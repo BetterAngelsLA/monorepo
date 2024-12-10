@@ -9,8 +9,7 @@ from django.apps import apps
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
-
-# from places import Places
+from places import Places
 from shelters.enums import (
     AccessibilityChoices,
     CityChoices,
@@ -31,8 +30,30 @@ from shelters.enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
-from shelters.models import ContactInfo, ExteriorPhoto, InteriorPhoto, Shelter
-from shelters.tests.baker_recipes import shelter_recipe
+from shelters.models import (
+    SPA,
+    Accessibility,
+    City,
+    ContactInfo,
+    Demographic,
+    EntryRequirement,
+    ExteriorPhoto,
+    Funder,
+    GeneralService,
+    HealthService,
+    ImmediateNeed,
+    InteriorPhoto,
+    Parking,
+    Pet,
+    RoomStyle,
+    Shelter,
+    ShelterProgram,
+    ShelterType,
+    SpecialSituationRestriction,
+    Storage,
+    TrainingService,
+)
+from shelters.tests.baker_recipes import related_m2m_unique, shelter_recipe
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
@@ -68,6 +89,13 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             phone
             programFees
             roomStylesOther
+            shelterProgramsOther
+            shelterTypesOther
+            status
+            subjectiveReview
+            supervisorialDistrict
+            totalBeds
+            website
             accessibility {name}
             cities {name}
             demographics {name}
@@ -85,13 +113,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             specialSituationRestrictions {name}
             storage {name}
             trainingServices {name}
-            shelterProgramsOther
-            shelterTypesOther
-            status
-            subjectiveReview
-            supervisorialDistrict
-            totalBeds
-            website
             additionalContacts {
                 id
                 contactName
@@ -110,89 +131,63 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         self._setup_shelter()
         # self._setup_shelter_related_objects()
-        # self._setup_shelter_contacts()
-        # self._setup_shelter_images()
+        self._setup_shelter_contacts()
+        self._setup_shelter_images()
 
     def _setup_shelter(self) -> None:
-        # self.shelter_organization = organization_recipe.make()
-        self.shelters = shelter_recipe.make(_quantity=2, organization=organization_recipe.make())
-        # self.shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
-        # self.shelters = baker.make(
-        #     Shelter,
-        #     bed_fees="bed fees",
-        #     city_council_district=1,
-        #     curfew=datetime.time(22, 00),
-        #     demographics_other="demographics other",
-        #     description="description",
-        #     email="shelter@example.com",
-        #     entry_info="entry info",
-        #     funders_other="funders other",
-        #     # location=self.shelter_location,
-        #     max_stay=7,
-        #     name="name",
-        #     on_site_security=True,
-        #     # organization=self.shelter_organization,
-        #     other_rules="other rules",
-        #     other_services="other services",
-        #     overall_rating=3,
-        #     phone="2125551212",
-        #     program_fees="program fees",
-        #     room_styles_other="room styles other",
-        #     shelter_programs_other="shelter programs other",
-        #     shelter_types_other="shelter types other",
-        #     subjective_review="subjective review",
-        #     supervisorial_district=1,
-        #     total_beds=1,
-        #     website="shelter.com",
-        #     _quantity=self.shelter_count,
-        # )
+        self.shelter_location = Places("123 Main Street", "34.0549", "-118.2426")
+        self.shelter_organization = organization_recipe.make()
 
-    def _setup_shelter_related_objects(self) -> None:
-        shelter_related_objects: List[ShelterRelatedObject] = [
-            ShelterRelatedObject(
-                field_name="accessibility", model_name="Accessibility", value=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE
-            ),
-            ShelterRelatedObject(field_name="cities", model_name="City", value=CityChoices.AGOURA_HILLS),
-            ShelterRelatedObject(field_name="demographics", model_name="Demographic", value=DemographicChoices.ALL),
-            ShelterRelatedObject(
-                field_name="entry_requirements", model_name="EntryRequirement", value=EntryRequirementChoices.PHOTO_ID
-            ),
-            ShelterRelatedObject(field_name="funders", model_name="Funder", value=FunderChoices.CITY_OF_LOS_ANGELES),
-            ShelterRelatedObject(
-                field_name="general_services", model_name="GeneralService", value=GeneralServiceChoices.CASE_MANAGEMENT
-            ),
-            ShelterRelatedObject(
-                field_name="health_services", model_name="HealthService", value=HealthServiceChoices.DENTAL
-            ),
-            ShelterRelatedObject(
-                field_name="immediate_needs", model_name="ImmediateNeed", value=ImmediateNeedChoices.CLOTHING
-            ),
-            ShelterRelatedObject(field_name="parking", model_name="Parking", value=ParkingChoices.BICYCLE),
-            ShelterRelatedObject(field_name="pets", model_name="Pet", value=PetChoices.CATS),
-            ShelterRelatedObject(field_name="room_styles", model_name="RoomStyle", value=RoomStyleChoices.CONGREGANT),
-            ShelterRelatedObject(
-                field_name="shelter_programs", model_name="ShelterProgram", value=ShelterProgramChoices.BRIDGE_HOME
-            ),
-            ShelterRelatedObject(field_name="shelter_types", model_name="ShelterType", value=ShelterChoices.BUILDING),
-            ShelterRelatedObject(field_name="spa", model_name="SPA", value=SPAChoices.ONE),
-            ShelterRelatedObject(
-                field_name="special_situation_restrictions",
-                model_name="SpecialSituationRestriction",
-                value=SpecialSituationRestrictionChoices.NONE,
-            ),
-            ShelterRelatedObject(field_name="storage", model_name="Storage", value=StorageChoices.AMNESTY_LOCKERS),
-            ShelterRelatedObject(
-                field_name="training_services", model_name="TrainingService", value=TrainingServiceChoices.JOB_TRAINING
-            ),
-        ]
-
-        for i in shelter_related_objects:
-            model_cls = apps.get_model("shelters", i.model_name)
-            related_object = model_cls.objects.get_or_create(model_cls, name=i.value)
-
-            for shelter in self.shelters:
-                related_manager = getattr(shelter, i.field_name)
-                related_manager.add(related_object)
+        self.shelters = shelter_recipe.make(
+            bed_fees="bed fees",
+            city_council_district=1,
+            curfew=datetime.time(22, 00),
+            demographics_other="demographics other",
+            description="description",
+            email="shelter@example.com",
+            entry_info="entry info",
+            funders_other="funders other",
+            max_stay=7,
+            name="name",
+            on_site_security=True,
+            organization=self.shelter_organization,
+            other_rules="other rules",
+            other_services="other services",
+            overall_rating=3,
+            phone="2125551212",
+            program_fees="program fees",
+            room_styles_other="room styles other",
+            shelter_programs_other="shelter programs other",
+            shelter_types_other="shelter types other",
+            status=StatusChoices.DRAFT,
+            subjective_review="subjective review",
+            supervisorial_district=1,
+            total_beds=1,
+            website="shelter.com",
+            location=self.shelter_location,
+            accessibility=[Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)[0]],
+            cities=[City.objects.get_or_create(name=CityChoices.AGOURA_HILLS)[0]],
+            demographics=[Demographic.objects.get_or_create(name=DemographicChoices.ALL)[0]],
+            entry_requirements=[EntryRequirement.objects.get_or_create(name=EntryRequirementChoices.PHOTO_ID)[0]],
+            funders=[Funder.objects.get_or_create(name=FunderChoices.CITY_OF_LOS_ANGELES)[0]],
+            general_services=[GeneralService.objects.get_or_create(name=GeneralServiceChoices.CASE_MANAGEMENT)[0]],
+            health_services=[HealthService.objects.get_or_create(name=HealthServiceChoices.DENTAL)[0]],
+            immediate_needs=[ImmediateNeed.objects.get_or_create(name=ImmediateNeedChoices.CLOTHING)[0]],
+            parking=[Parking.objects.get_or_create(name=ParkingChoices.BICYCLE)[0]],
+            pets=[Pet.objects.get_or_create(name=PetChoices.CATS)[0]],
+            room_styles=[RoomStyle.objects.get_or_create(name=RoomStyleChoices.CONGREGANT)[0]],
+            shelter_programs=[ShelterProgram.objects.get_or_create(name=ShelterProgramChoices.BRIDGE_HOME)[0]],
+            shelter_types=[ShelterType.objects.get_or_create(name=ShelterChoices.BUILDING)[0]],
+            spa=[SPA.objects.get_or_create(name=SPAChoices.ONE)[0]],
+            special_situation_restrictions=[
+                SpecialSituationRestriction.objects.get_or_create(
+                    name=SpecialSituationRestrictionChoices.NONE,
+                )[0]
+            ],
+            storage=[Storage.objects.get_or_create(name=StorageChoices.AMNESTY_LOCKERS)[0]],
+            training_services=[TrainingService.objects.get_or_create(name=TrainingServiceChoices.JOB_TRAINING)[0]],
+            _quantity=2,
+        )
 
     def _setup_shelter_contacts(self) -> None:
         for i in range(2):
@@ -318,7 +313,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 "longitude": -118.2426,
                 "place": "123 Main Street",
             },
-            # "organization": {"id": ANY, "name": self.shelter_organization.name},
+            "organization": {"id": ANY, "name": self.shelter_organization.name},
         }
         self.assertEqual(response_shelter, expected_shelter)
 

@@ -1,14 +1,9 @@
 import datetime
 import random
-from enum import Enum
-from typing import Any, Generic, TypeVar
+from typing import Any, Optional
 
 from accounts.tests.baker_recipes import organization_recipe
-from django.db.models import Model
-from model_bakery import baker
-from model_bakery.random_gen import gen_string
-from model_bakery.recipe import Recipe, related, seq
-from organizations.models import Organization
+from model_bakery.recipe import Recipe, foreign_key, related, seq
 from places import Places
 from shelters.enums import (
     CITY_COUNCIL_DISTRICT_CHOICES,
@@ -59,9 +54,6 @@ from shelters.models import (
     Video,
 )
 
-Model = TypeVar("Model")
-T = TypeVar("T", bound=Enum)
-
 
 def get_random_shelter_location() -> Places:
     street_names = ["Main St", "Santa Monica Blvd", "Wilshire Blvd", "Venice Blvd"]
@@ -84,7 +76,7 @@ def get_random_phone_number() -> str:
 
 
 class related_m2m_unique(related):
-    def __init__(self, related_model: Model, choices_enum: Enum) -> None:
+    def __init__(self, related_model: Any, choices_enum: Any) -> None:
         self.related_model = related_model
         self.choices_enum = choices_enum
 
@@ -99,38 +91,35 @@ class related_m2m_unique(related):
 
         return related_objs
 
-        # return [Accessibility.objects.get_or_create(name=AccessibilityChoices.WHEELCHAIR_ACCESSIBLE)[0]]
 
-
-# # Main Shelter recipe with related objects
 shelter_recipe = Recipe(
     Shelter,
-    bed_fees=seq("bed fees "),
+    bed_fees=seq("bed fees "),  # type: ignore
     city_council_district=random.choice(CITY_COUNCIL_DISTRICT_CHOICES)[0],
     curfew=datetime.time(random.randint(0, 23), random.randint(0, 59)),
-    demographics_other=seq("demographics other "),
-    description=seq("description "),
-    email=seq("shelter", suffix="@example.com"),
-    entry_info=seq("entry info "),
-    funders_other=seq("funders other "),
+    demographics_other=seq("demographics other "),  # type: ignore
+    description=seq("description "),  # type: ignore
+    email=seq("shelter", suffix="@example.com"),  # type: ignore
+    entry_info=seq("entry info "),  # type: ignore
+    funders_other=seq("funders other "),  # type: ignore
     location=get_random_shelter_location(),
     max_stay=random.randint(1, 7),
-    name=seq("shelter "),
+    name=seq("shelter "),  # type: ignore
+    organization=foreign_key(organization_recipe),
     on_site_security=random.choice([True, False, None]),
-    # organization=organization_recipe.make(name=seq("org ")),
-    other_rules=seq("other rules "),
-    other_services=seq("other services "),
+    other_rules=seq("other rules "),  # type: ignore
+    other_services=seq("other services "),  # type: ignore
     overall_rating=random.randint(1, 5),
     phone=get_random_phone_number(),
-    program_fees=seq("program fees "),
-    room_styles_other=seq("room styles other "),
-    shelter_programs_other=seq("shelter programs other "),
-    shelter_types_other=seq("shelter types other "),
+    program_fees=seq("program fees "),  # type: ignore
+    room_styles_other=seq("room styles other "),  # type: ignore
+    shelter_programs_other=seq("shelter programs other "),  # type: ignore
+    shelter_types_other=seq("shelter types other "),  # type: ignore
     status=random.choice(list(StatusChoices)),
-    subjective_review=seq("subjective review "),
+    subjective_review=seq("subjective review "),  # type: ignore
     supervisorial_district=random.choice(SUPERVISORIAL_DISTRICT_CHOICES)[0],
     total_beds=random.randint(10, 100),
-    website=seq("shelter", suffix=".com"),
+    website=seq("shelter", suffix=".com"),  # type: ignore
     accessibility=related_m2m_unique(Accessibility, AccessibilityChoices),
     cities=related_m2m_unique(City, CityChoices),
     demographics=related_m2m_unique(Demographic, DemographicChoices),
