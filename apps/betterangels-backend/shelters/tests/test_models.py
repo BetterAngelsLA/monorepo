@@ -41,6 +41,11 @@ class ShelterModelTestCase(TestCase):
         self.assertEqual(str(shelter.geometry.coords[1]), "123.0")
         self.assertEqual(str(shelter.geometry.coords[0]), "-123.0")
 
+        shelter.location = None
+        shelter.save()
+
+        self.assertIsNone(shelter.geometry)
+
     def test_create_shelter_events(self) -> None:
         # Verify shelter creation event
         shelter_events = Events.objects.filter(pgh_label="shelter.add")
