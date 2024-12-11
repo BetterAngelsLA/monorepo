@@ -1,4 +1,4 @@
-import LocationIcon from '@assets/icons/locationIcon.svg?react';
+import LocationIcon from '@assets/icons/svg/locationIcon.svg?react';
 
 import { useNavigate } from 'react-router-dom';
 import { calcDistance } from '../../utils/distance/calcDistance';
