@@ -643,6 +643,12 @@ export type GeneralServiceType = {
   name?: Maybe<GeneralServiceChoices>;
 };
 
+export type GeolocationInput = {
+  latitude: Scalars['Float']['input'];
+  longitude: Scalars['Float']['input'];
+  rangeInMiles?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export enum HairColorEnum {
   Bald = 'BALD',
   Black = 'BLACK',
@@ -1313,6 +1319,8 @@ export type QueryShelterArgs = {
 
 
 export type QuerySheltersArgs = {
+  filters?: InputMaybe<ShelterLocationFilter>;
+  order?: InputMaybe<ShelterOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1515,12 +1523,23 @@ export type ShelterKindType = {
   __typename?: 'ShelterKindType';
   name?: Maybe<ShelterChoices>;
 };
+export type ShelterLocationFilter = {
+  AND?: InputMaybe<ShelterLocationFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ShelterLocationFilter>;
+  OR?: InputMaybe<ShelterLocationFilter>;
+  geolocation?: InputMaybe<GeolocationInput>;
+};
 
 export type ShelterLocationType = {
   __typename?: 'ShelterLocationType';
   latitude: Scalars['Float']['output'];
   longitude: Scalars['Float']['output'];
   place: Scalars['String']['output'];
+};
+
+export type ShelterOrder = {
+  name?: InputMaybe<Ordering>;
 };
 
 export type ShelterPhotoType = {
@@ -1567,6 +1586,7 @@ export type ShelterType = {
   demographics: Array<DemographicType>;
   demographicsOther?: Maybe<Scalars['String']['output']>;
   description: Scalars['String']['output'];
+  distanceInMiles?: Maybe<Scalars['Float']['output']>;
   email?: Maybe<Scalars['String']['output']>;
   entryInfo?: Maybe<Scalars['String']['output']>;
   entryRequirements: Array<EntryRequirementType>;

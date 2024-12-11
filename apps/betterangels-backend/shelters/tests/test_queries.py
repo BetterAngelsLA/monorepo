@@ -1,7 +1,7 @@
 import datetime
 from dataclasses import dataclass
 from enum import IntEnum, StrEnum
-from typing import List
+from typing import Any, List
 from unittest.mock import ANY
 
 from accounts.tests.baker_recipes import organization_recipe
@@ -9,6 +9,7 @@ from django.apps import apps
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
+from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
     AccessibilityChoices,
@@ -54,6 +55,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             curfew
             demographicsOther
             description
+            distanceInMiles
             email
             entryInfo
             fundersOther
@@ -126,7 +128,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             funders_other="funders other",
             location=self.shelter_location,
             max_stay=7,
-            name="name",
+            name=seq("name "),  # type: ignore
             on_site_security=True,
             organization=self.shelter_organization,
             other_rules="other rules",
@@ -250,11 +252,12 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "curfew": "22:00:00",
             "demographicsOther": "demographics other",
             "description": "description",
+            "distanceInMiles": None,
             "email": "shelter@example.com",
             "entryInfo": "entry info",
             "fundersOther": "funders other",
             "maxStay": 7,
-            "name": "name",
+            "name": "name 1",
             "onSiteSecurity": True,
             "otherRules": "other rules",
             "otherServices": "other services",
@@ -321,8 +324,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
     def test_shelters_query(self) -> None:
         query = f"""
-            query ViewShelters($offset: Int, $limit: Int) {{
-                shelters(pagination: {{offset: $offset, limit: $limit}}) {{
+            query ViewShelters($offset: Int, $limit: Int, $order: ShelterOrder) {{
+                shelters(pagination: {{offset: $offset, limit: $limit}}, order: $order) {{
                     totalCount
                     pageInfo {{
                         limit
@@ -337,12 +340,62 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         """
 
         expected_query_count = 22
+        variables = {"order": {"name": "ASC"}}
 
         with self.assertNumQueries(expected_query_count):
-            response = self.execute_graphql(query)
+            response = self.execute_graphql(query, variables)
 
         shelters = response["data"]["shelters"]["results"]
 
         self.assertEqual(len(shelters), self.shelter_count)
         self.assertEqual(shelters[0]["heroImage"], self.exterior_photo_0.file.url)
         self.assertEqual(shelters[1]["heroImage"], self.interior_photo_1.file.url)
+
+    def test_shelter_location_filter(self) -> None:
+        reference_point = {
+            "latitude": 34,
+            "longitude": -118,
+        }
+        search_range_in_miles = 20
+
+        s1, s2, s3 = [
+            Shelter.objects.create(
+                location=Places(
+                    place=f"place {i}",
+                    # Each subsequent shelter is ~9 miles further from the reference point.
+                    latitude=f"{reference_point["latitude"]}.{i}",
+                    longitude=f"{reference_point["longitude"]}.{i}",
+                )
+            )
+            for i in range(3, 0, -1)
+        ]
+
+        query = """
+            query ViewShelters($filters: ShelterLocationFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                        distanceInMiles
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {}
+        filters["geolocation"] = {
+            "latitude": reference_point["latitude"],
+            "longitude": reference_point["longitude"],
+            "rangeInMiles": search_range_in_miles,
+        }
+
+        expected_query_count = 3
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        results = response["data"]["shelters"]["results"]
+
+        # exclude shelters generated outside the test
+        filtered_results = [r["id"] for r in results if r["id"] in [str(s.pk) for s in [s1, s2, s3]]]
+        # s1 is ~27 miles away from the reference point, so it was not included in the response payload
+        self.assertEqual(filtered_results, [str(s3.pk), str(s2.pk)])
