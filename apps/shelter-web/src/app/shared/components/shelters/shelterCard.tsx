@@ -1,4 +1,4 @@
-import LocationIcon from '@assets/icons/locationIcon.svg?react';
+import LocationIcon from '@assets/icons/svg/locationIcon.svg?react';
 
 import { calcDistance } from '../../utils/distance/calcDistance';
 import { formatDistance } from '../../utils/distance/formatDistance';
