@@ -1,5 +1,5 @@
 import { PropsWithChildren, ReactElement } from 'react';
-import { twCss } from '../shared/utils/styles/twCss';
+import { mergeCss } from '../shared/utils/styles/mergeCss';
 import { MaxWLayout } from './maxWLayout';
 
 interface IParams extends PropsWithChildren {
@@ -7,7 +7,7 @@ interface IParams extends PropsWithChildren {
 }
 
 export function HorizontalLayout(props: IParams): ReactElement {
-  const { className = '', children } = props;
+  const { className, children } = props;
 
   const parentCss = [
     'w-full',
@@ -19,7 +19,7 @@ export function HorizontalLayout(props: IParams): ReactElement {
   ];
 
   return (
-    <div className={twCss(parentCss)}>
+    <div className={mergeCss(parentCss)}>
       <MaxWLayout>{children}</MaxWLayout>
     </div>
   );

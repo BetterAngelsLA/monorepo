@@ -1,6 +1,6 @@
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
-import { twCss } from '../shared/utils/styles/twCss';
+import { mergeCss } from '../shared/utils/styles/mergeCss';
 import { Footer } from './footer';
 import { Header } from './header';
 import { HorizontalLayout } from './horizontalLayout';
@@ -24,7 +24,7 @@ export function MainLayout(props: IParams): ReactElement {
   ];
 
   return (
-    <div className={twCss(parentCss)}>
+    <div className={mergeCss(parentCss)}>
       <HorizontalLayout className="bg-steel-blue">
         <Header />
       </HorizontalLayout>

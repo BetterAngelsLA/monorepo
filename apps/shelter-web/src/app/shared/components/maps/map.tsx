@@ -5,7 +5,7 @@ import {
   useAdvancedMarkerRef,
   useMap,
 } from '@vis.gl/react-google-maps';
-import { twCss } from '../../utils/styles/twCss';
+import { mergeCss } from '../../utils/styles/mergeCss';
 import { LA_COUNTY_CENTER_LAT, LA_COUNTY_CENTER_LNG } from './constants.maps';
 import { MapZoomControls } from './mapZoomControls';
 
@@ -18,7 +18,6 @@ export function Map(props: TMap) {
   const { className = '', mapBounds } = props;
 
   const map = useMap();
-
   const [markerRef, marker] = useAdvancedMarkerRef();
 
   const mapCss = ['h-12', 'w-full', className];
@@ -26,7 +25,7 @@ export function Map(props: TMap) {
   return (
     <GoogleMap
       mapId={'bf51a910020fa25a'}
-      className={twCss(mapCss)}
+      className={mergeCss(mapCss)}
       defaultCenter={{
         lat: LA_COUNTY_CENTER_LAT,
         lng: LA_COUNTY_CENTER_LNG,
