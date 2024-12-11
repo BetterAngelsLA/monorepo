@@ -350,17 +350,19 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         self.assertEqual(shelters[1]["heroImage"], self.interior_photo_1.file.url)
 
     def test_shelter_location_filter(self) -> None:
-        user_location = {
+        reference_point = {
             "latitude": 34,
             "longitude": -118,
         }
+        search_range_in_miles = 20
 
         s1, s2, s3 = [
             Shelter.objects.create(
                 location=Places(
                     place=f"place {i}",
-                    latitude=f"{user_location["latitude"]}.{i}",
-                    longitude=f"{user_location["longitude"]}.{i}",
+                    # Each subsequent shelter is ~9 miles further from the reference point.
+                    latitude=f"{reference_point["latitude"]}.{i}",
+                    longitude=f"{reference_point["longitude"]}.{i}",
                 )
             )
             for i in range(3, 0, -1)
@@ -380,8 +382,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         filters: dict[str, Any] = {}
         filters["geolocation"] = {
-            "latitude": user_location["latitude"],
-            "longitude": user_location["longitude"],
+            "latitude": reference_point["latitude"],
+            "longitude": reference_point["longitude"],
+            "rangeInMiles": search_range_in_miles,
         }
 
         expected_query_count = 3
@@ -392,4 +395,5 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         # exclude shelters generated outside the test
         filtered_results = [r["id"] for r in results if r["id"] in [str(s.pk) for s in [s1, s2, s3]]]
-        self.assertEqual(filtered_results, [str(s3.pk), str(s2.pk), str(s1.pk)])
+        # s1 is ~27 miles away from the reference point, so it was not included in the response payload
+        self.assertEqual(filtered_results, [str(s3.pk), str(s2.pk)])

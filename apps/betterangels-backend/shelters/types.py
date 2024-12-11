@@ -7,6 +7,7 @@ from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
+from django.contrib.gis.measure import D
 from django.db.models import Prefetch, Q, QuerySet
 from shelters.enums import (
     AccessibilityChoices,
@@ -161,6 +162,7 @@ class FunderType:
 class GeolocationInput:
     latitude: float
     longitude: float
+    range_in_miles: Optional[int]
 
 
 @strawberry_django.filters.filter(Shelter)
@@ -172,9 +174,20 @@ class ShelterLocationFilter:
         if value is None:
             return queryset, Q()
 
-        user_location = Point(x=value.longitude, y=value.latitude, srid=4326)
+        reference_point = Point(x=value.longitude, y=value.latitude, srid=4326)
 
-        return queryset.annotate(distance=Distance("geolocation", user_location)).order_by("distance"), Q()
+        queryset = (
+            queryset.filter(
+                geolocation__dwithin=(
+                    reference_point,
+                    D(mi=value.range_in_miles),
+                )
+            )
+            .annotate(distance=Distance("geolocation", reference_point))
+            .order_by("distance")
+        )
+
+        return queryset, Q()
 
 
 @strawberry_django.type(Shelter, filters=ShelterLocationFilter)

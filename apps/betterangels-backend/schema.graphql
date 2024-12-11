@@ -616,6 +616,7 @@ type GeneralServiceType {
 input GeolocationInput {
   latitude: Float!
   longitude: Float!
+  rangeInMiles: Int
 }
 
 enum HairColorEnum {

@@ -256,7 +256,7 @@ class Shelter(BaseModel):
         longitude = self.location.longitude if self.location else None
 
         if latitude is not None and longitude is not None:
-            self.geolocation = Point(float(longitude), float(latitude), srid=4326)
+            self.geolocation = Point(float(longitude), float(latitude))
         else:
             self.geolocation = None
 
