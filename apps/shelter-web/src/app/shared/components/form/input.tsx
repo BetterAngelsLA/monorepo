@@ -1,42 +1,77 @@
 import CloseIcon from '@svg/mingcute_design/svg/mingcute:close-fill.svg?react';
-import { ChangeEvent, ReactElement, forwardRef } from 'react';
+import { InputHTMLAttributes, ReactElement, Ref, forwardRef } from 'react';
 
-type TInput = {
-  className?: string;
-  value?: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  required?: boolean;
-  disabled?: boolean;
-  withClear?: boolean;
-  autocomplete?: boolean;
-  spellcheck?: boolean;
+type AllowedTypes = string | number;
+interface IInput<T extends AllowedTypes = string>
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'> {
+  value?: T;
+  onChange?: (value: T) => void;
   leftIcon?: ReactElement;
   noClearBtn?: boolean;
-};
+  type?: 'text' | 'number' | 'email' | 'password' | 'search';
+}
 
-export const Input = forwardRef<HTMLInputElement, TInput>((props, ref) => {
+export const Input = forwardRef(InputInner) as <T extends AllowedTypes>(
+  props: IInput<T> & React.RefAttributes<HTMLInputElement>
+) => JSX.Element;
+
+function InputInner<T extends AllowedTypes>(
+  props: IInput<T>,
+  ref: Ref<HTMLInputElement>
+) {
   const {
     className = '',
-    value = '',
+    value,
+    type = 'text',
     onChange,
     placeholder,
     required,
     disabled,
-    autocomplete,
-    spellcheck,
+    autoComplete,
+    spellCheck,
     leftIcon,
     noClearBtn,
+    ...rest
   } = props;
 
-  function onValueChange(e: ChangeEvent<HTMLInputElement>): void {
-    const value = e.currentTarget.value as string;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!onChange) {
+      return;
+    }
 
-    onChange(value);
-  }
+    const inputValue = e.currentTarget.value;
+
+    if (e.currentTarget.type === 'number') {
+      if (inputValue === '') {
+        onChange(undefined as unknown as T);
+
+        return;
+      }
+
+      if (inputValue === '0') {
+        onChange(0 as T);
+
+        return;
+      }
+
+      const numericValue = inputValue.replace(/^0+/, '');
+
+      onChange(Number(numericValue) as T);
+
+      return;
+    }
+
+    onChange(String(inputValue) as T);
+  };
 
   function onClear() {
-    onChange('');
+    if (!onChange) {
+      return;
+    }
+
+    const clearedValue = typeof value === 'number' ? undefined : '';
+
+    onChange(clearedValue as T);
   }
 
   const parentCss = [
@@ -65,15 +100,17 @@ export const Input = forwardRef<HTMLInputElement, TInput>((props, ref) => {
 
       <input
         ref={ref}
-        value={value}
-        onChange={onValueChange}
+        value={value ?? ''}
+        type={type}
+        onChange={handleChange}
         placeholder={placeholder}
         className={inputCss}
         required={required}
         disabled={disabled}
-        autoComplete={String(!!autocomplete)}
-        autoCorrect={String(!!autocomplete)}
-        spellCheck={!!spellcheck}
+        autoComplete={String(!!autoComplete)}
+        autoCorrect={String(!!autoComplete)}
+        spellCheck={!!spellCheck}
+        {...rest}
       />
 
       {!noClearBtn && (
@@ -88,4 +125,4 @@ export const Input = forwardRef<HTMLInputElement, TInput>((props, ref) => {
       )}
     </div>
   );
-});
+}

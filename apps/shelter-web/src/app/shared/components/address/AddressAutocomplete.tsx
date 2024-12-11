@@ -82,7 +82,7 @@ export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
       setInputValue(value);
       fetchPredictions(value);
     },
-    [fetchPredictions]
+    [setInputValue, fetchPredictions]
   );
 
   const handleSuggestionClick = useCallback(
