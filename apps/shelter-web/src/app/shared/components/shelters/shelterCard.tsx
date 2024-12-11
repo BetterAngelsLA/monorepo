@@ -47,10 +47,8 @@ export function ShelterCard(props: TShelterCard) {
 
   const formattedAddress = place.replace(/, USA$/, '');
 
-  const cardCss = [className].join(' ');
-
   return (
-    <div className={cardCss}>
+    <div className={className}>
       {heroImage && (
         <div className="mb-4">
           <img

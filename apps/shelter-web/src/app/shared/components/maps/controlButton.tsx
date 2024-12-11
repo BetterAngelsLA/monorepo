@@ -1,5 +1,5 @@
 import { PropsWithChildren } from 'react';
-import { twCss } from '../../utils/styles/twCss';
+import { mergeCss } from '../../utils/styles/mergeCss';
 
 interface TProps extends PropsWithChildren {
   className?: string;
@@ -25,7 +25,7 @@ export function ControlButton(props: TProps) {
   ];
 
   return (
-    <button onClick={onClick} className={twCss(parentCss)}>
+    <button onClick={onClick} className={mergeCss(parentCss)}>
       {children}
     </button>
   );
