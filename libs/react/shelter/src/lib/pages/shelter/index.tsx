@@ -3,7 +3,7 @@ import { enumDisplayDemographics } from '../../static';
 import { useViewShelterQuery } from './__generated__/shelter.generated';
 
 export default function ShelterPage({ id }: { id: string }) {
-  const { loading, error, data } = useViewShelterQuery({
+  const { loading, data } = useViewShelterQuery({
     variables: {
       id,
     },
