@@ -79,7 +79,8 @@ class related_m2m_unique(related):
     def make(self) -> Any:
         related_objs = set()
 
-        quantity = random.randint(0, len(self.choices_enum))
+        # limit to 5 related objects per type, for readability
+        quantity = random.randint(0, min(len(self.choices_enum), 5))
 
         for i in range(quantity):
             related_object, _ = self.related_model.objects.get_or_create(name=(list(self.choices_enum)[i]))
@@ -97,30 +98,30 @@ shelter_contact_recipe = Recipe(
 shelter_recipe = Recipe(
     Shelter,
     bed_fees=seq("bed fees "),  # type: ignore
-    city_council_district=random.choice(CITY_COUNCIL_DISTRICT_CHOICES)[0],
-    curfew=datetime.time(random.randint(0, 23), random.randint(0, 59)),
+    city_council_district=lambda: random.choice(CITY_COUNCIL_DISTRICT_CHOICES)[0],
+    curfew=lambda: random.choice([datetime.time(random.randint(20, 23), 0), None]),
     demographics_other=seq("demographics other "),  # type: ignore
     description=seq("description "),  # type: ignore
     email=seq("shelter", suffix="@example.com"),  # type: ignore
     entry_info=seq("entry info "),  # type: ignore
     funders_other=seq("funders other "),  # type: ignore
     location=get_random_shelter_location,
-    max_stay=random.randint(1, 7),
+    max_stay=lambda: random.randint(7, 21),  # type: ignore
     name=seq("shelter "),  # type: ignore
     organization=foreign_key(organization_recipe),
     on_site_security=random.choice([True, False, None]),
     other_rules=seq("other rules "),  # type: ignore
     other_services=seq("other services "),  # type: ignore
-    overall_rating=random.randint(1, 5),
+    overall_rating=lambda: random.randint(1, 5),
     phone=get_random_phone_number,
     program_fees=seq("program fees "),  # type: ignore
     room_styles_other=seq("room styles other "),  # type: ignore
     shelter_programs_other=seq("shelter programs other "),  # type: ignore
     shelter_types_other=seq("shelter types other "),  # type: ignore
-    status=random.choice(list(StatusChoices)),
+    status=lambda: random.choice(list(StatusChoices)),
     subjective_review=seq("subjective review "),  # type: ignore
-    supervisorial_district=random.choice(SUPERVISORIAL_DISTRICT_CHOICES)[0],
-    total_beds=random.randint(10, 100),
+    supervisorial_district=lambda: random.choice(SUPERVISORIAL_DISTRICT_CHOICES)[0],
+    total_beds=lambda: round(random.randint(20, 200), -1),  # type: ignore
     website=seq("shelter", suffix=".com"),  # type: ignore
     accessibility=related_m2m_unique(Accessibility, AccessibilityChoices),
     cities=related_m2m_unique(City, CityChoices),

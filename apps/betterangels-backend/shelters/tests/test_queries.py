@@ -231,7 +231,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "entryInfo": "entry info",
             "fundersOther": "funders other",
             "maxStay": 7,
-            "name": "name 1",
+            "name": "name",
             "onSiteSecurity": True,
             "otherRules": "other rules",
             "otherServices": "other services",
@@ -330,7 +330,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         shelters = response["data"]["shelters"]["results"]
 
-        self.assertEqual(len(shelters), self.shelter_count)
+        self.assertEqual(len(shelters), shelter_count)
         self.assertEqual(shelters[0]["heroImage"], exterior_photo_0.file.url)
         self.assertEqual(shelters[1]["heroImage"], interior_photo_1.file.url)
 
