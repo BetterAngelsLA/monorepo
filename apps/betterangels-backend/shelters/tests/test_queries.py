@@ -9,6 +9,7 @@ from django.apps import apps
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
+from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
     AccessibilityChoices,
@@ -127,7 +128,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             funders_other="funders other",
             location=self.shelter_location,
             max_stay=7,
-            name="name",
+            name=seq("name "),  # type: ignore
             on_site_security=True,
             organization=self.shelter_organization,
             other_rules="other rules",
@@ -256,7 +257,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "entryInfo": "entry info",
             "fundersOther": "funders other",
             "maxStay": 7,
-            "name": "name",
+            "name": "name 1",
             "onSiteSecurity": True,
             "otherRules": "other rules",
             "otherServices": "other services",
@@ -323,8 +324,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
     def test_shelters_query(self) -> None:
         query = f"""
-            query ViewShelters($offset: Int, $limit: Int) {{
-                shelters(pagination: {{offset: $offset, limit: $limit}}) {{
+            query ViewShelters($offset: Int, $limit: Int, $order: ShelterOrder) {{
+                shelters(pagination: {{offset: $offset, limit: $limit}}, order: $order) {{
                     totalCount
                     pageInfo {{
                         limit
@@ -339,9 +340,10 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         """
 
         expected_query_count = 22
+        variables = {"order": {"name": "ASC"}}
 
         with self.assertNumQueries(expected_query_count):
-            response = self.execute_graphql(query)
+            response = self.execute_graphql(query, variables)
 
         shelters = response["data"]["shelters"]["results"]
 

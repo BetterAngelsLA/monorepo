@@ -190,7 +190,12 @@ class ShelterLocationFilter:
         return queryset, Q()
 
 
-@strawberry_django.type(Shelter, filters=ShelterLocationFilter)
+@strawberry_django.ordering.order(Shelter)
+class ShelterOrder:
+    name: auto
+
+
+@strawberry_django.type(Shelter, filters=ShelterLocationFilter, order=ShelterOrder)  # type: ignore
 class ShelterType:
     id: ID
     accessibility: List[AccessibilityType]

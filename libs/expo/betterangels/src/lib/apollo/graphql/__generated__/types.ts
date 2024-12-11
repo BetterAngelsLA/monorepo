@@ -21,7 +21,19 @@ export type Scalars = {
   PhoneNumber: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any; }
+  /** Time (isoformat) */
+  Time: { input: any; output: any; }
   Upload: { input: any; output: any; }
+};
+
+export enum AccessibilityChoices {
+  MedicalEquipmentPermitted = 'MEDICAL_EQUIPMENT_PERMITTED',
+  WheelchairAccessible = 'WHEELCHAIR_ACCESSIBLE'
+}
+
+export type AccessibilityType = {
+  __typename?: 'AccessibilityType';
+  name?: Maybe<AccessibilityChoices>;
 };
 
 export enum AdaAccommodationEnum {
@@ -80,6 +92,105 @@ export type AuthInput = {
 export type AuthResponse = {
   __typename?: 'AuthResponse';
   status_code: Scalars['String']['output'];
+};
+
+export enum CityChoices {
+  AgouraHills = 'AGOURA_HILLS',
+  Alhambra = 'ALHAMBRA',
+  Arcadia = 'ARCADIA',
+  Artesia = 'ARTESIA',
+  Avalon = 'AVALON',
+  Azusa = 'AZUSA',
+  BaldwinPark = 'BALDWIN_PARK',
+  Bell = 'BELL',
+  Bellflower = 'BELLFLOWER',
+  BellGardens = 'BELL_GARDENS',
+  BeverlyHills = 'BEVERLY_HILLS',
+  Bradbury = 'BRADBURY',
+  Burbank = 'BURBANK',
+  Calabasas = 'CALABASAS',
+  Carson = 'CARSON',
+  Cerritos = 'CERRITOS',
+  Claremont = 'CLAREMONT',
+  Commerce = 'COMMERCE',
+  Compton = 'COMPTON',
+  Covina = 'COVINA',
+  Cudahy = 'CUDAHY',
+  CulverCity = 'CULVER_CITY',
+  DiamondBar = 'DIAMOND_BAR',
+  Downey = 'DOWNEY',
+  Duarte = 'DUARTE',
+  ElMonte = 'EL_MONTE',
+  ElSegundo = 'EL_SEGUNDO',
+  Gardena = 'GARDENA',
+  Glendale = 'GLENDALE',
+  Glendora = 'GLENDORA',
+  HawaiianGardens = 'HAWAIIAN_GARDENS',
+  Hawthorne = 'HAWTHORNE',
+  HermosaBeach = 'HERMOSA_BEACH',
+  HiddenHills = 'HIDDEN_HILLS',
+  Hollywood = 'HOLLYWOOD',
+  HuntingtonPark = 'HUNTINGTON_PARK',
+  Industry = 'INDUSTRY',
+  Inglewood = 'INGLEWOOD',
+  Irwindale = 'IRWINDALE',
+  Lakewood = 'LAKEWOOD',
+  Lancaster = 'LANCASTER',
+  Lawndale = 'LAWNDALE',
+  LaCanadaFlintridge = 'LA_CANADA_FLINTRIDGE',
+  LaHabraHeights = 'LA_HABRA_HEIGHTS',
+  LaMirada = 'LA_MIRADA',
+  LaPuente = 'LA_PUENTE',
+  LaVerne = 'LA_VERNE',
+  Lomita = 'LOMITA',
+  LongBeach = 'LONG_BEACH',
+  LosAngeles = 'LOS_ANGELES',
+  Lynwood = 'LYNWOOD',
+  Malibu = 'MALIBU',
+  ManhattanBeach = 'MANHATTAN_BEACH',
+  Maywood = 'MAYWOOD',
+  Monrovia = 'MONROVIA',
+  Montebello = 'MONTEBELLO',
+  MontereyPark = 'MONTEREY_PARK',
+  Norwalk = 'NORWALK',
+  Palmdale = 'PALMDALE',
+  PalosVerdesEstates = 'PALOS_VERDES_ESTATES',
+  Paramount = 'PARAMOUNT',
+  Pasadena = 'PASADENA',
+  PicoRivera = 'PICO_RIVERA',
+  Pomona = 'POMONA',
+  RanchoPalosVerdes = 'RANCHO_PALOS_VERDES',
+  RedondoBeach = 'REDONDO_BEACH',
+  RollingHills = 'ROLLING_HILLS',
+  RollingHillsEstates = 'ROLLING_HILLS_ESTATES',
+  Rosemead = 'ROSEMEAD',
+  SantaClarita = 'SANTA_CLARITA',
+  SantaFeSprings = 'SANTA_FE_SPRINGS',
+  SantaMonica = 'SANTA_MONICA',
+  SanDimas = 'SAN_DIMAS',
+  SanFernando = 'SAN_FERNANDO',
+  SanGabriel = 'SAN_GABRIEL',
+  SanMarino = 'SAN_MARINO',
+  SierraMadre = 'SIERRA_MADRE',
+  SignalHill = 'SIGNAL_HILL',
+  SouthElMonte = 'SOUTH_EL_MONTE',
+  SouthGate = 'SOUTH_GATE',
+  SouthPasadena = 'SOUTH_PASADENA',
+  TempleCity = 'TEMPLE_CITY',
+  Torrance = 'TORRANCE',
+  Venice = 'VENICE',
+  Vernon = 'VERNON',
+  Walnut = 'WALNUT',
+  WestlakeVillage = 'WESTLAKE_VILLAGE',
+  WestCovina = 'WEST_COVINA',
+  WestHollywood = 'WEST_HOLLYWOOD',
+  WestLosAngeles = 'WEST_LOS_ANGELES',
+  Whittier = 'WHITTIER'
+}
+
+export type CityType = {
+  __typename?: 'CityType';
+  name?: Maybe<CityChoices>;
 };
 
 export type ClientContactInput = {
@@ -200,7 +311,6 @@ export type ClientProfileType = {
   genderOther?: Maybe<Scalars['String']['output']>;
   hairColor?: Maybe<HairColorEnum>;
   heightInInches?: Maybe<Scalars['Float']['output']>;
-  hmisId?: Maybe<Scalars['String']['output']>;
   hmisProfiles?: Maybe<Array<HmisProfileType>>;
   householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
@@ -259,6 +369,13 @@ export type ClientSearchInput = {
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type ContactInfoType = {
+  __typename?: 'ContactInfoType';
+  contactName: Scalars['String']['output'];
+  contactNumber: Scalars['PhoneNumber']['output'];
+  id: Scalars['ID']['output'];
+};
+
 export type CreateClientDocumentInput = {
   clientProfile: Scalars['ID']['input'];
   file: Scalars['Upload']['input'];
@@ -279,7 +396,6 @@ export type CreateClientProfileInput = {
   genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
-  hmisId?: InputMaybe<Scalars['String']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   importantNotes?: InputMaybe<Scalars['String']['input']>;
@@ -402,6 +518,22 @@ export type DeletedObjectType = {
   id: Scalars['Int']['output'];
 };
 
+export enum DemographicChoices {
+  All = 'ALL',
+  Families = 'FAMILIES',
+  Other = 'OTHER',
+  Seniors = 'SENIORS',
+  SingleMen = 'SINGLE_MEN',
+  SingleMoms = 'SINGLE_MOMS',
+  SingleWomen = 'SINGLE_WOMEN',
+  TayTeen = 'TAY_TEEN'
+}
+
+export type DemographicType = {
+  __typename?: 'DemographicType';
+  name?: Maybe<DemographicChoices>;
+};
+
 export type DjangoFileType = {
   __typename?: 'DjangoFileType';
   name: Scalars['String']['output'];
@@ -434,6 +566,18 @@ export enum DueByGroupEnum {
   Tomorrow = 'TOMORROW'
 }
 
+export enum EntryRequirementChoices {
+  MedicaidOrMedicare = 'MEDICAID_OR_MEDICARE',
+  PhotoId = 'PHOTO_ID',
+  Referral = 'REFERRAL',
+  Reservation = 'RESERVATION'
+}
+
+export type EntryRequirementType = {
+  __typename?: 'EntryRequirementType';
+  name?: Maybe<EntryRequirementChoices>;
+};
+
 export enum EyeColorEnum {
   Blue = 'BLUE',
   Brown = 'BROWN',
@@ -457,6 +601,22 @@ export type FlagType = {
   name: Scalars['String']['output'];
 };
 
+export enum FunderChoices {
+  CityOfLosAngeles = 'CITY_OF_LOS_ANGELES',
+  Dhs = 'DHS',
+  Dmh = 'DMH',
+  FederalFunding = 'FEDERAL_FUNDING',
+  Hopwa = 'HOPWA',
+  Lahsa = 'LAHSA',
+  Other = 'OTHER',
+  Private = 'PRIVATE'
+}
+
+export type FunderType = {
+  __typename?: 'FunderType';
+  name?: Maybe<FunderChoices>;
+};
+
 export enum GenderEnum {
   Female = 'FEMALE',
   Male = 'MALE',
@@ -464,6 +624,30 @@ export enum GenderEnum {
   Other = 'OTHER',
   PreferNotToSay = 'PREFER_NOT_TO_SAY'
 }
+
+export enum GeneralServiceChoices {
+  CaseManagement = 'CASE_MANAGEMENT',
+  Childcare = 'CHILDCARE',
+  ComputerAccess = 'COMPUTER_ACCESS',
+  EmploymentServices = 'EMPLOYMENT_SERVICES',
+  FinancialLiteracyAssistance = 'FINANCIAL_LITERACY_ASSISTANCE',
+  HousingNavigation = 'HOUSING_NAVIGATION',
+  LegalAssistance = 'LEGAL_ASSISTANCE',
+  Mail = 'MAIL',
+  Phone = 'PHONE',
+  Transportation = 'TRANSPORTATION'
+}
+
+export type GeneralServiceType = {
+  __typename?: 'GeneralServiceType';
+  name?: Maybe<GeneralServiceChoices>;
+};
+
+export type GeolocationInput = {
+  latitude: Scalars['Float']['input'];
+  longitude: Scalars['Float']['input'];
+  rangeInMiles?: InputMaybe<Scalars['Int']['input']>;
+};
 
 export enum HairColorEnum {
   Bald = 'BALD',
@@ -475,6 +659,18 @@ export enum HairColorEnum {
   Red = 'RED',
   White = 'WHITE'
 }
+
+export enum HealthServiceChoices {
+  Dental = 'DENTAL',
+  Medical = 'MEDICAL',
+  MentalHealth = 'MENTAL_HEALTH',
+  SubstanceUseTreatment = 'SUBSTANCE_USE_TREATMENT'
+}
+
+export type HealthServiceType = {
+  __typename?: 'HealthServiceType';
+  name?: Maybe<HealthServiceChoices>;
+};
 
 export enum HmisAgencyEnum {
   Champ = 'CHAMP',
@@ -495,6 +691,17 @@ export type HmisProfileType = {
   agency: HmisAgencyEnum;
   hmisId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+};
+
+export enum ImmediateNeedChoices {
+  Clothing = 'CLOTHING',
+  Food = 'FOOD',
+  Showers = 'SHOWERS'
+}
+
+export type ImmediateNeedType = {
+  __typename?: 'ImmediateNeedType';
+  name?: Maybe<ImmediateNeedChoices>;
 };
 
 export enum LanguageEnum {
@@ -943,12 +1150,39 @@ export type OrganizationType = {
   name: Scalars['String']['output'];
 };
 
+export enum ParkingChoices {
+  Automobile = 'AUTOMOBILE',
+  Bicycle = 'BICYCLE',
+  Motorcycle = 'MOTORCYCLE',
+  NoParking = 'NO_PARKING',
+  Rv = 'RV'
+}
+
+export type ParkingType = {
+  __typename?: 'ParkingType';
+  name?: Maybe<ParkingChoices>;
+};
+
 /** Permission definition for schema directives. */
 export type PermDefinition = {
   /** The app to which we are requiring permission. If this is empty that means that we are checking the permission directly. */
   app?: InputMaybe<Scalars['String']['input']>;
   /** The permission itself. If this is empty that means that we are checking for any permission for the given app. */
   permission?: InputMaybe<Scalars['String']['input']>;
+};
+
+export enum PetChoices {
+  Cats = 'CATS',
+  DogsOver_25Lbs = 'DOGS_OVER_25_LBS',
+  DogsUnder_25Lbs = 'DOGS_UNDER_25_LBS',
+  Exotics = 'EXOTICS',
+  NoPetsAllowed = 'NO_PETS_ALLOWED',
+  ServiceAnimals = 'SERVICE_ANIMALS'
+}
+
+export type PetType = {
+  __typename?: 'PetType';
+  name?: Maybe<PetChoices>;
 };
 
 export type PhoneNumberInput = {
@@ -998,6 +1232,8 @@ export type Query = {
   notesPaginated: NoteTypeOffsetPaginated;
   serviceRequest: ServiceRequestType;
   serviceRequests: Array<ServiceRequestType>;
+  shelter: ShelterType;
+  shelters: ShelterTypeOffsetPaginated;
   task: TaskType;
   tasks: Array<TaskType>;
 };
@@ -1077,6 +1313,18 @@ export type QueryServiceRequestsArgs = {
 };
 
 
+export type QueryShelterArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QuerySheltersArgs = {
+  filters?: InputMaybe<ShelterLocationFilter>;
+  order?: InputMaybe<ShelterOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
 export type QueryTaskArgs = {
   pk: Scalars['ID']['input'];
 };
@@ -1136,6 +1384,37 @@ export type RevertNoteInput = {
 };
 
 export type RevertNotePayload = NoteType | OperationInfo;
+
+export enum RoomStyleChoices {
+  Congregant = 'CONGREGANT',
+  CubicleHighWalls = 'CUBICLE_HIGH_WALLS',
+  CubicleLowWalls = 'CUBICLE_LOW_WALLS',
+  MotelRoom = 'MOTEL_ROOM',
+  Other = 'OTHER',
+  SharedRooms = 'SHARED_ROOMS',
+  SingleRoom = 'SINGLE_ROOM'
+}
+
+export type RoomStyleType = {
+  __typename?: 'RoomStyleType';
+  name?: Maybe<RoomStyleChoices>;
+};
+
+export enum SpaChoices {
+  Eight = 'EIGHT',
+  Five = 'FIVE',
+  Four = 'FOUR',
+  One = 'ONE',
+  Seven = 'SEVEN',
+  Six = 'SIX',
+  Three = 'THREE',
+  Two = 'TWO'
+}
+
+export type SpaType = {
+  __typename?: 'SPAType';
+  name?: Maybe<SpaChoices>;
+};
 
 export type SampleType = {
   __typename?: 'SampleType';
@@ -1230,6 +1509,135 @@ export enum ServiceRequestTypeEnum {
   Requested = 'REQUESTED'
 }
 
+export enum ShelterChoices {
+  Building = 'BUILDING',
+  Church = 'CHURCH',
+  HotelMotel = 'HOTEL_MOTEL',
+  Other = 'OTHER',
+  SafeParking = 'SAFE_PARKING',
+  SingleFamilyHouse = 'SINGLE_FAMILY_HOUSE',
+  TinyHomes = 'TINY_HOMES'
+}
+
+export type ShelterKindType = {
+  __typename?: 'ShelterKindType';
+  name?: Maybe<ShelterChoices>;
+};
+
+export type ShelterLocationFilter = {
+  AND?: InputMaybe<ShelterLocationFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ShelterLocationFilter>;
+  OR?: InputMaybe<ShelterLocationFilter>;
+  geolocation?: InputMaybe<GeolocationInput>;
+};
+
+export type ShelterLocationType = {
+  __typename?: 'ShelterLocationType';
+  latitude: Scalars['Float']['output'];
+  longitude: Scalars['Float']['output'];
+  place: Scalars['String']['output'];
+};
+
+export type ShelterOrder = {
+  name?: InputMaybe<Ordering>;
+};
+
+export type ShelterPhotoType = {
+  __typename?: 'ShelterPhotoType';
+  createdAt: Scalars['DateTime']['output'];
+  file: DjangoFileType;
+  id: Scalars['ID']['output'];
+};
+
+export enum ShelterProgramChoices {
+  BridgeHome = 'BRIDGE_HOME',
+  CrisisHousing = 'CRISIS_HOUSING',
+  EmergencyShelter = 'EMERGENCY_SHELTER',
+  FaithBased = 'FAITH_BASED',
+  InterimHousing = 'INTERIM_HOUSING',
+  Other = 'OTHER',
+  PermanentHousing = 'PERMANENT_HOUSING',
+  ProjectHomeKey = 'PROJECT_HOME_KEY',
+  RapidRehousing = 'RAPID_REHOUSING',
+  RecuperativeCare = 'RECUPERATIVE_CARE',
+  RoadmapHome = 'ROADMAP_HOME',
+  SafeParkLa = 'SAFE_PARK_LA',
+  SoberLiving = 'SOBER_LIVING',
+  TinyHomeVillage = 'TINY_HOME_VILLAGE',
+  TransitionalHousing = 'TRANSITIONAL_HOUSING',
+  WinterShelter = 'WINTER_SHELTER'
+}
+
+export type ShelterProgramType = {
+  __typename?: 'ShelterProgramType';
+  name?: Maybe<ShelterProgramChoices>;
+};
+
+export type ShelterType = {
+  __typename?: 'ShelterType';
+  ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
+  InteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
+  accessibility: Array<AccessibilityType>;
+  additionalContacts: Array<ContactInfoType>;
+  bedFees?: Maybe<Scalars['String']['output']>;
+  cities: Array<CityType>;
+  cityCouncilDistrict?: Maybe<Scalars['Int']['output']>;
+  curfew?: Maybe<Scalars['Time']['output']>;
+  demographics: Array<DemographicType>;
+  demographicsOther?: Maybe<Scalars['String']['output']>;
+  description: Scalars['String']['output'];
+  distanceInMiles?: Maybe<Scalars['Float']['output']>;
+  email?: Maybe<Scalars['String']['output']>;
+  entryInfo?: Maybe<Scalars['String']['output']>;
+  entryRequirements: Array<EntryRequirementType>;
+  exteriorPhotos: Array<ShelterPhotoType>;
+  funders: Array<FunderType>;
+  fundersOther?: Maybe<Scalars['String']['output']>;
+  generalServices: Array<GeneralServiceType>;
+  healthServices: Array<HealthServiceType>;
+  heroImage?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  immediateNeeds: Array<ImmediateNeedType>;
+  interiorPhotos: Array<ShelterPhotoType>;
+  location: ShelterLocationType;
+  maxStay?: Maybe<Scalars['Int']['output']>;
+  name: Scalars['String']['output'];
+  onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
+  organization?: Maybe<OrganizationType>;
+  otherRules?: Maybe<Scalars['String']['output']>;
+  otherServices?: Maybe<Scalars['String']['output']>;
+  overallRating?: Maybe<Scalars['Int']['output']>;
+  parking: Array<ParkingType>;
+  pets: Array<PetType>;
+  phone: Scalars['PhoneNumber']['output'];
+  programFees?: Maybe<Scalars['String']['output']>;
+  roomStyles: Array<RoomStyleType>;
+  roomStylesOther?: Maybe<Scalars['String']['output']>;
+  shelterPrograms: Array<ShelterProgramType>;
+  shelterProgramsOther?: Maybe<Scalars['String']['output']>;
+  shelterTypes: Array<ShelterKindType>;
+  shelterTypesOther?: Maybe<Scalars['String']['output']>;
+  spa: Array<SpaType>;
+  specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
+  status: StatusChoices;
+  storage: Array<StorageType>;
+  subjectiveReview?: Maybe<Scalars['String']['output']>;
+  supervisorialDistrict?: Maybe<Scalars['Int']['output']>;
+  totalBeds?: Maybe<Scalars['Int']['output']>;
+  trainingServices: Array<TrainingServiceType>;
+  website?: Maybe<Scalars['String']['output']>;
+};
+
+export type ShelterTypeOffsetPaginated = {
+  __typename?: 'ShelterTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<ShelterType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export enum SocialMediaEnum {
   Facebook = 'FACEBOOK',
   Instagram = 'INSTAGRAM',
@@ -1253,6 +1661,40 @@ export type SocialMediaProfileType = {
   id?: Maybe<Scalars['ID']['output']>;
   platform: SocialMediaEnum;
   platformUserId: Scalars['String']['output'];
+};
+
+export enum SpecialSituationRestrictionChoices {
+  DomesticViolence = 'DOMESTIC_VIOLENCE',
+  HivAids = 'HIV_AIDS',
+  HumanTrafficking = 'HUMAN_TRAFFICKING',
+  JusticeSystems = 'JUSTICE_SYSTEMS',
+  LgbtqPlus = 'LGBTQ_PLUS',
+  None = 'NONE',
+  Veterans = 'VETERANS'
+}
+
+export type SpecialSituationRestrictionType = {
+  __typename?: 'SpecialSituationRestrictionType';
+  name?: Maybe<SpecialSituationRestrictionChoices>;
+};
+
+export enum StatusChoices {
+  Approved = 'APPROVED',
+  Draft = 'DRAFT',
+  Inactive = 'INACTIVE',
+  Pending = 'PENDING'
+}
+
+export enum StorageChoices {
+  AmnestyLockers = 'AMNESTY_LOCKERS',
+  NoStorage = 'NO_STORAGE',
+  SharedStorage = 'SHARED_STORAGE',
+  StandardLockers = 'STANDARD_LOCKERS'
+}
+
+export type StorageType = {
+  __typename?: 'StorageType';
+  name?: Maybe<StorageChoices>;
 };
 
 export type SwitchType = {
@@ -1290,6 +1732,17 @@ export enum TaskTypeEnum {
   Purpose = 'PURPOSE'
 }
 
+export enum TrainingServiceChoices {
+  JobTraining = 'JOB_TRAINING',
+  LifeSkillsTraining = 'LIFE_SKILLS_TRAINING',
+  Tutoring = 'TUTORING'
+}
+
+export type TrainingServiceType = {
+  __typename?: 'TrainingServiceType';
+  name?: Maybe<TrainingServiceChoices>;
+};
+
 export type UpdateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
@@ -1302,7 +1755,6 @@ export type UpdateClientProfileInput = {
   genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
-  hmisId?: InputMaybe<Scalars['String']['input']>;
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];
