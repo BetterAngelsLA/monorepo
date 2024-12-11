@@ -1,6 +1,7 @@
 import SearchIcon from '@svg/mingcute_design/svg/mingcute:search-line.svg?react';
 import { useApiIsLoaded, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { useCallback, useEffect, useState } from 'react';
+import { ISO3166Alpha2 } from '../../../types/isoCodes';
 import { Input } from '../form/input';
 import { LA_COUNTY_CENTER, getPlacesBounds } from '../maps/getPlacesBounds';
 import { AddressSuggestion } from './addressSuggestion';
@@ -13,10 +14,11 @@ const boundsLA = getPlacesBounds({
 type TPlaceAutocomplete = {
   className?: string;
   onPlaceSelect: (place: google.maps.places.PlaceResult | null) => void;
+  countryRestrictions?: ISO3166Alpha2 | ISO3166Alpha2[] | null;
 };
 
 export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
-  const { onPlaceSelect, className = '' } = props;
+  const { onPlaceSelect, countryRestrictions = 'us', className = '' } = props;
 
   const apiIsLoaded = useApiIsLoaded();
 
@@ -53,6 +55,9 @@ export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
         sessionToken,
         locationBias: boundsLA,
         region: 'us',
+        componentRestrictions: {
+          country: countryRestrictions,
+        },
       };
 
       autocompleteService.getPlacePredictions(
