@@ -23,7 +23,7 @@ export const ServicesByCategory = [
       ServiceEnum.Shower,
       ServiceEnum.SleepingBag,
       ServiceEnum.Tarp,
-      ServiceEnum.Tent
+      ServiceEnum.Tent,
     ],
   },
   {
@@ -34,7 +34,7 @@ export const ServicesByCategory = [
       ServiceEnum.InternetAccess,
       ServiceEnum.Lahop,
       ServiceEnum.HmisConsent,
-      ServiceEnum.ConsenttoConnect
+      ServiceEnum.ConsentToConnect,
     ],
   },
   {
@@ -52,7 +52,7 @@ export const ServicesByCategory = [
       ServiceEnum.Ebt,
       ServiceEnum.SsiSsdi,
       ServiceEnum.PublicBenefitsPrograms,
-      ServiceEnum.Medi_Cal,
+      ServiceEnum.MediCal,
       ServiceEnum.UnemploymentCertification,
     ],
   },
@@ -90,7 +90,7 @@ export const ServicesByCategory = [
       ServiceEnum.DiscountScooterRides,
       ServiceEnum.Ride,
       ServiceEnum.Bicycle,
-      ServiceEnum.BicycleRepair
+      ServiceEnum.BicycleRepair,
     ],
   },
   {
