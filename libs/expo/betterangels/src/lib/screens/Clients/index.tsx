@@ -173,7 +173,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           flex: 1,
           backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
           paddingHorizontal: Spacings.sm,
-          paddingBottom: Spacings.xl,
           paddingTop: Spacings.sm,
         }}
       >
