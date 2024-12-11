@@ -1,15 +1,13 @@
 import MapPin from '@assets/icons/svg/mapPin.svg?react';
 import {
   AdvancedMarker,
-  ControlPosition,
   Map as GoogleMap,
-  MapControl,
   useAdvancedMarkerRef,
+  useMap,
 } from '@vis.gl/react-google-maps';
-import { useState } from 'react';
 import { twCss } from '../../utils/styles/twCss';
 import { LA_COUNTY_CENTER_LAT, LA_COUNTY_CENTER_LNG } from './constants.maps';
-import { ZoomButton } from './zoomButton';
+import { MapZoomControls } from './mapZoomControls';
 
 type TMap = {
   className?: string;
@@ -19,16 +17,9 @@ type TMap = {
 export function Map(props: TMap) {
   const { className = '', mapBounds } = props;
 
+  const map = useMap();
+
   const [markerRef, marker] = useAdvancedMarkerRef();
-  const [zoomLevel, setZoomLevel] = useState(11);
-
-  function onZoomIn() {
-    setZoomLevel((prev) => prev + 0.5);
-  }
-
-  function onZoomOut() {
-    setZoomLevel((prev) => prev - 0.5);
-  }
 
   const mapCss = ['h-12', 'w-full', className];
 
@@ -42,7 +33,7 @@ export function Map(props: TMap) {
       }}
       defaultBounds={mapBounds}
       gestureHandling={'greedy'}
-      zoom={zoomLevel}
+      defaultZoom={11}
       disableDefaultUI={true}
     >
       <AdvancedMarker
@@ -54,16 +45,7 @@ export function Map(props: TMap) {
       >
         <MapPin />
       </AdvancedMarker>
-      <MapControl position={ControlPosition.INLINE_END_BLOCK_END}>
-        <div className="mr-4">
-          <ZoomButton className="text-neutral-40" onClick={onZoomIn}>
-            +
-          </ZoomButton>
-          <ZoomButton className="mt-1.5" onClick={onZoomOut}>
-            <div className="w-4 h-[3px] bg-neutral-40"></div>
-          </ZoomButton>
-        </div>
-      </MapControl>
+      <MapZoomControls map={map} className="mr-4" />
     </GoogleMap>
   );
 }
