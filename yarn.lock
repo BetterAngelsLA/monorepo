@@ -4610,7 +4610,7 @@ __metadata:
     expo-image-picker: "npm:~16.0.3"
     expo-linking: "npm:~7.0.3"
     expo-location: "npm:~18.0.4"
-    expo-router: "npm:~4.0.11"
+    expo-router: "npm:4.0.11"
     expo-secure-store: "npm:~14.0.0"
     expo-sharing: "npm:~13.0.0"
     expo-splash-screen: "npm:~0.29.18"
@@ -13647,9 +13647,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-router@npm:~4.0.11":
-  version: 4.0.12
-  resolution: "expo-router@npm:4.0.12"
+"expo-router@npm:4.0.11":
+  version: 4.0.11
+  resolution: "expo-router@npm:4.0.11"
   dependencies:
     "@expo/metro-runtime": "npm:4.0.0"
     "@expo/server": "npm:^0.5.0"
@@ -13661,7 +13661,6 @@ __metadata:
     react-helmet-async: "npm:^1.3.0"
     react-native-helmet-async: "npm:2.0.4"
     react-native-is-edge-to-edge: "npm:^1.1.6"
-    react-server-dom-webpack: "npm:19.0.0-rc-6230622a1a-20240610"
     schema-utils: "npm:^4.0.1"
     semver: "npm:~7.6.3"
     server-only: "npm:^0.0.1"
@@ -13680,7 +13679,7 @@ __metadata:
       optional: true
     react-native-reanimated:
       optional: true
-  checksum: 10/1e1ae421dcd5cac16c1fc37bfdcecea0954e33f56e5cbe63f3434b74b0b27a73afb4e574e169b540a8ece6bc6cfa8e485a457909fd68ac4ccdf61ad603812a28
+  checksum: 10/a0b6f1ae7e14d7157b81928b638c04e54c280864942bb8322c17f7436c5001ccb07eb81507de0c051553c045e56af6f80d841afe922d33f7c19b2e338aac4eeb
   languageName: node
   linkType: hard
 
