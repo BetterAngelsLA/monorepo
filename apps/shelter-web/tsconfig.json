@@ -5,10 +5,10 @@
     "esModuleInterop": false,
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "types": ["vite/client"],
-    "paths": {
-      "@assets/*": ["libs/assets/src/*"]
-    }
+    "types": ["vite/client"]
+    // "paths": {
+    //   "@assets/*": ["libs/assets/src/*"]
+    // }
   },
   "files": [],
   "references": [
