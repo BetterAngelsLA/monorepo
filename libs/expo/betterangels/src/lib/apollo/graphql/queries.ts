@@ -115,3 +115,15 @@ export const GET_NOTE = gql`
     }
   }
 `;
+
+export const FEATURE_FLAGS_QUERY = gql`
+    query GetFeatureFlags {
+        featureControls {
+            flags {
+                name
+                isActive
+                lastModified
+            }
+        }
+    }
+`;
