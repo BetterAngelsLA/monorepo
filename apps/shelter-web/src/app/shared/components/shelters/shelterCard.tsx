@@ -1,4 +1,4 @@
-import LocationIcon from '@assets/icons/locationIcon.svg?react';
+import LocationIcon from '@assets/icons/svg/locationIcon.svg?react';
 
 import { useNavigate } from 'react-router-dom';
 import { calcDistance } from '../../utils/distance/calcDistance';
@@ -51,10 +51,8 @@ export function ShelterCard(props: TShelterCard) {
 
   const formattedAddress = place.replace(/, USA$/, '');
 
-  const cardCss = [className].join(' ');
-
   return (
-    <div className={cardCss}>
+    <div className={className}>
       {heroImage && (
         <div onClick={() => navigate(`/shelter/${id}`)} className="mb-4">
           <img

@@ -1,5 +1,6 @@
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
+import { mergeCss } from '../shared/utils/styles/mergeCss';
 import { Footer } from './footer';
 import { Header } from './header';
 import { HorizontalLayout } from './horizontalLayout';
@@ -8,20 +9,22 @@ type IParams = {
   className?: string;
 };
 
-export function ContentLayout(props: IParams): ReactElement {
+export function MainLayout(props: IParams): ReactElement {
   const { className = '' } = props;
 
   const parentCss = [
-    className,
     'w-full',
+    'max-w-screen',
+    'overflow-x-hidden',
     'flex',
     'flex-col',
     'items-center',
     'min-h-screen',
-  ].join(' ');
+    className,
+  ];
 
   return (
-    <div className={parentCss}>
+    <div className={mergeCss(parentCss)}>
       <HorizontalLayout className="bg-steel-blue">
         <Header />
       </HorizontalLayout>

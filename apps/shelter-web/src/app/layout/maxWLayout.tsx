@@ -1,26 +1,21 @@
 import { PropsWithChildren, ReactElement } from 'react';
 import { mergeCss } from '../shared/utils/styles/mergeCss';
-import { MaxWLayout } from './maxWLayout';
 
 interface IParams extends PropsWithChildren {
   className?: string;
 }
 
-export function HorizontalLayout(props: IParams): ReactElement {
+export function MaxWLayout(props: IParams): ReactElement {
   const { className, children } = props;
 
   const parentCss = [
-    'w-full',
+    'max-w-7xl',
+    'min-w-full',
     'flex',
     'flex-col',
-    'items-center',
-    'px-4',
+    'lg:mx-0',
     className,
   ];
 
-  return (
-    <div className={mergeCss(parentCss)}>
-      <MaxWLayout>{children}</MaxWLayout>
-    </div>
-  );
+  return <div className={mergeCss(parentCss)}>{children}</div>;
 }
