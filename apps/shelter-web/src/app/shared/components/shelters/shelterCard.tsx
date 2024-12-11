@@ -1,5 +1,6 @@
 import LocationIcon from '@assets/icons/locationIcon.svg?react';
 
+import { useNavigate } from 'react-router-dom';
 import { calcDistance } from '../../utils/distance/calcDistance';
 import { formatDistance } from '../../utils/distance/formatDistance';
 import { TLatLng } from '../maps/types.maps';
@@ -26,6 +27,7 @@ type TShelterCard = {
 export function ShelterCard(props: TShelterCard) {
   const {
     shelter: {
+      id,
       name,
       heroImage,
       location: { place, latitude: shelterLat, longitude: shelterLng },
@@ -33,6 +35,8 @@ export function ShelterCard(props: TShelterCard) {
     originCoordinates,
     className = '',
   } = props;
+
+  const navigate = useNavigate();
 
   let formattedDistance;
 
@@ -52,10 +56,10 @@ export function ShelterCard(props: TShelterCard) {
   return (
     <div className={cardCss}>
       {heroImage && (
-        <div className="mb-4">
+        <div onClick={() => navigate(`/shelter/${id}`)} className="mb-4">
           <img
             src={heroImage}
-            alt={`hero image for ${name}`}
+            alt={`hero for ${name}`}
             loading="lazy"
             className="aspect-[4/3] rounded-[20px]"
           />
