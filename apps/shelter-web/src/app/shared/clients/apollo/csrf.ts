@@ -1,8 +1,10 @@
 import { ApolloLink, Observable } from '@apollo/client';
 import { getCookie } from '../../utils/storage/cookies';
 
-const csrfCookieName = import.meta.env.VITE_CSRF_COOKIE_NAME;
-const csrfHeaderName = import.meta.env.VITE_CSRF_HEADER_NAME;
+const csrfCookieName =
+  import.meta.env.VITE_SHELTER_CSRF_COOKIE_NAME || 'csrftoken';
+const csrfHeaderName =
+  import.meta.env.VITE_SHELTER_CSRF_HEADER_NAME || 'x-csrftoken';
 
 const extractCsrfToken = async (apiUrl: string, customFetch = fetch) => {
   const csrfToken = getCookie(csrfCookieName);

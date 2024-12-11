@@ -19,8 +19,8 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
-
   return {
+    base: process.env.SHELTER_BASE_PATH || '/',
     root: __dirname,
     cacheDir: '../../node_modules/.vite/apps/shelter-web',
 
