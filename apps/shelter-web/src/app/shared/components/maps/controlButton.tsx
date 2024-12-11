@@ -6,7 +6,7 @@ interface TProps extends PropsWithChildren {
   onClick: () => void;
 }
 
-export function ZoomButton(props: TProps) {
+export function ControlButton(props: TProps) {
   const { onClick, children, className } = props;
 
   const parentCss = [
