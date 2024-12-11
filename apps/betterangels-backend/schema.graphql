@@ -613,6 +613,12 @@ type GeneralServiceType {
   name: GeneralServiceChoices
 }
 
+input GeolocationInput {
+  latitude: Float!
+  longitude: Float!
+  rangeInMiles: Int
+}
+
 enum HairColorEnum {
   BLACK
   BLONDE
@@ -1002,7 +1008,7 @@ type Query {
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput): ShelterTypeOffsetPaginated!
+  shelters(pagination: OffsetPaginationInput, filters: ShelterLocationFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -1108,27 +1114,39 @@ enum SelahTeamEnum {
 }
 
 enum ServiceEnum {
+  BAG
+  BATTERIES
   BICYCLE
+  BICYCLE_REPAIR
   BIRTH_CERTIFICATE
   BLANKET
   BOOK
   CALIFORNIA_LIFELINE_PHONE
   CLOTHES
+  CLOTHES_SOCKS
+  CONSENT_TO_CONNECT
   CONTACT_DPSS
   CONTACT_FRIEND
-  DMH_EVALUATION
-  DMV_NO_FEE_ID_FORM
   DENTAL
   DISCOUNT_SCOOTER_RIDES
+  DMH_EVALUATION
+  DMV_NO_FEE_ID_FORM
+  EBT
   FAMILY_REUNIFICATION
+  FEMININE_HYGIENE
+  FIRST_AID
   FOOD
   HARM_REDUCTION
+  HMIS_CONSENT
   HYGIENE_KIT
   INTERNET_ACCESS
+  LAHOP
   LEGAL_COUNSEL
   MAIL_PICK_UP
   MEDICAL
+  MEDI_CAL
   METRO_LIFE_TAP
+  OTHER
   PET_CARE
   PET_FOOD
   PUBLIC_BENEFITS_PROGRAMS
@@ -1137,19 +1155,21 @@ enum ServiceEnum {
   SHELTER
   SHOES
   SHOWER
+  SLEEPING_BAG
   SOCIAL_SECURITY_CARD_REPLACEMENT
+  SSI_SSDI
   STABILIZE
   STIMULUS_ASSISTANCE
   STORAGE
   STORAGE_BELONGINGS
   STORAGE_DOCUMENTS
+  TARP
   TENT
   THERAPIST_APPOINTMENT
   TRANSPORT
   UNEMPLOYMENT_CERTIFICATION
   VACCINE_PASSPORT
   WATER
-  OTHER
 }
 
 enum ServiceRequestStatusEnum {
@@ -1189,10 +1209,22 @@ type ShelterKindType {
   name: ShelterChoices
 }
 
+input ShelterLocationFilter {
+  AND: ShelterLocationFilter
+  OR: ShelterLocationFilter
+  NOT: ShelterLocationFilter
+  DISTINCT: Boolean
+  geolocation: GeolocationInput
+}
+
 type ShelterLocationType {
   place: String!
   latitude: Float!
   longitude: Float!
+}
+
+input ShelterOrder {
+  name: Ordering
 }
 
 type ShelterPhotoType {
@@ -1275,6 +1307,7 @@ type ShelterType {
   ExteriorPhotos: [ShelterPhotoType!]
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
+  distanceInMiles: Float
 }
 
 type ShelterTypeOffsetPaginated {
