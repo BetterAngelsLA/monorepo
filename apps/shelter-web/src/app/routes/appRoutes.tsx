@@ -1,14 +1,10 @@
 import { Link, RouteObject } from 'react-router-dom';
+import { Home } from '../pages/home/home';
 
 export const routeChildren: RouteObject[] = [
   {
     path: '/',
-    element: (
-      <div>
-        <div>ROOT page</div>
-        <Link to="/page-2">go to page 2</Link>
-      </div>
-    ),
+    element: <Home />,
   },
   {
     path: '/page-2',
