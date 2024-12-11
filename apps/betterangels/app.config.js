@@ -113,11 +113,11 @@ export default {
       [
         'expo-splash-screen',
         {
-          'backgroundColor': '#216AF8',
-          'image': './src/app/assets/images/splash.png',
-          'imageWidth': 750,
-        }
-      ]
+          backgroundColor: '#216AF8',
+          image: './src/app/assets/images/splash.png',
+          imageWidth: 750,
+        },
+      ],
     ],
     extra: {
       router: {
@@ -127,6 +127,7 @@ export default {
         projectId: '53171ba4-60ca-40cb-b3e6-b0c2393677b8',
       },
     },
+    newArchEnabled: true,
     owner: 'better-angels',
     runtimeVersion: process.env.RUNTIME_VERSION,
   },
