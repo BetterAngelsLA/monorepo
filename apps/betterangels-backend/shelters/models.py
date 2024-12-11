@@ -1,9 +1,11 @@
-from typing import Optional
+from typing import Any, Optional
 
 import pghistory
 from admin_async_upload.models import AsyncFileField
 from common.models import BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
+from django.contrib.gis.db.models import PointField
+from django.contrib.gis.geos import Point
 from django.db import models
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
@@ -171,6 +173,7 @@ class Shelter(BaseModel):
     name = models.CharField(max_length=255)
     organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, blank=True, null=True)
     location = PlacesField(blank=True, null=True)
+    geolocation = PointField(srid=4326, geography=True, blank=True, null=True)
     email = models.EmailField(max_length=254, blank=True, null=True)
     phone = PhoneNumberField()
     website = models.URLField(blank=True, null=True)
@@ -247,6 +250,17 @@ class Shelter(BaseModel):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        latitude = self.location.latitude if self.location else None
+        longitude = self.location.longitude if self.location else None
+
+        if latitude is not None and longitude is not None:
+            self.geolocation = Point(float(longitude), float(latitude))
+        else:
+            self.geolocation = None
+
+        super().save(*args, **kwargs)
 
 
 def upload_path(instance: Optional[Shelter], filename: str) -> str:
