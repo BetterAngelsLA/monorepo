@@ -87,6 +87,7 @@ export const ServicesByCategory = [
       ServiceEnum.DiscountScooterRides,
       ServiceEnum.Ride,
       ServiceEnum.Bicycle,
+      ServiceEnum.BicycleRepair,
     ],
   },
   {
