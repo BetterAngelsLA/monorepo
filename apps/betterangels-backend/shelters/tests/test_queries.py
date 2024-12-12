@@ -137,7 +137,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             entry_info="entry info",
             funders_other="funders other",
             max_stay=7,
-            name=seq("name "),  # type: ignore
+            name="name",
             on_site_security=True,
             organization=shelter_organization,
             other_rules="other rules",
@@ -321,7 +321,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         """
 
         expected_query_count = 22
-        variables = {"order": {"name": "ASC"}}
 
         variables = {"order": {"name": "ASC"}}
 
