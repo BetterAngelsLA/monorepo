@@ -11,7 +11,6 @@ export const ServicesByCategory = [
       ServiceEnum.Blanket,
       ServiceEnum.Book,
       ServiceEnum.Clothes,
-      ServiceEnum.ClothesSocks,
       ServiceEnum.FeminineHygiene,
       ServiceEnum.FirstAid,
       ServiceEnum.HygieneKit,
