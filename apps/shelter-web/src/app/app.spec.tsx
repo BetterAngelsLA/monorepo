@@ -1,20 +1,18 @@
 import { MockedProvider } from '@apollo/client/testing';
 import '@testing-library/jest-dom';
 import { render } from '@testing-library/react';
-
 import { BrowserRouter } from 'react-router-dom';
-
 import App from './app';
-import { GET_CURRENT_USER } from './pages/home/home';
+import { GET_SHELTERS_QUERY } from './shared/clients/apollo/queries/getShelters';
 
 const mocks = [
   {
     request: {
-      query: GET_CURRENT_USER,
+      query: GET_SHELTERS_QUERY,
     },
     result: {
       data: {
-        dog: { id: '1', name: 'Joe' },
+        shelters: { id: '1', name: 'name' },
       },
     },
     maxUsageCount: 1,

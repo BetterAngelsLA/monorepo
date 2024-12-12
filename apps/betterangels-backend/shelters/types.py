@@ -1,11 +1,14 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
 from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar
-from django.db.models import Prefetch
+from django.contrib.gis.db.models.functions import Distance
+from django.contrib.gis.geos import Point
+from django.contrib.gis.measure import D
+from django.db.models import Prefetch, Q, QuerySet
 from shelters.enums import (
     AccessibilityChoices,
     CityChoices,
@@ -155,12 +158,44 @@ class FunderType:
     name: Optional[FunderChoices]
 
 
+@strawberry.input
+class GeolocationInput:
+    latitude: float
+    longitude: float
+    range_in_miles: Optional[int]
+
+
+@strawberry_django.filters.filter(Shelter)
+class ShelterLocationFilter:
+    @strawberry_django.filter_field
+    def geolocation(
+        self, queryset: QuerySet, value: Optional[GeolocationInput], prefix: str
+    ) -> Tuple[QuerySet[Shelter], Q]:
+        if value is None:
+            return queryset, Q()
+
+        reference_point = Point(x=value.longitude, y=value.latitude, srid=4326)
+
+        queryset = (
+            queryset.filter(
+                geolocation__dwithin=(
+                    reference_point,
+                    D(mi=value.range_in_miles),
+                )
+            )
+            .annotate(distance=Distance("geolocation", reference_point))
+            .order_by("distance")
+        )
+
+        return queryset, Q()
+
+
 @strawberry_django.ordering.order(Shelter)
 class ShelterOrder:
     name: auto
 
 
-@strawberry_django.type(Shelter, order=ShelterOrder)  # type: ignore[literal-required]
+@strawberry_django.type(Shelter, filters=ShelterLocationFilter, order=ShelterOrder)  # type: ignore
 class ShelterType:
     id: ID
     accessibility: List[AccessibilityType]
@@ -236,3 +271,10 @@ class ShelterType:
         )
 
         return str(photo.file.url) if photo else None
+
+    @strawberry_django.field
+    def distance_in_miles(self, root: Shelter) -> Optional[float]:
+        if distance := getattr(root, "distance", None):
+            return float(distance.mi)
+
+        return None

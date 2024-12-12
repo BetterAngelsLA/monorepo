@@ -1,0 +1,102 @@
+query ViewShelter($id: ID!) {
+  shelter(pk: $id) {
+    bedFees
+    cityCouncilDistrict
+    curfew
+    demographicsOther
+    description
+    email
+    entryInfo
+    heroImage
+    id
+    maxStay
+    name
+    onSiteSecurity
+    fundersOther
+    otherRules
+    otherServices
+    overallRating
+    phone
+    programFees
+    roomStylesOther
+    shelterProgramsOther
+    shelterTypesOther
+    status
+    subjectiveReview
+    supervisorialDistrict
+    totalBeds
+    website
+    accessibility {
+      name
+    }
+    additionalContacts {
+      contactName
+      contactNumber
+    }
+    cities {
+      name
+    }
+    demographics {
+      name
+    }
+    entryRequirements {
+      name
+    }
+    exteriorPhotos {
+      file {
+        name
+        url
+      }
+    }
+    generalServices {
+      name
+    }
+    healthServices {
+      name
+    }
+    immediateNeeds {
+      name
+    }
+    interiorPhotos {
+      file {
+        name
+        url
+      }
+    }
+    location {
+      latitude
+      longitude
+      place
+    }
+    organization {
+      name
+    }
+    parking {
+      name
+    }
+    pets {
+      name
+    }
+    roomStyles {
+      name
+    }
+    shelterPrograms {
+      name
+    }
+    shelterTypes {
+      name
+    }
+    spa {
+      name
+    }
+    specialSituationRestrictions {
+      name
+    }
+    storage {
+      name
+    }
+    trainingServices {
+      name
+    }
+  }
+}
