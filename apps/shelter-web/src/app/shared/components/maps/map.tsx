@@ -13,7 +13,8 @@ import {
   LA_COUNTY_CENTER_LAT,
   LA_COUNTY_CENTER_LNG,
 } from './constants.maps';
-import { MapHandler, getPlacesBounds } from './mapHandler';
+import { getPlacesBounds } from './getPlacesBounds';
+import { MapHandler } from './mapHandler';
 import { MapZoomControls } from './mapZoomControls';
 import { TLatLng } from './types.maps';
 
