@@ -92,7 +92,7 @@ export default function UserProfile() {
       </View>
       {isSamplFeatureFlagActive && (
         <Text style={styles.featureText}>
-          The feature "SamplfeatureFlag" is active
+          The feature "SampleFeatureFlag" is active
         </Text>
       )}
     </View>

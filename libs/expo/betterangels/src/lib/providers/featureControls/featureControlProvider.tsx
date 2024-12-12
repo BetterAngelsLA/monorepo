@@ -7,6 +7,21 @@ interface FeatureControlProviderProps {
   children: React.ReactNode;
 }
 
+const toDictionary = (
+  items: Array<{
+    isActive?: boolean | null;
+    lastModified?: string | null;
+    name: string;
+  }>
+): FeatureControlDictionary =>
+  items.reduce((acc, item) => {
+    acc[item.name] = {
+      isActive: item.isActive ?? false,
+      lastModified: item.lastModified ?? null,
+    };
+    return acc;
+  }, {} as FeatureControlDictionary);
+
 export const FeatureControlProvider: React.FC<FeatureControlProviderProps> = ({
   children,
 }) => {
@@ -21,27 +36,18 @@ export const FeatureControlProvider: React.FC<FeatureControlProviderProps> = ({
 
   useEffect(() => {
     if (data?.featureControls) {
-      const toDictionary = (
-        items: Array<{
-          isActive?: boolean | null;
-          lastModified?: string | null;
-          name: string;
-        }>
-      ): FeatureControlDictionary =>
-        items.reduce((acc, item) => {
-          acc[item.name] = {
-            isActive: item.isActive ?? false,
-            lastModified: item.lastModified ?? null,
-          };
-          return acc;
-        }, {} as FeatureControlDictionary);
-
       setFeatureControlGroups({
         flags: toDictionary(data.featureControls.flags),
         switches: toDictionary(data.featureControls.switches),
         samples: toDictionary(data.featureControls.samples),
       });
     } else {
+      /*
+      Clears existing flags if data is null. Consider retaining the last known state to
+      avoid frequent toggling between default and active flags, especially during connectivity
+      issues, to prevent flickering. This will be important when we integrate incremental refresh later.
+      */
+
       setFeatureControlGroups({
         flags: {},
         switches: {},

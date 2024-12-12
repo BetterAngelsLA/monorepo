@@ -1,7 +1,6 @@
 import { createContext, useContext } from 'react';
 import { FeatureControlGroups } from './interfaces';
 
-// Create the context
 export const FeatureControlContext = createContext<
   FeatureControlGroups | undefined
 >(undefined);
