@@ -1,5 +1,4 @@
-import LocationIcon from '@assets/icons/svg/locationIcon.svg?react';
-
+import { LocationIcon } from '@monorepo/react/icons';
 import { useNavigate } from 'react-router-dom';
 import { calcDistance } from '../../utils/distance/calcDistance';
 import { formatDistance } from '../../utils/distance/formatDistance';
@@ -70,7 +69,7 @@ export function ShelterCard(props: TShelterCard) {
 
       {formattedAddress && (
         <div className="text-xs mt-1.5 flex items-start">
-          <LocationIcon className="mr-2" />
+          <LocationIcon className="h-4 mr-2" />
 
           <div className="flex-inline flex-wrap">
             <span>{formattedAddress}</span>

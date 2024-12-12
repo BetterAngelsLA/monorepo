@@ -1,4 +1,5 @@
-import MapPin from '@assets/icons/svg/mapPin.svg?react';
+import { MapPinIcon } from '@monorepo/react/icons';
+
 import {
   AdvancedMarker,
   Map as GoogleMap,
@@ -59,7 +60,7 @@ export function Map(props: TMap) {
       disableDefaultUI={true}
     >
       <AdvancedMarker ref={markerRef} position={mapCenter}>
-        <MapPin />
+        <MapPinIcon className="h-12" />
       </AdvancedMarker>
       <MapZoomControls map={map} className="mr-4" />
       <MapHandler center={center} />

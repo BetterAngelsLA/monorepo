@@ -1,3 +1,4 @@
+import { PlusIcon } from '@monorepo/react/icons';
 import { ControlPosition, MapControl } from '@vis.gl/react-google-maps';
 import { ControlButton } from './controlButton';
 
@@ -31,8 +32,8 @@ export function MapZoomControls(props: TProps) {
   return (
     <MapControl position={position}>
       <div className={className}>
-        <ControlButton className="text-neutral-40" onClick={onZoomIn}>
-          +
+        <ControlButton onClick={onZoomIn}>
+          <PlusIcon className="w-4 text-neutral-40" />
         </ControlButton>
         <ControlButton className="mt-1.5" onClick={onZoomOut}>
           <div className="w-4 h-[3px] bg-neutral-40"></div>
