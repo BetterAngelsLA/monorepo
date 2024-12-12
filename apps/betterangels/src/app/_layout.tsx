@@ -1,10 +1,10 @@
 import 'expo-dev-client';
 
 import {
+  FeatureControlProvider,
   KeyboardToolbarProvider,
   SnackbarProvider,
   UserProvider,
-  FeatureFlagProvider,
 } from '@monorepo/expo/betterangels';
 import {
   ApiConfigProvider,
@@ -62,7 +62,7 @@ function RootLayoutNav() {
   return (
     <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
       <ApolloClientProvider>
-        <FeatureFlagProvider>
+        <FeatureControlProvider>
           <KeyboardProvider>
             <KeyboardToolbarProvider>
               <UserProvider>
@@ -120,14 +120,17 @@ function RootLayoutNav() {
                         title: '',
                       }}
                     />
-                    <Stack.Screen name="auth" options={{ headerShown: false }} />
+                    <Stack.Screen
+                      name="auth"
+                      options={{ headerShown: false }}
+                    />
                   </Stack>
                   {/* </ThemeProvider> */}
                 </SnackbarProvider>
               </UserProvider>
             </KeyboardToolbarProvider>
           </KeyboardProvider>
-        </FeatureFlagProvider>
+        </FeatureControlProvider>
       </ApolloClientProvider>
     </ApiConfigProvider>
   );
