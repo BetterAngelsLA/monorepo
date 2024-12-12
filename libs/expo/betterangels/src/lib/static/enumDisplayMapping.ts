@@ -182,7 +182,7 @@ export const enumDisplayServices: { [key in ServiceEnum]: string } = {
   [ServiceEnum.Book]: 'Book',
   [ServiceEnum.CaliforniaLifelinePhone]: 'California Lifeline Phone',
   [ServiceEnum.Clothes]: 'Clothes',
-  [ServiceEnum.ClothesSocks]: 'Socks - Clothes',
+  [ServiceEnum.ClothesSocks]: 'Clothes - Socks',
   [ServiceEnum.ConsentToConnect]: 'Consent to Connect (CM or Council District)',
   [ServiceEnum.ContactDpss]: 'Contact DPSS',
   [ServiceEnum.ContactFriend]: 'Contact Friend',
