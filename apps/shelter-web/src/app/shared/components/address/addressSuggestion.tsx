@@ -1,4 +1,4 @@
-import LocationIcon from '@assets/icons/locationIcon.svg?react';
+import { LocationIcon } from '@monorepo/react/icons';
 
 type TAddressOption = {
   className?: string;

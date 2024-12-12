@@ -7,14 +7,20 @@ import { SheltersByLocation } from './sheltersByLocation';
 
 const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
-export function ShelterSearch() {
+type TProps = {
+  onLocationChange: (coordinates: TLatLng | null) => void;
+};
+
+export function ShelterSearch(props: TProps) {
+  const { onLocationChange } = props;
+
   const [coordinates, setCoordinates] = useState<TLatLng | null>(null);
 
   useEffect(() => {
-    console.log('*****************  coordinates:', coordinates);
-  }, [coordinates]);
+    onLocationChange(coordinates);
+  }, [onLocationChange, coordinates]);
 
-  function onLocationChange(result: TCurrentLocationResult | null) {
+  function onCurrentLocation(result: TCurrentLocationResult | null) {
     if (!result) {
       return;
     }
@@ -57,9 +63,8 @@ export function ShelterSearch() {
 
   return (
     <MapsApiProvider apiKey={googleMapsApiKey}>
-      <CurrentLocation onChange={onLocationChange} />
+      <CurrentLocation onChange={onCurrentLocation} />
       <AddressAutocomplete onPlaceSelect={onPlaceSelect} />
-
       <SheltersByLocation className="mt-8" coordinates={coordinates} />
     </MapsApiProvider>
   );
