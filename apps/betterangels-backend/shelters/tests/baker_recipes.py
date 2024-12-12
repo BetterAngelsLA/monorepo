@@ -106,7 +106,7 @@ shelter_recipe = Recipe(
     entry_info=seq("entry info "),  # type: ignore
     funders_other=seq("funders other "),  # type: ignore
     location=get_random_shelter_location,
-    max_stay=lambda: random.randint(7, 21),  # type: ignore
+    max_stay=lambda: random.randint(7, 21),
     name=seq("shelter "),  # type: ignore
     organization=foreign_key(organization_recipe),
     on_site_security=random.choice([True, False, None]),
@@ -121,7 +121,7 @@ shelter_recipe = Recipe(
     status=lambda: random.choice(list(StatusChoices)),
     subjective_review=seq("subjective review "),  # type: ignore
     supervisorial_district=lambda: random.choice(SUPERVISORIAL_DISTRICT_CHOICES)[0],
-    total_beds=lambda: round(random.randint(20, 200), -1),  # type: ignore
+    total_beds=lambda: round(random.randint(20, 200), -1),
     website=seq("shelter", suffix=".com"),  # type: ignore
     accessibility=related_m2m_unique(Accessibility, AccessibilityChoices),
     cities=related_m2m_unique(City, CityChoices),
