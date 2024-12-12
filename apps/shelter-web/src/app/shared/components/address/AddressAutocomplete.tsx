@@ -1,4 +1,4 @@
-import SearchIcon from '@svg/mingcute_design/svg/mingcute:search-line.svg?react';
+import { SearchIcon } from '@monorepo/react/icons';
 import { useApiIsLoaded, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { useCallback, useEffect, useState } from 'react';
 import { ISO3166Alpha2 } from '../../../types/isoCodes';

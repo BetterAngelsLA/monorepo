@@ -1,4 +1,4 @@
-import CloseIcon from '@svg/mingcute_design/svg/mingcute:close-fill.svg?react';
+import { CloseIcon } from '@monorepo/react/icons';
 import { InputHTMLAttributes, ReactElement, Ref, forwardRef } from 'react';
 
 type AllowedTypes = string | number;
