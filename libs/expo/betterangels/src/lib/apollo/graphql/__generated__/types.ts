@@ -1441,26 +1441,37 @@ export enum SelahTeamEnum {
 }
 
 export enum ServiceEnum {
+  Bag = 'BAG',
+  Batteries = 'BATTERIES',
   Bicycle = 'BICYCLE',
+  BicycleRepair = 'BICYCLE_REPAIR',
   BirthCertificate = 'BIRTH_CERTIFICATE',
   Blanket = 'BLANKET',
   Book = 'BOOK',
   CaliforniaLifelinePhone = 'CALIFORNIA_LIFELINE_PHONE',
   Clothes = 'CLOTHES',
+  ClothesSocks = 'CLOTHES_SOCKS',
+  ConsentToConnect = 'CONSENT_TO_CONNECT',
   ContactDpss = 'CONTACT_DPSS',
   ContactFriend = 'CONTACT_FRIEND',
   Dental = 'DENTAL',
   DiscountScooterRides = 'DISCOUNT_SCOOTER_RIDES',
   DmhEvaluation = 'DMH_EVALUATION',
   DmvNoFeeIdForm = 'DMV_NO_FEE_ID_FORM',
+  Ebt = 'EBT',
   FamilyReunification = 'FAMILY_REUNIFICATION',
+  FeminineHygiene = 'FEMININE_HYGIENE',
+  FirstAid = 'FIRST_AID',
   Food = 'FOOD',
   HarmReduction = 'HARM_REDUCTION',
+  HmisConsent = 'HMIS_CONSENT',
   HygieneKit = 'HYGIENE_KIT',
   InternetAccess = 'INTERNET_ACCESS',
+  Lahop = 'LAHOP',
   LegalCounsel = 'LEGAL_COUNSEL',
   MailPickUp = 'MAIL_PICK_UP',
   Medical = 'MEDICAL',
+  MediCal = 'MEDI_CAL',
   MetroLifeTap = 'METRO_LIFE_TAP',
   Other = 'OTHER',
   PetCare = 'PET_CARE',
@@ -1471,12 +1482,15 @@ export enum ServiceEnum {
   Shelter = 'SHELTER',
   Shoes = 'SHOES',
   Shower = 'SHOWER',
+  SleepingBag = 'SLEEPING_BAG',
   SocialSecurityCardReplacement = 'SOCIAL_SECURITY_CARD_REPLACEMENT',
+  SsiSsdi = 'SSI_SSDI',
   Stabilize = 'STABILIZE',
   StimulusAssistance = 'STIMULUS_ASSISTANCE',
   Storage = 'STORAGE',
   StorageBelongings = 'STORAGE_BELONGINGS',
   StorageDocuments = 'STORAGE_DOCUMENTS',
+  Tarp = 'TARP',
   Tent = 'TENT',
   TherapistAppointment = 'THERAPIST_APPOINTMENT',
   Transport = 'TRANSPORT',
@@ -1523,6 +1537,7 @@ export type ShelterKindType = {
   __typename?: 'ShelterKindType';
   name?: Maybe<ShelterChoices>;
 };
+
 export type ShelterLocationFilter = {
   AND?: InputMaybe<ShelterLocationFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
