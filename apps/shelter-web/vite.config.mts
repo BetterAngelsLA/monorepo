@@ -3,13 +3,14 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
-import svgr from 'vite-plugin-svgr';
+import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
 
 const SERVER_PORT = 8083;
 
 const MEDIA_PATH = path.resolve(__dirname, '../betterangels-backend/media');
 
 const devServerProxy: Record<string, string | ProxyOptions> = {
+  // to import media from from betterangels-backend
   '/media': {
     target: `http://localhost:${SERVER_PORT}/@fs${MEDIA_PATH}`,
     changeOrigin: true,
@@ -35,23 +36,9 @@ export default defineConfig(({ mode }) => {
       host: 'localhost',
     },
 
-    plugins: [
-      react(),
-      svgr({
-        include: '**/*.svg?react',
-      }),
-      nxViteTsPaths(),
-    ],
+    plugins: [react(), rawSvgPlugin(), nxViteTsPaths()],
 
-    resolve: {
-      alias: {
-        '@assets': path.resolve(__dirname, '../../libs/assets/src'),
-        '@svg': path.resolve(
-          __dirname,
-          '../../libs/expo/shared/icons/src/assets/third_party'
-        ),
-      },
-    },
+    resolve: {},
 
     build: {
       outDir: '../../dist/apps/shelter-web',
