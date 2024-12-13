@@ -1,45 +1,25 @@
-import { APIProvider as MapsApiProvider } from '@vis.gl/react-google-maps';
-import { useEffect, useState } from 'react';
+import { useMap } from '@vis.gl/react-google-maps';
+import { useAtom } from 'jotai';
+import { useEffect } from 'react';
+import { locationAtom } from '../../atoms/locationAtom';
 import { AddressAutocomplete } from '../address/AddressAutocomplete';
-import { CurrentLocation, TCurrentLocationResult } from '../currentLocation';
-import { TLatLng } from '../maps/types.maps';
-import { SheltersByLocation } from './sheltersByLocation';
+import { toGoogleLatLng } from '../map/utils/toGoogleLatLng';
+import { SheltersDisplay } from './sheltersDisplay';
 
-const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+export function ShelterSearch() {
+  const [location, setLocation] = useAtom(locationAtom);
 
-type TProps = {
-  onLocationChange: (coordinates: TLatLng | null) => void;
-};
-
-export function ShelterSearch(props: TProps) {
-  const { onLocationChange } = props;
-
-  const [coordinates, setCoordinates] = useState<TLatLng | null>(null);
+  const map = useMap();
 
   useEffect(() => {
-    onLocationChange(coordinates);
-  }, [onLocationChange, coordinates]);
-
-  function onCurrentLocation(result: TCurrentLocationResult | null) {
-    if (!result) {
+    if (!map) {
       return;
     }
 
-    if ('location' in result) {
-      const { lat, lng } = result.location;
+    const center = toGoogleLatLng(location);
 
-      setCoordinates({
-        lat,
-        lng,
-      });
-    }
-
-    if ('error' in result) {
-      console.log('******** result.error:', result.error);
-
-      setCoordinates(null);
-    }
-  }
+    center && map.setCenter(center);
+  }, [map, location]);
 
   function onPlaceSelect(address: google.maps.places.PlaceResult | null) {
     if (!address) {
@@ -48,24 +28,31 @@ export function ShelterSearch(props: TProps) {
 
     const { geometry } = address;
 
-    const lat = geometry?.location?.lat();
-    const lng = geometry?.location?.lng();
+    const latitude = geometry?.location?.lat();
+    const longitude = geometry?.location?.lng();
 
-    if (!lat || !lng) {
+    if (!latitude || !longitude) {
       return;
     }
 
-    setCoordinates({
-      lat,
-      lng,
+    setLocation({
+      latitude,
+      longitude,
+      source: 'address',
     });
   }
 
   return (
-    <MapsApiProvider apiKey={googleMapsApiKey}>
-      <CurrentLocation onChange={onCurrentLocation} />
+    <>
       <AddressAutocomplete onPlaceSelect={onPlaceSelect} />
-      <SheltersByLocation className="mt-8" coordinates={coordinates} />
-    </MapsApiProvider>
+
+      {!!location && (
+        <SheltersDisplay
+          className="mt-8"
+          coordinates={location}
+          coordinatesSource={location.source}
+        />
+      )}
+    </>
   );
 }

@@ -3,7 +3,8 @@ import { useApiIsLoaded, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { useCallback, useEffect, useState } from 'react';
 import { ISO3166Alpha2 } from '../../../types/isoCodes';
 import { Input } from '../form/input';
-import { LA_COUNTY_CENTER, getPlacesBounds } from '../maps/getPlacesBounds';
+import { LA_COUNTY_CENTER } from '../map/constants.maps';
+import { getPlacesBounds } from '../map/utils/getPlacesBounds';
 import { AddressSuggestion } from './addressSuggestion';
 
 const boundsLA = getPlacesBounds({

@@ -22,6 +22,7 @@ module.exports = {
       },
       colors: {
         'primary-20': 'var(--color-primary-20)',
+        'primary-60': 'var(--color-primary-60)',
         'steel-blue': 'var(--color-steel-blue)',
         'neutral-40': 'var(--color-neutral-40)',
         'neutral-70': 'var(--color-neutral-70)',

@@ -10,7 +10,10 @@ const apolloClient = createApolloClient({
   apiUrl: import.meta.env.VITE_SHELTER_API_URL,
 });
 // Get the basename from the current path
-const basename = window.location.pathname.split('/').slice(0, -1).join('/');
+const basename = import.meta.env.VITE_SHELTER_BASE_PATH || '/';
+
+console.log('*****************:', import.meta.env.VITE_SHELTER_API_URL);
+console.log('*****************:', basename);
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
