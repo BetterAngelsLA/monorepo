@@ -1008,7 +1008,7 @@ type Query {
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput, filters: ShelterLocationFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
+  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -1205,16 +1205,17 @@ enum ShelterChoices {
   OTHER
 }
 
-type ShelterKindType {
-  name: ShelterChoices
+input ShelterFilter {
+  AND: ShelterFilter
+  OR: ShelterFilter
+  NOT: ShelterFilter
+  DISTINCT: Boolean
+  properties: ShelterPropertyInput
+  geolocation: GeolocationInput
 }
 
-input ShelterLocationFilter {
-  AND: ShelterLocationFilter
-  OR: ShelterLocationFilter
-  NOT: ShelterLocationFilter
-  DISTINCT: Boolean
-  geolocation: GeolocationInput
+type ShelterKindType {
+  name: ShelterChoices
 }
 
 type ShelterLocationType {
@@ -1254,6 +1255,15 @@ enum ShelterProgramChoices {
 
 type ShelterProgramType {
   name: ShelterProgramChoices
+}
+
+input ShelterPropertyInput {
+  pets: [PetChoices!] = null
+  demographics: [DemographicChoices!] = null
+  specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
+  shelterType: [ShelterChoices!] = null
+  roomStyle: [RoomStyleChoices!] = null
+  parking: [ParkingChoices!] = null
 }
 
 type ShelterType {
