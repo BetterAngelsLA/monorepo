@@ -1,11 +1,10 @@
 import {
+  DEFAULT_BOUNDS_MILES,
   LA_COUNTY_CENTER_LAT,
   LA_COUNTY_CENTER_LNG,
   MILES_TO_DEGREES_AT_EQUATOR,
 } from './constants.maps';
 import { TLatLng } from './types.maps';
-
-const DEFAULT_BOUNDS_MILES = 10;
 
 export const LA_COUNTY_CENTER: TLatLng = {
   lat: LA_COUNTY_CENTER_LAT,
