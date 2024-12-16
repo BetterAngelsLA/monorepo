@@ -1008,7 +1008,7 @@ type Query {
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput, filters: ShelterLocationFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
+  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -1204,15 +1204,12 @@ enum ShelterChoices {
   OTHER
 }
 
-type ShelterKindType {
-  name: ShelterChoices
-}
-
-input ShelterLocationFilter {
-  AND: ShelterLocationFilter
-  OR: ShelterLocationFilter
-  NOT: ShelterLocationFilter
+input ShelterFilter {
+  AND: ShelterFilter
+  OR: ShelterFilter
+  NOT: ShelterFilter
   DISTINCT: Boolean
+  properties: ShelterPropertyInput
   geolocation: GeolocationInput
 }
 
@@ -1255,6 +1252,15 @@ type ShelterProgramType {
   name: ShelterProgramChoices
 }
 
+input ShelterPropertyInput {
+  pets: [PetChoices!] = null
+  demographics: [DemographicChoices!] = null
+  specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
+  shelterType: [ShelterChoices!] = null
+  roomStyle: [RoomStyleChoices!] = null
+  parking: [ParkingChoices!] = null
+}
+
 type ShelterType {
   id: ID!
   accessibility: [AccessibilityType!]!
@@ -1276,7 +1282,7 @@ type ShelterType {
   healthServices: [HealthServiceType!]!
   immediateNeeds: [ImmediateNeedType!]!
   interiorPhotos: [ShelterPhotoType!]!
-  location: ShelterLocationType!
+  location: ShelterLocationType
   maxStay: Int
   name: String!
   onSiteSecurity: Boolean
@@ -1292,7 +1298,7 @@ type ShelterType {
   roomStylesOther: String
   shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
-  shelterTypes: [ShelterKindType!]!
+  shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
@@ -1317,6 +1323,10 @@ type ShelterTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ShelterType!]!
+}
+
+type ShelterTypeType {
+  name: ShelterChoices
 }
 
 enum SocialMediaEnum {
