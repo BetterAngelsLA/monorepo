@@ -1319,7 +1319,7 @@ export type QueryShelterArgs = {
 
 
 export type QuerySheltersArgs = {
-  filters?: InputMaybe<ShelterLocationFilter>;
+  filters?: InputMaybe<ShelterFilter>;
   order?: InputMaybe<ShelterOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -1533,17 +1533,13 @@ export enum ShelterChoices {
   TinyHomes = 'TINY_HOMES'
 }
 
-export type ShelterKindType = {
-  __typename?: 'ShelterKindType';
-  name?: Maybe<ShelterChoices>;
-};
-
-export type ShelterLocationFilter = {
-  AND?: InputMaybe<ShelterLocationFilter>;
+export type ShelterFilter = {
+  AND?: InputMaybe<ShelterFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
-  NOT?: InputMaybe<ShelterLocationFilter>;
-  OR?: InputMaybe<ShelterLocationFilter>;
+  NOT?: InputMaybe<ShelterFilter>;
+  OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
+  properties?: InputMaybe<ShelterPropertyInput>;
 };
 
 export type ShelterLocationType = {
@@ -1588,6 +1584,15 @@ export type ShelterProgramType = {
   name?: Maybe<ShelterProgramChoices>;
 };
 
+export type ShelterPropertyInput = {
+  demographics?: InputMaybe<Array<DemographicChoices>>;
+  parking?: InputMaybe<Array<ParkingChoices>>;
+  pets?: InputMaybe<Array<PetChoices>>;
+  roomStyle?: InputMaybe<Array<RoomStyleChoices>>;
+  shelterType?: InputMaybe<Array<ShelterChoices>>;
+  specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
+};
+
 export type ShelterType = {
   __typename?: 'ShelterType';
   ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
@@ -1630,7 +1635,7 @@ export type ShelterType = {
   roomStylesOther?: Maybe<Scalars['String']['output']>;
   shelterPrograms: Array<ShelterProgramType>;
   shelterProgramsOther?: Maybe<Scalars['String']['output']>;
-  shelterTypes: Array<ShelterKindType>;
+  shelterTypes: Array<ShelterTypeType>;
   shelterTypesOther?: Maybe<Scalars['String']['output']>;
   spa: Array<SpaType>;
   specialSituationRestrictions: Array<SpecialSituationRestrictionType>;
@@ -1650,6 +1655,11 @@ export type ShelterTypeOffsetPaginated = {
   results: Array<ShelterType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
+};
+
+export type ShelterTypeType = {
+  __typename?: 'ShelterTypeType';
+  name?: Maybe<ShelterChoices>;
 };
 
 export enum SocialMediaEnum {

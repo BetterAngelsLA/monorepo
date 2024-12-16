@@ -19,11 +19,6 @@ export type ViewNoteQueryVariables = Types.Exact<{
 
 export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteType', id: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, attachments: Array<{ __typename?: 'NoteAttachmentType', id: string, namespace: Types.NoteNamespaceEnum, attachmentType: Types.AttachmentType, file: { __typename?: 'DjangoFileType', url: string, name: string } }>, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, client?: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, clientProfile?: { __typename?: 'DjangoModelType', id: string } | null } | null, createdBy: { __typename?: 'UserType', id: string } } };
 
-export type GetFeatureFlagsQueryVariables = Types.Exact<{ [key: string]: never; }>;
-
-
-export type GetFeatureFlagsQuery = { __typename?: 'Query', featureControls: { __typename?: 'FeatureControlData', flags: Array<{ __typename?: 'FlagType', name: string, isActive?: boolean | null, lastModified?: any | null }> } };
-
 
 export const NotesDocument = gql`
     query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput, $order: NoteOrder) {
@@ -203,46 +198,3 @@ export type ViewNoteQueryHookResult = ReturnType<typeof useViewNoteQuery>;
 export type ViewNoteLazyQueryHookResult = ReturnType<typeof useViewNoteLazyQuery>;
 export type ViewNoteSuspenseQueryHookResult = ReturnType<typeof useViewNoteSuspenseQuery>;
 export type ViewNoteQueryResult = Apollo.QueryResult<ViewNoteQuery, ViewNoteQueryVariables>;
-export const GetFeatureFlagsDocument = gql`
-    query GetFeatureFlags {
-  featureControls {
-    flags {
-      name
-      isActive
-      lastModified
-    }
-  }
-}
-    `;
-
-/**
- * __useGetFeatureFlagsQuery__
- *
- * To run a query within a React component, call `useGetFeatureFlagsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetFeatureFlagsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetFeatureFlagsQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetFeatureFlagsQuery(baseOptions?: Apollo.QueryHookOptions<GetFeatureFlagsQuery, GetFeatureFlagsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetFeatureFlagsQuery, GetFeatureFlagsQueryVariables>(GetFeatureFlagsDocument, options);
-      }
-export function useGetFeatureFlagsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetFeatureFlagsQuery, GetFeatureFlagsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetFeatureFlagsQuery, GetFeatureFlagsQueryVariables>(GetFeatureFlagsDocument, options);
-        }
-export function useGetFeatureFlagsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetFeatureFlagsQuery, GetFeatureFlagsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetFeatureFlagsQuery, GetFeatureFlagsQueryVariables>(GetFeatureFlagsDocument, options);
-        }
-export type GetFeatureFlagsQueryHookResult = ReturnType<typeof useGetFeatureFlagsQuery>;
-export type GetFeatureFlagsLazyQueryHookResult = ReturnType<typeof useGetFeatureFlagsLazyQuery>;
-export type GetFeatureFlagsSuspenseQueryHookResult = ReturnType<typeof useGetFeatureFlagsSuspenseQuery>;
-export type GetFeatureFlagsQueryResult = Apollo.QueryResult<GetFeatureFlagsQuery, GetFeatureFlagsQueryVariables>;

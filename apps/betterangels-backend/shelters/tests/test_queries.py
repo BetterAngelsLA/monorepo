@@ -51,7 +51,7 @@ from shelters.models import (
 )
 from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
 from test_utils.mixins import GraphQLTestCaseMixin
-from unittest_parametrize import ParametrizedTestCase
+from unittest_parametrize import ParametrizedTestCase, parametrize
 
 
 class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
@@ -338,9 +338,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "latitude": 34,
             "longitude": -118,
         }
-        search_range_in_miles = 20
 
-        s1, s2, s3 = [
+        search_range_in_miles = 20
+        _, s2, s3 = [
             Shelter.objects.create(
                 location=Places(
                     place=f"place {i}",
@@ -353,7 +353,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         ]
 
         query = """
-            query ViewShelters($filters: ShelterLocationFilter) {
+            query ViewShelters($filters: ShelterFilter) {
                 shelters(filters: $filters) {
                     totalCount
                     results {
@@ -377,7 +377,56 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         results = response["data"]["shelters"]["results"]
 
-        # exclude shelters generated outside the test
-        filtered_results = [r["id"] for r in results if r["id"] in [str(s.pk) for s in [s1, s2, s3]]]
+        result_shelter_ids = [r["id"] for r in results]
         # s1 is ~27 miles away from the reference point, so it was not included in the response payload
-        self.assertEqual(filtered_results, [str(s3.pk), str(s2.pk)])
+        self.assertEqual(result_shelter_ids, [str(s3.pk), str(s2.pk)])
+
+    @parametrize(
+        "property_filters, expected_result_count",
+        [
+            ({"pets": [PetChoices.CATS.name]}, 2),
+            ({"pets": [PetChoices.SERVICE_ANIMALS.name]}, 1),
+            ({"pets": [PetChoices.CATS.name, PetChoices.SERVICE_ANIMALS.name]}, 2),
+            ({"pets": [PetChoices.CATS.name], "parking": [ParkingChoices.BICYCLE.name]}, 1),
+            ({"pets": [PetChoices.CATS.name], "parking": [ParkingChoices.RV.name]}, 0),
+            ({"pets": [PetChoices.DOGS_UNDER_25_LBS.name], "parking": [ParkingChoices.RV.name]}, 1),
+        ],
+    )
+    def test_shelter_property_filter(self, property_filters: dict[str, str], expected_result_count: int) -> None:
+        shelter_recipe.make(
+            parking=[],
+            pets=[
+                Pet.objects.get_or_create(name=PetChoices.CATS)[0],
+                Pet.objects.get_or_create(name=PetChoices.SERVICE_ANIMALS)[0],
+            ],
+        )
+        shelter_recipe.make(
+            parking=[Parking.objects.get_or_create(name=ParkingChoices.BICYCLE)[0]],
+            pets=[Pet.objects.get_or_create(name=PetChoices.CATS)[0]],
+        )
+        shelter_recipe.make(
+            parking=[Parking.objects.get_or_create(name=ParkingChoices.RV)[0]],
+            pets=[Pet.objects.get_or_create(name=PetChoices.DOGS_UNDER_25_LBS)[0]],
+        )
+
+        query = """
+            query ViewShelters($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {}
+        filters["properties"] = property_filters
+
+        expected_query_count = 2
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        results = response["data"]["shelters"]["results"]
+
+        self.assertEqual(len(results), expected_result_count)

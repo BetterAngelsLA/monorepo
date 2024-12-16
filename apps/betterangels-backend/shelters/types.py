@@ -21,7 +21,9 @@ from shelters.enums import (
     ParkingChoices,
     PetChoices,
     RoomStyleChoices,
-    ShelterChoices,
+)
+from shelters.enums import ShelterChoices as ShelterTypeChoices
+from shelters.enums import (
     ShelterProgramChoices,
     SPAChoices,
     SpecialSituationRestrictionChoices,
@@ -49,7 +51,7 @@ from shelters.models import (
 )
 from shelters.models import ShelterType as ShelterKind
 from shelters.models import SpecialSituationRestriction, Storage, TrainingService
-from strawberry import ID, auto
+from strawberry import ID, asdict, auto
 
 
 @strawberry_django.type(ContactInfo)
@@ -84,8 +86,8 @@ class SpecialSituationRestrictionType:
 
 
 @strawberry_django.type(ShelterKind)
-class ShelterKindType:
-    name: Optional[ShelterChoices]
+class ShelterTypeType:
+    name: Optional[ShelterTypeChoices]
 
 
 @strawberry_django.type(RoomStyle)
@@ -165,8 +167,30 @@ class GeolocationInput:
     range_in_miles: Optional[int]
 
 
+@strawberry.input
+class ShelterPropertyInput:
+    pets: Optional[List[PetChoices]] = None
+    demographics: Optional[List[DemographicChoices]] = None
+    special_situation_restrictions: Optional[List[SpecialSituationRestrictionChoices]] = None
+    shelter_type: Optional[List[ShelterTypeChoices]] = None
+    room_style: Optional[List[RoomStyleChoices]] = None
+    parking: Optional[List[ParkingChoices]] = None
+
+
 @strawberry_django.filters.filter(Shelter)
-class ShelterLocationFilter:
+class ShelterFilter:
+    @strawberry_django.filter_field
+    def properties(
+        self, queryset: QuerySet, value: Optional[ShelterPropertyInput], prefix: str
+    ) -> Tuple[QuerySet[Shelter], Q]:
+        if value is None:
+            return queryset, Q()
+
+        value_dict = asdict(value)
+        filters = {f"{k}__name__in": v for k, v in value_dict.items() if v is not None}
+
+        return queryset.filter(**filters).distinct(), Q()
+
     @strawberry_django.filter_field
     def geolocation(
         self, queryset: QuerySet, value: Optional[GeolocationInput], prefix: str
@@ -195,7 +219,7 @@ class ShelterOrder:
     name: auto
 
 
-@strawberry_django.type(Shelter, filters=ShelterLocationFilter, order=ShelterOrder)  # type: ignore
+@strawberry_django.type(Shelter, filters=ShelterFilter, order=ShelterOrder)  # type: ignore
 class ShelterType:
     id: ID
     accessibility: List[AccessibilityType]
@@ -233,7 +257,7 @@ class ShelterType:
     room_styles_other: auto
     shelter_programs: List[ShelterProgramType]
     shelter_programs_other: auto
-    shelter_types: List[ShelterKindType]
+    shelter_types: List[ShelterTypeType]
     shelter_types_other: auto
     spa: List[SPAType]
     special_situation_restrictions: List[SpecialSituationRestrictionType]
