@@ -1277,7 +1277,7 @@ type ShelterType {
   healthServices: [HealthServiceType!]!
   immediateNeeds: [ImmediateNeedType!]!
   interiorPhotos: [ShelterPhotoType!]!
-  location: ShelterLocationType!
+  location: ShelterLocationType
   maxStay: Int
   name: String!
   onSiteSecurity: Boolean

@@ -217,7 +217,7 @@ class ShelterType:
     health_services: List[HealthServiceType]
     immediate_needs: List[ImmediateNeedType]
     interior_photos: List[ShelterPhotoType]
-    location: ShelterLocationType
+    location: Optional[ShelterLocationType]
     max_stay: auto
     name: auto
     on_site_security: auto
