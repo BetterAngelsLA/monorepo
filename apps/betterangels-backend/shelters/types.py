@@ -1,6 +1,4 @@
 from datetime import datetime
-from functools import reduce
-from operator import and_
 from typing import List, Optional, Tuple
 
 import strawberry
@@ -50,11 +48,9 @@ from shelters.models import (
     RoomStyle,
     Shelter,
     ShelterProgram,
-    ShelterType,
-    SpecialSituationRestriction,
-    Storage,
-    TrainingService,
 )
+from shelters.models import ShelterType as ShelterKind
+from shelters.models import SpecialSituationRestriction, Storage, TrainingService
 from strawberry import ID, asdict, auto
 
 
@@ -89,7 +85,7 @@ class SpecialSituationRestrictionType:
     name: Optional[SpecialSituationRestrictionChoices]
 
 
-@strawberry_django.type(ShelterType)
+@strawberry_django.type(ShelterKind)
 class ShelterTypeType:
     name: Optional[ShelterTypeChoices]
 
@@ -261,7 +257,7 @@ class ShelterType:
     room_styles_other: auto
     shelter_programs: List[ShelterProgramType]
     shelter_programs_other: auto
-    shelter_types: List[ShelterKindType]
+    shelter_types: List[ShelterTypeType]
     shelter_types_other: auto
     spa: List[SPAType]
     special_situation_restrictions: List[SpecialSituationRestrictionType]

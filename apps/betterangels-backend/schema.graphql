@@ -1214,10 +1214,6 @@ input ShelterFilter {
   geolocation: GeolocationInput
 }
 
-type ShelterKindType {
-  name: ShelterChoices
-}
-
 type ShelterLocationType {
   place: String!
   latitude: Float!
@@ -1303,7 +1299,7 @@ type ShelterType {
   roomStylesOther: String
   shelterPrograms: [ShelterProgramType!]!
   shelterProgramsOther: String
-  shelterTypes: [ShelterKindType!]!
+  shelterTypes: [ShelterTypeType!]!
   shelterTypesOther: String
   spa: [SPAType!]!
   specialSituationRestrictions: [SpecialSituationRestrictionType!]!
@@ -1328,6 +1324,10 @@ type ShelterTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ShelterType!]!
+}
+
+type ShelterTypeType {
+  name: ShelterChoices
 }
 
 enum SocialMediaEnum {
