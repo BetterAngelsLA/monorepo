@@ -19,7 +19,7 @@ export function ZoomButton(props: TProps) {
 
   function onZoom() {
     if (!map) {
-      console.warn('[ZoomInBtn] map missing.');
+      console.warn('[ZoomButton] map missing.');
 
       return;
     }

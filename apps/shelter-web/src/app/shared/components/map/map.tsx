@@ -74,7 +74,7 @@ export function Map(props: TMap) {
 
   function onCurrentLocationChange(location: TLatLng) {
     if (!map) {
-      console.warn('[MapControls] map missing.');
+      console.warn('[map::onCurrentLocationChange] map missing.');
 
       return;
     }
