@@ -14,12 +14,18 @@ const boundsLA = getPlacesBounds({
 
 type TPlaceAutocomplete = {
   className?: string;
+  placeholder?: string;
   onPlaceSelect: (place: google.maps.places.PlaceResult | null) => void;
   countryRestrictions?: ISO3166Alpha2 | ISO3166Alpha2[] | null;
 };
 
 export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
-  const { onPlaceSelect, countryRestrictions = 'us', className = '' } = props;
+  const {
+    onPlaceSelect,
+    countryRestrictions = 'us',
+    placeholder,
+    className = '',
+  } = props;
 
   const [inputValue, setInputValue] = useState<string>('');
   const [sessionToken, setSessionToken] = useState<
@@ -121,8 +127,8 @@ export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
     <div className={className}>
       <Input
         value={inputValue}
-        placeholder="Search address"
-        className="mt-4"
+        placeholder={placeholder}
+        className="w-full"
         onChange={onInputChange}
         leftIcon={<SearchIcon className="text-neutral-70 w-4 h-4" />}
       />

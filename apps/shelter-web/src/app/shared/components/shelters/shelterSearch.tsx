@@ -1,3 +1,4 @@
+import { FilterIcon } from '@monorepo/react/icons';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
@@ -42,9 +43,23 @@ export function ShelterSearch() {
     });
   }
 
+  function onFilterClick() {
+    console.log('################################### onFilterClick');
+  }
+
   return (
     <>
-      <AddressAutocomplete onPlaceSelect={onPlaceSelect} />
+      <div className="mt-4 flex items-center justify-between">
+        <AddressAutocomplete
+          className="w-full"
+          placeholder="Search address"
+          onPlaceSelect={onPlaceSelect}
+        />
+
+        <button onClick={onFilterClick}>
+          <FilterIcon className="w-6 ml-4 text-primary-20" />
+        </button>
+      </div>
 
       <SheltersDisplay
         className="mt-8"
