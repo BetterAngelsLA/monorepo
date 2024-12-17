@@ -793,7 +793,7 @@ class ShelterAdmin(ImportExportModelAdmin):
     search_fields = ("name", "organization__name", "description", "subjective_review")
     resource_class = ShelterResource
 
-    def get_related_model_permissions(self, action: str = "change") -> dict[str, str]:
+    def _get_m2m_permissions(self, action: str = "change") -> dict[str, str]:
         """
         Generates a dict of permission names by related_name key for all ManyToManyFields on the Shelter model.
         """
@@ -801,8 +801,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         for field in Shelter._meta.get_fields():
             if isinstance(field, models.ManyToManyField):
                 related_model = cast(Type[models.Model], field.related_model)
-                model_name = related_model._meta.model_name  # Singular name
-                # Generate the permission codename
+                model_name = related_model._meta.model_name  # singular name
                 permission_codename = f"{action}_{model_name}"
                 permissions_map[field.name] = f"shelters.{permission_codename}"
 
@@ -816,14 +815,10 @@ class ShelterAdmin(ImportExportModelAdmin):
         if not request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
             readonly_fields = (*readonly_fields, "is_reviewed")
 
-        related_permissions_map = self.get_related_model_permissions()
-
         all_permissions = request.user.get_all_permissions()
 
         if no_permission_fields := [
-            field_name
-            for field_name, perm in related_permissions_map.items()
-            if perm not in all_permissions
+            field_name for field_name, perm in self._get_m2m_permissions().items() if perm not in all_permissions
         ]:
             readonly_fields = (*readonly_fields, *no_permission_fields)
 
