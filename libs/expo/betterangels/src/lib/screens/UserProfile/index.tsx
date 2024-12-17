@@ -7,9 +7,10 @@ import {
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useDeleteCurrentUserMutation } from '../../apollo';
 import { useSignOut, useSnackbar, useUser } from '../../hooks';
+import { useFeatureControls } from '../../providers/featureControls/featureControlContext';
 import InfoCard from './InfoCard';
 
 export default function UserProfile() {
@@ -17,7 +18,7 @@ export default function UserProfile() {
   const { showSnackbar } = useSnackbar();
 
   if (!user) throw new Error('Something went wrong');
-
+  const featureControls = useFeatureControls();
   const [deleteCurrentUser] = useDeleteCurrentUserMutation();
   const userInfo = [
     { title: 'Email', value: user.email },
@@ -45,6 +46,9 @@ export default function UserProfile() {
       });
     }
   }
+
+  const isSamplFeatureFlagActive =
+    featureControls.flags['SampleFeatureFlag']?.isActive;
 
   return (
     <View style={styles.container}>
@@ -86,6 +90,11 @@ export default function UserProfile() {
           }
         />
       </View>
+      {isSamplFeatureFlagActive && (
+        <Text style={styles.featureText}>
+          The feature "SampleFeatureFlag" is active
+        </Text>
+      )}
     </View>
   );
 }
@@ -99,5 +108,14 @@ const styles = StyleSheet.create({
     padding: Spacings.sm,
     borderRadius: Radiuses.xs,
     backgroundColor: Colors.WHITE,
+  },
+  featureText: {
+    position: 'absolute',
+    bottom: Spacings.md,
+    width: '100%',
+    textAlign: 'center',
+    color: Colors.PRIMARY,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

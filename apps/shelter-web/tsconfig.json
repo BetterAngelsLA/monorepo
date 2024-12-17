@@ -6,9 +6,11 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "types": ["vite/client"]
+    // "paths": {
+    //   "@assets/*": ["libs/assets/src/*"]
+    // }
   },
   "files": [],
-  "include": [],
   "references": [
     {
       "path": "./tsconfig.app.json"

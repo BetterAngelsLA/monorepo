@@ -6,8 +6,8 @@ from organizations.models import Organization
 
 organization_recipe: Recipe[Organization] = Recipe(
     Organization,
-    name=lambda: gen_string(50),
-    slug=lambda: gen_string(50),
+    name=lambda: gen_string(20),
+    slug=lambda: gen_string(20),
 )
 
 permission_group_template_recipe = Recipe(
