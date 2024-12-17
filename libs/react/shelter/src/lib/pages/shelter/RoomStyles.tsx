@@ -1,4 +1,4 @@
-import { CardWrapper } from '@monorepo/react/components';
+import { Card } from '@monorepo/react/components';
 import { RoomStyleChoices } from '../../apollo';
 import { enumDisplayRoomStyles } from '../../static';
 import { ViewShelterQuery } from './__generated__/shelter.generated';
@@ -6,11 +6,11 @@ import { ViewShelterQuery } from './__generated__/shelter.generated';
 export default function RoomStyles({
   shelter,
 }: {
-  shelter?: ViewShelterQuery['shelter'];
+  shelter: ViewShelterQuery['shelter'];
 }) {
-  if (!shelter?.roomStyles?.length) return null;
+  if (!shelter.roomStyles?.length) return null;
   return (
-    <CardWrapper title="Sleeping Details">
+    <Card title="Sleeping Details">
       {shelter.roomStyles
         .filter(
           (shelterType): shelterType is { name: RoomStyleChoices } =>
@@ -18,6 +18,6 @@ export default function RoomStyles({
         )
         .map((shelterType) => enumDisplayRoomStyles[shelterType.name])
         .join(', ')}
-    </CardWrapper>
+    </Card>
   );
 }

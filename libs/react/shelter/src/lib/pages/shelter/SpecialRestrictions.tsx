@@ -1,4 +1,4 @@
-import { CardWrapper } from '@monorepo/react/components';
+import { Card } from '@monorepo/react/components';
 import { SpecialSituationRestrictionChoices } from '../../apollo';
 import { enumDisplaySpecialSituationRestrictionChoices } from '../../static';
 import { ViewShelterQuery } from './__generated__/shelter.generated';
@@ -6,11 +6,11 @@ import { ViewShelterQuery } from './__generated__/shelter.generated';
 export default function SpecialSituationRestrictions({
   shelter,
 }: {
-  shelter?: ViewShelterQuery['shelter'];
+  shelter: ViewShelterQuery['shelter'];
 }) {
-  if (!shelter?.specialSituationRestrictions?.length) return null;
+  if (!shelter.specialSituationRestrictions?.length) return null;
   return (
-    <CardWrapper title="Special Situatioin Restictions">
+    <Card title="Special Situation Restrictions">
       {shelter.specialSituationRestrictions
         .filter(
           (
@@ -23,6 +23,6 @@ export default function SpecialSituationRestrictions({
             enumDisplaySpecialSituationRestrictionChoices[restriction.name]
         )
         .join(', ')}
-    </CardWrapper>
+    </Card>
   );
 }

@@ -1,4 +1,4 @@
-import { Button, CardWrapper } from '@monorepo/react/components';
+import { Button, Card } from '@monorepo/react/components';
 import { useViewShelterQuery } from './__generated__/shelter.generated';
 import Actions from './Actions';
 import EntryRequirements from './EntryRequirements';
@@ -20,6 +20,10 @@ export default function ShelterPage({ id }: { id: string }) {
 
   const shelter = data?.shelter;
 
+  if (!shelter) {
+    return null;
+  }
+
   return (
     <div className="w-full">
       <Header shelter={shelter} />
@@ -31,9 +35,9 @@ export default function ShelterPage({ id }: { id: string }) {
       <div className="bg-neutral-99 py-2 px-4 -mx-4 flex flex-col gap-2">
         <GeneralInfo shelter={shelter} />
         {shelter?.description && (
-          <CardWrapper title="Description">
+          <Card title="Description">
             <div dangerouslySetInnerHTML={{ __html: shelter.description }} />
-          </CardWrapper>
+          </Card>
         )}
         <EntryRequirements shelter={shelter} />
         <SpecialRestrictions shelter={shelter} />

@@ -30,7 +30,7 @@ export function PillContainer({
           aria-label={showAll ? 'Show fewer items' : 'Show all items'}
         >
           <p className="text-xs font-semibold">
-            {showAll ? `Show Less` : `View All (+${data.length - maxVisible})`}
+            {showAll ? `View Less` : `View All (+${data.length - maxVisible})`}
           </p>
           {/* <ChevronLeftIcon className={clsx('chevron-icon', { rotated: showAll })} /> */}
         </button>

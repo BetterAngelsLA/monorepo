@@ -1,25 +1,28 @@
-import { CardWrapper } from '@monorepo/react/components';
+import { Card } from '@monorepo/react/components';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
 import GeneralServices from './GeneralServices';
 
 export default function GeneralInfo({
   shelter,
 }: {
-  shelter?: ViewShelterQuery['shelter'];
+  shelter: ViewShelterQuery['shelter'];
 }) {
   const contactInfo = [
     { label: shelter?.website, key: 'website' },
     { label: 'instagram', key: 'instagram' },
     { label: shelter?.phone, key: 'phone' },
     { label: shelter?.email, key: 'email' },
-    { label: shelter?.location.place, key: 'location' },
+    { label: shelter?.location?.place, key: 'location' },
   ];
   return (
-    <CardWrapper px="px-0" pb="pb-0">
+    <Card px="px-0" pb="pb-0">
       <div className="gap-2 flex flex-col px-6">
-        <div>
-          <p>{shelter?.totalBeds} beds available test</p>
-        </div>
+        {shelter.totalBeds && (
+          <div>
+            <p>{shelter.totalBeds} beds available</p>
+          </div>
+        )}
+
         <GeneralServices shelter={shelter} />
       </div>
       {contactInfo
@@ -32,6 +35,6 @@ export default function GeneralInfo({
             {info.label}
           </div>
         ))}
-    </CardWrapper>
+    </Card>
   );
 }
