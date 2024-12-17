@@ -5825,6 +5825,7 @@ __metadata:
     jest-environment-jsdom: "npm:^29.4.1"
     jest-environment-node: "npm:^29.4.1"
     jest-expo: "npm:~51.0.4"
+    jotai: "npm:^2.10.3"
     jsdom: "npm:~22.1.0"
     metro: "npm:~0.80.4"
     metro-react-native-babel-transformer: "npm:^0.77.0"
@@ -20573,6 +20574,21 @@ __metadata:
   version: 5.6.3
   resolution: "jose@npm:5.6.3"
   checksum: 10/829f07b8857221ada1cd112a5ebd084e34748f6e3247f5cb03aca0a1f25dd6a07283c9a4f5b854935bda505e3243405640550f8e9eb46c45b172dc4cb336ac89
+  languageName: node
+  linkType: hard
+
+"jotai@npm:^2.10.3":
+  version: 2.10.3
+  resolution: "jotai@npm:2.10.3"
+  peerDependencies:
+    "@types/react": ">=17.0.0"
+    react: ">=17.0.0"
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+    react:
+      optional: true
+  checksum: 10/b81722db9575a72f45ee451b5fac9bdc2c119d4dadfdda2606e646d6aee309d02e26afabeaa5939c722f5e78bac21de4c9ee15fb5ea2815a924be87dd1ff4faf
   languageName: node
   linkType: hard
 
