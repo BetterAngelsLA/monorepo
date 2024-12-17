@@ -56,14 +56,8 @@ export function Map(props: TMap) {
   });
 
   useEffect(() => {
-    console.log(`map loading status: ${mapApiStatus}`);
+    console.info(`[map] loading status: ${mapApiStatus}`);
   }, [mapApiStatus]);
-
-  useEffect(() => {
-    console.log(
-      `cameraProps lat::lng: ${cameraProps.center.lat} :: ${cameraProps.center.lng}`
-    );
-  }, [cameraProps.center]);
 
   const handleCameraChange = useCallback(
     (event: MapCameraChangedEvent) => {

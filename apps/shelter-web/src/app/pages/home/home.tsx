@@ -38,7 +38,7 @@ export function Home() {
     <>
       <MaxWLayout className="-mx-4">
         <Map
-          className="h-[480px] md:h-80"
+          className="h-[70vh] md:h-80"
           mapId={SHELTERS_MAP_ID}
           markers={shelterMarkers}
           onCenterSelect={onCenterSelect}

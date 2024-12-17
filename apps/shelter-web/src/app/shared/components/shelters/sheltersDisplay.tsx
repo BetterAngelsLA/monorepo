@@ -1,3 +1,4 @@
+import { ShelterFilter } from '@monorepo/expo/betterangels';
 import { useViewSheltersQuery } from '@monorepo/react/shelter';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
@@ -6,26 +7,41 @@ import { sheltersAtom } from '../../atoms/sheltersAtom';
 import { TLatLng } from '../map/types.maps';
 import { ShelterList } from './shelterList';
 
+const SEARCH_RANGE_MILES = 20;
+
 type TProps = {
   className?: string;
-  coordinates: TLatLng;
+  coordinates?: TLatLng | null;
   coordinatesSource?: TLocationSource;
+  rangeInMiles?: number;
 };
 
 export function SheltersDisplay(props: TProps) {
-  const { coordinates, coordinatesSource, className = '' } = props;
+  const {
+    coordinates,
+    coordinatesSource,
+    rangeInMiles = SEARCH_RANGE_MILES,
+    className = '',
+  } = props;
 
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
 
+  const queryFilters: ShelterFilter = {};
+
+  if (coordinates) {
+    const { latitude, longitude } = coordinates;
+
+    queryFilters.geolocation = {
+      latitude,
+      longitude,
+      rangeInMiles,
+    };
+  }
+
   const { loading, data, error } = useViewSheltersQuery({
+    skip: !coordinates,
     variables: {
-      filters: {
-        geolocation: {
-          latitude: coordinates?.latitude,
-          longitude: coordinates?.longitude,
-          rangeInMiles: 20,
-        },
-      },
+      filters: queryFilters,
     },
   });
 

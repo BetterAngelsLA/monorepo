@@ -46,13 +46,11 @@ export function ShelterSearch() {
     <>
       <AddressAutocomplete onPlaceSelect={onPlaceSelect} />
 
-      {!!location && (
-        <SheltersDisplay
-          className="mt-8"
-          coordinates={location}
-          coordinatesSource={location.source}
-        />
-      )}
+      <SheltersDisplay
+        className="mt-8"
+        coordinates={location}
+        coordinatesSource={location?.source}
+      />
     </>
   );
 }
