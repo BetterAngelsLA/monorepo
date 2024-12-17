@@ -97,6 +97,13 @@ class ShelterTypePermissions(models.TextChoices):
     VIEW = "shelters.view_sheltertype", _("Can view shelter type")
 
 
+class TrainingServicePermissions(models.TextChoices):
+    ADD = "shelters.add_trainingservice", _("Can add training service")
+    CHANGE = "shelters.change_trainingservice", _("Can change training service")
+    DELETE = "shelters.delete_trainingservice", _("Can delete training service")
+    VIEW = "shelters.view_trainingservice", _("Can view training service")
+
+
 class SleepingOptionPermissions(models.TextChoices):
     ADD = "shelters.add_sleepingoption", _("Can add sleeping option")
     CHANGE = "shelters.change_sleepingoption", _("Can change sleeping option")

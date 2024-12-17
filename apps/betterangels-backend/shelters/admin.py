@@ -7,6 +7,9 @@ import places
 import requests
 from betterangels_backend import settings
 from common.models import Location
+from typing import Optional, Tuple, Type, TypeVar, Union, Any
+
+from attrs import field
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
@@ -79,6 +82,10 @@ User = get_user_model()
 
 
 class ShelterForm(forms.ModelForm):
+    def __init__(self, *args: Tuple, user: User = None, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self.user = user
+
     template_name = "admin/shelters/change_form.html"  # Specify your custom template path
 
     # Summary Info
@@ -305,15 +312,39 @@ class ShelterForm(forms.ModelForm):
         )
 
     def clean(self) -> dict:
+        # raise Exception("oops")
         cleaned_data = super().clean() or {}
 
         # Dynamically detect all ManyToManyField attributes in the model
+        # TODO: this isn't respecting permissions
+        # permission should cover dynamic choices or other input field
+        # request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
+        print("&" * 100)
+        print(self.user)
+
         many_to_many_fields = [
             field.name for field in self._meta.model._meta.get_fields() if isinstance(field, models.ManyToManyField)
         ]
+        for p in self.user.permissions:
+            print(p)
 
         for field_name in many_to_many_fields:
+            print(field_name)
+            print(f"shelters.change_{field_name.replace("_", "")}")
+            print(self.user.has_perm(f"shelters.change_{field_name.replace("_", "")}"))
+
             model_class = self._meta.model._meta.get_field(field_name).related_model
+
+            # related_field = cleaned_data.get('related_field')
+
+            # Check if the user has permission to change the related model
+            # if not self.user.has_perm('related_app.change_related_model'):
+            #     raise forms.ValidationError(
+            #         "You do not have permission to change the related model."
+            #     )
+
+            # return cleaned_data
+
             cleaned_data[field_name] = self._clean_choices(field_name, model_class)
 
         # Detect fields with "_other" dynamically
@@ -333,6 +364,8 @@ class ShelterForm(forms.ModelForm):
                     text_field,
                     f"This field is required when 'Other' is selected in {multi_field}.",
                 )
+        print("cleaned data" * 10)
+        print(cleaned_data)
 
         return cleaned_data
 
@@ -792,6 +825,18 @@ class ShelterAdmin(ImportExportModelAdmin):
     )
     search_fields = ("name", "organization__name", "description", "subjective_review")
     resource_class = ShelterResource
+
+    def get_form(
+        self, request: HttpRequest, obj: Optional[Shelter] = None, change: bool = False, **kwargs: Any
+    ) -> Type[forms.ModelForm[Any]]:
+        form = super().get_form(request, obj, change, **kwargs)
+
+        class WrappedForm(form):
+            def __init__(self, *args: Tuple, **kwargs: Any):
+                kwargs["user"] = request.user
+                super().__init__(*args, **kwargs)
+
+        return WrappedForm
 
     def get_readonly_fields(
         self, request: HttpRequest, obj: Optional[Shelter] = None
