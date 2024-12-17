@@ -820,12 +820,11 @@ class ShelterAdmin(ImportExportModelAdmin):
 
         all_permissions = request.user.get_all_permissions()
 
-        no_permission_fields = []
-        for field_name, perm in related_permissions_map.items():
-            if perm not in all_permissions:
-                no_permission_fields.append(field_name)
-
-        if no_permission_fields:
+        if no_permission_fields := [
+            field_name
+            for field_name, perm in related_permissions_map.items()
+            if perm not in all_permissions
+        ]:
             readonly_fields = (*readonly_fields, *no_permission_fields)
 
         return readonly_fields
