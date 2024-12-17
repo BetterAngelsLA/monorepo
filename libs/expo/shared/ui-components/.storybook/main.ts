@@ -1,16 +1,20 @@
 import type { StorybookConfig } from '@storybook/react-webpack5';
 
 const config: StorybookConfig = {
-  stories: ['../src/**/*.stories.@(js|jsx|ts|tsx|mdx)'],
+  stories: ['../src/**/*.@(mdx|stories.@(js|jsx|ts|tsx))'],
+
   addons: [
     '@storybook/addon-essentials',
     '@nx/react/plugins/storybook',
     '@storybook/addon-react-native-web',
+    '@chromatic-com/storybook'
   ],
+
   framework: {
     name: '@storybook/react-webpack5',
     options: {},
   },
+
   webpackFinal: async (config) => {
     /**
      * There are two loaders attached to SVGs - svgr and file-loader
@@ -39,6 +43,12 @@ const config: StorybookConfig = {
 
     return config;
   },
+
+  docs: {},
+
+  typescript: {
+    reactDocgen: 'react-docgen-typescript'
+  }
 };
 
 export default config;
