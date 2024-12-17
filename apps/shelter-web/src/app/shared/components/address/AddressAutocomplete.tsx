@@ -1,5 +1,5 @@
 import { SearchIcon } from '@monorepo/react/icons';
-import { useApiIsLoaded, useMapsLibrary } from '@vis.gl/react-google-maps';
+import { useMapsLibrary } from '@vis.gl/react-google-maps';
 import { useCallback, useEffect, useState } from 'react';
 import { ISO3166Alpha2 } from '../../../types/isoCodes';
 import { Input } from '../form/input';
@@ -21,8 +21,6 @@ type TPlaceAutocomplete = {
 export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
   const { onPlaceSelect, countryRestrictions = 'us', className = '' } = props;
 
-  const apiIsLoaded = useApiIsLoaded();
-
   const [inputValue, setInputValue] = useState<string>('');
   const [sessionToken, setSessionToken] = useState<
     google.maps.places.AutocompleteSessionToken | undefined
@@ -36,7 +34,7 @@ export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
   const places = useMapsLibrary('places');
 
   useEffect(() => {
-    if (!apiIsLoaded) {
+    if (!places) {
       return;
     }
 
