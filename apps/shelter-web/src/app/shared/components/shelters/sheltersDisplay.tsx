@@ -1,4 +1,3 @@
-import { ShelterFilter } from '@monorepo/expo/betterangels';
 import { useViewSheltersQuery } from '@monorepo/react/shelter';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
@@ -8,6 +7,16 @@ import { TLatLng } from '../map/types.maps';
 import { ShelterList } from './shelterList';
 
 const SEARCH_RANGE_MILES = 20;
+
+// TODO: move gql Types to own lib
+// cannot import from @monorepo/expo... here
+type TQueryFilters = {
+  geolocation?: {
+    latitude: number;
+    longitude: number;
+    rangeInMiles?: number;
+  };
+};
 
 type TProps = {
   className?: string;
@@ -26,7 +35,7 @@ export function SheltersDisplay(props: TProps) {
 
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
 
-  const queryFilters: ShelterFilter = {};
+  const queryFilters: TQueryFilters = {};
 
   if (coordinates) {
     const { latitude, longitude } = coordinates;
