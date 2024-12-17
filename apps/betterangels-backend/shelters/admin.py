@@ -9,7 +9,6 @@ from betterangels_backend import settings
 from common.models import Location
 from typing import Optional, Tuple, Type, TypeVar, Union, Any
 
-# from attrs import field
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
@@ -79,8 +78,6 @@ from .models import (
 T = TypeVar("T", bound=models.Model)
 logger = logging.getLogger(__name__)
 User = get_user_model()
-
-from django.contrib.auth import get_user_model
 
 
 class ShelterForm(forms.ModelForm):
@@ -319,7 +316,6 @@ class ShelterForm(forms.ModelForm):
 
         for field_name in many_to_many_fields:
             model_class = self._meta.model._meta.get_field(field_name).related_model
-
             cleaned_data[field_name] = self._clean_choices(field_name, model_class)
 
         # Detect fields with "_other" dynamically

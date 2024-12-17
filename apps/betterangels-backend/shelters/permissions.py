@@ -23,6 +23,13 @@ class CityPermissions(models.TextChoices):
     VIEW = "shelters.view_city", _("Can view city")
 
 
+class DemographicPermissions(models.TextChoices):
+    ADD = "shelters.add_demographic", _("Can add demographic")
+    CHANGE = "shelters.change_demographic", _("Can change demographic")
+    DELETE = "shelters.delete_demographic", _("Can delete demographic")
+    VIEW = "shelters.view_demographic", _("Can view demographic")
+
+
 class EntryRequirementPermissions(models.TextChoices):
     ADD = "shelters.add_entryrequirement", _("Can add entry requirement")
     CHANGE = "shelters.change_entryrequirement", _("Can change entry requirement")
@@ -79,6 +86,13 @@ class PopulationPermissions(models.TextChoices):
     VIEW = "shelters.view_population", _("Can view population")
 
 
+class RoomStylePermissions(models.TextChoices):
+    ADD = "shelters.add_roomstyle", _("Can add room style")
+    CHANGE = "shelters.change_roomstyle", _("Can change room style")
+    DELETE = "shelters.delete_roomstyle", _("Can delete room style")
+    VIEW = "shelters.view_roomstyle", _("Can view room style")
+
+
 class ShelterPermissions(models.TextChoices):
     ADD = "shelters.add_shelter", _("Can add shelter")
     CHANGE = "shelters.change_shelter", _("Can change shelter")
@@ -97,13 +111,6 @@ class ShelterTypePermissions(models.TextChoices):
     VIEW = "shelters.view_sheltertype", _("Can view shelter type")
 
 
-class TrainingServicePermissions(models.TextChoices):
-    ADD = "shelters.add_trainingservice", _("Can add training service")
-    CHANGE = "shelters.change_trainingservice", _("Can change training service")
-    DELETE = "shelters.delete_trainingservice", _("Can delete training service")
-    VIEW = "shelters.view_trainingservice", _("Can view training service")
-
-
 class SleepingOptionPermissions(models.TextChoices):
     ADD = "shelters.add_sleepingoption", _("Can add sleeping option")
     CHANGE = "shelters.change_sleepingoption", _("Can change sleeping option")
@@ -118,8 +125,22 @@ class SpaPermissions(models.TextChoices):
     VIEW = "shelters.view_spa", _("Can view spa")
 
 
+class SpecialSituationRestrictionPermissions(models.TextChoices):
+    ADD = "shelters.add_specialsituationrestriction", _("Can add special situation restriction")
+    CHANGE = "shelters.change_specialsituationrestriction", _("Can change special situation restriction")
+    DELETE = "shelters.delete_specialsituationrestriction", _("Can delete special situation restriction")
+    VIEW = "shelters.view_specialsituationrestriction", _("Can view special situation restriction")
+
+
 class StoragePermissions(models.TextChoices):
     ADD = "shelters.add_storage", _("Can add storage")
     CHANGE = "shelters.change_storage", _("Can change storage")
     DELETE = "shelters.delete_storage", _("Can delete storage")
     VIEW = "shelters.view_storage", _("Can view storage")
+
+
+class TrainingServicePermissions(models.TextChoices):
+    ADD = "shelters.add_trainingservice", _("Can add training service")
+    CHANGE = "shelters.change_trainingservice", _("Can change training service")
+    DELETE = "shelters.delete_trainingservice", _("Can delete training service")
+    VIEW = "shelters.view_trainingservice", _("Can view training service")
