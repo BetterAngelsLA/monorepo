@@ -16,6 +16,13 @@ class CareerServicePermissions(models.TextChoices):
     VIEW = "shelters.view_careerservice", _("Can view career service")
 
 
+class ContactInfoPermissions(models.TextChoices):
+    ADD = "shelters.add_contactinfo", _("Can add contact info")
+    CHANGE = "shelters.change_contactinfo", _("Can change contact info")
+    DELETE = "shelters.delete_contactinfo", _("Can delete contact info")
+    VIEW = "shelters.view_contactinfo", _("Can view contact info")
+
+
 class CityPermissions(models.TextChoices):
     ADD = "shelters.add_city", _("Can add city")
     CHANGE = "shelters.change_city", _("Can change city")
@@ -35,6 +42,13 @@ class EntryRequirementPermissions(models.TextChoices):
     CHANGE = "shelters.change_entryrequirement", _("Can change entry requirement")
     DELETE = "shelters.delete_entryrequirement", _("Can delete entry requirement")
     VIEW = "shelters.view_entryrequirement", _("Can view entry requirement")
+
+
+class ExteriorPhotoPermissions(models.TextChoices):
+    ADD = "shelters.add_exteriorphoto", _("Can add exterior photo")
+    CHANGE = "shelters.change_exteriorphoto", _("Can change exterior photo")
+    DELETE = "shelters.delete_exteriorphoto", _("Can delete exterior photo")
+    VIEW = "shelters.view_exteriorphoto", _("Can view exterior photo")
 
 
 class FunderPermissions(models.TextChoices):
@@ -63,6 +77,13 @@ class ImmediateNeedPermissions(models.TextChoices):
     CHANGE = "shelters.change_immediateneed", _("Can change immediate need")
     DELETE = "shelters.delete_immediateneed", _("Can delete immediate need")
     VIEW = "shelters.view_immediateneed", _("Can view immediate need")
+
+
+class InteriorPhotoPermissions(models.TextChoices):
+    ADD = "shelters.add_interiorphoto", _("Can add interior photo")
+    CHANGE = "shelters.change_interiorphoto", _("Can change interior photo")
+    DELETE = "shelters.delete_interiorphoto", _("Can delete interior photo")
+    VIEW = "shelters.view_interiorphoto", _("Can view interior photo")
 
 
 class ParkingPermissions(models.TextChoices):
@@ -111,6 +132,13 @@ class ShelterTypePermissions(models.TextChoices):
     VIEW = "shelters.view_sheltertype", _("Can view shelter type")
 
 
+class ShelterProgramPermissions(models.TextChoices):
+    ADD = "shelters.add_shelterprogram", _("Can add shelter program")
+    CHANGE = "shelters.change_shelterprogram", _("Can change shelter program")
+    DELETE = "shelters.delete_shelterprogram", _("Can delete shelter program")
+    VIEW = "shelters.view_shelterprogram", _("Can view shelter program")
+
+
 class SleepingOptionPermissions(models.TextChoices):
     ADD = "shelters.add_sleepingoption", _("Can add sleeping option")
     CHANGE = "shelters.change_sleepingoption", _("Can change sleeping option")
@@ -144,3 +172,10 @@ class TrainingServicePermissions(models.TextChoices):
     CHANGE = "shelters.change_trainingservice", _("Can change training service")
     DELETE = "shelters.delete_trainingservice", _("Can delete training service")
     VIEW = "shelters.view_trainingservice", _("Can view training service")
+
+
+class VideoPermissions(models.TextChoices):
+    ADD = "shelters.add_video", _("Can add video")
+    CHANGE = "shelters.change_video", _("Can change video")
+    DELETE = "shelters.delete_video", _("Can delete video")
+    VIEW = "shelters.view_video", _("Can view video")

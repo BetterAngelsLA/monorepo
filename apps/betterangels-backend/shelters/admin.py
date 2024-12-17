@@ -7,8 +7,6 @@ import places
 import requests
 from betterangels_backend import settings
 from common.models import Location
-from typing import Optional, Tuple, Type, TypeVar, Union, Any
-
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
@@ -802,7 +800,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         permissions_map = {}
         for field in Shelter._meta.get_fields():
             if isinstance(field, models.ManyToManyField):
-                related_model = field.related_model
+                related_model = cast(Type[models.Model], field.related_model)
                 model_name = related_model._meta.model_name  # Singular name
                 # Generate the permission codename
                 permission_codename = f"{action}_{model_name}"

@@ -1,5 +1,13 @@
 from django.db import migrations
-from shelters.models import Demographic, RoomStyle, SpecialSituationRestriction
+from shelters.models import (
+    ContactInfo,
+    Demographic,
+    ExteriorPhoto,
+    RoomStyle,
+    ShelterProgram,
+    SpecialSituationRestriction,
+    Video,
+)
 from django.contrib.auth.models import Group
 
 
@@ -23,48 +31,42 @@ def assign_permissions_to_group(apps, group_name: str, permission_map: dict) -> 
 
 
 def modify_shelter_group_permissions(apps, schema_editor):
-    """
-    shelters | contact info | x4
-    # shelters | demographic | x4
-    shelters | exterior photo | x4
-    # shelters | room style | x4
-    shelters | shelter program | x4
-    shelters | shelter type | x4
-    # shelters | special situation restriction | x4
-    shelters | training service | x4
-    shelters | video | x4
-
-
-    additional contacts
-    exterior photos
-    interior photos
-    videos
-    """
-
     from shelters.permissions import (
+        ContactInfoPermissions,
         DemographicPermissions,
+        ExteriorPhotoPermissions,
+        InteriorPhotoPermissions,
         RoomStylePermissions,
+        ShelterProgramPermissions,
         SpecialSituationRestrictionPermissions,
+        TrainingServicePermissions,
+        VideoPermissions,
     )
 
+    ContactInfo = apps.get_model("shelters", "ContactInfo")
     Demographic = apps.get_model("shelters", "Demographic")
+    ExteriorPhoto = apps.get_model("shelters", "ExteriorPhoto")
+    InteriorPhoto = apps.get_model("shelters", "InteriorPhoto")
     RoomStyle = apps.get_model("shelters", "RoomStyle")
+    ShelterProgram = apps.get_model("shelters", "ShelterProgram")
     SpecialSituationRestriction = apps.get_model("shelters", "SpecialSituationRestriction")
+    TrainingService = apps.get_model("shelters", "TrainingService")
+    Video = apps.get_model("shelters", "Video")
 
-    # Data Entry Group
-    data_entry_permission_map = {
+    permission_map = {
+        ContactInfo: [ContactInfoPermissions],
         Demographic: [DemographicPermissions],
+        ExteriorPhoto: [ExteriorPhotoPermissions],
+        InteriorPhoto: [InteriorPhotoPermissions],
         RoomStyle: [RoomStylePermissions],
+        ShelterProgram: [ShelterProgramPermissions],
         SpecialSituationRestriction: [SpecialSituationRestrictionPermissions],
+        TrainingService: [TrainingServicePermissions],
+        Video: [VideoPermissions],
     }
 
-    assign_permissions_to_group(apps, "Shelter Data Entry", data_entry_permission_map)
-
-    # Administration Group
-    administration_permission_map = {
-        # Address: [AddressPermissions],
-    }
-    assign_permissions_to_group(apps, "Shelter Administration", administration_permission_map)
+    assign_permissions_to_group(apps, "Shelter Data Entry", permission_map)
+    assign_permissions_to_group(apps, "Shelter Administration", permission_map)
 
 
 class Migration(migrations.Migration):
