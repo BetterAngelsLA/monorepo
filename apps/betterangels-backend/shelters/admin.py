@@ -80,10 +80,13 @@ T = TypeVar("T", bound=models.Model)
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
+from django.contrib.auth import get_user_model
+
 
 class ShelterForm(forms.ModelForm):
     def __init__(self, *args: Tuple, user: User = None, **kwargs: Any):
         super().__init__(*args, **kwargs)
+        # self.user = get_user_model().objects.get(id=user.id)
         self.user = user
 
     template_name = "admin/shelters/change_form.html"  # Specify your custom template path
@@ -312,38 +315,14 @@ class ShelterForm(forms.ModelForm):
         )
 
     def clean(self) -> dict:
-        # raise Exception("oops")
         cleaned_data = super().clean() or {}
-
-        # Dynamically detect all ManyToManyField attributes in the model
-        # TODO: this isn't respecting permissions
-        # permission should cover dynamic choices or other input field
-        # request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
-        print("&" * 100)
-        print(self.user)
 
         many_to_many_fields = [
             field.name for field in self._meta.model._meta.get_fields() if isinstance(field, models.ManyToManyField)
         ]
-        for p in self.user.permissions:
-            print(p)
 
         for field_name in many_to_many_fields:
-            print(field_name)
-            print(f"shelters.change_{field_name.replace("_", "")}")
-            print(self.user.has_perm(f"shelters.change_{field_name.replace("_", "")}"))
-
             model_class = self._meta.model._meta.get_field(field_name).related_model
-
-            # related_field = cleaned_data.get('related_field')
-
-            # Check if the user has permission to change the related model
-            # if not self.user.has_perm('related_app.change_related_model'):
-            #     raise forms.ValidationError(
-            #         "You do not have permission to change the related model."
-            #     )
-
-            # return cleaned_data
 
             cleaned_data[field_name] = self._clean_choices(field_name, model_class)
 
@@ -845,6 +824,22 @@ class ShelterAdmin(ImportExportModelAdmin):
         readonly_fields = (*readonly_fields, "updated_at", "updated_by")
         if not request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
             readonly_fields = (*readonly_fields, "is_reviewed")
+
+        many_to_many_fields = [
+            field.name for field in Shelter._meta.get_fields() if isinstance(field, models.ManyToManyField)
+        ]
+        all_permissions = request.user.get_all_permissions()
+
+        no_permission_fields = []
+        for field_name in many_to_many_fields:
+            print(field_name)
+            perm_name = f"shelters.change_{field_name.replace("_", "")}"
+            if perm_name not in all_permissions:
+                no_permission_fields.append(field_name)
+
+        if no_permission_fields:
+            readonly_fields = (*readonly_fields, *no_permission_fields)
+
         return readonly_fields
 
     def _create_log_entries(self, user_pk, rows):  # type: ignore
