@@ -27,7 +27,9 @@
       "@monorepo/expo/shared/ui-components": [
         "libs/expo/shared/ui-components/src/index.ts"
       ],
-      "@monorepo/expo/shared/utils": ["libs/expo/shared/utils/src/index.ts"]
+      "@monorepo/expo/shared/utils": ["libs/expo/shared/utils/src/index.ts"],
+      "@monorepo/react/icons": ["libs/react/icons/src/index.ts"],
+      "@monorepo/react/shelter": ["libs/react/shelter/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

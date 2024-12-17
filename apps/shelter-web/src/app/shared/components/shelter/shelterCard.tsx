@@ -1,5 +1,5 @@
-import LocationIcon from '@assets/icons/locationIcon.svg?react';
-
+import { LocationIcon } from '@monorepo/react/icons';
+import { useNavigate } from 'react-router-dom';
 import { calcDistance } from '../../utils/distance/calcDistance';
 import { formatDistance } from '../../utils/distance/formatDistance';
 import { TLatLng } from '../maps/types.maps';
@@ -26,6 +26,7 @@ type TShelterCard = {
 export function ShelterCard(props: TShelterCard) {
   const {
     shelter: {
+      id,
       name,
       heroImage,
       location: { place, latitude: shelterLat, longitude: shelterLng },
@@ -33,6 +34,8 @@ export function ShelterCard(props: TShelterCard) {
     originCoordinates,
     className = '',
   } = props;
+
+  const navigate = useNavigate();
 
   let formattedDistance;
 
@@ -47,15 +50,13 @@ export function ShelterCard(props: TShelterCard) {
 
   const formattedAddress = place.replace(/, USA$/, '');
 
-  const cardCss = [className].join(' ');
-
   return (
-    <div className={cardCss}>
+    <div className={className}>
       {heroImage && (
-        <div className="mb-4">
+        <div onClick={() => navigate(`/shelter/${id}`)} className="mb-4">
           <img
             src={heroImage}
-            alt={`hero image for ${name}`}
+            alt={`hero for ${name}`}
             loading="lazy"
             className="aspect-[4/3] rounded-[20px]"
           />
@@ -68,7 +69,7 @@ export function ShelterCard(props: TShelterCard) {
 
       {formattedAddress && (
         <div className="text-xs mt-1.5 flex items-start">
-          <LocationIcon className="mr-2" />
+          <LocationIcon className="h-4 mr-2" />
 
           <div className="flex-inline flex-wrap">
             <span>{formattedAddress}</span>

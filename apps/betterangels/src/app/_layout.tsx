@@ -1,6 +1,7 @@
 import 'expo-dev-client';
 
 import {
+  FeatureControlProvider,
   KeyboardToolbarProvider,
   SnackbarProvider,
   UserProvider,
@@ -61,70 +62,75 @@ function RootLayoutNav() {
   return (
     <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
       <ApolloClientProvider>
-        <KeyboardProvider>
-          <KeyboardToolbarProvider>
-            <UserProvider>
-              <SnackbarProvider>
-                <StatusBar style="light" />
-                <Stack>
-                  <Stack.Screen
-                    name="(tabs)"
-                    options={{ headerShown: false, gestureEnabled: false }}
-                  />
-                  <Stack.Screen
-                    name="(private-screens)"
-                    options={{ headerShown: false, gestureEnabled: false }}
-                  />
-                  <Stack.Screen
-                    name="team"
-                    options={{
-                      title: '',
-                      presentation: 'modal',
-                      headerLeft: () => (
-                        <Link href="/teams">
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                            }}
+        <FeatureControlProvider>
+          <KeyboardProvider>
+            <KeyboardToolbarProvider>
+              <UserProvider>
+                <SnackbarProvider>
+                  <StatusBar style="light" />
+                  <Stack>
+                    <Stack.Screen
+                      name="(tabs)"
+                      options={{ headerShown: false, gestureEnabled: false }}
+                    />
+                    <Stack.Screen
+                      name="(private-screens)"
+                      options={{ headerShown: false, gestureEnabled: false }}
+                    />
+                    <Stack.Screen
+                      name="team"
+                      options={{
+                        title: '',
+                        presentation: 'modal',
+                        headerLeft: () => (
+                          <Link href="/teams">
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
+                              <TextRegular color={Colors.PRIMARY_LIGHT}>
+                                Teams
+                              </TextRegular>
+                            </View>
+                          </Link>
+                        ),
+                      }}
+                    />
+                    <Stack.Screen
+                      name="modal"
+                      options={{ presentation: 'modal' }}
+                    />
+                    <Stack.Screen
+                      name="sign-in"
+                      options={{
+                        headerLeft: () => (
+                          <IconButton
+                            onPress={() => router.back()}
+                            variant="transparent"
+                            accessibilityLabel="goes to get started screen"
+                            accessibilityHint="goes to get started screen"
                           >
-                            <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
-                            <TextRegular color={Colors.PRIMARY_LIGHT}>
-                              Teams
-                            </TextRegular>
-                          </View>
-                        </Link>
-                      ),
-                    }}
-                  />
-                  <Stack.Screen
-                    name="modal"
-                    options={{ presentation: 'modal' }}
-                  />
-                  <Stack.Screen
-                    name="sign-in"
-                    options={{
-                      headerLeft: () => (
-                        <IconButton
-                          onPress={() => router.back()}
-                          variant="transparent"
-                          accessibilityLabel="goes to get started screen"
-                          accessibilityHint="goes to get started screen"
-                        >
-                          <ArrowLeftIcon />
-                        </IconButton>
-                      ),
-                      headerShadowVisible: false,
-                      title: '',
-                    }}
-                  />
-                  <Stack.Screen name="auth" options={{ headerShown: false }} />
-                </Stack>
-                {/* </ThemeProvider> */}
-              </SnackbarProvider>
-            </UserProvider>
-          </KeyboardToolbarProvider>
-        </KeyboardProvider>
+                            <ArrowLeftIcon />
+                          </IconButton>
+                        ),
+                        headerShadowVisible: false,
+                        title: '',
+                      }}
+                    />
+                    <Stack.Screen
+                      name="auth"
+                      options={{ headerShown: false }}
+                    />
+                  </Stack>
+                  {/* </ThemeProvider> */}
+                </SnackbarProvider>
+              </UserProvider>
+            </KeyboardToolbarProvider>
+          </KeyboardProvider>
+        </FeatureControlProvider>
       </ApolloClientProvider>
     </ApiConfigProvider>
   );
