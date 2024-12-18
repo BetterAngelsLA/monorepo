@@ -210,10 +210,10 @@ export default function ConsentModal(props: IConsentModalProps) {
             mt={'sm'}
             color={Colors.PRIMARY_EXTRA_DARK}
           >
-            Welcome to
+            Welcome to:
           </TextBold>
           <TextBold size={'lg'} mb={'xs'} color={Colors.PRIMARY_EXTRA_DARK}>
-            BetterAngels Outreach app!
+            The Better Angels App
           </TextBold>
           <TextRegular size={'sm'} mb="md" color={Colors.PRIMARY_EXTRA_DARK}>
             Please confirm the following:

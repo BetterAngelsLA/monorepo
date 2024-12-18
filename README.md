@@ -32,8 +32,9 @@ Welcome to the BetterAngels Monorepo! This repository contains the codebases for
 3. [Backend Development](#backend-development)
 4. [Seed Data](#seed-data)
 5. [Development Workflow](#development-workflow)
-6. [Licensing Details](#licensing-details)
-7. [Contributing](#contributing)
+6. [Shelter DB](#shelter-db)
+7. [Licensing Details](#licensing-details)
+8. [Contributing](#contributing)
 
 ## Project Overview
 
@@ -75,6 +76,10 @@ The following users should exist as part of seed data:
 To maintain a consistent and efficient development process, we have established a workflow that includes branch management, pull requests, and code reviews.
 
 - **[Development Workflow Guide](docs/development_workflow.md)**: This document outlines our development practices, including how to create branches, submit pull requests, and conduct code reviews.
+
+## Shelter DB
+
+Shelter DB is a web project for discovering homeless shelters in LA County. More documentation for Shelter DB Project can be found [here](apps/shelter-web/README.md).
 
 ## Licensing Details
 
