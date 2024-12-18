@@ -1,15 +1,15 @@
 import haversine from 'haversine-distance';
-import { TLatLng } from '../../components/maps/types.maps';
+import { TLatLng } from '../../components/map/types.maps';
 import { metersToMiles } from './convert';
 
 type TParams = {
   pointA: TLatLng;
   pointB: TLatLng;
-  units?: 'miles' | 'meters';
+  units: 'miles' | 'meters';
 };
 
 export function calcDistance(params: TParams) {
-  const { pointA, pointB, units = 'miles' } = params;
+  const { pointA, pointB, units } = params;
 
   const distanceMeters = haversine(pointA, pointB);
 

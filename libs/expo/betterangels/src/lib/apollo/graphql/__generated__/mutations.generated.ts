@@ -62,13 +62,6 @@ export type DeleteMoodMutationVariables = Types.Exact<{
 
 export type DeleteMoodMutation = { __typename?: 'Mutation', deleteMood: { __typename?: 'DeletedObjectType', id: number } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
-export type CreateNoteTaskMutationVariables = Types.Exact<{
-  data: Types.CreateNoteTaskInput;
-}>;
-
-
-export type CreateNoteTaskMutation = { __typename?: 'Mutation', createNoteTask: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'TaskType', id: string, title: string, status: Types.TaskStatusEnum, dueBy?: any | null, createdAt: any, client?: { __typename?: 'UserType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } };
-
 export type UpdateTaskMutationVariables = Types.Exact<{
   data: Types.UpdateTaskInput;
 }>;
@@ -492,58 +485,6 @@ export function useDeleteMoodMutation(baseOptions?: Apollo.MutationHookOptions<D
 export type DeleteMoodMutationHookResult = ReturnType<typeof useDeleteMoodMutation>;
 export type DeleteMoodMutationResult = Apollo.MutationResult<DeleteMoodMutation>;
 export type DeleteMoodMutationOptions = Apollo.BaseMutationOptions<DeleteMoodMutation, DeleteMoodMutationVariables>;
-export const CreateNoteTaskDocument = gql`
-    mutation CreateNoteTask($data: CreateNoteTaskInput!) {
-  createNoteTask(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-    ... on TaskType {
-      id
-      title
-      status
-      dueBy
-      client {
-        id
-      }
-      createdBy {
-        id
-      }
-      createdAt
-    }
-  }
-}
-    `;
-export type CreateNoteTaskMutationFn = Apollo.MutationFunction<CreateNoteTaskMutation, CreateNoteTaskMutationVariables>;
-
-/**
- * __useCreateNoteTaskMutation__
- *
- * To run a mutation, you first call `useCreateNoteTaskMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateNoteTaskMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createNoteTaskMutation, { data, loading, error }] = useCreateNoteTaskMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useCreateNoteTaskMutation(baseOptions?: Apollo.MutationHookOptions<CreateNoteTaskMutation, CreateNoteTaskMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateNoteTaskMutation, CreateNoteTaskMutationVariables>(CreateNoteTaskDocument, options);
-      }
-export type CreateNoteTaskMutationHookResult = ReturnType<typeof useCreateNoteTaskMutation>;
-export type CreateNoteTaskMutationResult = Apollo.MutationResult<CreateNoteTaskMutation>;
-export type CreateNoteTaskMutationOptions = Apollo.BaseMutationOptions<CreateNoteTaskMutation, CreateNoteTaskMutationVariables>;
 export const UpdateTaskDocument = gql`
     mutation UpdateTask($data: UpdateTaskInput!) {
   updateTask(data: $data) {
