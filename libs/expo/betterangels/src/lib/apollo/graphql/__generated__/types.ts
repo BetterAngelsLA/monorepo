@@ -1392,7 +1392,6 @@ export enum ServiceEnum {
   Book = 'BOOK',
   CaliforniaLifelinePhone = 'CALIFORNIA_LIFELINE_PHONE',
   Clothes = 'CLOTHES',
-  ClothesSocks = 'CLOTHES_SOCKS',
   ConsentToConnect = 'CONSENT_TO_CONNECT',
   ContactDpss = 'CONTACT_DPSS',
   ContactFriend = 'CONTACT_FRIEND',
