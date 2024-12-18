@@ -1,7 +1,7 @@
 import { CloseIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { PropsWithChildren, ReactElement, ReactNode } from 'react';
-import { modalContentAtom } from '../atoms/modalContentAtom';
+import { modalAtom } from '../atoms/modalAtom';
 import { mergeCss } from '../utils/styles/mergeCss';
 import { ModalMask } from './modalMask';
 
@@ -31,7 +31,7 @@ export function Modal(props: IModal): ReactElement | null {
     onClose,
   } = props;
 
-  const [_modal, setModal] = useAtom(modalContentAtom);
+  const [_modal, setModal] = useAtom(modalAtom);
 
   function onModalClose(): void {
     if (typeof onClose === 'function') {
@@ -64,7 +64,10 @@ export function Modal(props: IModal): ReactElement | null {
 
   return (
     <ModalMask closeOnMaskClick={closeOnMaskClick}>
-      <div className={mergeCss(modalCss)}>
+      <div
+        className={mergeCss(modalCss)}
+        onClick={(e) => e && e.stopPropagation()}
+      >
         <div className={mergeCss(headerCss)}>
           <button className={mergeCss(closeCss)} onClick={onModalClose}>
             <CloseIcon className="w-4" />

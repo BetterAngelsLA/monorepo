@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import { ReactElement } from 'react';
-import { modalContentAtom } from '../atoms/modalContentAtom';
+import { modalAtom } from '../atoms/modalAtom';
 import { Modal } from './modal';
 
 type IProps = {
@@ -10,7 +10,7 @@ type IProps = {
 export function ModalContainer(props: IProps): ReactElement | null {
   const { className = '' } = props;
 
-  const [modal] = useAtom(modalContentAtom);
+  const [modal] = useAtom(modalAtom);
 
   if (!modal?.content) {
     return null;

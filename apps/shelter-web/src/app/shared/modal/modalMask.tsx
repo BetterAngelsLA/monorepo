@@ -1,7 +1,7 @@
-import { PropsWithChildren } from 'react';
+import { MouseEvent, PropsWithChildren } from 'react';
 
 import { useAtom } from 'jotai';
-import { modalContentAtom } from '../atoms/modalContentAtom';
+import { modalAtom } from '../atoms/modalAtom';
 import { mergeCss } from '../utils/styles/mergeCss';
 
 interface IProps extends PropsWithChildren {
@@ -12,7 +12,7 @@ interface IProps extends PropsWithChildren {
 export function ModalMask(props: IProps) {
   const { className, closeOnMaskClick = false, children } = props;
 
-  const [_modal, setModal] = useAtom(modalContentAtom);
+  const [_modal, setModal] = useAtom(modalAtom);
 
   const parentCss: string = [
     'top-0',
@@ -28,10 +28,16 @@ export function ModalMask(props: IProps) {
     className,
   ].join(' ');
 
-  function onMaskClick() {
-    if (closeOnMaskClick) {
-      setModal(null);
+  function onMaskClick(e: MouseEvent<HTMLDivElement>) {
+    if (e) {
+      e.stopPropagation();
     }
+
+    if (!closeOnMaskClick) {
+      return;
+    }
+
+    setModal(null);
   }
 
   return (

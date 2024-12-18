@@ -2,11 +2,11 @@ import { atom } from 'jotai';
 import { ReactNode } from 'react';
 import { ModalAnimationEnum, TModalType } from '../modal/modal';
 
-type IModalContentAtom = {
+type TProps = {
   content: ReactNode | null;
   type?: TModalType;
   animation?: ModalAnimationEnum | null;
   closeOnMaskClick?: boolean;
 };
 
-export const modalContentAtom = atom<IModalContentAtom | null>(null);
+export const modalAtom = atom<TProps | null>(null);

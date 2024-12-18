@@ -3,7 +3,7 @@ import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
 import { locationAtom } from '../../atoms/locationAtom';
-import { modalContentAtom } from '../../atoms/modalContentAtom';
+import { modalAtom } from '../../atoms/modalAtom';
 import { ModalAnimationEnum } from '../../modal/modal';
 import { AddressAutocomplete } from '../address/AddressAutocomplete';
 import { toGoogleLatLng } from '../map/utils/toGoogleLatLng';
@@ -11,7 +11,7 @@ import { SheltersDisplay } from './sheltersDisplay';
 
 export function ShelterSearch() {
   const [location, setLocation] = useAtom(locationAtom);
-  const [_modal, setModal] = useAtom(modalContentAtom);
+  const [_modal, setModal] = useAtom(modalAtom);
 
   const map = useMap();
 
