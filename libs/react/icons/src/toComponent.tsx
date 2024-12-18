@@ -4,9 +4,9 @@
  * @returns A React component for the SVG.
  */
 
-import React, { FC, createElement } from 'react';
+import { FC, SVGProps, createElement } from 'react';
 
-type SvgProps = React.SVGProps<SVGSVGElement>;
+type SvgProps = SVGProps<SVGSVGElement>;
 
 export function createSvgComponent(svgContent: string): FC<SvgProps> {
   return function SvgComponent(props: SvgProps) {

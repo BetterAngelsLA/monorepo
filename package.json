@@ -47,6 +47,7 @@
     "graphql": "^16.9.0",
     "haversine-distance": "^1.2.3",
     "i": "^0.3.7",
+    "jotai": "^2.10.3",
     "npm": "^10.9.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -172,5 +173,6 @@
   },
   "engines": {
     "node": "20.12.2"
-  }
+  },
+  "packageManager": "yarn@4.2.2+sha256.1aa43a5304405be7a7cb9cb5de7b97de9c4e8ddd3273e4dad00d6ae3eb39f0ef"
 }
