@@ -85,24 +85,26 @@ export default function AddEditClient({ id }: { id?: string }) {
       },
     ],
   });
-  const [updateClient] = useUpdateClientProfileMutation();
-  const [createClient] = useCreateClientProfileMutation({
-    refetchQueries: [
-      {
-        query: ClientProfilesDocument,
-        variables: {
-          pagination: { limit: 20 + 1, offset: 0 },
-          filters: {
-            search: '',
-          },
-          order: {
-            user_FirstName: Ordering.AscNullsFirst,
-            id: Ordering.Desc,
+  const [updateClient, { loading: isUpdating }] =
+    useUpdateClientProfileMutation();
+  const [createClient, { loading: isCreating }] =
+    useCreateClientProfileMutation({
+      refetchQueries: [
+        {
+          query: ClientProfilesDocument,
+          variables: {
+            pagination: { limit: 20 + 1, offset: 0 },
+            filters: {
+              search: '',
+            },
+            order: {
+              user_FirstName: Ordering.AscNullsFirst,
+              id: Ordering.Desc,
+            },
           },
         },
-      },
-    ],
-  });
+      ],
+    });
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
 
@@ -159,7 +161,6 @@ export default function AddEditClient({ id }: { id?: string }) {
     // @ts-expect-error: displayPronouns shouldn't be included in the input. This is a temporary fix.
     delete values.displayPronouns;
     delete values.profilePhoto;
-
     try {
       let operationResult;
       if (id) {
@@ -391,6 +392,7 @@ export default function AddEditClient({ id }: { id?: string }) {
             )}
           </MainScrollContainer>
           <BottomActions
+            disabled={!!methods.formState.errors.californiaId}
             cancel={
               <TextButton
                 onPress={router.back}
@@ -400,6 +402,7 @@ export default function AddEditClient({ id }: { id?: string }) {
               />
             }
             onSubmit={methods.handleSubmit(onSubmit)}
+            isLoading={isCreating || isUpdating}
           />
         </View>
       </TouchableWithoutFeedback>

@@ -1,0 +1,28 @@
+{
+  "name": "shelter-web",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/shelter-web/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/shelter-web/jest.config.ts"
+      }
+    },
+    "build": {
+      "executor": "@nx/vite:build",
+      "options": {
+        "outputPath": "dist/apps/shelter-web",
+        "configFile": "apps/shelter-web/vite.config.mts"
+      },
+      "configurations": {
+        "production": {
+          "mode": "production"
+        }
+      }
+    }
+  }
+}

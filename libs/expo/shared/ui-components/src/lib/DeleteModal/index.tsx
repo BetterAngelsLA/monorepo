@@ -32,7 +32,7 @@ export default function DeleteModal({
   return (
     <>
       {clonedButton}
-      <BasicModal visible={visible} setVisible={setVisible}>
+      <BasicModal visible={visible} onClose={() => setVisible(false)}>
         <TextBold size="lg">{title}</TextBold>
         {body && (
           <TextRegular size="sm" mt="sm">

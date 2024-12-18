@@ -1,0 +1,8 @@
+{
+  "name": "react-shelter",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/react/shelter/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {}
+}

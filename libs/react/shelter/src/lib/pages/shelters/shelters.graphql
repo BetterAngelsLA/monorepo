@@ -1,0 +1,20 @@
+query ViewShelters(
+  $filters: ShelterFilter
+  $pagination: OffsetPaginationInput
+  $order: ShelterOrder
+) {
+  shelters(filters: $filters, pagination: $pagination, order: $order) {
+    totalCount
+    results {
+      id
+      name
+      heroImage
+      distanceInMiles
+      location {
+        latitude
+        longitude
+        place
+      }
+    }
+  }
+}

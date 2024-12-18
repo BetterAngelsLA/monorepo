@@ -20,7 +20,7 @@ from common.graphql.types import (
     PhoneNumberType,
 )
 from common.models import Attachment
-from django.db.models import Max, Q, QuerySet
+from django.db.models import Exists, Max, OuterRef, Q, QuerySet
 from django.utils import timezone
 from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
@@ -96,25 +96,33 @@ class ClientProfileFilter:
 
         search_terms = value.split(" ")
 
-        q_objects = []
-        combined_q_search = []
         searchable_fields = [
             "california_id",
-            "hmis_id",
             "nickname",
             "user__first_name",
             "user__last_name",
             "user__middle_name",
         ]
 
-        for term in search_terms:
-            q_search = [Q(**{f"{field}__icontains": term}) for field in searchable_fields]
-            combined_q_search.append(reduce(or_, q_search))
-            q_objects.append(Q(*combined_q_search))
+        # Build queries for direct fields
+        direct_queries = [
+            reduce(or_, [Q(**{f"{field}__istartswith": term}) for field in searchable_fields]) for term in search_terms
+        ]
+        direct_query = reduce(and_, direct_queries) if direct_queries else Q()
 
-        queryset = queryset.filter(reduce(and_, q_objects))
+        # Build related queries
+        related_query = reduce(
+            and_,
+            [
+                Exists(HmisProfile.objects.filter(client_profile_id=OuterRef("pk"), hmis_id__istartswith=term))
+                for term in search_terms
+            ],
+            Q(),
+        )
 
-        return (queryset, Q())
+        combined_query = direct_query | related_query
+
+        return queryset.filter(combined_query), Q()
 
     @strawberry_django.filter_field
     def search_client(
@@ -198,7 +206,6 @@ class ClientProfileBaseType:
     gender_other: auto
     hair_color: auto
     height_in_inches: auto
-    hmis_id: auto
     important_notes: auto
     living_situation: Optional[LivingSituationEnum]
     marital_status: auto

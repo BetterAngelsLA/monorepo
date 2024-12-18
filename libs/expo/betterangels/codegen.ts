@@ -6,9 +6,14 @@ const config: CodegenConfig = {
   documents: [
     'src/**/*.{graphql,ts,tsx}',
     '!src/**/__generated__/**/*.{graphql,ts,tsx}',
+    '../../react/shelter/src/**/*.{graphql,ts,tsx}',
+    '!../../react/shelter/src/**/__generated__/**/*.{graphql,ts,tsx}',
   ],
   generates: {
     'src/lib/apollo/graphql/__generated__/types.ts': {
+      plugins: ['typescript'],
+    },
+    '../../react/shelter/src/lib/apollo/graphql/__generated__/types.ts': {
       plugins: ['typescript'],
     },
     'src/': {

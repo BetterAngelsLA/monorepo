@@ -1,17 +1,18 @@
+import { ImageZoom } from '@likashefqet/react-native-image-zoom';
 import { Colors } from '@monorepo/expo/shared/static';
 import { useState } from 'react';
 import { Modal, Pressable } from 'react-native';
-import ImageViewer from 'react-native-image-zoom-viewer';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import ImagesWithZoomHeader from './ImagesWithZoomHeader';
 
 interface ImagesWithZoomProps {
   title?: string | null;
-  imageUrls: { url: string }[];
+  imageUrl: string;
   children?: React.ReactNode;
 }
 
 export function ImagesWithZoom(props: ImagesWithZoomProps) {
-  const { title, imageUrls, children } = props;
+  const { title, imageUrl, children } = props;
   const [isVisible, setIsVisible] = useState(false);
 
   return (
@@ -29,14 +30,10 @@ export function ImagesWithZoom(props: ImagesWithZoomProps) {
         }}
         visible={isVisible}
       >
-        <ImagesWithZoomHeader title={title} setIsVisible={setIsVisible} />
-        <ImageViewer
-          backgroundColor="white"
-          renderIndicator={() => <></>}
-          imageUrls={imageUrls}
-          onCancel={() => setIsVisible(false)}
-          enableSwipeDown
-        />
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <ImagesWithZoomHeader title={title} setIsVisible={setIsVisible} />
+          <ImageZoom resizeMode="contain" uri={imageUrl} isDoubleTapEnabled />
+        </GestureHandlerRootView>
       </Modal>
     </>
   );

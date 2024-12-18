@@ -182,6 +182,7 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
                     })
                   }
                   label="File Name"
+                  placeholder={'Enter a file name'}
                   value={formImage.name}
                   onChangeText={(e) =>
                     setDocs({
