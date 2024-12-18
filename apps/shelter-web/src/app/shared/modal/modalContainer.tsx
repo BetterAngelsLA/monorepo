@@ -17,12 +17,7 @@ export function ModalContainer(props: IProps): ReactElement | null {
   }
 
   return (
-    <Modal
-      className={className}
-      animation={modal.animation}
-      fullScreen={modal.fullScreen}
-      header={modal.header}
-    >
+    <Modal className={className} {...modal}>
       {modal.content}
     </Modal>
   );

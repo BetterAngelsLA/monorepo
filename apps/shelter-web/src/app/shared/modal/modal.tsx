@@ -7,16 +7,17 @@ import { ModalMask } from './modalMask';
 
 export enum ModalAnimationEnum {
   SLIDE_UP = 'animate-slideInUp',
-  SLIDE_IN_LEFT = 'animate-slideInLeft',
   EXPAND = 'animate-expandInOut',
 }
+
+export type TModalType = 'drawer' | 'fullscreen' | 'default';
 
 interface IModal extends PropsWithChildren {
   className?: string;
   header?: string | ReactNode;
   animation?: ModalAnimationEnum | null;
-  fullScreen?: boolean;
-  forceSmall?: boolean;
+  type?: TModalType;
+  closeOnMaskClick?: boolean;
   onClose?: () => void;
 }
 
@@ -24,7 +25,8 @@ export function Modal(props: IModal): ReactElement | null {
   const {
     className = '',
     animation = ModalAnimationEnum.SLIDE_UP,
-    fullScreen = false,
+    type,
+    closeOnMaskClick,
     children,
     onClose,
   } = props;
@@ -51,9 +53,8 @@ export function Modal(props: IModal): ReactElement | null {
     'bg-white',
     'flex',
     'flex-col',
-    fullScreen
-      ? 'absolute top-0 left-0 right-0 bottom-0'
-      : 'relative rounded-xl pb-12 w-10/12',
+    type == 'fullscreen' ? 'absolute top-0 left-0 right-0 bottom-0' : '',
+    type == 'default' ? 'relative rounded-xl pb-12 w-10/12' : '',
     animation === null ? 'animate-none' : animation,
   ];
 
@@ -62,7 +63,7 @@ export function Modal(props: IModal): ReactElement | null {
   const headerCss = ['flex', 'justify-between', 'align-center', 'mt-0', 'mb-4'];
 
   return (
-    <ModalMask>
+    <ModalMask closeOnMaskClick={closeOnMaskClick}>
       <div className={mergeCss(modalCss)}>
         <div className={mergeCss(headerCss)}>
           <button className={mergeCss(closeCss)} onClick={onModalClose}>

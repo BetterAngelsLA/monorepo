@@ -4,6 +4,7 @@ import { useAtom } from 'jotai';
 import { useEffect } from 'react';
 import { locationAtom } from '../../atoms/locationAtom';
 import { modalContentAtom } from '../../atoms/modalContentAtom';
+import { ModalAnimationEnum } from '../../modal/modal';
 import { AddressAutocomplete } from '../address/AddressAutocomplete';
 import { toGoogleLatLng } from '../map/utils/toGoogleLatLng';
 import { SheltersDisplay } from './sheltersDisplay';
@@ -45,10 +46,21 @@ export function ShelterSearch() {
     });
   }
 
+  const hello = (
+    <div className="w-36">
+      <div className="my-4">hello</div>
+      <div className="my-4">hello</div>
+      <div className="my-4">hello</div>
+      <div className="my-4">hello</div>
+      <div className="my-4">hello</div>
+    </div>
+  );
+
   function onFilterClick() {
     setModal({
-      content: 'more to come ...',
-      fullScreen: true,
+      content: hello,
+      animation: ModalAnimationEnum.EXPAND,
+      closeOnMaskClick: true,
     });
   }
 

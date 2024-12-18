@@ -10,7 +10,7 @@ interface IProps extends PropsWithChildren {
 }
 
 export function ModalMask(props: IProps) {
-  const { className, closeOnMaskClick = true, children } = props;
+  const { className, closeOnMaskClick = false, children } = props;
 
   const [_modal, setModal] = useAtom(modalContentAtom);
 
@@ -29,7 +29,6 @@ export function ModalMask(props: IProps) {
   ].join(' ');
 
   function onMaskClick() {
-    console.log('################################### ON MASK CLICK');
     if (closeOnMaskClick) {
       setModal(null);
     }
