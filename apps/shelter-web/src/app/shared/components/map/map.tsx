@@ -10,8 +10,13 @@ import {
   useApiLoadingStatus,
   useMap,
 } from '@vis.gl/react-google-maps';
+import { useAtom } from 'jotai';
 import { useCallback, useEffect, useState } from 'react';
+import { modalAtom } from '../../atoms/modalAtom';
+import { sheltersAtom } from '../../atoms/sheltersAtom';
+import { ModalAnimationEnum } from '../../modal/modal';
 import { mergeCss } from '../../utils/styles/mergeCss';
+import { ShelterCard, TShelter } from '../shelter/shelterCard';
 import {
   DEFAULT_GESTURE_HANDLING,
   DEFAULT_MAP_ZOOM,
@@ -31,7 +36,6 @@ type TMap = {
   disableDefaultUI?: boolean;
   controlsPosition?: ControlPosition;
   onCenterSelect?: (center: TLatLng) => void;
-  onClick?: (markerId: string) => void;
   markers?: TMarker[];
 };
 
@@ -46,11 +50,12 @@ export function Map(props: TMap) {
     controlsPosition = ControlPosition.INLINE_END_BLOCK_END,
     onCenterSelect,
     markers = [],
-    onClick,
   } = props;
 
   const map = useMap();
   const mapApiStatus = useApiLoadingStatus();
+  const [_modal, setModal] = useAtom(modalAtom);
+  const [shelters] = useAtom(sheltersAtom);
 
   const [cameraProps, setCameraProps] = useState<MapCameraProps>({
     center: toGoogleLatLng(defaultCenter) as google.maps.LatLngLiteral,
@@ -60,6 +65,24 @@ export function Map(props: TMap) {
   useEffect(() => {
     console.info(`[map] loading status: ${mapApiStatus}`);
   }, [mapApiStatus]);
+
+  const handleClick = (markerId: string | null | undefined) => {
+    if (!markerId) {
+      return;
+    }
+    setModal({
+      content: (
+        <ShelterCard
+          className="mt-4"
+          shelter={
+            shelters.find((shelter) => shelter.id === markerId) as TShelter
+          }
+        />
+      ),
+      animation: ModalAnimationEnum.EXPAND,
+      closeOnMaskClick: true,
+    });
+  };
 
   const handleCameraChange = useCallback(
     (event: MapCameraChangedEvent) => {
@@ -115,7 +138,7 @@ export function Map(props: TMap) {
           key={marker.id}
           position={toGoogleLatLng(marker.position)}
           zIndex={99}
-          onClick={() => onClick(marker.id)}
+          onClick={() => handleClick(marker.id)}
         >
           <MapPinIcon className="h-10" type="secondary" />
         </AdvancedMarker>

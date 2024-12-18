@@ -11,6 +11,7 @@ export type TMarker = {
   position: TLatLng;
   id?: string;
   label?: string;
+  onClick?: (id?: string) => void;
 };
 
 export type TMapGestureHandling = 'cooperative' | 'greedy' | 'none' | 'auto';
