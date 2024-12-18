@@ -7,6 +7,7 @@ type TProps = {
   type?: TModalType;
   animation?: ModalAnimationEnum | null;
   closeOnMaskClick?: boolean;
+  fullW?: boolean;
 };
 
 export const modalAtom = atom<TProps | null>(null);
