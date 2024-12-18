@@ -11,6 +11,18 @@
       "options": {
         "jestConfig": "apps/shelter-web/jest.config.ts"
       }
+    },
+    "build": {
+      "executor": "@nx/vite:build",
+      "options": {
+        "outputPath": "dist/apps/shelter-web",
+        "configFile": "apps/shelter-web/vite.config.mts"
+      },
+      "configurations": {
+        "production": {
+          "mode": "production"
+        }
+      }
     }
   }
 }

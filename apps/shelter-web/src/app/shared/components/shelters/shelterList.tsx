@@ -1,4 +1,4 @@
-import { TLatLng } from '../maps/types.maps';
+import { TLatLng } from '../map/types.maps';
 import { ShelterCard, TShelter } from '../shelter/shelterCard';
 
 type TShelterList = {

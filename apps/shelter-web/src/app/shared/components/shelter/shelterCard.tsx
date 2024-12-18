@@ -1,20 +1,20 @@
 import { LocationIcon } from '@monorepo/react/icons';
 import { useNavigate } from 'react-router-dom';
-import { calcDistance } from '../../utils/distance/calcDistance';
-import { formatDistance } from '../../utils/distance/formatDistance';
-import { TLatLng } from '../maps/types.maps';
+import { TLatLng } from '../map/types.maps';
+import { DistanceAway } from './distanceAway';
+
+export type TShelterLocation = {
+  latitude: number;
+  longitude: number;
+  place: string;
+};
 
 export type TShelter = {
   id: string;
   name: string;
-  address: string;
   heroImage?: string | null;
-  distance?: number | null;
-  location: {
-    latitude: number;
-    longitude: number;
-    place: string;
-  };
+  distanceInMiles?: number | null;
+  location?: TShelterLocation | null;
 };
 
 type TShelterCard = {
@@ -25,30 +25,14 @@ type TShelterCard = {
 
 export function ShelterCard(props: TShelterCard) {
   const {
-    shelter: {
-      id,
-      name,
-      heroImage,
-      location: { place, latitude: shelterLat, longitude: shelterLng },
-    },
+    shelter: { id, name, heroImage, distanceInMiles, location },
     originCoordinates,
     className = '',
   } = props;
 
   const navigate = useNavigate();
 
-  let formattedDistance;
-
-  if (originCoordinates && shelterLat && shelterLng) {
-    const shelterCoords = {
-      lat: shelterLat,
-      lng: shelterLng,
-    };
-
-    formattedDistance = getFormattedDistance(originCoordinates, shelterCoords);
-  }
-
-  const formattedAddress = place.replace(/, USA$/, '');
+  const formattedAddress = location?.place.replace(/, USA$/, '');
 
   return (
     <div className={className}>
@@ -74,28 +58,16 @@ export function ShelterCard(props: TShelterCard) {
           <div className="flex-inline flex-wrap">
             <span>{formattedAddress}</span>
 
-            {!!formattedDistance && (
-              <span className="ml-1">({formattedDistance} away)</span>
-            )}
+            <DistanceAway
+              className="ml-1 inline"
+              distanceInMiles={distanceInMiles}
+              originCoordinates={originCoordinates}
+              targetCoordinates={location}
+              formatFn={(distance) => `(${distance} away)`}
+            />
           </div>
         </div>
       )}
     </div>
   );
-}
-
-function getFormattedDistance(pointA?: TLatLng, pointB?: TLatLng) {
-  if (!pointA || !pointB) {
-    return '';
-  }
-
-  const distanceMiles = calcDistance({
-    pointA,
-    pointB,
-  });
-
-  return formatDistance({
-    distance: distanceMiles,
-    minimum: 0.1,
-  });
 }

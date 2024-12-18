@@ -25,6 +25,12 @@ export default defineConfig(({ mode }) => {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/apps/shelter-web',
 
+    define: {
+      'import.meta.env.VITE_SHELTER_BASE_PATH': JSON.stringify(
+        process.env.SHELTER_BASE_PATH || '/'
+      ),
+    },
+
     server: {
       port: SERVER_PORT,
       host: 'localhost',

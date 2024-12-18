@@ -1,29 +1,73 @@
-import { APIProvider as MapsApiProvider } from '@vis.gl/react-google-maps';
-import { useState } from 'react';
+import { useAtom } from 'jotai';
+import { useEffect, useState } from 'react';
+import { SHELTERS_MAP_ID } from '../../constants.app';
 import { MaxWLayout } from '../../layout/maxWLayout';
-import { Map } from '../../shared/components/maps/map';
-import { TLatLng } from '../../shared/components/maps/types.maps';
+import { locationAtom } from '../../shared/atoms/locationAtom';
+import { modalAtom } from '../../shared/atoms/modalAtom';
+import { sheltersAtom } from '../../shared/atoms/sheltersAtom';
+import { Map } from '../../shared/components/map/map';
+import { TLatLng, TMarker } from '../../shared/components/map/types.maps';
+import { ShelterCard } from '../../shared/components/shelter/shelterCard';
 import { ShelterSearch } from '../../shared/components/shelters/shelterSearch';
-
-const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+import { ModalAnimationEnum } from '../../shared/modal/modal';
 
 export function Home() {
-  const [coordinates, setCoordinates] = useState<TLatLng | null>();
+  const [_location, setLocation] = useAtom(locationAtom);
+  const [shelters] = useAtom(sheltersAtom);
+  const [_modal, setModal] = useAtom(modalAtom);
+  const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
 
-  function onProviderError(error: unknown) {
-    console.error(`MapsApiProvider error ${error}`);
-  }
+  useEffect(() => {
+    const markers = shelters
+      .filter((shelter) => !!shelter.location)
+      .map((shelter) => {
+        return {
+          id: shelter.id,
+          position: shelter.location,
+          label: shelter.name,
+          onClick: () => handleClick(shelter.id),
+        } as TMarker;
+      });
 
-  function onLocationChange(coordinates: TLatLng | null) {
-    setCoordinates(coordinates);
+    setShelterMarkers(markers);
+  }, [shelters]);
+
+  const handleClick = (markerId: string | null | undefined) => {
+    if (!markerId) {
+      return;
+    }
+    setModal({
+      content: (
+        <ShelterCard
+          className="mt-4"
+          shelter={
+            shelters.find((shelter) => shelter.id === markerId) as TShelter
+          }
+        />
+      ),
+      animation: ModalAnimationEnum.EXPAND,
+      closeOnMaskClick: true,
+    });
+  };
+
+  function onCenterSelect(center: TLatLng) {
+    setLocation({
+      ...center,
+      source: 'currentLocation',
+    });
   }
 
   return (
-    <MapsApiProvider apiKey={googleMapsApiKey} onError={onProviderError}>
+    <>
       <MaxWLayout className="-mx-4">
-        <Map className="h-[480px] md:h-80" center={coordinates} />
+        <Map
+          className="h-[70vh] md:h-80"
+          mapId={SHELTERS_MAP_ID}
+          markers={shelterMarkers}
+          onCenterSelect={onCenterSelect}
+        />
       </MaxWLayout>
-      <ShelterSearch onLocationChange={onLocationChange} />
-    </MapsApiProvider>
+      <ShelterSearch />
+    </>
   );
 }
