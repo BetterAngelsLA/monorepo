@@ -1,8 +1,11 @@
+import { ClockIcon } from '@monorepo/react/icons';
+
 export default function OperationHours() {
   const notAvailable = true;
   return (
     <div className="text-sm my-6">
-      <div className="mb-1">
+      <div className="mb-1 flex items-center gap-2">
+        <ClockIcon className="w-6 h-6 fill-primary-20" />
         <h3 className="font-semibold">Operation Hours</h3>
       </div>
       {notAvailable ? (

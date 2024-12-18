@@ -1,7 +1,14 @@
 export { default as ArrowLeftIcon } from './components/arrowLeftIcon';
+export { default as CallIcon } from './components/callIcon';
+export { default as ClockIcon } from './components/clockIcon';
 export { default as CloseIcon } from './components/closeIcon';
+export { default as EmailIcon } from './components/emailIcon';
 export { default as FindMeIcon } from './components/findMeIcon';
+export { default as GlobeIcon } from './components/globeIcon';
+export { default as InstagramIcon } from './components/instagramIcon';
+export { default as ListIcon } from './components/listIcon';
 export { default as LocationIcon } from './components/locationIcon';
 export { default as MapPinIcon } from './components/mapPinIcon';
 export { default as PlusIcon } from './components/plusIcon';
 export { default as SearchIcon } from './components/searchIcon';
+export { default as UsersIcon } from './components/usersIcon';
