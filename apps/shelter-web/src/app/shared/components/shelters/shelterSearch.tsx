@@ -3,12 +3,14 @@ import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
 import { locationAtom } from '../../atoms/locationAtom';
+import { modalContentAtom } from '../../atoms/modalContentAtom';
 import { AddressAutocomplete } from '../address/AddressAutocomplete';
 import { toGoogleLatLng } from '../map/utils/toGoogleLatLng';
 import { SheltersDisplay } from './sheltersDisplay';
 
 export function ShelterSearch() {
   const [location, setLocation] = useAtom(locationAtom);
+  const [_modal, setModal] = useAtom(modalContentAtom);
 
   const map = useMap();
 
@@ -44,7 +46,10 @@ export function ShelterSearch() {
   }
 
   function onFilterClick() {
-    console.log('################################### onFilterClick');
+    setModal({
+      content: 'more to come ...',
+      fullScreen: true,
+    });
   }
 
   return (

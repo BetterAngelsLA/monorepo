@@ -33,6 +33,15 @@ module.exports = {
         'success-90': 'var(--color-success-90)',
       },
     },
+    keyframes: {
+      slideInUp: {
+        '0%': { transform: 'translate3d(0, 10%, 0)' },
+        '100%': { transform: 'translate3d(0, 0, 0)' },
+      },
+    },
+    animation: {
+      slideInUp: 'slideInUp 250ms ease-in-out 0ms',
+    },
   },
   plugins: [],
 };
