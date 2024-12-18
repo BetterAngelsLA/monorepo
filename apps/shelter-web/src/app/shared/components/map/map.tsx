@@ -10,13 +10,8 @@ import {
   useApiLoadingStatus,
   useMap,
 } from '@vis.gl/react-google-maps';
-import { useAtom } from 'jotai';
 import { useCallback, useEffect, useState } from 'react';
-import { modalAtom } from '../../atoms/modalAtom';
-import { sheltersAtom } from '../../atoms/sheltersAtom';
-import { ModalAnimationEnum } from '../../modal/modal';
 import { mergeCss } from '../../utils/styles/mergeCss';
-import { ShelterCard } from '../shelter/shelterCard';
 import {
   DEFAULT_GESTURE_HANDLING,
   DEFAULT_MAP_ZOOM,
@@ -36,6 +31,7 @@ type TMap = {
   disableDefaultUI?: boolean;
   controlsPosition?: ControlPosition;
   onCenterSelect?: (center: TLatLng) => void;
+  onClick?: (markerId: string) => void;
   markers?: TMarker[];
 };
 
@@ -50,6 +46,7 @@ export function Map(props: TMap) {
     controlsPosition = ControlPosition.INLINE_END_BLOCK_END,
     onCenterSelect,
     markers = [],
+    onClick,
   } = props;
 
   const map = useMap();
@@ -59,8 +56,6 @@ export function Map(props: TMap) {
     center: toGoogleLatLng(defaultCenter) as google.maps.LatLngLiteral,
     zoom: defaultZoom,
   });
-  const [sheltersData, _setSheltersData] = useAtom(sheltersAtom);
-  const [_modal, setModal] = useAtom(modalAtom);
 
   useEffect(() => {
     console.info(`[map] loading status: ${mapApiStatus}`);
@@ -120,20 +115,7 @@ export function Map(props: TMap) {
           key={marker.id}
           position={toGoogleLatLng(marker.position)}
           zIndex={99}
-          onClick={() =>
-            setModal({
-              content: (
-                <ShelterCard
-                  className="mt-4"
-                  shelter={sheltersData.find(
-                    (shelter) => shelter.id === marker.id
-                  )}
-                />
-              ),
-              animation: ModalAnimationEnum.EXPAND,
-              closeOnMaskClick: true,
-            })
-          }
+          onClick={() => onClick(marker.id)}
         >
           <MapPinIcon className="h-10" type="secondary" />
         </AdvancedMarker>
