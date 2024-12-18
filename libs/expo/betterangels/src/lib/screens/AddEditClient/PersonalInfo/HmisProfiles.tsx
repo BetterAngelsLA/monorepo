@@ -22,7 +22,6 @@ export default function HmisProfiles() {
     watch,
     control,
     formState: { errors },
-    resetField,
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
 
   const { fields, append, remove } = useFieldArray({
@@ -37,9 +36,13 @@ export default function HmisProfiles() {
     setValue('hmisProfiles', []);
   };
 
-  const onItemReset = (index: number) => {
-    resetField(`hmisProfiles.${index}.agency`);
-    resetField(`hmisProfiles.${index}.hmisId`);
+  const onItemClear = (index: number) => {
+    const updatedProfiles = [...hmisProfiles];
+    updatedProfiles[index] = {
+      agency: HmisAgencyEnum.Lahsa,
+      hmisId: '',
+    };
+    setValue('hmisProfiles', updatedProfiles);
   };
 
   return (
@@ -110,9 +113,9 @@ export default function HmisProfiles() {
             />
             <TextButton
               color={Colors.PRIMARY}
-              onPress={() => onItemReset(index)}
-              accessibilityHint="resets hmis profile"
-              title="Reset"
+              onPress={() => onItemClear(index)}
+              accessibilityHint="clears hmis profile"
+              title="Clear"
             />
           </View>
         </View>
