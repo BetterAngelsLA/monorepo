@@ -46,19 +46,9 @@ export function ShelterSearch() {
     });
   }
 
-  const hello = (
-    <div className="w-36">
-      <div className="my-4">hello</div>
-      <div className="my-4">hello</div>
-      <div className="my-4">hello</div>
-      <div className="my-4">hello</div>
-      <div className="my-4">hello</div>
-    </div>
-  );
-
   function onFilterClick() {
     setModal({
-      content: hello,
+      content: 'hello there',
       animation: ModalAnimationEnum.EXPAND,
       closeOnMaskClick: true,
     });
