@@ -1,3 +1,4 @@
+export { default as ArrowLeftIcon } from './components/arrowLeftIcon';
 export { default as CloseIcon } from './components/closeIcon';
 export { default as FindMeIcon } from './components/findMeIcon';
 export { default as LocationIcon } from './components/locationIcon';
