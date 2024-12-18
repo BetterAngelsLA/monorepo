@@ -43,7 +43,6 @@ class ServiceEnum(models.TextChoices):
     BOOK = "book", _("Book")
     CALIFORNIA_LIFELINE_PHONE = "california_lifeline_phone", _("California Lifeline Phone")
     CLOTHES = "clothes", _("Clothes")
-    CLOTHES_SOCKS = "clothes_socks", _("Clothes - Socks")
     CONSENT_TO_CONNECT = "consent_to_connect", _("Consent to Connect (CM or Council District)")
     CONTACT_DPSS = "contact_dpss", _("Contact DPSS")
     CONTACT_FRIEND = "contact_friend", _("Contact Friend")
