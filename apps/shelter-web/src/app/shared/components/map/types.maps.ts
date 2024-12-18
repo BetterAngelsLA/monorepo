@@ -11,6 +11,7 @@ export type TMarker = {
   position: TLatLng;
   id?: string;
   label?: string;
+  onClick?: ((e: google.maps.MapMouseEvent) => void) | undefined;
 };
 
 export type TMapGestureHandling = 'cooperative' | 'greedy' | 'none' | 'auto';

@@ -113,6 +113,7 @@ export function Map(props: TMap) {
           key={marker.id}
           position={toGoogleLatLng(marker.position)}
           zIndex={99}
+          onClick={marker.onClick}
         >
           <MapPinIcon className="h-10" type="secondary" />
         </AdvancedMarker>
