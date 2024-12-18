@@ -36,10 +36,13 @@ export default function Checkbox(props: ICheckbox): ReactElement {
   }, [checked]);
 
   let parentCss: string = [
+    'flex',
+    'justify-between',
+    'items-start',
+    'w-full',
     'text-sm',
     'px-4',
     'py-2',
-    'cursor-pointer',
     'border',
     'rounded-lg',
     !!isChecked
@@ -64,13 +67,11 @@ export default function Checkbox(props: ICheckbox): ReactElement {
   ].join(' ');
 
   return (
-    <div className={parentCss} onClick={handleChange}>
-      <label className="flex justify-between items-start">
-        <span className="flex flex-wrap">{label}</span>
-        <div className={checkboxContainerCss}>
-          {isChecked && <CheckIcon className="text-white" />}
-        </div>
-      </label>
-    </div>
+    <button className={parentCss} onClick={handleChange} disabled={disabled}>
+      <span className="flex flex-wrap">{label}</span>
+      <div className={checkboxContainerCss}>
+        {isChecked && <CheckIcon className="text-white" />}
+      </div>
+    </button>
   );
 }
