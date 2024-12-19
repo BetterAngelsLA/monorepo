@@ -7,8 +7,8 @@ import { modalAtom } from '../../atoms/modalAtom';
 import { ModalAnimationEnum } from '../../modal/modal';
 import { AddressAutocomplete } from '../address/AddressAutocomplete';
 import { toGoogleLatLng } from '../map/utils/toGoogleLatLng';
-import { ShelterFilter } from '../shelterFilter/shelterFilter';
-import { SheltersDisplay } from './sheltersDisplay';
+import { ShelterFilters } from '../shelterFilter/shelterFilters';
+import { SheltersDisplay, TShelterPropertyFilters } from './sheltersDisplay';
 
 export function ShelterSearch() {
   const [location, setLocation] = useAtom(locationAtom);
@@ -47,9 +47,15 @@ export function ShelterSearch() {
     });
   }
 
+  function onFiltersChange(updated: TShelterPropertyFilters) {
+    console.log();
+    console.log(updated);
+    console.log();
+  }
+
   function onFilterClick() {
     setModal({
-      content: <ShelterFilter className="w-full" />,
+      content: <ShelterFilters className="w-full" onChange={onFiltersChange} />,
       animation: ModalAnimationEnum.SLIDE_UP,
       type: 'fullscreen',
     });

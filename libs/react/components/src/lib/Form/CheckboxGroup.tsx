@@ -35,7 +35,7 @@ export type TProps = {
 };
 
 export function CheckboxGroup(props: TProps) {
-  const { className, options, values, selectAllKey, onChange } = props;
+  const { className, options, values = [], selectAllKey, onChange } = props;
 
   const [cbxOptions, setCbxOptions] = useState<TCheckboxOptionKv[]>([]);
   const [selected, setSelected] = useState<string[]>(values);

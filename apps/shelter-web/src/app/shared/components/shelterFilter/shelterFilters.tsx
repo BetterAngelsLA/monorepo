@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useAtom } from 'jotai';
+import { useEffect } from 'react';
+import { shelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { mergeCss } from '../../utils/styles/mergeCss';
+import { TShelterPropertyFilters } from '../shelters/sheltersDisplay';
 import { FilterSelector } from './filterSelector';
 import {
   demographicFilter,
@@ -12,24 +15,15 @@ import {
 
 type IProps = {
   className?: string;
+  onChange?: (filters: TShelterPropertyFilters) => void;
 };
 
-export function ShelterFilter(props: IProps) {
-  const { className } = props;
+export function ShelterFilters(props: IProps) {
+  const { onChange, className } = props;
 
-  const filterValues = {
-    [demographicFilter.name]: [],
-    [parkingFilter.name]: [],
-    [petsFilter.name]: [],
-    [roomStyleFilter.name]: [],
-    [shelterTypeFilter.name]: [],
-    [specialSituationFilter.name]: [],
-  };
+  const [filters, setFilters] = useAtom(shelterFiltersAtom);
 
-  const [filters, setFilters] =
-    useState<Record<string, string[]>>(filterValues);
-
-  const parentCss = ['xborder', 'border-red-500', className];
+  const parentCss = [className];
 
   function onFilterChange(filterName: string, selected: string[]) {
     setFilters((prev) => {
@@ -41,11 +35,10 @@ export function ShelterFilter(props: IProps) {
   }
 
   useEffect(() => {
-    console.log();
-    console.log('| -------------  filters  ------------- |');
-    console.log(filters);
-    console.log();
+    onChange && onChange(filters);
   }, [filters]);
+
+  const hello = filters[demographicFilter.name];
 
   return (
     <div className={mergeCss(parentCss)}>

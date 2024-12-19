@@ -12,10 +12,26 @@ import {
   enumDisplayShelterChoices,
   enumDisplaySpecialSituationRestrictionChoices,
 } from '@monorepo/react/shelter';
+import { TShelterPropertyFilters } from '../shelters/sheltersDisplay';
+
+export type TFilterOptionType =
+  | PetChoices
+  | DemographicChoices
+  | SpecialSituationRestrictionChoices
+  | ShelterChoices
+  | RoomStyleChoices
+  | ParkingChoices;
 
 export type TShelterFilterOption = {
   label: string;
-  value: string;
+  value: TFilterOptionType;
+};
+
+export type TFilterConfig = {
+  name: keyof TShelterPropertyFilters;
+  header: string;
+  options: TShelterFilterOption[];
+  selectAllKey?: string;
 };
 
 // Demographic
@@ -39,8 +55,8 @@ const demographicOptionList: TShelterFilterOption[] = demographicOptions.map(
   }
 );
 
-export const demographicFilter = {
-  name: 'demographicFilter',
+export const demographicFilter: TFilterConfig = {
+  name: 'demographics',
   header: 'Demographic',
   options: demographicOptionList,
   selectAllKey: DemographicChoices.All,
@@ -65,8 +81,8 @@ const specialSituationOptionsOptionList: TShelterFilterOption[] =
     };
   });
 
-export const specialSituationFilter = {
-  name: 'specialSituationFilter',
+export const specialSituationFilter: TFilterConfig = {
+  name: 'specialSituationRestrictions',
   header: 'Special Situation Restriction',
   options: specialSituationOptionsOptionList,
 };
@@ -91,8 +107,8 @@ const shelterTypeOptionsList: TShelterFilterOption[] = shelterTypeOptions.map(
   }
 );
 
-export const shelterTypeFilter = {
-  name: 'shelterTypeFilter',
+export const shelterTypeFilter: TFilterConfig = {
+  name: 'shelterType',
   header: 'Shelter Type',
   options: shelterTypeOptionsList,
 };
@@ -117,8 +133,8 @@ const roomStyleOptionsList: TShelterFilterOption[] = roomStyleOptions.map(
   }
 );
 
-export const roomStyleFilter = {
-  name: 'roomStyleFilter',
+export const roomStyleFilter: TFilterConfig = {
+  name: 'roomStyle',
   header: 'Room Style',
   options: roomStyleOptionsList,
 };
@@ -140,8 +156,8 @@ const petsOptionsList: TShelterFilterOption[] = petsOptions.map((option) => {
   };
 });
 
-export const petsFilter = {
-  name: 'petsFilter',
+export const petsFilter: TFilterConfig = {
+  name: 'pets',
   header: 'Pets',
   options: petsOptionsList,
 };
@@ -164,8 +180,8 @@ const parkingOptionsList: TShelterFilterOption[] = parkingOptions.map(
   }
 );
 
-export const parkingFilter = {
-  name: 'parkingFilter',
+export const parkingFilter: TFilterConfig = {
+  name: 'parking',
   header: 'Parking',
   options: parkingOptionsList,
 };

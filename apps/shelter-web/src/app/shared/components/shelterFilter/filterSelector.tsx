@@ -1,12 +1,15 @@
 import { CheckboxGroup, ExpandableContainer } from '@monorepo/react/components';
-import { TShelterFilterOption } from './shelterFilter.config';
+import {
+  TFilterOptionType,
+  TShelterFilterOption,
+} from './shelterFilter.config';
 
 type IProps = {
   className?: string;
   header: string;
   name: string;
   options: TShelterFilterOption[];
-  values: string[];
+  values?: TFilterOptionType[] | null;
   selectAllKey?: string;
   expanded?: boolean;
   onChange: (name: string, selected: string[]) => void;
@@ -29,7 +32,7 @@ export function FilterSelector(props: IProps) {
       <ExpandableContainer header={header} open={!!expanded}>
         <CheckboxGroup
           options={options}
-          values={values}
+          values={values || []}
           onChange={(selected) => onChange(name, selected)}
           selectAllKey={selectAllKey}
         />
