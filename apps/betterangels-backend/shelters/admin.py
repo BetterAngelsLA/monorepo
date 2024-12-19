@@ -793,6 +793,20 @@ class ShelterAdmin(ImportExportModelAdmin):
     search_fields = ("name", "organization__name", "description", "subjective_review")
     resource_class = ShelterResource
 
+    def _get_m2m_permissions(self, action: str = "change") -> dict[str, str]:
+        """
+        Generates a dict of permission names by related_name key for all ManyToManyFields on the Shelter model.
+        """
+        permissions_map = {}
+        for field in Shelter._meta.get_fields():
+            if isinstance(field, models.ManyToManyField):
+                related_model = cast(Type[models.Model], field.related_model)
+                model_name = related_model._meta.model_name  # singular name
+                permission_codename = f"{action}_{model_name}"
+                permissions_map[field.name] = f"shelters.{permission_codename}"
+
+        return permissions_map
+
     def get_readonly_fields(
         self, request: HttpRequest, obj: Optional[Shelter] = None
     ) -> Union[list[str], Tuple[str, ...]]:
@@ -800,6 +814,14 @@ class ShelterAdmin(ImportExportModelAdmin):
         readonly_fields = (*readonly_fields, "updated_at", "updated_by")
         if not request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
             readonly_fields = (*readonly_fields, "is_reviewed")
+
+        all_permissions = request.user.get_all_permissions()
+
+        if no_permission_fields := [
+            field_name for field_name, perm in self._get_m2m_permissions().items() if perm not in all_permissions
+        ]:
+            readonly_fields = (*readonly_fields, *no_permission_fields)
+
         return readonly_fields
 
     def _create_log_entries(self, user_pk, rows):  # type: ignore
