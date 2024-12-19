@@ -7,6 +7,7 @@ import { modalAtom } from '../../atoms/modalAtom';
 import { ModalAnimationEnum } from '../../modal/modal';
 import { AddressAutocomplete } from '../address/AddressAutocomplete';
 import { toGoogleLatLng } from '../map/utils/toGoogleLatLng';
+import { ShelterFilter } from '../shelterFilter/shelterFilter';
 import { SheltersDisplay } from './sheltersDisplay';
 
 export function ShelterSearch() {
@@ -48,9 +49,9 @@ export function ShelterSearch() {
 
   function onFilterClick() {
     setModal({
-      content: 'hello there',
-      animation: ModalAnimationEnum.EXPAND,
-      closeOnMaskClick: true,
+      content: <ShelterFilter className="w-full" />,
+      animation: ModalAnimationEnum.SLIDE_UP,
+      type: 'fullscreen',
     });
   }
 

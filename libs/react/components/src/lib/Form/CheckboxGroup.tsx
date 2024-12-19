@@ -29,14 +29,16 @@ function normalizeOptions(options: TCheckboxOption[]): TCheckboxOptionKv[] {
 export type TProps = {
   className?: string;
   options: TCheckboxOption[];
+  values: string[];
+  selectAllKey?: string;
   onChange: (selected: string[]) => void;
 };
 
 export function CheckboxGroup(props: TProps) {
-  const { className, options, onChange } = props;
+  const { className, options, values, selectAllKey, onChange } = props;
 
   const [cbxOptions, setCbxOptions] = useState<TCheckboxOptionKv[]>([]);
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string[]>(values);
 
   useEffect(() => {
     const normalized = normalizeOptions(options);
@@ -52,6 +54,10 @@ export function CheckboxGroup(props: TProps) {
     // add
     if (checked) {
       return setSelected((prev) => {
+        if (selectAllKey && value === selectAllKey) {
+          return cbxOptions.map((option) => option.value);
+        }
+
         const idx = prev.indexOf(value);
 
         if (idx > -1) {
@@ -64,24 +70,26 @@ export function CheckboxGroup(props: TProps) {
 
     // or remove
     return setSelected((prev) => {
-      const idx = prev.indexOf(value);
+      const removableValues = [value];
 
-      if (idx < 0) {
-        return prev;
+      if (selectAllKey) {
+        // removing all
+        if (value === selectAllKey) {
+          return [];
+        }
+
+        // not removing all, so will unselect ALL key
+        removableValues.push(selectAllKey);
       }
 
-      const copy = [...prev];
-
-      copy.splice(idx, 1);
-
-      return copy;
+      return prev.filter((val) => {
+        return !removableValues.includes(val);
+      });
     });
   }
 
-  let parentCss = ['flex', 'flex-col', className];
-
   return (
-    <div className={mergeCss(parentCss)}>
+    <div className={mergeCss(className)}>
       {cbxOptions.map((option, idx: number) => {
         const isChecked = selected.indexOf(option.value) > -1;
 

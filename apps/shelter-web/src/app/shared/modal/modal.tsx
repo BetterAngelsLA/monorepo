@@ -12,11 +12,12 @@ export enum ModalAnimationEnum {
 
 export type TModalType = 'drawer' | 'fullscreen' | 'default';
 
-interface IModal extends PropsWithChildren {
+export interface IModal extends PropsWithChildren {
   className?: string;
   header?: string | ReactNode;
   animation?: ModalAnimationEnum | null;
   type?: TModalType;
+  fullW?: boolean;
   closeOnMaskClick?: boolean;
   onClose?: () => void;
 }
@@ -27,6 +28,7 @@ export function Modal(props: IModal): ReactElement | null {
     animation = ModalAnimationEnum.SLIDE_UP,
     type = 'default',
     closeOnMaskClick,
+    fullW,
     children,
     onClose,
   } = props;
@@ -42,7 +44,6 @@ export function Modal(props: IModal): ReactElement | null {
   }
 
   const modalCss = [
-    className,
     'z-max',
     'transform-gpu',
     'overflow-x-hidden',
@@ -56,6 +57,8 @@ export function Modal(props: IModal): ReactElement | null {
     type === 'fullscreen' ? 'absolute top-0 left-0 right-0 bottom-0' : '',
     type === 'default' ? 'relative rounded-xl pb-12 w-10/12' : '',
     animation === null ? 'animate-none' : animation,
+    fullW ? 'w-full' : '',
+    className,
   ];
 
   const closeCss = ['ml-auto'];
