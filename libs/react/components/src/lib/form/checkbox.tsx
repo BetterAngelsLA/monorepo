@@ -1,41 +1,28 @@
 import { CheckIcon } from '@monorepo/react/icons';
-import { ReactElement, useEffect, useState } from 'react';
+import { ReactElement } from 'react';
+import { mergeCss } from '../../lib-utils/mergeCss';
 
 export type ICheckbox = {
   label: string;
   checked?: boolean;
-  onChange?: (checked: boolean) => void;
+  onChange: (checked: boolean) => void;
   className?: string;
   required?: boolean;
   disabled?: boolean;
 };
 
-export default function Checkbox(props: ICheckbox): ReactElement {
+export function Checkbox(props: ICheckbox): ReactElement {
   const { checked, onChange, label, disabled, className } = props;
-
-  const [isChecked, setIsChecked] = useState(!!checked);
 
   function handleChange(): void {
     if (disabled) {
       return;
     }
 
-    const newChecked = !isChecked;
-
-    setIsChecked(newChecked);
+    onChange(!checked);
   }
 
-  useEffect(() => {
-    if (onChange) {
-      onChange(isChecked);
-    }
-  }, [isChecked]);
-
-  useEffect(() => {
-    setIsChecked(!!checked);
-  }, [checked]);
-
-  let parentCss: string = [
+  const parentCss = [
     'flex',
     'justify-between',
     'items-start',
@@ -45,13 +32,11 @@ export default function Checkbox(props: ICheckbox): ReactElement {
     'py-2',
     'border',
     'rounded-lg',
-    !!isChecked
-      ? 'border-primary-95 bg-primary-95'
-      : 'border-neutral-90 bg-white',
+    checked ? 'border-primary-95 bg-primary-95' : 'border-neutral-90 bg-white',
     className,
-  ].join(' ');
+  ];
 
-  let checkboxContainerCss: string = [
+  const checkboxContainerCss = [
     'mt-0.5',
     'w-4',
     'h-4',
@@ -59,18 +44,19 @@ export default function Checkbox(props: ICheckbox): ReactElement {
     'flex',
     'items-center',
     'border',
-    !!isChecked
-      ? 'border-primary-20 bg-primary-20'
-      : 'border-neutral-90 bg-white',
+    checked ? 'border-primary-20 bg-primary-20' : 'border-neutral-90 bg-white',
     'rounded-sm',
-    className,
-  ].join(' ');
+  ];
 
   return (
-    <button className={parentCss} onClick={handleChange} disabled={disabled}>
-      <span className="flex flex-wrap">{label}</span>
-      <div className={checkboxContainerCss}>
-        {isChecked && <CheckIcon className="text-white" />}
+    <button
+      className={mergeCss(parentCss)}
+      onClick={handleChange}
+      disabled={disabled}
+    >
+      <div className="text-left text-wrap">{label}</div>
+      <div className={mergeCss(checkboxContainerCss)}>
+        {checked && <CheckIcon className="text-white" />}
       </div>
     </button>
   );

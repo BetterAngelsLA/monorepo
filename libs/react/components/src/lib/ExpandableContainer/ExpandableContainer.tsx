@@ -1,16 +1,15 @@
-import { ChevronDownIcon } from '@monorepo/react/icons';
 import {
   Dispatch,
   PropsWithChildren,
-  ReactElement,
   ReactNode,
   SetStateAction,
   useEffect,
   useState,
 } from 'react';
-import { mergeCss } from '../utils/styles/mergeCss';
+import ChevronDownIcon from '../../../../icons/src/lib/components/chevronDownIcon';
+import { mergeCss } from '../../lib-utils/mergeCss';
 
-interface IExpandableContainer extends PropsWithChildren {
+interface IProps extends PropsWithChildren {
   className?: string;
   header?: ReactNode | string;
   disabled?: boolean;
@@ -18,9 +17,7 @@ interface IExpandableContainer extends PropsWithChildren {
   onClick?: (opened: boolean) => void;
 }
 
-export function ExpandableContainer(
-  props: IExpandableContainer
-): ReactElement | null {
+export function ExpandableContainer(props: IProps) {
   const {
     header,
     disabled,
@@ -28,7 +25,7 @@ export function ExpandableContainer(
     open = false,
     children,
     onClick,
-  }: IExpandableContainer = props;
+  } = props;
 
   const [isOpen, setIsOpen]: [boolean, Dispatch<SetStateAction<boolean>>] =
     useState<boolean>(open);
@@ -51,22 +48,22 @@ export function ExpandableContainer(
     }
   }
 
-  const parentCss: string = [className].join(' ');
+  const parentCss = [className];
 
-  const headerCss: string = [
+  const headerCss = [
     'flex',
     'justify-between',
     'items-center',
     disabled ? '' : 'cursor-pointer',
-  ].join(' ');
+  ];
 
   const iconCss = ['h-5', isOpen ? 'rotate-180' : 'rotate-none'];
 
   const contentCss = ['mt-6'];
 
   return (
-    <div className={parentCss}>
-      <div className={headerCss} onClick={onExpanCollapse}>
+    <div className={mergeCss(parentCss)}>
+      <div className={mergeCss(headerCss)} onClick={onExpanCollapse}>
         {!!header && header}
         <ChevronDownIcon className={mergeCss(iconCss)} strokeWidth={2} />
       </div>
