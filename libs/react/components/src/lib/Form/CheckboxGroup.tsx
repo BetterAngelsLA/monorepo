@@ -38,7 +38,6 @@ export function CheckboxGroup(props: TProps) {
   const { className, options, values = [], selectAllKey, onChange } = props;
 
   const [cbxOptions, setCbxOptions] = useState<TCheckboxOptionKv[]>([]);
-  const [selected, setSelected] = useState<string[]>(values);
 
   useEffect(() => {
     const normalized = normalizeOptions(options);
@@ -46,52 +45,50 @@ export function CheckboxGroup(props: TProps) {
     setCbxOptions(normalized);
   }, [options]);
 
-  useEffect(() => {
-    onChange(selected);
-  }, [selected]);
-
   function handleChange(value: string, checked: boolean) {
     // add
     if (checked) {
-      return setSelected((prev) => {
-        if (selectAllKey && value === selectAllKey) {
-          return cbxOptions.map((option) => option.value);
-        }
+      // if select All
+      if (selectAllKey && value === selectAllKey) {
+        const allSelected = cbxOptions.map((option) => option.value);
 
-        const idx = prev.indexOf(value);
+        return onChange(allSelected);
+      }
 
-        if (idx > -1) {
-          return prev;
-        }
+      const idx = values.indexOf(value);
 
-        return [...prev, value];
-      });
+      // if already exists
+      if (idx > -1) {
+        return onChange(values);
+      }
+
+      return onChange([...values, value]);
     }
 
     // or remove
-    return setSelected((prev) => {
-      const removableValues = [value];
+    const removableValues = [value];
 
-      if (selectAllKey) {
-        // removing all
-        if (value === selectAllKey) {
-          return [];
-        }
-
-        // not removing all, so will unselect ALL key
-        removableValues.push(selectAllKey);
+    if (selectAllKey) {
+      // removing all
+      if (value === selectAllKey) {
+        return onChange([]);
       }
 
-      return prev.filter((val) => {
-        return !removableValues.includes(val);
-      });
+      // not removing all, so will unselect ALL key
+      removableValues.push(selectAllKey);
+    }
+
+    const updated = values.filter((val) => {
+      return !removableValues.includes(val);
     });
+
+    return onChange(updated);
   }
 
   return (
     <div className={mergeCss(className)}>
       {cbxOptions.map((option, idx: number) => {
-        const isChecked = selected.indexOf(option.value) > -1;
+        const isChecked = values.indexOf(option.value) > -1;
 
         return (
           <Checkbox

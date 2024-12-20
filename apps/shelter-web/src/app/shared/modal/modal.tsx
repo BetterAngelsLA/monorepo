@@ -19,6 +19,7 @@ export interface IModal extends PropsWithChildren {
   type?: TModalType;
   fullW?: boolean;
   closeOnMaskClick?: boolean;
+  footer?: ReactNode;
   onClose?: () => void;
 }
 
@@ -30,6 +31,7 @@ export function Modal(props: IModal): ReactElement | null {
     closeOnMaskClick,
     fullW,
     children,
+    footer,
     onClose,
   } = props;
 
@@ -48,22 +50,28 @@ export function Modal(props: IModal): ReactElement | null {
     'transform-gpu',
     'overflow-x-hidden',
     'overflow-y-auto',
-    'md:pt-8',
-    'p-6',
-    'md:p-10',
     'bg-white',
     'flex',
     'flex-col',
     type === 'fullscreen' ? 'absolute top-0 left-0 right-0 bottom-0' : '',
-    type === 'default' ? 'relative rounded-xl pb-12 w-10/12' : '',
+    type === 'default' ? 'relative rounded-xl w-10/12' : '',
     animation === null ? 'animate-none' : animation,
     fullW ? 'w-full' : '',
     className,
   ];
 
+  const modalBodyCss = [
+    'md:pt-8',
+    'p-6',
+    'md:p-10',
+    type === 'default' ? 'pb-12' : '',
+  ];
+
   const closeCss = ['ml-auto'];
 
   const headerCss = ['flex', 'justify-between', 'align-center', 'mt-0', 'mb-4'];
+
+  const modalFooterCss = ['w-full', 'mt-auto'];
 
   return (
     <ModalMask closeOnMaskClick={closeOnMaskClick}>
@@ -71,12 +79,16 @@ export function Modal(props: IModal): ReactElement | null {
         className={mergeCss(modalCss)}
         onClick={(e) => e && e.stopPropagation()}
       >
-        <div className={mergeCss(headerCss)}>
-          <button className={mergeCss(closeCss)} onClick={onModalClose}>
-            <CloseIcon className="w-4" />
-          </button>
+        <div className={mergeCss(modalBodyCss)}>
+          <div className={mergeCss(headerCss)}>
+            <button className={mergeCss(closeCss)} onClick={onModalClose}>
+              <CloseIcon className="w-4" />
+            </button>
+          </div>
+          <div className="w-full h-full">{children}</div>
         </div>
-        <div className="w-full h-full">{children}</div>
+
+        {footer && <div className={mergeCss(modalFooterCss)}>{footer}</div>}
       </div>
     </ModalMask>
   );

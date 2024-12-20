@@ -8,8 +8,6 @@ import {
   demographicFilter,
   parkingFilter,
   petsFilter,
-  roomStyleFilter,
-  shelterTypeFilter,
   specialSituationFilter,
 } from './shelterFilter.config';
 
@@ -27,6 +25,11 @@ export function ShelterFilters(props: IProps) {
 
   function onFilterChange(filterName: string, selected: string[]) {
     setFilters((prev) => {
+      const updated = {
+        ...prev,
+        [filterName]: selected,
+      };
+
       return {
         ...prev,
         [filterName]: selected,
@@ -38,54 +41,57 @@ export function ShelterFilters(props: IProps) {
     onChange && onChange(filters);
   }, [filters]);
 
-  const hello = filters[demographicFilter.name];
-
   return (
     <div className={mergeCss(parentCss)}>
-      <div className="text-xl">Filter</div>
-      <div>Select the categories below to filter shelters</div>
+      <div>
+        <div className="text-xl font-semibold">Filter</div>
+        <div className="text-sm mt-1 pr-8">
+          Select the categories below to filter shelters
+        </div>
+      </div>
+      <div>
+        <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[demographicFilter.name]}
+          {...demographicFilter}
+        />
 
-      <FilterSelector
-        className="mt-8"
-        onChange={onFilterChange}
-        values={filters[demographicFilter.name]}
-        {...demographicFilter}
-      />
+        <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[specialSituationFilter.name]}
+          {...specialSituationFilter}
+        />
 
-      <FilterSelector
-        className="mt-8"
-        onChange={onFilterChange}
-        values={filters[specialSituationFilter.name]}
-        {...specialSituationFilter}
-      />
+        {/* <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[shelterTypeFilter.name]}
+          {...shelterTypeFilter}
+        /> */}
 
-      <FilterSelector
-        className="mt-8"
-        onChange={onFilterChange}
-        values={filters[shelterTypeFilter.name]}
-        {...shelterTypeFilter}
-      />
+        {/* <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[roomStyleFilter.name]}
+          {...roomStyleFilter}
+        /> */}
 
-      <FilterSelector
-        className="mt-8"
-        onChange={onFilterChange}
-        values={filters[roomStyleFilter.name]}
-        {...roomStyleFilter}
-      />
+        <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[petsFilter.name]}
+          {...petsFilter}
+        />
 
-      <FilterSelector
-        className="mt-8"
-        onChange={onFilterChange}
-        values={filters[petsFilter.name]}
-        {...petsFilter}
-      />
-
-      <FilterSelector
-        className="mt-8"
-        onChange={onFilterChange}
-        values={filters[parkingFilter.name]}
-        {...parkingFilter}
-      />
+        <FilterSelector
+          className="mt-8"
+          onChange={onFilterChange}
+          values={filters[parkingFilter.name]}
+          {...parkingFilter}
+        />
+      </div>
     </div>
   );
 }

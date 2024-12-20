@@ -6,7 +6,7 @@ import {
   ShelterChoices,
   SpecialSituationRestrictionChoices,
   ViewSheltersQueryVariables,
-  useViewSheltersQuery,
+  useViewSheltersLazyQuery,
 } from '@monorepo/react/shelter';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
@@ -43,32 +43,48 @@ export function SheltersDisplay(props: TProps) {
     className = '',
   } = props;
 
+  const [getShelters, { loading, data, error }] = useViewSheltersLazyQuery();
+
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
 
-  const queryVariables: ViewSheltersQueryVariables = {};
+  useEffect(() => {
+    let queryVariables: ViewSheltersQueryVariables | undefined;
 
-  if (coordinates) {
-    const { latitude, longitude } = coordinates;
+    console.log('################################### SHOULD CALL QUERY');
 
-    queryVariables.filters = queryVariables.filters || {};
+    console.log('*****************  !!coordinates:', !!coordinates);
 
-    queryVariables.filters.geolocation = {
-      latitude,
-      longitude,
-      rangeInMiles,
-    };
-  }
+    if (coordinates) {
+      const { latitude, longitude } = coordinates;
 
-  if (propertyFilters) {
-    queryVariables.filters = queryVariables.filters || {};
+      queryVariables = queryVariables || {};
+      queryVariables.filters = queryVariables.filters || {};
 
-    queryVariables.filters.properties = propertyFilters;
-  }
+      queryVariables.filters.geolocation = {
+        latitude,
+        longitude,
+        rangeInMiles,
+      };
+    }
 
-  const { loading, data, error } = useViewSheltersQuery({
-    skip: !coordinates,
-    variables: queryVariables,
-  });
+    console.log('*****************  !!propertyFilters:', !!propertyFilters);
+
+    if (propertyFilters) {
+      queryVariables = queryVariables || {};
+      queryVariables.filters = queryVariables.filters || {};
+
+      queryVariables.filters.properties = propertyFilters;
+    }
+
+    console.log('*****************  !!queryVariables:', !!queryVariables);
+    console.log(queryVariables);
+
+    if (!queryVariables) {
+      return;
+    }
+
+    getShelters({ variables: queryVariables });
+  }, [coordinates, propertyFilters]);
 
   const shelters = data?.shelters?.results;
 

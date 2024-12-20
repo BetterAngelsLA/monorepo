@@ -6,8 +6,10 @@ type TProps = {
   content: ReactNode | null;
   type?: TModalType;
   animation?: ModalAnimationEnum | null;
-  closeOnMaskClick?: boolean;
   fullW?: boolean;
+  footer?: ReactNode;
+  closeOnMaskClick?: boolean;
+  onClose?: () => void;
 };
 
 export const modalAtom = atom<TProps | null>(null);
