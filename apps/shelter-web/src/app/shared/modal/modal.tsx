@@ -64,6 +64,9 @@ export function Modal(props: IModal): ReactElement | null {
     'md:pt-8',
     'p-6',
     'md:p-10',
+    'max-h-[calc(100vh - 88)]',
+    'overflow-hidden',
+    'overflow-y-auto',
     type === 'default' ? 'pb-12' : '',
   ];
 
@@ -71,7 +74,11 @@ export function Modal(props: IModal): ReactElement | null {
 
   const headerCss = ['flex', 'justify-between', 'align-center', 'mt-0', 'mb-4'];
 
-  const modalFooterCss = ['w-full', 'mt-auto'];
+  const modalFooterCss = [
+    'w-full',
+    'mt-auto',
+    'shadow-[0_-2px_4px_0px_rgba(0,0,0,0.05)]',
+  ];
 
   return (
     <ModalMask closeOnMaskClick={closeOnMaskClick}>
