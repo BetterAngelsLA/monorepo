@@ -33,10 +33,6 @@ export function ShelterFilters(props: IProps) {
   }
 
   useEffect(() => {
-    console.log();
-    console.log('| -------------  filters  ------------- |');
-    console.log(filters);
-
     onChange && onChange(filters);
   }, [filters]);
 

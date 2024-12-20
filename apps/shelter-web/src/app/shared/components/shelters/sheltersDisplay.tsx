@@ -13,6 +13,7 @@ import { useEffect } from 'react';
 import { TLocationSource } from '../../atoms/locationAtom';
 import { sheltersAtom } from '../../atoms/sheltersAtom';
 import { TLatLng } from '../map/types.maps';
+import { SearchSource } from './searchSource';
 import { ShelterList } from './shelterList';
 
 export type TShelterPropertyFilters = {
@@ -49,10 +50,6 @@ export function SheltersDisplay(props: TProps) {
 
   useEffect(() => {
     let queryVariables: ViewSheltersQueryVariables | undefined;
-
-    console.log('################################### SHOULD CALL QUERY');
-
-    console.log('*****************  !!coordinates:', !!coordinates);
 
     if (coordinates) {
       const { latitude, longitude } = coordinates;
@@ -107,16 +104,11 @@ export function SheltersDisplay(props: TProps) {
     return null;
   }
 
-  const locationSource =
-    coordinatesSource && coordinatesSource === 'address'
-      ? 'provided address'
-      : 'current location';
-
   return (
     <div className={className}>
       <div>
         <div className="font-semibold">{shelters.length} locations</div>
-        {!!locationSource && <div>(based on your {locationSource})</div>}
+        <SearchSource coordinatesSource={coordinatesSource} />
       </div>
 
       <ShelterList className="mt-4" shelters={shelters} />
