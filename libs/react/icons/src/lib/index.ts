@@ -1,3 +1,4 @@
+export { default as CheckIcon } from './components/checkIcon';
 export { default as CloseIcon } from './components/closeIcon';
 export { default as FilterIcon } from './components/filterIcon';
 export { default as FindMeIcon } from './components/findMeIcon';
