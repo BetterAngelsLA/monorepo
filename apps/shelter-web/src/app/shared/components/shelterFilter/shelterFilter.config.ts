@@ -31,12 +31,10 @@ export type TFilterConfig = {
   name: keyof TShelterPropertyFilters;
   header: string;
   options: TShelterFilterOption[];
-  selectAllKey?: string;
 };
 
 // Demographic
 const demographicOptions = [
-  DemographicChoices.All,
   DemographicChoices.SingleMen,
   DemographicChoices.SingleWomen,
   DemographicChoices.TayTeen,
@@ -59,7 +57,6 @@ export const demographicFilter: TFilterConfig = {
   name: 'demographics',
   header: 'Demographic',
   options: demographicOptionList,
-  selectAllKey: DemographicChoices.All,
 };
 
 // Special Situation

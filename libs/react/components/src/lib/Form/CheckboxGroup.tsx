@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { mergeCss } from '../../lib-utils/mergeCss';
 import { Checkbox } from './Checkbox';
 
+const SELECT_ALL_KEY = 'select_all';
+const SELECT_ALL_LABEL = 'Select All';
+
 type TCheckboxOptionKv = {
   label: string;
   value: string;
@@ -30,12 +33,18 @@ export type TProps = {
   className?: string;
   options: TCheckboxOption[];
   values: string[];
-  selectAllKey?: string;
+  selectAll?: string;
   onChange: (selected: string[]) => void;
 };
 
 export function CheckboxGroup(props: TProps) {
-  const { className, options, values = [], selectAllKey, onChange } = props;
+  const {
+    className,
+    options,
+    values = [],
+    selectAll = SELECT_ALL_LABEL,
+    onChange,
+  } = props;
 
   const [cbxOptions, setCbxOptions] = useState<TCheckboxOptionKv[]>([]);
 
@@ -46,10 +55,10 @@ export function CheckboxGroup(props: TProps) {
   }, [options]);
 
   function handleChange(value: string, checked: boolean) {
-    // add
+    // add filter
     if (checked) {
       // if select All
-      if (selectAllKey && value === selectAllKey) {
+      if (selectAll && value === SELECT_ALL_KEY) {
         const allSelected = cbxOptions.map((option) => option.value);
 
         return onChange(allSelected);
@@ -65,17 +74,17 @@ export function CheckboxGroup(props: TProps) {
       return onChange([...values, value]);
     }
 
-    // or remove
+    // remove filter
     const removableValues = [value];
 
-    if (selectAllKey) {
-      // removing all
-      if (value === selectAllKey) {
+    if (selectAll) {
+      // remove all
+      if (value === SELECT_ALL_KEY) {
         return onChange([]);
       }
 
       // not removing all, so will unselect ALL key
-      removableValues.push(selectAllKey);
+      removableValues.push(SELECT_ALL_KEY);
     }
 
     const updated = values.filter((val) => {
@@ -85,10 +94,25 @@ export function CheckboxGroup(props: TProps) {
     return onChange(updated);
   }
 
+  const visibleOptions = [...cbxOptions];
+
+  if (selectAll) {
+    visibleOptions.unshift({
+      label: selectAll,
+      value: SELECT_ALL_KEY,
+    });
+  }
+
+  const allSelected = cbxOptions.length === values.length;
+
   return (
     <div className={mergeCss(className)}>
-      {cbxOptions.map((option, idx: number) => {
-        const isChecked = values.indexOf(option.value) > -1;
+      {visibleOptions.map((option, idx: number) => {
+        let isChecked = values.indexOf(option.value) > -1;
+
+        if (allSelected && option.value === SELECT_ALL_KEY) {
+          isChecked = true;
+        }
 
         return (
           <Checkbox

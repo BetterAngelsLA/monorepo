@@ -10,22 +10,13 @@ type IProps = {
   name: string;
   options: TShelterFilterOption[];
   values?: TFilterOptionType[] | null;
-  selectAllKey?: string;
   expanded?: boolean;
   onChange: (name: string, selected: string[]) => void;
 };
 
 export function FilterSelector(props: IProps) {
-  const {
-    header,
-    name,
-    options,
-    values,
-    selectAllKey,
-    expanded,
-    onChange,
-    className,
-  } = props;
+  const { header, name, options, values, expanded, onChange, className } =
+    props;
 
   return (
     <div className={className}>
@@ -34,7 +25,7 @@ export function FilterSelector(props: IProps) {
           options={options}
           values={values || []}
           onChange={(selected) => onChange(name, selected)}
-          selectAllKey={selectAllKey}
+          selectAll="Select All"
         />
       </ExpandableContainer>
     </div>
