@@ -1,17 +1,26 @@
 import { FilterIcon } from '@monorepo/react/icons';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
-import { useEffect } from 'react';
+import { useResetAtom } from 'jotai/utils';
+import { useEffect, useState } from 'react';
 import { locationAtom } from '../../atoms/locationAtom';
 import { modalAtom } from '../../atoms/modalAtom';
+import { shelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { ModalAnimationEnum } from '../../modal/modal';
 import { AddressAutocomplete } from '../address/AddressAutocomplete';
 import { toGoogleLatLng } from '../map/utils/toGoogleLatLng';
-import { SheltersDisplay } from './sheltersDisplay';
+import { FilterPills } from '../shelterFilter/filterPills';
+import { FiltersActions } from '../shelterFilter/filtersActions';
+import { ShelterFilters } from '../shelterFilter/shelterFilters';
+import { SheltersDisplay, TShelterPropertyFilters } from './sheltersDisplay';
 
 export function ShelterSearch() {
-  const [location, setLocation] = useAtom(locationAtom);
   const [_modal, setModal] = useAtom(modalAtom);
+  const [location, setLocation] = useAtom(locationAtom);
+  const [queryFilters, setQueryFilters] = useState<TShelterPropertyFilters>();
+  const [submitQueryTs, setSubmitQueryTs] = useState<number>();
+  const [filters] = useAtom(shelterFiltersAtom);
+  const resetFilters = useResetAtom(shelterFiltersAtom);
 
   const map = useMap();
 
@@ -46,11 +55,26 @@ export function ShelterSearch() {
     });
   }
 
+  useEffect(() => {
+    if (submitQueryTs === undefined) {
+      return;
+    }
+
+    setQueryFilters(filters);
+  }, [submitQueryTs]);
+
+  function onSubmitFilters() {
+    setSubmitQueryTs(Date.now());
+    setModal(null);
+  }
+
   function onFilterClick() {
     setModal({
-      content: 'hello there',
-      animation: ModalAnimationEnum.EXPAND,
-      closeOnMaskClick: true,
+      content: <ShelterFilters className="w-full" />,
+      animation: ModalAnimationEnum.SLIDE_UP,
+      type: 'fullscreen',
+      footer: <FiltersActions className="pb-8" onDone={onSubmitFilters} />,
+      onClose: resetFilters,
     });
   }
 
@@ -68,10 +92,13 @@ export function ShelterSearch() {
         </button>
       </div>
 
+      <FilterPills className="mt-2" filters={filters} />
+
       <SheltersDisplay
         className="mt-8"
         coordinates={location}
         coordinatesSource={location?.source}
+        propertyFilters={queryFilters}
       />
     </>
   );

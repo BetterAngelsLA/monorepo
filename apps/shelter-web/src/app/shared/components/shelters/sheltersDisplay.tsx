@@ -1,28 +1,38 @@
-import { useViewSheltersQuery } from '@monorepo/react/shelter';
+import {
+  DemographicChoices,
+  ParkingChoices,
+  PetChoices,
+  RoomStyleChoices,
+  ShelterChoices,
+  SpecialSituationRestrictionChoices,
+  ViewSheltersQueryVariables,
+  useViewSheltersLazyQuery,
+} from '@monorepo/react/shelter';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
 import { TLocationSource } from '../../atoms/locationAtom';
 import { sheltersAtom } from '../../atoms/sheltersAtom';
 import { TLatLng } from '../map/types.maps';
+import { SearchSource } from './searchSource';
 import { ShelterList } from './shelterList';
 
-const SEARCH_RANGE_MILES = 20;
-
-// TODO: move gql Types to own lib
-// cannot import from @monorepo/expo... here
-type TQueryFilters = {
-  geolocation?: {
-    latitude: number;
-    longitude: number;
-    rangeInMiles?: number;
-  };
+export type TShelterPropertyFilters = {
+  pets?: PetChoices[] | null;
+  demographics?: DemographicChoices[] | null;
+  specialSituationRestrictions?: SpecialSituationRestrictionChoices[] | null;
+  shelterType?: ShelterChoices[] | null;
+  roomStyle?: RoomStyleChoices[] | null;
+  parking?: ParkingChoices[] | null;
 };
+
+const SEARCH_RANGE_MILES = 20;
 
 type TProps = {
   className?: string;
   coordinates?: TLatLng | null;
   coordinatesSource?: TLocationSource;
   rangeInMiles?: number;
+  propertyFilters?: TShelterPropertyFilters;
 };
 
 export function SheltersDisplay(props: TProps) {
@@ -30,29 +40,47 @@ export function SheltersDisplay(props: TProps) {
     coordinates,
     coordinatesSource,
     rangeInMiles = SEARCH_RANGE_MILES,
+    propertyFilters,
     className = '',
   } = props;
 
+  const [getShelters, { loading, data, error }] = useViewSheltersLazyQuery();
+
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
 
-  const queryFilters: TQueryFilters = {};
+  useEffect(() => {
+    let queryVariables: ViewSheltersQueryVariables | undefined;
 
-  if (coordinates) {
-    const { latitude, longitude } = coordinates;
+    if (coordinates) {
+      const { latitude, longitude } = coordinates;
 
-    queryFilters.geolocation = {
-      latitude,
-      longitude,
-      rangeInMiles,
-    };
-  }
+      queryVariables = queryVariables || {};
+      queryVariables.filters = queryVariables.filters || {};
 
-  const { loading, data, error } = useViewSheltersQuery({
-    skip: !coordinates,
-    variables: {
-      filters: queryFilters,
-    },
-  });
+      queryVariables.filters.geolocation = {
+        latitude,
+        longitude,
+        rangeInMiles,
+      };
+    }
+
+    if (propertyFilters) {
+      const prunedFilters = pruneFilters(propertyFilters);
+
+      if (prunedFilters) {
+        queryVariables = queryVariables || {};
+        queryVariables.filters = queryVariables.filters || {};
+
+        queryVariables.filters.properties = prunedFilters;
+      }
+    }
+
+    if (!queryVariables) {
+      return;
+    }
+
+    getShelters({ variables: queryVariables });
+  }, [coordinates, propertyFilters]);
 
   const shelters = data?.shelters?.results;
 
@@ -76,19 +104,30 @@ export function SheltersDisplay(props: TProps) {
     return null;
   }
 
-  const locationSource =
-    coordinatesSource && coordinatesSource === 'address'
-      ? 'provided address'
-      : 'current location';
-
   return (
     <div className={className}>
       <div>
         <div className="font-semibold">{shelters.length} locations</div>
-        {!!locationSource && <div>(based on your {locationSource})</div>}
+        <SearchSource coordinatesSource={coordinatesSource} />
       </div>
 
       <ShelterList className="mt-4" shelters={shelters} />
     </div>
   );
+}
+
+function pruneFilters(
+  filters?: TShelterPropertyFilters | null
+): TShelterPropertyFilters | null {
+  if (!filters) {
+    return null;
+  }
+
+  const result = Object.fromEntries(
+    Object.entries(filters).filter(([_, value]) => {
+      return value != null && (!Array.isArray(value) || value.length > 0);
+    })
+  );
+
+  return result;
 }
