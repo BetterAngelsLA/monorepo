@@ -1,19 +1,6 @@
 import '@testing-library/jest-dom';
-import { GET_SHELTERS_QUERY } from './shared/clients/apollo/queries/getShelters';
 
-const mocks = [
-  {
-    request: {
-      query: GET_SHELTERS_QUERY,
-    },
-    result: {
-      data: {
-        shelters: { id: '1', name: 'name' },
-      },
-    },
-    maxUsageCount: 1,
-  },
-];
+const mocks = [];
 
 describe('App', () => {
   it('should await fixed tests later!!!', () => {

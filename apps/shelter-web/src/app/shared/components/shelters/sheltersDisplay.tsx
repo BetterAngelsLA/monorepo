@@ -67,17 +67,16 @@ export function SheltersDisplay(props: TProps) {
       };
     }
 
-    console.log('*****************  !!propertyFilters:', !!propertyFilters);
-
     if (propertyFilters) {
-      queryVariables = queryVariables || {};
-      queryVariables.filters = queryVariables.filters || {};
+      const prunedFilters = pruneFilters(propertyFilters);
 
-      queryVariables.filters.properties = propertyFilters;
+      if (prunedFilters) {
+        queryVariables = queryVariables || {};
+        queryVariables.filters = queryVariables.filters || {};
+
+        queryVariables.filters.properties = prunedFilters;
+      }
     }
-
-    console.log('*****************  !!queryVariables:', !!queryVariables);
-    console.log(queryVariables);
 
     if (!queryVariables) {
       return;
@@ -123,4 +122,20 @@ export function SheltersDisplay(props: TProps) {
       <ShelterList className="mt-4" shelters={shelters} />
     </div>
   );
+}
+
+function pruneFilters(
+  filters?: TShelterPropertyFilters | null
+): TShelterPropertyFilters | null {
+  if (!filters) {
+    return null;
+  }
+
+  const result = Object.fromEntries(
+    Object.entries(filters).filter(([_, value]) => {
+      return value != null && (!Array.isArray(value) || value.length > 0);
+    })
+  );
+
+  return result;
 }

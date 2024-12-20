@@ -60,18 +60,11 @@ export function ShelterSearch() {
       return;
     }
 
-    console.log();
-    console.log('| -------------  filters - SUBMIT  ------------- |');
-    console.log(filters);
-    console.log();
-
     setQueryFilters(filters);
   }, [submitQueryTs]);
 
   function onSubmitFilters() {
-    console.log('################################### onSubmitFilters');
     setSubmitQueryTs(Date.now());
-    // resetFilters();
     setModal(null);
   }
 
