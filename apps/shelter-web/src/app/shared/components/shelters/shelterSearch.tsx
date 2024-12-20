@@ -9,6 +9,7 @@ import { shelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { ModalAnimationEnum } from '../../modal/modal';
 import { AddressAutocomplete } from '../address/AddressAutocomplete';
 import { toGoogleLatLng } from '../map/utils/toGoogleLatLng';
+import { FilterPills } from '../shelterFilter/filterPills';
 import { FiltersActions } from '../shelterFilter/filtersActions';
 import { ShelterFilters } from '../shelterFilter/shelterFilters';
 import { SheltersDisplay, TShelterPropertyFilters } from './sheltersDisplay';
@@ -97,6 +98,8 @@ export function ShelterSearch() {
           <FilterIcon className="w-6 ml-4 text-primary-20" />
         </button>
       </div>
+
+      <FilterPills className="mt-2" />
 
       <SheltersDisplay
         className="mt-8"

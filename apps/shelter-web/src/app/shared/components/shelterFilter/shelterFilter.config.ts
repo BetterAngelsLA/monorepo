@@ -33,6 +33,32 @@ export type TFilterConfig = {
   options: TShelterFilterOption[];
 };
 
+export function getFilterLabel(
+  category: keyof TShelterPropertyFilters,
+  value: TFilterOptionType
+): string | null {
+  switch (category) {
+    case 'demographics':
+      return enumDisplayDemographics[value as DemographicChoices] || null;
+    case 'pets':
+      return enumDisplayPetChoices[value as PetChoices] || null;
+    case 'specialSituationRestrictions':
+      return (
+        enumDisplaySpecialSituationRestrictionChoices[
+          value as SpecialSituationRestrictionChoices
+        ] || null
+      );
+    case 'shelterType':
+      return enumDisplayShelterChoices[value as ShelterChoices] || null;
+    case 'roomStyle':
+      return enumDisplayRoomStyles[value as RoomStyleChoices] || null;
+    case 'parking':
+      return enumDisplayParkingChoices[value as ParkingChoices] || null;
+    default:
+      return null;
+  }
+}
+
 // Demographic
 const demographicOptions = [
   DemographicChoices.SingleMen,
