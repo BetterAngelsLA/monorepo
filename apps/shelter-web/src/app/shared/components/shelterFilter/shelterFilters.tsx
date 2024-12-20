@@ -8,6 +8,8 @@ import {
   demographicFilter,
   parkingFilter,
   petsFilter,
+  roomStyleFilter,
+  shelterTypeFilter,
   specialSituationFilter,
 } from './shelterFilter.config';
 
@@ -59,19 +61,19 @@ export function ShelterFilters(props: IProps) {
           {...specialSituationFilter}
         />
 
-        {/* <FilterSelector
+        <FilterSelector
           className="mt-8"
           onChange={onFilterChange}
           values={filters[shelterTypeFilter.name]}
           {...shelterTypeFilter}
-        /> */}
+        />
 
-        {/* <FilterSelector
+        <FilterSelector
           className="mt-8"
           onChange={onFilterChange}
           values={filters[roomStyleFilter.name]}
           {...roomStyleFilter}
-        /> */}
+        />
 
         <FilterSelector
           className="mt-8"
