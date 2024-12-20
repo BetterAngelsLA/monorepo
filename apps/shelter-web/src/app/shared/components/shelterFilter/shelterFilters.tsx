@@ -21,15 +21,10 @@ export function ShelterFilters(props: IProps) {
 
   const [filters, setFilters] = useAtom(shelterFiltersAtom);
 
-  const parentCss = [className];
+  const parentCss = ['pb-24', className];
 
   function onFilterChange(filterName: string, selected: string[]) {
     setFilters((prev) => {
-      const updated = {
-        ...prev,
-        [filterName]: selected,
-      };
-
       return {
         ...prev,
         [filterName]: selected,
@@ -41,7 +36,7 @@ export function ShelterFilters(props: IProps) {
     console.log();
     console.log('| -------------  filters  ------------- |');
     console.log(filters);
-    console.log();
+
     onChange && onChange(filters);
   }, [filters]);
 
