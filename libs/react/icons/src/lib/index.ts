@@ -1,3 +1,5 @@
+export { default as BaShelterLogoIcon } from './components/baShelterLogoIcon';
+export { default as BetterAngelsLogoIcon } from './components/betterAngelsLogoIcon';
 export { default as CloseIcon } from './components/closeIcon';
 export { default as FilterIcon } from './components/filterIcon';
 export { default as FindMeIcon } from './components/findMeIcon';
