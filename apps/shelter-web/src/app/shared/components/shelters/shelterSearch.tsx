@@ -87,8 +87,8 @@ export function ShelterSearch() {
           onPlaceSelect={onPlaceSelect}
         />
 
-        <button onClick={onFilterClick}>
-          <FilterIcon className="w-6 ml-4 text-primary-20" />
+        <button onClick={onFilterClick} className="self-start ml-4 mt-4">
+          <FilterIcon className="w-6 text-primary-20" />
         </button>
       </div>
 
