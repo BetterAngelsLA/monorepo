@@ -35,19 +35,25 @@ export function ShelterCard(props: TShelterCard) {
 
   const formattedAddress = location?.place.replace(/, USA$/, '');
 
-  const parentCss = ['flex', 'flex-col', 'md:flex-row', className];
+  const parentCss = [
+    'flex',
+    'flex-col',
+    'md:flex-row',
+    'cursor-pointer',
+    className,
+  ];
 
   const heroCss = ['md:w-96', 'md:mr-4'];
 
   const contentCss = ['mt-4'];
 
   return (
-    <div className={mergeCss(parentCss)}>
+    <div
+      className={mergeCss(parentCss)}
+      onClick={() => navigate(`/shelter/${id}`)}
+    >
       {heroImage && (
-        <div
-          onClick={() => navigate(`/shelter/${id}`)}
-          className={mergeCss(heroCss)}
-        >
+        <div className={mergeCss(heroCss)}>
           <img
             src={heroImage}
             alt={`hero for ${name}`}
