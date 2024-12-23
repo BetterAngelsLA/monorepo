@@ -43,6 +43,7 @@ export function Checkbox(props: ICheckbox): ReactElement {
     'overflow-hidden',
     'flex',
     'items-center',
+    'justify-center',
     'border',
     checked ? 'border-primary-20 bg-primary-20' : 'border-neutral-90 bg-white',
     'rounded-sm',
@@ -56,7 +57,7 @@ export function Checkbox(props: ICheckbox): ReactElement {
     >
       <div className="text-left text-wrap">{label}</div>
       <div className={mergeCss(checkboxContainerCss)}>
-        {checked && <CheckIcon className="text-white" />}
+        {checked && <CheckIcon className="text-white h-4" />}
       </div>
     </button>
   );
