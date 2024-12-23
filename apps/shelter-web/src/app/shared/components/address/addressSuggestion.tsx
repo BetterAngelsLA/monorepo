@@ -11,13 +11,14 @@ export function AddressSuggestion(props: TAddressOption) {
 
   const {
     description,
-    structured_formatting: { main_text, secondary_text },
+    structured_formatting: { main_text = '', secondary_text = '' },
   } = item;
 
   let primaryText = main_text;
+
   const secondaryText = secondary_text.replace(/, USA$/, '');
 
-  if (!secondaryText) {
+  if (!secondaryText && description) {
     primaryText = description;
   }
 
@@ -34,6 +35,10 @@ export function AddressSuggestion(props: TAddressOption) {
     'hover:bg-neutral-98',
     'active:bg-neutral-98',
   ].join(' ');
+
+  if (!primaryText) {
+    return null;
+  }
 
   return (
     <div className={parentCss} onClick={onClick}>

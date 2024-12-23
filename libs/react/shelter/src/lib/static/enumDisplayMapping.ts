@@ -2,6 +2,8 @@ import {
   DemographicChoices,
   EntryRequirementChoices,
   GeneralServiceChoices,
+  ParkingChoices,
+  PetChoices,
   RoomStyleChoices,
   ShelterChoices,
   SpecialSituationRestrictionChoices,
@@ -11,12 +13,12 @@ export const enumDisplayDemographics: { [key in DemographicChoices]: string } =
   {
     [DemographicChoices.All]: 'All',
     [DemographicChoices.Families]: 'Families',
-    [DemographicChoices.Other]: 'Other',
+    [DemographicChoices.Other]: 'Others',
     [DemographicChoices.Seniors]: 'Seniors',
-    [DemographicChoices.SingleMen]: 'Single Man',
+    [DemographicChoices.SingleMen]: 'Single Men',
     [DemographicChoices.SingleMoms]: 'Single Moms',
-    [DemographicChoices.SingleWomen]: 'Single Woman',
-    [DemographicChoices.TayTeen]: 'Tay Teen',
+    [DemographicChoices.SingleWomen]: 'Single Women',
+    [DemographicChoices.TayTeen]: 'TAY/Teen',
   };
 
 export const enumDisplayGeneralServiceChoices: {
@@ -76,4 +78,21 @@ export const enumDisplayRoomStyles: { [key in RoomStyleChoices]: string } = {
   [RoomStyleChoices.Other]: 'Other',
   [RoomStyleChoices.SharedRooms]: 'Shared Room',
   [RoomStyleChoices.SingleRoom]: 'Single Room',
+};
+
+export const enumDisplayPetChoices: { [key in PetChoices]: string } = {
+  [PetChoices.Cats]: 'Cats',
+  [PetChoices.DogsOver_25Lbs]: 'Dogs (> 25 lbs)',
+  [PetChoices.DogsUnder_25Lbs]: 'Dogs (< 25 lbs)',
+  [PetChoices.Exotics]: 'Exotics',
+  [PetChoices.NoPetsAllowed]: 'No Pets Allowed',
+  [PetChoices.ServiceAnimals]: 'Service Animals',
+};
+
+export const enumDisplayParkingChoices: { [key in ParkingChoices]: string } = {
+  [ParkingChoices.Automobile]: 'Automobile',
+  [ParkingChoices.Bicycle]: 'Bicycle',
+  [ParkingChoices.Motorcycle]: 'Motorcycle',
+  [ParkingChoices.NoParking]: 'No Parking',
+  [ParkingChoices.Rv]: 'RV',
 };
