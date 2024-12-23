@@ -21,6 +21,7 @@ module.exports = {
         primary: ['Poppins', 'sans-serif'],
       },
       colors: {
+        'brand-yellow': 'var(--color-brand-yellow)',
         'primary-20': 'var(--color-primary-20)',
         'primary-60': 'var(--color-primary-60)',
         'primary-95': 'var(--color-primary-95)',
