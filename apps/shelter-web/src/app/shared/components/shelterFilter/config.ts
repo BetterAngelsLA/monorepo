@@ -48,9 +48,9 @@ export function getFilterLabel(
           value as SpecialSituationRestrictionChoices
         ] || null
       );
-    case 'shelterType':
+    case 'shelterTypes':
       return enumDisplayShelterChoices[value as ShelterChoices] || null;
-    case 'roomStyle':
+    case 'roomStyles':
       return enumDisplayRoomStyles[value as RoomStyleChoices] || null;
     case 'parking':
       return enumDisplayParkingChoices[value as ParkingChoices] || null;
@@ -131,7 +131,7 @@ const shelterTypeOptionsList: TShelterFilterOption[] = shelterTypeOptions.map(
 );
 
 export const shelterTypeFilter: TFilterConfig = {
-  name: 'shelterType',
+  name: 'shelterTypes',
   header: 'Shelter Type',
   options: shelterTypeOptionsList,
 };
@@ -157,7 +157,7 @@ const roomStyleOptionsList: TShelterFilterOption[] = roomStyleOptions.map(
 );
 
 export const roomStyleFilter: TFilterConfig = {
-  name: 'roomStyle',
+  name: 'roomStyles',
   header: 'Room Style',
   options: roomStyleOptionsList,
 };

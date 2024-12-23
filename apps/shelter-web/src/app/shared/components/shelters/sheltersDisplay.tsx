@@ -20,8 +20,8 @@ export type TShelterPropertyFilters = {
   pets?: PetChoices[] | null;
   demographics?: DemographicChoices[] | null;
   specialSituationRestrictions?: SpecialSituationRestrictionChoices[] | null;
-  shelterType?: ShelterChoices[] | null;
-  roomStyle?: RoomStyleChoices[] | null;
+  shelterTypes?: ShelterChoices[] | null;
+  roomStyles?: RoomStyleChoices[] | null;
   parking?: ParkingChoices[] | null;
 };
 

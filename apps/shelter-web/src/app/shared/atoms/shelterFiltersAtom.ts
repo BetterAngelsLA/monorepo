@@ -1,12 +1,12 @@
 import { atomWithReset } from 'jotai/utils';
 import { TShelterPropertyFilters } from '../components/shelters/sheltersDisplay';
 
-export const nullShelterFilters = {
+export const nullShelterFilters: TShelterPropertyFilters = {
   pets: [],
   demographics: [],
   specialSituationRestrictions: [],
-  // shelterType: [],
-  // roomStyle: [],
+  shelterTypes: [],
+  roomStyles: [],
   parking: [],
 };
 
