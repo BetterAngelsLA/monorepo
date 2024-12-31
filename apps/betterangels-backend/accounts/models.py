@@ -102,6 +102,12 @@ class User(AbstractBaseUser, PermissionsMixin):
             organization__in=user_organizations, template__name__in=authorized_permission_groups
         ).exists()
 
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if self.email:
+            self.email = self.email.lower()
+
+        super().save(*args, **kwargs)
+
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):
     accepted = models.BooleanField(default=False)
