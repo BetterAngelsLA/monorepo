@@ -7,7 +7,10 @@ import { modalAtom } from '../../shared/atoms/modalAtom';
 import { sheltersAtom } from '../../shared/atoms/sheltersAtom';
 import { Map } from '../../shared/components/map/map';
 import { TLatLng, TMarker } from '../../shared/components/map/types.maps';
-import { ShelterCard } from '../../shared/components/shelter/shelterCard';
+import {
+  ShelterCard,
+  TShelter,
+} from '../../shared/components/shelter/shelterCard';
 import { ShelterSearch } from '../../shared/components/shelters/shelterSearch';
 import { ModalAnimationEnum } from '../../shared/modal/modal';
 
