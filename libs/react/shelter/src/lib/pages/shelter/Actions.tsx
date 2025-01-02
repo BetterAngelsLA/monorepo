@@ -1,4 +1,4 @@
-import { CallIcon, LocationIcon } from '@monorepo/react/icons';
+import { CallIcon, LocationIcon, ShareIcon } from '@monorepo/react/icons';
 
 export default function Actions() {
   return (
@@ -12,6 +12,7 @@ export default function Actions() {
         <span>Directions</span>
       </div>
       <div className="flex flex-col items-center">
+        <ShareIcon className="w-6 h-6 fill-primary-20" />
         <span>Share</span>
       </div>
     </div>
