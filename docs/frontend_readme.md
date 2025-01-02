@@ -8,9 +8,9 @@ The betterangels_frontend is built in [React Native](https://reactnative.dev/). 
 
 If you are a volunteer be sure to also read the [Volunteer Contributors](#volunteer-contributors) section
 
-
-
 ### Installation Guide
+
+[Expo Setup with WSL2 and Android Emulators on Windows](#expo-setup-with-wsl2-and-android-emulators-on-windows)
 
 **Prerequisites:**
 
@@ -223,6 +223,84 @@ Our CI pipeline checks if the generated GraphQL schema and types are up-to-date.
 <br>
 <br>
 
+#
+
+<hr>
+
+## Expo Setup with WSL2 and Android Emulators on Windows
+
+This section provides a guide on setting up a development environment for React Native using Expo, WSL2, and Android emulators on a Windows system.
+
+**Prerequisites**
+
+Before you begin, ensure you have the following installed on your Windows machine:
+
+1. **Visual Studio Code**: [Download and install VSCode](https://code.visualstudio.com/)
+2. **Windows Subsystem for Linux (WSL2)**: Install WSL2 by running `wsl --install` in a PowerShell or Windows Command Prompt with administrative privileges. [More details](https://docs.microsoft.com/en-us/windows/wsl/install)
+3. **Docker for Windows**: [Download and install Docker](https://www.docker.com/products/docker-desktop)
+
+<br>
+
+**Setting Up the Environment**
+
+1. **Configure WSL2**
+
+- Open a WSL2 terminal (e.g., Ubuntu).
+- Set up your SSH key for GitHub or other version control systems.
+
+2. **Clone Your Repository**
+
+- Inside the WSL2 terminal, navigate to the directory where you want to work and clone your repository.
+
+3. **Node.js, npm, yarn**
+
+- Install a specific version of Node.js using NVM (Node Version Manager):
+
+  ```
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
+  ```
+
+  Restart your WSL2 terminal or run **source ~/.nvm/nvm.sh** to apply the changes.
+
+  ```
+  nvm install 18.17.1
+  ```
+
+  Should you encounter any problems, refer to [NVM Installation Guide](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating)
+
+  <br>
+
+- Enable Corepack to manage package managers like Yarn:
+  ```
+  corepack enable
+  ```
+
+4. **Android Studio**
+
+- Install Android Studio: [Download Android Studio](https://developer.android.com/studio)
+
+5. **WSL2 Configuration Script**
+
+- Run the following script to configure Android development tools:
+
+  ```
+  curl <'script-url'>
+  ```
+
+- This script sets environment variables and creates a symbolic link for `adb`.
+
+6. **Final Steps**
+
+- Restart your WSL2 terminal or run `source ~/.bashrc` to apply the changes.
+- [Test your setup](#getting-started) by starting an Android emulator and running an Expo project.
+
+**Conclusion**
+
+With these steps, you should have a functional React Native development environment using Expo, WSL2, and Android emulators on your Windows system. Enjoy your development experience!
+
+<br>
+<br>
+
 ## Volunteer Contributors
 
 This section provides guidelines to help new volunteer contributors get set up and aligned with our development process.
@@ -273,8 +351,7 @@ git merge upstream/main
 
 #### 2. Creating a Feature Branch
 
-Check the Jira board for tickets and assign one to yourself, move it to the ***In Progress*** column. Always create a new branch for each feature or bug fix you’re working on. This keeps your work organized and helps with code reviews.
-
+Check the Jira board for tickets and assign one to yourself, move it to the **_In Progress_** column. Always create a new branch for each feature or bug fix you’re working on. This keeps your work organized and helps with code reviews.
 
 Follow this naming convention when creating branches: **DEV-ticketNumber/short-description**
 
@@ -297,6 +374,7 @@ git add .
 git commit -m "Describe your changes here"
 git push origin feature-branch-name
 ```
+
 #### 4. Creating a Pull Request
 
 1. Go to your forked repo on GitHub.
