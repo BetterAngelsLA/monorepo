@@ -69,7 +69,7 @@ export default function LoginForm({
     try {
       const { data } = await loginForm({
         variables: {
-          username,
+          username: username.toLowerCase(),
           password,
         },
       });

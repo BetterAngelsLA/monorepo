@@ -21,8 +21,10 @@ module.exports = {
         primary: ['Poppins', 'sans-serif'],
       },
       colors: {
+        'brand-yellow': 'var(--color-brand-yellow)',
         'primary-20': 'var(--color-primary-20)',
         'primary-60': 'var(--color-primary-60)',
+        'primary-95': 'var(--color-primary-95)',
         'steel-blue': 'var(--color-steel-blue)',
         'neutral-40': 'var(--color-neutral-40)',
         'neutral-70': 'var(--color-neutral-70)',
@@ -32,6 +34,20 @@ module.exports = {
         'success-30': 'var(--color-success-30)',
         'success-90': 'var(--color-success-90)',
       },
+    },
+    keyframes: {
+      slideInUp: {
+        '0%': { transform: 'translate3d(0, 10%, 0)' },
+        '100%': { transform: 'translate3d(0, 0, 0)' },
+      },
+      expandInOut: {
+        '0%': { transform: 'scale(.85, .5)' },
+        '100%': { transform: 'scale(1, 1)' },
+      },
+    },
+    animation: {
+      slideInUp: 'slideInUp 250ms ease-in-out 0ms',
+      expandInOut: 'expandInOut 200ms ease-in-out 0ms',
     },
   },
   plugins: [],
