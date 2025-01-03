@@ -1,7 +1,7 @@
 import * as Types from '../../../../../../../expo/betterangels/src/lib/apollo/graphql/__generated__/types';
 
-import * as Apollo from '@apollo/client';
 import { gql } from '@apollo/client';
+import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
 export type ViewSheltersQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.ShelterFilter>;
@@ -9,49 +9,28 @@ export type ViewSheltersQueryVariables = Types.Exact<{
   order?: Types.InputMaybe<Types.ShelterOrder>;
 }>;
 
-export type ViewSheltersQuery = {
-  __typename?: 'Query';
-  shelters: {
-    __typename?: 'ShelterTypeOffsetPaginated';
-    totalCount: number;
-    results: Array<{
-      __typename?: 'ShelterType';
-      id: string;
-      name: string;
-      heroImage?: string | null;
-      distanceInMiles?: number | null;
-      location?: {
-        __typename?: 'ShelterLocationType';
-        latitude: number;
-        longitude: number;
-        place: string;
-      } | null;
-    }>;
-  };
-};
+
+export type ViewSheltersQuery = { __typename?: 'Query', shelters: { __typename?: 'ShelterTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'ShelterType', id: string, name: string, heroImage?: string | null, distanceInMiles?: number | null, location?: { __typename?: 'ShelterLocationType', latitude: number, longitude: number, place: string } | null }> } };
+
 
 export const ViewSheltersDocument = gql`
-  query ViewShelters(
-    $filters: ShelterFilter
-    $pagination: OffsetPaginationInput
-    $order: ShelterOrder
-  ) {
-    shelters(filters: $filters, pagination: $pagination, order: $order) {
-      totalCount
-      results {
-        id
-        name
-        heroImage
-        distanceInMiles
-        location {
-          latitude
-          longitude
-          place
-        }
+    query ViewShelters($filters: ShelterFilter, $pagination: OffsetPaginationInput, $order: ShelterOrder) {
+  shelters(filters: $filters, pagination: $pagination, order: $order) {
+    totalCount
+    results {
+      id
+      name
+      heroImage
+      distanceInMiles
+      location {
+        latitude
+        longitude
+        place
       }
     }
   }
-`;
+}
+    `;
 
 /**
  * __useViewSheltersQuery__
@@ -71,52 +50,19 @@ export const ViewSheltersDocument = gql`
  *   },
  * });
  */
-export function useViewSheltersQuery(
-  baseOptions?: Apollo.QueryHookOptions<
-    ViewSheltersQuery,
-    ViewSheltersQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<ViewSheltersQuery, ViewSheltersQueryVariables>(
-    ViewSheltersDocument,
-    options
-  );
-}
-export function useViewSheltersLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<
-    ViewSheltersQuery,
-    ViewSheltersQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<ViewSheltersQuery, ViewSheltersQueryVariables>(
-    ViewSheltersDocument,
-    options
-  );
-}
-export function useViewSheltersSuspenseQuery(
-  baseOptions?: Apollo.SuspenseQueryHookOptions<
-    ViewSheltersQuery,
-    ViewSheltersQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useSuspenseQuery<ViewSheltersQuery, ViewSheltersQueryVariables>(
-    ViewSheltersDocument,
-    options
-  );
-}
-export type ViewSheltersQueryHookResult = ReturnType<
-  typeof useViewSheltersQuery
->;
-export type ViewSheltersLazyQueryHookResult = ReturnType<
-  typeof useViewSheltersLazyQuery
->;
-export type ViewSheltersSuspenseQueryHookResult = ReturnType<
-  typeof useViewSheltersSuspenseQuery
->;
-export type ViewSheltersQueryResult = Apollo.QueryResult<
-  ViewSheltersQuery,
-  ViewSheltersQueryVariables
->;
+export function useViewSheltersQuery(baseOptions?: Apollo.QueryHookOptions<ViewSheltersQuery, ViewSheltersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<ViewSheltersQuery, ViewSheltersQueryVariables>(ViewSheltersDocument, options);
+      }
+export function useViewSheltersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ViewSheltersQuery, ViewSheltersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<ViewSheltersQuery, ViewSheltersQueryVariables>(ViewSheltersDocument, options);
+        }
+export function useViewSheltersSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ViewSheltersQuery, ViewSheltersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<ViewSheltersQuery, ViewSheltersQueryVariables>(ViewSheltersDocument, options);
+        }
+export type ViewSheltersQueryHookResult = ReturnType<typeof useViewSheltersQuery>;
+export type ViewSheltersLazyQueryHookResult = ReturnType<typeof useViewSheltersLazyQuery>;
+export type ViewSheltersSuspenseQueryHookResult = ReturnType<typeof useViewSheltersSuspenseQuery>;
+export type ViewSheltersQueryResult = Apollo.QueryResult<ViewSheltersQuery, ViewSheltersQueryVariables>;
