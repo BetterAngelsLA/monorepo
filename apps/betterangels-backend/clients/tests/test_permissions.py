@@ -132,13 +132,15 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         client_count = ClientProfile.objects.count()
         mutation = """
             query ViewClientProfiles {
-                clientProfiles {
-                    id
-                    user {
-                        firstName
-                        lastName
-                        middleName
-                        email
+                clientProfilesPaginated(pagination: {offset: 0, limit: 10}) {
+                    results {
+                        id
+                        user {
+                            firstName
+                            lastName
+                            middleName
+                            email
+                        }
                     }
                 }
             }
@@ -148,7 +150,7 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         response = self.execute_graphql(mutation, variables)
 
         expected_client_count = client_count if should_succeed else 0
-        self.assertTrue(len(response["data"]["clientProfiles"]) == expected_client_count)
+        self.assertTrue(len(response["data"]["clientProfilesPaginated"]["results"]) == expected_client_count)
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")

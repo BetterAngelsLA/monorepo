@@ -112,16 +112,23 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         query = f"""
             query ViewClientProfiles {{
-                clientProfiles{{
-                    {self.client_profile_fields}
+                clientProfilesPaginated(pagination: {{offset: $offset, limit: $limit}}) {{
+                    totalCount
+                    pageInfo {{
+                        limit
+                        offset
+                    }}
+                    results {{
+                        {self.client_profile_fields}
+                    }}
                 }}
             }}
         """
-        expected_query_count = 8
+        expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query)
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
-        client_profiles = response["data"]["clientProfiles"]
+        client_profiles = response["data"]["clientProfilesPaginated"]["results"]
         client_profile_count = ClientProfile.objects.count()
         self.assertEqual(client_profile_count, len(client_profiles))
 
