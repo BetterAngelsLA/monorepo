@@ -1,11 +1,15 @@
 import { Button, Card } from '@monorepo/react/components';
 import { useViewShelterQuery } from './__generated__/shelter.generated';
 import Actions from './Actions';
+import EcosystemInfo from './EcosystemInfo';
 import EntryRequirements from './EntryRequirements';
 import GeneralInfo from './GeneralInfo';
 import Header from './Header';
 import OperationHours from './OperationHours';
+import OtherServices from './OtherServices';
+import Restrictions from './Restrictions';
 import RoomStyles from './RoomStyles';
+import ShelterDetail from './ShelterDetail';
 import ShelterTypes from './ShelterTypes';
 import SpecialRestrictions from './SpecialRestrictions';
 
@@ -43,6 +47,10 @@ export default function ShelterPage({ id }: { id: string }) {
         <SpecialRestrictions shelter={shelter} />
         <ShelterTypes shelter={shelter} />
         <RoomStyles shelter={shelter} />
+        <ShelterDetail shelter={shelter} />
+        <Restrictions shelter={shelter} />
+        <OtherServices shelter={shelter} />
+        <EcosystemInfo shelter={shelter} />
       </div>
     </div>
   );

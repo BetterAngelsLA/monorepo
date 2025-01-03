@@ -48,6 +48,9 @@ query ViewShelter($id: ID!) {
         url
       }
     }
+    funders {
+      name
+    }
     generalServices {
       name
     }
