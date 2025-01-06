@@ -89,7 +89,12 @@ export default function TabLayout() {
             },
             headerShadowVisible: false,
             tabBarIcon: ({ color, focused }) => (
-              <View style={{ alignItems: 'center', width: 80, height: 15 }}>
+              <View
+                style={{
+                  alignItems: 'center',
+                  ...(isNative && styles.tabBarIconStyle),
+                }}
+              >
                 {focused ? (
                   <HouseSolidIcon color={color} />
                 ) : (
@@ -109,7 +114,12 @@ export default function TabLayout() {
             href: null,
             title: 'Appointment',
             tabBarIcon: ({ focused, color }) => (
-              <View style={{ alignItems: 'center', width: 80, height: 15 }}>
+              <View
+                style={{
+                  alignItems: 'center',
+                  ...(isNative && styles.tabBarIconStyle),
+                }}
+              >
                 {focused ? (
                   <CalendarSolidIcon color={color} />
                 ) : (
@@ -176,7 +186,12 @@ export default function TabLayout() {
             },
             title: '',
             tabBarIcon: ({ focused, color }) => (
-              <View style={{ alignItems: 'center', width: 80, height: 15 }}>
+              <View
+                style={{
+                  alignItems: 'center',
+                  ...(isNative && styles.tabBarIconStyle),
+                }}
+              >
                 {focused ? (
                   <UsersSolidIcon color={color} />
                 ) : (
@@ -195,7 +210,12 @@ export default function TabLayout() {
             title: 'Map',
             href: null,
             tabBarIcon: ({ color, focused }) => (
-              <View style={{ alignItems: 'center', width: 80, height: 15 }}>
+              <View
+                style={{
+                  alignItems: 'center',
+                  ...(isNative && styles.tabBarIconStyle),
+                }}
+              >
                 {focused ? (
                   <MapSolidIcon color={color} />
                 ) : (
@@ -214,7 +234,12 @@ export default function TabLayout() {
             href: null,
             title: '',
             tabBarIcon: ({ color, focused }) => (
-              <View style={{ alignItems: 'center', width: 80, height: 15 }}>
+              <View
+                style={{
+                  alignItems: 'center',
+                  ...(isNative && styles.tabBarIconStyle),
+                }}
+              >
                 {focused ? (
                   <SitemapSolidIcon color={color} />
                 ) : (
@@ -289,5 +314,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.WHITE,
+  },
+  tabBarIconStyle: {
+    width: 80,
+    height: 15,
   },
 });
