@@ -29,13 +29,13 @@ mutation CreateNote($data: CreateNoteInput!) {
   }
 }
 
-query ClientProfiles(
+query ClientProfilesPaginated(
   $filters: ClientProfileFilter
   $pagination: OffsetPaginationInput
   $order: ClientProfileOrder
 ) {
   clientProfilesPaginated(pagination: $pagination, filters: $filters, order: $order) {
-    ... on ClientProfileType {
+    ... on ClientProfileTypeOffsetPaginated {
       id
       age
       dateOfBirth

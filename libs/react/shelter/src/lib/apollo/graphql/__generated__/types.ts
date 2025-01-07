@@ -1221,7 +1221,6 @@ export type Query = {
   clientDocuments: Array<ClientDocumentType>;
   clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
   clientProfile: ClientProfileType;
-  clientProfiles: Array<ClientProfileType>;
   clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
@@ -1256,13 +1255,6 @@ export type QueryClientDocumentsPaginatedArgs = {
 
 export type QueryClientProfileArgs = {
   pk: Scalars['ID']['input'];
-};
-
-
-export type QueryClientProfilesArgs = {
-  filters?: InputMaybe<ClientProfileFilter>;
-  order?: InputMaybe<ClientProfileOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -1587,8 +1579,8 @@ export type ShelterPropertyInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
-  roomStyle?: InputMaybe<Array<RoomStyleChoices>>;
-  shelterType?: InputMaybe<Array<ShelterChoices>>;
+  roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
+  shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
 };
 
