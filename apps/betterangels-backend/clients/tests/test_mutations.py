@@ -142,28 +142,20 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "email": "firstey_lastey@example.com",
         }
 
-        contact_1 = {
-            "id": self.client_profile_1["contacts"][0]["id"],
-            "name": "Jerryyy",
-            "email": "jerryyy@example.co",
-            "phoneNumber": "6465551212",
-            "mailingAddress": "1235 Main Street",
-            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
-            "relationshipToClientOther": "bff",
-        }
-        contact_new = {
-            "name": "New guy",
-            "email": "new_guy@example.co",
-            "phoneNumber": "3475551212",
-            "mailingAddress": "1236 Main Street",
-            "relationshipToClient": RelationshipTypeEnum.UNCLE.name,
-            "relationshipToClientOther": None,
-        }
-        contacts = [contact_1, contact_new]
+        contacts: list = []
 
-        hmis_profiles: list = []
+        hmis_profile_update = {
+            "id": self.client_profile_1["hmisProfiles"][0]["id"],
+            "agency": HmisAgencyEnum.LAHSA.name,
+            "hmisId": "HMISidLAHSA1Updated",
+        }
+        hmis_profile_new = {
+            "hmisId": "HMISidPASADENA1New",
+            "agency": HmisAgencyEnum.PASADENA.name,
+        }
+        hmis_profiles = [hmis_profile_update, hmis_profile_new]
 
-        household_member_1 = {
+        household_member_update = {
             "id": self.client_profile_1["householdMembers"][0]["id"],
             "name": "Daffodils",
             "dateOfBirth": "1900-01-02",
@@ -180,23 +172,23 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.MOTHER.name,
             "relationshipToClientOther": None,
         }
-        household_members = [household_member_1, household_member_new]
+        household_members = [household_member_update, household_member_new]
 
-        client_1_phone_number_1 = {
+        phone_number_update = {
             "id": self.client_profile_1["phoneNumbers"][0]["id"],
             "number": "2125551212",
             "isPrimary": False,
         }
-        client_1_phone_number_new = {
+        phone_number_new = {
             "number": "6465551212",
             "isPrimary": True,
         }
-        client_1_phone_numbers = [client_1_phone_number_1, client_1_phone_number_new]
-        client_1_social_media_profile_2 = {
+        phone_numbers = [phone_number_update, phone_number_new]
+        social_media_profile_new = {
             "platform": SocialMediaEnum.TWITTER.name,
             "platformUserId": "bortman",
         }
-        client_1_social_media_profiles = [client_1_social_media_profile_2]
+        social_media_profiles = [social_media_profile_new]
 
         variables = {
             "id": self.client_profile_1["id"],
@@ -218,7 +210,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "mailingAddress": "1234 Mailing St",
             "nickname": "Fasty",
             "phoneNumber": "2125551212",
-            "phoneNumbers": client_1_phone_numbers,
+            "phoneNumbers": phone_numbers,
             "physicalDescription": "normally cat-like",
             "placeOfBirth": "Los Angeles, CA",
             "preferredCommunication": [PreferredCommunicationEnum.WHATSAPP.name],
@@ -227,7 +219,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "pronounsOther": "she/her/theirs",
             "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
             "residenceAddress": "1234 Residence St",
-            "socialMediaProfiles": client_1_social_media_profiles,
+            "socialMediaProfiles": social_media_profiles,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": user,
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
@@ -236,9 +228,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_profile = response["data"]["updateClientProfile"]
 
         # Add display fields to nested objects and update variables
-        expected_household_member_1 = {"displayGender": "Non-binary", **household_member_1}
+        expected_household_member_update = {"displayGender": "Non-binary", **household_member_update}
         expected_household_member_new = {"displayGender": "pangender", **household_member_new}
-        expected_household_members = [expected_household_member_1, expected_household_member_new]
+        expected_household_members = [expected_household_member_update, expected_household_member_new]
         variables["householdMembers"] = expected_household_members
 
         expected_client_profile = {
@@ -256,8 +248,44 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             ignore_order=True,
             exclude_regex_paths=[r"\['id'\]$"],
         )
-
         self.assertFalse(client_differences)
+
+    def test_update_client_profile_mutation_related_objects(self) -> None:
+        """Verifies that updating a client profile's doesn't affect other client profiles."""
+        client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
+        self.assertEqual(client_profile_2.hmis_profiles.count(), 1)
+        self.assertEqual(client_profile_2.phone_numbers.count(), 1)
+
+        hmis_profile_update = {
+            "id": self.client_profile_1["hmisProfiles"][0]["id"],
+            "agency": HmisAgencyEnum.LAHSA.name,
+            "hmisId": "HMISidLAHSA1Updated",
+        }
+        hmis_profile_new = {
+            "hmisId": "HMISidPASADENA1New",
+            "agency": HmisAgencyEnum.PASADENA.name,
+        }
+        hmis_profiles = [hmis_profile_update, hmis_profile_new]
+        phone_number_update = {
+            "id": self.client_profile_1["phoneNumbers"][0]["id"],
+            "number": "2125551212",
+            "isPrimary": False,
+        }
+        phone_number_new = {
+            "number": "6465551212",
+            "isPrimary": True,
+        }
+        phone_numbers = [phone_number_update, phone_number_new]
+
+        variables = {
+            "id": self.client_profile_1["id"],
+            "hmisProfiles": hmis_profiles,
+            "phoneNumbers": phone_numbers,
+        }
+        self._update_client_profile_fixture(variables)
+
+        self.assertEqual(client_profile_2.hmis_profiles.count(), 1)
+        self.assertEqual(client_profile_2.phone_numbers.count(), 1)
 
     def test_partial_update_client_profile_mutation(self) -> None:
         # Manually update profile photo because it's created after the client profile fixture.
