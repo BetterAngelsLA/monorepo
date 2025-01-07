@@ -16,6 +16,8 @@ import {
 } from '../../../apollo';
 import { enumDisplayHmisAgency } from '../../../static/enumDisplayMapping';
 
+const DEFAULT_AGENCY = HmisAgencyEnum.Lahsa;
+
 export default function HmisProfiles() {
   const {
     setValue,
@@ -39,7 +41,7 @@ export default function HmisProfiles() {
   const onItemClear = (index: number) => {
     const updatedProfiles = [...hmisProfiles];
     updatedProfiles[index] = {
-      agency: HmisAgencyEnum.Lahsa,
+      agency: DEFAULT_AGENCY,
       hmisId: '',
     };
     setValue('hmisProfiles', updatedProfiles);
@@ -125,7 +127,7 @@ export default function HmisProfiles() {
           color={Colors.PRIMARY}
           onPress={() =>
             append({
-              agency: HmisAgencyEnum.Lahsa,
+              agency: DEFAULT_AGENCY,
               hmisId: '',
             })
           }
