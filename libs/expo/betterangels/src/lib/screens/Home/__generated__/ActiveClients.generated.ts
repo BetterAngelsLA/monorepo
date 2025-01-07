@@ -10,14 +10,14 @@ export type CreateNoteMutationVariables = Types.Exact<{
 
 export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, title?: string | null, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email?: string | null } } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
-export type ClientProfilesQueryVariables = Types.Exact<{
+export type ActiveClientsProfilesPaginatedQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.ClientProfileFilter>;
   pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
   order?: Types.InputMaybe<Types.ClientProfileOrder>;
 }>;
 
 
-export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: Array<{ __typename?: 'ClientProfileType', id: string, age?: number | null, dateOfBirth?: any | null, heightInInches?: number | null, mailingAddress?: string | null, nickname?: string | null, residenceAddress?: string | null, displayCaseManager: string, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', id: string, agency: Types.HmisAgencyEnum, hmisId: string }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string } }> };
+export type ActiveClientsProfilesPaginatedQuery = { __typename?: 'Query', clientProfilesPaginated: { __typename?: 'ClientProfileTypeOffsetPaginated', totalCount: number, pageInfo: { __typename?: 'OffsetPaginationInfo', offset: number, limit?: number | null }, results: Array<{ __typename?: 'ClientProfileType', id: string, age?: number | null, dateOfBirth?: any | null, heightInInches?: number | null, mailingAddress?: string | null, nickname?: string | null, residenceAddress?: string | null, displayCaseManager: string, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', id: string, agency: Types.HmisAgencyEnum, hmisId: string }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string } }> } };
 
 
 export const CreateNoteDocument = gql`
@@ -77,50 +77,61 @@ export function useCreateNoteMutation(baseOptions?: Apollo.MutationHookOptions<C
 export type CreateNoteMutationHookResult = ReturnType<typeof useCreateNoteMutation>;
 export type CreateNoteMutationResult = Apollo.MutationResult<CreateNoteMutation>;
 export type CreateNoteMutationOptions = Apollo.BaseMutationOptions<CreateNoteMutation, CreateNoteMutationVariables>;
-export const ClientProfilesDocument = gql`
-    query ClientProfiles($filters: ClientProfileFilter, $pagination: OffsetPaginationInput, $order: ClientProfileOrder) {
-  clientProfiles(filters: $filters, pagination: $pagination, order: $order) {
-    ... on ClientProfileType {
-      id
-      age
-      dateOfBirth
-      heightInInches
-      mailingAddress
-      nickname
-      residenceAddress
-      hmisProfiles {
+export const ActiveClientsProfilesPaginatedDocument = gql`
+    query ActiveClientsProfilesPaginated($filters: ClientProfileFilter, $pagination: OffsetPaginationInput, $order: ClientProfileOrder) {
+  clientProfilesPaginated(
+    pagination: $pagination
+    filters: $filters
+    order: $order
+  ) {
+    ... on ClientProfileTypeOffsetPaginated {
+      pageInfo {
+        offset
+        limit
+      }
+      totalCount
+      results {
         id
-        agency
-        hmisId
+        age
+        dateOfBirth
+        heightInInches
+        mailingAddress
+        nickname
+        residenceAddress
+        hmisProfiles {
+          id
+          agency
+          hmisId
+        }
+        profilePhoto {
+          name
+          url
+        }
+        user {
+          id
+          email
+          firstName
+          lastName
+          username
+        }
+        displayCaseManager
       }
-      profilePhoto {
-        name
-        url
-      }
-      user {
-        id
-        email
-        firstName
-        lastName
-        username
-      }
-      displayCaseManager
     }
   }
 }
     `;
 
 /**
- * __useClientProfilesQuery__
+ * __useActiveClientsProfilesPaginatedQuery__
  *
- * To run a query within a React component, call `useClientProfilesQuery` and pass it any options that fit your needs.
- * When your component renders, `useClientProfilesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useActiveClientsProfilesPaginatedQuery` and pass it any options that fit your needs.
+ * When your component renders, `useActiveClientsProfilesPaginatedQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useClientProfilesQuery({
+ * const { data, loading, error } = useActiveClientsProfilesPaginatedQuery({
  *   variables: {
  *      filters: // value for 'filters'
  *      pagination: // value for 'pagination'
@@ -128,19 +139,19 @@ export const ClientProfilesDocument = gql`
  *   },
  * });
  */
-export function useClientProfilesQuery(baseOptions?: Apollo.QueryHookOptions<ClientProfilesQuery, ClientProfilesQueryVariables>) {
+export function useActiveClientsProfilesPaginatedQuery(baseOptions?: Apollo.QueryHookOptions<ActiveClientsProfilesPaginatedQuery, ActiveClientsProfilesPaginatedQueryVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<ClientProfilesQuery, ClientProfilesQueryVariables>(ClientProfilesDocument, options);
+        return Apollo.useQuery<ActiveClientsProfilesPaginatedQuery, ActiveClientsProfilesPaginatedQueryVariables>(ActiveClientsProfilesPaginatedDocument, options);
       }
-export function useClientProfilesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ClientProfilesQuery, ClientProfilesQueryVariables>) {
+export function useActiveClientsProfilesPaginatedLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ActiveClientsProfilesPaginatedQuery, ActiveClientsProfilesPaginatedQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<ClientProfilesQuery, ClientProfilesQueryVariables>(ClientProfilesDocument, options);
+          return Apollo.useLazyQuery<ActiveClientsProfilesPaginatedQuery, ActiveClientsProfilesPaginatedQueryVariables>(ActiveClientsProfilesPaginatedDocument, options);
         }
-export function useClientProfilesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ClientProfilesQuery, ClientProfilesQueryVariables>) {
+export function useActiveClientsProfilesPaginatedSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ActiveClientsProfilesPaginatedQuery, ActiveClientsProfilesPaginatedQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<ClientProfilesQuery, ClientProfilesQueryVariables>(ClientProfilesDocument, options);
+          return Apollo.useSuspenseQuery<ActiveClientsProfilesPaginatedQuery, ActiveClientsProfilesPaginatedQueryVariables>(ActiveClientsProfilesPaginatedDocument, options);
         }
-export type ClientProfilesQueryHookResult = ReturnType<typeof useClientProfilesQuery>;
-export type ClientProfilesLazyQueryHookResult = ReturnType<typeof useClientProfilesLazyQuery>;
-export type ClientProfilesSuspenseQueryHookResult = ReturnType<typeof useClientProfilesSuspenseQuery>;
-export type ClientProfilesQueryResult = Apollo.QueryResult<ClientProfilesQuery, ClientProfilesQueryVariables>;
+export type ActiveClientsProfilesPaginatedQueryHookResult = ReturnType<typeof useActiveClientsProfilesPaginatedQuery>;
+export type ActiveClientsProfilesPaginatedLazyQueryHookResult = ReturnType<typeof useActiveClientsProfilesPaginatedLazyQuery>;
+export type ActiveClientsProfilesPaginatedSuspenseQueryHookResult = ReturnType<typeof useActiveClientsProfilesPaginatedSuspenseQuery>;
+export type ActiveClientsProfilesPaginatedQueryResult = Apollo.QueryResult<ActiveClientsProfilesPaginatedQuery, ActiveClientsProfilesPaginatedQueryVariables>;

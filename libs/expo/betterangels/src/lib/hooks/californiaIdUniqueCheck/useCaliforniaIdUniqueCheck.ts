@@ -19,7 +19,7 @@ export default function useCaliforniaIdUniqueCheck(
     nextFetchPolicy: 'network-only',
   });
 
-  return data?.clientProfiles?.length
+  return data?.clientProfilesPaginated?.results?.length
     ? 'This is the same CA ID as another client'
     : undefined;
 }
