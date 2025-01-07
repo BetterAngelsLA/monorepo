@@ -2,13 +2,13 @@ import { milesToFeet } from './convert';
 
 type TParams = {
   distance: number;
-  units?: 'miles' | 'meters';
-  minimum?: number;
+  units: 'miles' | 'meters';
+  minimum?: number | null;
   minimumText?: string;
 };
 
 export function formatDistance(params: TParams) {
-  const { distance, units = 'miles', minimum, minimumText } = params;
+  const { distance, units, minimum = 0.1, minimumText } = params;
 
   if (!Number.isFinite(distance)) {
     return null;
