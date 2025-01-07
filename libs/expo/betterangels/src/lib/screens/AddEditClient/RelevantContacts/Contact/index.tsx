@@ -137,11 +137,11 @@ export default function Contact(props: IContactProps) {
         rules={{
           validate: (value: string) => {
             if (value) {
-              const areaCode = value.substring(0, 3);
+              const firstDigit = value.charAt(0);
 
               if (
                 !Regex.phoneNumber.test(value) ||
-                !Regex.usAreaCode.test(areaCode)
+                !Regex.usAreaCode.test(firstDigit)
               ) {
                 return 'Enter a 10-digit phone number without space or special characters';
               }
