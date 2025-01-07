@@ -284,7 +284,7 @@ Before you begin, ensure you have the following installed on your Windows machin
 - Run the following script to configure Android development tools:
 
   ```
-  curl <'script-url'>
+  ./wsl2-config.sh
   ```
 
 - This script sets environment variables and creates a symbolic link for `adb`.
