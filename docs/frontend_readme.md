@@ -263,7 +263,7 @@ Before you begin, ensure you have the following installed on your Windows machin
   Restart your WSL2 terminal or run **source ~/.nvm/nvm.sh** to apply the changes.
 
   ```
-  nvm install 18.17.1
+  nvm install 20.12.2
   ```
 
   Should you encounter any problems, refer to [NVM Installation Guide](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating)
