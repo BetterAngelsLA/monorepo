@@ -136,8 +136,15 @@ export default function Contact(props: IContactProps) {
         }
         rules={{
           validate: (value: string) => {
-            if (value && !Regex.phoneNumber.test(value)) {
-              return 'Enter a 10-digit phone number without space or special characters';
+            if (value) {
+              const areaCode = value.substring(0, 3);
+
+              if (
+                !Regex.phoneNumber.test(value) ||
+                !Regex.usAreaCode.test(areaCode)
+              ) {
+                return 'Enter a 10-digit phone number without space or special characters';
+              }
             }
             return true;
           },
