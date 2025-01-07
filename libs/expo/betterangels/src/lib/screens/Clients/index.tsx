@@ -14,8 +14,8 @@ import { Ordering } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
-  ClientProfilesQuery,
-  useClientProfilesQuery,
+  ClientProfilesPaginatedQuery,
+  useClientProfilesPaginatedQuery,
   useCreateNoteMutation,
 } from './__generated__/Clients.generated';
 
@@ -24,7 +24,7 @@ const paginationLimit = 20;
 interface IGroupedClients {
   [key: string]: {
     title: string;
-    data: ClientProfilesQuery['clientProfiles'];
+    data: ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'];
   };
 }
 
@@ -51,7 +51,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   });
   const [clients, setClients] = useState<IGroupedClients>({});
   const [currentClient, setCurrentClient] =
-    useState<ClientProfilesQuery['clientProfiles'][number]>();
+    useState<ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]>();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const { showSnackbar } = useSnackbar();
 
@@ -116,10 +116,10 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfiles' in data)) return;
+    if (!data || !('clientProfilesPaginated' in data)) return;
 
-    const clientsToShow = data.clientProfiles.slice(0, paginationLimit);
-    const isMoreAvailable = data.clientProfiles.length > clientsToShow.length;
+    const clientsToShow = data.clientProfilesPaginated.results.slice(0, paginationLimit);
+    const isMoreAvailable = data.clientProfilesPaginated.results.length > clientsToShow.length;
 
     const groupedContacts = clientsToShow.reduce(
       (acc: IGroupedClients, client) => {

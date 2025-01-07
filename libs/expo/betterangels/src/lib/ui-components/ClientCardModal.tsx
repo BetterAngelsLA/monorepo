@@ -2,7 +2,7 @@ import { FilePlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
 import { useRouter } from 'expo-router';
 import { useSnackbar } from '../hooks';
 import {
-  ClientProfilesQuery,
+  ActiveClientsProfilesPaginatedQuery,
   useCreateNoteMutation,
 } from '../screens/Home/__generated__/ActiveClients.generated';
 import MainModal from './MainModal';
@@ -10,7 +10,7 @@ import MainModal from './MainModal';
 interface IMainPlusModalProps {
   closeModal: () => void;
   isModalVisible: boolean;
-  client: ClientProfilesQuery['clientProfiles'][number];
+  client: ActiveClientsProfilesPaginatedQuery['clientProfilesPaginated']['results'][number];
 }
 
 export default function ClientCardModal(props: IMainPlusModalProps) {
