@@ -172,8 +172,8 @@ class ShelterPropertyInput:
     pets: Optional[List[PetChoices]] = None
     demographics: Optional[List[DemographicChoices]] = None
     special_situation_restrictions: Optional[List[SpecialSituationRestrictionChoices]] = None
-    shelter_type: Optional[List[ShelterTypeChoices]] = None
-    room_style: Optional[List[RoomStyleChoices]] = None
+    shelter_types: Optional[List[ShelterTypeChoices]] = None
+    room_styles: Optional[List[RoomStyleChoices]] = None
     parking: Optional[List[ParkingChoices]] = None
 
 
