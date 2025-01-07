@@ -250,9 +250,10 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertFalse(client_differences)
 
         client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
-
         self.assertEqual(client_profile_2.hmis_profiles.count(), 1)
         self.assertEqual(client_profile_2.phone_numbers.count(), 1)
+        self.assertEqual(client_profile_2.hmis_profiles.first().hmis_id, "HMISidPASADENA2")  # type: ignore
+        self.assertEqual(client_profile_2.phone_numbers.first().number, "3475551212")
 
     def test_partial_update_client_profile_mutation(self) -> None:
         # Manually update profile photo because it's created after the client profile fixture.
