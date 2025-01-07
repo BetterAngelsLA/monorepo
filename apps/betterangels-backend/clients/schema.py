@@ -79,10 +79,13 @@ def upsert_or_delete_client_related_object(
     item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
     items_to_create = [item for item in data if not item.get("id")]
     items_to_update = model_cls.objects.filter(id__in=item_updates_by_id.keys())
-    model_cls.objects.exclude(id__in=item_updates_by_id).delete()
 
     if generic_relation:
         content_type = ContentType.objects.get_for_model(ClientProfile)
+        model_cls.objects.filter(content_type=content_type, object_id=client_profile.pk).exclude(
+            id__in=item_updates_by_id
+        ).delete()
+
         items_for_bulk_create = [
             model_cls(
                 number=item["number"],
@@ -100,6 +103,8 @@ def upsert_or_delete_client_related_object(
             item.save()
 
         return
+
+    model_cls.objects.filter(client_profile=client_profile).exclude(id__in=item_updates_by_id).delete()
 
     for item in items_to_create:
         resolvers.create(
