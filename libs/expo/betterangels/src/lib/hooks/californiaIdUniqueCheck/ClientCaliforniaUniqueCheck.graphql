@@ -1,7 +1,7 @@
 query ClientCaliforniaUniqueCheck($filters: ClientProfileFilter) {
   clientProfilesPaginated(filters: $filters) {
     ... on ClientProfileTypeOffsetPaginated {
-      # id
+      id
     }
   }
 }
