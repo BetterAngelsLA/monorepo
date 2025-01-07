@@ -194,24 +194,28 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         (
             "case_manager_label, client_label, search_terms, "
-            "is_submitted, expected_results_count, "
+            "is_submitted, team, expected_results_count, "
             "returned_note_label_1, returned_note_label_2"
         ),
         [
             # Filter by:
-            # created by, client_label, search terms, and/or is_submitted
-            ("org_1_case_manager_1", None, None, None, 1, "note", None),  # CM 1 created one note
-            ("org_1_case_manager_2", None, None, None, 2, "note_2", "note_3"),  # CM 2 created 2 notes
-            ("org_1_case_manager_1", None, "deets", None, 0, None, None),  # None of CM 1's notes contain "deets"
-            ("org_1_case_manager_2", None, "deets", None, 2, "note_2", "note_3"),  # Two of CM 2's notes contain "deets"
+            # created by, client_label, search terms, is_submitted, and/or team
+            ("org_1_case_manager_1", None, None, None, None, 1, "note", None),  # CM 1 created one note
+            ("org_1_case_manager_2", None, None, None, None, 2, "note_2", "note_3"),  # CM 2 created 2 notes
+            ("org_1_case_manager_1", None, "deets", None, None, 0, None, None),  # None of CM 1's notes contain "deets"
+            # Two of CM 2's notes contain "deets"
+            ("org_1_case_manager_2", None, "deets", None, None, 2, "note_2", "note_3"),
             # CM 2 has one note "deets" for client "truman"
-            ("org_1_case_manager_2", None, "deets rum", None, 1, "note_3", None),
-            ("org_1_case_manager_2", None, "deets rum", True, 0, None, None),  # CM 2 has no submitted notes
-            ("org_1_case_manager_1", "client_user_2", None, None, 0, None, None),  # CM 1 has no notes for client 2
+            ("org_1_case_manager_2", None, "deets rum", None, None, 1, "note_3", None),
+            ("org_1_case_manager_2", None, "deets rum", True, None, 0, None, None),  # CM 2 has no submitted notes
+            # CM 1 has no notes for client 2
+            ("org_1_case_manager_1", "client_user_2", None, None, None, 0, None, None),
             # CM 2 has one unsubmitted note for client 1
-            ("org_1_case_manager_2", "client_user_1", None, False, 1, "note_2", None),
-            (None, None, None, True, 0, None, None),  # There are no submitted notes
-            (None, None, None, None, 3, False, None),  # There are three unsubmitted notes
+            ("org_1_case_manager_2", "client_user_1", None, False, None, 1, "note_2", None),
+            (None, None, None, True, None, 0, None, None),  # There are no submitted notes
+            (None, None, None, None, None, 3, False, None),  # There are three unsubmitted notes
+            # There is one note for team ECHO_PARK_ON_SITE
+            (None, None, None, None, SelahTeamEnum.WDI_ON_SITE, 1, False, None),
         ],
     )
     def test_notes_query_filter(
@@ -220,6 +224,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         client_label: Optional[str],
         search_terms: Optional[str],
         is_submitted: Optional[bool],
+        team: Optional[SelahTeamEnum],
         expected_results_count: int,
         returned_note_label_1: Optional[str],
         returned_note_label_2: Optional[str],
@@ -234,7 +239,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "client": self.client_user_1.pk,
             }
         )["data"]["createNote"]
-
         self.note_3 = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
@@ -265,6 +269,15 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         if search_terms:
             filters["search"] = search_terms
+
+        if team:
+            filters["teams"] = [team.name]
+            self._update_note_fixture(
+                {
+                    "id": self.note["id"],
+                    "team": team.name,
+                }
+            )
 
         if is_submitted is not None:
             filters["isSubmitted"] = is_submitted

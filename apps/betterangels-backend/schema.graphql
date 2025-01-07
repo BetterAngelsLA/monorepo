@@ -828,6 +828,7 @@ input NoteFilter {
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
+  teams: [SelahTeamEnum!]
   search: String
 }
 
@@ -880,7 +881,7 @@ type OffsetPaginationInfo {
 
 input OffsetPaginationInput {
   offset: Int! = 0
-  limit: Int
+  limit: Int = null
 }
 
 input OneToManyInput {
