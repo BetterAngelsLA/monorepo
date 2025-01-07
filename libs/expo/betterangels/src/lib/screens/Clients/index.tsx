@@ -35,7 +35,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const [createNote] = useCreateNoteMutation();
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { data, loading } = useClientProfilesQuery({
+  const { data, loading } = useClientProfilesPaginatedQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset },
       filters: {
