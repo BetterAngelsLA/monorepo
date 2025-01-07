@@ -243,6 +243,9 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
 
             if user_data := client_profile_data.pop("user", {}):
+                if email := user_data.get("email", ""):
+                    user_data["email"] = email.lower()
+
                 client_user = resolvers.update(
                     info,
                     client_user,
