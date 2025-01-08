@@ -22,8 +22,18 @@ export default function HmisProfiles() {
     watch,
     control,
     formState: { errors },
+    clearErrors,
     resetField,
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
+
+  console.log();
+  console.log('| -------------  HmisProfiles errors  ------------- |');
+  console.log(errors);
+  console.log();
+  console.log();
+  console.log('| -------------  errors.hmisProfiles[0]  ------------- |');
+  console.log(errors && errors.hmisProfiles && errors.hmisProfiles[0]);
+  console.log();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -34,12 +44,27 @@ export default function HmisProfiles() {
   const hmisProfiles = watch('hmisProfiles') || [];
 
   const onReset = () => {
+    console.log();
+    console.log('| -------------  RESET`  ------------- |');
+    console.log();
     setValue('hmisProfiles', []);
   };
 
   const onItemReset = (index: number) => {
-    resetField(`hmisProfiles.${index}.agency`);
-    resetField(`hmisProfiles.${index}.hmisId`);
+    console.log();
+    console.log('| -------------  RESET ITEM  ------------- |');
+    console.log();
+
+    // resetField(`hmisProfiles.${index}.agency`);
+    // resetField(`hmisProfiles.${index}.hmisId`);
+
+    const updatedProfiles = [...hmisProfiles];
+    updatedProfiles[index] = {
+      agency: HmisAgencyEnum.Lahsa,
+      hmisId: '',
+    };
+    setValue('hmisProfiles', updatedProfiles);
+    clearErrors(`hmisProfiles.${index}`);
   };
 
   return (
@@ -76,7 +101,7 @@ export default function HmisProfiles() {
               Enter the ID #
             </TextBold>
             <TextRegular size="sm">
-              Pair your HMIS ID type with a specific ID
+              Pair your HMIS ID type with a specific ID xx
             </TextRegular>
             <Input
               mt="xs"
@@ -86,7 +111,8 @@ export default function HmisProfiles() {
               error={errors.hmisProfiles && !!errors.hmisProfiles[index]}
               errorMessage={
                 errors.hmisProfiles && errors.hmisProfiles[index]
-                  ? 'Enter HMIS ID or remove this entry'
+                  ? errors.hmisProfiles[index]?.message ||
+                    'Enter HMIS ID or remove this entry'
                   : ''
               }
               rules={{

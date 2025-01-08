@@ -117,6 +117,7 @@ class DeletedObjectType:
 class RelHmisMeta:
     hmis_id: str
     agency: str
+    index: int
 
 @strawberry.type
 class RelOperationMessage:

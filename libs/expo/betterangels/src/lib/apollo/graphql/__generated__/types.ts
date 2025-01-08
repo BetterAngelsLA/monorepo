@@ -1349,6 +1349,7 @@ export type RelHmisMeta = {
   __typename?: 'RelHmisMeta';
   agency: Scalars['String']['output'];
   hmisId: Scalars['String']['output'];
+  index: Scalars['Int']['output'];
 };
 
 export type RelOperationInfo = {

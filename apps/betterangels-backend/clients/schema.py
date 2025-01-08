@@ -65,7 +65,8 @@ CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME: dict[str, dict[str, Any]] = {
 def validate_unique_hmis(
     data: List[Dict[str, Any]],
 ) -> RelOperationMessage | None:
-    for item in data:
+    # for item in data:
+    for index, item in enumerate(data):
         id = item.get("id", None)
         hmis_id = item.get("hmis_id", "")
         agency = item.get("agency", "")
@@ -73,12 +74,16 @@ def validate_unique_hmis(
         duplicate = HmisProfile.objects.filter(hmis_id=hmis_id, agency=agency)
 
         if duplicate.exists():
+            print('DUPLICATE FOR IDX: ', index)
+
             return RelOperationMessage(
                     relation="HmisProfile",
                     relation_id=id,
                     meta=RelHmisMeta(
                         hmis_id=hmis_id,
                         agency=agency,
+                        # index=index,
+                        index=1,
                     )
                 )
 

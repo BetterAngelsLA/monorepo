@@ -1024,6 +1024,7 @@ enum RaceEnum {
 type RelHmisMeta {
   hmisId: String!
   agency: String!
+  index: Int!
 }
 
 type RelOperationInfo {

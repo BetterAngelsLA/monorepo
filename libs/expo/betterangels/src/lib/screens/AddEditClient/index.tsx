@@ -202,9 +202,9 @@ export default function AddEditClient({ id }: { id?: string }) {
       ) {
         console.log();
         console.log(
-          '| -------------  operationResult.messages -- RelOperationInfo  ------------- |'
+          '| -------------  operationResult -- RelOperationInfo  ------------- |'
         );
-        console.log(operationResult.messages);
+        console.log(operationResult);
         console.log();
 
         // const relation = operationResult.messages[0].relation;
@@ -224,10 +224,11 @@ export default function AddEditClient({ id }: { id?: string }) {
         if (result.relation === 'HmisProfile') {
           console.log('***************** HmisProfile ID: ', result.relationId);
           console.log('***************** HmisProfile meta: ', result.meta);
-          // methods.setError('user.email', {
-          //   type: 'manual',
-          //   message: 'HMIS DUPE !!!!.',
-          // });
+
+          methods.setError('hmisProfiles.0', {
+            type: 'manual',
+            message: 'my dupe message.',
+          });
 
           return;
         }
