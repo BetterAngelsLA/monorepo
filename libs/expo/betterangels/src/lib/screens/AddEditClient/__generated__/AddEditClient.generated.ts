@@ -8,7 +8,7 @@ export type UpdateClientProfileMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateClientProfileMutation = { __typename?: 'Mutation', updateClientProfile: { __typename?: 'ClientProfileType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+export type UpdateClientProfileMutation = { __typename?: 'Mutation', updateClientProfile: { __typename?: 'ClientProfileType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'RelOperationInfo', messages: Array<{ __typename?: 'RelOperationMessage', relation: string, relationId?: number | null, meta?: { __typename?: 'RelHmisMeta', hmisId: string, agency: string } | null }> } };
 
 export type UpdateClientProfilePhotoMutationVariables = Types.Exact<{
   data: Types.ClientProfilePhotoInput;
@@ -47,6 +47,16 @@ export const UpdateClientProfileDocument = gql`
         kind
         field
         message
+      }
+    }
+    ... on RelOperationInfo {
+      messages {
+        relation
+        relationId
+        meta {
+          hmisId
+          agency
+        }
       }
     }
     ... on ClientProfileType {

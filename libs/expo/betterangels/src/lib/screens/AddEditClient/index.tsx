@@ -163,6 +163,7 @@ export default function AddEditClient({ id }: { id?: string }) {
     delete values.profilePhoto;
     try {
       let operationResult;
+
       if (id) {
         const input = {
           ...(values as UpdateClientProfileInput),
@@ -194,6 +195,44 @@ export default function AddEditClient({ id }: { id?: string }) {
         });
         operationResult = createResponse.data?.createClientProfile;
       }
+
+      if (
+        operationResult?.__typename === 'RelOperationInfo' &&
+        operationResult.messages.length > 0
+      ) {
+        console.log();
+        console.log(
+          '| -------------  operationResult.messages -- RelOperationInfo  ------------- |'
+        );
+        console.log(operationResult.messages);
+        console.log();
+
+        // const relation = operationResult.messages[0].relation;
+        const result = operationResult.messages[0];
+
+        // [{
+        //   "__typename": "RelOperationMessage",
+        //   "meta": {
+        //     "__typename": "RelHmisMeta",
+        //     "agency": "lahsa",
+        //     "hmisId": "Xxx"
+        //   },
+        //   "relation": "HmisProfile",
+        //   "relationId": 18
+        // }]
+
+        if (result.relation === 'HmisProfile') {
+          console.log('***************** HmisProfile ID: ', result.relationId);
+          console.log('***************** HmisProfile meta: ', result.meta);
+          // methods.setError('user.email', {
+          //   type: 'manual',
+          //   message: 'HMIS DUPE !!!!.',
+          // });
+
+          return;
+        }
+      }
+
       if (
         operationResult?.__typename === 'OperationInfo' &&
         operationResult.messages.length > 0
@@ -228,7 +267,9 @@ export default function AddEditClient({ id }: { id?: string }) {
         router.replace('/');
       }
     } catch (err) {
+      console.log('################################### CAUGHT ERR');
       console.error(err);
+      console.log('-------');
 
       showSnackbar({
         message: 'Sorry, there was an error updating this profile.',

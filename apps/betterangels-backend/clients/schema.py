@@ -1,12 +1,13 @@
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List, Union, cast
 
+from django.forms import ValidationError
 import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.utils import get_user_permission_group
-from clients.models import ClientContact, ClientProfile
+from clients.models import ClientContact, ClientProfile, HmisProfile
 from clients.permissions import ClientProfilePermissions
-from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
+from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType, RelHmisMeta, RelOperationInfo, RelOperationMessage
 from common.models import Attachment, PhoneNumber
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
@@ -61,6 +62,28 @@ CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME: dict[str, dict[str, Any]] = {
     },
 }
 
+def validate_unique_hmis(
+    data: List[Dict[str, Any]],
+) -> RelOperationMessage | None:
+    for item in data:
+        id = item.get("id", None)
+        hmis_id = item.get("hmis_id", "")
+        agency = item.get("agency", "")
+
+        duplicate = HmisProfile.objects.filter(hmis_id=hmis_id, agency=agency)
+
+        if duplicate.exists():
+            return RelOperationMessage(
+                    relation="HmisProfile",
+                    relation_id=id,
+                    meta=RelHmisMeta(
+                        hmis_id=hmis_id,
+                        agency=agency,
+                    )
+                )
+
+    return None
+
 
 def upsert_or_delete_client_related_object(
     info: Info,
@@ -69,12 +92,16 @@ def upsert_or_delete_client_related_object(
     generic_relation: bool,
     data: List[Dict[str, Any]],
     client_profile: ClientProfile,
-) -> None:
+) -> RelOperationMessage | None:
     """Creates, updates, or deletes a client's related objects.
 
     Expects a list of related objects. Missing elements will be deleted.
     """
     model_cls = apps.get_model(module, model_cls_name)
+
+    if model_cls_name == "HmisProfile":
+        if hmis_errors := validate_unique_hmis(data):
+            return hmis_errors
 
     item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
     items_to_create = [item for item in data if not item.get("id")]
@@ -102,7 +129,7 @@ def upsert_or_delete_client_related_object(
             item.is_primary = item_updates_by_id[str(item.id)]["is_primary"]
             item.save()
 
-        return
+        return None
 
     model_cls.objects.filter(client_profile=client_profile).exclude(id__in=item_updates_by_id).delete()
 
@@ -123,6 +150,7 @@ def upsert_or_delete_client_related_object(
             item_updates_by_id[str(item.id)],
         )
 
+    return None
 
 @strawberry.type
 class Query:
@@ -232,7 +260,7 @@ class Mutation:
             return cast(ClientProfileType, client_profile)
 
     @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])])
-    def update_client_profile(self, info: Info, data: UpdateClientProfileInput) -> ClientProfileType:
+    def update_client_profile(self, info: Info, data: UpdateClientProfileInput) -> Union[ClientProfileType, RelOperationInfo]:
         with transaction.atomic():
             user = get_current_user(info)
             try:
@@ -262,7 +290,7 @@ class Mutation:
 
             for related_name, related_cls_map in CLIENT_RELATED_CLS_NAME_BY_RELATED_NAME.items():
                 if client_profile_data[related_name] is not strawberry.UNSET:
-                    upsert_or_delete_client_related_object(
+                    validation_error = upsert_or_delete_client_related_object(
                         info,
                         related_cls_map["module"],
                         related_cls_map["cls_name"],
@@ -270,6 +298,11 @@ class Mutation:
                         client_profile_data.pop(related_name),
                         client_profile,
                     )
+
+                    if validation_error:
+                        return RelOperationInfo(
+                            messages=[validation_error]
+                        )
 
             client_profile = resolvers.update(
                 info,

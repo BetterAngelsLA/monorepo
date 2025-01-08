@@ -1345,6 +1345,25 @@ export enum RaceEnum {
   WhiteCaucasian = 'WHITE_CAUCASIAN'
 }
 
+export type RelHmisMeta = {
+  __typename?: 'RelHmisMeta';
+  agency: Scalars['String']['output'];
+  hmisId: Scalars['String']['output'];
+};
+
+export type RelOperationInfo = {
+  __typename?: 'RelOperationInfo';
+  messages: Array<RelOperationMessage>;
+};
+
+export type RelOperationMessage = {
+  __typename?: 'RelOperationMessage';
+  meta?: Maybe<RelHmisMeta>;
+  msg?: Maybe<Scalars['String']['output']>;
+  relation: Scalars['String']['output'];
+  relationId?: Maybe<Scalars['Int']['output']>;
+};
+
 export enum RelationshipTypeEnum {
   Aunt = 'AUNT',
   Child = 'CHILD',
@@ -1587,8 +1606,8 @@ export type ShelterPropertyInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
-  roomStyle?: InputMaybe<Array<RoomStyleChoices>>;
-  shelterType?: InputMaybe<Array<ShelterChoices>>;
+  roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
+  shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
 };
 
@@ -1803,7 +1822,7 @@ export type UpdateClientProfileInput = {
   veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
 };
 
-export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
+export type UpdateClientProfilePayload = ClientProfileType | OperationInfo | RelOperationInfo;
 
 export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 

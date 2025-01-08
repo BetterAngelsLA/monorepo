@@ -8,6 +8,17 @@ mutation UpdateClientProfile($data: UpdateClientProfileInput!) {
       }
     }
 
+    ... on RelOperationInfo {
+      messages {
+        relation
+        relationId
+        meta {
+          hmisId
+          agency
+        }
+      }
+    }
+
     ... on ClientProfileType {
       id
     }

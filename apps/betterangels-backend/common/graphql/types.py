@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import strawberry
 import strawberry_django
@@ -112,3 +112,35 @@ class FeatureControlData:
 @strawberry.type
 class DeletedObjectType:
     id: int
+
+@strawberry.type
+class RelHmisMeta:
+    hmis_id: str
+    agency: str
+
+@strawberry.type
+class RelOperationMessage:
+    relation: str
+    relation_id: Optional[int] = None
+    msg: Optional[str] = None
+    meta: Optional[RelHmisMeta] = None
+
+    def __hash__(self) -> int:
+        return hash((self.msg, self.relation, self.relation_id))
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, RelOperationMessage):
+            return (self.msg, self.relation, self.relation_id) == (other.msg, other.relation, other.relation_id)
+        return False
+
+@strawberry.type
+class RelOperationInfo:
+    messages: List[RelOperationMessage]
+
+    def __hash__(self) -> int:
+        return hash(tuple(self.messages))
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, RelOperationInfo):
+            return tuple(self.messages) == tuple(other.messages)
+        return False

@@ -1021,6 +1021,22 @@ enum RaceEnum {
   OTHER
 }
 
+type RelHmisMeta {
+  hmisId: String!
+  agency: String!
+}
+
+type RelOperationInfo {
+  messages: [RelOperationMessage!]!
+}
+
+type RelOperationMessage {
+  relation: String!
+  relationId: Int
+  msg: String
+  meta: RelHmisMeta
+}
+
 enum RelationshipTypeEnum {
   CURRENT_CASE_MANAGER
   PAST_CASE_MANAGER
@@ -1468,7 +1484,7 @@ input UpdateClientProfileInput {
   user: UpdateUserInput
 }
 
-union UpdateClientProfilePayload = ClientProfileType | OperationInfo
+union UpdateClientProfilePayload = ClientProfileType | RelOperationInfo | OperationInfo
 
 union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
