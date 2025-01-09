@@ -15,6 +15,7 @@ from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import ForeignKey, Prefetch
+from django.test import Client
 from guardian.shortcuts import assign_perm
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -226,16 +227,12 @@ class Mutation:
                     },
                 )
 
-            related_classes = []
-            # generic_related_classes = []
-
-            for field in ClientProfile._meta.get_fields():
-                if remote_field := getattr(field, "remote_field", None):
-                    if isinstance(remote_field, ForeignKey) or isinstance(remote_field, GenericRel):
-                        related_classes.append(field)
-
-                    # if isinstance(remote_field, GenericRel):
-                    #     generic_related_classes.append(field)
+            related_classes = [
+                field
+                for field in ClientProfile._meta.get_fields()
+                if hasattr(field, "remote_field")
+                and (isinstance(field.remote_field, ForeignKey) or isinstance(field.remote_field, GenericRel))
+            ]
 
             for related_cls in related_classes:
                 related_name = related_cls.name
@@ -246,20 +243,9 @@ class Mutation:
                     upsert_or_delete_client_related_object(
                         info,
                         related_cls,
-                        # related_cls.related_model,
                         client_profile_data.pop(related_name),
                         client_profile,
                     )
-
-            # for related_cls in generic_related_classes:
-            #     name = related_cls.name
-            #     if name in client_profile_data.keys() and client_profile_data[name] is not strawberry.UNSET:
-            #         upsert_or_delete_client_generic_related_object(
-            #             info,
-            #             related_cls.related_model,
-            #             client_profile_data.pop(name),
-            #             client_profile,
-            #         )
 
             client_profile = resolvers.update(
                 info,
