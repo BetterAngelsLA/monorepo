@@ -10,12 +10,10 @@ from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, PhoneNumber
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
-from django.apps import apps
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import ForeignKey, Prefetch
-from django.test import Client
 from guardian.shortcuts import assign_perm
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -51,37 +49,28 @@ def upsert_or_delete_client_related_object(
     item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
     items_to_create = [item for item in data if not item.get("id")]
     items_to_update = model_cls.objects.filter(id__in=item_updates_by_id.keys())
+    args: dict[str, Any]
 
     if isinstance(related_cls.remote_field, ForeignKey):
-        model_cls.objects.filter(client_profile=client_profile).exclude(id__in=item_updates_by_id).delete()
+        args = {"client_profile": client_profile}
 
-        for item in items_to_create:
-            resolvers.create(
-                info,
-                model_cls,
-                {
-                    **item,
-                    "client_profile": client_profile,
-                },
-            )
+    elif isinstance(related_cls.remote_field, GenericRel):
+        args = {
+            "content_type": ContentType.objects.get_for_model(ClientProfile),
+            "object_id": client_profile.pk,
+        }
 
-    if isinstance(related_cls.remote_field, GenericRel):
-        content_type = ContentType.objects.get_for_model(ClientProfile)
-        model_cls.objects.filter(content_type=content_type, object_id=client_profile.pk).exclude(
-            id__in=item_updates_by_id
-        ).delete()
+    model_cls.objects.filter(**args).exclude(id__in=item_updates_by_id).delete()
 
-        for item in items_to_create:
-            resolvers.create(
-                info,
-                model_cls,
-                {
-                    **item,
-                    "client_profile": client_profile,
-                    "content_type": content_type,
-                    "object_id": client_profile.pk,
-                },
-            )
+    for item in items_to_create:
+        resolvers.create(
+            info,
+            model_cls,
+            {
+                **item,
+                **args,
+            },
+        )
 
     for item in items_to_update:
         resolvers.update(
