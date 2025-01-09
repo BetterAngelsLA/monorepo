@@ -288,18 +288,31 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     def test_view_notes_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
-        mutation = """
-            query ViewNotes {
-                notes {
-                    id
-                    publicDetails
+        query = """
+            query ViewNotes($offset: Int, $limit: Int) {
+                notes: notesPaginated(pagination: {offset: $offset, limit: $limit}) {
+                    totalCount
+                    pageInfo {
+                        limit
+                        offset
+                    }
+                    results {
+                        id
+                        publicDetails
+                    }
                 }
             }
         """
-        variables = {"id": self.note["id"]}
-        response = self.execute_graphql(mutation, variables)
+        variables = {"offset": 0, "limit": None}
+        response = self.execute_graphql(query, variables)
 
-        self.assertTrue(len(response["data"]["notes"]) == should_succeed)
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["notes"]["results"])
+            if response["data"]["notes"]["totalCount"] > 0:
+                self.assertTrue(len(response["data"]["notes"]["results"]) > 0)
+        else:
+            self.assertEqual(response["data"]["notes"]["totalCount"], 0)
+            self.assertEqual(len(response["data"]["notes"]["results"]), 0)
 
     @parametrize(
         "user_label, should_succeed",
@@ -338,17 +351,27 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         self._handle_user_login(user_label)
 
         query = """
-            query ViewNotes {
-                notes {
-                    id
-                    privateDetails
+            query ViewNotes($offset: Int, $limit: Int) {
+                notes: notesPaginated(pagination: {offset: $offset, limit: $limit}) {
+                    totalCount
+                    pageInfo {
+                        limit
+                        offset
+                    }
+                    results {
+                        id
+                        privateDetails
+                    }
                 }
             }
         """
-        response = self.execute_graphql(query, {})
-        notes_data = response["data"]["notes"]
+        variables = {"offset": 0, "limit": None}
+        response = self.execute_graphql(query, variables)
+        notes_data = response["data"]["notes"]["results"]
 
-        private_details_visible = len([note for note in notes_data if note.get("privateDetails") is not None])
+        private_details_visible = len(
+            [note for note in notes_data if note.get("privateDetails") is not None]
+        )
 
         self.assertEqual(private_details_visible, expected_private_details_count)
 
