@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, List, Optional, cast
 
 import phonenumber_field
 import strawberry
@@ -38,24 +38,39 @@ from .types import (
 )
 
 
-def _validate_user_data(user_data: dict, nickname: str) -> list[dict[str, Any]]:
-    errors = []
+def _validate_user_email(user_data: dict, user: Optional[User] = None) -> list[dict[str, Any]]:
+    errors: list = []
+
+    if user_data["email"] is strawberry.UNSET:
+        return errors
+
+    email = user_data["email"].lower()
+
+    if user and user.email and user.email == email:
+        return errors
+
+    if User.objects.filter(email=email).exists():
+        errors.append({"field": "email", "message": "This email is already in use"})
+
+    return errors
+
+
+def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = None) -> list[dict[str, Any]]:
+    errors: list = []
 
     user_name_dict = {
         f"{name_field}": user_data.get(name_field) for name_field in ["first_name", "last_name", "middle_name"]
     }
     user_name_dict["nickname"] = nickname
 
-    has_name = next((k for k in user_name_dict.keys() if user_name_dict[k] is not strawberry.UNSET), None)
-    if not has_name:
+    user_name_untouched = all((v is strawberry.UNSET for v in user_name_dict.values()))
+    user_name_cleared = all((v == "" for v in user_name_dict.values()))
+
+    if user and user.has_name and user_name_untouched:
+        return errors
+
+    if user_name_cleared or user_name_untouched:
         errors.append({"field": "full_name", "message": "At least one name field is required"})
-
-    if user_data["email"] is not strawberry.UNSET:
-        email = user_data["email"].lower()
-        user_id = {"id": user_data["id"]} if user_data.get("id") is not strawberry.UNSET else {}
-
-        if User.objects.exclude(**user_id).filter(email=email).exists():
-            errors.append({"field": "email", "message": "This email is already in use"})
 
     return errors
 
@@ -117,16 +132,20 @@ def _validate_client_profile_data(data: dict) -> None:
     errors = []
 
     if data["user"] is not strawberry.UNSET:
-        errors += _validate_user_data(data["user"], data["nickname"])
+        user_id = data["user"].get("id", None)
+        user = User.objects.filter(id=user_id).first() if user_id else None
 
-    if data["phone_numbers"] is not strawberry.UNSET:
-        errors += _validate_phone_numbers(data["phone_numbers"])
+        errors += _validate_user_name(data["user"], data["nickname"], user)
+        errors += _validate_user_email(data["user"], user)
+
+    if data["contacts"] is not strawberry.UNSET:
+        errors += _validate_contacts(data["contacts"])
 
     if data["hmis_profiles"] is not strawberry.UNSET:
         errors += _validate_hmis_profiles(data["hmis_profiles"])
 
-    if data["contacts"] is not strawberry.UNSET:
-        errors += _validate_contacts(data["contacts"])
+    if data["phone_numbers"] is not strawberry.UNSET:
+        errors += _validate_phone_numbers(data["phone_numbers"])
 
     if errors:
         raise GraphQLError("Validation Errors", extensions={"errors": errors})

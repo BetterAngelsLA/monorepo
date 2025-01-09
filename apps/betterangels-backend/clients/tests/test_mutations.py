@@ -133,6 +133,52 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertFalse(client_differences)
 
+    def test_update_client_profile_mutation_validation(self) -> None:
+        contact = {
+            "phoneNumber": "125551212",
+            "relationshipToClient": RelationshipTypeEnum.AUNT.name,
+        }
+        hmis_profile = {
+            "hmisId": self.client_profile_1["hmisProfiles"][0]["hmisId"],
+            "agency": self.client_profile_1["hmisProfiles"][0]["agency"],
+        }
+        phone_number = {
+            "number": "125551212",
+            "isPrimary": True,
+        }
+        user = {
+            "id": self.client_profile_2["user"]["id"],
+            "firstName": "",
+            "lastName": "",
+            "middleName": "",
+            "email": self.client_profile_1["user"]["email"],
+        }
+
+        variables = {
+            "id": self.client_profile_2["id"],
+            "contacts": [contact],
+            "hmisProfiles": [hmis_profile],
+            "nickname": "",
+            "phoneNumbers": [phone_number],
+            "user": user,
+        }
+        response = self._update_client_profile_fixture(variables)
+        validation_errors = response["errors"][0]
+        error_messages = validation_errors["extensions"]["errors"]
+
+        self.assertEqual(validation_errors["message"], "Validation Errors")
+        self.assertEqual(len(error_messages), 5)
+        self.assertEqual(error_messages[0]["field"], "full_name")
+        self.assertEqual(error_messages[0]["message"], "At least one name field is required")
+        self.assertEqual(error_messages[1]["field"], "email")
+        self.assertEqual(error_messages[1]["message"], "This email is already in use")
+        self.assertEqual(error_messages[2]["field"], "contacts__0__phone_number")
+        self.assertEqual(error_messages[2]["message"], "The phone number entered is not valid")
+        self.assertEqual(error_messages[3]["field"], "hmis_profiles__0")
+        self.assertEqual(error_messages[3]["message"], "This LAHSA HMIS ID is already in use")
+        self.assertEqual(error_messages[4]["field"], "phone_numbers__0__number")
+        self.assertEqual(error_messages[4]["message"], "The phone number entered is not valid")
+
     def test_update_client_profile_mutation(self) -> None:
         user = {
             "id": self.client_profile_1["user"]["id"],
@@ -328,12 +374,13 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "user": user_update,
         }
         response = self._update_client_profile_fixture(variables)
+        validation_errors = response["errors"][0]
+        error_messages = validation_errors["extensions"]["errors"]
 
-        error_message = response["data"]["updateClientProfile"]["messages"][0]
-
-        self.assertEqual(error_message["kind"], "VALIDATION")
-        self.assertEqual(error_message["field"], "email")
-        self.assertEqual(error_message["message"], "User with this Email already exists.")
+        self.assertEqual(validation_errors["message"], "Validation Errors")
+        self.assertEqual(len(error_messages), 1)
+        self.assertEqual(error_messages[0]["field"], "email")
+        self.assertEqual(error_messages[0]["message"], "This email is already in use")
 
     def test_update_client_profile_duplicate_email_upper_mutation(self) -> None:
         dupe_email_upper = self.client_profile_2["user"]["email"].upper()
@@ -347,12 +394,13 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "user": user_update,
         }
         response = self._update_client_profile_fixture(variables)
+        validation_errors = response["errors"][0]
+        error_messages = validation_errors["extensions"]["errors"]
 
-        error_message = response["data"]["updateClientProfile"]["messages"][0]
-
-        self.assertEqual(error_message["kind"], "VALIDATION")
-        self.assertEqual(error_message["field"], "email")
-        self.assertEqual(error_message["message"], "User with this Email already exists.")
+        self.assertEqual(validation_errors["message"], "Validation Errors")
+        self.assertEqual(len(error_messages), 1)
+        self.assertEqual(error_messages[0]["field"], "email")
+        self.assertEqual(error_messages[0]["message"], "This email is already in use")
 
     def test_delete_client_profile_mutation(self) -> None:
         client_profile_id = self.client_profile_1["id"]
