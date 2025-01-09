@@ -19,12 +19,12 @@ export const enumDisplayDemographics: { [key in DemographicChoices]: string } =
   {
     [DemographicChoices.All]: 'All',
     [DemographicChoices.Families]: 'Families',
-    [DemographicChoices.Other]: 'Other',
+    [DemographicChoices.Other]: 'Others',
     [DemographicChoices.Seniors]: 'Seniors',
-    [DemographicChoices.SingleMen]: 'Single Man',
+    [DemographicChoices.SingleMen]: 'Single Men',
     [DemographicChoices.SingleMoms]: 'Single Moms',
-    [DemographicChoices.SingleWomen]: 'Single Woman',
-    [DemographicChoices.TayTeen]: 'Tay Teen',
+    [DemographicChoices.SingleWomen]: 'Single Women',
+    [DemographicChoices.TayTeen]: 'TAY/Teen',
   };
 
 export const enumDisplayGeneralServiceChoices: {
