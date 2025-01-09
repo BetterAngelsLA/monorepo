@@ -37,7 +37,7 @@ from .types import (
 
 def upsert_or_delete_client_related_object(
     info: Info,
-    model_cls: Any,
+    related_cls: Any,
     data: List[Dict[str, Any]],
     client_profile: ClientProfile,
 ) -> None:
@@ -45,62 +45,42 @@ def upsert_or_delete_client_related_object(
 
     Expects a list of related objects. Missing elements will be deleted.
     """
+    model_cls = related_cls.related_model
 
     item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
     items_to_create = [item for item in data if not item.get("id")]
     items_to_update = model_cls.objects.filter(id__in=item_updates_by_id.keys())
 
-    model_cls.objects.filter(client_profile=client_profile).exclude(id__in=item_updates_by_id).delete()
+    if isinstance(related_cls.remote_field, ForeignKey):
+        model_cls.objects.filter(client_profile=client_profile).exclude(id__in=item_updates_by_id).delete()
 
-    for item in items_to_create:
-        resolvers.create(
-            info,
-            model_cls,
-            {
-                **item,
-                "client_profile": client_profile,
-            },
-        )
+        for item in items_to_create:
+            resolvers.create(
+                info,
+                model_cls,
+                {
+                    **item,
+                    "client_profile": client_profile,
+                },
+            )
 
-    for item in items_to_update:
-        resolvers.update(
-            info,
-            item,
-            item_updates_by_id[str(item.id)],
-        )
+    if isinstance(related_cls.remote_field, GenericRel):
+        content_type = ContentType.objects.get_for_model(ClientProfile)
+        model_cls.objects.filter(content_type=content_type, object_id=client_profile.pk).exclude(
+            id__in=item_updates_by_id
+        ).delete()
 
-
-def upsert_or_delete_client_generic_related_object(
-    info: Info,
-    model_cls: Any,
-    data: List[Dict[str, Any]],
-    client_profile: ClientProfile,
-) -> None:
-    """Creates, updates, or deletes a client's related objects.
-
-    Expects a list of related objects. Missing elements will be deleted.
-    """
-
-    item_updates_by_id = {item["id"]: item for item in data if item.get("id")}
-    items_to_create = [item for item in data if not item.get("id")]
-    items_to_update = model_cls.objects.filter(id__in=item_updates_by_id.keys())
-
-    content_type = ContentType.objects.get_for_model(ClientProfile)
-    model_cls.objects.filter(content_type=content_type, object_id=client_profile.pk).exclude(
-        id__in=item_updates_by_id
-    ).delete()
-
-    for item in items_to_create:
-        resolvers.create(
-            info,
-            model_cls,
-            {
-                **item,
-                "client_profile": client_profile,
-                "content_type": content_type,
-                "object_id": client_profile.pk,
-            },
-        )
+        for item in items_to_create:
+            resolvers.create(
+                info,
+                model_cls,
+                {
+                    **item,
+                    "client_profile": client_profile,
+                    "content_type": content_type,
+                    "object_id": client_profile.pk,
+                },
+            )
 
     for item in items_to_update:
         resolvers.update(
@@ -247,38 +227,39 @@ class Mutation:
                 )
 
             related_classes = []
-            generic_related_classes = []
+            # generic_related_classes = []
 
             for field in ClientProfile._meta.get_fields():
                 if remote_field := getattr(field, "remote_field", None):
-                    if isinstance(remote_field, ForeignKey):
+                    if isinstance(remote_field, ForeignKey) or isinstance(remote_field, GenericRel):
                         related_classes.append(field)
 
-                    if isinstance(remote_field, GenericRel):
-                        generic_related_classes.append(field)
+                    # if isinstance(remote_field, GenericRel):
+                    #     generic_related_classes.append(field)
 
             for related_cls in related_classes:
-                related_name = related_cls.related_name
+                related_name = related_cls.name
                 if (
                     related_name in client_profile_data.keys()
                     and client_profile_data[related_name] is not strawberry.UNSET
                 ):
                     upsert_or_delete_client_related_object(
                         info,
-                        related_cls.related_model,
+                        related_cls,
+                        # related_cls.related_model,
                         client_profile_data.pop(related_name),
                         client_profile,
                     )
 
-            for related_cls in generic_related_classes:
-                name = related_cls.name
-                if name in client_profile_data.keys() and client_profile_data[name] is not strawberry.UNSET:
-                    upsert_or_delete_client_generic_related_object(
-                        info,
-                        related_cls.related_model,
-                        client_profile_data.pop(name),
-                        client_profile,
-                    )
+            # for related_cls in generic_related_classes:
+            #     name = related_cls.name
+            #     if name in client_profile_data.keys() and client_profile_data[name] is not strawberry.UNSET:
+            #         upsert_or_delete_client_generic_related_object(
+            #             info,
+            #             related_cls.related_model,
+            #             client_profile_data.pop(name),
+            #             client_profile,
+            #         )
 
             client_profile = resolvers.update(
                 info,
