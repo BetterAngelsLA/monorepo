@@ -1,5 +1,6 @@
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
+import { ModalContainer } from '../shared/modal/modalContainer';
 import { mergeCss } from '../shared/utils/styles/mergeCss';
 import { Footer } from './footer';
 import { Header } from './header';
@@ -34,6 +35,7 @@ export function MainLayout(props: IParams): ReactElement {
       <HorizontalLayout className="bg-steel-blue mt-auto">
         <Footer />
       </HorizontalLayout>
+      <ModalContainer />
     </div>
   );
 }

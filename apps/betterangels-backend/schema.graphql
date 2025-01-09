@@ -1123,7 +1123,6 @@ enum ServiceEnum {
   BOOK
   CALIFORNIA_LIFELINE_PHONE
   CLOTHES
-  CLOTHES_SOCKS
   CONSENT_TO_CONNECT
   CONTACT_DPSS
   CONTACT_FRIEND
@@ -1257,8 +1256,8 @@ input ShelterPropertyInput {
   pets: [PetChoices!] = null
   demographics: [DemographicChoices!] = null
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
-  shelterType: [ShelterChoices!] = null
-  roomStyle: [RoomStyleChoices!] = null
+  shelterTypes: [ShelterChoices!] = null
+  roomStyles: [RoomStyleChoices!] = null
   parking: [ParkingChoices!] = null
 }
 

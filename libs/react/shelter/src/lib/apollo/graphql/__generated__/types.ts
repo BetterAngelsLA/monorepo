@@ -1450,7 +1450,6 @@ export enum ServiceEnum {
   Book = 'BOOK',
   CaliforniaLifelinePhone = 'CALIFORNIA_LIFELINE_PHONE',
   Clothes = 'CLOTHES',
-  ClothesSocks = 'CLOTHES_SOCKS',
   ConsentToConnect = 'CONSENT_TO_CONNECT',
   ContactDpss = 'CONTACT_DPSS',
   ContactFriend = 'CONTACT_FRIEND',
@@ -1619,7 +1618,7 @@ export type ShelterType = {
   id: Scalars['ID']['output'];
   immediateNeeds: Array<ImmediateNeedType>;
   interiorPhotos: Array<ShelterPhotoType>;
-  location: ShelterLocationType;
+  location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;

@@ -1,3 +1,4 @@
+import { BaShelterLogoIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
 
 type IParams = {
@@ -16,5 +17,15 @@ export function Header(props: IParams): ReactElement {
     'text-white',
   ].join(' ');
 
-  return <header className={parentCss}>hello shelter-app</header>;
+  return (
+    <header className={parentCss}>
+      <div className="flex items-center">
+        <BaShelterLogoIcon className="h-4" />
+        <div className="text-white flex ml-2 text-sm">
+          <div className="font-normal">Shelters</div>
+          <div className="font-semibold">LA</div>
+        </div>
+      </div>
+    </header>
+  );
 }
