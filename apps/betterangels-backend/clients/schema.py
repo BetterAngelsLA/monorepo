@@ -1,10 +1,12 @@
 from typing import Any, Dict, List, cast
 
+import phonenumber_field
 import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.utils import get_user_permission_group
-from clients.models import ClientContact, ClientProfile
+from clients.enums import HmisAgencyEnum
+from clients.models import ClientContact, ClientProfile, HmisProfile
 from clients.permissions import ClientProfilePermissions
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, PhoneNumber
@@ -12,8 +14,10 @@ from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import ForeignKey, Prefetch
+from graphql import GraphQLError
 from guardian.shortcuts import assign_perm
 from strawberry.types import Info
 from strawberry_django import mutations
@@ -32,6 +36,73 @@ from .types import (
     CreateClientProfileInput,
     UpdateClientProfileInput,
 )
+
+
+def _validate_client_profile_data(data: dict) -> None:
+    """Validates the data for creating or updating a client profile."""
+    errors = []
+
+    if data["user"] is not strawberry.UNSET:
+        user_data = data["user"]
+
+        user_name_dict = {
+            f"{name_field}": user_data.get(name_field) for name_field in ["first_name", "last_name", "middle_name"]
+        }
+        user_name_dict["nickname"] = data["nickname"]
+
+        has_name = next((k for k in user_name_dict.keys() if user_name_dict[k] is not strawberry.UNSET), None)
+        if not has_name:
+            errors.append({"field": "full_name", "message": "At least one name field is required"})
+
+        if user_data["email"] is not strawberry.UNSET:
+            email = user_data["email"].lower()
+            user_id = {"id": user_data["id"]} if user_data.get("id") is not strawberry.UNSET else {}
+
+            if User.objects.exclude(**user_id).filter(email=email).exists():
+                errors.append({"field": "email", "message": "This email is already in use"})
+
+    if data["phone_numbers"] is not strawberry.UNSET:
+        phone_numbers = data["phone_numbers"]
+        for idx, phone_number in enumerate(phone_numbers):
+            try:
+                phonenumber_field.validators.validate_international_phonenumber(phone_number["number"])
+            except ValidationError:
+                errors.append(
+                    {"field": f"phone_numbers__{idx}__number", "message": "The phone number entered is not valid"}
+                )
+
+    if data["hmis_profiles"] is not strawberry.UNSET:
+        hmis_profiles = data["hmis_profiles"]
+        for idx, hmis_profile in enumerate(hmis_profiles):
+            hmis_profile_id = {"id": hmis_profile["id"]} if hmis_profile.get("id") is not strawberry.UNSET else {}
+
+            if (
+                HmisProfile.objects.exclude(**hmis_profile_id)
+                .filter(
+                    agency=hmis_profile["agency"],
+                    hmis_id=hmis_profile["hmis_id"],
+                )
+                .exists()
+            ):
+                errors.append(
+                    {
+                        "field": f"hmis_profiles__{idx}",
+                        "message": f"This {HmisAgencyEnum(hmis_profile["agency"]).label} HMIS ID is already in use",
+                    }
+                )
+
+    if data["contacts"] is not strawberry.UNSET:
+        contacts = data["contacts"]
+        for idx, contact in enumerate(contacts):
+            try:
+                phonenumber_field.validators.validate_international_phonenumber(contact["phone_number"])
+            except ValidationError:
+                errors.append(
+                    {"field": f"contacts__{idx}__phone_number", "message": "The phone number entered is not valid"}
+                )
+
+    if errors:
+        raise GraphQLError("Validation Errors", extensions={"errors": errors})
 
 
 def upsert_or_delete_client_related_object(
@@ -202,6 +273,8 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
+
+            _validate_client_profile_data(client_profile_data)
 
             if user_data := client_profile_data.pop("user", {}):
                 if email := user_data.get("email", ""):
