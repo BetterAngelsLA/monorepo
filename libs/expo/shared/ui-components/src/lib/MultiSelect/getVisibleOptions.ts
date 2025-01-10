@@ -4,10 +4,11 @@ type TGetVisibleOptions<T> = {
   options: T[];
   labelKey: keyof T;
   valueKey: keyof T;
+  withSelectAll?: boolean;
   selectAllKey: string;
   selectAllLabel: string;
-  searchText?: string;
   selectAllIdx?: TSelectAllIdx;
+  searchText?: string;
 };
 
 export function getVisibleOptions<T>(props: TGetVisibleOptions<T>): T[] {
@@ -16,8 +17,9 @@ export function getVisibleOptions<T>(props: TGetVisibleOptions<T>): T[] {
     valueKey,
     options,
     searchText = '',
+    withSelectAll,
     selectAllKey,
-    selectAllIdx,
+    selectAllIdx = 0,
     selectAllLabel,
   } = props;
 
@@ -35,8 +37,7 @@ export function getVisibleOptions<T>(props: TGetVisibleOptions<T>): T[] {
     return visibleOptions;
   }
 
-  // add Select All option
-  if (Number.isInteger(selectAllIdx) || selectAllIdx === 'last') {
+  if (withSelectAll) {
     const selectAllOption = {
       [labelKey]: selectAllLabel,
       [valueKey]: selectAllKey,
@@ -45,7 +46,9 @@ export function getVisibleOptions<T>(props: TGetVisibleOptions<T>): T[] {
     if (selectAllIdx === 'last') {
       visibleOptions.push(selectAllOption);
     } else {
-      visibleOptions.splice(selectAllIdx as number, 0, selectAllOption);
+      const insertIdx = Number.isInteger(selectAllIdx) ? selectAllIdx : 0;
+
+      visibleOptions.splice(insertIdx, 0, selectAllOption);
     }
 
     return visibleOptions;

@@ -15,15 +15,16 @@ const SELECT_ALL_LABEL = 'Select All';
 export type TSelectAllIdx = number | 'last';
 
 interface IProps<T> {
-  title: string;
+  title?: string;
   options: T[];
   selected: T[];
-  setSelectedItems: React.Dispatch<React.SetStateAction<T[]>>;
   valueKey: keyof T;
   labelKey: keyof T;
+  setSelectedItems: React.Dispatch<React.SetStateAction<T[]>>;
+  withSelectAll?: boolean;
   selectAllIdx?: TSelectAllIdx;
   selectAllLabel?: string;
-  useFilter?: boolean;
+  withFilter?: boolean;
   filterPlaceholder?: string;
 }
 
@@ -35,9 +36,10 @@ export function MultiSelect<T>(props: IProps<T>) {
     labelKey,
     setSelectedItems,
     selected = [],
-    selectAllIdx,
+    withSelectAll,
+    selectAllIdx = 0,
     selectAllLabel = SELECT_ALL_LABEL,
-    useFilter,
+    withFilter,
     filterPlaceholder = 'Search',
   } = props;
 
@@ -90,9 +92,10 @@ export function MultiSelect<T>(props: IProps<T>) {
     options,
     labelKey,
     valueKey,
-    selectAllLabel,
     searchText,
+    withSelectAll,
     selectAllIdx,
+    selectAllLabel,
     selectAllKey: SELECT_ALL_KEY,
   });
 
@@ -104,7 +107,7 @@ export function MultiSelect<T>(props: IProps<T>) {
         </TextBold>
       )}
 
-      {!!useFilter && (
+      {!!withFilter && (
         <BasicInput
           value={searchText}
           onDelete={() => setSearchText('')}

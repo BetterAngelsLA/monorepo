@@ -219,9 +219,10 @@ export default function Client({
               labelKey="label"
               selected={selected}
               setSelectedItems={setSelected}
+              withSelectAll={true}
               selectAllIdx={1}
               selectAllLabel="All Authors"
-              useFilter={true}
+              withFilter={true}
             />
           </BaseContainer>
         </ScrollView>
