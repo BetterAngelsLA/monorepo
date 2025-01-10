@@ -3,6 +3,9 @@ import { View } from 'react-native';
 import Checkbox from '../Checkbox';
 import TextRegular from '../TextRegular';
 
+const SELECT_ALL_KEY = 'select_all';
+const SELECT_ALL_LABEL = 'Select All';
+
 const items = [
   { id: '1', value: 'Me' },
   { id: '2', value: 'All Authors' },
@@ -29,116 +32,109 @@ interface IProps<T> {
   labelMarginLeft?: TSpacing;
   boldLabel?: boolean;
 
-  //   items?: { displayValue: string; value?: string }[];
-  //   items: (string | T)[];
   options: T[];
+  selected: T[];
+  setSelectedItems: React.Dispatch<React.SetStateAction<T[]>>;
   valueKey: keyof T;
-  displayKey: keyof T;
-
-  //   selected?: (string | T)[];
-  selected?: T[];
-
-  onChange: (values: T[]) => void;
-
-  //   setSelectedItems?: React.Dispatch<React.SetStateAction<string[]>>;
-  //   onSelect: (selected: []) => void;
+  labelKey: keyof T;
+  selectAllIdx?: number | 'last';
+  selectAllLabel?: string;
 }
-
-// selectedItems={selectedItems}
-// selectText="Pick Items"
-// searchInputPlaceholderText="Search Items..."
-// onChangeInput={ (text)=> console.log(text)}
 
 export function MultiSelect<T>(props: IProps<T>) {
   const {
     label,
     options,
     valueKey,
-    displayKey,
-    onChange,
+    labelKey,
+    setSelectedItems,
     selected = [],
+    selectAllIdx,
+    selectAllLabel = SELECT_ALL_LABEL,
   } = props;
 
-  console.log();
-  console.log('| -------------  MultiSelect  ------------- |');
-  //   console.log(items);
-  //   console.log();
-  console.log();
-  console.log('| -------------  selected  ------------- |');
-  console.log(selected);
-  console.log();
+  const toggleChecked = (item: T) => {
+    setSelectedItems((prev) => {
+      // toggle Select All
+      if (isSelectAllOption(item)) {
+        if (allAreSelected(prev)) {
+          return [];
+        }
 
-  const handleSelect = (item: T) => {
-    console.log('***************** ON SELECT - item:', item);
+        return options;
+      }
 
-    const selectedIdx = selected.findIndex((selectedItem) => {
-      return item[valueKey] === selectedItem[valueKey];
+      // uncheck
+      if (isSelected(item, prev)) {
+        const newSelectedItems = prev.filter((prevItem) => {
+          return item[valueKey] !== prevItem[valueKey];
+        });
+
+        return newSelectedItems;
+      }
+
+      // check
+      return [...prev, item];
     });
-
-    // remove
-    if (selectedIdx > -1) {
-      const updated = selected.filter((selectedItem) => {
-        return item[valueKey] !== selectedItem[valueKey];
-      });
-
-      return onChange(updated);
-    }
-
-    // add
-    if (selectedIdx < 0) {
-      return onChange([...selected, item]);
-    }
   };
+
+  const visibleOptions = [...options];
+
+  if (Number.isInteger(selectAllIdx) || selectAllIdx === 'last') {
+    const selectAllOption = {
+      [labelKey]: selectAllLabel,
+      [valueKey]: SELECT_ALL_KEY,
+    } as T;
+
+    if (selectAllIdx === 'last') {
+      visibleOptions.push(selectAllOption);
+    } else {
+      visibleOptions.splice(selectAllIdx as number, 0, selectAllOption);
+    }
+  }
+
+  function allAreSelected(selectedOptions: T[]): boolean {
+    return selectedOptions.length === options.length;
+  }
+
+  function isSelectAllOption(option: T): boolean {
+    return option[valueKey] === SELECT_ALL_KEY;
+  }
+
+  function isSelected(option: T, selectedOptions: T[]): boolean {
+    if (isSelectAllOption(option)) {
+      return allAreSelected(selectedOptions);
+    }
+
+    return !!selectedOptions.find((item) => {
+      return item[valueKey] === option[valueKey];
+    });
+  }
 
   return (
     <View>
-      {options.map((option, index) => {
+      {visibleOptions.map((option, index) => {
+        const isChecked = isSelected(option, selected);
+
         return (
           <Checkbox
             key={option[valueKey] as Key}
             mt={index !== 0 ? 'xs' : undefined}
-            isChecked={
-              !!selected.find((i) => i[displayKey] === option[displayKey])
-            }
-            onCheck={() => handleSelect(option)}
+            isChecked={isChecked}
+            onCheck={() => toggleChecked(option)}
             size="sm"
             hasBorder
             label={
-              <TextRegular>{(option as T)[displayKey] as string}</TextRegular>
+              <TextRegular>{(option as T)[labelKey] as string}</TextRegular>
             }
-            accessibilityHint="hello"
+            accessibilityHint={
+              isChecked
+                ? `uncheck option: ${option[labelKey]}`
+                : `check option: ${option[labelKey]}`
+            }
           />
         );
       })}
     </View>
   );
 }
-
-// return (
-//     <View ref={addressViewRef}>
-//       <AutocompleteInput<TPlacesPrediction>
-//         value={value || ''}
-//         placeholder={placeholder}
-//         label={label}
-//         predictions={predictions}
-//         onChangeText={handleChange}
-//         onFocus={handleFocus}
-//         onBlur={onBlur}
-//         onReset={() => onChange('')}
-//         errorMessage={error?.message}
-//         renderItem={(item) => (
-//           <AddressOption
-//             key={item.place_id}
-//             item={item}
-//             onPress={async () => {
-//               setPredictions([]);
-
-//               const detailAddress = await getDetailAddress(item, baseUrl);
-
-//               onChange(detailAddress);
-//             }}
-//           />
-//         )}
-//       />
-//     </View>
-//   );

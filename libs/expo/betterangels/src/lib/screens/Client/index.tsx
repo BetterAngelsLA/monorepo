@@ -37,16 +37,17 @@ interface ProfileRef {
 type THelloItem = {
   id: string;
   value: string;
+  random: string;
 };
 
 const items: THelloItem[] = [
-  { id: '1', value: 'Me' },
-  { id: '2', value: 'All Authors' },
-  { id: '3', value: 'Steve Young' },
-  { id: '4', value: 'Alex Smith' },
-  { id: '5', value: 'Joe Montana' },
-  { id: '6', value: 'Jimmy Garrapolo' },
-  { id: '7', value: 'Brock Purdy' },
+  { id: '1', value: 'Me', random: 'hello' },
+  { id: '2', value: 'All Authors', random: 'hello' },
+  { id: '3', value: 'Steve Young', random: 'hello' },
+  { id: '4', value: 'Alex Smith', random: 'hello' },
+  { id: '5', value: 'Joe Montana', random: 'hello' },
+  { id: '6', value: 'Jimmy Garrapolo', random: 'hello' },
+  { id: '7', value: 'Brock Purdy', random: 'hello' },
 ];
 
 const getTabComponent = (
@@ -152,13 +153,26 @@ export default function Client({
     throw new Error(`Something went wrong. Please try again. ${error}`);
 
   function onSelectChange(selectedItems: THelloItem[]) {
-    console.log();
-    console.log('| -------------  onSelectChange selected  ------------- .');
-    console.log(selectedItems);
-    console.log();
+    // console.log();
+    // console.log('| -------------  onSelectChange selected  ------------- .');
+    // console.log(selectedItems);
+    // console.log();
 
     setSelected(selectedItems);
   }
+
+  // const itemsWithSelectAll: THelloItem[] = [
+  //   { id: 'select_all', value: 'Select All' } as THelloItem,
+  //   ...items,
+  // ];
+
+  // const selectAllOption = {
+  //   id: 'select_all',
+  //   value: 'Select All',
+  // } as THelloItem;
+
+  // const itemsWithSelectAll: THelloItem[] = [...items];
+  // itemsWithSelectAll.splice(1, 0, selectAllOption);
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
@@ -177,9 +191,10 @@ export default function Client({
           label="Hello Multi"
           options={items}
           valueKey="id"
-          displayKey="value"
-          onChange={onSelectChange}
+          labelKey="value"
           selected={selected}
+          setSelectedItems={setSelected}
+          selectAllIdx={1}
         />
       </View>
       {/* <ClientTabs tab={tab} setTab={setTab} />
