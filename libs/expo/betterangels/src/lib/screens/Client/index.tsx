@@ -42,7 +42,6 @@ type THelloItem = {
 
 const items: THelloItem[] = [
   { id: '1', value: 'Me', random: 'hello' },
-  { id: '2', value: 'All Authors', random: 'hello' },
   { id: '3', value: 'Steve Young', random: 'hello' },
   { id: '4', value: 'Alex Smith', random: 'hello' },
   { id: '5', value: 'Joe Montana', random: 'hello' },
@@ -188,13 +187,15 @@ export default function Client({
         }}
       >
         <MultiSelect<THelloItem>
-          label="Hello Multi"
+          title="Filter - Authors"
           options={items}
           valueKey="id"
           labelKey="value"
           selected={selected}
           setSelectedItems={setSelected}
           selectAllIdx={1}
+          selectAllLabel="All Authors"
+          useFilter={true}
         />
       </View>
       {/* <ClientTabs tab={tab} setTab={setTab} />

@@ -1,22 +1,21 @@
-import { Key } from 'react';
-import { View } from 'react-native';
+import { SearchIcon } from '@monorepo/expo/shared/icons';
+import { Spacings } from '@monorepo/expo/shared/static';
+import { Key, useState } from 'react';
+import { StyleProp, View, ViewStyle } from 'react-native';
+import { Colors } from 'react-native/Libraries/NewAppScreen';
+import BasicInput from '../BasicInput';
 import Checkbox from '../Checkbox';
+import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
+import NoResultsFound from './NoResultsFound';
+import { getVisibleOptions } from './getVisibleOptions';
 
 const SELECT_ALL_KEY = 'select_all';
 const SELECT_ALL_LABEL = 'Select All';
 
-const items = [
-  { id: '1', value: 'Me' },
-  { id: '2', value: 'All Authors' },
-  { id: '3', value: 'Steve Young' },
-  { id: '4', value: 'Alex Smith' },
-  { id: '5', value: 'Joe Montana' },
-  { id: '6', value: 'Jimmy Garrapolo' },
-  { id: '7', value: 'Brock Purdy' },
-];
-
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+export type TSelectAllIdx = number | 'last';
 
 interface IProps<T> {
   mb?: TSpacing;
@@ -25,25 +24,30 @@ interface IProps<T> {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  label: string;
-  placeholder?: string;
+  componentStyle?: StyleProp<ViewStyle>;
 
-  defaultValue?: string;
-  labelMarginLeft?: TSpacing;
-  boldLabel?: boolean;
-
+  title: string;
   options: T[];
   selected: T[];
   setSelectedItems: React.Dispatch<React.SetStateAction<T[]>>;
   valueKey: keyof T;
   labelKey: keyof T;
-  selectAllIdx?: number | 'last';
+  selectAllIdx?: TSelectAllIdx;
   selectAllLabel?: string;
+  useFilter?: boolean;
+  filterPlaceholder?: string;
 }
 
 export function MultiSelect<T>(props: IProps<T>) {
   const {
-    label,
+    componentStyle,
+    mb,
+    mt,
+    my,
+    mx,
+    ml,
+    mr,
+    title,
     options,
     valueKey,
     labelKey,
@@ -51,7 +55,11 @@ export function MultiSelect<T>(props: IProps<T>) {
     selected = [],
     selectAllIdx,
     selectAllLabel = SELECT_ALL_LABEL,
+    useFilter,
+    filterPlaceholder = 'Search',
   } = props;
+
+  const [searchText, setSearchText] = useState('');
 
   const toggleChecked = (item: T) => {
     setSelectedItems((prev) => {
@@ -78,21 +86,6 @@ export function MultiSelect<T>(props: IProps<T>) {
     });
   };
 
-  const visibleOptions = [...options];
-
-  if (Number.isInteger(selectAllIdx) || selectAllIdx === 'last') {
-    const selectAllOption = {
-      [labelKey]: selectAllLabel,
-      [valueKey]: SELECT_ALL_KEY,
-    } as T;
-
-    if (selectAllIdx === 'last') {
-      visibleOptions.push(selectAllOption);
-    } else {
-      visibleOptions.splice(selectAllIdx as number, 0, selectAllOption);
-    }
-  }
-
   function allAreSelected(selectedOptions: T[]): boolean {
     return selectedOptions.length === options.length;
   }
@@ -111,30 +104,74 @@ export function MultiSelect<T>(props: IProps<T>) {
     });
   }
 
-  return (
-    <View>
-      {visibleOptions.map((option, index) => {
-        const isChecked = isSelected(option, selected);
+  const visibleOptions = getVisibleOptions({
+    options,
+    labelKey,
+    valueKey,
+    selectAllLabel,
+    searchText,
+    selectAllIdx,
+    selectAllKey: SELECT_ALL_KEY,
+  });
 
-        return (
-          <Checkbox
-            key={option[valueKey] as Key}
-            mt={index !== 0 ? 'xs' : undefined}
-            isChecked={isChecked}
-            onCheck={() => toggleChecked(option)}
-            size="sm"
-            hasBorder
-            label={
-              <TextRegular>{(option as T)[labelKey] as string}</TextRegular>
-            }
-            accessibilityHint={
-              isChecked
-                ? `uncheck option: ${option[labelKey]}`
-                : `check option: ${option[labelKey]}`
-            }
-          />
-        );
-      })}
+  return (
+    <View
+      style={[
+        componentStyle,
+        {
+          marginBottom: mb && Spacings[mb],
+          marginTop: mt && Spacings[mt],
+          marginLeft: ml && Spacings[ml],
+          marginRight: mr && Spacings[mr],
+          marginHorizontal: mx && Spacings[mx],
+          marginVertical: my && Spacings[my],
+        },
+      ]}
+    >
+      {!!title && (
+        <TextBold size="lg" mb="xs">
+          {title}
+        </TextBold>
+      )}
+
+      {!!useFilter && (
+        <BasicInput
+          value={searchText}
+          onDelete={() => setSearchText('')}
+          onChangeText={(query) => setSearchText(query)}
+          placeholder={filterPlaceholder}
+          icon={<SearchIcon color={Colors.NEUTRAL} />}
+          mb="md"
+        />
+      )}
+
+      <View>
+        {!visibleOptions.length && <NoResultsFound />}
+
+        {!!visibleOptions.length &&
+          visibleOptions.map((option, index) => {
+            const isChecked = isSelected(option, selected);
+
+            return (
+              <Checkbox
+                key={option[valueKey] as Key}
+                mt={index !== 0 ? 'xs' : undefined}
+                isChecked={isChecked}
+                onCheck={() => toggleChecked(option)}
+                size="sm"
+                hasBorder
+                label={
+                  <TextRegular>{(option as T)[labelKey] as string}</TextRegular>
+                }
+                accessibilityHint={
+                  isChecked
+                    ? `uncheck option: ${option[labelKey]}`
+                    : `check option: ${option[labelKey]}`
+                }
+              />
+            );
+          })}
+      </View>
     </View>
   );
 }
