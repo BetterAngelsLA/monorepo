@@ -1,5 +1,6 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
+  BaseContainer,
   Loading,
   MultiSelect,
   TextButton,
@@ -16,7 +17,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
 import Docs from './Docs';
@@ -36,17 +37,24 @@ interface ProfileRef {
 
 type THelloItem = {
   id: string;
-  value: string;
-  random: string;
+  label: string;
+  random?: string;
 };
 
 const items: THelloItem[] = [
-  { id: '1', value: 'Me', random: 'hello' },
-  { id: '3', value: 'Steve Young', random: 'hello' },
-  { id: '4', value: 'Alex Smith', random: 'hello' },
-  { id: '5', value: 'Joe Montana', random: 'hello' },
-  { id: '6', value: 'Jimmy Garrapolo', random: 'hello' },
-  { id: '7', value: 'Brock Purdy', random: 'hello' },
+  { id: '1', label: 'Me', random: 'hello' },
+  { id: '3', label: 'Steve Young', random: 'hello' },
+  { id: '4', label: 'Alex Smith', random: 'hello' },
+  { id: '5', label: 'Joe Montana', random: 'hello' },
+  { id: '6', label: 'Jimmy Garrapolo', random: 'hello' },
+  { id: '7', label: 'Brock Purdy', random: 'hello' },
+  { id: '8', label: 'Trey Lance' },
+  { id: '9', label: 'Josh Dobbs' },
+  { id: '10', label: 'Jeff Garcia' },
+  { id: '11', label: 'Trent Dilfer' },
+  { id: '12', label: 'Shaun Hill' },
+  { id: '13', label: "T.J O'Sullivan" },
+  { id: '14', label: 'Colin Kaepernick' },
 ];
 
 const getTabComponent = (
@@ -186,18 +194,39 @@ export default function Client({
           backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
         }}
       >
-        <MultiSelect<THelloItem>
-          title="Filter - Authors"
-          options={items}
-          valueKey="id"
-          labelKey="value"
-          selected={selected}
-          setSelectedItems={setSelected}
-          selectAllIdx={1}
-          selectAllLabel="All Authors"
-          useFilter={true}
-        />
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            gap: Spacings.sm,
+            paddingBottom: Spacings.md,
+          }}
+          style={{ paddingHorizontal: Spacings.xs }}
+        >
+          <BaseContainer
+            style={
+              {
+                // padding: Spacings.md,
+                // backgroundColor: '#fff',
+              }
+            }
+            // mt="xl"
+            // mx="lg"
+          >
+            <MultiSelect<THelloItem>
+              title="Filter - Authors"
+              options={items}
+              valueKey="id"
+              labelKey="label"
+              selected={selected}
+              setSelectedItems={setSelected}
+              selectAllIdx={1}
+              selectAllLabel="All Authors"
+              useFilter={true}
+            />
+          </BaseContainer>
+        </ScrollView>
       </View>
+
       {/* <ClientTabs tab={tab} setTab={setTab} />
       {getTabComponent(tab, data, profileRef)} */}
     </MainContainer>

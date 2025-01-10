@@ -1,8 +1,7 @@
 import { SearchIcon } from '@monorepo/expo/shared/icons';
-import { Spacings } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { Key, useState } from 'react';
-import { StyleProp, View, ViewStyle } from 'react-native';
-import { Colors } from 'react-native/Libraries/NewAppScreen';
+import { View } from 'react-native';
 import BasicInput from '../BasicInput';
 import Checkbox from '../Checkbox';
 import TextBold from '../TextBold';
@@ -13,19 +12,9 @@ import { getVisibleOptions } from './getVisibleOptions';
 const SELECT_ALL_KEY = 'select_all';
 const SELECT_ALL_LABEL = 'Select All';
 
-type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-
 export type TSelectAllIdx = number | 'last';
 
 interface IProps<T> {
-  mb?: TSpacing;
-  mt?: TSpacing;
-  my?: TSpacing;
-  mx?: TSpacing;
-  ml?: TSpacing;
-  mr?: TSpacing;
-  componentStyle?: StyleProp<ViewStyle>;
-
   title: string;
   options: T[];
   selected: T[];
@@ -40,13 +29,6 @@ interface IProps<T> {
 
 export function MultiSelect<T>(props: IProps<T>) {
   const {
-    componentStyle,
-    mb,
-    mt,
-    my,
-    mx,
-    ml,
-    mr,
     title,
     options,
     valueKey,
@@ -115,19 +97,7 @@ export function MultiSelect<T>(props: IProps<T>) {
   });
 
   return (
-    <View
-      style={[
-        componentStyle,
-        {
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
-        },
-      ]}
-    >
+    <View style={{ width: '100%' }}>
       {!!title && (
         <TextBold size="lg" mb="xs">
           {title}
