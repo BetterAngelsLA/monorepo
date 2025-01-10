@@ -1,6 +1,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import {
   Loading,
+  MultiSelect,
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -33,6 +34,21 @@ import {
 interface ProfileRef {
   scrollToRelevantContacts: () => void;
 }
+
+type THelloItem = {
+  id: string;
+  value: string;
+};
+
+const items: THelloItem[] = [
+  { id: '1', value: 'Me' },
+  { id: '2', value: 'All Authors' },
+  { id: '3', value: 'Steve Young' },
+  { id: '4', value: 'Alex Smith' },
+  { id: '5', value: 'Joe Montana' },
+  { id: '6', value: 'Jimmy Garrapolo' },
+  { id: '7', value: 'Brock Purdy' },
+];
 
 const getTabComponent = (
   key: string,
@@ -71,6 +87,8 @@ export default function Client({
 }) {
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
   const [tab, setTab] = useState('Profile');
+
+  const [selected, setSelected] = useState<THelloItem[]>([]);
 
   const profileRef = useRef<ProfileRef | null>(null);
 
@@ -134,12 +152,37 @@ export default function Client({
   if (error)
     throw new Error(`Something went wrong. Please try again. ${error}`);
 
+  function onSelectChange(selectedItems: THelloItem[]) {
+    console.log();
+    console.log('| -------------  onSelectChange selected  ------------- .');
+    console.log(selectedItems);
+    console.log();
+
+    setSelected(selectedItems);
+  }
+
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
       <ClientHeader
         onCaseManagerPress={handleScrollToRelevantContacts}
         client={data?.clientProfile}
       />
+      <View
+        style={{
+          flex: 1,
+          padding: 16,
+          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+        }}
+      >
+        <MultiSelect<THelloItem>
+          label="Hello Multi"
+          items={items}
+          valueKey="id"
+          displayKey="value"
+          onChange={onSelectChange}
+          selected={selected}
+        />
+      </View>
       <ClientTabs tab={tab} setTab={setTab} />
       {getTabComponent(tab, data, profileRef)}
     </MainContainer>
