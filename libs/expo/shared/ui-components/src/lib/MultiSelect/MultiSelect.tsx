@@ -1,4 +1,5 @@
-import { FlatList, TouchableOpacity } from 'react-native';
+import { Key } from 'react';
+import { View } from 'react-native';
 import Checkbox from '../Checkbox';
 import TextRegular from '../TextRegular';
 
@@ -30,7 +31,7 @@ interface IProps<T> {
 
   //   items?: { displayValue: string; value?: string }[];
   //   items: (string | T)[];
-  items: T[];
+  options: T[];
   valueKey: keyof T;
   displayKey: keyof T;
 
@@ -49,7 +50,14 @@ interface IProps<T> {
 // onChangeInput={ (text)=> console.log(text)}
 
 export function MultiSelect<T>(props: IProps<T>) {
-  const { label, items, valueKey, displayKey, onChange, selected = [] } = props;
+  const {
+    label,
+    options,
+    valueKey,
+    displayKey,
+    onChange,
+    selected = [],
+  } = props;
 
   console.log();
   console.log('| -------------  MultiSelect  ------------- |');
@@ -73,58 +81,36 @@ export function MultiSelect<T>(props: IProps<T>) {
         return item[valueKey] !== selectedItem[valueKey];
       });
 
-      console.log('################################### REMOVE');
-      console.log(updated);
-
       return onChange(updated);
     }
 
     // add
     if (selectedIdx < 0) {
-      console.log('################################### ADD');
-      console.log([...selected, item]);
-
       return onChange([...selected, item]);
     }
-
-    // setSelectedItems((prev) => {
-    //   const itemId = valueKey ? (item as T)[valueKey] : item;
-    //   if (prev.includes(String(itemId))) {
-    //     return prev.filter((i) => String(i) !== String(itemId));
-    //   }
-    //   return [...prev, String(itemId)];
-    // });
   };
 
   return (
-    <FlatList
-      data={items}
-      keyExtractor={(item, index) =>
-        valueKey ? String((item as T)[valueKey]) : String(index)
-      }
-      renderItem={({ item, index }) => (
-        <TouchableOpacity onPress={() => handleSelect(item)}>
+    <View>
+      {options.map((option, index) => {
+        return (
           <Checkbox
+            key={option[valueKey] as Key}
             mt={index !== 0 ? 'xs' : undefined}
             isChecked={
-              !!selected.find((i) => i[displayKey] === item[displayKey])
+              !!selected.find((i) => i[displayKey] === option[displayKey])
             }
-            onCheck={() => handleSelect(item)}
+            onCheck={() => handleSelect(option)}
             size="sm"
             hasBorder
             label={
-              <TextRegular>{(item as T)[displayKey] as string}</TextRegular>
+              <TextRegular>{(option as T)[displayKey] as string}</TextRegular>
             }
             accessibilityHint="hello"
           />
-        </TouchableOpacity>
-      )}
-    />
-
-    // label={(item as T)[displayKey] as string}
-    // <View>
-    //   <TextRegular>{label}</TextRegular>
-    // </View>
+        );
+      })}
+    </View>
   );
 }
 

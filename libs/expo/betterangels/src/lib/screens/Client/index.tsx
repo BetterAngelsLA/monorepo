@@ -19,7 +19,6 @@ import {
 import { Pressable, View } from 'react-native';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
-import ClientTabs from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
 import Locations from './Locations';
@@ -176,15 +175,15 @@ export default function Client({
       >
         <MultiSelect<THelloItem>
           label="Hello Multi"
-          items={items}
+          options={items}
           valueKey="id"
           displayKey="value"
           onChange={onSelectChange}
           selected={selected}
         />
       </View>
-      <ClientTabs tab={tab} setTab={setTab} />
-      {getTabComponent(tab, data, profileRef)}
+      {/* <ClientTabs tab={tab} setTab={setTab} />
+      {getTabComponent(tab, data, profileRef)} */}
     </MainContainer>
   );
 }
