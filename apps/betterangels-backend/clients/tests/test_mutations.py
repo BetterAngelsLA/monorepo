@@ -383,6 +383,20 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertEqual(client_profile["user"]["email"], "email@example.com")
 
+    def test_update_client_profile_null_email(self) -> None:
+        user_update = {
+            "id": self.client_profile_1["user"]["id"],
+            "email": None,
+        }
+        variables = {
+            "id": self.client_profile_1["id"],
+            "user": user_update,
+        }
+
+        response = self._update_client_profile_fixture(variables)
+        client_profile_user = response["data"]["updateClientProfile"]["user"]
+        self.assertEqual(client_profile_user["email"], None)
+
     def test_update_client_profile_duplicate_email_lower_mutation(self) -> None:
         dupe_email_lower = self.client_profile_2["user"]["email"].lower()
         user_update = {
