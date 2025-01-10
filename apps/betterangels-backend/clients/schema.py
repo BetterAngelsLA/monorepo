@@ -279,6 +279,8 @@ class Mutation:
             user = get_current_user(info)
             get_user_permission_group(user)
             client_profile_data: dict = strawberry.asdict(data)
+            _validate_client_profile_data(client_profile_data)
+
             user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)
             phone_numbers = client_profile_data.pop("phone_numbers", []) or []
