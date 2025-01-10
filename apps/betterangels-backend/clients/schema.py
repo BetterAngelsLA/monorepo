@@ -41,7 +41,7 @@ from .types import (
 def _validate_user_email(user_data: dict, user: Optional[User] = None) -> list[dict[str, Any]]:
     errors: list = []
 
-    if user_data["email"] is strawberry.UNSET:
+    if user_data["email"] is strawberry.UNSET or None:
         return errors
 
     email = user_data["email"].lower()
