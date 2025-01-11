@@ -1,7 +1,7 @@
 import { SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Key, useState } from 'react';
-import { View } from 'react-native';
+import { StyleProp, View, ViewStyle } from 'react-native';
 import BasicInput from '../BasicInput';
 import Checkbox from '../Checkbox';
 import TextBold from '../TextBold';
@@ -13,6 +13,7 @@ import { getVisibleOptions } from './getVisibleOptions';
 export type TSelectAllIdx = number | 'last';
 
 interface IProps<T> {
+  style?: StyleProp<ViewStyle>;
   options: T[];
   selected: T[];
   valueKey: keyof T;
@@ -28,6 +29,7 @@ interface IProps<T> {
 
 export function MultiSelect<T>(props: IProps<T>) {
   const {
+    style,
     options,
     selected = [],
     valueKey,
@@ -96,7 +98,7 @@ export function MultiSelect<T>(props: IProps<T>) {
   });
 
   return (
-    <View style={{ width: '100%' }}>
+    <View style={[style, { width: '100%' }]}>
       {!!title && (
         <TextBold size="lg" mb="xs">
           {title}
