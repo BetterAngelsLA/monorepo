@@ -13,13 +13,12 @@ import { getVisibleOptions } from './getVisibleOptions';
 export type TSelectAllIdx = number | 'last';
 
 interface IProps<T> {
-  title?: string;
   options: T[];
   selected: T[];
   valueKey: keyof T;
   labelKey: keyof T;
-  // setSelectedItems: React.Dispatch<React.SetStateAction<T[]>>;
   onChange: (newSelected: T[]) => void;
+  title?: string;
   withSelectAll?: boolean;
   selectAllIdx?: TSelectAllIdx;
   selectAllLabel?: string;
@@ -29,13 +28,12 @@ interface IProps<T> {
 
 export function MultiSelect<T>(props: IProps<T>) {
   const {
-    title,
     options,
+    selected = [],
     valueKey,
     labelKey,
-    // setSelectedItems,
     onChange,
-    selected = [],
+    title,
     withSelectAll,
     selectAllIdx = 0,
     selectAllLabel = SELECT_ALL_LABEL_DEFAULT,
@@ -66,29 +64,6 @@ export function MultiSelect<T>(props: IProps<T>) {
 
     // check
     return onChange([...selected, item]);
-
-    // setSelectedItems((prev) => {
-    //   // toggle Select All
-    //   if (isSelectAllOption(item)) {
-    //     if (allAreSelected(prev)) {
-    //       return [];
-    //     }
-
-    //     return options;
-    //   }
-
-    //   // uncheck
-    //   if (isSelected(item, prev)) {
-    //     const newSelectedItems = prev.filter((prevItem) => {
-    //       return item[valueKey] !== prevItem[valueKey];
-    //     });
-
-    //     return newSelectedItems;
-    //   }
-
-    //   // check
-    //   return [...prev, item];
-    // });
   };
 
   function allAreSelected(): boolean {
