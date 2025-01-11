@@ -1,12 +1,16 @@
-import { TSelectAllIdx } from './MultiSelect';
+import {
+  SELECT_ALL_LABEL_DEFAULT,
+  SELECT_ALL_VALUE,
+  TSelectAllIdx,
+} from './MultiSelect';
 
-type TGetVisibleOptions<T> = {
+export type TGetVisibleOptions<T> = {
   options: T[];
   labelKey: keyof T;
   valueKey: keyof T;
   withSelectAll?: boolean;
-  selectAllKey: string;
-  selectAllLabel: string;
+  selectAllLabel?: string;
+  selectAllValue?: string;
   selectAllIdx?: TSelectAllIdx;
   searchText?: string;
 };
@@ -18,9 +22,9 @@ export function getVisibleOptions<T>(props: TGetVisibleOptions<T>): T[] {
     options,
     searchText = '',
     withSelectAll,
-    selectAllKey,
     selectAllIdx = 0,
-    selectAllLabel,
+    selectAllValue = SELECT_ALL_VALUE,
+    selectAllLabel = SELECT_ALL_LABEL_DEFAULT,
   } = props;
 
   let visibleOptions = [...options];
@@ -40,7 +44,7 @@ export function getVisibleOptions<T>(props: TGetVisibleOptions<T>): T[] {
   if (withSelectAll) {
     const selectAllOption = {
       [labelKey]: selectAllLabel,
-      [valueKey]: selectAllKey,
+      [valueKey]: selectAllValue,
     } as T;
 
     if (selectAllIdx === 'last') {

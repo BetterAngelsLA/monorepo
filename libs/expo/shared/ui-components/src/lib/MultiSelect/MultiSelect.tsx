@@ -9,8 +9,8 @@ import TextRegular from '../TextRegular';
 import NoResultsFound from './NoResultsFound';
 import { getVisibleOptions } from './getVisibleOptions';
 
-const SELECT_ALL_KEY = 'select_all';
-const SELECT_ALL_LABEL = 'Select All';
+export const SELECT_ALL_LABEL_DEFAULT = 'Select All';
+export const SELECT_ALL_VALUE = 'select_all';
 
 export type TSelectAllIdx = number | 'last';
 
@@ -38,7 +38,7 @@ export function MultiSelect<T>(props: IProps<T>) {
     selected = [],
     withSelectAll,
     selectAllIdx = 0,
-    selectAllLabel = SELECT_ALL_LABEL,
+    selectAllLabel,
     withFilter,
     filterPlaceholder = 'Search',
   } = props;
@@ -75,7 +75,7 @@ export function MultiSelect<T>(props: IProps<T>) {
   }
 
   function isSelectAllOption(option: T): boolean {
-    return option[valueKey] === SELECT_ALL_KEY;
+    return option[valueKey] === SELECT_ALL_LABEL_DEFAULT;
   }
 
   function isSelected(option: T, selectedOptions: T[]): boolean {
@@ -96,7 +96,7 @@ export function MultiSelect<T>(props: IProps<T>) {
     withSelectAll,
     selectAllIdx,
     selectAllLabel,
-    selectAllKey: SELECT_ALL_KEY,
+    selectAllValue: SELECT_ALL_VALUE,
   });
 
   return (
