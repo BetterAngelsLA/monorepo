@@ -82,7 +82,13 @@
     "react-native-paper": "*",
     "dotenv": "*",
     "@react-native-picker/picker": "*",
-    "@likashefqet/react-native-image-zoom": "*"
+    "@likashefqet/react-native-image-zoom": "*",
+    "vm-browserify": "*",
+    "crypto-browserify": "*",
+    "stream-browserify": "*",
+    "os-browserify": "*",
+    "path-browserify": "*",
+    "@babel/plugin-transform-export-namespace-from": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",

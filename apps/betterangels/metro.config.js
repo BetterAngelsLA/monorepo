@@ -4,6 +4,9 @@ const { mergeConfig } = require('metro-config');
 
 const defaultConfig = getDefaultConfig(__dirname);
 defaultConfig.transformer.minifierConfig.compress.drop_console = true;
+// defaultConfig.transformer.babelTransformerPath = require.resolve(
+//   'react-native-reanimated/plugin'
+// );
 defaultConfig.resolver.sourceExts = [
   ...defaultConfig.resolver.sourceExts,
   'mjs',
