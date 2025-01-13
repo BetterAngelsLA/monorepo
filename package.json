@@ -8,6 +8,8 @@
     "storybook:build": "nx build-storybook expo-shared-ui-components",
     "server": "nx start betterangels-backend",
     "ba": "nx start betterangels",
+    "ba:cache:clear": "nx start betterangels --clear",
+    "ba:reset": "nx reset && yarn ba:cache:clear",
     "ba:build-dev": "nx build betterangels --profile development",
     "shelter": "nx serve shelter-web --port 8083"
   },
