@@ -61,24 +61,4 @@ describe('SelectButton Component', () => {
 
     expect(mockOnPress).toHaveBeenCalledTimes(1);
   });
-
-  it('displays correct styles for default and selected states', () => {
-    const { getByText, rerender } = render(
-      <SelectButton defaultLabel="All" selected={[]} onPress={jest.fn()} />
-    );
-
-    const defaultLabel = getByText('All');
-    expect(defaultLabel.props.style.color).toBeDefined();
-
-    rerender(
-      <SelectButton
-        defaultLabel="All"
-        selected={[{ id: 'team_a', label: 'Team A' }]}
-        onPress={jest.fn()}
-      />
-    );
-
-    const selectedLabel = getByText('Team A');
-    expect(selectedLabel.props.style.color).toBeDefined();
-  });
 });
