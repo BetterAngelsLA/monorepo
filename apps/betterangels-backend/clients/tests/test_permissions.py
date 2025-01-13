@@ -260,46 +260,6 @@ class ClientDocumentPermessionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_client_documents_permission(self, user_label: str, should_succeed: bool) -> None:
-        """
-        NOTE: This query is deprecated in favor of clientDocumentsPaginated
-        """
-
-        self._handle_user_login(user_label)
-
-        query = """
-            query ViewClientDocuments {
-                clientDocuments {
-                    id
-                }
-            }
-        """
-        response = self.execute_graphql(query)
-
-        if should_succeed:
-            returned_ids = {attachment["id"] for attachment in response["data"]["clientDocuments"]}
-            expected_ids = set(self.attachment_ids)
-            self.assertSetEqual(
-                returned_ids,
-                expected_ids,
-                "Should return exactly the expected attachments for the user.",
-            )
-        else:
-            self.assertTrue(
-                len(response["data"]["clientDocuments"]) == 0,
-                "Should return an empty list for client documents.",
-            )
-
-    @parametrize(
-        "user_label, should_succeed",
-        [
-            ("org_1_case_manager_1", True),  # Creator should succeed
-            ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
-            ("org_2_case_manager_1", True),  # CM in a different org should succeed
-            ("client_user_1", False),  # Client should not succeed
-            (None, False),  # Anonymous user should not succeed
-        ],
-    )
     def test_view_client_documents_paginated_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 

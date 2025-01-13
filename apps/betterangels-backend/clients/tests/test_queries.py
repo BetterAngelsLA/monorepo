@@ -420,37 +420,6 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             self.client_profile_1_document_1,
         )
 
-    def test_client_documents_query(self) -> None:
-        """
-        NOTE: This query is deprecated in favor of clientDocumentsPaginated
-        """
-
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        query = """
-            query ViewClientDocuments {
-                clientDocuments {
-                    id
-                    file {
-                        name
-                    }
-                    attachmentType
-                    originalFilename
-                    namespace
-                }
-            }
-        """
-        response = self.execute_graphql(query)
-
-        self.assertEqual(
-            response["data"]["clientDocuments"],
-            [
-                self.client_profile_1_document_1,
-                self.client_profile_1_document_2,
-                self.client_profile_1_document_3,
-                self.client_profile_1_document_4,
-            ],
-        )
-
     def test_client_documents_paginated_query(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
         query = """
