@@ -8,7 +8,7 @@ import {
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
-import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
+import { NotesPaginatedQuery, Ordering, useNotesPaginatedQuery } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
 import { MainContainer, NoteCard } from '../../ui-components';
 import InteractionsHeader from './InteractionsHeader';
@@ -23,7 +23,7 @@ export default function Interactions() {
   const [hasMore, setHasMore] = useState<boolean>(true);
   const { user } = useUser();
 
-  const { data, loading, error, refetch } = useNotesQuery({
+  const { data, loading, error, refetch } = useNotesPaginatedQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
@@ -32,7 +32,7 @@ export default function Interactions() {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const [notes, setNotes] = useState<NotesQuery['notes']>([]);
+  const [notes, setNotes] = useState<NotesPaginatedQuery['notesPaginated']['results']>([]);
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -64,9 +64,7 @@ export default function Interactions() {
         pagination: { limit: paginationLimit + 1, offset: 0 },
       });
       const isMoreAvailable =
-        response.data &&
-        'notes' in response.data &&
-        response.data.notes.length > paginationLimit;
+        response.data?.notesPaginated?.totalCount > paginationLimit;
       setHasMore(isMoreAvailable);
     } catch (err) {
       console.error(err);
@@ -75,10 +73,10 @@ export default function Interactions() {
   };
 
   useEffect(() => {
-    if (!data || !('notes' in data)) return;
+    if (!data || !('notesPaginated' in data)) return;
 
-    const notesToShow = data.notes.slice(0, paginationLimit);
-    const isMoreAvailable = data.notes.length > notesToShow.length;
+    const notesToShow = data.notesPaginated.results.slice(0, paginationLimit);
+    const isMoreAvailable = data.notesPaginated.totalCount > notesToShow.length;
 
     if (offset === 0) {
       setNotes(notesToShow);

@@ -1228,7 +1228,6 @@ export type Query = {
   note: NoteType;
   noteAttachment: NoteAttachmentType;
   noteAttachments: Array<NoteAttachmentType>;
-  notes: Array<NoteType>;
   notesPaginated: NoteTypeOffsetPaginated;
   serviceRequest: ServiceRequestType;
   serviceRequests: Array<ServiceRequestType>;
@@ -1285,13 +1284,6 @@ export type QueryNoteAttachmentArgs = {
 
 export type QueryNoteAttachmentsArgs = {
   filters?: InputMaybe<NoteAttachmentFilter>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryNotesArgs = {
-  filters?: InputMaybe<NoteFilter>;
-  order?: InputMaybe<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

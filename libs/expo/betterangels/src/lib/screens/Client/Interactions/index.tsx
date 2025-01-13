@@ -3,7 +3,7 @@ import { Loading } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
-import { NotesQuery, Ordering, useNotesPaginatedQuery } from '../../../apollo';
+import { NotesPaginatedQuery, Ordering, useNotesPaginatedQuery } from '../../../apollo';
 import { MainContainer, NoteCard } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import InteractionsHeader from './InteractionsHeader';
@@ -30,7 +30,7 @@ export default function Interactions({
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const [notes, setNotes] = useState<NotesQuery['notes']>([]);
+  const [notes, setNotes] = useState<NotesPaginatedQuery['notesPaginated']['results']>([]);
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -56,9 +56,7 @@ export default function Interactions({
         pagination: { limit: paginationLimit + 1, offset: 0 },
       });
       const isMoreAvailable =
-        response.data &&
-        'notes' in response.data &&
-        response.data.notes.length > paginationLimit;
+        response.data?.notesPaginated?.totalCount > paginationLimit;
       setHasMore(isMoreAvailable);
     } catch (err) {
       console.error(err);
@@ -68,14 +66,13 @@ export default function Interactions({
 
   const onChange = (e: string) => {
     setSearch(e);
-
     debounceFetch(e);
   };
 
   useEffect(() => {
     if (!data || !('notesPaginated' in data)) return;
 
-    const notesToShow = data.notesPaginated.slice(0, paginationLimit);
+    const notesToShow = data.notesPaginated.results.slice(0, paginationLimit);
     const isMoreAvailable = data.notesPaginated.totalCount > notesToShow.length;
 
     if (offset === 0) {
