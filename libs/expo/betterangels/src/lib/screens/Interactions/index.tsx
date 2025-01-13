@@ -11,6 +11,7 @@ import { FlatList, RefreshControl, View } from 'react-native';
 import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
 import { MainContainer, NoteCard } from '../../ui-components';
+import InteractionsFilters from './InteractionsFilters/TeamsFilter';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
 
@@ -95,6 +96,7 @@ export default function Interactions() {
   return (
     <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <InteractionsHeader search={search} setSearch={onChange} />
+      <InteractionsFilters />
       <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       {search && !loading && notes.length < 1 && (
         <View
