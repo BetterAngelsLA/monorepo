@@ -6,23 +6,23 @@ import TextRegular from '../TextRegular';
 
 interface ISelectButtonProps {
   defaultLabel?: string;
-  selected?: { id: string; label: string }[];
+  selected?: string[];
   onPress: () => void;
 }
 
 export function SelectButton(props: ISelectButtonProps) {
   const { defaultLabel = 'All', selected, onPress } = props;
 
-  const isDefault = !selected?.length || selected[0]?.label === defaultLabel;
+  const isDefault = !selected?.length || selected[0] === defaultLabel;
 
   let computedLabel: string;
 
   if (isDefault) {
     computedLabel = defaultLabel;
   } else if (selected.length === 1) {
-    computedLabel = selected[0].label;
+    computedLabel = selected[0];
   } else {
-    computedLabel = `${selected[0].label} + (${selected.length - 1})`;
+    computedLabel = `${selected[0]} + (${selected.length - 1})`;
   }
 
   const backgroundColor = isDefault ? Colors.WHITE : Colors.PRIMARY;

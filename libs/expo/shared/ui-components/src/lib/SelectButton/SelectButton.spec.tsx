@@ -4,7 +4,7 @@ import { SelectButton } from './SelectButton';
 describe('SelectButton Component', () => {
   it('renders with default label when no selection is made', () => {
     const { getByText } = render(
-      <SelectButton defaultLabel="All" selected={[]} onPress={jest.fn()} />
+      <SelectButton selected={[]} onPress={jest.fn()} />
     );
 
     expect(getByText('All')).toBeTruthy();
@@ -14,7 +14,7 @@ describe('SelectButton Component', () => {
     const { getByText } = render(
       <SelectButton
         defaultLabel="All"
-        selected={[{ id: 'team_a', label: 'Team A' }]}
+        selected={['Team A']}
         onPress={jest.fn()}
       />
     );
@@ -26,11 +26,7 @@ describe('SelectButton Component', () => {
     const { getByText } = render(
       <SelectButton
         defaultLabel="All"
-        selected={[
-          { id: 'team_a', label: 'Team A' },
-          { id: 'team_b', label: 'Team B' },
-          { id: 'team_c', label: 'Team C' },
-        ]}
+        selected={['Team A', 'Team B', 'Team C']}
         onPress={jest.fn()}
       />
     );
@@ -40,11 +36,7 @@ describe('SelectButton Component', () => {
 
   it('renders with "All" selected', () => {
     const { getByText } = render(
-      <SelectButton
-        defaultLabel="All"
-        selected={[{ id: 'all', label: 'All' }]}
-        onPress={jest.fn()}
-      />
+      <SelectButton defaultLabel="All" selected={['All']} onPress={jest.fn()} />
     );
 
     expect(getByText('All')).toBeTruthy();

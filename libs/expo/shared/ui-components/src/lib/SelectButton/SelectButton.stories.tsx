@@ -24,22 +24,18 @@ export const Default: SelectButtonStory = {
 
 export const SingleSelected: SelectButtonStory = {
   args: {
-    selected: [{ id: 'team_a', label: 'Team A' }],
+    selected: ['Team A'],
   },
 };
 
 export const MultipleSelected: SelectButtonStory = {
   args: {
-    selected: [
-      { id: 'team_a', label: 'Team A' },
-      { id: 'team_b', label: 'Team B' },
-      { id: 'team_c', label: 'Team C' },
-    ],
+    selected: ['Team A', 'Team B', 'Team C'],
   },
 };
 
 export const AllSelected: SelectButtonStory = {
   args: {
-    selected: [{ id: 'all', label: 'All' }],
+    selected: ['All'],
   },
 };
