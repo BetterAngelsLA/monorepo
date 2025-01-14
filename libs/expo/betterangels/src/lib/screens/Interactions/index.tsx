@@ -17,9 +17,16 @@ import InteractionsSorting from './InteractionsSorting';
 
 const paginationLimit = 10;
 
+type TFilters = {
+  teams: { id: string; label: string }[];
+};
+
 export default function Interactions() {
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState('');
+  const [filters, setFilters] = useState<TFilters>({
+    teams: [],
+  });
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const { user } = useUser();
@@ -96,7 +103,7 @@ export default function Interactions() {
   return (
     <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <InteractionsHeader search={search} setSearch={onChange} />
-      <InteractionsFilters />
+      <InteractionsFilters filters={filters} setFilters={setFilters} />
       <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       {search && !loading && notes.length < 1 && (
         <View
