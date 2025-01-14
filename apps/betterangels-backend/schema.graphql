@@ -828,8 +828,8 @@ input NoteFilter {
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
-  teams: [SelahTeamEnum!]
   search: String
+  teams: [SelahTeamEnum!]
 }
 
 enum NoteNamespaceEnum {
