@@ -265,10 +265,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         [
             ([SelahTeamEnum.WDI_ON_SITE.name, SelahTeamEnum.SLCC_ON_SITE.name], 2, ["note_2", "note_3"], 4),
             ([SelahTeamEnum.SLCC_ON_SITE.name], 1, ["note_3"], 4),
-            (["invalid team"], 0, [], 1),
+            ([SelahTeamEnum.WDI_ON_SITE.name, "invalid team"], 0, [], 1),
         ],
     )
-    def test_notes_query_teams_filter(
+    def test_notes_query_filter_by_teams(
         self,
         teams: list[SelahTeamEnum],
         expected_results_count: int,
@@ -322,7 +322,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
-        if teams == ["invalid team"]:
+        if "invalid team" in teams:
             self.assertIsNone(response["data"])
             self.assertEqual(len(response["errors"]), 1)
             self.assertIn("does not exist in 'SelahTeamEnum'", response["errors"][0]["message"])
