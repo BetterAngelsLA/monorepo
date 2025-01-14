@@ -420,11 +420,11 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             self.client_profile_1_document_1,
         )
 
-    def test_client_documents_paginated_query(self) -> None:
+    def test_client_documents_query(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
         query = """
             query ViewClientDocuments {
-                clientDocuments: clientDocumentsPaginated {
+                clientDocuments {
                     totalCount
                     results {
                         id

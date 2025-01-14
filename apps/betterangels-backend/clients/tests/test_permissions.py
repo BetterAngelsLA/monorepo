@@ -260,12 +260,12 @@ class ClientDocumentPermessionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_client_documents_paginated_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_client_documents_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         query = """
             query ViewClientDocuments {
-                clientDocuments: clientDocumentsPaginated {
+                clientDocuments {
                     totalCount
                     results {
                         id
