@@ -242,7 +242,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         filters: dict[str, Any] = {}
 
         if case_manager_label:
-            filters["createdBy"] = getattr(self, case_manager_label).pk
+            filters["createdBy"] = self.user_map[case_manager_label].pk
 
         if client_label:
             filters["client"] = getattr(self, client_label).pk
@@ -306,7 +306,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         )
 
-        filters = {"teams": teams} if teams else {}
+        filters = {"teams": teams}
 
         query = """
             query Notes($filters: NoteFilter) {
@@ -376,7 +376,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         """
 
-        filters: dict[str, Any] = {"search": search_terms} if search_terms else None
+        filters: dict[str, Any] = {"search": search_terms}
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
