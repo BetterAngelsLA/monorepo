@@ -376,8 +376,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         """
 
-        filters: dict[str, Any] = {}
-        filters["search"] = search_terms
+        filters: dict[str, Any] = {"search": search_terms} if search_terms else None
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
