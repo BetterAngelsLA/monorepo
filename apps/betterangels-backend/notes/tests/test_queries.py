@@ -337,9 +337,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         ("search_terms, expected_results_count, returned_note_labels"),
         [
-            ("deets", 2, ["note_2", "note_3"]),
-            ("deets coop", 1, ["note_2"]),
-            ("more", 1, ["note_3"]),
+            ("deets", 2, ["note_2", "note_3"]),  # Two notes have "deets" in public details
+            ("deets coop", 1, ["note_2"]),  # One note has "deets" in public details and "coop" in client name
+            ("more", 1, ["note_3"]),  # One note has "more" in public details
         ],
     )
     def test_notes_query_search(
