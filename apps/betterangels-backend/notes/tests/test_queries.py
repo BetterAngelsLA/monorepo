@@ -317,11 +317,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
 
     @parametrize(
-        ("teams, expected_results_count, returned_note_labels"),
+        ("teams, expected_results_count, returned_note_labels, expected_query_count"),
         [
-            ([], 3, ["note", "note_2", "note_3"]),
-            ([SelahTeamEnum.WDI_ON_SITE, SelahTeamEnum.SLCC_ON_SITE], 2, ["note_2", "note_3"]),
-            ([SelahTeamEnum.SLCC_ON_SITE], 1, ["note_3"]),
+            ([], 3, ["note", "note_2", "note_3"], 4),
+            ([SelahTeamEnum.WDI_ON_SITE.name, SelahTeamEnum.SLCC_ON_SITE.name], 2, ["note_2", "note_3"], 4),
+            ([SelahTeamEnum.SLCC_ON_SITE.name], 1, ["note_3"], 4),
+            (["invalid team"], 0, [], 1),
         ],
     )
     def test_notes_query_teams_filter(
@@ -329,6 +330,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         teams: list[SelahTeamEnum],
         expected_results_count: int,
         returned_note_labels: list[str],
+        expected_query_count: int,
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
@@ -361,9 +363,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         )
 
-        filters: dict[str, Any] = {}
-        if teams:
-            filters["teams"] = [team.name for team in teams]
+        filters = {"teams": teams} if teams else {}
 
         query = """
             query Notes($filters: NoteFilter) {
@@ -376,15 +376,20 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         """
 
-        expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
-        self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
-        notes = response["data"]["notes"]["results"]
+        if teams == ["invalid team"]:
+            self.assertIsNone(response["data"])
+            self.assertEqual(len(response["errors"]), 1)
+            self.assertIn("does not exist in 'SelahTeamEnum'", response["errors"][0]["message"])
 
-        for idx, note_label in enumerate(returned_note_labels):
-            self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
+        else:
+            self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
+            notes = response["data"]["notes"]["results"]
+
+            for idx, note_label in enumerate(returned_note_labels):
+                self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
 
     @parametrize(
         ("search_terms, expected_results_count, returned_note_labels"),
