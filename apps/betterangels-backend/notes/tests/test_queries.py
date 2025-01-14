@@ -247,7 +247,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         if client_label:
             filters["client"] = getattr(self, client_label).pk
 
-        if is_submitted is not None:
+        if isinstance(is_submitted, bool):
             filters["isSubmitted"] = is_submitted
 
         expected_query_count = 4
