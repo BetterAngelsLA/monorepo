@@ -195,66 +195,15 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         ("case_manager_label, client_label, is_submitted, expected_results_count, returned_note_labels"),
         [
             # Filter by:
-            # created by, client_label, search terms, and/or is_submitted
-            (
-                "org_1_case_manager_1",
-                None,
-                None,
-                1,
-                ["note"],
-            ),  # CM 1 created one note
-            (
-                "org_1_case_manager_2",
-                None,
-                None,
-                2,
-                ["note_2", "note_3"],
-            ),  # CM 2 created 2 notes
-            # Two of CM 2's notes contain "deets"
-            (
-                "org_1_case_manager_2",
-                None,
-                None,
-                2,
-                ["note_2", "note_3"],
-            ),
-            (
-                "org_1_case_manager_2",
-                None,
-                True,
-                0,
-                [],
-            ),  # CM 2 has no submitted notes
-            # CM 1 has no notes for client 2
-            (
-                "org_1_case_manager_1",
-                "client_user_2",
-                None,
-                0,
-                [],
-            ),
+            # created by, client_label, and/or is_submitted
+            ("org_1_case_manager_1", None, None, 1, ["note"]),  # CM 1 created one note
+            ("org_1_case_manager_2", None, None, 2, ["note_2", "note_3"]),  # CM 2 created 2 notes
+            ("org_1_case_manager_2", None, True, 0, []),  # CM 2 has no submitted notes
+            ("org_1_case_manager_1", "client_user_2", None, 0, []),  # CM 1 has no notes for client 2
             # CM 2 has one unsubmitted note for client 1
-            (
-                "org_1_case_manager_2",
-                "client_user_1",
-                False,
-                1,
-                ["note_2"],
-            ),
-            (
-                None,
-                None,
-                True,
-                0,
-                [],
-            ),  # There are no submitted notes
-            (
-                None,
-                None,
-                None,
-                3,
-                [],
-            ),  # There are three unsubmitted notes
+            ("org_1_case_manager_2", "client_user_1", False, 1, ["note_2"]),
+            (None, None, True, 0, []),  # There are no submitted notes
+            (None, None, None, 3, []),  # There are three unsubmitted notes
         ],
     )
     def test_notes_query_filter(
