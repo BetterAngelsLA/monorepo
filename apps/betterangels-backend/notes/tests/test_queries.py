@@ -192,13 +192,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertFalse(note_differences)
 
     @parametrize(
-        ("case_manager_label, client_label, is_submitted, team, expected_results_count, returned_note_labels"),
+        ("case_manager_label, client_label, is_submitted, expected_results_count, returned_note_labels"),
         [
             # Filter by:
-            # created by, client_label, search terms, is_submitted, and/or team
+            # created by, client_label, search terms, and/or is_submitted
             (
                 "org_1_case_manager_1",
-                None,
                 None,
                 None,
                 1,
@@ -206,7 +205,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             ),  # CM 1 created one note
             (
                 "org_1_case_manager_2",
-                None,
                 None,
                 None,
                 2,
@@ -217,7 +215,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "org_1_case_manager_2",
                 None,
                 None,
-                None,
                 2,
                 ["note_2", "note_3"],
             ),
@@ -225,7 +222,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "org_1_case_manager_2",
                 None,
                 True,
-                None,
                 0,
                 [],
             ),  # CM 2 has no submitted notes
@@ -233,7 +229,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             (
                 "org_1_case_manager_1",
                 "client_user_2",
-                None,
                 None,
                 0,
                 [],
@@ -243,7 +238,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "org_1_case_manager_2",
                 "client_user_1",
                 False,
-                None,
                 1,
                 ["note_2"],
             ),
@@ -251,7 +245,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 None,
                 None,
                 True,
-                None,
                 0,
                 [],
             ),  # There are no submitted notes
@@ -259,19 +252,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 None,
                 None,
                 None,
-                None,
                 3,
                 [],
             ),  # There are three unsubmitted notes
-            # There is one note for team ECHO_PARK_ON_SITE
-            (
-                None,
-                None,
-                None,
-                SelahTeamEnum.WDI_ON_SITE,
-                1,
-                [],
-            ),
         ],
     )
     def test_notes_query_filter(
@@ -279,7 +262,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         case_manager_label: Optional[str],
         client_label: Optional[str],
         is_submitted: Optional[bool],
-        team: Optional[SelahTeamEnum],
         expected_results_count: int,
         returned_note_labels: list[str],
     ) -> None:
@@ -321,17 +303,78 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         if client_label:
             filters["client"] = getattr(self, client_label).pk
 
-        if team:
-            filters["teams"] = [team.name]
-            self._update_note_fixture(
-                {
-                    "id": self.note["id"],
-                    "team": team.name,
-                }
-            )
-
         if is_submitted is not None:
             filters["isSubmitted"] = is_submitted
+
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
+        notes = response["data"]["notes"]["results"]
+
+        for idx, note_label in enumerate(returned_note_labels):
+            self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
+
+    @parametrize(
+        ("teams, expected_results_count, returned_note_labels"),
+        [
+            ([], 3, ["note", "note_2", "note_3"]),
+            ([SelahTeamEnum.WDI_ON_SITE, SelahTeamEnum.SLCC_ON_SITE], 2, ["note_2", "note_3"]),
+            ([SelahTeamEnum.SLCC_ON_SITE], 1, ["note_3"]),
+        ],
+    )
+    def test_notes_query_teams_filter(
+        self,
+        teams: list[SelahTeamEnum],
+        expected_results_count: int,
+        returned_note_labels: list[str],
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_2)
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
+        self.note_2 = self._create_note_fixture(
+            {
+                "purpose": "Client 1's Note",
+                "title": "Client 1's Note",
+                "publicDetails": "deets",
+                "client": self.client_user_1.pk,
+            }
+        )["data"]["createNote"]
+        self.note_3 = self._create_note_fixture(
+            {
+                "purpose": "Client 2's Note",
+                "title": "Client 2's Note",
+                "publicDetails": "more deets",
+                "client": self.client_user_2.pk,
+            }
+        )["data"]["createNote"]
+        self._update_note_fixture(
+            {
+                "id": self.note_2["id"],
+                "team": SelahTeamEnum.WDI_ON_SITE.name,
+            }
+        )
+        self._update_note_fixture(
+            {
+                "id": self.note_3["id"],
+                "team": SelahTeamEnum.SLCC_ON_SITE.name,
+            }
+        )
+
+        filters: dict[str, Any] = {}
+        if teams:
+            filters["teams"] = [team.name for team in teams]
+
+        query = """
+            query Notes($filters: NoteFilter) {
+                notes: notesPaginated(filters: $filters) {
+                    totalCount
+                    results{
+                        id
+                    }
+                }
+            }
+        """
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
