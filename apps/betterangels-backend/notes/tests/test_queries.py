@@ -295,6 +295,67 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         if returned_note_label_2:
             self.assertEqual(notes[1]["id"], getattr(self, returned_note_label_2)["id"])
 
+    @parametrize(
+        ("search_terms, expected_results_count, returned_note_label_1, returned_note_label_2"),
+        [
+            ("deets", 2, "note_2", "note_3"),
+            ("deets coop", 1, "note_2", None),
+            ("more", 1, "note_3", None),
+        ],
+    )
+    def test_notes_query_search(
+        self,
+        search_terms: Optional[str],
+        expected_results_count: int,
+        returned_note_label_1: Optional[str],
+        returned_note_label_2: Optional[str],
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_2)
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
+        self.note_2 = self._create_note_fixture(
+            {
+                "purpose": "Client 1's Note",
+                "title": "Client 1's Note",
+                "publicDetails": "deets",
+                "client": self.client_user_1.pk,
+            }
+        )["data"]["createNote"]
+        self.note_3 = self._create_note_fixture(
+            {
+                "purpose": "Client 2's Note",
+                "title": "Client 2's Note",
+                "publicDetails": "more deets",
+                "client": self.client_user_2.pk,
+            }
+        )["data"]["createNote"]
+
+        query = """
+            query Notes($filters: NoteFilter) {
+                notes: notesPaginated(filters: $filters) {
+                    totalCount
+                    results{
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {}
+        filters["search"] = search_terms
+
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
+        notes = response["data"]["notes"]["results"]
+
+        if returned_note_label_1:
+            self.assertEqual(notes[0]["id"], getattr(self, returned_note_label_1)["id"])
+
+        if returned_note_label_2:
+            self.assertEqual(notes[1]["id"], getattr(self, returned_note_label_2)["id"])
+
     def test_notes_query_order(self) -> None:
         """
         Assert that notes are returned in order of interacted_at timestamp, regardless of client
