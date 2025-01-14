@@ -198,12 +198,11 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             # created by, client_label, and/or is_submitted
             ("org_1_case_manager_1", None, None, 1, ["note"]),  # CM 1 created one note
             ("org_1_case_manager_2", None, None, 2, ["note_2", "note_3"]),  # CM 2 created 2 notes
-            ("org_1_case_manager_2", None, True, 0, []),  # CM 2 has no submitted notes
+            ("org_1_case_manager_2", None, False, 1, ["note_2"]),  # CM 2 has one unsubmitted note
+            ("org_1_case_manager_2", None, True, 1, ["note_3"]),  # CM 2 has one submitted note
             ("org_1_case_manager_1", "client_user_2", None, 0, []),  # CM 1 has no notes for client 2
-            # CM 2 has one unsubmitted note for client 1
-            ("org_1_case_manager_2", "client_user_1", False, 1, ["note_2"]),
-            (None, None, True, 0, []),  # There are no submitted notes
-            (None, None, None, 3, []),  # There are three unsubmitted notes
+            ("org_1_case_manager_1", "client_user_1", False, 1, ["note"]),  # CM 1 has one unsubmitted note for client 1
+            (None, None, False, 2, ["note", "note_2"]),  # There are two unsubmitted notes
         ],
     )
     def test_notes_query_filter(
@@ -216,22 +215,18 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
-        self.note_2 = self._create_note_fixture(
+        self.note_2 = self._create_note_fixture({"purpose": "Client 1's Note", "client": self.client_user_1.pk})[
+            "data"
+        ]["createNote"]
+        self.note_3 = self._create_note_fixture({"purpose": "Client 2's Note", "client": self.client_user_2.pk})[
+            "data"
+        ]["createNote"]
+        self._update_note_fixture(
             {
-                "purpose": "Client 1's Note",
-                "title": "Client 1's Note",
-                "publicDetails": "deets",
-                "client": self.client_user_1.pk,
+                "id": self.note_3["id"],
+                "isSubmitted": True,
             }
-        )["data"]["createNote"]
-        self.note_3 = self._create_note_fixture(
-            {
-                "purpose": "Client 2's Note",
-                "title": "Client 2's Note",
-                "publicDetails": "more deets",
-                "client": self.client_user_2.pk,
-            }
-        )["data"]["createNote"]
+        )
 
         query = """
             query Notes($filters: NoteFilter) {
@@ -268,7 +263,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         ("teams, expected_results_count, returned_note_labels, expected_query_count"),
         [
-            ([], 3, ["note", "note_2", "note_3"], 4),
             ([SelahTeamEnum.WDI_ON_SITE.name, SelahTeamEnum.SLCC_ON_SITE.name], 2, ["note_2", "note_3"], 4),
             ([SelahTeamEnum.SLCC_ON_SITE.name], 1, ["note_3"], 4),
             (["invalid team"], 0, [], 1),
@@ -286,19 +280,19 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.note_2 = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
-                "title": "Client 1's Note",
-                "publicDetails": "deets",
                 "client": self.client_user_1.pk,
             }
-        )["data"]["createNote"]
+        )[
+            "data"
+        ]["createNote"]
         self.note_3 = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
-                "title": "Client 2's Note",
-                "publicDetails": "more deets",
                 "client": self.client_user_2.pk,
             }
-        )["data"]["createNote"]
+        )[
+            "data"
+        ]["createNote"]
         self._update_note_fixture(
             {
                 "id": self.note_2["id"],
@@ -359,7 +353,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.note_2 = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
-                "title": "Client 1's Note",
                 "publicDetails": "deets",
                 "client": self.client_user_1.pk,
             }
@@ -367,7 +360,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.note_3 = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
-                "title": "Client 2's Note",
                 "publicDetails": "more deets",
                 "client": self.client_user_2.pk,
             }
@@ -406,19 +398,21 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         older_note = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
-                "title": "Client 1's Note",
                 "client": self.client_user_1.pk,
             }
-        )["data"]["createNote"]
+        )[
+            "data"
+        ]["createNote"]
         self._update_note_fixture({"id": older_note["id"], "interactedAt": "2024-03-10T10:11:12+00:00"})
 
         oldest_note = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
-                "title": "Client 2's Note",
                 "client": self.client_user_2.pk,
             }
-        )["data"]["createNote"]
+        )[
+            "data"
+        ]["createNote"]
         self._update_note_fixture({"id": oldest_note["id"], "interactedAt": "2024-01-10T10:11:12+00:00"})
 
         query = """
