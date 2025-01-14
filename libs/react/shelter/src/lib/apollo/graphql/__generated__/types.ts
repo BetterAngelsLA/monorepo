@@ -1218,8 +1218,7 @@ export enum PronounEnum {
 export type Query = {
   __typename?: 'Query';
   clientDocument: ClientDocumentType;
-  clientDocuments: Array<ClientDocumentType>;
-  clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
+  clientDocuments: ClientDocumentTypeOffsetPaginated;
   clientProfile: ClientProfileType;
   clientProfiles: Array<ClientProfileType>;
   clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
@@ -1245,11 +1244,6 @@ export type QueryClientDocumentArgs = {
 
 
 export type QueryClientDocumentsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryClientDocumentsPaginatedArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1587,8 +1581,8 @@ export type ShelterPropertyInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
-  roomStyle?: InputMaybe<Array<RoomStyleChoices>>;
-  shelterType?: InputMaybe<Array<ShelterChoices>>;
+  roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
+  shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
 };
 
