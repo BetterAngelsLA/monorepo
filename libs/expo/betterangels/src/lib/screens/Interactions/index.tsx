@@ -62,6 +62,10 @@ export default function Interactions() {
     []
   );
 
+  const onFiltersReset = () => {
+    setFilters({ teams: [] });
+  };
+
   const onChange = (e: string) => {
     setSearch(e);
 
@@ -106,7 +110,11 @@ export default function Interactions() {
 
   return (
     <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <InteractionsHeader search={search} setSearch={onChange} />
+      <InteractionsHeader
+        onFiltersReset={onFiltersReset}
+        search={search}
+        setSearch={onChange}
+      />
       <InteractionsFilters filters={filters} setFilters={setFilters} />
       <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       {search && !loading && notes.length < 1 && (
