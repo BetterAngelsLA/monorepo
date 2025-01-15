@@ -289,7 +289,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         self._handle_user_login(user_label)
 
         query = """
-            query ViewNotes($offset: Int, $limit: Int) {
+            query ViewNotes {
                 notes: notesPaginated {
                     totalCount
                     pageInfo {
@@ -303,7 +303,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
-        response = self.execute_graphql(query, variables)
+        response = self.execute_graphql(query)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["notes"]["results"])
@@ -350,7 +350,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         self._handle_user_login(user_label)
 
         query = """
-            query ViewNotes($offset: Int, $limit: Int) {
+            query ViewNotes {
                 notes: notesPaginated {
                     totalCount
                     pageInfo {
@@ -367,9 +367,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         response = self.execute_graphql(query)
         notes_data = response["data"]["notes"]["results"]
 
-        private_details_visible = len(
-            [note for note in notes_data if note.get("privateDetails") is not None]
-        )
+        private_details_visible = len([note for note in notes_data if note.get("privateDetails") is not None])
 
         self.assertEqual(private_details_visible, expected_private_details_count)
 
