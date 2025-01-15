@@ -824,6 +824,7 @@ input NoteFilter {
   client: ID
   createdBy: ID
   isSubmitted: Boolean
+  organization: ID
   AND: NoteFilter
   OR: NoteFilter
   NOT: NoteFilter

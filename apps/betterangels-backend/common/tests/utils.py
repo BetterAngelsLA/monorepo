@@ -52,11 +52,13 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
     def _setup_groups_and_permissions(self) -> None:
         caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")
         perm_group = permission_group_recipe.make(template=caseworker_permission_group_template)
+        self.org_1 = perm_group.organization
         perm_group.organization.add_user(self.org_1_case_manager_1)
         perm_group.organization.add_user(self.org_1_case_manager_2)
 
         # Create Another Org
         perm_group_2 = permission_group_recipe.make()
+        self.org_2 = perm_group.organization
         perm_group_2.organization.add_user(self.org_2_case_manager_1)
 
     def _get_address_inputs(
