@@ -290,7 +290,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query ViewNotes($offset: Int, $limit: Int) {
-                notes: notesPaginated(pagination: {offset: $offset, limit: $limit}) {
+                notes: notesPaginated {
                     totalCount
                     pageInfo {
                         limit
@@ -303,7 +303,6 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
-        variables = {"offset": 0, "limit": None}
         response = self.execute_graphql(query, variables)
 
         if should_succeed:
@@ -352,7 +351,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query ViewNotes($offset: Int, $limit: Int) {
-                notes: notesPaginated(pagination: {offset: $offset, limit: $limit}) {
+                notes: notesPaginated {
                     totalCount
                     pageInfo {
                         limit
@@ -365,8 +364,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
-        variables = {"offset": 0, "limit": None}
-        response = self.execute_graphql(query, variables)
+        response = self.execute_graphql(query)
         notes_data = response["data"]["notes"]["results"]
 
         private_details_visible = len(
