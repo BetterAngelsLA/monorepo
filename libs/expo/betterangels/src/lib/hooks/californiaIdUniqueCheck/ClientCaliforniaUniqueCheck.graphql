@@ -1,7 +1,14 @@
 query ClientCaliforniaUniqueCheck($filters: ClientProfileFilter) {
-  clientProfiles(filters: $filters) {
-    ... on ClientProfileType {
-      id
+  clientProfilesPaginated(filters: $filters) {
+    ... on ClientProfileTypeOffsetPaginated {
+      pageInfo {
+        offset
+        limit
+      }
+      totalCount
+      results {
+        id
+      }
     }
   }
 }
