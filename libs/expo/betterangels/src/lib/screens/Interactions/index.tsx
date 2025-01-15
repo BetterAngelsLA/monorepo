@@ -35,7 +35,11 @@ export default function Interactions() {
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
-      filters: { createdBy: user?.id, search: filterSearch },
+      filters: {
+        createdBy: user?.id,
+        search: filterSearch,
+        teams: filters.teams.map((item) => item.id),
+      },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',

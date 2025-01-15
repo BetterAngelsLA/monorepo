@@ -880,7 +880,7 @@ type OffsetPaginationInfo {
 
 input OffsetPaginationInput {
   offset: Int! = 0
-  limit: Int
+  limit: Int = null
 }
 
 input OneToManyInput {
