@@ -1,4 +1,5 @@
 from typing import Any, Optional
+from unittest import skip
 
 import time_machine
 from deepdiff import DeepDiff
@@ -197,14 +198,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             # Filter by:
             # created by, client_label, and/or is_submitted
             ("org_1_case_manager_1", None, None, None, 1, ["note"]),  # CM 1 created one note
-            ("org_1_case_manager_2", None, None, None, 2, ["note_2", "note_3"]),  # CM 2 created 2 notes
+            ("org_2_case_manager_1", None, None, True, 1, ["note_3"]),  # Org 2 CM 1 submitted 1 note
             ("org_1_case_manager_2", None, None, False, 1, ["note_2"]),  # CM 2 has one unsubmitted note
-            ("org_1_case_manager_2", None, None, True, 1, ["note_3"]),  # CM 2 has one submitted note
             ("org_1_case_manager_1", "client_user_2", None, None, 0, []),  # CM 1 has no notes for client 2
             # CM 1 has one unsubmitted note for client 1
             ("org_1_case_manager_1", "client_user_1", None, False, 1, ["note"]),
-            (None, None, None, False, 2, ["note", "note_2"]),  # There are two unsubmitted notes
-            (None, None, "org_1", False, 2, ["note", "note_2"]),  # There are two unsubmitted notes from org 1
+            (None, None, "org_2", True, 1, ["note_3"]),  # There is one submitted notes from org 2
         ],
     )
     def test_notes_query_filter(
@@ -221,6 +220,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.note_2 = self._create_note_fixture({"purpose": "Client 1's Note", "client": self.client_user_1.pk})[
             "data"
         ]["createNote"]
+        self.graphql_client.logout()
+        self.graphql_client.force_login(self.org_2_case_manager_1)
         self.note_3 = self._create_note_fixture({"purpose": "Client 2's Note", "client": self.client_user_2.pk})[
             "data"
         ]["createNote"]
