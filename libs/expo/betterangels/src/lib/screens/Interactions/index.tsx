@@ -16,7 +16,7 @@ import {
 } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
 import { MainContainer, NoteCard } from '../../ui-components';
-import InteractionsFilters from './InteractionsFilters/TeamsFilter';
+import InteractionsFilters from './InteractionsFilters';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
 
@@ -24,24 +24,26 @@ const paginationLimit = 10;
 
 type TFilters = {
   teams: { id: SelahTeamEnum; label: string }[];
+  createdBy: { id: string; label: string }[];
 };
 
 export default function Interactions() {
+  const { user } = useUser();
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState('');
   const [filters, setFilters] = useState<TFilters>({
     teams: [],
+    createdBy: [{ id: user?.id || '', label: 'Me' }],
   });
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { user } = useUser();
 
   const { data, loading, error, refetch } = useNotesQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
       filters: {
-        createdBy: user?.id,
+        // createdBy: filters.createdBy.map((item) => item.id),
         search: filterSearch,
         teams: filters.teams.map((item) => item.id),
       },
