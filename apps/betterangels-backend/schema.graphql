@@ -8,7 +8,10 @@ When the condition fails, the following can be returned (following this priority
 4) An empty `Connection` in case the return type is a relay connection
 2) Otherwise, an error will be raised
 """
-directive @hasRetvalPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
+directive @hasRetvalPerm(
+  permissions: [PermDefinition!]!
+  any: Boolean! = true
+) repeatable on FIELD_DEFINITION
 
 """
 Will check if the user has any/all permissions to resolve this.
@@ -20,7 +23,10 @@ When the condition fails, the following can be returned (following this priority
 4) An empty `Connection` in case the return type is a relay connection
 2) Otherwise, an error will be raised
 """
-directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
+directive @hasPerm(
+  permissions: [PermDefinition!]!
+  any: Boolean! = true
+) repeatable on FIELD_DEFINITION
 
 enum AccessibilityChoices {
   MEDICAL_EQUIPMENT_PERMITTED
@@ -233,10 +239,14 @@ type ClientDocumentType implements AttachmentInterface {
 type ClientDocumentTypeOffsetPaginated {
   pageInfo: OffsetPaginationInfo!
 
-  """Total count of existing results."""
+  """
+  Total count of existing results.
+  """
   totalCount: Int!
 
-  """List of paginated results."""
+  """
+  List of paginated results.
+  """
   results: [ClientDocumentType!]!
 }
 
@@ -329,10 +339,14 @@ type ClientProfileType {
 type ClientProfileTypeOffsetPaginated {
   pageInfo: OffsetPaginationInfo!
 
-  """Total count of existing results."""
+  """
+  Total count of existing results.
+  """
   totalCount: Int!
 
-  """List of paginated results."""
+  """
+  List of paginated results.
+  """
   results: [ClientProfileType!]!
 }
 
@@ -467,10 +481,14 @@ input CreateUserInput {
   email: String
 }
 
-"""Date (isoformat)"""
+"""
+Date (isoformat)
+"""
 scalar Date
 
-"""Date with time (isoformat)"""
+"""
+Date with time (isoformat)
+"""
 scalar DateTime
 
 union DeleteClientDocumentPayload = ClientDocumentType | OperationInfo
@@ -674,7 +692,10 @@ type ImmediateNeedType {
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
-scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
+scalar JSON
+  @specifiedBy(
+    url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf"
+  )
 
 enum LanguageEnum {
   ARABIC
@@ -772,32 +793,129 @@ type Mutation {
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
-  deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
-  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
-  createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
-  updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
-  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
-  deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
-  deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
-  deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
-  createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  createNoteAttachment(data: CreateNoteAttachmentInput!): CreateNoteAttachmentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  deleteClientDocument(
+    data: DeleteDjangoObjectInput!
+  ): DeleteClientDocumentPayload!
+    @hasRetvalPerm(
+      permissions: [{ app: "common", permission: "delete_attachment" }]
+      any: true
+    )
+  createClientDocument(
+    data: CreateClientDocumentInput!
+  ): CreateClientDocumentPayload!
+    @hasPerm(
+      permissions: [{ app: "common", permission: "add_attachment" }]
+      any: true
+    )
+  createClientProfile(
+    data: CreateClientProfileInput!
+  ): CreateClientProfilePayload!
+    @hasPerm(
+      permissions: [{ app: "clients", permission: "add_clientprofile" }]
+      any: true
+    )
+  updateClientProfile(
+    data: UpdateClientProfileInput!
+  ): UpdateClientProfilePayload!
+    @hasRetvalPerm(
+      permissions: [{ app: "clients", permission: "change_clientprofile" }]
+      any: true
+    )
+  updateClientProfilePhoto(
+    data: ClientProfilePhotoInput!
+  ): UpdateClientProfilePhotoPayload!
+    @hasRetvalPerm(
+      permissions: [{ app: "clients", permission: "change_clientprofile" }]
+      any: true
+    )
+  deleteClientProfile(
+    data: DeleteDjangoObjectInput!
+  ): DeleteClientProfilePayload!
+  deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "delete_note" }]
+      any: true
+    )
+  deleteNoteAttachment(
+    data: DeleteDjangoObjectInput!
+  ): DeleteNoteAttachmentPayload!
+    @hasRetvalPerm(
+      permissions: [{ app: "common", permission: "delete_attachment" }]
+      any: true
+    )
+  createNote(data: CreateNoteInput!): CreateNotePayload!
+    @hasPerm(permissions: [{ app: "notes", permission: "add_note" }], any: true)
+  updateNote(data: UpdateNoteInput!): UpdateNotePayload!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "change_note" }]
+      any: true
+    )
+  updateNoteLocation(
+    data: UpdateNoteLocationInput!
+  ): UpdateNoteLocationPayload!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "change_note" }]
+      any: true
+    )
+  revertNote(data: RevertNoteInput!): RevertNotePayload!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "change_note" }]
+      any: true
+    )
+  createNoteAttachment(
+    data: CreateNoteAttachmentInput!
+  ): CreateNoteAttachmentPayload!
+    @hasPerm(
+      permissions: [{ app: "common", permission: "add_attachment" }]
+      any: true
+    )
   addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload!
   removeNoteTask(data: RemoveNoteTaskInput!): RemoveNoteTaskPayload!
   createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload!
   deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload!
-  createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
-  createNoteServiceRequest(data: CreateNoteServiceRequestInput!): CreateNoteServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
-  updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_servicerequest"}], any: true)
-  removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload!
-  deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload!
-  createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
-  createNoteTask(data: CreateNoteTaskInput!): CreateNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
-  updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
-  updateTaskLocation(data: UpdateTaskLocationInput!): UpdateTaskLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
+  createServiceRequest(
+    data: CreateServiceRequestInput!
+  ): CreateServiceRequestPayload!
+    @hasPerm(
+      permissions: [{ app: "notes", permission: "add_servicerequest" }]
+      any: true
+    )
+  createNoteServiceRequest(
+    data: CreateNoteServiceRequestInput!
+  ): CreateNoteServiceRequestPayload!
+    @hasPerm(
+      permissions: [{ app: "notes", permission: "add_servicerequest" }]
+      any: true
+    )
+  updateServiceRequest(
+    data: UpdateServiceRequestInput!
+  ): UpdateServiceRequestPayload!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "change_servicerequest" }]
+      any: true
+    )
+  removeNoteServiceRequest(
+    data: RemoveNoteServiceRequestInput!
+  ): RemoveNoteServiceRequestPayload!
+  deleteServiceRequest(
+    data: DeleteDjangoObjectInput!
+  ): DeleteServiceRequestPayload!
+  createTask(data: CreateTaskInput!): CreateTaskPayload!
+    @hasPerm(permissions: [{ app: "notes", permission: "add_task" }], any: true)
+  createNoteTask(data: CreateNoteTaskInput!): CreateNoteTaskPayload!
+    @hasPerm(permissions: [{ app: "notes", permission: "add_task" }], any: true)
+  updateTask(data: UpdateTaskInput!): UpdateTaskPayload!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "change_task" }]
+      any: true
+    )
+  updateTaskLocation(
+    data: UpdateTaskLocationInput!
+  ): UpdateTaskLocationPayload!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "change_task" }]
+      any: true
+    )
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
 }
 
@@ -849,7 +967,10 @@ type NoteType {
   team: SelahTeamEnum
   title: String
   location: LocationType
-  attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
+  attachments(
+    filters: NoteAttachmentFilter
+    pagination: OffsetPaginationInput
+  ): [NoteAttachmentType!]!
   moods: [MoodType!]!
   purposes(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
   nextSteps(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
@@ -867,10 +988,14 @@ type NoteType {
 type NoteTypeOffsetPaginated {
   pageInfo: OffsetPaginationInfo!
 
-  """Total count of existing results."""
+  """
+  Total count of existing results.
+  """
   totalCount: Int!
 
-  """List of paginated results."""
+  """
+  List of paginated results.
+  """
   results: [NoteType!]!
 }
 
@@ -881,7 +1006,7 @@ type OffsetPaginationInfo {
 
 input OffsetPaginationInput {
   offset: Int! = 0
-  limit: Int = null
+  limit: Int
 }
 
 input OneToManyInput {
@@ -889,15 +1014,21 @@ input OneToManyInput {
 }
 
 type OperationInfo {
-  """List of messages returned by the operation."""
+  """
+  List of messages returned by the operation.
+  """
   messages: [OperationMessage!]!
 }
 
 type OperationMessage {
-  """The kind of this message."""
+  """
+  The kind of this message.
+  """
   kind: OperationMessageKind!
 
-  """The error message."""
+  """
+  The error message.
+  """
   message: String!
 
   """
@@ -905,7 +1036,9 @@ type OperationMessage {
   """
   field: String
 
-  """The error code, or `null` if no error code was set."""
+  """
+  The error code, or `null` if no error code was set.
+  """
   code: String
 }
 
@@ -970,7 +1103,9 @@ type PhoneNumberType {
   isPrimary: Boolean
 }
 
-"""Represents a point as `(x, y, z)` or `(x, y)`."""
+"""
+Represents a point as `(x, y, z)` or `(x, y)`.
+"""
 scalar Point
 
 enum PreferredCommunicationEnum {
@@ -992,24 +1127,109 @@ enum PronounEnum {
 
 type Query {
   currentUser: UserType!
-  clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
-  clientProfilesPaginated(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
-  clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  clientDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  clientDocumentsPaginated(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
+  clientProfiles(
+    filters: ClientProfileFilter
+    order: ClientProfileOrder
+    pagination: OffsetPaginationInput
+  ): [ClientProfileType!]!
+    @hasRetvalPerm(
+      permissions: [{ app: "clients", permission: "view_clientprofile" }]
+      any: true
+    )
+  clientProfilesPaginated(
+    pagination: OffsetPaginationInput
+    filters: ClientProfileFilter
+    order: ClientProfileOrder
+  ): ClientProfileTypeOffsetPaginated!
+    @hasRetvalPerm(
+      permissions: [{ app: "clients", permission: "view_clientprofile" }]
+      any: true
+    )
+  clientDocument(pk: ID!): ClientDocumentType!
+    @hasRetvalPerm(
+      permissions: [{ app: "common", permission: "view_attachment" }]
+      any: true
+    )
+  clientDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]!
+    @hasRetvalPerm(
+      permissions: [{ app: "common", permission: "view_attachment" }]
+      any: true
+    )
+  clientDocumentsPaginated(
+    pagination: OffsetPaginationInput
+  ): ClientDocumentTypeOffsetPaginated!
+    @hasRetvalPerm(
+      permissions: [{ app: "common", permission: "view_attachment" }]
+      any: true
+    )
+  clientProfile(pk: ID!): ClientProfileType!
+    @hasRetvalPerm(
+      permissions: [{ app: "clients", permission: "view_clientprofile" }]
+      any: true
+    )
   featureControls: FeatureControlData!
-  note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notes(filters: NoteFilter, order: NoteOrder, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notesPaginated(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  noteAttachment(pk: ID!): NoteAttachmentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  noteAttachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  serviceRequest(pk: ID!): ServiceRequestType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
-  serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
-  task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
-  tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
+  note(pk: ID!): NoteType!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "view_note" }]
+      any: true
+    )
+  notes(
+    filters: NoteFilter
+    order: NoteOrder
+    pagination: OffsetPaginationInput
+  ): [NoteType!]!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "view_note" }]
+      any: true
+    )
+  notesPaginated(
+    pagination: OffsetPaginationInput
+    filters: NoteFilter
+    order: NoteOrder
+  ): NoteTypeOffsetPaginated!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "view_note" }]
+      any: true
+    )
+  noteAttachment(pk: ID!): NoteAttachmentType!
+    @hasRetvalPerm(
+      permissions: [{ app: "common", permission: "view_attachment" }]
+      any: true
+    )
+  noteAttachments(
+    filters: NoteAttachmentFilter
+    pagination: OffsetPaginationInput
+  ): [NoteAttachmentType!]!
+    @hasRetvalPerm(
+      permissions: [{ app: "common", permission: "view_attachment" }]
+      any: true
+    )
+  serviceRequest(pk: ID!): ServiceRequestType!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "view_servicerequest" }]
+      any: true
+    )
+  serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "view_servicerequest" }]
+      any: true
+    )
+  task(pk: ID!): TaskType!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "view_task" }]
+      any: true
+    )
+  tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
+    @hasRetvalPerm(
+      permissions: [{ app: "notes", permission: "view_task" }]
+      any: true
+    )
   shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
+  shelters(
+    pagination: OffsetPaginationInput
+    filters: ShelterFilter
+    order: ShelterOrder
+  ): ShelterTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -1319,10 +1539,14 @@ type ShelterType {
 type ShelterTypeOffsetPaginated {
   pageInfo: OffsetPaginationInfo!
 
-  """Total count of existing results."""
+  """
+  Total count of existing results.
+  """
   totalCount: Int!
 
-  """List of paginated results."""
+  """
+  List of paginated results.
+  """
   results: [ShelterType!]!
 }
 
@@ -1419,7 +1643,9 @@ enum TaskTypeEnum {
   NEXT_STEP
 }
 
-"""Time (isoformat)"""
+"""
+Time (isoformat)
+"""
 scalar Time
 
 enum TrainingServiceChoices {
@@ -1557,7 +1783,9 @@ enum YesNoPreferNotToSayEnum {
   PREFER_NOT_TO_SAY
 }
 
-"""Permission definition for schema directives."""
+"""
+Permission definition for schema directives.
+"""
 input PermDefinition {
   """
   The app to which we are requiring permission. If this is empty that means that we are checking the permission directly.
