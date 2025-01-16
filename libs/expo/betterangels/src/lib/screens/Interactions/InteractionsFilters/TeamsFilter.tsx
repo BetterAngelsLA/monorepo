@@ -6,17 +6,20 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import { SelahTeamEnum } from '../../../apollo';
 import { enumDisplaySelahTeam } from '../../../static';
 import { Modal } from '../../../ui-components';
 
 interface IInteractionsFiltersProps {
-  setFilters: (filters: { teams: { id: string; label: string }[] }) => void;
-  filters: { teams: { id: string; label: string }[] };
+  setFilters: (filters: {
+    teams: { id: SelahTeamEnum; label: string }[];
+  }) => void;
+  filters: { teams: { id: SelahTeamEnum; label: string }[] };
 }
 
 const valueAsSelahTeamEnum = Object.entries(enumDisplaySelahTeam).map(
   ([key, value]) => ({
-    id: key,
+    id: key as SelahTeamEnum,
     label: value,
   })
 );
@@ -24,7 +27,7 @@ const valueAsSelahTeamEnum = Object.entries(enumDisplaySelahTeam).map(
 export default function InteractionsFilters(props: IInteractionsFiltersProps) {
   const { setFilters, filters } = props;
   const [selected, setSelected] = useState<
-    Array<{ id: string; label: string }>
+    Array<{ id: SelahTeamEnum; label: string }>
   >([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
@@ -67,7 +70,9 @@ export default function InteractionsFilters(props: IInteractionsFiltersProps) {
               withSelectAll
               selectAllLabel="All Teams"
               title="Filter - Teams"
-              onChange={(e) => setSelected(e)}
+              onChange={(e: { id: SelahTeamEnum; label: string }[]) =>
+                setSelected(e)
+              }
               options={valueAsSelahTeamEnum}
               selected={selected}
               valueKey="id"
