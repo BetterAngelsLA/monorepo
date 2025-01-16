@@ -284,7 +284,8 @@ class ClientDocumentPermessionTestCase(ClientProfileGraphQLBaseTestCase):
                 "Should return exactly the expected attachments for the user.",
             )
         else:
-            self.assertTrue(
-                len(response["data"]["clientDocuments"]["results"]) == 0,
+            self.assertEqual(
+                response["data"]["clientDocuments"]["totalCount"],
+                0,
                 "Should return an empty list for client documents.",
             )
