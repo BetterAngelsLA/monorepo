@@ -143,7 +143,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note_differences = DeepDiff(expected_note, note, ignore_order=True)
         self.assertFalse(note_differences)
 
-    def test_notes_query(self) -> None:
+        def test_notes_query(self) -> None:
         """
         NOTE: This query is deprecated in favor of notesPaginated
         """
@@ -163,7 +163,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(len(notes), 1)
         note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
         self.assertFalse(note_differences)
-
+        
     def test_notes_paginated_query(self) -> None:
         query = f"""
             query ViewNotes($offset: Int, $limit: Int) {{
