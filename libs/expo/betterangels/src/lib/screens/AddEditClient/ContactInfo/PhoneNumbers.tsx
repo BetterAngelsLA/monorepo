@@ -43,8 +43,15 @@ export default function PhoneNumbers() {
               }
               rules={{
                 validate: (value: string) => {
-                  if (value && !Regex.phoneNumber.test(value)) {
-                    return 'Enter a 10-digit phone number without space or special characters';
+                  if (value) {
+                    const firstDigit = value.charAt(0);
+
+                    if (
+                      !Regex.phoneNumber.test(value) ||
+                      !Regex.usAreaCode.test(firstDigit)
+                    ) {
+                      return 'Enter a 10-digit phone number without space or special characters';
+                    }
                   }
                   return true;
                 },
