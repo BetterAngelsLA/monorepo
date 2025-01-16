@@ -7,7 +7,7 @@ import {
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { SelahTeamEnum } from '../../../apollo';
-import { enumDisplaySelahTeam } from '../../../static';
+import { useUser } from '../../../hooks';
 import { Modal } from '../../../ui-components';
 
 type TFilters = {
@@ -15,44 +15,38 @@ type TFilters = {
   createdBy: { id: string; label: string }[];
 };
 
-interface ITeamFilterProps {
+interface ICreatedByFilterProps {
   setFilters: (filters: TFilters) => void;
   filters: TFilters;
 }
 
-const valueAsSelahTeamEnum = Object.entries(enumDisplaySelahTeam).map(
-  ([key, value]) => ({
-    id: key as SelahTeamEnum,
-    label: value,
-  })
-);
-
-export default function TeamsFilter(props: ITeamFilterProps) {
+export default function CreatedByFilter(props: ICreatedByFilterProps) {
   const { setFilters, filters } = props;
+  const { user } = useUser();
   const [selected, setSelected] = useState<
-    Array<{ id: SelahTeamEnum; label: string }>
+    Array<{ id: string; label: string }>
   >([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const handleOnDone = () => {
-    setFilters({ ...filters, teams: selected });
+    setFilters({ ...filters, createdBy: selected });
     setIsModalVisible(false);
   };
 
   const handleCloseModal = () => {
-    setSelected(filters.teams);
+    setSelected(filters.createdBy);
     setIsModalVisible(false);
   };
 
   const handleSelectButtonPress = () => {
-    setSelected(filters.teams);
+    setSelected(filters.createdBy);
     setIsModalVisible(true);
   };
   return (
     <View>
       <SelectButton
-        defaultLabel="All Teams"
-        selected={filters.teams?.map((item) => item.label)}
+        defaultLabel="All Authors"
+        selected={filters.createdBy?.map((item) => item.label)}
         onPress={handleSelectButtonPress}
       />
 
@@ -69,13 +63,9 @@ export default function TeamsFilter(props: ITeamFilterProps) {
             <MultiSelect
               filterPlaceholder="Search"
               withFilter
-              withSelectAll
-              selectAllLabel="All Teams"
-              title="Filter - Teams"
-              onChange={(e: { id: SelahTeamEnum; label: string }[]) =>
-                setSelected(e)
-              }
-              options={valueAsSelahTeamEnum}
+              title="Filter - Authors"
+              onChange={(e: { id: string; label: string }[]) => setSelected(e)}
+              options={[{ id: user?.id || '', label: 'Me' }]}
               selected={selected}
               valueKey="id"
               labelKey="label"
@@ -86,7 +76,7 @@ export default function TeamsFilter(props: ITeamFilterProps) {
             size="full"
             title="Done"
             variant="primary"
-            accessibilityHint="apply selected teams filter"
+            accessibilityHint="apply selected created by filter"
           />
         </View>
       </Modal>
