@@ -38,6 +38,11 @@ export default function Interactions() {
   const loadMoreInteractions = useCallback(async () => {
     if (hasMore && !loading && data?.notesPaginated?.pageInfo) {
       const { offset, limit } = data.notesPaginated.pageInfo;
+
+      if (offset === undefined || offset === null || limit === undefined || limit === null) {
+        return;
+      }
+
       const nextOffset = offset + limit;
 
       if (nextOffset < data.notesPaginated.totalCount) {
@@ -52,6 +57,13 @@ export default function Interactions() {
           setNotes((prevNotes) => [...prevNotes, ...newNotes]);
 
           const newPageInfo = fetchMoreResult.data.notesPaginated.pageInfo;
+
+          if (newPageInfo.offset === null || newPageInfo.offset === undefined ||
+            newPageInfo.limit === null || newPageInfo.limit === undefined) {
+            setHasMore(false);
+            return;
+          }
+
           setHasMore(newPageInfo.offset + newPageInfo.limit < fetchMoreResult.data.notesPaginated.totalCount);
         } catch (err) {
           console.error('Error loading more notes:', err);
@@ -87,6 +99,14 @@ export default function Interactions() {
 
       const { offset, limit } = response.data?.notesPaginated?.pageInfo;
       const totalCount = response.data?.notesPaginated?.totalCount;
+
+      if (offset === null || offset === undefined ||
+        limit === null || limit === undefined ||
+        totalCount === null || totalCount === undefined) {
+      setHasMore(false);
+      return;
+      }
+
       setHasMore(offset + limit < totalCount);
     } catch (err) {
       console.error(err);
@@ -102,6 +122,14 @@ export default function Interactions() {
 
     const { offset, limit } = data.notesPaginated.pageInfo;
     const totalCount = data.notesPaginated.totalCount;
+
+    if (offset === null || offset === undefined ||
+      limit === null || limit === undefined ||
+      totalCount === null || totalCount === undefined) {
+    setHasMore(false);
+    return;
+    }
+
     setHasMore(offset + limit < totalCount);
   }, [data]);
 
