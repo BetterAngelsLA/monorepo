@@ -8,7 +8,12 @@ import {
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
-import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
+import {
+  NotesQuery,
+  Ordering,
+  SelahTeamEnum,
+  useNotesQuery,
+} from '../../apollo';
 import useUser from '../../hooks/user/useUser';
 import { MainContainer, NoteCard } from '../../ui-components';
 import InteractionsFilters from './InteractionsFilters/TeamsFilter';
@@ -18,7 +23,7 @@ import InteractionsSorting from './InteractionsSorting';
 const paginationLimit = 10;
 
 type TFilters = {
-  teams: { id: string; label: string }[];
+  teams: { id: SelahTeamEnum; label: string }[];
 };
 
 export default function Interactions() {
