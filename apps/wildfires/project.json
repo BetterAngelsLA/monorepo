@@ -11,6 +11,10 @@
       "options": {
         "jestConfig": "apps/wildfires/jest.config.ts"
       }
+    },
+    "sync-deps": {
+      "executor": "@nx/expo:sync-deps",
+      "options": {}
     }
   }
 }
