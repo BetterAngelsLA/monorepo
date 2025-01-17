@@ -15,6 +15,18 @@
     "sync-deps": {
       "executor": "@nx/expo:sync-deps",
       "options": {}
+    },
+    "build": {
+      "executor": "@nx/vite:build",
+      "options": {
+        "outputPath": "dist/apps/wildfires",
+        "configFile": "apps/wildfires/vite.config.mts"
+      },
+      "configurations": {
+        "production": {
+          "mode": "production"
+        }
+      }
     }
   }
 }
