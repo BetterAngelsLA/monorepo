@@ -13,7 +13,7 @@ To run the web app locally:
 3. add a `.env` file (see .env.sample)
 4. To start server:
 
-- run command from the project root: `yarn shelter`
+- run command from the project root: `yarn fires`
   - `yarn fires` is an alias for `nx serve wildfire`
   - app defaults to `http://localhost:8200/`
 

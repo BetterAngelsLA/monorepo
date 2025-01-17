@@ -14,7 +14,13 @@
     "@nx/react": "*",
     "vite": "*",
     "@vitejs/plugin-react": "*",
-    "@nx/vite": "*"
+    "@nx/vite": "*",
+    "react-native-svg": "*",
+    "react": "*",
+    "clsx": "*",
+    "tailwind-merge": "*",
+    "jotai": "*",
+    "react-dom": "*"
   },
   "devDependencies": {}
 }
