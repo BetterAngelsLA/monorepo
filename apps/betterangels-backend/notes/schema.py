@@ -3,7 +3,9 @@ from typing import Dict, List, cast
 import pghistory
 import strawberry
 import strawberry_django
-from accounts.models import User
+from accounts.groups import GroupTemplateNames
+from accounts.models import PermissionGroup, User
+from accounts.types import UserType
 from accounts.utils import get_user_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, Location
@@ -11,6 +13,7 @@ from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models import Exists, OuterRef, QuerySet
 from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
@@ -32,7 +35,7 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
-from .types import (
+from .types import (  # InteractionAuthors,
     AddNoteTaskInput,
     CreateNoteAttachmentInput,
     CreateNoteInput,
@@ -89,6 +92,24 @@ class Query:
     task: TaskType = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
 
     tasks: List[TaskType] = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
+
+    @strawberry_django.offset_paginated(OffsetPaginated[UserType], extensions=[HasRetvalPerm(NotePermissions.VIEW)])
+    def interaction_authors(self) -> QuerySet[User]:
+        authorized_permission_groups = [template.value for template in GroupTemplateNames]
+
+        # Subquery to check if the user has any related permission group in an authorized group
+        permission_group_exists = PermissionGroup.objects.filter(
+            organization__users=OuterRef("pk"),  # Matches `User` to `Organization`
+            template__name__in=authorized_permission_groups,
+        )
+
+        # Use Exists to avoid duplicate users without `distinct()`
+        outreach_authorized_users = User.objects.filter(Exists(permission_group_exists))
+        # outreach_authorized_users = list(outreach_authorized_users)
+
+        return outreach_authorized_users
+
+    # interaction_authors: InteractionAuthors = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
 
 
 @strawberry.type

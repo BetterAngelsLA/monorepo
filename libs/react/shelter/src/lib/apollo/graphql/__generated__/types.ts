@@ -1022,6 +1022,7 @@ export type NoteFilter = {
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
 export enum NoteNamespaceEnum {
@@ -1225,6 +1226,7 @@ export type Query = {
   clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
+  interactionAuthors: UserTypeOffsetPaginated;
   note: NoteType;
   noteAttachment: NoteAttachmentType;
   noteAttachments: Array<NoteAttachmentType>;
@@ -1269,6 +1271,11 @@ export type QueryClientProfilesArgs = {
 export type QueryClientProfilesPaginatedArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryInteractionAuthorsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1882,6 +1889,15 @@ export type UserType = {
   middleName?: Maybe<Scalars['String']['output']>;
   organizationsOrganization?: Maybe<Array<OrganizationType>>;
   username: Scalars['String']['output'];
+};
+
+export type UserTypeOffsetPaginated = {
+  __typename?: 'UserTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<UserType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export enum YesNoPreferNotToSayEnum {
