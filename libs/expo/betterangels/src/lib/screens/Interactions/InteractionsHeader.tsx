@@ -14,6 +14,7 @@ export default function InteractionsHeader(props: IInteractionsHeaderProps) {
   function onDelete() {
     setSearch('');
   }
+
   return (
     <View
       style={{

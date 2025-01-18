@@ -1022,6 +1022,7 @@ export type NoteFilter = {
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
 export enum NoteNamespaceEnum {
