@@ -1,19 +1,24 @@
 import { TSurveyConfig } from './questionnaire.types';
 
-export function Demo() {
-  return <div>HELLO demo</div>;
-}
-
 export const config: TSurveyConfig = {
   questions: [
     {
       id: 'start',
       question: 'next question below or new screen?',
       type: 'radio',
-      options: ['below', 'new screen'],
+      options: [
+        {
+          id: 'below',
+          label: 'Below pls',
+        },
+        {
+          id: 'new-screen',
+          label: 'New screen',
+        },
+      ],
       next: {
         below: 'below',
-        ['new screen']: 'new-screen',
+        ['new-screen']: 'new-screen',
       },
     },
     {
@@ -21,7 +26,16 @@ export const config: TSurveyConfig = {
       inline: true,
       question: 'I am below',
       type: 'radio',
-      options: ['Yes', 'No'],
+      options: [
+        {
+          id: 'yes',
+          label: 'Yes',
+        },
+        {
+          id: 'no',
+          label: 'No',
+        },
+      ],
       next: {
         yes: 'xxx -- partial loss claim guidance ---',
         no: 'xxx --- skip',
@@ -31,7 +45,16 @@ export const config: TSurveyConfig = {
       id: 'new-screen',
       question: 'I am new-screen',
       type: 'radio',
-      options: ['Yes', 'No'],
+      options: [
+        {
+          id: 'yes',
+          label: 'Yes',
+        },
+        {
+          id: 'no',
+          label: 'No',
+        },
+      ],
       next: {
         yes: 'xxx -- partial loss claim guidance ---',
         no: 'xxx --- skip',

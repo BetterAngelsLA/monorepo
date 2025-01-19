@@ -1,5 +1,5 @@
 import { mergeCss } from '../../utils/styles/mergeCss';
-import { TAnswer, TQuestion } from './questionnaire.types';
+import { TAnswer, TOption, TQuestion } from './questionnaire.types';
 
 type IProps = {
   className?: string;
@@ -17,8 +17,8 @@ export function Question(props: IProps) {
   console.log(question.answer);
   console.log();
 
-  function optionSelected(option: string) {
-    return question.answer === option;
+  function optionSelected(option: TOption) {
+    return question.answer === option.id;
   }
 
   const optionCss = 'mx-2 my-4 py-1.5 px-4 border border-2 rounded-xl';
@@ -33,16 +33,16 @@ export function Question(props: IProps) {
 
             return (
               <button
-                key={option}
+                key={option.id}
                 onClick={() =>
                   onChange({
                     id: question.id,
-                    answer: option,
+                    answer: option.id,
                   })
                 }
                 className={`${optionCss} ${selected ? 'border-red-500' : ''}`}
               >
-                {option}
+                {option.label}
               </button>
             );
           })}
