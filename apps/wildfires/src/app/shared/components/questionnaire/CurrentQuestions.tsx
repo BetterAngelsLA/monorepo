@@ -7,24 +7,28 @@ type IProps = {
   className?: string;
   questions: TQuestion[];
   onAnswer: (answer: TAnswer) => void;
+  onClickNext?: () => void;
+  onClickPrev?: () => void;
 };
 
 export function CurrentQuestions(props: IProps) {
-  const { className, questions = [], onAnswer } = props;
+  const {
+    className,
+    questions = [],
+    onAnswer,
+    onClickPrev,
+    onClickNext,
+  } = props;
 
   const parentCss = [className];
 
-  function onClickNext() {
-    console.log('click NEXT');
-  }
-
-  function onClickPrev() {
-    console.log('click PREV');
-  }
-
   function handleAnswer(answer: TAnswer) {
-    onAnswer(answer);
+    if (!answer.error) {
+      onAnswer(answer);
+    }
   }
+
+  const useNav = !!onClickNext || !!onClickPrev;
 
   return (
     <div className={mergeCss(parentCss)}>
@@ -40,11 +44,13 @@ export function CurrentQuestions(props: IProps) {
           );
         })}
       </div>
-      <QuestionnaireNav
-        className="mt-4"
-        onNext={onClickNext}
-        onPrev={onClickPrev}
-      />
+      {useNav && (
+        <QuestionnaireNav
+          className="mt-4"
+          onNext={onClickNext}
+          onPrev={onClickPrev}
+        />
+      )}
     </div>
   );
 }

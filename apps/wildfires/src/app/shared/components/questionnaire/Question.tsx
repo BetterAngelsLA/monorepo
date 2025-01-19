@@ -12,10 +12,10 @@ export function Question(props: IProps) {
 
   const parentCss = [className];
 
-  console.log();
-  console.log('| -------------  Question ANSWER  ------------- |');
-  console.log(question.answer);
-  console.log();
+  // console.log();
+  // console.log('| -------------  Question ANSWER  ------------- |');
+  // console.log(question.answer);
+  // console.log();
 
   function optionSelected(option: TOption) {
     return question.answer === option.id;

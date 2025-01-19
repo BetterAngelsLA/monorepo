@@ -44,7 +44,7 @@ export function Questionnaire(props: IProps) {
     }
 
     // update answer
-    return setQuestions((prev) => {
+    setQuestions((prev) => {
       const qestionsCopy = [...prev];
 
       const question = qestionsCopy[questionIdx];
@@ -57,29 +57,15 @@ export function Questionnaire(props: IProps) {
       return qestionsCopy;
     });
 
-    // // update answer
-    // if (existingIdx > -1) {
-    //   return setAnswers((prev) => {
-    //     const updated = [...prev];
+    if (currentQuestion.useNav) {
+      return;
+    }
 
-    //     updated[existingIdx] = answer;
+    const val = Array.isArray(answer.answer) ? answer.answer[0] : answer.answer;
 
-    //     return updated;
-    //   });
-    // }
+    setNextStep(val as string);
 
-    // // append new answer
-    // setAnswers((prev) => {
-    //   const updated = [...prev];
-
-    //   updated.push(answer);
-
-    //   return updated;
-    // });
-
-    // const val = Array.isArray(answer.answer) ? answer.answer[0] : answer.answer;
-
-    // setNextStep(val as string);
+    return;
   };
 
   const setNextStep = (value: string | boolean) => {
@@ -109,24 +95,36 @@ export function Questionnaire(props: IProps) {
     }
   };
 
+  function onClickNext() {
+    console.log('################################### CLICK NEXT');
+  }
+
+  function onClickPrev() {
+    console.log('################################### CLICK PREV');
+  }
+
   const renderQuestion = () => {
-    console.log();
-    console.log('| -------------  RENDER currentQuestion  ------------- |');
     if (!currentQuestion) {
       console.error('NO QUESTION');
       return renderResults();
     }
 
-    // console.log();
-    // console.log('| -------------  answers  ------------- |');
-    // console.log(answers);
-    // console.log();
+    const currentQuestions = [currentQuestion];
+
+    const isFirstQuestion = currentQuestions[0].id === questions[0].id;
+
+    const useNav = questions.some((q) => q.useNav === true);
+
+    const useNext = useNav;
+    const usePrev = useNav && !isFirstQuestion;
 
     return (
       <CurrentQuestions
         className="mt-8"
-        questions={[currentQuestion]}
+        questions={currentQuestions}
         onAnswer={handleChange}
+        onClickNext={useNext ? onClickNext : undefined}
+        onClickPrev={usePrev ? onClickPrev : undefined}
       />
     );
   };

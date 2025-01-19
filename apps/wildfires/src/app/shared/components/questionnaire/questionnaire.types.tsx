@@ -11,14 +11,20 @@ export type TOption = {
   label: string;
 };
 
+export type TValidation = {
+  required?: boolean;
+};
+
 export type TQuestion = {
   id: string;
-  noNav?: boolean;
   question: string;
   type: 'radio' | 'text';
   options: TOption[];
   next: TNextTarget;
+
+  validation?: TValidation;
   inline?: boolean;
+  useNav?: boolean;
   answer?: string | string[];
 };
 
@@ -34,4 +40,5 @@ export type TQuestionAsked = {
 export type TAnswer = {
   id: string;
   answer: string | string[];
+  error?: string;
 };

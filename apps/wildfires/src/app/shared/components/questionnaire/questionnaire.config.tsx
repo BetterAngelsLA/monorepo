@@ -16,6 +16,7 @@ export const config: TSurveyConfig = {
           label: 'New screen',
         },
       ],
+      useNav: true,
       next: {
         below: 'below',
         ['new-screen']: 'new-screen',
