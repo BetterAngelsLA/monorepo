@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { QuestionsBlock } from './QuestionsBlock';
+import { QuestionnaireContext } from './provider/questionnaireContext';
 import { TAnswer, TQuestion, TResult } from './types';
 
 type IProps = {
@@ -12,13 +13,23 @@ type IProps = {
 export function QuestionStepper(props: IProps) {
   const { questions, answers, onAnswer, className } = props;
 
+  const context = useContext(QuestionnaireContext);
+
+  if (!context) {
+    throw new Error(
+      'QuestionnaireContext must be used with QuestionnaireWrapper'
+    );
+  }
+
+  const { currentQuestion, setCurrentQuestion } = context;
+
+  useEffect(() => {
+    if (questions?.length > 0) {
+      setCurrentQuestion(questions[0]);
+    }
+  }, [questions, setCurrentQuestion]);
+
   const [results, setResults] = useState<TResult[]>([]);
-
-  const [lastQuestionId, setLastQuestionId] = useState<string>();
-
-  const [currentQuestion, setCurrentQuestion] = useState<TQuestion>(
-    questions[0]
-  );
 
   function validateQuestion(questionId: string): boolean {
     const result = getCurrentResult(questionId);
@@ -33,38 +44,15 @@ export function QuestionStepper(props: IProps) {
   }
 
   function handleAnswer(answer: TAnswer) {
-    // console.log();
-    // console.log('| -------------  STEPPER handleAnswer  ------------- |');
-    // console.log(answer);
-    // console.log();
-
     onAnswer(answer);
   }
 
-  useEffect(() => {
-    console.log();
-    console.log('| -------------  ANSWERS CHANGED  ------------- |');
-    console.log(answers);
-    console.log();
-  }, [answers]);
+  useEffect(() => {}, [answers]);
 
   const renderQuestion = () => {
-    // console.log();
-    // console.log('| -------------  STEPPER RENDER  currentQuestion |');
-    // console.log(currentQuestion);
-    // console.log();
-
     if (!currentQuestion) {
-      console.error('STEPPER - NO QUESTION');
-
-      return;
+      return null;
     }
-
-    // const currentQuestions: TQuestion[] = [];
-    // const isFirstQuestion = visibleQuestions[0].id === questions[0].id;
-    // const useNav = questions.some((q) => q.useNav === true);
-    // const useNext = useNav;
-    // const usePrev = useNav && !isFirstQuestion;
 
     return (
       <QuestionsBlock
@@ -72,8 +60,6 @@ export function QuestionStepper(props: IProps) {
         questions={[currentQuestion]}
         answers={answers}
         onAnswer={handleAnswer}
-        // onClickNext={useNext ? onClickNext : undefined}
-        // onClickPrev={usePrev ? onClickPrev : undefined}
       />
     );
   };

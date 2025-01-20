@@ -3,7 +3,7 @@ export type TQuestionnaire = {
 };
 
 type TNestedTarget = {
-  [key: string]: string | TNextQTarget;
+  [key: string]: string;
 };
 
 export type TNextQTarget = string | TNestedTarget;

@@ -15,12 +15,14 @@ export function QuestionnaireNav(props: IProps) {
     return null;
   }
 
+  const disabledCss = 'opacity-50';
+
   return (
     <div className={mergeCss(parentCss)}>
       {!!onPrev && (
         <button
           onClick={onPrev}
-          className="mx-4 py-1.5 px-4 border border-2 rounded-xl"
+          className="mx-4 py-1.5 px-4 border border-2 rounded-xl bg-gray-300"
         >
           PREV
         </button>
@@ -28,7 +30,7 @@ export function QuestionnaireNav(props: IProps) {
       {!!onNext && (
         <button
           onClick={onNext}
-          className="mx-4 py-1.5 px-4 border border-2 rounded-xl"
+          className="mx-4 py-1.5 px-4 border border-2 rounded-xl bg-gray-300"
         >
           NEXT
         </button>
