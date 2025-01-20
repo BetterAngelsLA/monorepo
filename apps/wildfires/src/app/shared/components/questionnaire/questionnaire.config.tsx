@@ -4,28 +4,44 @@ export const config: TSurveyConfig = {
   questions: [
     {
       id: 'start',
-      question: '1. next question below or new screen?',
+      question: '1. First Question. Anwer Yes or No',
       type: 'radio',
       options: [
         {
-          id: 'below',
-          label: 'Below pls',
+          id: 'start-yes',
+          label: 'Yes',
         },
         {
-          id: 'new-screen',
-          label: 'New screen',
+          id: 'start-no',
+          label: 'No',
+        },
+      ],
+      useNav: true,
+      next: ['second'],
+    },
+    {
+      id: 'second',
+      question: '2. Should the next show 1 question or 2?',
+      type: 'radio',
+      options: [
+        {
+          id: 'one-question',
+          label: 'only one',
+        },
+        {
+          id: 'two-questions',
+          label: 'two please',
         },
       ],
       useNav: true,
       next: {
-        below: 'below',
-        ['new-screen']: 'new-screen',
+        'one-question': ['single-2'],
+        'two-questions': ['multi-1', 'multi-2'],
       },
     },
     {
-      id: 'below',
-      inline: true,
-      question: '2. I am below',
+      id: 'single-2',
+      question: 'Single question',
       type: 'radio',
       options: [
         {
@@ -37,14 +53,12 @@ export const config: TSurveyConfig = {
           label: 'No',
         },
       ],
-      next: {
-        yes: 'xxx -- partial loss claim guidance ---',
-        no: 'xxx --- skip',
-      },
+      useNav: true,
+      next: ['second'],
     },
     {
-      id: 'new-screen',
-      question: 'I am new-screen',
+      id: 'multi-1',
+      question: 'Random question 1',
       type: 'radio',
       options: [
         {
@@ -56,11 +70,86 @@ export const config: TSurveyConfig = {
           label: 'No',
         },
       ],
-      next: {
-        yes: 'xxx -- partial loss claim guidance ---',
-        no: 'xxx --- skip',
-      },
+      useNav: true,
+      next: ['second'],
     },
+    {
+      id: 'multi-2',
+      question: 'Random question 2',
+      type: 'radio',
+      options: [
+        {
+          id: 'yes',
+          label: 'Yes',
+        },
+        {
+          id: 'no',
+          label: 'No',
+        },
+      ],
+      useNav: true,
+      next: ['second'],
+    },
+
+    // {
+    //   id: 'below',
+    //   question: '3. I am below the previous question',
+    //   type: 'radio',
+    //   options: [
+    //     {
+    //       id: 'below',
+    //       label: 'Below pls',
+    //     },
+    //     {
+    //       id: 'new-screen',
+    //       label: 'New screen',
+    //     },
+    //   ],
+    //   useNav: true,
+    //   next: {
+    //     below: 'below',
+    //     ['new-screen']: 'new-screen',
+    //   },
+    // },
+    // {
+    //   id: 'separate',
+    //   // showBelow: true,
+    //   question: '3. No other questions visible.',
+    //   type: 'radio',
+    //   options: [
+    //     {
+    //       id: 'yes',
+    //       label: 'Yes',
+    //     },
+    //     {
+    //       id: 'no',
+    //       label: 'No',
+    //     },
+    //   ],
+    //   next: {
+    //     yes: 'xxx -- partial loss claim guidance ---',
+    //     no: 'xxx --- skip',
+    //   },
+    // },
+    // {
+    //   id: 'new-screen',
+    //   question: '2BI am new-screen',
+    //   type: 'radio',
+    //   options: [
+    //     {
+    //       id: 'yes',
+    //       label: 'Yes',
+    //     },
+    //     {
+    //       id: 'no',
+    //       label: 'No',
+    //     },
+    //   ],
+    //   next: {
+    //     yes: 'xxx -- partial loss claim guidance ---',
+    //     no: 'xxx --- skip',
+    //   },
+    // },
   ],
 };
 

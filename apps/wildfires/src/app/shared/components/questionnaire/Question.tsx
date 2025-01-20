@@ -4,21 +4,17 @@ import { TAnswer, TOption, TQuestion } from './questionnaire.types';
 type IProps = {
   className?: string;
   question: TQuestion;
+  answer?: string | string[];
   onChange: (value: TAnswer) => void;
 };
 
 export function Question(props: IProps) {
-  const { className, question, onChange } = props;
+  const { className, question, answer, onChange } = props;
 
   const parentCss = [className];
 
-  // console.log();
-  // console.log('| -------------  Question ANSWER  ------------- |');
-  // console.log(question.answer);
-  // console.log();
-
   function optionSelected(option: TOption) {
-    return question.answer?.value === option.id;
+    return answer === option.id;
   }
 
   const optionCss = 'mx-2 my-4 py-1.5 px-4 border border-2 rounded-xl';

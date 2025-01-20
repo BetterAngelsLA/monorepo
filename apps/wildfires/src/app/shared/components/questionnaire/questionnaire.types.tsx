@@ -1,10 +1,10 @@
 type TNestedTarget = {
-  [key: string]: string | TNextTarget;
+  [key: string]: string[] | TNextTarget;
   // [key in TQuestion['options'][number]]: string | TNextTarget;
   // children?: ReactNode;
 };
 
-export type TNextTarget = string | TNestedTarget;
+export type TNextTarget = string[] | TNestedTarget;
 
 export type TQuestion = {
   id: string;
@@ -15,7 +15,7 @@ export type TQuestion = {
 
   answer?: TAnswer;
   validation?: TValidation;
-  inline?: boolean;
+  showBelow?: boolean;
   useNav?: boolean;
 };
 
@@ -23,9 +23,10 @@ export type TSurveyConfig = {
   questions: TQuestion[];
 };
 
-export type TQuestionAsked = {
-  index: number;
-  answer?: string;
+export type TResult = {
+  questionId: string;
+  value: string | string[];
+  error?: string;
 };
 
 export type TOption = {

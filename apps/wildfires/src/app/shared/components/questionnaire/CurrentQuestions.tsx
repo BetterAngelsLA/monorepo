@@ -1,11 +1,12 @@
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { Question } from './Question';
 import { QuestionnaireNav } from './QuestionnaireNav';
-import { TAnswer, TQuestion } from './questionnaire.types';
+import { TAnswer, TQuestion, TResult } from './questionnaire.types';
 
 type IProps = {
   className?: string;
   questions: TQuestion[];
+  answers: TResult[];
   onAnswer: (answer: TAnswer) => void;
   onClickNext?: () => void;
   onClickPrev?: () => void;
@@ -15,6 +16,7 @@ export function CurrentQuestions(props: IProps) {
   const {
     className,
     questions = [],
+    answers = [],
     onAnswer,
     onClickPrev,
     onClickNext,
@@ -30,6 +32,15 @@ export function CurrentQuestions(props: IProps) {
 
   const useNav = !!onClickNext || !!onClickPrev;
 
+  function questionResult(
+    question: TQuestion,
+    answers: TResult[]
+  ): string | string[] {
+    const answer = answers.find((a) => a.questionId === question.id);
+
+    return answer?.value || '';
+  }
+
   return (
     <div className={mergeCss(parentCss)}>
       <div className="">
@@ -39,6 +50,7 @@ export function CurrentQuestions(props: IProps) {
               key={question.id}
               className="mt-8"
               question={question}
+              answer={questionResult(question, answers)}
               onChange={handleAnswer}
             />
           );
