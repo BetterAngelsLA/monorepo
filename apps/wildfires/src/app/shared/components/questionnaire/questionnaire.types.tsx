@@ -6,15 +6,6 @@ type TNestedTarget = {
 
 export type TNextTarget = string | TNestedTarget;
 
-export type TOption = {
-  id: string;
-  label: string;
-};
-
-export type TValidation = {
-  required?: boolean;
-};
-
 export type TQuestion = {
   id: string;
   question: string;
@@ -22,10 +13,10 @@ export type TQuestion = {
   options: TOption[];
   next: TNextTarget;
 
+  answer?: TAnswer;
   validation?: TValidation;
   inline?: boolean;
   useNav?: boolean;
-  answer?: string | string[];
 };
 
 export type TSurveyConfig = {
@@ -37,8 +28,17 @@ export type TQuestionAsked = {
   answer?: string;
 };
 
-export type TAnswer = {
+export type TOption = {
   id: string;
-  answer: string | string[];
+  label: string;
+};
+
+export type TValidation = {
+  required?: boolean;
+};
+
+export type TAnswer = {
+  questionId: string;
+  value: string | string[];
   error?: string;
 };

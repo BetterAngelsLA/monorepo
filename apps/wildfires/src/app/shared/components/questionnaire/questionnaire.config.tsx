@@ -4,7 +4,7 @@ export const config: TSurveyConfig = {
   questions: [
     {
       id: 'start',
-      question: 'next question below or new screen?',
+      question: '1. next question below or new screen?',
       type: 'radio',
       options: [
         {
@@ -25,7 +25,7 @@ export const config: TSurveyConfig = {
     {
       id: 'below',
       inline: true,
-      question: 'I am below',
+      question: '2. I am below',
       type: 'radio',
       options: [
         {

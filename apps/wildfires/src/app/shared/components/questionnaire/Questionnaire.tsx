@@ -30,12 +30,13 @@ export function Questionnaire(props: IProps) {
 
   const handleChange = (answer: TAnswer) => {
     console.log();
-    console.log('| -------------  ROOT answer  ------------- |');
+    console.log('| -------------  ROOT-ANSWER  ------------- |');
     console.log(answer);
     console.log();
 
-    // const existingIdx = answers.findIndex((a) => a.id === answer.id);
-    const questionIdx = questions.findIndex((q) => q.id === answer.id);
+    const questionIdx = questions.findIndex((q) => q.id === answer.questionId);
+
+    console.log('*****************  questionIdx:', questionIdx);
 
     if (questionIdx < 0) {
       console.error('[Questionnaire] question not found');
@@ -51,17 +52,18 @@ export function Questionnaire(props: IProps) {
 
       qestionsCopy[questionIdx] = {
         ...question,
-        answer: answer.answer,
+        answer: answer,
       };
 
       return qestionsCopy;
     });
 
     if (currentQuestion.useNav) {
+      console.log('################## USE NAV');
       return;
     }
 
-    const val = Array.isArray(answer.answer) ? answer.answer[0] : answer.answer;
+    const val = Array.isArray(answer.value) ? answer.value[0] : answer.value;
 
     setNextStep(val as string);
 
@@ -97,10 +99,39 @@ export function Questionnaire(props: IProps) {
 
   function onClickNext() {
     console.log('################################### CLICK NEXT');
+    console.log(
+      '*****************  currentQuestion.answer:',
+      currentQuestion.answer
+    );
+
+    const currentAnswer = currentQuestion.answer;
+
+    if (!currentAnswer) {
+      return;
+    }
+
+    const val = Array.isArray(currentAnswer.value)
+      ? currentAnswer.value[0]
+      : currentAnswer.value;
+
+    setNextStep(val as string);
   }
 
   function onClickPrev() {
     console.log('################################### CLICK PREV');
+    if (questionsAsked.length < 2) {
+      return;
+    }
+
+    const prevQuestionIdx = questionsAsked[questionsAsked.length - 2].index;
+
+    setCurrentStep(prevQuestionIdx);
+
+    const questionsAskedCopy = [...questionsAsked];
+
+    questionsAskedCopy.pop();
+
+    setQuestionsAsked(questionsAskedCopy);
   }
 
   const renderQuestion = () => {

@@ -18,7 +18,7 @@ export function Question(props: IProps) {
   // console.log();
 
   function optionSelected(option: TOption) {
-    return question.answer === option.id;
+    return question.answer?.value === option.id;
   }
 
   const optionCss = 'mx-2 my-4 py-1.5 px-4 border border-2 rounded-xl';
@@ -36,8 +36,8 @@ export function Question(props: IProps) {
                 key={option.id}
                 onClick={() =>
                   onChange({
-                    id: question.id,
-                    answer: option.id,
+                    questionId: question.id,
+                    value: option.id,
                   })
                 }
                 className={`${optionCss} ${selected ? 'border-red-500' : ''}`}
@@ -56,8 +56,8 @@ export function Question(props: IProps) {
             type="text"
             onBlur={(e) =>
               onChange({
-                id: question.id,
-                answer: e.target.value,
+                questionId: question.id,
+                value: e.target.value,
               })
             }
           />
