@@ -2,6 +2,12 @@ export type TQuestionnaire = {
   sections: TSection[];
 };
 
+type TNestedTarget = {
+  [key: string]: string | TNextQTarget;
+};
+
+export type TNextQTarget = string | TNestedTarget;
+
 export type TSection = {
   id: string;
   title: string;
@@ -15,7 +21,7 @@ export type TQuestion = {
   type: 'radio';
   question: string;
   options: TOption[];
-  next?: string;
+  next?: TNextQTarget;
 };
 
 export type TOption = {
@@ -26,4 +32,10 @@ export type TOption = {
 export type TAnswer = {
   questionId: string;
   optionId: string;
+};
+
+export type TResult = {
+  questionId: string;
+  value: string | string[];
+  error?: string;
 };

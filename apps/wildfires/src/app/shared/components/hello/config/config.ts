@@ -5,10 +5,15 @@ import { sectionD } from './d.config';
 import { stepperSection } from './stepper.config';
 
 const sections: TSection[] = [
+  { ...stepperSection, next: 'sectionA' },
   { ...sectionA, next: 'sectionB' },
-  { ...sectionB, next: 'stepperSection' },
-  { ...stepperSection, next: 'sectionD' },
+  { ...sectionB, next: 'sectionD' },
   { ...sectionD },
+
+  // { ...sectionA, next: 'sectionB' },
+  // { ...sectionB, next: 'stepperSection' },
+  // { ...stepperSection, next: 'sectionD' },
+  // { ...sectionD },
 ];
 
 export const config: TQuestionnaire = {

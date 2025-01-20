@@ -13,11 +13,6 @@ export function QuestionCard(props: IProps) {
 
   const parentCss = [className];
 
-  //   console.log();
-  //   console.log('| -------------  QuestionCard  ------------- |');
-  //   console.log(question);
-  //   console.log();
-
   function optionSelected(option: TOption) {
     return answer === option.optionId;
   }
