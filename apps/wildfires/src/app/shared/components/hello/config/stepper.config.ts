@@ -1,8 +1,8 @@
 import { TSection } from '../types';
 
-export const sectionC: TSection = {
-  id: 'sectionC',
-  title: 'title: section C (2 question)',
+export const stepperSection: TSection = {
+  id: 'stepperSection',
+  title: 'title: stepper section',
   stepper: true,
   questions: [
     {

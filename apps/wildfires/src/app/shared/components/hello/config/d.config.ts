@@ -5,31 +5,31 @@ export const sectionD: TSection = {
   title: 'title: section D (2 questions)',
   questions: [
     {
-      id: 'a_1',
+      id: 'b_1',
       type: 'radio',
       question: 'first question',
       options: [
         {
-          optionId: 'a_1_yes',
+          optionId: 'b_1_yes',
           label: 'Yes',
         },
         {
-          optionId: 'a_1_no',
+          optionId: 'b_1_no',
           label: 'No',
         },
       ],
     },
     {
-      id: 'a_2',
+      id: 'b_2',
       question: 'second question',
       type: 'radio',
       options: [
         {
-          optionId: 'a_2_yes',
+          optionId: 'b_2_yes',
           label: 'Yes',
         },
         {
-          optionId: 'a_2_no',
+          optionId: 'b_2_no',
           label: 'No',
         },
       ],

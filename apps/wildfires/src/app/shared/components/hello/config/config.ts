@@ -1,13 +1,13 @@
 import { TQuestionnaire, TSection } from '../types';
 import { sectionA } from './a.config';
 import { sectionB } from './b.config';
-import { sectionC } from './c.config';
 import { sectionD } from './d.config';
+import { stepperSection } from './stepper.config';
 
 const sections: TSection[] = [
   { ...sectionA, next: 'sectionB' },
-  { ...sectionB, next: 'sectionC' },
-  { ...sectionC, next: 'sectionD' },
+  { ...sectionB, next: 'stepperSection' },
+  { ...stepperSection, next: 'sectionD' },
   { ...sectionD },
 ];
 
