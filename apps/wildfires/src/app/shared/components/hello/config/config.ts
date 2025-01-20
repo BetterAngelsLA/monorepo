@@ -5,8 +5,13 @@ import { sectionD } from './d.config';
 import { stepperSection } from './stepper.config';
 
 const sections: TSection[] = [
-  { ...stepperSection, next: 'sectionA' },
-  { ...sectionA, next: 'sectionB' },
+  // { ...stepperSection, next: 'sectionA' },
+  // { ...sectionA, next: 'sectionB' },
+  // { ...sectionB, next: 'sectionD' },
+  // { ...sectionD },
+
+  { ...sectionA, next: 'stepperSection' },
+  { ...stepperSection, next: 'sectionB' },
   { ...sectionB, next: 'sectionD' },
   { ...sectionD },
 

@@ -21,13 +21,13 @@ export function QuestionStepper(props: IProps) {
     );
   }
 
-  const { currentQuestion, setCurrentQuestion } = context;
+  const { currentQuestion, setNextQuestion } = context;
 
   useEffect(() => {
-    if (questions?.length > 0) {
-      setCurrentQuestion(questions[0]);
+    if (questions?.length > 0 && !currentQuestion) {
+      setNextQuestion(questions);
     }
-  }, [questions, setCurrentQuestion]);
+  }, [questions, currentQuestion, setNextQuestion]);
 
   const [results, setResults] = useState<TResult[]>([]);
 

@@ -5,8 +5,6 @@ import { QuestionStepper } from './QuestionStepper';
 import { QuestionsBlock } from './QuestionsBlock';
 import { QuestionnaireContext } from './provider/questionnaireContext';
 import { TAnswer, TQuestionnaire, TSection } from './types';
-import { findQuestionById } from './utils/findQuestionById';
-import { getNextQuestionId } from './utils/getNextQuestionId';
 import { getSectionById } from './utils/getSectionById';
 
 type IProps = {
@@ -27,9 +25,7 @@ export function QuestionnaireWrapper(props: IProps) {
     );
   }
 
-  const { currentQuestion, setCurrentQuestion } = context;
-
-  const [answers, setAnswers] = useState<TAnswer[]>([]);
+  const { currentQuestion, setNextQuestion, answers, setAnswers } = context;
 
   const [sectionHistory, setSectionHistory] = useState<TSection[]>([
     sections[0],
@@ -57,39 +53,43 @@ export function QuestionnaireWrapper(props: IProps) {
         return;
       }
 
-      const answer = answers.find((a) => a.questionId === currentQuestion.id);
+      // const setNextQuestion = (section: TSection, questionId: string) => {
 
-      // no answer yet, do nothing
-      if (!answer) {
-        return;
-      }
+      setNextQuestion(currentSection.questions);
 
-      const next = currentQuestion.next;
+      //   const answer = answers.find((a) => a.questionId === currentQuestion.id);
 
-      // done with section
-      if (!next) {
-        return goToNextSection();
-      }
+      //   // no answer yet, do nothing
+      //   if (!answer) {
+      //     return;
+      //   }
 
-      const answerOptionId = answer.optionId;
+      //   const next = currentQuestion.next;
 
-      const nextQuestionId = getNextQuestionId({
-        next,
-        answerOptionId,
-      });
+      //   // done with section
+      //   if (!next) {
+      //     return goToNextSection();
+      //   }
 
-      const nextQuestion = findQuestionById(
-        currentSection.questions,
-        nextQuestionId as string
-      );
+      //   const answerOptionId = answer.optionId;
 
-      if (nextQuestion) {
-        return setCurrentQuestion(nextQuestion);
-      }
+      //   const nextQuestionId = getNextQuestionId({
+      //     next,
+      //     answerOptionId,
+      //   });
 
-      console.error(
-        `[onClickNext] could not find question by Id [${nextQuestionId}].`
-      );
+      //   const nextQuestion = findQuestionById(
+      //     currentSection.questions,
+      //     nextQuestionId as string
+      //   );
+
+      //   if (nextQuestion) {
+      //     return setCurrentQuestion(nextQuestion);
+      //   }
+
+      //   console.error(
+      //     `[onClickNext] could not find question by Id [${nextQuestionId}].`
+      //   );
 
       return;
     }
@@ -104,12 +104,32 @@ export function QuestionnaireWrapper(props: IProps) {
       const nextSection = getSectionById(sections, nextId);
 
       if (nextSection) {
+        // setCurrentQuestion(null);
+
         setSectionHistory([...sectionHistory, nextSection]);
       }
     }
   }
 
   function onClickPrev() {
+    console.log('################################### PREV');
+
+    if (currentSection.stepper) {
+      const questionIdx = currentSection.questions.findIndex(
+        (q) => q.id === currentQuestion?.id
+      );
+
+      if (questionIdx === 0) {
+        return goToPrevSection();
+      }
+
+      return;
+    }
+
+    goToPrevSection();
+  }
+
+  function goToPrevSection() {
     const historyCopy = [...sectionHistory];
 
     if (!historyCopy.length || historyCopy.length < 2) {
@@ -131,7 +151,7 @@ export function QuestionnaireWrapper(props: IProps) {
       (a) => a.questionId === newAnswer.questionId
     );
 
-    // update existing result
+    // update existing answer
     if (existingIdx > -1) {
       setAnswers((prev) => {
         const updated = [...prev];
@@ -149,12 +169,14 @@ export function QuestionnaireWrapper(props: IProps) {
     }
   }
 
+  const multiStepSection = !!currentSection.stepper;
+
+  //   const next = currentQuestion.next;
+
   const showPrevBtn = sectionHistory.length > 1;
   const showNextBtn = !!currentSection.next;
 
   const parentCss = ['pt-8', className];
-
-  const multiStepSection = !!currentSection.stepper;
 
   return (
     <div className={mergeCss(parentCss)}>
