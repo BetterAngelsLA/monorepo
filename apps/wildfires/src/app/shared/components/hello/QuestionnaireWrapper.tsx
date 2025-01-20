@@ -25,7 +25,14 @@ export function QuestionnaireWrapper(props: IProps) {
     );
   }
 
-  const { currentQuestion, setNextQuestion, answers, setAnswers } = context;
+  const {
+    currentQuestion,
+    setNextQuestion,
+    answers,
+    setAnswers,
+    clearQuestionHistory,
+    popQuestionHistory,
+  } = context;
 
   const [sectionHistory, setSectionHistory] = useState<TSection[]>([
     sections[0],
@@ -44,52 +51,12 @@ export function QuestionnaireWrapper(props: IProps) {
       return;
     }
 
-    console.log('################################### NEXT');
-    console.log(currentSection);
-    console.log('');
-
     if (currentSection.stepper) {
       if (!currentQuestion) {
         return;
       }
 
-      // const setNextQuestion = (section: TSection, questionId: string) => {
-
       setNextQuestion(currentSection.questions);
-
-      //   const answer = answers.find((a) => a.questionId === currentQuestion.id);
-
-      //   // no answer yet, do nothing
-      //   if (!answer) {
-      //     return;
-      //   }
-
-      //   const next = currentQuestion.next;
-
-      //   // done with section
-      //   if (!next) {
-      //     return goToNextSection();
-      //   }
-
-      //   const answerOptionId = answer.optionId;
-
-      //   const nextQuestionId = getNextQuestionId({
-      //     next,
-      //     answerOptionId,
-      //   });
-
-      //   const nextQuestion = findQuestionById(
-      //     currentSection.questions,
-      //     nextQuestionId as string
-      //   );
-
-      //   if (nextQuestion) {
-      //     return setCurrentQuestion(nextQuestion);
-      //   }
-
-      //   console.error(
-      //     `[onClickNext] could not find question by Id [${nextQuestionId}].`
-      //   );
 
       return;
     }
@@ -104,9 +71,8 @@ export function QuestionnaireWrapper(props: IProps) {
       const nextSection = getSectionById(sections, nextId);
 
       if (nextSection) {
-        // setCurrentQuestion(null);
-
         setSectionHistory([...sectionHistory, nextSection]);
+        clearQuestionHistory();
       }
     }
   }
@@ -120,10 +86,12 @@ export function QuestionnaireWrapper(props: IProps) {
       );
 
       if (questionIdx === 0) {
+        clearQuestionHistory();
+
         return goToPrevSection();
       }
 
-      return;
+      return popQuestionHistory();
     }
 
     goToPrevSection();

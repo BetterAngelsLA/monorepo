@@ -7,6 +7,11 @@ export type TQuestionnaireContext = {
 
   answers: TAnswer[];
   setAnswers: Dispatch<SetStateAction<TAnswer[]>>;
+
+  questionHistory: TQuestion[];
+  getLastQuestionHistoryId: () => void;
+  popQuestionHistory: () => void;
+  clearQuestionHistory: () => void;
 };
 
 export const QuestionnaireContext = createContext<

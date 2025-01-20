@@ -1,4 +1,4 @@
-import { ReactElement, ReactNode, useState } from 'react';
+import { ReactElement, ReactNode, useEffect, useState } from 'react';
 import { TAnswer, TQuestion } from '../types';
 import { findQuestionById } from '../utils/findQuestionById';
 import { getNextQuestionId } from '../utils/getNextQuestionId';
@@ -17,7 +17,34 @@ export default function QuestionnaireProvider(
     null
   );
 
+  const [questionHistory, setQuestionHistory] = useState<TQuestion[]>([]);
   const [answers, setAnswers] = useState<TAnswer[]>([]);
+
+  const clearQuestionHistory = () => {
+    setQuestionHistory([]);
+  };
+
+  const getLastQuestionHistoryId = () => {
+    if (!questionHistory?.length) {
+      return null;
+    }
+
+    return questionHistory[questionHistory.length - 1];
+  };
+
+  const popQuestionHistory = () => {
+    if (!questionHistory.length || questionHistory.length < 2) {
+      return;
+    }
+
+    setQuestionHistory((prev) => {
+      const historyCopy = [...prev];
+
+      historyCopy.pop();
+
+      return historyCopy;
+    });
+  };
 
   const setNextQuestion = (questions: TQuestion[]) => {
     if (!questions) {
@@ -25,7 +52,9 @@ export default function QuestionnaireProvider(
     }
 
     if (!currentQuestion) {
-      return setCurrentQuestion(questions[0]);
+      setQuestionHistory([questions[0]]);
+
+      return;
     }
 
     const currentQuestionAnswer = answers.find(
@@ -41,7 +70,7 @@ export default function QuestionnaireProvider(
 
     // no next question
     if (!next) {
-      setCurrentQuestion(null);
+      clearQuestionHistory();
 
       return;
     }
@@ -56,7 +85,13 @@ export default function QuestionnaireProvider(
     const nextQuestion = findQuestionById(questions, nextQuestionId as string);
 
     if (nextQuestion) {
-      return setCurrentQuestion(nextQuestion);
+      setCurrentQuestion(nextQuestion);
+
+      setQuestionHistory((prev) => {
+        return [...prev, nextQuestion];
+      });
+
+      return;
     }
 
     console.error(
@@ -66,9 +101,30 @@ export default function QuestionnaireProvider(
     return;
   };
 
+  useEffect(() => {
+    if (!questionHistory.length) {
+      setCurrentQuestion(null);
+
+      return;
+    }
+
+    const latestQuestion = questionHistory[questionHistory.length - 1];
+
+    setCurrentQuestion(latestQuestion);
+  }, [questionHistory]);
+
   return (
     <QuestionnaireContext.Provider
-      value={{ currentQuestion, setNextQuestion, answers, setAnswers }}
+      value={{
+        currentQuestion,
+        setNextQuestion,
+        answers,
+        setAnswers,
+        questionHistory,
+        getLastQuestionHistoryId,
+        popQuestionHistory,
+        clearQuestionHistory,
+      }}
     >
       {children}
     </QuestionnaireContext.Provider>
