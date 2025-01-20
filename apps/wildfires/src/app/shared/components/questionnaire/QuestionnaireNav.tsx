@@ -9,7 +9,7 @@ type IProps = {
 export function QuestionnaireNav(props: IProps) {
   const { className, onNext, onPrev } = props;
 
-  const parentCss = ['flex', 'justify-between', className];
+  const parentCss = ['flex', 'justify-center', className];
 
   if (!onNext && !onPrev) {
     return null;
@@ -20,7 +20,7 @@ export function QuestionnaireNav(props: IProps) {
       {!!onPrev && (
         <button
           onClick={onPrev}
-          className="mx-2 my-4 py-1.5 px-4 border border-2 rounded-xl"
+          className="mx-4 py-1.5 px-4 border border-2 rounded-xl"
         >
           PREV
         </button>
@@ -28,7 +28,7 @@ export function QuestionnaireNav(props: IProps) {
       {!!onNext && (
         <button
           onClick={onNext}
-          className="mx-2 my-4 py-1.5 px-4 border border-2 rounded-xl"
+          className="mx-4 py-1.5 px-4 border border-2 rounded-xl"
         >
           NEXT
         </button>
