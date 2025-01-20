@@ -1,5 +1,5 @@
 import { QuestionnaireWrapper } from '../shared/components/hello/QuestionnaireWrapper';
-import { config } from '../shared/components/hello/config';
+import { config } from '../shared/components/hello/config/config';
 
 export function HomePage() {
   return (
