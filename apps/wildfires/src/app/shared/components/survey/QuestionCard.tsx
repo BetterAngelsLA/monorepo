@@ -20,7 +20,7 @@ export function QuestionCard(props: IProps) {
       <QuestionHeader title={question.title} subtitle={question.subtitle} />
 
       <QuestionForm
-        className=""
+        className="mt-12"
         question={question}
         answer={answer}
         onAnswer={onAnswer}
