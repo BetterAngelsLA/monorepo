@@ -7,7 +7,8 @@ export const introductionForm: TFormBase = {
     {
       id: 'wildfireNames',
       type: 'checkbox',
-      question: 'What fire impacted you?',
+      title: 'What fire impacted you?',
+      subtitle: '(Select all that apply)',
       options: [
         {
           optionId: 'palisadesFire',
@@ -37,7 +38,7 @@ export const introductionForm: TFormBase = {
     {
       id: 'resourcesNeeded',
       type: 'checkbox',
-      question: 'Which of the following resources do you need? ',
+      title: 'Which of the following resources do you need? ',
       options: [
         { optionId: 'resourceMailForwarding', label: 'Mail Forwarding' },
         {

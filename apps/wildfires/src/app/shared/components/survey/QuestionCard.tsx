@@ -1,5 +1,6 @@
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { QuestionForm } from './QuestionForm';
+import { QuestionHeader } from './shared/QuestionHeader';
 import { TAnswer, TQuestion } from './types';
 
 type IProps = {
@@ -16,7 +17,7 @@ export function QuestionCard(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <h2>{question.question}</h2>
+      <QuestionHeader title={question.title} subtitle={question.subtitle} />
 
       <QuestionForm
         className=""

@@ -32,7 +32,8 @@ export type TSurvey = TSurveyForm[];
 export type TQuestion = {
   id: string;
   type: 'radio' | 'checkbox';
-  question: string;
+  title: string;
+  subtitle?: string;
   options: TOption[];
   rules?: TQuestionValidate;
   renderAfter?: ReactNode;
