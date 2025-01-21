@@ -1,4 +1,5 @@
 import { useContext } from 'react';
+import { SurveyRadio } from '../../../pages/home/firesSurvey/components/SurveyRadio';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { CheckboxGroup } from '../form/CheckboxGroup';
 import { SurveyContext } from './provider/SurveyContext';
@@ -36,8 +37,6 @@ export function QuestionForm(props: IProps) {
     });
   }
 
-  const optionCss = 'mx-2 my-4 py-1.5 px-4 border border-2 rounded-xl';
-
   switch (question.type) {
     case 'radio':
       return (
@@ -46,18 +45,19 @@ export function QuestionForm(props: IProps) {
             const selected = optionSelected(option);
 
             return (
-              <button
+              <SurveyRadio
+                className="mb-4 last:mb-0"
                 key={option.optionId}
-                onClick={() =>
+                name={option.optionId}
+                label={option.label}
+                selected={selected}
+                onChange={() => {
                   onAnswer({
                     questionId: question.id,
                     result: option.optionId,
-                  })
-                }
-                className={`${optionCss} ${selected ? 'border-red-500' : ''}`}
-              >
-                {option.label}
-              </button>
+                  });
+                }}
+              />
             );
           })}
         </div>
