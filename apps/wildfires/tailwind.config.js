@@ -22,6 +22,8 @@ module.exports = {
       },
       colors: {
         'brand-yellow': 'var(--color-brand-yellow)',
+        'brand-sky-blue': 'var(--color-brand-sky-blue)',
+        'brand-angel-blue': 'var(--color-brand-angel-blue)',
         'brand-dark-blue': 'var(--color-brand-dark-blue)',
         'primary-20': 'var(--color-primary-20)',
         'primary-60': 'var(--color-primary-60)',
