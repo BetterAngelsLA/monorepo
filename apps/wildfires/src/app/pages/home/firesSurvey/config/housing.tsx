@@ -16,7 +16,7 @@ const tempHousingForm: TFormBase = {
     {
       id: 'needTempHousing',
       type: 'radio',
-      question: 'Do you need a temporary housing?',
+      title: 'Do you need a temporary housing?',
       options: [
         {
           optionId: 'yes',
@@ -48,7 +48,7 @@ const rentOrOwnForm: TFormConditional = {
     {
       id: 'rentOrOwn',
       type: 'radio',
-      question: 'Do you RENT or OWN your home?',
+      title: 'Do you RENT or OWN your home?',
       options: [
         {
           optionId: 'rent',
@@ -76,7 +76,7 @@ const rentersInsuranceForm: TFormBase = {
     {
       id: 'haveRentersInsurance',
       type: 'radio',
-      question: 'Do you have Renter’s Insurance? ',
+      title: 'Do you have Renter’s Insurance? ',
       options: [
         {
           optionId: 'yes',
@@ -104,7 +104,7 @@ const ownersInsuranceForm: TFormBase = {
     {
       id: 'haveOwnersInsurance',
       type: 'radio',
-      question: 'Do you have Owner’s Insurance? ',
+      title: 'Do you have Owner’s Insurance? ',
       options: [
         {
           optionId: 'yes',

@@ -7,7 +7,7 @@ export const incomeForm: TFormBase = {
     {
       id: 'incomeByHouseholdSize',
       type: 'radio',
-      question:
+      title:
         'Based on your household size, is your income LESS or GREATER than the number in this chart?',
       options: [
         {
@@ -31,7 +31,7 @@ export const incomeForm: TFormBase = {
     {
       id: 'employmentType',
       type: 'checkbox',
-      question:
+      title:
         'Are you employed by a company, or do you work for yourself as a freelancer or self-employed professional?',
       options: [
         {

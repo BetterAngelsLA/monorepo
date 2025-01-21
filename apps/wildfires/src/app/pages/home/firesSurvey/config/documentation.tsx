@@ -7,7 +7,8 @@ export const documentationForm: TFormBase = {
     {
       id: 'replaceItems',
       type: 'checkbox',
-      question: 'Which of the following items (if any) do you need replaced?',
+      title: 'Which of the following items (if any) do you need replaced?',
+      subtitle: '(Select all that apply)',
       options: [
         {
           optionId: 'generalRecords',
