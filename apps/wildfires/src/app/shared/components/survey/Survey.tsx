@@ -77,7 +77,7 @@ export function Survey(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <div className="mb-4">{currentForm.title}</div>
+      <div className="mb-12 uppercase font-bold">{currentForm.title}</div>
 
       <QuestionsBlock
         questions={currentForm.questions}
@@ -85,7 +85,7 @@ export function Survey(props: IProps) {
         onAnswer={handleAnswer}
       />
 
-      <SurveyNav className="mt-12" onNext={onClickNext} onPrev={onClickPrev} />
+      <SurveyNav className="mt-14" onNext={onClickNext} onPrev={onClickPrev} />
     </div>
   );
 }
