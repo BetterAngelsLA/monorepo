@@ -43,7 +43,7 @@ export default function Interactions() {
       filters: {
         createdBy: user?.id,
         search: filterSearch,
-        teams: filters.teams.map((item) => item.id),
+        teams: filters.teams.length ? filters.teams.map((item) => item.id) : null,
       },
     },
     fetchPolicy: 'cache-and-network',
@@ -107,12 +107,17 @@ export default function Interactions() {
     setHasMore(isMoreAvailable);
   }, [data, offset]);
 
+  const updateFilters = (newFilters: TFilters) => {
+    setFilters(newFilters);
+    setOffset(0);
+  };
+
   if (error) throw new Error('Something went wrong!');
 
   return (
     <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <InteractionsHeader search={search} setSearch={onChange} />
-      <InteractionsFilters filters={filters} setFilters={setFilters} />
+      <InteractionsFilters filters={filters} setFilters={updateFilters} />
       <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       {search && !loading && notes.length < 1 && (
         <View
