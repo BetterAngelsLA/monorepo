@@ -1,4 +1,6 @@
+import { ArrowLeftIcon } from '@monorepo/react/icons';
 import { useContext } from 'react';
+import { SurveyButton } from '../../../pages/home/firesSurvey/components/SurveyButton';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { SurveyContext } from './provider/SurveyContext';
 
@@ -6,11 +8,10 @@ type IProps = {
   className?: string;
   onNext?: () => void;
   onPrev?: () => void;
-  nextDisabled?: boolean;
 };
 
 export function SurveyNav(props: IProps) {
-  const { className, onNext, onPrev, nextDisabled } = props;
+  const { className, onNext, onPrev } = props;
 
   const context = useContext(SurveyContext);
 
@@ -20,7 +21,7 @@ export function SurveyNav(props: IProps) {
 
   const { currentForm, formHistory, validateCurrentForm } = context;
 
-  const parentCss = ['flex', 'justify-center', className];
+  const parentCss = ['flex', 'flex-col', 'justify-center', className];
 
   if (!onNext && !onPrev) {
     return null;
@@ -33,31 +34,31 @@ export function SurveyNav(props: IProps) {
   console.log('currentFormErrors:');
   console.log(currentFormErrors);
 
-  const disabled = !!currentFormErrors.length;
+  const nextDisabled = !!currentFormErrors.length;
 
-  const buttonCss = 'mx-4 py-1.5 px-4 border border-2 rounded-xl bg-gray-300';
-
-  const disabledCss = 'opacity-50';
-
+  const buttonCss = 'my-4';
   const prevCss = [buttonCss];
-  const nextCss = [buttonCss, disabled ? disabledCss : ''];
+  const nextCss = [buttonCss];
 
   return (
     <div className={mergeCss(parentCss)}>
-      {!!onPrev && showPrevBtn && (
-        <button onClick={onPrev} className={mergeCss(prevCss)}>
-          PREV
-        </button>
+      {!!onNext && showNextBtn && (
+        <SurveyButton
+          dark
+          className={mergeCss(nextCss)}
+          onClick={onNext}
+          disabled={nextDisabled}
+        >
+          <span className="mr-4">Continue</span>
+          <ArrowLeftIcon className="h-5 rotate-180" />
+        </SurveyButton>
       )}
 
-      {!!onNext && showNextBtn && (
-        <button
-          onClick={onNext}
-          className={mergeCss(nextCss)}
-          disabled={disabled}
-        >
-          NEXT
-        </button>
+      {!!onPrev && showPrevBtn && (
+        <SurveyButton className={mergeCss(prevCss)} onClick={onPrev}>
+          <ArrowLeftIcon className="h-5" />
+          <span className="ml-4">Back</span>
+        </SurveyButton>
       )}
     </div>
   );
