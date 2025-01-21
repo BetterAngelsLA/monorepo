@@ -1,8 +1,9 @@
-import { Link, RouteObject } from 'react-router-dom';
+import { RouteObject } from 'react-router-dom';
+import { HomePage } from '../pages/home/homePage';
 
 export const routeChildren: RouteObject[] = [
   {
     path: '/',
-    element: <div className='mt-12'>home page</div>,
+    element: <HomePage />,
   },
 ];
