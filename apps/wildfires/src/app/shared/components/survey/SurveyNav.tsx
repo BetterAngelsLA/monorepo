@@ -1,6 +1,6 @@
 import { ArrowLeftIcon } from '@monorepo/react/icons';
 import { useContext } from 'react';
-import { SurveyButton } from '../../../pages/home/firesSurvey/components/SurveyButton';
+import { SurveyButton } from '../../../pages/introduction/firesSurvey/components/SurveyButton';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { SurveyContext } from './provider/SurveyContext';
 
