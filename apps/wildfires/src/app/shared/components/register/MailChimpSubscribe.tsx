@@ -2,7 +2,7 @@ import { useState } from 'react';
 import MailchimpSubscribe from 'react-mailchimp-subscribe';
 
 const MAILCHIMP_URL =
-  'https://betterangels.us15.list-manage.com/subscribe/post?u=0b57572f04d00dd06f8157bc2&amp;id=4eef176400&amp;f_id=00d5c2e1f0';
+  'https://betterangels.us9.list-manage.com/subscribe/post?u=604aa1b92deaf2b6a25adbfe8&amp;id=797ff52f8f&amp;f_id=00d2dae1f0';
 
 const SignupForm = ({ status, message, onValidated }) => {
   const [firstName, setFirstName] = useState('');
@@ -23,7 +23,7 @@ const SignupForm = ({ status, message, onValidated }) => {
       FNAME: firstName,
       LNAME: lastName,
       PHONE: phone,
-      ADDRESSSTR: address,
+      ADDR_STR: address,
     });
   };
 
