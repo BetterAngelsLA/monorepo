@@ -5837,6 +5837,7 @@ __metadata:
     react: "npm:18.2.0"
     react-dom: "npm:18.2.0"
     react-hook-form: "npm:^7.52.1"
+    react-mailchimp-subscribe: "npm:^2.1.3"
     react-native: "npm:0.74.5"
     react-native-gesture-handler: "npm:~2.16.1"
     react-native-keyboard-controller: "npm:^1.13.0"
@@ -14946,7 +14947,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"debug@npm:2.6.9, debug@npm:^2.2.0, debug@npm:^2.6.9":
+"debug@npm:2.6.9, debug@npm:^2.1.3, debug@npm:^2.2.0, debug@npm:^2.6.9":
   version: 2.6.9
   resolution: "debug@npm:2.6.9"
   dependencies:
@@ -20919,6 +20920,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jsonp@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "jsonp@npm:0.2.1"
+  dependencies:
+    debug: "npm:^2.1.3"
+  checksum: 10/90aabd9deb3a9ba83aedf8d40e1aaff1fc29f3f3fe42985a661782498dde526a7cd9b7bec4b8721f7d0beafab9e5ccfdafd46640f7dd6c58d529a6bb5238e2b8
+  languageName: node
+  linkType: hard
+
 "jsonparse@npm:^1.3.1":
   version: 1.3.1
   resolution: "jsonparse@npm:1.3.1"
@@ -25068,7 +25078,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:^15.5.10, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -25439,6 +25449,19 @@ __metadata:
   version: 17.0.2
   resolution: "react-is@npm:17.0.2"
   checksum: 10/73b36281e58eeb27c9cc6031301b6ae19ecdc9f18ae2d518bdb39b0ac564e65c5779405d623f1df9abf378a13858b79442480244bd579968afc1faf9a2ce5e05
+  languageName: node
+  linkType: hard
+
+"react-mailchimp-subscribe@npm:^2.1.3":
+  version: 2.1.3
+  resolution: "react-mailchimp-subscribe@npm:2.1.3"
+  dependencies:
+    jsonp: "npm:^0.2.1"
+    prop-types: "npm:^15.5.10"
+    to-querystring: "npm:^1.0.4"
+  peerDependencies:
+    react: ">=15"
+  checksum: 10/cc128e1a73954e5cb32c792621d1aa6d8d11edd38569ce0394e90ceca34c7a619483a788c82d0dc7961216b05b3d9cccbf73a909a078dc1fc0f12cf36aefbf87
   languageName: node
   linkType: hard
 
@@ -28506,6 +28529,13 @@ __metadata:
   version: 2.0.0
   resolution: "to-fast-properties@npm:2.0.0"
   checksum: 10/be2de62fe58ead94e3e592680052683b1ec986c72d589e7b21e5697f8744cdbf48c266fa72f6c15932894c10187b5f54573a3bcf7da0bfd964d5caf23d436168
+  languageName: node
+  linkType: hard
+
+"to-querystring@npm:^1.0.4":
+  version: 1.2.0
+  resolution: "to-querystring@npm:1.2.0"
+  checksum: 10/23de905b88c4e8e3f4fc9bd1bd5a0f44a8de487d55d15651fb5988f52d67d171e726096ddc181327d761ebc4c0d7e414026a28e0890fec976ddd5797befc0ddc
   languageName: node
   linkType: hard
 
