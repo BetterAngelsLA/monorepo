@@ -19,7 +19,12 @@ export function QuestionHeader(props: IProps) {
 
   const titleCss = ['text-2xl', 'leading-normal', 'lg:text-5xl', 'font-bold'];
 
-  const subtitleCss = ['text-2xl', 'leading-normal', 'lg:text-[42px]'];
+  const subtitleCss = [
+    'text-2xl',
+    'leading-normal',
+    'md:leading-[4.5rem]',
+    'lg:text-[42px]',
+  ];
 
   return (
     <div className={mergeCss(parentCss)}>
