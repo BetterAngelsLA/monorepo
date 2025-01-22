@@ -37,7 +37,7 @@ export function Footer(props: IParams): ReactElement {
         <div className="flex flex-col md:flex-row gap-8 md:gap-10 md:text-2xl">
           <Link to="#">About</Link>
           <Link to="#">Contact Us</Link>
-          <Link to="#">Privacy Policy</Link>
+          <Link to="/privacy-policy">Privacy Policy</Link>
         </div>
         <div className="md:text-2xl text-end md:text-auto">
           © 2025 Better Angels Inc. All rights reserved.
