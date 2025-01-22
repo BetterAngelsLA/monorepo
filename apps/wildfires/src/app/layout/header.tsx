@@ -29,27 +29,29 @@ export function Header(props: IParams): ReactElement {
 
   return (
     <header className={parentCss}>
-      <div className="flex items-center">
+      <Link to="/" className="flex items-center">
         <BetterAngelsLogoIcon className="h-7 sm:h-10 text-brand-sky-blue fill-current" />
         <div className="text-white flex ml-2 text-xl md:text-4xl">
           <div className="font-normal">
             Wildfire <span className="font-semibold">LA</span>
           </div>
         </div>
-      </div>
+      </Link>
       {/* Desktop */}
       <div className="hidden md:flex items-center font-bold">
         <p className="mr-8">Select Language</p>
         <Link className="mr-12" to="#">
           About Wildfire LA
         </Link>
-        <Button
-          size="small"
-          className="border-brand-yellow"
+        <a
+          target="_blank"
+          href="https://www.pledge.to/widgets/donate/JS11PeUKJh7pCqZC"
+          className="border-2 border-brand-yellow rounded-full py-1 px-7 hover:bg-brand-yellow hover:text-black"
           onClick={() => console.log('donate')}
+          rel="noreferrer"
         >
           Donate
-        </Button>
+        </a>
       </div>
       {/* Mobile */}
       <div className="flex md:hidden items-center font-bold gap-7">

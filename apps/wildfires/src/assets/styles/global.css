@@ -43,3 +43,10 @@ input:focus,
 textarea:focus {
   outline: none;
 }
+
+.plg-donate a {
+  background-color: transparent !important;
+  border-width: 2px;
+  border-radius: 50px !important;
+  border-color: var(--color-brand-yellow);
+}
