@@ -6,3 +6,5 @@ Source: https://icon-sets.iconify.design/iconamoon/check-bold/
 Title: iconamoon:trend-up.svg
 Source: https://icon-sets.iconify.design/iconamoon/trend-up/
 
+Title: iconamoon:email-light.svg
+Source: https://icon-sets.iconify.design/iconamoon/email-light/
