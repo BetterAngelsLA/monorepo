@@ -42,7 +42,15 @@ export function Header(props: IParams): ReactElement {
         <Link className="mr-12" to="#">
           About Wildfire LA
         </Link>
-        <div className="plg-donate" data-widget-id="JS11PeUKJh7pCqZC" />
+        <a
+          target="_blank"
+          href="https://www.pledge.to/widgets/donate/JS11PeUKJh7pCqZC"
+          className="border-2 border-brand-yellow rounded-full py-1 px-7 hover:bg-brand-yellow hover:text-black"
+          onClick={() => console.log('donate')}
+          rel="noreferrer"
+        >
+          Donate
+        </a>
       </div>
       {/* Mobile */}
       <div className="flex md:hidden items-center font-bold gap-7">
