@@ -25,14 +25,14 @@ export function Footer(props: IParams): ReactElement {
 
   return (
     <footer className={parentCss}>
-      <div className="flex mb-8 md:mb-0">
+      <a href="https://www.betterangels.la/" className="flex mb-8 md:mb-0">
         <BetterAngelsLogoIcon className="h-7 md:h-10 text-brand-sky-blue fill-current" />
         <div className="text-white flex ml-2 text-xl md:text-4xl">
           <div className="font-normal">
             Better<span className="font-semibold">Angels</span>
           </div>
         </div>
-      </div>
+      </a>
       <div className="flex flex-col align-end gap-14">
         <div className="flex flex-col md:flex-row gap-8 md:gap-10 md:text-2xl">
           <Link to="#">About</Link>
