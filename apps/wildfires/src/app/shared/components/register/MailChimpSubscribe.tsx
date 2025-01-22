@@ -7,7 +7,7 @@ import MailchimpSubscribe, {
 const MAILCHIMP_URL =
   'https://betterangels.us9.list-manage.com/subscribe/post?u=604aa1b92deaf2b6a25adbfe8&amp;id=797ff52f8f&amp;f_id=00d2dae1f0';
 
-const SignupForm = ({ status, message, onValidated }: ISubscribeFormProps) => {
+const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
   const [formData, setFormData] = useState<IMailchimpFormData>({
     EMAIL: '',
     FNAME: '',
@@ -31,7 +31,7 @@ const SignupForm = ({ status, message, onValidated }: ISubscribeFormProps) => {
     }
 
     // Send data to Mailchimp
-    onValidated({
+    subscribe({
       EMAIL: formData.email,
       FNAME: formData.firstName,
       LNAME: formData.lastName,
@@ -134,11 +134,7 @@ const MailchimpFormContainer = () => {
     <MailchimpSubscribe
       url={MAILCHIMP_URL}
       render={({ subscribe, status, message }: ISubscribeFormProps) => (
-        <SignupForm
-          status={status}
-          message={message}
-          onValidated={(formData) => subscribe(formData)}
-        />
+        <SignupForm status={status} message={message} subscribe={subscribe} />
       )}
     />
   );

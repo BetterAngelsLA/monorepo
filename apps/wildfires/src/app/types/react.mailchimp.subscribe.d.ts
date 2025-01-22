@@ -11,10 +11,9 @@ declare module 'react-mailchimp-subscribe' {
   }
 
   export interface ISubscribeFormProps {
-    subscribe: (data: IMailchimpFormData) => void;
-    status: 'error' | 'success' | 'sending' | null;
     message: TrustedHTML | string;
-    onValidated: (data: IMailchimpFormData) => void;
+    status: 'error' | 'success' | 'sending' | null;
+    subscribe: (data: IMailchimpFormData) => void;
   }
 
   export interface IMailchimpFormContainerProps {
