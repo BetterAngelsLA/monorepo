@@ -8,7 +8,7 @@ export default function UsefulLinks() {
       <h2 className="text-2xl md:text-[40px] md:leading-[94.5px] font-bold mb-6">
         Useful Links/Info
       </h2>
-      <div className="flex flex-col md:flex-row items-stretch justify-center gap-1">
+      <div className="flex flex-col md:flex-row items-stretch justify-center gap-1 md:w-full px-10">
         <UsefulLinksCard
           urlTitle="disasterassistance.gov"
           url="https://www.disasterassistance.gov/"
@@ -28,7 +28,7 @@ export default function UsefulLinks() {
           <EddIcon className="w-[95px]" />
         </UsefulLinksCard>
         <UsefulLinksCard
-          urlTitle="benefitscal.com/"
+          urlTitle="benefitscal.com"
           url="https://benefitscal.com/"
         >
           <BenefitsCalIcon className="h-[36px]" />
