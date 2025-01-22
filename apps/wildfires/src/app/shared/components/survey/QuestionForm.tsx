@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { SurveyRadio } from '../../../pages/home/firesSurvey/components/SurveyRadio';
+import { SurveyRadio } from '../../../pages/introduction/firesSurvey/components/SurveyRadio';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { CheckboxGroup } from '../form/CheckboxGroup';
 import { SurveyContext } from './provider/SurveyContext';
