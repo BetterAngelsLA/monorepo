@@ -5,7 +5,7 @@ import { FiresSurvey } from './firesSurvey/FiresSurvey';
 export function HomePage() {
   const pageRef = useRef<HTMLDivElement | null>(null);
 
-  // Function to dynamically generate a filename with a timestamp
+  // TODO: move this to the actual result page when we get these
   const generateFileName = () => {
     const now = new Date();
     const timestamp = now.toLocaleString("en-US", {

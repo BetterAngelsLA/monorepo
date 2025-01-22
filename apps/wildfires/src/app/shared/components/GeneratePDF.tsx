@@ -4,7 +4,7 @@ import { MutableRefObject } from "react";
 
 interface GeneratePDFProps {
   pageRef: MutableRefObject<HTMLDivElement | null>;
-  fileName: string | (() => string); // Accept either a string or a function
+  fileName: string | (() => string);
 }
 
 const GeneratePDF: React.FC<GeneratePDFProps> = ({ pageRef, fileName }) => {
@@ -24,7 +24,6 @@ const GeneratePDF: React.FC<GeneratePDFProps> = ({ pageRef, fileName }) => {
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
       pdf.addImage(image, "PNG", 0, 0, pdfWidth, pdfHeight);
 
-      // Handle filename as a string or a function
       const resolvedFileName =
         typeof fileName === "function" ? fileName() : fileName;
 
