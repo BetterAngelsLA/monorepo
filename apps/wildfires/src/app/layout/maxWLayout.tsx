@@ -10,10 +10,10 @@ export function MaxWLayout(props: IParams): ReactElement {
 
   const parentCss = [
     'max-w-7xl',
-    'min-w-full',
     'flex',
     'flex-col',
     'lg:mx-0',
+    'w-full',
     className,
   ];
 
