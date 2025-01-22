@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import fireHero from '../../../assets/images/fire-hero.jpeg';
 import Hero from '../../shared/components/hero/Hero';
 import Partners from '../../shared/components/partners/Partners';
+import UsefulLinks from '../../shared/components/usefulLinks/UsefulLinks';
 
 export function HomePage() {
   const pageRef = useRef<HTMLDivElement | null>(null);
@@ -22,6 +23,7 @@ export function HomePage() {
           </div>
         </div>
       </Hero>
+      <UsefulLinks />
       <Partners />
     </div>
   );
