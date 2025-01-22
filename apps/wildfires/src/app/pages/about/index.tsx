@@ -6,13 +6,10 @@ import ContactUs from '../../shared/components/contactUs/ContactUs';
 export default function About() {
   return (
     <div className="md:-mx-10 -mx-4">
-      <div
-        style={{
-          background:
-            'linear-gradient(90deg, rgba(30,51,66,1) 70%, rgba(156,220,237,1) 70%)',
-        }}
-      >
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch">
+      <div className="relative">
+        <div className="w-full h-full absolute top-0 z-100 right-1/3 bg-brand-dark-blue " />
+        <div className="w-full h-full absolute top-0 z-10 left-[50%] bg-brand-sky-blue " />
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch relative z-20">
           <div className="bg-brand-dark-blue w-full md:w-[60%] py-40 flex items-center px-4 md:px-10 md:py-0">
             <h1 className="border-l-[10px] border-brand-yellow font-light font-primary md:font-bold pl-4 md:pl-8 text-5xl md:text-[74px] text-white md:leading-[96.2px] text-left md:text-center">
               About Wildfire LA
