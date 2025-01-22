@@ -1,17 +1,19 @@
-import { useState } from 'react';
-import MailchimpSubscribe from 'react-mailchimp-subscribe';
+import React, { CSSProperties, useState } from 'react';
+import MailchimpSubscribe, {
+  ISubscribeFormProps,
+} from 'react-mailchimp-subscribe';
 
 const MAILCHIMP_URL =
-  'https://betterangels.us15.list-manage.com/subscribe/post?u=0b57572f04d00dd06f8157bc2&amp;id=4eef176400&amp;f_id=00d5c2e1f0';
+  'https://betterangels.us9.list-manage.com/subscribe/post?u=604aa1b92deaf2b6a25adbfe8&amp;id=797ff52f8f&amp;f_id=00d2dae1f0';
 
-const SignupForm = ({ status, message, onValidated }) => {
+const SignupForm = ({ status, message, onValidated }: ISubscribeFormProps) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || email.indexOf('@') <= 0) {
       return;
@@ -23,7 +25,7 @@ const SignupForm = ({ status, message, onValidated }) => {
       FNAME: firstName,
       LNAME: lastName,
       PHONE: phone,
-      ADDRESSSTR: address,
+      ADDR_STR: address,
     });
   };
 
@@ -115,7 +117,7 @@ const MailchimpFormContainer = () => {
   return (
     <MailchimpSubscribe
       url={MAILCHIMP_URL}
-      render={({ subscribe, status, message }) => (
+      render={({ subscribe, status, message }: ISubscribeFormProps) => (
         <SignupForm
           status={status}
           message={message}
@@ -128,10 +130,12 @@ const MailchimpFormContainer = () => {
 
 export default MailchimpFormContainer;
 
+const columnDirection: CSSProperties['flexDirection'] = 'column';
+
 const styles = {
   formGroup: {
     display: 'flex',
-    flexDirection: 'column',
+    flexDirection: columnDirection,
     marginBottom: '1rem',
   },
   label: {
