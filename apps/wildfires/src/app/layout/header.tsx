@@ -31,7 +31,7 @@ export function Header(props: IParams): ReactElement {
       <Link to="/" className="flex items-center">
         <BetterAngelsLogoIcon className="h-7 sm:h-10 text-brand-sky-blue fill-current" />
         <div className="text-white flex ml-2 text-xl md:text-4xl">
-          <div className="font-normal">
+          <div className="font-normal notranslate">
             Wildfire <span className="font-semibold">LA</span>
           </div>
         </div>
