@@ -1,7 +1,10 @@
+import { useRef } from 'react';
 import fireHero from '../../../assets/images/fire-hero.jpeg';
 import Hero from '../../shared/components/hero/Hero';
+import Partners from '../../shared/components/partners/Partners';
 
 export function HomePage() {
+  const pageRef = useRef<HTMLDivElement | null>(null);
   return (
     <div className="-mx-10">
       <Hero backgroundImage={fireHero}>
@@ -19,6 +22,7 @@ export function HomePage() {
           </div>
         </div>
       </Hero>
+      <Partners />
     </div>
   );
 }
