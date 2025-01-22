@@ -1,31 +1,28 @@
 import { ReactNode } from 'react';
 
-export type TNextStep = {
-  default?: string;
-  conditional?: {
-    [key: string]: string;
-  };
+export type TConditionRule =
+  | {
+      type: 'answerIncludes' | 'answerEquals';
+      questionId: string;
+      value: string;
+    }
+  | {
+      type: 'answerExists';
+      questionId: string;
+    };
+
+export type TShowConditions = {
+  type: 'all';
+  rules: TConditionRule[];
 };
 
-export type TFormBase = {
+export type TSurveyForm = {
   id: string;
-  conditional?: false;
   title: string;
   questions: TQuestion[];
-  next?: {
-    default: string;
-  };
+  showConditions?: TShowConditions;
+  nextFormId: string | null;
 };
-
-export type TFormConditional = {
-  id: string;
-  conditional: true;
-  title: string;
-  questions: [TQuestion];
-  next?: TNextStep;
-};
-
-export type TSurveyForm = TFormBase | TFormConditional;
 
 export type TSurvey = TSurveyForm[];
 
@@ -37,7 +34,6 @@ export type TQuestion = {
   options: TOption[];
   rules?: TQuestionValidate;
   renderAfter?: ReactNode;
-  next?: TNextStep;
 };
 
 export type TQuestionValidate = {
