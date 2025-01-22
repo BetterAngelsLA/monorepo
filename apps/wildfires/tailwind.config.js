@@ -18,7 +18,7 @@ module.exports = {
         lg: '1152px',
       },
       fontFamily: {
-        primary: ['Poppins', 'sans-serif'],
+        primary: ['IBM Plex Sans', 'sans-serif'],
       },
       colors: {
         'brand-yellow': 'var(--color-brand-yellow)',

@@ -5,7 +5,7 @@ import ContactUs from '../../shared/components/contactUs/ContactUs';
 
 export default function About() {
   return (
-    <div className="-mx-10">
+    <div className="md:-mx-10 -mx-4">
       <div
         style={{
           background:
@@ -13,12 +13,12 @@ export default function About() {
         }}
       >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch">
-          <div className="bg-brand-dark-blue w-full md:w-[60%] py-40 flex items-center px-10 md:py-0">
-            <h1 className="border-l-[10px] border-brand-yellow font-extralight md:font-bold pl-8 text-5xl md:text-[74px] text-white leading-[96.2px] text-center">
+          <div className="bg-brand-dark-blue w-full md:w-[60%] py-40 flex items-center px-4 md:px-10 md:py-0">
+            <h1 className="border-l-[10px] border-brand-yellow font-light font-primary md:font-bold pl-4 md:pl-8 text-5xl md:text-[74px] text-white md:leading-[96.2px] text-left md:text-center">
               About Wildfire LA
             </h1>
           </div>
-          <div className="flex flex-col h-full items-center w-full md:w-[40%] bg-brand-sky-blue py-12 gap-16">
+          <div className="flex flex-col h-full items-center w-full md:w-[40%] bg-brand-sky-blue px-4 py-12 gap-16">
             <img
               className="w-[292px] md:w-[400px]"
               src={BaLogo}
@@ -37,8 +37,8 @@ export default function About() {
           </div>
         </div>
       </div>
-      <div className="py-7 md:py-32 px-10 max-w-7xl mx-auto">
-        <h2 className="text-2xl md:text-5xl mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-8 font-bold">
+      <div className="py-7 md:py-32 px-4 md:px-10 max-w-7xl mx-auto">
+        <h2 className="text-2xl md:text-5xl mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
           Who We Are
         </h2>
         <p className="md:text-2xl mb-6 md:mb-12">
@@ -65,7 +65,7 @@ export default function About() {
             for all Angelenos.
           </li>
         </ul>
-        <h2 className="text-2xl md:text-5xl mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-8 font-bold">
+        <h2 className="text-2xl md:text-5xl mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
           What We Do
         </h2>
         <p className="mb-6 md:mb-32 md:text-2xl">
@@ -74,7 +74,7 @@ export default function About() {
           connect individuals and families with the tools, services, and
           information necessary to recover, rebuild, and move forward.
         </p>
-        <h2 className="text-2xl md:text-5xl mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-8 font-bold">
+        <h2 className="text-2xl md:text-5xl mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
           Why We Care
         </h2>
         <p className="mb-6 md:mb-32 md:text-2xl">
@@ -84,7 +84,7 @@ export default function About() {
           alone. This website reflects our dedication to creating a centralized,
           user-friendly resource hub for every resident in need.
         </p>
-        <h2 className="text-2xl md:text-5xl mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-8 font-bold">
+        <h2 className="text-2xl md:text-5xl mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
           Our Vision
         </h2>
         <p className="mb-6 md:mb-32 md:text-2xl">
