@@ -1,9 +1,12 @@
 import { useContext, useEffect } from 'react';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { QuestionsBlock } from './QuestionsBlock';
+import { Results } from './Results';
 import { SurveyNav } from './SurveyNav';
+
 import { SurveyContext } from './provider/SurveyContext';
 import { TAnswer } from './types';
+import { validateConfig } from './utils/validateConfig';
 
 type IProps = {
   className?: string;
@@ -19,15 +22,19 @@ export function Survey(props: IProps) {
     throw new Error('SurveyContext must be used with Survey');
   }
 
-  const { forms, currentForm, answers, setNextForm, goBack, setAnswers } =
+  const { forms, currentForm, answers, goBack, setAnswers, setNextForm } =
     context;
 
-  console.log('');
-  console.log('render Survey');
-  console.log('forms:');
-  console.log(forms);
+  // console.log('');
+  // console.log('render Survey');
+  // console.log('forms:');
+  // console.log(forms);
 
-  if (!forms.length) {
+  const configErrors = validateConfig(forms);
+
+  if (configErrors.length) {
+    console.error(configErrors);
+
     throw new Error('survey config forms missing');
   }
 
@@ -74,6 +81,10 @@ export function Survey(props: IProps) {
   }, [answers]);
 
   const parentCss = ['pt-8', className];
+
+  if (!currentForm) {
+    return <Results className="mt-24" />;
+  }
 
   return (
     <div className={mergeCss(parentCss)}>
