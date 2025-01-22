@@ -13,10 +13,10 @@ export default function Partners() {
         <PartnerCard link="https://www.betterangels.la/">
           <img className="w-[212px]" src={BaLogo} alt="partner imagine LA" />
         </PartnerCard>
-        <PartnerCard link="https://www.betterangels.la/">
+        <PartnerCard link="https://www.imaginela.org/">
           <img className="w-[164px]" src={Imagine} alt="partner imagine LA" />
         </PartnerCard>
-        <PartnerCard link="https://www.betterangels.la/">
+        <PartnerCard link="https://www.mayorsfundla.org/">
           <img
             className="w-[212px]"
             src={Mayor}
