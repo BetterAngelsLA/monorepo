@@ -3,6 +3,7 @@ import fireHero from '../../../assets/images/fire-hero.jpeg';
 import Hero from '../../shared/components/hero/Hero';
 import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
+import { FiresSurvey } from '../introduction/firesSurvey/FiresSurvey';
 
 export function HomePage() {
   const pageRef = useRef<HTMLDivElement | null>(null);
@@ -23,6 +24,7 @@ export function HomePage() {
           </div>
         </div>
       </Hero>
+      <FiresSurvey />
       <Partners />
       <Register />
     </div>
