@@ -4,7 +4,7 @@ import UsefulLinksCard from './UsefulLinksCard';
 
 export default function UsefulLinks() {
   return (
-    <div className="bg-brand-angel-blue py-12 w-full flex flex-col items-center justify-center">
+    <div className="bg-brand-angel-blue py-12 md:py-20 w-full flex flex-col items-center justify-center">
       <h2 className="text-2xl md:text-[40px] md:leading-[94.5px] font-bold mb-6">
         Useful Links/Info
       </h2>
