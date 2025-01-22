@@ -5,7 +5,6 @@ import {
 } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '../shared/components/button/Button';
 
 type IParams = {
   className?: string;
@@ -43,13 +42,7 @@ export function Header(props: IParams): ReactElement {
         <Link className="mr-12" to="#">
           About Wildfire LA
         </Link>
-        <Button
-          size="small"
-          className="border-brand-yellow"
-          onClick={() => console.log('donate')}
-        >
-          Donate
-        </Button>
+        <div className="plg-donate" data-widget-id="JS11PeUKJh7pCqZC" />
       </div>
       {/* Mobile */}
       <div className="flex md:hidden items-center font-bold gap-7">
