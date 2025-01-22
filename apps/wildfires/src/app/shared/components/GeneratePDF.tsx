@@ -1,6 +1,5 @@
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
 import { MutableRefObject } from "react";
+import { useReactToPrint } from "react-to-print";
 
 interface GeneratePDFProps {
   pageRef: MutableRefObject<HTMLDivElement | null>;
@@ -8,32 +7,30 @@ interface GeneratePDFProps {
 }
 
 const GeneratePDF: React.FC<GeneratePDFProps> = ({ pageRef, fileName }) => {
-  const downloadPDF = async () => {
-    const element = pageRef.current;
+  const handlePrint = useReactToPrint({
+    contentRef: pageRef,
+    documentTitle: typeof fileName === "function" ? fileName() : fileName,
+    pageStyle: `
+      @page {
+        size: auto;
+        margin: 0;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        -webkit-print-color-adjust: exact;
+      }
+      .no-page-break {
+        page-break-inside: avoid;
+      }
+    `,
+  });
 
-    if (!element) {
-      console.error("Page reference is null. Cannot generate PDF.");
-      return;
-    }
-
-    try {
-      const canvas = await html2canvas(element, { scale: 2 });
-      const image = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(image, "PNG", 0, 0, pdfWidth, pdfHeight);
-
-      const resolvedFileName =
-        typeof fileName === "function" ? fileName() : fileName;
-
-      pdf.save(resolvedFileName);
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-    }
-  };
-
-  return <button onClick={downloadPDF}>Download Page as PDF</button>;
+  return (
+    <button onClick={handlePrint}>
+      Download Page as PDF
+    </button>
+  );
 };
 
 export default GeneratePDF;
