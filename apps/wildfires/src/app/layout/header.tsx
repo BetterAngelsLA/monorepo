@@ -28,14 +28,14 @@ export function Header(props: IParams): ReactElement {
 
   return (
     <header className={parentCss}>
-      <div className="flex items-center">
+      <Link to="/" className="flex items-center">
         <BetterAngelsLogoIcon className="h-7 sm:h-10 text-brand-sky-blue fill-current" />
         <div className="text-white flex ml-2 text-xl md:text-4xl">
           <div className="font-normal">
             Wildfire <span className="font-semibold">LA</span>
           </div>
         </div>
-      </div>
+      </Link>
       {/* Desktop */}
       <div className="hidden md:flex items-center font-bold">
         <p className="mr-8">Select Language</p>
