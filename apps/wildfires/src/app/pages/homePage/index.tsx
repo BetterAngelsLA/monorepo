@@ -3,6 +3,7 @@ import fireHero from '../../../assets/images/fire-hero.jpeg';
 import ContactUs from '../../shared/components/contactUs/ContactUs';
 import Hero from '../../shared/components/hero/Hero';
 import Partners from '../../shared/components/partners/Partners';
+import UsefulLinks from '../../shared/components/usefulLinks/UsefulLinks';
 import Register from '../../shared/components/register/Register';
 import { FiresSurvey } from '../introduction/firesSurvey/FiresSurvey';
 
@@ -26,6 +27,7 @@ export function HomePage() {
         </div>
       </Hero>
       <FiresSurvey />
+      <UsefulLinks />
       <Partners />
       <Register />
       <ContactUs />
