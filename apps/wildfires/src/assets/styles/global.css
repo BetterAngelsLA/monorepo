@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --font-primary: 'Poppins', 'sans-serif';
+  --font-primary: 'IBM Plex Sans', 'sans-serif';
   --color-brand-yellow: #fff82e;
   --color-brand-sky-blue: #9cdced;
   --color-brand-angel-blue: #f2fafc;
