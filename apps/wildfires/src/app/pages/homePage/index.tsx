@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import fireHero from '../../../assets/images/fire-hero.jpeg';
+import ContactUs from '../../shared/components/contactUs/ContactUs';
 import Hero from '../../shared/components/hero/Hero';
 import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
@@ -27,6 +28,7 @@ export function HomePage() {
       <FiresSurvey />
       <Partners />
       <Register />
+      <ContactUs />
     </div>
   );
 }

@@ -29,7 +29,7 @@ export function MainLayout(props: IParams): ReactElement {
       <HorizontalLayout className="bg-steel-blue">
         <Header />
       </HorizontalLayout>
-      <HorizontalLayout className="mb-24">
+      <HorizontalLayout>
         <Outlet />
       </HorizontalLayout>
       <HorizontalLayout className="bg-brand-dark-blue">
