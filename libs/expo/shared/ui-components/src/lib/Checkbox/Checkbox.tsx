@@ -33,6 +33,7 @@ interface ICheckboxProps {
   isChecked: boolean;
   isConsent?: boolean;
   height?: DimensionValue | undefined;
+  testId?: string;
 }
 
 const SIZES = {
@@ -59,6 +60,7 @@ export function Checkbox(props: ICheckboxProps) {
     mx,
     height,
     isConsent,
+    testId,
   } = props;
 
   return (
@@ -101,7 +103,11 @@ export function Checkbox(props: ICheckboxProps) {
               },
             ]}
           >
-            {isChecked && <Text style={styles.checkboxLabel}>✓</Text>}
+            {isChecked && (
+              <Text style={styles.checkboxLabel} testID={`checkbox-${testId}`}>
+                ✓
+              </Text>
+            )}
           </View>
         </>
       ) : (
@@ -116,7 +122,11 @@ export function Checkbox(props: ICheckboxProps) {
               },
             ]}
           >
-            {isChecked && <Text style={styles.checkboxLabel}>✓</Text>}
+            {isChecked && (
+              <Text style={styles.checkboxLabel} testID={`checkbox-${testId}`}>
+                ✓
+              </Text>
+            )}
           </View>
           {label}
         </>
