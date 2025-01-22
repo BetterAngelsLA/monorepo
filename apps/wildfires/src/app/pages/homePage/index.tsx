@@ -1,5 +1,6 @@
 import fireHero from '../../../assets/images/fire-hero.jpeg';
 import Hero from '../../shared/components/hero/Hero';
+import Partners from '../../shared/components/partners/Partners';
 
 export function HomePage() {
   return (
@@ -19,6 +20,7 @@ export function HomePage() {
           </div>
         </div>
       </Hero>
+      <Partners />
     </div>
   );
 }
