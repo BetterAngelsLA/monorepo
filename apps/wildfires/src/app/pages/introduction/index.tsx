@@ -8,6 +8,7 @@ export function Introduction() {
     <div ref={pageRef}>
       <FiresSurvey />
 
+      {/* Move to results page when we have one */}
       <GeneratePDF pageRef={pageRef} fileName="Wildfire LA" />
     </div>
   );
