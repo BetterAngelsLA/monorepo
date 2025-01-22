@@ -5,6 +5,9 @@
 :root {
   --font-primary: 'Poppins', 'sans-serif';
   --color-brand-yellow: #fff82e;
+  --color-brand-sky-blue: #9cdced;
+  --color-brand-angel-blue: #f2fafc;
+  --color-brand-dark-blue: #1e3342;
   --color-primary-20: #052b73;
   --color-primary-60: #216af8;
   --color-primary-95: #dae7ff;
@@ -31,6 +34,8 @@ body {
   color: var(--color-primary-20);
   font-weight: 400;
   letter-spacing: 0.3px;
+
+  color: #000;
 }
 
 select:focus,
