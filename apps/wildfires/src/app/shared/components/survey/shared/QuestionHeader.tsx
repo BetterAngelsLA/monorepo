@@ -26,9 +26,13 @@ export function QuestionHeader(props: IProps) {
     'lg:text-[42px]',
   ];
 
+  if (!title && !subtitle) {
+    return null;
+  }
+
   return (
     <div className={mergeCss(parentCss)}>
-      <div className={mergeCss(titleCss)}>{title}</div>
+      {!!title && <div className={mergeCss(titleCss)}>{title}</div>}
 
       {!!subtitle && <div className={mergeCss(subtitleCss)}>{subtitle}</div>}
     </div>
