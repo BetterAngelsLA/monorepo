@@ -1,4 +1,5 @@
 import fireHero from '../../../assets/images/fire-hero.jpeg';
+import ContactUs from '../../shared/components/contactUs/ContactUs';
 import Hero from '../../shared/components/hero/Hero';
 
 export function HomePage() {
@@ -19,6 +20,7 @@ export function HomePage() {
           </div>
         </div>
       </Hero>
+      <ContactUs />
     </div>
   );
 }
