@@ -27,7 +27,7 @@ const GeneratePDF: React.FC<GeneratePDFProps> = ({ pageRef, fileName }) => {
   });
 
   return (
-    <button onClick={handlePrint}>
+    <button onClick={() => handlePrint()}>
       Download Page as PDF
     </button>
   );
