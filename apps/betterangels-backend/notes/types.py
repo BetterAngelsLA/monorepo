@@ -197,6 +197,15 @@ class NoteFilter:
             Q(),
         )
 
+    @strawberry_django.filter_field
+    def teams(
+        self, queryset: QuerySet, value: Optional[List[SelahTeamEnum]], prefix: str
+    ) -> Tuple[QuerySet[models.Note], Q]:
+        if value is None:
+            return queryset, Q()
+
+        return queryset.filter(team__in=value), Q()
+
 
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
 class NoteType:
