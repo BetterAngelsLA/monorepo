@@ -20,7 +20,7 @@
   --color-success-30: #007934;
   --color-success-90: #ddf8e8;
   --color-disabled-text: #9AA3AA;
-  --color-disabled-bg: rgba(30, 51, 66, 0.8); /* Equivalent to #1E3342 with 80% opacity */
+  --color-disabled-bg: rgba(30, 51, 66, 0.8);
 }
 
 * {
