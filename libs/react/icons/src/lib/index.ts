@@ -14,6 +14,7 @@ export { default as InstagramIcon } from './components/instagramIcon';
 export { default as ListIcon } from './components/listIcon';
 export { default as LocationIcon } from './components/locationIcon';
 export { default as MapPinIcon } from './components/mapPinIcon';
+export { default as MenuIcon } from './components/menuIcon';
 export { default as PlusIcon } from './components/plusIcon';
 export { default as SearchIcon } from './components/searchIcon';
 export { default as ShareIcon } from './components/shareIcon';
