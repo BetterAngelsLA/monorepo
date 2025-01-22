@@ -10,8 +10,8 @@ const customUi: TSurveyUi = {
 
 export function FiresSurvey() {
   function onChange(results: any) {
-    console.log('FiresSurvey results change:');
-    console.log(results);
+    // console.log('FiresSurvey results change:');
+    // console.log(results);
   }
 
   return (

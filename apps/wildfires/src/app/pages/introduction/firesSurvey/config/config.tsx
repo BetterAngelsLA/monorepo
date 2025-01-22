@@ -1,12 +1,24 @@
 import { TSurvey } from '../../../../shared/components/survey/types';
-import { documentationForm } from './documentation';
-import { housingFormsNested } from './housing';
-import { incomeForm } from './income';
-import { introductionForm } from './introduction';
+import {
+  documentReplacementForm,
+  employmentTypeForm,
+  haveOwnersInsuranceForm,
+  haveRentersInsuranceForm,
+  incomeAssessmentForm,
+  introductionForm,
+  isSmallBusinessForm,
+  rentOrOwnFormForm,
+  tempHousingForm,
+} from './forms/forms';
 
 export const surveyConfig: TSurvey = [
-  { ...introductionForm, next: { default: 'documentationForm' } },
-  { ...documentationForm, next: { default: 'incomeForm' } },
-  { ...incomeForm, next: { default: 'tempHousingForm' } },
-  ...housingFormsNested,
+  introductionForm,
+  documentReplacementForm,
+  incomeAssessmentForm,
+  employmentTypeForm,
+  tempHousingForm,
+  rentOrOwnFormForm,
+  haveOwnersInsuranceForm,
+  haveRentersInsuranceForm,
+  isSmallBusinessForm,
 ];

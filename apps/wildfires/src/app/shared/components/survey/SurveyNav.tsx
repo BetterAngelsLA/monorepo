@@ -27,12 +27,17 @@ export function SurveyNav(props: IProps) {
     return null;
   }
 
+  if (!currentForm) {
+    return;
+  }
+
   const showPrevBtn = formHistory.length > 1;
-  const showNextBtn = !!currentForm.next;
   const currentFormErrors = validateCurrentForm();
 
-  console.log('currentFormErrors:');
-  console.log(currentFormErrors);
+  if (currentFormErrors.length) {
+    console.log('currentFormErrors:');
+    console.log(currentFormErrors);
+  }
 
   const nextDisabled = !!currentFormErrors.length;
 
@@ -42,7 +47,7 @@ export function SurveyNav(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      {!!onNext && showNextBtn && (
+      {!!onNext && (
         <SurveyButton
           dark
           className={mergeCss(nextCss)}
