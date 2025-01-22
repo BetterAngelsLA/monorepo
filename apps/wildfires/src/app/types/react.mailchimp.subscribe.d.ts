@@ -2,7 +2,7 @@ declare module 'react-mailchimp-subscribe' {
   import * as React from 'react';
 
   export interface IMailchimpFormData {
-    EMAIL: string;
+    EMAIL?: string;
     FNAME?: string;
     LNAME?: string;
     PHONE?: string;
