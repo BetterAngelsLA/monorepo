@@ -84,7 +84,7 @@ export function Survey(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <SectionHeader className="mb-12" title={currentForm.title} />
+      <SectionHeader className="mb-12 md:mb-24" title={currentForm.title} />
 
       <QuestionsBlock
         questions={currentForm.questions}

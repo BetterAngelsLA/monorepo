@@ -18,5 +18,9 @@ export function SectionHeader(props: IProps) {
     className,
   ];
 
+  if (!title) {
+    return null;
+  }
+
   return <div className={mergeCss(parentCss)}>{title}</div>;
 }
