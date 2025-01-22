@@ -16,7 +16,6 @@ export const trackPageview = (path: string): void => {
   const isAnalyticsEnabled = import.meta.env.VITE_ANALYTICS_ENABLED === "true";
 
   if (isAnalyticsEnabled) {
-    console.log(`Page view: ${path}`)
     ReactGA.send({ hitType: "pageview", page: path });
   }
 };
