@@ -19,6 +19,8 @@
   --color-neutral-99: #f4f6fd;
   --color-success-30: #007934;
   --color-success-90: #ddf8e8;
+  --color-disabled-text: #9AA3AA;
+  --color-disabled-bg: rgba(30, 51, 66, 0.8); /* Equivalent to #1E3342 with 80% opacity */
 }
 
 * {
@@ -49,4 +51,11 @@ textarea:focus {
   border-width: 2px;
   border-radius: 50px !important;
   border-color: var(--color-brand-yellow);
+}
+
+button:disabled,
+.button:disabled {
+  color: var(--color-disabled-text);
+  background-color: var(--color-disabled-bg);
+  cursor: not-allowed;
 }
