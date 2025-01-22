@@ -5,6 +5,7 @@ import {
 } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
+import { mergeCss } from '../shared/utils/styles/mergeCss';
 
 type IParams = {
   className?: string;
@@ -14,9 +15,7 @@ export function Header(props: IParams): ReactElement {
   const { className = '' } = props;
 
   const parentCss = [
-    className,
     'w-full',
-    'max-w-7xl',
     'mx-auto',
     'flex',
     'items-center',
@@ -24,10 +23,11 @@ export function Header(props: IParams): ReactElement {
     'h-[104px]',
     'md:h-[78px]',
     'text-white',
-  ].join(' ');
+    className,
+  ];
 
   return (
-    <header className={parentCss}>
+    <header className={mergeCss(parentCss)}>
       <Link to="/" className="flex items-center">
         <BetterAngelsLogoIcon className="h-7 sm:h-10 text-brand-sky-blue fill-current" />
         <div className="text-white flex ml-2 text-xl md:text-4xl">
