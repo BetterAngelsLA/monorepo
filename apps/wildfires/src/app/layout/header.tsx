@@ -5,7 +5,6 @@ import {
 } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '../shared/components/button/Button';
 
 type IParams = {
   className?: string;
@@ -40,7 +39,7 @@ export function Header(props: IParams): ReactElement {
       {/* Desktop */}
       <div className="hidden md:flex items-center font-bold">
         <p className="mr-8">Select Language</p>
-        <Link className="mr-12" to="#">
+        <Link className="mr-12" to="/about">
           About Wildfire LA
         </Link>
         <a
