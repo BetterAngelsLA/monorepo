@@ -1,5 +1,11 @@
 import React, { useEffect } from "react";
 
+declare module "react" {
+    interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
+      name?: string;
+    }
+  }
+
 const Policy: React.FC = () => {
     useEffect(() => {
       const script = document.createElement("script");
