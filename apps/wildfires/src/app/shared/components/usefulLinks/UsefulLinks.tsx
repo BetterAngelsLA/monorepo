@@ -1,10 +1,29 @@
 import { BenefitsCalIcon, DeoIcon, EddIcon } from '@monorepo/react/icons';
 import Fema from '../../../../assets/images/FEMA-Logo.png';
+import { mergeCss } from '../../utils/styles/mergeCss';
 import UsefulLinksCard from './UsefulLinksCard';
 
-export default function UsefulLinks() {
+type IParams = {
+  className?: string;
+};
+
+export default function UsefulLinks(props: IParams) {
+  const { className } = props;
+
+  const parentCss = [
+    'bg-brand-angel-blue',
+    'py-12',
+    'md:py-20',
+    'w-full',
+    'flex',
+    'flex-col',
+    'items-center',
+    'justify-center',
+    className,
+  ];
+
   return (
-    <div className="bg-brand-angel-blue py-12 md:py-20 w-full flex flex-col items-center justify-center">
+    <div className={mergeCss(parentCss)}>
       <h2 className="text-2xl md:text-[40px] md:leading-[94.5px] font-bold mb-6">
         Useful Links/Info
       </h2>
