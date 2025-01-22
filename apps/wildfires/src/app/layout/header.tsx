@@ -1,4 +1,8 @@
-import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
+import {
+  BetterAngelsLogoIcon,
+  GlobeIcon,
+  MenuIcon,
+} from '@monorepo/react/icons';
 import { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '../shared/components/button/Button';
@@ -48,9 +52,13 @@ export function Header(props: IParams): ReactElement {
         </Button>
       </div>
       {/* Mobile */}
-      <div className="flex md:hidden items-center font-bold">
-        <p className="mr-8">globe</p>
-        <p className="mr-8">menu</p>
+      <div className="flex md:hidden items-center font-bold gap-7">
+        <div className="h-10 w-10 flex items-center justify-center">
+          <GlobeIcon className="h-6 w-6" stroke="white" />
+        </div>
+        <div className="h-10 w-10 flex items-center justify-center">
+          <MenuIcon className="h-6 w-6" fill="white" />
+        </div>
       </div>
     </header>
   );
