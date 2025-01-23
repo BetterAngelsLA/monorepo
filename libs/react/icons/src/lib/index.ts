@@ -14,6 +14,7 @@ export { default as EmailIcon } from './components/emailIcon';
 export { default as FilterIcon } from './components/filterIcon';
 export { default as FindMeIcon } from './components/findMeIcon';
 export { default as GlobeIcon } from './components/globeIcon';
+export { default as InfoIcon } from './components/infoIcon';
 export { default as InstagramIcon } from './components/instagramIcon';
 export { default as ListIcon } from './components/listIcon';
 export { default as LocationIcon } from './components/locationIcon';
