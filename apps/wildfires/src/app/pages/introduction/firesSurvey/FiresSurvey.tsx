@@ -1,3 +1,5 @@
+import { useNavigate } from 'react-router-dom';
+import { surveyResultsPagePath } from '../../../routes/routePaths';
 import { Survey } from '../../../shared/components/survey/Survey';
 import { TSurveyUi } from '../../../shared/components/survey/provider/SurveyContext';
 import SurveyProvider from '../../../shared/components/survey/provider/SurveyProvider';
@@ -10,6 +12,8 @@ const customUi: TSurveyUi = {
 };
 
 export function FiresSurvey() {
+  const navigateTo = useNavigate();
+
   function onChange(results: any) {
     // console.log('FiresSurvey results change:');
     // console.log(results);
@@ -19,6 +23,8 @@ export function FiresSurvey() {
     console.log('################################### ON END');
     console.log(results);
     console.log();
+
+    navigateTo(surveyResultsPagePath);
   }
 
   return (
