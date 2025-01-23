@@ -31,7 +31,7 @@ export function SurveyCheckbox(props: IProps): ReactElement {
     'py-4',
     'lg:py-6',
     'border',
-    'rounded-lg',
+    'rounded-xl',
     'cursor-pointer',
     'text-brand-dark-blue',
     checked ? 'border-brand-dark-blue' : 'border-[#DBDBDB]',
