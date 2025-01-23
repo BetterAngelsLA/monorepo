@@ -35,16 +35,14 @@ export function Header(props: IParams): ReactElement {
         <Link to="/" className="flex items-center">
           <BetterAngelsLogoIcon className="h-7 sm:h-10 text-brand-sky-blue fill-current" />
           <div className="text-white flex ml-2 text-xl md:text-4xl">
-            <div className="font-normal">
-              Wildfire <span className="font-semibold">LA</span>
-            </div>
+            <div className="font-normal">LA Disaster Relief Navigator</div>
           </div>
         </Link>
         {/* Desktop */}
         <div className="hidden md:flex items-center font-bold">
           <p className="mr-8">Select Language</p>
           <Link className="mr-12" to="/about">
-            About Wildfire LA
+            About LA Disaster Relief Navigator
           </Link>
           <a
             target="_blank"
@@ -70,7 +68,7 @@ export function Header(props: IParams): ReactElement {
         {isMenuOpen && (
           <div className="md:hidden absolute -left-4 w-[110%] top-full bg-brand-dark-blue p-8 z-20">
             <Link to="/about" className="block mb-6">
-              About Wildfire LA
+              About LA Disaster Relief Navigator
             </Link>
             <a
               target="_blank"
