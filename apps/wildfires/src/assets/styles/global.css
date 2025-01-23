@@ -72,24 +72,3 @@ textarea:focus {
 .goog-te-gadget-simple > span > a > img {
   display: none !important;
 }
-
-.goog-te-menu2 {
-  max-width: 100%;
-}
-
-.goog-te-menu-value span:nth-child(5) {
-  display: none;
-}
-
-@media (max-width: 768px) {
-  .goog-te-gadget-simple > span {
-    display: none !important;
-  }
-
-  .goog-te-gadget-simple::after {
-    content: 'Lng';
-    display: inline-block;
-    margin-right: 1.25rem;
-    margin-left: 0.25rem;
-  }
-}
