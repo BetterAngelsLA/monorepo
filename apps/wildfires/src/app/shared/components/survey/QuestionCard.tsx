@@ -17,14 +17,13 @@ export function QuestionCard(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <QuestionHeader title={question.title} subtitle={question.subtitle} />
-
-      <QuestionForm
-        className="mt-12"
-        question={question}
-        answer={answer}
-        onAnswer={onAnswer}
+      <QuestionHeader
+        className="mb-12 md:mb-20"
+        title={question.title}
+        subtitle={question.subtitle}
       />
+
+      <QuestionForm question={question} answer={answer} onAnswer={onAnswer} />
 
       {!!question.renderAfter && question.renderAfter}
     </div>
