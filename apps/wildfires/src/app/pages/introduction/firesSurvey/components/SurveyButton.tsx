@@ -1,4 +1,5 @@
 import { MouseEventHandler, PropsWithChildren } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '../../../../shared/components/button/Button';
 import { mergeCss } from '../../../../shared/utils/styles/mergeCss';
 
@@ -36,9 +37,9 @@ export function SurveyButton(props: TButtonProps) {
 
   if (href) {
     return (
-      <a className={mergeCss(parentCss)} href={href}>
+      <Link className={mergeCss(parentCss)} to={href}>
         {children}
-      </a>
+      </Link>
     );
   }
 
