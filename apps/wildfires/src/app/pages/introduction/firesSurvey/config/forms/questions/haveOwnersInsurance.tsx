@@ -6,12 +6,16 @@ export const qHaveOwnersInsurance: TQuestion = {
   title: 'Do you have Owner’s Insurance? ',
   options: [
     {
-      optionId: 'yes',
+      optionId: 'ownerInsuranceYes',
       label: 'Yes',
+      // tags: ['Housing - Owner with Insurance']
+      // slugs: ['housing-owner-with-insurance']
     },
     {
-      optionId: 'no',
+      optionId: 'housingInsuranceNo',
       label: 'No',
+      // tags: ['Housing - No Insurance']
+      // slugs: ['housing-no-insurance']
     },
   ],
   rules: {

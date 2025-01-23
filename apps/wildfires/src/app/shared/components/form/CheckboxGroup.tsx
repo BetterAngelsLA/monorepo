@@ -37,6 +37,7 @@ export type TProps = {
   selectAllLabel?: string;
   onChange: (selected: string[]) => void;
   CheckboxComponent?: ElementType<ICheckboxProps>;
+  checkboxCss?: string;
 };
 
 export function CheckboxGroup(props: TProps) {
@@ -48,6 +49,7 @@ export function CheckboxGroup(props: TProps) {
     selectAllLabel = SELECT_ALL_LABEL,
     onChange,
     CheckboxComponent,
+    checkboxCss,
   } = props;
 
   const [cbxOptions, setCbxOptions] = useState<TCheckboxOptionKv[]>([]);
@@ -123,7 +125,7 @@ export function CheckboxGroup(props: TProps) {
         return (
           <Checkbox
             key={idx}
-            className="mb-2 last:mb-0"
+            className={checkboxCss}
             label={option.label}
             checked={isChecked}
             onChange={(checked) => handleChange(option.value, checked)}

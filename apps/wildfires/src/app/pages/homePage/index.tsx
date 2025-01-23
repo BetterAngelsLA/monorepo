@@ -6,13 +6,13 @@ import Hero from '../../shared/components/hero/Hero';
 import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
 import UsefulLinks from '../../shared/components/usefulLinks/UsefulLinks';
-import { FiresSurvey } from '../introduction/firesSurvey/FiresSurvey';
+import { GetStarted } from './getStarted/GetStarted';
 
 export function HomePage() {
   const pageRef = useRef<HTMLDivElement | null>(null);
   return (
     <>
-      <Hero backgroundImage={fireHero}>
+      <Hero backgroundImage={fireHero} className="min-h-[75vh]">
         <div className="w-full bg-[rgba(30,51,66,0.3)] md:bg-[rgba(30,51,66,0.6)] h-full md:h-auto pt-12 pb-[4.5rem] md:py-16 text-white px-10">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center">
             <h1 className="flex-1 mb-10 md:mb-0 border-l-[10px] border-brand-yellow pl-4 text-left text-[74px] font-extralight">
@@ -28,9 +28,9 @@ export function HomePage() {
         </div>
       </Hero>
       <HorizontalLayout>
-        <FiresSurvey />
+        <GetStarted className="mt-8 md:mt-24" />
       </HorizontalLayout>
-      <UsefulLinks className="px-4 lg:px-8" />
+      <UsefulLinks className="mt-5 md:mt-[76px] px-4 lg:px-8" />
       <HorizontalLayout className="bg-brand-sky-blue">
         <Partners />
       </HorizontalLayout>

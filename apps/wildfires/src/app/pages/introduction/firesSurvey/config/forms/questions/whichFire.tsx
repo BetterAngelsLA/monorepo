@@ -16,10 +16,14 @@ export const qWhichFire: TQuestion = {
     },
     {
       optionId: 'kennethFire',
-      label: 'Kennet',
+      label: 'Kenneth',
     },
     {
-      optionId: 'hurtsFire',
+      optionId: 'hughesFire',
+      label: 'Hughes',
+    },
+    {
+      optionId: 'hurstFire',
       label: 'Hurst',
     },
     {
