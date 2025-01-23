@@ -3,6 +3,7 @@ import About from '../pages/about';
 import { HomePage } from '../pages/homePage';
 import { Introduction } from '../pages/introduction';
 import Policy from '../pages/Policy';
+import Result from '../pages/result';
 
 export const routeChildren: RouteObject[] = [
   {
@@ -12,6 +13,10 @@ export const routeChildren: RouteObject[] = [
   {
     path: '/about',
     element: <About />,
+  },
+  {
+    path: '/result',
+    element: <Result />,
   },
   {
     path: '/introduction',
