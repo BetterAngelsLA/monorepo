@@ -1,5 +1,4 @@
-const BASE_URL =
-  'https://4v490tec.api.sanity.io/v2022-03-07/data/query/production';
+import { CMS_BASE_URL } from '../sanityClient';
 
 export const fetchResourcesByTagsFn = async (tags: string[]) => {
   if (!tags.length) {
@@ -18,7 +17,7 @@ function generateUrl(tags: string[]): string {
 
   const encodedQuery = encodeURIComponent(queryParams);
 
-  return `${BASE_URL}?query=${encodedQuery}`;
+  return `${CMS_BASE_URL}?query=${encodedQuery}`;
 }
 
 function generateQueryParams(tags: string[]): string {
