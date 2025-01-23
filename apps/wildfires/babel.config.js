@@ -1,4 +1,4 @@
-// Only used by Jest
+// https://github.com/vitejs/vite/issues/1149#issuecomment-775033930
 module.exports = {
     presets: [
       [
