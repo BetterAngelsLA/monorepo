@@ -23,7 +23,7 @@ export const qWhichFire: TQuestion = {
       label: 'Hughes',
     },
     {
-      optionId: 'hurtsFire',
+      optionId: 'hurstFire',
       label: 'Hurst',
     },
     {
