@@ -1,6 +1,7 @@
 import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
+import { mergeCss } from '../shared/utils/styles/mergeCss';
 
 type IParams = {
   className?: string;
@@ -10,21 +11,20 @@ export function Footer(props: IParams): ReactElement {
   const { className = '' } = props;
 
   const parentCss = [
-    className,
     'w-full',
-    'max-w-7xl',
-    'mx-auto',
-    'flex-col',
-    'md:flex-row',
     'flex',
+    'md:flex-row',
     'justify-between',
+    'flex-col',
     'min-h-52',
+    'mx-auto',
     'py-20',
     'text-white',
-  ].join(' ');
+    className,
+  ];
 
   return (
-    <footer className={parentCss}>
+    <footer className={mergeCss(parentCss)}>
       <a href="https://www.betterangels.la/" className="flex mb-8 md:mb-0">
         <BetterAngelsLogoIcon className="h-7 md:h-10 text-brand-sky-blue fill-current" />
         <div className="text-white flex ml-2 text-xl md:text-4xl">
