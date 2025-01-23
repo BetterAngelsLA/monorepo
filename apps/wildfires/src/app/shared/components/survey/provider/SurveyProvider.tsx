@@ -1,5 +1,5 @@
 import { ReactElement, ReactNode, useEffect, useState } from 'react';
-import { TAnswer, TConditionRule, TSurveyForm } from '../types';
+import { TAnswer, TConditionRule, TResults, TSurveyForm } from '../types';
 import { validateForm } from '../utils/validateForm';
 import { SurveyContext, TSurveyUi } from './SurveyContext';
 
@@ -7,10 +7,11 @@ export type TSurveyProvider = {
   children: ReactNode;
   surveyForms: TSurveyForm[];
   ui?: TSurveyUi;
+  onSurveyEnd?: (results: TResults) => void;
 };
 
 export default function SurveyProvider(props: TSurveyProvider): ReactElement {
-  const { surveyForms, ui, children } = props;
+  const { surveyForms, ui, onSurveyEnd, children } = props;
 
   const initialForm = surveyForms[0];
 
@@ -102,6 +103,13 @@ export default function SurveyProvider(props: TSurveyProvider): ReactElement {
 
     if (!nextForm) {
       // Exit Survey
+
+      if (onSurveyEnd) {
+        onSurveyEnd({
+          answers,
+        });
+      }
+
       return setCurrentForm(null);
     }
 

@@ -50,3 +50,7 @@ export type TAnswer = {
   questionId: string;
   result: string | string[];
 };
+
+export type TResults = {
+  answers: TAnswer[];
+};
