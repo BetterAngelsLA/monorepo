@@ -32,7 +32,7 @@ export function QuestionsBlock(props: IProps) {
       {questions.map((question) => {
         return (
           <QuestionCard
-            className="mb-24 last:mb-0"
+            className="mb-[90px] md:mb-[120px] last:mb-0"
             key={question.id}
             question={question}
             answer={findQuestionResult(question, answers)}
