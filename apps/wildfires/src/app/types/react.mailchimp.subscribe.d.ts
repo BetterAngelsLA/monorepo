@@ -6,7 +6,7 @@ declare module 'react-mailchimp-subscribe' {
     FNAME?: string;
     LNAME?: string;
     PHONE?: string;
-    ADDR_STR?: string;
+    ZIPCODE?: string;
     [key: string]: string | undefined;
   }
 

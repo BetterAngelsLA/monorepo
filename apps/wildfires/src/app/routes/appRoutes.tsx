@@ -1,9 +1,15 @@
 import { RouteObject } from 'react-router-dom';
+import Policy from '../pages/Policy';
 import About from '../pages/about';
 import { HomePage } from '../pages/homePage';
 import { Introduction } from '../pages/introduction';
-import Policy from '../pages/Policy';
 import Result from '../pages/result';
+import {
+  aboutPagePath,
+  privacyPolicyPagePath,
+  surveyPagePath,
+  surveyResultsPagePath,
+} from './routePaths';
 
 export const routeChildren: RouteObject[] = [
   {
@@ -11,19 +17,19 @@ export const routeChildren: RouteObject[] = [
     element: <HomePage />,
   },
   {
-    path: '/about',
+    path: aboutPagePath,
     element: <About />,
   },
   {
-    path: '/result',
+    path: surveyResultsPagePath,
     element: <Result />,
   },
   {
-    path: '/introduction',
+    path: surveyPagePath,
     element: <Introduction />,
   },
   {
-    path: '/privacy-policy',
+    path: privacyPolicyPagePath,
     element: <Policy />,
   },
 ];

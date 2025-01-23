@@ -3,8 +3,13 @@ import BestPractices from '../../shared/components/bestPractices/BestPractices';
 import Hero from '../../shared/components/hero/Hero';
 import ImportantTips from '../../shared/components/importantTips/ImportantTips';
 import Register from '../../shared/components/register/Register';
+import { useAtom } from 'jotai';
+import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
+import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
 
 export default function Result() {
+  const [surveyResults] = useAtom(surveyResultsAtom);
+
   return (
     <>
       <HorizontalLayout className="bg-brand-dark-blue">
@@ -22,6 +27,9 @@ export default function Result() {
         <ImportantTips />
       </HorizontalLayout>
       <Register />
+      {!!surveyResults && (
+        <SurveyResults className="mt-8 mb-24" results={surveyResults} />
+      )}
     </>
   );
 }
