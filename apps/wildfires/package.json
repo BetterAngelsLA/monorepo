@@ -20,7 +20,9 @@
     "clsx": "*",
     "tailwind-merge": "*",
     "jotai": "*",
-    "react-dom": "*"
+    "react-dom": "*",
+    "react-to-print": "*",
+    "react-mailchimp-subscribe": "*"
   },
   "devDependencies": {}
 }
