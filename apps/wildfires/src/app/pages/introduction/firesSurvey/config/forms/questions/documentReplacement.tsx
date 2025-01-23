@@ -31,18 +31,6 @@ export const qDocumentReplacement: TQuestion = {
       // slugs: ['document-replacement-passport']
     },
     {
-      optionId: 'manufacturedMobileHomeDocs',
-      label: 'Manufactured / Mobile Home Documents',
-      // tags: ['Document Replacement - Mobile Home']
-      // slugs: ['document-replacement-mobile-home']
-    },
-    {
-      optionId: 'incomeTaxDocuments',
-      label: 'Income Tax Documents',
-      // tags: ['Document Replacement - Income Tax']
-      // slugs: ['document-replacement-income-tax']
-    },
-    {
       optionId: 'otherDocuments',
       label: 'Other / I’m not sure',
       // tags: ['Document Replacement - Other']
