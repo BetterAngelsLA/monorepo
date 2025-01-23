@@ -1,7 +1,12 @@
+import { useAtom } from 'jotai';
+import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
 import BestPractices from '../../shared/components/bestPractices/BestPractices';
 import Hero from '../../shared/components/hero/Hero';
+import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
 
 export default function Result() {
+  const [surveyResults] = useAtom(surveyResultsAtom);
+
   return (
     <>
       <div className="bg-brand-dark-blue w-full">
@@ -13,6 +18,10 @@ export default function Result() {
         </Hero>
       </div>
       <BestPractices />
+
+      {!!surveyResults && (
+        <SurveyResults className="mt-8 mb-24" results={surveyResults} />
+      )}
     </>
   );
 }
