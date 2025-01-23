@@ -28,9 +28,9 @@ export function HomePage() {
         </div>
       </Hero>
       <HorizontalLayout>
-        <GetStarted className="mt-8" />
+        <GetStarted className="mt-8 md:mt-24" />
       </HorizontalLayout>
-      <UsefulLinks className="px-4 lg:px-8" />
+      <UsefulLinks className="mt-5 md:mt-[76px] px-4 lg:px-8" />
       <HorizontalLayout className="bg-brand-sky-blue">
         <Partners />
       </HorizontalLayout>
