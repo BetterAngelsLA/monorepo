@@ -30,7 +30,7 @@ export function SurveyButton(props: TButtonProps) {
     'border-brand-dark-blue',
     dark ? 'bg-brand-dark-blue' : '',
     dark ? 'text-white' : 'brand-dark-blue',
-    disabled ? 'opacity-90' : '',
+    disabled ? 'opacity-90x text-[#9AA3AA]' : '',
     className,
   ];
 
