@@ -31,15 +31,19 @@ export const qIncomeAssessment: TQuestion = {
   id: 'qIncomeAssessment',
   type: 'radio',
   title:
-    'Based on your household size, is your income LESS or GREATER than the number in this chart?',
-  options: [
+    'Based on your household size, is your income LESS or MORE than the number in this chart?',
+  subtitle: 'Income includes things like wages, tips and government benefit payments. It\'s OK if you don\'t know your household\'s exact income.',
+    options: [
     {
-      optionId: 'less',
+      optionId: 'incomeLow',
       label: 'Less',
+      // tags: ['Income - Low Income']
+      // slugs: ['income-low-income']
     },
     {
-      optionId: 'more',
+      optionId: 'incomeHigh',
       label: 'Greater',
+      // No tags / Slugs
     },
   ],
   rules: {
