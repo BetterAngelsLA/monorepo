@@ -73,10 +73,12 @@ export function QuestionForm(props: IProps) {
       return (
         <div className={mergeCss(parentCss)}>
           <CheckboxGroup
+            className="flex flex-wrap gap-x-4 gap-y-4 md:gap-y-8 justify-center"
             options={options}
             values={answer as string[]}
             onChange={onCheckboxChange}
             CheckboxComponent={Checkbox}
+            checkboxCss="md:min-w-60 md:w-[300px] md:min-h-24"
           />
         </div>
       );
