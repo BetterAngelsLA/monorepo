@@ -23,6 +23,7 @@ export function SurveyResults(props: IProps) {
   const { isLoading, isError, data, error } = useQuery({
     queryKey: queryTags,
     queryFn: () => fetchResourcesByTagsFn(queryTags),
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 
