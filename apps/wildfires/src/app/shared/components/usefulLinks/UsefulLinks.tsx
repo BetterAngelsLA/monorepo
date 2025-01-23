@@ -26,9 +26,9 @@ export default function UsefulLinks(props: IParams) {
   return (
     <div className={mergeCss(parentCss)}>
       <h2 className="text-2xl md:text-[40px] md:leading-[94.5px] font-bold mb-6">
-        Useful Links/Info
+        Useful Links
       </h2>
-      <div className="flex flex-col flex-wrap md:flex-row items-center w-full justify-center gap-1 md:w-full px-10">
+      <div className="flex flex-col flex-wrap md:flex-row items-center w-full justify-center gap-1 md:w-full md:px-10">
         <UsefulLinksCard
           urlTitle="disasterassistance.gov"
           url="https://www.disasterassistance.gov/"
