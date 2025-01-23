@@ -13,7 +13,7 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
     FNAME: '',
     LNAME: '',
     PHONE: '',
-    ADDRESSSTR: '',
+    ZIPCODE: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,7 +36,7 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
       FNAME: formData.firstName,
       LNAME: formData.lastName,
       PHONE: formData.phone,
-      ADDR_STR: formData.address,
+      ZIPCODE: formData.zipCode,
     });
   };
 
@@ -112,14 +112,14 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
         </div>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Address of Fire-Impacted Property</label>
+          <label style={styles.label}>Zipcode of Fire-Impacted Property</label>
           <input
             style={styles.input}
             onChange={handleChange}
             type="text"
-            name="address"
-            value={formData.address}
-            placeholder="Address"
+            name="zipCode"
+            value={formData.zipCode}
+            placeholder="Zipcode"
           />
         </div>
 
