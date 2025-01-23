@@ -6,7 +6,12 @@ export const qResourceTopics: TQuestion = {
   title: 'Which of the following resources would you like to learn about?',
   subtitle: '(Select all that apply)',
   options: [
-    { optionId: 'resourceMailForwarding', label: 'Mail Forwarding' },
+    {
+      optionId: 'resourceMailForwarding',
+      label: 'Mail Forwarding'
+      // tags: ['General - Mail Forwarding']
+      // slugs: ['general-mail-forwarding']
+    },
     {
       optionId: 'resourceDocumentReplacement',
       label: 'Document/ID Replacement',
@@ -14,22 +19,63 @@ export const qResourceTopics: TQuestion = {
     {
       optionId: 'resourceFinancial',
       label: 'Financial/Income Impact Resources',
+      // tags: ['General - Financial Assistance']
+      // slugs: ['general-financial-assistance']
     },
-    { optionId: 'resourceHousing', label: 'Home/Housing Impact Resources' },
-    { optionId: 'resourceBusiness', label: 'Business Relief' },
-    { optionId: 'resourceFood', label: 'Food Resources' },
+    {
+      optionId: 'resourceHousing',
+      label: 'Home/Housing Impact Resources'
+      // tags: ['General - Housing Resources']
+      // slugs: ['general-housing-resources']
+    },
+    {
+      optionId: 'resourceBusiness',
+      label: 'Business Relief'
+      // tags: ['General - Business Resources']
+      // slugs: ['general-business-resources']
+    },
+    {
+      optionId: 'resourceFood',
+      label: 'Food Resources'
+      // tags: ['General - Food']
+      // slugs: ['general-food']
+    },
     {
       optionId: 'resourceHealthcare',
       label: 'Healthcare & Mental Health Resources',
+      // tags: ['General - Health']
+      // slugs: ['general-health']
     },
-    { optionId: 'resourceChildcare', label: 'Childcare' },
-    { optionId: 'resourcePets', label: 'Pet Resources' },
     {
-      optionId: 'resourceMissingPersons',
-      label: 'Reunification/Missing Persons',
+      optionId: 'resourceChildcare',
+      label: 'Childcare'
+      // tags: ['General - Childcare']
+      // slugs: ['general-childcare']
     },
-    { optionId: 'resourceImmigration', label: 'Immigration-Related Info' },
-    { optionId: 'resourceInPersonSupport', label: 'In-Person Support' },
+    {
+      optionId: 'resourcePets',
+      label: 'Pet Resources'
+      // tags: ['General - Pet']
+      // slugs: ['general-pet']
+    },
+    {
+      optionId: 'resourceReunification',
+      label: 'Reunification/Missing Persons',
+      // tags: ['General - Reunification']
+      // slugs: ['general-reunification']
+    },
+    {
+      optionId: 'resourceImmigration',
+      label: 'Immigration-Related Info'
+      // tags: ['General - Immigrant-Related']
+      // slugs: ['general-immigrant-related']
+    },
+    {
+      optionId: 'resourceInPersonSupport',
+      label: 'In-Person Support'
+      // tags: ['General - In-Person Support']
+      // slugs: ['general-in-person-support']
+    },
   ],
   rules: {
     required: true,

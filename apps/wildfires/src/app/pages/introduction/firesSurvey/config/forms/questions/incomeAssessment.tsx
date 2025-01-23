@@ -7,12 +7,15 @@ export const qIncomeAssessment: TQuestion = {
     'Based on your household size, is your income LESS or GREATER than the number in this chart?',
   options: [
     {
-      optionId: 'less',
+      optionId: 'incomeLow',
       label: 'Less',
+      // tags: ['Income - Low Income']
+      // slugs: ['income-low-income']
     },
     {
-      optionId: 'more',
+      optionId: 'incomeHigh',
       label: 'Greater',
+      // No tags / Slugs
     },
   ],
   rules: {
