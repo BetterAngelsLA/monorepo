@@ -75,7 +75,11 @@ export function SurveyCheckbox(props: IProps): ReactElement {
       <div className={mergeCss(checkboxContainerCss)}>
         {checked && <CheckIcon className="text-white h-8" />}
       </div>
-      <div className={mergeCss(labelCss)}>{label}</div>
+      {['Palisades', 'Eaton', 'Kennet', 'Hurst'].includes(label) ? (
+        <div className={mergeCss(labelCss) + " notranslate"}>{label}</div>
+      ) : (
+        <div className={mergeCss(labelCss)}>{label}</div>
+      )}
     </button>
   );
 }

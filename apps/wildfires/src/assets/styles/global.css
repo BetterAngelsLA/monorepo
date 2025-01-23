@@ -4,6 +4,7 @@
 
 :root {
   --font-primary: 'IBM Plex Sans', 'sans-serif';
+  --color-brand-orange: #ff902e;
   --color-brand-yellow: #fff82e;
   --color-brand-yellow-light: #fffed5;
   --color-brand-sky-blue: #9cdced;
@@ -50,4 +51,28 @@ textarea:focus {
   border-width: 2px;
   border-radius: 50px !important;
   border-color: var(--color-brand-yellow);
+}
+
+.goog-te-gadget-simple {
+  display: flex !important;
+  color: #fff !important;
+  background-color: transparent !important;
+  border: none !important;
+  align-items: center;
+}
+
+.goog-te-gadget-simple span {
+  color: #fff !important;
+}
+
+.goog-te-gadget-simple > span > a > span:not(:first-child) {
+  display: none !important;
+}
+
+.goog-te-gadget-simple > span > a > img {
+  display: none !important;
+}
+
+.goog-te-gadget-simple > span > a > span:last-child {
+  display: inline !important;
 }
