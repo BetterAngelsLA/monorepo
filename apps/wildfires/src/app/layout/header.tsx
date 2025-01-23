@@ -1,20 +1,14 @@
-import {
-  BetterAngelsLogoIcon,
-  GlobeIcon,
-  MenuIcon,
-} from '@monorepo/react/icons';
+import { GlobeIcon, MenuIcon } from '@monorepo/react/icons';
 import { ReactElement, useState } from 'react';
 import { Link } from 'react-router-dom';
+import LADR_LOGO from '../../assets/images/la_disaster_relief_navigator_logo.png';
 import { mergeCss } from '../shared/utils/styles/mergeCss';
-
 type IParams = {
   className?: string;
 };
-
 export function Header(props: IParams): ReactElement {
   const { className = '' } = props;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   const parentCss = [
     'w-full',
     'mx-auto',
@@ -33,10 +27,11 @@ export function Header(props: IParams): ReactElement {
     <>
       <header className={mergeCss(parentCss)}>
         <Link to="/" className="flex items-center">
-          <BetterAngelsLogoIcon className="h-7 sm:h-10 text-brand-sky-blue fill-current" />
-          <div className="text-white flex ml-2 text-xl md:text-4xl">
-            <div className="font-normal">LA Disaster Relief Navigator</div>
-          </div>
+          <img
+            src={LADR_LOGO}
+            alt="LA Disaster Relief Navigator"
+            className="w-[250px]"
+          />
         </Link>
         {/* Desktop */}
         <div className="hidden md:flex items-center font-bold">
