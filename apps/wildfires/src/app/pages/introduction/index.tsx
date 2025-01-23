@@ -12,7 +12,7 @@ export function Introduction() {
       </HorizontalLayout>
 
       {/* Move to results page when we have one */}
-      <GeneratePDF pageRef={pageRef} fileName="Wildfire LA" />
+      <GeneratePDF pageRef={pageRef} fileName="LA Disaster Relief Navigator" />
     </div>
   );
 }
