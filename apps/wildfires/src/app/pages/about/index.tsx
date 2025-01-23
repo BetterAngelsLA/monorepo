@@ -7,10 +7,8 @@ import ContactUs from '../../shared/components/contactUs/ContactUs';
 export default function About() {
   return (
     <>
-      <HorizontalLayout>
+      <HorizontalLayout className="bg-brand-dark-blue">
         <div className="relative">
-          <div className="w-full h-full absolute top-0 z-100 right-1/3 bg-brand-dark-blue " />
-          <div className="w-full h-full absolute top-0 z-10 left-[50%] bg-brand-sky-blue " />
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch relative z-20">
             <div className="bg-brand-dark-blue w-full md:w-[60%] py-40 flex items-center  md:py-0">
               <h1 className="border-l-[10px] border-brand-yellow font-light font-primary md:font-bold pl-4 md:pl-8 text-5xl md:text-[74px] text-white md:leading-[96.2px] text-left">
@@ -18,7 +16,7 @@ export default function About() {
                 Relief Navigator
               </h1>
             </div>
-            <div className="flex flex-col h-full items-center w-full md:w-[40%] bg-brand-sky-blue px-4 py-12 gap-16">
+            <div className="flex flex-col h-full items-center w-full md:w-[40%] bg-brand-sky-blue md:px-4 py-12 gap-16">
               <img
                 className="w-[292px] md:w-[400px]"
                 src={BaLogo}
@@ -37,7 +35,8 @@ export default function About() {
             </div>
           </div>
         </div>
-
+      </HorizontalLayout>
+      <HorizontalLayout>
         <div className="py-7 md:py-32 max-w-7xl mx-auto">
           <h2 className="text-2xl md:text-5xl mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Who We Are
