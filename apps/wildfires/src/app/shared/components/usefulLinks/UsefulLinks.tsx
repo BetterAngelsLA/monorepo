@@ -27,7 +27,7 @@ export default function UsefulLinks(props: IParams) {
       <h2 className="text-2xl md:text-[40px] md:leading-[94.5px] font-bold mb-6">
         Useful Links/Info
       </h2>
-      <div className="flex flex-col md:flex-row items-stretch justify-center gap-1 md:w-full px-10">
+      <div className="flex flex-col md:flex-row items-stretch w-full justify-center gap-1 md:w-full px-10">
         <UsefulLinksCard
           urlTitle="disasterassistance.gov"
           url="https://www.disasterassistance.gov/"
@@ -38,7 +38,7 @@ export default function UsefulLinks(props: IParams) {
           urlTitle="opportunity.lacounty.gov"
           url="https://opportunity.lacounty.gov/"
         >
-          <DeoIcon className="h-[130px]" />
+          <DeoIcon className="h-[90px] md:h-[130px]" />
         </UsefulLinksCard>
         <UsefulLinksCard
           urlTitle="edd.ca.gov/unemployment"
