@@ -6,7 +6,7 @@ import Hero from '../../shared/components/hero/Hero';
 import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
 import UsefulLinks from '../../shared/components/usefulLinks/UsefulLinks';
-import { FiresSurvey } from '../introduction/firesSurvey/FiresSurvey';
+import { GetStarted } from './getStarted/GetStarted';
 
 export function HomePage() {
   const pageRef = useRef<HTMLDivElement | null>(null);
@@ -28,7 +28,7 @@ export function HomePage() {
         </div>
       </Hero>
       <HorizontalLayout>
-        <FiresSurvey />
+        <GetStarted className="mt-8" />
       </HorizontalLayout>
       <UsefulLinks className="px-4 lg:px-8" />
       <HorizontalLayout className="bg-brand-sky-blue">

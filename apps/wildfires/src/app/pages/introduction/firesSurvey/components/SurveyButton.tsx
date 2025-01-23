@@ -1,16 +1,21 @@
-import { MouseEventHandler, PropsWithChildren, ReactElement } from 'react';
+import { MouseEventHandler, PropsWithChildren } from 'react';
 import { Button } from '../../../../shared/components/button/Button';
 import { mergeCss } from '../../../../shared/utils/styles/mergeCss';
 
-export interface IBaseButton extends PropsWithChildren {
+interface IBaseButton extends PropsWithChildren {
   className?: string;
   disabled?: boolean;
   dark?: true;
-  onClick: MouseEventHandler;
+  onClick?: MouseEventHandler;
+  href?: string;
 }
 
-export function SurveyButton(props: IBaseButton): ReactElement {
-  const { className, dark, onClick, disabled, children } = props;
+export type TButtonProps =
+  | (IBaseButton & { onClick: MouseEventHandler; href?: never })
+  | (IBaseButton & { href: string; onClick?: never });
+
+export function SurveyButton(props: TButtonProps) {
+  const { className, dark, onClick, disabled, href, children } = props;
 
   const parentCss = [
     'flex',
@@ -28,6 +33,18 @@ export function SurveyButton(props: IBaseButton): ReactElement {
     disabled ? 'opacity-90' : '',
     className,
   ];
+
+  if (href) {
+    return (
+      <a className={mergeCss(parentCss)} href={href}>
+        {children}
+      </a>
+    );
+  }
+
+  if (!onClick) {
+    return null;
+  }
 
   return (
     <Button
