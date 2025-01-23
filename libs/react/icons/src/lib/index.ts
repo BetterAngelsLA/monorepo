@@ -16,7 +16,6 @@ export { default as FindMeIcon } from './components/findMeIcon';
 export { default as GlobeIcon } from './components/globeIcon';
 export { default as InfoIcon } from './components/infoIcon';
 export { default as InstagramIcon } from './components/instagramIcon';
-export { default as LADRLogo } from './components/laDisasterReliefIcon';
 export { default as ListIcon } from './components/listIcon';
 export { default as LocationIcon } from './components/locationIcon';
 export { default as MapPinIcon } from './components/mapPinIcon';
