@@ -14,7 +14,10 @@ export default function About() {
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch relative z-20">
             <div className="bg-brand-dark-blue w-full md:w-[60%] py-40 flex items-center  md:py-0">
               <h1 className="border-l-[10px] border-brand-yellow font-light font-primary md:font-bold pl-4 md:pl-8 text-5xl md:text-[74px] text-white md:leading-[96.2px] text-left md:text-center">
-                About <span className="whitespace-nowrap">Wildfire LA</span>
+                About{' '}
+                <span className="whitespace-nowrap">
+                  LA Disaster Relief Navigator
+                </span>
               </h1>
             </div>
             <div className="flex flex-col h-full items-center w-full md:w-[40%] bg-brand-sky-blue px-4 py-12 gap-16">
