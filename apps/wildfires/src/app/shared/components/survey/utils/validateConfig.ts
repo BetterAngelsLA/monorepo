@@ -15,7 +15,7 @@ function findDuplicates(arr: string[]): string[] {
   return Array.from(duplicates);
 }
 
-function getAllQuestions(forms: TSurveyForm[]): TQuestion[] {
+export function getAllQuestions(forms: TSurveyForm[]): TQuestion[] {
   const questions: TQuestion[] = [];
 
   forms.forEach((form) => {

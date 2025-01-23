@@ -9,7 +9,7 @@ export const qIsSmallBusiness: TQuestion = {
       optionId: 'smallBusinessYes',
       label: 'Yes',
       // tags: ['Business - Small Business']
-      // slugs: ['business-small-business']
+      tags: ['business-small-business'],
     },
     {
       optionId: 'smallBusinessNo',

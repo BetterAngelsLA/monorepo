@@ -9,7 +9,7 @@ export const qTempHousing: TQuestion = {
       optionId: 'temporaryHousingYes',
       label: 'Yes',
       // tags: ['Housing - Temporary Housing']
-      // slugs: ['housing-temporary-housing']
+      tags: ['housing-temporary-housing'],
     },
     {
       optionId: 'temporaryHousingNo',

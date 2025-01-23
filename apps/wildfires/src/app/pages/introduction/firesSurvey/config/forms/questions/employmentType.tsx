@@ -10,19 +10,19 @@ export const qEmploymentType: TQuestion = {
       optionId: 'employmentCompany',
       label: 'Employed by a Company',
       // tags: ['Income - Job Loss']
-      // slugs: ['income-job-loss']
+      tags: ['income-job-loss'],
     },
     {
       optionId: 'employmentSelfEmployedFreelance',
       label: 'Self-Employed / Freelance',
       // tags: ['Income - Self-Employed/Freelance']
-      // slugs: ['income-self-employed-freelance']
+      tags: ['income-self-employed-freelance'],
     },
     {
       optionId: 'employmentNeither',
       label: 'Neither',
       // No tags or slugs
-    }
+    },
   ],
   rules: {
     required: true,
