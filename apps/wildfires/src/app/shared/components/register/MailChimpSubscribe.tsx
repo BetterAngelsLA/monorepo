@@ -83,7 +83,9 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
           </div>
 
           <div className="flex flex-1 flex-col mb-2">
-            <label className="mb-1 font-bold">Email</label>
+            <label className="mb-1 font-bold">
+              Email<span className="text-[#FF0000]">*</span>
+            </label>
             <input
               style={styles.input}
               onChange={handleChange}
@@ -91,6 +93,7 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
               name="email"
               pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
               value={formData.email}
+              required={true}
               placeholder="Email Address"
             />
           </div>
@@ -118,6 +121,10 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
               placeholder="Zipcode"
             />
           </div>
+        </div>
+        <div>
+          <span className="text-[#FF0000]">*</span>
+          <span>indicates a required field</span>
         </div>
 
         <div className="flex flex-row items-center justify-center mb-1">
