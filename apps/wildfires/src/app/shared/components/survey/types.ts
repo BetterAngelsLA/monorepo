@@ -51,6 +51,6 @@ export type TAnswer = {
   result: string | string[];
 };
 
-export type TResults = {
+export type TSurveyResults = {
   answers: TAnswer[];
 };

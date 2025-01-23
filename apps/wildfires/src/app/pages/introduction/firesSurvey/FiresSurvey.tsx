@@ -1,9 +1,11 @@
+import { useAtom } from 'jotai';
 import { useNavigate } from 'react-router-dom';
 import { surveyResultsPagePath } from '../../../routes/routePaths';
+import { surveyResultsAtom } from '../../../shared/atoms/surveyResultsAtom';
 import { Survey } from '../../../shared/components/survey/Survey';
 import { TSurveyUi } from '../../../shared/components/survey/provider/SurveyContext';
 import SurveyProvider from '../../../shared/components/survey/provider/SurveyProvider';
-import { TResults } from '../../../shared/components/survey/types';
+import { TSurveyResults } from '../../../shared/components/survey/types';
 import { SurveyCheckbox } from './components/SurveyCheckbox';
 import { surveyConfig } from './config/config';
 
@@ -12,17 +14,13 @@ const customUi: TSurveyUi = {
 };
 
 export function FiresSurvey() {
+  const [_surveyResults, storeSurveyResults] = useAtom(surveyResultsAtom);
   const navigateTo = useNavigate();
 
-  function onChange(results: any) {
-    // console.log('FiresSurvey results change:');
-    // console.log(results);
-  }
+  function onChange(results: any) {}
 
-  function onSurveyEnd(results: TResults) {
-    console.log('################################### ON END');
-    console.log(results);
-    console.log();
+  function onSurveyEnd(results: TSurveyResults) {
+    storeSurveyResults(results);
 
     navigateTo(surveyResultsPagePath);
   }
