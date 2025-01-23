@@ -1,4 +1,4 @@
-import React, { CSSProperties, useState } from 'react';
+import React, { CSSProperties, useEffect, useState } from 'react';
 import MailchimpSubscribe, {
   IMailchimpFormData,
   ISubscribeFormProps,
@@ -39,6 +39,18 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
       ZIPCODE: formData.zipCode,
     });
   };
+
+  useEffect(() => {
+    if (status === 'success') {
+      setFormData({
+        email: '',
+        firstName: '',
+        lastName: '',
+        phone: '',
+        zipCode: '',
+      });
+    }
+  }, [status]);
 
   const parentCss = [
     'p-4',
