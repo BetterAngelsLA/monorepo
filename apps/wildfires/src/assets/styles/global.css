@@ -72,3 +72,7 @@ textarea:focus {
 .goog-te-gadget-simple > span > a > img {
   display: none !important;
 }
+
+.goog-te-gadget-simple > span > a > span:last-child {
+  display: inline !important;
+}
