@@ -48,7 +48,7 @@ export const qResourceTopics: TQuestion = {
     },
     {
       optionId: 'resourceChildcare',
-      label: 'Childcare',
+      label: 'Family: Childcare & School Information',
       // tags: ['General - Childcare']
       // slugs: ['general-childcare']
     },
