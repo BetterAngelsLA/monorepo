@@ -1,5 +1,4 @@
 import { BenefitsCalIcon, DeoIcon, EddIcon } from '@monorepo/react/icons';
-import BAlogo from '../../../../assets/images/BA-logo.png';
 import Fema from '../../../../assets/images/FEMA-Logo.png';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import UsefulLinksCard from './UsefulLinksCard';
@@ -26,9 +25,9 @@ export default function UsefulLinks(props: IParams) {
   return (
     <div className={mergeCss(parentCss)}>
       <h2 className="text-2xl md:text-[40px] md:leading-[94.5px] font-bold mb-6">
-        Useful Links/Info
+        Useful Links
       </h2>
-      <div className="flex flex-col flex-wrap md:flex-row items-center w-full justify-center gap-1 md:w-full px-10">
+      <div className="flex flex-col flex-wrap md:flex-row items-center w-full justify-center gap-1 md:w-full md:px-10">
         <UsefulLinksCard
           urlTitle="disasterassistance.gov"
           url="https://www.disasterassistance.gov/"
@@ -54,12 +53,12 @@ export default function UsefulLinks(props: IParams) {
           <BenefitsCalIcon className="h-[36px]" />
         </UsefulLinksCard>
 
-        <UsefulLinksCard
+        {/* <UsefulLinksCard
           urlTitle="Emergency Assistance Fund"
           url=" https://www.betterangels.la/emergency-assistance-fund"
         >
           <img className="w-[174px]" src={BAlogo} alt="Better Angels LA" />
-        </UsefulLinksCard>
+        </UsefulLinksCard> */}
       </div>
     </div>
   );

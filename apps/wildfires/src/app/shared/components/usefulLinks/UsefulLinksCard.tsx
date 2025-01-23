@@ -14,7 +14,7 @@ export default function UsefulLinksCard(props: IUsefulLinksCardProps) {
       <div className="flex items-center justify-center flex-1">{children}</div>
       <a
         href={url}
-        className="flex items-center justify-center gap-2 bg-white md:bg-transparent py-5 md:py-0 w-full rounded-[50px]"
+        className="flex items-center justify-center gap-2 bg-white md:bg-transparent px-4 py-5 md:py-0 w-full rounded-[50px]"
       >
         <GlobeIcon stroke="#1E3342" className="h-4 w-4" />
         <p className="text-sm">{urlTitle}</p>
