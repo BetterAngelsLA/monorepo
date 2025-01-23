@@ -91,7 +91,7 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
               onChange={handleChange}
               type="email"
               name="email"
-              pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
+              pattern={EMAIL_REGEX.source}
               value={formData.email}
               required={true}
               placeholder="Email Address"
