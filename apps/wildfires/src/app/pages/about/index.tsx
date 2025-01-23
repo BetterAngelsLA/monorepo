@@ -43,7 +43,7 @@ export default function About() {
           </h2>
           <p className="md:text-2xl mb-6 md:mb-12">
             Better Angels, Imagine LA, and Mayor Karen Bass's Office have come
-            together to support Angelinos affected by the devastating January
+            together to support Angelenos affected by the devastating January
             2025 wildfires. Each partner brings unique expertise and a shared
             commitment to fostering community strength and resilience.
           </p>
@@ -70,7 +70,7 @@ export default function About() {
           </h2>
           <p className="mb-6 md:mb-32 md:text-2xl">
             Our mission is to provide personalized, actionable resources to all
-            Angelinos affected by the wildfires. Through this platform, we aim
+            Angelenos affected by the wildfires. Through this platform, we aim
             to connect individuals and families with the tools, services, and
             information necessary to recover, rebuild, and move forward.
           </p>
@@ -80,7 +80,7 @@ export default function About() {
           <p className="mb-6 md:mb-32 md:text-2xl">
             We recognize the profound impact the wildfires have had on our
             community, from displaced families to disrupted livelihoods. By
-            working together, we aim to ensure no Angelino faces these
+            working together, we aim to ensure no Angeleno faces these
             challenges alone. This website reflects our dedication to creating a
             centralized, user-friendly resource hub for every resident in need.
           </p>
