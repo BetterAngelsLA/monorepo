@@ -21,8 +21,6 @@ export function SurveyNav(props: IProps) {
 
   const { currentForm, formHistory, validateCurrentForm } = context;
 
-  const parentCss = ['flex', 'flex-col', 'justify-center', className];
-
   if (!onNext && !onPrev) {
     return null;
   }
@@ -41,16 +39,26 @@ export function SurveyNav(props: IProps) {
 
   const nextDisabled = !!currentFormErrors.length;
 
-  const buttonCss = 'my-4';
-  const prevCss = [buttonCss];
-  const nextCss = [buttonCss];
+  const parentCss = [
+    'flex',
+    'flex-col',
+    'md:flex-row',
+    'justify-center',
+    'items-center',
+    className,
+  ];
+
+  const buttonCss = ['my-4', 'max-w-[350px]', 'md:mx-3'];
+
+  const nextButtonCss = [buttonCss];
+  const prevButtonCss = [buttonCss, 'md:order-first'];
 
   return (
     <div className={mergeCss(parentCss)}>
       {!!onNext && (
         <SurveyButton
           dark
-          className={mergeCss(nextCss)}
+          className={mergeCss(nextButtonCss)}
           onClick={onNext}
           disabled={nextDisabled}
         >
@@ -60,7 +68,7 @@ export function SurveyNav(props: IProps) {
       )}
 
       {!!onPrev && showPrevBtn && (
-        <SurveyButton className={mergeCss(prevCss)} onClick={onPrev}>
+        <SurveyButton className={mergeCss(prevButtonCss)} onClick={onPrev}>
           <ArrowLeftIcon className="h-5" />
           <span className="ml-4">Back</span>
         </SurveyButton>
