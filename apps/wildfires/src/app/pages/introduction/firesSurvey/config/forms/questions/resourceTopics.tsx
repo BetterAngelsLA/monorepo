@@ -8,7 +8,7 @@ export const qResourceTopics: TQuestion = {
   options: [
     {
       optionId: 'resourceMailForwarding',
-      label: 'Mail Forwarding'
+      label: 'Mail Forwarding',
       // tags: ['General - Mail Forwarding']
       // slugs: ['general-mail-forwarding']
     },
@@ -24,19 +24,19 @@ export const qResourceTopics: TQuestion = {
     },
     {
       optionId: 'resourceHousing',
-      label: 'Housing / Shelter Resources'
+      label: 'Housing / Shelter Resources',
       // tags: ['General - Housing Resources']
       // slugs: ['general-housing-resources']
     },
     {
       optionId: 'resourceBusiness',
-      label: 'Support for Businesses'
+      label: 'Support for Businesses',
       // tags: ['General - Business Resources']
       // slugs: ['general-business-resources']
     },
     {
       optionId: 'resourceFood',
-      label: 'Food Resources'
+      label: 'Food Resources',
       // tags: ['General - Food']
       // slugs: ['general-food']
     },
@@ -48,31 +48,31 @@ export const qResourceTopics: TQuestion = {
     },
     {
       optionId: 'resourceChildcare',
-      label: 'Childcare'
+      label: 'Childcare',
       // tags: ['General - Childcare']
       // slugs: ['general-childcare']
     },
     {
       optionId: 'resourcePets',
-      label: 'Pet Resources'
+      label: 'Pet Resources',
       // tags: ['General - Pet']
       // slugs: ['general-pet']
     },
     {
       optionId: 'resourceReunification',
-      label: 'Reunification/Missing Persons',
+      label: 'Reunification / Missing Persons',
       // tags: ['General - Reunification']
       // slugs: ['general-reunification']
     },
     {
       optionId: 'resourceImmigration',
-      label: 'Immigrant-Related Info'
+      label: 'Immigrant-Related Info',
       // tags: ['General - Immigrant-Related']
       // slugs: ['general-immigrant-related']
     },
     {
       optionId: 'resourceInPersonSupport',
-      label: 'In-Person Support'
+      label: 'In-Person Support',
       // tags: ['General - In-Person Support']
       // slugs: ['general-in-person-support']
     },
