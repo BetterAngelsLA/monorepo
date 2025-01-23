@@ -1,17 +1,18 @@
 import { useRef } from 'react';
 import fireHero from '../../../assets/images/fire-hero.jpeg';
+import { HorizontalLayout } from '../../layout/horizontalLayout';
 import ContactUs from '../../shared/components/contactUs/ContactUs';
 import Hero from '../../shared/components/hero/Hero';
 import Partners from '../../shared/components/partners/Partners';
-import UsefulLinks from '../../shared/components/usefulLinks/UsefulLinks';
 import Register from '../../shared/components/register/Register';
-import { FiresSurvey } from '../introduction/firesSurvey/FiresSurvey';
+import UsefulLinks from '../../shared/components/usefulLinks/UsefulLinks';
+import { GetStarted } from './getStarted/GetStarted';
 
 export function HomePage() {
   const pageRef = useRef<HTMLDivElement | null>(null);
   return (
-    <div className="-mx-10">
-      <Hero backgroundImage={fireHero}>
+    <>
+      <Hero backgroundImage={fireHero} className="min-h-[75vh]">
         <div className="w-full bg-[rgba(30,51,66,0.3)] md:bg-[rgba(30,51,66,0.6)] h-full md:h-auto pt-12 pb-[4.5rem] md:py-16 text-white px-10">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center">
             <h1 className="flex-1 mb-10 md:mb-0 border-l-[10px] border-brand-yellow pl-4 text-left text-[74px] font-extralight">
@@ -26,11 +27,19 @@ export function HomePage() {
           </div>
         </div>
       </Hero>
-      <FiresSurvey />
-      <UsefulLinks />
-      <Partners />
-      <Register />
-      <ContactUs />
-    </div>
+      <HorizontalLayout>
+        <GetStarted className="mt-8 md:mt-24" />
+      </HorizontalLayout>
+      <UsefulLinks className="mt-5 md:mt-[76px] px-4 lg:px-8" />
+      <HorizontalLayout className="bg-brand-sky-blue">
+        <Partners />
+      </HorizontalLayout>
+      <HorizontalLayout className="bg-brand-angel-blue">
+        <Register />
+      </HorizontalLayout>
+      <HorizontalLayout className="bg-steel-blue">
+        <ContactUs />
+      </HorizontalLayout>
+    </>
   );
 }

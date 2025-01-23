@@ -3,14 +3,16 @@ import { TQuestion } from '../../../../../../shared/components/survey/types';
 export const qIsSmallBusiness: TQuestion = {
   id: 'qIsSmallBusiness',
   type: 'radio',
-  title: 'Does your business qualify as a  SMALL BUSINESS',
+  title: 'Does your business qualify as a SMALL BUSINESS',
   options: [
     {
-      optionId: 'yes',
+      optionId: 'smallBusinessYes',
       label: 'Yes',
+      // tags: ['Business - Small Business']
+      // slugs: ['business-small-business']
     },
     {
-      optionId: 'no',
+      optionId: 'smallBusinessNo',
       label: 'No',
     },
   ],

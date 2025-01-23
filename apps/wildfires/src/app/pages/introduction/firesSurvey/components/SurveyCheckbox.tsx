@@ -31,10 +31,10 @@ export function SurveyCheckbox(props: IProps): ReactElement {
     'py-4',
     'lg:py-6',
     'border',
-    'rounded-lg',
+    'rounded-xl',
     'cursor-pointer',
     'text-brand-dark-blue',
-    checked ? 'border-brand-dark-blue' : 'border-color-neutral-90',
+    checked ? 'border-brand-dark-blue' : 'border-[#DBDBDB]',
     disabled ? 'opacity-70 cursor-not-allowed' : '',
     className,
   ];
@@ -50,8 +50,8 @@ export function SurveyCheckbox(props: IProps): ReactElement {
     'min-w-6 lg:min-w-[30px]',
     'border',
     'text-brand-dark-blue',
-    'border-brand-dark-blue',
-    'rounded-md',
+    'border-steel-blue',
+    'rounded-[5px]',
     'md:rounded-lg',
     checked ? 'bg-brand-dark-blue' : 'bg-white',
   ];
@@ -61,9 +61,9 @@ export function SurveyCheckbox(props: IProps): ReactElement {
     'md:text-xl',
     'text-left',
     'text-wrap',
-    'leading-5',
-    'md:leading-6',
-    'font-semibold',
+    'leading-[22px]',
+    'md:leading-[30px]',
+    'font-bold',
   ];
 
   return (

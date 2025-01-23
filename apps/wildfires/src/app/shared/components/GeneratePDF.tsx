@@ -1,5 +1,5 @@
-import { MutableRefObject } from "react";
-import { useReactToPrint } from "react-to-print";
+import { MutableRefObject } from 'react';
+import { useReactToPrint } from 'react-to-print';
 
 interface GeneratePDFProps {
   pageRef: MutableRefObject<HTMLDivElement | null>;
@@ -9,7 +9,7 @@ interface GeneratePDFProps {
 const GeneratePDF: React.FC<GeneratePDFProps> = ({ pageRef, fileName }) => {
   const handlePrint = useReactToPrint({
     contentRef: pageRef,
-    documentTitle: typeof fileName === "function" ? fileName() : fileName,
+    documentTitle: typeof fileName === 'function' ? fileName() : fileName,
     pageStyle: `
       @page {
         size: auto;
@@ -26,11 +26,7 @@ const GeneratePDF: React.FC<GeneratePDFProps> = ({ pageRef, fileName }) => {
     `,
   });
 
-  return (
-    <button onClick={() => handlePrint()}>
-      Download Page as PDF
-    </button>
-  );
+  return <button onClick={() => handlePrint()}>Download Page as PDF</button>;
 };
 
 export default GeneratePDF;
