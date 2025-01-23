@@ -1,5 +1,8 @@
+import { HorizontalLayout } from '../../layout/horizontalLayout';
 import BestPractices from '../../shared/components/bestPractices/BestPractices';
 import Hero from '../../shared/components/hero/Hero';
+import ImportantTips from '../../shared/components/importantTips/ImportantTips';
+import Register from '../../shared/components/register/Register';
 
 export default function Result() {
   return (
@@ -13,6 +16,10 @@ export default function Result() {
         </Hero>
       </div>
       <BestPractices />
+      <HorizontalLayout>
+        <ImportantTips />
+      </HorizontalLayout>
+      <Register />
     </>
   );
 }

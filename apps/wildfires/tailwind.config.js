@@ -21,6 +21,7 @@ module.exports = {
         primary: ['IBM Plex Sans', 'sans-serif'],
       },
       colors: {
+        'brand-orange': 'var(--color-brand-orange)',
         'brand-yellow': 'var(--color-brand-yellow)',
         'brand-yellow-light': 'var(--color-brand-yellow-light)',
         'brand-sky-blue': 'var(--color-brand-sky-blue)',
