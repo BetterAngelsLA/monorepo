@@ -25,11 +25,16 @@ export function FiresSurvey() {
     navigateTo(surveyResultsPagePath);
   }
 
+  function onFormRender() {
+    window.scrollTo(0, 0);
+  }
+
   return (
     <SurveyProvider
       surveyForms={surveyConfig}
       ui={customUi}
       onSurveyEnd={onSurveyEnd}
+      onFormRender={onFormRender}
     >
       <Survey className="mt-8" onChange={onChange} />
     </SurveyProvider>
