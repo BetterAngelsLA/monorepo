@@ -1,32 +1,32 @@
-import { MutableRefObject } from 'react';
-import { useReactToPrint } from 'react-to-print';
+import html2pdf from 'html2pdf.js';
+import { Button } from './button/Button';
 
 interface GeneratePDFProps {
-  pageRef: MutableRefObject<HTMLDivElement | null>;
   fileName: string | (() => string);
+  className?: string;
 }
 
-const GeneratePDF: React.FC<GeneratePDFProps> = ({ pageRef, fileName }) => {
-  const handlePrint = useReactToPrint({
-    contentRef: pageRef,
-    documentTitle: typeof fileName === 'function' ? fileName() : fileName,
-    pageStyle: `
-      @page {
-        size: auto;
-        margin: 0;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        -webkit-print-color-adjust: exact;
-      }
-      .no-page-break {
-        page-break-inside: avoid;
-      }
-    `,
-  });
+const GeneratePDF: React.FC<GeneratePDFProps> = ({ className }) => {
+  const options = {
+    margin: [20, 20],
+    filename: 'result-content.pdf',
+    html2canvas: { scale: 2, letterRendering: true },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: 'avoid-all' },
+  };
 
-  return <button onClick={() => handlePrint()}>Download Page as PDF</button>;
+  const handleGeneratePdf = () => {
+    const element = document.getElementById('content-to-pdf');
+    if (element) {
+      html2pdf(element, options);
+    }
+  };
+
+  return (
+    <Button className={className} onClick={handleGeneratePdf}>
+      Save Your Action Plan as a PDF
+    </Button>
+  );
 };
 
 export default GeneratePDF;
