@@ -1,4 +1,4 @@
-import { GlobeIcon, MenuIcon, BetterAngelsLogoIcon } from '@monorepo/react/icons';
+import { MenuIcon } from '@monorepo/react/icons';
 import { ReactElement, useState } from 'react';
 import { Link } from 'react-router-dom';
 import LADR_LOGO from '../../assets/images/la_disaster_relief_navigator_logo.png';
