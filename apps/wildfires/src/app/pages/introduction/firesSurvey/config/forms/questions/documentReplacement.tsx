@@ -3,8 +3,8 @@ import { TQuestion } from '../../../../../../shared/components/survey/types';
 export const qDocumentReplacement: TQuestion = {
   id: 'qDocumentReplacement',
   type: 'checkbox',
-  title: 'Which of the following items (if any) do you need replaced?',
-  subtitle: '(Select all that apply)',
+  title: 'Which of the following items do you need replaced?',
+  subtitle: '(Choose as many as you like)',
   options: [
     {
       optionId: 'vitalRecords',
@@ -32,7 +32,7 @@ export const qDocumentReplacement: TQuestion = {
     },
     {
       optionId: 'manufacturedMobileHomeDocs',
-      label: 'Manufactured/Mobile Home Documents',
+      label: 'Manufactured / Mobile Home Documents',
       // tags: ['Document Replacement - Mobile Home']
       // slugs: ['document-replacement-mobile-home']
     },
@@ -44,7 +44,7 @@ export const qDocumentReplacement: TQuestion = {
     },
     {
       optionId: 'otherDocuments',
-      label: 'Other Documents',
+      label: 'Other / I’m not sure',
       // tags: ['Document Replacement - Other']
       // slugs: ['document-replacement-other']
     },

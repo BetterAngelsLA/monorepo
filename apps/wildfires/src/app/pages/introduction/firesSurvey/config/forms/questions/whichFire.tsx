@@ -19,6 +19,10 @@ export const qWhichFire: TQuestion = {
       label: 'Kennet',
     },
     {
+      optionId: 'hughesFire',
+      label: 'Hughes',
+    },
+    {
       optionId: 'hurtsFire',
       label: 'Hurst',
     },

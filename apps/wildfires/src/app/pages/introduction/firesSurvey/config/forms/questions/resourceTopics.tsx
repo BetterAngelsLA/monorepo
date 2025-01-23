@@ -3,8 +3,8 @@ import { TQuestion } from '../../../../../../shared/components/survey/types';
 export const qResourceTopics: TQuestion = {
   id: 'qResourceTopics',
   type: 'checkbox',
-  title: 'Which of the following resources would you like to learn about?',
-  subtitle: '(Select all that apply)',
+  title: 'Which resources would you like to learn about?',
+  subtitle: '(Choose as many as you like)',
   options: [
     {
       optionId: 'resourceMailForwarding',

@@ -4,18 +4,24 @@ export const qEmploymentType: TQuestion = {
   id: 'qEmploymentType',
   type: 'checkbox',
   title:
-    'Do you have a job or are you a SELF-EMPLOYED/FREELANCE worker?',
+    'Are you employed by a company, or do you work for yourself as a freelancer or self-employed professional?',
   options: [
     {
       optionId: 'employmentCompany',
       label: 'Employed by a Company',
-      // No Slugs or tags
+      // tags: ['Income - Job Loss']
+      // slugs: ['income-job-loss']
     },
     {
       optionId: 'employmentSelfEmployedFreelance',
       label: 'Self-Employed/Freelance',
       // tags: ['Income - Self-Employed/Freelance']
       // slugs: ['income-self-employed-freelance']
+    },
+    {
+      optionId: 'employmentNeither',
+      label: 'Neither',
+      // No tags or slugs
     }
   ],
   rules: {
