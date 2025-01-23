@@ -3,9 +3,11 @@ import MailchimpSubscribe, {
   IMailchimpFormData,
   ISubscribeFormProps,
 } from 'react-mailchimp-subscribe';
+import { SurveyButton } from '../../../pages/introduction/firesSurvey/components/SurveyButton';
 
 const MAILCHIMP_URL =
   'https://betterangels.us9.list-manage.com/subscribe/post?u=604aa1b92deaf2b6a25adbfe8&amp;id=797ff52f8f&amp;f_id=00d2dae1f0';
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
   const [formData, setFormData] = useState<IMailchimpFormData>({
@@ -53,22 +55,11 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
   }, [status]);
 
   return (
-    <div className="bg-white flex-1 p-6 flex flex-col items-center justify-between aspect-video rounded-lg">
-      {status === 'sending' && <div>Sending...</div>}
-      {status === 'error' && (
-        <div
-          style={{ color: 'red' }}
-          dangerouslySetInnerHTML={{ __html: message }}
-        />
-      )}
-      {status === 'success' && (
-        <div style={{ color: 'green' }}>Subscribed!</div>
-      )}
-
+    <div>
       <form onSubmit={handleSubmit}>
-        <div style={styles.formGroupRow}>
-          <div style={styles.formGroup}>
-            <label style={styles.label}>First Name</label>
+        <div className="flex flex-row flex-wrap mb-2">
+          <div className="flex flex-1 flex-col mb-2">
+            <label className="mb-1 font-bold">First Name</label>
             <input
               style={styles.input}
               onChange={handleChange}
@@ -79,8 +70,8 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
             />
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Last Name</label>
+          <div className="flex flex-1 flex-col mb-2">
+            <label className="mb-1 font-bold">Last Name</label>
             <input
               style={styles.input}
               onChange={handleChange}
@@ -91,20 +82,20 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
             />
           </div>
 
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Email</label>
+          <div className="flex flex-1 flex-col mb-2">
+            <label className="mb-1 font-bold">Email</label>
             <input
               style={styles.input}
               onChange={handleChange}
               type="email"
               name="email"
+              pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
               value={formData.email}
               placeholder="Email Address"
             />
           </div>
-
-          <div style={styles.formGroup}>
-            <label style={styles.label}>Cell Number</label>
+          <div className="flex flex-1 flex-col mb-2">
+            <label className="mb-1 font-bold">Cell Number</label>
             <input
               style={styles.input}
               onChange={handleChange}
@@ -114,21 +105,46 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
               placeholder="Phone Number"
             />
           </div>
+          <div className="flex flex-2 flex-col lg:w-full mb-2">
+            <label className="mb-1 font-bold">
+              Zipcode of Fire-Impacted Property
+            </label>
+            <input
+              style={styles.input}
+              onChange={handleChange}
+              type="text"
+              name="zipCode"
+              value={formData.zipCode}
+              placeholder="Zipcode"
+            />
+          </div>
         </div>
 
-        <div style={styles.formGroup}>
-          <label style={styles.label}>Zipcode of Fire-Impacted Property</label>
-          <input
-            style={styles.input}
-            onChange={handleChange}
-            type="text"
-            name="zipCode"
-            value={formData.zipCode}
-            placeholder="Zipcode"
-          />
+        <div className="flex flex-row items-center justify-center mb-1">
+          <div className="max-h-[50px]">
+            {status === 'sending' && <div>Sending...</div>}
+            {status === 'error' && (
+              <div
+                style={{ color: 'red' }}
+                dangerouslySetInnerHTML={{ __html: message }}
+              />
+            )}
+            {status === 'success' && (
+              <div className="color-brand-dark-blue">
+                You will receive a confirmation email to subscribe!
+              </div>
+            )}
+          </div>
         </div>
-        <div className="flex flex-col items-center">
-          <button type="submit">Subscribe</button>
+        <div className="flex flex-row items-center justify-end pr-4">
+          <SurveyButton
+            dark
+            className="w-[150px]"
+            onClick={handleSubmit}
+            disabled={!EMAIL_REGEX.test(formData.email || '')}
+          >
+            Submit
+          </SurveyButton>
         </div>
       </form>
     </div>
@@ -149,6 +165,7 @@ const MailchimpFormContainer = () => {
 export default MailchimpFormContainer;
 
 const columnDirection: CSSProperties['flexDirection'] = 'column';
+const rowDirection: CSSProperties['flexDirection'] = 'row';
 
 const styles = {
   formGroup: {
@@ -158,7 +175,7 @@ const styles = {
   },
   formGroupRow: {
     display: 'flex',
-    flexDirection: 'row',
+    flexDirection: rowDirection,
     justifyContent: 'space-between',
     marginBottom: '1rem',
   },
