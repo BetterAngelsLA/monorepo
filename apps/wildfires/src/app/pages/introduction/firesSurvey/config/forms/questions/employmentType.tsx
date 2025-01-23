@@ -14,7 +14,7 @@ export const qEmploymentType: TQuestion = {
     },
     {
       optionId: 'employmentSelfEmployedFreelance',
-      label: 'Self-Employed/Freelance',
+      label: 'Self-Employed / Freelance',
       // tags: ['Income - Self-Employed/Freelance']
       // slugs: ['income-self-employed-freelance']
     },

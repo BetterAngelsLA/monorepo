@@ -14,17 +14,17 @@ export const qResourceTopics: TQuestion = {
     },
     {
       optionId: 'resourceDocumentReplacement',
-      label: 'Document/ID Replacement',
+      label: 'Document / ID Replacement',
     },
     {
       optionId: 'resourceFinancial',
-      label: 'Financial/Income Loss Resources',
+      label: 'Financial / Income Loss Resources',
       // tags: ['General - Financial Assistance']
       // slugs: ['general-financial-assistance']
     },
     {
       optionId: 'resourceHousing',
-      label: 'Housing/Shelter Resources'
+      label: 'Housing / Shelter Resources'
       // tags: ['General - Housing Resources']
       // slugs: ['general-housing-resources']
     },
