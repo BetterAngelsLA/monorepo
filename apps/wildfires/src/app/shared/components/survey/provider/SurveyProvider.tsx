@@ -8,10 +8,11 @@ export type TSurveyProvider = {
   surveyForms: TSurveyForm[];
   ui?: TSurveyUi;
   onSurveyEnd?: (results: TSurveyResults) => void;
+  onFormRender?: () => void;
 };
 
 export default function SurveyProvider(props: TSurveyProvider): ReactElement {
-  const { surveyForms, ui, onSurveyEnd, children } = props;
+  const { surveyForms, ui, onFormRender, onSurveyEnd, children } = props;
 
   const initialForm = surveyForms[0];
 
@@ -115,6 +116,10 @@ export default function SurveyProvider(props: TSurveyProvider): ReactElement {
 
     if (nextForm) {
       setCurrentForm(nextForm);
+
+      if (onFormRender) {
+        onFormRender();
+      }
 
       setFormHistory((prev) => {
         return [...prev, nextForm];
