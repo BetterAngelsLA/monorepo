@@ -32,13 +32,14 @@ export const qIncomeAssessment: TQuestion = {
   type: 'radio',
   title:
     'Based on your household size, is your income LESS or MORE than the number in this chart?',
-  subtitle: 'Income includes things like wages, tips and government benefit payments. It\'s OK if you don\'t know your household\'s exact income.',
-    options: [
+  subtitle:
+    "Income includes things like wages, tips and government benefit payments. It's OK if you don't know your household's exact income.",
+  options: [
     {
       optionId: 'incomeLow',
       label: 'Less',
       // tags: ['Income - Low Income']
-      // slugs: ['income-low-income']
+      tags: ['income-low-income'],
     },
     {
       optionId: 'incomeHigh',

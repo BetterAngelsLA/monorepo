@@ -10,31 +10,31 @@ export const qDocumentReplacement: TQuestion = {
       optionId: 'vitalRecords',
       label: 'Records (birth/death certificate, marriage license)',
       // tags: ['Document Replacement - Vital Records'],
-      // slugs: ['document-replacement-vital-records']
+      tags: ['document-replacement-vital-records'],
     },
     {
       optionId: 'socialSecurityCards',
       label: 'Social Security Cards',
       // tags:['Document Replacement - Social Security Cards']
-      // slugs: ['document-replacement-social-security-cards']
+      tags: ['document-replacement-social-security-cards'],
     },
     {
       optionId: 'driversLicenseIds',
       label: "Driver's Licenses or ID's",
       // tags: ['Document Replacement - ID']
-      // slugs: ['document-replacement-id']
+      tags: ['document-replacement-id'],
     },
     {
       optionId: 'passport',
       label: 'Passport',
       // tags: ['Document Replacement - Passport']
-      // slugs: ['document-replacement-passport']
+      tags: ['document-replacement-passport'],
     },
     {
       optionId: 'otherDocuments',
       label: 'Other / I’m not sure',
       // tags: ['Document Replacement - Other']
-      // slugs: ['document-replacement-other']
+      tags: ['document-replacement-other'],
     },
   ],
   rules: {
