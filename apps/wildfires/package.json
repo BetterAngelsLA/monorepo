@@ -24,7 +24,9 @@
     "react-to-print": "*",
     "react-mailchimp-subscribe": "*",
     "@tanstack/react-query": "*",
-    "@portabletext/react": "*"
+    "@portabletext/react": "*",
+    "html2pdf.js": "*",
+    "react-ga4": "*"
   },
   "devDependencies": {}
 }
