@@ -29,9 +29,6 @@ export function HomePage() {
       <HorizontalLayout>
         <GetStarted className="mt-8 md:mt-24 mb-12 md:mb-24" />
       </HorizontalLayout>
-      <HorizontalLayout className="bg-brand-sky-blue">
-        <Partners />
-      </HorizontalLayout>
       <HorizontalLayout className="bg-brand-angel-blue">
         <Register />
       </HorizontalLayout>
