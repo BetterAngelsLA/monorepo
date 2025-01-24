@@ -10,7 +10,7 @@ type IProps = {
 export function ResourcePortableText(props: IProps) {
   const { data, className } = props;
 
-  const parentCss = ['flex', className];
+  const parentCss = ['survey-rich-text', className];
 
   return (
     <div className={mergeCss(parentCss)}>
