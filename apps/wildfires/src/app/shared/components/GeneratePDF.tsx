@@ -8,9 +8,9 @@ interface GeneratePDFProps {
 
 const GeneratePDF: React.FC<GeneratePDFProps> = ({ className }) => {
   const options = {
-    margin: [20, 20],
+    margin: [0, 10],
     filename: 'result-content.pdf',
-    html2canvas: { scale: 2, letterRendering: true },
+    html2canvas: { scale: 1, letterRendering: true },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak: { mode: 'avoid-all' },
   };
