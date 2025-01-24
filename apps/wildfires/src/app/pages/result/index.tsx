@@ -6,6 +6,7 @@ import GeneratePDF from '../../shared/components/GeneratePDF';
 import BestPractices from '../../shared/components/bestPractices/BestPractices';
 import Hero from '../../shared/components/hero/Hero';
 import ImportantTips from '../../shared/components/importantTips/ImportantTips';
+import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
 
@@ -67,8 +68,10 @@ export default function Result() {
           fileName="LA Disaster Relief Navigator"
         />
       </HorizontalLayout>
-
       <Register />
+      <HorizontalLayout className="bg-brand-sky-blue">
+        <Partners />
+      </HorizontalLayout>
     </>
   );
 }

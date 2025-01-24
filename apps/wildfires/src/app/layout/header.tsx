@@ -24,12 +24,10 @@ export function Header(props: IParams): ReactElement {
   ];
 
   return (
-    <>
-      <header className={mergeCss(parentCss)}>
-        <HomeLink className="h-8 md:h-12" />
-        <MenuDesktop className="hidden lg:flex" />
-        <MenuBtnMobile className="block lg:hidden" />
-      </header>
-    </>
+    <header className={mergeCss(parentCss)}>
+      <HomeLink className="h-8 md:h-12" />
+      <MenuDesktop />
+      <MenuBtnMobile className="block lg:hidden" />
+    </header>
   );
 }
