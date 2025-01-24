@@ -35,3 +35,5 @@ export const qWhichFire: TQuestion = {
     required: false,
   },
 };
+
+export const wildfireLabels = qWhichFire.options.map(option => option.label);

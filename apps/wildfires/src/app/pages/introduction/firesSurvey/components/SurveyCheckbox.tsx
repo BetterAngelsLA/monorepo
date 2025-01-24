@@ -1,6 +1,7 @@
 import { CheckIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
 import { mergeCss } from '../../../../shared/utils/styles/mergeCss';
+import { wildfireLabels } from '../config/forms/questions/whichFire';
 
 type IProps = {
   label: string;
@@ -75,7 +76,7 @@ export function SurveyCheckbox(props: IProps): ReactElement {
       <div className={mergeCss(checkboxContainerCss)}>
         {checked && <CheckIcon className="text-white h-8" />}
       </div>
-      {['Palisades', 'Eaton', 'Kennet', 'Hurst'].includes(label) ? (
+      {wildfireLabels.includes(label) ? (
         <div className={mergeCss(labelCss) + " notranslate"}>{label}</div>
       ) : (
         <div className={mergeCss(labelCss)}>{label}</div>
