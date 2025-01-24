@@ -7,6 +7,6 @@ export type TResource = {
   resourceLink?: string;
   priority?: number;
   tags?: string[];
-  description?: PortableTextBlock;
-  shortDescription?: PortableTextBlock;
+  description?: PortableTextBlock | null;
+  shortDescription?: PortableTextBlock | null;
 };
