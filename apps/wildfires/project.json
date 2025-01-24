@@ -24,7 +24,18 @@
       },
       "configurations": {
         "production": {
-          "mode": "production"
+          "mode": "production",
+          "env": {
+            "VITE_ANALYTICS_ENABLED": "true",
+            "VITE_ANALYTICS_ID": "G-3FX73WC6WM"
+          }
+        },
+        "development": {
+          "mode": "development",
+          "env": {
+            "VITE_ANALYTICS_ENABLED": "true",
+            "VITE_ANALYTICS_ID": "G-VXGSM2MQXZ"
+          }
         }
       }
     }

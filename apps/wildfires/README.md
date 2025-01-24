@@ -1,6 +1,6 @@
-# Wildfire LA
+# LA Disaster Relief Navigator
 
-Welcome to the Wildfire LA project! Our goal is to facilitate the discovery of resources for people impacted by the fires in Los Angeles county.
+Welcome to the LA Disaster Relief Navigator project! Our goal is to facilitate the discovery of resources for people impacted by the fires in Los Angeles county.
 
 ## Development
 

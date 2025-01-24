@@ -1,6 +1,6 @@
-import { BetterAngelsLogoIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
+import BA_LOGO from '../../assets/images/ba-logo-blue-white.png';
 import { mergeCss } from '../shared/utils/styles/mergeCss';
 
 type IParams = {
@@ -25,18 +25,15 @@ export function Footer(props: IParams): ReactElement {
 
   return (
     <footer className={mergeCss(parentCss)}>
-      <a href="https://www.betterangels.la/" className="flex mb-8 md:mb-0">
-        <BetterAngelsLogoIcon className="h-7 md:h-10 text-brand-sky-blue fill-current" />
-        <div className="text-white flex ml-2 text-xl md:text-4xl">
-          <div className="font-normal">
-            Better<span className="font-semibold">Angels</span>
-          </div>
-        </div>
-      </a>
-      <div className="flex flex-col align-end gap-14">
+      <div className="flex ml-2 mb-4">
+        <a href="https://www.betterangels.la/">
+          <img src={BA_LOGO} alt="Better Angels LA" className="h-9" />
+        </a>
+      </div>
+      <div className="flex flex-col align-end gap-14 ml-14">
         <div className="flex flex-col md:flex-row gap-8 md:gap-10 md:text-2xl">
           <Link to="/about">About</Link>
-          <a href="mailto:wildfire@betterangels.la">Contact Us</a>
+          <a href="mailto:wildfires@betterangels.la">Contact Us</a>
           <Link to="/privacy-policy">Privacy Policy</Link>
         </div>
         <div className="md:text-2xl text-end md:text-auto">

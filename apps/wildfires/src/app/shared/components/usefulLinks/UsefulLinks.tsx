@@ -25,9 +25,9 @@ export default function UsefulLinks(props: IParams) {
   return (
     <div className={mergeCss(parentCss)}>
       <h2 className="text-2xl md:text-[40px] md:leading-[94.5px] font-bold mb-6">
-        Useful Links/Info
+        Useful Links
       </h2>
-      <div className="flex flex-col md:flex-row items-stretch justify-center gap-1 md:w-full px-10">
+      <div className="flex flex-col flex-wrap md:flex-row items-center w-full justify-center gap-1 md:w-full md:px-10">
         <UsefulLinksCard
           urlTitle="disasterassistance.gov"
           url="https://www.disasterassistance.gov/"
@@ -38,7 +38,7 @@ export default function UsefulLinks(props: IParams) {
           urlTitle="opportunity.lacounty.gov"
           url="https://opportunity.lacounty.gov/"
         >
-          <DeoIcon className="h-[130px]" />
+          <DeoIcon className="h-[90px] md:h-[130px]" />
         </UsefulLinksCard>
         <UsefulLinksCard
           urlTitle="edd.ca.gov/unemployment"
@@ -52,6 +52,13 @@ export default function UsefulLinks(props: IParams) {
         >
           <BenefitsCalIcon className="h-[36px]" />
         </UsefulLinksCard>
+
+        {/* <UsefulLinksCard
+          urlTitle="Emergency Assistance Fund"
+          url=" https://www.betterangels.la/emergency-assistance-fund"
+        >
+          <img className="w-[174px]" src={BAlogo} alt="Better Angels LA" />
+        </UsefulLinksCard> */}
       </div>
     </div>
   );

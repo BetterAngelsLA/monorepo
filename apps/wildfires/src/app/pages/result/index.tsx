@@ -1,6 +1,7 @@
 import { useAtom } from 'jotai';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
+import GeneratePDF from '../../shared/components/GeneratePDF';
 import BestPractices from '../../shared/components/bestPractices/BestPractices';
 import Hero from '../../shared/components/hero/Hero';
 import ImportantTips from '../../shared/components/importantTips/ImportantTips';
@@ -21,12 +22,22 @@ export default function Result() {
         </Hero>
       </HorizontalLayout>
       <HorizontalLayout>
-        <BestPractices />
         {!!surveyResults && (
           <SurveyResults className="mt-8 mb-24" results={surveyResults} />
         )}
-        <ImportantTips />
+        <div id="content-to-pdf">
+          <BestPractices />
+          {!!surveyResults && (
+            <SurveyResults className="mt-8 mb-24" results={surveyResults} />
+          )}
+          <ImportantTips />
+        </div>
+        <GeneratePDF
+          className="mb-16 md:mb-28 bg-brand-dark-blue text-white mx-auto"
+          fileName="LA Disaster Relief Navigator"
+        />
       </HorizontalLayout>
+
       <Register />
     </>
   );
