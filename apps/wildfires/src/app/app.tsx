@@ -16,22 +16,16 @@ export function App() {
   }, []);
 
   return (
-    <>
-      <QueryClientProvider client={queryClient}>
-        <RouteTracker />
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
-            {routeChildren.map((route) => (
-              <Route
-                key={route.path}
-                path={route.path}
-                element={route.element}
-              />
-            ))}
-          </Route>
-        </Routes>
-      </QueryClientProvider>
-    </>
+    <QueryClientProvider client={queryClient}>
+      <RouteTracker />
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          {routeChildren.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
+        </Route>
+      </Routes>
+    </QueryClientProvider>
   );
 }
 
