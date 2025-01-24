@@ -1,6 +1,8 @@
+import AnnenbergLogo from '../../../assets/images/AF-2022-Horiz.png';
 import BaLogo from '../../../assets/images/ba-logo-white.png';
-import Imagine from '../../../assets/images/imagine_la_logo.png';
-import Mayor from '../../../assets/images/mayors-fund-logo.png';
+import ImagineLaLogo from '../../../assets/images/imagine_la_logo.png';
+import MayorsFundLaLogo from '../../../assets/images/mayors-fund-logo.png';
+import RSKFLaLogo from '../../../assets/images/RSKF_LA_Logotype_Black.png';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import ContactUs from '../../shared/components/contactUs/ContactUs';
 
@@ -24,13 +26,23 @@ export default function About() {
               />
               <img
                 className="w-[226px] md:w-[310px]"
-                src={Imagine}
+                src={ImagineLaLogo}
                 alt="Imagine LA"
               />
               <img
                 className="w-[292px] md:w-[400px]"
-                src={Mayor}
+                src={MayorsFundLaLogo}
                 alt="Mayor's fund for Los Angeles"
+              />
+              <img
+                className="w-[292px] md:w-[400px]"
+                src={AnnenbergLogo}
+                alt="Annenberg Foundation"
+              />
+              <img
+                className="w-[292px] md:w-[400px]"
+                src={RSKFLaLogo}
+                alt="R&S Kayne Foundation Los Angeles"
               />
             </div>
           </div>
