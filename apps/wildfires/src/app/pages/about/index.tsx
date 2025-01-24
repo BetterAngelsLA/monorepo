@@ -81,7 +81,7 @@ export default function About() {
             </li>
             <li className="list-disc">
               <span className="font-bold">Mayor Karen Bass's Office</span>:
-              Leads the nation's second largest city with urgency to delivered
+              Leads the nation's second largest city with urgency to deliver
               results for all Angelenos.
             </li>
             <li className="list-disc">
