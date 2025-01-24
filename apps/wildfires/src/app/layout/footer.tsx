@@ -36,7 +36,7 @@ export function Footer(props: IParams): ReactElement {
           <a href="mailto:wildfires@betterangels.la">Contact Us</a>
           <Link to="/privacy-policy">Privacy Policy</Link>
         </div>
-        <div className=" text-end md:text-auto">
+        <div className="text-end md:text-auto">
           © 2025 Better Angels Inc. All rights reserved.
         </div>
       </div>
