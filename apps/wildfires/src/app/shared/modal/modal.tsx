@@ -7,7 +7,9 @@ import { ModalMask } from './modalMask';
 
 export enum ModalAnimationEnum {
   SLIDE_UP = 'animate-slideInUp',
+  SLIDE_IN_LEFT = 'animate-slideInLeft',
   EXPAND = 'animate-expandInOut',
+  NAV = 'animate-nav',
 }
 
 export type TModalType = 'drawer' | 'fullscreen' | 'default';
@@ -20,6 +22,8 @@ export interface IModal extends PropsWithChildren {
   fullW?: boolean;
   closeOnMaskClick?: boolean;
   footer?: ReactNode;
+  parentCss?: string;
+  closeCss?: string;
   onClose?: () => void;
 }
 
@@ -31,6 +35,8 @@ export function Modal(props: IModal): ReactElement | null {
     closeOnMaskClick,
     fullW,
     children,
+    parentCss,
+    closeCss,
     footer,
     onClose,
   } = props;
@@ -57,6 +63,7 @@ export function Modal(props: IModal): ReactElement | null {
     type === 'default' ? 'relative rounded-xl w-10/12' : '',
     animation === null ? 'animate-none' : animation,
     fullW ? 'w-full' : '',
+    parentCss,
     className,
   ];
 
@@ -70,7 +77,7 @@ export function Modal(props: IModal): ReactElement | null {
     type === 'default' ? 'pb-12' : '',
   ];
 
-  const closeCss = ['ml-auto'];
+  const closeBtnCss = ['ml-auto', closeCss];
 
   const headerCss = ['flex', 'justify-between', 'align-center', 'mt-0', 'mb-4'];
 
@@ -88,7 +95,7 @@ export function Modal(props: IModal): ReactElement | null {
       >
         <div className={mergeCss(modalBodyCss)}>
           <div className={mergeCss(headerCss)}>
-            <button className={mergeCss(closeCss)} onClick={onModalClose}>
+            <button className={mergeCss(closeBtnCss)} onClick={onModalClose}>
               <CloseIcon className="w-4" />
             </button>
           </div>
