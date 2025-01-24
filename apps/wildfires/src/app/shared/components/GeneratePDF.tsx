@@ -18,7 +18,7 @@ const GeneratePDF: React.FC<GeneratePDFProps> = ({ className }) => {
   const handleGeneratePdf = () => {
     const element = document.getElementById('content-to-pdf');
     if (element) {
-      html2pdf(element, options);
+      html2pdf().from(element).set(options).save();
     }
   };
 
