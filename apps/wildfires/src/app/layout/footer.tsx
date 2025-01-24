@@ -31,12 +31,12 @@ export function Footer(props: IParams): ReactElement {
         </a>
       </div>
       <div className="flex flex-col align-end gap-14 ml-14">
-        <div className="flex flex-col md:flex-row gap-8 md:gap-10 md:text-2xl">
+        <div className="flex flex-col md:flex-row gap-8 md:gap-10">
           <Link to="/about">About LA Disaster Relief Navigator</Link>
           <a href="mailto:wildfires@betterangels.la">Contact Us</a>
           <Link to="/privacy-policy">Privacy Policy</Link>
         </div>
-        <div className="md:text-2xl text-end md:text-auto">
+        <div className="text-end md:text-auto">
           © 2025 Better Angels Inc. All rights reserved.
         </div>
       </div>

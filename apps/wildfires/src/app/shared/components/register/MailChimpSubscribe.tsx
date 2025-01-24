@@ -57,71 +57,76 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <div className="flex flex-row flex-wrap mb-2">
-          <div className="flex flex-1 flex-col mb-2">
-            <label className="mb-1 font-bold">First Name</label>
-            <input
-              style={styles.input}
-              onChange={handleChange}
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              placeholder="First Name"
-            />
-          </div>
+        <div className="flex flex-row flex-wrap w-full mb-2">
+          <div className="flex flex-row flex-wrap w-full mb-2">
+            <div className="flex flex-1 flex-col mb-2">
+              <label className="mb-1 font-bold">First Name</label>
+              <input
+                style={styles.input}
+                onChange={handleChange}
+                type="text"
+                name="firstName"
+                value={formData.firstName}
+                placeholder="First Name"
+              />
+            </div>
 
-          <div className="flex flex-1 flex-col mb-2">
-            <label className="mb-1 font-bold">Last Name</label>
-            <input
-              style={styles.input}
-              onChange={handleChange}
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              placeholder="Last Name"
-            />
+            <div className="flex flex-1 flex-col mb-2">
+              <label className="mb-1 font-bold">Last Name</label>
+              <input
+                style={styles.input}
+                onChange={handleChange}
+                type="text"
+                name="lastName"
+                value={formData.lastName}
+                placeholder="Last Name"
+              />
+            </div>
           </div>
+          <div className="flex flex-row flex-wrap w-full mb-2">
+            <div className="flex flex-1 flex-col mb-2 ">
+              <label className="mb-1 font-bold">
+                Email<span className="text-[#FF0000]">*</span>
+              </label>
+              <input
+                style={styles.input}
+                onChange={handleChange}
+                type="email"
+                name="email"
+                pattern={EMAIL_REGEX.source}
+                value={formData.email}
+                required={true}
+                placeholder="Email Address"
+              />
+            </div>
 
-          <div className="flex flex-1 flex-col mb-2">
-            <label className="mb-1 font-bold">
-              Email<span className="text-[#FF0000]">*</span>
-            </label>
-            <input
-              style={styles.input}
-              onChange={handleChange}
-              type="email"
-              name="email"
-              pattern={EMAIL_REGEX.source}
-              value={formData.email}
-              required={true}
-              placeholder="Email Address"
-            />
+            <div className="flex flex-1 flex-col mb-2">
+              <label className="mb-1 font-bold">
+                Zip of Fire-Impacted Property
+              </label>
+              <input
+                style={styles.input}
+                onChange={handleChange}
+                type="text"
+                name="zipCode"
+                value={formData.zipCode}
+                placeholder="Zipcode"
+              />
+            </div>
           </div>
-          <div className="flex flex-1 flex-col mb-2">
-            <label className="mb-1 font-bold">Cell Number</label>
-            <input
+        </div>
+        {/* HIDING AS PART OF DEV-1373 but may add back later */}
+        {/* <div className="flex flex-1 flex-col mb-2">
+              <label className="mb-1 font-bold">Cell Number</label>
+              <input
               style={styles.input}
               onChange={handleChange}
               type="text"
               name="phone"
               value={formData.phone}
               placeholder="Phone Number"
-            />
-          </div>
-          <div className="flex flex-2 flex-col lg:w-full mb-2">
-            <label className="mb-1 font-bold">
-              Zipcode of Fire-Impacted Property
-            </label>
-            <input
-              style={styles.input}
-              onChange={handleChange}
-              type="text"
-              name="zipCode"
-              value={formData.zipCode}
-              placeholder="Zipcode"
-            />
-          </div>
-        </div>
+              />
+            </div> */}
         <div>
           <span className="text-[#FF0000]">*</span>
           <span>indicates a required field</span>

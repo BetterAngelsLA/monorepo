@@ -1,6 +1,6 @@
 import { mergeCss } from '../../../utils/styles/mergeCss';
 
-const DONATE_HREF = 'https://www.pledge.to/widgets/donate/JS11PeUKJh7pCqZC';
+const DONATE_HREF = 'https://www.pledge.to/better-angels-emergency-assistance-fund';
 
 type IProps = {
   className?: string;

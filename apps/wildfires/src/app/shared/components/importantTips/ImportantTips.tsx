@@ -27,7 +27,7 @@ const DATA = {
 export default function ImportantTips() {
   return (
     <div className="bg-brand-yellow-light rounded-[20px] p-4 md:p-8 md:pb-[3.75rem] w-full my-12 md:my-20">
-      <h3 className="uppercase font-bold md:text-2xl mb-8 md:mb-10">
+      <h3 className="uppercase font-bold md:text-[32px] md:leading-[1.2] mb-8 md:mb-10">
         Important Tips
       </h3>
       <ImportantTipCard title="Tax & Insurance" data={DATA.tax} />
