@@ -14,10 +14,17 @@ export function SurveyResources(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <div className="mt-4 mb-8 font-bold text-2xl">Survey Resources</div>
-
+      <div className="mt-12 md:mt-20 mb-8 md:mb-12 font-bold text-xl md:text-2xl">
+        Resources
+      </div>
       {resources.map((resource, index) => {
-        return <ResourceCard key={index} resource={resource} />;
+        return (
+          <ResourceCard
+            key={index}
+            className="mb-4 lg:mb-10 last:mb-0"
+            resource={resource}
+          />
+        );
       })}
     </div>
   );

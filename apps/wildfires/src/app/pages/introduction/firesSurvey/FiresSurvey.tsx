@@ -25,8 +25,16 @@ export function FiresSurvey() {
     navigateTo(surveyResultsPagePath);
   }
 
-  function onFormRender() {
+  function scrollTop() {
     window.scrollTo(0, 0);
+  }
+
+  function onFormRender() {
+    scrollTop();
+  }
+
+  function onFormBack() {
+    scrollTop();
   }
 
   return (
@@ -35,6 +43,7 @@ export function FiresSurvey() {
       ui={customUi}
       onSurveyEnd={onSurveyEnd}
       onFormRender={onFormRender}
+      onFormBack={onFormBack}
     >
       <Survey className="mt-8" onChange={onChange} />
     </SurveyProvider>

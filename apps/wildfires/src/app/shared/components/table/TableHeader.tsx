@@ -14,11 +14,10 @@ export function TableHeader(props: TProps) {
     'border-white',
     'px-4',
     'py-2',
-    'text-sm',
+    'text-xs',
+    'sm:text-sm',
     'md:text-xl',
     'md:leading-8',
-    'truncate',
-    'max-w-[150px]',
     'md:max-w-[250px]',
     'lg:max-w-[450px]',
   ];
