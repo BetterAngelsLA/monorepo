@@ -1,4 +1,5 @@
 import { useAtom } from 'jotai';
+import { useEffect } from 'react';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
 import GeneratePDF from '../../shared/components/GeneratePDF';
@@ -8,8 +9,41 @@ import ImportantTips from '../../shared/components/importantTips/ImportantTips';
 import Register from '../../shared/components/register/Register';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
 
+const currentDomain = window.location.origin;
+const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
+
 export default function Result() {
   const [surveyResults] = useAtom(surveyResultsAtom);
+
+  const submitSurvey = async (survey: any) => {
+    try {
+      const newDate = new Date();
+
+      const surveyData = {
+        answers: survey.answers,
+        timestamp: newDate,
+        referrer_base: basename,
+      };
+
+      await fetch(`${currentDomain}/api/submitResults`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(surveyData),
+      });
+    } catch (error) {
+      console.error('Request failed', error);
+    }
+  };
+
+  useEffect(() => {
+    if (!surveyResults) {
+      return;
+    }
+
+    submitSurvey(surveyResults);
+  }, [surveyResults]);
 
   return (
     <>
