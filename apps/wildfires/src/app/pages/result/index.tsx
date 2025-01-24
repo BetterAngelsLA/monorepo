@@ -20,7 +20,7 @@ export default function Result() {
       const newDate = new Date();
 
       const surveyData = {
-        responses: survey,
+        answers: survey.answers,
         timestamp: newDate,
         referrer_base: basename,
       };
