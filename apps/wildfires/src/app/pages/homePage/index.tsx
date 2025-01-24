@@ -5,7 +5,6 @@ import ContactUs from '../../shared/components/contactUs/ContactUs';
 import Hero from '../../shared/components/hero/Hero';
 import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
-import UsefulLinks from '../../shared/components/usefulLinks/UsefulLinks';
 import { GetStarted } from './getStarted/GetStarted';
 
 export function HomePage() {
@@ -28,9 +27,8 @@ export function HomePage() {
         </div>
       </Hero>
       <HorizontalLayout>
-        <GetStarted className="mt-8 md:mt-24" />
+        <GetStarted className="mt-8 md:mt-24 mb-12 md:mb-24" />
       </HorizontalLayout>
-      <UsefulLinks className="mt-5 md:mt-[76px] px-4 lg:px-8" />
       <HorizontalLayout className="bg-brand-sky-blue">
         <Partners />
       </HorizontalLayout>
