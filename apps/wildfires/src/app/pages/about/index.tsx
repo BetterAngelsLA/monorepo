@@ -13,7 +13,7 @@ export default function About() {
         <div className="relative">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-stretch">
             <div className="bg-brand-dark-blue w-full md:w-[60%] py-40 flex items-center  md:py-0">
-              <h1 className="border-l-[10px] border-brand-yellow font-light font-primary md:font-bold pl-4 md:pl-8 text-5xl md:text-[74px] text-white md:leading-[96.2px] text-left">
+              <h1 className="border-l-[10px] border-brand-yellow font-light pl-4 md:pl-8 text-5xl md:text-[74px] text-white md:leading-[96.2px] text-left">
                 About <span className="whitespace-nowrap">LA Disaster</span>{' '}
                 Relief Navigator
               </h1>
