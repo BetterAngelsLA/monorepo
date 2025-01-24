@@ -1,4 +1,5 @@
 import { ArrowLeftIcon } from '@monorepo/react/icons';
+import { v4 as uuidv4 } from 'uuid';
 import { mergeCss } from '../../../shared/utils/styles/mergeCss';
 import { SurveyButton } from '../../introduction/firesSurvey/components/SurveyButton';
 import { GetStartedHeader } from './GetStartedHeader';
@@ -27,6 +28,10 @@ export function GetStarted(props: TProps) {
 
       <div className="mt-6 md:mt-20 flex justify-center">
         <SurveyButton
+          onClick={() => {
+            const guestId = uuidv4();
+            sessionStorage.setItem('guestId', guestId);
+          }}
           dark
           className="max-w-[350px] justify-center"
           href="/introduction"

@@ -1,14 +1,55 @@
+import { useAtom } from 'jotai';
+import { useEffect } from 'react';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
+import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
 import BestPractices from '../../shared/components/bestPractices/BestPractices';
 import Hero from '../../shared/components/hero/Hero';
 import ImportantTips from '../../shared/components/importantTips/ImportantTips';
 import Register from '../../shared/components/register/Register';
-import { useAtom } from 'jotai';
-import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
+
+const newDate = new Date();
+const currentDomain = window.location.origin;
 
 export default function Result() {
   const [surveyResults] = useAtom(surveyResultsAtom);
+
+  const submitSurvey = async (survey: any) => {
+    try {
+      const guestId = sessionStorage.getItem('guestId');
+
+      const surveyData = {
+        responses: survey.answers,
+        timestamp: newDate,
+        sessionId: guestId,
+      };
+
+      const response = await fetch(`${currentDomain}/api/submitResults`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(surveyData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        console.log('Success:', result);
+      } else {
+        console.error('Error:', result);
+      }
+    } catch (error) {
+      console.error('Request failed', error);
+    }
+  };
+
+  useEffect(() => {
+    if (!surveyResults) {
+      return;
+    }
+    submitSurvey(surveyResults);
+  }, []);
 
   return (
     <>
