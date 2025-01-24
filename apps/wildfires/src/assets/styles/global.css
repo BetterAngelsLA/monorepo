@@ -53,26 +53,22 @@ textarea:focus {
   border-color: var(--color-brand-yellow);
 }
 
-.goog-te-gadget-simple {
-  display: flex !important;
-  color: #fff !important;
+.goog-te-combo {
   background-color: transparent !important;
-  border: none !important;
-  align-items: center;
-}
-
-.goog-te-gadget-simple span {
   color: #fff !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  height: 20px !important;
 }
 
-.goog-te-gadget-simple > span > a > span:not(:first-child) {
-  display: none !important;
+@media screen and (max-width: 768px) {
+  .goog-te-combo {
+    font-size: 12px !important;
+    max-width: 120px !important;
+  }
 }
 
-.goog-te-gadget-simple > span > a > img {
-  display: none !important;
-}
-
-.goog-te-gadget-simple > span > a > span:last-child {
-  display: inline !important;
+.goog-te-gadget {
+  max-height: 20px !important;
+  overflow: hidden !important;
 }
