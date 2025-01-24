@@ -1,10 +1,11 @@
+import { useAtom } from 'jotai';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
+import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
 import BestPractices from '../../shared/components/bestPractices/BestPractices';
+import GeneratePDF from '../../shared/components/GeneratePDF';
 import Hero from '../../shared/components/hero/Hero';
 import ImportantTips from '../../shared/components/importantTips/ImportantTips';
 import Register from '../../shared/components/register/Register';
-import { useAtom } from 'jotai';
-import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
 
 export default function Result() {
@@ -21,15 +22,20 @@ export default function Result() {
         </Hero>
       </HorizontalLayout>
       <HorizontalLayout>
-        <BestPractices />
+        <div id="content-to-pdf">
+          <BestPractices />
+          {!!surveyResults && (
+            <SurveyResults className="mt-8 mb-24" results={surveyResults} />
+          )}
+          <ImportantTips />
+        </div>
+        <GeneratePDF
+          className="mb-16 md:mb-28 bg-brand-dark-blue text-white mx-auto"
+          fileName="LA Disaster Relief Navigator"
+        />
       </HorizontalLayout>
-      <HorizontalLayout>
-        <ImportantTips />
-      </HorizontalLayout>
+
       <Register />
-      {!!surveyResults && (
-        <SurveyResults className="mt-8 mb-24" results={surveyResults} />
-      )}
     </>
   );
 }
