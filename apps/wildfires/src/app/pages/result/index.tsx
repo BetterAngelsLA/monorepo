@@ -56,9 +56,6 @@ export default function Result() {
         </Hero>
       </HorizontalLayout>
       <HorizontalLayout>
-        {!!surveyResults && (
-          <SurveyResults className="mt-8 mb-24" results={surveyResults} />
-        )}
         <div id="content-to-pdf">
           <BestPractices />
           {!!surveyResults && (
