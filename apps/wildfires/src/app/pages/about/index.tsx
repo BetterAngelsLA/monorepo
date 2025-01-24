@@ -84,6 +84,20 @@ export default function About() {
               Leads the nation's second largest city with urgency to delivered
               results for all Angelenos.
             </li>
+            <li className="list-disc">
+              <span className="font-bold">Annenberg Foundation</span>: A
+              philanthropic foundation dedicated to addressing the critical
+              issues of our time through innovation, community, compassion, and
+              communication since 1989.
+            </li>
+            <li className="list-disc">
+              <span className="font-bold">
+                R&S Kayne Foundation Los Angeles
+              </span>
+              : A foundation committed to empowering individuals and communities
+              in LA by supporting opportunities to foster economic mobility and
+              well-being.
+            </li>
           </ul>
           <h2 className="text-2xl md:text-5xl mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             What We Do
