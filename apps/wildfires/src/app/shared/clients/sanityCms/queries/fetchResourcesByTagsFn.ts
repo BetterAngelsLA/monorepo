@@ -29,16 +29,8 @@ function generateQueryParams(tags: string[]): string {
       *[_type == "resource" && references(*[_type == "resource-tag" && (${tagsCondition})]._id)]{
         title,
         resourceType,
-        "shortDescription": shortDescription[].children[]{
-          _type,
-          marks,
-          text
-        },
-        "description": description[].children[]{
-          _type,
-          marks,
-          text
-        },
+        description,
+        shortDescription,
         "slug": slug.current,
         resourceLink,
         priority,
@@ -47,3 +39,14 @@ function generateQueryParams(tags: string[]): string {
 
   return query.replace(/\s+/g, ' ').trim();
 }
+
+// "description": description[].children[]{
+//   _type,
+//   marks,
+//   text
+// },
+// "shortDescription": shortDescription[].children[]{
+//   _type,
+//   marks,
+//   text
+// },
