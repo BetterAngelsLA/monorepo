@@ -10,19 +10,19 @@ import Register from '../../shared/components/register/Register';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
 
 const currentDomain = window.location.origin;
+const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 
 export default function Result() {
   const [surveyResults] = useAtom(surveyResultsAtom);
 
   const submitSurvey = async (survey: any) => {
     try {
-      const guestId = sessionStorage.getItem('guestId');
       const newDate = new Date();
 
       const surveyData = {
         responses: survey,
         timestamp: newDate,
-        sessionId: guestId,
+        referrer_base: basename,
       };
 
       await fetch(`${currentDomain}/api/submitResults`, {

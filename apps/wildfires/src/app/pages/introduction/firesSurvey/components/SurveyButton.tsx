@@ -1,5 +1,5 @@
 import { MouseEventHandler, PropsWithChildren } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '../../../../shared/components/button/Button';
 import { mergeCss } from '../../../../shared/utils/styles/mergeCss';
 
@@ -13,11 +13,10 @@ interface IBaseButton extends PropsWithChildren {
 
 export type TButtonProps =
   | (IBaseButton & { onClick?: MouseEventHandler; href?: never })
-  | (IBaseButton & { href: string; onClick?: MouseEventHandler });
+  | (IBaseButton & { href: string; onClick?: never });
 
 export function SurveyButton(props: TButtonProps) {
   const { className, dark, onClick, disabled, href, children } = props;
-  const navigate = useNavigate();
 
   const parentCss = [
     'flex',
@@ -37,17 +36,10 @@ export function SurveyButton(props: TButtonProps) {
   ];
 
   if (href) {
-    const handleClick = (event: any) => {
-      if (onClick) {
-        onClick(event);
-      }
-
-      navigate(href);
-    };
     return (
-      <Button className={mergeCss(parentCss)} onClick={handleClick}>
+      <Link className={mergeCss(parentCss)} to={href}>
         {children}
-      </Button>
+      </Link>
     );
   }
 
