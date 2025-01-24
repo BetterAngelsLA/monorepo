@@ -6,32 +6,28 @@ import { routeChildren } from './routes/appRoutes';
 import RouteTracker from './shared/components/RouterTracker';
 import { useScrollTopOnLocationChange } from './shared/hooks/useScrollTopOnLocationChange';
 import { initGA } from './shared/utils/analytics';
+import useGoogleTranslateScript from './useGoogleTranslateWidget';
 
 const queryClient = new QueryClient();
 
 export function App() {
   useScrollTopOnLocationChange();
+  useGoogleTranslateScript();
   useEffect(() => {
     initGA();
   }, []);
 
   return (
-    <>
-      <QueryClientProvider client={queryClient}>
-        <RouteTracker />
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
-            {routeChildren.map((route) => (
-              <Route
-                key={route.path}
-                path={route.path}
-                element={route.element}
-              />
-            ))}
-          </Route>
-        </Routes>
-      </QueryClientProvider>
-    </>
+    <QueryClientProvider client={queryClient}>
+      <RouteTracker />
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          {routeChildren.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
+        </Route>
+      </Routes>
+    </QueryClientProvider>
   );
 }
 
