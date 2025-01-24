@@ -84,16 +84,22 @@ textarea:focus {
 }
 
 .survey-rich-text p {
-  /* margin-bottom: 0.75rem; */
   margin-bottom: 1rem;
   font-size: 1rem;
 }
 
-.survey-rich-text h4 {
-  font-size: 1.125rem;
-  line-height: 1.1;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
+.survey-rich-text h1 {
+  font-size: 1.5rem;
+  line-height: 1.325;
+  margin-top: 1.25rem;
+  margin-bottom: 0.875rem;
+}
+
+.survey-rich-text h2 {
+  font-size: 1.375rem;
+  line-height: 1.25;
+  margin-top: 1.25rem;
+  margin-bottom: 0.875rem;
 }
 
 .survey-rich-text h3 {
@@ -103,11 +109,13 @@ textarea:focus {
   margin-bottom: 0.75rem;
 }
 
-.survey-rich-text h2 {
-  font-size: 1.375rem;
-  line-height: 1.25;
-  margin-top: 1.25rem;
-  margin-bottom: 0.875rem;
+.survey-rich-text h4,
+.survey-rich-text h5,
+.survey-rich-text h6 {
+  font-size: 1.125rem;
+  line-height: 1.1;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .survey-rich-text ul {
