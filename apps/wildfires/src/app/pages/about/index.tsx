@@ -54,10 +54,18 @@ export default function About() {
               homelessness in Los Angeles.
             </li>
             <li className="list-disc">
-              <span className="font-bold">Imagine LA</span>: A social impact
-              organization specializing in helping individuals and families
-              maximize public benefits and chart permanent pathways out of
-              poverty.
+              <span className="font-bold">Imagine LA</span>: Creators of the{' '}
+              <a
+                className="underline"
+                href="https://www.imaginela.org/benefit-navigator"
+                target="_blank"
+                rel="noreferrer"
+              >
+                BENEFIT NAVIGATOR — Imagine LA
+              </a>
+              . A social impact organization specializing in helping individuals
+              and families maximize public benefits and chart permanent pathways
+              out of poverty.
             </li>
             <li className="list-disc">
               <span className="font-bold">Mayor Karen Bass's Office</span>:
