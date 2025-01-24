@@ -9,7 +9,6 @@ import ImportantTips from '../../shared/components/importantTips/ImportantTips';
 import Register from '../../shared/components/register/Register';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
 
-const newDate = new Date();
 const currentDomain = window.location.origin;
 
 export default function Result() {
@@ -18,6 +17,7 @@ export default function Result() {
   const submitSurvey = async (survey: any) => {
     try {
       const guestId = sessionStorage.getItem('guestId');
+      const newDate = new Date();
 
       const surveyData = {
         responses: survey.answers,
@@ -25,21 +25,13 @@ export default function Result() {
         sessionId: guestId,
       };
 
-      const response = await fetch(`${currentDomain}/api/submitResults`, {
+      await fetch(`${currentDomain}/api/submitResults`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(surveyData),
       });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        console.log('Success:', result);
-      } else {
-        console.error('Error:', result);
-      }
     } catch (error) {
       console.error('Request failed', error);
     }
