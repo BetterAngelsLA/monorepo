@@ -9,13 +9,13 @@ export const qHaveOwnersInsurance: TQuestion = {
       optionId: 'ownerInsuranceYes',
       label: 'Yes',
       // tags: ['Housing - Owner with Insurance']
-      // slugs: ['housing-owner-with-insurance']
+      tags: ['housing-owner-with-insurance'],
     },
     {
       optionId: 'housingInsuranceNo',
       label: 'No',
       // tags: ['Housing - No Insurance']
-      // slugs: ['housing-no-insurance']
+      tags: ['housing-no-insurance'],
     },
   ],
   rules: {

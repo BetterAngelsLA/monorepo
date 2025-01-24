@@ -10,7 +10,7 @@ export const qResourceTopics: TQuestion = {
       optionId: 'resourceMailForwarding',
       label: 'Mail Forwarding',
       // tags: ['General - Mail Forwarding']
-      // slugs: ['general-mail-forwarding']
+      tags: ['general-mail-forwarding'],
     },
     {
       optionId: 'resourceDocumentReplacement',
@@ -20,61 +20,61 @@ export const qResourceTopics: TQuestion = {
       optionId: 'resourceFinancial',
       label: 'Financial / Income Loss Resources',
       // tags: ['General - Financial Assistance']
-      // slugs: ['general-financial-assistance']
+      tags: ['general-financial-assistance'],
     },
     {
       optionId: 'resourceHousing',
       label: 'Housing / Shelter Resources',
       // tags: ['General - Housing Resources']
-      // slugs: ['general-housing-resources']
+      tags: ['general-housing-resources'],
     },
     {
       optionId: 'resourceBusiness',
       label: 'Support for Businesses',
       // tags: ['General - Business Resources']
-      // slugs: ['general-business-resources']
+      tags: ['general-business-resources'],
     },
     {
       optionId: 'resourceFood',
       label: 'Food Resources',
       // tags: ['General - Food']
-      // slugs: ['general-food']
+      tags: ['general-food'],
     },
     {
       optionId: 'resourceHealthcare',
       label: 'Healthcare & Mental Health Resources',
       // tags: ['General - Health']
-      // slugs: ['general-health']
+      tags: ['general-health'],
     },
     {
       optionId: 'resourceChildcare',
       label: 'Family: Childcare & School Information',
       // tags: ['General - Childcare']
-      // slugs: ['general-childcare']
+      tags: ['general-childcare'],
     },
     {
       optionId: 'resourcePets',
       label: 'Pet Resources',
       // tags: ['General - Pet']
-      // slugs: ['general-pet']
+      tags: ['general-pet'],
     },
     {
       optionId: 'resourceReunification',
       label: 'Reunification / Missing Persons',
       // tags: ['General - Reunification']
-      // slugs: ['general-reunification']
+      tags: ['general-reunification'],
     },
     {
       optionId: 'resourceImmigration',
       label: 'Immigrant-Related Info',
       // tags: ['General - Immigrant-Related']
-      // slugs: ['general-immigrant-related']
+      tags: ['general-immigrant-related'],
     },
     {
       optionId: 'resourceInPersonSupport',
       label: 'In-Person Support',
       // tags: ['General - In-Person Support']
-      // slugs: ['general-in-person-support']
+      tags: ['general-in-person-support'],
     },
   ],
   rules: {
