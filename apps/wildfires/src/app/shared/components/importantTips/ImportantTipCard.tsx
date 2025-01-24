@@ -11,14 +11,14 @@ export default function ImportantTipCard(props: ImportantTipCardProps) {
 
   return (
     <div className={className}>
-      <h2 className="font-bold text-2xl md:text-[40px] md:leading-[52px] pl-6 border-l-[10px] border-brand-orange mb-4 md:mb-[3.875rem]">
+      <h2 className="font-bold text-2xl md:text-[40px] md:leading-[52px] pl-6 border-l-[10px] border-brand-orange my-10 md:mb-[3.875rem]">
         {title}
       </h2>
       <div className="flex flex-col gap-4 md:gap-10">
         {data.map((item, index) => (
           <div
             key={index}
-            className="flex flex-col gap-6 bg-white rounded-[20px] w-full p-6 mb-4 md:mb-10"
+            className="flex flex-col gap-6 bg-white rounded-[20px] w-full p-6"
           >
             <div className="flex items-center gap-4">
               <item.Icon className="h-6 min-w-6 md:h-8 md:min-w-8" />
