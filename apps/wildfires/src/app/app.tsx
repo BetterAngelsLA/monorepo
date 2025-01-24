@@ -6,13 +6,12 @@ import { routeChildren } from './routes/appRoutes';
 import RouteTracker from './shared/components/RouterTracker';
 import { useScrollTopOnLocationChange } from './shared/hooks/useScrollTopOnLocationChange';
 import { initGA } from './shared/utils/analytics';
-import useGoogleTranslateScript from './useGoogleTranslateWidget';
 
 const queryClient = new QueryClient();
 
 export function App() {
   useScrollTopOnLocationChange();
-  useGoogleTranslateScript();
+  // useGoogleTranslateScript();
   useEffect(() => {
     initGA();
   }, []);
