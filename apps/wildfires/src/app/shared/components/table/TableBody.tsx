@@ -10,7 +10,8 @@ export function TableBody(props: TProps) {
   const trCss = ['odd:bg-white', 'even:bg-brand-angel-blue'];
 
   const tdCss = [
-    'text-sm',
+    'text-xs',
+    'sm:text-sm',
     'md:text-xl',
     'leading-7',
     'text-center',
