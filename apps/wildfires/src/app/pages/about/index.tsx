@@ -1,6 +1,8 @@
+import AnnenbergLogo from '../../../assets/images/AF-2022-Horiz.png';
 import BaLogo from '../../../assets/images/ba-logo-white.png';
-import Imagine from '../../../assets/images/imagine_la_logo.png';
-import Mayor from '../../../assets/images/mayors-fund-logo.png';
+import ImagineLaLogo from '../../../assets/images/imagine_la_logo.png';
+import MayorsFundLaLogo from '../../../assets/images/mayors-fund-logo.png';
+import RSKFLaLogo from '../../../assets/images/RSKF_LA_Logotype_Black.png';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import ContactUs from '../../shared/components/contactUs/ContactUs';
 
@@ -24,13 +26,23 @@ export default function About() {
               />
               <img
                 className="w-[226px] md:w-[310px]"
-                src={Imagine}
+                src={ImagineLaLogo}
                 alt="Imagine LA"
               />
               <img
                 className="w-[292px] md:w-[400px]"
-                src={Mayor}
+                src={MayorsFundLaLogo}
                 alt="Mayor's fund for Los Angeles"
+              />
+              <img
+                className="w-[292px] md:w-[400px]"
+                src={AnnenbergLogo}
+                alt="Annenberg Foundation"
+              />
+              <img
+                className="w-[292px] md:w-[400px]"
+                src={RSKFLaLogo}
+                alt="R&S Kayne Foundation Los Angeles"
               />
             </div>
           </div>
@@ -54,15 +66,37 @@ export default function About() {
               homelessness in Los Angeles.
             </li>
             <li className="list-disc">
-              <span className="font-bold">Imagine LA</span>: A social impact
-              organization specializing in helping individuals and families
-              maximize public benefits and chart permanent pathways out of
-              poverty.
+              <span className="font-bold">Imagine LA</span>: Creators of the{' '}
+              <a
+                className="underline"
+                href="https://www.imaginela.org/benefit-navigator"
+                target="_blank"
+                rel="noreferrer"
+              >
+                BENEFIT NAVIGATOR — Imagine LA
+              </a>
+              . A social impact organization specializing in helping individuals
+              and families maximize public benefits and chart permanent pathways
+              out of poverty.
             </li>
             <li className="list-disc">
               <span className="font-bold">Mayor Karen Bass's Office</span>:
-              Leads the nation's second largest city with urgency to delivered
+              Leads the nation's second largest city with urgency to deliver
               results for all Angelenos.
+            </li>
+            <li className="list-disc">
+              <span className="font-bold">Annenberg Foundation</span>: A
+              philanthropic foundation dedicated to addressing the critical
+              issues of our time through innovation, community, compassion, and
+              communication since 1989.
+            </li>
+            <li className="list-disc">
+              <span className="font-bold">
+                R&S Kayne Foundation Los Angeles
+              </span>
+              : A foundation committed to empowering individuals and communities
+              in LA by supporting opportunities to foster economic mobility and
+              well-being.
             </li>
           </ul>
           <h2 className="text-2xl md:text-5xl mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
