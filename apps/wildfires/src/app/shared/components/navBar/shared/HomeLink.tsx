@@ -18,7 +18,6 @@ export function HomeLink(props: IProps) {
         src={LADR_LOGO}
         alt="LA Disaster Relief Navigator"
         className="h-full"
-        // className="w-[250px]"
       />
     </Link>
   );

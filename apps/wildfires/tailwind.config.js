@@ -45,10 +45,6 @@ module.exports = {
         '0%': { transform: 'translate3d(0, 10%, 0)' },
         '100%': { transform: 'translate3d(0, 0, 0)' },
       },
-      slideInLeft: {
-        '0%': { transform: 'translate3d(100%, 0, 0)' },
-        '100%': { transform: 'translate3d(0, 0, 0)' },
-      },
       expandInOut: {
         '0%': { transform: 'scale(.85, .5)' },
         '100%': { transform: 'scale(1, 1)' },
@@ -68,7 +64,6 @@ module.exports = {
     },
     animation: {
       slideInUp: 'slideInUp 250ms ease-in-out 0ms',
-      slideInLeft: 'slideInLeft 300ms ease-in-out 0ms',
       expandInOut: 'expandInOut 200ms ease-in-out 0ms',
       nav: 'nav 250ms ease-out 0ms',
     },

@@ -22,7 +22,6 @@ export function MenuMobile(props: IProps) {
   return (
     <div className={mergeCss(parentCss)}>
       <AboutLink className="mb-8" />
-      {/* <GoogleTranslateBtn className="mb-8" /> */}
       <Link to="/privacy-policy" className="mb-8">
         Privacy Policy
       </Link>

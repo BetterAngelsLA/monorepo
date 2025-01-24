@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { AboutLink } from './shared/AboutLink';
 import { DonateButton } from './shared/DonateButton';
-// import { TranslateBtn } from './shared/TranslateBtn';
 
 type IProps = {
   className?: string;
@@ -11,13 +10,7 @@ type IProps = {
 export function NavLinks(props: IProps) {
   const { className } = props;
 
-  const parentCss = [
-    'flex-col',
-    'lg:flex-col',
-    // 'items-end',
-    'text-white',
-    className,
-  ];
+  const parentCss = ['flex-col', 'lg:flex-col', 'text-white', className];
 
   return (
     <div className={mergeCss(parentCss)}>

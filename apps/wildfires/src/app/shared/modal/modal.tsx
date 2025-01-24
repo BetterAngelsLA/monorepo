@@ -7,7 +7,6 @@ import { ModalMask } from './modalMask';
 
 export enum ModalAnimationEnum {
   SLIDE_UP = 'animate-slideInUp',
-  SLIDE_IN_LEFT = 'animate-slideInLeft',
   EXPAND = 'animate-expandInOut',
   NAV = 'animate-nav',
 }
