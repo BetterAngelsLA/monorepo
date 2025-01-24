@@ -44,6 +44,7 @@ export type TOption = {
   optionId: string;
   label: string;
   next?: string;
+  tags?: string[];
 };
 
 export type TAnswer = {
