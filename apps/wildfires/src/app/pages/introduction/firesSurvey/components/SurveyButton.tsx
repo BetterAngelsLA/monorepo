@@ -12,7 +12,7 @@ interface IBaseButton extends PropsWithChildren {
 }
 
 export type TButtonProps =
-  | (IBaseButton & { onClick: MouseEventHandler; href?: never })
+  | (IBaseButton & { onClick?: MouseEventHandler; href?: never })
   | (IBaseButton & { href: string; onClick?: never });
 
 export function SurveyButton(props: TButtonProps) {
