@@ -1,75 +1,62 @@
 export enum ResourceTagCategoryEnum {
-  DocumentReplacement = 'DOCUMENT_REPLACEMENT',
-  BusinessAssistance = 'BUSINESS_ASSISTANCE',
-  Insurance = 'INSURANCE',
-  FinancialAssistanceIndividualsFamilies = 'FINANCIAL_ASSISTANCE_INDIVIDUALS_FAMILIES',
-  HousingAndFood = 'HOUSING_AND_FOOD',
-  ForwardMail = 'FORWARD_MAIL',
-  Immigrant = 'IMMIGRANT',
-  General = 'GENERAL',
-  UsefulLinks = 'USEFUL_LINKS',
-  MentalHealthAndPets = 'MENTAL_HEALTH_AND_PETS',
-  FamiliesWithChildren = 'FAMILIES_WITH_CHILDREN',
+  ReplaceDocuments = 'REPLACE_DOCUMENTS',
+  ForwardYourMail = 'FORWARD_YOUR_MAIL',
+  FileInsuranceClaims = 'FILE_INSURANCE_CLAIMS',
+  SecureHousing = 'SECURE_HOUSING',
+  SeekFinancialAssistance = 'SEEK_FINANCIAL_ASSISTANCE',
+  SeekBusinessAssistance = 'SEEK_BUSINESS_ASSISTANCE',
+  OtherResources = 'OTHER_RESOURCES',
 }
 
 export const ResourceTagCategoryLabelEnum = {
-  [ResourceTagCategoryEnum.DocumentReplacement]: 'Document Replacement',
-  [ResourceTagCategoryEnum.BusinessAssistance]: 'Business Assistance',
-  [ResourceTagCategoryEnum.Insurance]: 'Insurance',
-  [ResourceTagCategoryEnum.FinancialAssistanceIndividualsFamilies]:
-    'Financial Assistance for Individuals & Families',
-  [ResourceTagCategoryEnum.HousingAndFood]: 'Housing & Food',
-  [ResourceTagCategoryEnum.ForwardMail]: 'Forward Mail',
-  [ResourceTagCategoryEnum.Immigrant]: 'Immigrant',
-  [ResourceTagCategoryEnum.General]: 'General',
-  [ResourceTagCategoryEnum.UsefulLinks]: 'Useful Links',
-  [ResourceTagCategoryEnum.MentalHealthAndPets]: 'Mental Health & Pets',
-  [ResourceTagCategoryEnum.FamiliesWithChildren]: 'Families with Children',
+  [ResourceTagCategoryEnum.ReplaceDocuments]: 'Replace Documents',
+  [ResourceTagCategoryEnum.ForwardYourMail]: 'Forward Your Mail',
+  [ResourceTagCategoryEnum.FileInsuranceClaims]: 'File Insurance Claims',
+  [ResourceTagCategoryEnum.SecureHousing]: 'Secure Housing',
+  [ResourceTagCategoryEnum.SeekFinancialAssistance]:
+    'Seek Financial Assistance',
+  [ResourceTagCategoryEnum.SeekBusinessAssistance]: 'Seek Business Assistance',
+  [ResourceTagCategoryEnum.OtherResources]: 'Utilize These Other Resources',
 };
 
 type TTagsByCategory = Record<ResourceTagCategoryEnum, string[]>;
 
 export const tagsByCategory: TTagsByCategory = {
-  [ResourceTagCategoryEnum.DocumentReplacement]: [
-    'document-replacement-other',
+  [ResourceTagCategoryEnum.ReplaceDocuments]: [
+    'document-replacement-vital-records',
+    'document-replacement-social-security-cards',
+    'document-replacement-id',
+    'document-replacement-passport',
     'document-replacement-income-tax',
     'document-replacement-mobile-home',
-    'document-replacement-passport',
-    'document-replacement-id',
-    'document-replacement-social-security-cards',
-    'document-replacement-vital-records',
+    'document-replacement-other',
   ],
-  [ResourceTagCategoryEnum.BusinessAssistance]: [
+  [ResourceTagCategoryEnum.ForwardYourMail]: ['general-mail-forwarding'],
+  [ResourceTagCategoryEnum.FileInsuranceClaims]: [
+    'housing-no-insurance',
+    'housing-owner-with-insurance',
+    'housing-renter-with-insurance',
+  ],
+  [ResourceTagCategoryEnum.SecureHousing]: ['housing-temporary-housing'],
+  [ResourceTagCategoryEnum.SeekFinancialAssistance]: [
+    'income-low-income',
+    'income-job-loss',
+    'income-self-employed-freelance',
+    'general-food',
+    'housing-home-owner',
+    'general-housing-resources',
+    'general-financial-assistance',
+  ],
+  [ResourceTagCategoryEnum.SeekBusinessAssistance]: [
     'business-small-business',
     'general-business-resources',
   ],
-  [ResourceTagCategoryEnum.Insurance]: [
-    'housing-renter-with-insurance',
-    'housing-owner-with-insurance',
-  ],
-  [ResourceTagCategoryEnum.FinancialAssistanceIndividualsFamilies]: [
-    'housing-no-insurance',
-    'general-housing-resources',
-    'income-low-income',
-    'income-self-employed-freelance',
-    'income-job-loss',
-    'general-financial-assistance',
-  ],
-  [ResourceTagCategoryEnum.HousingAndFood]: [
-    'housing-temporary-housing',
-    'housing-home-owner',
-    'general-food',
-  ],
-  [ResourceTagCategoryEnum.ForwardMail]: ['general-mail-forwarding'],
-  [ResourceTagCategoryEnum.Immigrant]: ['general-immigrant-related'],
-  [ResourceTagCategoryEnum.General]: ['general-for-all'],
-  [ResourceTagCategoryEnum.UsefulLinks]: [
-    'general-in-person-support',
-    'general-reunification',
-  ],
-  [ResourceTagCategoryEnum.MentalHealthAndPets]: [
-    'general-pet',
+  [ResourceTagCategoryEnum.OtherResources]: [
+    'general-childcare',
     'general-health',
+    'general-pet',
+    'general-reunification',
+    'general-immigrant-related',
+    'general-in-person-support',
   ],
-  [ResourceTagCategoryEnum.FamiliesWithChildren]: ['general-childcare'],
-} as const;
+};
