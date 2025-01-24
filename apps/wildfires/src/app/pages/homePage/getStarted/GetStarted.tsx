@@ -31,7 +31,7 @@ export function GetStarted(props: TProps) {
           className="max-w-[350px] justify-center"
           href="/introduction"
         >
-          <span className="mr-4">Start Survey</span>
+          <span className="mr-4">Get Resources</span>
           <ArrowLeftIcon className="h-5 rotate-180" />
         </SurveyButton>
       </div>
