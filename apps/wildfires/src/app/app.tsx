@@ -11,7 +11,6 @@ const queryClient = new QueryClient();
 
 export function App() {
   useScrollTopOnLocationChange();
-  // useGoogleTranslateScript();
   useEffect(() => {
     initGA();
   }, []);
