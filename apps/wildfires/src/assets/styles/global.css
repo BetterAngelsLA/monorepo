@@ -72,3 +72,71 @@ textarea:focus {
   max-height: 20px !important;
   overflow: hidden !important;
 }
+
+/* survey wysiwyg  CSS */
+
+.survey-rich-text b {
+  font-weight: bold;
+}
+
+.survey-rich-text a {
+  font-style: italic;
+}
+
+.survey-rich-text p {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.survey-rich-text h1 {
+  font-size: 1.5rem;
+  line-height: 1.325;
+  margin-top: 1.25rem;
+  margin-bottom: 0.875rem;
+}
+
+.survey-rich-text h2 {
+  font-size: 1.375rem;
+  line-height: 1.25;
+  margin-top: 1.25rem;
+  margin-bottom: 0.875rem;
+}
+
+.survey-rich-text h3 {
+  font-size: 1.25rem;
+  line-height: 1.2;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.survey-rich-text h4,
+.survey-rich-text h5,
+.survey-rich-text h6 {
+  font-size: 1.125rem;
+  line-height: 1.1;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.survey-rich-text ul {
+  list-style: outside;
+  padding-left: 1rem;
+  margin-bottom: 0.625rem;
+}
+
+.survey-rich-text ul li {
+  list-style-type: disc;
+  margin-bottom: 0.5rem;
+}
+
+.survey-rich-text ol {
+  list-style: outside;
+  padding-left: 1rem;
+  margin-bottom: 0.625rem;
+}
+
+.survey-rich-text a {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}

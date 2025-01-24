@@ -6,6 +6,10 @@ function toPortableTextBlock(item: any): PortableTextBlock | null {
     return null;
   }
 
+  if (!item.length) {
+    return null;
+  }
+
   return item as unknown as PortableTextBlock;
 }
 
@@ -33,5 +37,5 @@ export function toTResource(item: any): TResource | null {
     tags: item.tags,
     description: toPortableTextBlock(item.description),
     shortDescription: toPortableTextBlock(item.shortDescription),
-  } as unknown as TResource;
+  };
 }

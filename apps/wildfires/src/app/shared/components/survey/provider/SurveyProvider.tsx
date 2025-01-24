@@ -9,10 +9,12 @@ export type TSurveyProvider = {
   ui?: TSurveyUi;
   onSurveyEnd?: (results: TSurveyResults) => void;
   onFormRender?: () => void;
+  onFormBack?: () => void;
 };
 
 export default function SurveyProvider(props: TSurveyProvider): ReactElement {
-  const { surveyForms, ui, onFormRender, onSurveyEnd, children } = props;
+  const { surveyForms, ui, onFormRender, onFormBack, onSurveyEnd, children } =
+    props;
 
   const initialForm = surveyForms[0];
 
@@ -128,6 +130,11 @@ export default function SurveyProvider(props: TSurveyProvider): ReactElement {
   };
 
   const goBack = () => {
+    // TODO: reconcile events such as onFormRender and onFormBack
+    if (onFormBack) {
+      onFormBack();
+    }
+
     popQuestionHistory();
   };
 
@@ -148,6 +155,9 @@ export default function SurveyProvider(props: TSurveyProvider): ReactElement {
   useEffect(() => {
     if (!formHistory.length) {
       // setCurrentForm(null);
+
+      // TODO: update next/back to work off of history - once have tests
+      // - run onFormRender here?
 
       return;
     }
