@@ -74,10 +74,6 @@ export function SurveyResults(props: IProps) {
 
   const queryTags = getTags(answers);
 
-  console.log('fetching by Tags ');
-  console.log(queryTags);
-  console.log();
-
   const { isLoading, isError, data, error } = useQuery({
     queryKey: queryTags,
     queryFn: () => fetchResourcesByTagsFn(queryTags),
@@ -95,26 +91,3 @@ export function SurveyResults(props: IProps) {
     </div>
   );
 }
-
-// function answerToArr(answer: string | string[]) {
-//   if (typeof answer === 'string') {
-//     return [answer];
-//   }
-
-//   return answer || [];
-// }
-
-// {answers.map((answer) => {
-//   return (
-//     <div
-//       key={answer.questionId}
-//       className="mb-8 border-b-2 last:border-b-0"
-//     >
-//       <div>
-//         <div>Question Id: {answer.questionId}</div>
-//         <div className="mb-2 font-bold">Answer:</div>
-//         <div>{answerToArr(answer.result).join(', ')}</div>
-//       </div>
-//     </div>
-//   );
-// })}
