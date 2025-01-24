@@ -18,9 +18,8 @@ export function GetStarted(props: TProps) {
 
       <div className="text-xl md:text-2xl leading-[30px] md:leading-normal mt-8 md:mt-10">
         <div className="font-bold">
-          Please tell us a little about your situation so that we can make sure
-          your action plan includes all of the relevant resources and financial
-          assistance available to you.
+          We’re here to help you find and access resources for your wildfire
+          recovery. Please help us do so by answering a few questions.
         </div>
         <div className="text-xl leading-[30px]">(Takes 3 minutes)</div>
       </div>
