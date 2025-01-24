@@ -43,7 +43,7 @@ export default function Result() {
     }
 
     submitSurvey(surveyResults);
-  }, []);
+  }, [surveyResults]);
 
   return (
     <>
