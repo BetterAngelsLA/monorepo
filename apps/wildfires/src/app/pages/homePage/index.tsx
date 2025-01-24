@@ -1,14 +1,11 @@
-import { useRef } from 'react';
 import fireHero from '../../../assets/images/fire-hero.jpeg';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import ContactUs from '../../shared/components/contactUs/ContactUs';
 import Hero from '../../shared/components/hero/Hero';
-import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
 import { GetStarted } from './getStarted/GetStarted';
 
 export function HomePage() {
-  const pageRef = useRef<HTMLDivElement | null>(null);
   return (
     <>
       <Hero backgroundImage={fireHero} className="min-h-[75vh]">
