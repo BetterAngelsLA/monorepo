@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
 
 import { surveyConfig } from '../../../pages/introduction/firesSurvey/config/config';
 import { fetchResourcesByTagsFn } from '../../clients/sanityCms/queries/fetchResourcesByTagsFn';
+import { toTResources } from '../../clients/sanityCms/utils/toTResource';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { TAnswer, TOption, TSurveyResults } from '../survey/types';
 import { getAllQuestions } from '../survey/utils/validateConfig';
+import { SurveyResources } from '../surveyResources/SurveyResources';
 
 const allQestions = getAllQuestions(surveyConfig);
 
@@ -84,40 +85,36 @@ export function SurveyResults(props: IProps) {
     retry: 1,
   });
 
-  useEffect(() => {
-    console.log('returned resources by tags:');
-    console.log(data?.result);
-    console.log();
-  }, [data]);
-
   const parentCss = [className];
 
-  function answerToArr(answer: string | string[]) {
-    if (typeof answer === 'string') {
-      return [answer];
-    }
-
-    return answer || [];
-  }
+  const resources = toTResources(data?.result);
 
   return (
     <div className={mergeCss(parentCss)}>
-      <div className="mt-4 mb-8 font-bold text-2xl">Survey Answers</div>
-
-      {answers.map((answer) => {
-        return (
-          <div
-            key={answer.questionId}
-            className="mb-8 border-b-2 last:border-b-0"
-          >
-            <div>
-              <div>Question Id: {answer.questionId}</div>
-              <div className="mb-2 font-bold">Answer:</div>
-              <div>{answerToArr(answer.result).join(', ')}</div>
-            </div>
-          </div>
-        );
-      })}
+      {resources && <SurveyResources resources={resources} />}
     </div>
   );
 }
+
+// function answerToArr(answer: string | string[]) {
+//   if (typeof answer === 'string') {
+//     return [answer];
+//   }
+
+//   return answer || [];
+// }
+
+// {answers.map((answer) => {
+//   return (
+//     <div
+//       key={answer.questionId}
+//       className="mb-8 border-b-2 last:border-b-0"
+//     >
+//       <div>
+//         <div>Question Id: {answer.questionId}</div>
+//         <div className="mb-2 font-bold">Answer:</div>
+//         <div>{answerToArr(answer.result).join(', ')}</div>
+//       </div>
+//     </div>
+//   );
+// })}

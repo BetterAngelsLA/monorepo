@@ -22,7 +22,9 @@
     "jotai": "*",
     "react-dom": "*",
     "react-to-print": "*",
-    "react-mailchimp-subscribe": "*"
+    "react-mailchimp-subscribe": "*",
+    "@tanstack/react-query": "*",
+    "@portabletext/react": "*"
   },
   "devDependencies": {}
 }
