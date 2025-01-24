@@ -8,7 +8,7 @@ import PartnerCard from './PartnerCard';
 export default function Partners() {
   return (
     <div className="bg-brand-sky-blue w-full flex flex-col items-center justify-center py-12 md:py-20 px-10">
-      <h2 className="text-2xl md:text-[40px] md:leading-[94.5px] font-bold mb-6">
+      <h2 className="text-2xl md:text-[40px] md:leading-[1.2] font-bold mb-6">
         This site is brought to you by
       </h2>
       <div className="flex flex-col justify-center flex-wrap md:flex-row flex-grow h-full gap-6">
