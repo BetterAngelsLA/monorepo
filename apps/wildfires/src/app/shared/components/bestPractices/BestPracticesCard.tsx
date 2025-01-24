@@ -25,13 +25,13 @@ export default function BestPracticesCard(props: IBestPracticesCardProps) {
         <Icon className="h-6 w-6 md:h-10 md:w-10 text-brand-dark-blue" />
       </div>
       <div>
-        <h3 className="text-xl md:text-[32px] md:leading-[41.6px] font-bold mb-4 pr-6 md:pr-0">
+        <h3 className="text-xl md:text-[32px] md:leading-[1.2] font-bold mb-4 pr-6 md:pr-0">
           {title}
         </h3>
-        <p className={`md:hidden md:text-2xl ${expand ? 'block' : 'hidden'}`}>
+        <p className={`md:hidden ${expand ? 'block' : 'hidden'}`}>
           {description}
         </p>
-        <p className="hidden md:text-2xl md:block">{description}</p>
+        <p className="hidden md:block">{description}</p>
       </div>
     </div>
   );

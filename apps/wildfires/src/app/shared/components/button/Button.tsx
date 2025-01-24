@@ -13,7 +13,7 @@ export function Button(props: IProps) {
 
   const sizes = {
     small: 'py-1 px-7',
-    normal: 'py-5 px-24',
+    normal: 'py-4 px-24',
   };
 
   const parentCss = [
