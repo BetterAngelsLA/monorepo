@@ -34,7 +34,13 @@ function generateQueryParams(tags: string[]): string {
         "slug": slug.current,
         resourceLink,
         priority,
-        "tags": tags[]->slug.current
+        "tags": tags[]->{
+          "slug": slug.current,
+          "categories": category->{
+            name,
+            priority
+          }
+        }
       }`;
 
   return query.replace(/\s+/g, ' ').trim();
