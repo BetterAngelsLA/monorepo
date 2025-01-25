@@ -143,3 +143,9 @@ textarea:focus {
   text-decoration-thickness: 2px;
   text-underline-offset: 2px;
 }
+
+/* html to pdf */
+
+#content-to-pdf {
+  margin: 0 1rem;
+}
