@@ -17,8 +17,8 @@ export function HomePage() {
             <p className="flex-1 text-xl md:tex-2xl leading-[30px] md:leading-[48px] text-justify md:text-start">
               The wildfires have impacted us in so many different ways. The LA
               Disaster Relief Navigator is here to help you quickly create a
-              personalized action plan with the critical financial and wellness
-              resources available to you.
+              personalized action plan that contains the critical financial and
+              wellness resources available to you.
             </p>
           </div>
         </div>
