@@ -1,4 +1,3 @@
-// src/app/pages/result/index.tsx
 import { useAtom } from 'jotai';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
