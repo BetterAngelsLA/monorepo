@@ -15,7 +15,7 @@ export function AboutLink(props: IProps) {
       <div className="hidden lg:block text-right">
         About LA Disaster Relief Navigator
       </div>
-      <div className="lg:hidden">About LA Disaster Relief Navigator</div>
+      <div className="lg:hidden">About</div>
     </Link>
   );
 }
