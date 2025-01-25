@@ -51,39 +51,75 @@ export default function About() {
       <HorizontalLayout>
         <div className="py-7 md:py-32 max-w-[62.5.rem] mx-auto">
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
+            About
+          </h2>
+          <p className="mb-6 md:mb-16 sm:mb-12">
+            Better Angels, in partnership with ImagineLA and the Mayor’s Fund,
+            has launched the LA Disaster Relief Navigator, an online tool to
+            help Angelenos impacted by the wildfires effectively navigate the
+            many resources potentially available to them. The solution is
+            designed to help people navigate every aspect of fire relief,
+            including applying for federal, state and local government
+            assistance, making insurance claims, home damage remediation,
+            temporary and permanent housing solutions and other critical
+            services. The Navigator provides victims with a personalized action
+            plan based on their specific situation, making the recovery process
+            immediately actionable and helping our community to rebuild even
+            stronger.
+          </p>
+          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Who We Are
           </h2>
-          <p className="mb-6 md:mb-12">
+          {/* <p> */}
+          <p className="mb-4 md:mb-4 sm:mb-4">
             Better Angels, Imagine LA, and Mayor Karen Bass's Office have come
             together to support Angelenos affected by the devastating January
             2025 wildfires. Each partner brings unique expertise and a shared
             commitment to fostering community strength and resilience.
           </p>
-          <ul className="ml-6 mb-6 md:mb-32">
+          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12">
             <li className="list-disc">
-              <span className="font-bold">Better Angels</span>: A tech-forward
-              nonprofit organization dedicated to ending the epidemic of
-              homelessness in Los Angeles.
+              <span className="font-bold">Better Angels</span>: Better Angels is
+              on a mission to end the epidemic of homelessness in Los Angeles by
+              unlocking the power of the entire Los Angeles community. Better
+              Angels is taking a holistic approach, harnessing new models of
+              intervention, community engagement, advocacy, world-class
+              technology, and a strong dose of pragmatism across five critical
+              areas of need: Prevention, Services, Shelter, Housing and
+              Technology.
             </li>
             <li className="list-disc">
-              <span className="font-bold">Imagine LA</span>: Creators of the{' '}
+              <span className="font-bold">Imagine LA</span>: A social impact
+              organization specializing in helping individuals and families
+              maximize public benefits and chart permanent pathways out of
+              poverty. ImagineLA created the{' '}
               <a
                 className="underline"
                 href="https://www.imaginela.org/benefit-navigator"
                 target="_blank"
                 rel="noreferrer"
               >
-                BENEFIT NAVIGATOR — Imagine LA
+                Benefits Navigator
               </a>
-              . A social impact organization specializing in helping individuals
-              and families maximize public benefits and chart permanent pathways
-              out of poverty.
+              , a suite of online tools dedicated to helping individuals and
+              families maximize their public benefits and chart permanent
+              pathways out of poverty.
             </li>
             <li className="list-disc">
               <span className="font-bold">Mayor Karen Bass's Office</span>:
               Leads the nation's second largest city with urgency to deliver
               results for all Angelenos.
             </li>
+          </ul>
+          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
+            Our Sponsors
+          </h2>
+          <p className="mb-4 md:mb-4 sm:mb-4">
+            This project was initially supported by two LA-based foundations,
+            who wanted to ensure that people needing help had an accessible way
+            to find and receive critical resources.
+          </p>
+          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12">
             <li className="list-disc">
               <span className="font-bold">Annenberg Foundation</span>: A
               philanthropic foundation dedicated to addressing the critical
@@ -102,7 +138,7 @@ export default function About() {
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             What We Do
           </h2>
-          <p className="mb-6 md:mb-32">
+          <p className="mb-6 md:mb-16 sm:mb-12">
             Our mission is to provide personalized, actionable resources to all
             Angelenos affected by the wildfires. Through this platform, we aim
             to connect individuals and families with the tools, services, and
@@ -111,7 +147,7 @@ export default function About() {
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Why We Care
           </h2>
-          <p className="mb-6 md:mb-32">
+          <p className="mb-6 md:mb-16 sm:mb-12">
             We recognize the profound impact the wildfires have had on our
             community, from displaced families to disrupted livelihoods. By
             working together, we aim to ensure no Angeleno faces these
@@ -121,7 +157,7 @@ export default function About() {
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Our Vision
           </h2>
-          <p className="mb-6 md:mb-32">
+          <p className="mb-6 md:mb-16">
             A stronger, more resilient Los Angeles, where every resident has
             access to the support they need during times of crisis and beyond.
           </p>
