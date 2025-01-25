@@ -43,21 +43,19 @@ type TCategoryResources = {
 
 export function groupResources(resources: TResource[]): TCategoryResources[] {
   const resourcesWithCategories = resources.flatMap((resource) =>
-    (resource.tags || []).map((tag) => ({
-      category: tag.category,
-      resource,
-    }))
+    (resource.tags || []).flatMap((tag) =>
+      tag.category ? [{ category: tag.category, resource }] : []
+    )
   );
 
-  const validResources = resourcesWithCategories.filter(
-    (entry) => entry.category !== undefined
+  const grouped = groupBy(
+    resourcesWithCategories,
+    (entry) => entry.category.slug
   );
-
-  const grouped = groupBy(validResources, (entry) => entry.category?.slug);
 
   const categoryResources: TCategoryResources[] = Object.entries(grouped).map(
     ([slug, entries]) => ({
-      category: entries[0].category ?? { name: 'Unknown', slug: slug },
+      category: entries[0].category,
       resources: uniqueBy(
         entries.map((entry) => entry.resource),
         (r) => r.slug
