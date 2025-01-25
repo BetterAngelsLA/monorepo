@@ -12,7 +12,7 @@ export function AboutLink(props: IProps) {
 
   return (
     <Link className={mergeCss(parentCss)} to="/about">
-      <div className="hidden lg:block">About LA Disaster Relief Navigator</div>
+      <div className="hidden lg:block">About</div>
       <div className="lg:hidden">About</div>
     </Link>
   );
