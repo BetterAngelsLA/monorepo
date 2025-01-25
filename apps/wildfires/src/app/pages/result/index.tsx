@@ -1,5 +1,5 @@
+// src/app/pages/result/index.tsx
 import { useAtom } from 'jotai';
-import { useEffect } from 'react';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
 import GeneratePDF from '../../shared/components/GeneratePDF';
@@ -9,42 +9,12 @@ import ImportantTips from '../../shared/components/importantTips/ImportantTips';
 import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
-
-const currentDomain = window.location.origin;
-const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
+import useSurveySubmission from '../../shared/hooks/useSurveySubmission';
 
 export default function Result() {
   const [surveyResults] = useAtom(surveyResultsAtom);
 
-  const submitSurvey = async (survey: any) => {
-    try {
-      const newDate = new Date();
-
-      const surveyData = {
-        answers: survey.answers,
-        timestamp: newDate,
-        referrer_base: basename,
-      };
-
-      await fetch(`${currentDomain}/api/submitResults`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(surveyData),
-      });
-    } catch (error) {
-      console.error('Request failed', error);
-    }
-  };
-
-  useEffect(() => {
-    if (!surveyResults) {
-      return;
-    }
-
-    submitSurvey(surveyResults);
-  }, [surveyResults]);
+  useSurveySubmission(surveyResults || null);
 
   return (
     <>
@@ -58,7 +28,7 @@ export default function Result() {
       <HorizontalLayout>
         <div id="content-to-pdf">
           <BestPractices />
-          {!!surveyResults && (
+          {surveyResults && (
             <SurveyResults className="mt-8 mb-24" results={surveyResults} />
           )}
           <ImportantTips />
