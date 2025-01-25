@@ -26,42 +26,25 @@ function generateQueryParams(tags: string[]): string {
     .join(' || ');
 
   const query = `
-  *[_type == "category"] | order(priority asc) {
-    name,
-    "slug": slug.current,
-    priority,
-  "tags": *[
-    _type == "resource-tag" &&
-    references(^._id) &&
-    (${tagsCondition})
-  ] {
+    *[_type == "resource" && references(*[_type == "resource-tag" && (${tagsCondition})]._id)]{
       "slug": slug.current,
-      label,
-      "resources": *[
-        _type == "resource" &&
-        references(^._id)
-      ] | order(priority asc) {
-        title,
-        resourceType,
-        description,
-        shortDescription,
+      priority,
+      resourceType,
+      title,
+      description,
+      shortDescription,
+      resourceLink,
+      usefulTipsLink,
+      "tags": tags[]->{
+        label,
         "slug": slug.current,
-        resourceLink,
-        priority,
+        category->{
+          name,
+          "slug": slug.current,
+          priority,
+        }
       }
-    }
-  }`;
+    }`;
 
   return query.replace(/\s+/g, ' ').trim();
 }
-
-// "description": description[].children[]{
-//   _type,
-//   marks,
-//   text
-// },
-// "shortDescription": shortDescription[].children[]{
-//   _type,
-//   marks,
-//   text
-// },

@@ -1,8 +1,4 @@
-import {
-  ResourceTagCategoryEnum,
-  tagsByCategory,
-} from '../../../pages/introduction/firesSurvey/constants.survey';
-import { TResource } from '../../clients/sanityCms/types';
+import { TResource, TTagCategory } from '../../clients/sanityCms/types';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { ResourceGroupCard } from './ResourceGroupCard';
 
@@ -15,7 +11,8 @@ export function SurveyResources(props: IProps) {
   const { resources, className } = props;
 
   const parentCss = [className];
-  const groupedResources = groupResourcesByCategory(resources);
+
+  const groupedAndSortedResources = groupResources(resources);
 
   return (
     <div className={mergeCss(parentCss)}>
@@ -23,15 +20,14 @@ export function SurveyResources(props: IProps) {
         Resources
       </div>
 
-      {Object.keys(groupedResources).map((categoryKey) => {
-        const categoryEnum = categoryKey as ResourceTagCategoryEnum;
-        const resources = groupedResources[categoryEnum];
+      {groupedAndSortedResources.map((categoryResources) => {
+        const { category, resources } = categoryResources;
 
         return (
           <ResourceGroupCard
-            key={categoryKey}
+            key={category.slug}
             className="mb-12 md:mb-20 last:mb-0"
-            resourceCategory={categoryEnum}
+            resourceCategory={category.name}
             resources={resources}
           />
         );
@@ -40,38 +36,57 @@ export function SurveyResources(props: IProps) {
   );
 }
 
-export function groupResourcesByCategory(
-  resources: TResource[]
-): Partial<Record<ResourceTagCategoryEnum, TResource[]>> {
-  const grouped: Partial<Record<ResourceTagCategoryEnum, TResource[]>> = {};
+type TCategoryResources = {
+  category: TTagCategory;
+  resources: TResource[];
+};
+
+export function groupResources(resources: TResource[]): TCategoryResources[] {
+  const groupedResources: Record<string, TResource[]> = {};
+  const categories: TTagCategory[] = [];
 
   resources.forEach((resource) => {
-    if (resource.tags) {
-      for (const tag of resource.tags) {
-        for (const category of Object.keys(ResourceTagCategoryEnum)) {
-          const categoryEnum =
-            ResourceTagCategoryEnum[
-              category as keyof typeof ResourceTagCategoryEnum
-            ];
+    resource.tags?.forEach((tag) => {
+      const category = tag.category;
 
-          if (tagsByCategory[categoryEnum].includes(tag)) {
-            if (!grouped[categoryEnum]) {
-              grouped[categoryEnum] = [];
-            }
-            grouped[categoryEnum]!.push(resource);
+      if (category) {
+        if (!groupedResources[category.slug]) {
+          groupedResources[category.slug] = [];
 
-            return;
-          }
+          categories.push(category);
         }
+
+        groupedResources[category.slug].push(resource);
       }
-    }
+    });
   });
 
-  for (const category in grouped) {
-    if (grouped[category as keyof typeof grouped]?.length === 0) {
-      delete grouped[category as keyof typeof grouped];
+  const grouped: TCategoryResources[] = Object.keys(groupedResources).map(
+    (categorySlug) => {
+      return {
+        category: categories.find(
+          (c) => c.slug === categorySlug
+        ) as TTagCategory,
+        resources: groupedResources[categorySlug],
+      };
     }
-  }
+  );
 
-  return grouped;
+  return sortCategoryResourcesByPriority(grouped);
+}
+
+export function sortCategoryResourcesByPriority(
+  categoryResources: TCategoryResources[]
+): TCategoryResources[] {
+  return categoryResources.sort((a, b) => {
+    // Handle undefined or null priority by treating them as the lowest possible priority
+    const priorityA = a.category.priority ?? -Infinity;
+    const priorityB = b.category.priority ?? -Infinity;
+
+    // Compare priorities: lower number first
+    if (priorityA < priorityB) return -1;
+    if (priorityA > priorityB) return 1;
+
+    return 0;
+  });
 }

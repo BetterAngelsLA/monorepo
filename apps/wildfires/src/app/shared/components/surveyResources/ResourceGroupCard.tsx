@@ -1,7 +1,3 @@
-import {
-  ResourceTagCategoryEnum,
-  ResourceTagCategoryLabelEnum,
-} from '../../../pages/introduction/firesSurvey/constants.survey';
 import { TResource } from '../../clients/sanityCms/types';
 import { sortByPriority } from '../../utils/sort';
 import { mergeCss } from '../../utils/styles/mergeCss';
@@ -10,7 +6,7 @@ import { ResourceCard } from './ResourceCard';
 
 type IProps = {
   className?: string;
-  resourceCategory: ResourceTagCategoryEnum;
+  resourceCategory: string;
   resources?: TResource[];
 };
 
@@ -25,7 +21,7 @@ export function ResourceGroupCard(props: IProps) {
 
   const sortedResources = sortByPriority<TResource>(resources, 'priority');
 
-  const title = ResourceTagCategoryLabelEnum[resourceCategory];
+  const title = resourceCategory;
 
   return (
     <div className={mergeCss(parentCss)}>
