@@ -48,7 +48,7 @@ export function SurveyNav(props: IProps) {
     className,
   ];
 
-  const buttonCss = ['my-4', 'max-w-[350px]', 'md:mx-3'];
+  const buttonCss = ['my-2', 'max-w-[350px]', 'md:mx-3'];
 
   const nextButtonCss = [buttonCss];
   const prevButtonCss = [buttonCss, 'md:order-first'];

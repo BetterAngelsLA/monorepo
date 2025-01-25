@@ -53,6 +53,7 @@ textarea:focus {
   border-color: var(--color-brand-yellow);
 }
 
+/* Google Translate Widget */
 .goog-te-combo {
   background-color: transparent !important;
   color: #fff !important;
@@ -69,11 +70,24 @@ textarea:focus {
     font-size: 12px !important;
     max-width: 120px !important;
   }
+  #goog-gt-tt {
+    width: 90% !important;
+    max-width: 300px !important;
+  }
 }
 
 .goog-te-gadget {
   max-height: 20px !important;
   overflow: hidden !important;
+}
+
+#goog-te-popup {
+  position: absolute !important;
+  top: auto !important;
+  bottom: 10px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 9999 !important;
 }
 
 /* survey wysiwyg  CSS */

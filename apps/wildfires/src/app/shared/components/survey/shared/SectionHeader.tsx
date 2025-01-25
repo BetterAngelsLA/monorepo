@@ -11,7 +11,6 @@ export function SectionHeader(props: IProps) {
   const parentCss = [
     'text-base',
     'md:text-2xl',
-    'uppercase',
     'leading-normal',
     'md:leading-normal', // required to override text-base line-height
     'font-bold',

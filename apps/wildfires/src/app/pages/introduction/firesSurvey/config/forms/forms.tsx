@@ -19,7 +19,7 @@ export const introductionForm: TSurveyForm = {
 
 export const documentReplacementForm: TSurveyForm = {
   id: 'documentReplacementForm',
-  title: 'documentReplacementForm',
+  title: 'Documentation',
   nextFormId: 'incomeAssessmentForm',
   questions: [qDocumentReplacement],
   showConditions: {
@@ -36,7 +36,7 @@ export const documentReplacementForm: TSurveyForm = {
 
 export const incomeAssessmentForm: TSurveyForm = {
   id: 'incomeAssessmentForm',
-  title: 'incomeAssessmentForm',
+  title: 'Income',
   nextFormId: 'employmentTypeForm',
   questions: [qIncomeAssessment],
   showConditions: {
@@ -53,7 +53,7 @@ export const incomeAssessmentForm: TSurveyForm = {
 
 export const employmentTypeForm: TSurveyForm = {
   id: 'employmentTypeForm',
-  title: 'employmentTypeForm',
+  title: 'Employment',
   nextFormId: 'tempHousingForm',
   questions: [qEmploymentType],
   showConditions: {
@@ -69,7 +69,7 @@ export const employmentTypeForm: TSurveyForm = {
 
 export const tempHousingForm: TSurveyForm = {
   id: 'tempHousingForm',
-  title: 'tempHousingForm',
+  title: 'Housing',
   nextFormId: 'rentOrOwnFormForm',
   questions: [qTempHousing],
   showConditions: {
@@ -86,7 +86,7 @@ export const tempHousingForm: TSurveyForm = {
 
 export const rentOrOwnFormForm: TSurveyForm = {
   id: 'rentOrOwnFormForm',
-  title: 'rentOrOwnFormForm',
+  title: 'Housing',
   nextFormId: 'haveOwnersInsuranceForm',
   questions: [qRentOrOwn],
   showConditions: {
@@ -102,7 +102,7 @@ export const rentOrOwnFormForm: TSurveyForm = {
 
 export const haveOwnersInsuranceForm: TSurveyForm = {
   id: 'haveOwnersInsuranceForm',
-  title: 'haveOwnersInsuranceForm',
+  title: 'Housing',
   nextFormId: 'haveRentersInsuranceForm',
   questions: [qHaveOwnersInsurance],
   showConditions: {
@@ -119,7 +119,7 @@ export const haveOwnersInsuranceForm: TSurveyForm = {
 
 export const haveRentersInsuranceForm: TSurveyForm = {
   id: 'haveRentersInsuranceForm',
-  title: 'haveRentersInsuranceForm',
+  title: 'Renters Insurance Form',
   nextFormId: 'isSmallBusinessForm',
   questions: [qHaveRentersInsurance],
   showConditions: {
@@ -136,7 +136,7 @@ export const haveRentersInsuranceForm: TSurveyForm = {
 
 export const isSmallBusinessForm: TSurveyForm = {
   id: 'isSmallBusinessForm',
-  title: 'isSmallBusinessForm',
+  title: 'Business',
   nextFormId: null,
   questions: [qIsSmallBusiness],
   showConditions: {

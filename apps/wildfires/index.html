@@ -18,10 +18,10 @@
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
-  <div id="google_translate_element"></div>
+  <div id="google_translate_element" style="display: none;"></div>
   <script type="text/javascript">
     function googleTranslateElementInit() {
-      new google.translate.TranslateElement({pageLanguage: 'en',layout: google.translate.TranslateElement.InlineLayout.VERTICAL, autodisplay: false, includedLanguages:'en,es,zh-CN,ko,tl,hy,fa,ru,ja,vi,fr'}, 'google_translate_element');
+      new google.translate.TranslateElement({pageLanguage: 'en',layout: google.translate.TranslateElement, autodisplay: false, includedLanguages:'en,es,zh-CN,ko,tl,hy,fa,ru,ja,vi,fr'}, 'google_translate_element');
     }
   </script>
 </body>
