@@ -25,7 +25,7 @@ export function ResourceCard(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <div className="font-bold">{title}</div>
+      <div className="font-bold text-[24px]">{title}</div>
 
       {!!shortDescription && (
         <ResourcePortableText className="mt-8" data={shortDescription} />

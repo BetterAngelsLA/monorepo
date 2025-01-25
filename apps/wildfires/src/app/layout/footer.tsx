@@ -26,13 +26,17 @@ export function Footer(props: IParams): ReactElement {
     <footer className={mergeCss(parentCss)}>
       <div className="flex flex-col md:flex-row md:items-center justify-between">
         <div className="flex ml-2 mb-8 md:mb-0">
-          <a href="https://www.betterangels.la/">
+          <a
+            target="_blank"
+            href="https://www.betterangels.la/"
+            rel="noreferrer"
+          >
             <img src={BA_LOGO} alt="Better Angels LA" className="h-9" />
           </a>
         </div>
         <div className="flex flex-col align-end gap-14 ml-4">
           <div className="flex flex-col md:flex-row gap-8 md:gap-10">
-            <Link to="/about">bout LA Disaster Relief Navigator</Link>
+            <Link to="/about">About LA Disaster Relief Navigator</Link>
             <a href="mailto:wildfires@betterangels.la">Contact Us</a>
             <Link to="/privacy-policy">Privacy Policy</Link>
           </div>
