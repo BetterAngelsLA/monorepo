@@ -18,9 +18,7 @@ export function NavLinks(props: IProps) {
 
       <Link to="/about" className="mb-8">
         <div className="lg:hidden">About</div>
-        <div className="hidden lg:block">
-          About LA Disaster Relief Navigator
-        </div>
+        <div className="hidden lg:block">About</div>
       </Link>
 
       {/* <TranslateBtn className="mb-8" /> */}
