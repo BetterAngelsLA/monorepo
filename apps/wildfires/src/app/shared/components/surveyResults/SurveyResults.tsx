@@ -68,8 +68,6 @@ type IProps = {
 export function SurveyResults(props: IProps) {
   const { results, className } = props;
 
-  const surveryConf = surveyConfig;
-
   const { answers = [] } = results;
 
   const queryTags = getTags(answers);
