@@ -15,7 +15,6 @@ export function SurveyResources(props: IProps) {
   const { resources, className } = props;
 
   const parentCss = [className];
-
   const groupedResources = groupResourcesByCategory(resources);
 
   return (

@@ -84,7 +84,6 @@ export function SurveyResults(props: IProps) {
   const parentCss = [className];
 
   const resources = toTResources(data?.result);
-
   return (
     <div className={mergeCss(parentCss)}>
       {resources && <SurveyResources resources={resources} />}

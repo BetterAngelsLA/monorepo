@@ -26,7 +26,21 @@ function generateQueryParams(tags: string[]): string {
     .join(' || ');
 
   const query = `
-      *[_type == "resource" && references(*[_type == "resource-tag" && (${tagsCondition})]._id)]{
+  *[_type == "category"] | order(priority asc) {
+    name,
+    "slug": slug.current,
+    priority,
+  "tags": *[
+    _type == "resource-tag" &&
+    references(^._id) &&
+    (${tagsCondition})
+  ] {
+      "slug": slug.current,
+      label,
+      "resources": *[
+        _type == "resource" &&
+        references(^._id)
+      ] | order(priority asc) {
         title,
         resourceType,
         description,
@@ -34,14 +48,9 @@ function generateQueryParams(tags: string[]): string {
         "slug": slug.current,
         resourceLink,
         priority,
-        "tags": tags[]->{
-          "slug": slug.current,
-          "categories": category->{
-            name,
-            priority
-          }
-        }
-      }`;
+      }
+    }
+  }`;
 
   return query.replace(/\s+/g, ' ').trim();
 }
