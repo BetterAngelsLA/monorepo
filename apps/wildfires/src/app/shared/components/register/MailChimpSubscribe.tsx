@@ -60,25 +60,31 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
         <div className="flex flex-row flex-wrap w-full mb-2">
           <div className="flex flex-row flex-wrap w-full mb-2">
             <div className="flex flex-1 flex-col mb-2">
-              <label className="mb-1 font-bold">First Name</label>
+              <label className="mb-1 font-bold">
+                First Name<span className="text-[#FF0000]">*</span>
+              </label>
               <input
                 style={styles.input}
                 onChange={handleChange}
                 type="text"
                 name="firstName"
                 value={formData.firstName}
+                required={true}
                 placeholder="First Name"
               />
             </div>
 
             <div className="flex flex-1 flex-col mb-2">
-              <label className="mb-1 font-bold">Last Name</label>
+              <label className="mb-1 font-bold">
+                Last Name<span className="text-[#FF0000]">*</span>
+              </label>
               <input
                 style={styles.input}
                 onChange={handleChange}
                 type="text"
                 name="lastName"
                 value={formData.lastName}
+                required={true}
                 placeholder="Last Name"
               />
             </div>
@@ -151,7 +157,12 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
             dark
             className="w-[150px]"
             onClick={handleSubmit}
-            disabled={!EMAIL_REGEX.test(formData.email || '')}
+            disabled={
+              status === 'sending' ||
+              !EMAIL_REGEX.test(formData.email || '') ||
+              !formData.firstName ||
+              !formData.lastName
+            }
           >
             Submit
           </SurveyButton>
