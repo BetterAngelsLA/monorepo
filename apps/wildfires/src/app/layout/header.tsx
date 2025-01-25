@@ -25,7 +25,7 @@ export function Header(props: IParams): ReactElement {
 
   return (
     <header className={mergeCss(parentCss)}>
-      <HomeLink className="h-8 md:h-12" />
+      <HomeLink className="min-w-[116px] w-[116px] md:w-[260px] md:min-w-[260px]" />
       <MenuDesktop />
       <MenuBtnMobile className="block lg:hidden" />
     </header>
