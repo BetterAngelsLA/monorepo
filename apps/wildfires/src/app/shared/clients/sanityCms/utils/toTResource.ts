@@ -1,5 +1,6 @@
 import { PortableTextBlock } from '@portabletext/react';
 import { TResource } from '../types';
+import { toTTags } from './toTTag';
 
 function toPortableTextBlock(item: any): PortableTextBlock | null {
   if (!Array.isArray(item)) {
@@ -33,9 +34,10 @@ export function toTResource(item: any): TResource | null {
     slug: item.slug,
     resourceType: item.resourceType,
     resourceLink: item.resourceLink,
-    priority: item.priority,
-    tags: item.tags,
+    usefulTipsLink: item.usefulTipsLink,
+    priority: Number.isInteger(item.priority) ? item.priority : undefined,
     description: toPortableTextBlock(item.description),
     shortDescription: toPortableTextBlock(item.shortDescription),
+    tags: toTTags(item.tags),
   };
 }
