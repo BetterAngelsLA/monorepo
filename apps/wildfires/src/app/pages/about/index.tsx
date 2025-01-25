@@ -117,7 +117,7 @@ export default function About() {
           <p className="mb-4 md:mb-4 sm:mb-4">
             This project was initially supported by two LA-based foundations,
             who wanted to ensure that people needing help had an accessible way
-            to find and receive critical resources.
+            to find and receive critical resources.{' '}
           </p>
           <ul className="ml-6 mb-6 md:mb-16 sm:mb-12">
             <li className="list-disc">
@@ -136,15 +136,6 @@ export default function About() {
             </li>
           </ul>
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
-            What We Do
-          </h2>
-          <p className="mb-6 md:mb-16 sm:mb-12">
-            Our mission is to provide personalized, actionable resources to all
-            Angelenos affected by the wildfires. Through this platform, we aim
-            to connect individuals and families with the tools, services, and
-            information necessary to recover, rebuild, and move forward.
-          </p>
-          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Why We Care
           </h2>
           <p className="mb-6 md:mb-16 sm:mb-12">
@@ -153,13 +144,9 @@ export default function About() {
             working together, we aim to ensure no Angeleno faces these
             challenges alone. This website reflects our dedication to creating a
             centralized, user-friendly resource hub for every resident in need.
-          </p>
-          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
-            Our Vision
-          </h2>
-          <p className="mb-6 md:mb-16">
-            A stronger, more resilient Los Angeles, where every resident has
-            access to the support they need during times of crisis and beyond.
+            We seek a stronger, more resilient Los Angeles, where every resident
+            has access to the support they need during times of crisis and
+            beyond.
           </p>
         </div>
       </HorizontalLayout>
