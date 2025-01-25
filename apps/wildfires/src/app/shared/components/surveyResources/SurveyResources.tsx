@@ -1,7 +1,7 @@
+import { groupBy, sortBy, uniqueBy } from 'remeda';
 import { TResource, TTagCategory } from '../../clients/sanityCms/types';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { ResourceGroupCard } from './ResourceGroupCard';
-
 type IProps = {
   className?: string;
   resources: TResource[];
@@ -42,51 +42,28 @@ type TCategoryResources = {
 };
 
 export function groupResources(resources: TResource[]): TCategoryResources[] {
-  const groupedResources: Record<string, TResource[]> = {};
-  const categories: TTagCategory[] = [];
-
-  resources.forEach((resource) => {
-    resource.tags?.forEach((tag) => {
-      const category = tag.category;
-
-      if (category) {
-        if (!groupedResources[category.slug]) {
-          groupedResources[category.slug] = [];
-
-          categories.push(category);
-        }
-
-        groupedResources[category.slug].push(resource);
-      }
-    });
-  });
-
-  const grouped: TCategoryResources[] = Object.keys(groupedResources).map(
-    (categorySlug) => {
-      return {
-        category: categories.find(
-          (c) => c.slug === categorySlug
-        ) as TTagCategory,
-        resources: groupedResources[categorySlug],
-      };
-    }
+  const resourcesWithCategories = resources.flatMap((resource) =>
+    (resource.tags || []).map((tag) => ({
+      category: tag.category,
+      resource,
+    }))
   );
 
-  return sortCategoryResourcesByPriority(grouped);
-}
+  const validResources = resourcesWithCategories.filter(
+    (entry) => entry.category !== undefined
+  );
 
-export function sortCategoryResourcesByPriority(
-  categoryResources: TCategoryResources[]
-): TCategoryResources[] {
-  return categoryResources.sort((a, b) => {
-    // Handle undefined or null priority by treating them as the lowest possible priority
-    const priorityA = a.category.priority ?? -Infinity;
-    const priorityB = b.category.priority ?? -Infinity;
+  const grouped = groupBy(validResources, (entry) => entry.category?.slug);
 
-    // Compare priorities: lower number first
-    if (priorityA < priorityB) return -1;
-    if (priorityA > priorityB) return 1;
+  const categoryResources: TCategoryResources[] = Object.entries(grouped).map(
+    ([slug, entries]) => ({
+      category: entries[0].category ?? { name: 'Unknown', slug: slug },
+      resources: uniqueBy(
+        entries.map((entry) => entry.resource),
+        (r) => r.slug
+      ),
+    })
+  );
 
-    return 0;
-  });
+  return sortBy(categoryResources, (cr) => cr.category.priority ?? -Infinity);
 }
