@@ -14,9 +14,9 @@ export function MenuDesktop(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <AboutLink className="mr-8 hidden lg:flex" />
+      <AboutLink className="mx-8 hidden lg:flex" />
       <GoogleTranslateBtn className="mr-8" />
-      <DonateButton className="hidden lg:flex" />
+      <DonateButton className="hidden lg:flex text-center" />
     </div>
   );
 }
