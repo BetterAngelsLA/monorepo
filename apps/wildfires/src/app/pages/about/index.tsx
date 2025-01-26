@@ -1,8 +1,3 @@
-import AnnenbergLogo from '../../../assets/images/AF-2022-Horiz.png';
-import BaLogo from '../../../assets/images/ba-logo-white.png';
-import ImagineLaLogo from '../../../assets/images/imagine_la_logo.png';
-import MayorsFundLaLogo from '../../../assets/images/mayors-fund-logo.png';
-import RSKFLaLogo from '../../../assets/images/RSKF_LA_Logotype_Black.png';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import ContactUs from '../../shared/components/contactUs/ContactUs';
 
@@ -11,39 +6,13 @@ export default function About() {
     <>
       <HorizontalLayout className="bg-brand-dark-blue">
         <div className="relative">
-          <div className="max-w-[62.5rem] mx-auto flex flex-col md:flex-row items-stretch">
-            <div className="bg-brand-dark-blue w-full md:w-[60%] py-40 flex items-center  md:py-0">
-              <h1 className="border-l-[10px] border-brand-yellow font-light font-primary md:font-bold pl-4 md:pl-8 text-5xl md:text-[64px] text-white md:leading-[1.2] text-left">
-                About <span className="whitespace-nowrap">LA Disaster</span>{' '}
-                Relief Navigator
+          <div className="max-w-[62.5rem] mx-auto flex flex-col md:flex-row items-stretch min-h-[60vh] py-14 md:py-28">
+            <div className="bg-brand-dark-blue w-full md:w-[60%] py-40 flex items-center md:py-0">
+              <h1 className="border-l-[10px] border-brand-yellow font-light font-primary pl-4 md:pl-8 text-5xl md:text-[64px] text-white md:leading-[1.2] text-left md:whitespace-nowrap">
+                <span className="block md:inline">About</span>{' '}
+                <span className="block md:inline">LA Disaster</span>{' '}
+                <span className="block md:inline">Relief Navigator</span>
               </h1>
-            </div>
-            <div className="flex flex-col h-full items-center w-full md:w-[40%] bg-brand-sky-blue md:px-4 py-12 gap-16">
-              <img
-                className="w-[292px] md:w-[400px]"
-                src={BaLogo}
-                alt="Better Angels LA"
-              />
-              <img
-                className="w-[226px] md:w-[310px]"
-                src={ImagineLaLogo}
-                alt="Imagine LA"
-              />
-              <img
-                className="w-[292px] md:w-[400px]"
-                src={MayorsFundLaLogo}
-                alt="Mayor's fund for Los Angeles"
-              />
-              <img
-                className="w-[292px] md:w-[400px]"
-                src={AnnenbergLogo}
-                alt="Annenberg Foundation"
-              />
-              <img
-                className="w-[292px] md:w-[400px]"
-                src={RSKFLaLogo}
-                alt="R&S Kayne Foundation Los Angeles"
-              />
             </div>
           </div>
         </div>
