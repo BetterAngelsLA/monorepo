@@ -42,7 +42,11 @@ export function ResourceCard(props: IProps) {
       )}
 
       {!!resourceLink && (
-        <ResourceLink className="self-end mt-8" href={resourceLink} />
+        <ResourceLink
+          title={title}
+          className="self-end mt-8"
+          href={resourceLink}
+        />
       )}
     </div>
   );
