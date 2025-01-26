@@ -139,7 +139,7 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
         </div>
 
         <div className="flex flex-row items-center justify-center mb-1">
-          <div className="max-h-[50px]">
+          <div className="max-h-[50px] mb-2">
             {status === 'sending' && <div>Sending...</div>}
             {status === 'error' && (
               <div
@@ -148,16 +148,16 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
               />
             )}
             {status === 'success' && (
-              <div className="color-brand-dark-blue">
+              <div className="color-brand-dark-blue mt-3">
                 You will receive a confirmation email to subscribe!
               </div>
             )}
           </div>
         </div>
-        <div className="flex flex-row items-center justify-end pr-4">
+        <div className="flex flex-col items-center justify-center pr-4 mt-6">
           <SurveyButton
             dark
-            className="w-[150px]"
+            className="max-w-[350px] justify-center"
             onClick={handleSubmit}
             disabled={
               status === 'sending' ||
