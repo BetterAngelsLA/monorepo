@@ -36,7 +36,6 @@ export function toTResource(item: any): TResource | null {
     resourceLink: item.resourceLink,
     usefulTipsLink: item.usefulTipsLink,
     priority: Number.isInteger(item.priority) ? item.priority : undefined,
-    description: toPortableTextBlock(item.description),
     shortDescription: toPortableTextBlock(item.shortDescription),
     tags: toTTags(item.tags),
   };
