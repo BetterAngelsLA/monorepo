@@ -22,8 +22,8 @@ export default function About() {
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             About
           </h2>
-          <p className="mb-6 md:mb-16 sm:mb-12">
-            Better Angels, in partnership with ImagineLA and the Mayor’s Fund,
+          <p className="mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
+            Better Angels, in partnership with ImagineLA and the Mayor's Fund,
             has launched the LA Disaster Relief Navigator, an online tool to
             help Angelenos impacted by the wildfires effectively navigate the
             many resources potentially available to them. The solution is
@@ -39,14 +39,13 @@ export default function About() {
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Who We Are
           </h2>
-          {/* <p> */}
-          <p className="mb-4 md:mb-4 sm:mb-4">
+          <p className="mb-4 md:mb-4 sm:mb-4 text-xl leading-normal">
             Better Angels, Imagine LA, and Mayor Karen Bass's Office have come
             together to support Angelenos affected by the devastating January
             2025 wildfires. Each partner brings unique expertise and a shared
             commitment to fostering community strength and resilience.
           </p>
-          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12">
+          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
             <li className="list-disc">
               <span className="font-bold">Better Angels</span>: Better Angels is
               on a mission to end the epidemic of homelessness in Los Angeles by
@@ -83,12 +82,12 @@ export default function About() {
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Our Sponsors
           </h2>
-          <p className="mb-4 md:mb-4 sm:mb-4">
+          <p className="mb-4 md:mb-4 sm:mb-4 text-xl leading-normal">
             This project was initially supported by two LA-based foundations,
             who wanted to ensure that people needing help had an accessible way
             to find and receive critical resources.{' '}
           </p>
-          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12">
+          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
             <li className="list-disc">
               <span className="font-bold">Annenberg Foundation</span>: A
               philanthropic foundation dedicated to addressing the critical
@@ -107,7 +106,7 @@ export default function About() {
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Why We Care
           </h2>
-          <p className="mb-6 md:mb-16 sm:mb-12">
+          <p className="mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
             We recognize the profound impact the wildfires have had on our
             community, from displaced families to disrupted livelihoods. By
             working together, we aim to ensure no Angeleno faces these
