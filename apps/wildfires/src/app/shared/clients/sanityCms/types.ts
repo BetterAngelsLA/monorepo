@@ -8,7 +8,6 @@ export type TResource = {
   usefulTipsLink?: string;
   priority?: number;
   tags?: TTag[];
-  description?: PortableTextBlock | null;
   shortDescription?: PortableTextBlock | null;
 };
 
