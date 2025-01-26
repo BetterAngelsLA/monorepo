@@ -12,31 +12,50 @@ export default function Partners() {
         This site is brought to you by
       </h2>
       <div className="flex flex-col justify-center flex-wrap md:flex-row flex-grow h-full gap-6">
-        <PartnerCard link="https://www.betterangels.la/">
-          <img className="w-[212px]" src={BaLogo} alt="partner imagine LA" />
+        <PartnerCard
+          ariaLabel="open better angels LA website in new tab"
+          link="https://www.betterangels.la/"
+        >
+          <img
+            className="w-[212px]"
+            src={BaLogo}
+            alt="partner better angels LA"
+          />
         </PartnerCard>
-        <PartnerCard link="https://www.imaginela.org/">
+        <PartnerCard
+          ariaLabel="open imagine LA website in new tab"
+          link="https://www.imaginela.org/"
+        >
           <img className="w-[164px]" src={Imagine} alt="partner imagine LA" />
         </PartnerCard>
-        <PartnerCard link="https://www.mayorsfundla.org/">
+        <PartnerCard
+          ariaLabel="open Mayor's fund for Los Angeles website in new tab"
+          link="https://www.mayorsfundla.org/"
+        >
           <img
             className="w-[212px]"
             src={Mayor}
             alt="partner Mayor's fund for Los Angeles"
           />
         </PartnerCard>
-        <PartnerCard link="https://annenberg.org/">
+        <PartnerCard
+          ariaLabel="open Annenberg Foundation website in new tab"
+          link="https://annenberg.org/"
+        >
           <img
             className="w-[212px]"
             src={Annenberg}
-            alt="Annenberg Foundation"
+            alt="sponsor Annenberg Foundation"
           />
         </PartnerCard>
-        <PartnerCard link="https://www.kaynefoundation.org/">
+        <PartnerCard
+          ariaLabel="open R&S Kayne Foundation website in new tab"
+          link="https://www.kaynefoundation.org/"
+        >
           <img
             className="w-[212px]"
             src={Kayn}
-            alt="R&S Kayne Foundation Logo"
+            alt="sponsor R&S Kayne Foundation Logo"
           />
         </PartnerCard>
       </div>
