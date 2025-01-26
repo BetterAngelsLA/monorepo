@@ -4,7 +4,6 @@ import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
 import GeneratePDF from '../../shared/components/GeneratePDF';
 import BestPractices from '../../shared/components/bestPractices/BestPractices';
 import Hero from '../../shared/components/hero/Hero';
-import ImportantTips from '../../shared/components/importantTips/ImportantTips';
 import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
@@ -30,7 +29,6 @@ export default function Result() {
           {surveyResults && (
             <SurveyResults className="mt-8 mb-24" results={surveyResults} />
           )}
-          <ImportantTips />
         </div>
         <GeneratePDF
           className="mb-16 md:mb-28 bg-brand-dark-blue text-white mx-auto"

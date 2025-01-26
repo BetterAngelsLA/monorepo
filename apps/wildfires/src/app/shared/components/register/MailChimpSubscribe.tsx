@@ -107,7 +107,9 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
             </div>
 
             <div className="flex flex-1 flex-col mb-2">
-              <label className="mb-1 font-bold">Zip Code</label>
+              <label className="mb-1 font-bold">
+                Zip Code of Fire Imacted Property
+              </label>
               <input
                 style={styles.input}
                 onChange={handleChange}
