@@ -22,16 +22,17 @@ export function GoogleTranslateBtn(props: IProps) {
   };
 
   const langs = [
-    { id: "hy", text: "Armenian" },
-    { id: "zh-CN", text: "Chinese (Simplified)" },
-    { id: "tl", text: "Filipino" },
-    { id: "fr", text: "French" },
-    { id: "ja", text: "Japanese" },
-    { id: "ko", text: "Korean" },
-    { id: "fa", text: "Persian" },
-    { id: "ru", text: "Russian" },
-    { id: "es", text: "Spanish" },
-    { id: "vi", text: "Vietnamese" },
+    { id: 'hy', text: 'Armenian' },
+    { id: 'zh-CN', text: 'Chinese (Simplified)' },
+    { id: 'en', text: 'English' },
+    { id: 'tl', text: 'Filipino' },
+    { id: 'fr', text: 'French' },
+    { id: 'ja', text: 'Japanese' },
+    { id: 'ko', text: 'Korean' },
+    { id: 'fa', text: 'Persian' },
+    { id: 'ru', text: 'Russian' },
+    { id: 'es', text: 'Spanish' },
+    { id: 'vi', text: 'Vietnamese' },
   ];
 
   useEffect(() => {
@@ -41,20 +42,21 @@ export function GoogleTranslateBtn(props: IProps) {
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
 
   useEffect(() => {
     if (isOpen && dropdownRef.current) {
-      const options = dropdownRef.current.querySelectorAll<HTMLLIElement>("li");
+      const options = dropdownRef.current.querySelectorAll<HTMLLIElement>('li');
 
       options.forEach((option) => {
         const handleOptionClick = () => {
-          const selectElement = document.querySelector<HTMLSelectElement>('.goog-te-combo');
-          if (selectElement){
+          const selectElement =
+            document.querySelector<HTMLSelectElement>('.goog-te-combo');
+          if (selectElement) {
             console.log(`Option ${option.id} selected, ${selectElement}`);
             selectElement.value = option.id;
             const event = new Event('change');
@@ -63,11 +65,11 @@ export function GoogleTranslateBtn(props: IProps) {
           closeDropdown();
         };
 
-        option.addEventListener("click", handleOptionClick);
+        option.addEventListener('click', handleOptionClick);
 
         // Cleanup event listener on unmount or when the dropdown closes
         return () => {
-          option.removeEventListener("click", handleOptionClick);
+          option.removeEventListener('click', handleOptionClick);
         };
       });
     }
