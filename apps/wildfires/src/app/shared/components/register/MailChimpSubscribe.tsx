@@ -108,7 +108,7 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
 
             <div className="flex flex-1 flex-col mb-2">
               <label className="mb-1 font-bold">
-                Zip Code of Fire Imacted Property
+                Zip Code of Fire Impacted Property
               </label>
               <input
                 style={styles.input}
