@@ -1,4 +1,4 @@
-import { GlobeIcon } from '@monorepo/react/icons';
+import { ChevronLeftIcon, GlobeIcon } from '@monorepo/react/icons';
 import { useEffect, useRef, useState } from 'react';
 import { mergeCss } from '../../../utils/styles/mergeCss';
 
@@ -53,18 +53,32 @@ export function GoogleTranslateBtn(props: IProps) {
   useEffect(() => {
     if (isOpen) {
       const isMobile = window.innerWidth < 768; // Mobile breakpoint
-      setDropdownPosition(isMobile ? 'right' : 'left'); // FIXED: Logic reversed here
+      setDropdownPosition(isMobile ? 'right' : 'left'); // Adjust alignment
     }
   }, [isOpen]);
 
   return (
     <div className={mergeCss(parentCss)} ref={dropdownRef}>
-      <GlobeIcon
-        className="h-6 w-6 cursor-pointer"
-        stroke="white"
-        fill="none"
+      {/* Render GlobeIcon on mobile and "Language" with arrow on large screens */}
+      <button
+        className="flex items-center space-x-2 cursor-pointer"
         onClick={toggleDropdown}
-      />
+      >
+        <GlobeIcon
+          className="h-6 w-6 lg:hidden" // Globe icon visible only on mobile
+          stroke="white"
+          fill="none"
+        />
+        <span className="hidden lg:flex items-center">
+          Language
+          <ChevronLeftIcon
+            className={`ml-1 h-4 w-4 transform transition-transform ${
+              isOpen ? 'rotate-90' : '-rotate-90'
+            }`}
+          /> {/* Toggles between pointing up and down */}
+        </span>
+      </button>
+
       {isOpen && (
         <div
           className={`absolute mt-2 w-48 bg-white text-black border border-gray-200 rounded shadow-lg z-10 ${
