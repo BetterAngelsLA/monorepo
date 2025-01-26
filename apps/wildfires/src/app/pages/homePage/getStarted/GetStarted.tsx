@@ -16,7 +16,7 @@ export function GetStarted(props: TProps) {
     <div className={mergeCss(parentCss)}>
       <GetStartedHeader />
 
-      <div className="text-xl md:text-2xl leading-[30px] md:leading-normal mt-8 md:mt-10">
+      <div className="text-xl leading-[30px] md:leading-[1.3] mt-8 md:mt-10">
         <div className="font-bold">
           Please tell us a little about your situation so that we can make sure
           your action plan includes all of the relevant resources and financial

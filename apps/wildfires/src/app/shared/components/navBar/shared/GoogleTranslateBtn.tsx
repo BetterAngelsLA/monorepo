@@ -9,10 +9,12 @@ type IProps = {
 export function GoogleTranslateBtn(props: IProps) {
   const { className } = props;
 
-  const parentCss = ['md:mr-12', className, 'relative', 'inline-block'];
+  const parentCss = [className, 'relative', 'inline-block'];
 
   const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState<'left' | 'right'>('right');
+  const [dropdownPosition, setDropdownPosition] = useState<'left' | 'right'>(
+    'right'
+  );
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
@@ -66,7 +68,10 @@ export function GoogleTranslateBtn(props: IProps) {
       const availableSpaceLeft = buttonRect.left;
 
       // Flip to the left if there's not enough space on the right
-      if (availableSpaceRight < dropdownWidth && availableSpaceLeft >= dropdownWidth) {
+      if (
+        availableSpaceRight < dropdownWidth &&
+        availableSpaceLeft >= dropdownWidth
+      ) {
         setDropdownPosition('left');
       } else {
         setDropdownPosition('right');
@@ -77,7 +82,6 @@ export function GoogleTranslateBtn(props: IProps) {
           const selectElement =
             document.querySelector<HTMLSelectElement>('.goog-te-combo');
           if (selectElement) {
-            console.log(`Option ${option.id} selected, ${selectElement}`);
             selectElement.value = option.id;
             const event = new Event('change');
             selectElement.dispatchEvent(event);
@@ -98,14 +102,10 @@ export function GoogleTranslateBtn(props: IProps) {
     <div className={mergeCss(parentCss)} ref={dropdownRef}>
       <button
         ref={buttonRef}
-        className="flex items-center space-x-2 cursor-pointer"
+        className="flex items-center cursor-pointer"
         onClick={toggleDropdown}
       >
-        <GlobeIcon
-          className="h-6 w-6 lg:hidden"
-          stroke="white"
-          fill="none"
-        />
+        <GlobeIcon className="h-6 w-6 lg:hidden" stroke="white" fill="none" />
         <span className="hidden lg:flex items-center">
           Language
           <ChevronLeftIcon
