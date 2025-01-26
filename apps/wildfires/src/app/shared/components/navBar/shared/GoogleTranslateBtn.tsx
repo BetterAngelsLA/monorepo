@@ -71,6 +71,26 @@ export function GoogleTranslateBtn(props: IProps) {
       } else {
         setDropdownPosition('right');
       }
+      const options = dropdownRef.current.querySelectorAll<HTMLLIElement>('li');
+      options.forEach((option) => {
+        const handleOptionClick = () => {
+          const selectElement =
+            document.querySelector<HTMLSelectElement>('.goog-te-combo');
+          if (selectElement) {
+            console.log(`Option ${option.id} selected, ${selectElement}`);
+            selectElement.value = option.id;
+            const event = new Event('change');
+            selectElement.dispatchEvent(event);
+          }
+          closeDropdown();
+        };
+        option.addEventListener('click', handleOptionClick);
+
+        // Cleanup event listener on unmount or when the dropdown closes
+        return () => {
+          option.removeEventListener('click', handleOptionClick);
+        };
+      });
     }
   }, [isOpen]);
 
