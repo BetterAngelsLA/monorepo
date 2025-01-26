@@ -15,7 +15,12 @@ export function GetStartedHeader(props: IProps) {
     className,
   ];
 
-  const titleCss = ['text-2xl', 'leading-normal', 'lg:text-5xl', 'font-bold'];
+  const titleCss = [
+    'text-2xl',
+    'leading-normal',
+    'lg:text-[40px]',
+    'font-bold',
+  ];
 
   return (
     <div className={mergeCss(parentCss)}>
