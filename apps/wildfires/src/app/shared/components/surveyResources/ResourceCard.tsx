@@ -31,8 +31,6 @@ export function ResourceCard(props: IProps) {
         <ResourcePortableText className="mt-8" data={shortDescription} />
       )}
 
-      {!!description && <ResourcePortableText data={description} />}
-
       {!!resourceLink && (
         <ResourceLink
           className="self-end mt-8"
