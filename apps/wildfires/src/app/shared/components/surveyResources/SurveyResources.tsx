@@ -1,6 +1,7 @@
 import { groupBy, sortBy, uniqueBy } from 'remeda';
 import { TResource, TTagCategory } from '../../clients/sanityCms/types';
 import { mergeCss } from '../../utils/styles/mergeCss';
+import { AlertResources } from './AlertResources';
 import { ResourceGroupCard } from './ResourceGroupCard';
 type IProps = {
   className?: string;
@@ -12,7 +13,10 @@ export function SurveyResources(props: IProps) {
 
   const parentCss = [className];
 
-  const groupedAndSortedResources = groupResources(resources);
+  const baseResources = resources.filter((r) => r.resourceType === 'resource');
+  const alertResources = resources.filter((r) => r.resourceType === 'alert');
+
+  const baseResourcesGroupedSorted = groupResources(baseResources);
 
   return (
     <div className={mergeCss(parentCss)}>
@@ -20,18 +24,31 @@ export function SurveyResources(props: IProps) {
         Resources
       </div>
 
-      {groupedAndSortedResources.map((categoryResources) => {
-        const { category, resources } = categoryResources;
+      {!!baseResourcesGroupedSorted.length && (
+        <div>
+          {baseResourcesGroupedSorted.map((categoryResources) => {
+            const { category, resources } = categoryResources;
 
-        return (
-          <ResourceGroupCard
-            key={category.slug}
+            return (
+              <ResourceGroupCard
+                key={category.slug}
+                className="mb-12 md:mb-20 last:mb-0"
+                resourceCategory={category.name}
+                resources={resources}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {!!alertResources.length && (
+        <div className="mt-12 md:mt-16">
+          <AlertResources
             className="mb-12 md:mb-20 last:mb-0"
-            resourceCategory={category.name}
-            resources={resources}
+            alerts={alertResources}
           />
-        );
-      })}
+        </div>
+      )}
     </div>
   );
 }

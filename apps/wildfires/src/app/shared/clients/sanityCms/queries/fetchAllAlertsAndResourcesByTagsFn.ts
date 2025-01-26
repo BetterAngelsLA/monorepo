@@ -1,10 +1,9 @@
 import { CMS_BASE_URL } from '../sanityClient';
+import { normalizeQueryString } from './utils/normalizeQueryString';
 
-export const fetchResourcesByTagsFn = async (tags: string[]) => {
-  if (!tags.length) {
-    throw new Error(`fetchResourcesByTagsFn: tags required`);
-  }
+const DEFAULT_QUERY = `*[_type == "resource" &&  (resourceType == "alert")]`;
 
+export const fetchAllAlertsAndResourcesByTagsFn = async (tags: string[]) => {
   const url = generateUrl(tags);
 
   const response = await fetch(url);
@@ -21,17 +20,25 @@ function generateUrl(tags: string[]): string {
 }
 
 function generateQueryParams(tags: string[]): string {
+  if (!tags.length) {
+    return normalizeQueryString(DEFAULT_QUERY);
+  }
+
   const tagsCondition = tags
     .map((tag) => `slug.current == "${tag}"`)
     .join(' || ');
 
   const query = `
-    *[_type == "resource" && references(*[_type == "resource-tag" && (${tagsCondition})]._id)]{
+    *[
+        _type == "resource" && (
+            references(*[_type == "resource-tag" && (${tagsCondition})]._id)
+            || (resourceType == "alert")
+        )
+    ]{
       "slug": slug.current,
       priority,
       resourceType,
       title,
-      description,
       shortDescription,
       resourceLink,
       usefulTipsLink,
@@ -46,5 +53,5 @@ function generateQueryParams(tags: string[]): string {
       }
     }`;
 
-  return query.replace(/\s+/g, ' ').trim();
+  return normalizeQueryString(query);
 }
