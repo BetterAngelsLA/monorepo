@@ -36,9 +36,11 @@ export function Footer(props: IParams): ReactElement {
         </div>
         <div className="flex flex-col align-end gap-14 ml-4">
           <div className="flex flex-col md:flex-row gap-8 md:gap-10">
-            <Link to="/about">About</Link>
+            <Link aria-label="navigate to About page" to="/about">
+              About
+            </Link>
             <a href="mailto:wildfires@betterangels.la">Contact Us</a>
-            <Link to="/privacy-policy">Privacy Policy</Link>
+            <Link aria-label="navigate to privacy policy" to="/privacy-policy">Privacy Policy</Link>
           </div>
         </div>
       </div>
