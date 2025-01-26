@@ -19,6 +19,7 @@ export function ResourceCard(props: IProps) {
     'border',
     'p-6',
     'rounded-lg',
+    '[box-shadow:0_4px_6px_#7777771A]',
     className,
   ];
 
