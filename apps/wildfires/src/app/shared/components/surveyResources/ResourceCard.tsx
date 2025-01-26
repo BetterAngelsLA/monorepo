@@ -34,7 +34,11 @@ export function ResourceCard(props: IProps) {
       )}
 
       {!!usefulTipsLink && (
-        <ResourceUsefulTipsLink className="mt-6" href={usefulTipsLink} />
+        <ResourceUsefulTipsLink
+          title={title}
+          className="mt-6"
+          href={usefulTipsLink}
+        />
       )}
 
       {!!resourceLink && (
