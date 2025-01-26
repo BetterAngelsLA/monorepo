@@ -1,5 +1,7 @@
+import { GlobeIcon } from '@monorepo/react/icons';
 import { useEffect, useRef, useState } from 'react';
 import { mergeCss } from '../../../utils/styles/mergeCss';
+
 
 type IProps = {
   className?: string;
@@ -8,7 +10,7 @@ type IProps = {
 export function GoogleTranslateBtn(props: IProps) {
   const { className } = props;
 
-  const parentCss = ['md:mr-12', className, 'relative', 'inline-block'];
+  const parentCss = ['md:mr-12', className, 'relative', 'inline-block']
 
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -78,9 +80,10 @@ export function GoogleTranslateBtn(props: IProps) {
   return (
     // <div className={mergeCss(parentCss)} id="google_translate_element"></div>
     <div className={mergeCss(parentCss)} ref={dropdownRef}>
-      <button className="mr-8" onClick={toggleDropdown}>
+      <GlobeIcon className="h-6 w-6" stroke='white' fill='none' onClick={toggleDropdown}></GlobeIcon>
+      {/* <button className="mr-8" onClick={toggleDropdown}>
         Language
-      </button>
+      </button> */}
       {isOpen && (
         <div className="absolute left-0 mt-2 w-48 bg-white text-black border border-gray-200 rounded shadow-lg z-10">
           <ul className="py-1">
