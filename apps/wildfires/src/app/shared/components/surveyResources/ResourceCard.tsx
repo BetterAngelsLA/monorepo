@@ -2,7 +2,7 @@ import { TResource } from '../../clients/sanityCms/types';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { ResourceLink } from './shared/ResourceLink';
 import { ResourcePortableText } from './shared/ResourcePortableText';
-import { ResourceUsefulResourceLink } from './shared/ResourceUsefulResourceLink';
+import { ResourceUsefulTipsLink } from './shared/ResourceUsefulTipsLink';
 
 type IProps = {
   className?: string;
@@ -33,7 +33,7 @@ export function ResourceCard(props: IProps) {
       )}
 
       {!!usefulTipsLink && (
-        <ResourceUsefulResourceLink className="mt-6" href={usefulTipsLink} />
+        <ResourceUsefulTipsLink className="mt-6" href={usefulTipsLink} />
       )}
 
       {!!resourceLink && (

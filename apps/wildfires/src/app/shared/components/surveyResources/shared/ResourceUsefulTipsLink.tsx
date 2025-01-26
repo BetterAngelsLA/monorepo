@@ -8,7 +8,7 @@ type IProps = {
   target?: '_blank' | '_self';
 };
 
-export function ResourceUsefulResourceLink(props: IProps) {
+export function ResourceUsefulTipsLink(props: IProps) {
   const { href, target = '_blank', className } = props;
 
   const parentCss = [className];
