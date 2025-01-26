@@ -16,8 +16,8 @@ export function Header(props: IParams): ReactElement {
     'flex',
     'items-center',
     'justify-between',
-    'h-[72px]',
-    'md:h-[104px]',
+    'h-[104px]',
+    'md:h-[110px]',
     'text-white',
     'relative',
     className,
@@ -25,8 +25,8 @@ export function Header(props: IParams): ReactElement {
 
   return (
     <header className={mergeCss(parentCss)}>
-      <HomeLink className="min-w-[116px] w-[116px] md:w-[260px] md:min-w-[260px]" />
-      <MenuDesktop/>
+      <HomeLink className="min-w-[200px] w-[200px] md:w-[300px] md:min-w-[300px]" />
+      <MenuDesktop />
       <MenuBtnMobile className="block lg:hidden" />
     </header>
   );
