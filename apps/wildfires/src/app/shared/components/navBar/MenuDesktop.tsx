@@ -10,13 +10,13 @@ type IProps = {
 export function MenuDesktop(props: IProps) {
   const { className } = props;
 
-  const parentCss = ['flex', 'items-center', 'font-bold', className];
+  const parentCss = ['flex', 'items-center', 'font-bold', 'justify-end', 'w-full', className];
 
   return (
     <div className={mergeCss(parentCss)}>
-      <AboutLink className="mx-8 hidden lg:flex" />
-      <GoogleTranslateBtn className="mr-8" />
-      <DonateButton className="hidden lg:flex text-center" />
+      <AboutLink className="mx-4 hidden lg:flex" />
+      <GoogleTranslateBtn className="mx-8" />
+      <DonateButton className="hidden lg:flex mx-2" />
     </div>
   );
 }
