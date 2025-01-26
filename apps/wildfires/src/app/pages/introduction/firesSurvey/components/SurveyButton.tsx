@@ -39,7 +39,7 @@ export function SurveyButton(props: TButtonProps) {
 
   if (href) {
     return (
-      <Link className={mergeCss(parentCss)} to={href}>
+      <Link aria-label={ariaLabel} className={mergeCss(parentCss)} to={href}>
         {children}
       </Link>
     );

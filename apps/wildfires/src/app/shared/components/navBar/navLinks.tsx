@@ -32,7 +32,7 @@ export function NavLinks(props: IProps) {
       </Link>
 
       <a
-        aria-label="open contact us email"
+        aria-label="send us an email"
         href="mailto:wildfires@betterangels.la"
         className="mb-8 hidden lg:block"
       >

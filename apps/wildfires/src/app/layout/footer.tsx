@@ -27,6 +27,7 @@ export function Footer(props: IParams): ReactElement {
       <div className="flex flex-col md:flex-row md:items-center justify-between">
         <div className="flex ml-2 mb-8 md:mb-0">
           <a
+            aria-label="open Better Angels website in new tab"
             target="_blank"
             href="https://www.betterangels.la/"
             rel="noreferrer"
@@ -39,8 +40,10 @@ export function Footer(props: IParams): ReactElement {
             <Link aria-label="navigate to About page" to="/about">
               About
             </Link>
-            <a href="mailto:wildfires@betterangels.la">Contact Us</a>
-            <Link aria-label="navigate to privacy policy" to="/privacy-policy">Privacy Policy</Link>
+            <a aria-label="send us an email" href="mailto:wildfires@betterangels.la">Contact Us</a>
+            <Link aria-label="navigate to privacy policy" to="/privacy-policy">
+              Privacy Policy
+            </Link>
           </div>
         </div>
       </div>
