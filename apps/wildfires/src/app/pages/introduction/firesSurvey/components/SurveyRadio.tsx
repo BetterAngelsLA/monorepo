@@ -23,7 +23,7 @@ export function SurveyRadio(props: IProps): ReactElement {
     'cursor-pointer',
     'text-brand-dark-blue',
     'shadow-brand-dark-blue',
-    'border-2',
+    'border-[3px]',
     selected ? 'border-brand-dark-blue' : 'border-[#DBDBDB]',
     'rounded-xl',
     'md:rounded-[20px]',
