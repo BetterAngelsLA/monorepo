@@ -1,18 +1,16 @@
 import { WFLinkIcon } from '@monorepo/react/icons';
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '../../../utils/styles/mergeCss';
 
 type IProps = {
   className?: string;
   href: string;
-  external?: boolean;
+  target?: '_blank' | '_self';
 };
 
 export function ResourceLink(props: IProps) {
-  const { href, external, className } = props;
+  const { href, target = '_blank', className } = props;
 
   const parentCss = ['flex', className];
-
-  const target = external ? '_blank' : '_self';
 
   if (!href) {
     return null;
