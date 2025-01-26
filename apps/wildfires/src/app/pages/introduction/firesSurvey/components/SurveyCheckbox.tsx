@@ -31,7 +31,7 @@ export function SurveyCheckbox(props: IProps): ReactElement {
     'px-4',
     'py-4',
     'lg:py-6',
-    'border',
+    'border-[3px]',
     'rounded-xl',
     'cursor-pointer',
     'text-brand-dark-blue',
@@ -77,7 +77,7 @@ export function SurveyCheckbox(props: IProps): ReactElement {
         {checked && <CheckIcon className="text-white h-8" />}
       </div>
       {wildfireLabels.includes(label) ? (
-        <div className={mergeCss(labelCss) + " notranslate"}>{label}</div>
+        <div className={mergeCss(labelCss) + ' notranslate'}>{label}</div>
       ) : (
         <div className={mergeCss(labelCss)}>{label}</div>
       )}
