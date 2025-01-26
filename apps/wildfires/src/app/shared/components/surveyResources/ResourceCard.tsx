@@ -11,8 +11,7 @@ type IProps = {
 export function ResourceCard(props: IProps) {
   const { resource, className } = props;
 
-  const { title, description, shortDescription, resourceType, resourceLink } =
-    resource;
+  const { title, shortDescription, resourceType, resourceLink } = resource;
 
   const parentCss = [
     'flex',
@@ -31,8 +30,6 @@ export function ResourceCard(props: IProps) {
       {!!shortDescription && (
         <ResourcePortableText className="mt-8" data={shortDescription} />
       )}
-
-      {!!description && <ResourcePortableText data={description} />}
 
       {!!resourceLink && (
         <ResourceLink
