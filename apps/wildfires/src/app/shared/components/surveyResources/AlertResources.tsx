@@ -1,5 +1,3 @@
-// AlertResources.tsx
-
 import { TResource } from '../../clients/sanityCms/types';
 import { sortByPriority } from '../../utils/sort';
 import { mergeCss } from '../../utils/styles/mergeCss';
@@ -7,27 +5,27 @@ import { ResourceCard } from './ResourceCard';
 
 type IProps = {
   className?: string;
-  resources?: TResource[];
+  alerts?: TResource[];
 };
 
 export function AlertResources(props: IProps) {
-  const { resources, className } = props;
+  const { alerts, className } = props;
 
   const parentCss = [
     'flex',
     'flex-col',
-    'bg-[#FFFEE0]',
+    'bg-[#FFFEE0]', // TODO: get named color
     'px-4',
     'py-[52px]',
     'rounded-xl',
     className,
   ];
 
-  if (!resources?.length) {
+  if (!alerts?.length) {
     return null;
   }
 
-  const sortedResources = sortByPriority<TResource>(resources, 'priority');
+  const sortedAlerts = sortByPriority<TResource>(alerts, 'priority');
 
   return (
     <div className={mergeCss(parentCss)}>
@@ -35,11 +33,11 @@ export function AlertResources(props: IProps) {
         alerts
       </div>
 
-      {sortedResources.map((resource) => (
+      {sortedAlerts.map((alert) => (
         <ResourceCard
-          key={resource.slug}
+          key={alert.slug}
           className="mb-4 lg:mb-10 last:mb-0"
-          resource={resource}
+          resource={alert}
         />
       ))}
     </div>

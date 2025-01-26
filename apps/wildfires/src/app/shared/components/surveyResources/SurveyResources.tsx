@@ -45,7 +45,7 @@ export function SurveyResources(props: IProps) {
         <div className="mt-12 md:mt-16">
           <AlertResources
             className="mb-12 md:mb-20 last:mb-0"
-            resources={alertResources}
+            alerts={alertResources}
           />
         </div>
       )}
