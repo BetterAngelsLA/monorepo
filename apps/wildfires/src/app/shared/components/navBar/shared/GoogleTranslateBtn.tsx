@@ -79,7 +79,7 @@ export function GoogleTranslateBtn(props: IProps) {
     // <div className={mergeCss(parentCss)} id="google_translate_element"></div>
     <div className={mergeCss(parentCss)} ref={dropdownRef}>
       <button className="mr-8" onClick={toggleDropdown}>
-        Select Language
+        Language
       </button>
       {isOpen && (
         <div className="absolute left-0 mt-2 w-48 bg-white text-black border border-gray-200 rounded shadow-lg z-10">
