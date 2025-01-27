@@ -1,5 +1,5 @@
 import { ChevronLeftIcon } from '@monorepo/react/icons';
-import { PropsWithChildren, ReactElement, useState } from 'react';
+import { PropsWithChildren, ReactElement, useEffect, useState } from 'react';
 import { mergeCss } from '../../../utils/styles/mergeCss';
 
 interface IProps extends PropsWithChildren {
@@ -10,7 +10,8 @@ interface IProps extends PropsWithChildren {
 
 export function ResourceCallout(props: IProps) {
   const { icon, type = 'alert', className, children } = props;
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useState(false);
+  const [wasExpandedBeforePrint, setWasExpandedBeforePrint] = useState(false);
 
   const parentCss = [
     'items-start',
@@ -21,6 +22,25 @@ export function ResourceCallout(props: IProps) {
   ];
 
   const iconCss = ['mr-6'];
+
+  useEffect(() => {
+    const handleBeforePrint = () => {
+      setWasExpandedBeforePrint(show); // Remember the current state
+      setShow(true); // Expand all content before printing
+    };
+
+    const handleAfterPrint = () => {
+      setShow(wasExpandedBeforePrint); // Restore the original state
+    };
+
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, [show, wasExpandedBeforePrint]);
 
   return (
     <div className={mergeCss(parentCss)}>

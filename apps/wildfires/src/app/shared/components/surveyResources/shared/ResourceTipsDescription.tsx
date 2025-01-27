@@ -19,7 +19,7 @@ export function ResourceTipsDescription(props: IProps) {
       className={mergeCss(parentCss)}
       icon={<LightBulbIcon className="h-6 md:h-8" />}
     >
-      <PortableText value={data} />
+        <PortableText value={data} />
     </ResourceCallout>
   );
 }
