@@ -19,9 +19,19 @@ const GeneratePDF: React.FC<GeneratePDFProps> = ({ className }) => {
   };
 
   const handleGeneratePdf = () => {
+    // Dispatch `beforeprint` to expand all collapsible sections
+    window.dispatchEvent(new Event('beforeprint'));
+
     const element = document.getElementById('content-to-pdf');
     if (element) {
-      html2pdf().from(element).set(options).save();
+      html2pdf()
+        .from(element)
+        .set(options)
+        .save()
+        .finally(() => {
+          // Dispatch `afterprint` to restore the original collapsed state
+          window.dispatchEvent(new Event('afterprint'));
+        });
     }
   };
 
