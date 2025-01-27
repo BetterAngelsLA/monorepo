@@ -1,7 +1,7 @@
 import fireHero from '../../../assets/images/fire-hero.jpeg';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
+import ContactUs from '../../shared/components/contactUs/ContactUs';
 import Hero from '../../shared/components/hero/Hero';
-import Register from '../../shared/components/register/Register';
 import { GetStarted } from './getStarted/GetStarted';
 
 export function HomePage() {
@@ -25,13 +25,13 @@ export function HomePage() {
       <HorizontalLayout>
         <GetStarted className="mt-8 md:mt-24 mb-12 md:mb-24" />
       </HorizontalLayout>
-      <HorizontalLayout className="bg-brand-angel-blue">
-        <Register />
-      </HorizontalLayout>
       {/* May need to bring this back soon so just commenting for now */}
-      {/* <HorizontalLayout className="bg-steel-blue">
-        <ContactUs />
+      {/* <HorizontalLayout className="bg-brand-angel-blue">
+        <Register />
       </HorizontalLayout> */}
+      <HorizontalLayout className="bg-steel-blue">
+        <ContactUs />
+      </HorizontalLayout>
     </>
   );
 }
