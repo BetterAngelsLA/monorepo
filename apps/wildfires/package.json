@@ -20,7 +20,13 @@
     "clsx": "*",
     "tailwind-merge": "*",
     "jotai": "*",
-    "react-dom": "*"
+    "react-dom": "*",
+    "react-to-print": "*",
+    "react-mailchimp-subscribe": "*",
+    "@tanstack/react-query": "*",
+    "@portabletext/react": "*",
+    "html2pdf.js": "*",
+    "react-ga4": "*"
   },
   "devDependencies": {}
 }
