@@ -9,7 +9,7 @@ type IProps = {
   data: PortableTextBlock;
 };
 
-export function ResourcTipsDescription(props: IProps) {
+export function ResourceTipsDescription(props: IProps) {
   const { data, className } = props;
 
   const parentCss = ['wisiwig', className];
