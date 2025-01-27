@@ -8,7 +8,6 @@ interface GeneratePDFProps {
 
 const GeneratePDF: React.FC<GeneratePDFProps> = ({ className }) => {
   const options = {
-    margin: [5, 10],
     filename: 'result-content.pdf',
     html2canvas: {
       scale: 2,
