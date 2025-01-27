@@ -14,7 +14,12 @@ from django.db import transaction
 from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum, TaskTypeEnum
+from notes.enums import (
+    SelahTeamEnum,
+    ServiceRequestStatusEnum,
+    ServiceRequestTypeEnum,
+    TaskTypeEnum,
+)
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.permissions import (
     NotePermissions,
@@ -60,6 +65,10 @@ from .types import (
 
 @strawberry.type
 class Query:
+    @strawberry.field
+    def available_teams(self) -> List[SelahTeamEnum]:
+        return [team for team in SelahTeamEnum]
+
     note: NoteType = strawberry_django.field(extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter)
 
     notes: List[NoteType] = strawberry_django.field(

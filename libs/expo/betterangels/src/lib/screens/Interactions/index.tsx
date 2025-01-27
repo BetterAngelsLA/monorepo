@@ -13,21 +13,45 @@ import useUser from '../../hooks/user/useUser';
 import { MainContainer, NoteCard } from '../../ui-components';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
+import {
+  AvailableTeamsQuery,
+  useAvailableTeamsQuery,
+} from './__generated__/interactions.generated';
 
 const paginationLimit = 10;
 
 export default function Interactions() {
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState('');
+  const [filterTeams, setFilterTeams] = useState();
+  const [availableTeams, setAvailableTeams] =
+    useState<AvailableTeamsQuery>(null);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const { user } = useUser();
+
+  const {
+    data: teamsData,
+    loading: teamsLoading,
+    error: teamsError,
+  } = useAvailableTeamsQuery();
+
+  useEffect(() => {
+    console.log('teamsLoading', teamsLoading);
+    console.log('teamsError', teamsError);
+    console.log('teamsData', teamsData);
+    // setFilterTeams(teamsData);
+  }, [teamsData, teamsLoading, teamsError]);
 
   const { data, loading, error, refetch } = useNotesQuery({
     variables: {
       pagination: { limit: paginationLimit + 1, offset: offset },
       order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
-      filters: { createdBy: user?.id, search: filterSearch },
+      filters: {
+        createdBy: user?.id,
+        search: filterSearch,
+        teams: filterTeams,
+      },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',

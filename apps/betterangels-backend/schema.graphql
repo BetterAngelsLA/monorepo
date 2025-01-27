@@ -1008,6 +1008,7 @@ type Query {
   serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
+  availableTeams: [SelahTeamEnum!]!
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
 }
