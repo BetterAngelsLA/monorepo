@@ -76,7 +76,7 @@ export function QuestionForm(props: IProps) {
           })}
         </div>
       );
-    case 'checkbox':
+    case 'checkbox': {
       const options = question.options.map((option) => {
         return {
           label: option.label,
@@ -94,6 +94,7 @@ export function QuestionForm(props: IProps) {
           checkboxCss={mergeCss(optionCss)}
         />
       );
+    }
 
     default:
   }
