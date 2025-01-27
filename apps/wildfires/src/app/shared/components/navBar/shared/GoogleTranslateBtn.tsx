@@ -105,7 +105,9 @@ export function GoogleTranslateBtn(props: IProps) {
         className="flex items-center cursor-pointer"
         onClick={toggleDropdown}
       >
-        <GlobeIcon className="h-6 w-6 lg:hidden" stroke="white" fill="none" />
+        <div className="min-h-10 min-w-10 flex items-center justify-center lg:hidden">
+          <GlobeIcon className="h-6 w-6" stroke="white" fill="none" />
+        </div>
         <span className="hidden lg:flex items-center">
           Language
           <ChevronLeftIcon
