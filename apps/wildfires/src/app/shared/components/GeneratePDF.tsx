@@ -26,7 +26,11 @@ const GeneratePDF: React.FC<GeneratePDFProps> = ({ className }) => {
   };
 
   return (
-    <Button className={className} onClick={handleGeneratePdf}>
+    <Button
+      ariaLabel="Save your action plan as a PDF file"
+      className={className}
+      onClick={handleGeneratePdf}
+    >
       Save Your Action Plan as a PDF
     </Button>
   );
