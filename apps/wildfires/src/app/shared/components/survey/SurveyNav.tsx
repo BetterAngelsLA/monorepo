@@ -57,6 +57,7 @@ export function SurveyNav(props: IProps) {
     <div className={mergeCss(parentCss)}>
       {!!onNext && (
         <SurveyButton
+          ariaLabel="questionnaire continue button"
           dark
           className={mergeCss(nextButtonCss)}
           onClick={onNext}
@@ -68,7 +69,11 @@ export function SurveyNav(props: IProps) {
       )}
 
       {!!onPrev && showPrevBtn && (
-        <SurveyButton className={mergeCss(prevButtonCss)} onClick={onPrev}>
+        <SurveyButton
+          ariaLabel="questionnaire back button"
+          className={mergeCss(prevButtonCss)}
+          onClick={onPrev}
+        >
           <ArrowLeftIcon className="h-5" />
           <span className="ml-4">Back</span>
         </SurveyButton>
