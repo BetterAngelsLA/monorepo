@@ -5859,6 +5859,7 @@ __metadata:
     react-native-web: "npm:0.19.12"
     react-router-dom: "npm:6.11.2"
     react-test-renderer: "npm:18.2.0"
+    remeda: "npm:^2.20.0"
     tailwind-merge: "npm:^2.5.5"
     tailwindcss: "npm:3.4.3"
     ts-jest: "npm:^29.1.0"
@@ -26671,6 +26672,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"remeda@npm:^2.20.0":
+  version: 2.20.0
+  resolution: "remeda@npm:2.20.0"
+  dependencies:
+    type-fest: "npm:^4.30.0"
+  checksum: 10/910cae1af1a99939951dbab06f97847beea8db7529ea17fc046273d1a5c53d1668d08cb5c8ddeeb76f8ced64c70ea730107ac99c03f1876bedfa488f795b5e58
+  languageName: node
+  linkType: hard
+
 "remedial@npm:^1.0.7":
   version: 1.0.8
   resolution: "remedial@npm:1.0.8"
@@ -29584,6 +29594,13 @@ __metadata:
   version: 2.19.0
   resolution: "type-fest@npm:2.19.0"
   checksum: 10/7bf9e8fdf34f92c8bb364c0af14ca875fac7e0183f2985498b77be129dc1b3b1ad0a6b3281580f19e48c6105c037fb966ad9934520c69c6434d17fd0af4eed78
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^4.30.0":
+  version: 4.33.0
+  resolution: "type-fest@npm:4.33.0"
+  checksum: 10/0d179e66fa765bd0a25a785b12dc797f90f2f92bdb8c9c8a789f3fd8e5a4492444e7ef83551b3b8463aeab24fd6195761e26b03174722de636b4b75aa5726fb7
   languageName: node
   linkType: hard
 

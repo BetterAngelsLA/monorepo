@@ -15,12 +15,13 @@ export function ModalMask(props: IProps) {
   const [_modal, setModal] = useAtom(modalAtom);
 
   const parentCss: string = [
+    // z-index should be above z-index of google skiptranslate bar, which is 10000001
+    'z-[90000001]',
     'top-0',
     'left-0',
     'right-0',
     'bottom-0',
     'fixed',
-    'z-max',
     'flex',
     'justify-center',
     'items-center',

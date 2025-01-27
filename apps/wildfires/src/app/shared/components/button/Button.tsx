@@ -2,6 +2,7 @@ import { MouseEventHandler, PropsWithChildren } from 'react';
 import { mergeCss } from '../../utils/styles/mergeCss';
 
 interface IProps extends PropsWithChildren {
+  ariaLabel: string;
   className?: string;
   disabled?: boolean;
   onClick: MouseEventHandler;
@@ -9,7 +10,14 @@ interface IProps extends PropsWithChildren {
 }
 
 export function Button(props: IProps) {
-  const { className, onClick, disabled, children, size = 'normal' } = props;
+  const {
+    ariaLabel,
+    className,
+    onClick,
+    disabled,
+    children,
+    size = 'normal',
+  } = props;
 
   const sizes = {
     small: 'py-1 px-7',
@@ -30,6 +38,7 @@ export function Button(props: IProps) {
 
   return (
     <button
+      aria-label={ariaLabel}
       className={mergeCss(parentCss)}
       onClick={onClick}
       disabled={disabled}

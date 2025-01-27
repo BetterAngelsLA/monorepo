@@ -1,7 +1,8 @@
 import { TResource } from '../../clients/sanityCms/types';
 import { mergeCss } from '../../utils/styles/mergeCss';
-import { ResourceLink } from './ResourceLink';
-import { ResourcePortableText } from './ResourcePortableText';
+import { ResourceLink } from './shared/ResourceLink';
+import { ResourcePortableText } from './shared/ResourcePortableText';
+import { ResourceUsefulTipsLink } from './shared/ResourceUsefulTipsLink';
 
 type IProps = {
   className?: string;
@@ -11,8 +12,7 @@ type IProps = {
 export function ResourceCard(props: IProps) {
   const { resource, className } = props;
 
-  const { title, description, shortDescription, resourceType, resourceLink } =
-    resource;
+  const { title, shortDescription, usefulTipsLink, resourceLink } = resource;
 
   const parentCss = [
     'flex',
@@ -20,6 +20,9 @@ export function ResourceCard(props: IProps) {
     'border',
     'p-6',
     'rounded-lg',
+    'bg-white',
+    '[box-shadow:0_4px_6px_#7777771A]',
+    'break-inside-avoid',
     className,
   ];
 
@@ -31,13 +34,19 @@ export function ResourceCard(props: IProps) {
         <ResourcePortableText className="mt-8" data={shortDescription} />
       )}
 
-      {!!description && <ResourcePortableText data={description} />}
+      {!!usefulTipsLink && (
+        <ResourceUsefulTipsLink
+          title={title}
+          className="mt-6"
+          href={usefulTipsLink}
+        />
+      )}
 
       {!!resourceLink && (
         <ResourceLink
-          className="self-end mt-8"
+          title={title}
+          className="ml-auto mt-8"
           href={resourceLink}
-          external={true}
         />
       )}
     </div>

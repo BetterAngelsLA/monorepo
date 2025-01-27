@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { surveyConfig } from '../../../pages/introduction/firesSurvey/config/config';
-import { fetchResourcesByTagsFn } from '../../clients/sanityCms/queries/fetchResourcesByTagsFn';
+import { fetchAllAlertsAndResourcesByTagsFn } from '../../clients/sanityCms/queries/fetchAllAlertsAndResourcesByTagsFn';
 import { toTResources } from '../../clients/sanityCms/utils/toTResource';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { TAnswer, TOption, TSurveyResults } from '../survey/types';
@@ -68,15 +68,13 @@ type IProps = {
 export function SurveyResults(props: IProps) {
   const { results, className } = props;
 
-  const surveryConf = surveyConfig;
-
   const { answers = [] } = results;
 
   const queryTags = getTags(answers);
 
   const { isLoading, isError, data, error } = useQuery({
     queryKey: queryTags,
-    queryFn: () => fetchResourcesByTagsFn(queryTags),
+    queryFn: () => fetchAllAlertsAndResourcesByTagsFn(queryTags),
     refetchOnWindowFocus: false,
     retry: 1,
   });

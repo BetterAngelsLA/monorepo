@@ -92,7 +92,11 @@ export function Survey(props: IProps) {
         onAnswer={handleAnswer}
       />
 
-      <SurveyNav className="mt-14" onNext={onClickNext} onPrev={onClickPrev} />
+      <SurveyNav
+        className="mt-14 mb-14"
+        onNext={onClickNext}
+        onPrev={onClickPrev}
+      />
     </div>
   );
 }

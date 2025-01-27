@@ -16,18 +16,23 @@ export function NavLinks(props: IProps) {
     <div className={mergeCss(parentCss)}>
       <AboutLink className="" />
 
-      <Link to="/about" className="mb-8">
+      <Link aria-label="navigate to About page" to="/about" className="mb-8">
         <div className="lg:hidden">About</div>
         <div className="hidden lg:block">About</div>
       </Link>
 
       {/* <TranslateBtn className="mb-8" /> */}
 
-      <Link to="/privacy-policy" className="mb-8 hidden lg:block">
+      <Link
+        aria-label="navigate to privacy policy"
+        to="/privacy-policy"
+        className="mb-8 hidden lg:block"
+      >
         Privacy Policy
       </Link>
 
       <a
+        aria-label="send us an email"
         href="mailto:wildfires@betterangels.la"
         className="mb-8 hidden lg:block"
       >

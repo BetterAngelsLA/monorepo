@@ -4,6 +4,7 @@ import { Button } from '../../../../shared/components/button/Button';
 import { mergeCss } from '../../../../shared/utils/styles/mergeCss';
 
 interface IBaseButton extends PropsWithChildren {
+  ariaLabel: string;
   className?: string;
   disabled?: boolean;
   dark?: true;
@@ -16,7 +17,8 @@ export type TButtonProps =
   | (IBaseButton & { href: string; onClick?: never });
 
 export function SurveyButton(props: TButtonProps) {
-  const { className, dark, onClick, disabled, href, children } = props;
+  const { ariaLabel, className, dark, onClick, disabled, href, children } =
+    props;
 
   const parentCss = [
     'flex',
@@ -37,7 +39,7 @@ export function SurveyButton(props: TButtonProps) {
 
   if (href) {
     return (
-      <Link className={mergeCss(parentCss)} to={href}>
+      <Link aria-label={ariaLabel} className={mergeCss(parentCss)} to={href}>
         {children}
       </Link>
     );
@@ -49,6 +51,7 @@ export function SurveyButton(props: TButtonProps) {
 
   return (
     <Button
+      ariaLabel={ariaLabel}
       className={mergeCss(parentCss)}
       onClick={onClick}
       disabled={disabled}

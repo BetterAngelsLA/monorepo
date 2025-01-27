@@ -13,7 +13,11 @@ export function HomeLink(props: IProps) {
   const parentCss = ['flex', 'items-center', className];
 
   return (
-    <Link to="/" className={mergeCss(parentCss)}>
+    <Link
+      aria-label="navigate to home page"
+      to="/"
+      className={mergeCss(parentCss)}
+    >
       <img
         src={LADR_LOGO}
         alt="LA Disaster Relief Navigator"

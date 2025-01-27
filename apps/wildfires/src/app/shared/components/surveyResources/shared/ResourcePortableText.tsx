@@ -1,11 +1,10 @@
 import { PortableText, PortableTextBlock } from '@portabletext/react';
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '../../../utils/styles/mergeCss';
 
 type IProps = {
   className?: string;
   data: PortableTextBlock;
 };
-// | PortableTextObject;
 
 export function ResourcePortableText(props: IProps) {
   const { data, className } = props;
