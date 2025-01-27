@@ -14,16 +14,24 @@ export function QuestionHeader(props: IProps) {
     'border-brand-sky-blue',
     'pl-4',
     'lg:pl-8',
+    'flex',
+    'flex-col',
+    'gap-6',
     className,
   ];
 
-  const titleCss = ['text-2xl', 'leading-normal', 'lg:text-5xl', 'font-bold'];
+  const titleCss = [
+    'text-2xl',
+    'leading-normal',
+    'lg:text-[40px]',
+    'font-bold',
+  ];
 
   const subtitleCss = [
     'text-2xl',
     'leading-normal',
-    'md:leading-[4.5rem]',
-    'lg:text-[42px]',
+    'md:leading-[1.3]',
+    'md:text-2xl',
   ];
 
   if (!title && !subtitle) {
