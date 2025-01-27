@@ -41,7 +41,7 @@ function generateQueryParams(tags: string[]): string {
       title,
       shortDescription,
       resourceLink,
-      usefulTipsLink,
+      tipsDescription,
       "tags": tags[]->{
         label,
         "slug": slug.current,
