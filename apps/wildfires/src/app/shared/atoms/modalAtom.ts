@@ -9,6 +9,8 @@ type TProps = {
   fullW?: boolean;
   footer?: ReactNode;
   closeOnMaskClick?: boolean;
+  parentCss?: string;
+  closeCss?: string;
   onClose?: () => void;
 };
 

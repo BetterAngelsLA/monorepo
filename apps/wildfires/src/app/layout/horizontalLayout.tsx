@@ -15,6 +15,7 @@ export function HorizontalLayout(props: IParams): ReactElement {
     'flex-col',
     'items-center',
     'px-4',
+    'md:px-10',
     className,
   ];
 
