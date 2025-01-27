@@ -22,10 +22,18 @@ export function MenuMobile(props: IProps) {
   return (
     <div className={mergeCss(parentCss)}>
       <AboutLink className="mb-8" />
-      <Link to="/privacy-policy" className="mb-8">
+      <Link
+        aria-label="navigate to privacy policy"
+        to="/privacy-policy"
+        className="mb-8"
+      >
         Privacy Policy
       </Link>
-      <a href="mailto:wildfires@betterangels.la" className="mb-8">
+      <a
+        aria-label="send us an email"
+        href="mailto:wildfires@betterangels.la"
+        className="mb-8"
+      >
         Contact Us
       </a>
       <DonateButton className="max-w-40 mb-4" />

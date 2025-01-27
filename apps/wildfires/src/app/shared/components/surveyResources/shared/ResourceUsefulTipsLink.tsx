@@ -4,12 +4,13 @@ import { ResourceCallout } from './ResourceCallout';
 
 type IProps = {
   className?: string;
+  title: string;
   href: string;
   target?: '_blank' | '_self';
 };
 
 export function ResourceUsefulTipsLink(props: IProps) {
-  const { href, target = '_blank', className } = props;
+  const { href, title, target = '_blank', className } = props;
 
   const parentCss = [className];
 
@@ -25,6 +26,7 @@ export function ResourceUsefulTipsLink(props: IProps) {
       <div>
         Please check out these useful
         <a
+          aria-label={`open ${title} useful tips in new tab`}
           className="underline underline-offset-2 ml-1"
           href={href}
           target={target}

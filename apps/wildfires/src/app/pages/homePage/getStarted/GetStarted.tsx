@@ -27,6 +27,7 @@ export function GetStarted(props: TProps) {
 
       <div className="mt-6 md:mt-20 flex justify-center">
         <SurveyButton
+          ariaLabel="begin resource navigator questionnaire form"
           dark
           className="max-w-[350px] justify-center"
           href="/introduction"

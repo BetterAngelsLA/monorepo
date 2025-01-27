@@ -11,7 +11,11 @@ export function AboutLink(props: IProps) {
   const parentCss = [className];
 
   return (
-    <Link className={mergeCss(parentCss)} to="/about">
+    <Link
+      aria-label="navigate to About page"
+      className={mergeCss(parentCss)}
+      to="/about"
+    >
       <div className="hidden lg:block text-right">About</div>
       <div className="lg:hidden">About</div>
     </Link>

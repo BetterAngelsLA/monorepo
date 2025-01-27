@@ -21,6 +21,7 @@ export default function BestPractices() {
             navigating online and/or to help you be prepared for an in-person
             meeting at a{' '}
             <a
+              aria-label="open disaster recovery center website in new tab"
               className="underline"
               target="_blank"
               href="https://www.disasterassistance.gov/"
