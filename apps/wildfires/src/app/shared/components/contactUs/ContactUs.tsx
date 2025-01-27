@@ -5,7 +5,7 @@ export default function ContactUs() {
         Have questions or need additional help?
       </h2>
       <a
-        className="py-4 md:py-6 w-full text-center max-w-96 border-2 border-white rounded-full md:text-xl font-bold"
+        className="py-4 w-full text-center max-w-96 border-2 border-white rounded-full md:text-xl font-bold"
         href="mailto:wildfires@betterangels.la"
       >
         Contact Us
