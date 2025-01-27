@@ -25,12 +25,12 @@ export function ResourceCallout(props: IProps) {
 
   useEffect(() => {
     const handleBeforePrint = () => {
-      setWasExpandedBeforePrint(show); // Remember the current state
-      setShow(true); // Expand all content before printing
+      setWasExpandedBeforePrint(show);
+      setShow(true);
     };
 
     const handleAfterPrint = () => {
-      setShow(wasExpandedBeforePrint); // Restore the original state
+      setShow(wasExpandedBeforePrint);
     };
 
     window.addEventListener('beforeprint', handleBeforePrint);
