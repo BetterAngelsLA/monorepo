@@ -12,7 +12,7 @@ type IProps = {
 export function ResourcTipsDescription(props: IProps) {
   const { data, className } = props;
 
-  const parentCss = [className];
+  const parentCss = ['wisiwig', className];
 
   return (
     <ResourceCallout
