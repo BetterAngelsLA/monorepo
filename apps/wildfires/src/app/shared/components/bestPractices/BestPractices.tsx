@@ -4,7 +4,7 @@ import BestPracticesCard from './BestPracticesCard';
 
 export default function BestPractices() {
   return (
-    <div className="w-full my-8 md:my-24">
+    <div className="w-full my-8 md:my-24 break-inside-avoid">
       <BestPracticesCard
         bgColor="bg-brand-yellow-light"
         title="Document everything!"
