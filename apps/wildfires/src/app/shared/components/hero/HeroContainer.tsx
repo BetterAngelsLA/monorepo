@@ -1,10 +1,9 @@
-interface IProps {
+interface IProps extends PropsWithChildren {
   className?: string;
   url?: string;
-  children: ReactNode;
 }
 
-import { ReactNode } from 'react';
+import { PropsWithChildren } from 'react';
 import { mergeCss } from '../../utils/styles/mergeCss';
 
 export default function HeroContainer(props: IProps) {
