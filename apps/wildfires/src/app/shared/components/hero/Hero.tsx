@@ -1,34 +1,30 @@
-import { ReactNode } from 'react';
+import fireHeroDesktop from '../../../../assets/images/fire-hero-desktop.jpeg';
+import fireHeroMobile from '../../../../assets/images/fire-hero-mobile.jpeg';
+import { mergeCss } from '../../utils/styles/mergeCss';
+import HeroContainer from './HeroContainer';
+import HeroContent from './HeroContent';
 
 interface IHeroProps {
   className?: string;
-  backgroundImage?: string;
-  children: ReactNode;
 }
 
 export default function Hero(props: IHeroProps) {
-  const { className = '', backgroundImage, children } = props;
+  const { className } = props;
 
-  const parentCss = [
-    'flex',
-    'items-center',
-    'justify-left',
-    'bg-cover',
-    'bg-no-repeat',
-    'bg-center',
-    'w-full',
-    className,
-  ].join(' ');
+  const parentCss = ['w-full'];
+
+  const mobileCss = [parentCss, 'md:hidden', className];
+  const desktopCss = [parentCss, 'hidden', 'md:flex', className];
+
   return (
-    <div
-      className={parentCss}
-      style={{
-        backgroundImage: backgroundImage
-          ? `url(${backgroundImage})`
-          : undefined,
-      }}
-    >
-      {children}
-    </div>
+    <>
+      <HeroContainer url={fireHeroMobile} className={mergeCss(mobileCss)}>
+        <HeroContent />
+      </HeroContainer>
+
+      <HeroContainer url={fireHeroDesktop} className={mergeCss(desktopCss)}>
+        <HeroContent />
+      </HeroContainer>
+    </>
   );
 }
