@@ -1,12 +1,12 @@
+import { PropsWithChildren } from 'react';
+import { mergeCss } from '../../utils/styles/mergeCss';
+
 interface IProps extends PropsWithChildren {
   className?: string;
   url?: string;
 }
 
-import { PropsWithChildren } from 'react';
-import { mergeCss } from '../../utils/styles/mergeCss';
-
-export default function HeroContainer(props: IProps) {
+export function HeroContainer(props: IProps) {
   const { className, url, children } = props;
 
   const parentCss = [
