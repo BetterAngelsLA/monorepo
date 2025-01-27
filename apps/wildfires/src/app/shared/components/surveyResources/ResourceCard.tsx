@@ -22,6 +22,7 @@ export function ResourceCard(props: IProps) {
     'rounded-lg',
     'bg-white',
     '[box-shadow:0_4px_6px_#7777771A]',
+    'break-inside-avoid',
     className,
   ];
 
@@ -38,7 +39,7 @@ export function ResourceCard(props: IProps) {
       )}
 
       {!!resourceLink && (
-        <ResourceLink className="self-end mt-8" href={resourceLink} />
+        <ResourceLink className="ml-auto mt-8" href={resourceLink} />
       )}
     </div>
   );
