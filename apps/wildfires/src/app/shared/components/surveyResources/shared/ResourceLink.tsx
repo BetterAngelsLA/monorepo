@@ -10,7 +10,7 @@ type IProps = {
 export function ResourceLink(props: IProps) {
   const { href, target = '_blank', className } = props;
 
-  const parentCss = ['flex', className];
+  const parentCss = ['flex', 'items-center', 'gap-2', className];
 
   if (!href) {
     return null;
@@ -19,8 +19,7 @@ export function ResourceLink(props: IProps) {
   return (
     <a className={mergeCss(parentCss)} href={href} target={target}>
       <div className="font-bold">Visit Resource Site</div>
-
-      <WFLinkIcon className="h-6 ml-[10px]" />
+      <WFLinkIcon className="h-6 min-w-6" />
     </a>
   );
 }
