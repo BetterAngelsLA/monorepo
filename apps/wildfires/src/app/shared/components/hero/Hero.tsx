@@ -1,5 +1,5 @@
-import fireHeroDesktop from '../../../../assets/images/fire-hero-desktop.jpeg';
-import fireHeroMobile from '../../../../assets/images/fire-hero-mobile.jpeg';
+import heroImgDesktop from '../../../../assets/images/fire-hero-desktop.jpeg';
+import heroImgMobile from '../../../../assets/images/fire-hero-mobile.jpeg';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import HeroContainer from './HeroContainer';
 import HeroContent from './HeroContent';
@@ -18,11 +18,11 @@ export default function Hero(props: IHeroProps) {
 
   return (
     <>
-      <HeroContainer url={fireHeroMobile} className={mergeCss(mobileCss)}>
+      <HeroContainer url={heroImgMobile} className={mergeCss(mobileCss)}>
         <HeroContent />
       </HeroContainer>
 
-      <HeroContainer url={fireHeroDesktop} className={mergeCss(desktopCss)}>
+      <HeroContainer url={heroImgDesktop} className={mergeCss(desktopCss)}>
         <HeroContent />
       </HeroContainer>
     </>

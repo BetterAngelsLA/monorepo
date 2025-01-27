@@ -5,6 +5,7 @@ interface IProps {
 }
 
 import { ReactNode } from 'react';
+import { mergeCss } from '../../utils/styles/mergeCss';
 
 export default function HeroContainer(props: IProps) {
   const { className, url, children } = props;
@@ -13,13 +14,14 @@ export default function HeroContainer(props: IProps) {
     'flex',
     'items-center',
     'justify-left',
+    `bg-steel-blue`,
     'bg-cover',
     'bg-no-repeat',
     'bg-center',
     'w-full',
     'h-full',
     className,
-  ].join(' ');
+  ];
 
   if (!url) {
     return null;
@@ -27,7 +29,7 @@ export default function HeroContainer(props: IProps) {
 
   return (
     <div
-      className={parentCss}
+      className={mergeCss(parentCss)}
       style={{
         backgroundImage: `url(${url})`,
       }}

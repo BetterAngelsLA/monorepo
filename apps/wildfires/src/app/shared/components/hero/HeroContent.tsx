@@ -1,5 +1,3 @@
-// HeroContent.tsx
-
 import { PropsWithChildren } from 'react';
 import { mergeCss } from '../../utils/styles/mergeCss';
 
@@ -9,12 +7,7 @@ interface IProps extends PropsWithChildren {
 }
 
 export default function HeroContent(props: IProps) {
-  const { className = '', backgroundImage } = props;
-
-  console.log();
-  console.log('| -------------  backgroundImage  ------------- |');
-  console.log(backgroundImage);
-  console.log();
+  const { className } = props;
 
   const parentCss = [
     'w-full',
@@ -28,7 +21,7 @@ export default function HeroContent(props: IProps) {
     'md:py-16',
     'text-white',
     className,
-  ].join(' ');
+  ];
 
   return (
     <div className={mergeCss(parentCss)}>
