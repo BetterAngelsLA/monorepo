@@ -156,6 +156,7 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
         </div>
         <div className="flex flex-col items-center justify-center pr-4 mt-6">
           <SurveyButton
+            ariaLabel="submit subscribe to mailing list form"
             dark
             className="max-w-[350px] justify-center"
             onClick={handleSubmit}

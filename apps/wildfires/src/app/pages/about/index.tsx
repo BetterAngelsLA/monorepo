@@ -62,6 +62,7 @@ export default function About() {
               maximize public benefits and chart permanent pathways out of
               poverty. ImagineLA created the{' '}
               <a
+                aria-label="open imagine LA benefits navigator website in new tab"
                 className="underline"
                 href="https://www.imaginela.org/benefit-navigator"
                 target="_blank"
