@@ -60,25 +60,31 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
         <div className="flex flex-row flex-wrap w-full mb-2">
           <div className="flex flex-row flex-wrap w-full mb-2">
             <div className="flex flex-1 flex-col mb-2">
-              <label className="mb-1 font-bold">First Name</label>
+              <label className="mb-1 font-bold">
+                First Name<span className="text-[#FF0000]">*</span>
+              </label>
               <input
                 style={styles.input}
                 onChange={handleChange}
                 type="text"
                 name="firstName"
                 value={formData.firstName}
+                required={true}
                 placeholder="First Name"
               />
             </div>
 
             <div className="flex flex-1 flex-col mb-2">
-              <label className="mb-1 font-bold">Last Name</label>
+              <label className="mb-1 font-bold">
+                Last Name<span className="text-[#FF0000]">*</span>
+              </label>
               <input
                 style={styles.input}
                 onChange={handleChange}
                 type="text"
                 name="lastName"
                 value={formData.lastName}
+                required={true}
                 placeholder="Last Name"
               />
             </div>
@@ -101,7 +107,9 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
             </div>
 
             <div className="flex flex-1 flex-col mb-2">
-              <label className="mb-1 font-bold">Zip Code</label>
+              <label className="mb-1 font-bold">
+                Zip Code of Fire Impacted Property
+              </label>
               <input
                 style={styles.input}
                 onChange={handleChange}
@@ -131,7 +139,7 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
         </div>
 
         <div className="flex flex-row items-center justify-center mb-1">
-          <div className="max-h-[50px]">
+          <div className="max-h-[50px] mb-2">
             {status === 'sending' && <div>Sending...</div>}
             {status === 'error' && (
               <div
@@ -140,18 +148,24 @@ const SignupForm = ({ status, message, subscribe }: ISubscribeFormProps) => {
               />
             )}
             {status === 'success' && (
-              <div className="color-brand-dark-blue">
+              <div className="color-brand-dark-blue mt-3">
                 You will receive a confirmation email to subscribe!
               </div>
             )}
           </div>
         </div>
-        <div className="flex flex-row items-center justify-end pr-4">
+        <div className="flex flex-col items-center justify-center pr-4 mt-6">
           <SurveyButton
+            ariaLabel="submit subscribe to mailing list form"
             dark
-            className="w-[150px]"
+            className="max-w-[350px] justify-center"
             onClick={handleSubmit}
-            disabled={!EMAIL_REGEX.test(formData.email || '')}
+            disabled={
+              status === 'sending' ||
+              !EMAIL_REGEX.test(formData.email || '') ||
+              !formData.firstName ||
+              !formData.lastName
+            }
           >
             Submit
           </SurveyButton>

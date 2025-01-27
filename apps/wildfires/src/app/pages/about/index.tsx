@@ -1,8 +1,3 @@
-import AnnenbergLogo from '../../../assets/images/AF-2022-Horiz.png';
-import BaLogo from '../../../assets/images/ba-logo-white.png';
-import ImagineLaLogo from '../../../assets/images/imagine_la_logo.png';
-import MayorsFundLaLogo from '../../../assets/images/mayors-fund-logo.png';
-import RSKFLaLogo from '../../../assets/images/RSKF_LA_Logotype_Black.png';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import ContactUs from '../../shared/components/contactUs/ContactUs';
 
@@ -11,39 +6,13 @@ export default function About() {
     <>
       <HorizontalLayout className="bg-brand-dark-blue">
         <div className="relative">
-          <div className="max-w-[62.5rem] mx-auto flex flex-col md:flex-row items-stretch">
-            <div className="bg-brand-dark-blue w-full md:w-[60%] py-40 flex items-center  md:py-0">
-              <h1 className="border-l-[10px] border-brand-yellow font-light font-primary md:font-bold pl-4 md:pl-8 text-5xl md:text-[64px] text-white md:leading-[1.2] text-left">
-                About <span className="whitespace-nowrap">LA Disaster</span>{' '}
-                Relief Navigator
+          <div className="max-w-[62.5rem] mx-auto flex flex-col md:flex-row items-stretch min-h-[10vh] py-14 md:py-28">
+            <div className="bg-brand-dark-blue w-full md:w-[60%] py-14 flex items-center md:py-0">
+              <h1 className="border-l-[10px] border-brand-yellow font-light font-primary pl-4 md:pl-8 text-5xl md:text-[64px] text-white md:leading-[1.2] text-left md:whitespace-nowrap">
+                <span className="block md:inline">About</span>{' '}
+                <span className="block md:inline">LA Disaster</span>{' '}
+                <span className="block md:inline">Relief Navigator</span>
               </h1>
-            </div>
-            <div className="flex flex-col h-full items-center w-full md:w-[40%] bg-brand-sky-blue md:px-4 py-12 gap-16">
-              <img
-                className="w-[292px] md:w-[400px]"
-                src={BaLogo}
-                alt="Better Angels LA"
-              />
-              <img
-                className="w-[226px] md:w-[310px]"
-                src={ImagineLaLogo}
-                alt="Imagine LA"
-              />
-              <img
-                className="w-[292px] md:w-[400px]"
-                src={MayorsFundLaLogo}
-                alt="Mayor's fund for Los Angeles"
-              />
-              <img
-                className="w-[292px] md:w-[400px]"
-                src={AnnenbergLogo}
-                alt="Annenberg Foundation"
-              />
-              <img
-                className="w-[292px] md:w-[400px]"
-                src={RSKFLaLogo}
-                alt="R&S Kayne Foundation Los Angeles"
-              />
             </div>
           </div>
         </div>
@@ -53,8 +22,8 @@ export default function About() {
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             About
           </h2>
-          <p className="mb-6 md:mb-16 sm:mb-12">
-            Better Angels, in partnership with ImagineLA and the Mayor’s Fund,
+          <p className="mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
+            Better Angels, in partnership with ImagineLA and the Mayor's Fund,
             has launched the LA Disaster Relief Navigator, an online tool to
             help Angelenos impacted by the wildfires effectively navigate the
             many resources potentially available to them. The solution is
@@ -70,14 +39,13 @@ export default function About() {
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Who We Are
           </h2>
-          {/* <p> */}
-          <p className="mb-4 md:mb-4 sm:mb-4">
+          <p className="mb-4 md:mb-4 sm:mb-4 text-xl leading-normal">
             Better Angels, Imagine LA, and Mayor Karen Bass's Office have come
             together to support Angelenos affected by the devastating January
             2025 wildfires. Each partner brings unique expertise and a shared
             commitment to fostering community strength and resilience.
           </p>
-          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12">
+          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
             <li className="list-disc">
               <span className="font-bold">Better Angels</span>: Better Angels is
               on a mission to end the epidemic of homelessness in Los Angeles by
@@ -94,6 +62,7 @@ export default function About() {
               maximize public benefits and chart permanent pathways out of
               poverty. ImagineLA created the{' '}
               <a
+                aria-label="open imagine LA benefits navigator website in new tab"
                 className="underline"
                 href="https://www.imaginela.org/benefit-navigator"
                 target="_blank"
@@ -114,12 +83,12 @@ export default function About() {
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Our Sponsors
           </h2>
-          <p className="mb-4 md:mb-4 sm:mb-4">
+          <p className="mb-4 md:mb-4 sm:mb-4 text-xl leading-normal">
             This project was initially supported by two LA-based foundations,
             who wanted to ensure that people needing help had an accessible way
             to find and receive critical resources.{' '}
           </p>
-          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12">
+          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
             <li className="list-disc">
               <span className="font-bold">Annenberg Foundation</span>: A
               philanthropic foundation dedicated to addressing the critical
@@ -138,7 +107,7 @@ export default function About() {
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Why We Care
           </h2>
-          <p className="mb-6 md:mb-16 sm:mb-12">
+          <p className="mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
             We recognize the profound impact the wildfires have had on our
             community, from displaced families to disrupted livelihoods. By
             working together, we aim to ensure no Angeleno faces these
