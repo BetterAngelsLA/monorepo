@@ -46,15 +46,16 @@ export function ResourceCallout(props: IProps) {
     <div className={mergeCss(parentCss)}>
       <div className="w-full flex items-center">
         {!!icon && <div className={mergeCss(iconCss)}>{icon}</div>}
-        <div className="flex items-center justify-between w-full flex-1">
+        <div
+          className="flex items-center justify-between w-full flex-1 cursor-pointer"
+          onClick={() => setShow(!show)}
+        >
           <div className="font-bold h-8 flex items-center text-xl">
             Useful Tips
           </div>
-          <div onClick={() => setShow(!show)}>
-            <ChevronLeftIcon
-              className={`h-4 w-4 ${show ? 'rotate-90' : '-rotate-90'}`}
-            />
-          </div>
+          <ChevronLeftIcon
+            className={`h-4 w-4 ${show ? 'rotate-90' : '-rotate-90'}`}
+          />
         </div>
       </div>
       {show && <div className="mt-4">{children}</div>}
