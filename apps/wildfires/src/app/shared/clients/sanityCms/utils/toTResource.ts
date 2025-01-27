@@ -34,7 +34,7 @@ export function toTResource(item: any): TResource | null {
     slug: item.slug,
     resourceType: item.resourceType,
     resourceLink: item.resourceLink,
-    usefulTipsLink: item.usefulTipsLink,
+    tipsDescription: item.tipsDescription,
     priority: Number.isInteger(item.priority) ? item.priority : undefined,
     shortDescription: toPortableTextBlock(item.shortDescription),
     tags: toTTags(item.tags),
