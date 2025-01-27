@@ -1022,6 +1022,7 @@ export type NoteFilter = {
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
 export enum NoteNamespaceEnum {
@@ -1217,6 +1218,7 @@ export enum PronounEnum {
 
 export type Query = {
   __typename?: 'Query';
+  availableTeams: Array<SelahTeamEnum>;
   clientDocument: ClientDocumentType;
   clientDocuments: Array<ClientDocumentType>;
   clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
