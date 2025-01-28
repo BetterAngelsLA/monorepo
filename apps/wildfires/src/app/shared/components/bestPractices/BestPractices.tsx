@@ -7,7 +7,7 @@ export default function BestPractices() {
     <div className="w-full my-8 md:my-24 break-inside-avoid">
       <BestPracticesCard
         bgColor="bg-brand-yellow-light"
-        title="Reminder to document everything"
+        title="Remember to document everything"
         description="Take videos and pictures of damages, keep receipts of all expenses!"
         Icon={CameraIcon}
       />
