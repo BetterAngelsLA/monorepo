@@ -27,17 +27,17 @@ export function GoogleTranslateBtn(props: IProps) {
   };
 
   const langs = [
-    { id: 'hy', text: 'Armenian' },
-    { id: 'zh-CN', text: 'Chinese (Simplified)' },
-    { id: 'en', text: 'English' },
-    { id: 'tl', text: 'Filipino' },
-    { id: 'fr', text: 'French' },
-    { id: 'ja', text: 'Japanese' },
-    { id: 'ko', text: 'Korean' },
-    { id: 'fa', text: 'Persian' },
-    { id: 'ru', text: 'Russian' },
-    { id: 'es', text: 'Spanish' },
-    { id: 'vi', text: 'Vietnamese' },
+    { id: 'hy', text: 'Հայերեն' }, // Armenian
+    { id: 'zh-CN', text: '简体中文' }, // Chinese (Simplified)
+    { id: 'en', text: 'English' }, // English
+    { id: 'tl', text: 'Filipino' }, // Filipino
+    { id: 'fr', text: 'Français' }, // French
+    { id: 'ja', text: '日本語' }, // Japanese
+    { id: 'ko', text: '한국어' }, // Korean
+    { id: 'fa', text: 'فارسی' }, // Persian
+    { id: 'ru', text: 'Русский' }, // Russian
+    { id: 'es', text: 'Español' }, // Spanish
+    { id: 'vi', text: 'Tiếng Việt' }, // Vietnamese
   ];
 
   useEffect(() => {
@@ -105,7 +105,7 @@ export function GoogleTranslateBtn(props: IProps) {
         className="flex items-center cursor-pointer"
         onClick={toggleDropdown}
       >
-        <div className="min-h-10 min-w-10 flex items-center justify-center lg:hidden">
+        <div className="min-h-10 min-w-10 flex items-center justify-center">
           <GlobeIcon className="h-6 w-6" stroke="white" fill="none" />
         </div>
         <span className="hidden lg:flex items-center">
