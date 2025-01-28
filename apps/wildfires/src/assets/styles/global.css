@@ -159,11 +159,11 @@ textarea:focus {
 }
 
 .wisiwig h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
+.wisiwig h2,
+.wisiwig h3,
+.wisiwig h4,
+.wisiwig h5,
+.wisiwig h6 {
   margin: 1rem 0 0.5rem 0;
   font-size: 18px !important;
 }
