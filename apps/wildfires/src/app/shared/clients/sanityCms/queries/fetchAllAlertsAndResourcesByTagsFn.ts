@@ -3,10 +3,30 @@ import { normalizeQueryString } from './utils/normalizeQueryString';
 
 const DEFAULT_QUERY = `*[_type == "resource" &&  (resourceType == "alert")]`;
 
-export const fetchAllAlertsAndResourcesByTagsFn = async (tags: string[]) => {
+export const fetchAllAlertsAndResourcesByTagsFn = async (
+  tags: string[]
+): Promise<any[]> => {
   const queryParams = generateQueryParams(tags);
 
-  return await sanityClient.fetch(queryParams);
+  try {
+    const response = await sanityClient.fetch(queryParams);
+
+    if (!Array.isArray(response)) {
+      throw new Error('invalid response');
+    }
+
+    return response;
+  } catch (error) {
+    let errorMessage = 'Unknown error';
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    console.error(`Failed to fetch resouces from Sanity: ${errorMessage}`);
+
+    return [];
+  }
 };
 
 function generateQueryParams(tags: string[]): string {
