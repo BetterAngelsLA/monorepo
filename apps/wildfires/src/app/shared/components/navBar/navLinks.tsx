@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { AboutLink } from './shared/AboutLink';
-import { DonateButton } from './shared/DonateButton';
 
 type IProps = {
   className?: string;
@@ -39,7 +38,6 @@ export function NavLinks(props: IProps) {
         Contact Us
       </a>
 
-      <DonateButton className="max-w-40 mb-4" />
     </div>
   );
 }
