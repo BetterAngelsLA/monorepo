@@ -1,23 +1,13 @@
-import { CMS_BASE_URL } from '../sanityClient';
+import { sanityClient } from '../sanityClient';
 import { normalizeQueryString } from './utils/normalizeQueryString';
 
 const DEFAULT_QUERY = `*[_type == "resource" &&  (resourceType == "alert")]`;
 
 export const fetchAllAlertsAndResourcesByTagsFn = async (tags: string[]) => {
-  const url = generateUrl(tags);
-
-  const response = await fetch(url);
-
-  return response.json();
-};
-
-function generateUrl(tags: string[]): string {
   const queryParams = generateQueryParams(tags);
 
-  const encodedQuery = encodeURIComponent(queryParams);
-
-  return `${CMS_BASE_URL}?query=${encodedQuery}`;
-}
+  return await sanityClient.fetch(queryParams);
+};
 
 function generateQueryParams(tags: string[]): string {
   if (!tags.length) {
