@@ -1,5 +1,4 @@
-import { Document, Page, PDFDownloadLink, StyleSheet, Text, View } from '@react-pdf/renderer';
-import React from 'react';
+import html2pdf from 'html2pdf.js';
 import { Button } from './button/Button';
 
 interface GeneratePDFProps {
@@ -7,53 +6,65 @@ interface GeneratePDFProps {
   className?: string;
 }
 
-const styles = StyleSheet.create({
-  page: {
-    padding: 20,
-    fontFamily: 'Helvetica',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#0d3b66', // Dark blue
-    borderLeftWidth: 10,
-    borderLeftColor: '#ffc107', // Yellow
-    paddingLeft: 10,
-    marginBottom: 10,
-  },
-  content: {
-    fontSize: 12,
-    marginTop: 10,
-  },
-});
+const GeneratePDF: React.FC<GeneratePDFProps> = ({ className }) => {
+  const options = {
+    margin: [5, 10],
+    filename: 'your-wildfire-recovery-action-plan.pdf',
+    html2canvas: {
+      scale: 2,
+      letterRendering: true,
+    },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: 'css' },
+  };
 
-const PDFContent = () => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      <Text style={styles.title}>Your Wildfire Recovery Action Plan</Text>
-      <View style={styles.content}>
-        <Text>This is where your action plan content goes.</Text>
-        <Text>Make sure to dynamically insert your data here as needed.</Text>
-      </View>
-    </Page>
-  </Document>
-);
+  const handleGeneratePdf = () => {
+    const h1 = document.createElement('h1');
+    h1.textContent = 'Your Wildfire Recovery Action Plan';
+    h1.classList.add(
+      'font-bold',
+      'border-l-[10px]',
+      'pl-4',
+      'md:pl-8',
+      'border-brand-yellow',
+      'text-4xl',
+      'text-brand-dark-blue',
+      'leading-normal'
+    );
 
-const GeneratePDF: React.FC<GeneratePDFProps> = ({ className, fileName = 'wildfire-recovery-action-plan.pdf' }) => {
+    h1.setAttribute('data-inserted', 'true');
+
+    window.dispatchEvent(new Event('beforeprint'));
+
+    const element = document.getElementById('content-to-pdf');
+    if (element) {
+      element.insertBefore(h1, element.firstChild);
+
+      html2pdf()
+        .from(element)
+        .set(options)
+        .save()
+        .finally(() => {
+          // Dispatch `afterprint` to restore the original collapsed state
+          window.dispatchEvent(new Event('afterprint'));
+          const h1 = document.querySelector(
+            '#content-to-pdf h1[data-inserted="true"]'
+          );
+          if (h1) {
+            h1.remove(); // Remove the <h1> element after PDF generation
+          }
+        });
+    }
+  };
+
   return (
-    <PDFDownloadLink
-      document={<PDFContent />}
-      fileName={typeof fileName === 'function' ? fileName() : fileName}
+    <Button
+      ariaLabel="Save your action plan as a PDF file"
+      className={className}
+      onClick={handleGeneratePdf}
     >
-      {({ loading }) => (
-        <Button
-          ariaLabel="Save your action plan as a PDF file"
-          className={className}
-        >
-          {loading ? 'Generating PDF...' : 'Save Your Action Plan as a PDF'}
-        </Button>
-      )}
-    </PDFDownloadLink>
+      Save Your Action Plan as a PDF
+    </Button>
   );
 };
 
