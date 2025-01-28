@@ -26,7 +26,11 @@
     "@tanstack/react-query": "*",
     "@portabletext/react": "*",
     "html2pdf.js": "*",
-    "react-ga4": "*"
+    "react-ga4": "*",
+    "remeda": "*",
+    "@portabletext/types": "*",
+    "uuid": "*",
+    "@sanity/client": "*"
   },
   "devDependencies": {}
 }
