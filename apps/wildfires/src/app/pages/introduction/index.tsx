@@ -3,7 +3,7 @@ import { FiresSurvey } from './firesSurvey/FiresSurvey';
 
 export function Introduction() {
   return (
-    <div>
+    <div className="w-full">
       <HorizontalLayout>
         <FiresSurvey />
       </HorizontalLayout>
