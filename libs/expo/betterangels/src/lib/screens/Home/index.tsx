@@ -13,22 +13,22 @@ import { FlatList, View } from 'react-native';
 import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
-  ClientProfilesQuery,
-  useClientProfilesQuery,
+  ActiveClientsProfilesPaginatedQuery,
+  useActiveClientsProfilesPaginatedQuery,
 } from './__generated__/ActiveClients.generated';
 
 const paginationLimit = 20;
 
 export default function Home({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] =
-    useState<ClientProfilesQuery['clientProfiles'][number]>();
+    useState<ActiveClientsProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]>();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [clients, setClients] = useState<ClientProfilesQuery['clientProfiles']>(
+  const [clients, setClients] = useState<ActiveClientsProfilesPaginatedQuery['clientProfilesPaginated']['results']>(
     []
   );
-  const { data, loading } = useClientProfilesQuery({
+  const { data, loading } = useActiveClientsProfilesPaginatedQuery({
     variables: {
       filters: { isActive: true },
       pagination: { limit: paginationLimit + 1, offset: offset },
@@ -53,10 +53,10 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfiles' in data)) return;
+    if (!data || !('clientProfilesPaginated' in data)) return;
 
-    const clientsToShow = data.clientProfiles.slice(0, paginationLimit);
-    const isMoreAvailable = data.clientProfiles.length > clientsToShow.length;
+    const clientsToShow = data.clientProfilesPaginated.results.slice(0, paginationLimit);
+    const isMoreAvailable = data.clientProfilesPaginated.results.length > clientsToShow.length;
 
     if (offset === 0) {
       setClients(clientsToShow);
