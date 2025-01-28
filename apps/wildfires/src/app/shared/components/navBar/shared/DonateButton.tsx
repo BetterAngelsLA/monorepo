@@ -1,6 +1,7 @@
 import { mergeCss } from '../../../utils/styles/mergeCss';
 
-const DONATE_HREF = 'https://www.pledge.to/better-angels-emergency-assistance-fund';
+const DONATE_HREF =
+  'https://www.pledge.to/better-angels-emergency-assistance-fund';
 
 type IProps = {
   className?: string;
@@ -25,6 +26,7 @@ export function DonateButton(props: IProps) {
 
   return (
     <a
+      aria-label="navigate to donation page"
       className={mergeCss(parentCss)}
       target="_blank"
       href={DONATE_HREF}

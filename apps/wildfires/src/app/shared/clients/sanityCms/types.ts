@@ -5,7 +5,7 @@ export type TResource = {
   slug: string;
   resourceType: 'resource' | 'alert';
   resourceLink?: string;
-  usefulTipsLink?: string;
+  tipsDescription?: PortableTextBlock | null;
   priority?: number;
   tags?: TTag[];
   shortDescription?: PortableTextBlock | null;

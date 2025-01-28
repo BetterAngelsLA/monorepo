@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import ContactUs from '../../shared/components/contactUs/ContactUs';
 
@@ -23,14 +24,14 @@ export default function About() {
             About
           </h2>
           <p className="mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
-            Better Angels, in partnership with ImagineLA and the Mayor's Fund,
-            has launched the LA Disaster Relief Navigator, an online tool to
-            help Angelenos impacted by the wildfires effectively navigate the
-            many resources potentially available to them. The solution is
+            Better Angels, in partnership with ImagineLA and the Mayor's Fund
+            for Los Angeles, has developed the LA Disaster Relief Navigator, an
+            online tool to help Angelenos impacted by the wildfires effectively
+            navigate the many resources available to them. The solution is
             designed to help people navigate every aspect of fire relief,
-            including applying for federal, state and local government
+            including applying for federal, state, and local government
             assistance, making insurance claims, home damage remediation,
-            temporary and permanent housing solutions and other critical
+            temporary and permanent housing solutions, and other critical
             services. The Navigator provides victims with a personalized action
             plan based on their specific situation, making the recovery process
             immediately actionable and helping our community to rebuild even
@@ -40,12 +41,12 @@ export default function About() {
             Who We Are
           </h2>
           <p className="mb-4 md:mb-4 sm:mb-4 text-xl leading-normal">
-            Better Angels, Imagine LA, and Mayor Karen Bass's Office have come
-            together to support Angelenos affected by the devastating January
-            2025 wildfires. Each partner brings unique expertise and a shared
-            commitment to fostering community strength and resilience.
+            Better Angels, Imagine LA, and the Mayor's Fund for Los Angeles have
+            come together to support Angelenos affected by the devastating
+            January 2025 wildfires. Each partner brings unique expertise and a
+            shared commitment to fostering community strength and resilience.
           </p>
-          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
+          <ul className="ml-6 mb-6 sm:mb-12 md:mb-16 text-xl leading-normal">
             <li className="list-disc">
               <span className="font-bold">Better Angels</span>: Better Angels is
               on a mission to end the epidemic of homelessness in Los Angeles by
@@ -53,15 +54,16 @@ export default function About() {
               Angels is taking a holistic approach, harnessing new models of
               intervention, community engagement, advocacy, world-class
               technology, and a strong dose of pragmatism across five critical
-              areas of need: Prevention, Services, Shelter, Housing and
+              areas of need: Prevention, Services, Shelter, Housing, and
               Technology.
             </li>
             <li className="list-disc">
               <span className="font-bold">Imagine LA</span>: A social impact
               organization specializing in helping individuals and families
               maximize public benefits and chart permanent pathways out of
-              poverty. ImagineLA created the{' '}
+              homelessness and poverty. Imagine LA has created the{' '}
               <a
+                aria-label="open imagine LA benefits navigator website in new tab"
                 className="underline"
                 href="https://www.imaginela.org/benefit-navigator"
                 target="_blank"
@@ -69,14 +71,29 @@ export default function About() {
               >
                 Benefits Navigator
               </a>
-              , a suite of online tools dedicated to helping individuals and
-              families maximize their public benefits and chart permanent
-              pathways out of poverty.
+              , a suite of online tools that helps case managers and their
+              clients to quickly navigate and access the complex arena of
+              federal, state, and local public benefits and refundable tax
+              credits. The Benefit Navigator has helped people access over $125
+              million in additional benefits and feel confident to increase
+              their earned income by an average of 25%.
             </li>
             <li className="list-disc">
-              <span className="font-bold">Mayor Karen Bass's Office</span>:
-              Leads the nation's second largest city with urgency to deliver
-              results for all Angelenos.
+              <span className="font-bold">
+                The Mayor’s Fund for Los Angeles
+              </span>
+              : In support of Mayor’s Karen Bass' work to reduce and end
+              homelessness in Los Angeles, the Mayor’s Fund for Los Angeles is
+              focused on preventing Angelenos from becoming homeless. It has
+              brought together business, philanthropy, nonprofits, and local
+              government to help keep Angelenos housed. Through outreach, case
+              management and expanded legal services, the Mayor’s Fund's We Are
+              LA program has connected over 53,000 Angelenos to needed services
+              and helped stabilize housing for more than 23,000 Angelenos at
+              risk of eviction and homelessness. The Mayor’s Fund, through their
+              hotline, is spearheading case management services to the Angelenos
+              severely economically impacted by the Wildfires - those at risk of
+              homelessness. The Hotline is a featured resource in the Navigator.
             </li>
           </ul>
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
@@ -87,7 +104,7 @@ export default function About() {
             who wanted to ensure that people needing help had an accessible way
             to find and receive critical resources.{' '}
           </p>
-          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
+          <ul className="ml-6 mb-6 sm:mb-12 md:mb-16 text-xl leading-normal">
             <li className="list-disc">
               <span className="font-bold">Annenberg Foundation</span>: A
               philanthropic foundation dedicated to addressing the critical
@@ -116,6 +133,51 @@ export default function About() {
             has access to the support they need during times of crisis and
             beyond.
           </p>
+          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
+            Credits
+          </h2>
+          <ul className="ml-6 mb-6 sm:mb-12 md:mb-16 text-xl leading-normal">
+            <li className="list-disc">
+              <Link
+                className="underline"
+                aria-label="navigate to home page"
+                to="/"
+              >
+                Home page
+              </Link>{' '}
+              hero image is adapted from{' '}
+              <a
+                aria-label="open flickr website in new tab"
+                className="underline"
+                href="https://www.flickr.com/photos/ashokbo/54261421534/in/photolist-2qETYbA-2kNzj2F-2mXEBxn-2oN42HP-2qEdefd-2nMJhxT-2goMkAV-2kZ8V3X-2qEPfUG-WYVFsq-MhoESM-2mXtpqN-2qEgQqq-2qEzaXM-2qEdUog-2qESLkA-2qG32rE-2qG8XrL-2qG8PLa-2qG9VVd-2qG3bQQ-2qG8Yzw-2j9ypPV-2qG9Poa-2qG32rz-2qG8pXA-2qG3UQw-2qGaBNV-2qGaC5B-2qG3UEr-2qG9FAk-2qG9FRF-2qG3UGq-2qG8q2y-2qG3UPj-2qG9FRA-25sLBSS-2qF3fC9-2qG3ULi-2qGaC2f-2qG8q9N-2qGpjA9-2kZPduC-2qEjwbr-2qEix7A-2jetVLQ-2qEhoZs-2qFeETQ-2qEnucj-2kZ4wW3/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Palisades fire
+              </a>{' '}
+              by{' '}
+              <a
+                aria-label="open flickr website in new tab"
+                className="underline"
+                href="https://www.flickr.com/photos/ashokbo/54261421534"
+                target="_blank"
+                rel="noreferrer"
+              >
+                ashokbo
+              </a>
+              . Licensed under{' '}
+              <a
+                aria-label="open creative commons license in new tab"
+                className="underline"
+                href="https://creativecommons.org/licenses/by-nc/2.0/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                CC BY-NC 2.0
+              </a>
+              .
+            </li>
+          </ul>
         </div>
       </HorizontalLayout>
       <ContactUs />

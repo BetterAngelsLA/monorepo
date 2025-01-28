@@ -157,3 +157,43 @@ textarea:focus {
   text-decoration-thickness: 2px;
   text-underline-offset: 2px;
 }
+
+.wisiwig h1,
+.wisiwig h2,
+.wisiwig h3,
+.wisiwig h4,
+.wisiwig h5,
+.wisiwig h6 {
+  margin: 1rem 0 0.5rem 0;
+  font-size: 18px !important;
+}
+
+.wisiwig p {
+  margin: 0.5rem 0;
+  font-size: 16px !important;
+}
+
+.wisiwig li {
+  margin-left: 2rem;
+  font-size: 16px !important;
+  word-break: break-word;
+}
+
+.wisiwig li::before {
+  content: '•';
+  color: var(--color-primary-20);
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+
+@media screen and (max-width: 768px) {
+  .wisiwig li {
+    margin-left: 0.875rem;
+  }
+}
+
+.wisiwig a {
+  text-decoration: underline !important;
+  font-style: italic !important;
+}

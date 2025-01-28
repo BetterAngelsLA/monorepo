@@ -4,10 +4,10 @@ import BestPracticesCard from './BestPracticesCard';
 
 export default function BestPractices() {
   return (
-    <div className="w-full my-8 md:my-24">
+    <div className="w-full my-8 md:my-24 break-inside-avoid">
       <BestPracticesCard
         bgColor="bg-brand-yellow-light"
-        title="Document everything!"
+        title="Remember to document everything"
         description="Take videos and pictures of damages, keep receipts of all expenses!"
         Icon={CameraIcon}
       />
@@ -21,6 +21,7 @@ export default function BestPractices() {
             navigating online and/or to help you be prepared for an in-person
             meeting at a{' '}
             <a
+              aria-label="open disaster recovery center website in new tab"
               className="underline"
               target="_blank"
               href="https://www.disasterassistance.gov/"
