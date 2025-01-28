@@ -26,7 +26,7 @@ export function HeroContent(props: IProps) {
   return (
     <div className={mergeCss(parentCss)}>
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center">
-        <h1 className="whitespace-nowrap flex-1 mb-10 md:mb-0 border-l-[10px] border-brand-yellow pl-4 text-left text-5xl md:text-[64px] md:leading-[1.2] font-extralight">
+        <h1 className="flex-1 mb-10 md:mb-0 md:mr-2 border-l-[10px] border-brand-yellow pl-4 text-left text-5xl md:text-[64px] md:leading-[1.2] font-extralight">
           Get the help <br /> you need
         </h1>
         <p className="flex-1 text-xl md:text-2xl leading-[30px] md:leading-[48px] text-justify md:text-start">
