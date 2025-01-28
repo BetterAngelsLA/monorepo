@@ -8,9 +8,15 @@ import {
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
-import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
+import {
+  NotesQuery,
+  Ordering,
+  SelahTeamEnum,
+  useNotesQuery,
+} from '../../apollo';
 import useUser from '../../hooks/user/useUser';
 import { MainContainer, NoteCard } from '../../ui-components';
+import InteractionsFilters from './InteractionsFilters/TeamsFilter';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
 import {
@@ -20,12 +26,19 @@ import {
 
 const paginationLimit = 10;
 
+type TFilters = {
+  teams: { id: SelahTeamEnum; label: string }[];
+};
+
 export default function Interactions() {
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState('');
   const [filterTeams, setFilterTeams] = useState();
   const [availableTeams, setAvailableTeams] =
     useState<AvailableTeamsQuery>(null);
+  const [filters, setFilters] = useState<TFilters>({
+    teams: [],
+  });
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const { user } = useUser();
@@ -50,7 +63,8 @@ export default function Interactions() {
       filters: {
         createdBy: user?.id,
         search: filterSearch,
-        teams: filterTeams,
+        // teams: filterTeams,
+        teams: filters.teams.length ? filters.teams.map((item) => item.id) : null,
       },
     },
     fetchPolicy: 'cache-and-network',
@@ -114,11 +128,17 @@ export default function Interactions() {
     setHasMore(isMoreAvailable);
   }, [data, offset]);
 
+  const updateFilters = (newFilters: TFilters) => {
+    setFilters(newFilters);
+    setOffset(0);
+  };
+
   if (error) throw new Error('Something went wrong!');
 
   return (
     <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <InteractionsHeader search={search} setSearch={onChange} />
+      <InteractionsFilters filters={filters} setFilters={updateFilters} />
       <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       {search && !loading && notes.length < 1 && (
         <View
