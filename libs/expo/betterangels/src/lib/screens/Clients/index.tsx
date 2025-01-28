@@ -8,7 +8,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ElementType, useEffect, useMemo, useState } from 'react';
+import { ElementType, useEffect, useMemo, useState, useCallback } from 'react';
 import { SectionList, View } from 'react-native';
 import { Ordering } from '../../apollo';
 import { useSnackbar } from '../../hooks';
@@ -34,9 +34,12 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const [filterSearch, setFilterSearch] = useState<string>('');
   const [createNote] = useCreateNoteMutation();
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { data, loading } = useClientProfilesPaginatedQuery({
+  const { data, loading, refetch } = useClientProfilesPaginatedQuery({
     variables: {
-      pagination: { limit: paginationLimit + 1, offset },
+      pagination: {
+        limit: paginationLimit,
+        offset: 0
+      },
       filters: {
         search: filterSearch,
       },
@@ -56,11 +59,18 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
   const router = useRouter();
 
-  function loadMoreClients() {
-    if (hasMore && !loading) {
-      const nextOffset = data?.clientProfilesPaginated.pageInfo.offset + paginationLimit;
+  const loadMoreClients = useCallback(() => {
+    if (hasMore && !loading && data?.clientProfilesPaginated?.pageInfo) {
+      const nextOffset = data.clientProfilesPaginated.pageInfo.offset + paginationLimit;
+      refetch({
+        pagination: {
+          limit: paginationLimit,
+          offset: nextOffset
+        }
+      });
     }
-  }
+  }, [hasMore, loading, data, refetch, paginationLimit]);
+
   async function createNoteFunction(
     id: string,
     firstName: string | undefined | null
@@ -116,10 +126,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   useEffect(() => {
     if (!data || !('clientProfilesPaginated' in data)) return;
 
-    const clientsToShow = data.clientProfilesPaginated.results.slice(0, paginationLimit);
-    const isMoreAvailable = data.clientProfilesPaginated.results.length > clientsToShow.length;
-
-    const groupedContacts = clientsToShow.reduce(
+    const groupedContacts = data.clientProfilesPaginated.results.reduce(
       (acc: IGroupedClients, client) => {
         const firstLetter =
           client.user.firstName?.charAt(0).toUpperCase() || '#';
@@ -137,7 +144,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     );
 
     setClients((prevClients) => {
-      if (offset === 0) {
+      if (data.clientProfilesPaginated.pageInfo.offset === 0) {
         return groupedContacts;
       }
 
@@ -157,8 +164,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       return mergedClients;
     });
 
-    setHasMore(isMoreAvailable);
-  }, [data, offset]);
+    const { pageInfo, totalCount } = data.clientProfilesPaginated;
+    setHasMore(pageInfo.offset + paginationLimit < totalCount);
+  }, [data]);
 
   const sections = useMemo(() => Object.values(clients || {}), [clients]);
   const hasClients = !loading && !!sections.length;
@@ -190,7 +198,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           onDelete={() => {
             setSearch('');
             setFilterSearch('');
-            setOffset(0);
+            setHasMore(true);
             setClients({});
           }}
         />
