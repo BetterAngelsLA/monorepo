@@ -16,20 +16,22 @@ export default function Result() {
 
   return (
     <>
-      <HorizontalLayout className="bg-brand-dark-blue">
-        <Hero className="min-h-[60vh] py-14 md:py-28">
-          <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white md:text-[64px] md:leading-[1.2]">
-            Your Wildfire Recovery Action Plan
-          </h1>
-        </Hero>
-      </HorizontalLayout>
-      <HorizontalLayout>
-        <div id="content-to-pdf">
+      <div id="content-to-pdf">
+        <HorizontalLayout className="bg-brand-dark-blue">
+          <Hero className="min-h-[60vh] py-14 md:py-28">
+            <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white md:text-[64px] md:leading-[1.2]">
+              Your Wildfire Recovery Action Plan
+            </h1>
+          </Hero>
+        </HorizontalLayout>
+        <HorizontalLayout>
           <BestPractices />
           {surveyResults && (
             <SurveyResults className="mt-8 mb-24" results={surveyResults} />
           )}
-        </div>
+        </HorizontalLayout>
+      </div>
+      <HorizontalLayout>
         <GeneratePDF
           className="mb-16 md:mb-28 bg-brand-dark-blue text-white mx-auto"
           fileName="LA Disaster Relief Navigator"
