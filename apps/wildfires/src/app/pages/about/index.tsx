@@ -164,7 +164,7 @@ export default function About() {
             >
               ashokbo
             </a>
-            . Licensed under
+            . Licensed under{' '}
             <a
               aria-label="open creative commons license in new tab"
               className="underline"
@@ -172,7 +172,6 @@ export default function About() {
               target="_blank"
               rel="noreferrer"
             >
-              {' '}
               CC BY-NC 2.0
             </a>
             .
