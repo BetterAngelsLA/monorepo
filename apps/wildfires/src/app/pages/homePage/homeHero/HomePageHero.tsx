@@ -1,5 +1,5 @@
-import heroImgDesktop from '../../../../assets/images/fire-hero-desktop.jpeg';
-import heroImgMobile from '../../../../assets/images/fire-hero-mobile.jpeg';
+import heroImgMobile from '../../../../assets/images/la-fire-hero-mobile.png';
+import heroImgDesktop from '../../../../assets/images/la-fire-hero-desktop.jpeg';
 import { HeroContainer } from '../../../shared/components/hero/HeroContainer';
 import { mergeCss } from '../../../shared/utils/styles/mergeCss';
 import { HeroContent } from './HeroContent';
