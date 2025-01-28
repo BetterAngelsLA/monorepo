@@ -82,7 +82,7 @@ export default function About() {
               in Los Angeles, the Mayor’s Fund for Los Angeles is focused on preventing
               Angelenos from becoming homeless. It has brought together business, philanthropy,
               nonprofits, and local government to help keep Angelenos housed. Through outreach,
-              case management and expanded legal services the Mayor’s Fund's We Are LA program
+              case management and expanded legal services, the Mayor’s Fund's We Are LA program
               has connected over 53,000 Angelenos to needed services and helped stabilize housing
               for more than 23,000 Angelenos at risk of eviction and homelessness.  The Mayor’s Fund,
               through their hotline, is spearheading case management services to the Angelenos
