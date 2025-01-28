@@ -158,10 +158,6 @@ textarea:focus {
   text-underline-offset: 2px;
 }
 
-.wisiwig ul {
-  list-style: disc !important;
-}
-
 .wisiwig h1,
 h2,
 h3,
@@ -183,6 +179,14 @@ h6 {
   word-break: break-word;
 }
 
+.wisiwig li::before {
+  content: '•';
+  color: var(--color-primary-20);
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+
 @media screen and (max-width: 768px) {
   .wisiwig li {
     margin-left: 0.875rem;
@@ -192,4 +196,8 @@ h6 {
 .wisiwig a {
   text-decoration: underline !important;
   font-style: italic !important;
+}
+
+details[open] .chevron {
+  transform: rotate(0deg);
 }

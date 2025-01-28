@@ -9,7 +9,7 @@ interface GeneratePDFProps {
 const GeneratePDF: React.FC<GeneratePDFProps> = ({ className }) => {
   const options = {
     margin: [5, 10],
-    filename: 'result-content.pdf',
+    filename: 'your-wildfire-action-recovery-plan.pdf',
     html2canvas: {
       scale: 2,
       letterRendering: true,
@@ -19,6 +19,11 @@ const GeneratePDF: React.FC<GeneratePDFProps> = ({ className }) => {
   };
 
   const handleGeneratePdf = () => {
+    const detailsElements = document.querySelectorAll('details');
+
+    detailsElements.forEach((details) => {
+      (details as HTMLElement).setAttribute('open', 'true');
+    });
     const element = document.getElementById('content-to-pdf');
     if (element) {
       html2pdf().from(element).set(options).save();
