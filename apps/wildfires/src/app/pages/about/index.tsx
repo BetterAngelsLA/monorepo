@@ -46,7 +46,7 @@ export default function About() {
             January 2025 wildfires. Each partner brings unique expertise and a
             shared commitment to fostering community strength and resilience.
           </p>
-          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
+          <ul className="ml-6 mb-6 sm:mb-12 md:mb-16 text-xl leading-normal">
             <li className="list-disc">
               <span className="font-bold">Better Angels</span>: Better Angels is
               on a mission to end the epidemic of homelessness in Los Angeles by
@@ -104,7 +104,7 @@ export default function About() {
             who wanted to ensure that people needing help had an accessible way
             to find and receive critical resources.{' '}
           </p>
-          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
+          <ul className="ml-6 mb-6 sm:mb-12 md:mb-16 text-xl leading-normal">
             <li className="list-disc">
               <span className="font-bold">Annenberg Foundation</span>: A
               philanthropic foundation dedicated to addressing the critical
@@ -136,7 +136,7 @@ export default function About() {
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Credits
           </h2>
-          <ul className="ml-6 mb-6 md:mb-16 sm:mb-12 text-xl leading-normal">
+          <ul className="ml-6 mb-6 sm:mb-12 md:mb-16 text-xl leading-normal">
             <li className="list-disc">
               <Link
                 className="underline"
