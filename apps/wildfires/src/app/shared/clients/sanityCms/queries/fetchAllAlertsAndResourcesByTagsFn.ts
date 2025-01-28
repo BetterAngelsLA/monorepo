@@ -6,9 +6,9 @@ const DEFAULT_QUERY = `*[_type == "resource" &&  (resourceType == "alert")]`;
 export const fetchAllAlertsAndResourcesByTagsFn = async (
   tags: string[]
 ): Promise<any[]> => {
-  const queryParams = generateQueryParams(tags);
-
   try {
+    const queryParams = generateQueryParams(tags);
+
     const response = await sanityClient.fetch(queryParams);
 
     if (!Array.isArray(response)) {
