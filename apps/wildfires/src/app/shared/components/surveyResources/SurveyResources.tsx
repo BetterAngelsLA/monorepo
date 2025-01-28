@@ -20,7 +20,7 @@ export function SurveyResources(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <div className="mt-12 md:mt-20 mb-8 md:mb-12 font-bold text-xl md:text-2xl">
+      <div className="mt-12 md:mt-20 mb-8 md:mb-12 font-bold text-xl md:text-2xl break-before-page">
         Resources
       </div>
 
@@ -32,7 +32,7 @@ export function SurveyResources(props: IProps) {
             return (
               <ResourceGroupCard
                 key={category.slug}
-                className="mb-12 md:mb-20 last:mb-0"
+                className="mb-12 md:mb-20 last:mb-0 break-inside-avoid"
                 resourceCategory={category.name}
                 resources={resources}
               />
@@ -42,7 +42,7 @@ export function SurveyResources(props: IProps) {
       )}
 
       {!!alertResources.length && (
-        <div className="mt-12 md:mt-16">
+        <div className="mt-12 md:mt-16 break-inside-avoid">
           <AlertResources
             className="mb-12 md:mb-20 last:mb-0"
             alerts={alertResources}
