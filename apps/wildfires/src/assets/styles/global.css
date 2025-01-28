@@ -46,13 +46,6 @@ textarea:focus {
   outline: none;
 }
 
-.plg-donate a {
-  background-color: transparent !important;
-  border-width: 2px;
-  border-radius: 50px !important;
-  border-color: var(--color-brand-yellow);
-}
-
 /* Google Translate Widget */
 .goog-te-combo {
   background-color: transparent !important;
