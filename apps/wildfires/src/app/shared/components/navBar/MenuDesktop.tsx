@@ -1,6 +1,5 @@
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { AboutLink } from './shared/AboutLink';
-import { DonateButton } from './shared/DonateButton';
 import { GoogleTranslateBtn } from './shared/GoogleTranslateBtn';
 
 type IProps = {
@@ -24,7 +23,6 @@ export function MenuDesktop(props: IProps) {
     <div className={mergeCss(parentCss)}>
       <AboutLink className="hidden lg:flex" />
       <GoogleTranslateBtn />
-      <DonateButton className="hidden lg:flex" />
     </div>
   );
 }
