@@ -1,23 +1,33 @@
-import { CMS_BASE_URL } from '../sanityClient';
+import { sanityClient } from '../sanityClient';
 import { normalizeQueryString } from './utils/normalizeQueryString';
 
 const DEFAULT_QUERY = `*[_type == "resource" &&  (resourceType == "alert")]`;
 
-export const fetchAllAlertsAndResourcesByTagsFn = async (tags: string[]) => {
-  const url = generateUrl(tags);
+export const fetchAllAlertsAndResourcesByTagsFn = async (
+  tags: string[]
+): Promise<any[]> => {
+  try {
+    const queryParams = generateQueryParams(tags);
 
-  const response = await fetch(url);
+    const response = await sanityClient.fetch(queryParams);
 
-  return response.json();
+    if (!Array.isArray(response)) {
+      throw new Error('invalid response');
+    }
+
+    return response;
+  } catch (error) {
+    let errorMessage = 'Unknown error';
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    console.error(`Failed to fetch resouces from Sanity: ${errorMessage}`);
+
+    return [];
+  }
 };
-
-function generateUrl(tags: string[]): string {
-  const queryParams = generateQueryParams(tags);
-
-  const encodedQuery = encodeURIComponent(queryParams);
-
-  return `${CMS_BASE_URL}?query=${encodedQuery}`;
-}
 
 function generateQueryParams(tags: string[]): string {
   if (!tags.length) {
