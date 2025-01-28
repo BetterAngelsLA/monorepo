@@ -6,6 +6,7 @@ export { default as CallIcon } from './components/callIcon';
 export { default as CameraIcon } from './components/cameraIcon';
 export { default as CheckIcon } from './components/checkIcon';
 export { default as ChevronLeftIcon } from './components/chevronLeftIcon';
+export { default as ChevronUpIcon } from './components/chevronUpIcon';
 export { default as ClockIcon } from './components/clockIcon';
 export { default as CloseIcon } from './components/closeIcon';
 export { default as DeoIcon } from './components/deoIcon';

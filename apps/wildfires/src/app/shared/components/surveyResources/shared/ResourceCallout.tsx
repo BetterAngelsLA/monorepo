@@ -1,4 +1,4 @@
-import { ChevronLeftIcon } from '@monorepo/react/icons';
+import { ChevronUpIcon } from '@monorepo/react/icons';
 import { PropsWithChildren, ReactElement, useEffect, useState } from 'react';
 import { mergeCss } from '../../../utils/styles/mergeCss';
 
@@ -53,8 +53,8 @@ export function ResourceCallout(props: IProps) {
           <div className="font-bold h-8 flex items-center text-xl">
             Useful Tips
           </div>
-          <ChevronLeftIcon
-            className={`h-4 w-4 ${show ? 'rotate-90' : '-rotate-90'}`}
+          <ChevronUpIcon
+            className={`h-4 w-4 ${show ? 'rotate-0' : 'rotate-180'}`}
           />
         </div>
       </div>
