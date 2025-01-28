@@ -33,7 +33,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState<string>('');
   const [createNote] = useCreateNoteMutation();
-  const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const { data, loading } = useClientProfilesPaginatedQuery({
     variables: {
@@ -59,7 +58,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
   function loadMoreClients() {
     if (hasMore && !loading) {
-      setOffset((prevOffset) => prevOffset + paginationLimit);
+      const nextOffset = data?.clientProfilesPaginated.pageInfo.offset + paginationLimit;
     }
   }
   async function createNoteFunction(
@@ -105,7 +104,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   );
 
   useEffect(() => {
-    setOffset(0);
     setClients({});
   }, [filterSearch]);
 

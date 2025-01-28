@@ -132,7 +132,7 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         client_count = ClientProfile.objects.count()
         mutation = """
             query ViewClientProfiles {
-                clientProfilesPaginated(pagination: {offset: 0, limit: 10}) {
+                clientProfilesPaginated {
                     results {
                         id
                         user {

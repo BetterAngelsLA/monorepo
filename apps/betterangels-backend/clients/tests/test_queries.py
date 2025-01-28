@@ -112,7 +112,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         query = f"""
             query ViewClientProfiles {{
-                clientProfilesPaginated(pagination: {{offset: $offset, limit: $limit}}) {{
+                clientProfiles{{
+                    {self.client_profile_fields}
                     totalCount
                     pageInfo {{
                         limit
