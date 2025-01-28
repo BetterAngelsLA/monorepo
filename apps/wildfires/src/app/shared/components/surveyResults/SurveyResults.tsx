@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 
 import { surveyConfig } from '../../../pages/introduction/firesSurvey/config/config';
 import { fetchAllAlertsAndResourcesByTagsFn } from '../../clients/sanityCms/queries/fetchAllAlertsAndResourcesByTagsFn';
-import { toTResources } from '../../clients/sanityCms/utils/toTResource';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { TAnswer, TOption, TSurveyResults } from '../survey/types';
 import { getAllQuestions } from '../survey/utils/validateConfig';
@@ -81,11 +80,9 @@ export function SurveyResults(props: IProps) {
 
   const parentCss = [className];
 
-  const resources = toTResources(data?.result);
-
   return (
     <div className={mergeCss(parentCss)}>
-      {resources && <SurveyResources resources={resources} />}
+      {!!data?.length && <SurveyResources resources={data} />}
     </div>
   );
 }
