@@ -12,7 +12,6 @@ from notes.enums import (
     NoteNamespaceEnum,
     SelahTeamEnum,
     ServiceRequestTypeEnum,
-    TaskTypeEnum,
 )
 from notes.permissions import PrivateDetailsPermissions
 from strawberry import ID, Info, auto
@@ -109,15 +108,6 @@ class CreateTaskInput:
     client: Optional[ID]
 
 
-@strawberry_django.input(models.Task)
-class CreateNoteTaskInput:
-    title: auto
-    status: auto
-    due_by: auto
-    note_id: ID
-    task_type: TaskTypeEnum
-
-
 @strawberry_django.input(models.Task, partial=True)
 class UpdateTaskInput:
     id: ID
@@ -132,20 +122,6 @@ class UpdateTaskInput:
 class MoodType:
     id: ID
     descriptor: auto
-
-
-@strawberry.input
-class AddNoteTaskInput:
-    task_id: ID
-    note_id: ID
-    task_type: TaskTypeEnum
-
-
-@strawberry.input
-class RemoveNoteTaskInput:
-    task_id: ID
-    note_id: ID
-    task_type: TaskTypeEnum
 
 
 @strawberry.input
@@ -216,8 +192,6 @@ class NoteType:
     location: Optional[LocationType]
     attachments: List[NoteAttachmentType]
     moods: List[MoodType]
-    purposes: List[TaskType]
-    next_steps: List[TaskType]
     provided_services: List[ServiceRequestType]
     requested_services: List[ServiceRequestType]
     public_details: auto

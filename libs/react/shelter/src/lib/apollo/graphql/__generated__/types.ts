@@ -43,14 +43,6 @@ export enum AdaAccommodationEnum {
   Visual = 'VISUAL'
 }
 
-export type AddNoteTaskInput = {
-  noteId: Scalars['ID']['input'];
-  taskId: Scalars['ID']['input'];
-  taskType: TaskTypeEnum;
-};
-
-export type AddNoteTaskPayload = NoteType | OperationInfo;
-
 export type AddressInput = {
   addressComponents?: InputMaybe<Scalars['JSON']['input']>;
   formattedAddress?: InputMaybe<Scalars['String']['input']>;
@@ -457,16 +449,6 @@ export type CreateNoteServiceRequestInput = {
 
 export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
 
-export type CreateNoteTaskInput = {
-  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
-  noteId: Scalars['ID']['input'];
-  status: TaskStatusEnum;
-  taskType: TaskTypeEnum;
-  title: Scalars['String']['input'];
-};
-
-export type CreateNoteTaskPayload = OperationInfo | TaskType;
-
 export type CreateServiceRequestInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
   customService?: InputMaybe<Scalars['String']['input']>;
@@ -797,7 +779,6 @@ export type MoodType = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  addNoteTask: AddNoteTaskPayload;
   appleAuth: AuthResponse;
   createClientDocument: CreateClientDocumentPayload;
   createClientProfile: CreateClientProfilePayload;
@@ -805,7 +786,6 @@ export type Mutation = {
   createNoteAttachment: CreateNoteAttachmentPayload;
   createNoteMood: CreateNoteMoodPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
-  createNoteTask: CreateNoteTaskPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
   deleteClientDocument: DeleteClientDocumentPayload;
@@ -821,7 +801,6 @@ export type Mutation = {
   login: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
-  removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
   updateClientProfile: UpdateClientProfilePayload;
   updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
@@ -831,11 +810,6 @@ export type Mutation = {
   updateServiceRequest: UpdateServiceRequestPayload;
   updateTask: UpdateTaskPayload;
   updateTaskLocation: UpdateTaskLocationPayload;
-};
-
-
-export type MutationAddNoteTaskArgs = {
-  data: AddNoteTaskInput;
 };
 
 
@@ -871,11 +845,6 @@ export type MutationCreateNoteMoodArgs = {
 
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
-};
-
-
-export type MutationCreateNoteTaskArgs = {
-  data: CreateNoteTaskInput;
 };
 
 
@@ -941,11 +910,6 @@ export type MutationLoginArgs = {
 
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
-};
-
-
-export type MutationRemoveNoteTaskArgs = {
-  data: RemoveNoteTaskInput;
 };
 
 
@@ -1046,12 +1010,10 @@ export type NoteType = {
   isSubmitted: Scalars['Boolean']['output'];
   location?: Maybe<LocationType>;
   moods: Array<MoodType>;
-  nextSteps: Array<TaskType>;
   privateDetails?: Maybe<Scalars['String']['output']>;
   providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];
   purpose?: Maybe<Scalars['String']['output']>;
-  purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
   team?: Maybe<SelahTeamEnum>;
   title?: Maybe<Scalars['String']['output']>;
@@ -1064,19 +1026,7 @@ export type NoteTypeAttachmentsArgs = {
 };
 
 
-export type NoteTypeNextStepsArgs = {
-  order?: InputMaybe<TaskOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
 export type NoteTypeProvidedServicesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type NoteTypePurposesArgs = {
-  order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1369,14 +1319,6 @@ export type RemoveNoteServiceRequestInput = {
 };
 
 export type RemoveNoteServiceRequestPayload = NoteType | OperationInfo;
-
-export type RemoveNoteTaskInput = {
-  noteId: Scalars['ID']['input'];
-  taskId: Scalars['ID']['input'];
-  taskType: TaskTypeEnum;
-};
-
-export type RemoveNoteTaskPayload = NoteType | OperationInfo;
 
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
@@ -1749,11 +1691,6 @@ export type TaskType = {
   status: TaskStatusEnum;
   title: Scalars['String']['output'];
 };
-
-export enum TaskTypeEnum {
-  NextStep = 'NEXT_STEP',
-  Purpose = 'PURPOSE'
-}
 
 export enum TrainingServiceChoices {
   JobTraining = 'JOB_TRAINING',

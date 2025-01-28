@@ -50,10 +50,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self._create_note_mood_fixture(
             {"descriptor": "EUTHYMIC", "noteId": note_id},
         )
-        # Add purposes and next steps
         note = Note.objects.get(pk=note_id)
-        note.purposes.set([self.purpose_1["id"], self.purpose_2["id"]])
-        note.next_steps.set([self.next_step_1["id"], self.next_step_2["id"]])
         note.provided_services.set(self.provided_services)
         note.requested_services.set(self.requested_services)
 
@@ -66,7 +63,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         """
 
         variables = {"id": note_id}
-        expected_query_count = 8
+        expected_query_count = 6
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -95,14 +92,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "pointOfInterest": self.point_of_interest,
             },
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
-            "purposes": [
-                {"id": self.purpose_1["id"], "title": self.purpose_1["title"]},
-                {"id": self.purpose_2["id"], "title": self.purpose_2["title"]},
-            ],
-            "nextSteps": [
-                {"id": self.next_step_1["id"], "title": self.next_step_1["title"], "location": None},
-                {"id": self.next_step_2["id"], "title": self.next_step_2["title"], "location": None},
-            ],
             "providedServices": [
                 {
                     "id": str(self.provided_services[0].id),
@@ -155,7 +144,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 }}
             }}
         """
-        expected_query_count = 8
+        expected_query_count = 6
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 
@@ -179,7 +168,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 }}
             }}
         """
-        expected_query_count = 9
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
