@@ -71,7 +71,7 @@ export default function About() {
                 Benefits Navigator
               </a>
               , a suite of online tools that helps case managers and their clients to quickly
-              navigate and access the complex arena of federal, state and local public benefits
+              navigate and access the complex arena of federal, state, and local public benefits
               and refundable tax credits. The Benefit Navigator has helped people access over
               $125 million in additional benefits and feel confident to increase their earned
               income by an average of 25%.
