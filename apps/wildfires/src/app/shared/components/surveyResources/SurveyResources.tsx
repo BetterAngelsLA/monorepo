@@ -32,7 +32,7 @@ export function SurveyResources(props: IProps) {
             return (
               <ResourceGroupCard
                 key={category.slug}
-                className="mb-12 md:mb-20 last:mb-0"
+                className="mb-12 md:mb-20 last:mb-0 break-inside-avoid"
                 resourceCategory={category.name}
                 resources={resources}
               />
