@@ -47,7 +47,7 @@ export function QuestionForm(props: IProps) {
 
   const optionCss = ['md:min-w-60', 'md:w-[300px]', 'md:min-h-24'];
 
-  const radioGroupCss = [optionContainerCss, 'justify-start', parentCss];
+  const radioGroupCss = [optionContainerCss, 'justify-center', parentCss];
 
   const checkboxGroupCss = [optionContainerCss, 'justify-center', parentCss];
 
