@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import ContactUs from '../../shared/components/contactUs/ContactUs';
 
@@ -132,6 +133,49 @@ export default function About() {
             has access to the support they need during times of crisis and
             beyond.
           </p>
+          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
+            Credits
+          </h2>
+          <li className="list-disc">
+            <Link
+              className="underline"
+              aria-label="navigate to home page"
+              to="/"
+            >
+              Home page
+            </Link>{' '}
+            hero image is adapted from{' '}
+            <a
+              aria-label="open flickr website in new tab"
+              className="underline"
+              href="https://www.flickr.com/photos/ashokbo/54261421534/in/photolist-2qETYbA-2kNzj2F-2mXEBxn-2oN42HP-2qEdefd-2nMJhxT-2goMkAV-2kZ8V3X-2qEPfUG-WYVFsq-MhoESM-2mXtpqN-2qEgQqq-2qEzaXM-2qEdUog-2qESLkA-2qG32rE-2qG8XrL-2qG8PLa-2qG9VVd-2qG3bQQ-2qG8Yzw-2j9ypPV-2qG9Poa-2qG32rz-2qG8pXA-2qG3UQw-2qGaBNV-2qGaC5B-2qG3UEr-2qG9FAk-2qG9FRF-2qG3UGq-2qG8q2y-2qG3UPj-2qG9FRA-25sLBSS-2qF3fC9-2qG3ULi-2qGaC2f-2qG8q9N-2qGpjA9-2kZPduC-2qEjwbr-2qEix7A-2jetVLQ-2qEhoZs-2qFeETQ-2qEnucj-2kZ4wW3/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Palisades fire
+            </a>{' '}
+            by{' '}
+            <a
+              aria-label="open flickr website in new tab"
+              className="underline"
+              href="https://www.flickr.com/photos/ashokbo/54261421534"
+              target="_blank"
+              rel="noreferrer"
+            >
+              ashokbo
+            </a>
+            . Licensed under{' '}
+            <a
+              aria-label="open creative commons license in new tab"
+              className="underline"
+              href="https://creativecommons.org/licenses/by-nc/2.0/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              CC BY-NC 2.0
+            </a>
+            .
+          </li>
         </div>
       </HorizontalLayout>
       <ContactUs />
