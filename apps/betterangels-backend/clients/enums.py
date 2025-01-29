@@ -89,6 +89,7 @@ class LivingSituationEnum(models.TextChoices):
     SHELTER = "shelter", _("Shelter")
     TENT = "tent", _("Tent")
     VEHICLE = "vehicle", _("Vehicle")
+    RV = "rv", _("RV")
     OTHER = "other", _("Other")
 
 
