@@ -3,6 +3,7 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
+from accounts.models import User
 from accounts.types import UserType
 from common.graphql.types import AttachmentInterface, LocationInput, LocationType
 from common.models import Attachment
@@ -286,3 +287,11 @@ class UpdateTaskLocationInput:
 class RevertNoteInput:
     id: ID
     revert_before_timestamp: datetime
+
+
+@strawberry_django.type(User)
+class InteractionAuthorType(User):
+    id: ID  # type: ignore
+    first_name: auto
+    last_name: auto
+    middle_name: auto
