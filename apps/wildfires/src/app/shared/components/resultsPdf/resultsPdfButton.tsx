@@ -12,11 +12,6 @@ type IGeneratePDF = {
 const generatePDF = async (props: IGeneratePDF) => {
   const { pageUrl } = props;
 
-  console.log();
-  console.log('| -------------  generatePDF - pageUrl  ------------- |');
-  console.log(pageUrl);
-  console.log();
-
   try {
     const response = await fetch(API_2_PDF_URL, {
       method: 'POST',
@@ -28,6 +23,7 @@ const generatePDF = async (props: IGeneratePDF) => {
         url: pageUrl,
         inline: true,
         filename: 'my-action-plan.pdf',
+        delay: 1000,
       }),
     });
 
@@ -36,11 +32,6 @@ const generatePDF = async (props: IGeneratePDF) => {
     }
 
     const data = await response.json();
-
-    console.log();
-    console.log('| -------------  data  ------------- |');
-    console.log(data);
-    console.log();
 
     const pdfUrl = data?.FileUrl;
 
