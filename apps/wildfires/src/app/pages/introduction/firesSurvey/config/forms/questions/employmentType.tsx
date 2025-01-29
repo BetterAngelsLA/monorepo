@@ -33,7 +33,6 @@ export const qEmploymentType: TQuestion = {
     {
       optionId: 'employmentNoneOfTheAbove',
       label: 'None of the above',
-      tags: ['income-no-of-the-above'],
     },
   ],
   rules: {
