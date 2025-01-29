@@ -5,6 +5,7 @@ import { Results } from './Results';
 import { SurveyNav } from './SurveyNav';
 
 import { SurveyContext } from './provider/SurveyContext';
+import { SectionHeader } from './shared/SectionHeader';
 import { TAnswer } from './types';
 import { validateConfig } from './utils/validateConfig';
 
@@ -24,11 +25,6 @@ export function Survey(props: IProps) {
 
   const { forms, currentForm, answers, goBack, setAnswers, setNextForm } =
     context;
-
-  // console.log('');
-  // console.log('render Survey');
-  // console.log('forms:');
-  // console.log(forms);
 
   const configErrors = validateConfig(forms);
 
@@ -88,7 +84,7 @@ export function Survey(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <div className="mb-12 uppercase font-bold">{currentForm.title}</div>
+      <SectionHeader className="mb-12 md:mb-24" title={currentForm.title} />
 
       <QuestionsBlock
         questions={currentForm.questions}
@@ -96,7 +92,11 @@ export function Survey(props: IProps) {
         onAnswer={handleAnswer}
       />
 
-      <SurveyNav className="mt-14" onNext={onClickNext} onPrev={onClickPrev} />
+      <SurveyNav
+        className="mt-14 mb-14"
+        onNext={onClickNext}
+        onPrev={onClickPrev}
+      />
     </div>
   );
 }

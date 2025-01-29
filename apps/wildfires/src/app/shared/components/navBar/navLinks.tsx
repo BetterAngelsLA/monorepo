@@ -1,0 +1,43 @@
+import { Link } from 'react-router-dom';
+import { mergeCss } from '../../utils/styles/mergeCss';
+import { AboutLink } from './shared/AboutLink';
+
+type IProps = {
+  className?: string;
+};
+
+export function NavLinks(props: IProps) {
+  const { className } = props;
+
+  const parentCss = ['flex-col', 'lg:flex-col', 'text-white', className];
+
+  return (
+    <div className={mergeCss(parentCss)}>
+      <AboutLink className="" />
+
+      <Link aria-label="navigate to About page" to="/about" className="mb-8">
+        <div className="lg:hidden">About</div>
+        <div className="hidden lg:block">About</div>
+      </Link>
+
+      {/* <TranslateBtn className="mb-8" /> */}
+
+      <Link
+        aria-label="navigate to privacy policy"
+        to="/privacy-policy"
+        className="mb-8 hidden lg:block"
+      >
+        Privacy Policy
+      </Link>
+
+      <a
+        aria-label="send us an email"
+        href="mailto:wildfires@betterangels.la"
+        className="mb-8 hidden lg:block"
+      >
+        Contact Us
+      </a>
+
+    </div>
+  );
+}

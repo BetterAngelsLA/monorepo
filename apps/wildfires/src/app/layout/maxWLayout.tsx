@@ -9,11 +9,11 @@ export function MaxWLayout(props: IParams): ReactElement {
   const { className, children } = props;
 
   const parentCss = [
-    'max-w-7xl',
-    'min-w-full',
+    'max-w-[1000px]',
     'flex',
     'flex-col',
     'lg:mx-0',
+    'w-full',
     className,
   ];
 

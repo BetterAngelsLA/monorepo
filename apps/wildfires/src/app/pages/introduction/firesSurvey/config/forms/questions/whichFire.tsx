@@ -16,10 +16,14 @@ export const qWhichFire: TQuestion = {
     },
     {
       optionId: 'kennethFire',
-      label: 'Kennet',
+      label: 'Kenneth',
     },
     {
-      optionId: 'hurtsFire',
+      optionId: 'hughesFire',
+      label: 'Hughes',
+    },
+    {
+      optionId: 'hurstFire',
       label: 'Hurst',
     },
     {
@@ -31,3 +35,5 @@ export const qWhichFire: TQuestion = {
     required: false,
   },
 };
+
+export const wildfireLabels = qWhichFire.options.map(option => option.label);

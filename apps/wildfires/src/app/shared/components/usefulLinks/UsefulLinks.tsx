@@ -1,14 +1,33 @@
 import { BenefitsCalIcon, DeoIcon, EddIcon } from '@monorepo/react/icons';
 import Fema from '../../../../assets/images/FEMA-Logo.png';
+import { mergeCss } from '../../utils/styles/mergeCss';
 import UsefulLinksCard from './UsefulLinksCard';
 
-export default function UsefulLinks() {
+type IParams = {
+  className?: string;
+};
+
+export default function UsefulLinks(props: IParams) {
+  const { className } = props;
+
+  const parentCss = [
+    'bg-brand-angel-blue',
+    'py-12',
+    'md:py-20',
+    'w-full',
+    'flex',
+    'flex-col',
+    'items-center',
+    'justify-center',
+    className,
+  ];
+
   return (
-    <div className="bg-brand-angel-blue py-12 md:py-20 w-full flex flex-col items-center justify-center">
-      <h2 className="text-2xl md:text-[40px] md:leading-[94.5px] font-bold mb-6">
-        Useful Links/Info
+    <div className={mergeCss(parentCss)}>
+      <h2 className="text-2xl md:text-[40px] md:leading-[1.2] font-bold mb-6">
+        Useful Links
       </h2>
-      <div className="flex flex-col md:flex-row items-stretch justify-center gap-1 md:w-full px-10">
+      <div className="flex flex-col flex-wrap md:flex-row items-center w-full justify-center gap-1 md:w-full md:px-10">
         <UsefulLinksCard
           urlTitle="disasterassistance.gov"
           url="https://www.disasterassistance.gov/"
@@ -19,7 +38,7 @@ export default function UsefulLinks() {
           urlTitle="opportunity.lacounty.gov"
           url="https://opportunity.lacounty.gov/"
         >
-          <DeoIcon className="h-[130px]" />
+          <DeoIcon className="h-[90px] md:h-[130px]" />
         </UsefulLinksCard>
         <UsefulLinksCard
           urlTitle="edd.ca.gov/unemployment"
@@ -33,6 +52,13 @@ export default function UsefulLinks() {
         >
           <BenefitsCalIcon className="h-[36px]" />
         </UsefulLinksCard>
+
+        {/* <UsefulLinksCard
+          urlTitle="Emergency Assistance Fund"
+          url=" https://www.betterangels.la/emergency-assistance-fund"
+        >
+          <img className="w-[174px]" src={BAlogo} alt="Better Angels LA" />
+        </UsefulLinksCard> */}
       </div>
     </div>
   );

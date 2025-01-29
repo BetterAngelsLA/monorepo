@@ -1,15 +1,12 @@
-import { useRef } from 'react';
-import GeneratePDF from '../../shared/components/GeneratePDF';
+import { HorizontalLayout } from '../../layout/horizontalLayout';
 import { FiresSurvey } from './firesSurvey/FiresSurvey';
 
 export function Introduction() {
-  const pageRef = useRef<HTMLDivElement | null>(null);
   return (
-    <div ref={pageRef}>
-      <FiresSurvey />
-
-      {/* Move to results page when we have one */}
-      <GeneratePDF pageRef={pageRef} fileName="Wildfire LA" />
+    <div className="w-full">
+      <HorizontalLayout>
+        <FiresSurvey />
+      </HorizontalLayout>
     </div>
   );
 }

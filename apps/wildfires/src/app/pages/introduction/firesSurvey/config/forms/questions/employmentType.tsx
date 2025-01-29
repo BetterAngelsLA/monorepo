@@ -9,14 +9,30 @@ export const qEmploymentType: TQuestion = {
     {
       optionId: 'employmentCompany',
       label: 'Employed by a Company',
+      // tags: ['Income - Job Loss']
+      tags: ['income-job-loss'],
     },
     {
-      optionId: 'employmentSelfEmployed',
-      label: 'Self-Employed',
+      optionId: 'employmentSelfEmployedFreelance',
+      label: 'Self-Employed / Freelance',
+      // tags: ['Income - Self-Employed/Freelance']
+      tags: ['income-self-employed-freelance'],
     },
     {
-      optionId: 'employmentFreelance',
-      label: 'Freelance worker',
+      optionId: 'employmentDomesticWorkerDayLaborer',
+      label: 'Domestic Worker / Day Laborer',
+      // tags: ['Income - Self-Employed/Freelance']
+      tags: ['income-job-loss'],
+    },
+    {
+      optionId: 'employmentMultipleJobs',
+      label: 'I have multiple jobs',
+      // tags: ['Income - Self-Employed/Freelance']
+      tags: ['income-job-loss'],
+    },
+    {
+      optionId: 'employmentNoneOfTheAbove',
+      label: 'None of the above',
     },
   ],
   rules: {

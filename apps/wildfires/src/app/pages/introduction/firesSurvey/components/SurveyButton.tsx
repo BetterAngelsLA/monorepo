@@ -1,16 +1,24 @@
-import { MouseEventHandler, PropsWithChildren, ReactElement } from 'react';
+import { MouseEventHandler, PropsWithChildren } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '../../../../shared/components/button/Button';
 import { mergeCss } from '../../../../shared/utils/styles/mergeCss';
 
-export interface IBaseButton extends PropsWithChildren {
+interface IBaseButton extends PropsWithChildren {
+  ariaLabel: string;
   className?: string;
   disabled?: boolean;
   dark?: true;
-  onClick: MouseEventHandler;
+  onClick?: MouseEventHandler;
+  href?: string;
 }
 
-export function SurveyButton(props: IBaseButton): ReactElement {
-  const { className, dark, onClick, disabled, children } = props;
+export type TButtonProps =
+  | (IBaseButton & { onClick?: MouseEventHandler; href?: never })
+  | (IBaseButton & { href: string; onClick?: never });
+
+export function SurveyButton(props: TButtonProps) {
+  const { ariaLabel, className, dark, onClick, disabled, href, children } =
+    props;
 
   const parentCss = [
     'flex',
@@ -25,12 +33,25 @@ export function SurveyButton(props: IBaseButton): ReactElement {
     'border-brand-dark-blue',
     dark ? 'bg-brand-dark-blue' : '',
     dark ? 'text-white' : 'brand-dark-blue',
-    disabled ? 'opacity-90' : '',
+    disabled ? 'opacity-90x text-[#9AA3AA]' : '',
     className,
   ];
 
+  if (href) {
+    return (
+      <Link aria-label={ariaLabel} className={mergeCss(parentCss)} to={href}>
+        {children}
+      </Link>
+    );
+  }
+
+  if (!onClick) {
+    return null;
+  }
+
   return (
     <Button
+      ariaLabel={ariaLabel}
       className={mergeCss(parentCss)}
       onClick={onClick}
       disabled={disabled}

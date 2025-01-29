@@ -37,16 +37,30 @@ export function QuestionForm(props: IProps) {
     });
   }
 
+  const optionContainerCss = [
+    'flex',
+    'flex-wrap',
+    'gap-x-4',
+    'gap-y-4',
+    'md:gap-y-8',
+  ];
+
+  const optionCss = ['md:min-w-60', 'md:w-[300px]', 'md:min-h-24'];
+
+  const radioGroupCss = [optionContainerCss, 'justify-center', parentCss];
+
+  const checkboxGroupCss = [optionContainerCss, 'justify-center', parentCss];
+
   switch (question.type) {
     case 'radio':
       return (
-        <div className={mergeCss(parentCss)}>
+        <div className={mergeCss(radioGroupCss)}>
           {question.options.map((option) => {
             const selected = optionSelected(option);
 
             return (
               <SurveyRadio
-                className="mb-4 last:mb-0"
+                className={mergeCss(optionCss)}
                 key={option.optionId}
                 name={option.optionId}
                 label={option.label}
@@ -62,7 +76,7 @@ export function QuestionForm(props: IProps) {
           })}
         </div>
       );
-    case 'checkbox':
+    case 'checkbox': {
       const options = question.options.map((option) => {
         return {
           label: option.label,
@@ -71,15 +85,16 @@ export function QuestionForm(props: IProps) {
       });
 
       return (
-        <div className={mergeCss(parentCss)}>
-          <CheckboxGroup
-            options={options}
-            values={answer as string[]}
-            onChange={onCheckboxChange}
-            CheckboxComponent={Checkbox}
-          />
-        </div>
+        <CheckboxGroup
+          className={mergeCss(checkboxGroupCss)}
+          options={options}
+          values={answer as string[]}
+          onChange={onCheckboxChange}
+          CheckboxComponent={Checkbox}
+          checkboxCss={mergeCss(optionCss)}
+        />
       );
+    }
 
     default:
   }

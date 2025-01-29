@@ -1,5 +1,5 @@
 import { ReactElement, ReactNode, useEffect, useState } from 'react';
-import { TAnswer, TConditionRule, TSurveyForm } from '../types';
+import { TAnswer, TConditionRule, TSurveyForm, TSurveyResults } from '../types';
 import { validateForm } from '../utils/validateForm';
 import { SurveyContext, TSurveyUi } from './SurveyContext';
 
@@ -7,10 +7,14 @@ export type TSurveyProvider = {
   children: ReactNode;
   surveyForms: TSurveyForm[];
   ui?: TSurveyUi;
+  onSurveyEnd?: (results: TSurveyResults) => void;
+  onFormRender?: () => void;
+  onFormBack?: () => void;
 };
 
 export default function SurveyProvider(props: TSurveyProvider): ReactElement {
-  const { surveyForms, ui, children } = props;
+  const { surveyForms, ui, onFormRender, onFormBack, onSurveyEnd, children } =
+    props;
 
   const initialForm = surveyForms[0];
 
@@ -102,11 +106,22 @@ export default function SurveyProvider(props: TSurveyProvider): ReactElement {
 
     if (!nextForm) {
       // Exit Survey
+
+      if (onSurveyEnd) {
+        onSurveyEnd({
+          answers,
+        });
+      }
+
       return setCurrentForm(null);
     }
 
     if (nextForm) {
       setCurrentForm(nextForm);
+
+      if (onFormRender) {
+        onFormRender();
+      }
 
       setFormHistory((prev) => {
         return [...prev, nextForm];
@@ -115,6 +130,11 @@ export default function SurveyProvider(props: TSurveyProvider): ReactElement {
   };
 
   const goBack = () => {
+    // TODO: reconcile events such as onFormRender and onFormBack
+    if (onFormBack) {
+      onFormBack();
+    }
+
     popQuestionHistory();
   };
 
@@ -135,6 +155,9 @@ export default function SurveyProvider(props: TSurveyProvider): ReactElement {
   useEffect(() => {
     if (!formHistory.length) {
       // setCurrentForm(null);
+
+      // TODO: update next/back to work off of history - once have tests
+      // - run onFormRender here?
 
       return;
     }

@@ -10,7 +10,6 @@ export default function Hero(props: IHeroProps) {
   const { className = '', backgroundImage, children } = props;
 
   const parentCss = [
-    'min-h-[75vh]',
     'flex',
     'items-center',
     'justify-left',

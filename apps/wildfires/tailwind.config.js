@@ -21,7 +21,9 @@ module.exports = {
         primary: ['IBM Plex Sans', 'sans-serif'],
       },
       colors: {
+        'brand-orange': 'var(--color-brand-orange)',
         'brand-yellow': 'var(--color-brand-yellow)',
+        'brand-yellow-light': 'var(--color-brand-yellow-light)',
         'brand-sky-blue': 'var(--color-brand-sky-blue)',
         'brand-angel-blue': 'var(--color-brand-angel-blue)',
         'brand-dark-blue': 'var(--color-brand-dark-blue)',
@@ -47,10 +49,23 @@ module.exports = {
         '0%': { transform: 'scale(.85, .5)' },
         '100%': { transform: 'scale(1, 1)' },
       },
+      nav: {
+        '0%': {
+          opacity: '.7',
+          scale: '.99',
+          transform: 'translate3d(0, 25px, 0)',
+        },
+        '100%': {
+          opacity: '5',
+          scale: '1',
+          transform: 'translate3d(0, 0, 0)',
+        },
+      },
     },
     animation: {
       slideInUp: 'slideInUp 250ms ease-in-out 0ms',
       expandInOut: 'expandInOut 200ms ease-in-out 0ms',
+      nav: 'nav 250ms ease-out 0ms',
     },
   },
   plugins: [],

@@ -20,11 +20,13 @@ export function SurveyRadio(props: IProps): ReactElement {
     'px-4',
     'py-4',
     'lg:py-6',
-    'border',
-    'rounded-lg',
     'cursor-pointer',
     'text-brand-dark-blue',
-    selected ? 'border-brand-dark-blue' : 'border-color-neutral-90',
+    'shadow-brand-dark-blue',
+    'border-[3px]',
+    selected ? 'border-brand-dark-blue' : 'border-[#DBDBDB]',
+    'rounded-xl',
+    'md:rounded-[20px]',
     className,
   ];
 
@@ -37,6 +39,8 @@ export function SurveyRadio(props: IProps): ReactElement {
     'rounded-full',
     selected ? 'bg-brand-dark-blue' : 'bg-transparent',
   ];
+
+  const labelCss = ['ml-6', 'font-bold', 'text-base', 'md:text-xl'];
 
   return (
     <label className={mergeCss(parentCss)}>
@@ -51,7 +55,7 @@ export function SurveyRadio(props: IProps): ReactElement {
       <div className={mergeCss(circleCss)}>
         <div className={mergeCss(circleInnerCss)}></div>
       </div>
-      <div className="ml-6">{label || name}</div>
+      <div className={mergeCss(labelCss)}>{label || name}</div>
     </label>
   );
 }

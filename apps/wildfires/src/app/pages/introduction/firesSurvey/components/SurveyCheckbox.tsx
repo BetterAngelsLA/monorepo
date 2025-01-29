@@ -1,6 +1,7 @@
 import { CheckIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
 import { mergeCss } from '../../../../shared/utils/styles/mergeCss';
+import { wildfireLabels } from '../config/forms/questions/whichFire';
 
 type IProps = {
   label: string;
@@ -30,11 +31,11 @@ export function SurveyCheckbox(props: IProps): ReactElement {
     'px-4',
     'py-4',
     'lg:py-6',
-    'border',
-    'rounded-lg',
+    'border-[3px]',
+    'rounded-xl',
     'cursor-pointer',
     'text-brand-dark-blue',
-    checked ? 'border-brand-dark-blue' : 'border-color-neutral-90',
+    checked ? 'border-brand-dark-blue' : 'border-[#DBDBDB]',
     disabled ? 'opacity-70 cursor-not-allowed' : '',
     className,
   ];
@@ -50,8 +51,8 @@ export function SurveyCheckbox(props: IProps): ReactElement {
     'min-w-6 lg:min-w-[30px]',
     'border',
     'text-brand-dark-blue',
-    'border-brand-dark-blue',
-    'rounded-md',
+    'border-steel-blue',
+    'rounded-[5px]',
     'md:rounded-lg',
     checked ? 'bg-brand-dark-blue' : 'bg-white',
   ];
@@ -61,9 +62,9 @@ export function SurveyCheckbox(props: IProps): ReactElement {
     'md:text-xl',
     'text-left',
     'text-wrap',
-    'leading-5',
-    'md:leading-6',
-    'font-semibold',
+    'leading-[22px]',
+    'md:leading-[30px]',
+    'font-bold',
   ];
 
   return (
@@ -75,7 +76,11 @@ export function SurveyCheckbox(props: IProps): ReactElement {
       <div className={mergeCss(checkboxContainerCss)}>
         {checked && <CheckIcon className="text-white h-8" />}
       </div>
-      <div className={mergeCss(labelCss)}>{label}</div>
+      {wildfireLabels.includes(label) ? (
+        <label className={mergeCss(labelCss) + ' notranslate'}>{label}</label>
+      ) : (
+        <label className={mergeCss(labelCss)}>{label}</label>
+      )}
     </button>
   );
 }
