@@ -1,15 +1,26 @@
 import { CameraIcon, WFAnnouncement } from '@monorepo/react/icons';
 
+import { mergeCss } from '../../utils/styles/mergeCss';
 import BestPracticesCard from './BestPracticesCard';
 
-export default function BestPractices() {
+type IProps = {
+  className?: string;
+  expanded?: boolean;
+};
+
+export default function BestPractices(props: IProps) {
+  const { className, expanded } = props;
+
+  const parentCss = ['w-full my-8 md:my-24 break-inside-avoid', className];
+
   return (
-    <div className="w-full my-8 md:my-24 break-inside-avoid">
+    <div className={mergeCss(parentCss)}>
       <BestPracticesCard
         bgColor="bg-brand-yellow-light"
         title="Remember to document everything"
         description="Take videos and pictures of damages, keep receipts of all expenses!"
         Icon={CameraIcon}
+        expanded={expanded}
       />
       <BestPracticesCard
         bgColor="bg-brand-angel-blue"
@@ -32,6 +43,7 @@ export default function BestPractices() {
           </>
         }
         Icon={WFAnnouncement}
+        expanded={expanded}
       />
     </div>
   );

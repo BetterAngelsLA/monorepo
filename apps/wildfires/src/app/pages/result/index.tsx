@@ -1,11 +1,11 @@
 import { useAtom } from 'jotai';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
-import GeneratePDF from '../../shared/components/GeneratePDF';
 import BestPractices from '../../shared/components/bestPractices/BestPractices';
 import Hero from '../../shared/components/hero/Hero';
 import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
+import ResultsPdfButton from '../../shared/components/resultsPdf/resultsPdfButton';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
 import useSurveySubmission from '../../shared/hooks/useSurveySubmission';
 
@@ -24,18 +24,13 @@ export default function Result() {
         </Hero>
       </HorizontalLayout>
       <HorizontalLayout>
-        <div id="content-to-pdf">
-          <BestPractices />
-          {surveyResults && (
-            <SurveyResults className="mt-8 mb-24" results={surveyResults} />
-          )}
-        </div>
-        <GeneratePDF
-          className="mb-16 md:mb-28 bg-brand-dark-blue text-white mx-auto"
-          fileName="LA Disaster Relief Navigator"
-        />
+        <BestPractices />
+        {surveyResults && (
+          <SurveyResults className="mt-8 mb-24" results={surveyResults} />
+        )}
+        <ResultsPdfButton className="mb-16 md:mb-28 bg-brand-dark-blue text-white mx-auto" />
       </HorizontalLayout>
-      <Register />
+      <Register className="mt-12" />
       <HorizontalLayout className="bg-brand-sky-blue">
         <Partners />
       </HorizontalLayout>
