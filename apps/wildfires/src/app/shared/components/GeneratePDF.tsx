@@ -28,7 +28,6 @@ const GeneratePDF = ({
     contentRef: targetRef,
     documentTitle: fileName,
     preserveAfterPrint: true,
-    // onBeforePrint: async () => {},
     onAfterPrint: () => {
       setPrinting(false);
     },
@@ -39,7 +38,6 @@ const GeneratePDF = ({
       e.preventDefault();
       setPrinting(true);
 
-      // Wait for state update and DOM to reflect changes
       await waitForRender();
 
       handlePrint();

@@ -38,14 +38,12 @@ export function ResourceCallout(props: IProps) {
     className,
   ];
 
-  // Handle printing state change
   useEffect(() => {
     if (isPrinting) {
-      console.log('printing');
-      wasExpandedBeforePrintRef.current = show; // Capture state only when printing starts
+      wasExpandedBeforePrintRef.current = show;
       setShow(true);
     } else {
-      setShow(wasExpandedBeforePrintRef.current); // Restore previous state
+      setShow(wasExpandedBeforePrintRef.current);
     }
   }, [isPrinting]); // ✅ Removed show from dependencies to prevent race conditions
 

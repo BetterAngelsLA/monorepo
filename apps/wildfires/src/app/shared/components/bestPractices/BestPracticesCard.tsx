@@ -15,14 +15,13 @@ export default function BestPracticesCard(props: IBestPracticesCardProps) {
   const wasExpandedBeforePrintRef = useRef(false);
   const { isPrinting } = usePrint();
 
-  // Handle printing state change
   useEffect(() => {
     if (isPrinting) {
       console.log('printing');
-      wasExpandedBeforePrintRef.current = expand; // Capture state only when printing starts
+      wasExpandedBeforePrintRef.current = expand;
       setExpand(true);
     } else {
-      setExpand(wasExpandedBeforePrintRef.current); // Restore previous state
+      setExpand(wasExpandedBeforePrintRef.current);
     }
   }, [isPrinting]); // ✅ Removed expand from dependencies to prevent race conditions
 
