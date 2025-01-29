@@ -5754,6 +5754,7 @@ __metadata:
     "@react-native-community/datetimepicker": "npm:8.0.1"
     "@react-native-picker/picker": "npm:2.7.5"
     "@sanity/client": "npm:^6.27.1"
+    "@sanity/image-url": "npm:^1.1.0"
     "@storybook/addon-essentials": "npm:^7.6.20"
     "@storybook/addon-react-native-web": "npm:^0.0.24"
     "@storybook/core-server": "npm:^7.6.20"
@@ -8865,6 +8866,13 @@ __metadata:
     event-source-polyfill: "npm:1.0.31"
     eventsource: "npm:2.0.2"
   checksum: 10/a877f6175f2134e3f12119ec11b4f919ca03b7bd01dd7e400c88704f8de8085bfbe09216f225fc54344bcacba2f230642a3ea4a5f08e861652d742b3a1c4fa60
+  languageName: node
+  linkType: hard
+
+"@sanity/image-url@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@sanity/image-url@npm:1.1.0"
+  checksum: 10/e6caf270e19973d99ccb999ec5a1e6b185bb80ab275d31e21692d02dd109945ccda05fd54a9a797efc5768c10c32140a4d5dd85ec2c01a02955acc5d917b7e9f
   languageName: node
   linkType: hard
 
