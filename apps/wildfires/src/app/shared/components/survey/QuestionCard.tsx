@@ -23,6 +23,7 @@ export function QuestionCard(props: IProps) {
         subtitle={question.subtitle}
       />
 
+      {!!question.renderIn && question.renderIn}
       <QuestionForm question={question} answer={answer} onAnswer={onAnswer} />
 
       {!!question.renderAfter && question.renderAfter}
