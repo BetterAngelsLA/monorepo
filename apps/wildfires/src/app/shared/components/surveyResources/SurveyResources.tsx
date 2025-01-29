@@ -14,8 +14,9 @@ export function SurveyResources(props: IProps) {
   const parentCss = [className];
 
   const baseResources = resources.filter((r) => r.resourceType === 'resource');
-  const alertResources = resources.filter((r) => r.resourceType === 'alert');
 
+  // put into atoms
+  const alertResources = resources.filter((r) => r.resourceType === 'alert');
   const baseResourcesGroupedSorted = groupResources(baseResources);
 
   return (
