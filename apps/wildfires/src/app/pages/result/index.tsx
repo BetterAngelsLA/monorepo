@@ -18,7 +18,7 @@ export default function Result() {
   return (
     <>
       {/* Content that will be included in the PDF */}
-      <div ref={printContentRef}>
+      <div className="w-full" ref={printContentRef}>
         <HorizontalLayout className="bg-brand-dark-blue">
           <Hero className="min-h-[60vh] py-14 md:py-28">
             <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white md:text-[64px] md:leading-[1.2]">
