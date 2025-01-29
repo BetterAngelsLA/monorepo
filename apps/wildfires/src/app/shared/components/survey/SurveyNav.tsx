@@ -32,11 +32,6 @@ export function SurveyNav(props: IProps) {
   const showPrevBtn = formHistory.length > 1;
   const currentFormErrors = validateCurrentForm();
 
-  if (currentFormErrors.length) {
-    console.log('currentFormErrors:');
-    console.log(currentFormErrors);
-  }
-
   const nextDisabled = !!currentFormErrors.length;
 
   const parentCss = [

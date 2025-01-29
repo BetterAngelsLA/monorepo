@@ -47,9 +47,6 @@ export function Survey(props: IProps) {
   }
 
   function handleAnswer(newAnswer: TAnswer) {
-    console.log('new answer:');
-    console.log(newAnswer);
-
     const existingIdx = answers.findIndex(
       (a) => a.questionId === newAnswer.questionId
     );
