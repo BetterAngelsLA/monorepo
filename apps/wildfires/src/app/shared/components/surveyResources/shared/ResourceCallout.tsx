@@ -4,6 +4,7 @@ import {
   ReactElement,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import { usePrint } from '../../../providers/PrintProvider';
@@ -26,7 +27,7 @@ export function ResourceCallout(props: IProps) {
   } = props;
 
   const [show, setShow] = useState(false);
-  const [wasExpandedBeforePrint, setWasExpandedBeforePrint] = useState(false);
+  const wasExpandedBeforePrintRef = useRef(false);
   const { isPrinting } = usePrint();
 
   const parentCss = [
@@ -37,16 +38,14 @@ export function ResourceCallout(props: IProps) {
     className,
   ];
 
-  // Update show state when printing state changes
   useEffect(() => {
     if (isPrinting) {
-      console.log('printing');
-      setWasExpandedBeforePrint(show);
+      wasExpandedBeforePrintRef.current = show;
       setShow(true);
     } else {
-      setShow(wasExpandedBeforePrint);
+      setShow(wasExpandedBeforePrintRef.current);
     }
-  }, [isPrinting, show, wasExpandedBeforePrint]);
+  }, [isPrinting]); // ✅ Removed show from dependencies to prevent race conditions
 
   const handleToggle = useCallback(() => {
     setShow((prev) => !prev);

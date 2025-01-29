@@ -1,5 +1,6 @@
 import { ChevronLeftIcon } from '@monorepo/react/icons';
-import { FC, ReactNode, useState } from 'react';
+import { FC, ReactNode, useEffect, useRef, useState } from 'react';
+import { usePrint } from '../../providers/PrintProvider';
 
 interface IBestPracticesCardProps {
   Icon: FC<{ className?: string }>;
@@ -11,6 +12,18 @@ interface IBestPracticesCardProps {
 export default function BestPracticesCard(props: IBestPracticesCardProps) {
   const { Icon, title, description, bgColor } = props;
   const [expand, setExpand] = useState(false);
+  const wasExpandedBeforePrintRef = useRef(false);
+  const { isPrinting } = usePrint();
+
+  useEffect(() => {
+    if (isPrinting) {
+      wasExpandedBeforePrintRef.current = expand;
+      setExpand(true);
+    } else {
+      setExpand(wasExpandedBeforePrintRef.current);
+    }
+  }, [isPrinting]); // ✅ Removed expand from dependencies to prevent race conditions
+
   return (
     <div
       className={`${bgColor} rounded-[20px] w-full p-6 md:p-10 flex items-center gap-4 mb-4 md:mb-10 relative`}
