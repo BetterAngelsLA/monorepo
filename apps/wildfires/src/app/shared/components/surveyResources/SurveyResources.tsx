@@ -3,6 +3,7 @@ import { TResource, TTagCategory } from '../../clients/sanityCms/types';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { AlertResources } from './AlertResources';
 import { ResourceGroupCard } from './ResourceGroupCard';
+
 type IProps = {
   className?: string;
   resources: TResource[];
@@ -10,6 +11,11 @@ type IProps = {
 
 export function SurveyResources(props: IProps) {
   const { resources, className } = props;
+
+  console.log();
+  console.log('| -------------  SurveyResources  ------------- |');
+  console.log(resources);
+  console.log();
 
   const parentCss = [className];
 

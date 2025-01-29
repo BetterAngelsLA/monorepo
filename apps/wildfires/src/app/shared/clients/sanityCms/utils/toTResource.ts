@@ -2,16 +2,16 @@ import { PortableTextBlock } from '@portabletext/react';
 import { TResource } from '../types';
 import { toTTags } from './toTTag';
 
-function toPortableTextBlock(item: any): PortableTextBlock | null {
-  if (!Array.isArray(item)) {
+function toPortableTextBlock(block: any): PortableTextBlock[] | null {
+  if (!Array.isArray(block)) {
     return null;
   }
 
-  if (!item.length) {
+  if (!block.length) {
     return null;
   }
 
-  return item as unknown as PortableTextBlock;
+  return block as unknown as PortableTextBlock[];
 }
 
 export function toTResources(items: any): TResource[] {
@@ -34,9 +34,10 @@ export function toTResource(item: any): TResource | null {
     slug: item.slug,
     resourceType: item.resourceType,
     resourceLink: item.resourceLink,
-    tipsDescription: item.tipsDescription,
-    priority: Number.isInteger(item.priority) ? item.priority : undefined,
+    usefulTipsLink: item.usefulTipsLink,
+    tipsDescription: toPortableTextBlock(item.tipsDescription),
     shortDescription: toPortableTextBlock(item.shortDescription),
+    priority: Number.isInteger(item.priority) ? item.priority : undefined,
     tags: toTTags(item.tags),
   };
 }
