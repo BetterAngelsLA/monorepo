@@ -33,9 +33,9 @@ export function AlertResources(props: IProps) {
         alerts
       </div>
 
-      {sortedAlerts.map((alert) => (
+      {sortedAlerts.map((alert, idx) => (
         <ResourceCard
-          key={alert.slug}
+          key={idx}
           className="mb-4 lg:mb-10 last:mb-0"
           resource={alert}
         />

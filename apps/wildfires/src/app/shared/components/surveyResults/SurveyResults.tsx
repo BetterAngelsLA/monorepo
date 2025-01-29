@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { useSearchParams } from 'react-router-dom';
 import { surveyConfig } from '../../../pages/introduction/firesSurvey/config/config';
 import { fetchAllAlertsAndResourcesByTagsFn } from '../../clients/sanityCms/queries/fetchAllAlertsAndResourcesByTagsFn';
 import { mergeCss } from '../../utils/styles/mergeCss';
@@ -39,7 +40,7 @@ function getAnswerTags(answer: TAnswer, answerOptions: TOption[]): string[] {
   return answerTags;
 }
 
-function getTags(answers: TAnswer[]): string[] {
+function getTagsFromAnswers(answers: TAnswer[]): string[] {
   const tags: string[] = [];
 
   for (const answer of answers) {
@@ -59,21 +60,39 @@ function getTags(answers: TAnswer[]): string[] {
   return tags;
 }
 
-type IProps = {
+function getTags(answers: TAnswer[], tagsStr?: string | null): string[] {
+  if (answers.length) {
+    return getTagsFromAnswers(answers);
+  }
+
+  if (!tagsStr) {
+    return [];
+  }
+
+  return tagsStr.split(',');
+}
+
+type ISurveyResults = {
   className?: string;
-  results: TSurveyResults;
+  results?: TSurveyResults;
 };
 
-export function SurveyResults(props: IProps) {
+export function SurveyResults(props: ISurveyResults) {
   const { results, className } = props;
 
-  const { answers = [] } = results;
+  const [searchParams] = useSearchParams();
 
-  const queryTags = getTags(answers);
+  const resultData = results || {
+    answers: [],
+  };
+
+  const { answers } = resultData;
+
+  const resourceTags = getTags(answers, searchParams.get('tags'));
 
   const { isLoading, isError, data, error } = useQuery({
-    queryKey: queryTags,
-    queryFn: () => fetchAllAlertsAndResourcesByTagsFn(queryTags),
+    queryKey: resourceTags,
+    queryFn: () => fetchAllAlertsAndResourcesByTagsFn(resourceTags),
     refetchOnWindowFocus: false,
     retry: 1,
   });
