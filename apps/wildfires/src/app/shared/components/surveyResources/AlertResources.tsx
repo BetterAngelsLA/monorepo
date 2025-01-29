@@ -30,7 +30,7 @@ export function AlertResources(props: IProps) {
   return (
     <div className={mergeCss(parentCss)}>
       <div className="uppercase text-lg font-bold mb-10 lg:mb-[60px]">
-        important alerts
+        important tips
       </div>
 
       {sortedAlerts.map((alert) => (
