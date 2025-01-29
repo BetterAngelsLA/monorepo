@@ -36,20 +36,17 @@ const GeneratePDF = ({
       >
         Print your action plan
       </Button>
-      <div className="text-sm text-gray-600 mt-3 max-w-md text-center">
-        <p className="mb-3">
-          If you'd like to save as a PDF, after clicking "Print your action
-          plan":
+      <div className="text-sm text-gray-600 mt-3 max-w-md text-center px-4">
+        <p className="mb-2">
+          After clicking "Print your action plan", to save as a PDF:
         </p>
-        <div className="space-y-2">
-          <p>
-            Desktop: Select <strong>"Save as PDF"</strong> in the print dialog
-          </p>
-          <p>
-            Mobile: Tap <strong>"Share"</strong> then{' '}
-            <strong>"Save to Files"</strong>
-          </p>
-        </div>
+        <p className="mb-1.5">
+          Desktop: Select <strong>"Save as PDF"</strong> in the print dialog
+        </p>
+        <p>
+          Mobile: Tap <strong>"Share"</strong> then{' '}
+          <strong>"Save to Files"</strong>
+        </p>
       </div>
     </div>
   );
