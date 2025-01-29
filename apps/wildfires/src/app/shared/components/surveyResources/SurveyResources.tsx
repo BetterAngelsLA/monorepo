@@ -20,10 +20,6 @@ export function SurveyResources(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <div className="mt-12 md:mt-20 mb-8 md:mb-12 font-bold text-xl md:text-2xl break-before-page">
-        Resources
-      </div>
-
       {!!baseResourcesGroupedSorted.length && (
         <div>
           {baseResourcesGroupedSorted.map((categoryResources) => {
