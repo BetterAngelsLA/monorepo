@@ -18,7 +18,7 @@ module.exports = {
         lg: '1152px',
       },
       fontFamily: {
-        primary: ['IBM Plex Sans', 'sans-serif'],
+        primary: ['sans-serif'],
       },
       colors: {
         'brand-orange': 'var(--color-brand-orange)',
