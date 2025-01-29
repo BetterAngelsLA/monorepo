@@ -1,16 +1,10 @@
-import { CameraIcon, WFAnnouncement } from '@monorepo/react/icons';
+import { WFAnnouncement } from '@monorepo/react/icons';
 
 import BestPracticesCard from './BestPracticesCard';
 
 export default function BestPractices() {
   return (
     <div className="w-full my-8 md:my-24 break-inside-avoid">
-      <BestPracticesCard
-        bgColor="bg-brand-yellow-light"
-        title="Remember to document everything"
-        description="Take videos and pictures of damages, keep receipts of all expenses!"
-        Icon={CameraIcon}
-      />
       <BestPracticesCard
         bgColor="bg-brand-angel-blue"
         title="Access the valuable resources available to you. Below are steps you
