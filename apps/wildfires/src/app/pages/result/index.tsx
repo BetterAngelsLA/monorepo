@@ -8,7 +8,6 @@ import Register from '../../shared/components/register/Register';
 import ResultsPdfButton from '../../shared/components/resultsPdf/resultsPdfButton';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
 import { useAnswerTags } from '../../shared/hooks/useAnswerTags';
-import useSurveySubmission from '../../shared/hooks/useSurveySubmission';
 
 export default function ResultPage() {
   const [surveyResults] = useAtom(surveyResultsAtom);
@@ -21,7 +20,7 @@ export default function ResultPage() {
 
   const answerTags = useAnswerTags(answers);
 
-  useSurveySubmission(surveyResults || null);
+  // useSurveySubmission(surveyResults || null);
 
   return (
     <>
