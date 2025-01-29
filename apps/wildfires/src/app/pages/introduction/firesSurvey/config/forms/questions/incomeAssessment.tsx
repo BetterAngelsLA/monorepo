@@ -44,7 +44,7 @@ export const qIncomeAssessment: TQuestion = {
     {
       optionId: 'incomeHigh',
       label: 'Greater',
-      // No tags / Slugs
+      tags: ['income-greater-income'],
     },
   ],
   rules: {

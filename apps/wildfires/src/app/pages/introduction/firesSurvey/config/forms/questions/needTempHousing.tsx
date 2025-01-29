@@ -14,7 +14,7 @@ export const qTempHousing: TQuestion = {
     {
       optionId: 'temporaryHousingNo',
       label: 'No',
-      // No tags or slugs
+      tags: ['housing-no-temporary-housing'],
     },
   ],
   rules: {
