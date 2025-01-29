@@ -16,7 +16,6 @@ const GeneratePDF = ({
 }: GeneratePDFProps) => {
   const { setPrinting } = usePrint();
 
-  // Direct print handler with proper async flow
   const handlePrint = useReactToPrint({
     contentRef: targetRef,
     documentTitle: fileName,
@@ -27,7 +26,6 @@ const GeneratePDF = ({
     },
   });
 
-  // Direct click handler with proper error handling
   const handleClick = useCallback(
     async (e: React.MouseEvent) => {
       e.preventDefault();
