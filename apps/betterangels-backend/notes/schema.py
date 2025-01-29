@@ -92,11 +92,13 @@ class Query:
 
     tasks: List[TaskType] = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
 
-    @strawberry_django.field
+    @strawberry_django.field(extensions=[HasPerm(NotePermissions.ADD)])
     def interaction_author(self, info: Info, pk: strawberry.ID) -> InteractionAuthorType:
         return cast(InteractionAuthorType, get_outreach_authorized_users(int(pk)))
 
-    @strawberry_django.offset_paginated(OffsetPaginated[InteractionAuthorType])
+    @strawberry_django.offset_paginated(
+        OffsetPaginated[InteractionAuthorType], extensions=[HasPerm(NotePermissions.ADD)]
+    )
     def interaction_authors(self) -> QuerySet[User]:
         return cast(QuerySet, get_outreach_authorized_users())
 

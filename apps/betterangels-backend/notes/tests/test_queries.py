@@ -211,6 +211,11 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             f"{response["data"]["interactionAuthor"]["firstName"]} is not Carolyn",
         )
 
+        self.graphql_client.logout()
+
+        response = self.execute_graphql(query, variables={"id": 3})
+        self.assertTrue(response["data"] is None, f"There are more than 0 results: {response}")
+
     def test_interaction_authors(self) -> None:
         query = """
             query ViewInteractionAuthors {
@@ -227,7 +232,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         """
         response = self.execute_graphql(query)
 
-        self.assertTrue(response["data"] is None, f"Data is None: {response}")
+        self.assertFalse(response["data"] is None, f"Data is None: {response}")
+
+        self.graphql_client.logout()
+
+        response = self.execute_graphql(query)
+        self.assertEqual(
+            response["data"]["interactionAuthors"]["totalCount"], 0, f"There are more than 0 results: {response}"
+        )
 
     @parametrize(
         ("case_manager_label, client_label, is_submitted, expected_results_count, returned_note_labels"),
