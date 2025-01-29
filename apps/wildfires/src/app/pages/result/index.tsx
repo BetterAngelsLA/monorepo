@@ -21,18 +21,17 @@ export default function Result() {
       <div className="w-full" id="print-container" ref={printContentRef}>
         <HorizontalLayout className="bg-brand-dark-blue">
           <Hero className="min-h-[60vh] py-14 md:py-28 hero-print">
-            <div className="container mx-auto px-4">
-              <h1 className="font-light border-l-[10px] pl-3 md:pl-8 border-brand-yellow text-white md:text-left">
-                <div className="flex flex-col justify-center md:block">
-                  <span className="text-[28px] leading-[1.2] md:text-[60px] md:leading-[1.2] text-left md:text-left block">
-                    Your Wildfire Recovery
-                  </span>
-                  <span className="text-[28px] leading-[1.2] md:text-[60px] md:leading-[1.2] text-left block mt-2">
-                    Action Plan
-                  </span>
-                </div>
-              </h1>
-            </div>
+            <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white md:text-[58px] md:leading-[1.2]">
+              Your Wildfire
+              <span className="md:hidden print:hidden">
+                <br />
+              </span>{' '}
+              Recovery
+              <span className="md:hidden print:hidden">
+                <br />
+              </span>{' '}
+              Action Plan
+            </h1>
           </Hero>
         </HorizontalLayout>
         <HorizontalLayout>
