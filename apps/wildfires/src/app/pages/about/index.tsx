@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import ContactUs from '../../shared/components/contactUs/ContactUs';
 
@@ -133,7 +132,7 @@ export default function About() {
             has access to the support they need during times of crisis and
             beyond.
           </p>
-          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
+          {/* <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Credits
           </h2>
           <ul className="ml-6 mb-6 sm:mb-12 md:mb-16 text-xl leading-normal">
@@ -177,7 +176,7 @@ export default function About() {
               </a>
               .
             </li>
-          </ul>
+          </ul> */}
         </div>
       </HorizontalLayout>
       <ContactUs />
