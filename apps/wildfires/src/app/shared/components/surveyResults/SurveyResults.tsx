@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { useAtom } from 'jotai';
 import { surveyConfig } from '../../../pages/introduction/firesSurvey/config/config';
+import { resourcesAtom } from '../../atoms/resourcesAtom';
 import { fetchAllAlertsAndResourcesByTagsFn } from '../../clients/sanityCms/queries/fetchAllAlertsAndResourcesByTagsFn';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { TAnswer, TOption, TSurveyResults } from '../survey/types';
@@ -67,6 +69,8 @@ type IProps = {
 export function SurveyResults(props: IProps) {
   const { results, className } = props;
 
+  const [_resourcesItems, setResourcesItems] = useAtom(resourcesAtom);
+
   const { answers = [] } = results;
 
   const queryTags = getTags(answers);
@@ -77,6 +81,10 @@ export function SurveyResults(props: IProps) {
     refetchOnWindowFocus: false,
     retry: 1,
   });
+
+  if (data) {
+    setResourcesItems(data);
+  }
 
   const parentCss = [className];
 
