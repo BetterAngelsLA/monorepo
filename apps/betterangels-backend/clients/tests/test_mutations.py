@@ -461,7 +461,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 41
+        expected_query_count = 42  # 1 extra query is made due to the addition of InteractionAuthorType
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
