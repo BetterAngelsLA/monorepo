@@ -6,11 +6,13 @@ interface IProps extends PropsWithChildren {
   className?: string;
   icon?: ReactElement;
   type?: 'alert';
+  expanded?: boolean;
 }
 
 export function ResourceCallout(props: IProps) {
-  const { icon, type = 'alert', className, children } = props;
-  const [show, setShow] = useState(false);
+  const { icon, type = 'alert', expanded, className, children } = props;
+
+  const [show, setShow] = useState(!!expanded);
   const [wasExpandedBeforePrint, setWasExpandedBeforePrint] = useState(false);
 
   const parentCss = [

@@ -8,10 +8,11 @@ type IProps = {
   className?: string;
   resourceCategory: string;
   resources?: TResource[];
+  expanded?: boolean;
 };
 
 export function ResourceGroupCard(props: IProps) {
-  const { resourceCategory, resources, className } = props;
+  const { resourceCategory, resources, expanded, className } = props;
 
   const parentCss = ['flex', 'flex-col', className];
 
@@ -34,6 +35,7 @@ export function ResourceGroupCard(props: IProps) {
           key={index}
           className="mb-4 lg:mb-10 last:mb-0"
           resource={resource}
+          expanded={expanded}
         />
       ))}
     </div>
