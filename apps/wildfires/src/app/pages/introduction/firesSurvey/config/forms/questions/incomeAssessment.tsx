@@ -50,5 +50,5 @@ export const qIncomeAssessment: TQuestion = {
   rules: {
     required: true,
   },
-  renderBefore: <IncomeByHouseholdTable />,
+  renderIn: <IncomeByHouseholdTable />,
 };
