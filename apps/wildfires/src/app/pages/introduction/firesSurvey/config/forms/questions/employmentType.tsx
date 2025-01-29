@@ -31,8 +31,8 @@ export const qEmploymentType: TQuestion = {
       tags: ['income-job-loss'],
     },
     {
-      optionId: 'employmentOther',
-      label: 'Other',
+      optionId: 'employmentNoneOfTheAbove',
+      label: 'None of the above',
       // No tags or slugs
     },
   ],
