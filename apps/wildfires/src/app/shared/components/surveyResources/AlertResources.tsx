@@ -6,10 +6,11 @@ import { ResourceCard } from './ResourceCard';
 type IProps = {
   className?: string;
   alerts?: TResource[];
+  expanded?: boolean;
 };
 
 export function AlertResources(props: IProps) {
-  const { alerts, className } = props;
+  const { alerts, expanded, className } = props;
 
   const parentCss = [
     'flex',
@@ -38,6 +39,7 @@ export function AlertResources(props: IProps) {
           key={idx}
           className="mb-4 lg:mb-10 last:mb-0"
           resource={alert}
+          expanded={expanded}
         />
       ))}
     </div>

@@ -75,10 +75,11 @@ function getTags(answers: TAnswer[], tagsStr?: string | null): string[] {
 type ISurveyResults = {
   className?: string;
   results?: TSurveyResults;
+  expanded?: boolean;
 };
 
 export function SurveyResults(props: ISurveyResults) {
-  const { results, className } = props;
+  const { results, expanded, className } = props;
 
   const [searchParams] = useSearchParams();
 
@@ -101,7 +102,9 @@ export function SurveyResults(props: ISurveyResults) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      {!!data?.length && <SurveyResources resources={data} />}
+      {!!data?.length && (
+        <SurveyResources resources={data} expanded={expanded} />
+      )}
     </div>
   );
 }

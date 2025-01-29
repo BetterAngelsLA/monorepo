@@ -7,7 +7,7 @@ export default function ResultPdfpage() {
     <HorizontalLayout className="">
       <BestPractices expanded={true} />
 
-      <SurveyResults className="mt-8 mb-24" />
+      <SurveyResults className="mt-8 mb-24" expanded={true} />
     </HorizontalLayout>
   );
 }

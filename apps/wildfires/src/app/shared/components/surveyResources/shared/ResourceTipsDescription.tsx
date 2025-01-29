@@ -7,10 +7,11 @@ import { ResourceCallout } from './ResourceCallout';
 type IProps = {
   className?: string;
   data: PortableTextBlock;
+  expanded?: boolean;
 };
 
 export function ResourceTipsDescription(props: IProps) {
-  const { data, className } = props;
+  const { data, expanded, className } = props;
 
   const parentCss = ['wisiwig', className];
 
@@ -18,6 +19,7 @@ export function ResourceTipsDescription(props: IProps) {
     <ResourceCallout
       className={mergeCss(parentCss)}
       icon={<LightBulbIcon className="h-6 md:h-8" />}
+      expanded={expanded}
     >
       <PortableText value={data} />
     </ResourceCallout>

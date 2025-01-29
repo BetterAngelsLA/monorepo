@@ -7,10 +7,11 @@ import { ResourceTipsDescription } from './shared/ResourceTipsDescription';
 type IProps = {
   className?: string;
   resource: TResource;
+  expanded?: boolean;
 };
 
 export function ResourceCard(props: IProps) {
-  const { resource, className } = props;
+  const { resource, expanded, className } = props;
 
   const { title, shortDescription, tipsDescription, resourceLink } = resource;
 
@@ -32,7 +33,9 @@ export function ResourceCard(props: IProps) {
       {!!shortDescription && (
         <ResourcePortableText className="mt-8" data={shortDescription} />
       )}
-      {!!tipsDescription && <ResourceTipsDescription data={tipsDescription} />}
+      {!!tipsDescription && (
+        <ResourceTipsDescription data={tipsDescription} expanded={expanded} />
+      )}
 
       {!!resourceLink && (
         <ResourceLink

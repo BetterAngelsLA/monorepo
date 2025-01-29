@@ -6,10 +6,11 @@ import { ResourceGroupCard } from './ResourceGroupCard';
 type IProps = {
   className?: string;
   resources: TResource[];
+  expanded?: boolean;
 };
 
 export function SurveyResources(props: IProps) {
-  const { resources, className } = props;
+  const { resources, expanded, className } = props;
 
   const parentCss = [className];
 
@@ -27,6 +28,7 @@ export function SurveyResources(props: IProps) {
 
             return (
               <ResourceGroupCard
+                expanded={expanded}
                 key={category.slug}
                 className="mb-12 md:mb-20 last:mb-0 break-inside-avoid"
                 resourceCategory={category.name}
@@ -42,6 +44,7 @@ export function SurveyResources(props: IProps) {
           <AlertResources
             className="mb-12 md:mb-20 last:mb-0"
             alerts={alertResources}
+            expanded={expanded}
           />
         </div>
       )}
