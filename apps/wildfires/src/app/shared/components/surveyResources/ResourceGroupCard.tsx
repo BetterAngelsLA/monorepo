@@ -26,7 +26,11 @@ export function ResourceGroupCard(props: IProps) {
   return (
     <div className={mergeCss(parentCss)}>
       {!!title && (
-        <SectionBanner className="mb-4 md:mb-12" title={title} variant="med" />
+        <SectionBanner
+          className="mb-4 md:mb-12 break-after-avoid-page"
+          title={title}
+          variant="med"
+        />
       )}
 
       {sortedResources.map((resource, index) => (
