@@ -22,10 +22,10 @@ export function QuestionCard(props: IProps) {
         title={question.title}
         subtitle={question.subtitle}
       />
-      <div className="text-xl lg:mt-[-50px] mb-12 md:mb-20">
+      <div className="text-xl md:mt-[-50px] mb-12 md:mb-20">
         {!!question.body && question.body}
       </div>
-      <div className="text-neutral-40 lg:mt-[-50px] mb-12 md:mb-20">
+      <div className="text-neutral-40 md:mt-[-50px] mb-12 md:mb-20">
         {!!question.note && question.note}
       </div>
 
