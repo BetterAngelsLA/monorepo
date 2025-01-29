@@ -32,6 +32,7 @@ export function ResourceCard(props: IProps) {
       {!!shortDescription && (
         <ResourcePortableText className="mt-8" data={shortDescription} />
       )}
+
       {!!tipsDescription && <ResourceTipsDescription data={tipsDescription} />}
 
       {!!resourceLink && (
