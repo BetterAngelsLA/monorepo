@@ -1,18 +1,18 @@
 import { useAtom } from 'jotai';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import { surveyResultsAtom } from '../../shared/atoms/surveyResultsAtom';
-import GeneratePDF from '../../shared/components/GeneratePDF';
 import BestPractices from '../../shared/components/bestPractices/BestPractices';
 import Hero from '../../shared/components/hero/Hero';
 import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
-import useSurveySubmission from '../../shared/hooks/useSurveySubmission';
 
 export default function Result() {
   const [surveyResults] = useAtom(surveyResultsAtom);
 
-  useSurveySubmission(surveyResults || null);
+  console.log('*****************  Result');
+
+  // useSurveySubmission(surveyResults || null);
 
   return (
     <>
@@ -26,14 +26,14 @@ export default function Result() {
       <HorizontalLayout>
         <div id="content-to-pdf">
           <BestPractices />
-          {surveyResults && (
-            <SurveyResults className="mt-8 mb-24" results={surveyResults} />
-          )}
+          {/* {surveyResults && ( */}
+          <SurveyResults className="mt-8 mb-24" results={surveyResults} />
+          {/* )} */}
         </div>
-        <GeneratePDF
+        {/* <GeneratePDF
           className="mb-16 md:mb-28 bg-brand-dark-blue text-white mx-auto"
           fileName="LA Disaster Relief Navigator"
-        />
+        /> */}
       </HorizontalLayout>
       <Register />
       <HorizontalLayout className="bg-brand-sky-blue">
