@@ -7,24 +7,8 @@ export default function BestPractices() {
     <div className="w-full my-8 md:my-24 break-inside-avoid">
       <BestPracticesCard
         bgColor="bg-brand-angel-blue"
-        title="Access the valuable resources available to you. Below are steps you
-            can take now."
-        description={
-          <>
-            These are listed in order of priority and can be your guide to
-            navigating online and/or to help you be prepared for an in-person
-            meeting at a{' '}
-            <a
-              aria-label="open disaster recovery center website in new tab"
-              className="underline"
-              target="_blank"
-              href="https://www.disasterassistance.gov/"
-              rel="noreferrer"
-            >
-              Disaster Recovery Center.
-            </a>
-          </>
-        }
+        title="Your Personalized Plan"
+        description="This action plan is meant to provide you with valuable resources and tips to guide you through the wildfire recovery process.  We've organized the information to make it easier for you to get the help you need."
         Icon={WFCheckbox}
       />
     </div>
