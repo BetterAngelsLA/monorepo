@@ -19,8 +19,20 @@ export const qEmploymentType: TQuestion = {
       tags: ['income-self-employed-freelance'],
     },
     {
-      optionId: 'employmentNeither',
-      label: 'Neither',
+      optionId: 'employmentDomesticWorkerDayLaborer',
+      label: 'Domestic Worker / Day Laborer',
+      // tags: ['Income - Self-Employed/Freelance']
+      tags: ['income-job-loss'],
+    },
+    {
+      optionId: 'employmentMultipleJobs',
+      label: 'I have multiple jobs',
+      // tags: ['Income - Self-Employed/Freelance']
+      tags: ['income-job-loss'],
+    },
+    {
+      optionId: 'employmentOther',
+      label: 'Other',
       // No tags or slugs
     },
   ],
