@@ -38,7 +38,7 @@ const GeneratePDF = ({
       </Button>
       <div className="text-sm text-gray-600 mt-3 max-w-md text-center px-4">
         <p className="mb-2">
-          After clicking "Print your action plan", to save as a PDF:
+          To save as PDF, click "Print your action plan" above, then:
         </p>
         <p className="mb-1.5">
           Desktop: Select <strong>"Save as PDF"</strong> in the print dialog
