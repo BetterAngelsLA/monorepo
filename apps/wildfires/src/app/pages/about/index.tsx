@@ -132,6 +132,7 @@ export default function About() {
             has access to the support they need during times of crisis and
             beyond.
           </p>
+        </div>
       </HorizontalLayout>
       <ContactUs />
     </>
