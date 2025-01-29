@@ -22,6 +22,12 @@ export function QuestionCard(props: IProps) {
         title={question.title}
         subtitle={question.subtitle}
       />
+      <div className="mb-12 md:mb-20">
+        <div className="text-xl mb-2">{!!question.body && question.body}</div>
+        <div className="text-neutral-40 mb-2">
+          {!!question.note && question.note}
+        </div>
+      </div>
 
       {!!question.renderIn && question.renderIn}
       <QuestionForm question={question} answer={answer} onAnswer={onAnswer} />

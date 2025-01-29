@@ -30,7 +30,9 @@ export type TQuestion = {
   id: string;
   type: 'radio' | 'checkbox';
   title: string;
+  body?: string;
   subtitle?: string;
+  note?: string;
   options: TOption[];
   rules?: TQuestionValidate;
   renderAfter?: ReactNode;
