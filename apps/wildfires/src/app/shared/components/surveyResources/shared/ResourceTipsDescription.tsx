@@ -6,7 +6,7 @@ import { ResourceCallout } from './ResourceCallout';
 
 type IProps = {
   className?: string;
-  data: PortableTextBlock;
+  data: PortableTextBlock[];
 };
 
 export function ResourceTipsDescription(props: IProps) {
