@@ -7,10 +7,19 @@ import Partners from '../../shared/components/partners/Partners';
 import Register from '../../shared/components/register/Register';
 import ResultsPdfButton from '../../shared/components/resultsPdf/resultsPdfButton';
 import { SurveyResults } from '../../shared/components/surveyResults/SurveyResults';
+import { useAnswerTags } from '../../shared/hooks/useAnswerTags';
 import useSurveySubmission from '../../shared/hooks/useSurveySubmission';
 
-export default function Result() {
+export default function ResultPage() {
   const [surveyResults] = useAtom(surveyResultsAtom);
+
+  const resultsData = surveyResults || {
+    answers: [],
+  };
+
+  const { answers } = resultsData;
+
+  const answerTags = useAnswerTags(answers);
 
   useSurveySubmission(surveyResults || null);
 
@@ -25,10 +34,15 @@ export default function Result() {
       </HorizontalLayout>
       <HorizontalLayout>
         <BestPractices />
+
         {surveyResults && (
-          <SurveyResults className="mt-8 mb-24" results={surveyResults} />
+          <SurveyResults className="mt-8 mb-24" answerTags={answerTags} />
         )}
-        <ResultsPdfButton className="mb-16 md:mb-28 bg-brand-dark-blue text-white mx-auto" />
+
+        <ResultsPdfButton
+          tags={answerTags.join(',')}
+          className="mb-16 md:mb-28 bg-brand-dark-blue text-white mx-auto"
+        />
       </HorizontalLayout>
       <Register className="mt-12" />
       <HorizontalLayout className="bg-brand-sky-blue">
