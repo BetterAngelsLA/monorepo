@@ -17,7 +17,6 @@ export default function BestPracticesCard(props: IBestPracticesCardProps) {
 
   useEffect(() => {
     if (isPrinting) {
-      console.log('printing');
       wasExpandedBeforePrintRef.current = expand;
       setExpand(true);
     } else {
