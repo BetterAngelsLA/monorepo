@@ -12,11 +12,6 @@ type IProps = {
 export function SurveyResources(props: IProps) {
   const { resources, className } = props;
 
-  console.log();
-  console.log('| -------------  SurveyResources  ------------- |');
-  console.log(resources);
-  console.log();
-
   const parentCss = [className];
 
   const baseResources = resources.filter((r) => r.resourceType === 'resource');

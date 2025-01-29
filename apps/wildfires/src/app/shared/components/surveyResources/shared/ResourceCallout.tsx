@@ -10,7 +10,7 @@ interface IProps extends PropsWithChildren {
 
 export function ResourceCallout(props: IProps) {
   const { icon, type = 'alert', className, children } = props;
-  const [show, setShow] = useState(false);
+  const [show, setShow] = useState(true);
   const [wasExpandedBeforePrint, setWasExpandedBeforePrint] = useState(false);
 
   const parentCss = [
