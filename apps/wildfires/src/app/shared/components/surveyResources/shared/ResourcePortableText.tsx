@@ -3,7 +3,7 @@ import { mergeCss } from '../../../utils/styles/mergeCss';
 
 type IProps = {
   className?: string;
-  data: PortableTextBlock;
+  data: PortableTextBlock[];
 };
 
 export function ResourcePortableText(props: IProps) {
