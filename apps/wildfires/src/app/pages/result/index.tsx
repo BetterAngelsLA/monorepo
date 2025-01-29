@@ -35,12 +35,14 @@ export default function Result() {
       </div>
 
       {/* Content that will only show on the webpage */}
-      <HorizontalLayout>
-        <GeneratePDF
-          targetRef={printContentRef}
-          className="mb-16 md:mb-28 bg-brand-dark-blue text-white mx-auto"
-          fileName="LA Disaster Relief Navigator.pdf"
-        />
+      <HorizontalLayout className="mb-16 md:mb-28">
+        <div className="flex flex-col items-center">
+          <GeneratePDF
+            targetRef={printContentRef}
+            className="bg-brand-dark-blue text-white"
+            fileName="LA Disaster Relief Navigator.pdf"
+          />
+        </div>
       </HorizontalLayout>
       <Register />
       <HorizontalLayout className="bg-brand-sky-blue">
