@@ -5,7 +5,8 @@ import { HeroContainer } from '../../../shared/components/hero/HeroContainer';
 import { mergeCss } from '../../../shared/utils/styles/mergeCss';
 import { HeroContent } from './HeroContent';
 
-const IMAGE_SLUG = 'homepage-hero';
+const MOBILE_IMAGE_SLUG = 'homepage-hero-mobile';
+const DESKTOP_IMAGE_SLUG = 'homepage-hero-desktop';
 
 interface IHeroProps {
   className?: string;
@@ -15,24 +16,36 @@ const builder = imageUrlBuilder(sanityClient);
 
 export function HomePageHero(props: IHeroProps) {
   const { className } = props;
-  const [imageRef, setImageRef] = useState<string | null>(null);
+  const [images, setImages] = useState<{
+    mobile: string | null;
+    desktop: string | null;
+  }>({
+    mobile: null,
+    desktop: null,
+  });
 
   useEffect(() => {
-    async function fetchImage() {
-      const query = `*[_type == "imageAsset" && slug.current == $slug][0].image.asset._ref`;
-      const params = { slug: IMAGE_SLUG };
-
+    async function fetchImages() {
       try {
-        const data = await sanityClient.fetch(query, params);
+        const query = `{
+          "mobile": *[_type == "imageAsset" && slug.current == $mobileSlug][0].image.asset._ref,
+          "desktop": *[_type == "imageAsset" && slug.current == $desktopSlug][0].image.asset._ref
+        }`;
+
+        const data = await sanityClient.fetch(query, {
+          mobileSlug: MOBILE_IMAGE_SLUG,
+          desktopSlug: DESKTOP_IMAGE_SLUG,
+        });
+
         if (data) {
-          setImageRef(data);
+          setImages({ mobile: data.mobile, desktop: data.desktop });
         }
       } catch (error) {
-        console.error('Error fetching image from Sanity:', error);
+        console.error('Error fetching images from Sanity:', error);
       }
     }
 
-    fetchImage();
+    fetchImages();
   }, []);
 
   const parentCss = ['w-full'];
@@ -40,17 +53,18 @@ export function HomePageHero(props: IHeroProps) {
   const desktopCss = [parentCss, 'hidden', 'md:flex', className];
 
   return (
-    imageRef && (
+    images.mobile &&
+    images.desktop && (
       <>
         <HeroContainer
-          url={builder.image(imageRef).width(600).format('webp').url()}
+          url={builder.image(images.mobile).format('webp').url()}
           className={mergeCss(mobileCss)}
         >
           <HeroContent />
         </HeroContainer>
 
         <HeroContainer
-          url={builder.image(imageRef).width(1200).format('webp').url()}
+          url={builder.image(images.desktop).format('webp').url()}
           className={mergeCss(desktopCss)}
         >
           <HeroContent />
