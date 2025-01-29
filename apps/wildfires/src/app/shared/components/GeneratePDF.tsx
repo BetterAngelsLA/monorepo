@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { usePrint } from '../providers/PrintProvider';
 import { Button } from './button/Button';
@@ -16,50 +16,49 @@ const GeneratePDF = ({
 }: GeneratePDFProps) => {
   const { setPrinting } = usePrint();
 
+  // Helper to wait for next rendering cycle
+  const waitForRender = () =>
+    new Promise((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(resolve);
+      });
+    });
+
   const handlePrint = useReactToPrint({
     contentRef: targetRef,
     documentTitle: fileName,
     preserveAfterPrint: true,
-    onBeforePrint: async () => {
-      setPrinting(true);
-      // Ensure content is expanded
-      if (targetRef.current) {
-        const element = targetRef.current;
-        element.style.height = 'auto';
-        element.style.overflow = 'visible';
-      }
-    },
+    onBeforePrint: async () => {},
     onAfterPrint: () => {
       setPrinting(false);
-      // Reset styles
-      if (targetRef.current) {
-        const element = targetRef.current;
-        element.style.height = '';
-        element.style.overflow = '';
-      }
     },
   });
 
-  const handleClick = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    setPrinting(true);
-    // Small delay to allow any state updates
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    handlePrint();
-  };
+  const handleClick = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      setPrinting(true);
+
+      // Wait for state update and DOM to reflect changes
+      await waitForRender();
+
+      handlePrint();
+    },
+    [setPrinting, handlePrint]
+  );
 
   return (
     <div className="flex flex-col items-center mx-auto">
       <Button
-        ariaLabel="Print your action plan"
+        ariaLabel="Print Your Action Plan"
         className={className}
         onClick={handleClick}
       >
-        Print your action plan
+        Print Your Action Plan
       </Button>
       <div className="text-sm text-gray-600 mt-3 max-w-md text-center px-4">
         <p className="mb-2">
-          To save as PDF, click "Print your action plan" above, then:
+          To save as PDF, click "Print Your Action Plan" above, then:
         </p>
         <p className="mb-1.5">
           Desktop: Select <strong>"Save as PDF"</strong> in the print dialog
