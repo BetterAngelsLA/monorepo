@@ -57,14 +57,14 @@ export function HomePageHero(props: IHeroProps) {
     images.desktop && (
       <>
         <HeroContainer
-          url={builder.image(images.mobile).format('webp').url()}
+          url={builder.image(images.mobile).url()}
           className={mergeCss(mobileCss)}
         >
           <HeroContent />
         </HeroContainer>
 
         <HeroContainer
-          url={builder.image(images.desktop).format('webp').url()}
+          url={builder.image(images.desktop).url()}
           className={mergeCss(desktopCss)}
         >
           <HeroContent />
