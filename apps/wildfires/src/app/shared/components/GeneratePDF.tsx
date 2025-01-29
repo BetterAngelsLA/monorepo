@@ -28,7 +28,7 @@ const GeneratePDF = ({
     contentRef: targetRef,
     documentTitle: fileName,
     preserveAfterPrint: true,
-    onBeforePrint: async () => {},
+    // onBeforePrint: async () => {},
     onAfterPrint: () => {
       setPrinting(false);
     },
