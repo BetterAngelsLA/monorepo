@@ -6,11 +6,14 @@ interface IBestPracticesCardProps {
   title: string;
   description: ReactNode;
   bgColor: string;
+  expanded?: boolean;
 }
 
 export default function BestPracticesCard(props: IBestPracticesCardProps) {
-  const { Icon, title, description, bgColor } = props;
-  const [expand, setExpand] = useState(false);
+  const { expanded, Icon, title, description, bgColor } = props;
+
+  const [expand, setExpand] = useState(!!expanded);
+
   return (
     <div
       className={`${bgColor} rounded-[20px] w-full p-6 md:p-10 flex items-center gap-4 mb-4 md:mb-10 relative`}

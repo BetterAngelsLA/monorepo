@@ -1,8 +1,20 @@
+import { mergeCss } from '../../utils/styles/mergeCss';
 import MailchimpFormContainer from './MailChimpSubscribe';
 
-export default function Register() {
+type IProps = {
+  className?: string;
+};
+
+export default function Register(props: IProps) {
+  const { className } = props;
+
   return (
-    <div className="bg-brand-angel-blue w-full flex flex-col items-center justify-center py-12 md:py-20 px-10">
+    <div
+      className={mergeCss([
+        'bg-brand-angel-blue w-full flex flex-col items-center justify-center py-12 md:py-20 px-10',
+        className,
+      ])}
+    >
       <h2 className="text-2xl md:text-[40px] md:leading-[1.2] font-bold mb-2 text-center">
         Register with LA Disaster Relief Navigator
       </h2>
