@@ -1,4 +1,4 @@
-import { WFAnnouncement } from '@monorepo/react/icons';
+import { WFCheckbox } from '@monorepo/react/icons';
 
 import BestPracticesCard from './BestPracticesCard';
 
@@ -25,7 +25,7 @@ export default function BestPractices() {
             </a>
           </>
         }
-        Icon={WFAnnouncement}
+        Icon={WFCheckbox}
       />
     </div>
   );
