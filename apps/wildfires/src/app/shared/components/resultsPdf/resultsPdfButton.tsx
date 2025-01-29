@@ -12,18 +12,19 @@ type IGeneratePDF = {
 const generatePDF = async (props: IGeneratePDF) => {
   const { pageUrl } = props;
 
+  const filename = `resources_${Date.now()}.pdf`;
+
   const options = {
     url: pageUrl,
     inline: true,
-    filename: 'my-action-plan.pdf',
+    filename: filename,
     delay: 1000,
+    useCustomStorage: true,
+    storage: {
+      method: 'PUT',
+      url: `https://development-us-west-2-wildfire-pdf.s3.amazonaws.com/${filename}`,
+    },
   };
-
-  console.log(console.log('################################### pageUrl'));
-  console.log(pageUrl);
-  console.log('options');
-  console.log(options);
-  console.log();
 
   try {
     const response = await fetch(API_2_PDF_URL, {
