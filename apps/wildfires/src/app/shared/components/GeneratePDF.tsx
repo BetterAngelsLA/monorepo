@@ -20,19 +20,40 @@ const GeneratePDF = ({
     contentRef: targetRef,
     documentTitle: fileName,
     preserveAfterPrint: true,
-    onBeforePrint: async () => setPrinting(true),
-    onAfterPrint: () => setPrinting(false),
+    onBeforePrint: async () => {
+      setPrinting(true);
+      // Ensure content is expanded
+      if (targetRef.current) {
+        const element = targetRef.current;
+        element.style.height = 'auto';
+        element.style.overflow = 'visible';
+      }
+    },
+    onAfterPrint: () => {
+      setPrinting(false);
+      // Reset styles
+      if (targetRef.current) {
+        const element = targetRef.current;
+        element.style.height = '';
+        element.style.overflow = '';
+      }
+    },
   });
+
+  const handleClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setPrinting(true);
+    // Small delay to allow any state updates
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    handlePrint();
+  };
 
   return (
     <div className="flex flex-col items-center mx-auto">
       <Button
         ariaLabel="Print your action plan"
         className={className}
-        onClick={(e) => {
-          e.preventDefault();
-          handlePrint();
-        }}
+        onClick={handleClick}
       >
         Print your action plan
       </Button>
