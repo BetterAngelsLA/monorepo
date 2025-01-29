@@ -191,6 +191,56 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
         self.assertFalse(note_differences)
 
+    def test_interaction_author(self) -> None:
+        query = """
+            query ViewInteractionAuthor($id: ID!) {
+                interactionAuthor(pk: $id) {
+                    firstName
+                    lastName
+                    middleName
+                }
+            }
+        """
+
+        response = self.execute_graphql(query, variables={"id": 3})
+
+        self.assertFalse(response["data"] is None, f"Data is None: {response}")
+        self.assertEqual(
+            "Carolyn",
+            response["data"]["interactionAuthor"]["firstName"],
+            f"{response["data"]["interactionAuthor"]["firstName"]} is not Carolyn",
+        )
+
+        self.graphql_client.logout()
+
+        response = self.execute_graphql(query, variables={"id": 3})
+        self.assertTrue(response["data"] is None, f"There are more than 0 results: {response}")
+
+    def test_interaction_authors(self) -> None:
+        query = """
+            query ViewInteractionAuthors {
+                interactionAuthors {
+                    totalCount
+                    results {
+                        id
+                        firstName
+                        lastName
+                        middleName
+                    }
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        self.assertFalse(response["data"] is None, f"Data is None: {response}")
+
+        self.graphql_client.logout()
+
+        response = self.execute_graphql(query)
+        self.assertEqual(
+            response["data"]["interactionAuthors"]["totalCount"], 0, f"There are more than 0 results: {response}"
+        )
+
     @parametrize(
         ("case_manager_label, client_label, is_submitted, expected_results_count, returned_note_labels"),
         [
