@@ -36,9 +36,19 @@ const generatePDF = async (props: IGeneratePDF) => {
     }
 
     const data = await response.json();
-    const pdfUrl = data.pdfUrl;
+
+    console.log();
+    console.log('| -------------  data  ------------- |');
+    console.log(data);
+    console.log();
+
+    const pdfUrl = data?.FileUrl;
+
     console.log('Generated PDF URL:', pdfUrl);
-    return pdfUrl;
+
+    if (pdfUrl) {
+      window.open(pdfUrl, '_blank');
+    }
   } catch (error) {
     console.error('Error generating PDF:', error);
   }
