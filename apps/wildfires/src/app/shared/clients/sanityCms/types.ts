@@ -4,11 +4,12 @@ export type TResource = {
   title: string;
   slug: string;
   resourceType: 'resource' | 'alert';
-  resourceLink?: string;
-  tipsDescription?: PortableTextBlock | null;
-  priority?: number;
+  resourceLink?: string | null;
+  usefulTipsLink?: string | null;
+  priority?: number | null;
   tags?: TTag[];
-  shortDescription?: PortableTextBlock | null;
+  tipsDescription?: PortableTextBlock[] | null;
+  shortDescription?: PortableTextBlock[] | null;
 };
 
 export type TTag = {
