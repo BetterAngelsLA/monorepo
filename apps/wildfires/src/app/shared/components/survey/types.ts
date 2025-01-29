@@ -34,6 +34,7 @@ export type TQuestion = {
   options: TOption[];
   rules?: TQuestionValidate;
   renderAfter?: ReactNode;
+  renderIn?: ReactNode;
 };
 
 export type TQuestionValidate = {
