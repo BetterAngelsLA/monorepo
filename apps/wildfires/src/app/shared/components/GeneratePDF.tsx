@@ -21,6 +21,7 @@ interface GeneratePDFProps {
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Helvetica',
+    padding: 20,
   },
 
   header: {
@@ -34,9 +35,6 @@ const styles = StyleSheet.create({
     height: 54,
   },
 
-  wrapper: {
-    padding: 20,
-  },
   line: {
     height: '100%',
     width: 10,
@@ -72,14 +70,10 @@ const PDFContent = () => (
         <View style={styles.line} />
         <Text style={styles.title}>Your Wildfire Recovery Action Plan</Text>
       </View>
-      <View style={styles.wrapper}>
-        <BestPractices />
-      </View>
+      <BestPractices />
     </Page>
     <Page size="A4" style={styles.page}>
-      <View style={styles.wrapper}>
-        <Resources title="test title" />
-      </View>
+      <Resources />
     </Page>
   </Document>
 );

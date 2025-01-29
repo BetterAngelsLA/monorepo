@@ -2,32 +2,23 @@ import { atom } from 'jotai';
 import { TResource } from '../clients/sanityCms/types';
 import { groupResources } from '../components/surveyResources/SurveyResources';
 
-// read-write
+// read-write atom for resources
 export const resourcesAtom = atom<TResource[]>([]);
 
-// read-only
+// read-only atom for filtering base resources
 export const baseResourcesAtom = atom((get) => {
-  get: {
-    const resources = get(resourcesAtom);
-
-    return resources.filter((r) => r.resourceType === 'resource');
-  }
+  const resources = get(resourcesAtom);
+  return resources.filter((r) => r.resourceType === 'resource');
 });
 
-// read-only
+// read-only atom for filtering alert resources
 export const alertResourcesAtom = atom((get) => {
-  get: {
-    const resources = get(resourcesAtom);
-
-    return resources.filter((r) => r.resourceType === 'alert');
-  }
+  const resources = get(resourcesAtom);
+  return resources.filter((r) => r.resourceType === 'alert');
 });
 
-// read-only
+// read-only atom for grouping and sorting base resources
 export const baseResourcesGroupedSortedAtom = atom((get) => {
-  get: {
-    const baseResources = get(baseResourcesAtom);
-
-    groupResources(baseResources);
-  }
+  const baseResources = get(baseResourcesAtom);
+  return groupResources(baseResources); // Ensure groupResources returns something to store
 });

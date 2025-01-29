@@ -1,6 +1,9 @@
 import { StyleSheet, Text, View } from '@react-pdf/renderer';
-import { TResource } from '../../clients/sanityCms/types';
-import { groupResources } from '../surveyResources/SurveyResources';
+import { useAtom } from 'jotai';
+import {
+  alertResourcesAtom,
+  baseResourcesGroupedSortedAtom,
+} from '../../atoms/resourcesAtom';
 import { AlertResources } from './AlertResources';
 import { ResourceGroupCard } from './ResourceGroupCard';
 
@@ -30,17 +33,10 @@ const styles = StyleSheet.create({
   },
 });
 
-type IProps = {
-  resources: TResource[];
-};
+export const Resources = () => {
+  const [alertResources] = useAtom(alertResourcesAtom);
+  const [baseResourcesGroupedSorted] = useAtom(baseResourcesGroupedSortedAtom);
 
-export const Resources = (props: IProps) => {
-  const { resources } = props;
-
-  const baseResources = resources.filter((r) => r.resourceType === 'resource');
-  const alertResources = resources.filter((r) => r.resourceType === 'alert');
-
-  const baseResourcesGroupedSorted = groupResources(baseResources);
   return (
     <View>
       <Text style={styles.heading}>Recources</Text>
@@ -61,7 +57,7 @@ export const Resources = (props: IProps) => {
         </View>
       )}
       {!!alertResources.length && (
-        <View style={{ marginTop: 48, gap: 48 }}>
+        <View style={{ marginTop: 48 }}>
           <AlertResources alerts={alertResources} />
         </View>
       )}

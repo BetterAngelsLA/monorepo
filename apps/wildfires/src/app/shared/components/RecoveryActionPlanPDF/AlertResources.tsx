@@ -6,7 +6,7 @@ import { ResourceCard } from './ResourceCard';
 const styles = StyleSheet.create({
   container: {
     backgroundColor: '#FFFEE0',
-    paddingVertical: 52,
+    paddingVertical: 48,
     paddingHorizontal: 16,
     borderRadius: 12,
   },
@@ -35,9 +35,11 @@ export const AlertResources = (props: IProps) => {
     <View style={styles.container}>
       <Text style={styles.alert}>alerts</Text>
 
-      {sortedAlerts.map((alert) => (
-        <ResourceCard key={alert.slug} resource={alert} />
-      ))}
+      <View style={{ gap: 48 }}>
+        {sortedAlerts.map((alert) => (
+          <ResourceCard key={alert.slug} resource={alert} />
+        ))}
+      </View>
     </View>
   );
 };

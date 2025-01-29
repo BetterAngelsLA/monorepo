@@ -46,7 +46,7 @@ export const ResourceGroupCard = (props: IProps) => {
   const title = resourceCategory;
 
   return (
-    <View style={{ gap: 16 }}>
+    <View style={{ gap: 16, marginTop: 32 }}>
       {!!title && (
         <View style={styles.titleWrapper}>
           <View style={styles.line} />
