@@ -11,6 +11,7 @@ import React from 'react';
 import LOGO from '../../../assets/images/la_disaster_relief_navigator_logo.png';
 import { Button } from './button/Button';
 import { BestPractices } from './RecoveryActionPlanPDF/BestPractices';
+import { Resources } from './RecoveryActionPlanPDF/Resources';
 
 interface GeneratePDFProps {
   fileName: string | (() => string);
@@ -73,6 +74,11 @@ const PDFContent = () => (
       </View>
       <View style={styles.wrapper}>
         <BestPractices />
+      </View>
+    </Page>
+    <Page size="A4" style={styles.page}>
+      <View style={styles.wrapper}>
+        <Resources title="test title" />
       </View>
     </Page>
   </Document>
