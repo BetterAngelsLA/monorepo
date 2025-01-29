@@ -1,0 +1,192 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-primary: 'IBM Plex Sans', 'sans-serif';
+  --color-brand-orange: #ff902e;
+  --color-brand-yellow: #fff82e;
+  --color-brand-yellow-light: #fffed5;
+  --color-brand-sky-blue: #9cdced;
+  --color-brand-angel-blue: #f2fafc;
+  --color-brand-dark-blue: #1e3342;
+  --color-primary-20: #052b73;
+  --color-primary-60: #216af8;
+  --color-primary-95: #dae7ff;
+  --color-steel-blue: #375c76;
+  --color-neutral-40: #62676f;
+  --color-neutral-70: #a8aeb8;
+  --color-neutral-90: #d3d9e3;
+  --color-neutral-98: #e8ecf2;
+  --color-neutral-99: #f4f6fd;
+  --color-success-30: #007934;
+  --color-success-90: #ddf8e8;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  font-family: var(--font-primary);
+  color: var(--color-primary-20);
+  font-weight: 400;
+  letter-spacing: 0.3px;
+
+  color: #000;
+}
+
+select:focus,
+input:focus,
+textarea:focus {
+  outline: none;
+}
+
+/* Google Translate Widget */
+.goog-te-combo {
+  background-color: transparent !important;
+  color: #fff !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  height: 20px !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+}
+
+@media screen and (max-width: 768px) {
+  .goog-te-combo {
+    font-size: 12px !important;
+    max-width: 120px !important;
+  }
+  #goog-gt-tt {
+    width: 90% !important;
+    max-width: 300px !important;
+  }
+}
+
+.goog-te-gadget {
+  max-height: 20px !important;
+  overflow: hidden !important;
+}
+
+#goog-te-popup {
+  position: absolute !important;
+  top: auto !important;
+  bottom: 10px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  z-index: 9999 !important;
+}
+
+/* survey wysiwyg  CSS */
+
+.survey-rich-text b {
+  font-weight: bold;
+}
+
+.survey-rich-text a {
+  font-style: italic;
+}
+
+.survey-rich-text p {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.survey-rich-text h1 {
+  font-size: 1.5rem;
+  line-height: 1.325;
+  margin-top: 1.25rem;
+  margin-bottom: 0.875rem;
+}
+
+.survey-rich-text h2 {
+  font-size: 1.375rem;
+  line-height: 1.25;
+  margin-top: 1.25rem;
+  margin-bottom: 0.875rem;
+}
+
+.survey-rich-text h3 {
+  font-size: 1.25rem;
+  line-height: 1.2;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.survey-rich-text h4,
+.survey-rich-text h5,
+.survey-rich-text h6 {
+  font-size: 1.125rem;
+  line-height: 1.1;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.survey-rich-text ul {
+  list-style: outside;
+  padding-left: 1rem;
+  margin-bottom: 0.625rem;
+}
+
+.survey-rich-text ul li {
+  list-style-type: disc;
+  margin-bottom: 0.5rem;
+}
+
+.survey-rich-text ol {
+  list-style: outside;
+  padding-left: 1rem;
+  margin-bottom: 0.625rem;
+}
+
+.survey-rich-text a {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+.wisiwig h1,
+.wisiwig h2,
+.wisiwig h3,
+.wisiwig h4,
+.wisiwig h5,
+.wisiwig h6 {
+  margin: 1rem 0 0.5rem 0;
+  font-size: 18px !important;
+}
+
+.wisiwig p {
+  margin: 0.5rem 0;
+  font-size: 16px !important;
+}
+
+.wisiwig li {
+  margin-left: 2rem;
+  font-size: 16px !important;
+  word-break: break-word;
+}
+
+.wisiwig li::before {
+  content: '•';
+  color: var(--color-primary-20);
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+
+@media screen and (max-width: 768px) {
+  .wisiwig li {
+    margin-left: 0.875rem;
+  }
+}
+
+.wisiwig a {
+  text-decoration: underline !important;
+  font-style: italic !important;
+}
