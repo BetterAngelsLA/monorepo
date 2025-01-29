@@ -16,33 +16,35 @@ const GeneratePDF = ({
 }: GeneratePDFProps) => {
   const { setPrinting } = usePrint();
 
-  // Helper to wait for next rendering cycle
-  const waitForRender = () =>
-    new Promise((resolve) => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(resolve);
-      });
-    });
-
+  // Direct print handler with proper async flow
   const handlePrint = useReactToPrint({
     contentRef: targetRef,
     documentTitle: fileName,
+    suppressErrors: true,
     preserveAfterPrint: true,
     onAfterPrint: () => {
       setPrinting(false);
     },
   });
 
+  // Direct click handler with proper error handling
   const handleClick = useCallback(
     async (e: React.MouseEvent) => {
       e.preventDefault();
-      setPrinting(true);
-
-      await waitForRender();
-
-      handlePrint();
+      try {
+        setPrinting(true);
+        await new Promise((resolve) => {
+          setTimeout(() => {
+            requestAnimationFrame(resolve);
+          }, 100);
+        });
+        handlePrint();
+      } catch (error) {
+        console.error('Print failed:', error);
+        setPrinting(false);
+      }
     },
-    [setPrinting, handlePrint]
+    [handlePrint, setPrinting]
   );
 
   return (
