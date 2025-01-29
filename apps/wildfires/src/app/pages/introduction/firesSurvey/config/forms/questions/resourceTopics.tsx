@@ -18,25 +18,25 @@ export const qResourceTopics: TQuestion = {
     },
     {
       optionId: 'resourceFinancial',
-      label: 'Financial / Income Loss Resources',
+      label: 'Income Loss',
       // tags: ['General - Financial Assistance']
       tags: ['general-financial-assistance'],
     },
     {
       optionId: 'resourceHousing',
-      label: 'Housing / Shelter Resources',
+      label: 'Housing, Shelter, and Repair',
       // tags: ['General - Housing Resources']
       tags: ['general-housing-resources'],
     },
     {
       optionId: 'resourceBusiness',
-      label: 'Support for Businesses',
+      label: 'Support for your Business',
       // tags: ['General - Business Resources']
       tags: ['general-business-resources'],
     },
     {
       optionId: 'resourceFood',
-      label: 'Food Resources',
+      label: 'Food and Essential Items',
       // tags: ['General - Food']
       tags: ['general-food'],
     },
@@ -66,7 +66,7 @@ export const qResourceTopics: TQuestion = {
     },
     {
       optionId: 'resourceImmigration',
-      label: 'Immigrant-Related Info',
+      label: 'Immigrant Related Information',
       // tags: ['General - Immigrant-Related']
       tags: ['general-immigrant-related'],
     },
