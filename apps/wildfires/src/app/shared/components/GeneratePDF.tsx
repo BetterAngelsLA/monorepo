@@ -19,6 +19,7 @@ const GeneratePDF = ({
   const handlePrint = useReactToPrint({
     contentRef: targetRef,
     documentTitle: fileName,
+    preserveAfterPrint: true,
     onBeforePrint: async () => setPrinting(true),
     onAfterPrint: () => setPrinting(false),
   });
