@@ -225,8 +225,6 @@ textarea:focus {
     font-size: 2.5rem !important; /* 40px */
     color: var(--color-primary-20) !important;
     border-color: var(--color-brand-sky-blue) !important;
-    text-align: center; /* Centers the text */
-    white-space: nowrap; /* Prevents wrapping */
   }
 
   .print-logo-container {
