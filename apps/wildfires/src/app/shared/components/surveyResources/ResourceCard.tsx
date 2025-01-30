@@ -8,8 +8,7 @@ import { ResourceTipsDescription } from './shared/ResourceTipsDescription';
 type IProps = {
   className?: string;
   resource: TResource;
-  // icon?: React.ReactNode;
-  Icon: FC<{ className?: string }>;
+  Icon?: FC<{ className?: string }>;
 };
 
 export function ResourceCard(props: IProps) {
@@ -26,6 +25,7 @@ export function ResourceCard(props: IProps) {
     'bg-white',
     '[box-shadow:0_4px_6px_#7777771A]',
     'break-inside-avoid',
+    'mb-1',
     className,
   ];
   return (
@@ -39,7 +39,7 @@ export function ResourceCard(props: IProps) {
         <div className="font-bold text-[24px]">{title}</div>
       </div>
       {!!shortDescription && (
-        <ResourcePortableText className="mt-8" data={shortDescription} />
+        <ResourcePortableText className="mt-4" data={shortDescription} />
       )}
       {!!tipsDescription && <ResourceTipsDescription data={tipsDescription} />}
       {!!resourceLink && (
