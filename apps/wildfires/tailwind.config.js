@@ -32,6 +32,7 @@ module.exports = {
         'primary-95': 'var(--color-primary-95)',
         'steel-blue': 'var(--color-steel-blue)',
         'neutral-40': 'var(--color-neutral-40)',
+        'neutral-55': 'var(--color-neutral-55)',
         'neutral-70': 'var(--color-neutral-70)',
         'neutral-90': 'var(--color-neutral-90)',
         'neutral-98': 'var(--color-neutral-98)',
