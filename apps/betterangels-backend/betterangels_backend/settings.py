@@ -180,7 +180,7 @@ SOCIALACCOUNT_PROVIDERS = {
                 # The Key ID (visible in the "View Key Details" page).
                 "secret": env("SOCIALACCOUNT_APPLE_SECRET"),
                 # Member ID/App ID Prefix -- you can find it below your name
-                # at the top right corner of the page, or it’s your App ID
+                # at the top right corner of the page, or it's your App ID
                 # Prefix in your App ID.
                 "key": env("SOCIALACCOUNT_APPLE_ID_PREFIX"),
                 "settings": {
@@ -217,9 +217,9 @@ TEMPLATES = [
 
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "guardian.backends.ObjectPermissionBackend",
     # `allauth` specific authentication methods, such as login by email
     "allauth.account.auth_backends.AuthenticationBackend",
+    "guardian.backends.ObjectPermissionBackend",
     "sesame.backends.ModelBackend",
 ]
 
@@ -341,8 +341,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-LOGIN_REDIRECT_URL = "home"
-LOGOUT_REDIRECT_URL = "home"
+LOGIN_REDIRECT_URL = "/admin/"
+LOGOUT_REDIRECT_URL = "/admin/"
 LOGIN_URL = "/accounts/login/"
 
 # django-organizations settings
@@ -368,7 +368,7 @@ from logging in until the email address is
 verified. Choose "optional"
 or "none" to allow logins with an unverified
 email address. In case of "optional", the email verification mail is
-still sent, whereas in case of “none” no email verification mails are sent.
+still sent, whereas in case of "none" no email verification mails are sent.
 """
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
@@ -497,3 +497,6 @@ RUNSCRIPT_LOG_TO_STDOUT = True
 
 # Phonenumber Field
 PHONENUMBER_DEFAULT_REGION = "US"
+
+# Add this setting near other URL-related settings
+APPEND_SLASH = True
