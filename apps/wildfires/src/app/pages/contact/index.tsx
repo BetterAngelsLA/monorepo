@@ -1,7 +1,6 @@
 import { HorizontalLayout } from '../../layout/horizontalLayout';
-import ContactUs from '../../shared/components/contactUs/ContactUs';
 
-export default function About() {
+export default function Contact() {
   return (
     <>
       <HorizontalLayout className="bg-brand-dark-blue">
@@ -9,9 +8,7 @@ export default function About() {
           <div className="max-w-[62.5rem] mx-auto flex flex-col md:flex-row items-stretch min-h-[10vh] md:py-28">
             <div className="bg-brand-dark-blue w-full md:w-[60%] py-14 flex items-center md:py-0">
               <h1 className="border-l-[10px] border-brand-yellow font-light font-primary pl-4 md:pl-8 text-5xl md:text-[58px] text-white md:leading-[1.2] text-left md:whitespace-nowrap">
-                <span className="block md:inline">About</span>{' '}
-                <span className="block md:inline">LA Disaster</span>{' '}
-                <span className="block md:inline">Relief Navigator</span>
+                <span className="block md:inline">Contact Us</span>
               </h1>
             </div>
           </div>
@@ -134,7 +131,6 @@ export default function About() {
           </p>
         </div>
       </HorizontalLayout>
-      <ContactUs />
     </>
   );
 }
