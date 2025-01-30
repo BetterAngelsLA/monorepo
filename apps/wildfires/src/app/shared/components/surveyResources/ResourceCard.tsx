@@ -36,7 +36,7 @@ export function ResourceCard(props: IProps) {
             <Icon className="h-6 w-6" />
           </div>
         )}
-        <div className="font-bold text-xl">{title}</div>
+        <div className="font-bold text-[24px]">{title}</div>
       </div>
       {!!shortDescription && (
         <ResourcePortableText className="mt-8" data={shortDescription} />
