@@ -33,11 +33,8 @@ export function ResourceCard(props: IProps) {
       <div className="font-bold text-[24px]">{title}</div>
 
       {!!shortDescription && (
-        <div className="flex flex-row items-center mt-8">
-          <div className="h-[24px] w-[24px]"></div>
-          {!!Icon && (
-            <Icon className="h-[40px] w-[40px] lg:h-[60px] lg:w-[60px] text-brand-dark-blue" />
-          )}
+        <div className="flex flex-row items-center">
+          <div>{!!Icon && <Icon className="h-[24px] w-[24px]" />}</div>
           <ResourcePortableText className="mt-8" data={shortDescription} />
         </div>
       )}
