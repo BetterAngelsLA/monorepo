@@ -37,7 +37,7 @@ export function AlertResources(props: IProps) {
       {sortedAlerts.map((alert) => (
         <ResourceCard
           key={alert.slug}
-          icon={<WFAlertOnIcon className="h-[24px] w-[24px]" />}
+          Icon={WFAlertOnIcon}
           className="mb-4 lg:mb-10 last:mb-0"
           resource={alert}
         />
