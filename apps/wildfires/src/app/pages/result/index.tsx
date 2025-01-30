@@ -20,38 +20,64 @@ export default function Result() {
     <>
       {/* Content that will be included in the PDF */}
       <div className="w-full" id="print-container" ref={printContentRef}>
-        <HorizontalLayout className="bg-brand-dark-blue print:bg-white">
-          <Hero className="min-h-[20vh] py-14 md:py-28 hero-print">
-            <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white print:text-black md:text-[58px] md:leading-[1.2]">
-              Your Wildfire
-              <span className="md:hidden print:hidden">
-                <br />
-              </span>{' '}
-              Recovery
-              <span className="md:hidden print:hidden">
-                <br />
-              </span>{' '}
-              Action Plan
-            </h1>
-            <div className="absolute bottom-0 left-0 right-0 pb-6 md:pb-8 print:pb-6 text-center hidden print:block">
-              <img
-                src={NavigatorLogo}
-                alt="BA Logo"
-                className="mx-auto w-32 md:w-40 print:w-32 print:h-12"
-                style={{
-                  width: 'auto',
-                  maxHeight: '220px',
-                }}
-              />
-            </div>
-          </Hero>
-        </HorizontalLayout>
-        <HorizontalLayout>
-          <BestPractices />
-          {surveyResults && (
-            <SurveyResults className="mt-8 mb-24" results={surveyResults} />
-          )}
-        </HorizontalLayout>
+        {/* Print-only first page */}
+        <div className="first-page-container print:block hidden">
+          <HorizontalLayout className="bg-brand-dark-blue print:bg-white w-full">
+            <Hero className="hero-print">
+              <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white print:text-black md:text-[58px] md:leading-[1.2]">
+                Your Wildfire
+                <span className="md:hidden print:hidden">
+                  <br />
+                </span>{' '}
+                Recovery
+                <span className="md:hidden print:hidden">
+                  <br />
+                </span>{' '}
+                Action Plan
+              </h1>
+            </Hero>
+          </HorizontalLayout>
+          <div className="logo-container">
+            <img
+              src={NavigatorLogo}
+              alt="LA Disaster Relief Navigator Logo"
+              className="mx-auto w-32 print:w-32"
+              style={{
+                width: 'auto',
+                maxHeight: '220px',
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Regular view (non-print) */}
+        <div className="print:hidden">
+          <HorizontalLayout className="bg-brand-dark-blue">
+            <Hero className="min-h-[20vh] py-14 md:py-28">
+              <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white print:text-black md:text-[58px] md:leading-[1.2]">
+                Your Wildfire
+                <span className="md:hidden print:hidden">
+                  <br />
+                </span>{' '}
+                Recovery
+                <span className="md:hidden print:hidden">
+                  <br />
+                </span>{' '}
+                Action Plan
+              </h1>
+            </Hero>
+          </HorizontalLayout>
+        </div>
+
+        {/* Rest of the content */}
+        <div className="content-section">
+          <HorizontalLayout>
+            <BestPractices />
+            {surveyResults && (
+              <SurveyResults className="mt-8 mb-24" results={surveyResults} />
+            )}
+          </HorizontalLayout>
+        </div>
       </div>
 
       {/* Content that will only show on the webpage */}
@@ -64,7 +90,9 @@ export default function Result() {
           />
         </div>
       </HorizontalLayout>
+
       <Register />
+
       <HorizontalLayout className="bg-brand-sky-blue">
         <Partners />
       </HorizontalLayout>

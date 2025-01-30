@@ -192,60 +192,83 @@ textarea:focus {
 }
 
 @media print {
-  /* Ensure margins around the printed page */
+  /* Safari-specific print styles */
   @page {
-    size: A4; /* or "letter" */
-    margin: 0.25in; /* Adjust as needed, e.g., 1 inch for sufficient top margin */
+    size: A4;
+    margin: 0.25in;
   }
 
-  /* Reset styles to avoid unexpected behavior */
-  html,
-  body {
-    margin: 0; /* Keep margin reset if necessary */
-    padding: 0;
-    width: 100%;
-  }
-
-  /* Add print-specific background overrides */
-  .print\:bg-white {
-    background-color: white !important;
-  }
-  .print\:text-black {
-    color: var(--color-primary-20) !important;
-  }
-
-  .hero-print {
-    min-height: 200px !important;
-    padding: 3rem 0 !important;
-    justify-content: center !important;
-    height: 275mm;
-  }
-
-  .hero-print h1 {
-    font-size: 2.5rem !important; /* 40px */
-    font-size: 2.5rem !important;
-    color: var(--color-primary-20) !important;
-    border-color: var(--color-brand-sky-blue) !important;
-  }
-
-  /* Ensure the container fits within the print area */
+  /* Reset container styles */
   #print-container {
-    width: 100%;
-    max-width: 100%;
-    padding: 20px; /* Adjust padding inside content */
-    page-break-before: auto;
-    page-break-after: avoid;
-    page-break-inside: avoid;
+    min-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    page-break-before: always !important;
   }
 
-  /* Prevent elements from breaking across pages */
+  /* First page container */
+  .first-page-container {
+    position: relative !important;
+    height: 297mm !important; /* A4 height */
+    width: 210mm !important; /* A4 width */
+    page-break-after: always !important;
+    page-break-inside: avoid !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Hero section styles */
+  .hero-print {
+    position: static !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Title styles */
+  .hero-print h1 {
+    font-size: 2.5rem !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+    max-width: 80% !important;
+    color: var(--color-primary-20) !important;
+  }
+
+  /* Logo container */
+  .logo-container {
+    position: absolute !important;
+    bottom: 1in !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: auto !important;
+  }
+
+  /* Safari-specific overrides */
+  _::-webkit-full-page-media,
+  _:future,
+  :root .first-page-container {
+    page-break-after: always !important;
+    margin-bottom: 20mm !important;
+  }
+
+  /* Prevent content overflow */
+  #print-container > *:not(.first-page-container) {
+    page-break-before: always !important;
+  }
+
+  /* Content spacing */
+  .content-section {
+    margin-top: 0 !important;
+    page-break-before: always !important;
+  }
+
+  /* Ensure proper page breaks */
   .avoid-page-break {
-    break-inside: avoid;
-    page-break-inside: avoid;
-  }
-
-  /* Optional: Hide non-essential UI elements */
-  .no-print {
-    display: none;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
 }
