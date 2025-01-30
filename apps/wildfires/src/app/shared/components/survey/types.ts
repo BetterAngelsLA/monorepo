@@ -32,7 +32,7 @@ export type TQuestion = {
   title: string;
   body?: string;
   subtitle?: string;
-  note?: string;
+  note?: React.ReactNode;
   options: TOption[];
   rules?: TQuestionValidate;
   renderAfter?: ReactNode;
