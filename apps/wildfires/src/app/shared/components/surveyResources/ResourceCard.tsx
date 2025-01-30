@@ -1,3 +1,4 @@
+import React from 'react';
 import { TResource } from '../../clients/sanityCms/types';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { ResourceLink } from './shared/ResourceLink';
@@ -7,10 +8,11 @@ import { ResourceTipsDescription } from './shared/ResourceTipsDescription';
 type IProps = {
   className?: string;
   resource: TResource;
+  icon?: React.ReactNode;
 };
 
 export function ResourceCard(props: IProps) {
-  const { resource, className } = props;
+  const { icon, resource, className } = props;
 
   const { title, shortDescription, tipsDescription, resourceLink } = resource;
 
@@ -30,7 +32,11 @@ export function ResourceCard(props: IProps) {
       <div className="font-bold text-[24px]">{title}</div>
 
       {!!shortDescription && (
-        <ResourcePortableText className="mt-8" data={shortDescription} />
+        <div className="flex flex-row items-center mt-8">
+          <div className="h-[24px] w-[24px]"></div>
+          {!!icon && icon}
+          <ResourcePortableText className="mt-8" data={shortDescription} />
+        </div>
       )}
 
       {!!tipsDescription && <ResourceTipsDescription data={tipsDescription} />}
