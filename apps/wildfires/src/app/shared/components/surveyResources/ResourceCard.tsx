@@ -32,7 +32,7 @@ export function ResourceCard(props: IProps) {
     <div className={mergeCss(parentCss)}>
       <div className="flex flex-row items-center">
         {!!Icon && (
-          <div className="m-2">
+          <div className="mr-6">
             <Icon className="h-6 w-6" />
           </div>
         )}
