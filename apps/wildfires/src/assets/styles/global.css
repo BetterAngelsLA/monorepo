@@ -192,83 +192,35 @@ textarea:focus {
 }
 
 @media print {
-  /* Safari-specific print styles */
   @page {
-    size: A4;
+    /* Keep your desired margins */
     margin: 0.25in;
   }
 
-  /* Reset container styles */
-  #print-container {
-    min-height: 100vh !important;
-    display: flex !important;
-    flex-direction: column !important;
-    page-break-before: always !important;
-  }
-
-  /* First page container */
-  .first-page-container {
-    position: relative !important;
-    height: 297mm !important; /* A4 height */
-    width: 210mm !important; /* A4 width */
-    page-break-after: always !important;
-    page-break-inside: avoid !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-  }
-
-  /* Hero section styles */
   .hero-print {
-    position: static !important;
-    width: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
+    /* Increase if you want a bigger hero */
+    height: 265mm;
+    padding: 3rem 0;
+    page-break-after: always; /* Force content after hero to start on a new page if desired */
   }
 
-  /* Title styles */
-  .hero-print h1 {
-    font-size: 2.5rem !important;
-    text-align: center !important;
-    margin: 0 auto !important;
-    max-width: 80% !important;
-    color: var(--color-primary-20) !important;
+  /* Position your logo container further down the page if needed */
+  .print-logo-container {
+    position: absolute;
+    bottom: 1.2in; /* Adjust to push it lower or higher */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
   }
 
-  /* Logo container */
-  .logo-container {
-    position: absolute !important;
-    bottom: 1in !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: auto !important;
+  /* Safari-specific fix (adjust if needed) */
+  @media screen and (-webkit-min-device-pixel-ratio: 0) {
+    .hero-print {
+      height: 255mm;
+      padding-top: 5rem;
+    }
   }
-
-  /* Safari-specific overrides */
-  _::-webkit-full-page-media,
-  _:future,
-  :root .first-page-container {
-    page-break-after: always !important;
-    margin-bottom: 20mm !important;
-  }
-
-  /* Prevent content overflow */
-  #print-container > *:not(.first-page-container) {
-    page-break-before: always !important;
-  }
-
-  /* Content spacing */
-  .content-section {
-    margin-top: 0 !important;
-    page-break-before: always !important;
-  }
-
-  /* Ensure proper page breaks */
-  .avoid-page-break {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
+  .print-logo-container {
+    bottom: 0.8in;
   }
 }

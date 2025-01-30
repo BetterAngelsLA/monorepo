@@ -18,69 +18,66 @@ export default function Result() {
 
   return (
     <>
-      {/* Content that will be included in the PDF */}
+      {/* ---------------------------------
+          PRINTABLE CONTENT
+      --------------------------------- */}
       <div className="w-full" id="print-container" ref={printContentRef}>
-        {/* Print-only first page */}
-        <div className="first-page-container print:block hidden">
-          <HorizontalLayout className="bg-brand-dark-blue print:bg-white w-full">
-            <Hero className="hero-print">
-              <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white print:text-black md:text-[58px] md:leading-[1.2]">
-                Your Wildfire
-                <span className="md:hidden print:hidden">
-                  <br />
-                </span>{' '}
-                Recovery
-                <span className="md:hidden print:hidden">
-                  <br />
-                </span>{' '}
-                Action Plan
-              </h1>
-            </Hero>
-          </HorizontalLayout>
-          <div className="logo-container">
-            <img
-              src={NavigatorLogo}
-              alt="LA Disaster Relief Navigator Logo"
-              className="mx-auto w-32 print:w-32"
-              style={{
-                width: 'auto',
-                maxHeight: '220px',
-              }}
-            />
-          </div>
-        </div>
+        <HorizontalLayout className="bg-brand-dark-blue print:bg-white">
+          <Hero className="hero-print min-h-[20vh] py-14 md:py-28 relative">
+            {/*
+              1) Border: Yellow on screen, Blue in print
+              2) Force single line in print
+              3) Adjust font size in print so it doesn't wrap
+            */}
+            <h1
+              className="
+                whitespace-nowrap
+                print:whitespace-nowrap
+                border-l-[10px]
+                border-brand-yellow
+                print:border-brand-sky-blue
+                text-white
+                print:text-black
+                font-light
+                pl-4
+                md:pl-8
+                text-5xl
+                md:text-[58px]
+                md:leading-[1.2]
+                print:text-4xl
+                mx-auto
+              "
+              style={{ maxWidth: '90%' }} // Optionally ensure no wrapping
+            >
+              Your Wildfire Recovery Action Plan
+            </h1>
 
-        {/* Regular view (non-print) */}
-        <div className="print:hidden">
-          <HorizontalLayout className="bg-brand-dark-blue">
-            <Hero className="min-h-[20vh] py-14 md:py-28">
-              <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white print:text-black md:text-[58px] md:leading-[1.2]">
-                Your Wildfire
-                <span className="md:hidden print:hidden">
-                  <br />
-                </span>{' '}
-                Recovery
-                <span className="md:hidden print:hidden">
-                  <br />
-                </span>{' '}
-                Action Plan
-              </h1>
-            </Hero>
-          </HorizontalLayout>
-        </div>
+            {/* Print-only Logo */}
+            <div className="print-logo-container hidden print:block">
+              <img
+                src={NavigatorLogo}
+                alt="LA Disaster Relief Navigator Logo"
+                className="mx-auto w-32 print:w-auto print:max-h-16"
+                style={{
+                  maxWidth: '200px',
+                  height: 'auto',
+                }}
+              />
+            </div>
+          </Hero>
+        </HorizontalLayout>
 
-        {/* Rest of the content */}
-        <div className="content-section">
-          <HorizontalLayout>
-            <BestPractices />
-            {surveyResults && (
-              <SurveyResults className="mt-8 mb-24" results={surveyResults} />
-            )}
-          </HorizontalLayout>
-        </div>
+        <HorizontalLayout>
+          <BestPractices />
+          {surveyResults && (
+            <SurveyResults className="mt-8 mb-24" results={surveyResults} />
+          )}
+        </HorizontalLayout>
       </div>
 
-      {/* Content that will only show on the webpage */}
+      {/* ---------------------------------
+          WEB-ONLY CONTENT
+      --------------------------------- */}
       <HorizontalLayout className="mb-16 md:mb-28">
         <div className="flex flex-col items-center">
           <GeneratePDF
