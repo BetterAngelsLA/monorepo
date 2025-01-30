@@ -26,6 +26,7 @@ export { default as PlusIcon } from './components/plusIcon';
 export { default as SearchIcon } from './components/searchIcon';
 export { default as ShareIcon } from './components/shareIcon';
 export { default as UsersIcon } from './components/usersIcon';
+export { default as WFAlertOnIcon } from './components/wfAlertOn';
 export { default as WFAnnouncement } from './components/wfAnnouncement';
 export { default as WFCheckbox } from './components/wfCheckbox';
 export { default as WFLinkIcon } from './components/wfLinkIcon';
