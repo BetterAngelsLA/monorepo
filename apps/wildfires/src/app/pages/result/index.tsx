@@ -43,7 +43,7 @@ export default function Result() {
                 alt="LA Disaster Relief Navigator Logo"
                 className="mx-auto w-32 print:w-auto print:max-h-16"
                 style={{
-                  maxWidth: '200px',
+                  maxWidth: '220px',
                   height: 'auto',
                 }}
               />
