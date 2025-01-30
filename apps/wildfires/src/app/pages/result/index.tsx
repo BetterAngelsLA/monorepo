@@ -41,7 +41,7 @@ export default function Result() {
               <img
                 src={NavigatorLogo}
                 alt="LA Disaster Relief Navigator Logo"
-                className="mx-auto w-32 print:w-auto print:max-h-16"
+                className="mx-auto w-32 print:w-auto print:max-h-12"
                 style={{
                   maxWidth: '220px',
                   height: 'auto',
@@ -59,9 +59,7 @@ export default function Result() {
         </HorizontalLayout>
       </div>
 
-      {/* ---------------------------------
-          WEB-ONLY CONTENT
-      --------------------------------- */}
+      {/* Content that will only show on the webpage */}
       <HorizontalLayout className="mb-16 md:mb-28">
         <div className="flex flex-col items-center">
           <GeneratePDF
