@@ -30,17 +30,18 @@ export function ResourceCard(props: IProps) {
   ];
   return (
     <div className={mergeCss(parentCss)}>
-      <div className="font-bold text-[24px]">{title}</div>
-
+      <div className="flex flex-row items-center">
+        {!!Icon && (
+          <div className="m-2">
+            <Icon className="h-6 w-6" />
+          </div>
+        )}
+        <div className="font-bold text-xl">{title}</div>
+      </div>
       {!!shortDescription && (
-        <div className="flex flex-row items-center">
-          <div>{!!Icon && <Icon className="h-[24px] w-[24px]" />}</div>
-          <ResourcePortableText className="mt-8" data={shortDescription} />
-        </div>
+        <ResourcePortableText className="mt-8" data={shortDescription} />
       )}
-
       {!!tipsDescription && <ResourceTipsDescription data={tipsDescription} />}
-
       {!!resourceLink && (
         <ResourceLink
           title={title}
