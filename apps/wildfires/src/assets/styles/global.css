@@ -210,10 +210,13 @@ textarea:focus {
     min-height: 200px !important;
     padding: 3rem 0 !important;
     justify-content: center !important;
+    height: 275mm;
   }
 
   .hero-print h1 {
     font-size: 2.5rem !important; /* 40px */
+    page-break-before: always;
+    page-break-after: always;
   }
 
   /* Ensure the container fits within the print area */
