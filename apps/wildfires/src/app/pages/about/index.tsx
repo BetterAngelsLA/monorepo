@@ -31,10 +31,10 @@ export default function About() {
             including applying for federal, state, and local government
             assistance, making insurance claims, home damage remediation,
             temporary and permanent housing solutions, and other critical
-            services. The Navigator provides victims with a personalized action
-            plan based on their specific situation, making the recovery process
-            immediately actionable and helping our community to rebuild even
-            stronger.
+            services. The Navigator provides people impacted by the wildfires
+            with a personalized action plan based on their specific situation,
+            making the recovery process immediately actionable and helping our
+            community to rebuild even stronger.
           </p>
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Who We Are
@@ -89,10 +89,10 @@ export default function About() {
               management and expanded legal services, the Mayor’s Fund's We Are
               LA program has connected over 53,000 Angelenos to needed services
               and helped stabilize housing for more than 23,000 Angelenos at
-              risk of eviction and homelessness. The Mayor’s Fund, through their
-              hotline, is spearheading case management services to the Angelenos
-              severely economically impacted by the Wildfires - those at risk of
-              homelessness. The Hotline is a featured resource in the Navigator.
+              risk of eviction and homelessness. The Mayor's Fund, through their
+              hotline, is providing case management services to economically
+              impacted Angelenos at risk of eviction and homelessness, including
+              those impacted by the wildfires.
             </li>
           </ul>
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
