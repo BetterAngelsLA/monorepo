@@ -18,9 +18,7 @@ export default function Result() {
 
   return (
     <>
-      {/* ---------------------------------
-          PRINTABLE CONTENT
-      --------------------------------- */}
+      {/* Content that will be included in the PDF */}
       <div className="w-full" id="print-container" ref={printContentRef}>
         <HorizontalLayout className="bg-brand-dark-blue print:bg-white">
           <Hero className="hero-print min-h-[20vh] py-14 md:py-28 relative">
@@ -35,7 +33,6 @@ export default function Result() {
               </span>{' '}
               Action Plan
             </h1>
-
             {/* Print-only Logo */}
             <div className="print-logo-container hidden print:block">
               <img
@@ -50,7 +47,6 @@ export default function Result() {
             </div>
           </Hero>
         </HorizontalLayout>
-
         <HorizontalLayout>
           <BestPractices />
           {surveyResults && (
@@ -58,7 +54,6 @@ export default function Result() {
           )}
         </HorizontalLayout>
       </div>
-
       {/* Content that will only show on the webpage */}
       <HorizontalLayout className="mb-16 md:mb-28">
         <div className="flex flex-col items-center">
@@ -69,9 +64,7 @@ export default function Result() {
           />
         </div>
       </HorizontalLayout>
-
       <Register />
-
       <HorizontalLayout className="bg-brand-sky-blue">
         <Partners />
       </HorizontalLayout>
