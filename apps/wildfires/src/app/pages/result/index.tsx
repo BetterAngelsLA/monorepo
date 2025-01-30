@@ -20,7 +20,7 @@ export default function Result() {
       {/* Content that will be included in the PDF */}
       <div className="w-full" id="print-container" ref={printContentRef}>
         <HorizontalLayout className="bg-brand-dark-blue">
-          <Hero className="min-h-[60vh] py-14 md:py-28 hero-print">
+          <Hero className="min-h-[20vh] py-14 md:py-28 hero-print">
             <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white md:text-[58px] md:leading-[1.2]">
               Your Wildfire
               <span className="md:hidden print:hidden">
