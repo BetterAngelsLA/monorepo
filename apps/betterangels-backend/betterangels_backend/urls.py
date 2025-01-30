@@ -19,7 +19,7 @@ import admin_async_upload.views
 from betterangels_backend import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.contrib.auth.decorators import login_required
+from allauth.account.decorators import secure_admin_login
 from django.urls import include, path
 from django.views.generic.base import TemplateView
 from strawberry.django.views import GraphQLView
@@ -27,11 +27,7 @@ from strawberry.django.views import GraphQLView
 from .schema import schema
 
 admin.autodiscover()
-# Instead of secure_admin_login, use login_required
-admin.site.login = login_required(admin.site.login)
-
-# Add this debug print
-print("Admin site URLs:", admin.site.urls)
+admin.site.login = secure_admin_login(admin.site.login)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

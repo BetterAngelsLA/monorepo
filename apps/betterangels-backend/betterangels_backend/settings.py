@@ -341,8 +341,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-LOGIN_REDIRECT_URL = "/admin/"
-LOGOUT_REDIRECT_URL = "/admin/"
+LOGIN_REDIRECT_URL = "home"
+LOGOUT_REDIRECT_URL = "home"
 LOGIN_URL = "/accounts/login/"
 
 # django-organizations settings
@@ -497,6 +497,3 @@ RUNSCRIPT_LOG_TO_STDOUT = True
 
 # Phonenumber Field
 PHONENUMBER_DEFAULT_REGION = "US"
-
-# Add this setting near other URL-related settings
-APPEND_SLASH = True
