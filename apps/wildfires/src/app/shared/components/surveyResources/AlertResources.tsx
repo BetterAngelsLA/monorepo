@@ -1,3 +1,4 @@
+import { WFAlertOnIcon } from '@monorepo/react/icons';
 import { TResource } from '../../clients/sanityCms/types';
 import { sortByPriority } from '../../utils/sort';
 import { mergeCss } from '../../utils/styles/mergeCss';
@@ -36,6 +37,7 @@ export function AlertResources(props: IProps) {
       {sortedAlerts.map((alert) => (
         <ResourceCard
           key={alert.slug}
+          Icon={WFAlertOnIcon}
           className="mb-4 lg:mb-10 last:mb-0"
           resource={alert}
         />
