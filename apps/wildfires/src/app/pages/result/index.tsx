@@ -24,32 +24,16 @@ export default function Result() {
       <div className="w-full" id="print-container" ref={printContentRef}>
         <HorizontalLayout className="bg-brand-dark-blue print:bg-white">
           <Hero className="hero-print min-h-[20vh] py-14 md:py-28 relative">
-            {/*
-              1) Border: Yellow on screen, Blue in print
-              2) Force single line in print
-              3) Adjust font size in print so it doesn't wrap
-            */}
-            <h1
-              className="
-                whitespace-nowrap
-                print:whitespace-nowrap
-                border-l-[10px]
-                border-brand-yellow
-                print:border-brand-sky-blue
-                text-white
-                print:text-black
-                font-light
-                pl-4
-                md:pl-8
-                text-5xl
-                md:text-[58px]
-                md:leading-[1.2]
-                print:text-4xl
-                mx-auto
-              "
-              style={{ maxWidth: '90%' }} // Optionally ensure no wrapping
-            >
-              Your Wildfire Recovery Action Plan
+            <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white print:text-black md:text-[58px] md:leading-[1.2]">
+              Your Wildfire
+              <span className="md:hidden print:hidden">
+                <br />
+              </span>{' '}
+              Recovery
+              <span className="md:hidden print:hidden">
+                <br />
+              </span>{' '}
+              Action Plan
             </h1>
 
             {/* Print-only Logo */}

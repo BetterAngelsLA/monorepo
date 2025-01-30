@@ -192,35 +192,71 @@ textarea:focus {
 }
 
 @media print {
+  /* Ensure margins around the printed page */
   @page {
-    /* Keep your desired margins */
-    margin: 0.25in;
+    size: A4; /* or "letter" */
+    margin: 0.25in; /* Adjust as needed, e.g., 1 inch for sufficient top margin */
+  }
+
+  /* Reset styles to avoid unexpected behavior */
+  html,
+  body {
+    margin: 0; /* Keep margin reset if necessary */
+    padding: 0;
+    width: 100%;
+  }
+
+  /* Add print-specific background overrides */
+  .print\:bg-white {
+    background-color: white !important;
+  }
+  .print\:text-black {
+    color: var(--color-primary-20) !important;
   }
 
   .hero-print {
-    /* Increase if you want a bigger hero */
-    height: 265mm;
-    padding: 3rem 0;
-    page-break-after: always; /* Force content after hero to start on a new page if desired */
+    height: 275mm;
+    padding-top: 5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Vertically centers the content */
+    align-items: center; /* Horizontally centers the content */
   }
 
-  /* Position your logo container further down the page if needed */
+  .hero-print h1 {
+    font-size: 2.5rem !important; /* 40px */
+    color: var(--color-primary-20) !important;
+    border-color: var(--color-brand-sky-blue) !important;
+    text-align: center; /* Centers the text */
+    white-space: nowrap; /* Prevents wrapping */
+  }
+
   .print-logo-container {
-    position: absolute;
-    bottom: 1.2in; /* Adjust to push it lower or higher */
+    position: absolute !important;
+    bottom: 1.5in;
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
   }
 
-  /* Safari-specific fix (adjust if needed) */
-  @media screen and (-webkit-min-device-pixel-ratio: 0) {
-    .hero-print {
-      height: 255mm;
-      padding-top: 5rem;
-    }
+  /* Ensure the container fits within the print area */
+  #print-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 20px; /* Adjust padding inside content */
+    page-break-before: auto;
+    page-break-after: avoid;
+    page-break-inside: avoid;
   }
-  .print-logo-container {
-    bottom: 0.8in;
+
+  /* Prevent elements from breaking across pages */
+  .avoid-page-break {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Optional: Hide non-essential UI elements */
+  .no-print {
+    display: none;
   }
 }
