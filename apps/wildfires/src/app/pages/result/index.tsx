@@ -21,7 +21,7 @@ export default function Result() {
       {/* Content that will be included in the PDF */}
       <div className="w-full" id="print-container" ref={printContentRef}>
         <HorizontalLayout className="bg-brand-dark-blue print:bg-white">
-          <Hero className="min-h-[20vh] py-14 md:py-28 hero-print">
+          <Hero className="hero-print min-h-[20vh] py-14 md:py-28 relative">
             <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white print:text-black md:text-[58px] md:leading-[1.2]">
               Your Wildfire
               <span className="md:hidden print:hidden">
@@ -33,14 +33,15 @@ export default function Result() {
               </span>{' '}
               Action Plan
             </h1>
-            <div className="absolute bottom-0 left-0 right-0 pb-6 md:pb-8 print:pb-6 text-center hidden print:block">
+            {/* Print-only Logo */}
+            <div className="print-logo-container hidden print:block">
               <img
                 src={NavigatorLogo}
-                alt="BA Logo"
-                className="mx-auto w-32 md:w-40 print:w-32 print:h-12"
+                alt="LA Disaster Relief Navigator Logo"
+                className="mx-auto w-32 print:w-auto print:max-h-12"
                 style={{
-                  width: 'auto',
-                  maxHeight: '220px',
+                  maxWidth: '220px',
+                  height: 'auto',
                 }}
               />
             </div>
@@ -53,7 +54,6 @@ export default function Result() {
           )}
         </HorizontalLayout>
       </div>
-
       {/* Content that will only show on the webpage */}
       <HorizontalLayout className="mb-16 md:mb-28">
         <div className="flex flex-col items-center">
