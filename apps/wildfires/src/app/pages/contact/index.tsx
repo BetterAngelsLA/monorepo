@@ -64,10 +64,10 @@ export default function Contact() {
                     <span className="text-xl md:text-[28px] font-bold">
                       {title}
                     </span>
-                    <p className="md:text-xl leading-normal text-center">
-                      {description}
-                    </p>
                   </div>
+                  <p className="md:text-xl  leading-normal text-center">
+                    {description}
+                  </p>
                   <a
                     aria-label={ariaLabel}
                     className="underline text-xl md:text-[28px] font-bold"
