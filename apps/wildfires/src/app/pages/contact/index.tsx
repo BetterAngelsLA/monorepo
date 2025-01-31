@@ -21,7 +21,7 @@ export default function Contact() {
             Please fill free to reach out with any question
           </h2>
           <div className="flex flex-wrap items-center justify-center gap-4 w-full flex-1">
-            <div className="min-h-[286px] md:min-h-[362px] min-w-[343px] md:min-w-[457px] flex flex-1 flex-col gap-6 items-center justify-between border border-steel-blue rounded-3xl p-6 md:p-12">
+            <div className="min-h-[286px] md:min-h-[362px] min-w-[343px] md:min-w-[457px] max-w-[492px] flex flex-1 flex-col gap-6 items-center justify-between border border-steel-blue rounded-3xl p-6 md:p-12">
               <div className="flex flex-col items-center gap-6">
                 <CallRegularIcon className="w-[60px] h-[60px] md:w-[80px] md:h-[80px]" />
                 <span className="text-xl md:text-[28px] font-bold">Phone</span>
@@ -38,7 +38,7 @@ export default function Contact() {
                 (213) 584-1808
               </a>
             </div>
-            <div className="flex flex-1 min-h-[286px] md:min-h-[362px] min-w-[343px] md:min-w-[457px] flex-col gap-6 items-center justify-between border border-steel-blue rounded-3xl p-6 md:p-12">
+            <div className="flex flex-1 min-h-[286px] md:min-h-[362px] min-w-[343px] max-w-[492px] md:min-w-[457px] flex-col gap-6 items-center justify-between border border-steel-blue rounded-3xl p-6 md:p-12">
               <div className="flex flex-col items-center gap-6">
                 <EmailOutlinedIcon className="w-[60px] h-[60px] md:w-[80px] md:h-[80px]" />
                 <span className="text-xl md:text-[28px] font-bold">Email</span>
