@@ -1,4 +1,8 @@
 import { Link } from 'react-router-dom';
+import {
+  contactPagePath,
+  privacyPolicyPagePath,
+} from '../../../routes/routePaths';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { AboutLink } from './shared/AboutLink';
 
@@ -23,18 +27,18 @@ export function MenuMobile(props: IProps) {
       <AboutLink className="mb-8" />
       <Link
         aria-label="navigate to privacy policy"
-        to="/privacy-policy"
+        to={privacyPolicyPagePath}
         className="mb-8"
       >
         Privacy Policy
       </Link>
-      <a
-        aria-label="send us an email"
-        href="mailto:wildfires@betterangels.la"
+      <Link
+        aria-label="navigate to Contact Us page"
+        to={contactPagePath}
         className="mb-8"
       >
         Contact Us
-      </a>
+      </Link>
     </div>
   );
 }
