@@ -1,6 +1,38 @@
 import { CallRegularIcon, EmailOutlinedIcon } from '@monorepo/react/icons';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 
+const contactOptions = [
+  {
+    id: 'phone',
+    icon: (
+      <CallRegularIcon
+        className="w-[60px] h-[60px] md:w-[80px] md:h-[80px]"
+        aria-hidden="true"
+      />
+    ),
+    title: 'Phone',
+    description:
+      "To connect with us by phone, please call the Mayor's Fund for LA Hotline at:",
+    link: 'tel:2135841808',
+    linkText: '(213) 584-1808',
+    ariaLabel: "call the Mayor's Fund for LA Hotline",
+  },
+  {
+    id: 'email',
+    icon: (
+      <EmailOutlinedIcon
+        className="w-[60px] h-[60px] md:w-[80px] md:h-[80px]"
+        aria-hidden="true"
+      />
+    ),
+    title: 'Email',
+    description: 'To get answers via email, please contact:',
+    link: 'mailto:wildfires@imaginela.org',
+    linkText: 'wildfires@imaginela.org',
+    ariaLabel: 'email wildfires support at Imagine LA',
+  },
+];
+
 export default function Contact() {
   return (
     <>
@@ -21,39 +53,31 @@ export default function Contact() {
             Please fill free to reach out with any question
           </h2>
           <div className="flex flex-wrap items-center justify-center gap-4 w-full flex-1">
-            <div className="min-h-[286px] md:min-h-[362px] min-w-[343px] md:min-w-[457px] max-w-[492px] flex flex-1 flex-col gap-6 items-center justify-between border border-steel-blue rounded-3xl p-6 md:p-12">
-              <div className="flex flex-col items-center gap-6">
-                <CallRegularIcon className="w-[60px] h-[60px] md:w-[80px] md:h-[80px]" />
-                <span className="text-xl md:text-[28px] font-bold">Phone</span>
-                <p className="md:text-xl leading-normal text-center">
-                  To connect with us by phone, please call the Mayor's Fund for
-                  LA Hotline at:
-                </p>
-              </div>
-              <a
-                aria-label="call the Mayor's Fund for LA Hotline"
-                className="underline text-xl md:text-[28px] font-bold"
-                href="tel:2135841808"
-              >
-                (213) 584-1808
-              </a>
-            </div>
-            <div className="flex flex-1 min-h-[286px] md:min-h-[362px] min-w-[343px] max-w-[492px] md:min-w-[457px] flex-col gap-6 items-center justify-between border border-steel-blue rounded-3xl p-6 md:p-12">
-              <div className="flex flex-col items-center gap-6">
-                <EmailOutlinedIcon className="w-[60px] h-[60px] md:w-[80px] md:h-[80px]" />
-                <span className="text-xl md:text-[28px] font-bold">Email</span>
-                <p className="md:text-xl leading-normal text-center">
-                  To get answers via email, please contact:
-                </p>
-              </div>
-              <a
-                aria-label="email wildfires support at Imagine LA"
-                className="underline text-xl md:text-[28px] font-bold"
-                href="mailto:wildfires@imaginela.org"
-              >
-                wildfires@imaginela.org
-              </a>
-            </div>
+            {contactOptions.map(
+              ({ id, icon, title, description, link, linkText, ariaLabel }) => (
+                <div
+                  key={id}
+                  className="flex flex-1 min-h-[286px] md:min-h-[362px] min-w-[343px] max-w-[492px] md:min-w-[457px] flex-col gap-6 items-center justify-between border border-steel-blue rounded-3xl p-6 md:p-12"
+                >
+                  <div className="flex flex-col items-center gap-6">
+                    {icon}
+                    <span className="text-xl md:text-[28px] font-bold">
+                      {title}
+                    </span>
+                    <p className="md:text-xl leading-normal text-center">
+                      {description}
+                    </p>
+                  </div>
+                  <a
+                    aria-label={ariaLabel}
+                    className="underline text-xl md:text-[28px] font-bold"
+                    href={link}
+                  >
+                    {linkText}
+                  </a>
+                </div>
+              )
+            )}
           </div>
         </div>
       </HorizontalLayout>
