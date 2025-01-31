@@ -50,7 +50,7 @@ export default function Contact() {
       <HorizontalLayout>
         <div className="py-6 md:py-16 w-full">
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
-            Please fill free to reach out with any question
+            Please feel free to reach out with any questions
           </h2>
           <div className="flex flex-wrap items-center justify-center gap-4 w-full flex-1">
             {contactOptions.map(
@@ -64,10 +64,10 @@ export default function Contact() {
                     <span className="text-xl md:text-[28px] font-bold">
                       {title}
                     </span>
-                    <p className="md:text-xl leading-normal text-center">
-                      {description}
-                    </p>
                   </div>
+                  <p className="md:text-xl  leading-normal text-center">
+                    {description}
+                  </p>
                   <a
                     aria-label={ariaLabel}
                     className="underline text-xl md:text-[28px] font-bold"
