@@ -126,7 +126,7 @@ export const GeneratePDF = ({
   return (
     <div className="flex flex-col items-center mx-auto">
       <Button
-        ariaLabel="Download Your Wildfire Recovery Action Plan PDF"
+        ariaLabel="Download Your Action Plan"
         className={className}
         onClick={handleClick}
       >
@@ -146,7 +146,7 @@ export const GeneratePDF = ({
             </span>
           </div>
         ) : (
-          'Download Your Wildfire Recovery Action Plan PDF'
+          'Download Your Action Plan'
         )}
       </Button>
     </div>
