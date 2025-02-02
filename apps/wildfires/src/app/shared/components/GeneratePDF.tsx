@@ -4,23 +4,20 @@ import { Button } from './button/Button';
 import { TSurveyResults } from './survey/types';
 
 interface GeneratePDFProps {
-  // The survey results payload as TSurveyResults (non-null)
+  // The survey results payload (non-null)
   results: TSurveyResults | null;
   fileName?: string;
   className?: string;
 }
 
-const GeneratePDF = ({ results, className }: GeneratePDFProps) => {
+const GeneratePDF = ({
+  results,
+  fileName = 'your-wildfire-recovery-action-plan.pdf',
+  className,
+}: GeneratePDFProps) => {
   // Build the Lambda endpoint dynamically using the current window location.
   // For example, if your API route is /api/generatePdf, then:
   const lambdaEndpoint = `${window.location.origin}/api/generatePdf`;
-
-  // Helper function to retrieve the current language from the Google Translate widget.
-  // This assumes that the widget renders a <select> with the class "goog-te-combo".
-  const getCurrentLanguage = (): string => {
-    const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
-    return combo && combo.value ? combo.value : 'en';
-  };
 
   const handleClick = useCallback(
     async (e: React.MouseEvent) => {
@@ -31,24 +28,29 @@ const GeneratePDF = ({ results, className }: GeneratePDFProps) => {
       }
       try {
         // Build the payload to compress.
+        // (Optionally, you can include a language field if needed.)
         const payload = {
           results,
-          language: getCurrentLanguage(),
+          language: 'en', // or retrieve from your widget if desired
         };
 
-        // Compress the surveyResults payload using LZString.
+        // Compress the payload using LZString.
         const encodedPayload = LZString.compressToEncodedURIComponent(
           JSON.stringify(payload)
         );
 
+        const basePath = new URL(
+          import.meta.env.VITE_APP_BASE_PATH + '/printResult',
+          window.location.origin
+        ).href;
+
         // Build the request body for your Lambda endpoint.
         const requestBody = {
           data: encodedPayload,
-          basePath:
-            window.location.origin +
-            import.meta.env.VITE_APP_BASE_PATH +
-            'printResult',
+          basePath: basePath,
         };
+
+        console.log('Request body:', requestBody);
 
         // Call your Lambda endpoint.
         const response = await fetch(lambdaEndpoint, {
@@ -56,7 +58,7 @@ const GeneratePDF = ({ results, className }: GeneratePDFProps) => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(requestBody), // <-- ensure we stringify the payload here!
+          body: JSON.stringify(requestBody),
         });
 
         if (!response.ok) {
@@ -65,9 +67,15 @@ const GeneratePDF = ({ results, className }: GeneratePDFProps) => {
 
         const responseData = await response.json();
         // Expect responseData to include a property "fileUrl".
+        console.log(responseData);
         if (responseData.fileUrl) {
-          // Open the generated PDF in a new tab.
-          window.open(responseData.fileUrl, '_blank');
+          // Trigger a download by creating an invisible anchor element.
+          const link = document.createElement('a');
+          link.href = responseData.fileUrl;
+          link.download = fileName;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
         } else {
           throw new Error(
             'No file URL returned from the PDF generation endpoint.'
@@ -77,13 +85,13 @@ const GeneratePDF = ({ results, className }: GeneratePDFProps) => {
         console.error('PDF generation failed:', error);
       }
     },
-    [lambdaEndpoint, results]
+    [lambdaEndpoint, results, fileName]
   );
 
   return (
     <div className="flex flex-col items-center mx-auto">
       <Button
-        ariaLabel="Generate PDF"
+        ariaLabel="Download Your Recovery Action Plan PDF"
         className={className}
         onClick={handleClick}
       >
