@@ -47,7 +47,7 @@ const GeneratePDF = ({ results, className }: GeneratePDFProps) => {
           basePath:
             window.location.origin +
             import.meta.env.VITE_APP_BASE_PATH +
-            '/printResult',
+            'printResult',
         };
 
         // Call your Lambda endpoint.
