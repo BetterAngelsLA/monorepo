@@ -1,71 +1,94 @@
+import LZString from 'lz-string';
 import React, { useCallback } from 'react';
-import { useReactToPrint } from 'react-to-print';
-import { usePrint } from '../providers/PrintProvider';
 import { Button } from './button/Button';
+import { TSurveyResults } from './survey/types';
 
 interface GeneratePDFProps {
-  targetRef: React.RefObject<HTMLElement>;
+  // The survey results payload as TSurveyResults (non-null)
+  results: TSurveyResults | null;
   fileName?: string;
   className?: string;
 }
 
-const GeneratePDF = ({
-  targetRef,
-  fileName = 'your-wildfire-recovery-action-plan.pdf',
-  className,
-}: GeneratePDFProps) => {
-  const { setPrinting } = usePrint();
+const GeneratePDF = ({ results, className }: GeneratePDFProps) => {
+  // Build the Lambda endpoint dynamically using the current window location.
+  // For example, if your API route is /api/generatePdf, then:
+  const lambdaEndpoint = `${window.location.origin}/api/generatePdf`;
 
-  const handlePrint = useReactToPrint({
-    contentRef: targetRef,
-    documentTitle: fileName,
-    suppressErrors: true,
-    preserveAfterPrint: true,
-    onAfterPrint: () => {
-      setPrinting(false);
-    },
-  });
+  // Helper function to retrieve the current language from the Google Translate widget.
+  // This assumes that the widget renders a <select> with the class "goog-te-combo".
+  const getCurrentLanguage = (): string => {
+    const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+    return combo && combo.value ? combo.value : 'en';
+  };
 
   const handleClick = useCallback(
     async (e: React.MouseEvent) => {
       e.preventDefault();
+      if (!results) {
+        console.error('No survey results provided.');
+        return;
+      }
       try {
-        setPrinting(true);
-        await new Promise((resolve) => {
-          setTimeout(() => {
-            requestAnimationFrame(resolve);
-          }, 100);
+        // Build the payload to compress.
+        const payload = {
+          results,
+          language: getCurrentLanguage(),
+        };
+
+        // Compress the surveyResults payload using LZString.
+        const encodedPayload = LZString.compressToEncodedURIComponent(
+          JSON.stringify(payload)
+        );
+
+        // Build the request body for your Lambda endpoint.
+        const requestBody = {
+          data: encodedPayload,
+          basePath:
+            window.location.origin +
+            import.meta.env.VITE_APP_BASE_PATH +
+            '/printResult',
+        };
+
+        // Call your Lambda endpoint.
+        const response = await fetch(lambdaEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody), // <-- ensure we stringify the payload here!
         });
-        handlePrint();
+
+        if (!response.ok) {
+          throw new Error(`Failed to generate PDF. Status: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        // Expect responseData to include a property "fileUrl".
+        if (responseData.fileUrl) {
+          // Open the generated PDF in a new tab.
+          window.open(responseData.fileUrl, '_blank');
+        } else {
+          throw new Error(
+            'No file URL returned from the PDF generation endpoint.'
+          );
+        }
       } catch (error) {
-        console.error('Print failed:', error);
-        setPrinting(false);
+        console.error('PDF generation failed:', error);
       }
     },
-    [handlePrint, setPrinting]
+    [lambdaEndpoint, results]
   );
 
   return (
     <div className="flex flex-col items-center mx-auto">
       <Button
-        ariaLabel="Print Your Action Plan"
+        ariaLabel="Generate PDF"
         className={className}
         onClick={handleClick}
       >
-        Print Your Action Plan
+        Download Your Action Plan PDF
       </Button>
-      <div className="text-sm text-gray-600 mt-3 max-w-md text-center px-4">
-        <p className="mb-2">
-          To save as PDF, click "Print Your Action Plan" above, then:
-        </p>
-        <p className="mb-1.5">
-          Desktop: Select <strong>"Save as PDF"</strong> in the print dialog
-        </p>
-        <p>
-          Mobile: Tap <strong>"Share"</strong> then{' '}
-          <strong>"Save to Files"</strong>
-        </p>
-      </div>
     </div>
   );
 };
