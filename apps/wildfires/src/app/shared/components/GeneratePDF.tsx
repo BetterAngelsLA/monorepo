@@ -91,11 +91,11 @@ export const GeneratePDF = ({
   return (
     <div className="flex flex-col items-center mx-auto">
       <Button
-        ariaLabel="Download Your Recovery Action Plan PDF"
+        ariaLabel="Download Your Wildfire Recovery Action Plan PDF"
         className={className}
         onClick={handleClick}
       >
-        Download Your Recovery Action Plan PDF
+        Download Your Wildfire Recovery Action Plan PDF
       </Button>
     </div>
   );
