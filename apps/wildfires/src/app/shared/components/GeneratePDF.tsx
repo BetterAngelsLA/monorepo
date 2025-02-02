@@ -1,9 +1,9 @@
 import LZString from 'lz-string';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button } from './button/Button';
 import { TSurveyResults } from './survey/types';
 
-function buildFullUrl(origin: string, ...pathSegments: string[]) {
+function buildFullUrl(origin: string, ...pathSegments: string[]): string {
   const normalizedSegments = pathSegments
     .map((segment) => (segment || '').replace(/^\/+|\/+$/g, ''))
     .filter((segment) => segment !== '');
@@ -34,6 +34,29 @@ export const GeneratePDF = ({
   fileName = 'your-wildfire-recovery-action-plan.pdf',
   className,
 }: GeneratePDFProps) => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [spinnerText, setSpinnerText] = useState<string>('');
+
+  // Setup a text spinner that cycles through ".", "..", "..."
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoading) {
+      setSpinnerText('.');
+      interval = setInterval(() => {
+        setSpinnerText((prev) => {
+          if (prev === '...') {
+            return '.';
+          } else {
+            return prev + '.';
+          }
+        });
+      }, 500);
+    } else {
+      setSpinnerText('');
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
+
   const handleClick = useCallback(
     async (e: React.MouseEvent) => {
       e.preventDefault();
@@ -42,20 +65,27 @@ export const GeneratePDF = ({
         return;
       }
       try {
+        setIsLoading(true);
+        // Build the payload to compress.
         const payload = {
           results,
-          language: 'en',
+          language: 'en', // or retrieve from your widget if desired
         };
 
+        // Compress the payload using LZString.
         const encodedPayload = LZString.compressToEncodedURIComponent(
           JSON.stringify(payload)
         );
 
+        // Build the request body for your Lambda endpoint.
         const requestBody = {
           data: encodedPayload,
           basePath: fullBasePath,
         };
 
+        console.log('Request body:', requestBody);
+
+        // Call your Lambda endpoint.
         const response = await fetch(lambdaEndpoint, {
           method: 'POST',
           headers: {
@@ -69,7 +99,10 @@ export const GeneratePDF = ({
         }
 
         const responseData = await response.json();
+        console.log('Response data:', responseData);
+        // Expect responseData to include a property "fileUrl".
         if (responseData.fileUrl) {
+          // Trigger a download by creating an invisible anchor element.
           const link = document.createElement('a');
           link.href = responseData.fileUrl;
           link.download = fileName;
@@ -83,9 +116,11 @@ export const GeneratePDF = ({
         }
       } catch (error) {
         console.error('PDF generation failed:', error);
+      } finally {
+        setIsLoading(false);
       }
     },
-    [results, fileName] // Only dependencies needed here
+    [lambdaEndpoint, results, fileName]
   );
 
   return (
@@ -95,8 +130,27 @@ export const GeneratePDF = ({
         className={className}
         onClick={handleClick}
       >
-        Download Your Wildfire Recovery Action Plan PDF
+        {isLoading ? (
+          // Wrap the spinner in a container with whitespace-nowrap to prevent line breaks.
+          <div className="flex items-center whitespace-nowrap">
+            <span>Generating PDF</span>
+            <span
+              style={{
+                display: 'inline-block',
+                width: '2em',
+                textAlign: 'left',
+                marginLeft: '0.5rem',
+              }}
+            >
+              {spinnerText}
+            </span>
+          </div>
+        ) : (
+          'Download Your Wildfire Recovery Action Plan PDF'
+        )}
       </Button>
     </div>
   );
 };
+
+export default GeneratePDF;
