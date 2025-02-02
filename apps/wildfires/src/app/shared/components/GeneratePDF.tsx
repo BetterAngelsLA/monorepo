@@ -3,22 +3,37 @@ import React, { useCallback } from 'react';
 import { Button } from './button/Button';
 import { TSurveyResults } from './survey/types';
 
+function buildFullUrl(origin: string, ...pathSegments: string[]) {
+  const normalizedSegments = pathSegments
+    .map((segment) => (segment || '').replace(/^\/+|\/+$/g, ''))
+    .filter((segment) => segment !== '');
+  const fullPath = normalizedSegments.join('/');
+  return new URL(fullPath, origin).href;
+}
+
+const fullBasePath = buildFullUrl(
+  window.location.origin,
+  import.meta.env.VITE_APP_BASE_PATH || '',
+  'printResult'
+);
+
+const lambdaEndpoint = buildFullUrl(
+  window.location.origin,
+  'api',
+  'generatePdf'
+);
+
 interface GeneratePDFProps {
-  // The survey results payload (non-null)
   results: TSurveyResults | null;
   fileName?: string;
   className?: string;
 }
 
-const GeneratePDF = ({
+export const GeneratePDF = ({
   results,
   fileName = 'your-wildfire-recovery-action-plan.pdf',
   className,
 }: GeneratePDFProps) => {
-  // Build the Lambda endpoint dynamically using the current window location.
-  // For example, if your API route is /api/generatePdf, then:
-  const lambdaEndpoint = `${window.location.origin}/api/generatePdf`;
-
   const handleClick = useCallback(
     async (e: React.MouseEvent) => {
       e.preventDefault();
@@ -27,32 +42,20 @@ const GeneratePDF = ({
         return;
       }
       try {
-        // Build the payload to compress.
-        // (Optionally, you can include a language field if needed.)
         const payload = {
           results,
-          language: 'en', // or retrieve from your widget if desired
+          language: 'en',
         };
 
-        // Compress the payload using LZString.
         const encodedPayload = LZString.compressToEncodedURIComponent(
           JSON.stringify(payload)
         );
 
-        const basePath = new URL(
-          import.meta.env.VITE_APP_BASE_PATH + '/printResult',
-          window.location.origin
-        ).href;
-
-        // Build the request body for your Lambda endpoint.
         const requestBody = {
           data: encodedPayload,
-          basePath: basePath,
+          basePath: fullBasePath,
         };
 
-        console.log('Request body:', requestBody);
-
-        // Call your Lambda endpoint.
         const response = await fetch(lambdaEndpoint, {
           method: 'POST',
           headers: {
@@ -66,10 +69,7 @@ const GeneratePDF = ({
         }
 
         const responseData = await response.json();
-        // Expect responseData to include a property "fileUrl".
-        console.log(responseData);
         if (responseData.fileUrl) {
-          // Trigger a download by creating an invisible anchor element.
           const link = document.createElement('a');
           link.href = responseData.fileUrl;
           link.download = fileName;
@@ -85,7 +85,7 @@ const GeneratePDF = ({
         console.error('PDF generation failed:', error);
       }
     },
-    [lambdaEndpoint, results, fileName]
+    [results, fileName] // Only dependencies needed here
   );
 
   return (
@@ -95,10 +95,8 @@ const GeneratePDF = ({
         className={className}
         onClick={handleClick}
       >
-        Download Your Action Plan PDF
+        Download Your Recovery Action Plan PDF
       </Button>
     </div>
   );
 };
-
-export default GeneratePDF;
