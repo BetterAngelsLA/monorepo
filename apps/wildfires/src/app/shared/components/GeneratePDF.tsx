@@ -11,6 +11,13 @@ function buildFullUrl(origin: string, ...pathSegments: string[]): string {
   return new URL(fullPath, origin).href;
 }
 
+// Helper function to retrieve the current language from the Google Translate widget.
+// This assumes that the widget renders a <select> with the class "goog-te-combo".
+const getCurrentLanguage = (): string => {
+  const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
+  return combo && combo.value ? combo.value : 'en';
+};
+
 const fullBasePath = buildFullUrl(
   window.location.origin,
   import.meta.env.VITE_APP_BASE_PATH || '',
@@ -66,26 +73,22 @@ export const GeneratePDF = ({
       }
       try {
         setIsLoading(true);
-        // Build the payload to compress.
         const payload = {
           results,
-          language: 'en', // or retrieve from your widget if desired
+          language: getCurrentLanguage(),
         };
 
-        // Compress the payload using LZString.
         const encodedPayload = LZString.compressToEncodedURIComponent(
           JSON.stringify(payload)
         );
 
-        // Build the request body for your Lambda endpoint.
         const requestBody = {
           data: encodedPayload,
           basePath: fullBasePath,
         };
 
-        console.log('Request body:', requestBody);
+        console.log(requestBody);
 
-        // Call your Lambda endpoint.
         const response = await fetch(lambdaEndpoint, {
           method: 'POST',
           headers: {
@@ -99,10 +102,7 @@ export const GeneratePDF = ({
         }
 
         const responseData = await response.json();
-        console.log('Response data:', responseData);
-        // Expect responseData to include a property "fileUrl".
         if (responseData.fileUrl) {
-          // Trigger a download by creating an invisible anchor element.
           const link = document.createElement('a');
           link.href = responseData.fileUrl;
           link.download = fileName;
@@ -120,7 +120,7 @@ export const GeneratePDF = ({
         setIsLoading(false);
       }
     },
-    [lambdaEndpoint, results, fileName]
+    [results, fileName]
   );
 
   return (
@@ -131,7 +131,6 @@ export const GeneratePDF = ({
         onClick={handleClick}
       >
         {isLoading ? (
-          // Wrap the spinner in a container with whitespace-nowrap to prevent line breaks.
           <div className="flex items-center whitespace-nowrap">
             <span>Generating PDF</span>
             <span

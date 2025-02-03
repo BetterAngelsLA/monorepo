@@ -12,7 +12,7 @@ export default function PrintResult() {
   const [surveyResults, setSurveyResults] = useState<TSurveyResults | null>(
     null
   );
-  const [language, setLanguage] = useState<string>('en');
+  const [language, setLanguage] = useState<string>('');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -61,41 +61,59 @@ export default function PrintResult() {
   }, [setPrinting]);
 
   return (
-    <>
-      <div className="w-full" id="print-container">
-        <HorizontalLayout className="bg-brand-dark-blue print:bg-white">
-          <Hero className="hero-print min-h-[20vh] py-14 md:py-28 relative">
-            <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white print:text-black md:text-[58px] md:leading-[1.2]">
-              Your Wildfire
-              <span className="md:hidden print:hidden">
-                <br />
-              </span>{' '}
-              Recovery
-              <span className="md:hidden print:hidden">
-                <br />
-              </span>{' '}
-              Action Plan
-            </h1>
-            <div className="print-logo-container hidden print:block">
-              <img
-                src={NavigatorLogo}
-                alt="LA Disaster Relief Navigator Logo"
-                className="mx-auto w-32 print:w-auto print:max-h-12"
-                style={{
-                  maxWidth: '220px',
-                  height: 'auto',
-                }}
-              />
-            </div>
-          </Hero>
-        </HorizontalLayout>
-        <HorizontalLayout>
-          <BestPractices />
-          {surveyResults && (
-            <SurveyResults className="mt-8 mb-24" results={surveyResults} />
-          )}
-        </HorizontalLayout>
+    <div className="w-full" id="print-container">
+      <div
+        className="language-debug"
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          padding: '4px 8px',
+          background: 'rgba(0,0,0,0.1)',
+          borderRadius: '4px',
+          fontSize: '12px',
+          zIndex: 1000,
+        }}
+      >
+        Current Language: {language}
       </div>
-    </>
+      <div
+        id="hidden-language"
+        style={{ display: 'none' }}
+        data-language={language}
+      />
+      <HorizontalLayout className="bg-brand-dark-blue print:bg-white">
+        <Hero className="hero-print min-h-[20vh] py-14 md:py-28 relative">
+          <h1 className="font-light border-l-[10px] pl-4 md:pl-8 border-brand-yellow text-5xl text-white print:text-black md:text-[58px] md:leading-[1.2]">
+            Your Wildfire
+            <span className="md:hidden print:hidden">
+              <br />
+            </span>{' '}
+            Recovery
+            <span className="md:hidden print:hidden">
+              <br />
+            </span>{' '}
+            Action Plan
+          </h1>
+          <div className="print-logo-container hidden print:block">
+            <img
+              src={NavigatorLogo}
+              alt="LA Disaster Relief Navigator Logo"
+              className="mx-auto w-32 print:w-auto print:max-h-12"
+              style={{
+                maxWidth: '220px',
+                height: 'auto',
+              }}
+            />
+          </div>
+        </Hero>
+      </HorizontalLayout>
+      <HorizontalLayout>
+        <BestPractices />
+        {surveyResults && (
+          <SurveyResults className="mt-8 mb-24" results={surveyResults} />
+        )}
+      </HorizontalLayout>
+    </div>
   );
 }

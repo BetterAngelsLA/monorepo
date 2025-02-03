@@ -66,9 +66,7 @@ type IProps = {
 
 export function SurveyResults(props: IProps) {
   const { results, className } = props;
-
   const { answers = [] } = results;
-
   const queryTags = getTags(answers);
 
   const { isLoading, isError, data, error } = useQuery({
@@ -83,6 +81,9 @@ export function SurveyResults(props: IProps) {
   return (
     <div className={mergeCss(parentCss)}>
       {!!data?.length && <SurveyResources resources={data} />}
+      {!isLoading && (
+        <div data-testid="survey-results-loaded" style={{ display: 'none' }} />
+      )}
     </div>
   );
 }
