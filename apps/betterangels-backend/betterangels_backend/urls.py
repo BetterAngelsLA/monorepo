@@ -30,6 +30,8 @@ admin.autodiscover()
 admin.site.login = secure_admin_login(admin.site.login)
 
 urlpatterns = [
+    path("", TemplateView.as_view(template_name="home.html"), name="home"),
+    path("", include("accounts.urls")),
     path("admin/", admin.site.urls),
     path("accounts/", include("allauth.urls"), name="accounts"),
     path("ckeditor5/", include("django_ckeditor_5.urls")),
@@ -44,8 +46,6 @@ urlpatterns = [
     path("legal/", include("legal.urls")),
     path("proxy/", include("proxy.urls"), name="proxy"),
     path("upload/", admin_async_upload.views.admin_resumable, name="admin_resumable"),
-    path("", TemplateView.as_view(template_name="home.html"), name="home"),
-    path("", include("accounts.urls")),
 ]
 
 
