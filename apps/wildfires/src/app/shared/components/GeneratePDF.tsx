@@ -1,70 +1,72 @@
-import html2pdf from 'html2pdf.js';
+import React, { useCallback } from 'react';
+import { useReactToPrint } from 'react-to-print';
+import { usePrint } from '../providers/PrintProvider';
 import { Button } from './button/Button';
 
 interface GeneratePDFProps {
-  fileName: string | (() => string);
+  targetRef: React.RefObject<HTMLElement>;
+  fileName?: string;
   className?: string;
 }
 
-const GeneratePDF: React.FC<GeneratePDFProps> = ({ className }) => {
-  const options = {
-    margin: [5, 10],
-    filename: 'your-wildfire-recovery-action-plan.pdf',
-    html2canvas: {
-      scale: 2,
-      letterRendering: true,
+const GeneratePDF = ({
+  targetRef,
+  fileName = 'your-wildfire-recovery-action-plan.pdf',
+  className,
+}: GeneratePDFProps) => {
+  const { setPrinting } = usePrint();
+
+  const handlePrint = useReactToPrint({
+    contentRef: targetRef,
+    documentTitle: fileName,
+    suppressErrors: true,
+    preserveAfterPrint: true,
+    onAfterPrint: () => {
+      setPrinting(false);
     },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: 'css' },
-  };
+  });
 
-  const handleGeneratePdf = () => {
-    const h1 = document.createElement('h1');
-    h1.textContent = 'Your Wildfire Recovery Action Plan';
-    h1.classList.add(
-      'font-bold',
-      'border-l-[10px]',
-      'pl-4',
-      'md:pl-8',
-      'border-brand-yellow',
-      'text-4xl',
-      'text-brand-dark-blue',
-      'leading-normal'
-    );
-
-    h1.setAttribute('data-inserted', 'true');
-
-    window.dispatchEvent(new Event('beforeprint'));
-
-    const element = document.getElementById('content-to-pdf');
-    if (element) {
-      element.insertBefore(h1, element.firstChild);
-
-      html2pdf()
-        .from(element)
-        .set(options)
-        .save()
-        .finally(() => {
-          // Dispatch `afterprint` to restore the original collapsed state
-          window.dispatchEvent(new Event('afterprint'));
-          const h1 = document.querySelector(
-            '#content-to-pdf h1[data-inserted="true"]'
-          );
-          if (h1) {
-            h1.remove(); // Remove the <h1> element after PDF generation
-          }
+  const handleClick = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      try {
+        setPrinting(true);
+        await new Promise((resolve) => {
+          setTimeout(() => {
+            requestAnimationFrame(resolve);
+          }, 100);
         });
-    }
-  };
+        handlePrint();
+      } catch (error) {
+        console.error('Print failed:', error);
+        setPrinting(false);
+      }
+    },
+    [handlePrint, setPrinting]
+  );
 
   return (
-    <Button
-      ariaLabel="Save your action plan as a PDF file"
-      className={className}
-      onClick={handleGeneratePdf}
-    >
-      Save Your Action Plan as a PDF
-    </Button>
+    <div className="flex flex-col items-center mx-auto">
+      <Button
+        ariaLabel="Print Your Action Plan"
+        className={className}
+        onClick={handleClick}
+      >
+        Print Your Action Plan
+      </Button>
+      <div className="text-sm text-gray-600 mt-3 max-w-md text-center px-4">
+        <p className="mb-2">
+          To save as PDF, click "Print Your Action Plan" above, then:
+        </p>
+        <p className="mb-1.5">
+          Desktop: Select <strong>"Save as PDF"</strong> in the print dialog
+        </p>
+        <p>
+          Mobile: Tap <strong>"Share"</strong> then{' '}
+          <strong>"Save to Files"</strong>
+        </p>
+      </div>
+    </div>
   );
 };
 
