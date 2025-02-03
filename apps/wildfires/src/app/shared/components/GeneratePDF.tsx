@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { usePrint } from '../providers/PrintProvider';
 import { Button } from './button/Button';
 
@@ -28,8 +28,6 @@ const lambdaTranslateEndpoint = buildFullUrl(
 
 /**
  * Inlines external CSS files in the given head element.
- * For every <link rel="stylesheet"> element, fetch its CSS and replace the link
- * with a <style> tag that contains the CSS.
  */
 async function inlineExternalCSS(headElement: HTMLElement): Promise<void> {
   const linkElements = headElement.querySelectorAll('link[rel="stylesheet"]');
@@ -65,20 +63,14 @@ async function extractFullHTMLFromPrintContainer(
   printContainer: HTMLElement,
   baseUrl: string
 ): Promise<string> {
-  // Clone the current head.
   const headClone = document.head.cloneNode(true) as HTMLElement;
-  // Remove any existing <base> and <script> tags.
   headClone.querySelectorAll('base, script').forEach((tag) => tag.remove());
-  // Inline external CSS.
   await inlineExternalCSS(headClone);
-  // Insert a new <base> tag so relative URLs resolve correctly.
   const baseTag = document.createElement('base');
   baseTag.href = baseUrl;
   headClone.insertBefore(baseTag, headClone.firstChild);
 
-  // Get the container's HTML as the body.
   const containerHtml = printContainer.outerHTML;
-
   return `<!DOCTYPE html>
 <html lang="${document.documentElement.lang || 'en'}">
   <head>${headClone.innerHTML}</head>
@@ -164,14 +156,22 @@ function restorePreviousTranslation(targetLang: string): Promise<void> {
 }
 
 /**
+ * Helper to detect Safari (desktop or iOS)
+ */
+function isSafariBrowser() {
+  const ua = navigator.userAgent;
+  return (
+    ua.includes('Safari') && !ua.includes('Chrome') && !ua.includes('CriOS')
+  );
+}
+
+/**
  * Calls the Lambda endpoint, sending the extracted HTML along with the current language.
- * Expects the Lambda to return a JSON object with a `fileUrl` property.
  */
 const callTranslateLambda = async (html: string, currentLanguage: string) => {
   const response = await fetch(lambdaTranslateEndpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    // Pass the current language as "targetLanguage"
     body: JSON.stringify({ html, targetLanguage: currentLanguage }),
   });
   if (!response.ok) {
@@ -184,8 +184,9 @@ const callTranslateLambda = async (html: string, currentLanguage: string) => {
 export const GeneratePDF = ({ className, printRef }: GeneratePDFProps) => {
   const { isPrinting, setPrinting } = usePrint();
   const [spinnerText, setSpinnerText] = useState<string>('');
+  const downloadButtonRef = useRef<HTMLDivElement>(null);
 
-  // Setup a spinner that cycles through ".", "..", "..."
+  // Cycle spinner text while printing.
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     if (isPrinting) {
@@ -208,12 +209,23 @@ export const GeneratePDF = ({ className, printRef }: GeneratePDFProps) => {
         console.error('Print container ref is not attached.');
         return;
       }
-      // Capture the current language before we revert anything.
       const currentLang = getCurrentGoogleTranslateLanguage() || 'en';
       try {
+        // Start printing mode (show full-screen toast and disable the button).
         setPrinting(true);
         console.log('Printing mode activated.');
         console.log('Current Google Translate language:', currentLang);
+
+        // For Safari: scroll the download button into view.
+        if (isSafariBrowser()) {
+          setTimeout(() => {
+            downloadButtonRef.current?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'center',
+              inline: 'center',
+            });
+          }, 150);
+        }
 
         // Revert the page to English for export.
         await revertGoogleTranslateToOriginal('en');
@@ -222,38 +234,36 @@ export const GeneratePDF = ({ className, printRef }: GeneratePDFProps) => {
         // Wait briefly for page updates.
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
-        // Extract the full HTML (with external CSS inlined via a <base> tag).
+        // Extract the full HTML.
         const fullHtml = await extractFullHTMLFromPrintContainer(
           printRef.current,
-          window.location.href // using the public site's URL as the base
+          window.location.href
         );
         console.log('Extracted full HTML.');
 
-        // Call the Lambda endpoint using the current language.
+        // Restore the previous translation.
+        await restorePreviousTranslation(currentLang);
+
+        // Call the Lambda endpoint.
         const fileUrl = await callTranslateLambda(fullHtml, currentLang);
         console.log('Received fileUrl from Lambda:', fileUrl);
 
-        // Trigger download of the PDF from the returned fileUrl.
+        // Trigger the PDF download.
         const fileLink = document.createElement('a');
         fileLink.href = fileUrl;
         fileLink.download = 'translated_print_container.pdf';
         document.body.appendChild(fileLink);
         fileLink.click();
+
+        // Wait a fixed delay to simulate waiting until the link is "finished clicked."
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
         document.body.removeChild(fileLink);
         console.log('Translated file downloaded.');
       } catch (error) {
         console.error('Error generating translated file:', error);
       } finally {
-        // Always restore the previous Google Translate language (if not English),
-        // even if an error occurred during download.
-        if (currentLang !== 'en') {
-          try {
-            await restorePreviousTranslation(currentLang);
-            console.log('Restored previous translation:', currentLang);
-          } catch (e) {
-            console.error('Error restoring translation:', e);
-          }
-        }
+        // Turn off printing mode (hide the full-screen toast).
         setPrinting(false);
         console.log('Printing mode deactivated.');
       }
@@ -262,32 +272,49 @@ export const GeneratePDF = ({ className, printRef }: GeneratePDFProps) => {
   );
 
   return (
-    <div className="flex flex-col items-center mx-auto">
-      <Button
-        ariaLabel="Download Your Action Plan"
-        className={className}
-        onClick={handleSaveHTML}
-        disabled={isPrinting}
+    <>
+      <div
+        ref={downloadButtonRef}
+        className="flex flex-col items-center mx-auto"
       >
-        {isPrinting ? (
-          <div className="flex items-center whitespace-nowrap">
-            <span>Generating PDF</span>
-            <span
-              style={{
-                display: 'inline-block',
-                width: '2em',
-                textAlign: 'left',
-                marginLeft: '0.5rem',
-              }}
-            >
-              {spinnerText}
-            </span>
+        <Button
+          ariaLabel="Download Your Action Plan"
+          className={className}
+          onClick={handleSaveHTML}
+          disabled={isPrinting}
+        >
+          Download Your Action Plan
+        </Button>
+      </div>
+
+      {/* Full-screen toast overlay */}
+      {isPrinting && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+          }}
+        >
+          <div
+            style={{
+              color: '#fff',
+              fontSize: '2rem',
+              textAlign: 'center',
+            }}
+          >
+            Generating PDF {spinnerText}
           </div>
-        ) : (
-          'Download Your Action Plan'
-        )}
-      </Button>
-    </div>
+        </div>
+      )}
+    </>
   );
 };
 
