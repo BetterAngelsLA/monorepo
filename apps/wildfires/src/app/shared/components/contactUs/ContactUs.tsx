@@ -22,7 +22,8 @@ export default function ContactUs() {
           <span className="md:whitespace-nowrap">
             Mayor's Fund for LA and the Office of Mayor Karen Bass.
           </span>
-          <br className="hidden md:inline" /> For in-person help, please go to a{' '}
+          <br className="hidden md:inline" /> For in-person help, please go to
+          an{' '}
           <a
             href="https://emergency.lacity.gov"
             target="_blank"
