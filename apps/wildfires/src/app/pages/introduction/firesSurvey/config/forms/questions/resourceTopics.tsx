@@ -3,7 +3,7 @@ import { TQuestion } from '../../../../../../shared/components/survey/types';
 export const qResourceTopics: TQuestion = {
   id: 'qResourceTopics',
   type: 'checkbox',
-  title: 'Which resources would you like to learn about?',
+  title: 'What help do you need?',
   subtitle: '(Choose as many as you like)',
   options: [
     {
@@ -18,7 +18,7 @@ export const qResourceTopics: TQuestion = {
     },
     {
       optionId: 'resourceFinancial',
-      label: 'Income Loss',
+      label: 'Income Loss Support',
       // tags: ['General - Financial Assistance']
       tags: ['general-financial-assistance'],
     },

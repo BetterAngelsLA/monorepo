@@ -19,7 +19,7 @@ export function GetStarted(props: TProps) {
       <div className="text-xl leading-[30px] md:leading-[1.3] mt-8 md:mt-10">
         <div className="font-bold">
           Please tell us a little about your situation so that we can make sure
-          your action plan includes all of the relevant resources and financial
+          your action plan includes the relevant resources and financial
           assistance available to you.
         </div>
         <div className="text-xl leading-[30px]">(Takes 3 minutes)</div>
@@ -32,7 +32,7 @@ export function GetStarted(props: TProps) {
           className="max-w-[350px] justify-center"
           href="/introduction"
         >
-          <span className="mr-4">Get Resources</span>
+          <span className="mr-4">Start</span>
           <ArrowLeftIcon className="h-5 rotate-180" />
         </SurveyButton>
       </div>
