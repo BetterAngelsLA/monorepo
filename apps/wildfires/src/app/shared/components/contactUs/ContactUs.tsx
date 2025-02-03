@@ -15,7 +15,7 @@ export default function ContactUs() {
         Contact Us
       </Link>
 
-      <div className="text-center mt-6 md:mt-8 text-sm md:text-base max-w-[680px] mx-auto">
+      <div className="text-center mt-6 md:mt-8 text-base md:text-lg max-w-[680px] mx-auto">
         <p>
           This online service was developed by Better Angels and Imagine LA in
           partnership with the&nbsp;
@@ -25,7 +25,7 @@ export default function ContactUs() {
           <br className="hidden md:inline" /> For in-person help, please go to
           an{' '}
           <a
-            href="https://emergency.lacity.gov"
+            href="https://emergency.lacity.gov/recovery"
             target="_blank"
             rel="noopener noreferrer"
             className="underline hover:text-brand-yellow-light transition-colors"
