@@ -6,6 +6,12 @@ interface GeneratePDFProps {
   printRef: React.RefObject<HTMLDivElement>;
 }
 
+// Define a type for the Lambda response
+interface LambdaResponse {
+  fileUrl: string;
+}
+
+/** Utility function to build a full URL from segments */
 function buildFullUrl(origin: string, ...pathSegments: string[]): string {
   const normalized = pathSegments
     .map((segment) => (segment || '').replace(/^\/+|\/+$/g, ''))
@@ -14,19 +20,23 @@ function buildFullUrl(origin: string, ...pathSegments: string[]): string {
   return new URL(normalized, origin).href;
 }
 
+/** Lambda endpoint to generate the PDF */
 const lambdaTranslateEndpoint = buildFullUrl(
   window.location.origin,
   'api',
   'generatePdf'
 );
 
+/**
+ * Inlines external CSS by replacing link tags with style tags.
+ * If a stylesheet fails to load, it is removed.
+ */
 async function inlineExternalCSS(headElement: HTMLElement): Promise<void> {
   const promises = Array.from(
     headElement.querySelectorAll('link[rel="stylesheet"]')
   ).map(async (link) => {
     const href = link.getAttribute('href');
     if (!href) return;
-
     try {
       const cssResponse = await fetch(href);
       const cssText = await cssResponse.text();
@@ -38,19 +48,24 @@ async function inlineExternalCSS(headElement: HTMLElement): Promise<void> {
       link.remove();
     }
   });
-
   await Promise.all(promises);
 }
 
+/**
+ * Extracts the full HTML from the print container along with updated head content.
+ * Waits for fonts to load (with a timeout fallback) before returning the HTML.
+ */
 async function extractFullHTMLFromPrintContainer(
   printContainer: HTMLElement,
   baseUrl: string
 ): Promise<string> {
+  // Clone the head and remove unnecessary elements.
   const headClone = document.head.cloneNode(true) as HTMLElement;
   headClone.querySelectorAll('base, script').forEach((tag) => tag.remove());
+
   await inlineExternalCSS(headClone);
 
-  // Add font face rules
+  // Append font-face CSS rules from accessible style sheets.
   const fontFaceCSS = Array.from(document.styleSheets)
     .map((sheet) => {
       try {
@@ -59,16 +74,15 @@ async function extractFullHTMLFromPrintContainer(
           .map((rule) => rule.cssText)
           .join('\n');
       } catch (e) {
-        return ''; // Skip cross-origin sheets
+        return ''; // Skip sheets that throw due to cross-origin restrictions.
       }
     })
     .join('\n');
-
   const fontStyle = document.createElement('style');
   fontStyle.textContent = fontFaceCSS;
   headClone.appendChild(fontStyle);
 
-  // Critical debug styles
+  // Append critical debug styles.
   const debugStyleTag = document.createElement('style');
   debugStyleTag.textContent = `
     * {
@@ -87,17 +101,18 @@ async function extractFullHTMLFromPrintContainer(
   `;
   headClone.appendChild(debugStyleTag);
 
-  // Font loading safeguard
-  const fontLoader = document.createElement('script');
-  fontLoader.textContent = `document.fonts.ready.then(() => { window.fontsLoaded = true; });`;
-  headClone.appendChild(fontLoader);
-
+  // Use the provided base URL for resolving relative URLs.
   const baseTag = document.createElement('base');
-  baseTag.href = new URL(window.location.href).origin;
+  baseTag.href = baseUrl;
   headClone.insertBefore(baseTag, headClone.firstChild);
 
-  const containerHtml = printContainer.outerHTML;
+  // Wait for fonts to load, but do not wait indefinitely.
+  await Promise.race([
+    document.fonts.ready,
+    new Promise((resolve) => setTimeout(resolve, 3000)),
+  ]);
 
+  const containerHtml = printContainer.outerHTML;
   return `<!DOCTYPE html>
 <html lang="${document.documentElement.lang || 'en'}">
   <head>${headClone.innerHTML}</head>
@@ -105,6 +120,7 @@ async function extractFullHTMLFromPrintContainer(
 </html>`;
 }
 
+/** Retrieves the current language from the Google Translate widget */
 function getCurrentGoogleTranslateLanguage(): string | null {
   const combo = document.querySelector(
     '.goog-te-combo'
@@ -112,32 +128,52 @@ function getCurrentGoogleTranslateLanguage(): string | null {
   return combo ? combo.value : null;
 }
 
-const callTranslateLambda = async (html: string, currentLanguage: string) => {
+/**
+ * Calls the Lambda endpoint to translate HTML and generate a PDF.
+ * Throws an error if the request fails or no file URL is returned.
+ */
+async function callTranslateLambda(
+  html: string,
+  targetLanguage: string
+): Promise<string> {
   const response = await fetch(lambdaTranslateEndpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ html, targetLanguage: currentLanguage }),
+    body: JSON.stringify({ html, targetLanguage }),
   });
   if (!response.ok) {
     throw new Error(`Lambda request failed with status ${response.status}`);
   }
-  const data = await response.json();
+  const data = (await response.json()) as LambdaResponse;
+  if (!data.fileUrl) {
+    throw new Error('No file URL returned from Lambda.');
+  }
   return data.fileUrl;
-};
-export const GeneratePDF = ({ className, printRef }: GeneratePDFProps) => {
-  const [spinnerText, setSpinnerText] = useState<string>('');
-  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+}
 
+/**
+ * Custom hook for managing spinner text while generating a PDF.
+ * Cycles through dots to simulate a loading spinner.
+ */
+function useSpinnerText(isActive: boolean, intervalMs = 500): string {
+  const [spinnerText, setSpinnerText] = useState<string>('');
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (isGenerating) {
-      setSpinnerText('.');
-      interval = setInterval(() => {
-        setSpinnerText((prev) => (prev === '...' ? '.' : prev + '.'));
-      }, 500);
+    if (!isActive) {
+      setSpinnerText('');
+      return;
     }
-    return () => interval && clearInterval(interval);
-  }, [isGenerating]);
+    setSpinnerText('.');
+    const interval = setInterval(() => {
+      setSpinnerText((prev) => (prev === '...' ? '.' : prev + '.'));
+    }, intervalMs);
+    return () => clearInterval(interval);
+  }, [isActive, intervalMs]);
+  return spinnerText;
+}
+
+export const GeneratePDF = ({ className, printRef }: GeneratePDFProps) => {
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const spinnerText = useSpinnerText(isGenerating);
 
   const handleSaveHTML = useCallback(
     async (e: React.MouseEvent) => {
@@ -146,16 +182,20 @@ export const GeneratePDF = ({ className, printRef }: GeneratePDFProps) => {
 
       try {
         setIsGenerating(true);
+
+        // Get the current language (defaulting to English).
         const currentLang = getCurrentGoogleTranslateLanguage() || 'en';
 
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
+        // Extract the full HTML (waiting for fonts to load or timeout).
         const fullHtml = await extractFullHTMLFromPrintContainer(
           printRef.current,
-          window.location.href
+          window.location.origin
         );
 
+        // Generate the PDF via Lambda and retrieve its URL.
         const fileUrl = await callTranslateLambda(fullHtml, currentLang);
+
+        // Create a temporary link to trigger the file download.
         const fileLink = document.createElement('a');
         fileLink.href = fileUrl;
         fileLink.download = 'document.pdf';
@@ -164,6 +204,7 @@ export const GeneratePDF = ({ className, printRef }: GeneratePDFProps) => {
         document.body.removeChild(fileLink);
       } catch (error) {
         console.error('Error generating PDF:', error);
+        alert('There was a problem generating your PDF. Please try again.');
       } finally {
         setIsGenerating(false);
       }
@@ -185,7 +226,7 @@ export const GeneratePDF = ({ className, printRef }: GeneratePDFProps) => {
             <span
               style={{
                 display: 'inline-block',
-                width: '3ch', // reserve width for 3 characters (max spinner dots)
+                width: '3ch', // Reserve space for the spinner dots
                 textAlign: 'left',
               }}
             >
