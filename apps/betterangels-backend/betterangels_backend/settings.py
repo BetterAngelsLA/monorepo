@@ -180,7 +180,7 @@ SOCIALACCOUNT_PROVIDERS = {
                 # The Key ID (visible in the "View Key Details" page).
                 "secret": env("SOCIALACCOUNT_APPLE_SECRET"),
                 # Member ID/App ID Prefix -- you can find it below your name
-                # at the top right corner of the page, or it's your App ID
+                # at the top right corner of the page, or it’s your App ID
                 # Prefix in your App ID.
                 "key": env("SOCIALACCOUNT_APPLE_ID_PREFIX"),
                 "settings": {
@@ -368,7 +368,7 @@ from logging in until the email address is
 verified. Choose "optional"
 or "none" to allow logins with an unverified
 email address. In case of "optional", the email verification mail is
-still sent, whereas in case of "none" no email verification mails are sent.
+still sent, whereas in case of “none“ no email verification mails are sent.
 """
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
