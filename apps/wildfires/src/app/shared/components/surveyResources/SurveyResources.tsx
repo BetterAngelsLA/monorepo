@@ -45,11 +45,6 @@ export function SurveyResources(props: IProps) {
           />
         </div>
       )}
-
-      {/* Hidden element to signal that rendering is complete */}
-      <div id="survey-results-loaded" style={{ display: 'none' }}>
-        loaded
-      </div>
     </div>
   );
 }
