@@ -6,13 +6,17 @@ import { ResourceCallout } from './ResourceCallout';
 
 type IProps = {
   className?: string;
-  data: PortableTextBlock;
+  data: PortableTextBlock[] | null;
 };
 
 export function ResourceTipsDescription(props: IProps) {
   const { data, className } = props;
 
   const parentCss = ['wisiwig', className];
+
+  if (!data?.length) {
+    return null;
+  }
 
   return (
     <ResourceCallout

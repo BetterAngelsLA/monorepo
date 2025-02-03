@@ -20,19 +20,17 @@ export function SurveyResources(props: IProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <div className="mt-12 md:mt-20 mb-8 md:mb-12 font-bold text-xl md:text-2xl break-before-page">
-        Resources
-      </div>
-
       {!!baseResourcesGroupedSorted.length && (
         <div>
-          {baseResourcesGroupedSorted.map((categoryResources) => {
+          {baseResourcesGroupedSorted.map((categoryResources, index) => {
             const { category, resources } = categoryResources;
 
             return (
               <ResourceGroupCard
                 key={category.slug}
-                className="mb-12 md:mb-20 last:mb-0 break-inside-avoid"
+                className={`mb-12 md:mb-20 last:mb-0 ${
+                  index > 0 ? 'break-inside-avoid' : ''
+                }`}
                 resourceCategory={category.name}
                 resources={resources}
               />

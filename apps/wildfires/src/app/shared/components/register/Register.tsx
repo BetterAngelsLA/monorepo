@@ -6,8 +6,11 @@ export default function Register() {
       <h2 className="text-2xl md:text-[40px] md:leading-[1.2] font-bold mb-2 text-center">
         Register with LA Disaster Relief Navigator
       </h2>
-      <p className="mb-6 text-center">
+      <p className="text-center">
         We will send you updates when additional resources become available.
+      </p>
+      <p className="mb-6 text-center">
+        We will not share your information with third parties.
       </p>
       <MailchimpFormContainer />
     </div>
