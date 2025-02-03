@@ -58,8 +58,8 @@ export default function Result() {
       <HorizontalLayout className="mb-16 md:mb-28">
         <div className="flex flex-col items-center">
           <GeneratePDF
+            printRef={printContentRef}
             className="bg-brand-dark-blue text-white"
-            results={surveyResults}
           />
         </div>
       </HorizontalLayout>
