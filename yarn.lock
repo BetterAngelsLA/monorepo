@@ -5831,7 +5831,6 @@ __metadata:
     jest-expo: "npm:~51.0.4"
     jotai: "npm:^2.10.3"
     jsdom: "npm:~22.1.0"
-    lz-string: "npm:^1.5.0"
     metro: "npm:~0.80.4"
     metro-react-native-babel-transformer: "npm:^0.77.0"
     npm: "npm:^10.9.2"
