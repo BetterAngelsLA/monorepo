@@ -368,7 +368,7 @@ from logging in until the email address is
 verified. Choose "optional"
 or "none" to allow logins with an unverified
 email address. In case of "optional", the email verification mail is
-still sent, whereas in case of “none“ no email verification mails are sent.
+still sent, whereas in case of “none” no email verification mails are sent.
 """
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
