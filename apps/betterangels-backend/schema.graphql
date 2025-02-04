@@ -1025,7 +1025,6 @@ type Query {
   serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
-  interactionAuthor(pk: ID!): InteractionAuthorType! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(pagination: OffsetPaginationInput): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!

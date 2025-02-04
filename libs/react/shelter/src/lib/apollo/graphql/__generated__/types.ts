@@ -1243,7 +1243,6 @@ export type Query = {
   clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
-  interactionAuthor: InteractionAuthorType;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
   noteAttachment: NoteAttachmentType;
@@ -1290,11 +1289,6 @@ export type QueryClientProfilesPaginatedArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryInteractionAuthorArgs = {
-  pk: Scalars['ID']['input'];
 };
 
 
