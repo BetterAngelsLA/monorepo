@@ -1,0 +1,71 @@
+@font-face {
+  font-family: 'Poppins';
+  src: url('../../../../../libs/assets/src/fonts/Poppins-Regular.ttf')
+    format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Poppins';
+  src: url('../../../../../libs/assets/src/fonts/Poppins-Medium.ttf')
+    format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Poppins';
+  src: url('../../../../../libs/assets/src/fonts/Poppins-SemiBold.ttf')
+    format('truetype');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../../../../../libs/assets/src/fonts/IBMPlexSans-Regular.ttf')
+    format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../../../../../libs/assets/src/fonts/IBMPlexSans-Italic.ttf')
+    format('truetype');
+  font-weight: 400;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../../../../../libs/assets/src/fonts/IBMPlexSans-Light.ttf')
+    format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../../../../../libs/assets/src/fonts/IBMPlexSans-LightItalic.ttf')
+    format('truetype');
+  font-weight: 300;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../../../../../libs/assets/src/fonts/IBMPlexSans-Bold.ttf')
+    format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('../../../../../libs/assets/src/fonts/IBMPlexSans-BoldItalic.ttf')
+    format('truetype');
+  font-weight: 700;
+  font-style: italic;
+}
