@@ -30,12 +30,30 @@ export default function Welcome() {
           <TextMedium mt="lg" textAlign="center" size="lg" mb="sm">
             Your account has not been authorized.
           </TextMedium>
-          <TextRegular textAlign="center" size="xs" mb="xs">
-            user ID: {user?.id}
-          </TextRegular>
-          <TextRegular textAlign="center" size="xs" mb="xs">
-            email: {user?.email}
-          </TextRegular>
+
+          <View style={{ marginBottom: 16 }}>
+            <TextRegular
+              textAlign="center"
+              size="xs"
+              style={{ fontWeight: 'bold' }}
+            >
+              User ID:{' '}
+              <TextRegular textAlign="center" size="xs">
+                {user?.id}
+              </TextRegular>
+            </TextRegular>
+            <TextRegular
+              textAlign="center"
+              size="xs"
+              style={{ fontWeight: 'bold' }}
+            >
+              User Email:{' '}
+              <TextRegular textAlign="center" size="xs">
+                {user?.email}
+              </TextRegular>
+            </TextRegular>
+          </View>
+
           <TextRegular textAlign="center" size="sm" mb="xl">
             Please contact your organization's administrator to authorize your
             account.
