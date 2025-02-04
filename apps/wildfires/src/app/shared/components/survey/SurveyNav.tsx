@@ -1,6 +1,6 @@
 import { ArrowLeftIcon } from '@monorepo/react/icons';
 import { useContext } from 'react';
-import { SurveyButton } from '../../../pages/home/firesSurvey/components/SurveyButton';
+import { SurveyButton } from '../../../pages/introduction/firesSurvey/components/SurveyButton';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { SurveyContext } from './provider/SurveyContext';
 
@@ -21,31 +21,45 @@ export function SurveyNav(props: IProps) {
 
   const { currentForm, formHistory, validateCurrentForm } = context;
 
-  const parentCss = ['flex', 'flex-col', 'justify-center', className];
-
   if (!onNext && !onPrev) {
     return null;
   }
 
+  if (!currentForm) {
+    return;
+  }
+
   const showPrevBtn = formHistory.length > 1;
-  const showNextBtn = !!currentForm.next;
   const currentFormErrors = validateCurrentForm();
 
-  console.log('currentFormErrors:');
-  console.log(currentFormErrors);
+  if (currentFormErrors.length) {
+    console.log('currentFormErrors:');
+    console.log(currentFormErrors);
+  }
 
   const nextDisabled = !!currentFormErrors.length;
 
-  const buttonCss = 'my-4';
-  const prevCss = [buttonCss];
-  const nextCss = [buttonCss];
+  const parentCss = [
+    'flex',
+    'flex-col',
+    'md:flex-row',
+    'justify-center',
+    'items-center',
+    className,
+  ];
+
+  const buttonCss = ['my-2', 'max-w-[350px]', 'md:mx-3'];
+
+  const nextButtonCss = [buttonCss];
+  const prevButtonCss = [buttonCss, 'md:order-first'];
 
   return (
     <div className={mergeCss(parentCss)}>
-      {!!onNext && showNextBtn && (
+      {!!onNext && (
         <SurveyButton
+          ariaLabel="questionnaire continue button"
           dark
-          className={mergeCss(nextCss)}
+          className={mergeCss(nextButtonCss)}
           onClick={onNext}
           disabled={nextDisabled}
         >
@@ -55,7 +69,11 @@ export function SurveyNav(props: IProps) {
       )}
 
       {!!onPrev && showPrevBtn && (
-        <SurveyButton className={mergeCss(prevCss)} onClick={onPrev}>
+        <SurveyButton
+          ariaLabel="questionnaire back button"
+          className={mergeCss(prevButtonCss)}
+          onClick={onPrev}
+        >
           <ArrowLeftIcon className="h-5" />
           <span className="ml-4">Back</span>
         </SurveyButton>

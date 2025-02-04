@@ -8,7 +8,7 @@ export type TSurveyUi = {
 
 type TSurveyContext = {
   forms: TSurveyForm[];
-  currentForm: TSurveyForm;
+  currentForm: TSurveyForm | null;
   formHistory: TSurveyForm[];
   answers: TAnswer[];
 

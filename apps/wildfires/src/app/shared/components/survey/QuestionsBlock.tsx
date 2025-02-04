@@ -32,8 +32,8 @@ export function QuestionsBlock(props: IProps) {
       {questions.map((question) => {
         return (
           <QuestionCard
+            className="mb-[90px] md:mb-[120px] last:mb-0"
             key={question.id}
-            className="mt-8"
             question={question}
             answer={findQuestionResult(question, answers)}
             onAnswer={handleAnswer}

@@ -1,4 +1,5 @@
 import { useContext } from 'react';
+import { SurveyRadio } from '../../../pages/introduction/firesSurvey/components/SurveyRadio';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { CheckboxGroup } from '../form/CheckboxGroup';
 import { SurveyContext } from './provider/SurveyContext';
@@ -36,33 +37,46 @@ export function QuestionForm(props: IProps) {
     });
   }
 
-  const optionCss = 'mx-2 my-4 py-1.5 px-4 border border-2 rounded-xl';
+  const optionContainerCss = [
+    'flex',
+    'flex-wrap',
+    'gap-x-4',
+    'gap-y-4',
+    'md:gap-y-8',
+  ];
+
+  const optionCss = ['md:min-w-60', 'md:w-[300px]', 'md:min-h-24'];
+
+  const radioGroupCss = [optionContainerCss, 'justify-center', parentCss];
+
+  const checkboxGroupCss = [optionContainerCss, 'justify-center', parentCss];
 
   switch (question.type) {
     case 'radio':
       return (
-        <div className={mergeCss(parentCss)}>
+        <div className={mergeCss(radioGroupCss)}>
           {question.options.map((option) => {
             const selected = optionSelected(option);
 
             return (
-              <button
+              <SurveyRadio
+                className={mergeCss(optionCss)}
                 key={option.optionId}
-                onClick={() =>
+                name={option.optionId}
+                label={option.label}
+                selected={selected}
+                onChange={() => {
                   onAnswer({
                     questionId: question.id,
                     result: option.optionId,
-                  })
-                }
-                className={`${optionCss} ${selected ? 'border-red-500' : ''}`}
-              >
-                {option.label}
-              </button>
+                  });
+                }}
+              />
             );
           })}
         </div>
       );
-    case 'checkbox':
+    case 'checkbox': {
       const options = question.options.map((option) => {
         return {
           label: option.label,
@@ -71,15 +85,16 @@ export function QuestionForm(props: IProps) {
       });
 
       return (
-        <div className={mergeCss(parentCss)}>
-          <CheckboxGroup
-            options={options}
-            values={answer as string[]}
-            onChange={onCheckboxChange}
-            CheckboxComponent={Checkbox}
-          />
-        </div>
+        <CheckboxGroup
+          className={mergeCss(checkboxGroupCss)}
+          options={options}
+          values={answer as string[]}
+          onChange={onCheckboxChange}
+          CheckboxComponent={Checkbox}
+          checkboxCss={mergeCss(optionCss)}
+        />
       );
+    }
 
     default:
   }
