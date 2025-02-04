@@ -1,9 +1,13 @@
+import uuid
 from typing import Any, Optional
 
 import time_machine
+from accounts.models import PermissionGroupTemplate, User
+from accounts.tests.baker_recipes import permission_group_recipe
 from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
+from model_bakery import baker
 from notes.enums import (
     DueByGroupEnum,
     NoteNamespaceEnum,
@@ -191,31 +195,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
         self.assertFalse(note_differences)
 
-    def test_interaction_author(self) -> None:
-        query = """
-            query ViewInteractionAuthor($id: ID!) {
-                interactionAuthor(pk: $id) {
-                    firstName
-                    lastName
-                    middleName
-                }
-            }
-        """
-
-        response = self.execute_graphql(query, variables={"id": 3})
-
-        self.assertFalse(response["data"] is None, f"Data is None: {response}")
-        self.assertEqual(
-            "Carolyn",
-            response["data"]["interactionAuthor"]["firstName"],
-            f"{response["data"]["interactionAuthor"]["firstName"]} is not Carolyn",
-        )
-
-        self.graphql_client.logout()
-
-        response = self.execute_graphql(query, variables={"id": 3})
-        self.assertTrue(response["data"] is None, f"There are more than 0 results: {response}")
-
     def test_interaction_authors(self) -> None:
         query = """
             query ViewInteractionAuthors {
@@ -230,16 +209,30 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 }
             }
         """
+
+        test_user_map = {
+            "test_new_interaction_author": baker.make(User, username=f"test_new_interaction_author_{uuid.uuid4()}")
+        }
+
+        test_new_interaction_author = test_user_map["test_new_interaction_author"]
+        test_new_interaction_author.first_name = "Wanda"
+        test_new_interaction_author.last_name = "Maximoff"
+        test_new_interaction_author.middle_name = "J."
+        test_new_interaction_author.save()
+
+        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")
+        perm_group = permission_group_recipe.make(template=caseworker_permission_group_template)
+        perm_group.organization.add_user(test_new_interaction_author)
+
         response = self.execute_graphql(query)
 
         self.assertFalse(response["data"] is None, f"Data is None: {response}")
 
-        self.graphql_client.logout()
+        firstNames = [result["firstName"] for result in response["data"]["interactionAuthors"]["results"]]
 
-        response = self.execute_graphql(query)
-        self.assertEqual(
-            response["data"]["interactionAuthors"]["totalCount"], 0, f"There are more than 0 results: {response}"
-        )
+        self.assertTrue("Wanda" in firstNames)
+
+        self.assertFalse(self.client_user_1.first_name in firstNames)
 
     @parametrize(
         ("case_manager_label, client_label, is_submitted, expected_results_count, returned_note_labels"),

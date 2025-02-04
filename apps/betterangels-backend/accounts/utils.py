@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Union
 
 from accounts.groups import GroupTemplateNames
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
@@ -48,7 +48,7 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
     return permission_group
 
 
-def get_outreach_authorized_users(user_id: Optional[int] = None) -> Union[User, QuerySet[User]]:
+def get_outreach_authorized_users() -> Union[User, QuerySet[User]]:
     authorized_permission_groups = [template.value for template in GroupTemplateNames]
 
     # Subquery to check if the user has any related permission group in an authorized group
@@ -59,9 +59,5 @@ def get_outreach_authorized_users(user_id: Optional[int] = None) -> Union[User, 
 
     # Use Exists to avoid duplicate users without `distinct()`
     outreach_authorized_users = User.objects.filter(Exists(permission_group_exists))
-
-    if user_id:
-        return outreach_authorized_users.get(pk=user_id)
-    # outreach_authorized_users = list(outreach_authorized_users)
 
     return outreach_authorized_users
