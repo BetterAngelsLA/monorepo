@@ -1,88 +1,44 @@
-import { useQuery } from '@tanstack/react-query';
-
-import { surveyConfig } from '../../../pages/introduction/firesSurvey/config/config';
-import { fetchAllAlertsAndResourcesByTagsFn } from '../../clients/sanityCms/queries/fetchAllAlertsAndResourcesByTagsFn';
+// SurveyResults.tsx
+import { TResource } from '../../clients/sanityCms/types';
 import { mergeCss } from '../../utils/styles/mergeCss';
-import { TAnswer, TOption, TSurveyResults } from '../survey/types';
-import { getAllQuestions } from '../survey/utils/validateConfig';
 import { SurveyResources } from '../surveyResources/SurveyResources';
-
-const allQestions = getAllQuestions(surveyConfig);
-
-function findQuestionById(id: string) {
-  return allQestions.find((q) => q.id === id);
-}
-
-function getAnswerTags(answer: TAnswer, answerOptions: TOption[]): string[] {
-  const answerTags: string[] = [];
-
-  let results = answer.result;
-
-  if (typeof results === 'string') {
-    results = [results];
-  }
-
-  for (const result of results) {
-    const resultOption = answerOptions.find((o) => o.optionId === result);
-
-    if (!resultOption) {
-      continue;
-    }
-
-    const optionTags = resultOption.tags || [];
-
-    for (const tag of optionTags) {
-      answerTags.push(tag);
-    }
-  }
-
-  return answerTags;
-}
-
-function getTags(answers: TAnswer[]): string[] {
-  const tags: string[] = [];
-
-  for (const answer of answers) {
-    const questionAnswered = findQuestionById(answer.questionId);
-
-    if (!questionAnswered?.options) {
-      continue;
-    }
-
-    const answerTags = getAnswerTags(answer, questionAnswered?.options);
-
-    for (const answerTag of answerTags) {
-      tags.push(answerTag);
-    }
-  }
-
-  return tags;
-}
 
 type IProps = {
   className?: string;
-  results: TSurveyResults;
+  resources: TResource[]; // the fetched resources
+  isLoading: boolean;
+  isError: boolean;
+  error: any;
 };
 
-export function SurveyResults(props: IProps) {
-  const { results, className } = props;
-
-  const { answers = [] } = results;
-
-  const queryTags = getTags(answers);
-
-  const { isLoading, isError, data, error } = useQuery({
-    queryKey: queryTags,
-    queryFn: () => fetchAllAlertsAndResourcesByTagsFn(queryTags),
-    refetchOnWindowFocus: false,
-    retry: 1,
-  });
-
+export function SurveyResults({
+  className,
+  resources,
+  isLoading,
+  isError,
+  error,
+}: IProps) {
   const parentCss = [className];
+
+  if (isLoading) {
+    return <div className={mergeCss(parentCss)}>Loading...</div>;
+  }
+
+  if (isError) {
+    return (
+      <div className={mergeCss(parentCss)}>
+        Error: {error?.message || 'An error occurred'}
+      </div>
+    );
+  }
 
   return (
     <div className={mergeCss(parentCss)}>
-      {!!data?.length && <SurveyResources resources={data} />}
+      {resources && resources.length > 0 ? (
+        <SurveyResources resources={resources} />
+      ) : (
+        <p>No resources found.</p>
+      )}
     </div>
   );
 }

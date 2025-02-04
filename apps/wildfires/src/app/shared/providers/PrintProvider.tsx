@@ -14,8 +14,16 @@ interface PrintContextType {
 
 const PrintContext = createContext<PrintContextType | undefined>(undefined);
 
-export function PrintProvider({ children }: { children: ReactNode }) {
-  const [isPrinting, setIsPrinting] = useState(false);
+interface PrintProviderProps {
+  children: ReactNode;
+  initialIsPrinting?: boolean; // Optional prop for an initial value
+}
+
+export function PrintProvider({
+  children,
+  initialIsPrinting = false, // default to false if not provided
+}: PrintProviderProps) {
+  const [isPrinting, setIsPrinting] = useState(initialIsPrinting);
 
   const setPrinting = useCallback((value: boolean) => {
     setIsPrinting(value);
