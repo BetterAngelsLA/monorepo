@@ -8,6 +8,7 @@ import {
 import { WarningIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
+  TextBold,
   TextButton,
   TextMedium,
   TextRegular,
@@ -32,26 +33,18 @@ export default function Welcome() {
           </TextMedium>
 
           <View style={{ marginBottom: 16 }}>
-            <TextRegular
-              textAlign="center"
-              size="xs"
-              style={{ fontWeight: 'bold' }}
-            >
+            <TextBold textAlign="center" size="xs">
               User ID:{' '}
               <TextRegular textAlign="center" size="xs">
                 {user?.id}
               </TextRegular>
-            </TextRegular>
-            <TextRegular
-              textAlign="center"
-              size="xs"
-              style={{ fontWeight: 'bold' }}
-            >
+            </TextBold>
+            <TextBold textAlign="center" size="xs">
               User Email:{' '}
               <TextRegular textAlign="center" size="xs">
                 {user?.email}
               </TextRegular>
-            </TextRegular>
+            </TextBold>
           </View>
 
           <TextRegular textAlign="center" size="sm" mb="xl">
