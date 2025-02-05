@@ -3,10 +3,9 @@ import { getItem, setItem } from '@monorepo/expo/shared/utils';
 import { CSRF_COOKIE_NAME } from './constants';
 
 class CSRFTokenManager {
-  private currentToken: string | null = null;
+  private currentTokens = new Map<string, string>();
   private inProgress = new Map<string, Promise<string | null>>();
 
-  // Compute a storage key based on the API URL.
   private getKey(apiUrl: string): string {
     try {
       const origin = new URL(apiUrl).origin.replace(/[^a-zA-Z0-9]/g, '_');
@@ -19,22 +18,21 @@ class CSRFTokenManager {
   async getToken(apiUrl: string, customFetch = fetch): Promise<string | null> {
     const key = this.getKey(apiUrl);
 
-    // Check the in‑memory cache first.
-    if (this.currentToken) return this.currentToken;
+    // Check the in-memory cache first.
+    const cached = this.currentTokens.get(key);
+    if (cached) return cached;
 
     // Then try AsyncStorage.
     const stored = await getItem(key);
     if (stored) {
-      this.currentToken = stored;
+      this.currentTokens.set(key, stored);
       return stored;
     }
 
-    // If a request is already in progress, return its promise.
+    // If a request is already in progress for this key, return its promise.
     if (this.inProgress.has(key)) {
       const pending = this.inProgress.get(key);
-      if (pending !== undefined) {
-        return pending;
-      }
+      if (pending !== undefined) return pending;
     }
 
     // Otherwise, start a new request.
@@ -47,7 +45,7 @@ class CSRFTokenManager {
         );
         const token = match ? match[1] : null;
         if (token) {
-          this.currentToken = token;
+          this.currentTokens.set(key, token);
           await setItem(key, token);
         }
         return token;
@@ -68,14 +66,14 @@ class CSRFTokenManager {
     const match = cookies.match(new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`));
     if (match) {
       const token = match[1];
-      this.currentToken = token;
+      this.currentTokens.set(key, token);
       await setItem(key, token);
     }
   }
 
   async clearToken(apiUrl: string): Promise<void> {
     const key = this.getKey(apiUrl);
-    this.currentToken = null;
+    this.currentTokens.delete(key);
     await setItem(key, '');
   }
 }

@@ -25,11 +25,10 @@ const TEST_QUERY = gql`
 // Based on our manager's key-generation logic for "https://api.example.com"
 const expectedKey = `${CSRF_COOKIE_NAME}_https___api_example_com`;
 
-// A forward link that passes along the operation and includes the current context.
+// A terminal forward link that passes along the operation context.
 const mockForward = new ApolloLink(
   (operation) =>
     new ApolloObservable<FetchResult>((observer) => {
-      // For testing, return a response that includes the current operation context.
       observer.next({
         data: {},
         errors: [],
@@ -55,11 +54,8 @@ describe('csrfLink', () => {
   const apiUrl = 'https://api.example.com';
 
   beforeEach(async () => {
-    // Reset mocks.
     jest.resetAllMocks();
-    // Clear the manager's token.
     await csrfManager.clearToken(apiUrl);
-    // Clear mocks again so that the clearToken call isn't counted.
     jest.clearAllMocks();
   });
 
@@ -73,7 +69,6 @@ describe('csrfLink', () => {
       }),
     });
     const testLink = csrfLink(apiUrl, mockFetch);
-    // Compose the link chain so that forward is provided.
     const composedLink = ApolloLink.from([testLink, mockForward]);
     const result = execute(composedLink, { query: TEST_QUERY });
     await apolloObservableToPromise(result);
@@ -85,10 +80,9 @@ describe('csrfLink', () => {
       ok: true,
       status: 200,
       json: () => Promise.resolve({}),
-      headers: new Headers(), // no token from fetch
+      headers: new Headers(),
     });
     const testLink = csrfLink(apiUrl, mockFetch);
-    // Provide a response object in the context with headers.
     const op = {
       query: TEST_QUERY,
       context: {
@@ -110,7 +104,7 @@ describe('csrfLink', () => {
       ok: true,
       status: 200,
       json: () => Promise.resolve({}),
-      headers: new Headers(), // no token from fetch
+      headers: new Headers(),
     });
     const testLink = csrfLink(apiUrl, mockFetch);
     const op = {
@@ -132,7 +126,6 @@ describe('csrfLink', () => {
   });
 
   it('should not store CSRF token if Set-Cookie header is absent', async () => {
-    // Ensure getItem returns undefined so no token is already stored.
     (getItem as jest.Mock).mockResolvedValue(undefined);
     const mockFetch = jest.fn().mockResolvedValue({
       ok: true,
@@ -144,16 +137,13 @@ describe('csrfLink', () => {
     const composedLink = ApolloLink.from([testLink, mockForward]);
     const result = execute(composedLink, { query: TEST_QUERY });
     await apolloObservableToPromise(result);
-    // We expect no call to setItem since no token should be found.
     expect(setItem).not.toHaveBeenCalled();
   });
 
   it('should add CSRF token to request headers if available', async () => {
-    // Simulate that AsyncStorage already has the token.
     (getItem as jest.Mock).mockResolvedValue(TEST_CSRF_TOKEN_VALUE);
     const testLink = csrfLink(apiUrl);
     let capturedHeaders: Record<string, string> | undefined;
-    // Create a capturing link to record the headers set on the operation.
     const captureLink = new ApolloLink((operation, forward) => {
       capturedHeaders = operation.getContext()['headers'] as Record<
         string,
@@ -161,7 +151,6 @@ describe('csrfLink', () => {
       >;
       return forward(operation);
     });
-    // Place the capture link after the CSRF link.
     const composedLink = ApolloLink.from([testLink, captureLink, mockForward]);
     const result = execute(composedLink, { query: TEST_QUERY });
     await apolloObservableToPromise(result);
@@ -169,7 +158,6 @@ describe('csrfLink', () => {
   });
 
   it('should not add CSRF token to request headers if not available', async () => {
-    // Force getItem to return undefined.
     (getItem as jest.Mock).mockResolvedValue(undefined);
     const mockFetch = jest.fn().mockResolvedValue({
       ok: true,
