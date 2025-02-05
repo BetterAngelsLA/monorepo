@@ -202,7 +202,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             ("org_1_case_manager_1", "client_user_2", None, None, 0, []),  # CM 1 has no notes for client 2
             # CM 1 has one unsubmitted note for client 1
             ("org_1_case_manager_1", "client_user_1", None, False, 1, ["note"]),
-            (None, None, "org_2", True, 1, ["note_3"]),  # There is one submitted notes from org 2
+            (None, None, "org_2", True, 1, ["note_3"]),  # There is one submitted note from org 2
         ],
     )
     def test_notes_query_filter(
