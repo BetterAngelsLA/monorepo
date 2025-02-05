@@ -21,7 +21,7 @@ class CSRFTokenManager {
     const cached = this.currentTokens.get(key);
     if (cached) return cached;
 
-    // Then try AsyncStorage.
+    // Then try SecureStorage.
     const stored = await getItem(key);
     if (stored) {
       this.currentTokens.set(key, stored);
