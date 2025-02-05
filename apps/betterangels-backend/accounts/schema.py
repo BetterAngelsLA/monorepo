@@ -2,6 +2,7 @@ from typing import cast
 
 import strawberry
 import strawberry_django
+from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from accounts.services import send_magic_link
 from common.graphql.types import DeletedObjectType
@@ -34,7 +35,7 @@ class Query:
 
     @strawberry.field(extensions=[HasPerm(NotePermissions.ADD)])
     def available_organizations(self, info: Info) -> list[OrganizationType]:
-        return list(Organization.objects.filter(permission_groups__name__icontains="caseworker"))
+        return list(Organization.objects.filter(permission_groups__name__icontains=GroupTemplateNames.CASEWORKER))
 
 
 @strawberry.type

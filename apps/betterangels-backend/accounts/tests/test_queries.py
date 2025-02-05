@@ -1,3 +1,4 @@
+from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
@@ -145,7 +146,7 @@ class AvailableOrganizationGraphQLTests(GraphQLBaseTestCase):
         permission_group_recipe.make(name="Caseworker")
 
         expected_organization_count = Organization.objects.filter(
-            permission_groups__name__icontains="caseworker"
+            permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
         ).count()
 
         query = """
