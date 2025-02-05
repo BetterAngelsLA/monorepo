@@ -43,7 +43,7 @@ export default function Interactions() {
       filters: {
         createdBy: user?.id,
         search: filterSearch,
-        teams: filters.teams.map((item) => item.id),
+        teams: filters.teams.length ? filters.teams.map((item) => item.id) : null,
       },
     },
     fetchPolicy: 'cache-and-network',
@@ -110,6 +110,11 @@ export default function Interactions() {
     // TODO: @mikefeldberg - this is a temporary solution until backend provides a way to know if there are more notes
     setHasMore(isMoreAvailable);
   }, [data, offset]);
+
+  const updateFilters = (newFilters: TFilters) => {
+    setFilters(newFilters);
+    setOffset(0);
+  };
 
   if (error) throw new Error('Something went wrong!');
 
