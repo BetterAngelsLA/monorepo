@@ -44,7 +44,7 @@ export function SelectButton(props: ISelectButtonProps) {
     >
       <TextRegular color={textColor}>{computedLabel}</TextRegular>
       <BaseContainer mx="xs" my="xxs">
-        <ChevronLeftIcon color="white" size="sm" rotate="-90deg" />
+        <ChevronLeftIcon color={textColor} size="sm" rotate="-90deg" />
       </BaseContainer>
     </Pressable>
   );
