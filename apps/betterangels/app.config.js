@@ -129,6 +129,12 @@ export default {
             'Allow $(PRODUCT_NAME) to use your location to log where client interactions take place.',
         },
       ],
+      [
+        'expo-document-picker',
+        {
+          iCloudContainerEnvironment: 'Production',
+        },
+      ],
     ],
     extra: {
       router: {
