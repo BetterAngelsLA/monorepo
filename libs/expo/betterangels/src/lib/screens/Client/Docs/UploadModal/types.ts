@@ -9,6 +9,7 @@ export interface IUploadSectionProps {
   onSubmit: () => void;
   children: ReactNode;
   loading?: boolean;
+  disabled?: boolean;
 }
 
 export interface IUploadModalProps {

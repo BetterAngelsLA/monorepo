@@ -11,6 +11,8 @@ import Camera from '../Camera';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
+const PDF_MIME_TYPE = 'application/pdf';
+
 interface IMediaPickerModalProps {
   onCapture: (file: ReactNativeFile) => void;
   setModalVisible: (isModalVisible: boolean) => void;
@@ -35,33 +37,32 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
     setModalVisible(false);
   };
 
-  const getDocuments = async () => {
+  const pickDocuments = async () => {
     try {
-      // DocumentPicker.DocumentPickerResult
-      // canceled: false;
-      // /**
-      //  * An array of picked assets.
-      //  */
-      // assets: DocumentPickerAsset[];
-      // /**
-      //  * `FileList` object for the parity with web File API.
-      //  * @platform web
-      //  */
-      // output?: FileList;
-
-      // const result: DocumentPicker.DocumentPickerResult =
       const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*', // Adjust file type if necessary (e.g., 'application/pdf' for PDFs)
+        type: PDF_MIME_TYPE,
       });
 
-      if (!result.canceled) {
-        // Handle the selected file here
-        const file = result.assets[0]; // Get the first selected file (if multiple are allowed)
-        console.log('File URI: ', file.uri);
-        console.log('File name: ', file.name);
-      } else {
-        console.log('User canceled the document picker');
+      const { canceled, assets } = result;
+
+      if (canceled || !assets?.length) {
+        return;
       }
+
+      const uploadPromises = assets.map(async (asset) => {
+        const file = new ReactNativeFile({
+          uri: asset.uri,
+          name: asset.name || Date.now().toString(),
+          type: asset.mimeType || PDF_MIME_TYPE,
+        });
+
+        return file;
+      });
+
+      const uploadedFiles = await Promise.all(uploadPromises);
+
+      setFiles(uploadedFiles);
+      setModalVisible(false);
     } catch (error) {
       console.error('DocumentPicker Error: ', error);
     }
@@ -164,7 +165,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               <TextRegular color={Colors.PRIMARY}>Take Photo</TextRegular>
             </Pressable>
             <Pressable
-              onPress={getDocuments}
+              onPress={pickDocuments}
               style={{
                 padding: Spacings.sm,
                 alignItems: 'center',
