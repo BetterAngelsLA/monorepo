@@ -43,7 +43,9 @@ export default function Interactions() {
       filters: {
         createdBy: user?.id,
         search: filterSearch,
-        teams: filters.teams.length ? filters.teams.map((item) => item.id) : null,
+        teams: filters.teams.length
+          ? filters.teams.map((item) => item.id)
+          : null,
       },
     },
     fetchPolicy: 'cache-and-network',
@@ -125,7 +127,7 @@ export default function Interactions() {
         search={search}
         setSearch={onChange}
       />
-      <InteractionsFilters filters={filters} setFilters={setFilters} />
+      <InteractionsFilters filters={filters} setFilters={updateFilters} />
       <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       {search && !loading && notes.length < 1 && (
         <View
