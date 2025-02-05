@@ -104,7 +104,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
             flex: 1,
           }}
         >
-          <TextBold size="lg">Write Public Note</TextBold>
+          <TextBold size="lg">Write Note</TextBold>
           {autoNote !== publicNote && (
             <View
               style={{
