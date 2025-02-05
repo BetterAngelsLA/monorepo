@@ -1,9 +1,13 @@
+import uuid
 from typing import Any, Optional
 
 import time_machine
+from accounts.models import PermissionGroupTemplate, User
+from accounts.tests.baker_recipes import permission_group_recipe
 from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
+from model_bakery import baker
 from notes.enums import (
     DueByGroupEnum,
     NoteNamespaceEnum,
@@ -190,6 +194,45 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         # TODO: Add more validations once sort is implemented
         note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
         self.assertFalse(note_differences)
+
+    def test_interaction_authors(self) -> None:
+        query = """
+            query ViewInteractionAuthors {
+                interactionAuthors {
+                    totalCount
+                    results {
+                        id
+                        firstName
+                        lastName
+                        middleName
+                    }
+                }
+            }
+        """
+
+        test_user_map = {
+            "test_new_interaction_author": baker.make(User, username=f"test_new_interaction_author_{uuid.uuid4()}")
+        }
+
+        test_new_interaction_author = test_user_map["test_new_interaction_author"]
+        test_new_interaction_author.first_name = "Wanda"
+        test_new_interaction_author.last_name = "Maximoff"
+        test_new_interaction_author.middle_name = "J."
+        test_new_interaction_author.save()
+
+        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")
+        perm_group = permission_group_recipe.make(template=caseworker_permission_group_template)
+        perm_group.organization.add_user(test_new_interaction_author)
+
+        response = self.execute_graphql(query)
+
+        self.assertFalse(response["data"] is None, f"Data is None: {response}")
+
+        firstNames = [result["firstName"] for result in response["data"]["interactionAuthors"]["results"]]
+
+        self.assertTrue("Wanda" in firstNames)
+
+        self.assertFalse(self.client_user_1.first_name in firstNames)
 
     @parametrize(
         ("case_manager_label, client_label, is_submitted, expected_results_count, returned_note_labels"),
