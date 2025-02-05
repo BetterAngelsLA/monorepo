@@ -10,7 +10,7 @@ import { RestLink } from 'apollo-link-rest';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import { Platform } from 'react-native';
 import { isReactNativeFileInstance } from './ReactNativeFile';
-import { csrfLink } from './links';
+import { requestAuthLink, responseInterceptor } from './links';
 
 /**
  * Creates an Apollo Client instance configured with the provided API URL.
@@ -38,7 +38,12 @@ export const createApolloClient = (
   });
 
   return new ApolloClient({
-    link: from([csrfLink(`${apiUrl}/admin/login/`), restLink, uploadLink]),
+    link: from([
+      requestAuthLink, // Sets CSRF header on outgoing requests
+      responseInterceptor, // Processes incoming responses
+      uploadLink, // Actual HTTP link
+      restLink, // REST API link
+    ]),
     cache: new InMemoryCache(),
   });
 };
