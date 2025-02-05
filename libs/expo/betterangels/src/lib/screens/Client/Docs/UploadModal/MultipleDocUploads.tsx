@@ -78,15 +78,6 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
     });
   };
 
-  const onFilenameClear = (index: number) => {
-    setDocs({
-      ...docs,
-      [docType]: docs[docType]?.map((file, i) =>
-        i === index ? { ...file, name: '' } : file
-      ),
-    });
-  };
-
   const onFilenameChange = (index: number, value: string) => {
     setDocs({
       ...docs,
@@ -96,9 +87,9 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
     });
   };
 
-  const uploadedDocs = (docs && docs[docType]) || [];
+  const docsToUpload = (docs && docs[docType]) || [];
 
-  const allDocsValid = uploadedDocs.every((file) => {
+  const allDocsValid = docsToUpload.every((file) => {
     return !!file.name && !!file.type && !!file.uri;
   });
 
@@ -106,7 +97,7 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
     <>
       <Section
         loading={loading}
-        disabled={!uploadedDocs.length || !allDocsValid}
+        disabled={!docsToUpload.length || !allDocsValid}
         title={title}
         onSubmit={uploadDocuments}
         onCancel={() => {
@@ -155,11 +146,10 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
           </Pressable>
         </View>
 
-        {uploadedDocs.length > 0 && (
+        {docsToUpload.length > 0 && (
           <UploadPreview
-            files={uploadedDocs}
+            files={docsToUpload}
             onRemoveFile={onRemoveFile}
-            onFilenameClear={onFilenameClear}
             onFilenameChange={onFilenameChange}
           />
         )}
