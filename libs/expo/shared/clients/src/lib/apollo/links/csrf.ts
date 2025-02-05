@@ -1,4 +1,3 @@
-// csrf.ts
 import { ApolloLink, FetchResult, Observable } from '@apollo/client';
 import { CSRF_HEADER_NAME } from './constants';
 import { csrfManager } from './csrf-manager';
@@ -20,10 +19,8 @@ export const csrfLink = (apiUrl: string, customFetch = fetch) => {
               },
             }));
 
-            // Forward the operation.
             forward(operation).subscribe({
               next: (response: FetchResult) => {
-                // Access context properties using bracket notation.
                 const context = operation.getContext();
                 const combinedCookies = [
                   context['response']?.headers?.get('set-cookie'),
@@ -34,7 +31,6 @@ export const csrfLink = (apiUrl: string, customFetch = fetch) => {
                   .filter(Boolean)
                   .join('; ');
 
-                // Update the token via the manager if new cookies are present.
                 csrfManager
                   .updateTokenFromCookies(apiUrl, combinedCookies)
                   .catch(console.error);

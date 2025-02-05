@@ -1,4 +1,3 @@
-// csrf-manager.ts
 import { getItem, setItem } from '@monorepo/expo/shared/utils';
 import { CSRF_COOKIE_NAME } from './constants';
 
