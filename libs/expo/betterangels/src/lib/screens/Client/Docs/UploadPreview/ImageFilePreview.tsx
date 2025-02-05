@@ -1,6 +1,9 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ImageThumbnailSizeDefault } from 'libs/expo/shared/static/src/lib/thumbnail';
+import {
+  Colors,
+  ImageThumbnailSizeDefault,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { Image, View } from 'react-native';
 import { TThumbnailSize } from '../UploadModal/types';
 import DeleteButton from './DeleteButton';
