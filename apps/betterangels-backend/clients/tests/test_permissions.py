@@ -266,14 +266,17 @@ class ClientDocumentPermessionTestCase(ClientProfileGraphQLBaseTestCase):
         query = """
             query ViewClientDocuments {
                 clientDocuments {
-                    id
+                    totalCount
+                    results {
+                        id
+                    }
                 }
             }
         """
         response = self.execute_graphql(query)
 
         if should_succeed:
-            returned_ids = {attachment["id"] for attachment in response["data"]["clientDocuments"]}
+            returned_ids = {attachment["id"] for attachment in response["data"]["clientDocuments"]["results"]}
             expected_ids = set(self.attachment_ids)
             self.assertSetEqual(
                 returned_ids,
@@ -281,7 +284,8 @@ class ClientDocumentPermessionTestCase(ClientProfileGraphQLBaseTestCase):
                 "Should return exactly the expected attachments for the user.",
             )
         else:
-            self.assertTrue(
-                len(response["data"]["clientDocuments"]) == 0,
+            self.assertEqual(
+                response["data"]["clientDocuments"]["totalCount"],
+                0,
                 "Should return an empty list for client documents.",
             )

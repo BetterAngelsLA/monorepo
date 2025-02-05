@@ -1219,8 +1219,7 @@ export enum PronounEnum {
 export type Query = {
   __typename?: 'Query';
   clientDocument: ClientDocumentType;
-  clientDocuments: Array<ClientDocumentType>;
-  clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
+  clientDocuments: ClientDocumentTypeOffsetPaginated;
   clientProfile: ClientProfileType;
   clientProfiles: Array<ClientProfileType>;
   clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
@@ -1246,11 +1245,6 @@ export type QueryClientDocumentArgs = {
 
 
 export type QueryClientDocumentsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryClientDocumentsPaginatedArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
