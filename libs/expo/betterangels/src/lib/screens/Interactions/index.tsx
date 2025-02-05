@@ -43,7 +43,9 @@ export default function Interactions() {
       filters: {
         createdBy: user?.id,
         search: filterSearch,
-        teams: filters.teams.length ? filters.teams.map((item) => item.id) : null,
+        teams: filters.teams.length
+          ? filters.teams.map((item) => item.id)
+          : null,
       },
     },
     fetchPolicy: 'cache-and-network',
@@ -66,6 +68,10 @@ export default function Interactions() {
       }, 500),
     []
   );
+
+  const onFiltersReset = () => {
+    setFilters({ teams: [] });
+  };
 
   const onChange = (e: string) => {
     setSearch(e);
@@ -116,7 +122,11 @@ export default function Interactions() {
 
   return (
     <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <InteractionsHeader search={search} setSearch={onChange} />
+      <InteractionsHeader
+        onFiltersReset={onFiltersReset}
+        search={search}
+        setSearch={onChange}
+      />
       <InteractionsFilters filters={filters} setFilters={updateFilters} />
       <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       {search && !loading && notes.length < 1 && (
