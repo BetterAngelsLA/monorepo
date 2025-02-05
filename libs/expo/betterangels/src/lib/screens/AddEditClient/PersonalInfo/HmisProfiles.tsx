@@ -16,13 +16,14 @@ import {
 } from '../../../apollo';
 import { enumDisplayHmisAgency } from '../../../static/enumDisplayMapping';
 
+const DEFAULT_AGENCY = HmisAgencyEnum.Lahsa;
+
 export default function HmisProfiles() {
   const {
     setValue,
     watch,
     control,
     formState: { errors },
-    resetField,
   } = useFormContext<UpdateClientProfileInput | CreateClientProfileInput>();
 
   const { fields, append, remove } = useFieldArray({
@@ -37,9 +38,13 @@ export default function HmisProfiles() {
     setValue('hmisProfiles', []);
   };
 
-  const onItemReset = (index: number) => {
-    resetField(`hmisProfiles.${index}.agency`);
-    resetField(`hmisProfiles.${index}.hmisId`);
+  const onItemClear = (index: number) => {
+    const updatedProfiles = [...hmisProfiles];
+    updatedProfiles[index] = {
+      agency: DEFAULT_AGENCY,
+      hmisId: '',
+    };
+    setValue('hmisProfiles', updatedProfiles);
   };
 
   return (
@@ -110,9 +115,9 @@ export default function HmisProfiles() {
             />
             <TextButton
               color={Colors.PRIMARY}
-              onPress={() => onItemReset(index)}
-              accessibilityHint="resets hmis profile"
-              title="Reset"
+              onPress={() => onItemClear(index)}
+              accessibilityHint="clears hmis profile"
+              title="Clear"
             />
           </View>
         </View>
@@ -122,7 +127,7 @@ export default function HmisProfiles() {
           color={Colors.PRIMARY}
           onPress={() =>
             append({
-              agency: HmisAgencyEnum.Lahsa,
+              agency: DEFAULT_AGENCY,
               hmisId: '',
             })
           }
