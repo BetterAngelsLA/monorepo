@@ -48,7 +48,8 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
     return permission_group
 
 
-def get_outreach_authorized_users() -> Union[User, QuerySet[User]]:
+def get_outreach_authorized_users() -> QuerySet[User]:
+    # TODO: Make unit test for this function
     authorized_permission_groups = [template.value for template in GroupTemplateNames]
 
     # Subquery to check if the user has any related permission group in an authorized group
@@ -58,6 +59,4 @@ def get_outreach_authorized_users() -> Union[User, QuerySet[User]]:
     )
 
     # Use Exists to avoid duplicate users without `distinct()`
-    outreach_authorized_users = User.objects.filter(Exists(permission_group_exists))
-
-    return outreach_authorized_users
+    return User.objects.filter(Exists(permission_group_exists))
