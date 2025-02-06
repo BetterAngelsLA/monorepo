@@ -230,23 +230,24 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(returned_author["middleName"], "J.")
 
     @parametrize(
-        ("case_manager_label, client_label, is_submitted, expected_results_count, returned_note_labels"),
+        ("case_manager_label, client_label, org_label, is_submitted, expected_results_count, returned_note_labels"),
         [
             # Filter by:
             # created by, client_label, and/or is_submitted
-            ("org_1_case_manager_1", None, None, 1, ["note"]),  # CM 1 created one note
-            ("org_1_case_manager_2", None, None, 2, ["note_2", "note_3"]),  # CM 2 created 2 notes
-            ("org_1_case_manager_2", None, False, 1, ["note_2"]),  # CM 2 has one unsubmitted note
-            ("org_1_case_manager_2", None, True, 1, ["note_3"]),  # CM 2 has one submitted note
-            ("org_1_case_manager_1", "client_user_2", None, 0, []),  # CM 1 has no notes for client 2
-            ("org_1_case_manager_1", "client_user_1", False, 1, ["note"]),  # CM 1 has one unsubmitted note for client 1
-            (None, None, False, 2, ["note", "note_2"]),  # There are two unsubmitted notes
+            ("org_1_case_manager_1", None, None, None, 1, ["note"]),  # CM 1 created one note
+            ("org_2_case_manager_1", None, None, True, 1, ["note_3"]),  # Org 2 CM 1 submitted 1 note
+            ("org_1_case_manager_2", None, None, False, 1, ["note_2"]),  # CM 2 has one unsubmitted note
+            ("org_1_case_manager_1", "client_user_2", None, None, 0, []),  # CM 1 has no notes for client 2
+            # CM 1 has one unsubmitted note for client 1
+            ("org_1_case_manager_1", "client_user_1", None, False, 1, ["note"]),
+            (None, None, "org_2", True, 1, ["note_3"]),  # There is one submitted note from org 2
         ],
     )
     def test_notes_query_filter(
         self,
         case_manager_label: Optional[str],
         client_label: Optional[str],
+        org_label: Optional[str],
         is_submitted: Optional[bool],
         expected_results_count: int,
         returned_note_labels: list[str],
@@ -256,6 +257,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.note_2 = self._create_note_fixture({"purpose": "Client 1's Note", "client": self.client_user_1.pk})[
             "data"
         ]["createNote"]
+        self.graphql_client.logout()
+        self.graphql_client.force_login(self.org_2_case_manager_1)
         self.note_3 = self._create_note_fixture({"purpose": "Client 2's Note", "client": self.client_user_2.pk})[
             "data"
         ]["createNote"]
@@ -284,6 +287,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         if client_label:
             filters["client"] = getattr(self, client_label).pk
+
+        if org_label:
+            filters["organization"] = getattr(self, org_label).pk
 
         if isinstance(is_submitted, bool):
             filters["isSubmitted"] = is_submitted

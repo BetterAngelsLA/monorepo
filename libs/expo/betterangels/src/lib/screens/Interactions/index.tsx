@@ -8,31 +8,53 @@ import {
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
-import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
+import {
+  NotesPaginatedQuery,
+  Ordering,
+  SelahTeamEnum,
+  useNotesPaginatedQuery,
+} from '../../apollo';
 import useUser from '../../hooks/user/useUser';
 import { MainContainer, NoteCard } from '../../ui-components';
+import InteractionsFilters from './InteractionsFilters/TeamsFilter';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
 
 const paginationLimit = 10;
 
+type TFilters = {
+  teams: { id: SelahTeamEnum; label: string }[];
+};
+
 export default function Interactions() {
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState('');
+  const [filters, setFilters] = useState<TFilters>({
+    teams: [],
+  });
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const { user } = useUser();
+  const [totalCount, setTotalCount] = useState<number>(0);
 
-  const { data, loading, error, refetch } = useNotesQuery({
+  const { data, loading, error, refetch } = useNotesPaginatedQuery({
     variables: {
-      pagination: { limit: paginationLimit + 1, offset: offset },
+      pagination: { limit: paginationLimit, offset: offset },
       order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
-      filters: { createdBy: user?.id, search: filterSearch },
+      filters: {
+        createdBy: user?.id,
+        search: filterSearch,
+        teams: filters.teams.length
+          ? filters.teams.map((item) => item.id)
+          : null,
+      },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const [notes, setNotes] = useState<NotesQuery['notes']>([]);
+  const [notes, setNotes] = useState<
+    NotesPaginatedQuery['notesPaginated']['results']
+  >([]);
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -50,9 +72,12 @@ export default function Interactions() {
     []
   );
 
+  const onFiltersReset = () => {
+    setFilters({ teams: [] });
+  };
+
   const onChange = (e: string) => {
     setSearch(e);
-
     debounceFetch(e);
   };
 
@@ -61,13 +86,13 @@ export default function Interactions() {
     setOffset(0);
     try {
       const response = await refetch({
-        pagination: { limit: paginationLimit + 1, offset: 0 },
+        pagination: { limit: paginationLimit, offset: 0 },
       });
-      const isMoreAvailable =
-        response.data &&
-        'notes' in response.data &&
-        response.data.notes.length > paginationLimit;
-      setHasMore(isMoreAvailable);
+      if (response.data && 'notesPaginated' in response.data) {
+        const { totalCount } = response.data.notesPaginated;
+        setTotalCount(totalCount);
+        setHasMore(paginationLimit < totalCount);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -75,27 +100,42 @@ export default function Interactions() {
   };
 
   useEffect(() => {
-    if (!data || !('notes' in data)) return;
-
-    const notesToShow = data.notes.slice(0, paginationLimit);
-    const isMoreAvailable = data.notes.length > notesToShow.length;
-
-    if (offset === 0) {
-      setNotes(notesToShow);
-    } else {
-      setNotes((prevNotes) => [...prevNotes, ...notesToShow]);
+    if (!data || !('notesPaginated' in data)) {
+      return;
     }
 
-    // TODO: @mikefeldberg - this is a temporary solution until backend provides a way to know if there are more notes
-    setHasMore(isMoreAvailable);
+    const { results, totalCount } = data.notesPaginated;
+    setTotalCount(totalCount);
+    if (offset === 0) {
+      setNotes(results);
+    } else {
+      setNotes((prevNotes) => [...prevNotes, ...results]);
+    }
+
+    setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
+
+  const updateFilters = (newFilters: TFilters) => {
+    setFilters(newFilters);
+    setOffset(0);
+  };
 
   if (error) throw new Error('Something went wrong!');
 
   return (
     <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <InteractionsHeader search={search} setSearch={onChange} />
-      <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
+      <InteractionsHeader
+        onFiltersReset={onFiltersReset}
+        search={search}
+        setSearch={onChange}
+      />
+      <InteractionsFilters filters={filters} setFilters={updateFilters} />
+      <InteractionsSorting
+        sort={sort}
+        setSort={setSort}
+        notes={notes}
+        totalCount={totalCount}
+      />
       {search && !loading && notes.length < 1 && (
         <View
           style={{

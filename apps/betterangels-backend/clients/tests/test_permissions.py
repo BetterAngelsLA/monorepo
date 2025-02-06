@@ -1,7 +1,9 @@
+from accounts.tests.baker_recipes import permission_group_recipe
 from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, LanguageEnum
 from clients.models import ClientProfile
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
 from common.models import Attachment
+from common.tests.utils import GraphQLBaseTestCase
 from django.test import override_settings
 from unittest_parametrize import parametrize
 
@@ -285,3 +287,35 @@ class ClientDocumentPermessionTestCase(ClientProfileGraphQLBaseTestCase):
                 len(response["data"]["clientDocuments"]) == 0,
                 "Should return an empty list for client documents.",
             )
+
+
+class OrganizationPermissionTestCase(GraphQLBaseTestCase):
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Case Manager should succeed
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_available_organizations_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        # This recipe creates an organization in the process. Including this here because even though
+        # Caseworker orgs are created elsewhere in the test suite, this test should be self-contained.
+        permission_group_recipe.make(name="Caseworker")
+
+        query = """
+            query {
+                availableOrganizations {
+                    id
+                    name
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        if should_succeed:
+            self.assertTrue(len(response["data"]["availableOrganizations"]) > 0)
+        else:
+            self.assertTrue(len(response["data"]["availableOrganizations"]) == 0)
