@@ -96,7 +96,7 @@ class Query:
         OffsetPaginated[InteractionAuthorType], extensions=[HasPerm(NotePermissions.ADD)]
     )
     def interaction_authors(self) -> QuerySet[User]:
-        return cast(QuerySet, get_outreach_authorized_users())
+        return get_outreach_authorized_users()
 
 
 @strawberry.type

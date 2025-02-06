@@ -291,7 +291,7 @@ class RevertNoteInput:
 
 @strawberry_django.type(User)
 class InteractionAuthorType:
-    id: ID  # type: ignore
+    id: ID
     first_name: auto
     last_name: auto
     middle_name: auto
