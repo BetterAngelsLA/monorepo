@@ -1,9 +1,12 @@
 from typing import Any, Optional
 
 import time_machine
+from accounts.models import User
+from accounts.tests.baker_recipes import permission_group_recipe
 from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
+from model_bakery import baker
 from notes.enums import (
     DueByGroupEnum,
     NoteNamespaceEnum,
@@ -190,6 +193,41 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         # TODO: Add more validations once sort is implemented
         note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
         self.assertFalse(note_differences)
+
+    def test_interaction_authors(self) -> None:
+        query = """
+            query ViewInteractionAuthors {
+                interactionAuthors {
+                    totalCount
+                    results {
+                        id
+                        firstName
+                        lastName
+                        middleName
+                    }
+                }
+            }
+        """
+
+        test_new_interaction_author = baker.make(
+            User,
+            first_name="Wanda",
+            last_name="Maximoff",
+            middle_name="J.",
+        )
+
+        perm_group = permission_group_recipe.make()
+        perm_group.organization.add_user(test_new_interaction_author)
+
+        response = self.execute_graphql(query)
+
+        self.assertFalse(response["data"] is None, f"Data is None: {response}")
+
+        results = response["data"]["interactionAuthors"]["results"]
+        returned_author: dict = next((u for u in results if u["id"] == str(test_new_interaction_author.pk)))
+        self.assertEqual(returned_author["firstName"], "Wanda")
+        self.assertEqual(returned_author["lastName"], "Maximoff")
+        self.assertEqual(returned_author["middleName"], "J.")
 
     @parametrize(
         ("case_manager_label, client_label, org_label, is_submitted, expected_results_count, returned_note_labels"),
