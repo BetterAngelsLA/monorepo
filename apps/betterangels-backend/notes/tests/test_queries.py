@@ -379,6 +379,72 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
 
     @parametrize(
+        ("name_search, expected_results_count, returned_authors"),
+        [
+            ("Maximoff", 1, ["test_new_interaction_author_2"]),  # Two notes have "deets" in public details
+            ("Pietro Maximoff", 0, None),  # One note has "deets" in public details and "coop" in client name
+            (
+                "Alex",
+                2,
+                ["test_new_interaction_author", "test_new_interaction_author_3"],
+            ),  # One note has "more" in public details
+        ],
+    )
+    def test_interaction_authors_filter(
+        self,
+        name_search: Optional[str],
+        expected_results_count: int,
+        returned_authors: Optional[list[str]],
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_2)
+
+        query = """
+            query InteractionAuthors($filters: InteractionAuthorFilter) {
+                interactionAuthors(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                        firstName
+                        lastName
+                        middleName
+                    }
+                }
+            }
+        """
+
+        test_user_map = {
+            "test_new_interaction_author": baker.make(User, first_name="Alexa", last_name="Danvers", middle_name="J."),
+            "test_new_client": baker.make(User, first_name="Alex", last_name="Johnson"),
+            "test_new_interaction_author_2": baker.make(
+                User, first_name="Wanda", last_name="Maximoff", middle_name="A."
+            ),
+            "test_new_interaction_author_3": baker.make(
+                User, first_name="Alexandria", last_name="Daniels", middle_name="M."
+            ),
+        }
+
+        test_new_interaction_author = test_user_map["test_new_interaction_author"]
+        test_new_interaction_author_2 = test_user_map["test_new_interaction_author_2"]
+        test_new_interaction_author_3 = test_user_map["test_new_interaction_author_3"]
+
+        perm_group = permission_group_recipe.make()
+        perm_group.organization.add_user(test_new_interaction_author)
+        perm_group.organization.add_user(test_new_interaction_author_2)
+        perm_group.organization.add_user(test_new_interaction_author_3)
+
+        filters: dict[str, Any] = {"generalNameSearch": name_search}
+
+        response = self.execute_graphql(query, variables={"filters": filters})
+
+        self.assertEqual(response["data"]["interactionAuthors"]["totalCount"], expected_results_count)
+        authors = response["data"]["interactionAuthors"]["results"]
+
+        if returned_authors:
+            authorIDs = set([int(u["id"]) for u in authors])
+            returned_authors_ids = set([test_user_map[u].pk for u in returned_authors])
+            self.assertEqual(authorIDs, returned_authors_ids, f"Not equal, {authorIDs, returned_authors_ids}")
+
+    @parametrize(
         ("search_terms, expected_results_count, returned_note_labels"),
         [
             ("deets", 2, ["note_2", "note_3"]),  # Two notes have "deets" in public details

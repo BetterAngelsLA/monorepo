@@ -290,6 +290,33 @@ class RevertNoteInput:
     revert_before_timestamp: datetime
 
 
+@strawberry_django.filters.filter(User)
+class InteractionAuthorFilter:
+    first_name: auto
+    last_name: auto
+    middle_name: auto
+
+    @strawberry_django.filter_field
+    def general_name_search(
+        self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str
+    ) -> Tuple[QuerySet[User], Q]:
+        if value is None:
+            return queryset, Q()
+
+        search_terms = value.split(" ")
+        query = Q()
+
+        for term in search_terms:
+            q_search = Q(Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(middle_name__icontains=term))
+
+            query &= q_search
+
+        return (
+            queryset.filter(query),
+            Q(),
+        )
+
+
 @strawberry_django.type(User)
 class InteractionAuthorType:
     id: ID

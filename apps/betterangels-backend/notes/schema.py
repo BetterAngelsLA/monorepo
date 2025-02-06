@@ -33,7 +33,7 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
-from .types import (  # InteractionAuthors,
+from .types import (
     AddNoteTaskInput,
     CreateNoteAttachmentInput,
     CreateNoteInput,
@@ -42,6 +42,7 @@ from .types import (  # InteractionAuthors,
     CreateNoteTaskInput,
     CreateServiceRequestInput,
     CreateTaskInput,
+    InteractionAuthorFilter,
     InteractionAuthorType,
     MoodType,
     NoteAttachmentType,
@@ -93,7 +94,9 @@ class Query:
     tasks: List[TaskType] = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
 
     @strawberry_django.offset_paginated(
-        OffsetPaginated[InteractionAuthorType], extensions=[HasPerm(NotePermissions.ADD)]
+        OffsetPaginated[InteractionAuthorType],
+        extensions=[HasPerm(NotePermissions.ADD)],
+        filters=InteractionAuthorFilter,
     )
     def interaction_authors(self) -> QuerySet[User]:
         return get_outreach_authorized_users()

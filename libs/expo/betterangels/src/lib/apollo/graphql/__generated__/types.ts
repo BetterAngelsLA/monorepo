@@ -704,6 +704,17 @@ export type ImmediateNeedType = {
   name?: Maybe<ImmediateNeedChoices>;
 };
 
+export type InteractionAuthorFilter = {
+  AND?: InputMaybe<InteractionAuthorFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<InteractionAuthorFilter>;
+  OR?: InputMaybe<InteractionAuthorFilter>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
+  generalNameSearch?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
+  middleName?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type InteractionAuthorType = {
   __typename?: 'InteractionAuthorType';
   firstName?: Maybe<Scalars['String']['output']>;
@@ -1295,6 +1306,7 @@ export type QueryClientProfilesPaginatedArgs = {
 
 
 export type QueryInteractionAuthorsArgs = {
+  filters?: InputMaybe<InteractionAuthorFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
