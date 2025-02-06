@@ -15,10 +15,11 @@ interface IInteractionsSortingProps {
   notes: NotesQuery['notes'] | undefined;
   sort: string;
   setSort: (sort: 'list' | 'location' | 'sort') => void;
+  totalCount: number;
 }
 
 export default function InteractionsSorting(props: IInteractionsSortingProps) {
-  const { notes, sort, setSort } = props;
+  const { notes, sort, setSort, totalCount } = props;
 
   function onSort(sorting: 'list' | 'location' | 'sort') {
     setSort(sorting);
@@ -33,9 +34,8 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
         justifyContent: 'space-between',
       }}
     >
-      <TextMedium size="lg">
-        {notes?.length} interaction
-        {notes?.length === 1 ? '' : 's'}
+      <TextMedium size="md">
+        Displaying {notes?.length} of {totalCount} interactions
       </TextMedium>
       {displayInteractionsSorting && (
         <View style={{ flexDirection: 'row', gap: Spacings.xs }}>

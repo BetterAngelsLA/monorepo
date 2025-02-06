@@ -1038,6 +1038,7 @@ export type NoteFilter = {
   client?: InputMaybe<Scalars['ID']['input']>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+  organization?: InputMaybe<Scalars['ID']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
@@ -1235,6 +1236,7 @@ export enum PronounEnum {
 
 export type Query = {
   __typename?: 'Query';
+  availableOrganizations: Array<OrganizationType>;
   clientDocument: ClientDocumentType;
   clientDocuments: Array<ClientDocumentType>;
   clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;

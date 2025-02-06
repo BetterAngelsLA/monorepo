@@ -22,10 +22,11 @@ interface IInteractionsSortingProps {
   sort: string;
   setSort: (sort: 'list' | 'location' | 'sort') => void;
   client: ClientProfileQuery | undefined;
+  totalCount: number;
 }
 
 export default function InteractionsSorting(props: IInteractionsSortingProps) {
-  const { notes, sort, setSort, client } = props;
+  const { notes, sort, setSort, client, totalCount } = props;
   const [createNote] = useCreateNoteMutation();
   const { showSnackbar } = useSnackbar();
   function onSort(sorting: 'list' | 'location' | 'sort') {
@@ -71,9 +72,8 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
         justifyContent: 'space-between',
       }}
     >
-      <TextMedium size="lg">
-        {notes?.length} interaction
-        {notes?.length === 1 ? '' : 's'}
+      <TextMedium size="md">
+        Displaying {notes?.length} of {totalCount} interactions
       </TextMedium>
       <IconButton
         onPress={() =>

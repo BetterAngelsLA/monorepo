@@ -841,6 +841,7 @@ input NoteFilter {
   client: ID
   createdBy: ID
   isSubmitted: Boolean
+  organization: ID
   AND: NoteFilter
   OR: NoteFilter
   NOT: NoteFilter
@@ -1009,6 +1010,7 @@ enum PronounEnum {
 
 type Query {
   currentUser: UserType!
+  availableOrganizations: [OrganizationType!]! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientProfilesPaginated(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
