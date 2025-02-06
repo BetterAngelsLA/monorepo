@@ -725,6 +725,7 @@ export enum LivingSituationEnum {
   Housing = 'HOUSING',
   OpenAir = 'OPEN_AIR',
   Other = 'OTHER',
+  Rv = 'RV',
   Shelter = 'SHELTER',
   Tent = 'TENT',
   Vehicle = 'VEHICLE'
