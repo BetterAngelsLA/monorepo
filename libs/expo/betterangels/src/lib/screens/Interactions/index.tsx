@@ -100,7 +100,9 @@ export default function Interactions() {
   };
 
   useEffect(() => {
-    if (!data || !('notesPaginated' in data)) return;
+    if (!data || !('notesPaginated' in data)) {
+      return;
+    }
 
     const { results, totalCount } = data.notesPaginated;
     setTotalCount(totalCount);
