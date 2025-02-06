@@ -13,25 +13,27 @@ import { FlatList, View } from 'react-native';
 import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
-  ClientProfilesQuery,
-  useClientProfilesQuery,
+  ClientProfilesPaginatedQuery,
+  useClientProfilesPaginatedQuery,
 } from './__generated__/ActiveClients.generated';
 
 const paginationLimit = 20;
 
 export default function Home({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] =
-    useState<ClientProfilesQuery['clientProfiles'][number]>();
+    useState<
+      ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
+    >();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [clients, setClients] = useState<ClientProfilesQuery['clientProfiles']>(
-    []
-  );
-  const { data, loading } = useClientProfilesQuery({
+  const [clients, setClients] = useState<
+    ClientProfilesPaginatedQuery['clientProfilesPaginated']['results']
+  >([]);
+  const { data, loading } = useClientProfilesPaginatedQuery({
     variables: {
       filters: { isActive: true },
-      pagination: { limit: paginationLimit + 1, offset: offset },
+      pagination: { limit: paginationLimit, offset: offset },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -53,18 +55,15 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfiles' in data)) return;
-
-    const clientsToShow = data.clientProfiles.slice(0, paginationLimit);
-    const isMoreAvailable = data.clientProfiles.length > clientsToShow.length;
-
+    if (!data || !('clientProfilesPaginated' in data)) return;
+    const { results, totalCount } = data.clientProfilesPaginated;
     if (offset === 0) {
-      setClients(clientsToShow);
+      setClients(results);
     } else {
-      setClients((prevClients) => [...prevClients, ...clientsToShow]);
+      setClients((prevClients) => [...prevClients, ...results]);
     }
 
-    setHasMore(isMoreAvailable);
+    setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
 
   return (
@@ -92,7 +91,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
             >
               <TextMedium size="lg">Active Clients</TextMedium>
               <TextButton
-                accessibilityHint="goes to all active clients list"
+                accessibilityHint="goes to all clients list"
                 color={Colors.PRIMARY}
                 fontSize="sm"
                 regular={true}
