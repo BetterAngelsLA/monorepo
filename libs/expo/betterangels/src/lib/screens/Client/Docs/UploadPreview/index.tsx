@@ -2,18 +2,19 @@ import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { BasicInput, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
+import { TThumbnailSize } from '../UploadModal/types';
 import FilePreview from './FilePreview';
 import ImageFilePreview from './ImageFilePreview';
 
 export interface IUploadPreview {
   files: ReactNativeFile[];
   onRemoveFile: (index: number) => void;
-  onFilenameClear: (index: number) => void;
   onFilenameChange: (index: number, value: string) => void;
+  thumbnailSize?: TThumbnailSize;
 }
 
 export default function UploadPreview(props: IUploadPreview) {
-  const { files, onRemoveFile, onFilenameClear, onFilenameChange } = props;
+  const { files, thumbnailSize, onRemoveFile, onFilenameChange } = props;
 
   let title = 'Uploaded file';
 
@@ -35,12 +36,17 @@ export default function UploadPreview(props: IUploadPreview) {
             {isImage && (
               <ImageFilePreview
                 file={file}
+                thumbnailSize={thumbnailSize}
                 onDelete={() => onRemoveFile(index)}
               />
             )}
 
             {!isImage && (
-              <FilePreview onDelete={() => onRemoveFile(index)} file={file} />
+              <FilePreview
+                file={file}
+                thumbnailSize={thumbnailSize}
+                onDelete={() => onRemoveFile(index)}
+              />
             )}
 
             <BasicInput
@@ -51,8 +57,8 @@ export default function UploadPreview(props: IUploadPreview) {
               errorMessage={
                 !file.name.trim() ? 'file name is required' : undefined
               }
-              onDelete={() => onFilenameClear(index)}
-              onChangeText={(e) => onFilenameChange(index, e)}
+              onDelete={() => onFilenameChange(index, '')}
+              onChangeText={(val) => onFilenameChange(index, val)}
             />
           </View>
         );
