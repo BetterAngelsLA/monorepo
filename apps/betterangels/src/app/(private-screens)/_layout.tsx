@@ -121,7 +121,7 @@ export default function PrivateLayout() {
       <Stack.Screen
         name="public-note"
         options={{
-          title: 'Public Note',
+          title: 'Note',
           headerTitleAlign: 'center',
           headerStyle: {
             backgroundColor: Colors.BRAND_DARK_BLUE,
