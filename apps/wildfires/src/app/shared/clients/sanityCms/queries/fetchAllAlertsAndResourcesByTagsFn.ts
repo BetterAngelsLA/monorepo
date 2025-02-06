@@ -1,11 +1,13 @@
 import { sanityClient } from '../sanityClient';
+import { TResource } from '../types';
+import { toTResources } from '../utils/toTResource';
 import { normalizeQueryString } from './utils/normalizeQueryString';
 
 const DEFAULT_QUERY = `*[_type == "resource" &&  (resourceType == "alert")]`;
 
 export const fetchAllAlertsAndResourcesByTagsFn = async (
   tags: string[]
-): Promise<any[]> => {
+): Promise<TResource[]> => {
   try {
     const queryParams = generateQueryParams(tags);
 
@@ -15,7 +17,7 @@ export const fetchAllAlertsAndResourcesByTagsFn = async (
       throw new Error('invalid response');
     }
 
-    return response;
+    return toTResources(response);
   } catch (error) {
     let errorMessage = 'Unknown error';
 

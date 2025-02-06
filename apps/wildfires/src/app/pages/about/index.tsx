@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { HorizontalLayout } from '../../layout/horizontalLayout';
 import ContactUs from '../../shared/components/contactUs/ContactUs';
 
@@ -7,9 +6,9 @@ export default function About() {
     <>
       <HorizontalLayout className="bg-brand-dark-blue">
         <div className="relative">
-          <div className="max-w-[62.5rem] mx-auto flex flex-col md:flex-row items-stretch min-h-[10vh] py-14 md:py-28">
+          <div className="max-w-[62.5rem] mx-auto flex flex-col md:flex-row items-stretch min-h-[10vh] md:py-28">
             <div className="bg-brand-dark-blue w-full md:w-[60%] py-14 flex items-center md:py-0">
-              <h1 className="border-l-[10px] border-brand-yellow font-light font-primary pl-4 md:pl-8 text-5xl md:text-[64px] text-white md:leading-[1.2] text-left md:whitespace-nowrap">
+              <h1 className="border-l-[10px] border-brand-yellow font-light font-primary pl-4 md:pl-8 text-5xl md:text-[58px] text-white md:leading-[1.2] text-left md:whitespace-nowrap">
                 <span className="block md:inline">About</span>{' '}
                 <span className="block md:inline">LA Disaster</span>{' '}
                 <span className="block md:inline">Relief Navigator</span>
@@ -32,10 +31,10 @@ export default function About() {
             including applying for federal, state, and local government
             assistance, making insurance claims, home damage remediation,
             temporary and permanent housing solutions, and other critical
-            services. The Navigator provides victims with a personalized action
-            plan based on their specific situation, making the recovery process
-            immediately actionable and helping our community to rebuild even
-            stronger.
+            services. The Navigator provides people impacted by the wildfires
+            with a personalized action plan based on their specific situation,
+            making the recovery process immediately actionable and helping our
+            community to rebuild even stronger.
           </p>
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
             Who We Are
@@ -90,10 +89,10 @@ export default function About() {
               management and expanded legal services, the Mayor’s Fund's We Are
               LA program has connected over 53,000 Angelenos to needed services
               and helped stabilize housing for more than 23,000 Angelenos at
-              risk of eviction and homelessness. The Mayor’s Fund, through their
-              hotline, is spearheading case management services to the Angelenos
-              severely economically impacted by the Wildfires - those at risk of
-              homelessness. The Hotline is a featured resource in the Navigator.
+              risk of eviction and homelessness. The Mayor's Fund, through their
+              hotline, is providing case management services to economically
+              impacted Angelenos at risk of eviction and homelessness, including
+              those impacted by the wildfires.
             </li>
           </ul>
           <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
@@ -133,51 +132,6 @@ export default function About() {
             has access to the support they need during times of crisis and
             beyond.
           </p>
-          <h2 className="text-2xl md:text-[40px] md:leading-[1.2] mb-6 md:mb-16 border-l-[10px] border-brand-sky-blue pl-4 md:pl-8 font-bold">
-            Credits
-          </h2>
-          <ul className="ml-6 mb-6 sm:mb-12 md:mb-16 text-xl leading-normal">
-            <li className="list-disc">
-              <Link
-                className="underline"
-                aria-label="navigate to home page"
-                to="/"
-              >
-                Home page
-              </Link>{' '}
-              hero image is adapted from{' '}
-              <a
-                aria-label="open flickr website in new tab"
-                className="underline"
-                href="https://www.flickr.com/photos/ashokbo/54261421534/in/photolist-2qETYbA-2kNzj2F-2mXEBxn-2oN42HP-2qEdefd-2nMJhxT-2goMkAV-2kZ8V3X-2qEPfUG-WYVFsq-MhoESM-2mXtpqN-2qEgQqq-2qEzaXM-2qEdUog-2qESLkA-2qG32rE-2qG8XrL-2qG8PLa-2qG9VVd-2qG3bQQ-2qG8Yzw-2j9ypPV-2qG9Poa-2qG32rz-2qG8pXA-2qG3UQw-2qGaBNV-2qGaC5B-2qG3UEr-2qG9FAk-2qG9FRF-2qG3UGq-2qG8q2y-2qG3UPj-2qG9FRA-25sLBSS-2qF3fC9-2qG3ULi-2qGaC2f-2qG8q9N-2qGpjA9-2kZPduC-2qEjwbr-2qEix7A-2jetVLQ-2qEhoZs-2qFeETQ-2qEnucj-2kZ4wW3/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                Palisades fire
-              </a>{' '}
-              by{' '}
-              <a
-                aria-label="open flickr website in new tab"
-                className="underline"
-                href="https://www.flickr.com/photos/ashokbo/54261421534"
-                target="_blank"
-                rel="noreferrer"
-              >
-                ashokbo
-              </a>
-              . Licensed under{' '}
-              <a
-                aria-label="open creative commons license in new tab"
-                className="underline"
-                href="https://creativecommons.org/licenses/by-nc/2.0/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                CC BY-NC 2.0
-              </a>
-              .
-            </li>
-          </ul>
         </div>
       </HorizontalLayout>
       <ContactUs />

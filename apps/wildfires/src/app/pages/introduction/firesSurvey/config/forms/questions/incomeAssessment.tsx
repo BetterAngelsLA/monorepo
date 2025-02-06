@@ -5,7 +5,7 @@ function IncomeByHouseholdTable() {
   return (
     <div className="flex justify-center">
       <Table
-        className="flex mt-12 md:mt-24 max-w-3xl"
+        className="flex mb-12 md:mb-24 max-w-3xl"
         headers={[
           'Household Size',
           'Monthly Gross Income Limit (Simplified)',
@@ -33,7 +33,7 @@ export const qIncomeAssessment: TQuestion = {
   title:
     'Based on your household size, is your income LESS or GREATER than the number in this chart?',
   subtitle:
-    "Please see the chart below and tell us if, for the number of people in your household, your household’s total pre-tax income (before the fires) was less or greater than the income amount listed in that row of the chart.",
+    'Please see the chart below and tell us if, for the number of people in your household, your household’s total pre-tax income (before the fires) was less or greater than the income amount listed in that row of the chart.',
   options: [
     {
       optionId: 'incomeLow',
@@ -50,5 +50,5 @@ export const qIncomeAssessment: TQuestion = {
   rules: {
     required: true,
   },
-  renderAfter: <IncomeByHouseholdTable />,
+  renderIn: <IncomeByHouseholdTable />,
 };

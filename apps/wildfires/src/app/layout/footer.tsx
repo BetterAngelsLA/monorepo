@@ -1,6 +1,11 @@
 import { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
 import BA_LOGO from '../../assets/images/ba-logo-blue-white.png';
+import {
+  aboutPagePath,
+  contactPagePath,
+  privacyPolicyPagePath,
+} from '../routes/routePaths';
 import { mergeCss } from '../shared/utils/styles/mergeCss';
 
 type IParams = {
@@ -37,11 +42,16 @@ export function Footer(props: IParams): ReactElement {
         </div>
         <div className="flex flex-col align-end gap-14 ml-4">
           <div className="flex flex-col md:flex-row gap-8 md:gap-10">
-            <Link aria-label="navigate to About page" to="/about">
+            <Link aria-label="navigate to About page" to={aboutPagePath}>
               About
             </Link>
-            <a aria-label="send us an email" href="mailto:wildfires@betterangels.la">Contact Us</a>
-            <Link aria-label="navigate to privacy policy" to="/privacy-policy">
+            <Link aria-label="navigate to Contact Us page" to={contactPagePath}>
+              Contact Us
+            </Link>
+            <Link
+              aria-label="navigate to privacy policy"
+              to={privacyPolicyPagePath}
+            >
               Privacy Policy
             </Link>
           </div>
