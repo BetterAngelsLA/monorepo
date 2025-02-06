@@ -60,7 +60,7 @@ export default function Interactions({
     setOffset(0);
     try {
       const response = await refetch({
-        pagination: { limit: paginationLimit + 1, offset: 0 },
+        pagination: { limit: paginationLimit, offset: 0 },
       });
       if (response.data && 'notesPaginated' in response.data) {
         const { totalCount } = response.data.notesPaginated;
