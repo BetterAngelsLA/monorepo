@@ -45,7 +45,9 @@ export default function Interactions() {
       filters: {
         // createdBy: filters.createdBy.map((item) => item.id),
         search: filterSearch,
-        teams: filters.teams.map((item) => item.id),
+        teams: filters.teams.length
+          ? filters.teams.map((item) => item.id)
+          : null,
       },
     },
     fetchPolicy: 'cache-and-network',
@@ -68,6 +70,10 @@ export default function Interactions() {
       }, 500),
     []
   );
+
+  const onFiltersReset = () => {
+    setFilters({ teams: [], createdBy: [] });
+  };
 
   const onChange = (e: string) => {
     setSearch(e);
@@ -109,12 +115,21 @@ export default function Interactions() {
     setHasMore(isMoreAvailable);
   }, [data, offset]);
 
+  const updateFilters = (newFilters: TFilters) => {
+    setFilters(newFilters);
+    setOffset(0);
+  };
+
   if (error) throw new Error('Something went wrong!');
 
   return (
     <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <InteractionsHeader search={search} setSearch={onChange} />
-      <InteractionsFilters filters={filters} setFilters={setFilters} />
+      <InteractionsHeader
+        onFiltersReset={onFiltersReset}
+        search={search}
+        setSearch={onChange}
+      />
+      <InteractionsFilters filters={filters} setFilters={updateFilters} />
       <InteractionsSorting sort={sort} setSort={setSort} notes={notes} />
       {search && !loading && notes.length < 1 && (
         <View
