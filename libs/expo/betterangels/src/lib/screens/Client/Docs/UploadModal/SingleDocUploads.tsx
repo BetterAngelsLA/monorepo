@@ -1,20 +1,19 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { PlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
+import { UploadIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
-  BasicInput,
-  IconButton,
   MediaPickerModal,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import { useSnackbar } from '../../../../hooks';
 import {
   ClientProfileDocument,
   useCreateClientDocumentMutation,
 } from '../../__generated__/Client.generated';
+import UploadPreview from '../UploadPreview';
 import Section from './UploadSection';
 import { ISingleDocUploadsProps } from './types';
 
@@ -35,14 +34,17 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
   });
 
   const uploadDocument = async () => {
-    if (!docs?.[docType] || !client) {
+    const document = docs?.[docType];
+
+    if (!document || !client) {
       return;
     }
+
     try {
       const fileToUpload = new ReactNativeFile({
-        uri: docs[docType]!.uri,
-        type: docs[docType]!.type,
-        name: docs[docType]!.name,
+        uri: document.uri,
+        type: document.type,
+        name: document.name,
       });
 
       await createDocument({
@@ -54,7 +56,6 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
           },
         },
       });
-      setTab(undefined);
     } catch (err) {
       console.error(`error uploading ${docType} forms: `, err);
 
@@ -63,19 +64,40 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
         type: 'error',
       });
     }
+
+    setTab(undefined);
   };
 
-  const onDelete = () => {
+  const onRemoveFile = (_idx: number) => {
     setDocs({
       ...docs,
       [docType]: undefined,
     });
   };
 
+  const onFilenameChange = (_idx: number, value: string) => {
+    setDocs({
+      ...docs,
+      [docType]: {
+        ...docs[docType],
+        name: value,
+      },
+    });
+  };
+
+  const documentToUpload = docs && docs[docType];
+
+  const documentValid =
+    !!documentToUpload &&
+    !!documentToUpload.name &&
+    !!documentToUpload.type &&
+    !!documentToUpload.uri;
+
   return (
     <>
       <Section
         loading={loading}
+        disabled={!documentValid}
         title={title}
         onSubmit={uploadDocument}
         onCancel={() => {
@@ -123,75 +145,14 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
             </View>
           </Pressable>
         </View>
-        {docs[docType] && (
-          <View style={{ paddingTop: Spacings.sm }}>
-            <TextBold mb="sm" size="md">
-              Uploaded Image
-            </TextBold>
-            <View style={{ marginBottom: Spacings.md }}>
-              <View
-                style={{
-                  position: 'relative',
-                  marginBottom: Spacings.sm,
-                  ...thumbnailSize,
-                }}
-              >
-                <IconButton
-                  borderColor="transparent"
-                  borderRadius={Radiuses.xxxl}
-                  onPress={() => onDelete()}
-                  style={{
-                    position: 'absolute',
-                    top: 5,
-                    right: 5,
-                    zIndex: 1000,
-                  }}
-                  variant="secondary"
-                  height="xs"
-                  width="xs"
-                  accessibilityLabel="delete"
-                  accessibilityHint="deletes the image"
-                >
-                  <PlusIcon size="sm" rotate="45deg" />
-                </IconButton>
-                <Image
-                  style={{
-                    ...thumbnailSize,
-                  }}
-                  source={{ uri: docs?.[docType]?.uri }}
-                  resizeMode="cover"
-                  accessibilityIgnoresInvertColors
-                />
-              </View>
-              <BasicInput
-                placeholder={'Enter a file name'}
-                label="File Name"
-                value={docs?.[docType]?.name}
-                onDelete={() =>
-                  setDocs({
-                    ...docs,
-                    [docType]: {
-                      ...docs[docType],
-                      name: '',
-                      uri: docs[docType]?.uri || '',
-                      type: docs[docType]?.type || '',
-                    },
-                  })
-                }
-                onChangeText={(e) =>
-                  setDocs({
-                    ...docs,
-                    [docType]: {
-                      ...docs[docType],
-                      name: e,
-                      uri: docs[docType]?.uri || '',
-                      type: docs[docType]?.type || '',
-                    },
-                  })
-                }
-              />
-            </View>
-          </View>
+
+        {documentToUpload && (
+          <UploadPreview
+            files={[documentToUpload]}
+            onRemoveFile={onRemoveFile}
+            onFilenameChange={onFilenameChange}
+            thumbnailSize={thumbnailSize}
+          />
         )}
       </Section>
       <MediaPickerModal

@@ -2,6 +2,7 @@ import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { Colors, Shadow, Spacings } from '@monorepo/expo/shared/static';
 import { resizeImage } from '@monorepo/expo/shared/utils';
 import { useCameraPermissions } from 'expo-camera';
+import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { Alert, Pressable, View } from 'react-native';
@@ -9,6 +10,8 @@ import Modal from 'react-native-modal';
 import Camera from '../Camera';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
+
+const PDF_MIME_TYPE = 'application/pdf';
 
 interface IMediaPickerModalProps {
   onCapture: (file: ReactNativeFile) => void;
@@ -32,6 +35,37 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
 
   const closeModal = () => {
     setModalVisible(false);
+  };
+
+  const pickDocuments = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: PDF_MIME_TYPE,
+      });
+
+      const { canceled, assets } = result;
+
+      if (canceled || !assets?.length) {
+        return;
+      }
+
+      const uploadPromises = assets.map(async (asset) => {
+        const file = new ReactNativeFile({
+          uri: asset.uri,
+          name: asset.name || Date.now().toString(),
+          type: asset.mimeType || PDF_MIME_TYPE,
+        });
+
+        return file;
+      });
+
+      const uploadedFiles = await Promise.all(uploadPromises);
+
+      setFiles(uploadedFiles);
+      setModalVisible(false);
+    } catch (error) {
+      console.error('DocumentPicker Error: ', error);
+    }
   };
 
   const getPermissionsAndOpenCamera = async () => {
@@ -129,6 +163,19 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               accessibilityHint="opens camera"
             >
               <TextRegular color={Colors.PRIMARY}>Take Photo</TextRegular>
+            </Pressable>
+            <Pressable
+              onPress={pickDocuments}
+              style={{
+                padding: Spacings.sm,
+                alignItems: 'center',
+                borderTopWidth: 0.5,
+                borderTopColor: Colors.NEUTRAL_LIGHT,
+              }}
+              accessibilityRole="button"
+              accessibilityHint="opens file library"
+            >
+              <TextRegular color={Colors.PRIMARY}>Upload PDF file</TextRegular>
             </Pressable>
           </View>
           <Pressable

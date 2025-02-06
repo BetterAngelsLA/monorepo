@@ -9,8 +9,23 @@ type TThumbnailSize = {
   width: number;
 };
 
+export const ImageThumbnailSizeDefault: TThumbnailSize = {
+  height: 395,
+  width: 236,
+};
+
+export const FileThumbnailSizeDefault: TThumbnailSize = {
+  height: 133,
+  width: 104,
+};
+
+export const IdThumbnailSize: TThumbnailSize = {
+  height: 86.5,
+  width: 129,
+};
+
 export const thumbnailSizes: Record<DocType, TThumbnailSize> = {
-  [DocType.BirthCertificate]: { height: 395, width: 236 },
-  [DocType.SocialSecurityCard]: { height: 86.5, width: 129 },
-  [DocType.PhotoId]: { height: 86.5, width: 129 },
+  [DocType.BirthCertificate]: ImageThumbnailSizeDefault,
+  [DocType.SocialSecurityCard]: IdThumbnailSize,
+  [DocType.PhotoId]: IdThumbnailSize,
 };
