@@ -16,6 +16,7 @@ Including another URLconf
 """
 
 import admin_async_upload.views
+from allauth.account.decorators import reauthentication_required
 from betterangels_backend import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -24,6 +25,9 @@ from django.views.generic.base import TemplateView
 from strawberry.django.views import GraphQLView
 
 from .schema import schema
+
+admin.autodiscover()
+admin.site.login = reauthentication_required(admin.site.login)
 
 urlpatterns = [
     path("", TemplateView.as_view(template_name="home.html"), name="home"),
