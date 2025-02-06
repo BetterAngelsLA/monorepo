@@ -1,6 +1,5 @@
 from typing import Type, cast
 
-from allauth.account.decorators import secure_admin_login
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
@@ -94,4 +93,3 @@ admin.site.unregister(OrganizationInvitation)
 admin.site.register(Organization, CustomOrganizationAdmin)
 admin.site.register(OrganizationUser, CustomOrganizationUserAdmin)
 admin.site.register(ExtendedOrganizationInvitation, ExtendedOrganizationInvitationAdmin)
-# admin.site.login = secure_admin_login(admin.site.login)
