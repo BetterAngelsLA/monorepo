@@ -48,8 +48,9 @@ export default function TeamsFilter(props: ITeamFilterProps) {
     setSelected(filters.teams);
     setIsModalVisible(true);
   };
+
   return (
-    <View>
+    <View style={{ marginBottom: Spacings.xl, alignItems: 'flex-start' }}>
       <SelectButton
         defaultLabel="All Teams"
         selected={filters.teams?.map((item) => item.label)}

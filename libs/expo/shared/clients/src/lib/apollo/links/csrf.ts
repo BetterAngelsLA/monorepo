@@ -1,37 +1,21 @@
 import { ApolloLink, FetchResult, Observable } from '@apollo/client';
-import { getItem, setItem } from '@monorepo/expo/shared/utils';
-import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from './constants';
+import { CSRF_HEADER_NAME } from './constants';
+import { csrfManager } from './csrf-manager';
 
-const csrfTokenRegex = new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`);
-
-const extractCsrfToken = async (apiUrl: string, customFetch = fetch) => {
-  let csrfToken = await getItem(CSRF_COOKIE_NAME);
-  if (!csrfToken) {
-    const response = await customFetch(apiUrl, { credentials: 'include' });
-    const cookies = response.headers?.get('Set-Cookie');
-    const match = cookies?.match(csrfTokenRegex);
-    if (match) {
-      csrfToken = match[1];
-      await setItem(CSRF_COOKIE_NAME, csrfToken);
-    }
-  }
-  return csrfToken;
-};
-
-const updateHeadersWithCsrf = (csrfToken: string | null) =>
-  csrfToken ? { [CSRF_HEADER_NAME]: csrfToken } : {};
-
-export const csrfLink = (apiUrl: string, customFetch = fetch) =>
-  new ApolloLink(
+export const csrfLink = (apiUrl: string, customFetch = fetch) => {
+  return new ApolloLink(
     (operation, forward) =>
       new Observable((observer) => {
-        const processOperation = async () => {
+        (async () => {
           try {
-            const csrfToken = await extractCsrfToken(apiUrl, customFetch);
+            // Retrieve (or fetch) the CSRF token via the centralized manager.
+            const csrfToken = await csrfManager.getToken(apiUrl, customFetch);
+
+            // Inject the token into the outgoing headers.
             operation.setContext(({ headers = {} }) => ({
               headers: {
                 ...headers,
-                ...updateHeadersWithCsrf(csrfToken),
+                ...(csrfToken ? { [CSRF_HEADER_NAME]: csrfToken } : {}),
               },
             }));
 
@@ -39,30 +23,28 @@ export const csrfLink = (apiUrl: string, customFetch = fetch) =>
               next: (response: FetchResult) => {
                 const context = operation.getContext();
                 const combinedCookies = [
-                  // Extract 'set-cookie' header from the GraphQL response if it exists
                   context['response']?.headers?.get('set-cookie'),
-                  // Extract 'set-cookie' headers from any REST responses and filter out any null or undefined values
-                  ...((context['restResponses'] as Response[]) || [])
-                    .map((res) => res?.headers.get('set-cookie'))
-                    .filter(Boolean),
+                  ...(context['restResponses'] || []).map((res: Response) =>
+                    res.headers.get('set-cookie')
+                  ),
                 ]
                   .filter(Boolean)
                   .join('; ');
 
-                const match = combinedCookies.match(csrfTokenRegex);
-                if (match) {
-                  setItem(CSRF_COOKIE_NAME, match[1]);
-                }
+                csrfManager
+                  .updateTokenFromCookies(apiUrl, combinedCookies)
+                  .catch(console.error);
+
                 observer.next(response);
               },
               error: observer.error.bind(observer),
               complete: observer.complete.bind(observer),
             });
-          } catch (err) {
-            console.error('Error in CSRF Apollo Link:', err);
-            observer.error(err);
+          } catch (error) {
+            console.error('CSRF link error:', error);
+            observer.error(error);
           }
-        };
-        processOperation();
+        })();
       })
   );
+};

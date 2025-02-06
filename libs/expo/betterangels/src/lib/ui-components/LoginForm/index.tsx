@@ -83,6 +83,7 @@ export default function LoginForm({
       }
     } catch (error) {
       setErrorMessage('Something went wrong. Please try again.');
+      switchEnvironment('production');
     }
     setIsLoading(false);
   };

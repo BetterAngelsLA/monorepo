@@ -122,6 +122,7 @@ class ServiceRequestAdmin(admin.ModelAdmin):
         "client__first_name",
         "client__last_name",
     )
+    readonly_fields = ("created_at",)
 
     @admin.display(description="Service")
     def service_name(self, obj: ServiceRequest) -> str:

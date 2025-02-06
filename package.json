@@ -9,15 +9,19 @@
     "server": "nx start betterangels-backend",
     "ba": "nx start betterangels",
     "ba:build-dev": "nx build betterangels --profile development",
-    "shelter": "nx serve shelter-web --port 8083"
+    "shelter": "nx serve shelter-web --port 8083",
+    "fires": "nx serve wildfires --port 8200"
   },
   "dependencies": {
     "@apollo/client": "^3.11.1",
     "@expo/metro-config": "~0.18.11",
     "@likashefqet/react-native-image-zoom": "^4.2.1",
+    "@portabletext/react": "^3.2.0",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-community/datetimepicker": "8.0.1",
     "@react-native-picker/picker": "2.7.5",
+    "@sanity/client": "^6.27.1",
+    "@tanstack/react-query": "^5.64.2",
     "@teovilla/react-native-web-maps": "^0.9.5",
     "@vis.gl/react-google-maps": "^1.4.2",
     "apollo-link-rest": "^0.9.0",
@@ -51,7 +55,9 @@
     "npm": "^10.9.2",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-ga4": "^2.1.0",
     "react-hook-form": "^7.52.1",
+    "react-mailchimp-subscribe": "^2.1.3",
     "react-native": "0.74.5",
     "react-native-gesture-handler": "~2.16.1",
     "react-native-keyboard-controller": "^1.13.0",
@@ -67,6 +73,8 @@
     "react-native-svg-transformer": "1.3.0",
     "react-native-web": "0.19.12",
     "react-router-dom": "6.11.2",
+    "react-to-print": "^3.0.5",
+    "remeda": "^2.20.0",
     "tailwind-merge": "^2.5.5",
     "tslib": "^2.3.0"
   },
@@ -115,6 +123,7 @@
     "@types/node": "18.19.14",
     "@types/react": "~18.2.79",
     "@types/react-dom": "~18.2.25",
+    "@types/react-mailchimp-subscribe": "^2.1.4",
     "@typescript-eslint/eslint-plugin": "7.17.0",
     "@typescript-eslint/parser": "7.17.0",
     "@vitejs/plugin-react": "^4.2.0",
@@ -153,7 +162,7 @@
     "typescript": "~5.3.3",
     "vite": "^5.0.0",
     "vite-plugin-svgr": "^4.3.0",
-    "vitest": "^1.3.1"
+    "vitest": "^1.6.1"
   },
   "resolutions": {
     "axios": ">=1.7.4",

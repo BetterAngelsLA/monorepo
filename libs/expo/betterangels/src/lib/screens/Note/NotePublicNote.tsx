@@ -11,7 +11,7 @@ export default function NotePublicNote({
   return (
     <View>
       <TextBold mb="xs" size="sm">
-        Public Note
+        Note
       </TextBold>
       <View
         style={{

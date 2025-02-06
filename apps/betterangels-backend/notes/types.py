@@ -172,6 +172,7 @@ class NoteFilter:
     client: Optional[ID]
     created_by: Optional[ID]
     is_submitted: auto
+    organization: Optional[ID]
 
     @strawberry_django.filter_field
     def search(
