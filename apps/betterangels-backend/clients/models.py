@@ -3,6 +3,7 @@ import uuid
 from typing import List, Optional
 
 from accounts.models import User
+from betterangels_backend import settings
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -205,3 +206,50 @@ class ClientHouseholdMember(models.Model):
             return self.gender_other
 
         return self.gender.label
+
+
+# Data Import #
+class ProfileDataImport(models.Model):
+    """
+    Model to track a client profile import job.
+    """
+
+    id = models.UUIDField(primary_key=True, editable=False)
+    imported_at = models.DateTimeField(auto_now_add=True)
+    source_file = models.CharField(max_length=255)
+    imported_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    notes = models.TextField(blank=True, default="")
+
+    def __str__(self) -> str:
+        return f"Profile Import {self.id} from {self.source_file} at {self.imported_at}"
+
+
+class ProfileImportRecord(models.Model):
+    """
+    Model to record each imported row (i.e. client profile) for a given ProfileDataImport job.
+    Stores the original CSV row (raw_data), the original CSV id (source_id),
+    and, if successfully imported, a link to the ClientProfile created via GraphQL.
+    """
+
+    import_job = models.ForeignKey(ProfileDataImport, on_delete=models.CASCADE, related_name="records")
+    source_id = models.CharField(max_length=255)  # Original CSV ID
+    client_profile = models.ForeignKey(
+        "clients.ClientProfile",  # Adjust this if your ClientProfile model is in a different app.
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    raw_data = models.JSONField()  # Stores the original CSV row data (as JSON)
+    success = models.BooleanField(default=False)
+    error_message = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("import_job", "source_id")]
+        indexes = [
+            models.Index(fields=["import_job", "success"]),
+        ]
+
+    def __str__(self) -> str:
+        status = "Success" if self.success else "Failed"
+        return f"Import Record {self.source_id} ({status})"
