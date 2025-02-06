@@ -14,8 +14,8 @@ import { Ordering } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
-  ClientProfilesQuery,
-  useClientProfilesQuery,
+  ClientProfilesPaginatedQuery,
+  useClientProfilesPaginatedQuery,
   useCreateNoteMutation,
 } from './__generated__/Clients.generated';
 
@@ -24,7 +24,7 @@ const paginationLimit = 20;
 interface IGroupedClients {
   [key: string]: {
     title: string;
-    data: ClientProfilesQuery['clientProfiles'];
+    data: ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'];
   };
 }
 
@@ -35,9 +35,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const [createNote] = useCreateNoteMutation();
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { data, loading } = useClientProfilesQuery({
+  const { data, loading } = useClientProfilesPaginatedQuery({
     variables: {
-      pagination: { limit: paginationLimit + 1, offset },
+      pagination: { limit: paginationLimit, offset },
       filters: {
         search: filterSearch,
       },
@@ -50,8 +50,11 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     nextFetchPolicy: 'cache-first',
   });
   const [clients, setClients] = useState<IGroupedClients>({});
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [currentClient, setCurrentClient] =
-    useState<ClientProfilesQuery['clientProfiles'][number]>();
+    useState<
+      ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
+    >();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const { showSnackbar } = useSnackbar();
 
@@ -116,27 +119,21 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfiles' in data)) return;
+    if (!data || !('clientProfilesPaginated' in data)) return;
+    const { results, totalCount } = data.clientProfilesPaginated;
 
-    const clientsToShow = data.clientProfiles.slice(0, paginationLimit);
-    const isMoreAvailable = data.clientProfiles.length > clientsToShow.length;
+    const groupedContacts = results.reduce((acc: IGroupedClients, client) => {
+      const firstLetter = client.user.firstName?.charAt(0).toUpperCase() || '#';
 
-    const groupedContacts = clientsToShow.reduce(
-      (acc: IGroupedClients, client) => {
-        const firstLetter =
-          client.user.firstName?.charAt(0).toUpperCase() || '#';
-
-        if (!acc[firstLetter]) {
-          acc[firstLetter] = {
-            title: firstLetter,
-            data: [],
-          };
-        }
-        acc[firstLetter].data.push(client);
-        return acc;
-      },
-      {}
-    );
+      if (!acc[firstLetter]) {
+        acc[firstLetter] = {
+          title: firstLetter,
+          data: [],
+        };
+      }
+      acc[firstLetter].data.push(client);
+      return acc;
+    }, {});
 
     setClients((prevClients) => {
       if (offset === 0) {
@@ -159,7 +156,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       return mergedClients;
     });
 
-    setHasMore(isMoreAvailable);
+    setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
 
   const sections = useMemo(() => Object.values(clients || {}), [clients]);
