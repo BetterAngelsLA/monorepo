@@ -2,15 +2,19 @@ from typing import cast
 
 import strawberry
 import strawberry_django
+from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from accounts.services import send_magic_link
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
+from notes.permissions import NotePermissions
+from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django import auth
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
+from strawberry_django.permissions import HasPerm
 from strawberry_django.utils.requests import get_request
 
 from .types import (
@@ -19,6 +23,7 @@ from .types import (
     LoginInput,
     MagicLinkInput,
     MagicLinkResponse,
+    OrganizationType,
     UpdateUserInput,
     UserType,
 )
@@ -27,6 +32,10 @@ from .types import (
 @strawberry.type
 class Query:
     current_user: UserType = auth.current_user()  # type: ignore
+
+    @strawberry.field(extensions=[HasPerm(NotePermissions.ADD)])
+    def available_organizations(self, info: Info) -> list[OrganizationType]:
+        return list(Organization.objects.filter(permission_groups__name__icontains=GroupTemplateNames.CASEWORKER))
 
 
 @strawberry.type

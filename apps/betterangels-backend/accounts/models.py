@@ -82,6 +82,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.full_name if self.full_name else self.pk}"
 
     @model_property
+    def has_name(self: "User") -> bool:
+        return any(
+            (
+                self.first_name,
+                self.last_name,
+                self.middle_name,
+                (getattr(self, "client_profile", None) and self.client_profile.nickname),
+            )
+        )
+
+    @model_property
     def full_name(self: "User") -> str:
         name_parts = filter(None, [self.first_name, self.middle_name, self.last_name])
         return " ".join(name_parts).strip()
@@ -101,6 +112,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         return PermissionGroup.objects.filter(
             organization__in=user_organizations, template__name__in=authorized_permission_groups
         ).exists()
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if self.email:
+            self.email = self.email.lower()
+
+        super().save(*args, **kwargs)
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):

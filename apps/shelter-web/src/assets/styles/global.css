@@ -4,12 +4,18 @@
 
 :root {
   --font-primary: 'Poppins', 'sans-serif';
+  --color-brand-yellow: #fff82e;
   --color-primary-20: #052b73;
+  --color-primary-60: #216af8;
+  --color-primary-95: #dae7ff;
   --color-steel-blue: #375c76;
   --color-neutral-40: #62676f;
   --color-neutral-70: #a8aeb8;
   --color-neutral-90: #d3d9e3;
   --color-neutral-98: #e8ecf2;
+  --color-neutral-99: #f4f6fd;
+  --color-success-30: #007934;
+  --color-success-90: #ddf8e8;
 }
 
 * {

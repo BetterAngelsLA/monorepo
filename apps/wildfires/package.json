@@ -1,0 +1,36 @@
+{
+  "name": "wildfires",
+  "version": "1.0.0",
+  "description": "resource finder app for LA wildfires",
+  "main": "src/index.tsx",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@testing-library/react": "*",
+    "react-router-dom": "*",
+    "@nx/react": "*",
+    "vite": "*",
+    "@vitejs/plugin-react": "*",
+    "@nx/vite": "*",
+    "react-native-svg": "*",
+    "react": "*",
+    "clsx": "*",
+    "tailwind-merge": "*",
+    "jotai": "*",
+    "react-dom": "*",
+    "react-to-print": "*",
+    "react-mailchimp-subscribe": "*",
+    "@tanstack/react-query": "*",
+    "@portabletext/react": "*",
+    "html2pdf.js": "*",
+    "react-ga4": "*",
+    "remeda": "*",
+    "@portabletext/types": "*",
+    "uuid": "*",
+    "@sanity/client": "*"
+  },
+  "devDependencies": {}
+}
