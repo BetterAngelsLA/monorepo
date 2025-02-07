@@ -90,24 +90,21 @@ export default function DocumentModal(props: IDocumentModalProps) {
     }
   };
 
+  const fileTypeText = getFileFileTypeText(document?.file.url);
+
   const ACTIONS = [
     {
-      title: 'View Image',
+      title: `View this ${fileTypeText}`,
       Icon: ViewIcon,
       route: `/file/${document?.id}`,
     },
-    // {
-    //   title: 'Edit this file',
-    //   Icon: PencilSolidIcon,
-    //   route: `/edit-image/${document?.id}`,
-    // },
     {
-      title: 'Download this file',
+      title: `Download this ${fileTypeText}`,
       Icon: DownloadIcon,
       onPress: downloadFile,
     },
     {
-      title: 'Delete this file',
+      title: `Delete this ${fileTypeText}`,
       Icon: DeleteIcon,
       onPress: handleDelete,
     },
@@ -123,4 +120,41 @@ export default function DocumentModal(props: IDocumentModalProps) {
       opacity={0.5}
     />
   );
+}
+
+type TFileType = 'image' | 'pdf' | 'other' | 'unknown' | null;
+
+const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff'];
+
+// TODO if DEV-1493 is ever implemented and document has a mimeType
+function getFileTypeFromExtension(url?: string): TFileType {
+  if (!url) {
+    return null;
+  }
+
+  const extension = url.split('.').pop()?.toLowerCase();
+
+  if (!extension) {
+    return 'unknown';
+  }
+
+  if (IMAGE_EXTENSIONS.includes(extension)) {
+    return 'image';
+  }
+
+  if (extension === 'pdf') {
+    return 'pdf';
+  }
+
+  return 'other';
+}
+
+function getFileFileTypeText(url?: string): string {
+  const fileType = getFileTypeFromExtension(url);
+
+  if (fileType === 'image') {
+    return 'image';
+  }
+
+  return 'file';
 }
