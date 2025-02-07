@@ -214,7 +214,7 @@ class ProfileDataImport(models.Model):
     Model to track a client profile import job.
     """
 
-    id = models.UUIDField(primary_key=True, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     imported_at = models.DateTimeField(auto_now_add=True)
     source_file = models.CharField(max_length=255)
     imported_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)

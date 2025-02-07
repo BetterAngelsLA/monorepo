@@ -2,128 +2,157 @@ import csv
 import json
 import logging
 from datetime import datetime
+from typing import Any, Dict, Optional, cast
 
 import requests
 from clients.models import ProfileDataImport, ProfileImportRecord
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
-from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
-# Set your GraphQL API endpoint here.
-GRAPHQL_URL = "http://localhost:8000/graphql/"
+# Endpoints
+GRAPHQL_URL: str = "http://localhost:8000/graphql"  # Adjust as needed
+REST_LOGIN_URL: str = "http://localhost:8000/rest-auth/login/"
 
-# ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-# Helper functions for data transformations
-# ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+# ---------------------------------------------------------------------
+# Helper functions for data transformations and enum normalization
+# ---------------------------------------------------------------------
 
-GENDER_MAP = {
-    "Cisgender Male": "MALE",
-    "Cisgender Female": "FEMALE",
-    # Add additional mappings as needed.
-}
-HAIR_COLOR_MAP = {
-    "Black": "BLACK",
-    "Brown": "BROWN",
-    "Blonde": "BLONDE",
-    "Gray": "GRAY",
-}
-RACE_MAP = {
-    "White": "WHITE",
-    "Black / African-American": "BLACK_AFRICAN_AMERICAN",
-    "Hispanic / Latino": "HISPANIC_LATINO",
-    "Asian": "ASIAN",
+# Gender mapping: Convert CSV (case‐insensitive) to GraphQL enum value.
+GENDER_MAP: Dict[str, str] = {
+    "cisgender male": "MALE",
+    "male": "MALE",
+    "cisgender female": "FEMALE",
+    "female": "FEMALE",
+    "non-binary": "NON_BINARY",
+    "transgender male": "MALE",  # adjust as needed
+    "transgender female": "FEMALE",  # adjust as needed
+    # Add any additional mappings if required.
 }
 
 
-def parse_date(date_str):
-    """
-    Attempt to parse a date in MM/DD/YYYY format.
-    Returns an ISO-format date string (YYYY-MM-DD) or None if invalid.
-    """
+# Hair color mapping: Map CSV variants to allowed enum keys.
+def map_hair_color(val: str) -> Optional[str]:
+    val = val.strip().lower()
+    if not val:
+        return None
+    mapping = {
+        "dark brown": "BROWN",
+        "light brown": "BROWN",
+        "salt/pepper": "BROWN",
+        "black": "BLACK",
+        "blonde": "BLONDE",
+        "gray": "GRAY",
+        "grey": "GRAY",
+        "red": "RED",
+        "white": "WHITE",
+        "bald": "BALD",
+        "other": "OTHER",
+        # You may add additional variants (for example, "auburn" if needed)
+    }
+    return mapping.get(val, val.upper())
+
+
+# Race mapping: Map CSV (after lowercasing and trimming) to GraphQL enum value.
+RACE_MAP: Dict[str, str] = {
+    "white": "WHITE_CAUCASIAN",
+    "black / african-american": "BLACK_AFRICAN_AMERICAN",
+    "hispanic / latino": "HISPANIC_LATINO",
+    "asian": "ASIAN",
+    "multi-racial / other": "OTHER",
+    # If your CSV sometimes uses "native hawaiian/pacific islander", add it:
+    "native hawaiian/pacific islander": "NATIVE_HAWAIIAN_PACIFIC_ISLANDER",
+}
+
+
+def map_language(val: str) -> Optional[str]:
+    # Convert CSV value to uppercase to match GraphQL enum (e.g., "English" -> "ENGLISH")
+    val = val.strip().upper()
+    return val if val else None
+
+
+def parse_date(date_str: str) -> Optional[str]:
     try:
-        # Skip values like "0/0/0000"
-        dt = datetime.strptime(date_str, "%m/%d/%Y")
+        dt: datetime = datetime.strptime(date_str, "%m/%d/%Y")
         return dt.date().isoformat()
     except Exception:
         return None
 
 
-def convert_height(height_str):
-    """
-    Converts a height string (e.g., "6'" or "5'11\"") into inches.
-    Returns an integer (inches) or None if conversion fails.
-    """
+def convert_height(height_str: str) -> Optional[int]:
     if not height_str:
         return None
     try:
         if "'" in height_str:
             parts = height_str.replace('"', "").split("'")
-            feet = int(parts[0].strip())
-            inches = int(parts[1].strip()) if len(parts) > 1 and parts[1].strip().isdigit() else 0
+            feet: int = int(parts[0].strip())
+            inches: int = int(parts[1].strip()) if len(parts) > 1 and parts[1].strip().isdigit() else 0
             return feet * 12 + inches
         else:
-            # If the field is already numeric (as string)
             return int(height_str)
     except Exception:
         return None
 
 
-# ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-# Management Command
-# ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+# ---------------------------------------------------------------------
+# Management Command with REST Auth and CSRF Handling
+# ---------------------------------------------------------------------
 
 
 class Command(BaseCommand):
-    help = "Import client profiles from a CSV file via GraphQL and track each imported profile."
+    help: str = "Import client profiles from a CSV file via GraphQL and track each imported profile."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: Any) -> None:
         parser.add_argument("csv_path", type=str, help="Path to the CSV file.")
-        parser.add_argument("--username", required=True, help="Username for GraphQL authentication.")
-        parser.add_argument("--password", required=True, help="Password for GraphQL authentication.")
+        parser.add_argument("--username", required=True, help="Username for REST auth login.")
+        parser.add_argument("--password", required=True, help="Password for REST auth login.")
 
-    def handle(self, *args, **options):
-        csv_path = options["csv_path"]
-        username = options["username"]
-        password = options["password"]
+    def handle(self, *args: Any, **options: Any) -> None:
+        csv_path: str = options["csv_path"]
+        username: str = options["username"]
+        password: str = options["password"]
 
-        # Authenticate via GraphQL to obtain a JWT token
-        token = self.authenticate(username, password)
-        if not token:
+        # Create a session to persist cookies (including CSRF)
+        self.session = requests.Session()
+        # GET the GraphQL URL to trigger CSRF cookie generation
+        get_response = self.session.get(GRAPHQL_URL)
+        self.stdout.write(f"Cookies after GET: {self.session.cookies.get_dict()}")
+
+        token: Optional[str] = self.authenticate(username, password)
+        if token is None:
             raise CommandError("Authentication failed. Please check your credentials.")
 
-        # Get the Django user instance for tracking the import job.
         User = get_user_model()
         try:
             user_instance = User.objects.get(username=username)
         except User.DoesNotExist:
             raise CommandError(f"User '{username}' does not exist.")
 
-        # Create a new ProfileDataImport record for this job.
-        import_job = ProfileDataImport.objects.create(
-            source_file=csv_path, imported_by=user_instance, notes="Client profile import via management command"
+        import_job: ProfileDataImport = ProfileDataImport.objects.create(
+            source_file=csv_path,
+            imported_by=user_instance,
+            notes="Client profile import via management command (REST auth login)",
         )
 
-        row_count = 0
+        row_count: int = 0
         with open(csv_path, "r", encoding="utf-8-sig") as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 row_count += 1
-                # Use the CSV 'id' field (or a fallback if missing) as the source_id.
-                source_id = row.get("id", f"row_{row_count}")
+                source_id: str = row.get("id", f"row_{row_count}")
                 try:
-                    input_data = self.build_input_data(row)
-                    result = self.create_client_profile(input_data, token)
+                    input_data: Dict[str, Any] = self.build_input_data(row)
+                    result: Dict[str, Any] = self.create_client_profile(input_data, token)
                     if "errors" in result:
-                        error_msg = json.dumps(result["errors"])
+                        error_msg: str = json.dumps(result["errors"])
                         raise Exception(f"GraphQL errors: {error_msg}")
-                    profile_data = result.get("data", {}).get("createClientProfile", {})
+                    # Extract profile data from the inline fragment.
+                    profile_data: Dict[str, Any] = result.get("data", {}).get("createClientProfile", {})
                     if not profile_data or "id" not in profile_data:
                         raise Exception("No profile ID returned from GraphQL.")
-                    client_profile_id = profile_data["id"]
+                    client_profile_id: str = profile_data["id"]
 
-                    # Record a successful import.
                     ProfileImportRecord.objects.create(
                         import_job=import_job,
                         source_id=source_id,
@@ -133,66 +162,78 @@ class Command(BaseCommand):
                     )
                     self.stdout.write(self.style.SUCCESS(f"Row {row_count} imported as profile ID {client_profile_id}"))
                 except Exception as e:
-                    # Record the failed import attempt.
                     ProfileImportRecord.objects.create(
-                        import_job=import_job, source_id=source_id, raw_data=row, success=False, error_message=str(e)
+                        import_job=import_job,
+                        source_id=source_id,
+                        raw_data=row,
+                        success=False,
+                        error_message=str(e),
                     )
                     self.stderr.write(self.style.ERROR(f"Failed row {row_count} (source_id: {source_id}): {str(e)}"))
 
         self.stdout.write(self.style.SUCCESS("Import job completed."))
 
-    def authenticate(self, username, password):
+    def authenticate(self, username: str, password: str) -> Optional[str]:
         """
-        Call the GraphQL login mutation and return the JWT token.
-        Adjust the mutation as needed for your authentication schema.
+        Call the REST auth login endpoint and return the token.
+        We assume the endpoint expects JSON with "username" and "password"
+        and returns a token under "key". If a 204 is returned, we assume session auth.
         """
-        query = """
-        mutation Login($email: String!, $password: String!) {
-            login(email: $email, password: $password) {
-                token
-            }
-        }
-        """
-        variables = {"email": username, "password": password}
-        response = requests.post(GRAPHQL_URL, json={"query": query, "variables": variables})
-        if response.status_code == 200:
-            data = response.json()
-            token = data.get("data", {}).get("login", {}).get("token")
-            return token
+        csrf_token: str = self.session.cookies.get("csrftoken", "")
+        self.stdout.write(f"Using CSRF token: {csrf_token}")
+        headers: Dict[str, str] = {"X-CSRFToken": csrf_token, "Content-Type": "application/json"}
+        payload: Dict[str, Any] = {"username": username, "password": password}
+        response = self.session.post(REST_LOGIN_URL, json=payload, headers=headers)
+        self.stdout.write(f"REST login response status: {response.status_code}")
+        self.stdout.write(f"REST login response text: {response.text}")
+        if response.status_code in (200, 204):
+            try:
+                data: Dict[str, Any] = response.json()
+                token: Optional[str] = data.get("key")
+                return token
+            except ValueError:
+                return ""
         return None
 
-    def create_client_profile(self, input_data, token):
+    def create_client_profile(self, input_data: Dict[str, Any], token: str) -> Dict[str, Any]:
         """
         Call the GraphQL mutation to create a client profile.
-        Adjust the mutation and fields as needed to match your GraphQL schema.
+        Uses the session (which preserves cookies) so that CSRF and cookies persist.
+        Uses an inline fragment to retrieve fields from ClientProfileType.
         """
-        mutation = """
+        mutation: str = """
         mutation CreateClientProfile($input: CreateClientProfileInput!) {
             createClientProfile(data: $input) {
-                id
-                user {
+                ... on ClientProfileType {
                     id
-                    email
+                    user {
+                        id
+                        email
+                    }
                 }
             }
         }
         """
-        headers = {"Authorization": f"Bearer {token}"}
-        response = requests.post(
-            GRAPHQL_URL, json={"query": mutation, "variables": {"input": input_data}}, headers=headers
+        csrf_token: str = self.session.cookies.get("csrftoken", "")
+        headers: Dict[str, str] = {"X-CSRFToken": csrf_token, "Content-Type": "application/json"}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        response = self.session.post(
+            GRAPHQL_URL,
+            json={"query": mutation, "variables": {"input": input_data}},
+            headers=headers,
         )
         if response.status_code == 200:
-            return response.json()
+            return cast(Dict[str, Any], response.json())
         else:
             raise Exception(f"GraphQL request failed with status {response.status_code}: {response.text}")
 
-    def build_input_data(self, row):
+    def build_input_data(self, row: Dict[str, str]) -> Dict[str, Any]:
         """
         Build a dictionary matching your GraphQL CreateClientProfileInput type.
-        Maps and converts CSV fields (by header name) to the corresponding GraphQL fields.
-        Adjust the keys and transformations as needed.
+        Enum fields are normalized using helper functions.
         """
-        input_data = {
+        input_data: Dict[str, Any] = {
             "nickname": row.get("Nickname(s) / common-use name(s)", "").strip(),
             "dateOfBirth": None,
             "user": {
@@ -207,52 +248,60 @@ class Command(BaseCommand):
             "importantNotes": row.get("Engagement Tips / Triggers", "").strip() or None,
             "heightInInches": None,
             "hairColor": None,
-            "eyeColor": row.get("Eye Color", "").strip() or None,
+            "eyeColor": None,
             "physicalDescription": row.get("Distinguishing Marks & Description", "").strip() or None,
             "gender": None,
-            "adaAccommodation": None,  # Adjust if you expect a list value
+            "adaAccommodation": None,  # Adjust if needed
             "race": None,
-            "preferredLanguage": row.get("Preferred Language", "").strip() or None,
+            "preferredLanguage": None,
             "veteranStatus": None,
         }
 
         # Date of Birth
-        dob_str = row.get("Date of Birth", "").strip()
+        dob_str: str = row.get("Date of Birth", "").strip()
         input_data["dateOfBirth"] = parse_date(dob_str)
 
         # Phone Number from "Cell Phone"
-        cell_phone = row.get("Cell Phone", "").strip()
+        cell_phone: str = row.get("Cell Phone", "").strip()
         if cell_phone:
             input_data["phoneNumbers"].append({"number": cell_phone, "isPrimary": True})
 
-        # Living Situation: if "Vehicle dweller?" equals "Yes" (case-insensitive), then set to VEHICLE.
-        vehicle_dweller = row.get("Vehicle dweller?", "").strip().lower()
+        # Living Situation: if "Vehicle dweller?" equals "Yes"
+        vehicle_dweller: str = row.get("Vehicle dweller?", "").strip().lower()
         if vehicle_dweller == "yes":
             input_data["livingSituation"] = "VEHICLE"
 
         # Height conversion
-        height_str = row.get("Height", "").strip()
+        height_str: str = row.get("Height", "").strip()
         input_data["heightInInches"] = convert_height(height_str)
 
         # Hair Color mapping
-        hair_color = row.get("Hair Color", "").strip()
+        hair_color: str = row.get("Hair Color", "").strip()
         if hair_color:
-            input_data["hairColor"] = HAIR_COLOR_MAP.get(hair_color, hair_color.upper())
+            input_data["hairColor"] = map_hair_color(hair_color)
+
+        # Eye Color: Convert to uppercase (e.g., "brown" -> "BROWN")
+        eye_color: str = row.get("Eye Color", "").strip()
+        if eye_color:
+            input_data["eyeColor"] = eye_color.strip().upper()
 
         # Gender mapping
-        gender = row.get("Gender", "").strip()
+        gender: str = row.get("Gender", "").strip()
         if gender:
-            input_data["gender"] = GENDER_MAP.get(gender, "OTHER")
+            input_data["gender"] = GENDER_MAP.get(gender.lower(), gender.upper())
 
         # Race mapping
-        race = row.get("Race", "").strip()
+        race: str = row.get("Race", "").strip()
         if race:
-            input_data["race"] = RACE_MAP.get(race, race.upper())
+            input_data["race"] = RACE_MAP.get(race.lower(), race.upper())
 
-        # Veteran Status: if "Veteran?" equals "Yes" (case-insensitive) then set to "YES" else "NO"
-        veteran = row.get("Veteran?", "").strip().lower()
+        # Preferred Language: normalize to uppercase
+        preferred_language: str = row.get("Preferred Language", "").strip()
+        if preferred_language:
+            input_data["preferredLanguage"] = map_language(preferred_language)
+
+        # Veteran Status: if "Veteran?" equals "Yes"
+        veteran: str = row.get("Veteran?", "").strip().lower()
         input_data["veteranStatus"] = "YES" if veteran == "yes" else "NO"
-
-        # (Add additional field mappings as needed.)
 
         return input_data

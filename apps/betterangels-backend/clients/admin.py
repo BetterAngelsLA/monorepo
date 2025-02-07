@@ -1,4 +1,6 @@
+from common.models import PhoneNumber
 from django.contrib import admin
+from django.contrib.contenttypes.admin import GenericTabularInline
 
 from .models import ClientProfile, HmisProfile, ProfileDataImport, ProfileImportRecord
 
@@ -8,12 +10,15 @@ class HmisProfileInline(admin.TabularInline):
     extra = 1
 
 
+class PhoneNumberInline(GenericTabularInline):
+    model = PhoneNumber
+    extra = 1
+
+
 @admin.register(ClientProfile)
 class ClientProfileAdmin(admin.ModelAdmin):
     list_display = ["name", "id"]
-    inlines = [
-        HmisProfileInline,
-    ]
+    inlines = [HmisProfileInline, PhoneNumberInline]
 
     def name(self, obj: ClientProfile) -> str:
         return obj.user.full_name
