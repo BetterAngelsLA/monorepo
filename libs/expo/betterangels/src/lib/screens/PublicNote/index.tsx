@@ -104,7 +104,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
             flex: 1,
           }}
         >
-          <TextBold size="lg">Write Public Note</TextBold>
+          <TextBold size="lg">Write Note</TextBold>
           {autoNote !== publicNote && (
             <View
               style={{
@@ -129,9 +129,9 @@ export default function PublicNote({ noteId }: { noteId: string }) {
               value={publicNote}
               onChangeText={(text) => onChange(text)}
               multiline
-              accessibilityHint="area to write an HMIS note"
+              accessibilityHint="area to write a note"
               textAlignVertical="top"
-              accessibilityLabel="HMIS input"
+              accessibilityLabel="Note input"
               style={styles.input}
               placeholder={
                 "Describe your interaction or tap 'Regenerate' to automatically create it in GIRP format"

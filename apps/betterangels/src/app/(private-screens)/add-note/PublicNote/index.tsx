@@ -1,14 +1,7 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  FieldCard,
-  TextBold,
-  TextMedium,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { FieldCard, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { RefObject } from 'react';
-import { ScrollView, View } from 'react-native';
-import InfoModal from './InfoModal';
+import { ScrollView } from 'react-native';
 
 interface IPublicNoteProps {
   expanded: string | undefined | null;
@@ -37,23 +30,8 @@ export default function PublicNote(props: IPublicNoteProps) {
           },
         })
       }
-      title="Public Note"
-      info={<InfoModal />}
-      actionName={
-        !note ? (
-          <TextMedium size="sm">Add HMIS note</TextMedium>
-        ) : (
-          <View
-            style={{
-              backgroundColor: Colors.WARNING_EXTRA_LIGHT,
-              borderRadius: 8,
-              padding: Spacings.xs,
-            }}
-          >
-            <TextBold color={Colors.WARNING_DARK}>Review HMIS Note</TextBold>
-          </View>
-        )
-      }
+      title="Note"
+      actionName={null}
     >
       {note && <TextRegular mb="md">{note}</TextRegular>}
     </FieldCard>

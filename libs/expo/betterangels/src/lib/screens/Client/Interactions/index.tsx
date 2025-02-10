@@ -3,7 +3,11 @@ import { Loading } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
-import { NotesQuery, Ordering, useNotesQuery } from '../../../apollo';
+import {
+  NotesPaginatedQuery,
+  Ordering,
+  useNotesPaginatedQuery,
+} from '../../../apollo';
 import { MainContainer, NoteCard } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import InteractionsHeader from './InteractionsHeader';
@@ -21,18 +25,21 @@ export default function Interactions({
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
-  const { data, loading, error, refetch } = useNotesQuery({
+  const { data, loading, error, refetch } = useNotesPaginatedQuery({
     variables: {
-      pagination: { limit: paginationLimit + 1, offset: offset },
+      pagination: { limit: paginationLimit, offset: offset },
       order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
       filters: { client: client?.clientProfile.user.id, search: filterSearch },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const [notes, setNotes] = useState<NotesQuery['notes']>([]);
+  const [notes, setNotes] = useState<
+    NotesPaginatedQuery['notesPaginated']['results']
+  >([]);
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
   const [refreshing, setRefreshing] = useState(false);
+  const [totalCount, setTotalCount] = useState<number>(0);
 
   function loadMoreInteractions() {
     if (hasMore && !loading) {
@@ -53,13 +60,13 @@ export default function Interactions({
     setOffset(0);
     try {
       const response = await refetch({
-        pagination: { limit: paginationLimit + 1, offset: 0 },
+        pagination: { limit: paginationLimit, offset: 0 },
       });
-      const isMoreAvailable =
-        response.data &&
-        'notes' in response.data &&
-        response.data.notes.length > paginationLimit;
-      setHasMore(isMoreAvailable);
+      if (response.data && 'notesPaginated' in response.data) {
+        const { totalCount } = response.data.notesPaginated;
+        setTotalCount(totalCount);
+        setHasMore(paginationLimit < totalCount);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -73,18 +80,20 @@ export default function Interactions({
   };
 
   useEffect(() => {
-    if (!data || !('notes' in data)) return;
-
-    const notesToShow = data.notes.slice(0, paginationLimit);
-    const isMoreAvailable = data.notes.length > notesToShow.length;
-
-    if (offset === 0) {
-      setNotes(notesToShow);
-    } else {
-      setNotes((prevNotes) => [...prevNotes, ...notesToShow]);
+    if (!data || !('notesPaginated' in data)) {
+      return;
     }
 
-    setHasMore(isMoreAvailable);
+    const { results, totalCount } = data.notesPaginated;
+    setTotalCount(totalCount);
+
+    if (offset === 0) {
+      setNotes(results);
+    } else {
+      setNotes((prevNotes) => [...prevNotes, ...results]);
+    }
+
+    setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
 
   if (error) throw new Error('Something went wrong!');
@@ -100,6 +109,7 @@ export default function Interactions({
               setSort={setSort}
               notes={notes}
               client={client}
+              totalCount={totalCount}
             />
           </>
         }
