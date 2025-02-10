@@ -48,6 +48,7 @@ def map_hair_color(val: str) -> Optional[str]:
         "dark brown": "BROWN",
         "light brown": "BROWN",
         "salt/pepper": "BROWN",
+        "light brown with gray streaks in front": "BROWN",
         "black": "BLACK",
         "blonde": "BLONDE",
         "gray": "GRAY",
