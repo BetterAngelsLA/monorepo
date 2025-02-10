@@ -1,20 +1,21 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { Spacings } from '@monorepo/expo/shared/static';
+import { Spacings, TThumbnailSize } from '@monorepo/expo/shared/static';
 import { BasicInput, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { TThumbnailSize } from '../UploadModal/types';
-import FilePreview from './FilePreview';
-import ImageFilePreview from './ImageFilePreview';
+import { ClientDocumentNamespaceEnum } from '../../../../apollo';
+import { FileThumbnail } from '../../../../ui-components/FileThumbnail/FileThumbnail';
 
 export interface IUploadPreview {
   files: ReactNativeFile[];
   onRemoveFile: (index: number) => void;
   onFilenameChange: (index: number, value: string) => void;
   thumbnailSize?: TThumbnailSize;
+  documentType?: ClientDocumentNamespaceEnum;
 }
 
-export default function UploadPreview(props: IUploadPreview) {
-  const { files, thumbnailSize, onRemoveFile, onFilenameChange } = props;
+export default function UploadsPreview(props: IUploadPreview) {
+  const { documentType, files, onRemoveFile, onFilenameChange, thumbnailSize } =
+    props;
 
   let title = 'Uploaded file';
 
@@ -29,25 +30,14 @@ export default function UploadPreview(props: IUploadPreview) {
       </TextBold>
 
       {files.map((file, index) => {
-        const isImage = file.type.startsWith('image');
-
         return (
           <View key={index} style={{ marginBottom: Spacings.md }}>
-            {isImage && (
-              <ImageFilePreview
-                file={file}
-                thumbnailSize={thumbnailSize}
-                onDelete={() => onRemoveFile(index)}
-              />
-            )}
-
-            {!isImage && (
-              <FilePreview
-                file={file}
-                thumbnailSize={thumbnailSize}
-                onDelete={() => onRemoveFile(index)}
-              />
-            )}
+            <FileThumbnail
+              uri={file.uri}
+              thumbnailSize={thumbnailSize}
+              documentType={documentType}
+              onDelete={() => onRemoveFile(index)}
+            />
 
             <BasicInput
               label="File Name"

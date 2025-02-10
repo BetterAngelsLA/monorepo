@@ -13,8 +13,8 @@ import {
   ClientProfileDocument,
   useCreateClientDocumentMutation,
 } from '../../__generated__/Client.generated';
-import UploadPreview from '../UploadPreview';
 import Section from './UploadSection';
+import UploadsPreview from './UploadsPreview';
 import { IMultipleDocUploadsProps } from './types';
 
 export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
@@ -147,10 +147,11 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
         </View>
 
         {docsToUpload.length > 0 && (
-          <UploadPreview
+          <UploadsPreview
             files={docsToUpload}
             onRemoveFile={onRemoveFile}
             onFilenameChange={onFilenameChange}
+            documentType={ClientDocumentNamespaceEnum[docType]}
           />
         )}
       </Section>
