@@ -7,7 +7,7 @@ export interface IDeleteButton {
   accessibilityHint: string;
 }
 
-export default function DeleteButton(props: IDeleteButton) {
+export function ThumbnailDeleteButton(props: IDeleteButton) {
   const { onDelete, accessibilityHint } = props;
 
   return (

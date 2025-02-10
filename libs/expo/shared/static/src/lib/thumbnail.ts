@@ -4,7 +4,7 @@ enum DocType {
   PhotoId = 'PhotoId',
 }
 
-type TThumbnailSize = {
+export type TThumbnailSize = {
   height: number;
   width: number;
 };
