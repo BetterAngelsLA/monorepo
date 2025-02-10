@@ -7,6 +7,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 import { ClientDocumentType } from '../apollo';
+import { getFileTypeFromExtension } from '../helpers/files/getFileTypeFromExtension';
 import {
   ClientProfileDocument,
   useDeleteClientDocumentMutation,
@@ -120,33 +121,6 @@ export default function DocumentModal(props: IDocumentModalProps) {
       opacity={0.5}
     />
   );
-}
-
-type TFileType = 'image' | 'pdf' | 'other' | 'unknown' | null;
-
-const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff'];
-
-// TODO if DEV-1493 is ever implemented and document has a mimeType
-function getFileTypeFromExtension(url?: string): TFileType {
-  if (!url) {
-    return null;
-  }
-
-  const extension = url.split('.').pop()?.toLowerCase();
-
-  if (!extension) {
-    return 'unknown';
-  }
-
-  if (IMAGE_EXTENSIONS.includes(extension)) {
-    return 'image';
-  }
-
-  if (extension === 'pdf') {
-    return 'pdf';
-  }
-
-  return 'other';
 }
 
 function getFileFileTypeText(url?: string): string {

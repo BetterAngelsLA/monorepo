@@ -13,8 +13,8 @@ import {
   ClientProfileDocument,
   useCreateClientDocumentMutation,
 } from '../../__generated__/Client.generated';
-import UploadPreview from '../UploadPreview';
 import Section from './UploadSection';
+import UploadsPreview from './UploadsPreview';
 import { ISingleDocUploadsProps } from './types';
 
 export default function SingleDocUploads(props: ISingleDocUploadsProps) {
@@ -147,11 +147,11 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
         </View>
 
         {documentToUpload && (
-          <UploadPreview
+          <UploadsPreview
             files={[documentToUpload]}
             onRemoveFile={onRemoveFile}
             onFilenameChange={onFilenameChange}
-            thumbnailSize={thumbnailSize}
+            documentType={ClientDocumentNamespaceEnum[docType]}
           />
         )}
       </Section>

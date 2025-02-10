@@ -8,5 +8,6 @@ export {
   FileThumbnailSizeDefault,
   IdThumbnailSize,
   ImageThumbnailSizeDefault,
+  TThumbnailSize,
   thumbnailSizes,
 } from './thumbnail';
