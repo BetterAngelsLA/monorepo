@@ -18,8 +18,7 @@ import UploadsPreview from './UploadsPreview';
 import { ISingleDocUploadsProps } from './types';
 
 export default function SingleDocUploads(props: ISingleDocUploadsProps) {
-  const { setTab, client, setDocs, docs, title, docType, thumbnailSize } =
-    props;
+  const { setTab, client, setDocs, docs, title, docType } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { showSnackbar } = useSnackbar();
   const [createDocument, { loading }] = useCreateClientDocumentMutation({

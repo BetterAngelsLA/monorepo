@@ -245,7 +245,7 @@ export default function DriverLicense({
                   />
                 </View>
                 <BasicInput
-                  label="File Name x"
+                  label="File Name"
                   value={docs.DriversLicenseFront.name}
                   onDelete={() =>
                     setDocs({
@@ -313,7 +313,7 @@ export default function DriverLicense({
                   />
                 </View>
                 <BasicInput
-                  label="File Name y"
+                  label="File Name"
                   value={docs.DriversLicenseBack.name}
                   onDelete={() =>
                     setDocs({
