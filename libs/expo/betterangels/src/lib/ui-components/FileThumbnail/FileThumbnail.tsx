@@ -47,6 +47,8 @@ export function FileThumbnail(props: IProps) {
     thumbSize = isImage ? ImageThumbnailSizeDefault : FileThumbnailSizeDefault;
   }
 
+  const fileOrImageText = isImage ? 'image' : 'file';
+
   return (
     <View
       style={{
@@ -62,7 +64,7 @@ export function FileThumbnail(props: IProps) {
       {!!onDelete && (
         <ThumbnailDeleteButton
           onDelete={onDelete}
-          accessibilityHint="deletes the image"
+          accessibilityHint={`deletes the ${fileOrImageText}`}
         />
       )}
 
