@@ -14,6 +14,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
+import React from 'react';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import { HmisProfileType, Maybe } from '../apollo';
 import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
@@ -33,7 +34,8 @@ interface IClientCardProps {
   arrivedFrom?: string;
 }
 
-export default function ClientCard(props: IClientCardProps) {
+// export default function ClientCard(props: IClientCardProps) {
+const ClientCard = React.memo(function ClientCard(props: IClientCardProps) {
   const {
     client,
     mb,
@@ -157,7 +159,9 @@ export default function ClientCard(props: IClientCardProps) {
       </View>
     </Pressable>
   );
-}
+});
+
+export default ClientCard;
 
 const styles = StyleSheet.create({
   clientCard: {},

@@ -50,7 +50,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     nextFetchPolicy: 'cache-first',
   });
   const [clients, setClients] = useState<IGroupedClients>({});
-  const [totalCount, setTotalCount] = useState<number>(0);
   const [currentClient, setCurrentClient] =
     useState<
       ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
@@ -122,7 +121,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     if (!data || !('clientProfilesPaginated' in data)) return;
     const { results, totalCount } = data.clientProfilesPaginated;
 
-    const groupedContacts = results.reduce((acc: IGroupedClients, client) => {
+    const groupedClients = results.reduce((acc: IGroupedClients, client) => {
       const firstLetter = client.user.firstName?.charAt(0).toUpperCase() || '#';
 
       if (!acc[firstLetter]) {
@@ -137,19 +136,19 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
     setClients((prevClients) => {
       if (offset === 0) {
-        return groupedContacts;
+        return groupedClients;
       }
 
       const mergedClients = { ...prevClients };
 
-      Object.keys(groupedContacts).forEach((key) => {
+      Object.keys(groupedClients).forEach((key) => {
         if (mergedClients[key]) {
           mergedClients[key].data = [
             ...mergedClients[key].data,
-            ...groupedContacts[key].data,
+            ...groupedClients[key].data,
           ];
         } else {
-          mergedClients[key] = groupedContacts[key];
+          mergedClients[key] = groupedClients[key];
         }
       });
 
