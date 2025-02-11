@@ -68,10 +68,12 @@ class HmisAgencyEnum(models.TextChoices):
 
 @strawberry.enum
 class LanguageEnum(models.TextChoices):
+    ASL = "asl", _("American Sign Language")
     ARABIC = "arabic", _("Arabic")
     ARMENIAN = "armenian", _("Armenian")
     ENGLISH = "english", _("English")
     FARSI = "farsi", _("Farsi")
+    FRENCH = "french", _("French")
     INDONESIAN = "indonesian", _("Indonesian")
     JAPANESE = "japanese", _("Japanese")
     KHMER = "khmer", _("Khmer")
