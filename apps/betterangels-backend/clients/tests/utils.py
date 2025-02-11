@@ -363,6 +363,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on ClientDocumentType {
                         id
                         attachmentType
+                        mimeType
                         file {
                             name
                         }
