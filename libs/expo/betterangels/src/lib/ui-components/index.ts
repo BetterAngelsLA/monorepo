@@ -24,4 +24,6 @@ export { default as PronounPicker } from './PronounPicker';
 export { default as RacePicker } from './RacePicker';
 export { default as RequestedProvidedServices } from './RequestedProvidedServices';
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
+export { default as WebBrowserLink } from './WebBrowserLink';
+
 export { AppleSignIn, GoogleSignIn } from './SocialLogin';

@@ -10,8 +10,9 @@ import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AttachmentType } from '../../apollo';
+import { getFileTypeFromExtension } from '../../helpers/files/getFileTypeFromExtension';
 import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
-import { MainContainer } from '../../ui-components';
+import { MainContainer, WebBrowserLink } from '../../ui-components';
 import { FileThumbnail } from '../../ui-components/FileThumbnail/FileThumbnail';
 import { useClientDocumentQuery } from './__generated__/Document.generated';
 
@@ -26,18 +27,23 @@ export default function FileScreenComponent({ id }: { id: string }) {
     });
   }, [data, navigation]);
 
-  if (!data)
+  if (!data) {
     return (
       <View style={styles.loadingContainer}>
         <Loading size="large" />
       </View>
     );
+  }
 
   const { clientDocument } = data || {};
   const { attachmentType, createdAt, namespace, file, originalFilename } =
     clientDocument;
 
   const isImage = attachmentType === AttachmentType.Image;
+
+  const derifedFileType = getFileTypeFromExtension(file.url);
+
+  const isPdf = derifedFileType === 'pdf';
 
   return (
     <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
@@ -55,7 +61,17 @@ export default function FileScreenComponent({ id }: { id: string }) {
           </ImagesWithZoom>
         )}
 
-        {!isImage && (
+        {isPdf && (
+          <WebBrowserLink href={file.url} accessibilityHint="open pdf file">
+            <FileThumbnail
+              uri={file.url}
+              attachmentType={attachmentType}
+              documentType={namespace}
+            />
+          </WebBrowserLink>
+        )}
+
+        {!isImage && !isPdf && (
           <FileThumbnail
             uri={file.url}
             attachmentType={attachmentType}

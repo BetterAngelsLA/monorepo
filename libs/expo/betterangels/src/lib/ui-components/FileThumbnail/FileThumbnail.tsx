@@ -93,11 +93,5 @@ function getFileType(uri: string, attachmentType?: AttachmentType): TFileType {
     return 'image';
   }
 
-  const derifedFileType = getFileTypeFromExtension(uri);
-
-  if (derifedFileType === 'image') {
-    return 'image';
-  }
-
-  return 'unknown';
+  return getFileTypeFromExtension(uri);
 }

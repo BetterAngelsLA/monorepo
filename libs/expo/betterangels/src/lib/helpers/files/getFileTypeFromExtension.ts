@@ -8,7 +8,13 @@ export function getFileTypeFromExtension(url?: string): TFileType {
     return null;
   }
 
-  const extension = url.split('.').pop()?.toLowerCase();
+  const parsedUrl = url.startsWith('http') ? new URL(url) : { pathname: url };
+
+  const extension = parsedUrl.pathname
+    .split('?')[0]
+    .split('.')
+    .pop()
+    ?.toLowerCase();
 
   if (!extension) {
     return 'unknown';
