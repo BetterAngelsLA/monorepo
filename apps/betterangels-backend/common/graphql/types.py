@@ -69,6 +69,7 @@ class AttachmentInterface:
     id: ID
     file: auto
     attachment_type: auto
+    mime_type: auto
     original_filename: auto
     created_at: auto
     updated_at: auto
