@@ -19,7 +19,6 @@ from clients.enums import (
     RelationshipTypeEnum,
     SocialMediaEnum,
     VeteranStatusEnum,
-    YesNoPreferNotToSayEnum,
 )
 from common.models import Attachment, BaseModel, PhoneNumber
 from dateutil.relativedelta import relativedelta

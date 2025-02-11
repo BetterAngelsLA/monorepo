@@ -313,7 +313,6 @@ type ClientProfileType {
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: YesNoPreferNotToSayEnum
-  tempVeteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
@@ -327,6 +326,7 @@ type ClientProfileType {
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   user: UserType!
   displayCaseManager: String!
+  tempVeteranStatus: VeteranStatusEnum
 }
 
 type ClientProfileTypeOffsetPaginated {
@@ -389,13 +389,13 @@ input CreateClientProfileInput {
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: YesNoPreferNotToSayEnum
-  tempVeteranStatus: VeteranStatusEnum
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: CreateUserInput!
+  tempVeteranStatus: VeteranStatusEnum
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -1467,7 +1467,6 @@ input UpdateClientProfileInput {
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: YesNoPreferNotToSayEnum
-  tempVeteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
@@ -1475,6 +1474,7 @@ input UpdateClientProfileInput {
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: UpdateUserInput
+  tempVeteranStatus: VeteranStatusEnum
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
