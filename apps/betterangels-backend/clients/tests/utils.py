@@ -200,6 +200,10 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.client_1_phone_number_2 = {
             "number": "7185551212",
         }
+        self.client_2_phone_number_1 = {
+            "number": "3475551212",
+            "isPrimary": True,
+        }
         self.client_profile_1_phone_numbers = [self.client_1_phone_number_1, self.client_1_phone_number_2]
 
         self.client_1_social_media_profile_1 = {
@@ -270,7 +274,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "maritalStatus": None,
                 "nickname": None,
                 "phoneNumber": None,
-                "phoneNumbers": [],
+                "phoneNumbers": [self.client_2_phone_number_1],
                 "physicalDescription": None,
                 "placeOfBirth": None,
                 "preferredCommunication": [],
@@ -359,6 +363,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on ClientDocumentType {
                         id
                         attachmentType
+                        mimeType
                         file {
                             name
                         }

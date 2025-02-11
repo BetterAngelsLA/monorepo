@@ -63,6 +63,7 @@ interface AttachmentInterface {
   id: ID!
   file: DjangoFileType!
   attachmentType: AttachmentType!
+  mimeType: String!
   originalFilename: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -224,6 +225,7 @@ type ClientDocumentType implements AttachmentInterface {
   id: ID!
   file: DjangoFileType!
   attachmentType: AttachmentType!
+  mimeType: String!
   originalFilename: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -814,6 +816,7 @@ type NoteAttachmentType implements AttachmentInterface {
   id: ID!
   file: DjangoFileType!
   attachmentType: AttachmentType!
+  mimeType: String!
   originalFilename: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -824,11 +827,13 @@ input NoteFilter {
   client: ID
   createdBy: ID
   isSubmitted: Boolean
+  organization: ID
   AND: NoteFilter
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
   search: String
+  teams: [SelahTeamEnum!]
 }
 
 enum NoteNamespaceEnum {
@@ -880,7 +885,7 @@ type OffsetPaginationInfo {
 
 input OffsetPaginationInput {
   offset: Int! = 0
-  limit: Int = null
+  limit: Int
 }
 
 input OneToManyInput {
@@ -991,6 +996,7 @@ enum PronounEnum {
 
 type Query {
   currentUser: UserType!
+  availableOrganizations: [OrganizationType!]! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientProfilesPaginated(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
@@ -1123,7 +1129,6 @@ enum ServiceEnum {
   BOOK
   CALIFORNIA_LIFELINE_PHONE
   CLOTHES
-  CLOTHES_SOCKS
   CONSENT_TO_CONNECT
   CONTACT_DPSS
   CONTACT_FRIEND
@@ -1257,8 +1262,8 @@ input ShelterPropertyInput {
   pets: [PetChoices!] = null
   demographics: [DemographicChoices!] = null
   specialSituationRestrictions: [SpecialSituationRestrictionChoices!] = null
-  shelterType: [ShelterChoices!] = null
-  roomStyle: [RoomStyleChoices!] = null
+  shelterTypes: [ShelterChoices!] = null
+  roomStyles: [RoomStyleChoices!] = null
   parking: [ParkingChoices!] = null
 }
 

@@ -38,6 +38,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 name
             }
             attachmentType
+            mimeType
             originalFilename
             namespace
         }
@@ -407,6 +408,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
                         name
                     }
                     attachmentType
+                    mimeType
                     originalFilename
                     namespace
                 }
@@ -434,6 +436,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
                         name
                     }
                     attachmentType
+                    mimeType
                     originalFilename
                     namespace
                 }
@@ -463,6 +466,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
                             name
                         }
                         attachmentType
+                        mimeType
                         originalFilename
                         namespace
                     }

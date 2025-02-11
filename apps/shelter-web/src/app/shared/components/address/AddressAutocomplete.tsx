@@ -1,9 +1,10 @@
 import { SearchIcon } from '@monorepo/react/icons';
-import { useApiIsLoaded, useMapsLibrary } from '@vis.gl/react-google-maps';
+import { useMapsLibrary } from '@vis.gl/react-google-maps';
 import { useCallback, useEffect, useState } from 'react';
 import { ISO3166Alpha2 } from '../../../types/isoCodes';
 import { Input } from '../form/input';
-import { LA_COUNTY_CENTER, getPlacesBounds } from '../maps/getPlacesBounds';
+import { LA_COUNTY_CENTER } from '../map/constants.maps';
+import { getPlacesBounds } from '../map/utils/getPlacesBounds';
 import { AddressSuggestion } from './addressSuggestion';
 
 const boundsLA = getPlacesBounds({
@@ -13,14 +14,18 @@ const boundsLA = getPlacesBounds({
 
 type TPlaceAutocomplete = {
   className?: string;
+  placeholder?: string;
   onPlaceSelect: (place: google.maps.places.PlaceResult | null) => void;
   countryRestrictions?: ISO3166Alpha2 | ISO3166Alpha2[] | null;
 };
 
 export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
-  const { onPlaceSelect, countryRestrictions = 'us', className = '' } = props;
-
-  const apiIsLoaded = useApiIsLoaded();
+  const {
+    onPlaceSelect,
+    countryRestrictions = 'us',
+    placeholder,
+    className = '',
+  } = props;
 
   const [inputValue, setInputValue] = useState<string>('');
   const [sessionToken, setSessionToken] = useState<
@@ -35,7 +40,7 @@ export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
   const places = useMapsLibrary('places');
 
   useEffect(() => {
-    if (!apiIsLoaded) {
+    if (!places) {
       return;
     }
 
@@ -122,8 +127,8 @@ export const AddressAutocomplete = (props: TPlaceAutocomplete) => {
     <div className={className}>
       <Input
         value={inputValue}
-        placeholder="Search address"
-        className="mt-4"
+        placeholder={placeholder}
+        className="w-full"
         onChange={onInputChange}
         leftIcon={<SearchIcon className="text-neutral-70 w-4 h-4" />}
       />

@@ -70,6 +70,7 @@ export type AttachmentInterface = {
   createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
+  mimeType: Scalars['String']['output'];
   originalFilename?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -235,6 +236,7 @@ export type ClientDocumentType = AttachmentInterface & {
   createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
+  mimeType: Scalars['String']['output'];
   namespace: ClientDocumentNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -1008,6 +1010,7 @@ export type NoteAttachmentType = AttachmentInterface & {
   createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
+  mimeType: Scalars['String']['output'];
   namespace: NoteNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -1021,7 +1024,9 @@ export type NoteFilter = {
   client?: InputMaybe<Scalars['ID']['input']>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
+  organization?: InputMaybe<Scalars['ID']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
+  teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
 export enum NoteNamespaceEnum {
@@ -1217,6 +1222,7 @@ export enum PronounEnum {
 
 export type Query = {
   __typename?: 'Query';
+  availableOrganizations: Array<OrganizationType>;
   clientDocument: ClientDocumentType;
   clientDocuments: Array<ClientDocumentType>;
   clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
@@ -1450,7 +1456,6 @@ export enum ServiceEnum {
   Book = 'BOOK',
   CaliforniaLifelinePhone = 'CALIFORNIA_LIFELINE_PHONE',
   Clothes = 'CLOTHES',
-  ClothesSocks = 'CLOTHES_SOCKS',
   ConsentToConnect = 'CONSENT_TO_CONNECT',
   ContactDpss = 'CONTACT_DPSS',
   ContactFriend = 'CONTACT_FRIEND',
@@ -1588,8 +1593,8 @@ export type ShelterPropertyInput = {
   demographics?: InputMaybe<Array<DemographicChoices>>;
   parking?: InputMaybe<Array<ParkingChoices>>;
   pets?: InputMaybe<Array<PetChoices>>;
-  roomStyle?: InputMaybe<Array<RoomStyleChoices>>;
-  shelterType?: InputMaybe<Array<ShelterChoices>>;
+  roomStyles?: InputMaybe<Array<RoomStyleChoices>>;
+  shelterTypes?: InputMaybe<Array<ShelterChoices>>;
   specialSituationRestrictions?: InputMaybe<Array<SpecialSituationRestrictionChoices>>;
 };
 
@@ -1619,7 +1624,7 @@ export type ShelterType = {
   id: Scalars['ID']['output'];
   immediateNeeds: Array<ImmediateNeedType>;
   interiorPhotos: Array<ShelterPhotoType>;
-  location: ShelterLocationType;
+  location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;

@@ -69,7 +69,7 @@ export default function LoginForm({
     try {
       const { data } = await loginForm({
         variables: {
-          username,
+          username: username.toLowerCase(),
           password,
         },
       });
@@ -83,6 +83,7 @@ export default function LoginForm({
       }
     } catch (error) {
       setErrorMessage('Something went wrong. Please try again.');
+      switchEnvironment('production');
     }
     setIsLoading(false);
   };

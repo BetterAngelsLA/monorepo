@@ -1,7 +1,5 @@
-import { setItem } from '@monorepo/expo/shared/utils';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { CSRF_COOKIE_NAME } from '../apollo/links/constants';
 
 interface ApiConfigContextType {
   baseUrl: string;
@@ -48,10 +46,7 @@ export const ApiConfigProvider = ({
     if (environment === env) return;
 
     try {
-      await Promise.all([
-        AsyncStorage.setItem('currentEnvironment', env),
-        setItem(CSRF_COOKIE_NAME, ''),
-      ]);
+      await Promise.all([AsyncStorage.setItem('currentEnvironment', env)]);
       setEnvironment(env);
     } catch (error) {
       console.error('Error switching environment:', error);

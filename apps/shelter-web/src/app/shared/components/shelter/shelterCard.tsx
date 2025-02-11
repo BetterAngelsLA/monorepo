@@ -1,20 +1,21 @@
 import { LocationIcon } from '@monorepo/react/icons';
 import { useNavigate } from 'react-router-dom';
-import { calcDistance } from '../../utils/distance/calcDistance';
-import { formatDistance } from '../../utils/distance/formatDistance';
-import { TLatLng } from '../maps/types.maps';
+import { mergeCss } from '../../utils/styles/mergeCss';
+import { TLatLng } from '../map/types.maps';
+import { DistanceAway } from './distanceAway';
+
+export type TShelterLocation = {
+  latitude: number;
+  longitude: number;
+  place: string;
+};
 
 export type TShelter = {
   id: string;
   name: string;
-  address: string;
   heroImage?: string | null;
-  distance?: number | null;
-  location: {
-    latitude: number;
-    longitude: number;
-    place: string;
-  };
+  distanceInMiles?: number | null;
+  location?: TShelterLocation | null;
 };
 
 type TShelterCard = {
@@ -25,35 +26,34 @@ type TShelterCard = {
 
 export function ShelterCard(props: TShelterCard) {
   const {
-    shelter: {
-      id,
-      name,
-      heroImage,
-      location: { place, latitude: shelterLat, longitude: shelterLng },
-    },
+    shelter: { id, name, heroImage, distanceInMiles, location },
     originCoordinates,
-    className = '',
+    className,
   } = props;
 
   const navigate = useNavigate();
 
-  let formattedDistance;
+  const formattedAddress = location?.place.replace(/, USA$/, '');
 
-  if (originCoordinates && shelterLat && shelterLng) {
-    const shelterCoords = {
-      lat: shelterLat,
-      lng: shelterLng,
-    };
+  const parentCss = [
+    'flex',
+    'flex-col',
+    'md:flex-row',
+    'cursor-pointer',
+    className,
+  ];
 
-    formattedDistance = getFormattedDistance(originCoordinates, shelterCoords);
-  }
+  const heroCss = ['md:w-96', 'md:mr-4'];
 
-  const formattedAddress = place.replace(/, USA$/, '');
+  const contentCss = ['mt-4'];
 
   return (
-    <div className={className}>
+    <div
+      className={mergeCss(parentCss)}
+      onClick={() => navigate(`/shelter/${id}`)}
+    >
       {heroImage && (
-        <div onClick={() => navigate(`/shelter/${id}`)} className="mb-4">
+        <div className={mergeCss(heroCss)}>
           <img
             src={heroImage}
             alt={`hero for ${name}`}
@@ -63,39 +63,29 @@ export function ShelterCard(props: TShelterCard) {
         </div>
       )}
 
-      <div className="font-semibold text-sm leading-[1.125rem] tracking-[.03125rem]">
-        {name}
-      </div>
-
-      {formattedAddress && (
-        <div className="text-xs mt-1.5 flex items-start">
-          <LocationIcon className="h-4 mr-2" />
-
-          <div className="flex-inline flex-wrap">
-            <span>{formattedAddress}</span>
-
-            {!!formattedDistance && (
-              <span className="ml-1">({formattedDistance} away)</span>
-            )}
-          </div>
+      <div className={mergeCss(contentCss)}>
+        <div className="font-semibold text-sm md:text-lg leading-[1.125rem] tracking-[.03125rem]">
+          {name}
         </div>
-      )}
+
+        {formattedAddress && (
+          <div className="text-xs md:text-sm mt-1.5 flex items-start">
+            <LocationIcon className="h-4 mr-2" />
+
+            <div className="flex-inline flex-wrap">
+              <span>{formattedAddress}</span>
+
+              <DistanceAway
+                className="ml-1 inline"
+                distanceInMiles={distanceInMiles}
+                originCoordinates={originCoordinates}
+                targetCoordinates={location}
+                formatFn={(distance) => `(${distance} away)`}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
-
-function getFormattedDistance(pointA?: TLatLng, pointB?: TLatLng) {
-  if (!pointA || !pointB) {
-    return '';
-  }
-
-  const distanceMiles = calcDistance({
-    pointA,
-    pointB,
-  });
-
-  return formatDistance({
-    distance: distanceMiles,
-    minimum: 0.1,
-  });
 }

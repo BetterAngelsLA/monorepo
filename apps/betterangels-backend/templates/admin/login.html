@@ -1,0 +1,5 @@
+{% extends "admin/login.html" %}
+{% block content %}
+    <div>{% include "account/google_login_button.html" %}</div>
+    {{ block.super }}
+{% endblock content %}

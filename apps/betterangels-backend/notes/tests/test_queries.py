@@ -192,53 +192,180 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertFalse(note_differences)
 
     @parametrize(
-        (
-            "case_manager_label, client_label, search_terms, "
-            "is_submitted, expected_results_count, "
-            "returned_note_label_1, returned_note_label_2"
-        ),
+        ("case_manager_label, client_label, org_label, is_submitted, expected_results_count, returned_note_labels"),
         [
             # Filter by:
-            # created by, client_label, search terms, and/or is_submitted
-            ("org_1_case_manager_1", None, None, None, 1, "note", None),  # CM 1 created one note
-            ("org_1_case_manager_2", None, None, None, 2, "note_2", "note_3"),  # CM 2 created 2 notes
-            ("org_1_case_manager_1", None, "deets", None, 0, None, None),  # None of CM 1's notes contain "deets"
-            ("org_1_case_manager_2", None, "deets", None, 2, "note_2", "note_3"),  # Two of CM 2's notes contain "deets"
-            # CM 2 has one note "deets" for client "truman"
-            ("org_1_case_manager_2", None, "deets rum", None, 1, "note_3", None),
-            ("org_1_case_manager_2", None, "deets rum", True, 0, None, None),  # CM 2 has no submitted notes
-            ("org_1_case_manager_1", "client_user_2", None, None, 0, None, None),  # CM 1 has no notes for client 2
-            # CM 2 has one unsubmitted note for client 1
-            ("org_1_case_manager_2", "client_user_1", None, False, 1, "note_2", None),
-            (None, None, None, True, 0, None, None),  # There are no submitted notes
-            (None, None, None, None, 3, False, None),  # There are three unsubmitted notes
+            # created by, client_label, and/or is_submitted
+            ("org_1_case_manager_1", None, None, None, 1, ["note"]),  # CM 1 created one note
+            ("org_2_case_manager_1", None, None, True, 1, ["note_3"]),  # Org 2 CM 1 submitted 1 note
+            ("org_1_case_manager_2", None, None, False, 1, ["note_2"]),  # CM 2 has one unsubmitted note
+            ("org_1_case_manager_1", "client_user_2", None, None, 0, []),  # CM 1 has no notes for client 2
+            # CM 1 has one unsubmitted note for client 1
+            ("org_1_case_manager_1", "client_user_1", None, False, 1, ["note"]),
+            (None, None, "org_2", True, 1, ["note_3"]),  # There is one submitted note from org 2
         ],
     )
     def test_notes_query_filter(
         self,
         case_manager_label: Optional[str],
         client_label: Optional[str],
-        search_terms: Optional[str],
+        org_label: Optional[str],
         is_submitted: Optional[bool],
         expected_results_count: int,
-        returned_note_label_1: Optional[str],
-        returned_note_label_2: Optional[str],
+        returned_note_labels: list[str],
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_2)
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
+        self.note_2 = self._create_note_fixture({"purpose": "Client 1's Note", "client": self.client_user_1.pk})[
+            "data"
+        ]["createNote"]
+        self.graphql_client.logout()
+        self.graphql_client.force_login(self.org_2_case_manager_1)
+        self.note_3 = self._create_note_fixture({"purpose": "Client 2's Note", "client": self.client_user_2.pk})[
+            "data"
+        ]["createNote"]
+        self._update_note_fixture(
+            {
+                "id": self.note_3["id"],
+                "isSubmitted": True,
+            }
+        )
+
+        query = """
+            query Notes($filters: NoteFilter) {
+                notes: notesPaginated(filters: $filters) {
+                    totalCount
+                    results{
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {}
+
+        if case_manager_label:
+            filters["createdBy"] = self.user_map[case_manager_label].pk
+
+        if client_label:
+            filters["client"] = getattr(self, client_label).pk
+
+        if org_label:
+            filters["organization"] = getattr(self, org_label).pk
+
+        if isinstance(is_submitted, bool):
+            filters["isSubmitted"] = is_submitted
+
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
+        notes = response["data"]["notes"]["results"]
+
+        for idx, note_label in enumerate(returned_note_labels):
+            self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
+
+    @parametrize(
+        ("teams, expected_results_count, returned_note_labels, expected_query_count"),
+        [
+            ([SelahTeamEnum.WDI_ON_SITE.name, SelahTeamEnum.SLCC_ON_SITE.name], 2, ["note_2", "note_3"], 4),
+            ([SelahTeamEnum.SLCC_ON_SITE.name], 1, ["note_3"], 4),
+            ([SelahTeamEnum.WDI_ON_SITE.name, "invalid team"], 0, [], 1),
+        ],
+    )
+    def test_notes_query_filter_by_teams(
+        self,
+        teams: list[SelahTeamEnum],
+        expected_results_count: int,
+        returned_note_labels: list[str],
+        expected_query_count: int,
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
         self.note_2 = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
-                "title": "Client 1's Note",
+                "client": self.client_user_1.pk,
+            }
+        )[
+            "data"
+        ]["createNote"]
+        self.note_3 = self._create_note_fixture(
+            {
+                "purpose": "Client 2's Note",
+                "client": self.client_user_2.pk,
+            }
+        )[
+            "data"
+        ]["createNote"]
+        self._update_note_fixture(
+            {
+                "id": self.note_2["id"],
+                "team": SelahTeamEnum.WDI_ON_SITE.name,
+            }
+        )
+        self._update_note_fixture(
+            {
+                "id": self.note_3["id"],
+                "team": SelahTeamEnum.SLCC_ON_SITE.name,
+            }
+        )
+
+        filters = {"teams": teams}
+
+        query = """
+            query Notes($filters: NoteFilter) {
+                notes: notesPaginated(filters: $filters) {
+                    totalCount
+                    results{
+                        id
+                    }
+                }
+            }
+        """
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        if "invalid team" in teams:
+            self.assertIsNone(response["data"])
+            self.assertEqual(len(response["errors"]), 1)
+            self.assertIn("does not exist in 'SelahTeamEnum'", response["errors"][0]["message"])
+
+        else:
+            self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
+            notes = response["data"]["notes"]["results"]
+
+            for idx, note_label in enumerate(returned_note_labels):
+                self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
+
+    @parametrize(
+        ("search_terms, expected_results_count, returned_note_labels"),
+        [
+            ("deets", 2, ["note_2", "note_3"]),  # Two notes have "deets" in public details
+            ("deets coop", 1, ["note_2"]),  # One note has "deets" in public details and "coop" in client name
+            ("more", 1, ["note_3"]),  # One note has "more" in public details
+        ],
+    )
+    def test_notes_query_search(
+        self,
+        search_terms: Optional[str],
+        expected_results_count: int,
+        returned_note_labels: list[str],
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_2)
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
+        self.note_2 = self._create_note_fixture(
+            {
+                "purpose": "Client 1's Note",
                 "publicDetails": "deets",
                 "client": self.client_user_1.pk,
             }
         )["data"]["createNote"]
-
         self.note_3 = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
-                "title": "Client 2's Note",
                 "publicDetails": "more deets",
                 "client": self.client_user_2.pk,
             }
@@ -255,19 +382,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         """
 
-        filters: dict[str, Any] = {}
-
-        if case_manager_label:
-            filters["createdBy"] = getattr(self, case_manager_label).pk
-
-        if client_label:
-            filters["client"] = getattr(self, client_label).pk
-
-        if search_terms:
-            filters["search"] = search_terms
-
-        if is_submitted is not None:
-            filters["isSubmitted"] = is_submitted
+        filters: dict[str, Any] = {"search": search_terms}
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -276,11 +391,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
         notes = response["data"]["notes"]["results"]
 
-        if returned_note_label_1:
-            self.assertEqual(notes[0]["id"], getattr(self, returned_note_label_1)["id"])
-
-        if returned_note_label_2:
-            self.assertEqual(notes[1]["id"], getattr(self, returned_note_label_2)["id"])
+        for idx, note_label in enumerate(returned_note_labels):
+            self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
 
     def test_notes_query_order(self) -> None:
         """
@@ -291,19 +403,21 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         older_note = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
-                "title": "Client 1's Note",
                 "client": self.client_user_1.pk,
             }
-        )["data"]["createNote"]
+        )[
+            "data"
+        ]["createNote"]
         self._update_note_fixture({"id": older_note["id"], "interactedAt": "2024-03-10T10:11:12+00:00"})
 
         oldest_note = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
-                "title": "Client 2's Note",
                 "client": self.client_user_2.pk,
             }
-        )["data"]["createNote"]
+        )[
+            "data"
+        ]["createNote"]
         self._update_note_fixture({"id": oldest_note["id"], "interactedAt": "2024-01-10T10:11:12+00:00"})
 
         query = """
@@ -363,6 +477,7 @@ class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):
                         name
                     }
                     attachmentType
+                    mimeType
                     originalFilename
                     namespace
                 }
@@ -385,6 +500,7 @@ class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):
                         name
                     }
                     attachmentType
+                    mimeType
                     originalFilename
                     namespace
                 }
