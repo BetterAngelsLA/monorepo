@@ -1,5 +1,5 @@
 import json
-from typing import Any, List, TypeVar, cast
+from typing import Any, List, Type, TypeVar, cast
 from urllib.parse import unquote
 
 from accounts.serializers import SocialLoginSerializer
@@ -17,16 +17,50 @@ from .utils import base64url_decode
 T = TypeVar("T")
 
 
+def scope_fix(client_class: Type[Any]) -> Type[Any]:
+    # https://github.com/iMerica/dj-rest-auth/issues/673
+    class Wrapped(client_class):
+        def __init__(
+            self,
+            request: Any,
+            consumer_key: str,
+            consumer_secret: str,
+            access_token_method: str,
+            access_token_url: str,
+            callback_url: str,
+            _scope: Any,  # Extra parameter to ignore
+            scope_delimiter: str = " ",
+            headers: Any = None,
+            basic_auth: bool = False,
+            **kwargs: Any,
+        ) -> None:
+            # _scope is accepted but ignored.
+            super().__init__(
+                request,
+                consumer_key,
+                consumer_secret,
+                access_token_method,
+                access_token_url,
+                callback_url,
+                scope_delimiter,
+                headers,
+                basic_auth,
+                **kwargs,
+            )
+
+    return Wrapped
+
+
 class AppleLogin(SocialLoginView):
     adapter_class = AppleOAuth2Adapter
-    client_class = AppleOAuth2Client
+    client_class = scope_fix(AppleOAuth2Client)
     serializer_class = SocialLoginSerializer
     authentication_classes: List[Any] = []
 
 
 class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
-    client_class = OAuth2Client
+    client_class = scope_fix(OAuth2Client)
     serializer_class = SocialLoginSerializer
     authentication_classes: List[Any] = []
 
