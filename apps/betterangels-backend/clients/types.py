@@ -12,6 +12,8 @@ from clients.enums import (
     LanguageEnum,
     LivingSituationEnum,
     PreferredCommunicationEnum,
+    VeteranStatusEnum,
+    YesNoPreferNotToSayEnum,
 )
 from common.graphql.types import (
     AttachmentInterface,
@@ -222,7 +224,9 @@ class ClientProfileBaseType:
     race: auto
     residence_address: auto
     spoken_languages: Optional[List[LanguageEnum]]
-    veteran_status: auto
+    veteran_status: Optional[YesNoPreferNotToSayEnum]
+    # TODO: remove after veteran_status field updated to use VeteranStatusEnum
+    temp_veteran_status: Optional[VeteranStatusEnum]
 
 
 @strawberry.input

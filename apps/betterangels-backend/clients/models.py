@@ -18,6 +18,7 @@ from clients.enums import (
     RaceEnum,
     RelationshipTypeEnum,
     SocialMediaEnum,
+    VeteranStatusEnum,
     YesNoPreferNotToSayEnum,
 )
 from common.models import Attachment, BaseModel, PhoneNumber
@@ -123,7 +124,7 @@ class ClientProfile(models.Model):
     race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
     residence_address = models.TextField(blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
-    veteran_status = TextChoicesField(choices_enum=YesNoPreferNotToSayEnum, blank=True, null=True)
+    veteran_status = TextChoicesField(choices_enum=VeteranStatusEnum, blank=True, null=True)
 
     @model_property
     def doc_ready_documents(self: "ClientProfile") -> List[Attachment]:
