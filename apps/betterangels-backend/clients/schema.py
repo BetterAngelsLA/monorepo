@@ -51,6 +51,18 @@ from .types import (
 )
 
 
+def _format_graphql_error(error: Exception) -> str:
+    if isinstance(error, GraphQLError) and hasattr(error, "extensions"):
+        # Extract the custom error list if available.
+        ext = error.extensions
+        error_list = ext.get("errors")
+        if error_list:
+            detailed_errors = "; ".join(f"{err.get('field')}: {err.get('message')}" for err in error_list)
+            return f"{error.message} ({detailed_errors})"
+    # Fallback: return the standard string representation.
+    return str(error)
+
+
 def _validate_user_email(user_data: dict, user: Optional[User] = None) -> list[dict[str, Any]]:
     errors: list = []
 
@@ -459,6 +471,6 @@ class Mutation:
                 source_id=data.source_id,
                 raw_data=data.raw_data,
                 success=False,
-                error_message=str(e),
+                error_message=_format_graphql_error(e),
             )
         return cast(ClientProfileImportRecordType, record)
