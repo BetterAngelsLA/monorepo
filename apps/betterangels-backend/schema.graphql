@@ -313,6 +313,7 @@ type ClientProfileType {
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: YesNoPreferNotToSayEnum
+  tempVeteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
@@ -388,6 +389,7 @@ input CreateClientProfileInput {
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: YesNoPreferNotToSayEnum
+  tempVeteranStatus: VeteranStatusEnum
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
@@ -1465,6 +1467,7 @@ input UpdateClientProfileInput {
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: YesNoPreferNotToSayEnum
+  tempVeteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
@@ -1556,10 +1559,18 @@ type UserType {
   username: String!
 }
 
+enum VeteranStatusEnum {
+  YES
+  NO
+  PREFER_NOT_TO_SAY
+  OTHER_THAN_HONORABLE
+}
+
 enum YesNoPreferNotToSayEnum {
   YES
   NO
   PREFER_NOT_TO_SAY
+  OTHER_THAN_HONORABLE
 }
 
 """Permission definition for schema directives."""
