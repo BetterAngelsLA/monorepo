@@ -477,6 +477,7 @@ class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):
                         name
                     }
                     attachmentType
+                    mimeType
                     originalFilename
                     namespace
                 }
@@ -499,6 +500,7 @@ class NoteAttachmentQueryTestCase(NoteGraphQLBaseTestCase):
                         name
                     }
                     attachmentType
+                    mimeType
                     originalFilename
                     namespace
                 }
