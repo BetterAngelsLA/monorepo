@@ -234,22 +234,22 @@ class ClientProfileImportRecord(models.Model):
     """
 
     import_job = models.ForeignKey(ClientProfileDataImport, on_delete=models.CASCADE, related_name="records")
-    source_id = models.CharField(max_length=255)  # Original CSV ID
+    source_id = models.CharField(max_length=255)
+    source_name = models.CharField(max_length=255)
     client_profile = models.ForeignKey(
-        "clients.ClientProfile",  # Adjust if your ClientProfile model is elsewhere.
+        "clients.ClientProfile",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
     )
-    raw_data = models.JSONField()  # Stores the original CSV row data (as JSON)
+    raw_data = models.JSONField()
     success = models.BooleanField(default=False)
     error_message = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = [("import_job", "source_id")]
         indexes = [
-            models.Index(fields=["import_job", "success"]),
+            models.Index(fields=["import_job", "success", "source_name", "source_id"]),
         ]
 
     def __str__(self) -> str:

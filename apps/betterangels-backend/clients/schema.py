@@ -54,7 +54,7 @@ from .types import (
 def _format_graphql_error(error: Exception) -> str:
     if isinstance(error, GraphQLError) and hasattr(error, "extensions"):
         # Extract the custom error list if available.
-        ext = error.extensions
+        ext = error.extensions or {}
         error_list = ext.get("errors")
         if error_list:
             detailed_errors = "; ".join(f"{err.get('field')}: {err.get('message')}" for err in error_list)
@@ -436,7 +436,7 @@ class Mutation:
     # Data Import
     @strawberry_django.mutation(extensions=[HasPerm(ClientProfileImportRecordPermissions.ADD)])
     def create_client_profile_data_import(
-        self, info: Info, data: "CreateProfileDataImportInput"
+        self, info: Info, data: CreateProfileDataImportInput
     ) -> "ClientProfileDataImportType":
         user = cast(User, get_current_user(info))
         record = ClientProfileDataImport.objects.create(
@@ -453,7 +453,15 @@ class Mutation:
         )
 
     @strawberry_django.mutation(extensions=[HasPerm([ClientProfileImportRecordPermissions.ADD])])
-    def import_client_profile(self, info: Info, data: "ImportClientProfileInput") -> "ClientProfileImportRecordType":
+    def import_client_profile(self, info: Info, data: ImportClientProfileInput) -> ClientProfileImportRecordType:
+        existing = ClientProfileImportRecord.objects.filter(
+            source_id=data.source_id, source_name=data.source_name, success=True
+        ).first()
+        if existing:
+            raise Exception(
+                f"Source ID {data.source_id} with source name '{data.source_name}' has already been imported successfully."
+            )
+
         import_job = ClientProfileDataImport.objects.get(id=data.import_job_id)
         try:
             with transaction.atomic():
@@ -461,6 +469,7 @@ class Mutation:
                 record = ClientProfileImportRecord.objects.create(
                     import_job=import_job,
                     source_id=data.source_id,
+                    source_name=data.source_name,
                     client_profile=client_profile,
                     raw_data=data.raw_data,
                     success=True,
@@ -469,6 +478,7 @@ class Mutation:
             record = ClientProfileImportRecord.objects.create(
                 import_job=import_job,
                 source_id=data.source_id,
+                source_name=data.source_name,
                 raw_data=data.raw_data,
                 success=False,
                 error_message=_format_graphql_error(e),

@@ -349,6 +349,7 @@ class ClientProfileDataImportType:
 class ClientProfileImportRecordType:
     id: auto
     source_id: auto
+    source_name: auto
     success: auto
     error_message: auto
     created_at: auto
@@ -366,5 +367,6 @@ class CreateProfileDataImportInput:
 class ImportClientProfileInput:
     import_job_id: auto
     source_id: auto
+    source_name: auto
     raw_data: auto
     client_profile: CreateClientProfileInput

@@ -90,16 +90,25 @@ def import_client_profile(
     mutation ImportClientProfile($input: ImportClientProfileInput!) {
       importClientProfile(data: $input) {
         ... on ClientProfileImportRecordType {
-          id sourceId success errorMessage createdAt clientProfile { id } rawData
+          id
+          sourceId
+          sourceName
+          success
+          errorMessage
+          createdAt
+          clientProfile { id }
+          rawData
         }
         ... on OperationInfo { messages { message code field kind } }
       }
     }
     """
+    # Note: We hardcode the sourceName to "SELAH"
     variables = {
         "input": {
             "importJobId": import_job_id,
             "sourceId": source_id,
+            "sourceName": "SELAH",
             "rawData": raw_data,
             "clientProfile": client_profile,
         }
@@ -117,12 +126,9 @@ def import_client_profile(
 
 def authenticate(session: requests.Session, username: str, password: str) -> Optional[str]:
     csrf_token = get_csrf_token(session)
-    print(f"Using CSRF token: {csrf_token}")
     headers: Dict[str, str] = {"X-CSRFToken": csrf_token, "Content-Type": "application/json"}
     payload = {"username": username, "password": password}
     response = session.post(REST_LOGIN_URL, json=payload, headers=headers)
-    print(f"REST login response status: {response.status_code}")
-    print(f"REST login response text: {response.text}")
     if response.status_code == 200:
         try:
             return response.json().get("key", "")

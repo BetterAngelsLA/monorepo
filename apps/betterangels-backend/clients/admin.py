@@ -48,7 +48,7 @@ class ClientProfileDataImportAdmin(admin.ModelAdmin):
 
 @admin.register(ClientProfileImportRecord)
 class ClientProfileImportRecordAdmin(admin.ModelAdmin):
-    list_display = ("source_id", "import_job", "client_profile", "success", "created_at")
-    list_filter = ("import_job", "success")
+    list_display = ("import_job__id", "source_name", "source_id", "client_profile", "success", "created_at")
+    list_filter = ("import_job__id", "success")
     search_fields = ("source_id", "client_profile__id")
     readonly_fields = ("raw_data", "error_message")
