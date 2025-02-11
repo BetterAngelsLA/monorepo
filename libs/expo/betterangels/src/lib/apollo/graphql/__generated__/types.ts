@@ -70,6 +70,7 @@ export type AttachmentInterface = {
   createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
+  mimeType: Scalars['String']['output'];
   originalFilename?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -235,6 +236,7 @@ export type ClientDocumentType = AttachmentInterface & {
   createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
+  mimeType: Scalars['String']['output'];
   namespace: ClientDocumentNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
@@ -1008,6 +1010,7 @@ export type NoteAttachmentType = AttachmentInterface & {
   createdAt: Scalars['DateTime']['output'];
   file: DjangoFileType;
   id: Scalars['ID']['output'];
+  mimeType: Scalars['String']['output'];
   namespace: NoteNamespaceEnum;
   originalFilename?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
