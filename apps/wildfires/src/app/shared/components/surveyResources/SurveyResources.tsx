@@ -3,6 +3,7 @@ import { TResource, TTagCategory } from '../../clients/sanityCms/types';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { AlertResources } from './AlertResources';
 import { ResourceGroupCard } from './ResourceGroupCard';
+
 type IProps = {
   className?: string;
   resources: TResource[];
@@ -10,12 +11,10 @@ type IProps = {
 
 export function SurveyResources(props: IProps) {
   const { resources, className } = props;
-
   const parentCss = [className];
 
   const baseResources = resources.filter((r) => r.resourceType === 'resource');
   const alertResources = resources.filter((r) => r.resourceType === 'alert');
-
   const baseResourcesGroupedSorted = groupResources(baseResources);
 
   return (
@@ -24,7 +23,6 @@ export function SurveyResources(props: IProps) {
         <div>
           {baseResourcesGroupedSorted.map((categoryResources, index) => {
             const { category, resources } = categoryResources;
-
             return (
               <ResourceGroupCard
                 key={category.slug}
