@@ -6,8 +6,17 @@ import strawberry_django
 from accounts.models import User
 from accounts.utils import get_user_permission_group
 from clients.enums import HmisAgencyEnum
-from clients.models import ClientContact, ClientProfile, HmisProfile
-from clients.permissions import ClientProfilePermissions
+from clients.models import (
+    ClientContact,
+    ClientProfile,
+    ClientProfileDataImport,
+    ClientProfileImportRecord,
+    HmisProfile,
+)
+from clients.permissions import (
+    ClientProfileImportRecordPermissions,
+    ClientProfilePermissions,
+)
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, PhoneNumber
 from common.permissions.enums import AttachmentPermissions
@@ -30,18 +39,23 @@ from strawberry_django.utils.query import filter_for_user
 from .enums import RelationshipTypeEnum
 from .types import (
     ClientDocumentType,
+    ClientProfileDataImportType,
+    ClientProfileImportRecordType,
     ClientProfilePhotoInput,
     ClientProfileType,
     CreateClientDocumentInput,
     CreateClientProfileInput,
+    CreateProfileDataImportInput,
+    ImportClientProfileInput,
     UpdateClientProfileInput,
 )
 
 
-def _validate_user_email(user_data: dict, user: Optional[User] = None) -> list[dict[str, Any]]:
-    errors: list = []
+def _validate_user_email(user_data: dict, user: Optional[User] = None) -> List[Dict[str, Any]]:
+    errors: List[Dict[str, Any]] = []
 
-    if user_data["email"] is strawberry.UNSET or user_data["email"] is None:
+    # Use .get() to be safe.
+    if user_data.get("email") in (strawberry.UNSET, None):
         return errors
 
     email = user_data["email"].lower()
@@ -55,18 +69,19 @@ def _validate_user_email(user_data: dict, user: Optional[User] = None) -> list[d
     return errors
 
 
-def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = None) -> list[dict[str, Any]]:
-    errors: list = []
+def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = None) -> List[Dict[str, Any]]:
+    errors: List[Dict[str, Any]] = []
 
+    # Build a dictionary for the name fields.
     user_name_dict = {
-        f"{name_field}": user_data.get(name_field) for name_field in ["first_name", "last_name", "middle_name"]
+        name_field: user_data.get(name_field) for name_field in ["first_name", "last_name", "middle_name"]
     }
     user_name_dict["nickname"] = nickname
 
     user_name_untouched = all((v is strawberry.UNSET for v in user_name_dict.values()))
     user_name_cleared = all((v == "" for v in user_name_dict.values()))
 
-    if user and user.has_name and user_name_untouched:
+    if user and getattr(user, "has_name", False) and user_name_untouched:
         return errors
 
     if user_name_cleared or user_name_untouched:
@@ -75,47 +90,40 @@ def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = N
     return errors
 
 
-def _validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def _validate_client_profile_data(data: dict) -> None:
+    """Validates the data for creating or updating a client profile."""
     errors = []
 
-    for idx, phone_number in enumerate(phone_numbers):
-        try:
-            phonenumber_field.validators.validate_international_phonenumber(phone_number["number"])
-        except ValidationError:
-            errors.append(
-                {"field": f"phone_numbers__{idx}__number", "message": "The phone number entered is not valid"}
-            )
+    # Get the user data safely.
+    user_data = data.get("user")
+    if user_data is None or user_data is strawberry.UNSET:
+        errors.append({"field": "user", "message": "User data is required."})
+    else:
+        user_id = user_data.get("id", None)
+        user = User.objects.filter(id=user_id).first() if user_id else None
 
-    return errors
+        errors += _validate_user_name(user_data, data.get("nickname", ""), user)
+        errors += _validate_user_email(user_data, user)
+
+    # Validate contacts if provided.
+    if data.get("contacts") is not strawberry.UNSET:
+        errors += _validate_contacts(data["contacts"])
+
+    # Validate HMIS profiles if provided.
+    if data.get("hmis_profiles") is not strawberry.UNSET:
+        errors += _validate_hmis_profiles(data["hmis_profiles"])
+
+    # Validate phone numbers if provided.
+    if data.get("phone_numbers") is not strawberry.UNSET:
+        errors += _validate_phone_numbers(data["phone_numbers"])
+
+    if errors:
+        raise GraphQLError("Validation Errors", extensions={"errors": errors})
 
 
-def _validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
+# Assuming these helper functions are defined elsewhere in your code:
+def _validate_contacts(contacts: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     errors = []
-
-    for idx, hmis_profile in enumerate(hmis_profiles):
-        hmis_profile_id = {"id": hmis_profile["id"]} if hmis_profile.get("id") is not strawberry.UNSET else {}
-
-        if (
-            HmisProfile.objects.exclude(**hmis_profile_id)
-            .filter(
-                agency=hmis_profile["agency"],
-                hmis_id=hmis_profile["hmis_id"],
-            )
-            .exists()
-        ):
-            errors.append(
-                {
-                    "field": f"hmis_profiles__{idx}",
-                    "message": f"This {HmisAgencyEnum(hmis_profile["agency"]).label} HMIS ID is already in use",
-                }
-            )
-
-    return errors
-
-
-def _validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    errors = []
-
     for idx, contact in enumerate(contacts):
         try:
             phonenumber_field.validators.validate_international_phonenumber(contact["phone_number"])
@@ -123,32 +131,38 @@ def _validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
             errors.append(
                 {"field": f"contacts__{idx}__phone_number", "message": "The phone number entered is not valid"}
             )
-
     return errors
 
 
-def _validate_client_profile_data(data: dict) -> None:
-    """Validates the data for creating or updating a client profile."""
+def _validate_hmis_profiles(hmis_profiles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     errors = []
 
-    if data["user"] is not strawberry.UNSET:
-        user_id = data["user"].get("id", None)
-        user = User.objects.filter(id=user_id).first() if user_id else None
+    for idx, hmis_profile in enumerate(hmis_profiles):
+        hmis_profile_id = {"id": hmis_profile["id"]} if hmis_profile.get("id") is not strawberry.UNSET else {}
+        if (
+            HmisProfile.objects.exclude(**hmis_profile_id)
+            .filter(agency=hmis_profile["agency"], hmis_id=hmis_profile["hmis_id"])
+            .exists()
+        ):
+            errors.append(
+                {
+                    "field": f"hmis_profiles__{idx}",
+                    "message": f"This {HmisAgencyEnum(hmis_profile['agency']).label} HMIS ID is already in use",
+                }
+            )
+    return errors
 
-        errors += _validate_user_name(data["user"], data["nickname"], user)
-        errors += _validate_user_email(data["user"], user)
 
-    if data["contacts"] is not strawberry.UNSET:
-        errors += _validate_contacts(data["contacts"])
-
-    if data["hmis_profiles"] is not strawberry.UNSET:
-        errors += _validate_hmis_profiles(data["hmis_profiles"])
-
-    if data["phone_numbers"] is not strawberry.UNSET:
-        errors += _validate_phone_numbers(data["phone_numbers"])
-
-    if errors:
-        raise GraphQLError("Validation Errors", extensions={"errors": errors})
+def _validate_phone_numbers(phone_numbers: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    errors = []
+    for idx, phone_number in enumerate(phone_numbers):
+        try:
+            phonenumber_field.validators.validate_international_phonenumber(phone_number["number"])
+        except ValidationError:
+            errors.append(
+                {"field": f"phone_numbers__{idx}__number", "message": "The phone number entered is not valid"}
+            )
+    return errors
 
 
 def upsert_or_delete_client_related_object(
@@ -278,33 +292,53 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
             get_user_permission_group(user)
-            client_profile_data: dict = strawberry.asdict(data)
-            _validate_client_profile_data(client_profile_data)
+            # Convert input to a dictionary.
+            client_profile_input: dict = strawberry.asdict(data)
+            _validate_client_profile_data(client_profile_input)
 
-            user_data = client_profile_data.pop("user")
+            # Pop reverse-related fields so they are not passed directly to resolvers.create.
+            reverse_fields = [
+                "contacts",
+                "hmis_profiles",
+                "household_members",
+                "social_media_profiles",
+                "phone_numbers",
+            ]
+            reverse_data = {}
+            for field in reverse_fields:
+                reverse_data[field] = client_profile_input.pop(field, None)
+
+            # Pop and create the user.
+            user_data = client_profile_input.pop("user")
             client_user = User.objects.create_client(**user_data)
-            phone_numbers = client_profile_data.pop("phone_numbers", []) or []
 
+            # Create the ClientProfile without reverse-related fields.
             client_profile = resolvers.create(
                 info,
                 ClientProfile,
-                {
-                    **client_profile_data,
-                    "user": client_user,
-                },
+                {**client_profile_input, "user": client_user},
             )
 
+            # Handle reverse relations separately.
+            # For example, if reverse_data["phone_numbers"] exists:
             content_type = ContentType.objects.get_for_model(ClientProfile)
+            if reverse_data.get("phone_numbers"):
+                for phone_number in reverse_data["phone_numbers"]:
+                    PhoneNumber.objects.create(
+                        content_type=content_type,
+                        object_id=client_profile.id,
+                        number=phone_number["number"],
+                        is_primary=phone_number["is_primary"],
+                    )
 
-            for phone_number in phone_numbers:
-                PhoneNumber.objects.create(
-                    content_type=content_type,
-                    object_id=client_profile.id,
-                    number=phone_number["number"],
-                    is_primary=phone_number["is_primary"],
-                )
+            # Similarly, handle contacts, HMIS profiles, etc.
+            for field, items in reverse_data.items():
+                if items is not None and field not in ["phone_numbers"]:
+                    # Get the related field from the model metadata.
+                    related_field = ClientProfile._meta.get_field(field)
+                    upsert_or_delete_client_related_object(info, related_field, items, client_profile)
 
-            return cast(ClientProfileType, client_profile)
+        return cast(ClientProfileType, client_profile)
 
     @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])])
     def update_client_profile(self, info: Info, data: UpdateClientProfileInput) -> ClientProfileType:
@@ -407,3 +441,51 @@ class Mutation:
                 raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")
 
             return DeletedObjectType(id=client_profile_id)
+
+    # Data Import
+    @strawberry_django.mutation(extensions=[HasPerm(ClientProfileImportRecordPermissions.ADD)])
+    def create_client_profile_data_import(
+        self, info: Info, data: "CreateProfileDataImportInput"
+    ) -> "ClientProfileDataImportType":
+        user = cast(User, get_current_user(info))
+        record = ClientProfileDataImport.objects.create(
+            source_file=data.source_file,
+            imported_by=user,
+            notes=data.notes,
+        )
+        return ClientProfileDataImportType(
+            id=record.id,
+            imported_at=record.imported_at,
+            imported_by=record.imported_by,
+            notes=record.notes,
+            source_file=record.source_file,
+        )
+
+    @strawberry_django.mutation(extensions=[HasPerm([ClientProfileImportRecordPermissions.ADD])])
+    def import_client_profile(self, info: Info, data: "ImportClientProfileInput") -> "ClientProfileImportRecordType":
+        import_job = ClientProfileDataImport.objects.get(id=data.import_job_id)
+        try:
+            with transaction.atomic():
+                client_profile_input: Dict[str, Any] = strawberry.asdict(data.client_profile)
+                if "user" in client_profile_input:
+                    user_input: Dict[str, Any] = client_profile_input["user"]
+                    if "id" not in user_input or user_input["id"] in (None, "", strawberry.UNSET):
+                        user_input["id"] = ""
+                    client_profile_input["user"] = user_input
+                client_profile = resolvers.create(info, ClientProfile, client_profile_input)
+                record = ClientProfileImportRecord.objects.create(
+                    import_job=import_job,
+                    source_id=data.source_id,
+                    client_profile=client_profile,
+                    raw_data=data.raw_data,
+                    success=True,
+                )
+        except Exception as e:
+            record = ClientProfileImportRecord.objects.create(
+                import_job=import_job,
+                source_id=data.source_id,
+                raw_data=data.raw_data,
+                success=False,
+                error_message=str(e),
+            )
+        return cast(ClientProfileImportRecordType, record)

@@ -2,7 +2,12 @@ from common.models import PhoneNumber
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 
-from .models import ClientProfile, HmisProfile, ProfileDataImport, ProfileImportRecord
+from .models import (
+    ClientProfile,
+    ClientProfileDataImport,
+    ClientProfileImportRecord,
+    HmisProfile,
+)
 
 
 class HmisProfileInline(admin.TabularInline):
@@ -27,12 +32,12 @@ class ClientProfileAdmin(admin.ModelAdmin):
 # Data Import
 
 
-@admin.register(ProfileDataImport)
-class ProfileDataImportAdmin(admin.ModelAdmin):
+@admin.register(ClientProfileDataImport)
+class ClientProfileDataImportAdmin(admin.ModelAdmin):
     list_display = ("id", "imported_at", "source_file", "imported_by", "record_counts")
     readonly_fields = ("record_counts",)
 
-    def record_counts(self, obj: ProfileDataImport) -> str:
+    def record_counts(self, obj: ClientProfileDataImport) -> str:
         total = obj.records.count()
         successes = obj.records.filter(success=True).count()
         failures = total - successes
@@ -41,8 +46,8 @@ class ProfileDataImportAdmin(admin.ModelAdmin):
     record_counts.short_description = "Import Record Counts"
 
 
-@admin.register(ProfileImportRecord)
-class ProfileImportRecordAdmin(admin.ModelAdmin):
+@admin.register(ClientProfileImportRecord)
+class ClientProfileImportRecordAdmin(admin.ModelAdmin):
     list_display = ("source_id", "import_job", "client_profile", "success", "created_at")
     list_filter = ("import_job", "success")
     search_fields = ("source_id", "client_profile__id")

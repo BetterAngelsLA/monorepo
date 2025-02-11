@@ -209,7 +209,7 @@ class ClientHouseholdMember(models.Model):
 
 
 # Data Import #
-class ProfileDataImport(models.Model):
+class ClientProfileDataImport(models.Model):
     """
     Model to track a client profile import job.
     """
@@ -221,20 +221,22 @@ class ProfileDataImport(models.Model):
     notes = models.TextField(blank=True, default="")
 
     def __str__(self) -> str:
-        return f"Profile Import {self.id} from {self.source_file} at {self.imported_at}"
+        return f"ClientProfile Import {self.id} from {self.source_file} at {self.imported_at}"
 
 
-class ProfileImportRecord(models.Model):
+class ClientProfileImportRecord(models.Model):
     """
-    Model to record each imported row (i.e. client profile) for a given ProfileDataImport job.
+    Model to record each imported row (i.e. client profile) for a given
+    ClientProfileDataImport job.
+
     Stores the original CSV row (raw_data), the original CSV id (source_id),
     and, if successfully imported, a link to the ClientProfile created via GraphQL.
     """
 
-    import_job = models.ForeignKey(ProfileDataImport, on_delete=models.CASCADE, related_name="records")
+    import_job = models.ForeignKey(ClientProfileDataImport, on_delete=models.CASCADE, related_name="records")
     source_id = models.CharField(max_length=255)  # Original CSV ID
     client_profile = models.ForeignKey(
-        "clients.ClientProfile",  # Adjust this if your ClientProfile model is in a different app.
+        "clients.ClientProfile",  # Adjust if your ClientProfile model is elsewhere.
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -252,4 +254,4 @@ class ProfileImportRecord(models.Model):
 
     def __str__(self) -> str:
         status = "Success" if self.success else "Failed"
-        return f"Import Record {self.source_id} ({status})"
+        return f"ClientProfile Import Record {self.source_id} ({status})"
