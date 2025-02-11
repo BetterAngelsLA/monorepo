@@ -78,7 +78,10 @@ export default function FileScreenComponent({ id }: { id: string }) {
             documentType={namespace}
           />
         )}
-        <TextBold size="sm">File Name</TextBold>
+
+        <TextBold mt="sm" size="sm">
+          File Name
+        </TextBold>
         <TextRegular size="sm">{originalFilename}</TextRegular>
       </View>
       <TextRegular textAlign="right" size="sm">

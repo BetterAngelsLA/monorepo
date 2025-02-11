@@ -44,6 +44,7 @@ export default function UploadsPreview(props: IUploadPreview) {
               placeholder={'Enter a file name'}
               value={file.name}
               required
+              mt="sm"
               errorMessage={
                 !file.name.trim() ? 'file name is required' : undefined
               }
