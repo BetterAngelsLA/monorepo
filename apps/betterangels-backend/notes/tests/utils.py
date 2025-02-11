@@ -453,6 +453,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on NoteAttachmentType {
                         id
                         attachmentType
+                        mimeType
                         file {
                             name
                         }
