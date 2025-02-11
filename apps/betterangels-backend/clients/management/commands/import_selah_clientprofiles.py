@@ -1,16 +1,33 @@
 import csv
 import logging
+import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import phonenumbers
 import requests
-from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand, CommandError
 
 logger = logging.getLogger(__name__)
+# These globals will be overwritten by command-line options.
 GRAPHQL_URL: str = "http://localhost:8000/graphql"
 REST_LOGIN_URL: str = "http://localhost:8000/rest-auth/login/"
+
+
+def parse_source_id(source_id: str) -> float:
+    """
+    Convert the source_id to a numeric value.
+    If it cannot be fully converted, extract the first numeric part.
+    If no numeric part is found, return 0.0.
+    """
+    try:
+        return float(source_id)
+    except ValueError:
+        match = re.search(r"\d+", source_id)
+        if match:
+            return float(match.group())
+        else:
+            return 0.0
 
 
 def get_csrf_token(session: requests.Session) -> str:
@@ -114,8 +131,31 @@ def authenticate(session: requests.Session, username: str, password: str) -> Opt
     elif response.status_code == 204:
         # 204 indicates success with no content.
         return ""
-    # Return None on failure.
     return None
+
+
+def map_value(
+    val: str,
+    mapping: Dict[str, str],
+    default: Optional[str] = None,
+    field: Optional[str] = None,
+    source_id: Optional[str] = None,
+) -> Optional[str]:
+    """
+    Normalize the input value by stripping and lowering it, then look it up in the mapping.
+    If the value is not found, log a warning (including the field and source_id if provided)
+    and return the provided default (which can be None).
+    """
+    v = val.strip().lower()
+    if not v:
+        return None
+    if v not in mapping:
+        msg = f"Value '{val}' not found in mapping for field '{field}'"
+        if source_id:
+            msg += f" (source_id: {source_id})"
+        msg += f"; defaulting to {default}"
+        logger.warning(msg)
+    return mapping.get(v, default)
 
 
 def build_input_data(row: Dict[str, str]) -> Dict[str, Any]:
@@ -139,35 +179,79 @@ def build_input_data(row: Dict[str, str]) -> Dict[str, Any]:
         except Exception:
             return None
 
-    def map_value(val: str, mapping: Dict[str, str]) -> Optional[str]:
-        val = val.strip().lower()
-        return mapping.get(val, val.upper()) if val else None
+    # Mapping dictionaries: keys are lowercased input values; values are enum names in CAPS.
+    gender_map = {
+        "cisgender male": "MALE",
+        "male": "MALE",
+        "m": "MALE",
+        "cisgender female": "FEMALE",
+        "female": "FEMALE",
+        "f": "FEMALE",
+        "non-binary": "NON_BINARY",
+        "nonbinary": "NON_BINARY",
+        "transgender male": "MALE",
+        "transgender female": "FEMALE",
+    }
+    hair_map = {
+        "black": "BLACK",
+        "blonde": "BLONDE",
+        "dirty blonde with streaks of brown and also unnatural colors": "BLONDE",
+        "short hair bleached yellow/blonde": "BLONDE",
+        "dark brown": "BROWN",
+        "light brown": "BROWN",
+        "light brown with gray streaks in front": "BROWN",
+        "light brown, but often wearing a wig.": "BROWN",
+        "brown/gray": "BROWN",
+        "brown": "BROWN",
+        "grey": "GRAY",
+        "gray": "GRAY",
+        "salt/pepper": "GRAY",
+        "auburn": "RED",
+        "red": "RED",
+        "red - dyed": "RED",
+        "white": "WHITE",
+        "bald": "BALD",
+    }
+    language_map = {
+        "arabic": "ARABIC",
+        "armenian": "ARMENIAN",
+        "english": "ENGLISH",
+        "farsi": "FARSI",
+        "indonesian": "INDONESIAN",
+        "japanese": "JAPANESE",
+        "khmer": "KHMER",
+        "korean": "KOREAN",
+        "russian": "RUSSIAN",
+        "simplified chinese": "SIMPLIFIED_CHINESE",
+        "spanish": "SPANISH",
+        "tagalog": "TAGALOG",
+        "traditional chinese": "TRADITIONAL_CHINESE",
+        "vietnamese": "VIETNAMESE",
+    }
+    race_map = {
+        "white": "WHITE_CAUCASIAN",
+        "black / african-american": "BLACK_AFRICAN_AMERICAN",
+        "hispanic / latino": "HISPANIC_LATINO",
+        "asian": "ASIAN",
+        "multi-racial / other": "OTHER",
+        "native hawaiian / other pacific islander": "NATIVE_HAWAIIAN_PACIFIC_ISLANDER",
+        "native american": "AMERICAN_INDIAN_ALASKA_NATIVE",
+    }
+    eye_color_map = {
+        "blue": "BLUE",
+        "brown": "BROWN",
+        "black": "BROWN",
+        "green": "GREEN",
+        "gray": "GRAY",
+        "grey": "GRAY",
+        "hazel": "HAZEL",
+        "other": "OTHER",
+    }
 
-    gender: Optional[str] = map_value(
-        row.get("Gender", ""),
-        {
-            "cisgender male": "MALE",
-            "male": "MALE",
-            "cisgender female": "FEMALE",
-            "female": "FEMALE",
-            "non-binary": "NON_BINARY",
-            "transgender male": "MALE",
-            "transgender female": "FEMALE",
-        },
-    )
-    race: Optional[str] = map_value(
-        row.get("Race", ""),
-        {
-            "white": "WHITE_CAUCASIAN",
-            "black / african-american": "BLACK_AFRICAN_AMERICAN",
-            "hispanic / latino": "HISPANIC_LATINO",
-            "asian": "ASIAN",
-            "multi-racial / other": "OTHER",
-            "native hawaiian / other pacific islander": "NATIVE_HAWAIIAN_PACIFIC_ISLANDER",
-            "native american": "AMERICAN_INDIAN_ALASKA_NATIVE",
-        },
-    )
+    # Retrieve source_id from the row for warnings.
+    src_id = row.get("id", "unknown")
 
+    # Build user data.
     user_data: Dict[str, Optional[str]] = {
         "firstName": row.get("Name (PLS READ TOOLTIP)_first", "").strip() or None,
         "middleName": row.get("Name (PLS READ TOOLTIP)_middle", "").strip() or None,
@@ -188,41 +272,22 @@ def build_input_data(row: Dict[str, str]) -> Dict[str, Any]:
         "importantNotes": row.get("Engagement Tips / Triggers", "").strip() or None,
         "heightInInches": convert_height(row.get("Height", "").strip()),
         "hairColor": map_value(
-            row.get("Hair Color", ""),
-            {
-                "brown": "BROWN",
-                "dark brown": "BROWN",
-                "light brown": "BROWN",
-                "salt/pepper": "BROWN",
-                "black": "BLACK",
-                "blonde": "BLONDE",
-                "gray": "GRAY",
-                "grey": "GRAY",
-                "auburn": "RED",
-                "red": "RED",
-                "white": "WHITE",
-                "bald": "BALD",
-                "other": "OTHER",
-            },
+            row.get("Hair Color", ""), hair_map, default="OTHER", field="Hair Color", source_id=src_id
         ),
         "eyeColor": map_value(
-            row.get("Eye Color", ""),
-            {
-                "blue": "BLUE",
-                "brown": "BROWN",
-                "black": "BROWN",
-                "green": "GREEN",
-                "gray": "GRAY",
-                "grey": "GRAY",
-                "hazel": "HAZEL",
-                "other": "OTHER",
-            },
+            row.get("Eye Color", ""), eye_color_map, default="OTHER", field="Eye Color", source_id=src_id
         ),
         "physicalDescription": row.get("Distinguishing Marks & Description", "").strip() or None,
-        "gender": gender,
+        "gender": map_value(row.get("Gender", ""), gender_map, default="OTHER", field="Gender", source_id=src_id),
         "adaAccommodation": None,
-        "race": race,
-        "preferredLanguage": row.get("Preferred Language", "").strip().upper() or None,
+        "race": map_value(row.get("Race", ""), race_map, default="OTHER", field="Race", source_id=src_id),
+        "preferredLanguage": map_value(
+            row.get("Preferred Language", ""),
+            language_map,
+            default=None,
+            field="Preferred Language",
+            source_id=src_id,
+        ),
         "veteranStatus": "YES" if row.get("Veteran?", "").strip().lower() == "yes" else "NO",
     }
 
@@ -243,23 +308,34 @@ class Command(BaseCommand):
         parser.add_argument("csv_path", type=str, help="Path to the CSV file.")
         parser.add_argument("--username", required=True, help="Username for REST auth login.")
         parser.add_argument("--password", required=True, help="Password for REST auth login.")
+        parser.add_argument(
+            "--graphql-url",
+            default="http://localhost:8000/graphql",
+            help="GraphQL endpoint URL (default: http://localhost:8000/graphql)",
+        )
+        parser.add_argument(
+            "--rest-login-url",
+            default="http://localhost:8000/rest-auth/login/",
+            help="REST login endpoint URL (default: http://localhost:8000/rest-auth/login/)",
+        )
 
     def handle(self, *args: Any, **options: Any) -> None:
+        # Override the global endpoints with the provided options.
+        global GRAPHQL_URL, REST_LOGIN_URL
+        GRAPHQL_URL = options["graphql_url"]
+        REST_LOGIN_URL = options["rest_login_url"]
+
         csv_path: str = options["csv_path"]
         username: str = options["username"]
         password: str = options["password"]
 
         session = requests.Session()
         session.get(GRAPHQL_URL)
-        print("Cookies after GET:", session.cookies.get_dict())
+        self.stdout.write(f"Cookies after GET: {session.cookies.get_dict()}")
 
         token: Optional[str] = authenticate(session, username, password)
         if token is None:
             raise CommandError("Authentication failed. Check credentials.")
-
-        UserModel = get_user_model()
-        if not UserModel.objects.filter(username=username).exists():
-            raise CommandError(f"User '{username}' does not exist.")
 
         import_job: Dict[str, Any] = create_client_profile_data_import(
             session, token, source_file=csv_path, notes="Client profile import via management command"
@@ -268,22 +344,70 @@ class Command(BaseCommand):
         if not import_job_id:
             raise CommandError("No import job ID returned from GraphQL.")
 
+        # Lists to hold report records and failed rows.
+        report_records: List[Dict[str, Any]] = []
+        failed_rows: List[Dict[str, Any]] = []
+
+        # Read all rows from CSV and sort them so that the highest source_id values come first.
         with open(csv_path, "r", encoding="utf-8-sig") as csvfile:
             reader = csv.DictReader(csvfile)
-            for i, row in enumerate(reader, start=1):
-                if not any(row.values()):
-                    print(f"Skipping empty row {i}")
-                    continue
-                source_id: str = row.get("id", f"row_{i}")
-                try:
-                    input_data: Dict[str, Any] = build_input_data(row)
-                    result: Dict[str, Any] = import_client_profile(
-                        session, token, import_job_id, source_id, row, input_data
-                    )
-                    client_profile: Optional[Dict[str, Any]] = result.get("clientProfile")
-                    if not client_profile:
-                        raise Exception(f"Client profile not created: {result.get('errorMessage')}")
-                    print(f"Row {i} imported as profile ID {client_profile.get('id')}")
-                except Exception as e:
-                    print(f"Failed row {i} (source_id: {source_id}): {e}")
-        print("Import job completed.")
+            csv_fieldnames = reader.fieldnames
+            rows = list(reader)
+            sorted_rows = sorted(rows, key=lambda row: parse_source_id(row.get("id", "0")), reverse=True)
+
+        # Process the sorted rows.
+        for i, row in enumerate(sorted_rows, start=1):
+            if not any(row.values()):
+                self.stdout.write(f"Skipping empty row {i}")
+                continue
+
+            # Get the source_id from the CSV row (or default to a generated value)
+            source_id: str = row.get("id", f"row_{i}")
+            record = {"row": i, "source_id": source_id, "target_id": "", "error_message": ""}
+            try:
+                input_data: Dict[str, Any] = build_input_data(row)
+                result: Dict[str, Any] = import_client_profile(
+                    session, token, import_job_id, source_id, row, input_data
+                )
+                client_profile: Optional[Dict[str, Any]] = result.get("clientProfile")
+                if not client_profile:
+                    raise Exception(f"Client profile not created: {result.get('errorMessage')}")
+                target_id = client_profile.get("id")
+                record["target_id"] = target_id
+                self.stdout.write(f"Row {i} with source_id {source_id} imported as profile ID {target_id}")
+            except Exception as e:
+                error_msg = str(e)
+                record["error_message"] = error_msg
+                self.stderr.write(f"Failed row {i} (source_id: {source_id}): {error_msg}")
+                failed_rows.append(row)
+            report_records.append(record)
+
+        self.stdout.write("Import job completed.")
+
+        # Generate the import report CSV.
+        report_file = "import_report.csv"
+        try:
+            with open(report_file, "w", newline="", encoding="utf-8") as rf:
+                fieldnames = ["row", "source_id", "target_id", "error_message"]
+                writer = csv.DictWriter(rf, fieldnames=fieldnames)
+                writer.writeheader()
+                for rec in report_records:
+                    writer.writerow(rec)
+            self.stdout.write(f"Import report saved to {report_file}")
+        except Exception as e:
+            self.stderr.write(f"Error writing report file: {e}")
+
+        # Generate the CSV file for failed imports.
+        failed_file = "failed_imports.csv"
+        if failed_rows and csv_fieldnames:
+            try:
+                with open(failed_file, "w", newline="", encoding="utf-8") as ff:
+                    writer = csv.DictWriter(ff, fieldnames=csv_fieldnames)
+                    writer.writeheader()
+                    for failed_row in failed_rows:
+                        writer.writerow(failed_row)
+                self.stdout.write(f"Failed import rows saved to {failed_file}")
+            except Exception as e:
+                self.stderr.write(f"Error writing failed imports file: {e}")
+        else:
+            self.stdout.write("No failed rows to export.")
