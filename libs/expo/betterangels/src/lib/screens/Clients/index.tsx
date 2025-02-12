@@ -4,6 +4,7 @@ import {
   BasicInput,
   Loading,
   TextBold,
+  TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
@@ -21,24 +22,16 @@ import {
 
 const paginationLimit = 20;
 
-interface IGroupedClients {
-  [key: string]: {
-    title: string;
-    data: ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'];
-  };
-}
-
 export default function Clients({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] =
     useState<
       ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
     >();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
-  const [offset, setOffset] = useState<number>(0); // good
-  const [hasMore, setHasMore] = useState<boolean>(true); // good
-  // const [clients, setClients] = useState<IGroupedClients>({});
+  const [offset, setOffset] = useState<number>(0);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [clients, setClients] = useState<
-    // good
     ClientProfilesPaginatedQuery['clientProfilesPaginated']['results']
   >([]);
   const [filterSearch, setFilterSearch] = useState<string>('');
@@ -122,49 +115,14 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     debounceFetch(e);
   };
 
-  // useEffect(() => {
-  //   if (!data || !('clientProfilesPaginated' in data)) return;
-  //   const { results, totalCount } = data.clientProfilesPaginated;
-
-  //   const groupedClients = results.reduce((acc: IGroupedClients, client) => {
-  //     const firstLetter = client.user.firstName?.charAt(0).toUpperCase() || '#';
-
-  //     if (!acc[firstLetter]) {
-  //       acc[firstLetter] = {
-  //         title: firstLetter,
-  //         data: [],
-  //       };
-  //     }
-  //     acc[firstLetter].data.push(client);
-  //     return acc;
-  //   }, {});
-
-  //   setClients((prevClients) => {
-  //     if (offset === 0) {
-  //       return groupedClients;
-  //     }
-
-  //     const mergedClients = { ...prevClients };
-
-  //     Object.keys(groupedClients).forEach((key) => {
-  //       if (mergedClients[key]) {
-  //         mergedClients[key].data = [
-  //           ...mergedClients[key].data,
-  //           ...groupedClients[key].data,
-  //         ];
-  //       } else {
-  //         mergedClients[key] = groupedClients[key];
-  //       }
-  //     });
-
-  //     return mergedClients;
-  //   });
-
-  //   setHasMore(offset + paginationLimit < totalCount);
-  // }, [data, offset]);
   useEffect(() => {
-    if (!data || !('clientProfilesPaginated' in data)) return;
+    if (!data || !('clientProfilesPaginated' in data)) {
+      return;
+    }
+
     const { results, totalCount } = data.clientProfilesPaginated;
+    setTotalCount(totalCount);
+
     if (offset === 0) {
       setClients(results);
     } else {
@@ -173,8 +131,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
     setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
-  // const sections = useMemo(() => Object.values(clients || {}), [clients]);
-  // const hasClients = !loading && !!sections.length;
 
   return (
     <View style={{ flex: 1 }}>
@@ -245,6 +201,11 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
               paddingHorizontal: Spacings.sm,
             }}
             data={clients}
+            ListHeaderComponent={
+              <TextMedium size="md">
+                Displaying {clients?.length} of {totalCount} clients
+              </TextMedium>
+            }
             renderItem={({ item: clientProfile }) =>
               clients ? (
                 <ClientCard
