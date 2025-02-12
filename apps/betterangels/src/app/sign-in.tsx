@@ -4,6 +4,7 @@ import {
   LoginForm,
   useUser,
 } from '@monorepo/expo/betterangels';
+import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Loading,
@@ -25,6 +26,16 @@ export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
   const [errorMessage, setErrorMessage] = useState('');
+  const { switchEnvironment } = useApiConfig();
+
+  useEffect(() => {
+    // Run this effect only once on mount.
+    // If there's no user, switch to production.
+    if (!user) {
+      switchEnvironment('production');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (user) {
