@@ -27,6 +27,7 @@ export default {
       ? './src/app/assets/images/icon.png'
       : './src/app/assets/images/preview-icon.png',
     updates: {
+      // enabled: false,
       fallbackToCacheTimeout: 0,
       url: 'https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8',
     },
@@ -34,7 +35,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.34',
+      buildNumber: '1.0.37',
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
@@ -73,7 +74,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 34,
+      versionCode: 37,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
