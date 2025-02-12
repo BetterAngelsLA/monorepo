@@ -118,6 +118,12 @@ export default {
           imageWidth: 750,
         },
       ],
+      [
+        'expo-document-picker',
+        {
+          iCloudContainerEnvironment: 'Production',
+        },
+      ],
     ],
     extra: {
       router: {
