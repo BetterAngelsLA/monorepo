@@ -85,6 +85,8 @@ export default {
       bundler: 'metro',
     },
     plugins: [
+      '@config-plugins/react-native-blob-util',
+      '@config-plugins/react-native-pdf',
       [
         'expo-build-properties',
         {
