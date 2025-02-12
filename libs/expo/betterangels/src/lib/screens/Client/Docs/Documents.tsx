@@ -4,7 +4,7 @@ import { Accordion, FileCard } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { ClientDocumentType, Maybe } from '../../../apollo';
-import { DocumentModal } from '../../../ui-components';
+import { DocumentModal, FileThumbnail } from '../../../ui-components';
 
 interface IDocumentsProps {
   expanded: undefined | string | null;
@@ -53,6 +53,17 @@ export default function Documents(props: IDocumentsProps) {
               url={document.file.url}
               onPress={() => setSelectedDocument(document)}
               createdAt={document.createdAt}
+              thumbnail={
+                <FileThumbnail
+                  uri={document.file.url}
+                  mimeType={document.mimeType}
+                  borderRadius={Radiuses.xxxs}
+                  thumbnailSize={{
+                    width: 36,
+                    height: 36,
+                  }}
+                />
+              }
             />
           ))}
         </View>

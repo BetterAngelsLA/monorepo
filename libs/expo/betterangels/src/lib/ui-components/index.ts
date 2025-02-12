@@ -8,6 +8,7 @@ export { default as ConsentModal } from './ConsentModal';
 export { default as DateOfBirthPicker } from './DateOfBirthPicker';
 export { default as DocumentModal } from './DocumentModal';
 export { default as EyeColorPicker } from './EyeColorPicker';
+export { FileThumbnail } from './FileThumbnail/FileThumbnail';
 export { default as GenderPicker } from './GenderPicker';
 export { default as HairColorPicker } from './HairColorPicker';
 export { default as Header } from './Header';
@@ -24,6 +25,5 @@ export { default as PronounPicker } from './PronounPicker';
 export { default as RacePicker } from './RacePicker';
 export { default as RequestedProvidedServices } from './RequestedProvidedServices';
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
-export { default as WebBrowserLink } from './WebBrowserLink';
-
 export { AppleSignIn, GoogleSignIn } from './SocialLogin';
+export { default as WebBrowserLink } from './WebBrowserLink';

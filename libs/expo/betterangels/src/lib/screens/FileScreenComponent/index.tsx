@@ -12,9 +12,13 @@ import { StyleSheet, View } from 'react-native';
 import { AttachmentType } from '../../apollo';
 import { MimeTypes } from '../../static';
 import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
-import { MainContainer, WebBrowserLink } from '../../ui-components';
-import { FileThumbnail } from '../../ui-components/FileThumbnail/FileThumbnail';
+import {
+  FileThumbnail,
+  MainContainer,
+  WebBrowserLink,
+} from '../../ui-components';
 import { useClientDocumentQuery } from './__generated__/Document.generated';
+import { fileDisplaySizeMap } from './fileDisplaySizeMap';
 
 export default function FileScreenComponent({ id }: { id: string }) {
   const { data } = useClientDocumentQuery({ variables: { id } });
@@ -58,8 +62,8 @@ export default function FileScreenComponent({ id }: { id: string }) {
           <ImagesWithZoom title={originalFilename} imageUrl={file.url}>
             <FileThumbnail
               uri={file.url}
-              fileType="image"
-              documentType={namespace}
+              mimeType={mimeType}
+              thumbnailSize={fileDisplaySizeMap[namespace]}
             />
           </ImagesWithZoom>
         )}
@@ -68,8 +72,8 @@ export default function FileScreenComponent({ id }: { id: string }) {
           <WebBrowserLink href={file.url} accessibilityHint="open pdf file">
             <FileThumbnail
               uri={file.url}
-              fileType="pdf"
-              documentType={namespace}
+              mimeType={mimeType}
+              thumbnailSize={fileDisplaySizeMap[namespace]}
             />
           </WebBrowserLink>
         )}
@@ -77,8 +81,8 @@ export default function FileScreenComponent({ id }: { id: string }) {
         {!isImage && !isPdf && (
           <FileThumbnail
             uri={file.url}
-            fileType="other"
-            documentType={namespace}
+            mimeType={mimeType}
+            thumbnailSize={fileDisplaySizeMap[namespace]}
           />
         )}
 
