@@ -141,6 +141,13 @@ export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
     [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
   };
 
+export const enumDisplayVeteranStatus: { [key in VeteranStatusEnum]: string } =
+  {
+    [YesNoPreferNotToSayEnum.Yes]: 'Yes',
+    [YesNoPreferNotToSayEnum.No]: 'No',
+    [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
+  };
+
 export const clientRelationshipEnumDisplay: Partial<{
   [key in RelationshipTypeEnum]: string;
 }> = {
