@@ -79,7 +79,7 @@ runs:
         for platform in "${platforms[@]}"; do
           # Check for existing builds for the platform
           # Suppress stderr to hide sensitive details like UDIDs
-          build_output=$(yarn nx run betterangels:build-list --platform "$platform" \
+          build_output=$(yarn nx run ${{ inputs.project }}:build-list --platform "$platform" \
             --buildProfile "${{ inputs.profile }}" --runtimeVersion "${{ inputs.runtime-version }}" \
             --limit 1 --json --non-interactive 2>/dev/null)
 
@@ -87,7 +87,7 @@ runs:
           if [[ "$(echo "$build_output" | jq length)" -eq 0 ]]; then
             echo "No existing $platform build found for runtime version ${{ inputs.runtime-version }}. Starting a new build."
             # Suppress stderr to hide sensitive details like UDIDs
-            build_output=$(yarn nx run betterangels:build --profile "${{ inputs.profile }}" --platform "$platform" \
+            build_output=$(yarn nx run ${{ inputs.project }}:build --profile "${{ inputs.profile }}" --platform "$platform" \
               --freeze-credentials --non-interactive --no-wait --json 2>/dev/null)
           else
             echo "$platform build found for runtime version ${{ inputs.runtime-version }}."
