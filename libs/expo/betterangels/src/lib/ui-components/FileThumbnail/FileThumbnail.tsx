@@ -7,12 +7,10 @@ import {
   thumbnailSizes,
 } from '@monorepo/expo/shared/static';
 import { Image, View } from 'react-native';
-import { AttachmentType, ClientDocumentNamespaceEnum } from '../../apollo';
-import {
-  TFileType,
-  getFileTypeFromExtension,
-} from '../../helpers/files/getFileTypeFromExtension';
+import { ClientDocumentNamespaceEnum } from '../../apollo';
 import { ThumbnailDeleteButton } from './ThumbnailDeleteButton';
+
+export type TThumbFileType = 'image' | 'pdf' | 'other';
 
 const thumbSizeMap: Partial<
   Record<ClientDocumentNamespaceEnum, TThumbnailSize>
@@ -25,20 +23,18 @@ const thumbSizeMap: Partial<
 
 interface IProps {
   uri: string;
-  attachmentType?: AttachmentType;
+  fileType: TThumbFileType;
   thumbnailSize?: TThumbnailSize;
   documentType?: ClientDocumentNamespaceEnum;
   onDelete?: () => void;
 }
 
 export function FileThumbnail(props: IProps) {
-  const { attachmentType, documentType, onDelete, uri, thumbnailSize } = props;
-
-  const fileType = getFileType(uri, attachmentType);
+  const { documentType, fileType, onDelete, uri, thumbnailSize } = props;
 
   const isImage = fileType === 'image';
   const isPdf = fileType === 'pdf';
-  const isDefaultFileType = !isImage && !isPdf;
+  const isOtherType = fileType === 'other';
 
   let thumbSize =
     thumbnailSize || thumbSizeMap[documentType as ClientDocumentNamespaceEnum];
@@ -82,16 +78,7 @@ export function FileThumbnail(props: IProps) {
 
       {isPdf && <FilePdfIcon size="lg" color={Colors.NEUTRAL_DARK} />}
 
-      {isDefaultFileType && <NoteIcon size="lg" color={Colors.NEUTRAL_DARK} />}
+      {isOtherType && <NoteIcon size="lg" color={Colors.NEUTRAL_DARK} />}
     </View>
   );
-}
-
-// TODO: use mimeType if/when DEV-1493 is implemented
-function getFileType(uri: string, attachmentType?: AttachmentType): TFileType {
-  if (attachmentType === AttachmentType.Image) {
-    return 'image';
-  }
-
-  return getFileTypeFromExtension(uri);
 }

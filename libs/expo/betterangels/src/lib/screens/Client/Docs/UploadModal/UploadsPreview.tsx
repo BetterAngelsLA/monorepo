@@ -3,7 +3,11 @@ import { Spacings, TThumbnailSize } from '@monorepo/expo/shared/static';
 import { BasicInput, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import { FileThumbnail } from '../../../../ui-components/FileThumbnail/FileThumbnail';
+import { MimeTypes } from '../../../../static';
+import {
+  FileThumbnail,
+  TThumbFileType,
+} from '../../../../ui-components/FileThumbnail/FileThumbnail';
 
 export interface IUploadPreview {
   files: ReactNativeFile[];
@@ -35,6 +39,7 @@ export default function UploadsPreview(props: IUploadPreview) {
             <FileThumbnail
               uri={file.uri}
               thumbnailSize={thumbnailSize}
+              fileType={toFileType(file.type)}
               documentType={documentType}
               onDelete={() => onRemoveFile(index)}
             />
@@ -56,4 +61,16 @@ export default function UploadsPreview(props: IUploadPreview) {
       })}
     </View>
   );
+}
+
+function toFileType(type: string): TThumbFileType {
+  if (type.startsWith('image')) {
+    return 'image';
+  }
+
+  if (type === MimeTypes.PDF) {
+    return 'pdf';
+  }
+
+  return 'other';
 }

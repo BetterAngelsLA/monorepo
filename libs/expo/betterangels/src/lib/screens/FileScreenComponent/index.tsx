@@ -10,10 +10,13 @@ import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AttachmentType } from '../../apollo';
-import { getFileTypeFromExtension } from '../../helpers/files/getFileTypeFromExtension';
+import { MimeTypes } from '../../static';
 import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
 import { MainContainer, WebBrowserLink } from '../../ui-components';
-import { FileThumbnail } from '../../ui-components/FileThumbnail/FileThumbnail';
+import {
+  FileThumbnail,
+  TThumbFileType,
+} from '../../ui-components/FileThumbnail/FileThumbnail';
 import { useClientDocumentQuery } from './__generated__/Document.generated';
 
 export default function FileScreenComponent({ id }: { id: string }) {
@@ -36,14 +39,27 @@ export default function FileScreenComponent({ id }: { id: string }) {
   }
 
   const { clientDocument } = data || {};
-  const { attachmentType, createdAt, namespace, file, originalFilename } =
-    clientDocument;
+  const {
+    attachmentType,
+    createdAt,
+    namespace,
+    mimeType,
+    file,
+    originalFilename,
+  } = clientDocument;
 
   const isImage = attachmentType === AttachmentType.Image;
+  const isPdf = mimeType === MimeTypes.PDF;
 
-  const derifedFileType = getFileTypeFromExtension(file.url);
+  let fileType: TThumbFileType = 'other';
 
-  const isPdf = derifedFileType === 'pdf';
+  if (attachmentType === AttachmentType.Image) {
+    fileType = 'image';
+  }
+
+  if (mimeType === MimeTypes.PDF) {
+    fileType = 'pdf';
+  }
 
   return (
     <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
@@ -55,7 +71,7 @@ export default function FileScreenComponent({ id }: { id: string }) {
           <ImagesWithZoom title={originalFilename} imageUrl={file.url}>
             <FileThumbnail
               uri={file.url}
-              attachmentType={attachmentType}
+              fileType={fileType}
               documentType={namespace}
             />
           </ImagesWithZoom>
@@ -65,7 +81,7 @@ export default function FileScreenComponent({ id }: { id: string }) {
           <WebBrowserLink href={file.url} accessibilityHint="open pdf file">
             <FileThumbnail
               uri={file.url}
-              attachmentType={attachmentType}
+              fileType={fileType}
               documentType={namespace}
             />
           </WebBrowserLink>
@@ -74,7 +90,7 @@ export default function FileScreenComponent({ id }: { id: string }) {
         {!isImage && !isPdf && (
           <FileThumbnail
             uri={file.url}
-            attachmentType={attachmentType}
+            fileType={fileType}
             documentType={namespace}
           />
         )}
