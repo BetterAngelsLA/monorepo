@@ -65,7 +65,8 @@
     "@nx/eslint": "*",
     "@nx/jest": "*",
     "@nx/js": "*",
-    "@types/google.maps": "*"
+    "@types/google.maps": "*",
+    "expo-updates": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/betterangels && cp yarn.lock apps/betterangels && corepack enable",
