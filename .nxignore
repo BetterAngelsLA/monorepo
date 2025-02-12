@@ -1,0 +1,5 @@
+.nxignore
+
+# Remove once we add detox back
+betterangels-e2e
+shelter-e2e

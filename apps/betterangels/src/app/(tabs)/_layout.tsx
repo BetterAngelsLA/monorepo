@@ -1,152 +1,121 @@
-import { Redirect, Tabs, useRouter } from 'expo-router';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
-
 import {
   ConsentModal,
   MainPlusModal,
   useUser,
 } from '@monorepo/expo/betterangels';
 import {
-  CalendarLineIcon,
-  CalendarSolidIcon,
   HouseLineIcon,
   HouseSolidIcon,
-  MapLineIcon,
-  MapSolidIcon,
   PlusIcon,
-  SitemapLineIcon,
-  SitemapSolidIcon,
   UsersLineIcon,
   UsersSolidIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors, FontSizes } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { Redirect, Tabs, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { privacyPolicyUrl, termsOfServiceUrl } from '../../../config';
 
-const isNative = Platform.OS !== 'web';
+interface TabIconProps {
+  focused: boolean;
+  color: string;
+  Icon: React.FC<{ color: string }>;
+  InactiveIcon: React.FC<{ color: string }>;
+  label: string;
+}
+
+const TabIcon: React.FC<TabIconProps> = ({
+  focused,
+  color,
+  Icon,
+  InactiveIcon,
+  label,
+}) => (
+  <View style={styles.tabIconContainer}>
+    {focused ? <Icon color={color} /> : <InactiveIcon color={color} />}
+    <TextRegular color={color} size="xs" style={styles.labelText}>
+      {label}
+    </TextRegular>
+  </View>
+);
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const [isModalVisible, setModalVisible] = useState(false);
-  const [tosModalIsOpen, setTosModalIsOpen] = useState<boolean>(false);
+  const [tosModalIsOpen, setTosModalIsOpen] = useState(false);
   const router = useRouter();
-
   const { user, isLoading } = useUser();
 
   useEffect(() => {
-    if (user && (!user.hasAcceptedTos || !user.hasAcceptedPrivacyPolicy)) {
+    if (
+      user?.hasAcceptedTos === false ||
+      user?.hasAcceptedPrivacyPolicy === false
+    ) {
       setTosModalIsOpen(true);
     }
   }, [user]);
 
-  const openModal = () => {
-    setModalVisible(true);
-  };
-
-  const closeModal = () => {
-    setModalVisible(false);
-  };
-
   if (isLoading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={styles.loadingContainer}>
         <Loading size="large" />
       </View>
     );
   }
 
-  if (!user) {
-    return <Redirect href="/auth" />;
-  }
+  if (!user) return <Redirect href="/auth" />;
+  if (!user.organizations?.length) return <Redirect href="/welcome" />;
 
-  if (user && (!user.organizations || user.organizations.length < 1)) {
-    return <Redirect href="/welcome" />;
-  }
+  const screenOptions = {
+    tabBarShowLabel: false,
+    tabBarActiveTintColor: Colors.PRIMARY_EXTRA_DARK,
+    tabBarInactiveTintColor: Colors.NEUTRAL_DARK,
+    tabBarStyle: [styles.tabBar, { height: 70 + insets.bottom }],
+    tabBarItemStyle: styles.tabBarItem,
+    headerStyle: { backgroundColor: Colors.BRAND_DARK_BLUE },
+    headerShadowVisible: false,
+  };
 
   return (
     <>
-      <Tabs
-        screenOptions={{
-          tabBarShowLabel: false,
-          tabBarActiveTintColor: Colors.PRIMARY_EXTRA_DARK,
-          tabBarInactiveTintColor: Colors.NEUTRAL_DARK,
-          tabBarStyle: {
-            height: 70 + insets.bottom,
-            ...(isNative && { alignItems: 'center' }),
-            justifyContent: 'center',
-            borderTopWidth: 0,
-          },
-        }}
-      >
+      <Tabs screenOptions={screenOptions}>
         <Tabs.Screen
           name="index"
           options={{
             title: '',
-            headerStyle: {
-              backgroundColor: Colors.BRAND_DARK_BLUE,
-            },
-            headerShadowVisible: false,
             tabBarIcon: ({ color, focused }) => (
-              <View style={{ alignItems: 'center' }}>
-                {focused ? (
-                  <HouseSolidIcon color={color} />
-                ) : (
-                  <HouseLineIcon color={color} />
-                )}
+              <TabIcon
+                focused={focused}
+                color={color}
+                Icon={HouseSolidIcon}
+                InactiveIcon={HouseLineIcon}
+                label="Home"
+              />
+            ),
+          }}
+        />
 
-                <TextRegular color={color} size="xs">
-                  Home
-                </TextRegular>
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="appointment"
-          options={{
-            href: null,
-            title: 'Appointment',
-            tabBarIcon: ({ focused, color }) => (
-              <View style={{ alignItems: 'center' }}>
-                {focused ? (
-                  <CalendarSolidIcon color={color} />
-                ) : (
-                  <CalendarLineIcon color={color} />
-                )}
-                <TextRegular color={color} size="xs">
-                  Appointment
-                </TextRegular>
-              </View>
-            ),
-          }}
-        />
         <Tabs.Screen
           name="drawerPlaceholder"
           listeners={{
             tabPress: (e) => {
               e.preventDefault();
-              openModal();
+              setModalVisible(true);
             },
           }}
           options={{
             title: '',
             tabBarIcon: () => (
-              <View style={styles.wrapper}>
+              <View style={styles.plusButtonWrapper}>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityHint="Opening homepage main modal"
-                  onPress={openModal}
+                  onPress={() => setModalVisible(true)}
                   style={({ pressed }) => [
-                    styles.middleButton,
-                    {
-                      backgroundColor: pressed
-                        ? Colors.PRIMARY_DARK
-                        : Colors.PRIMARY,
-                      height: pressed ? 64 : 66,
-                      width: pressed ? 64 : 66,
-                    },
+                    styles.plusButton,
+                    pressed && styles.plusButtonPressed,
                   ]}
                 >
                   <PlusIcon color={Colors.WHITE} />
@@ -155,6 +124,7 @@ export default function TabLayout() {
             ),
           }}
         />
+
         <Tabs.Screen
           name="clients"
           listeners={{
@@ -162,92 +132,34 @@ export default function TabLayout() {
               e.preventDefault();
               router.navigate({
                 pathname: '/clients',
-                params: {
-                  title: '',
-                  select: 'false',
-                },
+                params: { title: '', select: 'false' },
               });
             },
           }}
           options={{
-            headerShadowVisible: false,
-            headerStyle: {
-              backgroundColor: Colors.BRAND_DARK_BLUE,
-            },
-            title: '',
-            tabBarIcon: ({ focused, color }) => (
-              <View style={{ alignItems: 'center' }}>
-                {focused ? (
-                  <UsersSolidIcon color={color} />
-                ) : (
-                  <UsersLineIcon color={color} />
-                )}
-                <TextRegular color={color} size="xs" numberOfLines={1}>
-                  All Clients
-                </TextRegular>
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="map"
-          options={{
-            title: 'Map',
-            href: null,
-            tabBarIcon: ({ color, focused }) => (
-              <View style={{ alignItems: 'center' }}>
-                {focused ? (
-                  <MapSolidIcon color={color} />
-                ) : (
-                  <MapLineIcon color={color} />
-                )}
-                <TextRegular color={color} size="xs">
-                  Map
-                </TextRegular>
-              </View>
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="teams"
-          options={{
-            href: null,
             title: '',
             tabBarIcon: ({ color, focused }) => (
-              <View style={{ alignItems: 'center' }}>
-                {focused ? (
-                  <SitemapSolidIcon color={color} />
-                ) : (
-                  <SitemapLineIcon color={color} />
-                )}
-                <TextRegular color={color} size="xs">
-                  Teams
-                </TextRegular>
-              </View>
+              <TabIcon
+                focused={focused}
+                color={color}
+                Icon={UsersSolidIcon}
+                InactiveIcon={UsersLineIcon}
+                label="All Clients"
+              />
             ),
           }}
         />
-        <Tabs.Screen
-          name="calendar"
-          options={{
-            title: 'Calendar',
-            href: null,
-            tabBarIcon: ({ color, focused }) => (
-              <View style={{ alignItems: 'center' }}>
-                {focused ? (
-                  <CalendarSolidIcon color={color} />
-                ) : (
-                  <CalendarLineIcon color={color} />
-                )}
-                <TextRegular color={color} size="xs">
-                  Calendar
-                </TextRegular>
-              </View>
-            ),
-          }}
-        />
+
+        {/* Hidden routes */}
+        {['map', 'teams', 'calendar', 'appointment'].map((name) => (
+          <Tabs.Screen key={name} name={name} options={{ href: null }} />
+        ))}
       </Tabs>
-      <MainPlusModal closeModal={closeModal} isModalVisible={isModalVisible} />
+
+      <MainPlusModal
+        closeModal={() => setModalVisible(false)}
+        isModalVisible={isModalVisible}
+      />
       <ConsentModal
         user={user}
         isModalVisible={tosModalIsOpen}
@@ -260,34 +172,46 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
-  profileContainer: {
-    backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-    height: 24,
-    width: 24,
-    borderRadius: 100,
+  loadingContainer: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  profileText: {
-    textTransform: 'uppercase',
-    color: Colors.WHITE,
-    fontFamily: 'Poppins-Regular',
-    fontSize: FontSizes.xs.fontSize,
+  tabBar: {
+    borderTopWidth: 0,
   },
-  middleButton: {
-    borderRadius: 100,
+  tabBarItem: {
+    paddingVertical: 15,
+  },
+  tabIconContainer: {
     alignItems: 'center',
-
+    minWidth: 80,
     justifyContent: 'center',
   },
-  wrapper: {
-    height: 80,
-    width: 80,
+  labelText: {
+    textAlign: 'center',
+  },
+  plusButtonWrapper: {
     position: 'relative',
     bottom: 36,
+    height: 80,
+    width: 80,
     borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.WHITE,
+  },
+  plusButton: {
+    height: 66,
+    width: 66,
+    borderRadius: 100,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.PRIMARY,
+  },
+  plusButtonPressed: {
+    backgroundColor: Colors.PRIMARY_DARK,
+    height: 64,
+    width: 64,
   },
 });
