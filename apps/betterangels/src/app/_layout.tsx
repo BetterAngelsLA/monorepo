@@ -90,18 +90,24 @@ export default function RootLayout() {
 
   useEffect(() => {
     // Once fonts are loaded or an error occurs, hide the native splash screen.
-    if (loaded || error) {
-      SplashScreen.hideAsync();
-      if (error) {
-        console.warn(`Error loading fonts: ${error}`);
-      }
-    }
-  }, [loaded, error]);
+    // if (loaded || error) {
+    SplashScreen.hideAsync();
+  }, []);
+
+  // useEffect(() => {
+  //   // Once fonts are loaded or an error occurs, hide the native splash screen.
+  //   if (loaded || error) {
+  //     SplashScreen.hideAsync();
+  //     if (error) {
+  //       console.warn(`Error loading fonts: ${error}`);
+  //     }
+  //   }
+  // }, [loaded, error]);
 
   // While fonts are still loading (and no error has occurred), show nothing.
-  if (!loaded && !error) {
-    return null;
-  }
+  // if (!loaded && !error) {
+  //   return null;
+  // }
 
   return (
     <View style={{ flex: 1 }}>
