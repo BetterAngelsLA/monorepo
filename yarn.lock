@@ -4688,6 +4688,7 @@ __metadata:
     expo-clipboard: "npm:~7.0.1"
     expo-constants: "npm:~17.0.5"
     expo-dev-client: "npm:~5.0.12"
+    expo-font: "npm:~13.0.3"
     expo-image-manipulator: "npm:~13.0.6"
     expo-image-picker: "npm:~16.0.6"
     expo-linking: "npm:~7.0.5"

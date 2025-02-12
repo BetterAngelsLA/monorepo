@@ -81,6 +81,7 @@ export default {
       bundler: 'metro',
     },
     plugins: [
+      'expo-apple-authentication',
       'expo-build-properties',
       [
         'expo-dev-launcher',
@@ -88,7 +89,16 @@ export default {
           launchMode: 'launcher',
         },
       ],
-      'expo-apple-authentication',
+      [
+        'expo-font',
+        {
+          fonts: [
+            './src/app/assets/fonts/Poppins-Medium.ttf',
+            './src/app/assets/fonts/Poppins-Regular.ttf',
+            './src/app/assets/fonts/Poppins-SemiBold.ttf',
+          ],
+        },
+      ],
       'expo-router',
       [
         'expo-image-picker',
