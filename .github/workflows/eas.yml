@@ -97,6 +97,7 @@ jobs:
           node-version: 20.12.2
       - run: |
           corepack enable
+          npm install --global eas-cli
       - name: 🧶 Setup Yarn in Node
         uses: actions/setup-node@v4
         with:
@@ -119,13 +120,13 @@ jobs:
           project: ${{ matrix.project }}
           secrets: ${{ toJson(secrets) }}
 
-      # - name: 🔍 Preview Build
-      #   id: preview-build
-      #   uses: ./.github/actions/expo-build
-      #   with:
-      #     profile: preview
-      #     project: ${{ matrix.project }}
-      #     runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
+      - name: 🔍 Preview Build
+        id: preview-build
+        uses: ./.github/actions/expo-build
+        with:
+          profile: preview
+          project: ${{ matrix.project }}
+          runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
       # - name: 📱 Simulator Build
       #   id: simulator-build
@@ -253,6 +254,7 @@ jobs:
           node-version: 20.12.2
       - run: |
           corepack enable
+          npm install --global eas-cli
 
       - name: 🧶 Setup Yarn in Node
         uses: actions/setup-node@v4
