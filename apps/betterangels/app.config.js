@@ -73,7 +73,7 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 42,
+      versionCode: 43,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
