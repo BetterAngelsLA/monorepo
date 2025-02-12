@@ -83,7 +83,7 @@ runs:
             --platform "$platform" \
             --buildProfile "${{ inputs.profile }}" \
             --runtimeVersion "${{ inputs.runtime-version }}" \
-            --limit 1 --json --non-interactive 2>/dev/null)
+            --limit 1 --json --interactive false 2>/dev/null)
 
           # Verify the build_output is valid JSON
           if ! echo "$build_output" | jq empty >/dev/null 2>&1; then
@@ -100,7 +100,7 @@ runs:
               --profile "${{ inputs.profile }}" \
               --platform "$platform" \
               --freeze-credentials \
-              --non-interactive --no-wait --json 2>/dev/null)
+              --interactive false --wait false --json 2>/dev/null)
 
             # Verify the build_output from the new build is valid JSON
             if ! echo "$build_output" | jq empty >/dev/null 2>&1; then
