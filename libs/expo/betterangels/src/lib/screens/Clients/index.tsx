@@ -49,7 +49,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const { title, select } = useLocalSearchParams();
   const [search, setSearch] = useState<string>('');
   const [createNote] = useCreateNoteMutation();
@@ -57,9 +57,14 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
   const router = useRouter();
 
-  function loadMoreClients() {
-    if (hasMore && !loading) {
+  async function loadMoreClients() {
+    if (hasMore && !loading && !isLoadingMore) {
+      setIsLoadingMore(true);
       setOffset((prevOffset) => prevOffset + paginationLimit);
+
+      setTimeout(() => {
+        setIsLoadingMore(false);
+      }, 600);
     }
   }
   async function createNoteFunction(

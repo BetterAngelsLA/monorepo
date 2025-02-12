@@ -20,6 +20,7 @@ import {
 const paginationLimit = 20;
 
 export default function Home({ Logo }: { Logo: ElementType }) {
+  const router = useRouter();
   const [currentClient, setCurrentClient] =
     useState<
       ActiveClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
@@ -40,11 +41,16 @@ export default function Home({ Logo }: { Logo: ElementType }) {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const router = useRouter();
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  function loadMoreClients() {
-    if (hasMore && !loading) {
+  async function loadMoreClients() {
+    if (hasMore && !loading && !isLoadingMore) {
+      setIsLoadingMore(true);
       setOffset((prevOffset) => prevOffset + paginationLimit);
+
+      setTimeout(() => {
+        setIsLoadingMore(false);
+      }, 600);
     }
   }
 
