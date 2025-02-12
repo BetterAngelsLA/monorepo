@@ -73,8 +73,6 @@ runs:
       id: check-builds
       shell: bash
       run: |
-        set -euxo pipefail
-
         # Convert platforms input into an array
         platforms=(${{ inputs.platforms }})
         slugs=()

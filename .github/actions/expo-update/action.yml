@@ -60,11 +60,15 @@ runs:
       id: perform-eas-update
       run: |
         platforms=("android" "ios")
-        eas_update_output=$(yarn nx run ${{ inputs.project }}:eas-update --branch "${{ inputs.branch }}" --auto --json --interactive false 2>&1) || {
+        # Capture the raw output from the EAS update command.
+        eas_update_raw=$(yarn nx run ${{ inputs.project }}:eas-update --branch "${{ inputs.branch }}" --auto --json --interactive false 2>&1) || {
           echo "Error running the EAS update command:"
-          echo "$eas_update_output"
+          echo "$eas_update_raw"
           exit 1
         }
+
+        # Extract only the JSON portion (from the first "[" to the last "]").
+        eas_update_output=$(echo "$eas_update_raw" | sed -n '/^\[/,/\]$/p')
 
         for platform in "${platforms[@]}"; do
           update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
