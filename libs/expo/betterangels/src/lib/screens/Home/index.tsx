@@ -13,8 +13,8 @@ import { FlatList, View } from 'react-native';
 import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
-  ClientProfilesPaginatedQuery,
-  useClientProfilesPaginatedQuery,
+  ActiveClientProfilesPaginatedQuery,
+  useActiveClientProfilesPaginatedQuery,
 } from './__generated__/ActiveClients.generated';
 
 const paginationLimit = 20;
@@ -22,15 +22,15 @@ const paginationLimit = 20;
 export default function Home({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] =
     useState<
-      ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
+      ActiveClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
     >();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [clients, setClients] = useState<
-    ClientProfilesPaginatedQuery['clientProfilesPaginated']['results']
+    ActiveClientProfilesPaginatedQuery['clientProfilesPaginated']['results']
   >([]);
-  const { data, loading } = useClientProfilesPaginatedQuery({
+  const { data, loading } = useActiveClientProfilesPaginatedQuery({
     variables: {
       filters: { isActive: true },
       pagination: { limit: paginationLimit, offset: offset },

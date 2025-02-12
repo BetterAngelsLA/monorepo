@@ -624,7 +624,9 @@ export enum GenderEnum {
   Male = 'MALE',
   NonBinary = 'NON_BINARY',
   Other = 'OTHER',
-  PreferNotToSay = 'PREFER_NOT_TO_SAY'
+  PreferNotToSay = 'PREFER_NOT_TO_SAY',
+  TransFemale = 'TRANS_FEMALE',
+  TransMale = 'TRANS_MALE'
 }
 
 export enum GeneralServiceChoices {
@@ -709,8 +711,10 @@ export type ImmediateNeedType = {
 export enum LanguageEnum {
   Arabic = 'ARABIC',
   Armenian = 'ARMENIAN',
+  Asl = 'ASL',
   English = 'ENGLISH',
   Farsi = 'FARSI',
+  French = 'FRENCH',
   Indonesian = 'INDONESIAN',
   Japanese = 'JAPANESE',
   Khmer = 'KHMER',
