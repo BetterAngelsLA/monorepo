@@ -53,7 +53,8 @@
     "react-native-modal": "*",
     "@react-native-picker/picker": "*",
     "react-native-select-dropdown": "*",
-    "react-native-paper": "*"
+    "react-native-paper": "*",
+    "expo-updates": "*"
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/shelter && cp yarn.lock apps/shelter",
