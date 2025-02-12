@@ -81,7 +81,6 @@
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.26.3",
     "@chromatic-com/storybook": "^3",
-    "@config-plugins/detox": "8.0.0",
     "@expo/metro-runtime": "~4.0.1",
     "@graphql-codegen/cli": "^5.0.2",
     "@graphql-codegen/client-preset": "^4.3.2",

@@ -1871,17 +1871,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@config-plugins/detox@npm:8.0.0":
-  version: 8.0.0
-  resolution: "@config-plugins/detox@npm:8.0.0"
-  dependencies:
-    expo-build-properties: "npm:~0.12.1"
-  peerDependencies:
-    expo: ^51
-  checksum: 10/ebc2a2062b1d28253ac7199d8936631679625bc1818cc8e20bdad5c60375f2ffcbdeae2bfe686b65a1ba5b43535e672de32315d3ba83e87708d006ea7465b729
-  languageName: node
-  linkType: hard
-
 "@cspotcode/source-map-support@npm:^0.8.0":
   version: 0.8.1
   resolution: "@cspotcode/source-map-support@npm:0.8.1"
@@ -4605,7 +4594,6 @@ __metadata:
     "@babel/preset-env": "npm:^7.26.0"
     "@babel/preset-react": "npm:^7.26.3"
     "@chromatic-com/storybook": "npm:^3"
-    "@config-plugins/detox": "npm:8.0.0"
     "@expo/metro-config": "npm:~0.19.0"
     "@expo/metro-runtime": "npm:~4.0.1"
     "@graphql-codegen/cli": "npm:^5.0.2"
@@ -13503,18 +13491,6 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10/ecfc5063d50597b6d9f390751c28c602a40b7ffd216c415b4dc9b2c800b592ad9b4479fb8532c64597ef484c65b518a0d658cc3f1e00e8ab27b70c5f7f70cbba
-  languageName: node
-  linkType: hard
-
-"expo-build-properties@npm:~0.12.1":
-  version: 0.12.5
-  resolution: "expo-build-properties@npm:0.12.5"
-  dependencies:
-    ajv: "npm:^8.11.0"
-    semver: "npm:^7.6.0"
-  peerDependencies:
-    expo: "*"
-  checksum: 10/22a1c3fbe6ef00efe13976612766c665390df033d84203bb8d8133fec5d9291be333341119f35b4f5e60932b5829e9ac10c7aaa1a28cbfb5fa689b1b7917229a
   languageName: node
   linkType: hard
 
