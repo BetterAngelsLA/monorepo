@@ -4,6 +4,8 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
+    "metro": "*",
+    "metro-resolver": "*",
     "dotenv": "*",
     "expo-auth-session": "*",
     "react-native": "*",

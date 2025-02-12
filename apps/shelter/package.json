@@ -3,6 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
+    "metro": "*",
+    "metro-resolver": "*",
     "@expo/vector-icons": "*",
     "react": "*",
     "react-native": "*",
