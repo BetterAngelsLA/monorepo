@@ -99,7 +99,7 @@ runs:
           fi
 
           # Verify the cleaned output is valid JSON.
-          if ! echo "$cleaned_output" | jq empty >/dev/null 2>&1; then
+          if ! { [ "$cleaned_output" = "[]" ] || echo "$cleaned_output" | jq empty >/dev/null 2>&1; }; then
             echo "Error: Received invalid JSON from the build-list command for platform: $platform"
             echo "Cleaned output was:"
             echo "$cleaned_output"
