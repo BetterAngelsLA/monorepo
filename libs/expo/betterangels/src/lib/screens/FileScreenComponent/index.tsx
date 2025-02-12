@@ -8,16 +8,12 @@ import {
 import { format } from 'date-fns';
 import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
-// import PDF from 'react-native-pdf';
+import { SafeAreaView, StyleSheet, View } from 'react-native';
+import PDF from 'react-native-pdf';
 import { AttachmentType } from '../../apollo';
 import { MimeTypes } from '../../static';
 import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
-import {
-  FileThumbnail,
-  MainContainer,
-  WebBrowserLink,
-} from '../../ui-components';
+import { FileThumbnail, MainContainer } from '../../ui-components';
 import { useClientDocumentQuery } from './__generated__/Document.generated';
 import { fileDisplaySizeMap } from './fileDisplaySizeMap';
 
@@ -73,23 +69,23 @@ export default function FileScreenComponent({ id }: { id: string }) {
         )}
 
         {isPdf && (
-          // <SafeAreaView style={{ flex: 1 }}>
-          //   <PDF
-          //     source={{
-          //       uri: pdfUrl,
-          //       cache: true,
-          //     }}
-          //     style={{ flex: 1 }}
-          //   />
-          // </SafeAreaView>
-
-          <WebBrowserLink href={file.url} accessibilityHint="open pdf file">
-            <FileThumbnail
-              uri={file.url}
-              mimeType={mimeType}
-              thumbnailSize={fileDisplaySizeMap[namespace]}
+          <SafeAreaView style={{ flex: 1 }}>
+            <PDF
+              source={{
+                uri: file.url,
+                cache: true,
+              }}
+              style={{ flex: 1 }}
             />
-          </WebBrowserLink>
+          </SafeAreaView>
+
+          // <WebBrowserLink href={file.url} accessibilityHint="open pdf file">
+          //   <FileThumbnail
+          //     uri={file.url}
+          //     mimeType={mimeType}
+          //     thumbnailSize={fileDisplaySizeMap[namespace]}
+          //   />
+          // </WebBrowserLink>
         )}
 
         {!isImage && !isPdf && (
