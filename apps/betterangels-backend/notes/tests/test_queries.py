@@ -209,7 +209,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             }
         """
 
-        test_new_interaction_author = baker.make(
+        interaction_author = baker.make(
             User,
             first_name="Wanda",
             last_name="Maximoff",
@@ -217,14 +217,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         )
 
         perm_group = permission_group_recipe.make()
-        perm_group.organization.add_user(test_new_interaction_author)
+        perm_group.organization.add_user(interaction_author)
 
         response = self.execute_graphql(query)
 
         self.assertFalse(response["data"] is None, f"Data is None: {response}")
 
         results = response["data"]["interactionAuthors"]["results"]
-        returned_author: dict = next((u for u in results if u["id"] == str(test_new_interaction_author.pk)))
+        returned_author: dict = next((u for u in results if u["id"] == str(interaction_author.pk)))
         self.assertEqual(returned_author["firstName"], "Wanda")
         self.assertEqual(returned_author["lastName"], "Maximoff")
         self.assertEqual(returned_author["middleName"], "J.")
@@ -381,12 +381,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         ("name_search, expected_results_count, returned_authors"),
         [
-            ("Maximoff", 1, ["test_new_interaction_author_2"]),  # Two notes have "deets" in public details
+            ("Maximoff", 1, ["interaction_author_2"]),  # Two notes have "deets" in public details
             ("Pietro Maximoff", 0, None),  # One note has "deets" in public details and "coop" in client name
             (
                 "Alex",
                 2,
-                ["test_new_interaction_author", "test_new_interaction_author_3"],
+                ["interaction_author", "interaction_author_3"],
             ),  # One note has "more" in public details
         ],
     )
@@ -413,24 +413,20 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         """
 
         test_user_map = {
-            "test_new_interaction_author": baker.make(User, first_name="Alexa", last_name="Danvers", middle_name="J."),
-            "test_new_client": baker.make(User, first_name="Alex", last_name="Johnson"),
-            "test_new_interaction_author_2": baker.make(
-                User, first_name="Wanda", last_name="Maximoff", middle_name="A."
-            ),
-            "test_new_interaction_author_3": baker.make(
-                User, first_name="Alexandria", last_name="Daniels", middle_name="M."
-            ),
+            "interaction_author": baker.make(User, first_name="Alexa", last_name="Danvers", middle_name="J."),
+            "client": baker.make(User, first_name="Alex", last_name="Johnson"),
+            "interaction_author_2": baker.make(User, first_name="Wanda", last_name="Maximoff", middle_name="A."),
+            "interaction_author_3": baker.make(User, first_name="Alexandria", last_name="Daniels", middle_name="M."),
         }
 
-        test_new_interaction_author = test_user_map["test_new_interaction_author"]
-        test_new_interaction_author_2 = test_user_map["test_new_interaction_author_2"]
-        test_new_interaction_author_3 = test_user_map["test_new_interaction_author_3"]
+        interaction_author = test_user_map["interaction_author"]
+        interaction_author_2 = test_user_map["interaction_author_2"]
+        interaction_author_3 = test_user_map["interaction_author_3"]
 
         perm_group = permission_group_recipe.make()
-        perm_group.organization.add_user(test_new_interaction_author)
-        perm_group.organization.add_user(test_new_interaction_author_2)
-        perm_group.organization.add_user(test_new_interaction_author_3)
+        perm_group.organization.add_user(interaction_author)
+        perm_group.organization.add_user(interaction_author_2)
+        perm_group.organization.add_user(interaction_author_3)
 
         filters: dict[str, Any] = {"generalNameSearch": name_search}
 
