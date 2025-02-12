@@ -63,12 +63,12 @@ export default function UploadsPreview(props: IUploadPreview) {
   );
 }
 
-function toFileType(type: string): TThumbFileType {
-  if (type.startsWith('image')) {
+function toFileType(mimeType: string): TThumbFileType {
+  if (mimeType.startsWith('image')) {
     return 'image';
   }
 
-  if (type === MimeTypes.PDF) {
+  if (mimeType === MimeTypes.PDF) {
     return 'pdf';
   }
 

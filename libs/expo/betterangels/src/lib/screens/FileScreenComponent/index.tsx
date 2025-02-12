@@ -13,10 +13,7 @@ import { AttachmentType } from '../../apollo';
 import { MimeTypes } from '../../static';
 import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
 import { MainContainer, WebBrowserLink } from '../../ui-components';
-import {
-  FileThumbnail,
-  TThumbFileType,
-} from '../../ui-components/FileThumbnail/FileThumbnail';
+import { FileThumbnail } from '../../ui-components/FileThumbnail/FileThumbnail';
 import { useClientDocumentQuery } from './__generated__/Document.generated';
 
 export default function FileScreenComponent({ id }: { id: string }) {
@@ -51,16 +48,6 @@ export default function FileScreenComponent({ id }: { id: string }) {
   const isImage = attachmentType === AttachmentType.Image;
   const isPdf = mimeType === MimeTypes.PDF;
 
-  let fileType: TThumbFileType = 'other';
-
-  if (attachmentType === AttachmentType.Image) {
-    fileType = 'image';
-  }
-
-  if (mimeType === MimeTypes.PDF) {
-    fileType = 'pdf';
-  }
-
   return (
     <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <TextBold mb="xs" size="lg">
@@ -71,7 +58,7 @@ export default function FileScreenComponent({ id }: { id: string }) {
           <ImagesWithZoom title={originalFilename} imageUrl={file.url}>
             <FileThumbnail
               uri={file.url}
-              fileType={fileType}
+              fileType="image"
               documentType={namespace}
             />
           </ImagesWithZoom>
@@ -81,7 +68,7 @@ export default function FileScreenComponent({ id }: { id: string }) {
           <WebBrowserLink href={file.url} accessibilityHint="open pdf file">
             <FileThumbnail
               uri={file.url}
-              fileType={fileType}
+              fileType="pdf"
               documentType={namespace}
             />
           </WebBrowserLink>
@@ -90,7 +77,7 @@ export default function FileScreenComponent({ id }: { id: string }) {
         {!isImage && !isPdf && (
           <FileThumbnail
             uri={file.url}
-            fileType={fileType}
+            fileType="other"
             documentType={namespace}
           />
         )}
