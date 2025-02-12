@@ -8,6 +8,7 @@
     "storybook:build": "nx storybook build expo-shared-ui-components",
     "server": "nx start betterangels-backend",
     "ba": "nx start betterangels",
+    "ba:clear": "nx start betterangels --clear",
     "ba:build-dev": "nx build betterangels --profile development",
     "shelter": "nx serve shelter-web --port 8083",
     "fires": "nx serve wildfires --port 8200"
@@ -37,6 +38,7 @@
     "expo-clipboard": "~7.0.1",
     "expo-constants": "~17.0.5",
     "expo-dev-client": "~5.0.12",
+    "expo-document-picker": "^13.0.3",
     "expo-image-manipulator": "~13.0.6",
     "expo-image-picker": "~16.0.6",
     "expo-linking": "~7.0.5",
