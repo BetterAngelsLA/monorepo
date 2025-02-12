@@ -149,7 +149,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           </TextBold>
         )}
         <BasicInput
-          mb="sm"
           icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
           value={search}
           placeholder="Search by name"
@@ -159,9 +158,22 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             setSearch('');
             setFilterSearch('');
             setOffset(0);
-            setClients({});
+            setClients([]);
           }}
         />
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: Spacings.xs,
+            backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+          }}
+        >
+          <TextMedium size="sm">
+            Displaying {clients.length} of {totalCount} clients
+          </TextMedium>
+        </View>
         {search && !clients && (
           <View
             style={{
@@ -197,15 +209,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
               flex: 1,
               backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
               paddingBottom: 80,
-              paddingTop: Spacings.sm,
-              paddingHorizontal: Spacings.sm,
+              marginTop: Spacings.xs,
             }}
             data={clients}
-            ListHeaderComponent={
-              <TextMedium size="md">
-                Displaying {clients?.length} of {totalCount} clients
-              </TextMedium>
-            }
             renderItem={({ item: clientProfile }) =>
               clients ? (
                 <ClientCard
