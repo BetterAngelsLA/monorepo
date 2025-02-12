@@ -86,6 +86,7 @@ class LanguageEnum(models.TextChoices):
 class LivingSituationEnum(models.TextChoices):
     HOUSING = "housing", _("Housing")
     OPEN_AIR = "open_air", _("Open Air")
+    RV = "rv", _("RV")
     SHELTER = "shelter", _("Shelter")
     TENT = "tent", _("Tent")
     VEHICLE = "vehicle", _("Vehicle")
