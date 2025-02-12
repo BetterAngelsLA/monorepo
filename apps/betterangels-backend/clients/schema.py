@@ -287,7 +287,6 @@ class Mutation:
 
             # TODO: remove after fe cutover to new field & type
             if client_profile_data.get("temp_veteran_status") != strawberry.UNSET:
-                # if client_profile_data.get("temp_veteran_status", None) != strawberry.UNSET:
                 client_profile_data["veteran_status"] = client_profile_data["temp_veteran_status"]
 
             client_profile = resolvers.create(
@@ -328,7 +327,7 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
 
             # TODO: remove after fe cutover to new field & type
-            if client_profile_data.get("temp_veteran_status", None):
+            if client_profile_data.get("temp_veteran_status") != strawberry.UNSET:
                 client_profile_data["veteran_status"] = client_profile_data["temp_veteran_status"]
 
             _validate_client_profile_data(client_profile_data)

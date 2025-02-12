@@ -126,7 +126,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "profilePhoto": None,
             "socialMediaProfiles": expected_social_media_profiles,
             "user": expected_user,
-            "veteranStatus": VeteranStatusEnum.YES.name,
+            # TODO: update after fe cutover to new field & type
+            "veteranStatus": None,
         }
         client_differences = DeepDiff(
             expected_client_profile,
@@ -247,6 +248,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "displayGender": "Female",
             "displayPronouns": "she/her/theirs",
             "profilePhoto": {"name": self.client_profile_1_photo_name},
+            # TODO: update after fe cutover to new field & type
             "veteranStatus": VeteranStatusEnum.OTHER_THAN_HONORABLE.name,
         }
         client_differences = DeepDiff(
