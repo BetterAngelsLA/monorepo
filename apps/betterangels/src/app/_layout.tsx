@@ -39,18 +39,17 @@ export default function RootLayout() {
     'Poppins-SemiBold': require('./assets/fonts/Poppins-SemiBold.ttf'),
   });
 
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
+    if (loaded || error) {
       SplashScreen.hideAsync();
+      if (error) {
+        console.warn(`Error in loading fonts: ${error}`);
+      }
     }
-  }, [loaded]);
+  }, [loaded, error]);
 
-  if (!loaded) {
+  // Return nothing until fonts are loaded (or an error occurs)
+  if (!loaded && !error) {
     return null;
   }
 
@@ -59,6 +58,7 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const router = useRouter();
+
   return (
     <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
       <ApolloClientProvider>
@@ -125,7 +125,6 @@ function RootLayoutNav() {
                       options={{ headerShown: false }}
                     />
                   </Stack>
-                  {/* </ThemeProvider> */}
                 </SnackbarProvider>
               </UserProvider>
             </KeyboardToolbarProvider>
