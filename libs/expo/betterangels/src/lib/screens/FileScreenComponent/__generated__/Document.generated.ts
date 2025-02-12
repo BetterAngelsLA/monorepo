@@ -8,7 +8,7 @@ export type ClientDocumentQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientDocumentQuery = { __typename?: 'Query', clientDocument: { __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, file: { __typename?: 'DjangoFileType', url: string, name: string } } };
+export type ClientDocumentQuery = { __typename?: 'Query', clientDocument: { __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, attachmentType: Types.AttachmentType, file: { __typename?: 'DjangoFileType', url: string, name: string } } };
 
 
 export const ClientDocumentDocument = gql`
@@ -19,6 +19,7 @@ export const ClientDocumentDocument = gql`
       createdAt
       namespace
       originalFilename
+      attachmentType
       file {
         url
         name

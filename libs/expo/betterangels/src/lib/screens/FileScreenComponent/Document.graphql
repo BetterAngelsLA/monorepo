@@ -5,6 +5,7 @@ query ClientDocument($id: ID!) {
       createdAt
       namespace
       originalFilename
+      attachmentType
       file {
         url
         name

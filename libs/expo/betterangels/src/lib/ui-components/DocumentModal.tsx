@@ -7,6 +7,7 @@ import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Alert } from 'react-native';
 import { ClientDocumentType } from '../apollo';
+import { getFileTypeFromExtension } from '../helpers/files/getFileTypeFromExtension';
 import {
   ClientProfileDocument,
   useDeleteClientDocumentMutation,
@@ -90,24 +91,21 @@ export default function DocumentModal(props: IDocumentModalProps) {
     }
   };
 
+  const fileTypeText = getFileFileTypeText(document?.file.url);
+
   const ACTIONS = [
     {
-      title: 'View Image',
+      title: `View this ${fileTypeText}`,
       Icon: ViewIcon,
       route: `/file/${document?.id}`,
     },
-    // {
-    //   title: 'Edit this file',
-    //   Icon: PencilSolidIcon,
-    //   route: `/edit-image/${document?.id}`,
-    // },
     {
-      title: 'Download this file',
+      title: `Download this ${fileTypeText}`,
       Icon: DownloadIcon,
       onPress: downloadFile,
     },
     {
-      title: 'Delete this file',
+      title: `Delete this ${fileTypeText}`,
       Icon: DeleteIcon,
       onPress: handleDelete,
     },
@@ -123,4 +121,14 @@ export default function DocumentModal(props: IDocumentModalProps) {
       opacity={0.5}
     />
   );
+}
+
+function getFileFileTypeText(url?: string): string {
+  const fileType = getFileTypeFromExtension(url);
+
+  if (fileType === 'image') {
+    return 'image';
+  }
+
+  return 'file';
 }
