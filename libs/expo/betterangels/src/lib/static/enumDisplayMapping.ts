@@ -16,6 +16,7 @@ import {
   ServiceEnum,
   ServiceRequestTypeEnum,
   SocialMediaEnum,
+  VeteranStatusEnum,
   YesNoPreferNotToSayEnum,
 } from '../apollo';
 
@@ -71,6 +72,8 @@ export const enumDisplayYesNoPreferNot: {
   [YesNoPreferNotToSayEnum.Yes]: 'Yes',
   [YesNoPreferNotToSayEnum.No]: 'No',
   [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
+  [YesNoPreferNotToSayEnum.OtherThanHonorable]:
+    'Other than Honorable Discharge',
 };
 export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
   [PronounEnum.HeHimHis]: 'He/Him/His',
@@ -139,13 +142,16 @@ export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
     [YesNoPreferNotToSayEnum.Yes]: 'Yes',
     [YesNoPreferNotToSayEnum.No]: 'No',
     [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
+    [YesNoPreferNotToSayEnum.OtherThanHonorable]:
+      'Other than Honorable Discharge',
   };
 
 export const enumDisplayVeteranStatus: { [key in VeteranStatusEnum]: string } =
   {
-    [YesNoPreferNotToSayEnum.Yes]: 'Yes',
-    [YesNoPreferNotToSayEnum.No]: 'No',
-    [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
+    [VeteranStatusEnum.Yes]: 'Yes',
+    [VeteranStatusEnum.No]: 'No',
+    [VeteranStatusEnum.PreferNotToSay]: 'Prefer not to say',
+    [VeteranStatusEnum.OtherThanHonorable]: 'Other than Honorable Discharge',
   };
 
 export const clientRelationshipEnumDisplay: Partial<{
