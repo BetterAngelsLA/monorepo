@@ -53,8 +53,8 @@ export default function FileScreenComponent({ id }: { id: string }) {
   const isImage = attachmentType === AttachmentType.Image;
   const isPdf = mimeType === MimeTypes.PDF;
 
-  const pdfUrl =
-    'https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf';
+  // const pdfUrl =
+  // 'https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf';
 
   return (
     <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
