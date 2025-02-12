@@ -9,7 +9,7 @@ import {
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useEffect, useMemo, useState } from 'react';
-import { SectionList, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 import { Ordering } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
@@ -29,12 +29,19 @@ interface IGroupedClients {
 }
 
 export default function Clients({ Logo }: { Logo: ElementType }) {
-  const { title, select } = useLocalSearchParams();
-  const [search, setSearch] = useState<string>('');
+  const [currentClient, setCurrentClient] =
+    useState<
+      ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
+    >();
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
+  const [offset, setOffset] = useState<number>(0); // good
+  const [hasMore, setHasMore] = useState<boolean>(true); // good
+  // const [clients, setClients] = useState<IGroupedClients>({});
+  const [clients, setClients] = useState<
+    // good
+    ClientProfilesPaginatedQuery['clientProfilesPaginated']['results']
+  >([]);
   const [filterSearch, setFilterSearch] = useState<string>('');
-  const [createNote] = useCreateNoteMutation();
-  const [offset, setOffset] = useState<number>(0);
-  const [hasMore, setHasMore] = useState<boolean>(true);
   const { data, loading } = useClientProfilesPaginatedQuery({
     variables: {
       pagination: { limit: paginationLimit, offset },
@@ -49,12 +56,10 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const [clients, setClients] = useState<IGroupedClients>({});
-  const [currentClient, setCurrentClient] =
-    useState<
-      ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
-    >();
-  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
+
+  const { title, select } = useLocalSearchParams();
+  const [search, setSearch] = useState<string>('');
+  const [createNote] = useCreateNoteMutation();
   const { showSnackbar } = useSnackbar();
 
   const router = useRouter();
@@ -108,7 +113,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
   useEffect(() => {
     setOffset(0);
-    setClients({});
+    setClients([]);
   }, [filterSearch]);
 
   const onChange = (e: string) => {
@@ -117,49 +122,59 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     debounceFetch(e);
   };
 
+  // useEffect(() => {
+  //   if (!data || !('clientProfilesPaginated' in data)) return;
+  //   const { results, totalCount } = data.clientProfilesPaginated;
+
+  //   const groupedClients = results.reduce((acc: IGroupedClients, client) => {
+  //     const firstLetter = client.user.firstName?.charAt(0).toUpperCase() || '#';
+
+  //     if (!acc[firstLetter]) {
+  //       acc[firstLetter] = {
+  //         title: firstLetter,
+  //         data: [],
+  //       };
+  //     }
+  //     acc[firstLetter].data.push(client);
+  //     return acc;
+  //   }, {});
+
+  //   setClients((prevClients) => {
+  //     if (offset === 0) {
+  //       return groupedClients;
+  //     }
+
+  //     const mergedClients = { ...prevClients };
+
+  //     Object.keys(groupedClients).forEach((key) => {
+  //       if (mergedClients[key]) {
+  //         mergedClients[key].data = [
+  //           ...mergedClients[key].data,
+  //           ...groupedClients[key].data,
+  //         ];
+  //       } else {
+  //         mergedClients[key] = groupedClients[key];
+  //       }
+  //     });
+
+  //     return mergedClients;
+  //   });
+
+  //   setHasMore(offset + paginationLimit < totalCount);
+  // }, [data, offset]);
   useEffect(() => {
     if (!data || !('clientProfilesPaginated' in data)) return;
     const { results, totalCount } = data.clientProfilesPaginated;
-
-    const groupedClients = results.reduce((acc: IGroupedClients, client) => {
-      const firstLetter = client.user.firstName?.charAt(0).toUpperCase() || '#';
-
-      if (!acc[firstLetter]) {
-        acc[firstLetter] = {
-          title: firstLetter,
-          data: [],
-        };
-      }
-      acc[firstLetter].data.push(client);
-      return acc;
-    }, {});
-
-    setClients((prevClients) => {
-      if (offset === 0) {
-        return groupedClients;
-      }
-
-      const mergedClients = { ...prevClients };
-
-      Object.keys(groupedClients).forEach((key) => {
-        if (mergedClients[key]) {
-          mergedClients[key].data = [
-            ...mergedClients[key].data,
-            ...groupedClients[key].data,
-          ];
-        } else {
-          mergedClients[key] = groupedClients[key];
-        }
-      });
-
-      return mergedClients;
-    });
+    if (offset === 0) {
+      setClients(results);
+    } else {
+      setClients((prevClients) => [...prevClients, ...results]);
+    }
 
     setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
-
-  const sections = useMemo(() => Object.values(clients || {}), [clients]);
-  const hasClients = !loading && !!sections.length;
+  // const sections = useMemo(() => Object.values(clients || {}), [clients]);
+  // const hasClients = !loading && !!sections.length;
 
   return (
     <View style={{ flex: 1 }}>
@@ -191,7 +206,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             setClients({});
           }}
         />
-        {search && !hasClients && (
+        {search && !clients && (
           <View
             style={{
               flexGrow: 1,
@@ -220,12 +235,16 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             </TextRegular>
           </View>
         )}
-        {hasClients && (
-          <SectionList
+        {clients && (
+          <FlatList
             style={{
               flex: 1,
+              backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+              paddingBottom: 80,
+              paddingTop: Spacings.sm,
+              paddingHorizontal: Spacings.sm,
             }}
-            sections={sections}
+            data={clients}
             renderItem={({ item: clientProfile }) =>
               clients ? (
                 <ClientCard
@@ -247,11 +266,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                 />
               ) : null
             }
-            renderSectionHeader={({ section: { title } }) => (
-              <TextBold mb="xs" size="sm">
-                {title}
-              </TextBold>
-            )}
             keyExtractor={(clientProfile) => clientProfile.id}
             onEndReached={loadMoreClients}
             onEndReachedThreshold={0.05}
