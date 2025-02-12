@@ -60,7 +60,7 @@ runs:
       id: perform-eas-update
       run: |
         platforms=("android" "ios")
-        eas_update_output=$(eas update --branch "${{ inputs.branch }}" --non-interactive --auto --json)
+        eas_update_output=$(yarn nx run betterangels:eas-update --branch "${{ inputs.branch }}" --non-interactive --auto --json)
 
         for platform in "${platforms[@]}"; do
           update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
@@ -80,5 +80,4 @@ runs:
           echo "${platform}-update-commit=$update_commit" >> $GITHUB_OUTPUT
           echo "${platform}-runtime-version=$runtime_version" >> $GITHUB_OUTPUT
         done
-      working-directory: apps/${{ inputs.project }}
       shell: bash

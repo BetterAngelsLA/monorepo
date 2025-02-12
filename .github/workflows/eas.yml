@@ -119,22 +119,22 @@ jobs:
           project: ${{ matrix.project }}
           secrets: ${{ toJson(secrets) }}
 
-      - name: 🔍 Preview Build
-        id: preview-build
-        uses: ./.github/actions/expo-build
-        with:
-          profile: preview
-          project: ${{ matrix.project }}
-          runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
+      # - name: 🔍 Preview Build
+      #   id: preview-build
+      #   uses: ./.github/actions/expo-build
+      #   with:
+      #     profile: preview
+      #     project: ${{ matrix.project }}
+      #     runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
-      - name: 📱 Simulator Build
-        id: simulator-build
-        uses: ./.github/actions/expo-build
-        with:
-          profile: development-simulator
-          project: ${{ matrix.project }}
-          platforms: ios
-          runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
+      # - name: 📱 Simulator Build
+      #   id: simulator-build
+      #   uses: ./.github/actions/expo-build
+      #   with:
+      #     profile: development-simulator
+      #     project: ${{ matrix.project }}
+      #     platforms: ios
+      #     runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
       - name: 🚀 Perform EAS Update
         id: expo-update
