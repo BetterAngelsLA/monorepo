@@ -91,7 +91,6 @@ function RootLayoutNav() {
             options={{
               title: 'Location',
               headerShown: true,
-              headerBackTitleVisible: false,
               animation: 'slide_from_bottom',
             }}
           />
