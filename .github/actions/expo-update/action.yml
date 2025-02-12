@@ -60,8 +60,9 @@ runs:
       id: perform-eas-update
       run: |
         platforms=("android" "ios")
-        eas_update_output=$(yarn nx run "${{ inputs.project }}:eas-update" --branch "${{ inputs.branch }}" --non-interactive --auto --json) || {
-          echo "Error running the EAS update command"
+        eas_update_output=$(yarn nx run betterangels:eas-update --branch "${{ inputs.branch }}" --non-interactive --auto --json 2>&1) || {
+          echo "Error running the EAS update command:"
+          echo "$eas_update_output"
           exit 1
         }
 
