@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { BasicInput, Button } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useUser } from '../../hooks';
 import { useLoginFormMutation } from './__generated__/index.generated';
@@ -32,40 +32,20 @@ export default function LoginForm({
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { refetchUser } = useUser();
-  const { switchEnvironment } = useApiConfig();
-  const [loginForm, { loading, error }] = useLoginFormMutation();
+  const { environment, switchEnvironment } = useApiConfig();
+  const [loginForm] = useLoginFormMutation();
 
-  const isValidEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+  // States for waiting until the environment changes
+  const [pendingLogin, setPendingLogin] = useState(false);
+  const [targetEnv, setTargetEnv] = useState<string | null>(null);
 
+  const isValidEmail = (email: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const isButtonDisabled = !isValidEmail(username) || password.length < 8;
 
-  const checkIfDemoMode = (email: string): boolean => {
-    const demoDomain = '@example.com';
-    return email.endsWith(demoDomain);
-  };
-
-  const handleUsernameChange = (newUsername: string) => {
-    setUsername(newUsername);
-    if (checkIfDemoMode(newUsername)) {
-      console.log('Switching to Demo API');
-      switchEnvironment('demo');
-    } else {
-      console.log('Switching to Production API');
-      switchEnvironment('production');
-    }
-  };
-
-  const handleLogin = async () => {
-    if (isButtonDisabled) {
-      setErrorMessage('Either email or password is incorrect.');
-      return;
-    }
-
+  // This function handles the actual login process.
+  const doLogin = useCallback(async () => {
     setIsLoading(true);
-
     try {
       const { data } = await loginForm({
         variables: {
@@ -73,19 +53,49 @@ export default function LoginForm({
           password,
         },
       });
-
-      if (error) {
-        setErrorMessage('Something went wrong. Please try again.');
-      } else if (!loading && data && 'login' in data) {
-        refetchUser();
+      if (data?.login) {
+        await refetchUser();
       } else {
         setErrorMessage('Either email or password is incorrect.');
       }
-    } catch (error) {
+    } catch (err) {
       setErrorMessage('Something went wrong. Please try again.');
       switchEnvironment('production');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
+  }, [
+    loginForm,
+    password,
+    refetchUser,
+    setErrorMessage,
+    setIsLoading,
+    switchEnvironment,
+    username,
+  ]);
+
+  useEffect(() => {
+    if (pendingLogin && targetEnv && environment === targetEnv) {
+      doLogin();
+      setPendingLogin(false);
+      setTargetEnv(null);
+    }
+  }, [environment, pendingLogin, targetEnv, doLogin]);
+
+  const handleLogin = () => {
+    if (isButtonDisabled) {
+      setErrorMessage('Either email or password is incorrect.');
+      return;
+    }
+    const env = username.endsWith('@example.com') ? 'demo' : 'production';
+    if (environment !== env) {
+      console.log(`Switching to ${env} API`);
+      switchEnvironment(env);
+      setPendingLogin(true);
+      setTargetEnv(env);
+    } else {
+      doLogin();
+    }
   };
 
   return (
@@ -95,7 +105,7 @@ export default function LoginForm({
         borderRadius={50}
         height={44}
         value={username}
-        onChangeText={handleUsernameChange}
+        onChangeText={setUsername}
         placeholder="Enter email address"
         placeholderTextColor="#A9A9A9"
         autoCapitalize="none"
@@ -104,11 +114,10 @@ export default function LoginForm({
         accessibilityHint="Enter your email address"
         mb="xs"
       />
-
       <BasicInput
-        height={44}
         label="Password"
         borderRadius={50}
+        height={44}
         value={password}
         onChangeText={setPassword}
         placeholder="Enter password"
@@ -139,22 +148,6 @@ export default function LoginForm({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 12,
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
-  input: {
-    flex: 1,
-    marginLeft: 10,
-    color: '#000',
   },
   errorText: {
     color: 'red',

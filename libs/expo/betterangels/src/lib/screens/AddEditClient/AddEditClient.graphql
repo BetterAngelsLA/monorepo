@@ -62,6 +62,7 @@ query GetClientProfile($id: ID!) {
       race
       residenceAddress
       veteranStatus
+      tempVeteranStatus
       profilePhoto {
         name
         url
