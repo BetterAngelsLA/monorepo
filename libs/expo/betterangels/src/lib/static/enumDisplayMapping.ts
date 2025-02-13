@@ -23,10 +23,12 @@ import {
 export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Arabic]: 'Arabic',
   [LanguageEnum.Armenian]: 'Armenian',
+  [LanguageEnum.Asl]: 'American Sign Language',
   [LanguageEnum.SimplifiedChinese]: 'Chinese, Simplified',
   [LanguageEnum.TraditionalChinese]: 'Chinese, Traditional',
   [LanguageEnum.English]: 'English',
   [LanguageEnum.Farsi]: 'Farsi',
+  [LanguageEnum.French]: 'French',
   [LanguageEnum.Indonesian]: 'Indonesian',
   [LanguageEnum.Japanese]: 'Japanese',
   [LanguageEnum.Khmer]: 'Khmer',
@@ -64,6 +66,8 @@ export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.NonBinary]: 'Non-Binary',
   [GenderEnum.PreferNotToSay]: 'Prefer not to say',
   [GenderEnum.Other]: 'Other',
+  [GenderEnum.TransMale]: 'Transgender Male',
+  [GenderEnum.TransFemale]: 'Transgender Female',
 };
 
 export const enumDisplayYesNoPreferNot: {

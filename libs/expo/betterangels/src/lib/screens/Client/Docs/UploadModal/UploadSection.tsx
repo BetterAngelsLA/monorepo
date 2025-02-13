@@ -11,7 +11,9 @@ import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { IUploadSectionProps } from './types';
 
 export default function UploadSection(props: IUploadSectionProps) {
-  const { onCancel, title, subtitle, onSubmit, children, loading } = props;
+  const { onCancel, title, subtitle, onSubmit, children, loading, disabled } =
+    props;
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -43,6 +45,7 @@ export default function UploadSection(props: IUploadSectionProps) {
       </ScrollView>
       <BottomActions
         isLoading={loading}
+        disabled={disabled}
         cancel={
           <TextButton
             title="Cancel"

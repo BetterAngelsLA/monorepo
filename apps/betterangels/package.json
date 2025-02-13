@@ -68,7 +68,9 @@
     "@nx/jest": "*",
     "@nx/js": "*",
     "@types/google.maps": "*",
-    "expo-updates": "*"
+    "expo-updates": "*",
+    "expo-document-picker": "*",
+    "react-native-pdf": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",

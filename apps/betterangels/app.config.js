@@ -80,6 +80,8 @@ export default {
       bundler: 'metro',
     },
     plugins: [
+      '@config-plugins/react-native-blob-util',
+      '@config-plugins/react-native-pdf',
       'expo-apple-authentication',
       'expo-build-properties',
       [
@@ -126,6 +128,12 @@ export default {
           backgroundColor: '#216AF8',
           image: './src/app/assets/images/splash.png',
           imageWidth: 750,
+        },
+      ],
+      [
+        'expo-document-picker',
+        {
+          iCloudContainerEnvironment: 'Production',
         },
       ],
     ],
