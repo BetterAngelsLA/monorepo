@@ -54,8 +54,8 @@ export function useClientDocumentLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ClientDocumentQuery, ClientDocumentQueryVariables>(ClientDocumentDocument, options);
         }
-export function useClientDocumentSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ClientDocumentQuery, ClientDocumentQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useClientDocumentSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ClientDocumentQuery, ClientDocumentQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<ClientDocumentQuery, ClientDocumentQueryVariables>(ClientDocumentDocument, options);
         }
 export type ClientDocumentQueryHookResult = ReturnType<typeof useClientDocumentQuery>;

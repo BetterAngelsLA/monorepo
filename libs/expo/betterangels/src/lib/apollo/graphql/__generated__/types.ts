@@ -335,6 +335,7 @@ export type ClientProfileType = {
   residenceAddress?: Maybe<Scalars['String']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
+  tempVeteranStatus?: Maybe<VeteranStatusEnum>;
   user: UserType;
   veteranStatus?: Maybe<YesNoPreferNotToSayEnum>;
 };
@@ -418,6 +419,7 @@ export type CreateClientProfileInput = {
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
+  tempVeteranStatus?: InputMaybe<VeteranStatusEnum>;
   user: CreateUserInput;
   veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
 };
@@ -1805,6 +1807,7 @@ export type UpdateClientProfileInput = {
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
+  tempVeteranStatus?: InputMaybe<VeteranStatusEnum>;
   user?: InputMaybe<UpdateUserInput>;
   veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
 };
@@ -1890,8 +1893,16 @@ export type UserType = {
   username: Scalars['String']['output'];
 };
 
+export enum VeteranStatusEnum {
+  No = 'NO',
+  OtherThanHonorable = 'OTHER_THAN_HONORABLE',
+  PreferNotToSay = 'PREFER_NOT_TO_SAY',
+  Yes = 'YES'
+}
+
 export enum YesNoPreferNotToSayEnum {
   No = 'NO',
+  OtherThanHonorable = 'OTHER_THAN_HONORABLE',
   PreferNotToSay = 'PREFER_NOT_TO_SAY',
   Yes = 'YES'
 }
