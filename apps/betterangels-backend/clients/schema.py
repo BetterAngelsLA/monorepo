@@ -6,8 +6,17 @@ import strawberry_django
 from accounts.models import User
 from accounts.utils import get_user_permission_group
 from clients.enums import HmisAgencyEnum
-from clients.models import ClientContact, ClientProfile, HmisProfile
-from clients.permissions import ClientProfilePermissions
+from clients.models import (
+    ClientContact,
+    ClientProfile,
+    ClientProfileDataImport,
+    ClientProfileImportRecord,
+    HmisProfile,
+)
+from clients.permissions import (
+    ClientProfileImportRecordPermissions,
+    ClientProfilePermissions,
+)
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, PhoneNumber
 from common.permissions.enums import AttachmentPermissions
@@ -30,12 +39,28 @@ from strawberry_django.utils.query import filter_for_user
 from .enums import RelationshipTypeEnum
 from .types import (
     ClientDocumentType,
+    ClientProfileDataImportType,
+    ClientProfileImportRecordType,
     ClientProfilePhotoInput,
     ClientProfileType,
     CreateClientDocumentInput,
     CreateClientProfileInput,
+    CreateProfileDataImportInput,
+    ImportClientProfileInput,
     UpdateClientProfileInput,
 )
+
+
+def _format_graphql_error(error: Exception) -> str:
+    if isinstance(error, GraphQLError) and hasattr(error, "extensions"):
+        # Extract the custom error list if available.
+        ext = error.extensions or {}
+        error_list = ext.get("errors")
+        if error_list:
+            detailed_errors = "; ".join(f"{err.get('field')}: {err.get('message')}" for err in error_list)
+            return f"{error.message} ({detailed_errors})"
+    # Fallback: return the standard string representation.
+    return str(error)
 
 
 def _validate_user_email(user_data: dict, user: Optional[User] = None) -> list[dict[str, Any]]:
@@ -415,3 +440,55 @@ class Mutation:
                 raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")
 
             return DeletedObjectType(id=client_profile_id)
+
+    # Data Import
+    @strawberry_django.mutation(extensions=[HasPerm(ClientProfileImportRecordPermissions.ADD)])
+    def create_client_profile_data_import(
+        self, info: Info, data: CreateProfileDataImportInput
+    ) -> "ClientProfileDataImportType":
+        user = cast(User, get_current_user(info))
+        record = ClientProfileDataImport.objects.create(
+            source_file=data.source_file,
+            imported_by=user,
+            notes=data.notes,
+        )
+        return ClientProfileDataImportType(
+            id=record.id,
+            imported_at=record.imported_at,
+            imported_by=record.imported_by,
+            notes=record.notes,
+            source_file=record.source_file,
+        )
+
+    @strawberry_django.mutation(extensions=[HasPerm([ClientProfileImportRecordPermissions.ADD])])
+    def import_client_profile(self, info: Info, data: ImportClientProfileInput) -> ClientProfileImportRecordType:
+        existing = ClientProfileImportRecord.objects.filter(
+            source_id=data.source_id, source_name=data.source_name, success=True
+        ).first()
+        if existing:
+            raise Exception(
+                f"Source ID {data.source_id} with source name '{data.source_name}' has already been imported successfully."
+            )
+
+        import_job = ClientProfileDataImport.objects.get(id=data.import_job_id)
+        try:
+            with transaction.atomic():
+                client_profile = Mutation.create_client_profile(self, info, data.client_profile)
+                record = ClientProfileImportRecord.objects.create(
+                    import_job=import_job,
+                    source_id=data.source_id,
+                    source_name=data.source_name,
+                    client_profile=client_profile,
+                    raw_data=data.raw_data,
+                    success=True,
+                )
+        except Exception as e:
+            record = ClientProfileImportRecord.objects.create(
+                import_job=import_job,
+                source_id=data.source_id,
+                source_name=data.source_name,
+                raw_data=data.raw_data,
+                success=False,
+                error_message=_format_graphql_error(e),
+            )
+        return cast(ClientProfileImportRecordType, record)
