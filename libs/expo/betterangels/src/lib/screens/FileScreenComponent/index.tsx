@@ -88,7 +88,9 @@ export default function FileScreenComponent({ id }: { id: string }) {
           <TextBold mt="sm" size="sm">
             File Name
           </TextBold>
-          <TextRegular size="sm">{originalFilename}</TextRegular>
+          <TextRegular size="sm" style={{ width: '100%' }}>
+            {originalFilename}
+          </TextRegular>
         </View>
         <TextRegular textAlign="right" size="sm">
           Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')}
