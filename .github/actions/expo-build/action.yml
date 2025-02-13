@@ -90,17 +90,9 @@ runs:
           # Extract just the JSON content (from first "[" to last "]")
           cleaned_output=$(echo "$build_output" | sed -n '/^\[/,/\]$/p')
 
-          # If cleaning didn't return anything, report the full output for debugging.
-          if [ -z "$cleaned_output" ]; then
-            echo "Error: Could not extract JSON from build-list command for platform: $platform"
-            echo "Full output was:"
-            echo "$build_output"
-            exit 1
-          fi
-
-          # Verify the cleaned output is valid JSON.
-          if ! { [ "$cleaned_output" = "[]" ] || echo "$cleaned_output" | jq empty >/dev/null 2>&1; }; then
-            echo "Error: Received invalid JSON from the build-list command for platform: $platform"
+          # Use jq empty to validate the JSON. If it fails, the JSON is invalid.
+          if ! echo "$cleaned_output" | jq empty >/dev/null 2>&1; then
+            echo "Error: Received invalid JSON from build-list command for platform: $platform"
             echo "Cleaned output was:"
             echo "$cleaned_output"
             exit 1
