@@ -68,7 +68,7 @@ runs:
         }
 
         # Extract only the JSON portion (from the first "[" to the last "]").
-        eas_update_output=$(echo "$eas_update_raw" | sed -n '/^\[/,/\]$/p')
+        eas_update_output=$(echo "$eas_update_raw" | sed ':a;N;$!ba;s/.*\(\[[^]]*\]\).*/\1/')
 
         for platform in "${platforms[@]}"; do
           update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")

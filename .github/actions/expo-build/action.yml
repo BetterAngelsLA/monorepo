@@ -87,8 +87,8 @@ runs:
             --runtimeVersion "${{ inputs.runtime-version }}" \
             --limit 1 --json --interactive false 2>/dev/null)
 
-          # Extract just the JSON content (from first "[" to last "]")
-          cleaned_output=$(echo "$build_output" | sed -n '/^\[/,/\]$/p')
+          # Extract only the JSON portion (from the first "[" to the last "]").
+          cleaned_output=$(echo "$build_output" | sed ':a;N;$!ba;s/.*\(\[[^]]*\]\).*/\1/')
 
           # Use jq empty to validate the JSON. If it fails, the JSON is invalid.
           if ! echo "$cleaned_output" | jq empty >/dev/null 2>&1; then
