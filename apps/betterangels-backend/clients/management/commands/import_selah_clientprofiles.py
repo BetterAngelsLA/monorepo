@@ -227,8 +227,10 @@ def build_input_data(row: Dict[str, str]) -> Dict[str, Any]:
     language_map = {
         "arabic": "ARABIC",
         "armenian": "ARMENIAN",
+        "sign lanuage": "ASL",  # Typo in the source data
         "english": "ENGLISH",
         "farsi": "FARSI",
+        "french": "FRENCH",
         "indonesian": "INDONESIAN",
         "japanese": "JAPANESE",
         "khmer": "KHMER",
