@@ -3,7 +3,8 @@ import { Spacings, TThumbnailSize } from '@monorepo/expo/shared/static';
 import { BasicInput, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
-import { FileThumbnail } from '../../../../ui-components/FileThumbnail/FileThumbnail';
+import { FileThumbnail } from '../../../../ui-components';
+import { fileDisplaySizeMap } from '../../../FileScreenComponent/fileDisplaySizeMap';
 
 export interface IUploadPreview {
   files: ReactNativeFile[];
@@ -34,8 +35,11 @@ export default function UploadsPreview(props: IUploadPreview) {
           <View key={index} style={{ marginBottom: Spacings.md }}>
             <FileThumbnail
               uri={file.uri}
-              thumbnailSize={thumbnailSize}
-              documentType={documentType}
+              mimeType={file.type}
+              thumbnailSize={
+                thumbnailSize ||
+                fileDisplaySizeMap[documentType as ClientDocumentNamespaceEnum]
+              }
               onDelete={() => onRemoveFile(index)}
             />
 
@@ -44,6 +48,7 @@ export default function UploadsPreview(props: IUploadPreview) {
               placeholder={'Enter a file name'}
               value={file.name}
               required
+              mt="sm"
               errorMessage={
                 !file.name.trim() ? 'file name is required' : undefined
               }

@@ -1,5 +1,11 @@
 import { ServiceEnum } from '../apollo';
 
+export const MimeTypes = {
+  PDF: 'application/pdf',
+} as const;
+
+export type MimeType = (typeof MimeTypes)[keyof typeof MimeTypes];
+
 export const ServicesByCategory = [
   {
     title: 'Immediate Needs',

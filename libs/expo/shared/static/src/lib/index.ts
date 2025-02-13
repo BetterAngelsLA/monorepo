@@ -1,6 +1,6 @@
 export { Colors } from './colors';
 export { FontSizes } from './fontSizes';
-export { Radiuses } from './radiuses';
+export { Radiuses, TRadius, TRadiusKey } from './radiuses';
 export { Regex } from './regex';
 export { Shadow } from './shadow';
 export { Spacings, TSpacing } from './spacings';

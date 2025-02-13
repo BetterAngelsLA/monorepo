@@ -82,6 +82,7 @@ query ClientProfile($id: ID!) {
         createdAt
         namespace
         originalFilename
+        mimeType
         file {
           url
           name
@@ -92,6 +93,7 @@ query ClientProfile($id: ID!) {
         createdAt
         namespace
         originalFilename
+        mimeType
         file {
           url
           name
@@ -102,6 +104,7 @@ query ClientProfile($id: ID!) {
         createdAt
         namespace
         originalFilename
+        mimeType
         file {
           url
           name

@@ -8,12 +8,14 @@ import {
 import { format } from 'date-fns';
 import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { SafeAreaView, StyleSheet, View } from 'react-native';
+import PDF from 'react-native-pdf';
 import { AttachmentType } from '../../apollo';
+import { MimeTypes } from '../../static';
 import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
-import { MainContainer } from '../../ui-components';
-import { FileThumbnail } from '../../ui-components/FileThumbnail/FileThumbnail';
+import { FileThumbnail, MainContainer } from '../../ui-components';
 import { useClientDocumentQuery } from './__generated__/Document.generated';
+import { fileDisplaySizeMap } from './fileDisplaySizeMap';
 
 export default function FileScreenComponent({ id }: { id: string }) {
   const { data } = useClientDocumentQuery({ variables: { id } });
@@ -26,18 +28,29 @@ export default function FileScreenComponent({ id }: { id: string }) {
     });
   }, [data, navigation]);
 
-  if (!data)
+  if (!data) {
     return (
       <View style={styles.loadingContainer}>
         <Loading size="large" />
       </View>
     );
+  }
 
   const { clientDocument } = data || {};
-  const { attachmentType, createdAt, namespace, file, originalFilename } =
-    clientDocument;
+  const {
+    attachmentType,
+    createdAt,
+    namespace,
+    mimeType,
+    file,
+    originalFilename,
+  } = clientDocument;
 
   const isImage = attachmentType === AttachmentType.Image;
+  const isPdf = mimeType === MimeTypes.PDF;
+
+  // const pdfUrl =
+  // 'https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf';
 
   return (
     <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
@@ -49,20 +62,43 @@ export default function FileScreenComponent({ id }: { id: string }) {
           <ImagesWithZoom title={originalFilename} imageUrl={file.url}>
             <FileThumbnail
               uri={file.url}
-              attachmentType={attachmentType}
-              documentType={namespace}
+              mimeType={mimeType}
+              thumbnailSize={fileDisplaySizeMap[namespace]}
             />
           </ImagesWithZoom>
         )}
 
-        {!isImage && (
+        {isPdf && (
+          <SafeAreaView style={{ flex: 1 }}>
+            <PDF
+              source={{
+                uri: file.url,
+                cache: true,
+              }}
+              style={{ flex: 1 }}
+            />
+          </SafeAreaView>
+
+          // <WebBrowserLink href={file.url} accessibilityHint="open pdf file">
+          //   <FileThumbnail
+          //     uri={file.url}
+          //     mimeType={mimeType}
+          //     thumbnailSize={fileDisplaySizeMap[namespace]}
+          //   />
+          // </WebBrowserLink>
+        )}
+
+        {!isImage && !isPdf && (
           <FileThumbnail
             uri={file.url}
-            attachmentType={attachmentType}
-            documentType={namespace}
+            mimeType={mimeType}
+            thumbnailSize={fileDisplaySizeMap[namespace]}
           />
         )}
-        <TextBold size="sm">File Name</TextBold>
+
+        <TextBold mt="sm" size="sm">
+          File Name
+        </TextBold>
         <TextRegular size="sm">{originalFilename}</TextRegular>
       </View>
       <TextRegular textAlign="right" size="sm">
