@@ -186,6 +186,12 @@ def build_input_data(row: Dict[str, str]) -> Dict[str, Any]:
             return None
 
     # Mapping dictionaries: keys are lowercased input values; values are enum names in CAPS.
+    ada_map = {
+        "hearing": "HEARING",
+        "mobility": "MOBILITY",
+        "visual": "VISUAL",
+        "other": "OTHER",
+    }
     gender_map = {
         "cisgender male": "MALE",
         "male": "MALE",
@@ -195,8 +201,8 @@ def build_input_data(row: Dict[str, str]) -> Dict[str, Any]:
         "f": "FEMALE",
         "non-binary": "NON_BINARY",
         "nonbinary": "NON_BINARY",
-        "transgender male": "MALE",
-        "transgender female": "FEMALE",
+        "transgender male": "TRANS_MALE",
+        "transgender female": "TRANS_FEMALE",
     }
     hair_map = {
         "black": "BLACK",
