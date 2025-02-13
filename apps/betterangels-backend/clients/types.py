@@ -12,6 +12,8 @@ from clients.enums import (
     LanguageEnum,
     LivingSituationEnum,
     PreferredCommunicationEnum,
+    VeteranStatusEnum,
+    YesNoPreferNotToSayEnum,
 )
 from common.graphql.types import (
     AttachmentInterface,
@@ -224,7 +226,7 @@ class ClientProfileBaseType:
     race: auto
     residence_address: auto
     spoken_languages: Optional[List[LanguageEnum]]
-    veteran_status: auto
+    veteran_status: Optional[YesNoPreferNotToSayEnum]
 
 
 @strawberry.input
@@ -301,6 +303,14 @@ class ClientProfileType(ClientProfileBaseType):
 
         return "Not Assigned"
 
+    # TODO: remove after fe cutover to new field & type
+    @strawberry.field
+    def temp_veteran_status(self, info: Info) -> Optional[VeteranStatusEnum]:
+        if veteran_status := self.veteran_status:
+            return veteran_status  # type: ignore
+
+        return None
+
 
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
@@ -310,6 +320,8 @@ class CreateClientProfileInput(ClientProfileBaseType):
     phone_numbers: Optional[List[PhoneNumberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
     user: CreateUserInput
+    # TODO: remove after fe cutover to new field & type
+    temp_veteran_status: Optional[VeteranStatusEnum]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
@@ -321,6 +333,8 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     phone_numbers: Optional[List[PhoneNumberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
     user: Optional[UpdateUserInput]
+    # TODO: remove after fe cutover to new field & type
+    temp_veteran_status: Optional[VeteranStatusEnum]
 
 
 # TODO: refactor frontend to use ClientProfileInput instead of CreateClientProfileInput and UpdateClientProfileInput.

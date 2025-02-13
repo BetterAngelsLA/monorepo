@@ -63,6 +63,7 @@ interface AttachmentInterface {
   id: ID!
   file: DjangoFileType!
   attachmentType: AttachmentType!
+  mimeType: String!
   originalFilename: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -224,6 +225,7 @@ type ClientDocumentType implements AttachmentInterface {
   id: ID!
   file: DjangoFileType!
   attachmentType: AttachmentType!
+  mimeType: String!
   originalFilename: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -324,6 +326,7 @@ type ClientProfileType {
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   user: UserType!
   displayCaseManager: String!
+  tempVeteranStatus: VeteranStatusEnum
 }
 
 type ClientProfileTypeOffsetPaginated {
@@ -392,6 +395,7 @@ input CreateClientProfileInput {
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: CreateUserInput!
+  tempVeteranStatus: VeteranStatusEnum
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -591,6 +595,8 @@ type FunderType {
 enum GenderEnum {
   MALE
   FEMALE
+  TRANS_MALE
+  TRANS_FEMALE
   NON_BINARY
   OTHER
   PREFER_NOT_TO_SAY
@@ -677,10 +683,12 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](https:/
 scalar JSON @specifiedBy(url: "https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf")
 
 enum LanguageEnum {
+  ASL
   ARABIC
   ARMENIAN
   ENGLISH
   FARSI
+  FRENCH
   INDONESIAN
   JAPANESE
   KHMER
@@ -814,6 +822,7 @@ type NoteAttachmentType implements AttachmentInterface {
   id: ID!
   file: DjangoFileType!
   attachmentType: AttachmentType!
+  mimeType: String!
   originalFilename: String
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -1469,6 +1478,7 @@ input UpdateClientProfileInput {
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: UpdateUserInput
+  tempVeteranStatus: VeteranStatusEnum
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
@@ -1553,10 +1563,18 @@ type UserType {
   username: String!
 }
 
+enum VeteranStatusEnum {
+  YES
+  NO
+  PREFER_NOT_TO_SAY
+  OTHER_THAN_HONORABLE
+}
+
 enum YesNoPreferNotToSayEnum {
   YES
   NO
   PREFER_NOT_TO_SAY
+  OTHER_THAN_HONORABLE
 }
 
 """Permission definition for schema directives."""

@@ -310,6 +310,10 @@ class Mutation:
             client_user = User.objects.create_client(**user_data)
             phone_numbers = client_profile_data.pop("phone_numbers", []) or []
 
+            # TODO: remove after fe cutover to new field & type
+            if client_profile_data.get("temp_veteran_status") != strawberry.UNSET:
+                client_profile_data["veteran_status"] = client_profile_data["temp_veteran_status"]
+
             client_profile = resolvers.create(
                 info,
                 ClientProfile,
@@ -346,6 +350,10 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
+
+            # TODO: remove after fe cutover to new field & type
+            if client_profile_data.get("temp_veteran_status") != strawberry.UNSET:
+                client_profile_data["veteran_status"] = client_profile_data["temp_veteran_status"]
 
             _validate_client_profile_data(client_profile_data)
 
