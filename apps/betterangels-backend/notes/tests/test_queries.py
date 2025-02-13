@@ -381,11 +381,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         [
             ("Maximoff", 1, ["interaction_author_2"]),
             ("Pietro Maximoff", 0, None),
-            (
-                "Alex",
-                2,
-                ["interaction_author", "interaction_author_3"],
-            ),
+            ("Alex", 2, ["interaction_author", "interaction_author_3"]),
         ],
     )
     def test_interaction_authors_filter(
@@ -402,9 +398,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     totalCount
                     results {
                         id
-                        firstName
-                        lastName
-                        middleName
                     }
                 }
             }
