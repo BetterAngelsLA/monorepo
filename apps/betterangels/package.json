@@ -68,13 +68,7 @@
     "@nx/jest": "*",
     "@nx/js": "*",
     "@types/google.maps": "*",
-    "expo-updates": "*"
-    "@teovilla/react-native-web-maps": "*",
-    "react-native-paper": "*",
-    "dotenv": "*",
-    "@react-native-picker/picker": "*",
-    "picocolors": "*",
-    "@likashefqet/react-native-image-zoom": "*",
+    "expo-updates": "*",
     "expo-document-picker": "*"
   },
   "scripts": {
