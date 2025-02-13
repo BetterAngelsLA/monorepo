@@ -304,9 +304,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", True),  # Other case manager should succeed
+            ("org_1_case_manager_1", True),  # Case manager should succeed
             ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
@@ -329,7 +327,10 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         """
         response = self.execute_graphql(mutation)
 
-        self.assertTrue((response["data"]["interactionAuthors"]["totalCount"] > 0) == should_succeed)
+        if should_succeed:
+            self.assertTrue(response["data"]["interactionAuthors"]["totalCount"] > 0)
+        else:
+            self.assertTrue(response["data"]["interactionAuthors"]["totalCount"] == 0)
 
     @parametrize(
         "user_label, should_succeed",

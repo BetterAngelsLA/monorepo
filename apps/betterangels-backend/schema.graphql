@@ -674,14 +674,11 @@ type ImmediateNeedType {
 }
 
 input InteractionAuthorFilter {
-  firstName: String
-  lastName: String
-  middleName: String
   AND: InteractionAuthorFilter
   OR: InteractionAuthorFilter
   NOT: InteractionAuthorFilter
   DISTINCT: Boolean
-  generalNameSearch: String
+  search: String
 }
 
 type InteractionAuthorType {

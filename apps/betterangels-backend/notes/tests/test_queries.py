@@ -221,8 +221,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         response = self.execute_graphql(query)
 
-        self.assertFalse(response["data"] is None, f"Data is None: {response}")
-
         results = response["data"]["interactionAuthors"]["results"]
         returned_author: dict = next((u for u in results if u["id"] == str(interaction_author.pk)))
         self.assertEqual(returned_author["firstName"], "Wanda")
@@ -379,22 +377,22 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
 
     @parametrize(
-        ("name_search, expected_results_count, returned_authors"),
+        ("name_search, expected_results_count, expected_authors"),
         [
-            ("Maximoff", 1, ["interaction_author_2"]),  # Two notes have "deets" in public details
-            ("Pietro Maximoff", 0, None),  # One note has "deets" in public details and "coop" in client name
+            ("Maximoff", 1, ["interaction_author_2"]),
+            ("Pietro Maximoff", 0, None),
             (
                 "Alex",
                 2,
                 ["interaction_author", "interaction_author_3"],
-            ),  # One note has "more" in public details
+            ),
         ],
     )
     def test_interaction_authors_filter(
         self,
         name_search: Optional[str],
         expected_results_count: int,
-        returned_authors: Optional[list[str]],
+        expected_authors: Optional[list[str]],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
 
@@ -428,17 +426,17 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         perm_group.organization.add_user(interaction_author_2)
         perm_group.organization.add_user(interaction_author_3)
 
-        filters: dict[str, Any] = {"generalNameSearch": name_search}
+        filters: dict[str, Any] = {"search": name_search}
 
         response = self.execute_graphql(query, variables={"filters": filters})
 
         self.assertEqual(response["data"]["interactionAuthors"]["totalCount"], expected_results_count)
         authors = response["data"]["interactionAuthors"]["results"]
 
-        if returned_authors:
-            authorIDs = set([int(u["id"]) for u in authors])
-            returned_authors_ids = set([test_user_map[u].pk for u in returned_authors])
-            self.assertEqual(authorIDs, returned_authors_ids, f"Not equal, {authorIDs, returned_authors_ids}")
+        if expected_authors:
+            author_ids = set([int(u["id"]) for u in authors])
+            expected_authors_ids = set([test_user_map[u].pk for u in expected_authors])
+            self.assertEqual(author_ids, expected_authors_ids, f"Not equal, {author_ids, expected_authors_ids}")
 
     @parametrize(
         ("search_terms, expected_results_count, returned_note_labels"),

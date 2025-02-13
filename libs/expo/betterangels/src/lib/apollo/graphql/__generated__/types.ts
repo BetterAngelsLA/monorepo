@@ -711,10 +711,7 @@ export type InteractionAuthorFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<InteractionAuthorFilter>;
   OR?: InputMaybe<InteractionAuthorFilter>;
-  firstName?: InputMaybe<Scalars['String']['input']>;
-  generalNameSearch?: InputMaybe<Scalars['String']['input']>;
-  lastName?: InputMaybe<Scalars['String']['input']>;
-  middleName?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InteractionAuthorType = {

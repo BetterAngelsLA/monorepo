@@ -292,14 +292,8 @@ class RevertNoteInput:
 
 @strawberry_django.filters.filter(User)
 class InteractionAuthorFilter:
-    first_name: auto
-    last_name: auto
-    middle_name: auto
-
     @strawberry_django.filter_field
-    def general_name_search(
-        self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str
-    ) -> Tuple[QuerySet[User], Q]:
+    def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Tuple[QuerySet[User], Q]:
         if value is None:
             return queryset, Q()
 
