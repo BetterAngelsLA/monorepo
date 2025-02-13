@@ -1,9 +1,14 @@
 import { StyleSheet, View } from 'react-native';
 
-import { handleEmailPress, useSignOut } from '@monorepo/expo/betterangels';
+import {
+  handleEmailPress,
+  useSignOut,
+  useUser,
+} from '@monorepo/expo/betterangels';
 import { WarningIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
+  TextBold,
   TextButton,
   TextMedium,
   TextRegular,
@@ -12,6 +17,8 @@ import { StatusBar } from 'expo-status-bar';
 
 export default function Welcome() {
   const { signOut } = useSignOut();
+  const { user } = useUser();
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -24,6 +31,22 @@ export default function Welcome() {
           <TextMedium mt="lg" textAlign="center" size="lg" mb="sm">
             Your account has not been authorized.
           </TextMedium>
+
+          <View style={{ marginBottom: 16 }}>
+            <TextBold textAlign="center" size="xs">
+              User ID:{' '}
+              <TextRegular textAlign="center" size="xs">
+                {user?.id}
+              </TextRegular>
+            </TextBold>
+            <TextBold textAlign="center" size="xs">
+              User Email:{' '}
+              <TextRegular textAlign="center" size="xs">
+                {user?.email}
+              </TextRegular>
+            </TextBold>
+          </View>
+
           <TextRegular textAlign="center" size="sm" mb="xl">
             Please contact your organization's administrator to authorize your
             account.
