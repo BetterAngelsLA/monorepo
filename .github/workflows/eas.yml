@@ -97,6 +97,7 @@ jobs:
           node-version: 20.12.2
       - run: |
           corepack enable
+          npm install --global eas-cli
       - name: 🧶 Setup Yarn in Node
         uses: actions/setup-node@v4
         with:
@@ -253,6 +254,7 @@ jobs:
           node-version: 20.12.2
       - run: |
           corepack enable
+          npm install --global eas-cli
 
       - name: 🧶 Setup Yarn in Node
         uses: actions/setup-node@v4

@@ -45,8 +45,8 @@ export function useClientCaliforniaUniqueCheckLazyQuery(baseOptions?: Apollo.Laz
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ClientCaliforniaUniqueCheckQuery, ClientCaliforniaUniqueCheckQueryVariables>(ClientCaliforniaUniqueCheckDocument, options);
         }
-export function useClientCaliforniaUniqueCheckSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ClientCaliforniaUniqueCheckQuery, ClientCaliforniaUniqueCheckQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useClientCaliforniaUniqueCheckSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ClientCaliforniaUniqueCheckQuery, ClientCaliforniaUniqueCheckQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<ClientCaliforniaUniqueCheckQuery, ClientCaliforniaUniqueCheckQueryVariables>(ClientCaliforniaUniqueCheckDocument, options);
         }
 export type ClientCaliforniaUniqueCheckQueryHookResult = ReturnType<typeof useClientCaliforniaUniqueCheckQuery>;

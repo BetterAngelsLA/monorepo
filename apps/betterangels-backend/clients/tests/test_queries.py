@@ -102,6 +102,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": self.client_profile_1["user"],
             "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
+            # TODO: remove after fe cutover to new field & type
+            "tempVeteranStatus": YesNoPreferNotToSayEnum.NO.name,
         }
 
         self.assertEqual(client_profile, expected_client_profile)
