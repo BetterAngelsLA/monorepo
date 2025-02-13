@@ -73,6 +73,7 @@ export default function FileScreenComponent({ id }: { id: string }) {
               mimeType={mimeType}
               thumbnailSize={fileDisplaySizeMap[namespace]}
               onPress={() => setPdfIsOpen(true)}
+              accessibilityHint="opens pdf file"
             />
           )}
 

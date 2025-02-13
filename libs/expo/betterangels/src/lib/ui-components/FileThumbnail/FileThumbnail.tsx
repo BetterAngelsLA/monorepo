@@ -16,16 +16,21 @@ interface IProps {
   mimeType: string;
   thumbnailSize?: TThumbnailSize;
   borderRadius?: TRadius;
+  accessibilityHint?: string;
   onDelete?: () => void;
   onPress?: () => void;
 }
 
 export function FileThumbnail(props: IProps) {
-  const { onPress, ...rest } = props;
+  const { accessibilityHint, onPress, ...rest } = props;
 
   if (onPress) {
     return (
-      <TouchableOpacity onPress={onPress}>
+      <TouchableOpacity
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityHint={accessibilityHint}
+      >
         <FileThumbnailBase {...rest} />
       </TouchableOpacity>
     );
