@@ -1869,17 +1869,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@config-plugins/detox@npm:8.0.0":
-  version: 8.0.0
-  resolution: "@config-plugins/detox@npm:8.0.0"
-  dependencies:
-    expo-build-properties: "npm:~0.12.1"
-  peerDependencies:
-    expo: ^51
-  checksum: 10/ebc2a2062b1d28253ac7199d8936631679625bc1818cc8e20bdad5c60375f2ffcbdeae2bfe686b65a1ba5b43535e672de32315d3ba83e87708d006ea7465b729
-  languageName: node
-  linkType: hard
-
 "@config-plugins/react-native-blob-util@npm:^9.0.0":
   version: 9.0.0
   resolution: "@config-plugins/react-native-blob-util@npm:9.0.0"
