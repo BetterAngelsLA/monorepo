@@ -7,7 +7,7 @@ import {
   TRadius,
   TThumbnailSize,
 } from '@monorepo/expo/shared/static';
-import { Image, View } from 'react-native';
+import { Image, TouchableOpacity, View } from 'react-native';
 import { MimeTypes } from '../../static';
 import { ThumbnailDeleteButton } from './ThumbnailDeleteButton';
 
@@ -17,9 +17,24 @@ interface IProps {
   thumbnailSize?: TThumbnailSize;
   borderRadius?: TRadius;
   onDelete?: () => void;
+  onPress?: () => void;
 }
 
 export function FileThumbnail(props: IProps) {
+  const { onPress, ...rest } = props;
+
+  if (onPress) {
+    return (
+      <TouchableOpacity onPress={onPress}>
+        <FileThumbnailBase {...rest} />
+      </TouchableOpacity>
+    );
+  }
+
+  return <FileThumbnailBase {...rest} />;
+}
+
+function FileThumbnailBase(props: IProps) {
   const {
     mimeType,
     onDelete,
