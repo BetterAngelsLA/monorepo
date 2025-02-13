@@ -16,17 +16,18 @@ import {
   ServiceEnum,
   ServiceRequestTypeEnum,
   SocialMediaEnum,
-  VeteranStatusEnum,
   YesNoPreferNotToSayEnum,
 } from '../apollo';
 
 export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Arabic]: 'Arabic',
   [LanguageEnum.Armenian]: 'Armenian',
+  [LanguageEnum.Asl]: 'ASL',
   [LanguageEnum.SimplifiedChinese]: 'Chinese, Simplified',
   [LanguageEnum.TraditionalChinese]: 'Chinese, Traditional',
   [LanguageEnum.English]: 'English',
   [LanguageEnum.Farsi]: 'Farsi',
+  [LanguageEnum.French]: 'French',
   [LanguageEnum.Indonesian]: 'Indonesian',
   [LanguageEnum.Japanese]: 'Japanese',
   [LanguageEnum.Khmer]: 'Khmer',
@@ -61,6 +62,8 @@ export const enumDisplayHmisAgency: {
 export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.Female]: 'Female',
   [GenderEnum.Male]: 'Male',
+  [GenderEnum.TransFemale]: 'Transgender Female',
+  [GenderEnum.TransMale]: 'Transgender Male',
   [GenderEnum.NonBinary]: 'Non-Binary',
   [GenderEnum.PreferNotToSay]: 'Prefer not to say',
   [GenderEnum.Other]: 'Other',
@@ -72,8 +75,6 @@ export const enumDisplayYesNoPreferNot: {
   [YesNoPreferNotToSayEnum.Yes]: 'Yes',
   [YesNoPreferNotToSayEnum.No]: 'No',
   [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
-  [YesNoPreferNotToSayEnum.OtherThanHonorable]:
-    'Other than Honorable Discharge',
 };
 export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
   [PronounEnum.HeHimHis]: 'He/Him/His',
@@ -142,16 +143,6 @@ export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
     [YesNoPreferNotToSayEnum.Yes]: 'Yes',
     [YesNoPreferNotToSayEnum.No]: 'No',
     [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
-    [YesNoPreferNotToSayEnum.OtherThanHonorable]:
-      'Other than Honorable Discharge',
-  };
-
-export const enumDisplayVeteranStatus: { [key in VeteranStatusEnum]: string } =
-  {
-    [VeteranStatusEnum.Yes]: 'Yes',
-    [VeteranStatusEnum.No]: 'No',
-    [VeteranStatusEnum.PreferNotToSay]: 'Prefer not to say',
-    [VeteranStatusEnum.OtherThanHonorable]: 'Other than Honorable Discharge',
   };
 
 export const clientRelationshipEnumDisplay: Partial<{
