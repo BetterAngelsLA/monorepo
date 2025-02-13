@@ -326,6 +326,7 @@ type ClientProfileType {
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   user: UserType!
   displayCaseManager: String!
+  tempVeteranStatus: VeteranStatusEnum
 }
 
 type ClientProfileTypeOffsetPaginated {
@@ -394,6 +395,7 @@ input CreateClientProfileInput {
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: CreateUserInput!
+  tempVeteranStatus: VeteranStatusEnum
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -1476,6 +1478,7 @@ input UpdateClientProfileInput {
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: UpdateUserInput
+  tempVeteranStatus: VeteranStatusEnum
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
@@ -1560,10 +1563,18 @@ type UserType {
   username: String!
 }
 
+enum VeteranStatusEnum {
+  YES
+  NO
+  PREFER_NOT_TO_SAY
+  OTHER_THAN_HONORABLE
+}
+
 enum YesNoPreferNotToSayEnum {
   YES
   NO
   PREFER_NOT_TO_SAY
+  OTHER_THAN_HONORABLE
 }
 
 """Permission definition for schema directives."""
