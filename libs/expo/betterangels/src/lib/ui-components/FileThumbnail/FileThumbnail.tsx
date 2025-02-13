@@ -3,45 +3,56 @@ import {
   Colors,
   FileThumbnailSizeDefault,
   ImageThumbnailSizeDefault,
+  Radiuses,
+  TRadius,
   TThumbnailSize,
-  thumbnailSizes,
 } from '@monorepo/expo/shared/static';
-import { Image, View } from 'react-native';
-import { AttachmentType, ClientDocumentNamespaceEnum } from '../../apollo';
-import {
-  TFileType,
-  getFileTypeFromExtension,
-} from '../../helpers/files/getFileTypeFromExtension';
+import { Image, TouchableOpacity, View } from 'react-native';
+import { MimeTypes } from '../../static';
 import { ThumbnailDeleteButton } from './ThumbnailDeleteButton';
-
-const thumbSizeMap: Partial<
-  Record<ClientDocumentNamespaceEnum, TThumbnailSize>
-> = {
-  [ClientDocumentNamespaceEnum.PhotoId]: thumbnailSizes.PhotoId,
-  [ClientDocumentNamespaceEnum.DriversLicenseFront]: thumbnailSizes.PhotoId,
-  [ClientDocumentNamespaceEnum.DriversLicenseBack]: thumbnailSizes.PhotoId,
-  [ClientDocumentNamespaceEnum.SocialSecurityCard]: thumbnailSizes.PhotoId,
-};
 
 interface IProps {
   uri: string;
-  attachmentType?: AttachmentType;
+  mimeType: string;
   thumbnailSize?: TThumbnailSize;
-  documentType?: ClientDocumentNamespaceEnum;
+  borderRadius?: TRadius;
+  accessibilityHint?: string;
   onDelete?: () => void;
+  onPress?: () => void;
 }
 
 export function FileThumbnail(props: IProps) {
-  const { attachmentType, documentType, onDelete, uri, thumbnailSize } = props;
+  const { accessibilityHint, onPress, ...rest } = props;
 
-  const fileType = getFileType(uri, attachmentType);
+  if (onPress) {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityHint={accessibilityHint}
+      >
+        <FileThumbnailBase {...rest} />
+      </TouchableOpacity>
+    );
+  }
 
-  const isImage = fileType === 'image';
-  const isPdf = fileType === 'pdf';
-  const isDefaultFileType = !isImage && !isPdf;
+  return <FileThumbnailBase {...rest} />;
+}
 
-  let thumbSize =
-    thumbnailSize || thumbSizeMap[documentType as ClientDocumentNamespaceEnum];
+function FileThumbnailBase(props: IProps) {
+  const {
+    mimeType,
+    onDelete,
+    uri,
+    thumbnailSize,
+    borderRadius = Radiuses.xs,
+  } = props;
+
+  const isImage = mimeType.startsWith('image');
+  const isPdf = mimeType === MimeTypes.PDF;
+  const isOtherType = !isImage && !isPdf;
+
+  let thumbSize = thumbnailSize;
 
   if (!thumbSize) {
     thumbSize = isImage ? ImageThumbnailSizeDefault : FileThumbnailSizeDefault;
@@ -49,12 +60,14 @@ export function FileThumbnail(props: IProps) {
 
   const fileOrImageText = isImage ? 'image' : 'file';
 
+  const iconSize = thumbSize.width >= 70 ? 'lg' : 'sm';
+
   return (
     <View
       style={{
         borderWidth: 1,
         borderColor: Colors.NEUTRAL_LIGHT,
-        borderRadius: 8,
+        borderRadius: borderRadius,
         overflow: 'hidden',
         justifyContent: 'center',
         alignItems: 'center',
@@ -80,24 +93,9 @@ export function FileThumbnail(props: IProps) {
         />
       )}
 
-      {isPdf && <FilePdfIcon size="lg" color={Colors.NEUTRAL_DARK} />}
+      {isPdf && <FilePdfIcon size={iconSize} color={Colors.NEUTRAL_DARK} />}
 
-      {isDefaultFileType && <NoteIcon size="lg" color={Colors.NEUTRAL_DARK} />}
+      {isOtherType && <NoteIcon size={iconSize} color={Colors.NEUTRAL_DARK} />}
     </View>
   );
-}
-
-// TODO: use mimeType if/when DEV-1493 is implemented
-function getFileType(uri: string, attachmentType?: AttachmentType): TFileType {
-  if (attachmentType === AttachmentType.Image) {
-    return 'image';
-  }
-
-  const derifedFileType = getFileTypeFromExtension(uri);
-
-  if (derifedFileType === 'image') {
-    return 'image';
-  }
-
-  return 'unknown';
 }
