@@ -63,7 +63,9 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfilesPaginated' in data)) return;
+    if (!data || !('clientProfilesPaginated' in data)) {
+      return;
+    }
     const { results, totalCount } = data.clientProfilesPaginated;
     setTotalCount(totalCount);
 

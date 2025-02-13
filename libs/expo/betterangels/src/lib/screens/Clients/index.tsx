@@ -179,7 +179,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             Displaying {clients.length} of {totalCount} clients
           </TextMedium>
         </View>
-        {search && !clients && (
+        {search && clients.length < 1 && (
           <View
             style={{
               flexGrow: 1,
