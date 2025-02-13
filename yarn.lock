@@ -56,9 +56,9 @@ __metadata:
   linkType: hard
 
 "@adobe/css-tools@npm:^4.3.2":
-  version: 4.4.1
-  resolution: "@adobe/css-tools@npm:4.4.1"
-  checksum: 10/a0ea05517308593a52728936a833b1075c4cf1a6b68baaea817063f34e75faa1dba1209dd285003c4f8072804227dfa563e7e903f72ae2d39cb520aaee3f4bcc
+  version: 4.4.2
+  resolution: "@adobe/css-tools@npm:4.4.2"
+  checksum: 10/893d97ba524d92d5fdcee517a47fa7a144ca89dfcc559f5e1c3a9894599bf64c4ee5fc811fb11de0ab84da6778f4b69ea6aede73813534aeb5dfbc412d0788db
   languageName: node
   linkType: hard
 
@@ -4604,8 +4604,8 @@ __metadata:
     expo-clipboard: "npm:~7.0.1"
     expo-constants: "npm:~17.0.5"
     expo-dev-client: "npm:~5.0.12"
-    expo-font: "npm:~13.0.3"
     expo-document-picker: "npm:^13.0.3"
+    expo-font: "npm:~13.0.3"
     expo-image-manipulator: "npm:~13.0.6"
     expo-image-picker: "npm:~16.0.6"
     expo-linking: "npm:~7.0.5"
@@ -5002,7 +5002,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nx/devkit@npm:20.4.2, @nx/devkit@npm:^20.0.0":
+"@nx/devkit@npm:20.4.2":
   version: 20.4.2
   resolution: "@nx/devkit@npm:20.4.2"
   dependencies:
@@ -5017,6 +5017,24 @@ __metadata:
   peerDependencies:
     nx: ">= 19 <= 21"
   checksum: 10/552da83fd3b3dc47987883e004a8d374c572b1920d507374b4ae50f3f576273797100cdf0b51f5450d58a36d249e8b86bb1208ebddf2f03b8e3ef45faa3a70d0
+  languageName: node
+  linkType: hard
+
+"@nx/devkit@npm:^20.0.0":
+  version: 20.4.3
+  resolution: "@nx/devkit@npm:20.4.3"
+  dependencies:
+    ejs: "npm:^3.1.7"
+    enquirer: "npm:~2.3.6"
+    ignore: "npm:^5.0.4"
+    minimatch: "npm:9.0.3"
+    semver: "npm:^7.5.3"
+    tmp: "npm:~0.2.1"
+    tslib: "npm:^2.3.0"
+    yargs-parser: "npm:21.1.1"
+  peerDependencies:
+    nx: ">= 19 <= 21"
+  checksum: 10/345444708495e0746d2a82d9dd1ae55963574422359c3dc4eae11eca620b1763ad625901e71bc906cd79bcd82acd39259a807412aa3c37879725a08b32a16f9f
   languageName: node
   linkType: hard
 
@@ -8084,11 +8102,11 @@ __metadata:
   linkType: hard
 
 "@types/node@npm:*":
-  version: 22.13.1
-  resolution: "@types/node@npm:22.13.1"
+  version: 22.13.2
+  resolution: "@types/node@npm:22.13.2"
   dependencies:
     undici-types: "npm:~6.20.0"
-  checksum: 10/d8ba7068b0445643c0fa6e4917cdb7a90e8756a9daff8c8a332689cd5b2eaa01e4cd07de42e3cd7e6a6f465eeda803d5a1363d00b5ab3f6cea7950350a159497
+  checksum: 10/1d033a01a3dbcd0e305f46b0e61b8d697e5675392e6ca5a14b1f44240da14bb4949dd2731aff528a4cd5f160883d44df17e64b7f741aab4d735201dd6321182d
   languageName: node
   linkType: hard
 
@@ -12438,9 +12456,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.5.73":
-  version: 1.5.97
-  resolution: "electron-to-chromium@npm:1.5.97"
-  checksum: 10/b56172c116a1a90a93664712be0f35ddffddec4fe56a757ebb8f93ed4d5d172da277e4ec8759a86faee5b9017ea86641dada547b4699963a2c7f39a723ffce69
+  version: 1.5.98
+  resolution: "electron-to-chromium@npm:1.5.98"
+  checksum: 10/92e34018f289ca57bbb20e14bd5bf6b28d34489a259c7a43079381abcf7cd9399a104d49bfdbf44019d72f682ea32b2482be534758997c292501098a83454210
   languageName: node
   linkType: hard
 
@@ -13819,11 +13837,11 @@ __metadata:
   linkType: hard
 
 "expo-updates@npm:~0.26.17":
-  version: 0.26.17
-  resolution: "expo-updates@npm:0.26.17"
+  version: 0.26.18
+  resolution: "expo-updates@npm:0.26.18"
   dependencies:
     "@expo/code-signing-certificates": "npm:0.0.5"
-    "@expo/config": "npm:~10.0.8"
+    "@expo/config": "npm:~10.0.9"
     "@expo/config-plugins": "npm:~9.0.15"
     "@expo/spawn-async": "npm:^1.7.2"
     arg: "npm:4.1.0"
@@ -13841,7 +13859,7 @@ __metadata:
     react: "*"
   bin:
     expo-updates: bin/cli.js
-  checksum: 10/7e3bf6754a1200d72b6e99378205f54d4a1fbe3581680401609c086c6232158d29e2f1f782096512beb9306be4e94121a82d87098eb2df0b002989e05d741c1f
+  checksum: 10/912bd4ad21cc54d5fd8ea58e0445a9e9cb78694ee84fe34484c65d55741c84770d59abdb9d238126024a80e565fc9e5d5611c207e67200d3f701e1def0cf8a41
   languageName: node
   linkType: hard
 
@@ -14424,9 +14442,9 @@ __metadata:
   linkType: hard
 
 "flow-parser@npm:0.*":
-  version: 0.260.0
-  resolution: "flow-parser@npm:0.260.0"
-  checksum: 10/b9c7f79b216f7fa78e6003e20d0340863e859a31ab308a1539d37369cd7c57a536f6d04b02c42f3362284045c55f42f7333457c7d3f89f6eedc747967235a393
+  version: 0.261.0
+  resolution: "flow-parser@npm:0.261.0"
+  checksum: 10/dc4ad3e39288d534a9b924af259b95c4e9f51b9eea0b62a5fa645d4378a1f11d155136f7239f2cad75087660c46c14c856708aa453434b727656cc3ac8d4c57a
   languageName: node
   linkType: hard
 
