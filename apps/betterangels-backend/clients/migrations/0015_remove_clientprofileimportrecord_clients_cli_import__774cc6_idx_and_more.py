@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("clients", "0013_rename_profiledataimport_clientprofiledataimport_and_more"),
+        ("clients", "0014_rename_profiledataimport_clientprofiledataimport_and_more"),
     ]
 
     operations = [

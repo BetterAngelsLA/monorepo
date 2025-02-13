@@ -7,7 +7,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("clients", "0012_profiledataimport_profileimportrecord"),
+        ("clients", "0013_profiledataimport_profileimportrecord"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

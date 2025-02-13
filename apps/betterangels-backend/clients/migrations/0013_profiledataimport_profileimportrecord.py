@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("clients", "0011_remove_clientprofile_hmis_id"),
+        ("clients", "0012_alter_clientprofile_veteran_status"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
