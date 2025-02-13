@@ -143,8 +143,8 @@ export function useViewShelterLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ViewShelterQuery, ViewShelterQueryVariables>(ViewShelterDocument, options);
         }
-export function useViewShelterSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ViewShelterQuery, ViewShelterQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
+export function useViewShelterSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ViewShelterQuery, ViewShelterQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<ViewShelterQuery, ViewShelterQueryVariables>(ViewShelterDocument, options);
         }
 export type ViewShelterQueryHookResult = ReturnType<typeof useViewShelterQuery>;
