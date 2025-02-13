@@ -1882,6 +1882,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@config-plugins/react-native-blob-util@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "@config-plugins/react-native-blob-util@npm:9.0.0"
+  peerDependencies:
+    expo: ^52
+  checksum: 10/2b4d899b28176712c798ec4c9818abe21138b1912d686c5e6f70873b89eeeb1ec0aad5e8a2d632b24570e4e42ac094dc9789a9272a9cf2c50881fd91c05b4540
+  languageName: node
+  linkType: hard
+
+"@config-plugins/react-native-pdf@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "@config-plugins/react-native-pdf@npm:9.0.0"
+  peerDependencies:
+    expo: ^52
+  checksum: 10/33a027eff86f0f42f2ac5d6070d573d71fbb2f71b9e1789dc626720bbdf7530119087d90cb67a4e14b7b8d3867ffe5162957b44bfab4f6b5eff477fdfc550829
+  languageName: node
+  linkType: hard
+
 "@cspotcode/source-map-support@npm:^0.8.0":
   version: 0.8.1
   resolution: "@cspotcode/source-map-support@npm:0.8.1"
@@ -4606,6 +4624,8 @@ __metadata:
     "@babel/preset-react": "npm:^7.26.3"
     "@chromatic-com/storybook": "npm:^3"
     "@config-plugins/detox": "npm:8.0.0"
+    "@config-plugins/react-native-blob-util": "npm:^9.0.0"
+    "@config-plugins/react-native-pdf": "npm:^9.0.0"
     "@expo/metro-config": "npm:~0.19.0"
     "@expo/metro-runtime": "npm:~4.0.1"
     "@graphql-codegen/cli": "npm:^5.0.2"
@@ -4722,12 +4742,14 @@ __metadata:
     react-hook-form: "npm:^7.52.1"
     react-mailchimp-subscribe: "npm:^2.1.3"
     react-native: "npm:0.76.7"
+    react-native-blob-util: "npm:^0.21.2"
     react-native-gesture-handler: "npm:~2.20.2"
     react-native-keyboard-controller: "npm:^1.13.0"
     react-native-maps: "npm:1.18.0"
     react-native-modal: "npm:^13.0.1"
     react-native-open-maps: "npm:^0.4.3"
     react-native-paper: "npm:^5.12.5"
+    react-native-pdf: "npm:^6.7.7"
     react-native-reanimated: "npm:~3.16.1"
     react-native-safe-area-context: "npm:4.12.0"
     react-native-screens: "npm:~4.4.0"
@@ -6158,6 +6180,13 @@ __metadata:
   peerDependencies:
     "@babel/core": "*"
   checksum: 10/7950a8e5503f034b6a0f591744386095b91f8b32537b161d10e767b10c6696eb6c9b9fed0357158a3c610aef71804381b562ad92be839f3bb779c3d4294cbbf5
+  languageName: node
+  linkType: hard
+
+"@react-native/normalize-color@npm:*":
+  version: 2.1.0
+  resolution: "@react-native/normalize-color@npm:2.1.0"
+  checksum: 10/a72b98538e6b7e265fb0669b8767d5f788777fb1a0ac1df7b0c82d8b3a804c8122aa7b819688c5e36fcf90b5ba93050b0070e29d3f0d70ab9530c2abd2bb9f9e
   languageName: node
   linkType: hard
 
@@ -10069,6 +10098,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"base-64@npm:0.1.0":
+  version: 0.1.0
+  resolution: "base-64@npm:0.1.0"
+  checksum: 10/5a42938f82372ab5392cbacc85a5a78115cbbd9dbef9f7540fa47d78763a3a8bd7d598475f0d92341f66285afd377509851a9bb5c67bbecb89686e9255d5b3eb
+  languageName: node
+  linkType: hard
+
 "base64-js@npm:^1.2.3, base64-js@npm:^1.3.0, base64-js@npm:^1.3.1, base64-js@npm:^1.5.1":
   version: 1.5.1
   resolution: "base64-js@npm:1.5.1"
@@ -11524,6 +11560,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"crypto-js@npm:4.2.0":
+  version: 4.2.0
+  resolution: "crypto-js@npm:4.2.0"
+  checksum: 10/c7bcc56a6e01c3c397e95aa4a74e4241321f04677f9a618a8f48a63b5781617248afb9adb0629824792e7ec20ca0d4241a49b6b2938ae6f973ec4efc5c53c924
+  languageName: node
+  linkType: hard
+
 "crypto-random-string@npm:^2.0.0":
   version: 2.0.0
   resolution: "crypto-random-string@npm:2.0.0"
@@ -12172,6 +12215,17 @@ __metadata:
   version: 0.11.0
   resolution: "dependency-graph@npm:0.11.0"
   checksum: 10/6b5eb540303753037a613e781da4b81534d139cbabc92f342630ed622e3ef4c332fc40cf87823e1ec71a7aeb4b195f8d88d7e625931ce6007bf2bf09a8bfb01e
+  languageName: node
+  linkType: hard
+
+"deprecated-react-native-prop-types@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "deprecated-react-native-prop-types@npm:2.3.0"
+  dependencies:
+    "@react-native/normalize-color": "npm:*"
+    invariant: "npm:*"
+    prop-types: "npm:*"
+  checksum: 10/5abbad5b6d6830ca92151167f42611256ada1e8991b5066ed3659f3bbe909ae87949f3e7f075f1b685256138cad81423222220f4c6d5740376db19cb9f793312
   languageName: node
   linkType: hard
 
@@ -16000,7 +16054,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"invariant@npm:2.2.4, invariant@npm:^2.2.4":
+"invariant@npm:*, invariant@npm:2.2.4, invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4"
   dependencies:
@@ -21141,7 +21195,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:^15.5.10, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:*, prop-types@npm:^15.5.10, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -21508,6 +21562,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-blob-util@npm:^0.21.2":
+  version: 0.21.2
+  resolution: "react-native-blob-util@npm:0.21.2"
+  dependencies:
+    base-64: "npm:0.1.0"
+    glob: "npm:^10.3.10"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10/8ef768e795edaf7a02eaf84be47adf1461294cd8e9a91f5a015625d2bd1759bb2b2b1203deac065771c49f9a592874953528831dfbae8553056389deb74afc81
+  languageName: node
+  linkType: hard
+
 "react-native-gesture-handler@npm:~2.20.2":
   version: 2.20.2
   resolution: "react-native-gesture-handler@npm:2.20.2"
@@ -21610,6 +21677,20 @@ __metadata:
     react-native-safe-area-context: "*"
     react-native-vector-icons: "*"
   checksum: 10/704a516d06304a2687146a6cc2d3ccd710ee19abc00a00878d28e2a6e64636f9ee1a1831cc6510b43a68abe30425d41a9739a0b325508fcd69db9d1a3a223763
+  languageName: node
+  linkType: hard
+
+"react-native-pdf@npm:^6.7.7":
+  version: 6.7.7
+  resolution: "react-native-pdf@npm:6.7.7"
+  dependencies:
+    crypto-js: "npm:4.2.0"
+    deprecated-react-native-prop-types: "npm:^2.3.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-blob-util: ">=0.13.7"
+  checksum: 10/b6e24c82103be0b03820ea3239509f369660fb701252e4d9888b1cbf1bcf5895e81f631c8e71e16a6579075080c79c0d311fe5cdf45511099a944893b8239263
   languageName: node
   linkType: hard
 
