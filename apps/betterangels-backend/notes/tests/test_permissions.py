@@ -304,6 +304,37 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
         [
+            ("org_1_case_manager_1", True),  # Case manager should succeed
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_interaction_authors_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        mutation = """
+            query ViewInteractionAuthors {
+                interactionAuthors {
+                    totalCount
+                    results {
+                        id
+                        firstName
+                        lastName
+                        middleName
+                    }
+                }
+            }
+        """
+        response = self.execute_graphql(mutation)
+
+        if should_succeed:
+            self.assertTrue(response["data"]["interactionAuthors"]["totalCount"] > 0)
+        else:
+            self.assertTrue(response["data"]["interactionAuthors"]["totalCount"] == 0)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
             ("org_1_case_manager_1", True),  # Note owner should succeed
             ("org_2_case_manager_1", False),  # Other org case manager should not succeed
         ],

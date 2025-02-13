@@ -1,9 +1,12 @@
 from typing import Any, Optional
 
 import time_machine
+from accounts.models import User
+from accounts.tests.baker_recipes import permission_group_recipe
 from deepdiff import DeepDiff
 from django.test import ignore_warnings, override_settings
 from django.utils import timezone
+from model_bakery import baker
 from notes.enums import (
     DueByGroupEnum,
     NoteNamespaceEnum,
@@ -191,6 +194,39 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
         self.assertFalse(note_differences)
 
+    def test_interaction_authors(self) -> None:
+        query = """
+            query ViewInteractionAuthors {
+                interactionAuthors {
+                    totalCount
+                    results {
+                        id
+                        firstName
+                        lastName
+                        middleName
+                    }
+                }
+            }
+        """
+
+        interaction_author = baker.make(
+            User,
+            first_name="Wanda",
+            last_name="Maximoff",
+            middle_name="J.",
+        )
+
+        perm_group = permission_group_recipe.make()
+        perm_group.organization.add_user(interaction_author)
+
+        response = self.execute_graphql(query)
+
+        results = response["data"]["interactionAuthors"]["results"]
+        returned_author: dict = next((u for u in results if u["id"] == str(interaction_author.pk)))
+        self.assertEqual(returned_author["firstName"], "Wanda")
+        self.assertEqual(returned_author["lastName"], "Maximoff")
+        self.assertEqual(returned_author["middleName"], "J.")
+
     @parametrize(
         ("case_manager_label, client_label, org_label, is_submitted, expected_results_count, returned_note_labels"),
         [
@@ -339,6 +375,61 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
             for idx, note_label in enumerate(returned_note_labels):
                 self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
+
+    @parametrize(
+        ("name_search, expected_results_count, expected_authors"),
+        [
+            ("Maximoff", 1, ["interaction_author_2"]),
+            ("Pietro Maximoff", 0, None),
+            ("Alex", 2, ["interaction_author", "interaction_author_3"]),
+        ],
+    )
+    def test_interaction_authors_filter(
+        self,
+        name_search: Optional[str],
+        expected_results_count: int,
+        expected_authors: Optional[list[str]],
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_2)
+
+        query = """
+            query InteractionAuthors($filters: InteractionAuthorFilter) {
+                interactionAuthors(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        test_user_map = {
+            "interaction_author": baker.make(User, first_name="Alexa", last_name="Danvers", middle_name="J."),
+            "client": baker.make(User, first_name="Alex", last_name="Johnson"),
+            "interaction_author_2": baker.make(User, first_name="Wanda", last_name="Maximoff", middle_name="A."),
+            "interaction_author_3": baker.make(User, first_name="Alexandria", last_name="Daniels", middle_name="M."),
+        }
+
+        interaction_author = test_user_map["interaction_author"]
+        interaction_author_2 = test_user_map["interaction_author_2"]
+        interaction_author_3 = test_user_map["interaction_author_3"]
+
+        perm_group = permission_group_recipe.make()
+        perm_group.organization.add_user(interaction_author)
+        perm_group.organization.add_user(interaction_author_2)
+        perm_group.organization.add_user(interaction_author_3)
+
+        filters: dict[str, Any] = {"search": name_search}
+
+        response = self.execute_graphql(query, variables={"filters": filters})
+
+        self.assertEqual(response["data"]["interactionAuthors"]["totalCount"], expected_results_count)
+        authors = response["data"]["interactionAuthors"]["results"]
+
+        if expected_authors:
+            author_ids = set([int(u["id"]) for u in authors])
+            expected_authors_ids = set([test_user_map[u].pk for u in expected_authors])
+            self.assertEqual(author_ids, expected_authors_ids, f"Not equal, {author_ids, expected_authors_ids}")
 
     @parametrize(
         ("search_terms, expected_results_count, returned_note_labels"),

@@ -3,6 +3,7 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
+from accounts.models import User
 from accounts.types import UserType
 from common.graphql.types import AttachmentInterface, LocationInput, LocationType
 from common.models import Attachment
@@ -287,3 +288,32 @@ class UpdateTaskLocationInput:
 class RevertNoteInput:
     id: ID
     revert_before_timestamp: datetime
+
+
+@strawberry_django.filters.filter(User)
+class InteractionAuthorFilter:
+    @strawberry_django.filter_field
+    def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Tuple[QuerySet[User], Q]:
+        if value is None:
+            return queryset, Q()
+
+        search_terms = value.split(" ")
+        query = Q()
+
+        for term in search_terms:
+            q_search = Q(Q(first_name__icontains=term) | Q(last_name__icontains=term) | Q(middle_name__icontains=term))
+
+            query &= q_search
+
+        return (
+            queryset.filter(query),
+            Q(),
+        )
+
+
+@strawberry_django.type(User)
+class InteractionAuthorType:
+    id: ID
+    first_name: auto
+    last_name: auto
+    middle_name: auto

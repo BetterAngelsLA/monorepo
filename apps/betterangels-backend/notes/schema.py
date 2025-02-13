@@ -4,13 +4,14 @@ import pghistory
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_user_permission_group
+from accounts.utils import get_outreach_authorized_users, get_user_permission_group
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, Location
 from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+from django.db.models import QuerySet
 from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
@@ -41,6 +42,8 @@ from .types import (
     CreateNoteTaskInput,
     CreateServiceRequestInput,
     CreateTaskInput,
+    InteractionAuthorFilter,
+    InteractionAuthorType,
     MoodType,
     NoteAttachmentType,
     NoteFilter,
@@ -89,6 +92,14 @@ class Query:
     task: TaskType = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
 
     tasks: List[TaskType] = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
+
+    @strawberry_django.offset_paginated(
+        OffsetPaginated[InteractionAuthorType],
+        extensions=[HasPerm(NotePermissions.ADD)],
+        filters=InteractionAuthorFilter,
+    )
+    def interaction_authors(self) -> QuerySet[User]:
+        return get_outreach_authorized_users()
 
 
 @strawberry.type
