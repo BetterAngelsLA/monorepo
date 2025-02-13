@@ -1,14 +1,12 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { PlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
+import { UploadIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
-  BasicInput,
-  IconButton,
   MediaPickerModal,
   TextBold,
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import { useSnackbar } from '../../../../hooks';
 import {
@@ -16,6 +14,7 @@ import {
   useCreateClientDocumentMutation,
 } from '../../__generated__/Client.generated';
 import Section from './UploadSection';
+import UploadsPreview from './UploadsPreview';
 import { IMultipleDocUploadsProps } from './types';
 
 export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
@@ -35,6 +34,7 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
 
   const uploadDocuments = async () => {
     const documents = docs?.[docType];
+
     if (!documents || documents.length < 1 || !client) {
       return;
     }
@@ -71,17 +71,33 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
     setTab(undefined);
   };
 
-  const onDelete = (index: number) => {
+  const onRemoveFile = (index: number) => {
     setDocs({
       ...docs,
       [docType]: docs[docType]?.filter((_, i) => i !== index),
     });
   };
 
+  const onFilenameChange = (index: number, value: string) => {
+    setDocs({
+      ...docs,
+      [docType]: docs[docType]?.map((file, i) =>
+        i === index ? { ...file, name: value } : file
+      ),
+    });
+  };
+
+  const docsToUpload = (docs && docs[docType]) || [];
+
+  const allDocsValid = docsToUpload.every((file) => {
+    return !!file.name && !!file.type && !!file.uri;
+  });
+
   return (
     <>
       <Section
         loading={loading}
+        disabled={!docsToUpload.length || !allDocsValid}
         title={title}
         onSubmit={uploadDocuments}
         onCancel={() => {
@@ -129,73 +145,14 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
             </View>
           </Pressable>
         </View>
-        {docs[docType] && docs[docType]!.length > 0 && (
-          <View style={{ paddingTop: Spacings.sm }}>
-            <TextBold mb="sm" size="md">
-              Uploaded Image{docs[docType]!.length > 1 ? 's' : ''}
-            </TextBold>
-            {docs[docType]!.map((formImage, index) => (
-              <View key={index} style={{ marginBottom: Spacings.md }}>
-                <View
-                  style={{
-                    position: 'relative',
-                    height: 395,
-                    width: 236,
-                    marginBottom: Spacings.sm,
-                  }}
-                >
-                  <IconButton
-                    borderColor="transparent"
-                    borderRadius={Radiuses.xxxl}
-                    onPress={() => onDelete(index)}
-                    style={{
-                      position: 'absolute',
-                      top: 5,
-                      right: 5,
-                      zIndex: 1000,
-                    }}
-                    variant="secondary"
-                    height="xs"
-                    width="xs"
-                    accessibilityLabel="delete"
-                    accessibilityHint="deletes the image"
-                  >
-                    <PlusIcon size="sm" rotate="45deg" />
-                  </IconButton>
-                  <Image
-                    style={{
-                      height: 395,
-                      width: 236,
-                    }}
-                    source={{ uri: formImage.uri }}
-                    resizeMode="cover"
-                    accessibilityIgnoresInvertColors
-                  />
-                </View>
-                <BasicInput
-                  onDelete={() =>
-                    setDocs({
-                      ...docs,
-                      [docType]: docs[docType]?.map((img, i) =>
-                        i === index ? { ...img, name: '' } : img
-                      ),
-                    })
-                  }
-                  label="File Name"
-                  placeholder={'Enter a file name'}
-                  value={formImage.name}
-                  onChangeText={(e) =>
-                    setDocs({
-                      ...docs,
-                      [docType]: docs[docType]?.map((img, i) =>
-                        i === index ? { ...img, name: e } : img
-                      ),
-                    })
-                  }
-                />
-              </View>
-            ))}
-          </View>
+
+        {docsToUpload.length > 0 && (
+          <UploadsPreview
+            files={docsToUpload}
+            onRemoveFile={onRemoveFile}
+            onFilenameChange={onFilenameChange}
+            documentType={ClientDocumentNamespaceEnum[docType]}
+          />
         )}
       </Section>
       <MediaPickerModal
