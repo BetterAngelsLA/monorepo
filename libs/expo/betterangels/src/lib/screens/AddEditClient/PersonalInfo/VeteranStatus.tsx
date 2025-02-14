@@ -10,7 +10,7 @@ import { useFormContext } from 'react-hook-form';
 import {
   CreateClientProfileInput,
   UpdateClientProfileInput,
-  YesNoPreferNotToSayEnum,
+  VeteranStatusEnum,
 } from '../../../apollo';
 import { enumDisplayVeteran } from '../../../static/enumDisplayMapping';
 
@@ -19,10 +19,10 @@ export default function VeteranStatus() {
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
-  const veteranStatus = watch('veteranStatus');
+  const tempVeteranStatus = watch('tempVeteranStatus');
 
   const onReset = () => {
-    setValue('veteranStatus', null);
+    setValue('tempVeteranStatus', null);
   };
   return (
     <CardWrapper onReset={onReset} title="Veteran Status">
@@ -31,10 +31,10 @@ export default function VeteranStatus() {
         {Object.entries(enumDisplayVeteran).map(([enumValue, displayValue]) => (
           <Radio
             key={enumValue}
-            value={enumDisplayVeteran[veteranStatus as YesNoPreferNotToSayEnum]}
+            value={enumDisplayVeteran[tempVeteranStatus as VeteranStatusEnum]}
             label={displayValue}
             onPress={() =>
-              setValue('veteranStatus', enumValue as YesNoPreferNotToSayEnum)
+              setValue('tempVeteranStatus', enumValue as VeteranStatusEnum)
             }
             accessibilityHint="selects veteran status"
           />
