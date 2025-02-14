@@ -1,17 +1,18 @@
 import { ApolloLink, FetchResult, Observable } from '@apollo/client';
+import { Subscription } from 'zen-observable-ts';
 import { CSRF_HEADER_NAME } from './constants';
 import { csrfManager } from './csrf-manager';
 
-export const csrfLink = (apiUrl: string, customFetch = fetch) => {
+export const csrfLink = (apiUrl: string) => {
   return new ApolloLink(
     (operation, forward) =>
-      new Observable((observer) => {
+      new Observable<FetchResult>((observer) => {
+        let subscription: Subscription | undefined;
         (async () => {
           try {
-            // Retrieve (or fetch) the CSRF token via the centralized manager.
-            const csrfToken = await csrfManager.getToken(apiUrl, customFetch);
-
-            // Inject the token into the outgoing headers.
+            // Retrieve the CSRF token via our new manager.
+            const csrfToken = await csrfManager.getToken(apiUrl);
+            // Inject the token (if available) into the outgoing headers.
             operation.setContext(({ headers = {} }) => ({
               headers: {
                 ...headers,
@@ -19,32 +20,25 @@ export const csrfLink = (apiUrl: string, customFetch = fetch) => {
               },
             }));
 
-            forward(operation).subscribe({
-              next: (response: FetchResult) => {
-                const context = operation.getContext();
-                const combinedCookies = [
-                  context['response']?.headers?.get('set-cookie'),
-                  ...(context['restResponses'] || []).map((res: Response) =>
-                    res.headers.get('set-cookie')
-                  ),
-                ]
-                  .filter(Boolean)
-                  .join('; ');
-
-                csrfManager
-                  .updateTokenFromCookies(apiUrl, combinedCookies)
-                  .catch(console.error);
-
-                observer.next(response);
+            // Forward the operation.
+            subscription = forward(operation).subscribe({
+              next: (result: FetchResult) => {
+                observer.next(result);
               },
-              error: observer.error.bind(observer),
-              complete: observer.complete.bind(observer),
+              error: (err) => observer.error(err),
+              complete: () => observer.complete(),
             });
           } catch (error) {
             console.error('CSRF link error:', error);
             observer.error(error);
           }
         })();
+        // Always return a cleanup function.
+        return () => {
+          if (subscription) {
+            subscription.unsubscribe();
+          }
+        };
       })
   );
 };
