@@ -293,9 +293,10 @@ def build_input_data(row: Dict[str, str]) -> Dict[str, Any]:
         ),
         "physicalDescription": row.get("Distinguishing Marks & Description", "").strip() or None,
         "gender": map_value(row.get("Gender", ""), gender_map, default="OTHER", field="Gender", source_id=src_id),
-        "adaAccommodation": map_value(
-            row.get("ADA accommodation?", ""), ada_map, default="OTHER", field="ADA Accommodation", source_id=src_id
-        ),
+        "adaAccommodation": [
+            map_value(value, ada_map, default="OTHER", field="ADA Accommodation", source_id=src_id)
+            for value in row.get("ADA accommodation?", "").split("|")
+        ],
         "race": map_value(row.get("Race", ""), race_map, default="OTHER", field="Race", source_id=src_id),
         "preferredLanguage": map_value(
             row.get("Preferred Language", ""),
