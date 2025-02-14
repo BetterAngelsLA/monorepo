@@ -31,7 +31,7 @@ def parse_source_id(source_id: str) -> float:
 
 
 def get_csrf_token(session: requests.Session) -> str:
-    return session.cookies.get("csrftoken", "")
+    return str(session.cookies.get("csrftoken", ""))
 
 
 def send_graphql_request(
@@ -131,7 +131,7 @@ def authenticate(session: requests.Session, username: str, password: str) -> Opt
     response = session.post(REST_LOGIN_URL, json=payload, headers=headers)
     if response.status_code == 200:
         try:
-            return response.json().get("key", "")
+            return str(response.json().get("key", ""))
         except Exception:
             return ""
     elif response.status_code == 204:

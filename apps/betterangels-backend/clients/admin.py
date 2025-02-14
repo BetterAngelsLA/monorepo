@@ -43,7 +43,7 @@ class ClientProfileDataImportAdmin(admin.ModelAdmin):
         failures = total - successes
         return f"Total: {total} | Success: {successes} | Failures: {failures}"
 
-    record_counts.short_description = "Import Record Counts"
+    record_counts.short_description = "Import Record Counts"  # type: ignore
 
 
 @admin.register(ClientProfileImportRecord)
