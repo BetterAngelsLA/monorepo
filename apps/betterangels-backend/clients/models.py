@@ -3,6 +3,7 @@ import uuid
 from typing import List, Optional
 
 from accounts.models import User
+from betterangels_backend import settings
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -205,3 +206,52 @@ class ClientHouseholdMember(models.Model):
             return self.gender_other
 
         return self.gender.label
+
+
+# Data Import #
+class ClientProfileDataImport(models.Model):
+    """
+    Model to track a client profile import job.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    imported_at = models.DateTimeField(auto_now_add=True)
+    source_file = models.CharField(max_length=255)
+    imported_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    notes = models.TextField(blank=True, default="")
+
+    def __str__(self) -> str:
+        return f"ClientProfile Import {self.id} from {self.source_file} at {self.imported_at}"
+
+
+class ClientProfileImportRecord(models.Model):
+    """
+    Model to record each imported row (i.e. client profile) for a given
+    ClientProfileDataImport job.
+
+    Stores the original CSV row (raw_data), the original CSV id (source_id),
+    and, if successfully imported, a link to the ClientProfile created via GraphQL.
+    """
+
+    import_job = models.ForeignKey(ClientProfileDataImport, on_delete=models.CASCADE, related_name="records")
+    source_id = models.CharField(max_length=255)
+    source_name = models.CharField(max_length=255)
+    client_profile = models.ForeignKey(
+        "clients.ClientProfile",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    raw_data = models.JSONField()
+    success = models.BooleanField(default=False)
+    error_message = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["import_job", "success", "source_name", "source_id"]),
+        ]
+
+    def __str__(self) -> str:
+        status = "Success" if self.success else "Failed"
+        return f"ClientProfile Import Record {self.source_id} ({status})"

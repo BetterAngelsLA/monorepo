@@ -32,6 +32,8 @@ from .models import (
     ClientContact,
     ClientHouseholdMember,
     ClientProfile,
+    ClientProfileDataImport,
+    ClientProfileImportRecord,
     HmisProfile,
     SocialMediaProfile,
 )
@@ -345,3 +347,40 @@ class ClientProfileInput(ClientProfileBaseType):
     household_members: Optional[List[ClientHouseholdMemberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
     user: Optional[UpdateUserInput]
+
+
+# Data Import
+@strawberry_django.type(ClientProfileDataImport)
+class ClientProfileDataImportType:
+    id: auto
+    imported_at: auto
+    source_file: auto
+    notes: auto
+    imported_by: auto
+
+
+@strawberry_django.type(ClientProfileImportRecord)
+class ClientProfileImportRecordType:
+    id: auto
+    source_id: auto
+    source_name: auto
+    success: auto
+    error_message: auto
+    created_at: auto
+    client_profile: Optional[ClientProfileType]
+    raw_data: auto
+
+
+@strawberry_django.input(ClientProfileDataImport)
+class CreateProfileDataImportInput:
+    source_file: auto
+    notes: auto
+
+
+@strawberry_django.input(ClientProfileImportRecord)
+class ImportClientProfileInput:
+    import_job_id: auto
+    source_id: auto
+    source_name: auto
+    raw_data: auto
+    client_profile: CreateClientProfileInput

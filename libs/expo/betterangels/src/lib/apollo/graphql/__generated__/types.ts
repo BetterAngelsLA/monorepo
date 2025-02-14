@@ -23,6 +23,7 @@ export type Scalars = {
   Point: { input: any; output: any; }
   /** Time (isoformat) */
   Time: { input: any; output: any; }
+  UUID: { input: any; output: any; }
   Upload: { input: any; output: any; }
 };
 
@@ -274,6 +275,15 @@ export type ClientHouseholdMemberType = {
   relationshipToClientOther?: Maybe<Scalars['String']['output']>;
 };
 
+export type ClientProfileDataImportType = {
+  __typename?: 'ClientProfileDataImportType';
+  id: Scalars['UUID']['output'];
+  importedAt: Scalars['DateTime']['output'];
+  importedBy: DjangoModelType;
+  notes: Scalars['String']['output'];
+  sourceFile: Scalars['String']['output'];
+};
+
 export type ClientProfileFilter = {
   AND?: InputMaybe<ClientProfileFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -282,6 +292,18 @@ export type ClientProfileFilter = {
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
   searchClient?: InputMaybe<ClientSearchInput>;
+};
+
+export type ClientProfileImportRecordType = {
+  __typename?: 'ClientProfileImportRecordType';
+  clientProfile?: Maybe<ClientProfileType>;
+  createdAt: Scalars['DateTime']['output'];
+  errorMessage: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  rawData: Scalars['JSON']['output'];
+  sourceId: Scalars['String']['output'];
+  sourceName: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
 };
 
 export type ClientProfileOrder = {
@@ -387,6 +409,8 @@ export type CreateClientDocumentInput = {
 
 export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
+export type CreateClientProfileDataImportPayload = ClientProfileDataImportType | OperationInfo;
+
 export type CreateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
   address?: InputMaybe<Scalars['String']['input']>;
@@ -470,6 +494,11 @@ export type CreateNoteTaskInput = {
 };
 
 export type CreateNoteTaskPayload = OperationInfo | TaskType;
+
+export type CreateProfileDataImportInput = {
+  notes?: InputMaybe<Scalars['String']['input']>;
+  sourceFile: Scalars['String']['input'];
+};
 
 export type CreateServiceRequestInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
@@ -626,7 +655,9 @@ export enum GenderEnum {
   Male = 'MALE',
   NonBinary = 'NON_BINARY',
   Other = 'OTHER',
-  PreferNotToSay = 'PREFER_NOT_TO_SAY'
+  PreferNotToSay = 'PREFER_NOT_TO_SAY',
+  TransFemale = 'TRANS_FEMALE',
+  TransMale = 'TRANS_MALE'
 }
 
 export enum GeneralServiceChoices {
@@ -708,11 +739,23 @@ export type ImmediateNeedType = {
   name?: Maybe<ImmediateNeedChoices>;
 };
 
+export type ImportClientProfileInput = {
+  clientProfile: CreateClientProfileInput;
+  importJobId: Scalars['UUID']['input'];
+  rawData: Scalars['JSON']['input'];
+  sourceId: Scalars['String']['input'];
+  sourceName: Scalars['String']['input'];
+};
+
+export type ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo;
+
 export enum LanguageEnum {
   Arabic = 'ARABIC',
   Armenian = 'ARMENIAN',
+  Asl = 'ASL',
   English = 'ENGLISH',
   Farsi = 'FARSI',
+  French = 'FRENCH',
   Indonesian = 'INDONESIAN',
   Japanese = 'JAPANESE',
   Khmer = 'KHMER',
@@ -805,6 +848,7 @@ export type Mutation = {
   appleAuth: AuthResponse;
   createClientDocument: CreateClientDocumentPayload;
   createClientProfile: CreateClientProfilePayload;
+  createClientProfileDataImport: CreateClientProfileDataImportPayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
   createNoteMood: CreateNoteMoodPayload;
@@ -822,6 +866,7 @@ export type Mutation = {
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   googleAuth: AuthResponse;
+  importClientProfile: ImportClientProfilePayload;
   login: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
@@ -855,6 +900,11 @@ export type MutationCreateClientDocumentArgs = {
 
 export type MutationCreateClientProfileArgs = {
   data: CreateClientProfileInput;
+};
+
+
+export type MutationCreateClientProfileDataImportArgs = {
+  data: CreateProfileDataImportInput;
 };
 
 
@@ -935,6 +985,11 @@ export type MutationGenerateMagicLinkArgs = {
 
 export type MutationGoogleAuthArgs = {
   input: AuthInput;
+};
+
+
+export type MutationImportClientProfileArgs = {
+  data: ImportClientProfileInput;
 };
 
 
