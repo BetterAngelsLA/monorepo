@@ -68,7 +68,9 @@
     "@nx/jest": "*",
     "@nx/js": "*",
     "@types/google.maps": "*",
-    "expo-updates": "*"
+    "expo-updates": "*",
+    "@react-native-cookies/cookies": "*",
+    "zen-observable-ts": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",
