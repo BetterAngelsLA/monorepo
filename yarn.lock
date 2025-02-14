@@ -4546,6 +4546,7 @@ __metadata:
     "@portabletext/react": "npm:^3.2.0"
     "@react-native-async-storage/async-storage": "npm:1.23.1"
     "@react-native-community/datetimepicker": "npm:8.2.0"
+    "@react-native-cookies/cookies": "npm:^6.2.1"
     "@react-native-picker/picker": "npm:2.9.0"
     "@sanity/client": "npm:^6.27.1"
     "@storybook/addon-essentials": "npm:8.5.5"
@@ -5825,6 +5826,17 @@ __metadata:
     react-native-windows:
       optional: true
   checksum: 10/57b51a9423d3ba49029e2d9905db040f7091285c51578eef5273baf3dd2e22bde6d1a17962a8dc5e0ac588dccff0ab36c9774f9da76363fca458ec42d30c4d66
+  languageName: node
+  linkType: hard
+
+"@react-native-cookies/cookies@npm:^6.2.1":
+  version: 6.2.1
+  resolution: "@react-native-cookies/cookies@npm:6.2.1"
+  dependencies:
+    invariant: "npm:^2.2.4"
+  peerDependencies:
+    react-native: ">= 0.60.2"
+  checksum: 10/cf479715f803f346dc46d4e73b08de76115370657bbc298ce0e6f2d87fafcd8c75a618b0a4943435ef312df142f2134deacf8a1aae7086f14f1265d1b46f8a56
   languageName: node
   linkType: hard
 
