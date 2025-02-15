@@ -5,6 +5,7 @@ import { RestLink } from 'apollo-link-rest';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import { Platform } from 'react-native';
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from './constants';
+import { isReactNativeFileInstance } from './ReactNativeFile';
 
 const getTokenFromWeb = (): string | null =>
   document.cookie.match(new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`))?.[1] ?? null;
@@ -52,6 +53,7 @@ export const createApolloClient = (
       createUploadLink({
         uri: `${apiUrl}/graphql`,
         credentials: 'include',
+        isExtractableFile: isReactNativeFileInstance,
       }),
     ]),
     cache: new InMemoryCache(),
