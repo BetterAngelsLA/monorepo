@@ -13,6 +13,7 @@ export { default as Camera } from './Camera';
 export { default as CardWrapper } from './CardWrapper';
 export { default as Checkbox } from './Checkbox';
 export { default as CircularLoading } from './CircularLoading';
+export { default as CloseButton } from './CloseButton';
 export { BaseContainer } from './Container';
 export { default as Copy } from './Copy';
 export { default as DatePicker } from './DatePicker';

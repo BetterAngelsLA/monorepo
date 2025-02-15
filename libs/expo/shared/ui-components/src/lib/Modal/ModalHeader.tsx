@@ -1,7 +1,7 @@
-import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextMedium } from '@monorepo/expo/shared/ui-components';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
+import CloseButton from '../CloseButton';
+import TextMedium from '../TextMedium';
 
 interface IProps {
   title?: string | null;
@@ -37,20 +37,10 @@ export function ModalHeader(props: IProps) {
           {title}
         </TextMedium>
       )}
-      <Pressable
-        onPress={onClose}
-        style={{
-          width: 40,
-          height: 40,
-          justifyContent: 'center',
-          alignItems: 'center',
-          marginLeft: 'auto',
-        }}
+      <CloseButton
+        onClose={onClose}
         accessibilityHint={accessibilityHint || 'close'}
-        accessibilityRole="button"
-      >
-        <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
-      </Pressable>
+      />
     </View>
   );
 }
