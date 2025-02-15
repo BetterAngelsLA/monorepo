@@ -61,13 +61,6 @@ export const FeatureControlProvider: React.FC<FeatureControlProviderProps> = ({
     [featureControlGroups]
   );
 
-  if (error) {
-    console.error(
-      'FeatureControlProvider encountered an error:',
-      error.message
-    );
-  }
-
   return (
     <FeatureControlContext.Provider value={memoizedControlGroups}>
       {children}
