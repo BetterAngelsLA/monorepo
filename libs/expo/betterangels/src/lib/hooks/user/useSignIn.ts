@@ -21,13 +21,13 @@ export default function useSignIn(mutation: DocumentNode) {
           variables: {
             code,
             codeVerifier,
-            idToken: idToken,
+            idToken,
             redirectUri: redirectUri
               ? encodeURIComponent(redirectUri)
               : undefined,
           },
         });
-        refetchUser();
+        await refetchUser();
       } catch (err) {
         console.error('Error during sign in:', err);
       }
@@ -35,7 +35,6 @@ export default function useSignIn(mutation: DocumentNode) {
     [socialAuth, refetchUser]
   );
 
-  // NOTE: We may want to consider putting this routing elsewhere.
   useEffect(() => {
     if (user) {
       router.replace(user.isOutreachAuthorized ? '/' : '/welcome');

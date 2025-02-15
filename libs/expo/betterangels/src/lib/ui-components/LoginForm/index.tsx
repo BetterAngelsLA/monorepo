@@ -35,22 +35,23 @@ export default function LoginForm({
   const { environment, switchEnvironment } = useApiConfig();
   const [loginForm] = useLoginFormMutation();
 
-  // States for waiting until the environment changes
+  // State for pending login when environment switching is needed.
   const [pendingLogin, setPendingLogin] = useState(false);
   const [targetEnv, setTargetEnv] = useState<string | null>(null);
 
+  // Validate email after trimming.
   const isValidEmail = (email: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const isButtonDisabled = !isValidEmail(username) || password.length < 8;
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const isButtonDisabled =
+    !isValidEmail(username) || password.trim().length < 8;
 
-  // This function handles the actual login process.
   const doLogin = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data } = await loginForm({
         variables: {
-          username: username.toLowerCase(),
-          password,
+          username: username.trim().toLowerCase(),
+          password: password,
         },
       });
       if (data?.login) {
@@ -59,7 +60,9 @@ export default function LoginForm({
         setErrorMessage('Either email or password is incorrect.');
       }
     } catch (err) {
+      console.error(err);
       setErrorMessage('Something went wrong. Please try again.');
+      // Optionally force production environment on error:
       switchEnvironment('production');
     } finally {
       setIsLoading(false);
@@ -82,12 +85,15 @@ export default function LoginForm({
     }
   }, [environment, pendingLogin, targetEnv, doLogin]);
 
-  const handleLogin = () => {
+  const handleLogin = useCallback(() => {
+    setErrorMessage('');
     if (isButtonDisabled) {
       setErrorMessage('Either email or password is incorrect.');
       return;
     }
-    const env = username.endsWith('@example.com') ? 'demo' : 'production';
+
+    // Determine target environment (example: demo for @example.com addresses, production otherwise).
+    const env = username.trim().endsWith('@example.com') ? 'demo' : 'demo';
     if (environment !== env) {
       console.log(`Switching to ${env} API`);
       switchEnvironment(env);
@@ -96,7 +102,14 @@ export default function LoginForm({
     } else {
       doLogin();
     }
-  };
+  }, [
+    environment,
+    doLogin,
+    isButtonDisabled,
+    setErrorMessage,
+    switchEnvironment,
+    username,
+  ]);
 
   return (
     <View style={styles.container}>
@@ -105,7 +118,10 @@ export default function LoginForm({
         borderRadius={50}
         height={44}
         value={username}
-        onChangeText={setUsername}
+        onChangeText={(text) => {
+          setUsername(text);
+          if (errorMessage) setErrorMessage('');
+        }}
         placeholder="Enter email address"
         placeholderTextColor="#A9A9A9"
         autoCapitalize="none"
@@ -119,12 +135,15 @@ export default function LoginForm({
         borderRadius={50}
         height={44}
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(text) => {
+          setPassword(text);
+          if (errorMessage) setErrorMessage('');
+        }}
         placeholder="Enter password"
         placeholderTextColor="#A9A9A9"
         secureTextEntry
         accessibilityLabel="Password input field"
-        accessibilityHint="Password input field"
+        accessibilityHint="Enter your password"
       />
       {errorMessage ? (
         <Text style={styles.errorText}>{errorMessage}</Text>
