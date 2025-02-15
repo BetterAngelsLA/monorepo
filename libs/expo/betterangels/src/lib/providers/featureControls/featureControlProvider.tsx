@@ -32,7 +32,7 @@ export const FeatureControlProvider: React.FC<FeatureControlProviderProps> = ({
       samples: {},
     });
 
-  const { data, error } = useGetFeatureControlsQuery();
+  const { data } = useGetFeatureControlsQuery();
 
   useEffect(() => {
     if (data?.featureControls) {
