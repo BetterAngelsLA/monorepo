@@ -6,82 +6,54 @@ import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import { Platform } from 'react-native';
 import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from './constants';
 
-// Read token from web cookies.
-const getTokenWeb = (): string | null => {
-  if (typeof document !== 'undefined' && document.cookie) {
-    const match = document.cookie.match(
-      new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`)
-    );
-    return match ? match[1] : null;
-  }
-  return null;
-};
+const getTokenFromWeb = (): string | null =>
+  document.cookie.match(new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`))?.[1] ?? null;
 
-// Read token from native cookies.
-const getTokenNative = async (apiUrl: string): Promise<string | null> => {
-  try {
-    const cookies = await CookieManager.get(apiUrl);
-    return cookies[CSRF_COOKIE_NAME]?.value || null;
-  } catch (error) {
-    console.error('Error reading native cookies:', error);
-    return null;
-  }
-};
+const getTokenFromNative = async (apiUrl: string): Promise<string | null> =>
+  (await CookieManager.get(apiUrl))[CSRF_COOKIE_NAME]?.value ?? null;
 
-// Fetch the CSRF token by calling the CSRF URL (expected to set the cookie).
-const fetchToken = async (csrfUrl: string): Promise<void> => {
-  try {
+const getCSRFToken = async (
+  apiUrl: string,
+  csrfUrl: string
+): Promise<string | null> => {
+  const readToken = async () =>
+    Platform.OS === 'web'
+      ? getTokenFromWeb()
+      : await getTokenFromNative(apiUrl);
+
+  let token = await readToken();
+  if (!token) {
     await fetch(csrfUrl, {
       credentials: 'include',
       headers: { Accept: 'text/html' },
     });
-  } catch (error) {
-    console.error('Error fetching CSRF token:', error);
+    token = await readToken();
   }
+  return token;
 };
 
 export const createApolloClient = (
   apiUrl: string,
   csrfUrl = `${apiUrl}/admin/login/`
-) => {
-  // Set the CSRF header on every request.
-  const authLink = setContext(async (_, { headers = {} }) => {
-    let token: string | null;
-    if (Platform.OS === 'web') {
-      token = getTokenWeb();
-      if (!token) {
-        await fetchToken(csrfUrl);
-        token = getTokenWeb();
-      }
-    } else {
-      token = await getTokenNative(apiUrl);
-      if (!token) {
-        await fetchToken(csrfUrl);
-        token = await getTokenNative(apiUrl);
-      }
-    }
-    return {
-      headers: {
-        ...headers,
-        ...(token ? { [CSRF_HEADER_NAME]: token } : {}),
-        ...(Platform.OS !== 'web' ? { referer: apiUrl } : {}),
-      },
-    };
-  });
-
-  const restLink = new RestLink({
-    uri: apiUrl,
-    credentials: 'include',
-  });
-
-  const uploadLink = createUploadLink({
-    uri: `${apiUrl}/graphql`,
-    credentials: 'include',
-  });
-
-  return new ApolloClient({
-    link: from([authLink, restLink, uploadLink]),
+) =>
+  new ApolloClient({
+    link: from([
+      setContext(async (_, { headers = {} }) => {
+        const token = await getCSRFToken(apiUrl, csrfUrl);
+        return {
+          headers: {
+            ...headers,
+            ...(token ? { [CSRF_HEADER_NAME]: token } : {}),
+            ...(Platform.OS !== 'web' ? { referer: apiUrl } : {}),
+          },
+        };
+      }),
+      new RestLink({ uri: apiUrl, credentials: 'include' }),
+      createUploadLink({
+        uri: `${apiUrl}/graphql`,
+        credentials: 'include',
+      }),
+    ]),
     cache: new InMemoryCache(),
     credentials: 'include',
   });
-};
