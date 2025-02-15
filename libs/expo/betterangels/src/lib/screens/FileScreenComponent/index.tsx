@@ -1,26 +1,38 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
-  ImagesWithZoom,
+  BaseModal,
+  ImageViewer,
   Loading,
+  PdfViewer,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { useNavigation } from 'expo-router';
-import { useLayoutEffect, useState } from 'react';
+import { ReactNode, useLayoutEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AttachmentType } from '../../apollo';
 import { MimeTypes } from '../../static';
 import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
 import { FileThumbnail, MainContainer } from '../../ui-components';
-import { PdfModal } from './PdfModal';
 import { useClientDocumentQuery } from './__generated__/Document.generated';
 import { fileDisplaySizeMap } from './fileDisplaySizeMap';
 
-export default function FileScreenComponent({ id }: { id: string }) {
-  const { data } = useClientDocumentQuery({ variables: { id } });
-  const [pdfIsOpen, setPdfIsOpen] = useState<boolean>(false);
+type TFileView = {
+  content: ReactNode;
+  title?: string;
+};
+
+type TFileScreenComponent = {
+  id: string;
+};
+
+export default function FileScreenComponent(props: TFileScreenComponent) {
+  const { id } = props;
+
   const navigation = useNavigation();
+  const [fileView, setFileView] = useState<TFileView | null>(null);
+  const { data } = useClientDocumentQuery({ variables: { id } });
 
   useLayoutEffect(() => {
     if (!data) return;
@@ -58,13 +70,18 @@ export default function FileScreenComponent({ id }: { id: string }) {
         </TextBold>
         <View style={styles.fileContainer}>
           {isImage && (
-            <ImagesWithZoom title={originalFilename} imageUrl={file.url}>
-              <FileThumbnail
-                uri={file.url}
-                mimeType={mimeType}
-                thumbnailSize={fileDisplaySizeMap[namespace]}
-              />
-            </ImagesWithZoom>
+            <FileThumbnail
+              uri={file.url}
+              mimeType={mimeType}
+              thumbnailSize={fileDisplaySizeMap[namespace]}
+              accessibilityHint="view full image"
+              onPress={() =>
+                setFileView({
+                  content: <ImageViewer url={file.url} />,
+                  title: originalFilename || '',
+                })
+              }
+            />
           )}
 
           {isPdf && (
@@ -72,8 +89,13 @@ export default function FileScreenComponent({ id }: { id: string }) {
               uri={file.url}
               mimeType={mimeType}
               thumbnailSize={fileDisplaySizeMap[namespace]}
-              onPress={() => setPdfIsOpen(true)}
-              accessibilityHint="opens pdf file"
+              accessibilityHint="view pdf file"
+              onPress={() =>
+                setFileView({
+                  content: <PdfViewer url={file.url} />,
+                  title: originalFilename || '',
+                })
+              }
             />
           )}
 
@@ -97,7 +119,15 @@ export default function FileScreenComponent({ id }: { id: string }) {
         </TextRegular>
       </MainContainer>
 
-      <PdfModal url={file.url} isOpen={pdfIsOpen} setIsOpen={setPdfIsOpen} />
+      {!!fileView?.content && (
+        <BaseModal
+          title={fileView.title}
+          isOpen={true}
+          onClose={() => setFileView(null)}
+        >
+          {fileView.content}
+        </BaseModal>
+      )}
     </>
   );
 }
