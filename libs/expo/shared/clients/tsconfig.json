@@ -9,8 +9,7 @@
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "jsx": "react",
-    "allowJs": true
+    "jsx": "react"
   },
   "files": [],
   "include": [],
