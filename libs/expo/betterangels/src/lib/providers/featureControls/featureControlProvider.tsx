@@ -32,7 +32,7 @@ export const FeatureControlProvider: React.FC<FeatureControlProviderProps> = ({
       samples: {},
     });
 
-  const { data, error } = useGetFeatureControlsQuery();
+  const { data } = useGetFeatureControlsQuery();
 
   useEffect(() => {
     if (data?.featureControls) {
@@ -60,13 +60,6 @@ export const FeatureControlProvider: React.FC<FeatureControlProviderProps> = ({
     () => featureControlGroups,
     [featureControlGroups]
   );
-
-  if (error) {
-    console.error(
-      'FeatureControlProvider encountered an error:',
-      error.message
-    );
-  }
 
   return (
     <FeatureControlContext.Provider value={memoizedControlGroups}>

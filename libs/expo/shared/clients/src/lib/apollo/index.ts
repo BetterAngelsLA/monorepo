@@ -1,3 +1,3 @@
 export * from './ApolloClientProvider';
-export * from './links';
+export * from './constants';
 export * from './ReactNativeFile';
