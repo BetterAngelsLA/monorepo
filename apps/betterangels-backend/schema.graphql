@@ -704,6 +704,7 @@ enum LanguageEnum {
 enum LivingSituationEnum {
   HOUSING
   OPEN_AIR
+  RV
   SHELTER
   TENT
   VEHICLE
