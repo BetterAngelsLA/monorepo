@@ -62,6 +62,9 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
   const isImage = attachmentType === AttachmentType.Image;
   const isPdf = mimeType === MimeTypes.PDF;
 
+  const pdfUrl =
+    'https://www.adobe.com/support/products/enterprise/knowledgecenter/media/c4611_sample_explain.pdf';
+
   return (
     <>
       <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
@@ -85,6 +88,21 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
           )}
 
           {isPdf && (
+            // <WebBrowserLink href={pdfUrl} accessibilityHint="view pdf file">
+            //   <FileThumbnail
+            //     uri={file.url}
+            //     mimeType={mimeType}
+            //     thumbnailSize={fileDisplaySizeMap[namespace]}
+            //     accessibilityHint="view pdf file"
+            //     // onPress={() =>
+            //     //   setFileView({
+            //     //     // content: <PdfViewer url={file.url} />,
+            //     //     content: <PdfViewer url={pdfUrl} />,
+            //     //     title: originalFilename || '',
+            //     //   })
+            //     // }
+            //   />
+            // </WebBrowserLink>
             <FileThumbnail
               uri={file.url}
               mimeType={mimeType}
@@ -92,7 +110,8 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
               accessibilityHint="view pdf file"
               onPress={() =>
                 setFileView({
-                  content: <PdfViewer url={file.url} />,
+                  // content: <PdfViewer url={file.url} />,
+                  content: <PdfViewer url={pdfUrl} />,
                   title: originalFilename || '',
                 })
               }
