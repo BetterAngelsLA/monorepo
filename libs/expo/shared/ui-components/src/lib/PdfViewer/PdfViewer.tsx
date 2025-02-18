@@ -10,7 +10,8 @@ type TProps = {
 };
 
 export default function PdfViewer(props: TProps) {
-  const { url, cache = true } = props;
+  // const { url, cache = true } = props;
+  const { url } = props;
 
   const [fileUri, setFileUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
