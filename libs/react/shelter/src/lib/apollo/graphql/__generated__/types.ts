@@ -749,6 +749,31 @@ export type ImportClientProfileInput = {
 
 export type ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo;
 
+export type InteractionAuthorFilter = {
+  AND?: InputMaybe<InteractionAuthorFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<InteractionAuthorFilter>;
+  OR?: InputMaybe<InteractionAuthorFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type InteractionAuthorType = {
+  __typename?: 'InteractionAuthorType';
+  firstName?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  lastName?: Maybe<Scalars['String']['output']>;
+  middleName?: Maybe<Scalars['String']['output']>;
+};
+
+export type InteractionAuthorTypeOffsetPaginated = {
+  __typename?: 'InteractionAuthorTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<InteractionAuthorType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export enum LanguageEnum {
   Arabic = 'ARABIC',
   Armenian = 'ARMENIAN',
@@ -1288,6 +1313,7 @@ export type Query = {
   clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
+  interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
   noteAttachment: NoteAttachmentType;
   noteAttachments: Array<NoteAttachmentType>;
@@ -1332,6 +1358,12 @@ export type QueryClientProfilesArgs = {
 export type QueryClientProfilesPaginatedArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryInteractionAuthorsArgs = {
+  filters?: InputMaybe<InteractionAuthorFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
