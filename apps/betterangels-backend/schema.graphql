@@ -264,6 +264,14 @@ type ClientHouseholdMemberType {
   displayGender: String
 }
 
+type ClientProfileDataImportType {
+  id: UUID!
+  importedAt: DateTime!
+  sourceFile: String!
+  notes: String!
+  importedBy: DjangoModelType!
+}
+
 input ClientProfileFilter {
   AND: ClientProfileFilter
   OR: ClientProfileFilter
@@ -272,6 +280,17 @@ input ClientProfileFilter {
   isActive: Boolean
   search: String
   searchClient: ClientSearchInput
+}
+
+type ClientProfileImportRecordType {
+  id: ID!
+  sourceId: String!
+  sourceName: String!
+  success: Boolean!
+  errorMessage: String!
+  createdAt: DateTime!
+  clientProfile: ClientProfileType
+  rawData: JSON!
 }
 
 input ClientProfileOrder {
@@ -361,6 +380,8 @@ input CreateClientDocumentInput {
 
 union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 
+union CreateClientProfileDataImportPayload = ClientProfileDataImportType | OperationInfo
+
 input CreateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
@@ -444,6 +465,11 @@ input CreateNoteTaskInput {
 }
 
 union CreateNoteTaskPayload = TaskType | OperationInfo
+
+input CreateProfileDataImportInput {
+  sourceFile: String!
+  notes: String
+}
 
 input CreateServiceRequestInput {
   service: ServiceEnum!
@@ -677,6 +703,16 @@ type ImmediateNeedType {
   name: ImmediateNeedChoices
 }
 
+input ImportClientProfileInput {
+  importJobId: UUID!
+  sourceId: String!
+  sourceName: String!
+  rawData: JSON!
+  clientProfile: CreateClientProfileInput!
+}
+
+union ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo
+
 input InteractionAuthorFilter {
   AND: InteractionAuthorFilter
   OR: InteractionAuthorFilter
@@ -811,6 +847,8 @@ type Mutation {
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
+  createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
+  importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
@@ -1468,6 +1506,8 @@ enum TrainingServiceChoices {
 type TrainingServiceType {
   name: TrainingServiceChoices
 }
+
+scalar UUID
 
 input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
