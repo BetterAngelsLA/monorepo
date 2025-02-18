@@ -21,7 +21,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.0.34',
+    version: '1.0.36',
     orientation: 'portrait',
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
@@ -34,7 +34,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.33',
+      buildNumber: '1.0.47',
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
@@ -73,13 +73,14 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 33,
+      versionCode: 46,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
       bundler: 'metro',
     },
     plugins: [
+      'expo-apple-authentication',
       'expo-build-properties',
       [
         'expo-dev-launcher',
@@ -87,7 +88,16 @@ export default {
           launchMode: 'launcher',
         },
       ],
-      'expo-apple-authentication',
+      [
+        'expo-font',
+        {
+          fonts: [
+            './src/app/assets/fonts/Poppins-Medium.ttf',
+            './src/app/assets/fonts/Poppins-Regular.ttf',
+            './src/app/assets/fonts/Poppins-SemiBold.ttf',
+          ],
+        },
+      ],
       'expo-router',
       [
         'expo-image-picker',
