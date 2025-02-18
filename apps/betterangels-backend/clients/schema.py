@@ -242,6 +242,10 @@ class Query:
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
 
+    active_client_profiles: OffsetPaginated[ClientProfileType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
+    )
+
     client_profiles_paginated: OffsetPaginated[ClientProfileType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
