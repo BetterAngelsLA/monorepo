@@ -37,9 +37,11 @@ def get_csrf_token(session: requests.Session) -> str:
 def send_graphql_request(
     session: requests.Session, query: str, variables: Dict[str, Any], token: Optional[str] = None
 ) -> Dict[str, Any]:
+    csrf_token = get_csrf_token(session)
     headers: Dict[str, str] = {
-        "X-CSRFToken": get_csrf_token(session),
+        "X-CSRFToken": csrf_token,
         "Content-Type": "application/json",
+        "Referer": f"{GRAPHQL_URL}?csrf_token={csrf_token}",
     }
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -126,7 +128,11 @@ def import_client_profile(
 
 def authenticate(session: requests.Session, username: str, password: str) -> Optional[str]:
     csrf_token = get_csrf_token(session)
-    headers: Dict[str, str] = {"X-CSRFToken": csrf_token, "Content-Type": "application/json"}
+    headers: Dict[str, str] = {
+        "X-CSRFToken": csrf_token,
+        "Content-Type": "application/json",
+        "Referer": f"{REST_LOGIN_URL}?csrf_token={csrf_token}",
+    }
     payload = {"username": username, "password": password}
     response = session.post(REST_LOGIN_URL, json=payload, headers=headers)
     if response.status_code == 200:
