@@ -18,6 +18,6 @@ alias ynx-test-fe="yarn nx test betterangels"
 alias ynx-typecheck="yarn nx affected -t typecheck"
 alias ynx-validate-schema="yarn nx affected -t validate-graphql-schema"
 
-alias ynx-precommit="ynx-lint && ynx-check-migrations && ynx-validate-schema && ynx-typecheck"
+alias ynx-precommit="ynx-lint && ynx-typecheck && ynx-validate-schema && ynx-check-migrations"
 
 alias rebash="source .bash_aliases"
