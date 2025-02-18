@@ -173,6 +173,7 @@
     "dset": ">=3.1.4",
     "express": ">=4.20.0",
     "fast-xml-parser": ">=4.4.1",
+    "koa": ">=2.15.4",
     "metro-resolver": ">=0.81.0",
     "metro-config": ">=0.81.0",
     "micromatch": ">=4.0.8",
