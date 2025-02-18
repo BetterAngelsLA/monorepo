@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import CookieManager from '@react-native-cookies/cookies';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface ApiConfigContextType {
@@ -46,6 +47,7 @@ export const ApiConfigProvider = ({
     if (environment === env) return;
 
     try {
+      await CookieManager.clearAll();
       await Promise.all([AsyncStorage.setItem('currentEnvironment', env)]);
       setEnvironment(env);
     } catch (error) {
