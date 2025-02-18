@@ -16,6 +16,7 @@ from clients.enums import (
     RaceEnum,
     RelationshipTypeEnum,
     SocialMediaEnum,
+    VeteranStatusEnum,
     YesNoPreferNotToSayEnum,
 )
 from clients.models import ClientProfile, HmisProfile
@@ -98,6 +99,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": user,
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
+            # TODO: remove after fe cutover to new field & type
+            "tempVeteranStatus": None,
         }
         response = self._create_client_profile_fixture(variables)
         client_profile = response["data"]["createClientProfile"]
@@ -123,6 +126,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "profilePhoto": None,
             "socialMediaProfiles": expected_social_media_profiles,
             "user": expected_user,
+            # TODO: update after fe cutover to new field & type
+            "veteranStatus": None,
         }
         client_differences = DeepDiff(
             expected_client_profile,
@@ -223,6 +228,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": user,
             "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
+            # TODO: remove after fe cutover to new field & type
+            "tempVeteranStatus": YesNoPreferNotToSayEnum.OTHER_THAN_HONORABLE.name,
         }
         response = self._update_client_profile_fixture(variables)
         client_profile = response["data"]["updateClientProfile"]
@@ -241,6 +248,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "displayGender": "Female",
             "displayPronouns": "she/her/theirs",
             "profilePhoto": {"name": self.client_profile_1_photo_name},
+            # TODO: update after fe cutover to new field & type
+            "veteranStatus": VeteranStatusEnum.OTHER_THAN_HONORABLE.name,
         }
         client_differences = DeepDiff(
             expected_client_profile,
@@ -461,7 +470,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 41
+        expected_query_count = 47
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
@@ -541,7 +550,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
 
-        expected_query_count = 16
+        expected_query_count = 17
         with self.assertNumQueriesWithoutCache(expected_query_count):
             self._delete_client_document_fixture(client_document_id)
 

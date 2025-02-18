@@ -21,16 +21,11 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.0.33',
+    version: '1.0.36',
     orientation: 'portrait',
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
       : './src/app/assets/images/preview-icon.png',
-    splash: {
-      image: './src/app/assets/images/splash.png',
-      resizeMode: 'contain',
-      backgroundColor: '#216AF8',
-    },
     updates: {
       fallbackToCacheTimeout: 0,
       url: 'https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8',
@@ -39,7 +34,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.32',
+      buildNumber: '1.0.47',
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
@@ -78,33 +73,29 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 32,
+      versionCode: 46,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
       bundler: 'metro',
     },
     plugins: [
-      [
-        'expo-build-properties',
-        {
-          android: {
-            kotlinVersion: '1.6.21',
-          },
-        },
-      ],
+      'expo-apple-authentication',
+      'expo-build-properties',
       [
         'expo-dev-launcher',
         {
           launchMode: 'launcher',
         },
       ],
-      'expo-apple-authentication',
       [
-        '@config-plugins/detox',
+        'expo-font',
         {
-          skipProguard: false,
-          subdomains: IS_PRODUCTION ? ['10.0.2.2', 'localhost'] : '*',
+          fonts: [
+            './src/app/assets/fonts/Poppins-Medium.ttf',
+            './src/app/assets/fonts/Poppins-Regular.ttf',
+            './src/app/assets/fonts/Poppins-SemiBold.ttf',
+          ],
         },
       ],
       'expo-router',
@@ -129,6 +120,14 @@ export default {
             'Allow $(PRODUCT_NAME) to use your location to log where client interactions take place.',
         },
       ],
+      [
+        'expo-splash-screen',
+        {
+          backgroundColor: '#216AF8',
+          image: './src/app/assets/images/splash.png',
+          imageWidth: 750,
+        },
+      ],
     ],
     extra: {
       router: {
@@ -138,6 +137,7 @@ export default {
         projectId: '53171ba4-60ca-40cb-b3e6-b0c2393677b8',
       },
     },
+    newArchEnabled: false,
     owner: 'better-angels',
     runtimeVersion: process.env.RUNTIME_VERSION,
   },

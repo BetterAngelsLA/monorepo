@@ -57,6 +57,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             residenceAddress
             spokenLanguages
             veteranStatus
+            tempVeteranStatus
             displayCaseManager
             displayGender
             displayPronouns
@@ -363,6 +364,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on ClientDocumentType {
                         id
                         attachmentType
+                        mimeType
                         file {
                             name
                         }
