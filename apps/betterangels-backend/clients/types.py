@@ -225,7 +225,7 @@ class ClientProfileBaseType:
     race: auto
     residence_address: auto
     spoken_languages: Optional[List[LanguageEnum]]
-    veteran_status: Optional[VeteranStatusEnum]
+    veteran_status: auto
 
 
 @strawberry.input
