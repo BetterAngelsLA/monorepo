@@ -20,6 +20,7 @@ from betterangels_backend import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic.base import RedirectView
 from strawberry.django.views import GraphQLView
 
@@ -33,10 +34,12 @@ urlpatterns = [
     path("ckeditor5/", include("django_ckeditor_5.urls")),
     path(
         "graphql",
-        GraphQLView.as_view(
-            schema=schema,
-            # https://github.com/strawberry-graphql/strawberry/issues/3655#issuecomment-2386409153
-            multipart_uploads_enabled=True,
+        ensure_csrf_cookie(
+            GraphQLView.as_view(
+                schema=schema,
+                # https://github.com/strawberry-graphql/strawberry/issues/3655#issuecomment-2386409153
+                multipart_uploads_enabled=True,
+            )
         ),
     ),
     path("legal/", include("legal.urls")),

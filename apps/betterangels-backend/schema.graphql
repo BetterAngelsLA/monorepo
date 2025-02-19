@@ -264,6 +264,14 @@ type ClientHouseholdMemberType {
   displayGender: String
 }
 
+type ClientProfileDataImportType {
+  id: UUID!
+  importedAt: DateTime!
+  sourceFile: String!
+  notes: String!
+  importedBy: DjangoModelType!
+}
+
 input ClientProfileFilter {
   AND: ClientProfileFilter
   OR: ClientProfileFilter
@@ -272,6 +280,17 @@ input ClientProfileFilter {
   isActive: Boolean
   search: String
   searchClient: ClientSearchInput
+}
+
+type ClientProfileImportRecordType {
+  id: ID!
+  sourceId: String!
+  sourceName: String!
+  success: Boolean!
+  errorMessage: String!
+  createdAt: DateTime!
+  clientProfile: ClientProfileType
+  rawData: JSON!
 }
 
 input ClientProfileOrder {
@@ -361,6 +380,8 @@ input CreateClientDocumentInput {
 
 union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 
+union CreateClientProfileDataImportPayload = ClientProfileDataImportType | OperationInfo
+
 input CreateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
@@ -444,6 +465,11 @@ input CreateNoteTaskInput {
 }
 
 union CreateNoteTaskPayload = TaskType | OperationInfo
+
+input CreateProfileDataImportInput {
+  sourceFile: String!
+  notes: String
+}
 
 input CreateServiceRequestInput {
   service: ServiceEnum!
@@ -677,6 +703,41 @@ type ImmediateNeedType {
   name: ImmediateNeedChoices
 }
 
+input ImportClientProfileInput {
+  importJobId: UUID!
+  sourceId: String!
+  sourceName: String!
+  rawData: JSON!
+  clientProfile: CreateClientProfileInput!
+}
+
+union ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo
+
+input InteractionAuthorFilter {
+  AND: InteractionAuthorFilter
+  OR: InteractionAuthorFilter
+  NOT: InteractionAuthorFilter
+  DISTINCT: Boolean
+  search: String
+}
+
+type InteractionAuthorType {
+  id: ID!
+  firstName: String
+  lastName: String
+  middleName: String
+}
+
+type InteractionAuthorTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [InteractionAuthorType!]!
+}
+
 """
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf).
 """
@@ -786,6 +847,8 @@ type Mutation {
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
+  createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
+  importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   deleteNoteAttachment(data: DeleteDjangoObjectInput!): DeleteNoteAttachmentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
@@ -1004,6 +1067,7 @@ type Query {
   currentUser: UserType!
   availableOrganizations: [OrganizationType!]! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
+  activeClientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientProfilesPaginated(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
@@ -1019,6 +1083,7 @@ type Query {
   serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
+  interactionAuthors(filters: InteractionAuthorFilter, pagination: OffsetPaginationInput): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
 }
@@ -1442,6 +1507,8 @@ enum TrainingServiceChoices {
 type TrainingServiceType {
   name: TrainingServiceChoices
 }
+
+scalar UUID
 
 input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
