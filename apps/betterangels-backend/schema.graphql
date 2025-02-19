@@ -901,6 +901,7 @@ input NoteFilter {
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
+  authors: [ID!]
   search: String
   teams: [SelahTeamEnum!]
 }

@@ -176,6 +176,15 @@ class NoteFilter:
     organization: Optional[ID]
 
     @strawberry_django.filter_field
+    def authors(
+        self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str
+    ) -> Tuple[QuerySet[models.Note], Q]:
+        if value is None:
+            return queryset, Q()
+
+        return queryset.filter(created_by__in=value), Q()
+
+    @strawberry_django.filter_field
     def search(
         self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str
     ) -> Tuple[QuerySet[models.Note], Q]:
