@@ -22,7 +22,6 @@ import {
 
 export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Arabic]: 'Arabic',
-  [LanguageEnum.Asl]: 'American Sign Language',
   [LanguageEnum.Armenian]: 'Armenian',
   [LanguageEnum.Asl]: 'American Sign Language',
   [LanguageEnum.SimplifiedChinese]: 'Chinese, Simplified',
@@ -64,8 +63,6 @@ export const enumDisplayHmisAgency: {
 export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.Female]: 'Female',
   [GenderEnum.Male]: 'Male',
-  [GenderEnum.TransFemale]: 'Transgender Female',
-  [GenderEnum.TransMale]: 'Transgender Male',
   [GenderEnum.NonBinary]: 'Non-Binary',
   [GenderEnum.PreferNotToSay]: 'Prefer not to say',
   [GenderEnum.Other]: 'Other',
