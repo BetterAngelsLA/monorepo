@@ -25,8 +25,8 @@ export default function InteractionsFilters(props: IInteractionsFiltersProps) {
         gap: Spacings.xs,
       }}
     >
-      <CreatedByFilter {...props} />
       <TeamsFilter {...props} />
+      <CreatedByFilter {...props} />
     </View>
   );
 }

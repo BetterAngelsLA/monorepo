@@ -1304,6 +1304,7 @@ export enum PronounEnum {
 
 export type Query = {
   __typename?: 'Query';
+  activeClientProfiles: ClientProfileTypeOffsetPaginated;
   availableOrganizations: Array<OrganizationType>;
   clientDocument: ClientDocumentType;
   clientDocuments: Array<ClientDocumentType>;
@@ -1325,6 +1326,13 @@ export type Query = {
   shelters: ShelterTypeOffsetPaginated;
   task: TaskType;
   tasks: Array<TaskType>;
+};
+
+
+export type QueryActiveClientProfilesArgs = {
+  filters?: InputMaybe<ClientProfileFilter>;
+  order?: InputMaybe<ClientProfileOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
