@@ -2,6 +2,7 @@ from typing import Union
 
 from accounts.groups import GroupTemplateNames
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
+from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 
 from .models import PermissionGroup, PermissionGroupTemplate, User
@@ -45,3 +46,17 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
         raise PermissionError("User lacks proper organization or permissions")
 
     return permission_group
+
+
+def get_outreach_authorized_users() -> QuerySet[User]:
+    # TODO: Make unit test for this function
+    authorized_permission_groups = [template.value for template in GroupTemplateNames]
+
+    # Subquery to check if the user has any related permission group in an authorized group
+    permission_group_exists = PermissionGroup.objects.filter(
+        organization__users=OuterRef("pk"),  # Matches `User` to `Organization`
+        template__name__in=authorized_permission_groups,
+    )
+
+    # Use Exists to avoid duplicate users without `distinct()`
+    return User.objects.filter(Exists(permission_group_exists))
