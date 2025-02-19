@@ -11,6 +11,7 @@ import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useEffect, useMemo, useState } from 'react';
 import { FlatList, View } from 'react-native';
+import { uniqueBy } from 'remeda';
 import { Ordering } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
@@ -19,7 +20,6 @@ import {
   useClientProfilesPaginatedQuery,
   useCreateNoteMutation,
 } from './__generated__/Clients.generated';
-
 type TClientProfile =
   ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'];
 
@@ -122,17 +122,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     if (offset === 0) {
       setClients(results);
     } else {
-      setClients((prevClients) => {
-        // Merge new results with previous ones
-        const combined = [...prevClients, ...results];
-
-        // Use a Map to track unique clients by id
-        const clientMap = new Map<string, (typeof combined)[number]>();
-        for (const client of combined) {
-          clientMap.set(client.id, client);
-        }
-        return Array.from(clientMap.values());
-      });
+      setClients((prevClients) =>
+        uniqueBy([...prevClients, ...results], (client) => client.id)
+      );
     }
 
     setHasMore(offset + paginationLimit < totalCount);
