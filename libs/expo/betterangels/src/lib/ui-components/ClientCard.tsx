@@ -15,15 +15,14 @@ import {
 import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import { HmisProfileType, Maybe } from '../apollo';
 import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-
 interface IClientCardProps {
   client: ClientProfilesQuery['clientProfiles'][number] | undefined;
-  progress?: number;
+  progress?: DimensionValue;
   mb?: TSpacing;
   mt?: TSpacing;
   my?: TSpacing;
@@ -35,6 +34,7 @@ interface IClientCardProps {
   arrivedFrom?: string;
 }
 
+// export default function ClientCard(props: IClientCardProps) {
 const ClientCard = React.memo(function ClientCard(props: IClientCardProps) {
   const {
     client,
@@ -48,44 +48,49 @@ const ClientCard = React.memo(function ClientCard(props: IClientCardProps) {
     select = 'false',
     arrivedFrom,
   } = props;
+
   const router = useRouter();
 
-  if (!client) return null;
+  if (!client) {
+    return;
+  }
 
   const formatHeight = (inches: number) => {
     const feet = Math.floor(inches / 12);
     const remainingInches = inches % 12;
     return `${feet}' ${remainingInches}"`;
   };
-
-  const getLahsaHmisId = (hmisProfiles: Maybe<HmisProfileType[] | undefined>) =>
-    hmisProfiles?.find((profile) => profile?.agency === 'LAHSA')?.hmisId;
-
+  const getLahsaHmisId = (
+    hmisProfiles: Maybe<HmisProfileType[] | undefined>
+  ) => {
+    return hmisProfiles?.find((profile) => profile?.agency === 'LAHSA')?.hmisId;
+  };
   const formattedHeight = client.heightInInches
     ? formatHeight(client.heightInInches)
     : null;
   const lahsaHmisId = client.hmisProfiles
     ? getLahsaHmisId(client.hmisProfiles)
     : null;
-
   return (
     <Pressable
       accessibilityRole="button"
       onPress={() =>
         router.navigate({
           pathname: `/client/${client.id}`,
-          params: { arrivedFrom },
+          params: {
+            arrivedFrom,
+          },
         })
       }
       style={({ pressed }) => [
         styles.container,
         {
-          marginBottom: mb ? Spacings[mb] : undefined,
-          marginTop: mt ? Spacings[mt] : undefined,
-          marginLeft: ml ? Spacings[ml] : undefined,
-          marginRight: mr ? Spacings[mr] : undefined,
-          marginHorizontal: mx ? Spacings[mx] : undefined,
-          marginVertical: my ? Spacings[my] : undefined,
+          marginBottom: mb && Spacings[mb],
+          marginTop: mt && Spacings[mt],
+          marginLeft: ml && Spacings[ml],
+          marginRight: mr && Spacings[mr],
+          marginHorizontal: mx && Spacings[mx],
+          marginVertical: my && Spacings[my],
           backgroundColor: pressed ? Colors.GRAY_PRESSED : Colors.WHITE,
         },
       ]}
@@ -97,7 +102,8 @@ const ClientCard = React.memo(function ClientCard(props: IClientCardProps) {
         size="xl"
         mr="xs"
       />
-      <View style={styles.infoContainer}>
+
+      <View style={{ gap: Spacings.xxs, flex: 2 }}>
         <TextBold size="sm">
           {client.user.firstName} {client.user.lastName}{' '}
           {client.nickname && `(${client.nickname})`}
@@ -132,20 +138,20 @@ const ClientCard = React.memo(function ClientCard(props: IClientCardProps) {
           </View>
         )}
       </View>
-      <View style={styles.buttonContainer}>
+      <View style={{ justifyContent: 'center', position: 'relative' }}>
         {select === 'true' ? (
           <TextButton
             fontSize="sm"
-            title="Select"
+            title={'Select'}
             onPress={onPress}
-            accessibilityHint={`Add an interaction for ${client.user.firstName} ${client.user.lastName}`}
+            accessibilityHint={`Add a interaction for client ${client.user.firstName} ${client.user.lastName}`}
           />
         ) : (
           <IconButton
             onPress={onPress}
             variant="transparent"
-            accessibilityLabel="open client details modal"
-            accessibilityHint="open client details modal"
+            accessibilityLabel={'open client details modal'}
+            accessibilityHint={'open client details modal'}
           >
             <ThreeDotIcon />
           </IconButton>
@@ -158,6 +164,7 @@ const ClientCard = React.memo(function ClientCard(props: IClientCardProps) {
 export default ClientCard;
 
 const styles = StyleSheet.create({
+  clientCard: {},
   container: {
     alignItems: 'center',
     borderRadius: Radiuses.xs,
@@ -165,16 +172,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  infoContainer: {
-    gap: Spacings.xxs,
-    flex: 2,
-  },
-  buttonContainer: {
-    justifyContent: 'center',
+  progress: {
+    backgroundColor: Colors.NEUTRAL_LIGHT,
+    height: 5,
+    width: '100%',
     position: 'relative',
+  },
+  moreButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacings.xs,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 0,
+    marginBottom: 0,
   },
 });

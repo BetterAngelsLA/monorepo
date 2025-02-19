@@ -9,13 +9,11 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { ElementType, useEffect, useMemo, useState } from 'react';
+import { FlatList, View } from 'react-native';
 import { Ordering } from '../../apollo';
 import { useSnackbar } from '../../hooks';
-import ClientCard from '../../ui-components/ClientCard';
-import ClientCardModal from '../../ui-components/ClientCardModal';
-import Header from '../../ui-components/Header';
+import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
   ClientProfilesPaginatedQuery,
   useClientProfilesPaginatedQuery,
@@ -23,11 +21,8 @@ import {
 } from './__generated__/Clients.generated';
 
 const paginationLimit = 20;
-// Approximate fixed height for each ClientCard (adjust if needed)
-const ITEM_HEIGHT = 120;
 
-export default function Clients({ Logo }: { Logo: React.ElementType }) {
-  const router = useRouter();
+export default function Clients({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] =
     useState<
       ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
@@ -40,15 +35,12 @@ export default function Clients({ Logo }: { Logo: React.ElementType }) {
     ClientProfilesPaginatedQuery['clientProfilesPaginated']['results']
   >([]);
   const [filterSearch, setFilterSearch] = useState<string>('');
-  const [search, setSearch] = useState<string>('');
-
-  const { title, select } = useLocalSearchParams();
-  const { showSnackbar } = useSnackbar();
-
   const { data, loading } = useClientProfilesPaginatedQuery({
     variables: {
       pagination: { limit: paginationLimit, offset },
-      filters: { search: filterSearch },
+      filters: {
+        search: filterSearch,
+      },
       order: {
         user_FirstName: Ordering.AscNullsFirst,
         id: Ordering.Desc,
@@ -57,109 +49,114 @@ export default function Clients({ Logo }: { Logo: React.ElementType }) {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const { title, select } = useLocalSearchParams();
+  const [search, setSearch] = useState<string>('');
   const [createNote] = useCreateNoteMutation();
+  const { showSnackbar } = useSnackbar();
 
-  // Debounce the search input
-  const debounceFetch = useMemo(
-    () => debounce((text: string) => setFilterSearch(text), 500),
-    []
-  );
+  const router = useRouter();
 
-  const onChange = (text: string) => {
-    setSearch(text);
-    debounceFetch(text);
-  };
-
-  // Reset offset and clear clients when search filter changes
-  useEffect(() => {
-    setOffset(0);
-    setClients([]);
-  }, [filterSearch]);
-
-  // Merge new paginated results, filtering out duplicates by id
-  useEffect(() => {
-    if (!data || !('clientProfilesPaginated' in data)) return;
-    const { results, totalCount } = data.clientProfilesPaginated;
-    setTotalCount(totalCount);
-    if (offset === 0) {
-      setClients(results);
-    } else {
-      setClients((prevClients) => {
-        const combined = [...prevClients, ...results];
-        return combined.filter(
-          (client, index, self) =>
-            index === self.findIndex((c) => c.id === client.id)
-        );
-      });
-    }
-    setHasMore(offset + paginationLimit < totalCount);
-  }, [data, offset]);
-
-  const loadMoreClients = useCallback(() => {
+  async function loadMoreClients() {
     if (hasMore && !loading && !isLoadingMore) {
       setIsLoadingMore(true);
       setOffset((prevOffset) => prevOffset + paginationLimit);
-      setTimeout(() => setIsLoadingMore(false), 600);
+
+      setTimeout(() => {
+        setIsLoadingMore(false);
+      }, 600);
     }
-  }, [hasMore, loading, isLoadingMore]);
-
-  // Memoize onPress handler for each ClientCard
-  const handleClientPress = useCallback(
-    (
-      clientProfile: ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
-    ) => {
-      if (select === 'true') {
-        createNoteFunction(clientProfile.user.id, clientProfile.user.firstName);
-      } else {
-        setCurrentClient(clientProfile);
-        setModalIsOpen(true);
-      }
-    },
-    [select]
-  );
-
-  // Create note function
-  const createNoteFunction = useCallback(
-    async (id: string, firstName: string | null | undefined) => {
-      try {
-        const { data } = await createNote({
-          variables: {
-            data: {
-              purpose: `Session with ${firstName || 'Client'}`,
-              client: id,
-            },
+  }
+  async function createNoteFunction(
+    id: string,
+    firstName: string | undefined | null
+  ) {
+    try {
+      const { data } = await createNote({
+        variables: {
+          data: {
+            purpose: `Session with ${firstName || 'Client'}`,
+            client: id,
           },
-        });
-        if (data?.createNote && 'id' in data.createNote) {
-          router.navigate(`/add-note/${data.createNote.id}`);
-        }
-      } catch (err) {
-        console.error(err);
-        showSnackbar({
-          message: `Sorry, there was an error creating a new interaction.`,
-          type: 'error',
-        });
+        },
+      });
+      if (data?.createNote && 'id' in data.createNote) {
+        router.navigate(`/add-note/${data?.createNote.id}`);
       }
-    },
-    [createNote, router, showSnackbar]
-  );
+    } catch (err) {
+      console.error(err);
+
+      showSnackbar({
+        message: `Sorry, there was an error creating a new interaction.`,
+        type: 'error',
+      });
+    }
+  }
 
   const renderFooter = () => {
     return loading ? (
-      <View style={localStyles.footer}>
+      <View style={{ marginTop: 10, alignItems: 'center' }}>
         <Loading size="large" color={Colors.NEUTRAL_DARK} />
       </View>
     ) : null;
   };
 
+  const debounceFetch = useMemo(
+    () =>
+      debounce((text) => {
+        setFilterSearch(text);
+      }, 500),
+    []
+  );
+
+  useEffect(() => {
+    setOffset(0);
+    setClients([]);
+  }, [filterSearch]);
+
+  const onChange = (e: string) => {
+    setSearch(e);
+
+    debounceFetch(e);
+  };
+
+  useEffect(() => {
+    if (!data || !('clientProfilesPaginated' in data)) {
+      return;
+    }
+    const { results, totalCount } = data.clientProfilesPaginated;
+    setTotalCount(totalCount);
+
+    if (offset === 0) {
+      setClients(results);
+    } else {
+      setClients((prevClients) => {
+        // Merge new results with previous ones and remove duplicates by id
+        const combined = [...prevClients, ...results];
+        const uniqueClients = combined.filter(
+          (client, index, self) =>
+            index === self.findIndex((c) => c.id === client.id)
+        );
+        return uniqueClients;
+      });
+    }
+
+    setHasMore(offset + paginationLimit < totalCount);
+  }, [data, offset]);
+
   return (
-    <View style={localStyles.screenContainer}>
+    <View style={{ flex: 1 }}>
       <Header title="Clients" Logo={Logo} />
-      <View style={localStyles.contentContainer}>
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+          paddingHorizontal: Spacings.sm,
+          paddingTop: Spacings.sm,
+        }}
+      >
         {title && (
-          <TextBold style={localStyles.title} size="lg">
+          <TextBold mb="sm" size="lg">
             {title}
           </TextBold>
         )}
@@ -176,14 +173,38 @@ export default function Clients({ Logo }: { Logo: React.ElementType }) {
             setClients([]);
           }}
         />
-        <View style={localStyles.infoRow}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: Spacings.xs,
+            backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+          }}
+        >
           <TextMedium size="sm">
             Displaying {clients.length} of {totalCount} clients
           </TextMedium>
         </View>
-        {search && clients.length < 1 ? (
-          <View style={localStyles.noResultsContainer}>
-            <View style={localStyles.noResultsIcon}>
+        {search && clients.length < 1 && (
+          <View
+            style={{
+              flexGrow: 1,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <View
+              style={{
+                height: 90,
+                width: 90,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: Radiuses.xxxl,
+                backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
+                marginBottom: Spacings.md,
+              }}
+            >
               <UserSearchIcon size="2xl" color={Colors.PRIMARY} />
             </View>
             <TextBold mb="xs" size="sm">
@@ -193,28 +214,41 @@ export default function Clients({ Logo }: { Logo: React.ElementType }) {
               Try searching for something else.
             </TextRegular>
           </View>
-        ) : (
+        )}
+        {clients && (
           <FlatList
-            style={localStyles.flatList}
+            style={{
+              flex: 1,
+              backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+              paddingBottom: 80,
+              marginTop: Spacings.xs,
+            }}
             data={clients}
-            renderItem={({ item: clientProfile }) => (
-              <ClientCard
-                client={clientProfile}
-                arrivedFrom="/clients"
-                select={select as string}
-                onPress={() => handleClientPress(clientProfile)}
-                mb="sm"
-              />
-            )}
-            keyExtractor={(clientProfile) => String(clientProfile.id)}
+            renderItem={({ item: clientProfile }) =>
+              clients ? (
+                <ClientCard
+                  client={clientProfile}
+                  arrivedFrom="/clients"
+                  select={select as string}
+                  onPress={() => {
+                    if (select === 'true') {
+                      createNoteFunction(
+                        clientProfile.user.id,
+                        clientProfile.user.firstName
+                      );
+                    } else {
+                      setCurrentClient(clientProfile);
+                      setModalIsOpen(true);
+                    }
+                  }}
+                  mb="sm"
+                />
+              ) : null
+            }
+            keyExtractor={(clientProfile) => clientProfile.id}
             onEndReached={loadMoreClients}
             onEndReachedThreshold={0.05}
             ListFooterComponent={renderFooter}
-            getItemLayout={(_, index) => ({
-              length: ITEM_HEIGHT,
-              offset: ITEM_HEIGHT * index,
-              index,
-            })}
           />
         )}
       </View>
@@ -228,50 +262,3 @@ export default function Clients({ Logo }: { Logo: React.ElementType }) {
     </View>
   );
 }
-
-const localStyles = StyleSheet.create({
-  screenContainer: {
-    flex: 1,
-    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-  },
-  contentContainer: {
-    flex: 1,
-    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-    paddingHorizontal: Spacings.sm,
-    paddingTop: Spacings.sm,
-  },
-  title: {
-    marginBottom: Spacings.sm,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: Spacings.xs,
-    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-  },
-  noResultsContainer: {
-    flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  noResultsIcon: {
-    height: 90,
-    width: 90,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: Radiuses.xxxl,
-    backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-    marginBottom: Spacings.md,
-  },
-  flatList: {
-    flex: 1,
-    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-    paddingBottom: 80,
-    marginTop: Spacings.xs,
-  },
-  footer: {
-    marginTop: 10,
-    alignItems: 'center',
-  },
-});
