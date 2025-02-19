@@ -61,9 +61,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfilesPaginated' in data)) {
-      return;
-    }
+    if (!data || !('clientProfilesPaginated' in data)) return;
     const { results, totalCount } = data.clientProfilesPaginated;
     setTotalCount(totalCount);
 
@@ -71,12 +69,21 @@ export default function Home({ Logo }: { Logo: ElementType }) {
       setClients(results);
     } else {
       setClients((prevClients) => {
-        // Merge new results with previous ones and remove duplicates by id
+        // Merge new results with previous ones
         const combined = [...prevClients, ...results];
-        const uniqueClients = combined.filter(
-          (client, index, self) =>
-            index === self.findIndex((c) => c.id === client.id)
-        );
+
+        // Use a Map to track unique clients by id
+        const clientMap = new Map<string, (typeof combined)[number]>();
+        for (const client of combined) {
+          clientMap.set(client.id, client);
+        }
+        const uniqueClients = Array.from(clientMap.values());
+        const duplicateCount = combined.length - uniqueClients.length;
+        if (duplicateCount > 0) {
+          console.log(
+            `Found duplicates: ${duplicateCount} duplicate(s) removed.`
+          );
+        }
         return uniqueClients;
       });
     }
