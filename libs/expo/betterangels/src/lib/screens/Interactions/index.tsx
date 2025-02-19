@@ -24,7 +24,7 @@ const paginationLimit = 10;
 
 type TFilters = {
   teams: { id: SelahTeamEnum; label: string }[];
-  createdBy: { id: string; label: string }[];
+  authors: { id: string; label: string }[];
 };
 
 export default function Interactions() {
@@ -34,7 +34,7 @@ export default function Interactions() {
   const [filterSearch, setFilterSearch] = useState('');
   const [filters, setFilters] = useState<TFilters>({
     teams: [],
-    createdBy: [{ id: user?.id || '', label: 'Me' }],
+    authors: [{ id: user?.id || '', label: 'Me' }],
   });
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -44,9 +44,9 @@ export default function Interactions() {
       pagination: { limit: paginationLimit, offset: offset },
       order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
       filters: {
-        // createdBy: filters.createdBy.length
-        //   ? filters.createdBy.map((item) => item.id)
-        //   : null,
+        authors: filters.authors.length
+          ? filters.authors.map((item) => item.id)
+          : null,
         search: filterSearch,
         teams: filters.teams.length
           ? filters.teams.map((item) => item.id)
@@ -77,7 +77,7 @@ export default function Interactions() {
   );
 
   const onFiltersReset = () => {
-    setFilters({ teams: [], createdBy: [] });
+    setFilters({ teams: [], authors: [] });
   };
 
   const onChange = (e: string) => {

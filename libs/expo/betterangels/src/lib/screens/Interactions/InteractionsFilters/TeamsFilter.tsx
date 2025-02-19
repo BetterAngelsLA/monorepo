@@ -12,7 +12,7 @@ import { Modal } from '../../../ui-components';
 
 type TFilters = {
   teams: { id: SelahTeamEnum; label: string }[];
-  createdBy: { id: string; label: string }[];
+  authors: { id: string; label: string }[];
 };
 
 interface ITeamFilterProps {

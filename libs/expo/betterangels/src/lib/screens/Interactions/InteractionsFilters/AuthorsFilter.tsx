@@ -10,7 +10,6 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
   ScrollView,
-  Text,
   View,
 } from 'react-native';
 import { SelahTeamEnum, useInteractionAuthorsQuery } from '../../../apollo';
@@ -19,23 +18,25 @@ import { Modal } from '../../../ui-components';
 
 type TFilters = {
   teams: { id: SelahTeamEnum; label: string }[];
-  createdBy: { id: string; label: string }[];
+  authors: { id: string; label: string }[];
 };
 
-interface ICreatedByFilterProps {
+interface IAuthorsFilterProps {
   setFilters: (filters: TFilters) => void;
   filters: TFilters;
 }
 
 const paginationLimit = 25;
 
-export default function CreatedByFilter(props: ICreatedByFilterProps) {
+export default function AuthorsFilter(props: IAuthorsFilterProps) {
   const { setFilters, filters } = props;
   const { user } = useUser();
   const [selected, setSelected] = useState<
     Array<{ id: string; label: string }>
   >([]);
-  const [authors, setAuthors] = useState<{ id: string; label: string }[]>([]);
+  const [authorsState, setAuthorsState] = useState<
+    { id: string; label: string }[]
+  >([]);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -46,17 +47,17 @@ export default function CreatedByFilter(props: ICreatedByFilterProps) {
   });
 
   const handleOnDone = () => {
-    setFilters({ ...filters, createdBy: selected });
+    setFilters({ ...filters, authors: selected });
     setIsModalVisible(false);
   };
 
   const handleCloseModal = () => {
-    setSelected(filters.createdBy);
+    setSelected(filters.authors);
     setIsModalVisible(false);
   };
 
   const handleSelectButtonPress = () => {
-    setSelected(filters.createdBy);
+    setSelected(filters.authors);
     setIsModalVisible(true);
   };
 
@@ -87,7 +88,7 @@ export default function CreatedByFilter(props: ICreatedByFilterProps) {
       label: user?.id === item.id ? 'Me' : `${item.firstName} ${item.lastName}`,
     }));
 
-    setAuthors((prevAuthors) => {
+    setAuthorsState((prevAuthors) => {
       const uniqueAuthors = [...prevAuthors, ...filteredAuthors].filter(
         (v, i, a) => a.findIndex((t) => t.id === v.id) === i
       );
@@ -103,7 +104,7 @@ export default function CreatedByFilter(props: ICreatedByFilterProps) {
     <View>
       <SelectButton
         defaultLabel="All Authors"
-        selected={filters.createdBy?.map((item) => item.label)}
+        selected={filters.authors?.map((item) => item.label)}
         onPress={handleSelectButtonPress}
       />
 
@@ -116,9 +117,6 @@ export default function CreatedByFilter(props: ICreatedByFilterProps) {
         <View
           style={{ paddingHorizontal: Spacings.md, flex: 1, gap: Spacings.lg }}
         >
-          <Text>
-            {data?.interactionAuthors.totalCount} {authors.length}
-          </Text>
           <ScrollView
             onScroll={handleScroll}
             scrollEventThrottle={200}
@@ -130,7 +128,7 @@ export default function CreatedByFilter(props: ICreatedByFilterProps) {
               withFilter
               title="Filter - Authors"
               onChange={(e: { id: string; label: string }[]) => setSelected(e)}
-              options={authors}
+              options={authorsState}
               selected={selected}
               valueKey="id"
               labelKey="label"

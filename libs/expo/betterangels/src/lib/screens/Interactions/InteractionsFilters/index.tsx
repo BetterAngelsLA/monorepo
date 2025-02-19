@@ -2,12 +2,12 @@ import { Spacings } from '@monorepo/expo/shared/static';
 
 import { View } from 'react-native';
 import { SelahTeamEnum } from '../../../apollo';
-import CreatedByFilter from './CreatedByFilter';
+import AuthorsFilter from './AuthorsFilter';
 import TeamsFilter from './TeamsFilter';
 
 type TFilters = {
   teams: { id: SelahTeamEnum; label: string }[];
-  createdBy: { id: string; label: string }[];
+  authors: { id: string; label: string }[];
 };
 
 interface IInteractionsFiltersProps {
@@ -26,7 +26,7 @@ export default function InteractionsFilters(props: IInteractionsFiltersProps) {
       }}
     >
       <TeamsFilter {...props} />
-      <CreatedByFilter {...props} />
+      <AuthorsFilter {...props} />
     </View>
   );
 }
