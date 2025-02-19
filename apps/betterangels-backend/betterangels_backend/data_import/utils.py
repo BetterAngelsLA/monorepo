@@ -13,12 +13,9 @@ def create_default_session() -> requests.Session:
     """
     Create a new requests Session with default headers.
     """
+
     session = requests.Session()
-    session.headers.update(
-        {
-            "Content-Type": "application/json",
-        }
-    )
+    session.headers.update({"Content-Type": "application/json"})
     return session
 
 
@@ -41,7 +38,7 @@ def update_dynamic_headers(session: requests.Session, url: str, token: Optional[
 
 def authenticate(session: requests.Session, login_url: str, username: str, password: str) -> Optional[str]:
     """
-    Authenticate against the login URL using the provided username and password.
+     Authenticate against the login URL using the provided username and password.
     Assumes the session has been primed with cookies via an initial GET.
     """
     update_dynamic_headers(session, login_url)
@@ -49,12 +46,18 @@ def authenticate(session: requests.Session, login_url: str, username: str, passw
     response = session.post(login_url, json=payload)
     if response.status_code == 200:
         try:
-            return str(response.json().get("key", ""))
-        except Exception:
-            return ""
+            data = response.json()
+            token = data.get("key") or data.get("token")
+            if token is None:
+                logger.error("No token found in login response: %s", data)
+            return str(token) if token is not None else None
+        except Exception as ex:
+            logger.exception("Error parsing JSON response: %s", ex)
+            return None
     elif response.status_code == 204:
-        # 204 indicates success with no content.
         return ""
+    else:
+        logger.error("Login POST returned status %s: %s", response.status_code, response.text)
     return None
 
 
@@ -67,12 +70,10 @@ class GraphQLClient:
         self.login_url = login_url
         self.graphql_url = graphql_url
         self.session = create_default_session()
-        # Perform initial GET on the login URL to set cookies/CSRF token.
         self.session.get(login_url)
         token = authenticate(self.session, login_url, username, password)
-        if not token:
+        if token is None:
             raise Exception("Authentication failed.")
-        # Update headers for the GraphQL endpoint.
         update_dynamic_headers(self.session, graphql_url, token)
 
     def request(self, query: str, variables: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -127,7 +128,6 @@ def read_csv_file(csv_path: str) -> Tuple[List[Dict[str, str]], List[str]]:
     """
     with open(csv_path, "r", encoding="utf-8-sig") as csvfile:
         reader = csv.DictReader(csvfile)
-        # Ensure fieldnames is a list of strings.
         fieldnames = list(reader.fieldnames or [])
         rows = cast(List[Dict[str, str]], list(reader))
     return rows, fieldnames
