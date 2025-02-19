@@ -171,9 +171,17 @@ class NoteOrder:
 @strawberry_django.filters.filter(models.Note)
 class NoteFilter:
     client: Optional[ID]
-    created_by: Optional[ID]
     is_submitted: auto
     organization: Optional[ID]
+
+    @strawberry_django.filter_field
+    def created_by(
+        self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str
+    ) -> Tuple[QuerySet[models.Note], Q]:
+        if value is None:
+            return queryset, Q()
+
+        return queryset.filter(created_by__in=value), Q()
 
     @strawberry_django.filter_field
     def search(

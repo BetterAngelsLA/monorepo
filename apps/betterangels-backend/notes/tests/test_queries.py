@@ -228,22 +228,29 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(returned_author["middleName"], "J.")
 
     @parametrize(
-        ("case_manager_label, client_label, org_label, is_submitted, expected_results_count, returned_note_labels"),
+        ("case_manager_labels, client_label, org_label, is_submitted, expected_results_count, returned_note_labels"),
         [
             # Filter by:
             # created by, client_label, and/or is_submitted
-            ("org_1_case_manager_1", None, None, None, 1, ["note"]),  # CM 1 created one note
-            ("org_2_case_manager_1", None, None, True, 1, ["note_3"]),  # Org 2 CM 1 submitted 1 note
-            ("org_1_case_manager_2", None, None, False, 1, ["note_2"]),  # CM 2 has one unsubmitted note
-            ("org_1_case_manager_1", "client_user_2", None, None, 0, []),  # CM 1 has no notes for client 2
+            (
+                ["org_1_case_manager_1", "org_1_case_manager_2"],
+                None,
+                None,
+                None,
+                2,
+                ["note", "note_2"],
+            ),  # CM 1 created one note
+            (["org_2_case_manager_1"], None, None, True, 1, ["note_3"]),  # Org 2 CM 1 submitted 1 note
+            (["org_1_case_manager_2"], None, None, False, 1, ["note_2"]),  # CM 2 has one unsubmitted note
+            (["org_1_case_manager_1"], "client_user_2", None, None, 0, []),  # CM 1 has no notes for client 2
             # CM 1 has one unsubmitted note for client 1
-            ("org_1_case_manager_1", "client_user_1", None, False, 1, ["note"]),
+            (["org_1_case_manager_1"], "client_user_1", None, False, 1, ["note"]),
             (None, None, "org_2", True, 1, ["note_3"]),  # There is one submitted note from org 2
         ],
     )
     def test_notes_query_filter(
         self,
-        case_manager_label: Optional[str],
+        case_manager_labels: Optional[list[str]],
         client_label: Optional[str],
         org_label: Optional[str],
         is_submitted: Optional[bool],
@@ -280,8 +287,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         filters: dict[str, Any] = {}
 
-        if case_manager_label:
-            filters["createdBy"] = self.user_map[case_manager_label].pk
+        if case_manager_labels:
+            filters["createdBy"] = [self.user_map[label].pk for label in case_manager_labels]
 
         if client_label:
             filters["client"] = getattr(self, client_label).pk
