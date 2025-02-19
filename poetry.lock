@@ -1272,17 +1272,17 @@ typing_extensions = ">=4.0.0"
 
 [[package]]
 name = "django-ckeditor-5"
-version = "0.2.16"
+version = "0.2.17"
 description = "CKEditor 5 for Django."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "django_ckeditor_5-0.2.16-py3-none-any.whl", hash = "sha256:1e7ef99b9b66f7f904df601158d102835d8113a22493b6de06adaabf2fbcb115"},
-    {file = "django_ckeditor_5-0.2.16.tar.gz", hash = "sha256:11a2e36d29ee6bd3bbcef18cc8fcd53107ba300af4e6157c0c3b6f4670248e4c"},
+    {file = "django_ckeditor_5-0.2.17-py3-none-any.whl", hash = "sha256:16d4113bad7a80a82046c461a6b5bd03592f5215dc1d10d85ee9481d9f6257b7"},
+    {file = "django_ckeditor_5-0.2.17.tar.gz", hash = "sha256:ce1ab6e21010d6742618275e237d042b1b15645dda3258f7e960b57e93268caf"},
 ]
 
 [package.dependencies]
-Django = ">=5.1.6"
+Django = ">=2.2"
 Pillow = "*"
 
 [package.extras]
@@ -2291,13 +2291,13 @@ files = [
 
 [[package]]
 name = "model-bakery"
-version = "1.20.1"
+version = "1.20.3"
 description = "Smart object creation facility for Django."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "model_bakery-1.20.1-py3-none-any.whl", hash = "sha256:eb3b4301e6a5620dac9a16d5d586796869bda05b958a95239fbccf69e79c3831"},
-    {file = "model_bakery-1.20.1.tar.gz", hash = "sha256:6b9dcdcdbbc65f6c1e0c61ebea173777020ddcdce52f3e21362ba7f6000f90fe"},
+    {file = "model_bakery-1.20.3-py3-none-any.whl", hash = "sha256:0309e68dc0a992b4788df5f6cb84e4619ab9f47614939cc19cf6c46de1fe4838"},
+    {file = "model_bakery-1.20.3.tar.gz", hash = "sha256:3534eae547c937d12287bcaec2b29ddffcd28a7b1571a1613ff7fe4e5c7bdd11"},
 ]
 
 [package.dependencies]
