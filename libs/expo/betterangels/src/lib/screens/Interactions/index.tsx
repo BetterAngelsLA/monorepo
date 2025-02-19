@@ -44,7 +44,9 @@ export default function Interactions() {
       pagination: { limit: paginationLimit, offset: offset },
       order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
       filters: {
-        // createdBy: filters.createdBy.map((item) => item.id),
+        // createdBy: filters.createdBy.length
+        //   ? filters.createdBy.map((item) => item.id)
+        //   : null,
         search: filterSearch,
         teams: filters.teams.length
           ? filters.teams.map((item) => item.id)
