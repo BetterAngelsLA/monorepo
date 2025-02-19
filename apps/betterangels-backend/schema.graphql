@@ -894,13 +894,14 @@ type NoteAttachmentType implements AttachmentInterface {
 
 input NoteFilter {
   client: ID
+  createdBy: ID
   isSubmitted: Boolean
   organization: ID
   AND: NoteFilter
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
-  createdBy: [ID!]
+  authors: [ID!]
   search: String
   teams: [SelahTeamEnum!]
 }
