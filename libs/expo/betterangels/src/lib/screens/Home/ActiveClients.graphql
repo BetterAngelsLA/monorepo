@@ -63,3 +63,47 @@ query ClientProfiles(
     }
   }
 }
+
+query ActiveClientProfilesPaginated(
+  $filters: ClientProfileFilter
+  $pagination: OffsetPaginationInput
+  $order: ClientProfileOrder
+) {
+  clientProfilesPaginated(
+    filters: $filters
+    pagination: $pagination
+    order: $order
+  ) {
+    totalCount
+    pageInfo {
+      limit
+      offset
+    }
+    results {
+      id
+      age
+      dateOfBirth
+      heightInInches
+      mailingAddress
+      nickname
+      residenceAddress
+      hmisProfiles {
+        id
+        agency
+        hmisId
+      }
+      profilePhoto {
+        name
+        url
+      }
+      user {
+        id
+        email
+        firstName
+        lastName
+        username
+      }
+      displayCaseManager # TODO: This shouldn't be here. Temporary fix while we figure out type generation.
+    }
+  }
+}
