@@ -4,7 +4,13 @@ import {
   ThreeDotIcon,
   UserOutlineIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  Radiuses,
+  Spacings,
+  TMarginProps,
+  getMarginStyles,
+} from '@monorepo/expo/shared/static';
 import {
   Avatar,
   IconButton,
@@ -14,37 +20,34 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
-import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
-import { HmisProfileType, Maybe } from '../apollo';
-import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
+import {
+  DimensionValue,
+  Pressable,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
+import { TFullClientProfile } from '../../apollo/graphql/types/clientProfile';
 
-type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-interface IClientCardProps {
-  client: ClientProfilesQuery['clientProfiles'][number] | undefined;
+export type TClientListCard = {};
+
+interface IClientCardProps extends TMarginProps {
+  client: TFullClientProfile;
   progress?: DimensionValue;
-  mb?: TSpacing;
-  mt?: TSpacing;
-  my?: TSpacing;
-  mx?: TSpacing;
-  ml?: TSpacing;
-  mr?: TSpacing;
   onPress?: () => void;
   select?: string;
   arrivedFrom?: string;
+  style?: ViewStyle[];
 }
 
-export default function ClientCard(props: IClientCardProps) {
+export default function ClientListCard(props: IClientCardProps) {
   const {
     client,
-    mb,
-    mt,
-    mr,
-    ml,
-    my,
-    mx,
     onPress,
     select = 'false',
     arrivedFrom,
+    style = {},
+    ...marginProps
   } = props;
 
   const router = useRouter();
@@ -58,17 +61,24 @@ export default function ClientCard(props: IClientCardProps) {
     const remainingInches = inches % 12;
     return `${feet}' ${remainingInches}"`;
   };
+
+  // TODO: FIX ANY
   const getLahsaHmisId = (
-    hmisProfiles: Maybe<HmisProfileType[] | undefined>
+    // hmisProfiles: Maybe<HmisProfileType[] | undefined>
+    hmisProfiles: any
   ) => {
-    return hmisProfiles?.find((profile) => profile?.agency === 'LAHSA')?.hmisId;
+    return hmisProfiles?.find((profile: any) => profile?.agency === 'LAHSA')
+      ?.hmisId;
   };
+
   const formattedHeight = client.heightInInches
     ? formatHeight(client.heightInInches)
     : null;
+
   const lahsaHmisId = client.hmisProfiles
     ? getLahsaHmisId(client.hmisProfiles)
     : null;
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -83,14 +93,10 @@ export default function ClientCard(props: IClientCardProps) {
       style={({ pressed }) => [
         styles.container,
         {
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
           backgroundColor: pressed ? Colors.GRAY_PRESSED : Colors.WHITE,
+          ...getMarginStyles(marginProps),
         },
+        style,
       ]}
     >
       <Avatar
@@ -106,6 +112,7 @@ export default function ClientCard(props: IClientCardProps) {
           {client.user.firstName} {client.user.lastName}{' '}
           {client.nickname && `(${client.nickname})`}
         </TextBold>
+
         {(client.dateOfBirth || formattedHeight) && (
           <View style={styles.row}>
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
@@ -115,6 +122,7 @@ export default function ClientCard(props: IClientCardProps) {
                 {client.age})
               </TextRegular>
             )}
+
             {!!client.dateOfBirth && !!client.heightInInches && (
               <TextRegular size="xs"> | </TextRegular>
             )}
@@ -123,12 +131,14 @@ export default function ClientCard(props: IClientCardProps) {
             )}
           </View>
         )}
+
         {!!client.residenceAddress && (
           <View style={styles.row}>
             <LocationDotIcon size="sm" mr="xxs" color={Colors.NEUTRAL_DARK} />
             <TextRegular size="xs">{client.residenceAddress}</TextRegular>
           </View>
         )}
+
         {!!lahsaHmisId && (
           <View style={styles.row}>
             <IdCardOutlineIcon size="sm" mr="xxs" color={Colors.NEUTRAL_DARK} />
@@ -136,6 +146,7 @@ export default function ClientCard(props: IClientCardProps) {
           </View>
         )}
       </View>
+
       <View style={{ justifyContent: 'center', position: 'relative' }}>
         {select === 'true' ? (
           <TextButton

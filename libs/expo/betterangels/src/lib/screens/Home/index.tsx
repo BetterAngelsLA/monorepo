@@ -1,3 +1,4 @@
+import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   Loading,
@@ -9,27 +10,21 @@ import {
 import { useRouter } from 'expo-router';
 import { ElementType, useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
-
-import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
+import { TFullClientProfile } from '../../apollo/graphql/types/clientProfile';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
-import {
-  ActiveClientProfilesPaginatedQuery,
-  useActiveClientProfilesPaginatedQuery,
-} from './__generated__/ActiveClients.generated';
+import { useActiveClientProfilesPaginatedQuery } from './__generated__/activeClients.query.generated';
 
 const paginationLimit = 20;
-type TClientProfile =
-  ActiveClientProfilesPaginatedQuery['clientProfilesPaginated']['results'];
 
 export default function Home({ Logo }: { Logo: ElementType }) {
   const router = useRouter();
-  const [currentClient, setCurrentClient] = useState<TClientProfile[number]>();
+  const [currentClient, setCurrentClient] = useState<TFullClientProfile>();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [totalCount, setTotalCount] = useState<number>(0);
 
-  const [clients, setClients] = useState<TClientProfile>([]);
+  const [clients, setClients] = useState<TFullClientProfile[]>([]);
   const { data, loading } = useActiveClientProfilesPaginatedQuery({
     variables: {
       filters: { isActive: true },

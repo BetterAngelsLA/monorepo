@@ -12,26 +12,21 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useEffect, useMemo, useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { Ordering } from '../../apollo';
+import { TFullClientProfile } from '../../apollo/graphql/types/clientProfile';
 import { useSnackbar } from '../../hooks';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
-import {
-  ClientProfilesPaginatedQuery,
-  useClientProfilesPaginatedQuery,
-  useCreateNoteMutation,
-} from './__generated__/Clients.generated';
-
-type TClientProfile =
-  ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'];
+import { useClientProfilesPaginatedQuery } from './__generated__/clientProfiles.query.generated';
+import { useCreateNoteMutation } from './__generated__/createNote.mutation.generated';
 
 const paginationLimit = 20;
 
 export default function Clients({ Logo }: { Logo: ElementType }) {
-  const [currentClient, setCurrentClient] = useState<TClientProfile[number]>();
+  const [currentClient, setCurrentClient] = useState<TFullClientProfile>();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [totalCount, setTotalCount] = useState<number>(0);
-  const [clients, setClients] = useState<TClientProfile>([]);
+  const [clients, setClients] = useState<TFullClientProfile[]>([]);
   const [filterSearch, setFilterSearch] = useState<string>('');
   const { data, loading } = useClientProfilesPaginatedQuery({
     variables: {
