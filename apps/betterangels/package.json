@@ -69,7 +69,8 @@
     "@nx/js": "*",
     "@types/google.maps": "*",
     "expo-updates": "*",
-    "@react-native-cookies/cookies": "*"
+    "@react-native-cookies/cookies": "*",
+    "remeda": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",
