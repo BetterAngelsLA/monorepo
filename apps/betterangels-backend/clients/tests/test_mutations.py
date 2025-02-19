@@ -98,7 +98,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "socialMediaProfiles": social_media_profile,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": user,
-            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
+            "veteranStatus": VeteranStatusEnum.YES.name,
             # TODO: remove after fe cutover to new field & type
             "tempVeteranStatus": None,
         }
@@ -227,7 +227,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "socialMediaProfiles": social_media_profiles,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": user,
-            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
+            "veteranStatus": VeteranStatusEnum.YES.name,
             # TODO: remove after fe cutover to new field & type
             "tempVeteranStatus": YesNoPreferNotToSayEnum.OTHER_THAN_HONORABLE.name,
         }
