@@ -901,6 +901,7 @@ input NoteFilter {
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
+  authors: [ID!]
   search: String
   teams: [SelahTeamEnum!]
 }
@@ -1067,7 +1068,6 @@ type Query {
   currentUser: UserType!
   availableOrganizations: [OrganizationType!]! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
-  activeClientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientProfilesPaginated(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)

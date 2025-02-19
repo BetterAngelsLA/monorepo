@@ -71,7 +71,8 @@
     "expo-updates": "*",
     "expo-document-picker": "*",
     "react-native-pdf": "*",
-    "@react-native-cookies/cookies": "*"
+    "@react-native-cookies/cookies": "*",
+    "remeda": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",
