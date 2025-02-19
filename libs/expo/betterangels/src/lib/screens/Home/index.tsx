@@ -9,36 +9,38 @@ import {
 import { useRouter } from 'expo-router';
 import { ElementType, useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
+import { uniqueBy } from 'remeda';
 
 import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
-  ClientProfilesQuery,
-  useClientProfilesQuery,
+  ActiveClientProfilesPaginatedQuery,
+  useActiveClientProfilesPaginatedQuery,
 } from './__generated__/ActiveClients.generated';
 
 const paginationLimit = 20;
+type TClientProfile =
+  ActiveClientProfilesPaginatedQuery['clientProfilesPaginated']['results'];
 
 export default function Home({ Logo }: { Logo: ElementType }) {
-  const [currentClient, setCurrentClient] =
-    useState<ClientProfilesQuery['clientProfiles'][number]>();
+  const router = useRouter();
+  const [currentClient, setCurrentClient] = useState<TClientProfile[number]>();
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [clients, setClients] = useState<ClientProfilesQuery['clientProfiles']>(
-    []
-  );
-  const { data, loading } = useClientProfilesQuery({
+  const [totalCount, setTotalCount] = useState<number>(0);
+
+  const [clients, setClients] = useState<TClientProfile>([]);
+  const { data, loading } = useActiveClientProfilesPaginatedQuery({
     variables: {
       filters: { isActive: true },
-      pagination: { limit: paginationLimit + 1, offset: offset },
+      pagination: { limit: paginationLimit, offset: offset },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const router = useRouter();
 
-  function loadMoreClients() {
+  async function loadMoreClients() {
     if (hasMore && !loading) {
       setOffset((prevOffset) => prevOffset + paginationLimit);
     }
@@ -53,85 +55,57 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfiles' in data)) return;
-
-    const clientsToShow = data.clientProfiles.slice(0, paginationLimit);
-    const isMoreAvailable = data.clientProfiles.length > clientsToShow.length;
+    if (!data || !('clientProfilesPaginated' in data)) {
+      return;
+    }
+    const { results, totalCount } = data.clientProfilesPaginated;
+    setTotalCount(totalCount);
 
     if (offset === 0) {
-      setClients(clientsToShow);
+      setClients(results);
     } else {
-      setClients((prevClients) => [...prevClients, ...clientsToShow]);
+      setClients((prevClients) =>
+        uniqueBy([...prevClients, ...results], (client) => client.id)
+      );
     }
 
-    setHasMore(isMoreAvailable);
+    setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT }}>
       <Header title="Home" Logo={Logo} />
-
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: Spacings.xs,
+          paddingHorizontal: Spacings.sm,
+          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+        }}
+      >
+        <TextMedium size="sm">
+          Displaying {clients.length} of {totalCount} Active Clients
+        </TextMedium>
+        <TextButton
+          accessibilityHint="goes to all clients list"
+          color={Colors.PRIMARY}
+          fontSize="sm"
+          regular={true}
+          title="All Clients"
+          onPress={() => router.navigate('/clients')}
+        />
+      </View>
       <FlatList
         style={{
           flex: 1,
           backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
           paddingBottom: 80,
-          paddingTop: Spacings.sm,
+          marginTop: Spacings.xs,
           paddingHorizontal: Spacings.sm,
         }}
         data={clients}
-        ListHeaderComponent={
-          <>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: Spacings.sm,
-              }}
-            >
-              <TextMedium size="lg">Active Clients</TextMedium>
-              <TextButton
-                accessibilityHint="goes to all active clients list"
-                color={Colors.PRIMARY}
-                fontSize="sm"
-                regular={true}
-                title="All Clients"
-                onPress={() => router.navigate('/clients')}
-              />
-            </View>
-            {!loading && clients.length < 1 && (
-              <View
-                style={{
-                  flexGrow: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  paddingVertical: Spacings.xl,
-                }}
-              >
-                <View
-                  style={{
-                    height: 90,
-                    width: 90,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: Radiuses.xxxl,
-                    backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-                    marginBottom: Spacings.md,
-                  }}
-                >
-                  <UserAddOutlineIcon size="2xl" color={Colors.PRIMARY} />
-                </View>
-                <TextBold mb="xs" size="sm">
-                  No Active Clients
-                </TextBold>
-                <TextRegular size="sm">
-                  Try adding a client or an interaction.
-                </TextRegular>
-              </View>
-            )}
-          </>
-        }
         renderItem={({ item: clientProfile }) =>
           clients ? (
             <ClientCard
@@ -148,6 +122,38 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         keyExtractor={(clientProfile) => clientProfile.id}
         onEndReached={loadMoreClients}
         onEndReachedThreshold={0.05}
+        ListHeaderComponent={
+          !loading && clients.length < 1 ? (
+            <View
+              style={{
+                flexGrow: 1,
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingVertical: Spacings.xl,
+              }}
+            >
+              <View
+                style={{
+                  height: 90,
+                  width: 90,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: Radiuses.xxxl,
+                  backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
+                  marginBottom: Spacings.md,
+                }}
+              >
+                <UserAddOutlineIcon size="2xl" color={Colors.PRIMARY} />
+              </View>
+              <TextBold mb="xs" size="sm">
+                No Active Clients
+              </TextBold>
+              <TextRegular size="sm">
+                Try adding a client or an interaction.
+              </TextRegular>
+            </View>
+          ) : null
+        }
         ListFooterComponent={renderFooter}
       />
       {currentClient && (
