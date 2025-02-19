@@ -4,40 +4,38 @@ import {
   BasicInput,
   Loading,
   TextBold,
+  TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ElementType, useEffect, useMemo, useState } from 'react';
-import { SectionList, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 import { Ordering } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
-  ClientProfilesQuery,
-  useClientProfilesQuery,
+  ClientProfilesPaginatedQuery,
+  useClientProfilesPaginatedQuery,
   useCreateNoteMutation,
 } from './__generated__/Clients.generated';
 
+type TClientProfile =
+  ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'];
+
 const paginationLimit = 20;
 
-interface IGroupedClients {
-  [key: string]: {
-    title: string;
-    data: ClientProfilesQuery['clientProfiles'];
-  };
-}
-
 export default function Clients({ Logo }: { Logo: ElementType }) {
-  const { title, select } = useLocalSearchParams();
-  const [search, setSearch] = useState<string>('');
-  const [filterSearch, setFilterSearch] = useState<string>('');
-  const [createNote] = useCreateNoteMutation();
+  const [currentClient, setCurrentClient] = useState<TClientProfile[number]>();
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { data, loading } = useClientProfilesQuery({
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [clients, setClients] = useState<TClientProfile>([]);
+  const [filterSearch, setFilterSearch] = useState<string>('');
+  const { data, loading } = useClientProfilesPaginatedQuery({
     variables: {
-      pagination: { limit: paginationLimit + 1, offset },
+      pagination: { limit: paginationLimit, offset },
       filters: {
         search: filterSearch,
       },
@@ -49,15 +47,14 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const [clients, setClients] = useState<IGroupedClients>({});
-  const [currentClient, setCurrentClient] =
-    useState<ClientProfilesQuery['clientProfiles'][number]>();
-  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
+  const { title, select } = useLocalSearchParams();
+  const [search, setSearch] = useState<string>('');
+  const [createNote] = useCreateNoteMutation();
   const { showSnackbar } = useSnackbar();
 
   const router = useRouter();
 
-  function loadMoreClients() {
+  async function loadMoreClients() {
     if (hasMore && !loading) {
       setOffset((prevOffset) => prevOffset + paginationLimit);
     }
@@ -106,7 +103,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
   useEffect(() => {
     setOffset(0);
-    setClients({});
+    setClients([]);
   }, [filterSearch]);
 
   const onChange = (e: string) => {
@@ -116,54 +113,28 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfiles' in data)) return;
+    if (!data || !('clientProfilesPaginated' in data)) return;
+    const { results, totalCount } = data.clientProfilesPaginated;
+    setTotalCount(totalCount);
 
-    const clientsToShow = data.clientProfiles.slice(0, paginationLimit);
-    const isMoreAvailable = data.clientProfiles.length > clientsToShow.length;
+    if (offset === 0) {
+      setClients(results);
+    } else {
+      setClients((prevClients) => {
+        // Merge new results with previous ones
+        const combined = [...prevClients, ...results];
 
-    const groupedContacts = clientsToShow.reduce(
-      (acc: IGroupedClients, client) => {
-        const firstLetter =
-          client.user.firstName?.charAt(0).toUpperCase() || '#';
-
-        if (!acc[firstLetter]) {
-          acc[firstLetter] = {
-            title: firstLetter,
-            data: [],
-          };
+        // Use a Map to track unique clients by id
+        const clientMap = new Map<string, (typeof combined)[number]>();
+        for (const client of combined) {
+          clientMap.set(client.id, client);
         }
-        acc[firstLetter].data.push(client);
-        return acc;
-      },
-      {}
-    );
-
-    setClients((prevClients) => {
-      if (offset === 0) {
-        return groupedContacts;
-      }
-
-      const mergedClients = { ...prevClients };
-
-      Object.keys(groupedContacts).forEach((key) => {
-        if (mergedClients[key]) {
-          mergedClients[key].data = [
-            ...mergedClients[key].data,
-            ...groupedContacts[key].data,
-          ];
-        } else {
-          mergedClients[key] = groupedContacts[key];
-        }
+        return Array.from(clientMap.values());
       });
+    }
 
-      return mergedClients;
-    });
-
-    setHasMore(isMoreAvailable);
+    setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
-
-  const sections = useMemo(() => Object.values(clients || {}), [clients]);
-  const hasClients = !loading && !!sections.length;
 
   return (
     <View style={{ flex: 1 }}>
@@ -182,7 +153,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           </TextBold>
         )}
         <BasicInput
-          mb="sm"
           icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
           value={search}
           placeholder="Search by name"
@@ -192,10 +162,23 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             setSearch('');
             setFilterSearch('');
             setOffset(0);
-            setClients({});
+            setClients([]);
           }}
         />
-        {search && !hasClients && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: Spacings.xs,
+            backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+          }}
+        >
+          <TextMedium size="sm">
+            Displaying {clients.length} of {totalCount} clients
+          </TextMedium>
+        </View>
+        {search && clients.length < 1 && (
           <View
             style={{
               flexGrow: 1,
@@ -224,12 +207,15 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             </TextRegular>
           </View>
         )}
-        {hasClients && (
-          <SectionList
+        {!!clients.length && (
+          <FlatList
             style={{
               flex: 1,
+              backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+              paddingBottom: 80,
+              marginTop: Spacings.xs,
             }}
-            sections={sections}
+            data={clients}
             renderItem={({ item: clientProfile }) =>
               clients ? (
                 <ClientCard
@@ -251,11 +237,6 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                 />
               ) : null
             }
-            renderSectionHeader={({ section: { title } }) => (
-              <TextBold mb="xs" size="sm">
-                {title}
-              </TextBold>
-            )}
             keyExtractor={(clientProfile) => clientProfile.id}
             onEndReached={loadMoreClients}
             onEndReachedThreshold={0.05}
