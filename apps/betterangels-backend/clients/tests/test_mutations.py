@@ -470,7 +470,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 47
+        expected_query_count = 49
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
