@@ -35,7 +35,6 @@ if TYPE_CHECKING:
 )
 class ServiceRequest(BaseModel):
     service = TextChoicesField(choices_enum=ServiceEnum)
-    custom_service = models.CharField(max_length=100, null=True, blank=True)
     service_other = models.CharField(max_length=100, null=True, blank=True)
     client = models.ForeignKey(
         "accounts.User",

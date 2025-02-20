@@ -45,7 +45,6 @@ class CreateNoteAttachmentInput:
 class ServiceRequestType:
     id: ID
     service: auto
-    custom_service: auto
     service_other: auto
     status: auto
     due_by: auto
@@ -59,7 +58,6 @@ class ServiceRequestType:
 class CreateServiceRequestInput:
     service: auto
     status: auto
-    custom_service: auto
     service_other: auto
     client: Optional[ID]
 
@@ -67,7 +65,6 @@ class CreateServiceRequestInput:
 @strawberry_django.input(models.ServiceRequest)
 class CreateNoteServiceRequestInput:
     service: auto
-    custom_service: Optional[str]
     service_other: Optional[str]
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
@@ -76,7 +73,6 @@ class CreateNoteServiceRequestInput:
 @strawberry_django.input(models.ServiceRequest, partial=True)
 class UpdateServiceRequestInput:
     id: ID
-    custom_service: auto
     service_other: auto
     status: auto
     due_by: auto
