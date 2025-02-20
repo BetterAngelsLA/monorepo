@@ -92,7 +92,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
               accessibilityHint="view pdf file"
               onPress={() =>
                 setFileView({
-                  content: <PdfViewer url={file.url} />,
+                  content: <PdfViewer url={file.url} cache={true} />,
                   title: originalFilename || '',
                 })
               }
