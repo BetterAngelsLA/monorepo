@@ -434,8 +434,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertEqual(validation_errors["message"], "Validation Errors")
         self.assertEqual(len(error_messages), 1)
-        self.assertEqual(error_messages[0]["field"], "email")
-        self.assertEqual(error_messages[0]["message"], "This email is already in use")
+        self.assertEqual(error_messages[0]["field"], "user")
+        self.assertEqual(error_messages[0]["location"], "email")
+        self.assertEqual(error_messages[0]["errorCode"], ErrorMessageEnum.EMAIL_IN_USE.name)
 
     def test_update_client_profile_duplicate_email_upper_mutation(self) -> None:
         dupe_email_upper = self.client_profile_2["user"]["email"].upper()
@@ -454,8 +455,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertEqual(validation_errors["message"], "Validation Errors")
         self.assertEqual(len(error_messages), 1)
-        self.assertEqual(error_messages[0]["field"], "email")
-        self.assertEqual(error_messages[0]["message"], "This email is already in use")
+        self.assertEqual(error_messages[0]["field"], "user")
+        self.assertEqual(error_messages[0]["location"], "email")
+        self.assertEqual(error_messages[0]["errorCode"], ErrorMessageEnum.EMAIL_IN_USE.name)
 
     def test_delete_client_profile_mutation(self) -> None:
         client_profile_id = self.client_profile_1["id"]
