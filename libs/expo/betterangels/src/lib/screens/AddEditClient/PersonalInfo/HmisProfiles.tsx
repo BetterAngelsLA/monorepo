@@ -88,11 +88,12 @@ export default function HmisProfiles() {
               placeholder="Enter HMIS ID"
               name={`hmisProfiles[${index}].hmisId`}
               control={control}
-              error={errors.hmisProfiles && !!errors.hmisProfiles[index]}
+              error={errors.hmisProfiles && !!errors.hmisProfiles?.[index]}
               errorMessage={
-                errors.hmisProfiles && errors.hmisProfiles[index]
+                errors?.hmisProfiles?.[index]?.hmisId?.message ||
+                (errors?.hmisProfiles?.[index]
                   ? 'Enter HMIS ID or remove this entry'
-                  : ''
+                  : '')
               }
               rules={{
                 required: true,
