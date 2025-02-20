@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, List, Optional, cast
 
 import phonenumber_field
@@ -106,6 +107,13 @@ def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = N
 
 def _validate_california_id(california_id: str) -> list[dict[str, Any]]:
     errors = []
+
+    california_id_pattern = r"^[A-Z]\d{7}$"
+    if not re.search(california_id_pattern, california_id):
+        errors.append(_build_error("californiaId", None, ErrorMessageEnum.INVALID_CA_ID.name))
+
+        # early return so we don't query for invalid ids
+        return errors
 
     if ClientProfile.objects.filter(california_id=california_id).exists():
         errors.append(_build_error("californiaId", None, ErrorMessageEnum.CA_ID_IN_USE.name))

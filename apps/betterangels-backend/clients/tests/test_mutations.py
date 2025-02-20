@@ -319,6 +319,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         variables.pop("id")
         variables["user"].pop("id")
 
+        variables["californiaId"] = "invalid_id"
+
         response = self._create_client_profile_fixture(variables)
         validation_errors = response["errors"][0]
         error_messages = validation_errors["extensions"]["errors"]
@@ -333,7 +335,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(error_messages[1]["errorCode"], ErrorMessageEnum.EMAIL_IN_USE.name)
         self.assertEqual(error_messages[2]["field"], "californiaId")
         self.assertEqual(error_messages[2]["location"], None)
-        self.assertEqual(error_messages[2]["errorCode"], ErrorMessageEnum.CA_ID_IN_USE.name)
+        self.assertEqual(error_messages[2]["errorCode"], ErrorMessageEnum.INVALID_CA_ID.name)
         self.assertEqual(error_messages[3]["field"], "contacts")
         self.assertEqual(error_messages[3]["location"], "0__phoneNumber")
         self.assertEqual(error_messages[3]["errorCode"], ErrorMessageEnum.INVALID_PHONE_NUMBER.name)
