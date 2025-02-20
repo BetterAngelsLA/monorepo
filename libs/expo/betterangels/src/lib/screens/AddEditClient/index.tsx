@@ -22,6 +22,7 @@ import {
   SocialMediaEnum,
   UpdateClientProfileInput,
 } from '../../apollo';
+import { parseValidationErrors } from '../../helpers/parseClientProfileErrors';
 import { useSnackbar } from '../../hooks';
 import { MainScrollContainer } from '../../ui-components';
 import { ClientProfilesDocument } from '../Clients/__generated__/Clients.generated';
@@ -62,38 +63,6 @@ const defaultSocialMedias = [
     platformUserId: '',
   },
 ];
-
-const ERROR_MESSAGE_MAP: Record<string, string> = {
-  EMAIL_IN_USE: 'User with this Email already exists',
-  NO_NAME_PROVIDED: 'Filling out one of the fields is required',
-  INVALID_PHONE_NUMBER: 'Please enter a valid 10-digit phone number',
-  HMIS_ID_IN_USE: 'HMIS ID in use by another client',
-};
-
-function parseValidationErrors(
-  errors: TValidationError[]
-): Record<string, string> {
-  const formErrors: Record<string, string> = {};
-  errors.forEach((error) => {
-    const message = ERROR_MESSAGE_MAP[error.errorCode];
-    let fieldKey: string;
-
-    if (error.location) {
-      if (error.location.includes('__')) {
-        const [index, subField] = error.location.split('__');
-        fieldKey = `${error.field}[${index}].${subField}`;
-      } else {
-        fieldKey = `${error.field}.${error.location}`;
-      }
-    } else {
-      fieldKey = error.field;
-    }
-
-    formErrors[fieldKey] = message;
-  });
-
-  return formErrors;
-}
 
 export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
@@ -243,16 +212,7 @@ export default function AddEditClient({ id }: { id?: string }) {
       }
 
       if (operationErrors) {
-        const formErrors = parseValidationErrors(operationErrors);
-        Object.entries(formErrors).forEach(([key, message]) => {
-          methods.setError(
-            key as keyof (UpdateClientProfileInput | CreateClientProfileInput),
-            {
-              type: 'manual',
-              message,
-            }
-          );
-        });
+        parseValidationErrors(operationErrors);
         return;
       }
 
