@@ -38,6 +38,12 @@ import {
   useUpdateClientProfileMutation,
 } from './__generated__/AddEditClient.generated';
 
+type TValidationError = {
+  field: string;
+  location: string | undefined;
+  errorCode: string;
+};
+
 const defaultSocialMedias = [
   {
     platform: SocialMediaEnum.Facebook,
@@ -56,6 +62,38 @@ const defaultSocialMedias = [
     platformUserId: '',
   },
 ];
+
+const ERROR_MESSAGE_MAP: Record<string, string> = {
+  EMAIL_IN_USE: 'User with this Email already exists',
+  NO_NAME_PROVIDED: 'Filling out one of the fields is required',
+  INVALID_PHONE_NUMBER: 'Please enter a valid 10-digit phone number',
+  HMIS_ID_IN_USE: 'HMIS ID in use by another client',
+};
+
+function parseValidationErrors(
+  errors: TValidationError[]
+): Record<string, string> {
+  const formErrors: Record<string, string> = {};
+  errors.forEach((error) => {
+    const message = ERROR_MESSAGE_MAP[error.errorCode];
+    let fieldKey: string;
+
+    if (error.location) {
+      if (error.location.includes('__')) {
+        const [index, subField] = error.location.split('__');
+        fieldKey = `${error.field}[${index}].${subField}`;
+      } else {
+        fieldKey = `${error.field}.${error.location}`;
+      }
+    } else {
+      fieldKey = error.field;
+    }
+
+    formErrors[fieldKey] = message;
+  });
+
+  return formErrors;
+}
 
 export default function AddEditClient({ id }: { id?: string }) {
   const checkId = id ? { variables: { id } } : { skip: true };
@@ -163,6 +201,7 @@ export default function AddEditClient({ id }: { id?: string }) {
     delete values.profilePhoto;
     try {
       let operationResult;
+      let operationErrors: TValidationError[] | undefined;
       if (id) {
         const input = {
           ...(values as UpdateClientProfileInput),
@@ -183,17 +222,33 @@ export default function AddEditClient({ id }: { id?: string }) {
               },
             },
           },
+          errorPolicy: 'all',
         });
 
         refetch();
         operationResult = updateResponse.data?.updateClientProfile;
+        operationErrors = updateResponse.errors?.[0].extensions?.['errors'];
+
+        if (operationErrors) {
+          const formErrors = parseValidationErrors(operationErrors);
+          Object.entries(formErrors).forEach(([key, message]) => {
+            methods.setError(key, {
+              type: 'manual',
+              message,
+            });
+          });
+          return;
+        }
       } else {
         const input = values as CreateClientProfileInput;
         const createResponse = await createClient({
           variables: { data: input as CreateClientProfileInput },
+          errorPolicy: 'all',
         });
         operationResult = createResponse.data?.createClientProfile;
+        operationErrors = createResponse.errors?.[0].extensions?.['errors'];
       }
+
       if (
         operationResult?.__typename === 'OperationInfo' &&
         operationResult.messages.length > 0
