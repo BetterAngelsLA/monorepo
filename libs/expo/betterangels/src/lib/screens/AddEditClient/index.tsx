@@ -227,18 +227,9 @@ export default function AddEditClient({ id }: { id?: string }) {
 
         refetch();
         operationResult = updateResponse.data?.updateClientProfile;
-        operationErrors = updateResponse.errors?.[0].extensions?.['errors'];
-
-        if (operationErrors) {
-          const formErrors = parseValidationErrors(operationErrors);
-          Object.entries(formErrors).forEach(([key, message]) => {
-            methods.setError(key, {
-              type: 'manual',
-              message,
-            });
-          });
-          return;
-        }
+        operationErrors = updateResponse.errors?.[0].extensions?.['errors'] as
+          | TValidationError[]
+          | undefined;
       } else {
         const input = values as CreateClientProfileInput;
         const createResponse = await createClient({
@@ -246,7 +237,23 @@ export default function AddEditClient({ id }: { id?: string }) {
           errorPolicy: 'all',
         });
         operationResult = createResponse.data?.createClientProfile;
-        operationErrors = createResponse.errors?.[0].extensions?.['errors'];
+        operationErrors = createResponse.errors?.[0].extensions?.['errors'] as
+          | TValidationError[]
+          | undefined;
+      }
+
+      if (operationErrors) {
+        const formErrors = parseValidationErrors(operationErrors);
+        Object.entries(formErrors).forEach(([key, message]) => {
+          methods.setError(
+            key as keyof (UpdateClientProfileInput | CreateClientProfileInput),
+            {
+              type: 'manual',
+              message,
+            }
+          );
+        });
+        return;
       }
 
       if (
