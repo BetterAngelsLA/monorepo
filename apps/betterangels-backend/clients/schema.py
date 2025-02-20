@@ -5,7 +5,6 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.utils import get_user_permission_group
-from clients.enums import HmisAgencyEnum
 from clients.models import (
     ClientContact,
     ClientProfile,
@@ -17,6 +16,7 @@ from clients.permissions import (
     ClientProfileImportRecordPermissions,
     ClientProfilePermissions,
 )
+from common.enums import ErrorMessageEnum
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, PhoneNumber
 from common.permissions.enums import AttachmentPermissions
@@ -51,6 +51,10 @@ from .types import (
 )
 
 
+def _build_error(field: str, location: Optional[str], error_code: str) -> dict:
+    return {"field": field, "location": location, "errorCode": error_code}
+
+
 def _format_graphql_error(error: Exception) -> str:
     if isinstance(error, GraphQLError) and hasattr(error, "extensions"):
         # Extract the custom error list if available.
@@ -75,7 +79,7 @@ def _validate_user_email(user_data: dict, user: Optional[User] = None) -> list[d
         return errors
 
     if User.objects.filter(email=email).exists():
-        errors.append({"field": "email", "message": "This email is already in use"})
+        errors.append(_build_error("user", "email", ErrorMessageEnum.EMAIL_IN_USE.name))
 
     return errors
 
@@ -95,7 +99,7 @@ def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = N
         return errors
 
     if user_name_cleared or user_name_untouched:
-        errors.append({"field": "full_name", "message": "At least one name field is required"})
+        errors.append(_build_error("nickname", None, ErrorMessageEnum.NO_NAME_PROVIDED.name))
 
     return errors
 
@@ -107,9 +111,7 @@ def _validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[st
         try:
             phonenumber_field.validators.validate_international_phonenumber(phone_number["number"])
         except ValidationError:
-            errors.append(
-                {"field": f"phone_numbers__{idx}__number", "message": "The phone number entered is not valid"}
-            )
+            errors.append(_build_error("phoneNumbers", f"{idx}__number", ErrorMessageEnum.INVALID_PHONE_NUMBER.name))
 
     return errors
 
@@ -124,16 +126,11 @@ def _validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[st
             HmisProfile.objects.exclude(**hmis_profile_id)
             .filter(
                 agency=hmis_profile["agency"],
-                hmis_id=hmis_profile["hmis_id"],
+                hmis_id__iexact=hmis_profile["hmis_id"],
             )
             .exists()
         ):
-            errors.append(
-                {
-                    "field": f"hmis_profiles__{idx}",
-                    "message": f"This {HmisAgencyEnum(hmis_profile["agency"]).label} HMIS ID is already in use",
-                }
-            )
+            errors.append(_build_error("hmisProfiles", f"{idx}__hmisId", ErrorMessageEnum.HMIS_ID_IN_USE.name))
 
     return errors
 
@@ -145,9 +142,7 @@ def _validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
         try:
             phonenumber_field.validators.validate_international_phonenumber(contact["phone_number"])
         except ValidationError:
-            errors.append(
-                {"field": f"contacts__{idx}__phone_number", "message": "The phone number entered is not valid"}
-            )
+            errors.append(_build_error("contacts", f"{idx}__phoneNumber", ErrorMessageEnum.INVALID_PHONE_NUMBER.name))
 
     return errors
 
