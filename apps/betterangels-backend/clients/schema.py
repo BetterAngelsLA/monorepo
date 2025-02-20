@@ -51,6 +51,10 @@ from .types import (
 )
 
 
+def _build_error(field: str, location: Optional[str], error_code: str) -> dict:
+    return {"field": field, "location": location, "errorCode": error_code}
+
+
 def _format_graphql_error(error: Exception) -> str:
     if isinstance(error, GraphQLError) and hasattr(error, "extensions"):
         # Extract the custom error list if available.
@@ -75,13 +79,7 @@ def _validate_user_email(user_data: dict, user: Optional[User] = None) -> list[d
         return errors
 
     if User.objects.filter(email=email).exists():
-        errors.append(
-            {
-                "field": "user",
-                "location": "email",
-                "errorCode": ErrorMessageEnum.EMAIL_IN_USE.name,
-            },
-        )
+        errors.append(_build_error("user", "email", ErrorMessageEnum.EMAIL_IN_USE.name))
 
     return errors
 
@@ -101,13 +99,7 @@ def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = N
         return errors
 
     if user_name_cleared or user_name_untouched:
-        errors.append(
-            {
-                "field": "nickname",
-                "location": None,
-                "errorCode": ErrorMessageEnum.NO_NAME_PROVIDED.name,
-            },
-        )
+        errors.append(_build_error("nickname", None, ErrorMessageEnum.NO_NAME_PROVIDED.name))
 
     return errors
 
@@ -119,13 +111,7 @@ def _validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[st
         try:
             phonenumber_field.validators.validate_international_phonenumber(phone_number["number"])
         except ValidationError:
-            errors.append(
-                {
-                    "field": "phoneNumbers",
-                    "location": f"{idx}__number",
-                    "errorCode": ErrorMessageEnum.INVALID_PHONE_NUMBER.name,
-                },
-            )
+            errors.append(_build_error("phoneNumbers", f"{idx}__number", ErrorMessageEnum.INVALID_PHONE_NUMBER.name))
 
     return errors
 
@@ -144,13 +130,7 @@ def _validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[st
             )
             .exists()
         ):
-            errors.append(
-                {
-                    "field": "hmisProfiles",
-                    "location": f"{idx}__hmisId",
-                    "errorCode": ErrorMessageEnum.HMIS_ID_IN_USE.name,
-                }
-            )
+            errors.append(_build_error("hmisProfiles", f"{idx}__hmisId", ErrorMessageEnum.HMIS_ID_IN_USE.name))
 
     return errors
 
@@ -162,13 +142,7 @@ def _validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
         try:
             phonenumber_field.validators.validate_international_phonenumber(contact["phone_number"])
         except ValidationError:
-            errors.append(
-                {
-                    "field": "contacts",
-                    "location": f"{idx}__phoneNumber",
-                    "errorCode": ErrorMessageEnum.INVALID_PHONE_NUMBER.name,
-                }
-            )
+            errors.append(_build_error("contacts", f"{idx}__phoneNumber", ErrorMessageEnum.INVALID_PHONE_NUMBER.name))
 
     return errors
 
