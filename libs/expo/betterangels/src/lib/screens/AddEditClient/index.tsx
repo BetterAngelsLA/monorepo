@@ -169,7 +169,6 @@ export default function AddEditClient({ id }: { id?: string }) {
     delete values.displayPronouns;
     delete values.profilePhoto;
     try {
-      let operationResult;
       let operationErrors: TValidationError[] | undefined;
       if (id) {
         const input = {
@@ -195,7 +194,6 @@ export default function AddEditClient({ id }: { id?: string }) {
         });
 
         refetch();
-        operationResult = updateResponse.data?.updateClientProfile;
         operationErrors = updateResponse.errors?.[0].extensions?.['errors'] as
           | TValidationError[]
           | undefined;
@@ -205,7 +203,6 @@ export default function AddEditClient({ id }: { id?: string }) {
           variables: { data: input as CreateClientProfileInput },
           errorPolicy: 'all',
         });
-        operationResult = createResponse.data?.createClientProfile;
         operationErrors = createResponse.errors?.[0].extensions?.['errors'] as
           | TValidationError[]
           | undefined;
@@ -216,34 +213,6 @@ export default function AddEditClient({ id }: { id?: string }) {
         return;
       }
 
-      if (
-        operationResult?.__typename === 'OperationInfo' &&
-        operationResult.messages.length > 0
-      ) {
-        const resultMessage = operationResult.messages[0].message;
-        if (resultMessage === 'User with this Email already exists.') {
-          methods.setError('user.email', {
-            type: 'manual',
-            message: 'User with this Email already exists.',
-          });
-
-          return;
-        }
-
-        if (
-          resultMessage ===
-          'California ID must be 1 letter followed by 7 numbers'
-        ) {
-          methods.setError('californiaId', {
-            type: 'manual',
-            message: 'CA ID must be 1 letter followed by 7 numbers',
-          });
-
-          return;
-        }
-
-        throw new Error(`Failed to update a client profile: ${resultMessage}`);
-      }
       if (id) {
         router.replace(`/client/${id}`);
       } else {
