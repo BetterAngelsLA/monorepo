@@ -1,37 +1,61 @@
+import { Colors } from '@monorepo/expo/shared/static';
 import * as FileSystem from 'expo-file-system';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Dimensions, View } from 'react-native';
+import { Dimensions, View } from 'react-native';
 import PDF from 'react-native-pdf';
+import Loading from '../Loading';
+import TextMedium from '../TextMedium';
 
 type TProps = {
   url?: string;
   cache?: boolean;
+  onError?: () => void;
 };
 
-export default function PdfViewer({ url, cache = true }: TProps) {
-  const [localPdfUri, setLocalPdfUri] = useState<string | null>(null);
+export default function PdfViewer(props: TProps) {
+  const { onError, url, cache } = props;
+
+  const [localFileUri, setLocalFileUri] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [hasError, setHasError] = useState<boolean>(false);
+
+  function onLoadError(err: any) {
+    setHasError(true);
+
+    console.error('PdfViewer Load Error:', err);
+
+    if (onError) {
+      onError();
+    }
+  }
 
   useEffect(() => {
+    setHasError(false);
+
     async function downloadAndSetPdf() {
-      if (!url) return;
+      if (!url) {
+        return;
+      }
 
       try {
         if (url.startsWith('file://')) {
-          setLocalPdfUri(url);
+          setLocalFileUri(url);
           setLoading(false);
+
           return;
         }
 
-        const fileUri = `${FileSystem.documentDirectory}temp.pdf`;
-        console.log(`Downloading PDF from ${url}...`);
+        const localDestinationUri = `${FileSystem.documentDirectory}temp.pdf`;
 
-        const { uri } = await FileSystem.downloadAsync(url, fileUri);
-        console.log(`PDF saved to: ${uri}`);
+        const { uri } = await FileSystem.downloadAsync(
+          url,
+          localDestinationUri
+        );
 
-        setLocalPdfUri(uri);
+        setLocalFileUri(uri);
+        setHasError(false);
       } catch (error) {
-        console.error('Failed to download PDF:', error);
+        onLoadError(error);
       } finally {
         setLoading(false);
       }
@@ -40,31 +64,66 @@ export default function PdfViewer({ url, cache = true }: TProps) {
     downloadAndSetPdf();
   }, [url]);
 
-  if (!url) return null;
+  if (!url) {
+    return null;
+  }
+
+  if (hasError) {
+    return <ErrorScreen />;
+  }
 
   if (loading) {
-    return <ActivityIndicator size="large" color="#0000ff" />;
+    return <LoadingScreen />;
   }
 
   return (
     <View style={{ flex: 1 }}>
       <PDF
-        source={{ uri: localPdfUri || url, cache }}
-        style={{ flex: 1, width: Dimensions.get('window').width }}
-        onLoadComplete={(numberOfPages, filePath) => {
-          console.log(`Number of pages: ${numberOfPages}`);
+        source={{
+          uri: localFileUri || url,
+          cache,
         }}
-        onPageChanged={(page, numberOfPages) => {
-          console.log('numberOfPages: ', numberOfPages);
-          console.log(`Current page: ${page}`);
+        style={{
+          flex: 1,
+          width: Dimensions.get('window').width,
         }}
-        onError={(error) => {
-          console.error('PDF Load Error:', error);
-        }}
-        onPressLink={(uri) => {
-          console.log(`Link pressed: ${uri}`);
-        }}
+        onError={onLoadError}
       />
+    </View>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Loading size="large" color={Colors.NEUTRAL_DARK} />
+    </View>
+  );
+}
+
+function ErrorScreen() {
+  return (
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <TextMedium
+        style={{
+          width: '80%',
+        }}
+        textAlign="center"
+      >
+        Sorry, there was a problem loading the PDF file.
+      </TextMedium>
     </View>
   );
 }
