@@ -5,10 +5,11 @@ export type TValidationError = {
 };
 
 export const ERROR_MESSAGE_MAP: Record<string, string> = {
-  CA_ID_IN_USE: 'California ID must be 1 letter followed by 7 numbers',
+  CA_ID_IN_USE: 'California ID in use by another client',
   EMAIL_IN_USE: 'User with this Email already exists',
   HMIS_ID_IN_USE: 'HMIS ID in use by another client',
   INVALID_PHONE_NUMBER: 'Please enter a valid 10-digit phone number',
+  INVALID_CA_ID: 'California ID must be 1 letter followed by 7 numbers',
   NO_NAME_PROVIDED: 'Filling out one of the fields is required',
 };
 
