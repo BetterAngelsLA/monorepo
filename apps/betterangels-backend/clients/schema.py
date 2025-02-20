@@ -5,7 +5,6 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.utils import get_user_permission_group
-from clients.enums import HmisAgencyEnum
 from clients.models import (
     ClientContact,
     ClientProfile,
