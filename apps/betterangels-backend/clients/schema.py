@@ -262,6 +262,16 @@ class Query:
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
+    # Data Import
+    @strawberry_django.field
+    def clientProfileImportRecordsBulk(self, source: str, sourceIds: List[str]) -> List[ClientProfileImportRecordType]:
+        """
+        Given a source (e.g. "SELAH") and a list of sourceIds, return the matching records.
+        Note: Only records that exist in the database will be returned.
+        """
+        qs = ClientProfileImportRecord.objects.filter(source_name=source, source_id__in=sourceIds, success=True)
+        return cast(List[ClientProfileImportRecordType], list(qs))
+
 
 @strawberry.type
 class Mutation:
@@ -496,6 +506,3 @@ class Mutation:
                 error_message=_format_graphql_error(e),
             )
         return cast(ClientProfileImportRecordType, record)
-
-
-# trigger build

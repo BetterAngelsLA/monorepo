@@ -14,9 +14,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 logger = logging.getLogger(__name__)
 
-GRAPHQL_URL = "http://localhost:8000/graphql"
-REST_LOGIN_URL = "http://localhost:8000/rest-auth/login/"
-
 
 def create_client_profile_data_import(client: GraphQLClient, source_file: str, notes: str) -> Dict[str, Any]:
     query = """
@@ -231,6 +228,10 @@ def map_value(
     return mapping.get(v, default)
 
 
+GRAPHQL_URL = "http://localhost:8000/graphql"
+REST_LOGIN_URL = "http://localhost:8000/rest-auth/login/"
+
+
 class Command(BaseCommand):
     help = "Import client profiles from a CSV file via GraphQL."
 
@@ -258,14 +259,6 @@ class Command(BaseCommand):
                 password=password,
             )
         except Exception as e:
-            self.stderr.write(
-                "Authentication failed. Please verify:\n"
-                "- Credentials are correct.\n"
-                "- REST login URL is correct and accessible.\n"
-                "- Login endpoint returns token under 'key' or 'token'.\n"
-                "- CSRF token is correctly set (or not required).\n"
-                "Test the login endpoint with curl or Postman."
-            )
             raise CommandError(f"Authentication failed: {e}")
 
         import_job = create_client_profile_data_import(

@@ -45,7 +45,6 @@ class CreateNoteAttachmentInput:
 class ServiceRequestType:
     id: ID
     service: auto
-    custom_service: auto
     service_other: auto
     status: auto
     due_by: auto
@@ -59,7 +58,6 @@ class ServiceRequestType:
 class CreateServiceRequestInput:
     service: auto
     status: auto
-    custom_service: auto
     service_other: auto
     client: Optional[ID]
 
@@ -67,7 +65,6 @@ class CreateServiceRequestInput:
 @strawberry_django.input(models.ServiceRequest)
 class CreateNoteServiceRequestInput:
     service: auto
-    custom_service: Optional[str]
     service_other: Optional[str]
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
@@ -76,7 +73,6 @@ class CreateNoteServiceRequestInput:
 @strawberry_django.input(models.ServiceRequest, partial=True)
 class UpdateServiceRequestInput:
     id: ID
-    custom_service: auto
     service_other: auto
     status: auto
     due_by: auto
@@ -253,10 +249,14 @@ class NoteType:
 @strawberry_django.input(models.Note)
 class CreateNoteInput:
     purpose: auto
+    team: Optional[SelahTeamEnum]
     title: Optional[str]
+    location: Optional[ID]
     public_details: auto
     private_details: auto
     client: Optional[ID]
+    is_submitted: auto
+    interacted_at: auto
 
 
 @strawberry_django.input(models.Note, partial=True)
@@ -317,3 +317,40 @@ class InteractionAuthorType:
     first_name: auto
     last_name: auto
     middle_name: auto
+
+
+# Data Import
+@strawberry_django.input(models.NoteDataImport)
+class CreateNoteDataImportInput:
+    source_file: str
+    notes: str
+
+
+@strawberry_django.input(models.NoteImportRecord)
+class ImportNoteInput:
+    import_job_id: auto
+    source_id: auto
+    source_name: auto
+    raw_data: auto
+    note: CreateNoteInput
+
+
+# Output types for note import
+@strawberry_django.type(models.NoteDataImport)
+class NoteDataImportType:
+    id: auto
+    imported_at: auto
+    source_file: auto
+    notes: auto
+    imported_by: auto
+
+
+@strawberry_django.type(models.NoteImportRecord)
+class NoteImportRecordType:
+    id: auto
+    source_id: auto
+    source_name: auto
+    success: auto
+    error_message: auto
+    created_at: auto
+    note: Optional[NoteType]
