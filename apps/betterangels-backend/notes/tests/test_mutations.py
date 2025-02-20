@@ -238,7 +238,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "service": "BLANKET",
             "serviceOther": None,
-            "customService": None,
             "noteId": self.note["id"],
             "serviceRequestType": service_request_type,
         }
@@ -254,7 +253,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "service": "BLANKET",
             "status": expected_status,
             "serviceOther": None,
-            "customService": None,
             "dueBy": None,
             "completedOn": ANY,
             "client": self.note["client"],
@@ -287,7 +285,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "service": "OTHER",
             "serviceOther": "Other Service",
-            "customService": "Other Service",
             "noteId": self.note["id"],
             "serviceRequestType": service_request_type,
         }
@@ -303,7 +300,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "service": "OTHER",
             "status": expected_status,
             "serviceOther": "Other Service",
-            "customService": "Other Service",
             "dueBy": None,
             "completedOn": ANY,
             "client": self.note["client"],
@@ -335,7 +331,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "service": "BLANKET",
             "serviceOther": None,
-            "customService": None,
             "noteId": self.note["id"],
             "serviceRequestType": service_request_type,
         }
@@ -984,7 +979,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "BLANKET",
                 "serviceOther": None,
-                "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
             }
@@ -993,7 +987,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "WATER",
                 "serviceOther": None,
-                "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
             }
@@ -1009,7 +1002,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "CLOTHES",
                 "serviceOther": None,
-                "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
             }
@@ -1019,7 +1011,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "FOOD",
                 "serviceOther": None,
-                "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
             }
@@ -1067,7 +1058,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "OTHER",
                 "serviceOther": "Other Service",
-                "customService": "Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
             }
@@ -1076,7 +1066,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "OTHER",
                 "serviceOther": "Other Service",
-                "customService": "Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
             }
@@ -1090,7 +1079,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "OTHER",
                 "serviceOther": "Discarded Other Service",
-                "customService": "Discarded Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
             }
@@ -1100,7 +1088,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "OTHER",
                 "serviceOther": "Discarded Other Service",
-                "customService": "Discarded Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
             }
@@ -1295,7 +1282,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "BLANKET",
                 "serviceOther": None,
-                "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
             }
@@ -1304,7 +1290,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "WATER",
                 "serviceOther": None,
-                "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
             }
@@ -1317,7 +1302,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "CLOTHES",
                 "serviceOther": None,
-                "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
             }
@@ -1327,7 +1311,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "FOOD",
                 "serviceOther": None,
-                "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
             }
@@ -1379,7 +1362,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "OTHER",
                 "serviceOther": "Other Service",
-                "customService": "Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
             }
@@ -1388,7 +1370,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "OTHER",
                 "serviceOther": "Other Service",
-                "customService": "Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
             }
@@ -1399,7 +1380,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "OTHER",
                 "serviceOther": "Retrieved Other Service",
-                "customService": "Retrieved Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
             }
@@ -1409,7 +1389,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "OTHER",
                 "serviceOther": "Retrieved Other Service",
-                "customService": "Retrieved Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
             }
@@ -1579,7 +1558,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "OTHER",
                 "serviceOther": "Other Provided Service",
-                "customService": "Other Provided Service",
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
             }
@@ -1589,7 +1567,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "service": "BLANKET",
                 "serviceOther": None,
-                "customService": None,
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
             }
@@ -1602,7 +1579,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self._update_service_request_fixture(
             {
                 "id": provided_service["id"],
-                "customService": "Discarded Provided Service Title",
                 "serviceOther": "Discarded Provided Service Title",
             }
         )
@@ -1619,7 +1595,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             providedServices {
                 id
                 serviceOther
-                customService
             }
             requestedServices {
                 id
@@ -1633,7 +1608,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["providedServices"][0]["serviceOther"], "Other Provided Service")
-        self.assertEqual(reverted_note["providedServices"][0]["customService"], "Other Provided Service")
         self.assertEqual(reverted_note["requestedServices"][0]["status"], "TO_DO")
         self.assertEqual(reverted_note["requestedServices"][0]["dueBy"], None)
 
@@ -1740,7 +1714,6 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "id": ANY,
             "service": "BLANKET",
             "serviceOther": None,
-            "customService": None,
             "dueBy": None,
             "completedOn": None,
             "status": "TO_DO",
@@ -1768,7 +1741,6 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "id": self.service_request["id"],
             "service": "BLANKET",
             "serviceOther": None,
-            "customService": None,
             "status": "COMPLETED",
             "dueBy": "2024-03-11T11:12:13+00:00",
             "completedOn": "2024-03-11T12:34:56+00:00",
@@ -1794,7 +1766,6 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "id": self.service_request["id"],
             "service": "BLANKET",
             "serviceOther": None,
-            "customService": None,
             "status": "TO_DO",
             "dueBy": None,
             "completedOn": None,

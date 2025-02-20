@@ -63,7 +63,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 id
                 service
                 serviceOther
-                customService
                 dueBy
                 status
             }
@@ -71,7 +70,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 id
                 service
                 serviceOther
-                customService
                 dueBy
                 status
             }
@@ -369,7 +367,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         id
                         service
                         serviceOther
-                        customService
                         status
                         dueBy
                         completedOn
@@ -518,7 +515,6 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
                         id
                         service
                         serviceOther
-                        customService
                         status
                         dueBy
                         completedOn

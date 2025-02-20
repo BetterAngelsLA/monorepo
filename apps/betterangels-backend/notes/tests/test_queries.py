@@ -111,7 +111,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     "id": str(self.provided_services[0].id),
                     "service": ServiceEnum(self.provided_services[0].service).name,
                     "serviceOther": self.provided_services[0].service_other,
-                    "customService": self.provided_services[0].custom_service,
                     "dueBy": self.provided_services[0].due_by,
                     "status": ServiceRequestStatusEnum(self.provided_services[0].status).name,
                 },
@@ -119,7 +118,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     "id": str(self.provided_services[1].id),
                     "service": ServiceEnum(self.provided_services[1].service).name,
                     "serviceOther": self.provided_services[1].service_other,
-                    "customService": self.provided_services[1].custom_service,
                     "dueBy": self.provided_services[1].due_by,
                     "status": ServiceRequestStatusEnum(self.provided_services[1].status).name,
                 },
@@ -129,7 +127,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     "id": str(self.requested_services[0].id),
                     "service": ServiceEnum(self.requested_services[0].service).name,
                     "serviceOther": self.requested_services[0].service_other,
-                    "customService": self.requested_services[0].custom_service,
                     "dueBy": self.requested_services[0].due_by,
                     "status": ServiceRequestStatusEnum(self.requested_services[0].status).name,
                 },
@@ -137,7 +134,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     "id": str(self.requested_services[1].id),
                     "service": ServiceEnum(self.requested_services[1].service).name,
                     "serviceOther": self.requested_services[1].service_other,
-                    "customService": self.requested_services[1].custom_service,
                     "dueBy": self.requested_services[1].due_by,
                     "status": ServiceRequestStatusEnum(self.requested_services[1].status).name,
                 },
@@ -721,7 +717,6 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     id
                     service
                     serviceOther
-                    customService
                     status
                     dueBy
                     completedOn
@@ -746,7 +741,6 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "id": service_request_id,
             "service": self.service_request["service"],
             "serviceOther": None,
-            "customService": None,
             "status": "COMPLETED",
             "dueBy": None,
             "completedOn": "2024-03-11T10:11:12+00:00",
@@ -764,7 +758,6 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     id
                     service
                     serviceOther
-                    customService
                     status
                     dueBy
                     completedOn
