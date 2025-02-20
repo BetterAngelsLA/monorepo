@@ -3,7 +3,6 @@ import {
   BaseModal,
   ImageViewer,
   Loading,
-  PdfViewer,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -14,7 +13,11 @@ import { StyleSheet, View } from 'react-native';
 import { AttachmentType } from '../../apollo';
 import { MimeTypes } from '../../static';
 import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
-import { FileThumbnail, MainContainer } from '../../ui-components';
+import {
+  FileThumbnail,
+  MainContainer,
+  WebBrowserLink,
+} from '../../ui-components';
 import { useClientDocumentQuery } from './__generated__/Document.generated';
 import { fileDisplaySizeMap } from './fileDisplaySizeMap';
 
@@ -85,18 +88,14 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
           )}
 
           {isPdf && (
-            <FileThumbnail
-              uri={file.url}
-              mimeType={mimeType}
-              thumbnailSize={fileDisplaySizeMap[namespace]}
-              accessibilityHint="view pdf file"
-              onPress={() =>
-                setFileView({
-                  content: <PdfViewer url={file.url} />,
-                  title: originalFilename || '',
-                })
-              }
-            />
+            <WebBrowserLink href={file.url} accessibilityHint="view pdf file">
+              <FileThumbnail
+                uri={file.url}
+                mimeType={mimeType}
+                thumbnailSize={fileDisplaySizeMap[namespace]}
+                accessibilityHint="view pdf file"
+              />
+            </WebBrowserLink>
           )}
 
           {!isImage && !isPdf && (
