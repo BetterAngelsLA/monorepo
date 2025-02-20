@@ -28,6 +28,14 @@ export type NotesPaginatedQueryVariables = Types.Exact<{
 
 export type NotesPaginatedQuery = { __typename?: 'Query', notesPaginated: { __typename?: 'NoteTypeOffsetPaginated', totalCount: number, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number }, results: Array<{ __typename?: 'NoteType', id: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, client?: { __typename?: 'UserType', id: string, email?: string | null, username: string, firstName?: string | null, lastName?: string | null } | null, createdBy: { __typename?: 'UserType', id: string, email?: string | null, username: string, firstName?: string | null, lastName?: string | null } }> } };
 
+export type InteractionAuthorsQueryVariables = Types.Exact<{
+  filters?: Types.InputMaybe<Types.InteractionAuthorFilter>;
+  pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
+}>;
+
+
+export type InteractionAuthorsQuery = { __typename?: 'Query', interactionAuthors: { __typename?: 'InteractionAuthorTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'InteractionAuthorType', firstName?: string | null, id: string, lastName?: string | null, middleName?: string | null }>, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number } } };
+
 
 export const NotesDocument = gql`
     query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput, $order: NoteOrder) {
@@ -300,3 +308,54 @@ export type NotesPaginatedQueryHookResult = ReturnType<typeof useNotesPaginatedQ
 export type NotesPaginatedLazyQueryHookResult = ReturnType<typeof useNotesPaginatedLazyQuery>;
 export type NotesPaginatedSuspenseQueryHookResult = ReturnType<typeof useNotesPaginatedSuspenseQuery>;
 export type NotesPaginatedQueryResult = Apollo.QueryResult<NotesPaginatedQuery, NotesPaginatedQueryVariables>;
+export const InteractionAuthorsDocument = gql`
+    query InteractionAuthors($filters: InteractionAuthorFilter, $pagination: OffsetPaginationInput) {
+  interactionAuthors(filters: $filters, pagination: $pagination) {
+    totalCount
+    results {
+      firstName
+      id
+      lastName
+      middleName
+    }
+    pageInfo {
+      limit
+      offset
+    }
+  }
+}
+    `;
+
+/**
+ * __useInteractionAuthorsQuery__
+ *
+ * To run a query within a React component, call `useInteractionAuthorsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useInteractionAuthorsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useInteractionAuthorsQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *      pagination: // value for 'pagination'
+ *   },
+ * });
+ */
+export function useInteractionAuthorsQuery(baseOptions?: Apollo.QueryHookOptions<InteractionAuthorsQuery, InteractionAuthorsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<InteractionAuthorsQuery, InteractionAuthorsQueryVariables>(InteractionAuthorsDocument, options);
+      }
+export function useInteractionAuthorsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<InteractionAuthorsQuery, InteractionAuthorsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<InteractionAuthorsQuery, InteractionAuthorsQueryVariables>(InteractionAuthorsDocument, options);
+        }
+export function useInteractionAuthorsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<InteractionAuthorsQuery, InteractionAuthorsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<InteractionAuthorsQuery, InteractionAuthorsQueryVariables>(InteractionAuthorsDocument, options);
+        }
+export type InteractionAuthorsQueryHookResult = ReturnType<typeof useInteractionAuthorsQuery>;
+export type InteractionAuthorsLazyQueryHookResult = ReturnType<typeof useInteractionAuthorsLazyQuery>;
+export type InteractionAuthorsSuspenseQueryHookResult = ReturnType<typeof useInteractionAuthorsSuspenseQuery>;
+export type InteractionAuthorsQueryResult = Apollo.QueryResult<InteractionAuthorsQuery, InteractionAuthorsQueryVariables>;
