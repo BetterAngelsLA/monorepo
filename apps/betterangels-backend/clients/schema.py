@@ -104,6 +104,15 @@ def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = N
     return errors
 
 
+def _validate_california_id(california_id: str) -> list[dict[str, Any]]:
+    errors = []
+
+    if ClientProfile.objects.filter(california_id=california_id).exists():
+        errors.append(_build_error("californiaId", None, ErrorMessageEnum.CA_ID_IN_USE.name))
+
+    return errors
+
+
 def _validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str, Any]]:
     errors = []
 
@@ -157,6 +166,9 @@ def _validate_client_profile_data(data: dict) -> None:
 
         errors += _validate_user_name(data["user"], data["nickname"], user)
         errors += _validate_user_email(data["user"], user)
+
+    if data["california_id"] is not strawberry.UNSET:
+        errors += _validate_california_id(data["california_id"])
 
     if data["contacts"] is not strawberry.UNSET:
         errors += _validate_contacts(data["contacts"])
