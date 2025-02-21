@@ -7,6 +7,7 @@ from clients.enums import HmisAgencyEnum
 from clients.models import ClientProfile
 from clients.schema import (
     validate_california_id,
+    validate_contacts,
     validate_hmis_profiles,
     validate_phone_numbers,
     validate_user_email,
@@ -195,5 +196,42 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(errors[0]["location"], "1__hmisId")
         self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.HMIS_ID_IN_USE.name)
 
-    # def test_validate_contacts(self) -> None:
-    #     pass
+    @parametrize(
+        "contacts, expected_locations, expected_error_count",
+        [
+            (
+                [
+                    {"phone_number": "2125551212"},
+                    {"phone_number": "2125551213"},
+                    {"phone_number": "2125551214"},
+                ],
+                None,
+                0,
+            ),
+            (
+                [
+                    {"phone_number": "2005551212"},
+                    {"phone_number": "2125551212"},
+                    {"phone_number": "212555121"},
+                ],
+                ["0__phoneNumber", "2__phoneNumber"],
+                2,
+            ),
+            ([{"phone_number": "2125551212"}], None, 0),
+        ],
+    )
+    def test_validate_contacts(
+        self,
+        contacts: list[dict[str, str]],
+        expected_locations: Optional[list[str]],
+        expected_error_count: int,
+    ) -> None:
+        contact_dicts = [{"phone_number": c["phone_number"]} for c in contacts]
+
+        errors = validate_contacts(contact_dicts)
+        self.assertEqual(len(errors), expected_error_count)
+        if expected_error_count:
+            assert expected_locations
+            for error, location in zip(errors, expected_locations):
+                self.assertEqual(error["errorCode"], ErrorMessageEnum.INVALID_PHONE_NUMBER.name)
+                self.assertEqual(error["location"], location)
