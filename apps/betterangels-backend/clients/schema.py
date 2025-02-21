@@ -82,7 +82,7 @@ def _validate_user_email(email: str, user: Optional[User] = None) -> list[dict[s
     return errors
 
 
-def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = None) -> list[dict[str, Any]]:
+def validate_user_name(user_data: dict, nickname: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
     errors: list = []
 
     user_name_dict = {
@@ -97,7 +97,7 @@ def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = N
         return errors
 
     if user_name_cleared or user_name_not_set:
-        errors.append(_build_error("nickname", None, ErrorMessageEnum.NO_NAME_PROVIDED.name))
+        errors.append({"field": "nickname", "location": None, "errorCode": ErrorMessageEnum.NO_NAME_PROVIDED.name})
 
     return errors
 
@@ -179,15 +179,16 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
         errors += california_id_errors
 
     if user_data := data.get("user"):
-        if data["user"].get("email") == "":
-            data["user"]["email"] = None
-
-        user_id = data["user"].get("id", None)
+        user_id = user_data.get("id", None)
         user = User.objects.filter(id=user_id).first() if user_id else None
 
-        errors += _validate_user_name(data["user"], data["nickname"], user)
-        if email := user_data.get("email"):
-            errors += _validate_user_email(email, user)
+        errors += validate_user_name(user_data, data["nickname"], user)
+
+        # if email := user_data.get("email"):
+        #     errors += _validate_user_email(email, user)
+
+        # if data["user"].get("email") == "":
+        #     data["user"]["email"] = None
 
     if data.get("contacts"):
         errors += _validate_contacts(data["contacts"])
