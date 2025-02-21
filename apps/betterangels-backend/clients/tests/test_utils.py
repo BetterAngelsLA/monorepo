@@ -1,11 +1,13 @@
-from typing import Optional
+from typing import Any, Optional
 
 import phonenumber_field
 import strawberry
 from accounts.models import User
+from clients.enums import HmisAgencyEnum
 from clients.models import ClientProfile
 from clients.schema import (
     validate_california_id,
+    validate_hmis_profiles,
     validate_phone_numbers,
     validate_user_email,
     validate_user_name,
@@ -148,8 +150,50 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
                 self.assertEqual(error["errorCode"], expected_error_code)
                 self.assertEqual(error["location"], location)
 
-    # def test_validate_hmis_profiles(self) -> None:
-    #     pass
+    @parametrize(
+        "hmis_profiles, expected_locations, expected_error_count",
+        [
+            ([{"agency": HmisAgencyEnum.PASADENA, "hmis_id": "4lign24"}], None, 0),
+            (
+                [
+                    {"agency": HmisAgencyEnum.LAHSA, "hmis_id": "HMISidLAHSA1"},
+                    {"agency": HmisAgencyEnum.PASADENA, "hmis_id": "yu635fbg"},
+                    {"agency": HmisAgencyEnum.PASADENA, "hmis_id": "HMISidPASADENA1"},
+                ],
+                ["0__hmisId", "2__hmisId"],
+                2,
+            ),
+        ],
+    )
+    def test_validate_hmis_profiles(
+        self,
+        hmis_profiles: list[dict[str, Any]],
+        expected_locations: list[str],
+        expected_error_count: int,
+    ) -> None:
+        errors = validate_hmis_profiles(hmis_profiles)
+        self.assertEqual(len(errors), expected_error_count)
+        if expected_error_count:
+            for error, location in zip(errors, expected_locations):
+                self.assertEqual(error["location"], location)
+                self.assertEqual(error["errorCode"], ErrorMessageEnum.HMIS_ID_IN_USE.name)
+
+    def test_validate_hmis_profiles_update_existing(self) -> None:
+        hmis_profiles = [
+            {
+                "id": self.client_profile_1["hmisProfiles"][0]["id"],
+                "agency": HmisAgencyEnum[self.client_profile_1["hmisProfiles"][0]["agency"]],
+                "hmis_id": self.client_profile_1["hmisProfiles"][0]["hmisId"],
+            },
+            {
+                "agency": HmisAgencyEnum[self.client_profile_1["hmisProfiles"][0]["agency"]],
+                "hmis_id": self.client_profile_1["hmisProfiles"][0]["hmisId"],
+            },
+        ]
+        errors = validate_hmis_profiles(hmis_profiles)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0]["location"], "1__hmisId")
+        self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.HMIS_ID_IN_USE.name)
 
     # def test_validate_contacts(self) -> None:
     #     pass

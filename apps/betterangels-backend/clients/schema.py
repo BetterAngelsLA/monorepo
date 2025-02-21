@@ -145,7 +145,9 @@ def validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str
     errors = []
 
     for idx, hmis_profile in enumerate(hmis_profiles):
-        hmis_profile_id = {"id": hmis_profile["id"]} if hmis_profile.get("id") is not strawberry.UNSET else {}
+        # exclude the current hmis profile from the query,
+        # so we're not flagging the current profile as a duplicate
+        hmis_profile_id = {"id": hmis_profile["id"]} if hmis_profile.get("id") else {}
 
         if (
             HmisProfile.objects.exclude(**hmis_profile_id)
