@@ -68,19 +68,17 @@ def validate_user_email(
 ) -> tuple[Optional[str], list[dict[str, Any]]]:
     errors: list = []
 
-    if email == "":
-        email = None
+    if email in [None, ""]:
+        return None, errors
 
+    email: str
+    email = email.lower()
+
+    if user and user.email and user.email == email:
         return email, errors
 
-    if email is not None:
-        email = email.lower()
-
-        if user and user.email and user.email == email:
-            return email, errors
-
-        if User.objects.filter(email__iexact=email).exists():
-            errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_IN_USE.name})
+    if User.objects.filter(email__iexact=email).exists():
+        errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_IN_USE.name})
 
     return email, errors
 
@@ -88,9 +86,7 @@ def validate_user_email(
 def validate_user_name(user_data: dict, nickname: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
     errors: list = []
 
-    user_name_dict = {
-        f"{name_field}": user_data.get(name_field) for name_field in ["first_name", "last_name", "middle_name"]
-    }
+    user_name_dict = {k: v for k, v in user_data.items() if k in ["first_name", "last_name", "middle_name"]}
     user_name_dict["nickname"] = nickname
 
     user_name_not_set = all((v is strawberry.UNSET for v in user_name_dict.values()))
@@ -108,26 +104,21 @@ def validate_user_name(user_data: dict, nickname: Optional[str], user: Optional[
 def validate_california_id(california_id: Optional[str]) -> tuple[Optional[str], list[dict[str, Any]]]:
     errors: list = []
 
-    if california_id == strawberry.UNSET:
+    if california_id in ["", None]:
+        return None, errors
+
+    california_id: str
+    california_id = california_id.upper()
+
+    california_id_pattern = r"^[A-Z]\d{7}$"
+    if not re.search(california_id_pattern, california_id):
+        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.INVALID_CA_ID.name})
+
+        # early return so we don't query for invalid ids
         return california_id, errors
 
-    if california_id == "":
-        california_id = None
-
-        return california_id, errors
-
-    if california_id is not None:
-        california_id = california_id.upper()
-
-        california_id_pattern = r"^[A-Z]\d{7}$"
-        if not re.search(california_id_pattern, california_id):
-            errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.INVALID_CA_ID.name})
-
-            # early return so we don't query for invalid ids
-            return california_id, errors
-
-        if ClientProfile.objects.filter(california_id__iexact=california_id).exists():
-            errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_IN_USE.name})
+    if ClientProfile.objects.filter(california_id__iexact=california_id).exists():
+        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_IN_USE.name})
 
     return california_id, errors
 

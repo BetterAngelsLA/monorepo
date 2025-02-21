@@ -32,31 +32,35 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
     def test_validate_user_email(
         self, email: Optional[str], expected_email: None, expected_error_code: Optional[ErrorMessageEnum]
     ) -> None:
-        returned_email, returned_error = validate_user_email(email)
+        returned_email, returned_errors = validate_user_email(email)
 
         self.assertEqual(returned_email, expected_email)
+
         if expected_error_code:
-            self.assertEqual(returned_error[0]["errorCode"], expected_error_code)
+            self.assertEqual(len(returned_errors), 1)
+            self.assertEqual(returned_errors[0]["errorCode"], expected_error_code)
+        else:
+            self.assertEqual(len(returned_errors), 0)
 
     def test_validate_user_name_create_not_set(self) -> None:
-        """Verify that creating a client profile with all name fields unset returns an error.
+        """Verify that creating a client profile with all name fields unset returns an error."""
+        user_data = {
+            "first_name": strawberry.UNSET,
+            "last_name": strawberry.UNSET,
+            "middle_name": strawberry.UNSET,
+        }
+        nickname = strawberry.UNSET
 
-        This has to be run via graphql query because there's no way to set fields to strawberry.UNSET.
-        """
-        variables = {"user": {"email": "email@email.email"}}
-
-        response = self._create_client_profile_fixture(variables)
-
-        errors = response["errors"][0]["extensions"]["errors"]
+        errors = validate_user_name(user_data, nickname, None)
         self.assertEqual(len(errors), 1)
         self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.NO_NAME_PROVIDED.name)
 
     def test_validate_user_name_update_not_set(self) -> None:
         """Verify that updating a client profile with all name fields unset succeeds."""
         user_data = {
-            "firstName": strawberry.UNSET,
-            "lastName": strawberry.UNSET,
-            "middleName": strawberry.UNSET,
+            "first_name": strawberry.UNSET,
+            "last_name": strawberry.UNSET,
+            "middle_name": strawberry.UNSET,
         }
         nickname = strawberry.UNSET
         user = User.objects.get(pk=self.client_profile_1["user"]["id"])
@@ -67,9 +71,9 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
     def test_validate_user_name_create_null(self) -> None:
         """Verify that creating a client profile with all name fields blank or null returns an error."""
         user_data = {
-            "firstName": "",
-            "lastName": "",
-            "middleName": "",
+            "first_name": "",
+            "last_name": "",
+            "middle_name": "",
         }
         nickname = None
 
@@ -80,9 +84,9 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
     def test_validate_user_name_update_null(self) -> None:
         """Verify that updating a client profile with all name fields blank or null returns an error."""
         user_data = {
-            "firstName": "",
-            "lastName": "",
-            "middleName": "",
+            "first_name": "",
+            "last_name": "",
+            "middle_name": "",
         }
         nickname = None
         user = User.objects.get(pk=self.client_profile_1["user"]["id"])
