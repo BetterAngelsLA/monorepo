@@ -158,7 +158,7 @@ export default function AddEditClient({ id }: { id?: string }) {
       }
       return member;
     });
-    // @ts-expect-error: displayPronouns shouldn't be included in the input. This is a temporary fix.
+    // @ts-expect-error: displayPronouns shouldn't be included in the input. This is a temporary fix
     delete values.displayPronouns;
     delete values.profilePhoto;
     try {
