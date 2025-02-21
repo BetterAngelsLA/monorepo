@@ -36,10 +36,10 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(returned_email, expected_email)
 
         if should_succeed:
+            self.assertEqual(len(returned_errors), 0)
+        else:
             self.assertEqual(len(returned_errors), 1)
             self.assertEqual(returned_errors[0]["errorCode"], ErrorMessageEnum.EMAIL_IN_USE.name)
-        else:
-            self.assertEqual(len(returned_errors), 0)
 
     def test_validate_user_name_create_not_set(self) -> None:
         """Verify that creating a client profile with all name fields unset returns an error."""
