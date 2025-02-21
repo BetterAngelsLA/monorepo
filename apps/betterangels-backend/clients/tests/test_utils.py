@@ -1,10 +1,8 @@
 from typing import Any, Optional
 
-import phonenumber_field
 import strawberry
 from accounts.models import User
 from clients.enums import HmisAgencyEnum
-from clients.models import ClientProfile
 from clients.schema import (
     validate_california_id,
     validate_contacts,
@@ -24,24 +22,22 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
     @parametrize(
-        "email, expected_email, expected_error_code",
+        "email, expected_email, should_succeed",
         [
-            ("", None, None),
-            (None, None, None),
-            ("TODD@pblivin.com", "todd@pblivin.com", ErrorMessageEnum.EMAIL_IN_USE.name),
-            ("TODD@pblivin.net", "todd@pblivin.net", None),
+            ("", None, True),
+            (None, None, True),
+            ("TODD@pblivin.com", "todd@pblivin.com", False),
+            ("TODD@pblivin.net", "todd@pblivin.net", True),
         ],
     )
-    def test_validate_user_email(
-        self, email: Optional[str], expected_email: None, expected_error_code: Optional[ErrorMessageEnum]
-    ) -> None:
+    def test_validate_user_email(self, email: Optional[str], expected_email: None, should_succeed: bool) -> None:
         returned_email, returned_errors = validate_user_email(email)
 
         self.assertEqual(returned_email, expected_email)
 
-        if expected_error_code:
+        if should_succeed:
             self.assertEqual(len(returned_errors), 1)
-            self.assertEqual(returned_errors[0]["errorCode"], expected_error_code)
+            self.assertEqual(returned_errors[0]["errorCode"], ErrorMessageEnum.EMAIL_IN_USE.name)
         else:
             self.assertEqual(len(returned_errors), 0)
 
@@ -122,22 +118,20 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertEqual(returned_error[0]["errorCode"], expected_error_code)
 
     @parametrize(
-        "phone_numbers, expected_error_code, expected_locations, expected_error_count",
+        "phone_numbers, expected_locations, expected_error_count",
         [
-            (["2125551212", "2125551213", "2125551214"], None, None, 0),
+            (["2125551212", "2125551213", "2125551214"], None, 0),
             (
                 ["2005551212", "2125551212", "212555121"],
-                ErrorMessageEnum.INVALID_PHONE_NUMBER.name,
                 ["0__number", "2__number"],
                 2,
             ),
-            (["2125551212"], None, None, 0),
+            (["2125551212"], None, 0),
         ],
     )
     def test_validate_phone_numbers(
         self,
         phone_numbers: list[str],
-        expected_error_code: Optional[ErrorMessageEnum],
         expected_locations: Optional[list[str]],
         expected_error_count: int,
     ) -> None:
@@ -145,10 +139,10 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
 
         errors = validate_phone_numbers(phone_number_dicts)
         self.assertEqual(len(errors), expected_error_count)
-        if expected_error_code:
+        if expected_error_count:
             assert expected_locations
             for error, location in zip(errors, expected_locations):
-                self.assertEqual(error["errorCode"], expected_error_code)
+                self.assertEqual(error["errorCode"], ErrorMessageEnum.INVALID_PHONE_NUMBER.name)
                 self.assertEqual(error["location"], location)
 
     @parametrize(
