@@ -102,20 +102,28 @@ def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = N
     return errors
 
 
-def _validate_california_id(california_id: str) -> list[dict[str, Any]]:
+def validate_california_id(california_id: Optional[str]) -> tuple[Optional[str], list[dict[str, Any]]]:
     errors: list = []
 
-    california_id_pattern = r"^[a-zA-Z]\d{7}$"
-    if not re.search(california_id_pattern, california_id):
-        errors.append(_build_error("californiaId", None, ErrorMessageEnum.INVALID_CA_ID.name))
+    if california_id == "":
+        california_id = None
 
-        # early return so we don't query for invalid ids
-        return errors
+        return california_id, errors
 
-    if ClientProfile.objects.filter(california_id__iexact=california_id).exists():
-        errors.append(_build_error("californiaId", None, ErrorMessageEnum.CA_ID_IN_USE.name))
+    if california_id is not None:
+        california_id = california_id.upper()
 
-    return errors
+        california_id_pattern = r"^[A-Z]\d{7}$"
+        if not re.search(california_id_pattern, california_id):
+            errors.append(_build_error("californiaId", None, ErrorMessageEnum.INVALID_CA_ID.name))
+
+            # early return so we don't query for invalid ids
+            return california_id, errors
+
+        if ClientProfile.objects.filter(california_id__iexact=california_id).exists():
+            errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_IN_USE.name})
+
+    return california_id, errors
 
 
 def _validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -165,6 +173,11 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
     """Validates the data for creating or updating a client profile."""
     errors: list = []
 
+    if data.get("california_id") is not strawberry.UNSET:
+        validated_california_id, california_id_errors = validate_california_id(data["california_id"])
+        data["california_id"] = validated_california_id
+        errors += california_id_errors
+
     if user_data := data.get("user"):
         if data["user"].get("email") == "":
             data["user"]["email"] = None
@@ -175,15 +188,6 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
         errors += _validate_user_name(data["user"], data["nickname"], user)
         if email := user_data.get("email"):
             errors += _validate_user_email(email, user)
-
-    if data.get("california_id") is not strawberry.UNSET:
-        if data["california_id"] == "":
-            data["california_id"] = None
-
-        if data["california_id"] is not None:
-            data["california_id"] = data["california_id"].upper()
-
-            errors += _validate_california_id(data["california_id"])
 
     if data.get("contacts"):
         errors += _validate_contacts(data["contacts"])

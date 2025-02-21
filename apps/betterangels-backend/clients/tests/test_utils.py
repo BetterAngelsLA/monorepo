@@ -1,6 +1,7 @@
 from typing import Optional
 
 import phonenumber_field
+from clients.schema import validate_california_id
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
 from common.enums import ErrorMessageEnum
 from unittest_parametrize import parametrize
@@ -85,9 +86,9 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "california_id, expected_california_id, expected_error_code",
         [
-            ("L1234567", None, ErrorMessageEnum.CA_ID_IN_USE.name),
-            ("l1234567", None, ErrorMessageEnum.CA_ID_IN_USE.name),
-            ("L123456", None, ErrorMessageEnum.INVALID_CA_ID.name),
+            ("L1234567", "L1234567", ErrorMessageEnum.CA_ID_IN_USE.name),
+            ("l1234567", "L1234567", ErrorMessageEnum.CA_ID_IN_USE.name),
+            ("L123456", "L123456", ErrorMessageEnum.INVALID_CA_ID.name),
             ("l1357246", "L1357246", None),
             ("", None, None),
             (None, None, None),
@@ -99,20 +100,11 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
         expected_california_id: Optional[str],
         expected_error_code: Optional[ErrorMessageEnum],
     ) -> None:
-        variables = {
-            "id": self.client_profile_2["id"],
-            "californiaId": california_id,
-        }
-        response = self._update_client_profile_fixture(variables)
+        returned_ca_id, returned_error = validate_california_id(california_id)
 
+        self.assertEqual(returned_ca_id, expected_california_id)
         if expected_error_code:
-            validation_errors = response["errors"][0]
-            error_messages = validation_errors["extensions"]["errors"]
-            self.assertEqual(len(error_messages), 1)
-            self.assertEqual(error_messages[0]["errorCode"], expected_error_code)
-        else:
-            client_profile = response["data"]["updateClientProfile"]
-            self.assertEqual(client_profile["californiaId"], expected_california_id)
+            self.assertEqual(returned_error[0]["errorCode"], expected_error_code)
 
     @parametrize(
         "phone_number, expected_phone_number, expected_error_code",
