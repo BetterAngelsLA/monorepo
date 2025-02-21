@@ -22,7 +22,7 @@ import {
   SocialMediaEnum,
   UpdateClientProfileInput,
 } from '../../apollo';
-import { parseValidationErrors } from '../../helpers/parseClientProfileErrors';
+import { applyValidationErrors } from '../../helpers/parseClientProfileErrors';
 import { useSnackbar } from '../../hooks';
 import { MainScrollContainer } from '../../ui-components';
 import { ClientProfilesDocument } from '../Clients/__generated__/Clients.generated';
@@ -209,7 +209,7 @@ export default function AddEditClient({ id }: { id?: string }) {
       }
 
       if (operationErrors) {
-        parseValidationErrors(operationErrors);
+        applyValidationErrors(operationErrors, methods.setError);
         return;
       }
 
