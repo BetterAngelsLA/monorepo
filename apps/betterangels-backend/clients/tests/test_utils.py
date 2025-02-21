@@ -6,6 +6,7 @@ from accounts.models import User
 from clients.models import ClientProfile
 from clients.schema import (
     validate_california_id,
+    validate_phone_numbers,
     validate_user_email,
     validate_user_name,
 )
@@ -114,24 +115,37 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertEqual(returned_error[0]["errorCode"], expected_error_code)
 
     @parametrize(
-        "phone_number, expected_phone_number, expected_error_code",
+        "phone_numbers, expected_error_code, expected_locations, expected_error_count",
         [
-            ("2125551212", "2125551212", None),
-            ("212555121", None, ErrorMessageEnum.INVALID_PHONE_NUMBER.name),
-            ("2005551212", None, ErrorMessageEnum.INVALID_PHONE_NUMBER.name),
-            # ("", None, None),
-            # (None, None, None),
+            (["2125551212", "2125551213", "2125551214"], None, None, 0),
+            (
+                ["2005551212", "2125551212", "212555121"],
+                ErrorMessageEnum.INVALID_PHONE_NUMBER.name,
+                ["0__number", "2__number"],
+                2,
+            ),
+            (["2125551212"], None, None, 0),
         ],
     )
     def test_validate_phone_numbers(
-        self, phone_number: str, expected_phone_number: Optional[str], expected_error_code: Optional[ErrorMessageEnum]
+        self,
+        phone_numbers: list[str],
+        expected_error_code: Optional[ErrorMessageEnum],
+        expected_locations: Optional[list[str]],
+        expected_error_count: int,
     ) -> None:
-        pass
-        # with self.assertRaises(phonenumber_field.validators.ValidationError):
-        #     phonenumber_field.validators.validate_international_phonenumber(phone_number)
+        phone_number_dicts = [{"number": phone_number} for phone_number in phone_numbers]
 
-    def test_validate_hmis_profiles(self) -> None:
-        pass
+        errors = validate_phone_numbers(phone_number_dicts)
+        self.assertEqual(len(errors), expected_error_count)
+        if expected_error_code:
+            assert expected_locations
+            for error, location in zip(errors, expected_locations):
+                self.assertEqual(error["errorCode"], expected_error_code)
+                self.assertEqual(error["location"], location)
 
-    def test_validate_contacts(self) -> None:
-        pass
+    # def test_validate_hmis_profiles(self) -> None:
+    #     pass
+
+    # def test_validate_contacts(self) -> None:
+    #     pass
