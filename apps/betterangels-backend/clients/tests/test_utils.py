@@ -4,7 +4,11 @@ import phonenumber_field
 import strawberry
 from accounts.models import User
 from clients.models import ClientProfile
-from clients.schema import validate_california_id, validate_user_name
+from clients.schema import (
+    validate_california_id,
+    validate_user_email,
+    validate_user_name,
+)
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
 from common.enums import ErrorMessageEnum
 from unittest_parametrize import parametrize
@@ -20,29 +24,18 @@ class UtilsTestCase(ClientProfileGraphQLBaseTestCase):
         [
             ("", None, None),
             (None, None, None),
-            ("todd@pblivin.com", None, ErrorMessageEnum.EMAIL_IN_USE.name),
-            ("todd@pblivin.net", "todd@pblivin.net", None),
+            ("TODD@pblivin.com", "todd@pblivin.com", ErrorMessageEnum.EMAIL_IN_USE.name),
+            ("TODD@pblivin.net", "todd@pblivin.net", None),
         ],
     )
     def test_validate_user_email(
         self, email: Optional[str], expected_email: None, expected_error_code: Optional[ErrorMessageEnum]
     ) -> None:
-        variables = {
-            "user": {
-                "firstName": "firsty",
-                "email": email,
-            },
-        }
-        response = self._create_client_profile_fixture(variables)
+        returned_email, returned_error = validate_user_email(email)
 
+        self.assertEqual(returned_email, expected_email)
         if expected_error_code:
-            validation_errors = response["errors"][0]
-            error_messages = validation_errors["extensions"]["errors"]
-            self.assertEqual(len(error_messages), 1)
-            self.assertEqual(error_messages[0]["errorCode"], expected_error_code)
-        else:
-            client_profile = response["data"]["createClientProfile"]
-            self.assertEqual(client_profile["user"]["email"], expected_email)
+            self.assertEqual(returned_error[0]["errorCode"], expected_error_code)
 
     def test_validate_user_name_create_not_set(self) -> None:
         """Verify that creating a client profile with all name fields unset returns an error.

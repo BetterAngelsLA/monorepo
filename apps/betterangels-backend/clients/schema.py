@@ -68,18 +68,26 @@ def _build_error(field: str, location: Optional[str], error_code: str) -> dict:
     return {"field": field, "location": location, "errorCode": error_code}
 
 
-def _validate_user_email(email: str, user: Optional[User] = None) -> list[dict[str, Any]]:
+def validate_user_email(
+    email: Optional[str], user: Optional[User] = None
+) -> tuple[Optional[str], list[dict[str, Any]]]:
     errors: list = []
 
-    email = email.lower()
+    if email == "":
+        email = None
 
-    if user and user.email and user.email == email:
-        return errors
+        return email, errors
 
-    if User.objects.filter(email=email).exists():
-        errors.append(_build_error("user", "email", ErrorMessageEnum.EMAIL_IN_USE.name))
+    if email is not None:
+        email = email.lower()
 
-    return errors
+        if user and user.email and user.email == email:
+            return email, errors
+
+        if User.objects.filter(email__iexact=email).exists():
+            errors.append(_build_error("user", "email", ErrorMessageEnum.EMAIL_IN_USE.name))
+
+    return email, errors
 
 
 def validate_user_name(user_data: dict, nickname: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
@@ -184,11 +192,9 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
 
         errors += validate_user_name(user_data, data["nickname"], user)
 
-        # if email := user_data.get("email"):
-        #     errors += _validate_user_email(email, user)
-
-        # if data["user"].get("email") == "":
-        #     data["user"]["email"] = None
+        validated_email, email_errors = validate_user_email(user_data["email"], user)
+        data["user"]["email"] = validated_email
+        errors += email_errors
 
     if data.get("contacts"):
         errors += _validate_contacts(data["contacts"])
