@@ -71,7 +71,10 @@ def _format_graphql_error(error: Exception) -> str:
 def _validate_user_email(user_data: dict, user: Optional[User] = None) -> list[dict[str, Any]]:
     errors: list = []
 
-    if user_data["email"] is strawberry.UNSET or user_data["email"] is None:
+    # Convert empty strings to None, because empty string will violate unique constraint
+    if user_data["email"] == "":
+        user_data["email"] = None
+
         return errors
 
     email = user_data["email"].lower()
@@ -105,8 +108,13 @@ def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = N
     return errors
 
 
-def _validate_california_id(california_id: str) -> list[dict[str, Any]]:
-    errors = []
+def _validate_california_id(california_id: Optional[str]) -> list[dict[str, Any]]:
+    errors: list = []
+
+    if california_id == "":
+        california_id = None
+
+        return errors
 
     california_id_pattern = r"^[a-zA-Z]\d{7}$"
     if not re.search(california_id_pattern, california_id):
