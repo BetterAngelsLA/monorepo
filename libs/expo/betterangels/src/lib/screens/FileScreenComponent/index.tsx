@@ -1,4 +1,9 @@
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  MimeTypes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import {
   BaseModal,
   ImageViewer,
@@ -12,7 +17,6 @@ import { useNavigation } from 'expo-router';
 import { ReactNode, useLayoutEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AttachmentType } from '../../apollo';
-import { MimeTypes } from '../../static';
 import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
 import { FileThumbnail, MainContainer } from '../../ui-components';
 import { useClientDocumentQuery } from './__generated__/Document.generated';

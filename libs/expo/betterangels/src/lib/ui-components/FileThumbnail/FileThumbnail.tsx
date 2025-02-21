@@ -3,12 +3,12 @@ import {
   Colors,
   FileThumbnailSizeDefault,
   ImageThumbnailSizeDefault,
+  MimeTypes,
   Radiuses,
   TRadius,
   TThumbnailSize,
 } from '@monorepo/expo/shared/static';
 import { Image, TouchableOpacity, View } from 'react-native';
-import { MimeTypes } from '../../static';
 import { ThumbnailDeleteButton } from './ThumbnailDeleteButton';
 
 interface IProps {

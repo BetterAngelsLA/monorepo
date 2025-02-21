@@ -1,5 +1,10 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { Colors, Shadow, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  MimeTypes,
+  Shadow,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { resizeImage } from '@monorepo/expo/shared/utils';
 import { useCameraPermissions } from 'expo-camera';
 import * as DocumentPicker from 'expo-document-picker';
@@ -10,8 +15,6 @@ import Modal from 'react-native-modal';
 import Camera from '../Camera';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
-
-const PDF_MIME_TYPE = 'application/pdf';
 
 interface IMediaPickerModalProps {
   onCapture: (file: ReactNativeFile) => void;
@@ -40,7 +43,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
   const pickDocuments = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: PDF_MIME_TYPE,
+        type: MimeTypes.PDF,
       });
 
       const { canceled, assets } = result;
@@ -53,7 +56,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
         const file = new ReactNativeFile({
           uri: asset.uri,
           name: asset.name || Date.now().toString(),
-          type: asset.mimeType || PDF_MIME_TYPE,
+          type: asset.mimeType || MimeTypes.PDF,
         });
 
         return file;
