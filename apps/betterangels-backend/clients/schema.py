@@ -63,10 +63,6 @@ def _format_graphql_error(error: Exception) -> str:
     return str(error)
 
 
-def _build_error(field: str, location: Optional[str], error_code: str) -> dict:
-    return {"field": field, "location": location, "errorCode": error_code}
-
-
 def validate_user_email(
     email: Optional[str], user: Optional[User] = None
 ) -> tuple[Optional[str], list[dict[str, Any]]]:
@@ -84,7 +80,7 @@ def validate_user_email(
             return email, errors
 
         if User.objects.filter(email__iexact=email).exists():
-            errors.append(_build_error("user", "email", ErrorMessageEnum.EMAIL_IN_USE.name))
+            errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_IN_USE.name})
 
     return email, errors
 
@@ -125,7 +121,7 @@ def validate_california_id(california_id: Optional[str]) -> tuple[Optional[str],
 
         california_id_pattern = r"^[A-Z]\d{7}$"
         if not re.search(california_id_pattern, california_id):
-            errors.append(_build_error("californiaId", None, ErrorMessageEnum.INVALID_CA_ID.name))
+            errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.INVALID_CA_ID.name})
 
             # early return so we don't query for invalid ids
             return california_id, errors
@@ -143,12 +139,18 @@ def validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str
         try:
             phonenumber_field.validators.validate_international_phonenumber(phone_number["number"])
         except ValidationError:
-            errors.append(_build_error("phoneNumbers", f"{idx}__number", ErrorMessageEnum.INVALID_PHONE_NUMBER.name))
+            errors.append(
+                {
+                    "field": "phoneNumbers",
+                    "location": f"{idx}__number",
+                    "errorCode": ErrorMessageEnum.INVALID_PHONE_NUMBER.name,
+                }
+            )
 
     return errors
 
 
-def _validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
     errors = []
 
     for idx, hmis_profile in enumerate(hmis_profiles):
@@ -162,7 +164,13 @@ def _validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[st
             )
             .exists()
         ):
-            errors.append(_build_error("hmisProfiles", f"{idx}__hmisId", ErrorMessageEnum.HMIS_ID_IN_USE.name))
+            errors.append(
+                {
+                    "field": "hmisProfiles",
+                    "location": f"{idx}__hmisId",
+                    "errorCode": ErrorMessageEnum.HMIS_ID_IN_USE.name,
+                }
+            )
 
     return errors
 
@@ -174,7 +182,13 @@ def _validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
         try:
             phonenumber_field.validators.validate_international_phonenumber(contact["phone_number"])
         except ValidationError:
-            errors.append(_build_error("contacts", f"{idx}__phoneNumber", ErrorMessageEnum.INVALID_PHONE_NUMBER.name))
+            errors.append(
+                {
+                    "field": "contacts",
+                    "location": f"{idx}__phoneNumber",
+                    "errorCode": ErrorMessageEnum.INVALID_PHONE_NUMBER.name,
+                }
+            )
 
     return errors
 
@@ -202,7 +216,7 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
         errors += _validate_contacts(data["contacts"])
 
     if data.get("hmis_profiles"):
-        errors += _validate_hmis_profiles(data["hmis_profiles"])
+        errors += validate_hmis_profiles(data["hmis_profiles"])
 
     if data.get("phone_numbers"):
         errors += validate_phone_numbers(data["phone_numbers"])
