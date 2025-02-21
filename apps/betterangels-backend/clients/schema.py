@@ -112,6 +112,9 @@ def validate_user_name(user_data: dict, nickname: Optional[str], user: Optional[
 def validate_california_id(california_id: Optional[str]) -> tuple[Optional[str], list[dict[str, Any]]]:
     errors: list = []
 
+    if california_id == strawberry.UNSET:
+        return california_id, errors
+
     if california_id == "":
         california_id = None
 
@@ -133,7 +136,7 @@ def validate_california_id(california_id: Optional[str]) -> tuple[Optional[str],
     return california_id, errors
 
 
-def _validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str, Any]]:
     errors = []
 
     for idx, phone_number in enumerate(phone_numbers):
@@ -202,7 +205,7 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
         errors += _validate_hmis_profiles(data["hmis_profiles"])
 
     if data.get("phone_numbers"):
-        errors += _validate_phone_numbers(data["phone_numbers"])
+        errors += validate_phone_numbers(data["phone_numbers"])
 
     if errors:
         raise GraphQLError("Validation Errors", extensions={"errors": errors})
