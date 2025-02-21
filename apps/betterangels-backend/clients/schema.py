@@ -90,13 +90,13 @@ def validate_user_name(user_data: dict, nickname: Optional[str], user: Optional[
     user_name_dict = {k: v for k, v in user_data.items() if k in ["first_name", "last_name", "middle_name"]}
     user_name_dict["nickname"] = nickname
 
-    user_name_not_set = all((v is strawberry.UNSET for v in user_name_dict.values()))
-    user_name_cleared = all((v == "" or v is None for v in user_name_dict.values()))
+    user_name_unset = all((v is strawberry.UNSET for v in user_name_dict.values()))
+    user_name_null = all((v == "" or v is None for v in user_name_dict.values()))
 
-    if user and user.has_name and user_name_not_set:
+    if user and user.has_name and user_name_unset:
         return errors
 
-    if user_name_cleared or user_name_not_set:
+    if user_name_null or user_name_unset:
         errors.append({"field": "nickname", "location": None, "errorCode": ErrorMessageEnum.NO_NAME_PROVIDED.name})
 
     return errors
@@ -189,11 +189,6 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
     """Validates the data for creating or updating a client profile."""
     errors: list = []
 
-    if data.get("california_id") is not strawberry.UNSET:
-        validated_california_id, california_id_errors = validate_california_id(data["california_id"])
-        data["california_id"] = validated_california_id
-        errors += california_id_errors
-
     if user_data := data.get("user"):
         user_id = user_data.get("id", None)
         user = User.objects.filter(id=user_id).first() if user_id else None
@@ -203,6 +198,11 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
         validated_email, email_errors = validate_user_email(user_data["email"], user)
         data["user"]["email"] = validated_email
         errors += email_errors
+
+    if data.get("california_id") is not strawberry.UNSET:
+        validated_california_id, california_id_errors = validate_california_id(data["california_id"])
+        data["california_id"] = validated_california_id
+        errors += california_id_errors
 
     if data.get("contacts"):
         errors += _validate_contacts(data["contacts"])
