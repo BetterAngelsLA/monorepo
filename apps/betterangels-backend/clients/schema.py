@@ -51,10 +51,6 @@ from .types import (
 )
 
 
-def _build_error(field: str, location: Optional[str], error_code: str) -> dict:
-    return {"field": field, "location": location, "errorCode": error_code}
-
-
 def _format_graphql_error(error: Exception) -> str:
     if isinstance(error, GraphQLError) and hasattr(error, "extensions"):
         # Extract the custom error list if available.
@@ -67,16 +63,14 @@ def _format_graphql_error(error: Exception) -> str:
     return str(error)
 
 
-def _validate_user_email(user_data: dict, user: Optional[User] = None) -> list[dict[str, Any]]:
+def _build_error(field: str, location: Optional[str], error_code: str) -> dict:
+    return {"field": field, "location": location, "errorCode": error_code}
+
+
+def _validate_user_email(email: str, user: Optional[User] = None) -> list[dict[str, Any]]:
     errors: list = []
 
-    # Convert empty strings to None, because empty string will violate unique constraint
-    if user_data["email"] == "":
-        user_data["email"] = None
-
-        return errors
-
-    email = user_data["email"].lower()
+    email = email.lower()
 
     if user and user.email and user.email == email:
         return errors
@@ -95,25 +89,20 @@ def _validate_user_name(user_data: dict, nickname: str, user: Optional[User] = N
     }
     user_name_dict["nickname"] = nickname
 
-    user_name_untouched = all((v is strawberry.UNSET for v in user_name_dict.values()))
-    user_name_cleared = all((v == "" for v in user_name_dict.values()))
+    user_name_not_set = all((v is strawberry.UNSET for v in user_name_dict.values()))
+    user_name_cleared = all((v == "" or v is None for v in user_name_dict.values()))
 
-    if user and user.has_name and user_name_untouched:
+    if user and user.has_name and user_name_not_set:
         return errors
 
-    if user_name_cleared or user_name_untouched:
+    if user_name_cleared or user_name_not_set:
         errors.append(_build_error("nickname", None, ErrorMessageEnum.NO_NAME_PROVIDED.name))
 
     return errors
 
 
-def _validate_california_id(california_id: Optional[str]) -> list[dict[str, Any]]:
+def _validate_california_id(california_id: str) -> list[dict[str, Any]]:
     errors: list = []
-
-    if california_id == "":
-        california_id = None
-
-        return errors
 
     california_id_pattern = r"^[a-zA-Z]\d{7}$"
     if not re.search(california_id_pattern, california_id):
@@ -171,28 +160,43 @@ def _validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return errors
 
 
-def _validate_client_profile_data(data: dict) -> None:
+def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
     """Validates the data for creating or updating a client profile."""
-    errors = []
+    errors: list = []
 
-    if data["user"] is not strawberry.UNSET:
+    if user_data := data.get("user"):
+        if data["user"].get("email") == "":
+            data["user"]["email"] = None
+
         user_id = data["user"].get("id", None)
         user = User.objects.filter(id=user_id).first() if user_id else None
 
         errors += _validate_user_name(data["user"], data["nickname"], user)
-        errors += _validate_user_email(data["user"], user)
+        if email := user_data.get("email"):
+            errors += _validate_user_email(email, user)
 
-    if data["contacts"] is not strawberry.UNSET:
+    if data.get("california_id") is not strawberry.UNSET:
+        if data["california_id"] == "":
+            data["california_id"] = None
+
+        if data["california_id"] is not None:
+            data["california_id"] = data["california_id"].upper()
+
+            errors += _validate_california_id(data["california_id"])
+
+    if data.get("contacts"):
         errors += _validate_contacts(data["contacts"])
 
-    if data["hmis_profiles"] is not strawberry.UNSET:
+    if data.get("hmis_profiles"):
         errors += _validate_hmis_profiles(data["hmis_profiles"])
 
-    if data["phone_numbers"] is not strawberry.UNSET:
+    if data.get("phone_numbers"):
         errors += _validate_phone_numbers(data["phone_numbers"])
 
     if errors:
         raise GraphQLError("Validation Errors", extensions={"errors": errors})
+
+    return data
 
 
 def upsert_or_delete_client_related_object(
@@ -323,7 +327,8 @@ class Mutation:
             user = get_current_user(info)
             get_user_permission_group(user)
             client_profile_data: dict = strawberry.asdict(data)
-            _validate_client_profile_data(client_profile_data)
+
+            client_profile_data = _validate_client_profile_data(client_profile_data)
 
             user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)
@@ -374,7 +379,7 @@ class Mutation:
             if client_profile_data.get("temp_veteran_status") != strawberry.UNSET:
                 client_profile_data["veteran_status"] = client_profile_data["temp_veteran_status"]
 
-            _validate_client_profile_data(client_profile_data)
+            client_profile_data = _validate_client_profile_data(client_profile_data)
 
             if user_data := client_profile_data.pop("user", {}):
                 if email := user_data.get("email", ""):
