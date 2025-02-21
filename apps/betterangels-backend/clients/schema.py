@@ -169,7 +169,7 @@ def validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str
     return errors
 
 
-def _validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     errors = []
 
     for idx, contact in enumerate(contacts):
@@ -207,7 +207,7 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
         errors += california_id_errors
 
     if data.get("contacts"):
-        errors += _validate_contacts(data["contacts"])
+        errors += validate_contacts(data["contacts"])
 
     if data.get("hmis_profiles"):
         errors += validate_hmis_profiles(data["hmis_profiles"])
