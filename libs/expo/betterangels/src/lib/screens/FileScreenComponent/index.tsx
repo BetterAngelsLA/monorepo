@@ -1,29 +1,42 @@
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
-  ImagesWithZoom,
+  Colors,
+  MimeTypes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
+import {
+  BaseModal,
+  ImageViewer,
   Loading,
+  PdfViewer,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { useNavigation } from 'expo-router';
-import { useLayoutEffect, useMemo } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
-import { ClientDocumentNamespaceEnum } from '../../apollo';
+import { ReactNode, useLayoutEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { AttachmentType } from '../../apollo';
 import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
-import { MainContainer } from '../../ui-components';
+import { FileThumbnail, MainContainer } from '../../ui-components';
 import { useClientDocumentQuery } from './__generated__/Document.generated';
+import { fileDisplaySizeMap } from './fileDisplaySizeMap';
 
-const ID_STYLE = [
-  ClientDocumentNamespaceEnum.PhotoId,
-  ClientDocumentNamespaceEnum.DriversLicenseFront,
-  ClientDocumentNamespaceEnum.DriversLicenseBack,
-  ClientDocumentNamespaceEnum.SocialSecurityCard,
-];
+type TFileView = {
+  content: ReactNode;
+  title?: string;
+};
 
-export default function FileScreenComponent({ id }: { id: string }) {
-  const { data } = useClientDocumentQuery({ variables: { id } });
+type TFileScreenComponent = {
+  id: string;
+};
+
+export default function FileScreenComponent(props: TFileScreenComponent) {
+  const { id } = props;
+
   const navigation = useNavigation();
+  const [fileView, setFileView] = useState<TFileView | null>(null);
+  const { data } = useClientDocumentQuery({ variables: { id } });
 
   useLayoutEffect(() => {
     if (!data) return;
@@ -32,76 +45,94 @@ export default function FileScreenComponent({ id }: { id: string }) {
     });
   }, [data, navigation]);
 
-  const ImageComponent = useMemo(() => {
-    if (!data) return null;
-
-    if (ID_STYLE.includes(data.clientDocument.namespace)) {
-      return (
-        <View
-          style={{
-            borderWidth: 1,
-            borderColor: Colors.NEUTRAL_LIGHT,
-            borderRadius: Radiuses.xs,
-            marginBottom: Spacings.md,
-            padding: Spacings.xxs,
-            width: 129,
-            height: 86.5,
-          }}
-        >
-          <Image
-            style={{
-              width: '100%',
-              height: '100%',
-
-              borderRadius: Radiuses.xs,
-            }}
-            source={{ uri: data.clientDocument.file.url }}
-            resizeMode="cover"
-            accessibilityIgnoresInvertColors
-          />
-        </View>
-      );
-    } else {
-      return (
-        <Image
-          style={{ width: 207, height: 346, marginBottom: Spacings.md }}
-          source={{ uri: data.clientDocument.file.url }}
-          resizeMode="cover"
-          accessibilityIgnoresInvertColors
-        />
-      );
-    }
-  }, [data]);
-
-  if (!data)
+  if (!data) {
     return (
       <View style={styles.loadingContainer}>
         <Loading size="large" />
       </View>
     );
+  }
+
+  const { clientDocument } = data || {};
+  const {
+    attachmentType,
+    createdAt,
+    namespace,
+    mimeType,
+    file,
+    originalFilename,
+  } = clientDocument;
+
+  const isImage = attachmentType === AttachmentType.Image;
+  const isPdf = mimeType === MimeTypes.PDF;
 
   return (
-    <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <TextBold mb="xs" size="lg">
-        {enumDisplayDocumentType[data.clientDocument.namespace]}
-      </TextBold>
-      <View style={styles.fileContainer}>
-        <ImagesWithZoom
-          title={data.clientDocument.originalFilename}
-          imageUrl={data.clientDocument.file.url}
-        >
-          {ImageComponent}
-        </ImagesWithZoom>
-        <TextBold size="sm">File Name</TextBold>
-        <TextRegular size="sm">
-          {data.clientDocument.originalFilename}
+    <>
+      <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+        <TextBold mb="xs" size="lg">
+          {enumDisplayDocumentType[namespace]}
+        </TextBold>
+        <View style={styles.fileContainer}>
+          {isImage && (
+            <FileThumbnail
+              uri={file.url}
+              mimeType={mimeType}
+              thumbnailSize={fileDisplaySizeMap[namespace]}
+              accessibilityHint="view full image"
+              onPress={() =>
+                setFileView({
+                  content: <ImageViewer url={file.url} />,
+                  title: originalFilename || '',
+                })
+              }
+            />
+          )}
+
+          {isPdf && (
+            <FileThumbnail
+              uri={file.url}
+              mimeType={mimeType}
+              thumbnailSize={fileDisplaySizeMap[namespace]}
+              accessibilityHint="view pdf file"
+              onPress={() =>
+                setFileView({
+                  content: <PdfViewer url={file.url} cache={true} />,
+                  title: originalFilename || '',
+                })
+              }
+            />
+          )}
+
+          {!isImage && !isPdf && (
+            <FileThumbnail
+              uri={file.url}
+              mimeType={mimeType}
+              thumbnailSize={fileDisplaySizeMap[namespace]}
+            />
+          )}
+
+          <TextBold mt="sm" size="sm">
+            File Name
+          </TextBold>
+          <TextRegular size="sm" style={{ width: '100%' }}>
+            {originalFilename}
+          </TextRegular>
+        </View>
+        <TextRegular textAlign="right" size="sm">
+          Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')}
         </TextRegular>
-      </View>
-      <TextRegular textAlign="right" size="sm">
-        Uploaded on{' '}
-        {format(new Date(data.clientDocument.createdAt), 'MM/dd/yyyy')}
-      </TextRegular>
-    </MainContainer>
+      </MainContainer>
+
+      {!!fileView?.content && (
+        <BaseModal
+          title={fileView.title}
+          isOpen={true}
+          onClose={() => setFileView(null)}
+        >
+          {fileView.content}
+        </BaseModal>
+      )}
+    </>
   );
 }
 

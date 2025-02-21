@@ -1,4 +1,5 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
+import { TThumbnailSize } from '@monorepo/expo/shared/static';
 import { Dispatch, ReactNode, SetStateAction } from 'react';
 import { ClientProfileQuery } from '../../__generated__/Client.generated';
 
@@ -9,6 +10,7 @@ export interface IUploadSectionProps {
   onSubmit: () => void;
   children: ReactNode;
   loading?: boolean;
+  disabled?: boolean;
 }
 
 export interface IUploadModalProps {
@@ -56,11 +58,6 @@ export interface ISingleDocUploadsProps {
     | 'PhotoId';
   thumbnailSize: TThumbnailSize;
 }
-
-export type TThumbnailSize = {
-  height: number;
-  width: number;
-};
 
 export type Docs = {
   DriversLicenseFront: ReactNativeFile | undefined;

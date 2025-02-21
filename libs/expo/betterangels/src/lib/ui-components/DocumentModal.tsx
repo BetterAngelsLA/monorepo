@@ -90,24 +90,21 @@ export default function DocumentModal(props: IDocumentModalProps) {
     }
   };
 
+  const fileTypeText = getFileFileTypeText(document?.mimeType);
+
   const ACTIONS = [
     {
-      title: 'View Image',
+      title: `View this ${fileTypeText}`,
       Icon: ViewIcon,
       route: `/file/${document?.id}`,
     },
-    // {
-    //   title: 'Edit this file',
-    //   Icon: PencilSolidIcon,
-    //   route: `/edit-image/${document?.id}`,
-    // },
     {
-      title: 'Download this file',
+      title: `Download this ${fileTypeText}`,
       Icon: DownloadIcon,
       onPress: downloadFile,
     },
     {
-      title: 'Delete this file',
+      title: `Delete this ${fileTypeText}`,
       Icon: DeleteIcon,
       onPress: handleDelete,
     },
@@ -123,4 +120,12 @@ export default function DocumentModal(props: IDocumentModalProps) {
       opacity={0.5}
     />
   );
+}
+
+function getFileFileTypeText(mimeType?: string): string {
+  if (mimeType?.startsWith('image')) {
+    return 'image';
+  }
+
+  return 'file';
 }

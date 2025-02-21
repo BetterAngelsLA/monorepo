@@ -69,6 +69,8 @@
     "@nx/js": "*",
     "@types/google.maps": "*",
     "expo-updates": "*",
+    "expo-document-picker": "*",
+    "react-native-pdf": "*",
     "@react-native-cookies/cookies": "*",
     "remeda": "*"
   },

@@ -1,17 +1,19 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { format } from 'date-fns';
+import { ReactNode } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import TextRegular from '../TextRegular';
-import { format } from 'date-fns';
 
 interface IFileCardProps {
   onPress: () => void;
+  thumbnail?: ReactNode;
   filename?: string | null;
   url: string;
   createdAt: string;
 }
 
 export function FileCard(props: IFileCardProps) {
-  const { onPress, url, filename, createdAt } = props;
+  const { onPress, url, filename, createdAt, thumbnail } = props;
 
   return (
     <Pressable
@@ -50,12 +52,16 @@ export function FileCard(props: IFileCardProps) {
             justifyContent: 'center',
           }}
         >
-          <Image
-            style={{ width: 36, height: 36 }}
-            source={{ uri: url }}
-            resizeMode="cover"
-            accessibilityIgnoresInvertColors
-          />
+          {!!thumbnail && thumbnail}
+
+          {!thumbnail && (
+            <Image
+              style={{ width: 36, height: 36 }}
+              source={{ uri: url }}
+              resizeMode="cover"
+              accessibilityIgnoresInvertColors
+            />
+          )}
         </View>
         <TextRegular numberOfLines={1} style={{ flex: 1 }} size="sm">
           {filename}
