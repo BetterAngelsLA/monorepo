@@ -220,7 +220,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             self.client_1_social_media_profile_2,
         ]
 
-        client_profile_1 = self._create_client_profile_fixture(
+        self.client_profile_1 = self._create_client_profile_fixture(
             {
                 "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
                 "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
@@ -253,12 +253,11 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "user": self.client_profile_1_user,
                 "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
             }
-        )
-        self.client_profile_1 = client_profile_1["data"]["createClientProfile"]
+        )["data"]["createClientProfile"]
         self.client_profile_1_photo_name = self._update_client_profile_photo_fixture(self.client_profile_1["id"])[
             "data"
         ]["updateClientProfilePhoto"]["profilePhoto"]["name"]
-        client_profile_2 = self._create_client_profile_fixture(
+        self.client_profile_2 = self._create_client_profile_fixture(
             {
                 "adaAccommodation": [],
                 "address": None,
@@ -289,8 +288,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "user": self.client_profile_2_user,
                 "veteranStatus": None,
             }
-        )
-        self.client_profile_2 = client_profile_2["data"]["createClientProfile"]
+        )["data"]["createClientProfile"]
 
     def _setup_client_documents(self) -> None:
         self.client_profile_1_document_1 = self._create_client_document_fixture(
