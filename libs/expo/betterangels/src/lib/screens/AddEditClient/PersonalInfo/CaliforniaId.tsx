@@ -30,6 +30,9 @@ export default function CaliforniaId() {
     name: ['californiaId'],
   });
 
+  const patternCheckError =
+    californiaId && !Regex.californiaId.test(californiaId);
+
   const uniqueCheckError = useCaliforniaIdUniqueCheck(
     californiaId as string,
     clientProfileId as string
@@ -43,6 +46,9 @@ export default function CaliforniaId() {
   }
 
   useEffect(() => {
+    if (!californiaId || californiaId.length < 8) {
+      return;
+    }
     if (uniqueCheckError) {
       setError('californiaId', {
         type: 'manual',
@@ -62,6 +68,20 @@ export default function CaliforniaId() {
       clearErrors('californiaId');
     }
   }, [californiaId, uniqueCheckError, setError, clearErrors]);
+
+  useEffect(() => {
+    if (!californiaId || californiaId.length < 8) {
+      return;
+    }
+    if (patternCheckError) {
+      setError('californiaId', {
+        type: 'manual',
+        message: 'CA ID must be 1 letter followed by 7 digits',
+      });
+    } else {
+      clearErrors('californiaId');
+    }
+  }, [californiaId, patternCheckError, setError, clearErrors]);
 
   return (
     <CardWrapper title="CA ID #">
@@ -97,13 +117,13 @@ export default function CaliforniaId() {
         placeholder="Enter CA ID #"
         rules={{
           validate: (value: string) => {
-            if (value && !Regex.californiaId.test(value)) {
-              return 'CA ID must be 1 letter followed by 7 digits';
-            }
             if (uniqueCheckError) {
               return uniqueCheckError;
             }
-            return true;
+            if (patternCheckError) {
+              return patternCheckError;
+            }
+            return;
           },
         }}
       />
