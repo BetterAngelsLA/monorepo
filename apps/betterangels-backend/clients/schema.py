@@ -203,19 +203,9 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
         user_id = user_data.get("id", None)
         user = User.objects.filter(id=user_id).first() if user_id else None
 
-        errors += validate_name_exists(user_data, data["nickname"], user)
-
         validated_email, email_errors = validate_user_email(user_data["email"], user)
         data["user"]["email"] = validated_email
         errors += email_errors
-
-    if data.get("california_id") is not strawberry.UNSET:
-        validated_california_id, california_id_errors = clean_and_validate_california_id(data["california_id"])
-        data["california_id"] = validated_california_id
-        errors += california_id_errors
-
-        if validated_california_id and not california_id_errors:
-            errors += validate_california_id_unique(validated_california_id, user)
 
     if data.get("contacts"):
         errors += validate_contacts(data["contacts"])
