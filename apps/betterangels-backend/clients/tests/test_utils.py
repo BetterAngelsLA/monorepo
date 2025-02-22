@@ -10,7 +10,7 @@ from clients.schema import (
     validate_hmis_profiles,
     validate_name_exists,
     validate_phone_numbers,
-    validate_user_email,
+    validate_user_email_unique,
 )
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
 from common.enums import ErrorMessageEnum
@@ -32,8 +32,8 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             ("TODD@pblivin.net", "todd@pblivin.net", True),
         ],
     )
-    def test_validate_user_email(self, email: Optional[str], expected_email: None, should_succeed: bool) -> None:
-        returned_email, returned_errors = validate_user_email(email)
+    def test_validate_user_email_unique(self, email: Optional[str], expected_email: None, should_succeed: bool) -> None:
+        returned_email, returned_errors = validate_user_email_unique(email)
 
         self.assertEqual(returned_email, expected_email)
 
