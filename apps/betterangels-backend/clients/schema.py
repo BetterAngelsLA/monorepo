@@ -69,7 +69,7 @@ def validate_user_email(
 ) -> tuple[Optional[str], list[dict[str, Any]]]:
     errors: list = []
 
-    if email in [None, ""]:
+    if email is None or email.strip() == "":
         return None, errors
 
     email: str
@@ -84,17 +84,20 @@ def validate_user_email(
     return email, errors
 
 
-def validate_user_name(user_data: dict, nickname: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
+def validate_name_exists(user_data: dict, nickname: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
     errors: list = []
 
     user_name_dict = {k: v for k, v in user_data.items() if k in ["first_name", "last_name", "middle_name"]}
     user_name_dict["nickname"] = nickname
 
     user_name_unset = all((v is strawberry.UNSET for v in user_name_dict.values()))
-    user_name_null = all((v == "" or v is None for v in user_name_dict.values()))
 
     if user and user.has_name and user_name_unset:
         return errors
+
+    user_name_null = all(
+        (v is not strawberry.UNSET and (v is None or v.strip() == "") for v in user_name_dict.values())
+    )
 
     if user_name_null or user_name_unset:
         errors.append({"field": "nickname", "location": None, "errorCode": ErrorMessageEnum.NO_NAME_PROVIDED.name})
@@ -102,10 +105,21 @@ def validate_user_name(user_data: dict, nickname: Optional[str], user: Optional[
     return errors
 
 
-def validate_california_id(california_id: Optional[str]) -> tuple[Optional[str], list[dict[str, Any]]]:
+def validate_california_id_unique(california_id: str, user: Optional[User]) -> list[dict[str, Any]]:
     errors: list = []
 
-    if california_id in ["", None]:
+    user_id = {"user_id": user.pk} if user else {}
+
+    if ClientProfile.objects.exclude(**user_id).filter(california_id__iexact=california_id).exists():
+        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_IN_USE.name})
+
+    return errors
+
+
+def clean_and_validate_california_id(california_id: Optional[str]) -> tuple[Optional[str], list[dict[str, Any]]]:
+    errors: list = []
+
+    if california_id is None or california_id.strip() == "":
         return None, errors
 
     california_id: str
@@ -114,12 +128,6 @@ def validate_california_id(california_id: Optional[str]) -> tuple[Optional[str],
     california_id_pattern = r"^[A-Z]\d{7}$"
     if not re.search(california_id_pattern, california_id):
         errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.INVALID_CA_ID.name})
-
-        # early return so we don't query for invalid ids
-        return california_id, errors
-
-    if ClientProfile.objects.filter(california_id__iexact=california_id).exists():
-        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_IN_USE.name})
 
     return california_id, errors
 
@@ -195,16 +203,19 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
         user_id = user_data.get("id", None)
         user = User.objects.filter(id=user_id).first() if user_id else None
 
-        errors += validate_user_name(user_data, data["nickname"], user)
+        errors += validate_name_exists(user_data, data["nickname"], user)
 
         validated_email, email_errors = validate_user_email(user_data["email"], user)
         data["user"]["email"] = validated_email
         errors += email_errors
 
     if data.get("california_id") is not strawberry.UNSET:
-        validated_california_id, california_id_errors = validate_california_id(data["california_id"])
+        validated_california_id, california_id_errors = clean_and_validate_california_id(data["california_id"])
         data["california_id"] = validated_california_id
         errors += california_id_errors
+
+        if validated_california_id and not california_id_errors:
+            errors += validate_california_id_unique(validated_california_id, user)
 
     if data.get("contacts"):
         errors += validate_contacts(data["contacts"])
