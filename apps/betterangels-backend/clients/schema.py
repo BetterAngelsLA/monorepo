@@ -64,7 +64,7 @@ def _format_graphql_error(error: Exception) -> str:
     return str(error)
 
 
-def validate_user_email(
+def validate_user_email_unique(
     email: Optional[str], user: Optional[User] = None
 ) -> tuple[Optional[str], list[dict[str, Any]]]:
     errors: list = []
@@ -203,7 +203,7 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
         user_id = user_data.get("id", None)
         user = User.objects.filter(id=user_id).first() if user_id else None
 
-        validated_email, email_errors = validate_user_email(user_data["email"], user)
+        validated_email, email_errors = validate_user_email_unique(user_data["email"], user)
         data["user"]["email"] = validated_email
         errors += email_errors
 
