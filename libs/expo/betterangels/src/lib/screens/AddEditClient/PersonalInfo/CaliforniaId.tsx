@@ -112,7 +112,6 @@ export default function CaliforniaId() {
         control={control}
         error={!!errors.californiaId}
         errorMessage={(errors.californiaId?.message as string) || undefined}
-        maxLength={8}
         name="californiaId"
         placeholder="Enter CA ID #"
         rules={{
