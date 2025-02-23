@@ -43,24 +43,14 @@ export default function CaliforniaId() {
   }
 
   useEffect(() => {
-    if (!californiaId || californiaId.length < 8) {
-      return;
-    }
-    if (uniqueCheckError) {
-      setError('californiaId', {
-        type: 'manual',
-        message: uniqueCheckError,
-      });
-      if (featureAvailable(californiaId)) {
-        // If keyboard not dismissed, modal does not render fullscreen on some Android devices.
+    if (featureAvailable(californiaId) && uniqueCheckError) {
+      // If keyboard not dismissed, modal does not render fullscreen on some Android devices.
+      Keyboard.dismiss();
 
-        Keyboard.dismiss();
-
-        // TODO: confirm if it breaks on Android after upgrade to New Architecture
-        setTimeout(() => {
-          setModalVisible(true);
-        }, 100);
-      }
+      // TODO: confirm if it breaks on Android after upgrade to New Architecture
+      setTimeout(() => {
+        setModalVisible(true);
+      }, 100);
     } else {
       clearErrors('californiaId');
     }
