@@ -82,24 +82,13 @@ def validate_user_email_pattern(email: Optional[str]) -> tuple[Optional[str], li
     return email, errors
 
 
-def validate_user_email_unique(
-    email: Optional[str], user: Optional[User] = None
-) -> tuple[Optional[str], list[dict[str, Any]]]:
+def validate_user_email_unique(email: str, user: Optional[User] = None) -> list[dict[str, Any]]:
     errors: list = []
-
-    if email is None or email.strip() == "":
-        return None, errors
-
-    email: str
-    email = email.lower()
-
-    if user and user.email and user.email == email:
-        return email, errors
 
     if User.objects.filter(email__iexact=email).exists():
         errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_IN_USE.name})
 
-    return email, errors
+    return errors
 
 
 def name_is_present(name: Optional[str]) -> bool:
@@ -242,9 +231,12 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
 
         errors += validate_client_has_name(user_data, user_data.get("nickname"), user)
         validated_email, email_pattern_errors = validate_user_email_pattern(user_data.get("email"))
-        validated_email, email_errors = validate_user_email_unique(user_data["email"], user)
+
         data["user"]["email"] = validated_email
-        errors += email_errors
+        errors += email_pattern_errors
+
+        if not email_pattern_errors:
+            errors += validate_user_email_unique(data["user"]["email"], user)
 
     if data.get("contacts"):
         errors += validate_contacts(data["contacts"])

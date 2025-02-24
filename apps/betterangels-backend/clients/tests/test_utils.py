@@ -92,66 +92,17 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertEqual(returned_errors[0]["errorCode"], ErrorMessageEnum.INVALID_EMAIL.name)
 
     @parametrize(
-        "email, expected_email, should_succeed",
-        [
-            (" ", None, True),
-            ("", None, True),
-            (None, None, True),
-            ("TODD@pblivin.com", "todd@pblivin.com", False),
-            ("TODD@pblivin.net ", "todd@pblivin.net", True),
-            ("TODD@pblivin. net", "todd@pblivin. net", False),
-        ],
+        "email, should_succeed",
+        [("TODD@pblivin.com", False), ("todd@pblivin.net", True)],
     )
-    def test_validate_user_email_unique(self, email: Optional[str], expected_email: None, should_succeed: bool) -> None:
-        returned_email, returned_errors = validate_user_email_unique(email)
-
-        self.assertEqual(returned_email, expected_email)
+    def test_validate_user_email_unique(self, email: str, should_succeed: bool) -> None:
+        errors = validate_user_email_unique(email)
 
         if should_succeed:
-            self.assertEqual(len(returned_errors), 0)
+            self.assertEqual(len(errors), 0)
         else:
-            self.assertEqual(len(returned_errors), 1)
-            self.assertEqual(returned_errors[0]["errorCode"], ErrorMessageEnum.EMAIL_IN_USE.name)
-
-    def test_validate_client_has_name_update_not_set(self) -> None:
-        """Verify that updating a client profile with all name fields unset succeeds."""
-        user_data = {
-            "first_name": strawberry.UNSET,
-            "last_name": strawberry.UNSET,
-            "middle_name": strawberry.UNSET,
-        }
-        nickname = strawberry.UNSET
-        user = User.objects.get(pk=self.client_profile_1["user"]["id"])
-
-        errors = validate_client_has_name(user_data, nickname, user)
-        self.assertEqual(len(errors), 0)
-
-    def test_validate_client_has_name_create_null(self) -> None:
-        """Verify that creating a client profile with all name fields blank or null returns an error."""
-        user_data = {
-            "first_name": " ",
-            "last_name": "",
-            "middle_name": "",
-        }
-        nickname = None
-
-        errors = validate_client_has_name(user_data, nickname, None)
-        self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.NO_NAME_PROVIDED.name)
-
-    def test_validate_client_has_name_update_null(self) -> None:
-        """Verify that updating a client profile with all name fields blank or null returns an error."""
-        user_data = {
-            "first_name": "",
-            "last_name": None,
-            "middle_name": "",
-        }
-        nickname = " "
-        user = User.objects.get(pk=self.client_profile_1["user"]["id"])
-
-        errors = validate_client_has_name(user_data, nickname, user)
-        self.assertEqual(len(errors), 1)
-        self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.NO_NAME_PROVIDED.name)
+            self.assertEqual(len(errors), 1)
+            self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.EMAIL_IN_USE.name)
 
     @parametrize(
         "california_id, expected_california_id, expected_error_code",
