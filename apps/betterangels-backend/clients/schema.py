@@ -77,7 +77,7 @@ def validate_user_email_pattern(email: Optional[str]) -> tuple[Optional[str], li
     email = email.strip().lower()
 
     if not re.search(EMAIL_REGEX_PATTERN, email):
-        errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.INVALID_EMAIL.name})
+        errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_INVALID.name})
 
     return email, errors
 
@@ -127,9 +127,23 @@ def validate_client_has_name(
         if client_has_name:
             return errors
 
-    errors.append({"field": "nickname", "location": None, "errorCode": ErrorMessageEnum.NO_NAME_PROVIDED.name})
+    errors.append({"field": "nickname", "location": None, "errorCode": ErrorMessageEnum.NAME_NOT_PROVIDED.name})
 
     return errors
+
+
+def validate_california_id_pattern(california_id: Optional[str]) -> tuple[Optional[str], list[dict[str, Any]]]:
+    errors: list = []
+
+    if california_id is None or california_id.strip() == "":
+        return None, errors
+
+    california_id = california_id.upper()
+
+    if not re.search(CALIFORNIA_ID_REGEX_PATTERN, california_id):
+        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_INVALID.name})
+
+    return california_id, errors
 
 
 def validate_california_id_unique(california_id: str, user: Optional[User]) -> list[dict[str, Any]]:
@@ -143,21 +157,6 @@ def validate_california_id_unique(california_id: str, user: Optional[User]) -> l
     return errors
 
 
-def clean_and_validate_california_id(california_id: Optional[str]) -> tuple[Optional[str], list[dict[str, Any]]]:
-    errors: list = []
-
-    if california_id is None or california_id.strip() == "":
-        return None, errors
-
-    california_id: str
-    california_id = california_id.upper()
-
-    if not re.search(CALIFORNIA_ID_REGEX_PATTERN, california_id):
-        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.INVALID_CA_ID.name})
-
-    return california_id, errors
-
-
 def validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str, Any]]:
     errors = []
 
@@ -169,7 +168,7 @@ def validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str
                 {
                     "field": "phoneNumbers",
                     "location": f"{idx}__number",
-                    "errorCode": ErrorMessageEnum.INVALID_PHONE_NUMBER.name,
+                    "errorCode": ErrorMessageEnum.PHONE_NUMBER_INVALID.name,
                 }
             )
 
@@ -214,7 +213,7 @@ def validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 {
                     "field": "contacts",
                     "location": f"{idx}__phoneNumber",
-                    "errorCode": ErrorMessageEnum.INVALID_PHONE_NUMBER.name,
+                    "errorCode": ErrorMessageEnum.PHONE_NUMBER_INVALID.name,
                 }
             )
 
@@ -237,6 +236,14 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
 
         if not email_pattern_errors:
             errors += validate_user_email_unique(data["user"]["email"], user)
+
+    if data.get("california_id") is not strawberry.UNSET:
+        validated_california_id, california_id_errors = validate_california_id_pattern(data["california_id"])
+        errors += california_id_errors
+
+        if not california_id_errors:
+            data["california_id"] = validated_california_id
+            errors += validate_california_id_unique(data["california_id"], user)
 
     if data.get("contacts"):
         errors += validate_contacts(data["contacts"])

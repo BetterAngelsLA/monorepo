@@ -4,8 +4,8 @@ import strawberry
 from accounts.models import User
 from clients.enums import HmisAgencyEnum
 from clients.schema import (
-    clean_and_validate_california_id,
     name_is_present,
+    validate_california_id_pattern,
     validate_california_id_unique,
     validate_client_has_name,
     validate_contacts,
@@ -64,7 +64,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertEqual(len(errors), 0)
         else:
             self.assertEqual(len(errors), 1)
-            self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.NO_NAME_PROVIDED.name)
+            self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.NAME_NOT_PROVIDED.name)
 
     @parametrize(
         "email, expected_output, should_succeed",
@@ -89,7 +89,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertEqual(len(returned_errors), 0)
         else:
             self.assertEqual(len(returned_errors), 1)
-            self.assertEqual(returned_errors[0]["errorCode"], ErrorMessageEnum.INVALID_EMAIL.name)
+            self.assertEqual(returned_errors[0]["errorCode"], ErrorMessageEnum.EMAIL_INVALID.name)
 
     @parametrize(
         "email, should_succeed",
@@ -108,21 +108,21 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         "california_id, expected_california_id, expected_error_code",
         [
             ("l1234567", "L1234567", None),
-            ("L123456", "L123456", ErrorMessageEnum.INVALID_CA_ID.name),
-            ("LL 123456", "LL 123456", ErrorMessageEnum.INVALID_CA_ID.name),
-            ("L123456X", "L123456X", ErrorMessageEnum.INVALID_CA_ID.name),
+            ("L123456", "L123456", ErrorMessageEnum.CA_ID_INVALID.name),
+            ("LL 123456", "LL 123456", ErrorMessageEnum.CA_ID_INVALID.name),
+            ("L123456X", "L123456X", ErrorMessageEnum.CA_ID_INVALID.name),
             ("", None, None),
             ("  ", None, None),
             (None, None, None),
         ],
     )
-    def test_clean_and_validate_california_id(
+    def test_validate_california_id_pattern(
         self,
         california_id: Optional[str],
         expected_california_id: Optional[str],
         expected_error_code: Optional[ErrorMessageEnum],
     ) -> None:
-        returned_ca_id, returned_error = clean_and_validate_california_id(california_id)
+        returned_ca_id, returned_error = validate_california_id_pattern(california_id)
 
         self.assertEqual(returned_ca_id, expected_california_id)
         if expected_error_code:
@@ -168,7 +168,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             for error, location in zip(errors, expected_locations):
                 self.assertEqual(error["field"], "phoneNumbers")
                 self.assertEqual(error["location"], location)
-                self.assertEqual(error["errorCode"], ErrorMessageEnum.INVALID_PHONE_NUMBER.name)
+                self.assertEqual(error["errorCode"], ErrorMessageEnum.PHONE_NUMBER_INVALID.name)
 
     @parametrize(
         "hmis_profiles, expected_locations, expected_error_count",
@@ -256,4 +256,4 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             for error, location in zip(errors, expected_locations):
                 self.assertEqual(error["field"], "contacts")
                 self.assertEqual(error["location"], location)
-                self.assertEqual(error["errorCode"], ErrorMessageEnum.INVALID_PHONE_NUMBER.name)
+                self.assertEqual(error["errorCode"], ErrorMessageEnum.PHONE_NUMBER_INVALID.name)
