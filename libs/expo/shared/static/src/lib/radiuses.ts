@@ -9,3 +9,6 @@ export const Radiuses = {
   xxl: 50,
   xxxl: 100,
 } as const;
+
+export type TRadiusKey = keyof typeof Radiuses;
+export type TRadius = (typeof Radiuses)[TRadiusKey];
