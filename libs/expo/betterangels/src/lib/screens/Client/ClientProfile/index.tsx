@@ -1,6 +1,6 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { ScrollView, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
@@ -15,12 +15,10 @@ interface ProfileProps {
 
 const ClientProfile = forwardRef<ProfileRef, ProfileProps>(
   ({ client }, ref) => {
-    const [expanded, setExpanded] = useState<undefined | string | null>();
     const scrollRef = useRef<ScrollView>(null);
     const viewRef = useRef<View>(null);
 
     const scrollToView = async () => {
-      await setExpanded('Relevant Contacts');
       setTimeout(() => {
         viewRef.current?.measureLayout(scrollRef.current as any, (x, y) => {
           scrollRef.current?.scrollTo({
@@ -34,12 +32,6 @@ const ClientProfile = forwardRef<ProfileRef, ProfileProps>(
     useImperativeHandle(ref, () => ({
       scrollToRelevantContacts: scrollToView,
     }));
-
-    const props = {
-      client,
-      expanded,
-      setExpanded,
-    };
 
     return (
       <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
