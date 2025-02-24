@@ -4,7 +4,7 @@ import { Accordion, FileCard } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { ClientDocumentType, Maybe } from '../../../apollo';
-import { DocumentModal } from '../../../ui-components';
+import { DocumentModal, FileThumbnail } from '../../../ui-components';
 
 interface IDocumentsProps {
   expanded: undefined | string | null;
@@ -16,17 +16,11 @@ interface IDocumentsProps {
 
 export default function Documents(props: IDocumentsProps) {
   const { expanded, setExpanded, data, clientId, title } = props;
-  const [modalIsOpen, setModalIsOpen] = useState(false);
   const [selectedDocument, setSelectedDocument] = useState<
     Maybe<ClientDocumentType> | undefined
   >(undefined);
 
   const isOtherDocuments = expanded === title;
-
-  const openModal = (document: ClientDocumentType) => {
-    setSelectedDocument(document);
-    setModalIsOpen(true);
-  };
 
   return (
     <Accordion
@@ -57,17 +51,28 @@ export default function Documents(props: IDocumentsProps) {
               key={document.id}
               filename={document.originalFilename}
               url={document.file.url}
-              onPress={() => openModal(document)}
+              onPress={() => setSelectedDocument(document)}
               createdAt={document.createdAt}
+              thumbnail={
+                <FileThumbnail
+                  uri={document.file.url}
+                  mimeType={document.mimeType}
+                  borderRadius={Radiuses.xxxs}
+                  thumbnailSize={{
+                    width: 36,
+                    height: 36,
+                  }}
+                />
+              }
             />
           ))}
         </View>
       )}
-      {selectedDocument && (
+      {!!selectedDocument && (
         <DocumentModal
           clientId={clientId}
-          isModalVisible={modalIsOpen}
-          closeModal={() => setModalIsOpen(false)}
+          isModalVisible={!!selectedDocument}
+          closeModal={() => setSelectedDocument(undefined)}
           document={selectedDocument}
         />
       )}
