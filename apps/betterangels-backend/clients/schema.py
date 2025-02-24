@@ -1,3 +1,4 @@
+import re
 from typing import Any, Dict, List, Optional, cast
 
 import phonenumber_field
@@ -16,6 +17,7 @@ from clients.permissions import (
     ClientProfileImportRecordPermissions,
     ClientProfilePermissions,
 )
+from common.constants import CALIFORNIA_ID_REGEX_PATTERN, EMAIL_REGEX_PATTERN
 from common.enums import ErrorMessageEnum
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, PhoneNumber
@@ -63,6 +65,23 @@ def _format_graphql_error(error: Exception) -> str:
     return str(error)
 
 
+def validate_user_email_pattern(email: Optional[str]) -> tuple[Optional[str], list[dict[str, Any]]]:
+    errors: list = []
+
+    if email == strawberry.UNSET:
+        return strawberry.UNSET, errors
+
+    if email is None or email.strip() == "":
+        return None, errors
+
+    email = email.strip().lower()
+
+    if not re.search(EMAIL_REGEX_PATTERN, email):
+        errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.INVALID_EMAIL.name})
+
+    return email, errors
+
+
 def validate_user_email_unique(
     email: Optional[str], user: Optional[User] = None
 ) -> tuple[Optional[str], list[dict[str, Any]]]:
@@ -83,23 +102,43 @@ def validate_user_email_unique(
     return email, errors
 
 
-def validate_name_exists(user_data: dict, nickname: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
+def name_is_present(name: Optional[str]) -> bool:
+    return not (name is strawberry.UNSET or name is None or name.strip() == "")
+
+
+def validate_client_has_name(
+    user_data: dict, nickname: Optional[str], user: Optional[User] = None
+) -> list[dict[str, Any]]:
     errors: list = []
 
-    user_name_dict = {k: v for k, v in user_data.items() if k in ["first_name", "last_name", "middle_name"]}
-    user_name_dict["nickname"] = nickname
-
-    user_name_unset = all((v is strawberry.UNSET for v in user_name_dict.values()))
-
-    if user and user.has_name and user_name_unset:
-        return errors
-
-    user_name_null = all(
-        (v is not strawberry.UNSET and (v is None or v.strip() == "") for v in user_name_dict.values())
+    payload_has_name = any(
+        (
+            name_is_present(user_data.get("first_name")),
+            name_is_present(user_data.get("last_name")),
+            name_is_present(user_data.get("middle_name")),
+            name_is_present(nickname),
+        )
     )
 
-    if user_name_null or user_name_unset:
-        errors.append({"field": "nickname", "location": None, "errorCode": ErrorMessageEnum.NO_NAME_PROVIDED.name})
+    # If the payload contains at least one name field, the data is valid
+    if payload_has_name:
+        return errors
+
+    # If the payload isn't clearing all existing name fields, the data is valid
+    if user:
+        client_has_name = any(
+            (
+                name_is_present(user.first_name) and user_data.get("first_name") is strawberry.UNSET,
+                name_is_present(user.last_name) and user_data.get("last_name") is strawberry.UNSET,
+                name_is_present(user.middle_name) and user_data.get("middle_name") is strawberry.UNSET,
+                name_is_present(user.client_profile.nickname) and nickname is strawberry.UNSET,
+            )
+        )
+
+        if client_has_name:
+            return errors
+
+    errors.append({"field": "nickname", "location": None, "errorCode": ErrorMessageEnum.NO_NAME_PROVIDED.name})
 
     return errors
 
@@ -124,8 +163,7 @@ def clean_and_validate_california_id(california_id: Optional[str]) -> tuple[Opti
     california_id: str
     california_id = california_id.upper()
 
-    california_id_pattern = r"^[A-Z]\d{7}$"
-    if not re.search(california_id_pattern, california_id):
+    if not re.search(CALIFORNIA_ID_REGEX_PATTERN, california_id):
         errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.INVALID_CA_ID.name})
 
     return california_id, errors
@@ -202,6 +240,8 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
         user_id = user_data.get("id", None)
         user = User.objects.filter(id=user_id).first() if user_id else None
 
+        errors += validate_client_has_name(user_data, user_data.get("nickname"), user)
+        validated_email, email_pattern_errors = validate_user_email_pattern(user_data.get("email"))
         validated_email, email_errors = validate_user_email_unique(user_data["email"], user)
         data["user"]["email"] = validated_email
         errors += email_errors
