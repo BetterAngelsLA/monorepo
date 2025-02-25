@@ -17,7 +17,7 @@ from clients.permissions import (
     ClientProfileImportRecordPermissions,
     ClientProfilePermissions,
 )
-from common.constants import CALIFORNIA_ID_REGEX_PATTERN, EMAIL_REGEX_PATTERN
+from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.enums import ErrorMessageEnum
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, PhoneNumber
@@ -69,27 +69,16 @@ def value_is_set(value: Optional[str]) -> bool:
     return not (value is strawberry.UNSET or value is None or value.strip() == "")
 
 
-def validate_user_email_pattern(email: Optional[str]) -> tuple[Optional[str], list[dict[str, Any]]]:
+def validate_user_email(email: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
     errors: list = []
 
-    if email == strawberry.UNSET:
-        return strawberry.UNSET, errors
+    if email in [strawberry.UNSET, None, ""]:
+        return errors
 
-    if email is None or email.strip() == "":
-        return None, errors
-
-    email = email.strip().lower()
-
-    if not re.search(EMAIL_REGEX_PATTERN, email):
+    email: str
+    if not re.search(EMAIL_REGEX, email):
         errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_INVALID.name})
 
-    return email, errors
-
-
-def validate_user_email_unique(email: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
-    errors: list = []
-
-    if not value_is_set(email):
         return errors
 
     user_id = {"user_id": user.pk} if user else {}
@@ -122,10 +111,10 @@ def validate_client_has_name(
     if user:
         client_has_name = any(
             (
-                value_is_set(user.first_name) and user_data.get("first_name") is strawberry.UNSET,
-                value_is_set(user.last_name) and user_data.get("last_name") is strawberry.UNSET,
-                value_is_set(user.middle_name) and user_data.get("middle_name") is strawberry.UNSET,
-                value_is_set(user.client_profile.nickname) and nickname is strawberry.UNSET,
+                user.first_name and user_data.get("first_name") is strawberry.UNSET,
+                user.last_name and user_data.get("last_name") is strawberry.UNSET,
+                user.middle_name and user_data.get("middle_name") is strawberry.UNSET,
+                user.client_profile.nickname and nickname is strawberry.UNSET,
             )
         )
 
@@ -145,7 +134,7 @@ def validate_california_id_pattern(california_id: Optional[str]) -> tuple[Option
 
     california_id = california_id.upper()
 
-    if not re.search(CALIFORNIA_ID_REGEX_PATTERN, california_id):
+    if not re.search(CALIFORNIA_ID_REGEX, california_id):
         errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_INVALID.name})
 
     return california_id, errors
@@ -246,7 +235,7 @@ def validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return errors
 
 
-def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
+def validate_client_profile_data(data: dict) -> dict[Any, Any]:
     """Validates the data for creating or updating a client profile."""
     errors: list = []
 
@@ -255,12 +244,7 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
         user = User.objects.filter(id=user_id).first() if user_id else None
 
         errors += validate_client_has_name(user_data, user_data.get("nickname"), user)
-
-        validated_email, email_pattern_errors = validate_user_email_pattern(user_data.get("email"))
-        errors += email_pattern_errors
-        data["user"]["email"] = validated_email
-
-        errors += validate_user_email_unique(data["user"]["email"], user)
+        errors += validate_user_email(user_data.get("email"), user)
 
     if data.get("california_id") is not strawberry.UNSET:
         validated_california_id, california_id_errors = validate_california_id_pattern(data["california_id"])
@@ -414,7 +398,7 @@ class Mutation:
             get_user_permission_group(user)
             client_profile_data: dict = strawberry.asdict(data)
 
-            client_profile_data = _validate_client_profile_data(client_profile_data)
+            validate_client_profile_data(client_profile_data)
 
             user_data = client_profile_data.pop("user")
             client_user = User.objects.create_client(**user_data)
@@ -465,7 +449,7 @@ class Mutation:
             if client_profile_data.get("temp_veteran_status") != strawberry.UNSET:
                 client_profile_data["veteran_status"] = client_profile_data["temp_veteran_status"]
 
-            client_profile_data = _validate_client_profile_data(client_profile_data)
+            validate_client_profile_data(client_profile_data)
 
             if user_data := client_profile_data.pop("user", {}):
                 if email := user_data.get("email", ""):

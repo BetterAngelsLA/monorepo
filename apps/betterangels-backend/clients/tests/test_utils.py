@@ -11,8 +11,7 @@ from clients.schema import (
     validate_hmis_profiles_complete,
     validate_hmis_profiles_unique,
     validate_phone_numbers,
-    validate_user_email_pattern,
-    validate_user_email_unique,
+    validate_user_email,
     value_is_set,
 )
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
@@ -74,55 +73,73 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertEqual(len(errors), 0)
 
     @parametrize(
-        "email, expected_validated_email, should_return_error",
+        "email, expected_error_code",
         [
-            (" ", None, False),
-            ("", None, False),
-            (None, None, False),
-            ("@.c", "@.c", True),
-            (strawberry.UNSET, strawberry.UNSET, False),
-            (" TODD@pblivin.net ", "todd@pblivin.net", False),
-            ("TODD@pblivin. net", "todd@pblivin. net", True),
+            (strawberry.UNSET, None),
+            (None, None),
+            ("", None),
+            (" ", ErrorMessageEnum.EMAIL_INVALID.name),
+            ("@.c", ErrorMessageEnum.EMAIL_INVALID.name),
+            (" TODD@pblivin.net ", ErrorMessageEnum.EMAIL_INVALID.name),
+            ("TODD@pblivin. net", ErrorMessageEnum.EMAIL_INVALID.name),
+            ("TODD@pblivin.com", ErrorMessageEnum.EMAIL_IN_USE.name),
         ],
     )
-    def test_validate_user_email_pattern(
-        self, email: Optional[str], expected_validated_email: None, should_return_error: bool
-    ) -> None:
-        returned_email, returned_errors = validate_user_email_pattern(email)
+    def test_validate_user_email(self, email: Optional[str], expected_error_code: Optional[ErrorMessageEnum]) -> None:
+        errors = validate_user_email(email)
 
-        self.assertEqual(returned_email, expected_validated_email)
-
-        if should_return_error:
-            self.assertEqual(len(returned_errors), 1)
-            self.assertEqual(returned_errors[0]["errorCode"], ErrorMessageEnum.EMAIL_INVALID.name)
-        else:
-            self.assertEqual(len(returned_errors), 0)
-
-    @parametrize(
-        "email, should_return_error",
-        [("todd@pblivin.net", False), ("TODD@pblivin.com", True)],
-    )
-    def test_validate_user_email_unique(self, email: str, should_return_error: bool) -> None:
-        errors = validate_user_email_unique(email)
-
-        if should_return_error:
+        if expected_error_code:
             self.assertEqual(len(errors), 1)
-            self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.EMAIL_IN_USE.name)
+            self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.EMAIL_INVALID.name)
         else:
             self.assertEqual(len(errors), 0)
 
-    @parametrize(
-        "email",
-        [(strawberry.UNSET,), ("  ",), (None,)],
-    )
-    def test_validate_user_email_unique_null(self, email: Optional[str]) -> None:
-        self.assertEqual(len(validate_user_email_unique(email, None)), 0)
-
-    def test_validate_email_unique_update_existing(self) -> None:
+    def test_validate_email_update_existing(self) -> None:
         user = User.objects.get(id=self.client_profile_1["user"]["id"])
         email = user.email
 
-        self.assertEqual(len(validate_user_email_unique(email, user)), 0)
+        self.assertEqual(len(validate_user_email(email, user)), 0)
+
+    # @parametrize(
+    #     "email, should_return_error",
+    #     [
+    #         (strawberry.UNSET, False),
+    #         (None, False),
+    #         ("", False),
+    #         (" ", True),
+    #         ("@.c", True),
+    #         (" TODD@pblivin.net ", True),
+    #         ("TODD@pblivin. net", True),
+    #     ],
+    # )
+    # def test_validate_user_email_pattern(self, email: Optional[str], should_return_error: bool) -> None:
+    #     errors = validate_user_email_pattern(email)
+
+    #     if should_return_error:
+    #         self.assertEqual(len(errors), 1)
+    #         self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.EMAIL_INVALID.name)
+    #     else:
+    #         self.assertEqual(len(errors), 0)
+
+    # @parametrize(
+    #     "email, should_return_error",
+    #     [("todd@pblivin.net", False), ("TODD@pblivin.com", True)],
+    # )
+    # def test_validate_user_email_unique(self, email: str, should_return_error: bool) -> None:
+    #     errors = validate_user_email_unique(email)
+
+    #     if should_return_error:
+    #         self.assertEqual(len(errors), 1)
+    #         self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.EMAIL_IN_USE.name)
+    #     else:
+    #         self.assertEqual(len(errors), 0)
+
+    # @parametrize(
+    #     "email",
+    #     [(strawberry.UNSET,), ("  ",), (None,)],
+    # )
+    # def test_validate_user_email_unique_null(self, email: Optional[str]) -> None:
+    #     self.assertEqual(len(validate_user_email_unique(email, None)), 0)
 
     @parametrize(
         "california_id, expected_california_id, expected_error_code",
