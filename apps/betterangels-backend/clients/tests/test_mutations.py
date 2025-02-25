@@ -415,6 +415,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profile_user["email"], None)
 
     def test_update_client_profile_duplicate_email_lower_mutation(self) -> None:
+        self.maxDiff = None
         dupe_email_lower = self.client_profile_2["user"]["email"].lower()
         user_update = {
             "id": self.client_profile_1["user"]["id"],
@@ -436,6 +437,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(error_messages[0]["errorCode"], ErrorMessageEnum.EMAIL_IN_USE.name)
 
     def test_update_client_profile_duplicate_email_upper_mutation(self) -> None:
+        self.maxDiff = None
         dupe_email_upper = self.client_profile_2["user"]["email"].upper()
         user_update = {
             "id": self.client_profile_1["user"]["id"],

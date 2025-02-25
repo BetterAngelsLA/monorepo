@@ -66,36 +66,8 @@ def _format_graphql_error(error: Exception) -> str:
 
 
 def value_is_set(value: Optional[str]) -> bool:
+    # return not (value is strawberry.UNSET or value is None or value == "")
     return not (value is strawberry.UNSET or value is None or value.strip() == "")
-
-
-def validate_user_provided(user_data: Optional[dict]) -> list[dict[str, Any]]:
-    errors: list = []
-
-    if not user_data:
-        errors.append({"field": "user", "location": None, "errorCode": ErrorMessageEnum.NAME_NOT_PROVIDED.name})
-
-    return errors
-
-
-def validate_user_email(email: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
-    errors: list = []
-
-    if email in [strawberry.UNSET, None, ""]:
-        return errors
-
-    email: str
-    if not re.search(EMAIL_REGEX, email):
-        errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_INVALID.name})
-
-        return errors
-
-    exclude_arg = {"id": user.pk} if user else {}
-
-    if User.objects.exclude(**exclude_arg).filter(email__iexact=email).exists():
-        errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_IN_USE.name})
-
-    return errors
 
 
 def validate_client_name(user_data: dict, nickname: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
@@ -129,6 +101,26 @@ def validate_client_name(user_data: dict, nickname: Optional[str], user: Optiona
             return errors
 
     errors.append({"field": "nickname", "location": None, "errorCode": ErrorMessageEnum.NAME_NOT_PROVIDED.name})
+
+    return errors
+
+
+def validate_user_email(email: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
+    errors: list = []
+
+    if email in [strawberry.UNSET, None, ""]:
+        return errors
+
+    email: str
+    if not re.search(EMAIL_REGEX, email):
+        errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_INVALID.name})
+
+        return errors
+
+    exclude_arg = {"id": user.pk} if user else {}
+
+    if User.objects.exclude(**exclude_arg).filter(email__iexact=email).exists():
+        errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_IN_USE.name})
 
     return errors
 
@@ -237,12 +229,12 @@ def validate_client_profile_data(data: dict) -> dict[Any, Any]:
     """Validates the data for creating or updating a client profile."""
     errors: list = []
 
-    errors += validate_user_provided(data.get("user"))
+    user = None
+
+    if value_is_set(data.get("id")):
+        user = User.objects.filter(client_profile__id=data["id"]).first()
 
     if user_data := data.get("user"):
-        user_id = user_data.get("id", None)
-        user = User.objects.filter(id=user_id).first() if user_id else None
-
         errors += validate_client_name(user_data, user_data.get("nickname"), user)
         errors += validate_user_email(user_data.get("email"), user)
 
