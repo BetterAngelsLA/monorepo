@@ -306,6 +306,11 @@ export type ClientProfileImportRecordType = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ClientProfileImportRecordsBulkInput = {
+  source: Scalars['String']['input'];
+  sourceIds: Array<Scalars['String']['input']>;
+};
+
 export type ClientProfileOrder = {
   id?: InputMaybe<Ordering>;
   user_FirstName?: InputMaybe<Ordering>;
@@ -1399,8 +1404,7 @@ export type QueryClientProfileArgs = {
 
 
 export type QueryClientProfileImportRecordsBulkArgs = {
-  source: Scalars['String']['input'];
-  sourceIds: Array<Scalars['String']['input']>;
+  data: ClientProfileImportRecordsBulkInput;
 };
 
 
