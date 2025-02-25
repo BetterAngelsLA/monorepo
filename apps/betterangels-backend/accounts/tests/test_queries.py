@@ -1,10 +1,12 @@
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from common.tests.utils import GraphQLBaseTestCase
+from django.contrib.auth.models import Permission
 from django.test import ignore_warnings
 from model_bakery import baker
 from organizations.models import Organization, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
+from accounts.permissions import OrganizationPermissions
 
 from .baker_recipes import organization_recipe, permission_group_recipe
 
@@ -160,3 +162,36 @@ class AvailableOrganizationGraphQLTests(GraphQLBaseTestCase):
 
         response = self.execute_graphql(query)
         self.assertEqual(len(response["data"]["availableOrganizations"]), expected_organization_count)
+
+
+class OrganizationQueryTestCase(GraphQLBaseTestCase):
+    def test_organizations_query(self) -> None:
+        user = baker.make(User)
+        permission = Permission.objects.get(codename=OrganizationPermissions.VIEW.value.split('.')[1])
+        user.user_permissions.add(permission)
+        self.graphql_client.force_login(user)
+
+        query = """
+            query Organizations($pagination: OffsetPaginationInput!) {
+                organizations(pagination: $pagination) {
+                    totalCount
+                    results {
+                        id
+                        name
+                    }
+                    pageInfo {
+                        offset
+                        limit
+                    }
+                }
+            }
+        """
+        variables = {"pagination": {"offset": 0, "limit": 10}}
+        response = self.execute_graphql(query, variables=variables)
+
+        expected_count = Organization.objects.count()
+        expected_names = list(Organization.objects.order_by("name").values_list("name", flat=True))
+        actual_names = [org["name"] for org in response["data"]["organizations"]["results"]]
+
+        self.assertEqual(response["data"]["organizations"]["totalCount"], expected_count)
+        self.assertEqual(actual_names, expected_names)
