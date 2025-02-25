@@ -39,7 +39,7 @@ class MoodInline(admin.TabularInline):
 @admin.register(Note)
 class NoteAdmin(AttachmentAdminMixin, admin.ModelAdmin):
     list_display = (
-        "note_title",
+        "note_purpose",
         "client",
         "created_by",
         "organization",
@@ -52,7 +52,7 @@ class NoteAdmin(AttachmentAdminMixin, admin.ModelAdmin):
         "updated_at",
     )
     search_fields = (
-        "title",
+        "purpose",
         "public_details",
         "private_details",
         "created_by__email",
@@ -68,8 +68,8 @@ class NoteAdmin(AttachmentAdminMixin, admin.ModelAdmin):
         "updated_at",
     )
 
-    def note_title(self, obj: Note) -> str:
-        return f"{obj.title} ({obj.pk})"
+    def note_purpose(self, obj: Note) -> str:
+        return f"{obj.purpose} ({obj.pk})"
 
 
 @admin.register(Task)

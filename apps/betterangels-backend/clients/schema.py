@@ -40,6 +40,7 @@ from .enums import RelationshipTypeEnum
 from .types import (
     ClientDocumentType,
     ClientProfileDataImportType,
+    ClientProfileImportRecordsBulkInput,
     ClientProfileImportRecordType,
     ClientProfilePhotoInput,
     ClientProfileType,
@@ -254,13 +255,18 @@ class Query:
     )
 
     # Data Import
-    @strawberry_django.field(extensions=[HasRetvalPerm(perms=[ClientProfileImportRecordPermissions.VIEW])])
-    def clientProfileImportRecordsBulk(self, source: str, sourceIds: List[str]) -> List[ClientProfileImportRecordType]:
+    @strawberry_django.field(extensions=[HasPerm(ClientProfileImportRecordPermissions.VIEW)])
+    def clientProfileImportRecordsBulk(
+        self, info: Info, data: ClientProfileImportRecordsBulkInput
+    ) -> List[ClientProfileImportRecordType]:
         """
-        Given a source (e.g. "SELAH") and a list of sourceIds, return the matching records.
+        Given input data containing a source (e.g. "SELAH") and a list of sourceIds,
+        return the matching records.
         Note: Only records that exist in the database will be returned.
         """
-        qs = ClientProfileImportRecord.objects.filter(source_name=source, source_id__in=sourceIds, success=True)
+        qs = ClientProfileImportRecord.objects.filter(
+            source_name=data.source, source_id__in=data.sourceIds, success=True
+        )
         return cast(List[ClientProfileImportRecordType], list(qs))
 
 
@@ -465,7 +471,7 @@ class Mutation:
             source_file=record.source_file,
         )
 
-    @strawberry_django.mutation(extensions=[HasPerm([ClientProfileImportRecordPermissions.ADD])])
+    @strawberry_django.mutation(extensions=[HasPerm(ClientProfileImportRecordPermissions.ADD)])
     def import_client_profile(self, info: Info, data: ImportClientProfileInput) -> ClientProfileImportRecordType:
         existing = ClientProfileImportRecord.objects.filter(
             source_id=data.source_id, source_name=data.source_name, success=True
