@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 class ErrorCodeEnum(models.TextChoices):
     CA_ID_INVALID = "ca_id_invalid", _("California ID invalid")
-    CA_ID_IN_USE = "ca_id_in_us", _("California ID is already in use")
+    CA_ID_IN_USE = "ca_id_in_use", _("California ID is already in use")
     EMAIL_INVALID = "email_invalid", _("Email invalid")
     EMAIL_IN_USE = "email_in_use", _("Email is already in use")
     HMIS_ID_IN_USE = "hmis_id_in_use", _("HMIS ID is already in use")

@@ -182,10 +182,10 @@ def validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str
 
             continue
 
-        hmis_profile_id = {"id": hmis_profile["id"]} if hmis_profile.get("id") else {}
+        exclude_arg = {"id": hmis_profile["id"]} if hmis_profile.get("id") else {}
 
         if (
-            HmisProfile.objects.exclude(**hmis_profile_id)
+            HmisProfile.objects.exclude(**exclude_arg)
             .filter(
                 agency=hmis_profile["agency"],
                 hmis_id__iexact=hmis_profile["hmis_id"],
