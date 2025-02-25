@@ -107,11 +107,11 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             ("", None),
             ("V9753100", None),
             ("  ", ErrorCodeEnum.CA_ID_INVALID.name),
-            ("l1234567", ErrorCodeEnum.CA_ID_INVALID.name),
+            ("l1234567", ErrorCodeEnum.CA_ID_IN_USE.name),
+            ("L1234567", ErrorCodeEnum.CA_ID_IN_USE.name),
             ("L123456", ErrorCodeEnum.CA_ID_INVALID.name),
             ("LL 123456", ErrorCodeEnum.CA_ID_INVALID.name),
             ("L123456X", ErrorCodeEnum.CA_ID_INVALID.name),
-            ("L1234567", ErrorCodeEnum.CA_ID_IN_USE.name),
         ],
     )
     def test_validate_california_id(
