@@ -157,6 +157,9 @@ def validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str
     errors = []
 
     for idx, phone_number in enumerate(phone_numbers):
+        if not phone_number.get("number"):
+            continue
+
         try:
             phonenumber_field.validators.validate_international_phonenumber(phone_number["number"])
         except ValidationError:
@@ -213,6 +216,9 @@ def validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     errors = []
 
     for idx, contact in enumerate(contacts):
+        if not contact.get("phone_number"):
+            continue
+
         try:
             phonenumber_field.validators.validate_international_phonenumber(contact["phone_number"])
         except ValidationError:

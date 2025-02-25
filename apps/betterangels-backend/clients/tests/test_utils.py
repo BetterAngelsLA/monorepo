@@ -138,6 +138,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "phone_numbers, expected_locations, expected_error_count",
         [
+            ([strawberry.UNSET, None, "", " "], ["3__number"], 1),
             (["2125551212", "2125551213", "2125551214"], None, 0),
             (["2005551212", "2125551212", "212555121"], ["0__number", "2__number"], 2),
             (["2125551212"], None, 0),
@@ -199,6 +200,16 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "contacts, expected_locations, expected_error_count",
         [
+            (
+                [
+                    {"phone_number": strawberry.UNSET},
+                    {"phone_number": None},
+                    {"phone_number": ""},
+                    {"phone_number": " "},
+                ],
+                ["3__phoneNumber"],
+                1,
+            ),
             (
                 [{"phone_number": "2125551212"}, {"phone_number": "2125551213"}, {"phone_number": "2125551214"}],
                 None,
