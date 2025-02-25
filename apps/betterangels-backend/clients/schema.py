@@ -116,6 +116,7 @@ def validate_user_email(email: Optional[str], user: Optional[User] = None) -> li
 
         return errors
 
+    # exclude the user being updated from the unique check
     exclude_arg = {"id": user.pk} if user else {}
 
     if User.objects.exclude(**exclude_arg).filter(email__iexact=email).exists():
@@ -136,6 +137,7 @@ def validate_california_id(california_id: Optional[str], user: Optional[User] = 
 
         return errors
 
+    # exclude the client profile being updated from the unique check
     exclude_arg = {"user_id": user.pk} if user else {}
 
     if ClientProfile.objects.exclude(**exclude_arg).filter(california_id__iexact=california_id).exists():
@@ -182,6 +184,7 @@ def validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str
 
             continue
 
+        # exclude the hmis profile being updated from the unique check
         exclude_arg = {"id": hmis_profile["id"]} if hmis_profile.get("id") else {}
 
         if (
@@ -224,7 +227,7 @@ def validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return errors
 
 
-def validate_client_profile_data(data: dict) -> dict[Any, Any]:
+def validate_client_profile_data(data: dict) -> None:
     """Validates the data for creating or updating a client profile."""
     errors: list = []
 
@@ -251,8 +254,6 @@ def validate_client_profile_data(data: dict) -> dict[Any, Any]:
 
     if errors:
         raise GraphQLError("Validation Errors", extensions={"errors": errors})
-
-    return data
 
 
 def upsert_or_delete_client_related_object(
