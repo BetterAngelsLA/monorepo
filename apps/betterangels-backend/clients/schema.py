@@ -1,7 +1,6 @@
 import re
 from typing import Any, Dict, List, Optional, cast
 
-import phonenumber_field
 import strawberry
 import strawberry_django
 from accounts.models import User
@@ -30,6 +29,7 @@ from django.db import transaction
 from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
 from guardian.shortcuts import assign_perm
+from phonenumber_field.validators import validate_international_phonenumber
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -152,7 +152,7 @@ def validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str
             continue
 
         try:
-            phonenumber_field.validators.validate_international_phonenumber(phone_number["number"])
+            validate_international_phonenumber(phone_number["number"])
         except ValidationError:
             errors.append(
                 {
@@ -211,7 +211,7 @@ def validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
             continue
 
         try:
-            phonenumber_field.validators.validate_international_phonenumber(contact["phone_number"])
+            validate_international_phonenumber(contact["phone_number"])
         except ValidationError:
             errors.append(
                 {
