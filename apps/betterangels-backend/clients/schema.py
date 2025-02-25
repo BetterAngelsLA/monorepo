@@ -124,36 +124,16 @@ def validate_client_name(user_data: dict, nickname: Optional[str], user: Optiona
     return errors
 
 
-def validate_california_id(california_id: Optional[str], user: Optional[User]) -> list[dict[str, Any]]:
-    errors = []
+def validate_california_id(california_id: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
+    errors: list = []
 
-    if california_id is None or california_id.strip() == "":
-        return None, errors
+    if california_id in [strawberry.UNSET, None, ""]:
+        return errors
 
+    california_id: str
     if not re.search(CALIFORNIA_ID_REGEX, california_id):
         errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_INVALID.name})
 
-    return errors
-
-
-def validate_california_id_pattern(california_id: Optional[str]) -> tuple[Optional[str], list[dict[str, Any]]]:
-    errors: list = []
-
-    if california_id is None or california_id.strip() == "":
-        return None, errors
-
-    california_id = california_id.upper()
-
-    if not re.search(CALIFORNIA_ID_REGEX, california_id):
-        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_INVALID.name})
-
-    return california_id, errors
-
-
-def validate_california_id_unique(california_id: Optional[str], user: Optional[User]) -> list[dict[str, Any]]:
-    errors: list = []
-
-    if not value_is_set(california_id):
         return errors
 
     exclude_arg = {"user_id": user.pk} if user else {}
@@ -256,12 +236,8 @@ def validate_client_profile_data(data: dict) -> dict[Any, Any]:
         errors += validate_client_name(user_data, user_data.get("nickname"), user)
         errors += validate_user_email(user_data.get("email"), user)
 
-    if data.get("california_id") is not strawberry.UNSET:
-        validated_california_id, california_id_errors = validate_california_id_pattern(data["california_id"])
-        errors += california_id_errors
-        data["california_id"] = validated_california_id
-
-        errors += validate_california_id_unique(data["california_id"], user)
+    if data.get("california_id"):
+        errors += validate_california_id(data["california_id"], user)
 
     if data.get("contacts"):
         errors += validate_contacts(data["contacts"])

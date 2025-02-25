@@ -4,8 +4,7 @@ import strawberry
 from accounts.models import User
 from clients.enums import HmisAgencyEnum
 from clients.schema import (
-    validate_california_id_pattern,
-    validate_california_id_unique,
+    validate_california_id,
     validate_client_name,
     validate_contacts,
     validate_hmis_profiles_complete,
@@ -100,90 +99,42 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertEqual(len(validate_user_email(email, user)), 0)
 
-    # @parametrize(
-    #     "email, should_return_error",
-    #     [
-    #         (strawberry.UNSET, False),
-    #         (None, False),
-    #         ("", False),
-    #         (" ", True),
-    #         ("@.c", True),
-    #         (" TODD@pblivin.net ", True),
-    #         ("TODD@pblivin. net", True),
-    #     ],
-    # )
-    # def test_validate_user_email_pattern(self, email: Optional[str], should_return_error: bool) -> None:
-    #     errors = validate_user_email_pattern(email)
-
-    #     if should_return_error:
-    #         self.assertEqual(len(errors), 1)
-    #         self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.EMAIL_INVALID.name)
-    #     else:
-    #         self.assertEqual(len(errors), 0)
-
-    # @parametrize(
-    #     "email, should_return_error",
-    #     [("todd@pblivin.net", False), ("TODD@pblivin.com", True)],
-    # )
-    # def test_validate_user_email_unique(self, email: str, should_return_error: bool) -> None:
-    #     errors = validate_user_email_unique(email)
-
-    #     if should_return_error:
-    #         self.assertEqual(len(errors), 1)
-    #         self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.EMAIL_IN_USE.name)
-    #     else:
-    #         self.assertEqual(len(errors), 0)
-
-    # @parametrize(
-    #     "email",
-    #     [(strawberry.UNSET,), ("  ",), (None,)],
-    # )
-    # def test_validate_user_email_unique_null(self, email: Optional[str]) -> None:
-    #     self.assertEqual(len(validate_user_email_unique(email, None)), 0)
-
     @parametrize(
-        "california_id, expected_california_id, expected_error_code",
+        "california_id, expected_error_code",
         [
-            ("l1234567", "L1234567", None),
-            ("L123456", "L123456", ErrorMessageEnum.CA_ID_INVALID.name),
-            ("LL 123456", "LL 123456", ErrorMessageEnum.CA_ID_INVALID.name),
-            ("L123456X", "L123456X", ErrorMessageEnum.CA_ID_INVALID.name),
-            ("", None, None),
-            ("  ", None, None),
-            (None, None, None),
+            (strawberry.UNSET, None),
+            (None, None),
+            ("", None),
+            ("  ", ErrorMessageEnum.CA_ID_INVALID.name),
+            ("l1234567", ErrorMessageEnum.CA_ID_INVALID.name),
+            ("L123456", ErrorMessageEnum.CA_ID_INVALID.name),
+            ("LL 123456", ErrorMessageEnum.CA_ID_INVALID.name),
+            ("L123456X", ErrorMessageEnum.CA_ID_INVALID.name),
+            ("L1234567", ErrorMessageEnum.CA_ID_IN_USE.name),
         ],
     )
-    def test_validate_california_id_pattern(
+    def test_validate_california_id(
         self,
         california_id: Optional[str],
-        expected_california_id: Optional[str],
         expected_error_code: Optional[ErrorMessageEnum],
     ) -> None:
-        returned_ca_id, returned_error = validate_california_id_pattern(california_id)
+        errors = validate_california_id(california_id)
 
-        self.assertEqual(returned_ca_id, expected_california_id)
         if expected_error_code:
-            self.assertEqual(returned_error[0]["errorCode"], expected_error_code)
+            self.assertEqual(len(errors), 1)
+            self.assertEqual(errors[0]["errorCode"], expected_error_code)
 
-    def test_validate_california_id_unique(self) -> None:
+    def test_validate_california_id_update_existing(self) -> None:
         user = User.objects.get(pk=self.client_profile_1["user"]["id"])
         california_id = self.client_profile_1["californiaId"]
 
-        # Unique check
-        errors = validate_california_id_unique(california_id, user)
+        errors = validate_california_id(california_id, user)
         self.assertEqual(len(errors), 0)
 
-        errors = validate_california_id_unique(california_id, None)
+        errors = validate_california_id(california_id, None)
         self.assertEqual(len(errors), 1)
         self.assertEqual(errors[0]["field"], "californiaId")
         self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.CA_ID_IN_USE.name)
-
-    @parametrize(
-        "california_id",
-        [(strawberry.UNSET,), ("  ",), (None,)],
-    )
-    def test_validate_california_id_unique_null(self, california_id: Optional[str]) -> None:
-        self.assertEqual(len(validate_california_id_unique(california_id, None)), 0)
 
     @parametrize(
         "phone_numbers, expected_locations, expected_error_count",
