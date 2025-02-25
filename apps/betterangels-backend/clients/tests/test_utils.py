@@ -106,7 +106,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             (None, None),
             ("", None),
             ("V9753100", None),
-            ("  ", ErrorCodeEnum.CA_ID_INVALID.name),
+            (" ", ErrorCodeEnum.CA_ID_INVALID.name),
             ("l1234567", ErrorCodeEnum.CA_ID_IN_USE.name),
             ("L1234567", ErrorCodeEnum.CA_ID_IN_USE.name),
             ("L123456", ErrorCodeEnum.CA_ID_INVALID.name),

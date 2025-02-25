@@ -66,7 +66,7 @@ def _format_graphql_error(error: Exception) -> str:
 
 
 def value_is_set(value: Optional[str]) -> bool:
-    return not (value is strawberry.UNSET or value is None or value.strip() == "")
+    return value is not strawberry.UNSET and value is not None and value.strip() != ""
 
 
 def validate_client_name(user_data: dict, nickname: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
