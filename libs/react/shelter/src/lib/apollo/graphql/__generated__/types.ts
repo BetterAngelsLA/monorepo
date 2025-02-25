@@ -1103,6 +1103,7 @@ export type NoteFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<NoteFilter>;
   OR?: InputMaybe<NoteFilter>;
+  authors?: InputMaybe<Array<Scalars['ID']['input']>>;
   client?: InputMaybe<Scalars['ID']['input']>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
