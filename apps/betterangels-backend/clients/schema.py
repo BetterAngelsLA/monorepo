@@ -255,19 +255,22 @@ class Query:
     )
 
     # Data Import
-    @strawberry_django.field(extensions=[HasPerm(ClientProfileImportRecordPermissions.VIEW)])
-    def clientProfileImportRecordsBulk(
+    @strawberry_django.offset_paginated(extensions=[HasPerm(ClientProfileImportRecordPermissions.VIEW)])
+    def bulk_client_profile_import_records(
         self, info: Info, data: ClientProfileImportRecordsBulkInput
-    ) -> List[ClientProfileImportRecordType]:
+    ) -> OffsetPaginated[ClientProfileImportRecordType]:
         """
         Given input data containing a source (e.g. "SELAH") and a list of sourceIds,
         return the matching records.
         Note: Only records that exist in the database will be returned.
         """
+
         qs = ClientProfileImportRecord.objects.filter(
-            source_name=data.source, source_id__in=data.sourceIds, success=True
+            source_name=data.source,
+            source_id__in=data.sourceIds,
+            success=True,
         )
-        return cast(List[ClientProfileImportRecordType], list(qs))
+        return cast(OffsetPaginated[ClientProfileImportRecordType], qs)
 
 
 @strawberry.type
