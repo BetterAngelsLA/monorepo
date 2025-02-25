@@ -10,7 +10,7 @@ mutation CreateNote($data: CreateNoteInput!) {
 
     ... on NoteType {
       id
-      title
+      purpose
       publicDetails
       client {
         id
