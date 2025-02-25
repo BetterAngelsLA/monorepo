@@ -15,48 +15,9 @@ from .models import (
     User,
 )
 
-
-class CustomOrganizationUserAdmin(AdminRequestMixin, ModelAdmin[User]):
-    form = OrganizationUserForm
-
-
-class ExtendedOrganizationInvitationAdmin(ModelAdmin[ExtendedOrganizationInvitation]):
-    list_display = ("invited_by", "invitee", "organization", "accepted")
-    search_fields = ("invited_by__username", "invitee__username", "organization__name")
-    list_filter = ("organization",)
-
-
-class UserAdmin(BaseUserAdmin):
-    add_form = UserCreationForm
-    form = UserChangeForm
-    fieldsets = (
-        (None, {"fields": ("email", "password")}),
-        (("Personal info"), {"fields": ("first_name", "last_name")}),
-        (
-            ("Permissions"),
-            {
-                "fields": (
-                    "is_active",
-                    "is_staff",
-                    "is_superuser",
-                    "groups",
-                    "user_permissions",
-                ),
-            },
-        ),
-        (("Important dates"), {"fields": ("last_login",)}),
-    )
-    # Not convinced this is the right type
-    model = cast(Type[DefaultUser], User)
-    list_display = [
-        "id",
-        "full_name",
-        "email",
-        "is_client",
-    ]
-
-    def is_client(self, obj: User) -> bool:
-        return hasattr(obj, "client_profile")
+admin.site.unregister(Organization)
+admin.site.unregister(OrganizationUser)
+admin.site.unregister(OrganizationInvitation)
 
 
 @admin.register(PermissionGroup)
@@ -80,16 +41,54 @@ class PermissionGroupInline(admin.TabularInline):
     extra = 1
 
 
+@admin.register(Organization)
 class CustomOrganizationAdmin(admin.ModelAdmin):
     inlines = [PermissionGroupInline]
     list_display = ("name",)  # Adjust according to your model fields
     search_fields = ("name",)  # Enables searching by name in the autocomplete fields
 
 
-admin.site.register(User, UserAdmin)
-admin.site.unregister(Organization)
-admin.site.unregister(OrganizationUser)
-admin.site.unregister(OrganizationInvitation)
-admin.site.register(Organization, CustomOrganizationAdmin)
-admin.site.register(OrganizationUser, CustomOrganizationUserAdmin)
-admin.site.register(ExtendedOrganizationInvitation, ExtendedOrganizationInvitationAdmin)
+@admin.register(OrganizationUser)
+class CustomOrganizationUserAdmin(AdminRequestMixin, ModelAdmin[User]):
+    form = OrganizationUserForm
+
+
+@admin.register(ExtendedOrganizationInvitation)
+class ExtendedOrganizationInvitationAdmin(ModelAdmin[ExtendedOrganizationInvitation]):
+    list_display = ("invited_by", "invitee", "organization", "accepted")
+    search_fields = ("invited_by__username", "invitee__username", "organization__name")
+    list_filter = ("organization", "accepted")
+
+
+@admin.register(User)
+class UserAdmin(BaseUserAdmin):
+    add_form = UserCreationForm
+    form = UserChangeForm
+    fieldsets = (
+        (None, {"fields": ("email", "password")}),
+        (("Personal info"), {"fields": ("first_name", "last_name")}),
+        (
+            ("Permissions"),
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+            },
+        ),
+        (("Important dates"), {"fields": ("last_login",)}),
+    )
+    # Not convinced this is the right type; we cast our custom User as a DefaultUser.
+    model = cast(Type[DefaultUser], User)
+    list_display = [
+        "id",
+        "full_name",
+        "email",
+        "is_client",
+    ]
+
+    def is_client(self, obj: User) -> bool:
+        return hasattr(obj, "client_profile")

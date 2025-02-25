@@ -138,13 +138,12 @@ class NoteDataImportAdmin(admin.ModelAdmin):
     list_display = ("id", "imported_at", "source_file", "imported_by", "record_counts")
     readonly_fields = ("record_counts",)
 
+    @admin.display(description="Import Record Counts")
     def record_counts(self, obj: NoteDataImport) -> str:
         total = obj.records.count()
         successes = obj.records.filter(success=True).count()
         failures = total - successes
         return f"Total: {total} | Success: {successes} | Failures: {failures}"
-
-    record_counts.short_description = "Import Record Counts"
 
 
 @admin.register(NoteImportRecord)

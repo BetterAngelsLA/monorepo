@@ -697,6 +697,17 @@ class Mutation:
         this resolver looks up the corresponding ClientProfileImportRecord (with source "SELAH")
         and injects the internal client ID into the note data before creating the note.
         """
+        # Check if a successful import already exists for this source.
+        existing = NoteImportRecord.objects.filter(
+            source_name=data.source_name,
+            source_id=data.source_id,
+            success=True,
+        ).first()
+        if existing:
+            raise Exception(
+                f"Source ID {data.source_id} with source name '{data.source_name}' has already been imported successfully."
+            )
+
         # Convert the incoming note input to a dictionary.
         note_input = strawberry.asdict(data.note)
         # Pop out the parentId so it doesn't get passed to CreateNoteInput.
@@ -736,4 +747,4 @@ class Mutation:
                 success=False,
                 error_message=str(e),
             )
-        return record
+        return cast(NoteImportRecordType, record)
