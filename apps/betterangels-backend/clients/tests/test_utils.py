@@ -37,6 +37,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "first_name, middle_name, last_name, nickname, operation, should_return_error",
         [
+            (strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, "nick", "create", False),
             (strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, "create", True),
             (None, None, None, None, "create", True),
             (" ", " ", " ", " ", "create", True),
@@ -75,6 +76,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             (strawberry.UNSET, None),
             (None, None),
             ("", None),
+            ("valid_email@example.co", None),
             (" ", ErrorCodeEnum.EMAIL_INVALID.name),
             ("@.c", ErrorCodeEnum.EMAIL_INVALID.name),
             (" TODD@pblivin.net ", ErrorCodeEnum.EMAIL_INVALID.name),
@@ -103,6 +105,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             (strawberry.UNSET, None),
             (None, None),
             ("", None),
+            ("V9753100", None),
             ("  ", ErrorCodeEnum.CA_ID_INVALID.name),
             ("l1234567", ErrorCodeEnum.CA_ID_INVALID.name),
             ("L123456", ErrorCodeEnum.CA_ID_INVALID.name),
