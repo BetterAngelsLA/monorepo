@@ -1,9 +1,9 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { forwardRef, useImperativeHandle, useRef } from 'react';
 import { ScrollView, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
+import FullNameDetails from './ClientProfileSections/FullNameDetails';
 
 interface ProfileRef {
   scrollToRelevantContacts: () => void;
@@ -36,7 +36,7 @@ const ClientProfile = forwardRef<ProfileRef, ProfileProps>(
     return (
       <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
         <View>
-          <TextBold>HELLO REDESIGN</TextBold>
+          <FullNameDetails client={client} />
         </View>
       </MainScrollContainer>
     );
