@@ -6,7 +6,7 @@ from clients.enums import HmisAgencyEnum
 from clients.schema import (
     validate_california_id_pattern,
     validate_california_id_unique,
-    validate_client_has_name,
+    validate_client_name,
     validate_contacts,
     validate_hmis_profiles_complete,
     validate_hmis_profiles_unique,
@@ -50,7 +50,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             ("", None, " ", strawberry.UNSET, "update", False),
         ],
     )
-    def test_validate_client_has_name(
+    def test_validate_client_name(
         self,
         first_name: Optional[str],
         middle_name: Optional[str],
@@ -65,7 +65,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             "last_name": last_name,
             "middle_name": middle_name,
         }
-        errors = validate_client_has_name(user_data, nickname, user)
+        errors = validate_client_name(user_data, nickname, user)
         if should_return_error:
             self.assertEqual(len(errors), 1)
             self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.NAME_NOT_PROVIDED.name)
@@ -90,7 +90,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
 
         if expected_error_code:
             self.assertEqual(len(errors), 1)
-            self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.EMAIL_INVALID.name)
+            self.assertEqual(errors[0]["errorCode"], expected_error_code)
         else:
             self.assertEqual(len(errors), 0)
 

@@ -81,17 +81,15 @@ def validate_user_email(email: Optional[str], user: Optional[User] = None) -> li
 
         return errors
 
-    user_id = {"user_id": user.pk} if user else {}
+    exclude_arg = {"id": user.pk} if user else {}
 
-    if User.objects.exclude(**user_id).filter(email__iexact=email).exists():
+    if User.objects.exclude(**exclude_arg).filter(email__iexact=email).exists():
         errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_IN_USE.name})
 
     return errors
 
 
-def validate_client_has_name(
-    user_data: dict, nickname: Optional[str], user: Optional[User] = None
-) -> list[dict[str, Any]]:
+def validate_client_name(user_data: dict, nickname: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
     errors: list = []
 
     payload_has_name = any(
@@ -126,6 +124,18 @@ def validate_client_has_name(
     return errors
 
 
+def validate_california_id(california_id: Optional[str], user: Optional[User]) -> list[dict[str, Any]]:
+    errors = []
+
+    if california_id is None or california_id.strip() == "":
+        return None, errors
+
+    if not re.search(CALIFORNIA_ID_REGEX, california_id):
+        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_INVALID.name})
+
+    return errors
+
+
 def validate_california_id_pattern(california_id: Optional[str]) -> tuple[Optional[str], list[dict[str, Any]]]:
     errors: list = []
 
@@ -146,9 +156,9 @@ def validate_california_id_unique(california_id: Optional[str], user: Optional[U
     if not value_is_set(california_id):
         return errors
 
-    user_id = {"user_id": user.pk} if user else {}
+    exclude_arg = {"user_id": user.pk} if user else {}
 
-    if ClientProfile.objects.exclude(**user_id).filter(california_id__iexact=california_id).exists():
+    if ClientProfile.objects.exclude(**exclude_arg).filter(california_id__iexact=california_id).exists():
         errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_IN_USE.name})
 
     return errors
@@ -243,7 +253,7 @@ def validate_client_profile_data(data: dict) -> dict[Any, Any]:
         user_id = user_data.get("id", None)
         user = User.objects.filter(id=user_id).first() if user_id else None
 
-        errors += validate_client_has_name(user_data, user_data.get("nickname"), user)
+        errors += validate_client_name(user_data, user_data.get("nickname"), user)
         errors += validate_user_email(user_data.get("email"), user)
 
     if data.get("california_id") is not strawberry.UNSET:
