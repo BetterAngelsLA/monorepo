@@ -65,6 +65,10 @@ def _format_graphql_error(error: Exception) -> str:
     return str(error)
 
 
+def value_is_set(value: Optional[str]) -> bool:
+    return not (value is strawberry.UNSET or value is None or value.strip() == "")
+
+
 def validate_user_email_pattern(email: Optional[str]) -> tuple[Optional[str], list[dict[str, Any]]]:
     errors: list = []
 
@@ -82,17 +86,16 @@ def validate_user_email_pattern(email: Optional[str]) -> tuple[Optional[str], li
     return email, errors
 
 
-def validate_user_email_unique(email: str, user: Optional[User] = None) -> list[dict[str, Any]]:
+def validate_user_email_unique(email: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
     errors: list = []
+
+    if not value_is_set(email):
+        return errors
 
     if User.objects.filter(email__iexact=email).exists():
         errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_IN_USE.name})
 
     return errors
-
-
-def name_is_present(name: Optional[str]) -> bool:
-    return not (name is strawberry.UNSET or name is None or name.strip() == "")
 
 
 def validate_client_has_name(
@@ -102,10 +105,10 @@ def validate_client_has_name(
 
     payload_has_name = any(
         (
-            name_is_present(user_data.get("first_name")),
-            name_is_present(user_data.get("last_name")),
-            name_is_present(user_data.get("middle_name")),
-            name_is_present(nickname),
+            value_is_set(user_data.get("first_name")),
+            value_is_set(user_data.get("last_name")),
+            value_is_set(user_data.get("middle_name")),
+            value_is_set(nickname),
         )
     )
 
@@ -117,10 +120,10 @@ def validate_client_has_name(
     if user:
         client_has_name = any(
             (
-                name_is_present(user.first_name) and user_data.get("first_name") is strawberry.UNSET,
-                name_is_present(user.last_name) and user_data.get("last_name") is strawberry.UNSET,
-                name_is_present(user.middle_name) and user_data.get("middle_name") is strawberry.UNSET,
-                name_is_present(user.client_profile.nickname) and nickname is strawberry.UNSET,
+                value_is_set(user.first_name) and user_data.get("first_name") is strawberry.UNSET,
+                value_is_set(user.last_name) and user_data.get("last_name") is strawberry.UNSET,
+                value_is_set(user.middle_name) and user_data.get("middle_name") is strawberry.UNSET,
+                value_is_set(user.client_profile.nickname) and nickname is strawberry.UNSET,
             )
         )
 
@@ -146,8 +149,11 @@ def validate_california_id_pattern(california_id: Optional[str]) -> tuple[Option
     return california_id, errors
 
 
-def validate_california_id_unique(california_id: str, user: Optional[User]) -> list[dict[str, Any]]:
+def validate_california_id_unique(california_id: Optional[str], user: Optional[User]) -> list[dict[str, Any]]:
     errors: list = []
+
+    if not value_is_set(california_id):
+        return errors
 
     user_id = {"user_id": user.pk} if user else {}
 
@@ -175,7 +181,25 @@ def validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str
     return errors
 
 
-def validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def validate_hmis_profiles_complete(hmis_profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    errors = []
+
+    for idx, hmis_profile in enumerate(hmis_profiles):
+        hmis_id = hmis_profile.get("hmis_id")
+
+        if not value_is_set(hmis_id):
+            errors.append(
+                {
+                    "field": "hmisProfiles",
+                    "location": f"{idx}__hmisId",
+                    "errorCode": ErrorMessageEnum.HMIS_ID_NOT_PROVIDED.name,
+                }
+            )
+
+    return errors
+
+
+def validate_hmis_profiles_unique(hmis_profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
     errors = []
 
     for idx, hmis_profile in enumerate(hmis_profiles):
@@ -229,27 +253,26 @@ def _validate_client_profile_data(data: dict) -> dict[Any, Any]:
         user = User.objects.filter(id=user_id).first() if user_id else None
 
         errors += validate_client_has_name(user_data, user_data.get("nickname"), user)
+
         validated_email, email_pattern_errors = validate_user_email_pattern(user_data.get("email"))
-
-        data["user"]["email"] = validated_email
         errors += email_pattern_errors
+        data["user"]["email"] = validated_email
 
-        if not email_pattern_errors:
-            errors += validate_user_email_unique(data["user"]["email"], user)
+        errors += validate_user_email_unique(data["user"]["email"], user)
 
     if data.get("california_id") is not strawberry.UNSET:
         validated_california_id, california_id_errors = validate_california_id_pattern(data["california_id"])
         errors += california_id_errors
+        data["california_id"] = validated_california_id
 
-        if not california_id_errors:
-            data["california_id"] = validated_california_id
-            errors += validate_california_id_unique(data["california_id"], user)
+        errors += validate_california_id_unique(data["california_id"], user)
 
     if data.get("contacts"):
         errors += validate_contacts(data["contacts"])
 
     if data.get("hmis_profiles"):
-        errors += validate_hmis_profiles(data["hmis_profiles"])
+        errors += validate_hmis_profiles_complete(data["hmis_profiles"])
+        errors += validate_hmis_profiles_unique(data["hmis_profiles"])
 
     if data.get("phone_numbers"):
         errors += validate_phone_numbers(data["phone_numbers"])

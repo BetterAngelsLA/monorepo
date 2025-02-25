@@ -321,6 +321,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         variables["californiaId"] = self.client_profile_1["californiaId"]
         variables["user"]["email"] = self.client_profile_1["user"]["email"]
+        variables["hmisProfiles"][0]["hmisId"] = self.client_profile_1["hmisProfiles"][0]["hmisId"].upper()
 
         response = self._create_client_profile_fixture(variables)
         validation_errors = response["errors"][0]
