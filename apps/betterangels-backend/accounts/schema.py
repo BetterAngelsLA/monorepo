@@ -4,6 +4,7 @@ import strawberry
 import strawberry_django
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
+from accounts.permissions import OrganizationPermissions
 from accounts.services import send_magic_link
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
@@ -14,6 +15,7 @@ from strawberry.types import Info
 from strawberry_django import auth
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
+from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 from strawberry_django.utils.requests import get_request
 
@@ -29,6 +31,11 @@ from .types import (
 )
 
 
+@strawberry.input
+class OrganizationOrder:
+    name: str
+
+
 @strawberry.type
 class Query:
     current_user: UserType = auth.current_user()  # type: ignore
@@ -36,6 +43,10 @@ class Query:
     @strawberry.field(extensions=[HasPerm(NotePermissions.ADD)])
     def available_organizations(self, info: Info) -> list[OrganizationType]:
         return list(Organization.objects.filter(permission_groups__name__icontains=GroupTemplateNames.CASEWORKER))
+
+    organizations: OffsetPaginated[OrganizationType] = strawberry_django.offset_paginated(
+        extensions=[HasPerm(OrganizationPermissions.VIEW)], order=OrganizationOrder
+    )
 
 
 @strawberry.type
