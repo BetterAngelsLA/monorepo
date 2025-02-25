@@ -69,8 +69,13 @@ def value_is_set(value: Optional[str]) -> bool:
     return not (value is strawberry.UNSET or value is None or value.strip() == "")
 
 
-def validate_user_provided(user_data: dict) -> list[dict[str, Any]]:
+def validate_user_provided(user_data: Optional[dict]) -> list[dict[str, Any]]:
     errors: list = []
+
+    if not user_data:
+        errors.append({"field": "user", "location": None, "errorCode": ErrorMessageEnum.NAME_NOT_PROVIDED.name})
+
+    return errors
 
 
 def validate_user_email(email: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
@@ -226,8 +231,7 @@ def validate_client_profile_data(data: dict) -> dict[Any, Any]:
     """Validates the data for creating or updating a client profile."""
     errors: list = []
 
-    if not data.get("user"):
-        errors.append({"field": "user", "location": None, "errorCode": ErrorMessageEnum.NAME_NOT_PROVIDED.name})
+    errors += validate_user_provided(data.get("user"))
 
     if user_data := data.get("user"):
         user_id = user_data.get("id", None)
