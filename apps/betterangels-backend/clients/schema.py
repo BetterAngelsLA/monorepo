@@ -6,6 +6,7 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.utils import get_user_permission_group
+from clients.enums import ErrorCodeEnum
 from clients.models import (
     ClientContact,
     ClientProfile,
@@ -18,7 +19,6 @@ from clients.permissions import (
     ClientProfilePermissions,
 )
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
-from common.enums import ErrorMessageEnum
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, PhoneNumber
 from common.permissions.enums import AttachmentPermissions
@@ -99,7 +99,7 @@ def validate_client_name(user_data: dict, nickname: Optional[str], user: Optiona
         if client_has_name:
             return errors
 
-    errors.append({"field": "nickname", "location": None, "errorCode": ErrorMessageEnum.NAME_NOT_PROVIDED.name})
+    errors.append({"field": "nickname", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name})
 
     return errors
 
@@ -112,14 +112,14 @@ def validate_user_email(email: Optional[str], user: Optional[User] = None) -> li
 
     email: str
     if not re.search(EMAIL_REGEX, email):
-        errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_INVALID.name})
+        errors.append({"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_INVALID.name})
 
         return errors
 
     exclude_arg = {"id": user.pk} if user else {}
 
     if User.objects.exclude(**exclude_arg).filter(email__iexact=email).exists():
-        errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_IN_USE.name})
+        errors.append({"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name})
 
     return errors
 
@@ -132,14 +132,14 @@ def validate_california_id(california_id: Optional[str], user: Optional[User] = 
 
     california_id: str
     if not re.search(CALIFORNIA_ID_REGEX, california_id):
-        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_INVALID.name})
+        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_INVALID.name})
 
         return errors
 
     exclude_arg = {"user_id": user.pk} if user else {}
 
     if ClientProfile.objects.exclude(**exclude_arg).filter(california_id__iexact=california_id).exists():
-        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_IN_USE.name})
+        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_IN_USE.name})
 
     return errors
 
@@ -158,7 +158,7 @@ def validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str
                 {
                     "field": "phoneNumbers",
                     "location": f"{idx}__number",
-                    "errorCode": ErrorMessageEnum.PHONE_NUMBER_INVALID.name,
+                    "errorCode": ErrorCodeEnum.PHONE_NUMBER_INVALID.name,
                 }
             )
 
@@ -176,7 +176,7 @@ def validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str
                 {
                     "field": "hmisProfiles",
                     "location": f"{idx}__hmisId",
-                    "errorCode": ErrorMessageEnum.HMIS_ID_NOT_PROVIDED.name,
+                    "errorCode": ErrorCodeEnum.HMIS_ID_NOT_PROVIDED.name,
                 }
             )
 
@@ -196,7 +196,7 @@ def validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str
                 {
                     "field": "hmisProfiles",
                     "location": f"{idx}__hmisId",
-                    "errorCode": ErrorMessageEnum.HMIS_ID_IN_USE.name,
+                    "errorCode": ErrorCodeEnum.HMIS_ID_IN_USE.name,
                 }
             )
 
@@ -217,7 +217,7 @@ def validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 {
                     "field": "contacts",
                     "location": f"{idx}__phoneNumber",
-                    "errorCode": ErrorMessageEnum.PHONE_NUMBER_INVALID.name,
+                    "errorCode": ErrorCodeEnum.PHONE_NUMBER_INVALID.name,
                 }
             )
 
