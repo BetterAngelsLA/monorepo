@@ -336,7 +336,7 @@ type ClientProfileType {
   race: RaceEnum
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
-  veteranStatus: YesNoPreferNotToSayEnum
+  veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
@@ -414,7 +414,7 @@ input CreateClientProfileInput {
   race: RaceEnum
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
-  veteranStatus: YesNoPreferNotToSayEnum
+  veteranStatus: VeteranStatusEnum
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
@@ -1578,7 +1578,7 @@ input UpdateClientProfileInput {
   race: RaceEnum
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
-  veteranStatus: YesNoPreferNotToSayEnum
+  veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
@@ -1670,13 +1670,6 @@ type UserType {
 }
 
 enum VeteranStatusEnum {
-  YES
-  NO
-  PREFER_NOT_TO_SAY
-  OTHER_THAN_HONORABLE
-}
-
-enum YesNoPreferNotToSayEnum {
   YES
   NO
   PREFER_NOT_TO_SAY
