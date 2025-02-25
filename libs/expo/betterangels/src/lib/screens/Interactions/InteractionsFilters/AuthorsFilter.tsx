@@ -5,7 +5,8 @@ import {
   MultiSelect,
   SelectButton,
 } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useEffect, useState } from 'react';
+import { debounce } from '@monorepo/expo/shared/utils';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -31,6 +32,8 @@ const paginationLimit = 25;
 export default function AuthorsFilter(props: IAuthorsFilterProps) {
   const { setFilters, filters } = props;
   const { user } = useUser();
+  const [search, setSearch] = useState<string>('');
+  const [filterSearch, setFilterSearch] = useState('');
   const [selected, setSelected] = useState<
     Array<{ id: string; label: string }>
   >([]);
@@ -43,6 +46,9 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
   const { data, loading, error } = useInteractionAuthorsQuery({
     variables: {
       pagination: { limit: paginationLimit, offset: offset },
+      filters: {
+        search: filterSearch,
+      },
     },
   });
 
@@ -78,27 +84,42 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
     }
   };
 
+  const debounceFetch = useMemo(
+    () =>
+      debounce((text) => {
+        setFilterSearch(text);
+        setOffset(0);
+      }, 500),
+    []
+  );
+
+  const onSearch = (e: string) => {
+    setSearch(e);
+    debounceFetch(e);
+  };
+
   useEffect(() => {
     if (!data?.interactionAuthors) return;
 
     const { totalCount, results } = data.interactionAuthors;
 
-    const filteredAuthors = results.map((item) => ({
-      id: item.id,
-      label: user?.id === item.id ? 'Me' : `${item.firstName} ${item.lastName}`,
-    }));
+    const filteredAuthors = results
+      .filter((item) => item.id !== user?.id && item.firstName)
+      .map((item) => ({
+        id: item.id,
+        label: `${item.firstName} ${item.lastName}`,
+      }));
 
-    setAuthorsState((prevAuthors) => {
-      const uniqueAuthors = [...prevAuthors, ...filteredAuthors].filter(
-        (v, i, a) => a.findIndex((t) => t.id === v.id) === i
-      );
-      return uniqueAuthors;
-    });
+    if (offset === 0) {
+      setAuthorsState(filteredAuthors);
+    } else {
+      setAuthorsState((prevAuthors) => [...prevAuthors, ...filteredAuthors]);
+    }
 
     setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
 
-  if (error) throw new Error('Something went wrong!');
+  if (error || !user) throw new Error('Something went wrong!');
 
   return (
     <View>
@@ -127,8 +148,10 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
               filterPlaceholder="Search"
               withFilter
               title="Filter - Authors"
+              search={search}
+              onSearch={onSearch}
               onChange={(e: { id: string; label: string }[]) => setSelected(e)}
-              options={authorsState}
+              options={[{ id: user.id, label: 'Me' }, ...authorsState]}
               selected={selected}
               valueKey="id"
               labelKey="label"

@@ -25,6 +25,8 @@ interface IProps<T> {
   selectAllLabel?: string;
   withFilter?: boolean;
   filterPlaceholder?: string;
+  onSearch?: (search: string) => void;
+  search?: string;
 }
 
 export function MultiSelect<T>(props: IProps<T>) {
@@ -35,6 +37,8 @@ export function MultiSelect<T>(props: IProps<T>) {
     valueKey,
     labelKey,
     onChange,
+    onSearch,
+    search,
     title,
     withSelectAll,
     selectAllIdx = 0,
@@ -105,7 +109,18 @@ export function MultiSelect<T>(props: IProps<T>) {
         </TextBold>
       )}
 
-      {!!withFilter && (
+      {!!onSearch && !!withFilter && (
+        <BasicInput
+          value={search}
+          onDelete={() => onSearch('')}
+          onChangeText={(query) => onSearch(query)}
+          placeholder={filterPlaceholder}
+          icon={<SearchIcon color={Colors.NEUTRAL} />}
+          mb="md"
+        />
+      )}
+
+      {!!withFilter && !onSearch && (
         <BasicInput
           value={searchText}
           onDelete={() => setSearchText('')}
