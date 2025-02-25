@@ -216,7 +216,7 @@ class Note(BaseModel):
         else:
             created_by_label = "Case Manager"
 
-        return f"Note {self.id}: {self.title} (by {created_by_label} {self.interacted_at.date()})"
+        return f"Note {self.id}: {self.purpose} (by {created_by_label} {self.interacted_at.date()})"
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:

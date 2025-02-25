@@ -28,7 +28,6 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         note_count = Note.objects.count()
         variables = {
             "purpose": "Test Note",
-            "title": "Test Note",
             "publicDetails": "This is a test note.",
         }
         response = self._create_note_fixture(variables)
@@ -94,7 +93,6 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "id": self.note["id"],
             "purpose": "Updated Note",
-            "title": "Updated Note",
             "publicDetails": "Updated content",
             "isSubmitted": False,
         }

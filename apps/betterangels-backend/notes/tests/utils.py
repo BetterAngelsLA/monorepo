@@ -84,7 +84,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.note = self._create_note_fixture(
             {
-                "title": f"Session with {self.client_user_1.full_name}",
                 "purpose": f"Session with {self.client_user_1.full_name}",
                 "publicDetails": f"{self.client_user_1.full_name}'s public details",
                 "client": self.client_user_1.pk,
