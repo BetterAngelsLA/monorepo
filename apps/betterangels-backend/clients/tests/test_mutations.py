@@ -4,6 +4,7 @@ from accounts.models import User
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
+    ErrorCodeEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -21,7 +22,6 @@ from clients.enums import (
 )
 from clients.models import ClientProfile, HmisProfile
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
-from clients.enums import ErrorCodeEnum
 from common.models import Attachment
 from deepdiff import DeepDiff
 from django.test import override_settings
