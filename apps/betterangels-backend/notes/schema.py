@@ -697,7 +697,6 @@ class Mutation:
         this resolver looks up the corresponding ClientProfileImportRecord (with source "SELAH")
         and injects the internal client ID into the note data before creating the note.
         """
-        # Check if a successful import already exists for this source.
         existing = NoteImportRecord.objects.filter(
             source_name=data.source_name,
             source_id=data.source_id,
@@ -708,8 +707,8 @@ class Mutation:
                 f"Source ID {data.source_id} with source name '{data.source_name}' has already been imported successfully."
             )
 
-        # Convert the incoming note input to a dictionary.
         note_input = strawberry.asdict(data.note)
+
         # Pop out the parentId so it doesn't get passed to CreateNoteInput.
         parent_id = note_input.pop("parentId", None)
         if parent_id:
@@ -720,15 +719,12 @@ class Mutation:
             ).first()
             if cp_record is None or cp_record.client_profile is None:
                 raise Exception(f"Client lookup failed for parentId '{parent_id}'")
-            # Inject the client ID (as a string) into the note input.
             note_input["client"] = str(cp_record.client_profile.id)
 
+        import_job = NoteDataImport.objects.get(id=data.import_job_id)
         try:
             with transaction.atomic():
-                # Create the note with the modified input.
-
                 note = Mutation.create_note(self, info, data.note)
-                import_job = NoteDataImport.objects.get(id=data.import_job_id)
                 record = NoteImportRecord.objects.create(
                     import_job=import_job,
                     source_id=data.source_id,
@@ -738,7 +734,6 @@ class Mutation:
                     success=True,
                 )
         except Exception as e:
-            import_job = NoteDataImport.objects.get(id=data.import_job_id)
             record = NoteImportRecord.objects.create(
                 import_job=import_job,
                 source_id=data.source_id,
