@@ -4,7 +4,6 @@ import strawberry
 from accounts.models import User
 from clients.enums import HmisAgencyEnum
 from clients.schema import (
-    value_is_set,
     validate_california_id_pattern,
     validate_california_id_unique,
     validate_client_has_name,
@@ -14,6 +13,7 @@ from clients.schema import (
     validate_phone_numbers,
     validate_user_email_pattern,
     validate_user_email_unique,
+    value_is_set,
 )
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
 from common.enums import ErrorMessageEnum
@@ -27,7 +27,13 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
 
     @parametrize(
         "name, expected_result",
-        [(strawberry.UNSET, False), (None, False), ("", False), (" ", False), ("x", True)],
+        [
+            (strawberry.UNSET, False),
+            (None, False),
+            ("", False),
+            (" ", False),
+            ("x", True),
+        ],
     )
     def test_value_is_set(self, name: Optional[str], expected_result: bool) -> None:
         self.assertEqual(value_is_set(name), expected_result)
@@ -36,13 +42,13 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         "first_name, middle_name, last_name, nickname, operation, should_return_error",
         [
             (strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, "create", True),
-            ("", None, " ", strawberry.UNSET, "create", True),
             (None, None, None, None, "create", True),
             (" ", " ", " ", " ", "create", True),
+            ("", None, " ", strawberry.UNSET, "create", True),
+            (strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, "update", False),
             (None, None, None, None, "update", True),
             (" ", " ", " ", " ", "update", True),
             ("", None, " ", strawberry.UNSET, "update", False),
-            (strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, "update", False),
         ],
     )
     def test_validate_client_has_name(
@@ -105,9 +111,18 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         else:
             self.assertEqual(len(errors), 0)
 
-    @parametrize("email", [(strawberry.UNSET,), ("  ",), (None,)])
+    @parametrize(
+        "email",
+        [(strawberry.UNSET,), ("  ",), (None,)],
+    )
     def test_validate_user_email_unique_null(self, email: Optional[str]) -> None:
         self.assertEqual(len(validate_user_email_unique(email, None)), 0)
+
+    def test_validate_email_unique_update_existing(self) -> None:
+        user = User.objects.get(id=self.client_profile_1["user"]["id"])
+        email = user.email
+
+        self.assertEqual(len(validate_user_email_unique(email, user)), 0)
 
     @parametrize(
         "california_id, expected_california_id, expected_error_code",
@@ -146,7 +161,10 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(errors[0]["field"], "californiaId")
         self.assertEqual(errors[0]["errorCode"], ErrorMessageEnum.CA_ID_IN_USE.name)
 
-    @parametrize("california_id", [(strawberry.UNSET,), ("  ",), (None,)])
+    @parametrize(
+        "california_id",
+        [(strawberry.UNSET,), ("  ",), (None,)],
+    )
     def test_validate_california_id_unique_null(self, california_id: Optional[str]) -> None:
         self.assertEqual(len(validate_california_id_unique(california_id, None)), 0)
 

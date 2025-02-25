@@ -266,7 +266,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "relationshipToClient": RelationshipTypeEnum.AUNT.name,
         }
         hmis_profile = {
-            "hmisId": self.client_profile_1["hmisProfiles"][0]["hmisId"].upper(),
+            "hmisId": " ",
             "agency": self.client_profile_1["hmisProfiles"][0]["agency"],
         }
         phone_number = {
@@ -291,30 +291,23 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "user": user,
         }
 
-        response = self._update_client_profile_fixture(variables)
-        validation_errors = response["errors"][0]
-        error_messages = validation_errors["extensions"]["errors"]
+        update_response = self._update_client_profile_fixture(variables)
+        self.assertEqual(len(update_response["errors"]), 1)
 
-        self.assertEqual(validation_errors["message"], "Validation Errors")
-        self.assertEqual(len(error_messages), 6)
-        self.assertEqual(error_messages[0]["field"], "nickname")
-        self.assertIsNone(error_messages[0]["location"])
-        self.assertEqual(error_messages[0]["errorCode"], ErrorMessageEnum.NAME_NOT_PROVIDED.name)
-        self.assertEqual(error_messages[1]["field"], "user")
-        self.assertEqual(error_messages[1]["location"], "email")
-        self.assertEqual(error_messages[1]["errorCode"], ErrorMessageEnum.EMAIL_INVALID.name)
-        self.assertEqual(error_messages[2]["field"], "californiaId")
-        self.assertIsNone(error_messages[2]["location"])
-        self.assertEqual(error_messages[2]["errorCode"], ErrorMessageEnum.CA_ID_INVALID.name)
-        self.assertEqual(error_messages[3]["field"], "contacts")
-        self.assertEqual(error_messages[3]["location"], "0__phoneNumber")
-        self.assertEqual(error_messages[3]["errorCode"], ErrorMessageEnum.PHONE_NUMBER_INVALID.name)
-        self.assertEqual(error_messages[4]["field"], "hmisProfiles")
-        self.assertEqual(error_messages[4]["location"], "0__hmisId")
-        self.assertEqual(error_messages[4]["errorCode"], ErrorMessageEnum.HMIS_ID_IN_USE.name)
-        self.assertEqual(error_messages[5]["field"], "phoneNumbers")
-        self.assertEqual(error_messages[5]["location"], "0__number")
-        self.assertEqual(error_messages[5]["errorCode"], ErrorMessageEnum.PHONE_NUMBER_INVALID.name)
+        expected_update_error_messages = [
+            {"field": "nickname", "location": None, "errorCode": ErrorMessageEnum.NAME_NOT_PROVIDED.name},
+            {"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_INVALID.name},
+            {"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_INVALID.name},
+            {
+                "field": "contacts",
+                "location": "0__phoneNumber",
+                "errorCode": ErrorMessageEnum.PHONE_NUMBER_INVALID.name,
+            },
+            {"field": "hmisProfiles", "location": "0__hmisId", "errorCode": ErrorMessageEnum.HMIS_ID_NOT_PROVIDED.name},
+            {"field": "phoneNumbers", "location": "0__number", "errorCode": ErrorMessageEnum.PHONE_NUMBER_INVALID.name},
+        ]
+
+        self.assertCountEqual(update_response["errors"][0]["extensions"]["errors"], expected_update_error_messages)
 
         variables.pop("id")
         variables["user"].pop("id")
@@ -323,30 +316,23 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         variables["user"]["email"] = self.client_profile_1["user"]["email"]
         variables["hmisProfiles"][0]["hmisId"] = self.client_profile_1["hmisProfiles"][0]["hmisId"].upper()
 
-        response = self._create_client_profile_fixture(variables)
-        validation_errors = response["errors"][0]
-        error_messages = validation_errors["extensions"]["errors"]
+        create_response = self._create_client_profile_fixture(variables)
+        self.assertEqual(len(create_response["errors"]), 1)
 
-        self.assertEqual(validation_errors["message"], "Validation Errors")
-        self.assertEqual(len(error_messages), 6)
-        self.assertEqual(error_messages[0]["field"], "nickname")
-        self.assertIsNone(error_messages[0]["location"])
-        self.assertEqual(error_messages[0]["errorCode"], ErrorMessageEnum.NAME_NOT_PROVIDED.name)
-        self.assertEqual(error_messages[1]["field"], "user")
-        self.assertEqual(error_messages[1]["location"], "email")
-        self.assertEqual(error_messages[1]["errorCode"], ErrorMessageEnum.EMAIL_IN_USE.name)
-        self.assertEqual(error_messages[2]["field"], "californiaId")
-        self.assertIsNone(error_messages[2]["location"])
-        self.assertEqual(error_messages[2]["errorCode"], ErrorMessageEnum.CA_ID_IN_USE.name)
-        self.assertEqual(error_messages[3]["field"], "contacts")
-        self.assertEqual(error_messages[3]["location"], "0__phoneNumber")
-        self.assertEqual(error_messages[3]["errorCode"], ErrorMessageEnum.PHONE_NUMBER_INVALID.name)
-        self.assertEqual(error_messages[4]["field"], "hmisProfiles")
-        self.assertEqual(error_messages[4]["location"], "0__hmisId")
-        self.assertEqual(error_messages[4]["errorCode"], ErrorMessageEnum.HMIS_ID_IN_USE.name)
-        self.assertEqual(error_messages[5]["field"], "phoneNumbers")
-        self.assertEqual(error_messages[5]["location"], "0__number")
-        self.assertEqual(error_messages[5]["errorCode"], ErrorMessageEnum.PHONE_NUMBER_INVALID.name)
+        expected_create_error_messages = [
+            {"field": "nickname", "location": None, "errorCode": ErrorMessageEnum.NAME_NOT_PROVIDED.name},
+            {"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_IN_USE.name},
+            {"field": "californiaId", "location": None, "errorCode": ErrorMessageEnum.CA_ID_IN_USE.name},
+            {
+                "field": "contacts",
+                "location": "0__phoneNumber",
+                "errorCode": ErrorMessageEnum.PHONE_NUMBER_INVALID.name,
+            },
+            {"field": "hmisProfiles", "location": "0__hmisId", "errorCode": ErrorMessageEnum.HMIS_ID_IN_USE.name},
+            {"field": "phoneNumbers", "location": "0__number", "errorCode": ErrorMessageEnum.PHONE_NUMBER_INVALID.name},
+        ]
+
+        self.assertCountEqual(create_response["errors"][0]["extensions"]["errors"], expected_create_error_messages)
 
     def test_update_client_profile_mutation_related_objects(self) -> None:
         """Verifies that updating a client profile's doesn't affect other client profiles."""

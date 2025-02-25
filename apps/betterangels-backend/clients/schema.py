@@ -92,7 +92,9 @@ def validate_user_email_unique(email: Optional[str], user: Optional[User] = None
     if not value_is_set(email):
         return errors
 
-    if User.objects.filter(email__iexact=email).exists():
+    user_id = {"user_id": user.pk} if user else {}
+
+    if User.objects.exclude(**user_id).filter(email__iexact=email).exists():
         errors.append({"field": "user", "location": "email", "errorCode": ErrorMessageEnum.EMAIL_IN_USE.name})
 
     return errors
