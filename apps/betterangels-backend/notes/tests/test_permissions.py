@@ -134,7 +134,6 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             note_id = self._create_note_fixture(
                 {
                     "purpose": "New Note",
-                    "title": "New Note",
                     "publicDetails": "New public details",
                     "client": self.client_user_1.pk,
                 }
@@ -200,7 +199,6 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             note_id = self._create_note_fixture(
                 {
                     "purpose": "New Note",
-                    "title": "New Note",
                     "publicDetails": "New public details",
                     "client": self.client_user_1.pk,
                 }

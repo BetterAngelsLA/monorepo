@@ -473,7 +473,6 @@ export type CreateNoteInput = {
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
-  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateNoteMoodInput = {
@@ -1192,7 +1191,6 @@ export type NoteType = {
   purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
   team?: Maybe<SelahTeamEnum>;
-  title?: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -1971,7 +1969,6 @@ export type UpdateNoteInput = {
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
-  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateNoteLocationInput = {

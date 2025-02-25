@@ -219,7 +219,6 @@ class NoteType:
     id: ID
     purpose: auto
     team: Optional[SelahTeamEnum]
-    title: auto
     location: Optional[LocationType]
     attachments: List[NoteAttachmentType]
     moods: List[MoodType]
@@ -259,7 +258,6 @@ class NoteType:
 class CreateNoteInput:
     purpose: auto
     team: Optional[SelahTeamEnum]
-    title: auto
     public_details: auto
     private_details: auto
     client: Optional[ID]
@@ -272,7 +270,6 @@ class UpdateNoteInput:
     id: ID
     purpose: auto
     team: Optional[SelahTeamEnum]
-    title: auto
     location: Optional[ID]
     public_details: auto
     private_details: auto

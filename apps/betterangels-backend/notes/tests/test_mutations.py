@@ -31,7 +31,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             response = self._create_note_fixture(
                 {
                     "purpose": "New note purpose",
-                    "title": "New note title",
                     "publicDetails": "New public details",
                     "client": self.client_user_1.pk,
                 }
@@ -42,7 +41,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": ANY,
             "purpose": "New note purpose",
             "team": None,
-            "title": "New note title",
             "location": None,
             "moods": [],
             "purposes": [],
@@ -64,7 +62,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "purpose": "Updated note purpose",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
-            "title": "Updated note title",
             "location": self.location.pk,
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
@@ -81,7 +78,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "purpose": "Updated note purpose",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
-            "title": "Updated note title",
             "location": {
                 "id": str(self.location.pk),
                 "address": {
@@ -124,7 +120,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "id": self.note["id"],
             "purpose": f"Session with {self.client_user_1.full_name}",
             "team": None,
-            "title": f"Session with {self.client_user_1.full_name}",
             "location": None,
             "moods": [],
             "purposes": [],
@@ -561,7 +556,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "id": note_id,
                 "purpose": "Discarded Purpose",
-                "title": "Discarded Title",
                 "publicDetails": "Discarded Body",
                 "location": other_location.pk,
             }
@@ -570,7 +564,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
         note_fields = """
             purpose
-            title
             publicDetails
             location {
                 id
@@ -582,7 +575,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purpose"], "Session with Dale Cooper")
-        self.assertEqual(reverted_note["title"], "Session with Dale Cooper")
         self.assertEqual(reverted_note["publicDetails"], "Dale Cooper's public details")
         self.assertIsNone(reverted_note["location"])
 
@@ -595,7 +587,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purpose"], "Session with Dale Cooper")
-        self.assertEqual(reverted_note["title"], "Session with Dale Cooper")
         self.assertEqual(reverted_note["publicDetails"], "Dale Cooper's public details")
         self.assertIsNone(reverted_note["location"])
 
@@ -603,9 +594,9 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         """
         Test Actions:
         0. Setup creates a note
-        1. Update note title, public details, point, and address
+        1. Update note purpose, public details, point, and address
         2. Save now as revert_before_timestamp
-        3. Update note title, public details, point, and address
+        3. Update note purpose, public details, point, and address
         4. Revert to revert_before_timestamp from Step 2
         5. Assert note has details from Step 1
         6. Save now as revert_before_timestamp
@@ -619,7 +610,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "id": note_id,
                 "purpose": "Updated purpose",
-                "title": "Updated Title",
                 "publicDetails": "Updated Body",
                 "location": self.location.pk,
             }
@@ -635,7 +625,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             {
                 "id": note_id,
                 "purpose": "Discarded purpose",
-                "title": "Discarded Title",
                 "publicDetails": "Discarded Body",
                 "location": other_location.pk,
             }
@@ -644,7 +633,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
         note_fields = """
             purpose
-            title
             publicDetails
             location {
                 address {
@@ -657,7 +645,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purpose"], "Updated purpose")
-        self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
         self.assertEqual(reverted_note["location"]["address"]["street"], "106 West 1st Street")
 
@@ -670,7 +657,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(reverted_note["purpose"], "Updated purpose")
-        self.assertEqual(reverted_note["title"], "Updated Title")
         self.assertEqual(reverted_note["publicDetails"], "Updated Body")
         self.assertEqual(reverted_note["location"]["address"]["street"], "106 West 1st Street")
 
@@ -1616,18 +1602,18 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         Asserts that when revertNote mutation fails, the Note instance is not partially updated.
         """
         note_id = self.note["id"]
-        self._update_note_fixture({"id": note_id, "title": "Updated Title"})
+        self._update_note_fixture({"id": note_id, "purpose": "Updated Purpose"})
 
         # Select a moment to revert to
         revert_before_timestamp = timezone.now()
 
         # Update - should be persisted because revert fails
-        self._update_note_fixture({"id": note_id, "title": "Discarded Title"})
+        self._update_note_fixture({"id": note_id, "purpose": "Discarded Purpose"})
         self._create_note_mood_fixture({"descriptor": "ANXIOUS", "noteId": note_id})
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
         note_fields = """
-            title
+            purpose
             moods {
                 descriptor
             }
@@ -1637,7 +1623,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             not_reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
         self.assertEqual(len(not_reverted_note["moods"]), 1)
-        self.assertEqual(not_reverted_note["title"], "Discarded Title")
+        self.assertEqual(not_reverted_note["purpose"], "Discarded Purpose")
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")

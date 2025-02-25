@@ -184,7 +184,6 @@ class Note(BaseModel):
     purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
     team = TextChoicesField(SelahTeamEnum, null=True, blank=True)
-    title = models.CharField(max_length=100, blank=True, null=True)
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 

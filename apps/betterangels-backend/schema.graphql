@@ -439,7 +439,6 @@ union CreateNoteDataImportPayload = NoteDataImportType | OperationInfo
 input CreateNoteInput {
   purpose: String
   team: SelahTeamEnum
-  title: String
   publicDetails: String
   privateDetails: String
   client: ID
@@ -959,7 +958,6 @@ type NoteType {
   id: ID!
   purpose: String
   team: SelahTeamEnum
-  title: String
   location: LocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   moods: [MoodType!]!
@@ -1596,7 +1594,6 @@ input UpdateNoteInput {
   id: ID!
   purpose: String
   team: SelahTeamEnum
-  title: String
   location: ID
   publicDetails: String
   privateDetails: String

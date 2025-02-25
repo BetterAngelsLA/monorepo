@@ -43,7 +43,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "publicDetails": "Updated public details",
                 "purpose": "Updated Note",
                 "team": SelahTeamEnum.WDI_ON_SITE.name,
-                "title": "Updated Note",
             }
         )
         # Add moods
@@ -85,7 +84,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated public details",
             "purpose": "Updated Note",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
-            "title": "Updated Note",
             "location": {
                 "id": str(self.location.pk),
                 "address": {
