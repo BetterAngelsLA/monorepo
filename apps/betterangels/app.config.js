@@ -21,7 +21,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.0.36',
+    version: '1.0.37',
     orientation: 'portrait',
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
@@ -34,7 +34,7 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.47',
+      buildNumber: '1.0.48',
       associatedDomains: [`applinks:${HOSTNAME}`],
       usesAppleSignIn: true,
       config: {
@@ -73,13 +73,15 @@ export default {
           apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       },
-      versionCode: 46,
+      versionCode: 47,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
       bundler: 'metro',
     },
     plugins: [
+      '@config-plugins/react-native-blob-util',
+      '@config-plugins/react-native-pdf',
       'expo-apple-authentication',
       'expo-build-properties',
       [
@@ -126,6 +128,12 @@ export default {
           backgroundColor: '#216AF8',
           image: './src/app/assets/images/splash.png',
           imageWidth: 750,
+        },
+      ],
+      [
+        'expo-document-picker',
+        {
+          iCloudContainerEnvironment: 'Production',
         },
       ],
     ],
