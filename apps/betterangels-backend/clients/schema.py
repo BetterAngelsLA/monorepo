@@ -70,36 +70,26 @@ def value_is_set(value: Optional[str]) -> bool:
 
 
 def validate_client_name(user_data: dict, nickname: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
+    """Verify that either:
+    1. The incoming data contains at least one name field OR
+    2. The existing user has at least one name field and the incoming data isn't clearing it.
+    """
     errors: list = []
 
-    payload_has_name = any(
+    if any(
         (
-            value_is_set(user_data.get("first_name")),
-            value_is_set(user_data.get("last_name")),
-            value_is_set(user_data.get("middle_name")),
-            value_is_set(nickname),
+            value_is_set(user_data.get("first_name"))
+            or (user and user.first_name and user_data.get("first_name") is strawberry.UNSET),
+            value_is_set(user_data.get("last_name"))
+            or (user and user.last_name and user_data.get("last_name") is strawberry.UNSET),
+            value_is_set(user_data.get("middle_name"))
+            or (user and user.middle_name and user_data.get("middle_name") is strawberry.UNSET),
+            value_is_set(nickname) or (user and user.client_profile.nickname and nickname is strawberry.UNSET),
         )
-    )
-
-    # If the payload contains at least one name field, the data is valid
-    if payload_has_name:
+    ):
         return errors
 
-    # If the payload isn't clearing all existing name fields, the data is valid
-    if user:
-        client_has_name = any(
-            (
-                user.first_name and user_data.get("first_name") is strawberry.UNSET,
-                user.last_name and user_data.get("last_name") is strawberry.UNSET,
-                user.middle_name and user_data.get("middle_name") is strawberry.UNSET,
-                user.client_profile.nickname and nickname is strawberry.UNSET,
-            )
-        )
-
-        if client_has_name:
-            return errors
-
-    errors.append({"field": "nickname", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name})
+    errors.append({"field": "name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name})
 
     return errors
 
