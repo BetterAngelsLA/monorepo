@@ -259,8 +259,7 @@ class NoteType:
 class CreateNoteInput:
     purpose: auto
     team: Optional[SelahTeamEnum]
-    title: Optional[str]
-    location: Optional[ID]
+    title: auto
     public_details: auto
     private_details: auto
     client: Optional[ID]

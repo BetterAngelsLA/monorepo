@@ -690,7 +690,7 @@ class Mutation:
             imported_by=record.imported_by,
         )
 
-    @strawberry_django.mutation
+    @strawberry_django.mutation(extensions=[HasPerm(NoteImportRecordPermissions.ADD)])
     def import_note(self, info: Info, data: ImportNoteInput) -> NoteImportRecordType:
         """
         Imports a note. If the note input includes a 'parentId' field,

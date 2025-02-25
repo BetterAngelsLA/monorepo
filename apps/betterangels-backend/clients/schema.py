@@ -254,7 +254,7 @@ class Query:
     )
 
     # Data Import
-    @strawberry_django.field
+    @strawberry_django.field(extensions=[HasRetvalPerm(perms=[ClientProfileImportRecordPermissions.VIEW])])
     def clientProfileImportRecordsBulk(self, source: str, sourceIds: List[str]) -> List[ClientProfileImportRecordType]:
         """
         Given a source (e.g. "SELAH") and a list of sourceIds, return the matching records.
