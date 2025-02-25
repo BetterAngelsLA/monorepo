@@ -66,7 +66,6 @@ def _format_graphql_error(error: Exception) -> str:
 
 
 def value_is_set(value: Optional[str]) -> bool:
-    # return not (value is strawberry.UNSET or value is None or value == "")
     return not (value is strawberry.UNSET or value is None or value.strip() == "")
 
 
