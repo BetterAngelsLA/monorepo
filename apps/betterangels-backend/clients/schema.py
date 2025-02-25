@@ -162,7 +162,7 @@ def validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str
     return errors
 
 
-def validate_hmis_profiles_complete(hmis_profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
     errors = []
 
     for idx, hmis_profile in enumerate(hmis_profiles):
@@ -177,15 +177,8 @@ def validate_hmis_profiles_complete(hmis_profiles: list[dict[str, Any]]) -> list
                 }
             )
 
-    return errors
+            continue
 
-
-def validate_hmis_profiles_unique(hmis_profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    errors = []
-
-    for idx, hmis_profile in enumerate(hmis_profiles):
-        # exclude the current hmis profile from the query,
-        # so we're not flagging the current profile as a duplicate
         hmis_profile_id = {"id": hmis_profile["id"]} if hmis_profile.get("id") else {}
 
         if (
@@ -243,8 +236,7 @@ def validate_client_profile_data(data: dict) -> dict[Any, Any]:
         errors += validate_contacts(data["contacts"])
 
     if data.get("hmis_profiles"):
-        errors += validate_hmis_profiles_complete(data["hmis_profiles"])
-        errors += validate_hmis_profiles_unique(data["hmis_profiles"])
+        errors += validate_hmis_profiles(data["hmis_profiles"])
 
     if data.get("phone_numbers"):
         errors += validate_phone_numbers(data["phone_numbers"])
