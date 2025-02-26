@@ -220,7 +220,7 @@ class Migration(migrations.Migration):
                     django_choices_field.fields.TextChoicesField(
                         blank=True,
                         choices=[("yes", "Yes"), ("no", "No"), ("prefer_not_to_say", "Prefer not to say")],
-                        choices_enum=clients.enums.YesNoPreferNotToSayEnum,
+                        choices_enum=clients.enums.VeteranStatusEnum,
                         max_length=17,
                         null=True,
                     ),
