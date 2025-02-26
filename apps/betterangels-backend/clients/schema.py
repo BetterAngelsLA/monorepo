@@ -65,7 +65,7 @@ def _format_graphql_error(error: Exception) -> str:
     return str(error)
 
 
-def value_is_set(value: Optional[str]) -> bool:
+def value_exists(value: Optional[str]) -> bool:
     return value is not strawberry.UNSET and value is not None and value.strip() != ""
 
 
@@ -74,66 +74,62 @@ def validate_client_name(user_data: dict, nickname: Optional[str], user: Optiona
     1. The incoming data contains at least one name field OR
     2. The existing user has at least one name field and the incoming data isn't clearing it.
     """
-    errors: list = []
-
     if any(
         (
-            value_is_set(user_data.get("first_name"))
-            or (user and user.first_name and user_data.get("first_name") is strawberry.UNSET),
-            value_is_set(user_data.get("last_name"))
-            or (user and user.last_name and user_data.get("last_name") is strawberry.UNSET),
-            value_is_set(user_data.get("middle_name"))
-            or (user and user.middle_name and user_data.get("middle_name") is strawberry.UNSET),
-            value_is_set(nickname) or (user and user.client_profile.nickname and nickname is strawberry.UNSET),
+            value_exists(user_data.get("first_name")),
+            value_exists(user_data.get("last_name")),
+            value_exists(user_data.get("middle_name")),
+            value_exists(nickname),
         )
     ):
-        return errors
+        return []
 
-    errors.append({"field": "name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name})
+    if user:
+        if any(
+            (
+                user.first_name and user_data.get("first_name") is strawberry.UNSET,
+                user.last_name and user_data.get("last_name") is strawberry.UNSET,
+                user.middle_name and user_data.get("middle_name") is strawberry.UNSET,
+                user.client_profile.nickname and nickname is strawberry.UNSET,
+            )
+        ):
+            return []
 
-    return errors
+    return [{"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name}]
 
 
 def validate_user_email(email: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
-    errors: list = []
-
     if email in [strawberry.UNSET, None, ""]:
-        return errors
+        return []
 
     email: str
     if not re.search(EMAIL_REGEX, email):
-        errors.append({"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_INVALID.name})
-
-        return errors
+        return [{"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_INVALID.name}]
 
     # exclude the user being updated from the unique check
     exclude_arg = {"id": user.pk} if user else {}
 
     if User.objects.exclude(**exclude_arg).filter(email__iexact=email).exists():
-        errors.append({"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name})
+        return [{"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
 
-    return errors
+    return []
 
 
 def validate_california_id(california_id: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
-    errors: list = []
-
     if california_id in [strawberry.UNSET, None, ""]:
-        return errors
+        return []
 
     california_id: str
     if not re.search(CALIFORNIA_ID_REGEX, california_id):
-        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_INVALID.name})
-
-        return errors
+        return [{"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_INVALID.name}]
 
     # exclude the client profile being updated from the unique check
     exclude_arg = {"user_id": user.pk} if user else {}
 
     if ClientProfile.objects.exclude(**exclude_arg).filter(california_id__iexact=california_id).exists():
-        errors.append({"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_IN_USE.name})
+        return [{"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_IN_USE.name}]
 
-    return errors
+    return []
 
 
 def validate_phone_numbers(phone_numbers: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -163,7 +159,7 @@ def validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str
     for idx, hmis_profile in enumerate(hmis_profiles):
         hmis_id = hmis_profile.get("hmis_id")
 
-        if not value_is_set(hmis_id):
+        if not value_exists(hmis_id):
             errors.append(
                 {
                     "field": "hmisProfiles",
@@ -223,7 +219,7 @@ def validate_client_profile_data(data: dict) -> None:
 
     user = None
 
-    if value_is_set(data.get("id")):
+    if value_exists(data.get("id")):
         user = User.objects.filter(client_profile__id=data["id"]).first()
 
     if user_data := data.get("user"):
@@ -244,6 +240,8 @@ def validate_client_profile_data(data: dict) -> None:
 
     if errors:
         raise GraphQLError("Validation Errors", extensions={"errors": errors})
+
+    return None
 
 
 def upsert_or_delete_client_related_object(

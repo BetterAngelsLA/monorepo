@@ -295,7 +295,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(len(update_response["errors"]), 1)
 
         expected_update_error_messages = [
-            {"field": "name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name},
+            {"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name},
             {"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_INVALID.name},
             {"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_INVALID.name},
             {
@@ -320,7 +320,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(len(create_response["errors"]), 1)
 
         expected_create_error_messages = [
-            {"field": "name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name},
+            {"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name},
             {"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name},
             {"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_IN_USE.name},
             {

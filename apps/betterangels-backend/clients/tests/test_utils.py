@@ -10,7 +10,7 @@ from clients.schema import (
     validate_hmis_profiles,
     validate_phone_numbers,
     validate_user_email,
-    value_is_set,
+    value_exists,
 )
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
 from unittest_parametrize import parametrize
@@ -31,8 +31,8 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             ("x", True),
         ],
     )
-    def test_value_is_set(self, name: Optional[str], expected_result: bool) -> None:
-        self.assertEqual(value_is_set(name), expected_result)
+    def test_value_exists(self, name: Optional[str], expected_result: bool) -> None:
+        self.assertEqual(value_exists(name), expected_result)
 
     @parametrize(
         "first_name, middle_name, last_name, nickname, operation, should_return_error",
