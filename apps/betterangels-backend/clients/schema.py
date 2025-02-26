@@ -55,15 +55,22 @@ from .types import (
 
 
 def _format_graphql_error(error: Exception) -> str:
-    if isinstance(error, GraphQLError) and hasattr(error, "extensions"):
-        # Extract the custom error list if available.
-        ext = error.extensions or {}
-        error_list = ext.get("errors")
-        if error_list:
-            detailed_errors = "; ".join(f"{err.get('field')}: {err.get('message')}" for err in error_list)
-            return f"{error.message} ({detailed_errors})"
-    # Fallback: return the standard string representation.
-    return str(error)
+    # Use error.message if available; otherwise, fallback to error.args[0] or str(error)
+    message = getattr(error, "message", None) or (error.args[0] if error.args else str(error))
+
+    # Attempt to get custom error details from the extensions attribute.
+    extensions = getattr(error, "extensions", {})
+    error_list = extensions.get("errors", [])
+
+    if error_list and isinstance(error_list, list):
+        details = "; ".join(
+            f"{err.get('field', 'unknown')}: {err.get('errorCode', 'N/A')}"
+            + (f" at {err.get('location')}" if err.get("location") else "")
+            for err in error_list
+        )
+        return f"{message}: {details}"
+
+    return message
 
 
 def value_exists(value: Optional[str]) -> bool:
