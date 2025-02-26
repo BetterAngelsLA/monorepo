@@ -18,7 +18,6 @@ from clients.enums import (
     RelationshipTypeEnum,
     SocialMediaEnum,
     VeteranStatusEnum,
-    YesNoPreferNotToSayEnum,
 )
 from clients.models import ClientProfile, HmisProfile
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
@@ -100,8 +99,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": user,
             "veteranStatus": VeteranStatusEnum.YES.name,
-            # TODO: remove after fe cutover to new field & type
-            "tempVeteranStatus": None,
         }
         response = self._create_client_profile_fixture(variables)
         client_profile = response["data"]["createClientProfile"]
@@ -127,8 +124,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "profilePhoto": None,
             "socialMediaProfiles": expected_social_media_profiles,
             "user": expected_user,
-            # TODO: update after fe cutover to new field & type
-            "veteranStatus": None,
+            "veteranStatus": VeteranStatusEnum.YES.name,
         }
         client_differences = DeepDiff(
             expected_client_profile,
@@ -229,8 +225,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": user,
             "veteranStatus": VeteranStatusEnum.YES.name,
-            # TODO: remove after fe cutover to new field & type
-            "tempVeteranStatus": YesNoPreferNotToSayEnum.OTHER_THAN_HONORABLE.name,
         }
         response = self._update_client_profile_fixture(variables)
         client_profile = response["data"]["updateClientProfile"]
@@ -249,8 +243,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "displayGender": "Female",
             "displayPronouns": "she/her/theirs",
             "profilePhoto": {"name": self.client_profile_1_photo_name},
-            # TODO: update after fe cutover to new field & type
-            "veteranStatus": VeteranStatusEnum.OTHER_THAN_HONORABLE.name,
+            "veteranStatus": VeteranStatusEnum.YES.name,
         }
         client_differences = DeepDiff(
             expected_client_profile,
