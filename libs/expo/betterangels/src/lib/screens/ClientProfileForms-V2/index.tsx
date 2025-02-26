@@ -6,7 +6,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { ReactNode, useEffect, useLayoutEffect, useState } from 'react';
 import { View } from 'react-native';
 import { useSnackbar } from '../../hooks';
 import { useGetClientProfileQuery } from '../AddEditClient/__generated__/AddEditClient.generated';
@@ -22,7 +22,7 @@ import { FormStateMapping, IClientProfileForms } from './types';
 
 const formConfigs: Record<
   keyof FormStateMapping,
-  { title: string; content: React.ReactNode }
+  { title: string; content: ReactNode }
 > = {
   // TODO: handle state settler
   ContactInfo: {
@@ -59,19 +59,26 @@ const formConfigs: Record<
   },
 };
 
-export default function ClientProfileForms<K extends keyof FormStateMapping>(
-  props: IClientProfileForms<K>
-) {
+export default function ClientProfileForms(props: IClientProfileForms) {
   const { componentName, id } = props;
   const { data, error, loading } = useGetClientProfileQuery({
     variables: { id },
   });
-  const [form, setForm] = useState<FormStateMapping[K] | undefined>(undefined);
+  const [form, setForm] = useState<
+    FormStateMapping[keyof FormStateMapping] | undefined
+  >(undefined);
   const navigation = useNavigation();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const config = formConfigs[componentName];
+  const allowedKeys = Object.keys(formConfigs);
+
+  if (!allowedKeys.includes(componentName)) {
+    throw new Error(`Invalid componentName "${componentName}" provided.`);
+  }
+
+  const validComponentName = componentName as keyof FormStateMapping;
+  const config = formConfigs[validComponentName];
 
   const onSubmit = () => {
     // submit the form here

@@ -50,7 +50,7 @@ export interface FormStateMapping {
   RelevantContact: RelevantContactState;
 }
 
-export interface IClientProfileForms<K extends keyof FormStateMapping> {
+export interface IClientProfileForms {
   id: string;
-  componentName: K;
+  componentName: string;
 }
