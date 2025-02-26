@@ -360,7 +360,6 @@ type ClientProfileType {
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   user: UserType!
   displayCaseManager: String!
-  tempVeteranStatus: VeteranStatusEnum
 }
 
 type ClientProfileTypeOffsetPaginated {
@@ -431,7 +430,6 @@ input CreateClientProfileInput {
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: CreateUserInput!
-  tempVeteranStatus: VeteranStatusEnum
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -1597,7 +1595,6 @@ input UpdateClientProfileInput {
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: UpdateUserInput
-  tempVeteranStatus: VeteranStatusEnum
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
