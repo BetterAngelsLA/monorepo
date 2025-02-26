@@ -170,15 +170,6 @@ class SocialMediaEnum(models.TextChoices):
     WHATSAPP = "whatsapp", _("WhatsApp")
 
 
-# NOTE: this is effectively the veteran status enum. We need to do a multi-phase deploy to
-# swap it in the frontend
-class YesNoPreferNotToSayEnum(models.TextChoices):
-    YES = "yes", _("Yes")
-    NO = "no", _("No")
-    PREFER_NOT_TO_SAY = "prefer_not_to_say", _("Prefer not to say")
-    OTHER_THAN_HONORABLE = "other_than_honorable", _("Other than Honorable Discharge")
-
-
 class VeteranStatusEnum(models.TextChoices):
     YES = "yes", _("Yes")
     NO = "no", _("No")
