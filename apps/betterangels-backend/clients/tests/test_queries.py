@@ -14,6 +14,7 @@ from clients.enums import (
     PreferredCommunicationEnum,
     PronounEnum,
     RaceEnum,
+    VeteranStatusEnum,
     YesNoPreferNotToSayEnum,
 )
 from clients.models import ClientProfile
@@ -101,7 +102,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "socialMediaProfiles": self.client_profile_1["socialMediaProfiles"],
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": self.client_profile_1["user"],
-            "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
+            "veteranStatus": VeteranStatusEnum.NO.name,
             # TODO: remove after fe cutover to new field & type
             "tempVeteranStatus": YesNoPreferNotToSayEnum.NO.name,
         }

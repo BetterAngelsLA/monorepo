@@ -306,6 +306,20 @@ export type ClientProfileImportRecordType = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ClientProfileImportRecordTypeOffsetPaginated = {
+  __typename?: 'ClientProfileImportRecordTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<ClientProfileImportRecordType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ClientProfileImportRecordsBulkInput = {
+  source: Scalars['String']['input'];
+  sourceIds: Array<Scalars['String']['input']>;
+};
+
 export type ClientProfileOrder = {
   id?: InputMaybe<Ordering>;
   user_FirstName?: InputMaybe<Ordering>;
@@ -359,7 +373,7 @@ export type ClientProfileType = {
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
   tempVeteranStatus?: Maybe<VeteranStatusEnum>;
   user: UserType;
-  veteranStatus?: Maybe<YesNoPreferNotToSayEnum>;
+  veteranStatus?: Maybe<VeteranStatusEnum>;
 };
 
 
@@ -445,7 +459,7 @@ export type CreateClientProfileInput = {
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   tempVeteranStatus?: InputMaybe<VeteranStatusEnum>;
   user: CreateUserInput;
-  veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
+  veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
 export type CreateClientProfilePayload = ClientProfileType | OperationInfo;
@@ -458,12 +472,21 @@ export type CreateNoteAttachmentInput = {
 
 export type CreateNoteAttachmentPayload = NoteAttachmentType | OperationInfo;
 
+export type CreateNoteDataImportInput = {
+  notes: Scalars['String']['input'];
+  sourceFile: Scalars['String']['input'];
+};
+
+export type CreateNoteDataImportPayload = NoteDataImportType | OperationInfo;
+
 export type CreateNoteInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
+  interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['String']['input']>;
-  title?: InputMaybe<Scalars['String']['input']>;
+  team?: InputMaybe<SelahTeamEnum>;
 };
 
 export type CreateNoteMoodInput = {
@@ -476,7 +499,6 @@ export type CreateNoteMoodPayload = MoodType | OperationInfo;
 export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceRequestInput = {
-  customService?: InputMaybe<Scalars['String']['input']>;
   noteId: Scalars['ID']['input'];
   service: ServiceEnum;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
@@ -502,7 +524,6 @@ export type CreateProfileDataImportInput = {
 
 export type CreateServiceRequestInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
-  customService?: InputMaybe<Scalars['String']['input']>;
   service: ServiceEnum;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   status: ServiceRequestStatusEnum;
@@ -749,6 +770,16 @@ export type ImportClientProfileInput = {
 
 export type ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo;
 
+export type ImportNoteInput = {
+  importJobId: Scalars['UUID']['input'];
+  note: CreateNoteInput;
+  rawData: Scalars['JSON']['input'];
+  sourceId: Scalars['String']['input'];
+  sourceName: Scalars['String']['input'];
+};
+
+export type ImportNotePayload = NoteImportRecordType | OperationInfo;
+
 export type InteractionAuthorFilter = {
   AND?: InputMaybe<InteractionAuthorFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -876,6 +907,7 @@ export type Mutation = {
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
   createNote: CreateNotePayload;
   createNoteAttachment: CreateNoteAttachmentPayload;
+  createNoteDataImport: CreateNoteDataImportPayload;
   createNoteMood: CreateNoteMoodPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
   createNoteTask: CreateNoteTaskPayload;
@@ -892,6 +924,7 @@ export type Mutation = {
   generateMagicLink: MagicLinkResponse;
   googleAuth: AuthResponse;
   importClientProfile: ImportClientProfilePayload;
+  importNote: ImportNotePayload;
   login: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
@@ -940,6 +973,11 @@ export type MutationCreateNoteArgs = {
 
 export type MutationCreateNoteAttachmentArgs = {
   data: CreateNoteAttachmentInput;
+};
+
+
+export type MutationCreateNoteDataImportArgs = {
+  data: CreateNoteDataImportInput;
 };
 
 
@@ -1015,6 +1053,11 @@ export type MutationGoogleAuthArgs = {
 
 export type MutationImportClientProfileArgs = {
   data: ImportClientProfileInput;
+};
+
+
+export type MutationImportNoteArgs = {
+  data: ImportNoteInput;
 };
 
 
@@ -1098,17 +1141,39 @@ export type NoteAttachmentType = AttachmentInterface & {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type NoteDataImportType = {
+  __typename?: 'NoteDataImportType';
+  id: Scalars['UUID']['output'];
+  importedAt: Scalars['DateTime']['output'];
+  importedBy: DjangoModelType;
+  notes: Scalars['String']['output'];
+  sourceFile: Scalars['String']['output'];
+};
+
 export type NoteFilter = {
   AND?: InputMaybe<NoteFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<NoteFilter>;
   OR?: InputMaybe<NoteFilter>;
+  authors?: InputMaybe<Array<Scalars['ID']['input']>>;
   client?: InputMaybe<Scalars['ID']['input']>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   organization?: InputMaybe<Scalars['ID']['input']>;
   search?: InputMaybe<Scalars['String']['input']>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
+};
+
+export type NoteImportRecordType = {
+  __typename?: 'NoteImportRecordType';
+  createdAt: Scalars['DateTime']['output'];
+  errorMessage: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  note?: Maybe<NoteType>;
+  rawData: Scalars['JSON']['output'];
+  sourceId: Scalars['String']['output'];
+  sourceName: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
 };
 
 export enum NoteNamespaceEnum {
@@ -1141,7 +1206,6 @@ export type NoteType = {
   purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
   team?: Maybe<SelahTeamEnum>;
-  title?: Maybe<Scalars['String']['output']>;
 };
 
 
@@ -1305,6 +1369,7 @@ export enum PronounEnum {
 export type Query = {
   __typename?: 'Query';
   availableOrganizations: Array<OrganizationType>;
+  bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
   clientDocument: ClientDocumentType;
   clientDocuments: Array<ClientDocumentType>;
   clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
@@ -1325,6 +1390,12 @@ export type Query = {
   shelters: ShelterTypeOffsetPaginated;
   task: TaskType;
   tasks: Array<TaskType>;
+};
+
+
+export type QueryBulkClientProfileImportRecordsArgs = {
+  data: ClientProfileImportRecordsBulkInput;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -1604,7 +1675,6 @@ export type ServiceRequestType = {
   completedOn?: Maybe<Scalars['DateTime']['output']>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
-  customService?: Maybe<Scalars['String']['output']>;
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   service: ServiceEnum;
@@ -1896,7 +1966,7 @@ export type UpdateClientProfileInput = {
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   tempVeteranStatus?: InputMaybe<VeteranStatusEnum>;
   user?: InputMaybe<UpdateUserInput>;
-  veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
+  veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
 export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
@@ -1914,7 +1984,6 @@ export type UpdateNoteInput = {
   publicDetails?: InputMaybe<Scalars['String']['input']>;
   purpose?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
-  title?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateNoteLocationInput = {
@@ -1928,7 +1997,6 @@ export type UpdateNotePayload = NoteType | OperationInfo;
 
 export type UpdateServiceRequestInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
-  customService?: InputMaybe<Scalars['String']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id: Scalars['ID']['input'];
   serviceOther?: InputMaybe<Scalars['String']['input']>;
@@ -1981,13 +2049,6 @@ export type UserType = {
 };
 
 export enum VeteranStatusEnum {
-  No = 'NO',
-  OtherThanHonorable = 'OTHER_THAN_HONORABLE',
-  PreferNotToSay = 'PREFER_NOT_TO_SAY',
-  Yes = 'YES'
-}
-
-export enum YesNoPreferNotToSayEnum {
   No = 'NO',
   OtherThanHonorable = 'OTHER_THAN_HONORABLE',
   PreferNotToSay = 'PREFER_NOT_TO_SAY',
