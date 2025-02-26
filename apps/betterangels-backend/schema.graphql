@@ -293,6 +293,21 @@ type ClientProfileImportRecordType {
   rawData: JSON!
 }
 
+type ClientProfileImportRecordTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ClientProfileImportRecordType!]!
+}
+
+input ClientProfileImportRecordsBulkInput {
+  source: String!
+  sourceIds: [String!]!
+}
+
 input ClientProfileOrder {
   user_FirstName: Ordering
   user_LastName: Ordering
@@ -331,7 +346,7 @@ type ClientProfileType {
   race: RaceEnum
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
-  veteranStatus: YesNoPreferNotToSayEnum
+  veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
@@ -409,7 +424,7 @@ input CreateClientProfileInput {
   race: RaceEnum
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
-  veteranStatus: YesNoPreferNotToSayEnum
+  veteranStatus: VeteranStatusEnum
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
@@ -429,12 +444,21 @@ input CreateNoteAttachmentInput {
 
 union CreateNoteAttachmentPayload = NoteAttachmentType | OperationInfo
 
+input CreateNoteDataImportInput {
+  sourceFile: String!
+  notes: String!
+}
+
+union CreateNoteDataImportPayload = NoteDataImportType | OperationInfo
+
 input CreateNoteInput {
   purpose: String
-  title: String
+  team: SelahTeamEnum
   publicDetails: String
   privateDetails: String
   client: ID
+  isSubmitted: Boolean
+  interactedAt: DateTime
 }
 
 input CreateNoteMoodInput {
@@ -448,7 +472,6 @@ union CreateNotePayload = NoteType | OperationInfo
 
 input CreateNoteServiceRequestInput {
   service: ServiceEnum!
-  customService: String
   serviceOther: String
   noteId: ID!
   serviceRequestType: ServiceRequestTypeEnum!
@@ -474,7 +497,6 @@ input CreateProfileDataImportInput {
 input CreateServiceRequestInput {
   service: ServiceEnum!
   status: ServiceRequestStatusEnum!
-  customService: String
   serviceOther: String
   client: ID
 }
@@ -713,6 +735,16 @@ input ImportClientProfileInput {
 
 union ImportClientProfilePayload = ClientProfileImportRecordType | OperationInfo
 
+input ImportNoteInput {
+  importJobId: UUID!
+  sourceId: String!
+  sourceName: String!
+  rawData: JSON!
+  note: CreateNoteInput!
+}
+
+union ImportNotePayload = NoteImportRecordType | OperationInfo
+
 input InteractionAuthorFilter {
   AND: InteractionAuthorFilter
   OR: InteractionAuthorFilter
@@ -870,6 +902,8 @@ type Mutation {
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
   updateTaskLocation(data: UpdateTaskLocationInput!): UpdateTaskLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
+  createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
+  importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
 }
 
 input NoteAttachmentFilter {
@@ -892,6 +926,14 @@ type NoteAttachmentType implements AttachmentInterface {
   namespace: NoteNamespaceEnum!
 }
 
+type NoteDataImportType {
+  id: UUID!
+  importedAt: DateTime!
+  sourceFile: String!
+  notes: String!
+  importedBy: DjangoModelType!
+}
+
 input NoteFilter {
   client: ID
   createdBy: ID
@@ -904,6 +946,17 @@ input NoteFilter {
   authors: [ID!]
   search: String
   teams: [SelahTeamEnum!]
+}
+
+type NoteImportRecordType {
+  id: ID!
+  sourceId: String!
+  sourceName: String!
+  success: Boolean!
+  errorMessage: String!
+  createdAt: DateTime!
+  note: NoteType
+  rawData: JSON!
 }
 
 enum NoteNamespaceEnum {
@@ -921,7 +974,6 @@ type NoteType {
   id: ID!
   purpose: String
   team: SelahTeamEnum
-  title: String
   location: LocationType
   attachments(filters: NoteAttachmentFilter, pagination: OffsetPaginationInput): [NoteAttachmentType!]!
   moods: [MoodType!]!
@@ -1073,6 +1125,7 @@ type Query {
   clientDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocumentsPaginated(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
+  bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, order: NoteOrder, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
@@ -1256,7 +1309,6 @@ enum ServiceRequestStatusEnum {
 type ServiceRequestType {
   id: ID!
   service: ServiceEnum!
-  customService: String
   serviceOther: String
   status: ServiceRequestStatusEnum!
   dueBy: DateTime
@@ -1537,7 +1589,7 @@ input UpdateClientProfileInput {
   race: RaceEnum
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
-  veteranStatus: YesNoPreferNotToSayEnum
+  veteranStatus: VeteranStatusEnum
   id: ID!
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
@@ -1558,7 +1610,6 @@ input UpdateNoteInput {
   id: ID!
   purpose: String
   team: SelahTeamEnum
-  title: String
   location: ID
   publicDetails: String
   privateDetails: String
@@ -1577,7 +1628,6 @@ union UpdateNotePayload = NoteType | OperationInfo
 
 input UpdateServiceRequestInput {
   id: ID!
-  customService: String
   serviceOther: String
   status: ServiceRequestStatusEnum
   dueBy: DateTime
@@ -1631,13 +1681,6 @@ type UserType {
 }
 
 enum VeteranStatusEnum {
-  YES
-  NO
-  PREFER_NOT_TO_SAY
-  OTHER_THAN_HONORABLE
-}
-
-enum YesNoPreferNotToSayEnum {
   YES
   NO
   PREFER_NOT_TO_SAY

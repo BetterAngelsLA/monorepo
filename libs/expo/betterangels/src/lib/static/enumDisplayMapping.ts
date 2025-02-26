@@ -17,13 +17,12 @@ import {
   ServiceRequestTypeEnum,
   SocialMediaEnum,
   VeteranStatusEnum,
-  YesNoPreferNotToSayEnum,
 } from '../apollo';
 
 export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
   [LanguageEnum.Arabic]: 'Arabic',
-  [LanguageEnum.Asl]: 'American Sign Language',
   [LanguageEnum.Armenian]: 'Armenian',
+  [LanguageEnum.Asl]: 'American Sign Language',
   [LanguageEnum.SimplifiedChinese]: 'Chinese, Simplified',
   [LanguageEnum.TraditionalChinese]: 'Chinese, Traditional',
   [LanguageEnum.English]: 'English',
@@ -63,22 +62,13 @@ export const enumDisplayHmisAgency: {
 export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.Female]: 'Female',
   [GenderEnum.Male]: 'Male',
-  [GenderEnum.TransFemale]: 'Transgender Female',
-  [GenderEnum.TransMale]: 'Transgender Male',
   [GenderEnum.NonBinary]: 'Non-Binary',
   [GenderEnum.PreferNotToSay]: 'Prefer not to say',
   [GenderEnum.Other]: 'Other',
+  [GenderEnum.TransMale]: 'Transgender Male',
+  [GenderEnum.TransFemale]: 'Transgender Female',
 };
 
-export const enumDisplayYesNoPreferNot: {
-  [key in YesNoPreferNotToSayEnum]: string;
-} = {
-  [YesNoPreferNotToSayEnum.Yes]: 'Yes',
-  [YesNoPreferNotToSayEnum.No]: 'No',
-  [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
-  [YesNoPreferNotToSayEnum.OtherThanHonorable]:
-    'Other than Honorable Discharge',
-};
 export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
   [PronounEnum.HeHimHis]: 'He/Him/His',
   [PronounEnum.SheHerHers]: 'She/Her/Hers',
@@ -140,15 +130,6 @@ export const enumDisplayDocumentType: {
   [ClientDocumentNamespaceEnum.PhotoId]: 'Photo ID',
   [ClientDocumentNamespaceEnum.SocialSecurityCard]: 'Social Security Card',
 };
-
-export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
-  {
-    [YesNoPreferNotToSayEnum.Yes]: 'Yes',
-    [YesNoPreferNotToSayEnum.No]: 'No',
-    [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
-    [YesNoPreferNotToSayEnum.OtherThanHonorable]:
-      'Other than Honorable Discharge',
-  };
 
 export const enumDisplayVeteranStatus: { [key in VeteranStatusEnum]: string } =
   {

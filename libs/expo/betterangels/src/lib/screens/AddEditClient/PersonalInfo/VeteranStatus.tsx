@@ -12,7 +12,7 @@ import {
   UpdateClientProfileInput,
   VeteranStatusEnum,
 } from '../../../apollo';
-import { enumDisplayVeteran } from '../../../static/enumDisplayMapping';
+import { enumDisplayVeteranStatus } from '../../../static/enumDisplayMapping';
 
 export default function VeteranStatus() {
   const { setValue, watch } = useFormContext<
@@ -28,17 +28,21 @@ export default function VeteranStatus() {
     <CardWrapper onReset={onReset} title="Veteran Status">
       <View style={styles.container}>
         <TextBold size="sm">Are you a veteran?</TextBold>
-        {Object.entries(enumDisplayVeteran).map(([enumValue, displayValue]) => (
-          <Radio
-            key={enumValue}
-            value={enumDisplayVeteran[tempVeteranStatus as VeteranStatusEnum]}
-            label={displayValue}
-            onPress={() =>
-              setValue('tempVeteranStatus', enumValue as VeteranStatusEnum)
-            }
-            accessibilityHint="selects veteran status"
-          />
-        ))}
+        {Object.entries(enumDisplayVeteranStatus).map(
+          ([enumValue, displayValue]) => (
+            <Radio
+              key={enumValue}
+              value={
+                enumDisplayVeteranStatus[tempVeteranStatus as VeteranStatusEnum]
+              }
+              label={displayValue}
+              onPress={() =>
+                setValue('tempVeteranStatus', enumValue as VeteranStatusEnum)
+              }
+              accessibilityHint="selects veteran status"
+            />
+          )
+        )}
       </View>
     </CardWrapper>
   );

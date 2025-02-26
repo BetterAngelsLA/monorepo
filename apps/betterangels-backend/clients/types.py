@@ -13,7 +13,6 @@ from clients.enums import (
     LivingSituationEnum,
     PreferredCommunicationEnum,
     VeteranStatusEnum,
-    YesNoPreferNotToSayEnum,
 )
 from common.graphql.types import (
     AttachmentInterface,
@@ -226,7 +225,7 @@ class ClientProfileBaseType:
     race: auto
     residence_address: auto
     spoken_languages: Optional[List[LanguageEnum]]
-    veteran_status: Optional[YesNoPreferNotToSayEnum]
+    veteran_status: auto
 
 
 @strawberry.input
@@ -350,6 +349,12 @@ class ClientProfileInput(ClientProfileBaseType):
 
 
 # Data Import
+@strawberry.input
+class ClientProfileImportRecordsBulkInput:
+    source: str
+    sourceIds: List[str]
+
+
 @strawberry_django.type(ClientProfileDataImport)
 class ClientProfileDataImportType:
     id: auto
