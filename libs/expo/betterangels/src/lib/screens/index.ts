@@ -1,5 +1,6 @@
 export { default as AddEditClient } from './AddEditClient';
 export { default as Client } from './Client';
+export { default as ClientProfileForms } from './ClientProfileForms-V2';
 export { default as Clients } from './Clients';
 export { default as FileScreenComponent } from './FileScreenComponent';
 export { default as Home } from './Home';
