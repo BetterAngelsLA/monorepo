@@ -1,8 +1,10 @@
+import uuid
 from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pghistory
 from accounts.models import User
+from betterangels_backend import settings
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
@@ -35,7 +37,6 @@ if TYPE_CHECKING:
 )
 class ServiceRequest(BaseModel):
     service = TextChoicesField(choices_enum=ServiceEnum)
-    custom_service = models.CharField(max_length=100, null=True, blank=True)
     service_other = models.CharField(max_length=100, null=True, blank=True)
     client = models.ForeignKey(
         "accounts.User",
@@ -172,7 +173,7 @@ class Note(BaseModel):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     # This is the date & time displayed on the note. We don't want to use created_at
     # on the FE because the Note may not be created during the client interaction.
-    interacted_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    interacted_at = models.DateTimeField(default=timezone.now, db_index=True)
     is_submitted = models.BooleanField(default=False)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     next_steps = models.ManyToManyField(Task, blank=True, related_name="next_step_notes")
@@ -183,7 +184,6 @@ class Note(BaseModel):
     purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
     team = TextChoicesField(SelahTeamEnum, null=True, blank=True)
-    title = models.CharField(max_length=100, blank=True, null=True)
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
@@ -216,7 +216,7 @@ class Note(BaseModel):
         else:
             created_by_label = "Case Manager"
 
-        return f"Note {self.id}: {self.title} (by {created_by_label} {self.interacted_at.date()})"
+        return f"Note {self.id}: {self.purpose} (by {created_by_label} {self.interacted_at.date()})"
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:
@@ -354,3 +354,45 @@ class ServiceRequestUserObjectPermission(UserObjectPermissionBase):
 
 class ServiceRequestGroupObjectPermission(GroupObjectPermissionBase):
     content_object = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE)
+
+
+# Data Import
+class NoteDataImport(models.Model):
+    """
+    Model to track a note import job.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    imported_at = models.DateTimeField(auto_now_add=True)
+    source_file = models.CharField(max_length=255)
+    imported_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    notes = models.TextField(blank=True, default="")
+
+    def __str__(self) -> str:
+        return f"Note Import {self.id} from {self.source_file} at {self.imported_at}"
+
+
+class NoteImportRecord(models.Model):
+    """
+    Model to record each imported row (i.e. note) for a given note import job.
+    Stores the original CSV row (raw_data), the original CSV id (source_id),
+    and, if successfully imported, a link to the Note created via GraphQL.
+    """
+
+    import_job = models.ForeignKey(NoteDataImport, on_delete=models.CASCADE, related_name="records")
+    source_id = models.CharField(max_length=255)
+    source_name = models.CharField(max_length=255)
+    note = models.ForeignKey(Note, on_delete=models.SET_NULL, null=True, blank=True)
+    raw_data = models.JSONField()
+    success = models.BooleanField(default=False)
+    error_message = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["import_job", "success", "source_name", "source_id"]),
+        ]
+
+    def __str__(self) -> str:
+        status = "Success" if self.success else "Failed"
+        return f"Note Import Record {self.source_id} ({status})"

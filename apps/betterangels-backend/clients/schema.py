@@ -42,6 +42,7 @@ from .enums import RelationshipTypeEnum
 from .types import (
     ClientDocumentType,
     ClientProfileDataImportType,
+    ClientProfileImportRecordsBulkInput,
     ClientProfileImportRecordType,
     ClientProfilePhotoInput,
     ClientProfileType,
@@ -326,6 +327,24 @@ class Query:
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
+    # Data Import
+    @strawberry_django.offset_paginated(extensions=[HasPerm(ClientProfileImportRecordPermissions.VIEW)])
+    def bulk_client_profile_import_records(
+        self, info: Info, data: ClientProfileImportRecordsBulkInput
+    ) -> OffsetPaginated[ClientProfileImportRecordType]:
+        """
+        Given input data containing a source (e.g. "SELAH") and a list of sourceIds,
+        return the matching records.
+        Note: Only records that exist in the database will be returned.
+        """
+
+        qs = ClientProfileImportRecord.objects.filter(
+            source_name=data.source,
+            source_id__in=data.sourceIds,
+            success=True,
+        )
+        return cast(OffsetPaginated[ClientProfileImportRecordType], qs)
+
 
 @strawberry.type
 class Mutation:
@@ -529,7 +548,7 @@ class Mutation:
             source_file=record.source_file,
         )
 
-    @strawberry_django.mutation(extensions=[HasPerm([ClientProfileImportRecordPermissions.ADD])])
+    @strawberry_django.mutation(extensions=[HasPerm(ClientProfileImportRecordPermissions.ADD)])
     def import_client_profile(self, info: Info, data: ImportClientProfileInput) -> ClientProfileImportRecordType:
         existing = ClientProfileImportRecord.objects.filter(
             source_id=data.source_id, source_name=data.source_name, success=True
@@ -561,6 +580,3 @@ class Mutation:
                 error_message=_format_graphql_error(e),
             )
         return cast(ClientProfileImportRecordType, record)
-
-
-# trigger build

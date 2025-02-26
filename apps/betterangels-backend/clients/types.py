@@ -349,6 +349,12 @@ class ClientProfileInput(ClientProfileBaseType):
 
 
 # Data Import
+@strawberry.input
+class ClientProfileImportRecordsBulkInput:
+    source: str
+    sourceIds: List[str]
+
+
 @strawberry_django.type(ClientProfileDataImport)
 class ClientProfileDataImportType:
     id: auto

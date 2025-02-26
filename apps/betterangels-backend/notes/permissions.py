@@ -25,3 +25,11 @@ class TaskPermissions(models.TextChoices):
     CHANGE = "notes.change_task", _("Can change task")
     DELETE = "notes.delete_task", _("Can delete task")
     ADD = "notes.add_task", _("Can add task")
+
+
+# Data Import
+class NoteImportRecordPermissions(models.TextChoices):
+    VIEW = "notes.view_noteimportrecord", _("Can view note import record")
+    CHANGE = "notes.change_noteimportrecord", _("Can change note import record")
+    DELETE = "notes.delete_noteimportrecord", _("Can delete note import record")
+    ADD = "notes.add_noteimportrecord", _("Can add note import record")
