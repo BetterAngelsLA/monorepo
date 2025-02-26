@@ -19,10 +19,10 @@ export default function VeteranStatus() {
     UpdateClientProfileInput | CreateClientProfileInput
   >();
 
-  const tempVeteranStatus = watch('tempVeteranStatus');
+  const veteranStatus = watch('veteranStatus');
 
   const onReset = () => {
-    setValue('tempVeteranStatus', null);
+    setValue('veteranStatus', null);
   };
   return (
     <CardWrapper onReset={onReset} title="Veteran Status">
@@ -33,11 +33,11 @@ export default function VeteranStatus() {
             <Radio
               key={enumValue}
               value={
-                enumDisplayVeteranStatus[tempVeteranStatus as VeteranStatusEnum]
+                enumDisplayVeteranStatus[veteranStatus as VeteranStatusEnum]
               }
               label={displayValue}
               onPress={() =>
-                setValue('tempVeteranStatus', enumValue as VeteranStatusEnum)
+                setValue('veteranStatus', enumValue as VeteranStatusEnum)
               }
               accessibilityHint="selects veteran status"
             />

@@ -45,7 +45,6 @@ query ClientProfile($id: ID!) {
       preferredLanguage
       pronouns
       veteranStatus
-      tempVeteranStatus
       livingSituation
       adaAccommodation
       profilePhoto {
