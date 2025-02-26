@@ -306,6 +306,15 @@ export type ClientProfileImportRecordType = {
   success: Scalars['Boolean']['output'];
 };
 
+export type ClientProfileImportRecordTypeOffsetPaginated = {
+  __typename?: 'ClientProfileImportRecordTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<ClientProfileImportRecordType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type ClientProfileImportRecordsBulkInput = {
   source: Scalars['String']['input'];
   sourceIds: Array<Scalars['String']['input']>;
@@ -364,7 +373,7 @@ export type ClientProfileType = {
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
   tempVeteranStatus?: Maybe<VeteranStatusEnum>;
   user: UserType;
-  veteranStatus?: Maybe<YesNoPreferNotToSayEnum>;
+  veteranStatus?: Maybe<VeteranStatusEnum>;
 };
 
 
@@ -450,7 +459,7 @@ export type CreateClientProfileInput = {
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   tempVeteranStatus?: InputMaybe<VeteranStatusEnum>;
   user: CreateUserInput;
-  veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
+  veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
 export type CreateClientProfilePayload = ClientProfileType | OperationInfo;
@@ -1359,11 +1368,11 @@ export enum PronounEnum {
 export type Query = {
   __typename?: 'Query';
   availableOrganizations: Array<OrganizationType>;
+  bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
   clientDocument: ClientDocumentType;
   clientDocuments: Array<ClientDocumentType>;
   clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
   clientProfile: ClientProfileType;
-  clientProfileImportRecordsBulk: Array<ClientProfileImportRecordType>;
   clientProfiles: Array<ClientProfileType>;
   clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
@@ -1380,6 +1389,12 @@ export type Query = {
   shelters: ShelterTypeOffsetPaginated;
   task: TaskType;
   tasks: Array<TaskType>;
+};
+
+
+export type QueryBulkClientProfileImportRecordsArgs = {
+  data: ClientProfileImportRecordsBulkInput;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -1400,11 +1415,6 @@ export type QueryClientDocumentsPaginatedArgs = {
 
 export type QueryClientProfileArgs = {
   pk: Scalars['ID']['input'];
-};
-
-
-export type QueryClientProfileImportRecordsBulkArgs = {
-  data: ClientProfileImportRecordsBulkInput;
 };
 
 
@@ -1955,7 +1965,7 @@ export type UpdateClientProfileInput = {
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   tempVeteranStatus?: InputMaybe<VeteranStatusEnum>;
   user?: InputMaybe<UpdateUserInput>;
-  veteranStatus?: InputMaybe<YesNoPreferNotToSayEnum>;
+  veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
 export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
@@ -2038,13 +2048,6 @@ export type UserType = {
 };
 
 export enum VeteranStatusEnum {
-  No = 'NO',
-  OtherThanHonorable = 'OTHER_THAN_HONORABLE',
-  PreferNotToSay = 'PREFER_NOT_TO_SAY',
-  Yes = 'YES'
-}
-
-export enum YesNoPreferNotToSayEnum {
   No = 'NO',
   OtherThanHonorable = 'OTHER_THAN_HONORABLE',
   PreferNotToSay = 'PREFER_NOT_TO_SAY',
