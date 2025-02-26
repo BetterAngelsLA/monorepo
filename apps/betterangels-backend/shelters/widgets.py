@@ -1,3 +1,4 @@
+from datetime import time
 from typing import Any, List, Optional, Tuple
 
 from django import forms
@@ -38,4 +39,36 @@ class LatLongField(forms.MultiValueField):
                 raise ValidationError(_("Longitude is required"))
             point_str = "POINT(%f %f)" % tuple(reversed(data_list))
             return point_str
+        return None
+
+
+class TimeRangeWidget(forms.MultiWidget):
+    def __init__(self, attrs: Optional[dict] = None) -> None:
+        widgets = [
+            forms.TimeInput(attrs={"type": "time"}),
+            forms.TimeInput(attrs={"type": "time"}),
+        ]
+        super().__init__(widgets, attrs)
+
+    def decompress(self, value: Optional[Tuple[time, time]]) -> List[Optional[time]]:
+        if value:
+            return [value[0], value[1]]
+        return [None, None]
+
+
+class TimeRangeField(forms.MultiValueField):
+    widget = TimeRangeWidget
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        fields = [forms.TimeField(), forms.TimeField()]
+        super().__init__(fields, *args, **kwargs)
+
+    def compress(self, data_list: List[Optional[time]]) -> Optional[Tuple[time, time]]:
+        if data_list:
+            start, end = data_list
+            if start is None or end is None:
+                raise forms.ValidationError("Both start and end times are required.")
+            if end <= start:
+                raise forms.ValidationError("End time must be after start time.")
+            return (start, end)
         return None

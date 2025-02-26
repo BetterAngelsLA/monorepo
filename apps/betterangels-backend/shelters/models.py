@@ -177,6 +177,8 @@ class Shelter(BaseModel):
     email = models.EmailField(max_length=254, blank=True, null=True)
     phone = PhoneNumberField()
     website = models.URLField(blank=True, null=True)
+    operating_hours_start = models.TimeField(null=True, blank=True)
+    operating_hours_end = models.TimeField(null=True, blank=True)
 
     # Summary Information
     description = CKEditor5Field()
@@ -190,17 +192,23 @@ class Shelter(BaseModel):
     total_beds = models.PositiveIntegerField(blank=True, null=True)
     room_styles = models.ManyToManyField(RoomStyle)
     room_styles_other = models.CharField(max_length=255, blank=True, null=True)
+    add_notes_sleeping_details = CKEditor5Field(verbose_name="Additional Notes", null=True, blank=True)
 
     # Shelter Details
     accessibility = models.ManyToManyField(Accessibility)
     storage = models.ManyToManyField(Storage)
     pets = models.ManyToManyField(Pet)
     parking = models.ManyToManyField(Parking)
+    add_notes_shelter_details = CKEditor5Field(verbose_name="Additional Notes", null=True, blank=True)
 
-    # Restrictions
+    # Policies
     max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
+    intake_hours_start = models.TimeField(null=True, blank=True)
+    intake_hours_end = models.TimeField(null=True, blank=True)
     curfew = models.TimeField(null=True, blank=True)
     on_site_security = models.BooleanField(null=True, blank=True)
+    visitors_allowed = models.BooleanField(null=True, blank=True)
+    emergency_surge = models.BooleanField(verbose_name="Emergency Capacity Surge Options", null=True, blank=True)
     other_rules = CKEditor5Field(null=True, blank=True)
 
     # Services Offered
@@ -208,13 +216,13 @@ class Shelter(BaseModel):
     general_services = models.ManyToManyField(GeneralService)
     health_services = models.ManyToManyField(HealthService)
     training_services = models.ManyToManyField(TrainingService)
-    other_services = CKEditor5Field(null=True, blank=True)
+    other_services = CKEditor5Field(verbose_name="Additional Notes", null=True, blank=True)
 
     # Entry Requirements
     entry_info = CKEditor5Field(null=True, blank=True)
     entry_requirements = models.ManyToManyField(EntryRequirement)
-    bed_fees = CKEditor5Field(null=True, blank=True)
-    program_fees = CKEditor5Field(null=True, blank=True)
+    bed_fees = models.CharField(max_length=255, blank=True, null=True)
+    program_fees = models.CharField(max_length=255, blank=True, null=True)
 
     # Ecosystem Information
     cities = models.ManyToManyField(City)

@@ -72,6 +72,7 @@ from .models import (
     TrainingService,
     Video,
 )
+from .widgets import TimeRangeField, TimeRangeWidget
 
 T = TypeVar("T", bound=models.Model)
 logger = logging.getLogger(__name__)
@@ -104,6 +105,7 @@ class ShelterForm(forms.ModelForm):
                 "data-allow-clear": "true",
             }
         ),
+        label="Special Situation",
         required=True,
     )
     shelter_types = forms.MultipleChoiceField(
@@ -294,6 +296,9 @@ class ShelterForm(forms.ModelForm):
         ),
     )
 
+    op_hours_time_range = TimeRangeField(widget=TimeRangeWidget())
+    intake_hours_time_range = TimeRangeField(widget=TimeRangeWidget())
+
     class Meta:
         model = Shelter
         fields = "__all__"
@@ -306,6 +311,13 @@ class ShelterForm(forms.ModelForm):
 
     def clean(self) -> dict:
         cleaned_data = super().clean() or {}
+
+        time_range = cleaned_data.get("op_hours_time_range")
+        if time_range:
+            cleaned_data["operating_hours_start"], cleaned_data["operating_hours_end"] = time_range
+        time_range = cleaned_data.get("intake_hours_time_range")
+        if time_range:
+            cleaned_data["intake_hours_start"], cleaned_data["intake_hours_end"] = time_range
 
         # Dynamically detect all ManyToManyField attributes in the model
         many_to_many_fields = [
@@ -633,6 +645,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "email",
                     "phone",
                     "website",
+                    "op_hours_time_range",
                 ),
             },
         ),
@@ -640,12 +653,12 @@ class ShelterAdmin(ImportExportModelAdmin):
             "Summary Info",
             {
                 "fields": (
-                    "description",
                     "demographics",
                     "demographics_other",
                     "special_situation_restrictions",
                     "shelter_types",
                     "shelter_types_other",
+                    "description",
                 )
             },
         ),
@@ -656,6 +669,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "total_beds",
                     "room_styles",
                     "room_styles_other",
+                    "add_notes_sleeping_details",
                 )
             },
         ),
@@ -667,16 +681,20 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "storage",
                     "pets",
                     "parking",
+                    "add_notes_shelter_details",
                 )
             },
         ),
         (
-            "Restrictions",
+            "Policies",
             {
                 "fields": (
                     "max_stay",
+                    "intake_hours_time_range",
                     "curfew",
                     "on_site_security",
+                    "visitors_allowed",
+                    "emergency_surge",
                     "other_rules",
                 )
             },
