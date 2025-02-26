@@ -57,7 +57,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             residenceAddress
             spokenLanguages
             veteranStatus
-            tempVeteranStatus
             displayCaseManager
             displayGender
             displayPronouns
