@@ -193,10 +193,13 @@ export default function AddEditClient({ id }: { id?: string }) {
           errorPolicy: 'all',
         });
 
-        refetch();
         operationErrors = updateResponse.errors?.[0].extensions?.['errors'] as
           | TValidationError[]
           | undefined;
+
+        if (!operationErrors) {
+          refetch();
+        }
       } else {
         const input = values as CreateClientProfileInput;
         const createResponse = await createClient({
