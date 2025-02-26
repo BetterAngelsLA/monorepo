@@ -2,9 +2,10 @@ from common.admin import AttachmentAdminMixin
 from django.contrib import admin
 from notes.enums import ServiceEnum
 
-from .models import Mood, Note, ServiceRequest, Task
+from .models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest, Task
 
 
+@admin.register(Mood)
 class MoodAdmin(admin.ModelAdmin):
     list_display = (
         "descriptor",
@@ -35,9 +36,10 @@ class MoodInline(admin.TabularInline):
     extra = 1
 
 
+@admin.register(Note)
 class NoteAdmin(AttachmentAdminMixin, admin.ModelAdmin):
     list_display = (
-        "note_title",
+        "note_purpose",
         "client",
         "created_by",
         "organization",
@@ -50,7 +52,7 @@ class NoteAdmin(AttachmentAdminMixin, admin.ModelAdmin):
         "updated_at",
     )
     search_fields = (
-        "title",
+        "purpose",
         "public_details",
         "private_details",
         "created_by__email",
@@ -66,10 +68,11 @@ class NoteAdmin(AttachmentAdminMixin, admin.ModelAdmin):
         "updated_at",
     )
 
-    def note_title(self, obj: Note) -> str:
-        return f"{obj.title} ({obj.pk})"
+    def note_purpose(self, obj: Note) -> str:
+        return f"{obj.purpose} ({obj.pk})"
 
 
+@admin.register(Task)
 class TaskAdmin(AttachmentAdminMixin, admin.ModelAdmin):
     list_display = (
         "title",
@@ -95,6 +98,7 @@ class TaskAdmin(AttachmentAdminMixin, admin.ModelAdmin):
     )
 
 
+@admin.register(ServiceRequest)
 class ServiceRequestAdmin(admin.ModelAdmin):
     list_display = (
         "service_name",
@@ -129,7 +133,22 @@ class ServiceRequestAdmin(admin.ModelAdmin):
         return str(obj.service.label if obj.service != ServiceEnum.OTHER else obj.service_other)
 
 
-admin.site.register(Mood, MoodAdmin)
-admin.site.register(Note, NoteAdmin)
-admin.site.register(ServiceRequest, ServiceRequestAdmin)
-admin.site.register(Task, TaskAdmin)
+@admin.register(NoteDataImport)
+class NoteDataImportAdmin(admin.ModelAdmin):
+    list_display = ("id", "imported_at", "source_file", "imported_by", "record_counts")
+    readonly_fields = ("record_counts",)
+
+    @admin.display(description="Import Record Counts")
+    def record_counts(self, obj: NoteDataImport) -> str:
+        total = obj.records.count()
+        successes = obj.records.filter(success=True).count()
+        failures = total - successes
+        return f"Total: {total} | Success: {successes} | Failures: {failures}"
+
+
+@admin.register(NoteImportRecord)
+class NoteImportRecordAdmin(admin.ModelAdmin):
+    list_display = ("import_job__id", "source_name", "source_id", "note", "success", "created_at")
+    list_filter = ("import_job__id", "success")
+    search_fields = ("source_id", "note__id")
+    readonly_fields = ("raw_data", "error_message")

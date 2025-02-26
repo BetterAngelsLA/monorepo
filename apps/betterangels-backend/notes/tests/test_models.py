@@ -17,7 +17,6 @@ class NoteModelTestCase(TestCase):
         self.created_by_user: User = baker.make(User, first_name="Harry", last_name="Truman")
         self.note = baker.make(
             Note,
-            title="Session with Dale",
             purpose="Session with Dale",
             interacted_at=datetime.now(),
             client=self.client_user,

@@ -17,7 +17,6 @@ import {
   ServiceRequestTypeEnum,
   SocialMediaEnum,
   VeteranStatusEnum,
-  YesNoPreferNotToSayEnum,
 } from '../apollo';
 
 export const enumDisplayLanguage: { [key in LanguageEnum]: string } = {
@@ -70,15 +69,6 @@ export const enumDisplayGender: { [key in GenderEnum]: string } = {
   [GenderEnum.TransFemale]: 'Transgender Female',
 };
 
-export const enumDisplayYesNoPreferNot: {
-  [key in YesNoPreferNotToSayEnum]: string;
-} = {
-  [YesNoPreferNotToSayEnum.Yes]: 'Yes',
-  [YesNoPreferNotToSayEnum.No]: 'No',
-  [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
-  [YesNoPreferNotToSayEnum.OtherThanHonorable]:
-    'Other than Honorable Discharge',
-};
 export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
   [PronounEnum.HeHimHis]: 'He/Him/His',
   [PronounEnum.SheHerHers]: 'She/Her/Hers',
@@ -140,15 +130,6 @@ export const enumDisplayDocumentType: {
   [ClientDocumentNamespaceEnum.PhotoId]: 'Photo ID',
   [ClientDocumentNamespaceEnum.SocialSecurityCard]: 'Social Security Card',
 };
-
-export const enumDisplayVeteran: { [key in YesNoPreferNotToSayEnum]: string } =
-  {
-    [YesNoPreferNotToSayEnum.Yes]: 'Yes',
-    [YesNoPreferNotToSayEnum.No]: 'No',
-    [YesNoPreferNotToSayEnum.PreferNotToSay]: 'Prefer not to say',
-    [YesNoPreferNotToSayEnum.OtherThanHonorable]:
-      'Other than Honorable Discharge',
-  };
 
 export const enumDisplayVeteranStatus: { [key in VeteranStatusEnum]: string } =
   {
