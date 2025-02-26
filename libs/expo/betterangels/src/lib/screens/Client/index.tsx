@@ -16,8 +16,11 @@ import {
   useState,
 } from 'react';
 import { Pressable, View } from 'react-native';
+import { useFeatureFlagActive } from '../../hooks';
+import { FeatureFlags } from '../../providers/featureControls/constants';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
+import ClientProfile from './ClientProfile/index';
 import ClientTabs from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
@@ -37,6 +40,7 @@ interface ProfileRef {
 const getTabComponent = (
   key: string,
   client: ClientProfileQuery | undefined,
+  clientRedesignFeatureOn: boolean,
   profileRef?: RefObject<ProfileRef>
 ): ReactElement | null => {
   const components: {
@@ -55,11 +59,15 @@ const getTabComponent = (
 
   if (!Component) return null;
 
-  return key === 'Profile' ? (
-    <Component ref={profileRef} client={client} />
-  ) : (
-    <Component client={client} />
-  );
+  if (key !== 'Profile') {
+    return <Component client={client} />;
+  }
+
+  if (clientRedesignFeatureOn) {
+    return <ClientProfile ref={profileRef} client={client} />;
+  }
+
+  return <Profile ref={profileRef} client={client} />;
 };
 
 export default function Client({
@@ -71,6 +79,9 @@ export default function Client({
 }) {
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
   const [tab, setTab] = useState('Profile');
+  const clientRedesignFeatureOn = useFeatureFlagActive(
+    FeatureFlags.PROFILE_REDESIGN_FF
+  );
 
   const profileRef = useRef<ProfileRef | null>(null);
 
@@ -141,7 +152,7 @@ export default function Client({
         client={data?.clientProfile}
       />
       <ClientTabs tab={tab} setTab={setTab} />
-      {getTabComponent(tab, data, profileRef)}
+      {getTabComponent(tab, data, clientRedesignFeatureOn, profileRef)}
     </MainContainer>
   );
 }

@@ -2,6 +2,7 @@ import {
   AppleSignIn,
   GoogleSignIn,
   LoginForm,
+  useFeatureControls,
   useUser,
 } from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
@@ -27,6 +28,7 @@ export default function SignIn() {
   const { user } = useUser();
   const [errorMessage, setErrorMessage] = useState('');
   const { switchEnvironment } = useApiConfig();
+  const { refetchFeatureFlags } = useFeatureControls();
 
   useEffect(() => {
     // Run this effect only once on mount.
@@ -39,6 +41,8 @@ export default function SignIn() {
 
   useEffect(() => {
     if (user) {
+      refetchFeatureFlags();
+
       setIsLoading(false);
     }
   }, [user]);
