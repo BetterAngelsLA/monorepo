@@ -53,5 +53,9 @@ class UserModelTestCase(ParametrizedTestCase, TestCase):
         self.assertEqual(user.is_outreach_authorized, should_succeed)
 
     def test_save(self) -> None:
-        user = User.objects.create(username="lowercaseme", email="LOWERCASEME@EXAMPLE.COM")
+        user = baker.make(User, email="LOWERCASEME@EXAMPLE.COM")
         self.assertEqual(user.email, "lowercaseme@example.com")
+
+        user.email = ""
+        user.save()
+        self.assertIsNone(user.email)
