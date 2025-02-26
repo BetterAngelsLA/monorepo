@@ -359,3 +359,4 @@ class NoteImportRecordType:
     error_message: auto
     created_at: auto
     note: Optional[NoteType]
+    raw_data: auto

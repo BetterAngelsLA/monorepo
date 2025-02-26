@@ -1170,6 +1170,7 @@ export type NoteImportRecordType = {
   errorMessage: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   note?: Maybe<NoteType>;
+  rawData: Scalars['JSON']['output'];
   sourceId: Scalars['String']['output'];
   sourceName: Scalars['String']['output'];
   success: Scalars['Boolean']['output'];

@@ -956,6 +956,7 @@ type NoteImportRecordType {
   errorMessage: String!
   createdAt: DateTime!
   note: NoteType
+  rawData: JSON!
 }
 
 enum NoteNamespaceEnum {
