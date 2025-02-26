@@ -32,7 +32,15 @@ export const FeatureControlProvider: React.FC<FeatureControlProviderProps> = ({
       samples: {},
     });
 
-  const { data } = useGetFeatureControlsQuery();
+  const { data, refetch } = useGetFeatureControlsQuery();
+
+  const clearFeatureFlags = () => {
+    setFeatureControlGroups({
+      flags: {},
+      switches: {},
+      samples: {},
+    });
+  };
 
   useEffect(() => {
     if (data?.featureControls) {
@@ -48,11 +56,7 @@ export const FeatureControlProvider: React.FC<FeatureControlProviderProps> = ({
       issues, to prevent flickering. This will be important when we integrate incremental refresh later.
       */
 
-      setFeatureControlGroups({
-        flags: {},
-        switches: {},
-        samples: {},
-      });
+      clearFeatureFlags();
     }
   }, [data]);
 
@@ -62,7 +66,13 @@ export const FeatureControlProvider: React.FC<FeatureControlProviderProps> = ({
   );
 
   return (
-    <FeatureControlContext.Provider value={memoizedControlGroups}>
+    <FeatureControlContext.Provider
+      value={{
+        ...memoizedControlGroups,
+        refetchFeatureFlags: refetch,
+        clearFeatureFlags,
+      }}
+    >
       {children}
     </FeatureControlContext.Provider>
   );
