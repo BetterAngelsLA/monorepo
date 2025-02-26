@@ -59,6 +59,7 @@ class LocationTaskAdminMixin:
         return format_html("<br>".join(task_links))
 
 
+@admin.register(Attachment)
 class AttachmentAdmin(admin.ModelAdmin):
     list_display = (
         "get_str",
@@ -91,10 +92,12 @@ class AttachmentAdmin(admin.ModelAdmin):
         return str(obj)
 
 
+@admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):
     readonly_fields = ("address_components", "formatted_address")
 
 
+@admin.register(Location)
 class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelAdmin):
     list_display = (
         "formatted_address",
@@ -124,8 +127,3 @@ class LocationAdmin(LocationNoteAdminMixin, LocationTaskAdminMixin, admin.ModelA
 
     def formatted_address(self, obj: Location) -> str:
         return str(obj.address.formatted_address) if obj.address else ""
-
-
-admin.site.register(Address, AddressAdmin)
-admin.site.register(Attachment, AttachmentAdmin)
-admin.site.register(Location, LocationAdmin)

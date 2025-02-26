@@ -99,7 +99,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "socialMediaProfiles": social_media_profile,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": user,
-            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
+            "veteranStatus": VeteranStatusEnum.YES.name,
             # TODO: remove after fe cutover to new field & type
             "tempVeteranStatus": None,
         }
@@ -228,7 +228,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "socialMediaProfiles": social_media_profiles,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": user,
-            "veteranStatus": YesNoPreferNotToSayEnum.YES.name,
+            "veteranStatus": VeteranStatusEnum.YES.name,
             # TODO: remove after fe cutover to new field & type
             "tempVeteranStatus": YesNoPreferNotToSayEnum.OTHER_THAN_HONORABLE.name,
         }
@@ -486,7 +486,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile_id}
 
-        expected_query_count = 49
+        expected_query_count = 50
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
