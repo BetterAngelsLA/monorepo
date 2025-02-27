@@ -22,6 +22,7 @@ import {
   SocialMediaEnum,
   UpdateClientProfileInput,
 } from '../../apollo';
+import { applyValidationErrors } from '../../helpers/parseClientProfileErrors';
 import { useSnackbar } from '../../hooks';
 import { MainScrollContainer } from '../../ui-components';
 import { ClientProfilesDocument } from '../Clients/__generated__/Clients.generated';
@@ -37,6 +38,12 @@ import {
   useGetClientProfileQuery,
   useUpdateClientProfileMutation,
 } from './__generated__/AddEditClient.generated';
+
+type TValidationError = {
+  field: string;
+  location: string | undefined;
+  errorCode: string;
+};
 
 const defaultSocialMedias = [
   {
@@ -162,7 +169,7 @@ export default function AddEditClient({ id }: { id?: string }) {
     delete values.displayPronouns;
     delete values.profilePhoto;
     try {
-      let operationResult;
+      let operationErrors: TValidationError[] | undefined;
       if (id) {
         const input = {
           ...(values as UpdateClientProfileInput),
@@ -183,45 +190,32 @@ export default function AddEditClient({ id }: { id?: string }) {
               },
             },
           },
+          errorPolicy: 'all',
         });
 
-        refetch();
-        operationResult = updateResponse.data?.updateClientProfile;
+        operationErrors = updateResponse.errors?.[0].extensions?.['errors'] as
+          | TValidationError[]
+          | undefined;
+
+        if (!operationErrors) {
+          refetch();
+        }
       } else {
         const input = values as CreateClientProfileInput;
         const createResponse = await createClient({
           variables: { data: input as CreateClientProfileInput },
+          errorPolicy: 'all',
         });
-        operationResult = createResponse.data?.createClientProfile;
+        operationErrors = createResponse.errors?.[0].extensions?.['errors'] as
+          | TValidationError[]
+          | undefined;
       }
-      if (
-        operationResult?.__typename === 'OperationInfo' &&
-        operationResult.messages.length > 0
-      ) {
-        const resultMessage = operationResult.messages[0].message;
-        if (resultMessage === 'User with this Email already exists.') {
-          methods.setError('user.email', {
-            type: 'manual',
-            message: 'User with this Email already exists.',
-          });
 
-          return;
-        }
-
-        if (
-          resultMessage ===
-          'California ID must be 1 letter followed by 7 numbers'
-        ) {
-          methods.setError('californiaId', {
-            type: 'manual',
-            message: 'CA ID must be 1 letter followed by 7 numbers',
-          });
-
-          return;
-        }
-
-        throw new Error(`Failed to update a client profile: ${resultMessage}`);
+      if (operationErrors) {
+        applyValidationErrors(operationErrors, methods.setError);
+        return;
       }
+
       if (id) {
         router.replace(`/client/${id}`);
       } else {

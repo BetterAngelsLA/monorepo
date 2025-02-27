@@ -116,6 +116,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.email:
             self.email = self.email.lower()
+        else:
+            self.email = None
 
         super().save(*args, **kwargs)
 
