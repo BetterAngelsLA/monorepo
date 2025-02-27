@@ -1,6 +1,6 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { Accordion } from '@monorepo/expo/shared/ui-components';
-import { ReactElement, useRef, useState } from 'react';
+import { Dispatch, ReactElement, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
@@ -56,7 +56,7 @@ type TAccordionSection = {
   section: ClientProfileSectionsEnum;
   children: ReactElement;
   expandedTitle: TClientSectionTitle | null;
-  setExpandedTitle: any;
+  setExpandedTitle: Dispatch<React.SetStateAction<TClientSectionTitle | null>>;
 };
 
 function AccordionSection(props: TAccordionSection) {

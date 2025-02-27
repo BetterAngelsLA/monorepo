@@ -13,10 +13,8 @@ export function InfoList(props: TInfoList) {
 
   let visibleItems = items;
 
-  if (!showAll) {
-    if (hasSomeContent(items)) {
-      visibleItems = items.filter((item) => itemHasContent(item));
-    }
+  if (!showAll && hasSomeContent(items)) {
+    visibleItems = items.filter((item) => itemHasContent(item));
   }
 
   return (
