@@ -64,7 +64,7 @@ const getTabComponent = (
   }
 
   if (clientRedesignFeatureOn) {
-    return <ClientProfile ref={profileRef} client={client} />;
+    return <ClientProfile client={client} />;
   }
 
   return <Profile ref={profileRef} client={client} />;

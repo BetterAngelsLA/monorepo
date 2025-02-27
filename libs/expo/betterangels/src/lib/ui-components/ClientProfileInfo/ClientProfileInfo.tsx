@@ -21,8 +21,6 @@ type TClientProfileInfo = {
 export function ClientProfileInfo(props: TClientProfileInfo) {
   const { items, showAll, action = {} } = props;
 
-  let visibleItems = items;
-
   const {
     onClick,
     accessibilityLabel = 'edit',
@@ -30,15 +28,9 @@ export function ClientProfileInfo(props: TClientProfileInfo) {
     buttonContent,
   } = action;
 
-  if (!showAll) {
-    if (hasSomeContent(items)) {
-      visibleItems = items.filter((item) => itemHasContent(item));
-    }
-  }
-
   return (
     <View style={styles.container}>
-      <InfoList items={items} style={styles.list} />
+      <InfoList items={items} style={styles.list} showAll={showAll} />
 
       {!!onClick && (
         <View style={styles.button}>
@@ -49,30 +41,12 @@ export function ClientProfileInfo(props: TClientProfileInfo) {
             variant={'transparent'}
             alignItems="center"
           >
-            {!!buttonContent ? buttonContent : <WFEdit size="md" />}
+            {buttonContent || <WFEdit size="md" />}
           </IconButton>
         </View>
       )}
     </View>
   );
-}
-
-function hasSomeContent(items: TInfoListItem[]): boolean {
-  return items.some((item) => itemHasContent(item));
-}
-
-function itemHasContent(item: TInfoListItem): boolean {
-  const content = item.content;
-
-  if (typeof content === 'undefined' || content === null) {
-    return false;
-  }
-
-  if (typeof content === 'string') {
-    return !!content.trim().length;
-  }
-
-  return true;
 }
 
 const styles = StyleSheet.create({
