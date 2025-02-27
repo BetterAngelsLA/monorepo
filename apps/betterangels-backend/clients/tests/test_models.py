@@ -5,7 +5,7 @@ from django.test import TestCase
 from model_bakery import baker
 
 
-class ClientProfileTestCase(TestCase):
+class ClientProfileModelTestCase(TestCase):
     def test_display_pronouns(self) -> None:
         client_profile = baker.make(ClientProfile)
         self.assertIsNone(client_profile.display_pronouns)
@@ -18,6 +18,14 @@ class ClientProfileTestCase(TestCase):
         client_profile.pronouns_other = "she/her/their"
         client_profile.save()
         self.assertEqual(client_profile.display_pronouns, "she/her/their")
+
+    def test_save(self) -> None:
+        client_profile = baker.make(ClientProfile, california_id="x1357642")
+        self.assertEqual(client_profile.california_id, "X1357642")
+
+        client_profile.california_id = ""
+        client_profile.save()
+        self.assertIsNone(client_profile.california_id)
 
 
 class HmisProfileModelTestCase(TestCase):

@@ -16,6 +16,8 @@ export default function EmailAddress() {
     <CardWrapper title="Email Address">
       <Input
         name="user.email"
+        autoCapitalize="none"
+        autoCorrect={false}
         placeholder="Enter email address"
         control={control}
         error={!!errors.user?.email}
