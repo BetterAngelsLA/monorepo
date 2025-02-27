@@ -1,7 +1,5 @@
-from typing import Optional
 from unittest.mock import ANY
 
-import strawberry
 from accounts.models import User
 from clients.enums import (
     AdaAccommodationEnum,
@@ -26,7 +24,6 @@ from clients.tests.utils import ClientProfileGraphQLBaseTestCase
 from common.models import Attachment
 from deepdiff import DeepDiff
 from django.test import override_settings
-from unittest_parametrize import parametrize
 
 
 class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
@@ -332,7 +329,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
     def test_client_profile_mutation_client_name_validation(self) -> None:
         variables = {
-            "user": {"id": self.client_profile_1["user"]["id"]},
+            "user": {},
             "nickname": "Mikey",
         }
 
