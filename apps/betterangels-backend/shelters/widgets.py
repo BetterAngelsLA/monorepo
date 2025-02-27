@@ -1,9 +1,11 @@
+import datetime
 from datetime import time
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 from django import forms
 from django.contrib.gis.geos import Point
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
@@ -56,7 +58,7 @@ class TimeRangeWidget(forms.MultiWidget):
         return [None, None]
 
 
-class TimeRangeField(forms.MultiValueField):
+class TimeRangeFormField(forms.MultiValueField):
     widget = TimeRangeWidget
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -72,3 +74,63 @@ class TimeRangeField(forms.MultiValueField):
                 raise forms.ValidationError("End time must be after start time.")
             return (start, end)
         return None
+
+
+class TimeRangeField(models.Field):
+    description = "A field to store a range of times (start and end) as a single string"
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        # You can add additional options here if needed
+        super().__init__(*args, **kwargs)
+
+    def db_type(self, connection: Any) -> str:
+        # We'll store the range as a string in the database.
+        # Adjust the size as needed.
+        return "varchar(50)"
+
+    def from_db_value(self, value: Optional[str], expression: Any, connection: Any) -> Optional[Tuple[time, time]]:
+        """Convert the string from the database to a Python tuple."""
+        if value is None:
+            return value
+        try:
+            start_str, end_str = value.split("-")
+            start_time = datetime.datetime.strptime(start_str, "%H:%M:%S").time()
+            end_time = datetime.datetime.strptime(end_str, "%H:%M:%S").time()
+            return (start_time, end_time)
+        except Exception:
+            return None
+
+    def to_python(self, value: Union[None, Tuple[time, time], str]) -> Optional[Tuple[time, time]]:
+        """Convert the input value into the expected Python data type."""
+        if value is None:
+            return value
+        if isinstance(value, tuple):
+            return value
+        if isinstance(value, str):
+            try:
+                start_str, end_str = value.split("-")
+                start_time = datetime.datetime.strptime(start_str, "%H:%M:%S").time()
+                end_time = datetime.datetime.strptime(end_str, "%H:%M:%S").time()
+                return (start_time, end_time)
+            except Exception:
+                raise ValidationError("Invalid time range format. Expected 'HH:MM:SS-HH:MM:SS'.")
+        raise ValidationError("Invalid type for TimeRangeField")
+
+    def get_prep_value(self, value: Optional[Tuple[time, time]]) -> Optional[str]:
+        """Convert the Python tuple back into a string for storage."""
+        if isinstance(value, tuple):
+            start, end = value
+            # Format times as HH:MM:SS; adjust if you need a different format.
+            return f"{start.strftime('%H:%M:%S')}-{end.strftime('%H:%M:%S')}"
+        return value
+
+    def deconstruct(self) -> Tuple[str, str, Sequence[Any], Dict[str, Any]]:
+        """Needed for migrations to work correctly."""
+        name, path, args, kwargs = super().deconstruct()
+        return name, path, args, kwargs
+
+    def formfield(self, **kwargs: Any) -> forms.Field:  # type: ignore
+        """Specify the form field and widget to use in forms."""
+        defaults = {"form_class": TimeRangeFormField}
+        defaults.update(kwargs)
+        return super().formfield(**defaults)  # type: ignore

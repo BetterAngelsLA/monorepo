@@ -33,10 +33,13 @@ from .enums import (
     CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
+    ExitPolicyChoices,
     FunderChoices,
     GeneralServiceChoices,
     HealthServiceChoices,
     ImmediateNeedChoices,
+    MatchedReferralRequirementChoices,
+    MealServiceChoices,
     ParkingChoices,
     PetChoices,
     RoomStyleChoices,
@@ -72,7 +75,6 @@ from .models import (
     TrainingService,
     Video,
 )
-from .widgets import TimeRangeField, TimeRangeWidget
 
 T = TypeVar("T", bound=models.Model)
 logger = logging.getLogger(__name__)
@@ -295,9 +297,44 @@ class ShelterForm(forms.ModelForm):
             }
         ),
     )
-
-    op_hours_time_range = TimeRangeField(widget=TimeRangeWidget())
-    intake_hours_time_range = TimeRangeField(widget=TimeRangeWidget())
+    exit_policy = forms.MultipleChoiceField(
+        choices=ExitPolicyChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select exit policies...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    exit_policy_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Please specify...",
+            }
+        ),
+    )
+    meal_services = forms.MultipleChoiceField(
+        choices=MealServiceChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select meal services...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    matched_referral_requirements = forms.MultipleChoiceField(
+        choices=MatchedReferralRequirementChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select requirements...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
 
     class Meta:
         model = Shelter
@@ -645,7 +682,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "email",
                     "phone",
                     "website",
-                    "op_hours_time_range",
+                    "operating_hours",
                 ),
             },
         ),
@@ -690,10 +727,12 @@ class ShelterAdmin(ImportExportModelAdmin):
             {
                 "fields": (
                     "max_stay",
-                    "intake_hours_time_range",
+                    "intake_hours",
                     "curfew",
                     "on_site_security",
                     "visitors_allowed",
+                    "exit_policy",
+                    "exit_policy_other",
                     "emergency_surge",
                     "other_rules",
                 )
@@ -707,6 +746,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "general_services",
                     "health_services",
                     "training_services",
+                    "meal_services",
                     "other_services",
                 )
             },
@@ -717,6 +757,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                 "fields": (
                     "entry_info",
                     "entry_requirements",
+                    "matched_referral_requirements",
                     "bed_fees",
                     "program_fees",
                 )

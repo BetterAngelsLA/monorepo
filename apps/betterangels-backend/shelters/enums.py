@@ -293,3 +293,22 @@ class StatusChoices(models.TextChoices):
     PENDING = "pending", _("Pending")
     APPROVED = "approved", _("Approved")
     INACTIVE = "inactive", _("Inactive")
+
+
+class ExitPolicyChoices(models.TextChoices):
+    MIA = "mia", _("Exit after 72 hours of being MIA")
+    VIOLENCE = "violence", _("Exit due to violence to self or others")
+    MITIGATION = "mitigation", _("30 Days Mitigation plan prior to exits")
+    OTHER = "other", _("Other")
+
+
+class MealServiceChoices(models.TextChoices):
+    BREAKFAST = "breakfast", _("Breakfast")
+    LUNCH = "lunch", _("Lunch")
+    DINNER = "dinner", _("Dinner")
+
+
+class MatchedReferralRequirementChoices(models.TextChoices):
+    SERVICE_PROVIDER_SUBMISSION = "service_provider_submission", _("Service Provider Submission")
+    SELF_REFERRAL = "self_referral", _("Self Referral Option")
+    SAME_DAY_INTAKE = "same_day_intake", _("Same Day Intake")

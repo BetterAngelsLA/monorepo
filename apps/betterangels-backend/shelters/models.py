@@ -21,10 +21,13 @@ from .enums import (
     CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
+    ExitPolicyChoices,
     FunderChoices,
     GeneralServiceChoices,
     HealthServiceChoices,
     ImmediateNeedChoices,
+    MatchedReferralRequirementChoices,
+    MealServiceChoices,
     ParkingChoices,
     PetChoices,
     RoomStyleChoices,
@@ -36,6 +39,7 @@ from .enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
+from .widgets import TimeRangeField
 
 
 # Summary Info
@@ -163,6 +167,27 @@ class Funder(models.Model):
         return str(self.name)
 
 
+class ExitPolicy(models.Model):
+    name = TextChoicesField(choices_enum=ExitPolicyChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class MealService(models.Model):
+    name = TextChoicesField(choices_enum=MealServiceChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
+class MatchedReferralRequirement(models.Model):
+    name = TextChoicesField(choices_enum=MatchedReferralRequirementChoices, unique=True, blank=True, null=True)
+
+    def __str__(self) -> str:
+        return str(self.name)
+
+
 @pghistory.track(
     pghistory.InsertEvent("shelter.add"),
     pghistory.UpdateEvent("shelter.update"),
@@ -177,8 +202,7 @@ class Shelter(BaseModel):
     email = models.EmailField(max_length=254, blank=True, null=True)
     phone = PhoneNumberField()
     website = models.URLField(blank=True, null=True)
-    operating_hours_start = models.TimeField(null=True, blank=True)
-    operating_hours_end = models.TimeField(null=True, blank=True)
+    operating_hours = TimeRangeField(null=True, blank=True)
 
     # Summary Information
     description = CKEditor5Field()
@@ -203,11 +227,12 @@ class Shelter(BaseModel):
 
     # Policies
     max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
-    intake_hours_start = models.TimeField(null=True, blank=True)
-    intake_hours_end = models.TimeField(null=True, blank=True)
+    intake_hours = TimeRangeField(null=True, blank=True)
     curfew = models.TimeField(null=True, blank=True)
     on_site_security = models.BooleanField(null=True, blank=True)
     visitors_allowed = models.BooleanField(null=True, blank=True)
+    exit_policy = models.ManyToManyField(ExitPolicy)
+    exit_policy_other = models.CharField(max_length=255, blank=True, null=True)
     emergency_surge = models.BooleanField(verbose_name="Emergency Capacity Surge Options", null=True, blank=True)
     other_rules = CKEditor5Field(null=True, blank=True)
 
@@ -216,11 +241,13 @@ class Shelter(BaseModel):
     general_services = models.ManyToManyField(GeneralService)
     health_services = models.ManyToManyField(HealthService)
     training_services = models.ManyToManyField(TrainingService)
+    meal_services = models.ManyToManyField(MealService)
     other_services = CKEditor5Field(verbose_name="Additional Notes", null=True, blank=True)
 
     # Entry Requirements
     entry_info = CKEditor5Field(null=True, blank=True)
     entry_requirements = models.ManyToManyField(EntryRequirement)
+    matched_referral = models.ManyToManyField(MatchedReferralRequirement)
     bed_fees = models.CharField(max_length=255, blank=True, null=True)
     program_fees = models.CharField(max_length=255, blank=True, null=True)
 
