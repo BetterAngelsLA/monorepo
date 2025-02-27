@@ -43,24 +43,14 @@ export default function CaliforniaId() {
   }
 
   useEffect(() => {
-    if (!californiaId || californiaId.length < 8) {
-      clearErrors('californiaId');
-      return;
-    }
-    if (uniqueCheckError) {
-      setError('californiaId', {
-        type: 'manual',
-        message: uniqueCheckError,
-      });
-      if (featureAvailable(californiaId)) {
-        // If keyboard not dismissed, modal does not render fullscreen on some Android devices.
-        Keyboard.dismiss();
+    if (featureAvailable(californiaId) && uniqueCheckError) {
+      // If keyboard not dismissed, modal does not render fullscreen on some Android devices.
+      Keyboard.dismiss();
 
-        // TODO: confirm if it breaks on Android after upgrade to New Architecture
-        setTimeout(() => {
-          setModalVisible(true);
-        }, 100);
-      }
+      // TODO: confirm if it breaks on Android after upgrade to New Architecture
+      setTimeout(() => {
+        setModalVisible(true);
+      }, 100);
     } else {
       clearErrors('californiaId');
     }
@@ -99,6 +89,9 @@ export default function CaliforniaId() {
         placeholder="Enter CA ID #"
         rules={{
           validate: (value: string) => {
+            if (value === '') {
+              return true;
+            }
             if (value && !Regex.californiaId.test(value)) {
               return 'CA ID must be 1 letter followed by 7 digits';
             }
