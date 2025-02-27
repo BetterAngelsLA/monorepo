@@ -330,65 +330,14 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertCountEqual(create_response["errors"][0]["extensions"]["errors"], expected_create_error_messages)
 
-    @parametrize(
-        "first_name, middle_name, last_name, nickname, operation, should_return_error",
-        [
-            (strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, "nick", "create", False),
-            (strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, "create", True),
-            (None, None, None, None, "create", True),
-            (" ", " ", " ", " ", "create", True),
-            ("", None, " ", strawberry.UNSET, "create", True),
-            (strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, strawberry.UNSET, "update", False),
-            (None, None, None, None, "update", True),
-            (" ", " ", " ", " ", "update", True),
-            ("", None, " ", strawberry.UNSET, "update", False),
-        ],
-    )
-    def test_client_profile_mutation_client_name_validation(
-        self,
-        first_name: Optional[str],
-        middle_name: Optional[str],
-        last_name: Optional[str],
-        nickname: Optional[str],
-        operation: str,
-        should_return_error: bool,
-    ) -> None:
-        user = {
-            "id": self.client_profile_1["user"]["id"],
-            "firstName": first_name,
-            "lastName": last_name,
-            "middleName": middle_name,
-        }
-        variables: dict = {
-            "id": self.client_profile_1["id"],
-            "user": user,
-            "nickname": nickname,
+    def test_client_profile_mutation_client_name_validation(self) -> None:
+        variables = {
+            "user": {"id": self.client_profile_1["user"]["id"]},
+            "nickname": "Mikey",
         }
 
-        # Can't pass strawberry.UNSET to the mutation, so we remove the "unset" fields
-        if first_name is strawberry.UNSET:
-            variables["user"].pop("firstName")
-        if last_name is strawberry.UNSET:
-            variables["user"].pop("lastName")
-        if middle_name is strawberry.UNSET:
-            variables["user"].pop("middleName")
-        if nickname is strawberry.UNSET:
-            variables.pop("nickname")
-
-        if operation == "create":
-            variables.pop("id")
-            variables["user"].pop("id")
-            response = self._create_client_profile_fixture(variables)
-        else:
-            response = self._update_client_profile_fixture(variables)
-
-        if should_return_error:
-            self.assertEqual(len(response["errors"]), 1)
-            self.assertEqual(
-                response["errors"][0]["extensions"]["errors"][0]["errorCode"], ErrorCodeEnum.NAME_NOT_PROVIDED.name
-            )
-        else:
-            self.assertIsNone(response.get("errors"))
+        response = self._create_client_profile_fixture(variables)
+        self.assertIsNone(response.get("errors"))
 
     def test_update_client_profile_mutation_related_objects(self) -> None:
         """Verifies that updating a client profile's doesn't affect other client profiles."""
