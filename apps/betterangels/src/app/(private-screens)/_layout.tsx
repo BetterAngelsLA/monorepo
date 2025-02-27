@@ -202,6 +202,7 @@ export default function PrivateLayout() {
         name="edit-client-v2/[id]"
         options={{
           headerTitleAlign: 'center',
+          title: '',
           headerStyle: {
             backgroundColor: Colors.BRAND_DARK_BLUE,
           },
