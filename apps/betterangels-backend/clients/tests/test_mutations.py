@@ -327,6 +327,15 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertCountEqual(create_response["errors"][0]["extensions"]["errors"], expected_create_error_messages)
 
+    def test_client_profile_mutation_client_name_validation(self) -> None:
+        variables = {
+            "user": {},
+            "nickname": "Mikey",
+        }
+
+        response = self._create_client_profile_fixture(variables)
+        self.assertIsNone(response.get("errors"))
+
     def test_update_client_profile_mutation_related_objects(self) -> None:
         """Verifies that updating a client profile's doesn't affect other client profiles."""
         client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])

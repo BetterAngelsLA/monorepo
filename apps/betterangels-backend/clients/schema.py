@@ -231,7 +231,7 @@ def validate_client_profile_data(data: dict) -> None:
         user = User.objects.filter(client_profile__id=data["id"]).first()
 
     if user_data := data.get("user"):
-        errors += validate_client_name(user_data, user_data.get("nickname"), user)
+        errors += validate_client_name(user_data, data.get("nickname"), user)
         errors += validate_user_email(user_data.get("email"), user)
 
     if data.get("california_id"):
