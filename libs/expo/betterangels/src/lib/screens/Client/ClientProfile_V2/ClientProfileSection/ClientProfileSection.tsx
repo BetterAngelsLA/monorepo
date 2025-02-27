@@ -1,20 +1,37 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { TextBold } from '@monorepo/expo/shared/ui-components';
+import { WFEdit } from '@monorepo/expo/shared/icons';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { IconButton } from '@monorepo/expo/shared/ui-components';
+import { ReactElement } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   ClientProfileSectionItem,
   TClientProfileSectionItem,
 } from './ClientProfileSectionItem';
 
+type TClickAction = {
+  onClick?: () => void;
+  accessibilityHint?: string;
+  accessibilityLabel?: string;
+  content?: ReactElement;
+};
+
 type TFullNameDetails = {
   items: TClientProfileSectionItem[];
   showAll?: boolean;
+  action?: TClickAction;
 };
 
 export function ClientProfileSection(props: TFullNameDetails) {
-  const { items, showAll } = props;
+  const { items, showAll, action = {} } = props;
 
   let visibleItems = items;
+
+  const {
+    onClick,
+    accessibilityLabel = 'edit',
+    accessibilityHint = '',
+    content,
+  } = action;
 
   if (!showAll) {
     if (hasSomeContent(items)) {
@@ -39,7 +56,15 @@ export function ClientProfileSection(props: TFullNameDetails) {
         })}
       </View>
       <View>
-        <TextBold size="sm">Edit</TextBold>
+        <IconButton
+          onPress={onClick}
+          accessibilityLabel={accessibilityLabel}
+          accessibilityHint={accessibilityHint}
+          variant={'transparent'}
+          alignItems="center"
+        >
+          {!!content ? content : <WFEdit size="md" />}
+        </IconButton>
       </View>
     </View>
   );
@@ -51,6 +76,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
+    backgroundColor: Colors.WHITE,
+    paddingHorizontal: Spacings.sm,
+    paddingVertical: Spacings.md,
+    borderRadius: Radiuses.xs,
   },
   content: {
     flex: 1,

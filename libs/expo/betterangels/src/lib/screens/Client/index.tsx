@@ -20,7 +20,7 @@ import { useFeatureFlagActive } from '../../hooks';
 import { FeatureFlags } from '../../providers/featureControls/constants';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
-import ClientProfile from './ClientProfile/index';
+import ClientProfile from './ClientProfile_V2';
 import ClientTabs from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';

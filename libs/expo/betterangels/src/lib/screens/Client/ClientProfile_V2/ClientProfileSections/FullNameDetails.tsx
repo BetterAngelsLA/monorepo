@@ -2,11 +2,11 @@ import { View } from 'react-native';
 import { ClientProfileQuery } from '../../__generated__/Client.generated';
 import { ClientProfileSection } from '../ClientProfileSection/ClientProfileSection';
 
-type TFullNameDetails = {
+type TProps = {
   client: ClientProfileQuery | undefined;
 };
 
-export default function FullNameDetails(props: TFullNameDetails) {
+export default function FullNameDetails(props: TProps) {
   const { client } = props;
 
   const { firstName, middleName, lastName } = client?.clientProfile.user || {};
@@ -33,7 +33,14 @@ export default function FullNameDetails(props: TFullNameDetails) {
 
   return (
     <View>
-      <ClientProfileSection items={content} />
+      <ClientProfileSection
+        items={content}
+        showAll
+        action={{
+          onClick: () => alert('clicked'),
+          accessibilityLabel: 'edit name information',
+        }}
+      />
     </View>
   );
 }

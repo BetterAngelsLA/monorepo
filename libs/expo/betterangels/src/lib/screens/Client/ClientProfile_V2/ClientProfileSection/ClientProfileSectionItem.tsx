@@ -4,7 +4,7 @@ import { ReactNode, isValidElement } from 'react';
 import { View, ViewStyle } from 'react-native';
 
 export type TClientProfileSectionItem = {
-  content?: string | ReactNode;
+  content?: string | ReactNode | null;
   title?: string;
   placeholder?: string | ReactNode | null;
   style?: ViewStyle;
