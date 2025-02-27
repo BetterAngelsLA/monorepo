@@ -10,11 +10,14 @@ import { SelahTeamEnum } from '../../../apollo';
 import { enumDisplaySelahTeam } from '../../../static';
 import { Modal } from '../../../ui-components';
 
-interface IInteractionsFiltersProps {
-  setFilters: (filters: {
-    teams: { id: SelahTeamEnum; label: string }[];
-  }) => void;
-  filters: { teams: { id: SelahTeamEnum; label: string }[] };
+type TFilters = {
+  teams: { id: SelahTeamEnum; label: string }[];
+  authors: { id: string; label: string }[];
+};
+
+interface ITeamFilterProps {
+  setFilters: (filters: TFilters) => void;
+  filters: TFilters;
 }
 
 const valueAsSelahTeamEnum = Object.entries(enumDisplaySelahTeam).map(
@@ -24,7 +27,7 @@ const valueAsSelahTeamEnum = Object.entries(enumDisplaySelahTeam).map(
   })
 );
 
-export default function InteractionsFilters(props: IInteractionsFiltersProps) {
+export default function TeamsFilter(props: ITeamFilterProps) {
   const { setFilters, filters } = props;
   const [selected, setSelected] = useState<
     Array<{ id: SelahTeamEnum; label: string }>
@@ -47,7 +50,7 @@ export default function InteractionsFilters(props: IInteractionsFiltersProps) {
   };
 
   return (
-    <View style={{ marginBottom: Spacings.xl, alignItems: 'flex-start' }}>
+    <View style={{ alignItems: 'flex-start' }}>
       <SelectButton
         defaultLabel="All Teams"
         selected={filters.teams?.map((item) => item.label)}
