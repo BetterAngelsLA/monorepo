@@ -1,6 +1,6 @@
 import { View } from 'react-native';
+import { ClientProfileInfo } from '../../../../ui-components';
 import { ClientProfileQuery } from '../../__generated__/Client.generated';
-import { ClientProfileSection } from '../ClientProfileSection/ClientProfileSection';
 
 type TProps = {
   client: ClientProfileQuery | undefined;
@@ -33,9 +33,8 @@ export default function FullNameDetails(props: TProps) {
 
   return (
     <View>
-      <ClientProfileSection
+      <ClientProfileInfo
         items={content}
-        showAll
         action={{
           onClick: () => alert('clicked'),
           accessibilityLabel: 'edit name information',

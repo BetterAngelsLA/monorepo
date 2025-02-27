@@ -1,7 +1,12 @@
 import { format } from 'date-fns';
 import { View } from 'react-native';
+import {
+  enumDisplayLanguage,
+  enumDisplayLivingSituation,
+  enumDisplayVeteranStatus,
+} from '../../../../static';
+import { ClientProfileInfo } from '../../../../ui-components';
 import { ClientProfileQuery } from '../../__generated__/Client.generated';
-import { ClientProfileSection } from '../ClientProfileSection/ClientProfileSection';
 
 type TProps = {
   client: ClientProfileQuery | undefined;
@@ -33,25 +38,25 @@ export default function PersonalInfo(props: TProps) {
     },
     {
       title: 'Preferred Language',
-      content: preferredLanguage,
+      content: preferredLanguage && enumDisplayLanguage[preferredLanguage],
     },
     {
       title: 'Veteran Status',
-      content: veteranStatus,
+      content: veteranStatus && enumDisplayVeteranStatus[veteranStatus],
     },
     {
       title: 'Living Situation',
-      content: livingSituation,
+      content: livingSituation && enumDisplayLivingSituation[livingSituation],
     },
   ];
 
   return (
     <View>
-      <ClientProfileSection
+      <ClientProfileInfo
         items={content}
         action={{
           onClick: () => alert('clicked'),
-          accessibilityLabel: 'edit name information',
+          accessibilityLabel: 'edit personal info',
         }}
       />
     </View>

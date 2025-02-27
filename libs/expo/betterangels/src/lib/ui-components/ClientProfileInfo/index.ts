@@ -1,0 +1,1 @@
+export { ClientProfileInfo } from './ClientProfileInfo';
