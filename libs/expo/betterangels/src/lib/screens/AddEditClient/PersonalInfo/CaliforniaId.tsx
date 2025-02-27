@@ -89,6 +89,9 @@ export default function CaliforniaId() {
         placeholder="Enter CA ID #"
         rules={{
           validate: (value: string) => {
+            if (value === '') {
+              return true;
+            }
             if (value && !Regex.californiaId.test(value)) {
               return 'CA ID must be 1 letter followed by 7 digits';
             }
