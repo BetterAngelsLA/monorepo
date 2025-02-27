@@ -50,7 +50,7 @@ export default function TeamsFilter(props: ITeamFilterProps) {
   };
 
   return (
-    <View style={{ marginBottom: Spacings.xl, alignItems: 'flex-start' }}>
+    <View style={{ alignItems: 'flex-start' }}>
       <SelectButton
         defaultLabel="All Teams"
         selected={filters.teams?.map((item) => item.label)}
