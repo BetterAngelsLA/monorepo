@@ -14,7 +14,7 @@ from clients.enums import (
     PreferredCommunicationEnum,
     PronounEnum,
     RaceEnum,
-    YesNoPreferNotToSayEnum,
+    VeteranStatusEnum,
 )
 from clients.models import ClientProfile
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
@@ -101,9 +101,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "socialMediaProfiles": self.client_profile_1["socialMediaProfiles"],
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "user": self.client_profile_1["user"],
-            "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
-            # TODO: remove after fe cutover to new field & type
-            "tempVeteranStatus": YesNoPreferNotToSayEnum.NO.name,
+            "veteranStatus": VeteranStatusEnum.NO.name,
         }
 
         self.assertEqual(client_profile, expected_client_profile)

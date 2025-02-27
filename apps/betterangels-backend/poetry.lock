@@ -59,17 +59,17 @@ css = ["tinycss2 (>=1.1.0,<1.5)"]
 
 [[package]]
 name = "boto3"
-version = "1.36.15"
+version = "1.36.22"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3-1.36.15-py3-none-any.whl", hash = "sha256:b218092b08ce15fe29b2358345f4ccb812a2377a5e9bccd49e391a5976a24202"},
-    {file = "boto3-1.36.15.tar.gz", hash = "sha256:721d689ebd07a9a95f904356bd97f92032d8006a54eea25316ba55a7585ca7e9"},
+    {file = "boto3-1.36.22-py3-none-any.whl", hash = "sha256:39957eabdce009353d72d131046489fbbfa15891865d5f069f1e8bfa414e6b81"},
+    {file = "boto3-1.36.22.tar.gz", hash = "sha256:768c8a4d4a6227fe2258105efa086f1424cba5ca915a5eb2305b2cd979306ad1"},
 ]
 
 [package.dependencies]
-botocore = ">=1.36.15,<1.37.0"
+botocore = ">=1.36.22,<1.37.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.11.0,<0.12.0"
 
@@ -78,13 +78,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "botocore"
-version = "1.36.15"
+version = "1.36.22"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "botocore-1.36.15-py3-none-any.whl", hash = "sha256:fe0f8d786029125f4c66a30b1d81a551f667b0915dac843604ffa0652c5ff475"},
-    {file = "botocore-1.36.15.tar.gz", hash = "sha256:ab8e69930ef6c42784eb2dee6c0256627ca6bba57730ebe3056179d28aa63d44"},
+    {file = "botocore-1.36.22-py3-none-any.whl", hash = "sha256:75d6b34acb0686ee4d54ff6eb285e78ccfe318407428769d1e3e13351714d890"},
+    {file = "botocore-1.36.22.tar.gz", hash = "sha256:59520247d5a479731724f97c995d5a1c2aae3b303b324f39d99efcfad1d3019e"},
 ]
 
 [package.dependencies]
@@ -435,40 +435,42 @@ files = [
 
 [[package]]
 name = "cryptography"
-version = "44.0.0"
+version = "44.0.1"
 description = "cryptography is a package which provides cryptographic recipes and primitives to Python developers."
 optional = false
 python-versions = "!=3.9.0,!=3.9.1,>=3.7"
 files = [
-    {file = "cryptography-44.0.0-cp37-abi3-macosx_10_9_universal2.whl", hash = "sha256:84111ad4ff3f6253820e6d3e58be2cc2a00adb29335d4cacb5ab4d4d34f2a123"},
-    {file = "cryptography-44.0.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b15492a11f9e1b62ba9d73c210e2416724633167de94607ec6069ef724fad092"},
-    {file = "cryptography-44.0.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:831c3c4d0774e488fdc83a1923b49b9957d33287de923d58ebd3cec47a0ae43f"},
-    {file = "cryptography-44.0.0-cp37-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:761817a3377ef15ac23cd7834715081791d4ec77f9297ee694ca1ee9c2c7e5eb"},
-    {file = "cryptography-44.0.0-cp37-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:3c672a53c0fb4725a29c303be906d3c1fa99c32f58abe008a82705f9ee96f40b"},
-    {file = "cryptography-44.0.0-cp37-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:4ac4c9f37eba52cb6fbeaf5b59c152ea976726b865bd4cf87883a7e7006cc543"},
-    {file = "cryptography-44.0.0-cp37-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:60eb32934076fa07e4316b7b2742fa52cbb190b42c2df2863dbc4230a0a9b385"},
-    {file = "cryptography-44.0.0-cp37-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:ed3534eb1090483c96178fcb0f8893719d96d5274dfde98aa6add34614e97c8e"},
-    {file = "cryptography-44.0.0-cp37-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:f3f6fdfa89ee2d9d496e2c087cebef9d4fcbb0ad63c40e821b39f74bf48d9c5e"},
-    {file = "cryptography-44.0.0-cp37-abi3-win32.whl", hash = "sha256:eb33480f1bad5b78233b0ad3e1b0be21e8ef1da745d8d2aecbb20671658b9053"},
-    {file = "cryptography-44.0.0-cp37-abi3-win_amd64.whl", hash = "sha256:abc998e0c0eee3c8a1904221d3f67dcfa76422b23620173e28c11d3e626c21bd"},
-    {file = "cryptography-44.0.0-cp39-abi3-macosx_10_9_universal2.whl", hash = "sha256:660cb7312a08bc38be15b696462fa7cc7cd85c3ed9c576e81f4dc4d8b2b31591"},
-    {file = "cryptography-44.0.0-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1923cb251c04be85eec9fda837661c67c1049063305d6be5721643c22dd4e2b7"},
-    {file = "cryptography-44.0.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:404fdc66ee5f83a1388be54300ae978b2efd538018de18556dde92575e05defc"},
-    {file = "cryptography-44.0.0-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:c5eb858beed7835e5ad1faba59e865109f3e52b3783b9ac21e7e47dc5554e289"},
-    {file = "cryptography-44.0.0-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:f53c2c87e0fb4b0c00fa9571082a057e37690a8f12233306161c8f4b819960b7"},
-    {file = "cryptography-44.0.0-cp39-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:9e6fc8a08e116fb7c7dd1f040074c9d7b51d74a8ea40d4df2fc7aa08b76b9e6c"},
-    {file = "cryptography-44.0.0-cp39-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:9abcc2e083cbe8dde89124a47e5e53ec38751f0d7dfd36801008f316a127d7ba"},
-    {file = "cryptography-44.0.0-cp39-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:d2436114e46b36d00f8b72ff57e598978b37399d2786fd39793c36c6d5cb1c64"},
-    {file = "cryptography-44.0.0-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:a01956ddfa0a6790d594f5b34fc1bfa6098aca434696a03cfdbe469b8ed79285"},
-    {file = "cryptography-44.0.0-cp39-abi3-win32.whl", hash = "sha256:eca27345e1214d1b9f9490d200f9db5a874479be914199194e746c893788d417"},
-    {file = "cryptography-44.0.0-cp39-abi3-win_amd64.whl", hash = "sha256:708ee5f1bafe76d041b53a4f95eb28cdeb8d18da17e597d46d7833ee59b97ede"},
-    {file = "cryptography-44.0.0-pp310-pypy310_pp73-macosx_10_9_x86_64.whl", hash = "sha256:37d76e6863da3774cd9db5b409a9ecfd2c71c981c38788d3fcfaf177f447b731"},
-    {file = "cryptography-44.0.0-pp310-pypy310_pp73-manylinux_2_28_aarch64.whl", hash = "sha256:f677e1268c4e23420c3acade68fac427fffcb8d19d7df95ed7ad17cdef8404f4"},
-    {file = "cryptography-44.0.0-pp310-pypy310_pp73-manylinux_2_28_x86_64.whl", hash = "sha256:f5e7cb1e5e56ca0933b4873c0220a78b773b24d40d186b6738080b73d3d0a756"},
-    {file = "cryptography-44.0.0-pp310-pypy310_pp73-manylinux_2_34_aarch64.whl", hash = "sha256:8b3e6eae66cf54701ee7d9c83c30ac0a1e3fa17be486033000f2a73a12ab507c"},
-    {file = "cryptography-44.0.0-pp310-pypy310_pp73-manylinux_2_34_x86_64.whl", hash = "sha256:be4ce505894d15d5c5037167ffb7f0ae90b7be6f2a98f9a5c3442395501c32fa"},
-    {file = "cryptography-44.0.0-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:62901fb618f74d7d81bf408c8719e9ec14d863086efe4185afd07c352aee1d2c"},
-    {file = "cryptography-44.0.0.tar.gz", hash = "sha256:cd4e834f340b4293430701e772ec543b0fbe6c2dea510a5286fe0acabe153a02"},
+    {file = "cryptography-44.0.1-cp37-abi3-macosx_10_9_universal2.whl", hash = "sha256:bf688f615c29bfe9dfc44312ca470989279f0e94bb9f631f85e3459af8efc009"},
+    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:dd7c7e2d71d908dc0f8d2027e1604102140d84b155e658c20e8ad1304317691f"},
+    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:887143b9ff6bad2b7570da75a7fe8bbf5f65276365ac259a5d2d5147a73775f2"},
+    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:322eb03ecc62784536bc173f1483e76747aafeb69c8728df48537eb431cd1911"},
+    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_28_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:21377472ca4ada2906bc313168c9dc7b1d7ca417b63c1c3011d0c74b7de9ae69"},
+    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:df978682c1504fc93b3209de21aeabf2375cb1571d4e61907b3e7a2540e83026"},
+    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:eb3889330f2a4a148abead555399ec9a32b13b7c8ba969b72d8e500eb7ef84cd"},
+    {file = "cryptography-44.0.1-cp37-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:8e6a85a93d0642bd774460a86513c5d9d80b5c002ca9693e63f6e540f1815ed0"},
+    {file = "cryptography-44.0.1-cp37-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:6f76fdd6fd048576a04c5210d53aa04ca34d2ed63336d4abd306d0cbe298fddf"},
+    {file = "cryptography-44.0.1-cp37-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:6c8acf6f3d1f47acb2248ec3ea261171a671f3d9428e34ad0357148d492c7864"},
+    {file = "cryptography-44.0.1-cp37-abi3-win32.whl", hash = "sha256:24979e9f2040c953a94bf3c6782e67795a4c260734e5264dceea65c8f4bae64a"},
+    {file = "cryptography-44.0.1-cp37-abi3-win_amd64.whl", hash = "sha256:fd0ee90072861e276b0ff08bd627abec29e32a53b2be44e41dbcdf87cbee2b00"},
+    {file = "cryptography-44.0.1-cp39-abi3-macosx_10_9_universal2.whl", hash = "sha256:a2d8a7045e1ab9b9f803f0d9531ead85f90c5f2859e653b61497228b18452008"},
+    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b8272f257cf1cbd3f2e120f14c68bff2b6bdfcc157fafdee84a1b795efd72862"},
+    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1e8d181e90a777b63f3f0caa836844a1182f1f265687fac2115fcf245f5fbec3"},
+    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:436df4f203482f41aad60ed1813811ac4ab102765ecae7a2bbb1dbb66dcff5a7"},
+    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_28_armv7l.manylinux_2_31_armv7l.whl", hash = "sha256:4f422e8c6a28cf8b7f883eb790695d6d45b0c385a2583073f3cec434cc705e1a"},
+    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:72198e2b5925155497a5a3e8c216c7fb3e64c16ccee11f0e7da272fa93b35c4c"},
+    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_34_aarch64.whl", hash = "sha256:2a46a89ad3e6176223b632056f321bc7de36b9f9b93b2cc1cccf935a3849dc62"},
+    {file = "cryptography-44.0.1-cp39-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:53f23339864b617a3dfc2b0ac8d5c432625c80014c25caac9082314e9de56f41"},
+    {file = "cryptography-44.0.1-cp39-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:888fcc3fce0c888785a4876ca55f9f43787f4c5c1cc1e2e0da71ad481ff82c5b"},
+    {file = "cryptography-44.0.1-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:00918d859aa4e57db8299607086f793fa7813ae2ff5a4637e318a25ef82730f7"},
+    {file = "cryptography-44.0.1-cp39-abi3-win32.whl", hash = "sha256:9b336599e2cb77b1008cb2ac264b290803ec5e8e89d618a5e978ff5eb6f715d9"},
+    {file = "cryptography-44.0.1-cp39-abi3-win_amd64.whl", hash = "sha256:e403f7f766ded778ecdb790da786b418a9f2394f36e8cc8b796cc056ab05f44f"},
+    {file = "cryptography-44.0.1-pp310-pypy310_pp73-macosx_10_9_x86_64.whl", hash = "sha256:1f9a92144fa0c877117e9748c74501bea842f93d21ee00b0cf922846d9d0b183"},
+    {file = "cryptography-44.0.1-pp310-pypy310_pp73-manylinux_2_28_aarch64.whl", hash = "sha256:610a83540765a8d8ce0f351ce42e26e53e1f774a6efb71eb1b41eb01d01c3d12"},
+    {file = "cryptography-44.0.1-pp310-pypy310_pp73-manylinux_2_28_x86_64.whl", hash = "sha256:5fed5cd6102bb4eb843e3315d2bf25fede494509bddadb81e03a859c1bc17b83"},
+    {file = "cryptography-44.0.1-pp310-pypy310_pp73-manylinux_2_34_aarch64.whl", hash = "sha256:f4daefc971c2d1f82f03097dc6f216744a6cd2ac0f04c68fb935ea2ba2a0d420"},
+    {file = "cryptography-44.0.1-pp310-pypy310_pp73-manylinux_2_34_x86_64.whl", hash = "sha256:94f99f2b943b354a5b6307d7e8d19f5c423a794462bde2bf310c770ba052b1c4"},
+    {file = "cryptography-44.0.1-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:d9c5b9f698a83c8bd71e0f4d3f9f839ef244798e5ffe96febfa9714717db7af7"},
+    {file = "cryptography-44.0.1.tar.gz", hash = "sha256:f51f5705ab27898afda1aaa430f34ad90dc117421057782022edf0600bec5f14"},
 ]
 
 [package.dependencies]
@@ -481,7 +483,7 @@ nox = ["nox (>=2024.4.15)", "nox[uv] (>=2024.3.2)"]
 pep8test = ["check-sdist", "click (>=8.0.1)", "mypy (>=1.4)", "ruff (>=0.3.6)"]
 sdist = ["build (>=1.0.0)"]
 ssh = ["bcrypt (>=3.1.5)"]
-test = ["certifi (>=2024)", "cryptography-vectors (==44.0.0)", "pretend (>=0.7)", "pytest (>=7.4.0)", "pytest-benchmark (>=4.0)", "pytest-cov (>=2.10.1)", "pytest-xdist (>=3.5.0)"]
+test = ["certifi (>=2024)", "cryptography-vectors (==44.0.1)", "pretend (>=0.7)", "pytest (>=7.4.0)", "pytest-benchmark (>=4.0)", "pytest-cov (>=2.10.1)", "pytest-xdist (>=3.5.0)"]
 test-randomorder = ["pytest-randomly"]
 
 [[package]]
@@ -501,17 +503,6 @@ orderly-set = ">=5.3.0,<6"
 [package.extras]
 cli = ["click (==8.1.8)", "pyyaml (==6.0.2)"]
 optimize = ["orjson"]
-
-[[package]]
-name = "defusedxml"
-version = "0.7.1"
-description = "XML bomb protection for Python stdlib modules"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
-files = [
-    {file = "defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"},
-    {file = "defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69"},
-]
 
 [[package]]
 name = "diff-match-patch"
@@ -543,21 +534,21 @@ django = ">=3.0"
 
 [[package]]
 name = "dj-rest-auth"
-version = "6.0.0"
+version = "7.0.1"
 description = "Authentication and Registration in Django Rest Framework"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "dj-rest-auth-6.0.0.tar.gz", hash = "sha256:760b45f3a07cd6182e6a20fe07d0c55230c5f950167df724d7914d0dd8c50133"},
+    {file = "dj-rest-auth-7.0.1.tar.gz", hash = "sha256:3f8c744cbcf05355ff4bcbef0c8a63645da38e29a0fdef3c3332d4aced52fb90"},
 ]
 
 [package.dependencies]
-Django = ">=3.2,<6.0"
-django-allauth = {version = ">=0.56.0,<0.62.0", optional = true, markers = "extra == \"with_social\""}
+Django = ">=4.2,<6.0"
+django-allauth = {version = ">=64.0.0", extras = ["socialaccount"], optional = true, markers = "extra == \"with-social\""}
 djangorestframework = ">=3.13.0"
 
 [package.extras]
-with-social = ["django-allauth (>=0.56.0,<0.62.0)"]
+with-social = ["django-allauth[socialaccount] (>=64.0.0)"]
 
 [[package]]
 name = "django"
@@ -614,34 +605,37 @@ python-slugify = ">=7.0.0,<9.0.0"
 
 [[package]]
 name = "django-allauth"
-version = "0.61.1"
+version = "65.4.1"
 description = "Integrated set of Django applications addressing authentication, registration, account management as well as 3rd party (social) account authentication."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "django-allauth-0.61.1.tar.gz", hash = "sha256:5b4ae515ea74f54f0041210692eee10c309ad15ddbbd03d3620693c75e3f7945"},
+    {file = "django_allauth-65.4.1.tar.gz", hash = "sha256:60b32aef7dbbcc213319aa4fd8f570e985266ea1162ae6ef7a26a24efca85c8c"},
 ]
 
 [package.dependencies]
-Django = ">=3.2"
-pyjwt = {version = ">=1.7", extras = ["crypto"]}
-python3-openid = ">=3.0.8"
-requests = ">=2.0.0"
-requests-oauthlib = ">=0.3.0"
+asgiref = ">=3.8.1"
+Django = ">=4.2.16"
+pyjwt = {version = ">=1.7", extras = ["crypto"], optional = true, markers = "extra == \"socialaccount\""}
+requests = {version = ">=2.0.0", optional = true, markers = "extra == \"socialaccount\""}
+requests-oauthlib = {version = ">=0.3.0", optional = true, markers = "extra == \"socialaccount\""}
 
 [package.extras]
-mfa = ["qrcode (>=7.0.0)"]
+mfa = ["fido2 (>=1.1.2)", "qrcode (>=7.0.0)"]
+openid = ["python3-openid (>=3.0.8)"]
 saml = ["python3-saml (>=1.15.0,<2.0.0)"]
+socialaccount = ["pyjwt[crypto] (>=1.7)", "requests (>=2.0.0)", "requests-oauthlib (>=0.3.0)"]
+steam = ["python3-openid (>=3.0.8)"]
 
 [[package]]
 name = "django-appconf"
-version = "1.0.6"
+version = "1.1.0"
 description = "A helper class for handling configuration defaults of packaged apps gracefully."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 files = [
-    {file = "django-appconf-1.0.6.tar.gz", hash = "sha256:cfe87ea827c4ee04b9a70fab90b86d704cb02f2981f89da8423cb0fabf88efbf"},
-    {file = "django_appconf-1.0.6-py3-none-any.whl", hash = "sha256:c3ae442fba1ff7ec830412c5184b17169a7a1e71cf0864a4c3f93cf4c98a1993"},
+    {file = "django-appconf-1.1.0.tar.gz", hash = "sha256:9fcead372f82a0f21ee189434e7ae9c007cbb29af1118c18251720f3d06243e4"},
+    {file = "django_appconf-1.1.0-py3-none-any.whl", hash = "sha256:7abd5a163ff57557f216e84d3ce9dac36c37ffce1ab9a044d3d53b7c943dd10f"},
 ]
 
 [package.dependencies]
@@ -664,13 +658,13 @@ typing_extensions = ">=4.0.0"
 
 [[package]]
 name = "django-ckeditor-5"
-version = "0.2.15"
+version = "0.2.17"
 description = "CKEditor 5 for Django."
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "django_ckeditor_5-0.2.15-py3-none-any.whl", hash = "sha256:71980998d4bef7b272e50cb6878cca5c0bedec42b389a3827ffe1bbb88babd29"},
-    {file = "django_ckeditor_5-0.2.15.tar.gz", hash = "sha256:587f0485a3dca6a1a7c7c68e4160770e46389b8cf50205bf352bd47fcb63567c"},
+    {file = "django_ckeditor_5-0.2.17-py3-none-any.whl", hash = "sha256:16d4113bad7a80a82046c461a6b5bd03592f5215dc1d10d85ee9481d9f6257b7"},
+    {file = "django_ckeditor_5-0.2.17.tar.gz", hash = "sha256:ce1ab6e21010d6742618275e237d042b1b15645dda3258f7e960b57e93268caf"},
 ]
 
 [package.dependencies]
@@ -678,7 +672,7 @@ Django = ">=2.2"
 Pillow = "*"
 
 [package.extras]
-dev = ["bandit[toml] (==1.7.6)", "black (==22.12.0)", "codespell (==2.2.2)", "coverage (==7.4.0)", "mypy (==1.8.0)", "mypy-extensions (==1.0.0)", "pytest (==7.4.4)", "pytest-cov (==4.0.0)", "pytest-django (==4.5.2)", "pytest-mock (==3.10.0)", "safety (==2.3.5)", "types-setuptools (==65.6.0.2)", "typing-extensions (==4.9.0)"]
+dev = ["bandit[toml] (==1.8.2)", "black (==25.1.0)", "codespell (==2.4.1)", "coverage (==7.6.10)", "mypy (==1.15.0)", "mypy-extensions (==1.0.0)", "pytest (==8.3.4)", "pytest-cov (==6.0.0)", "pytest-django (==4.9.0)", "pytest-mock (==3.14.0)", "safety (==3.2.14)", "types-setuptools (==75.8.0.20250110)", "typing_extensions (==4.12.2)"]
 
 [[package]]
 name = "django-colorfield"
@@ -884,17 +878,17 @@ test = ["tox (>=2.3)"]
 
 [[package]]
 name = "django-select2"
-version = "8.2.3"
+version = "8.3.0"
 description = "This is a Django_ integration of Select2_."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.10"
 files = [
-    {file = "django_select2-8.2.3-py3-none-any.whl", hash = "sha256:a3bc3f3bfb21d73791be1bc0dd8cc674d11e167129d605847c257942e7a2143b"},
-    {file = "django_select2-8.2.3.tar.gz", hash = "sha256:1de547c89ee2f005f1d461f76db89b440897939fcea894db8ba756b6f1ad36c1"},
+    {file = "django_select2-8.3.0-py3-none-any.whl", hash = "sha256:70af282123db358a9612241d6b077cbb2a92ce642893e6efcbda2cb8ce5b7c8f"},
+    {file = "django_select2-8.3.0.tar.gz", hash = "sha256:9975a74f13f20468d07deae027672045f58e0d6d1983c305805ba40b16a0f0ec"},
 ]
 
 [package.dependencies]
-django = ">=3.2"
+django = ">=4.2"
 django-appconf = ">=0.6.0"
 
 [package.extras]
@@ -940,13 +934,13 @@ ua = ["ua-parser (>=0.15)"]
 
 [[package]]
 name = "django-storages"
-version = "1.14.4"
+version = "1.14.5"
 description = "Support for many storage backends in Django"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "django-storages-1.14.4.tar.gz", hash = "sha256:69aca94d26e6714d14ad63f33d13619e697508ee33ede184e462ed766dc2a73f"},
-    {file = "django_storages-1.14.4-py3-none-any.whl", hash = "sha256:d61930acb4a25e3aebebc6addaf946a3b1df31c803a6bf1af2f31c9047febaa3"},
+    {file = "django_storages-1.14.5-py3-none-any.whl", hash = "sha256:5ce9c69426f24f379821fd688442314e4aa03de87ae43183c4e16915f4c165d4"},
+    {file = "django_storages-1.14.5.tar.gz", hash = "sha256:ace80dbee311258453e30cd5cfd91096b834180ccf09bc1f4d2cb6d38d68571a"},
 ]
 
 [package.dependencies]
@@ -957,7 +951,7 @@ Django = ">=3.2"
 azure = ["azure-core (>=1.13)", "azure-storage-blob (>=12)"]
 boto3 = ["boto3 (>=1.4.4)"]
 dropbox = ["dropbox (>=7.2.1)"]
-google = ["google-cloud-storage (>=1.27)"]
+google = ["google-cloud-storage (>=1.32)"]
 libcloud = ["apache-libcloud"]
 s3 = ["boto3 (>=1.4.4)"]
 sftp = ["paramiko (>=1.15)"]
@@ -982,20 +976,6 @@ structlog = ">=21.4.0"
 [package.extras]
 celery = ["celery (>=5.1)"]
 commands = ["django-extensions (>=1.4.9)"]
-
-[[package]]
-name = "django-tree-queries"
-version = "0.19.0"
-description = "Tree queries with explicit opt-in, without configurability"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "django_tree_queries-0.19.0-py3-none-any.whl", hash = "sha256:05b9e3158e31612528f136b4704a8d807e14edc0b4a607a45377e6132517ba2c"},
-    {file = "django_tree_queries-0.19.0.tar.gz", hash = "sha256:d1325e75f96e90b86c4316a3d63498101ec05703f4e629786b561e8aaab0e4a7"},
-]
-
-[package.extras]
-tests = ["coverage"]
 
 [[package]]
 name = "django-waffle"
@@ -1461,13 +1441,13 @@ files = [
 
 [[package]]
 name = "phonenumbers"
-version = "8.13.54"
+version = "8.13.55"
 description = "Python version of Google's common library for parsing, formatting, storing and validating international phone numbers."
 optional = false
 python-versions = "*"
 files = [
-    {file = "phonenumbers-8.13.54-py2.py3-none-any.whl", hash = "sha256:97624ada7260daafd09538baa6574b14cb9151cf29c5b22d9278abd050957edf"},
-    {file = "phonenumbers-8.13.54.tar.gz", hash = "sha256:4c32e3c941b24e5ce28d2211f624f0fef08462781e3d7e5e85192275cfd6c680"},
+    {file = "phonenumbers-8.13.55-py2.py3-none-any.whl", hash = "sha256:25feaf46135f0fb1e61b69513dc97c477285ba98a69204bf5a8cf241a844a718"},
+    {file = "phonenumbers-8.13.55.tar.gz", hash = "sha256:57c989dda3eabab1b5a9e3d24438a39ebd032fa0172bf68bfd90ab70b3d5e08b"},
 ]
 
 [[package]]
@@ -1682,24 +1662,6 @@ text-unidecode = ">=1.3"
 unidecode = ["Unidecode (>=1.1.1)"]
 
 [[package]]
-name = "python3-openid"
-version = "3.2.0"
-description = "OpenID support for modern servers and consumers."
-optional = false
-python-versions = "*"
-files = [
-    {file = "python3-openid-3.2.0.tar.gz", hash = "sha256:33fbf6928f401e0b790151ed2b5290b02545e8775f982485205a066f874aaeaf"},
-    {file = "python3_openid-3.2.0-py3-none-any.whl", hash = "sha256:6626f771e0417486701e0b4daff762e7212e820ca5b29fcc0d05f6f8736dfa6b"},
-]
-
-[package.dependencies]
-defusedxml = "*"
-
-[package.extras]
-mysql = ["mysql-connector-python"]
-postgresql = ["psycopg2"]
-
-[[package]]
 name = "redis"
 version = "5.2.1"
 description = "Python client for Redis database and key-value store"
@@ -1818,13 +1780,13 @@ doc = ["sphinx"]
 
 [[package]]
 name = "strawberry-graphql"
-version = "0.258.0"
+version = "0.260.2"
 description = "A library for creating GraphQL APIs"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "strawberry_graphql-0.258.0-py3-none-any.whl", hash = "sha256:041adda6e9a97ca337793f6c07fe4db0a9793226907394a00022782f132040ec"},
-    {file = "strawberry_graphql-0.258.0.tar.gz", hash = "sha256:3975c638f751e9b87cefd5eb1a29c1f33e639b1f218f199578114fb839dec94c"},
+    {file = "strawberry_graphql-0.260.2-py3-none-any.whl", hash = "sha256:b3eb30bb1318b3a2d4405c100618b36e082899309fea8550029ef530d56c1276"},
+    {file = "strawberry_graphql-0.260.2.tar.gz", hash = "sha256:c630a570c941a0c6b34398c7f9c87bcb5af18383557f1a1f45ed957a4ec7f4b7"},
 ]
 
 [package.dependencies]
@@ -1852,20 +1814,19 @@ sanic = ["sanic (>=20.12.2)"]
 
 [[package]]
 name = "strawberry-graphql-django"
-version = "0.54.0"
+version = "0.56.0"
 description = "Strawberry GraphQL Django extension"
 optional = false
 python-versions = "<4.0,>=3.9"
 files = [
-    {file = "strawberry_graphql_django-0.54.0-py3-none-any.whl", hash = "sha256:09204106869fd51f6810a724c6d474116cc3f471653a79eb5f7eedbda14567a3"},
-    {file = "strawberry_graphql_django-0.54.0.tar.gz", hash = "sha256:d5e64a705ab6784cb000f5940f91db459af7f425aa02d5479c678ec4d3b54f5f"},
+    {file = "strawberry_graphql_django-0.56.0-py3-none-any.whl", hash = "sha256:48430d29d7c044d5047c245135aa0a98ba2519afe26005a6c0debb21ae28c8b3"},
+    {file = "strawberry_graphql_django-0.56.0.tar.gz", hash = "sha256:517e57fe7545f88e81ec5eb2365f1811b86709fdd2591f26fe7a1ffc5eed3c4c"},
 ]
 
 [package.dependencies]
 asgiref = ">=3.8"
 django = ">=4.2"
-django-tree-queries = ">=0.19.0,<0.20.0"
-strawberry-graphql = ">=0.257.0"
+strawberry-graphql = ">=0.258.0"
 
 [package.extras]
 debug-toolbar = ["django-debug-toolbar (>=3.4)"]
@@ -2113,4 +2074,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.13.0"
-content-hash = "cc75ebebed160ef3db5e207b0a8204b7e8d3c786f1e7b23b3741dc139fbbb8aa"
+content-hash = "898452683bfa17839514f19691125cce26a49186be5cca8e5e38c9816f3fc659"

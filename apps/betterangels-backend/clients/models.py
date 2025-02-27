@@ -1,6 +1,6 @@
 import os
 import uuid
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from accounts.models import User
 from betterangels_backend import settings
@@ -21,6 +21,7 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
+from common.constants import CALIFORNIA_ID_REGEX
 from common.models import Attachment, BaseModel, PhoneNumber
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
@@ -95,7 +96,7 @@ class ClientProfile(models.Model):
         blank=True,
         null=True,
         validators=[
-            RegexValidator(regex=r"^[A-Z]\d{7}$", message="California ID must be 1 letter followed by 7 numbers")
+            RegexValidator(regex=CALIFORNIA_ID_REGEX, message="California ID must be 1 letter followed by 7 numbers")
         ],
     )
     date_of_birth = models.DateField(blank=True, null=True)
@@ -167,6 +168,14 @@ class ClientProfile(models.Model):
             return self.gender_other
 
         return self.gender.label
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if self.california_id:
+            self.california_id = self.california_id.upper()
+        else:
+            self.california_id = None
+
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ["user__first_name"]

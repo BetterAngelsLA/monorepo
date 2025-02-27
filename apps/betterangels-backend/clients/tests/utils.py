@@ -15,7 +15,7 @@ from clients.enums import (
     RaceEnum,
     RelationshipTypeEnum,
     SocialMediaEnum,
-    YesNoPreferNotToSayEnum,
+    VeteranStatusEnum,
 )
 from common.tests.utils import GraphQLBaseTestCase
 from dateutil.relativedelta import relativedelta
@@ -57,7 +57,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             residenceAddress
             spokenLanguages
             veteranStatus
-            tempVeteranStatus
             displayCaseManager
             displayGender
             displayPronouns
@@ -251,7 +250,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "socialMediaProfiles": self.client_1_social_media_profiles,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "user": self.client_profile_1_user,
-                "veteranStatus": YesNoPreferNotToSayEnum.NO.name,
+                "veteranStatus": VeteranStatusEnum.NO.name,
             }
         )["data"]["createClientProfile"]
         self.client_profile_1_photo_name = self._update_client_profile_photo_fixture(self.client_profile_1["id"])[

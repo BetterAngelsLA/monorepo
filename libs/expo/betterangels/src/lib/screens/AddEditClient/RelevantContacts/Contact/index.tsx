@@ -108,6 +108,8 @@ export default function Contact(props: IContactProps) {
       <Input
         placeholder="Email"
         label="Email"
+        autoCapitalize="none"
+        autoCorrect={false}
         keyboardType="email-address"
         name={`contacts[${index}].email`}
         error={!!errors.contacts?.[index]?.email}

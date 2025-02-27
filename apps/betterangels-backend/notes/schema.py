@@ -5,6 +5,7 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.utils import get_outreach_authorized_users, get_user_permission_group
+from clients.models import ClientProfileImportRecord
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Attachment, Location
 from common.permissions.enums import AttachmentPermissions
@@ -16,8 +17,16 @@ from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum, TaskTypeEnum
-from notes.models import Mood, Note, ServiceRequest, Task
+from notes.models import (
+    Mood,
+    Note,
+    NoteDataImport,
+    NoteImportRecord,
+    ServiceRequest,
+    Task,
+)
 from notes.permissions import (
+    NoteImportRecordPermissions,
     NotePermissions,
     PrivateDetailsPermissions,
     ServiceRequestPermissions,
@@ -36,17 +45,21 @@ from strawberry_django.utils.query import filter_for_user
 from .types import (
     AddNoteTaskInput,
     CreateNoteAttachmentInput,
+    CreateNoteDataImportInput,
     CreateNoteInput,
     CreateNoteMoodInput,
     CreateNoteServiceRequestInput,
     CreateNoteTaskInput,
     CreateServiceRequestInput,
     CreateTaskInput,
+    ImportNoteInput,
     InteractionAuthorFilter,
     InteractionAuthorType,
     MoodType,
     NoteAttachmentType,
+    NoteDataImportType,
     NoteFilter,
+    NoteImportRecordType,
     NoteType,
     RemoveNoteServiceRequestInput,
     RemoveNoteTaskInput,
@@ -660,3 +673,73 @@ class Mutation:
             task.delete()
 
         return DeletedObjectType(id=task_id)
+
+    @strawberry_django.mutation(extensions=[HasPerm(NoteImportRecordPermissions.ADD)])
+    def create_note_data_import(self, info: Info, data: CreateNoteDataImportInput) -> NoteDataImportType:
+        user = cast(User, get_current_user(info))
+        record = NoteDataImport.objects.create(
+            source_file=data.source_file,
+            imported_by=user,
+            notes=data.notes,
+        )
+        return NoteDataImportType(
+            id=record.id,
+            imported_at=record.imported_at.isoformat(),
+            source_file=record.source_file,
+            notes=record.notes,
+            imported_by=record.imported_by,
+        )
+
+    @strawberry_django.mutation(extensions=[HasPerm(NoteImportRecordPermissions.ADD)])
+    def import_note(self, info: Info, data: ImportNoteInput) -> NoteImportRecordType:
+        """
+        Imports a note. If the note input includes a 'parentId' field,
+        this resolver looks up the corresponding ClientProfileImportRecord (with source "SELAH")
+        and injects the internal client ID into the note data before creating the note.
+        """
+        existing = NoteImportRecord.objects.filter(
+            source_name=data.source_name,
+            source_id=data.source_id,
+            success=True,
+        ).first()
+        if existing:
+            raise Exception(
+                f"Source ID {data.source_id} with source name '{data.source_name}' has already been imported successfully."
+            )
+
+        note_input = strawberry.asdict(data.note)
+
+        # Pop out the parentId so it doesn't get passed to CreateNoteInput.
+        parent_id = note_input.pop("parentId", None)
+        if parent_id:
+            cp_record = ClientProfileImportRecord.objects.filter(
+                source_id=parent_id,
+                source_name="SELAH",
+                success=True,
+            ).first()
+            if cp_record is None or cp_record.client_profile is None:
+                raise Exception(f"Client lookup failed for parentId '{parent_id}'")
+            note_input["client"] = str(cp_record.client_profile.id)
+
+        import_job = NoteDataImport.objects.get(id=data.import_job_id)
+        try:
+            with transaction.atomic():
+                note = Mutation.create_note(self, info, data.note)
+                record = NoteImportRecord.objects.create(
+                    import_job=import_job,
+                    source_id=data.source_id,
+                    source_name=data.source_name,
+                    note=note,
+                    raw_data=data.raw_data,
+                    success=True,
+                )
+        except Exception as e:
+            record = NoteImportRecord.objects.create(
+                import_job=import_job,
+                source_id=data.source_id,
+                source_name=data.source_name,
+                raw_data=data.raw_data,
+                success=False,
+                error_message=str(e),
+            )
+        return cast(NoteImportRecordType, record)
