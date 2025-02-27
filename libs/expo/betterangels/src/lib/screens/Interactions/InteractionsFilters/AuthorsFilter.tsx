@@ -150,7 +150,11 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
               search={search}
               onSearch={onSearch}
               onChange={(e: { id: string; label: string }[]) => setSelected(e)}
-              options={[{ id: user.id, label: 'Me' }, ...authorsState]}
+              options={
+                search === ''
+                  ? [{ id: user.id, label: 'Me' }, ...authorsState]
+                  : [...authorsState]
+              }
               selected={selected}
               valueKey="id"
               labelKey="label"
