@@ -4,6 +4,7 @@ import { Dispatch, ReactElement, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
+import DemographicInfo from './ClientProfileSections/DemographicInfo';
 import FullNameDetails from './ClientProfileSections/FullNameDetails';
 import ImportantNotes from './ClientProfileSections/ImportantNotes';
 import PersonalInfo from './ClientProfileSections/PersonalInfo';
@@ -42,6 +43,47 @@ export default function ClientProfile(props: ProfileProps) {
 
         <AccordionSection
           section={ClientProfileSectionsEnum.ImportantNotes}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <ImportantNotes client={client} />
+        </AccordionSection>
+
+        {/* Demographic */}
+        <AccordionSection
+          section={ClientProfileSectionsEnum.Demographic}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <DemographicInfo clientProfile={client?.clientProfile} />
+        </AccordionSection>
+
+        <AccordionSection
+          section={ClientProfileSectionsEnum.ContactInfo}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <ImportantNotes client={client} />
+        </AccordionSection>
+
+        <AccordionSection
+          section={ClientProfileSectionsEnum.RelevantContacts}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <ImportantNotes client={client} />
+        </AccordionSection>
+
+        <AccordionSection
+          section={ClientProfileSectionsEnum.Household}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <ImportantNotes client={client} />
+        </AccordionSection>
+
+        <AccordionSection
+          section={ClientProfileSectionsEnum.HmisIds}
           expandedTitle={expandedTitle}
           setExpandedTitle={setExpandedTitle}
         >
