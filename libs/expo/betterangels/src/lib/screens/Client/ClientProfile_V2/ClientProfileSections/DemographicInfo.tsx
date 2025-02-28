@@ -6,10 +6,10 @@ import {
   enumDisplayRace,
 } from '../../../../static';
 import { ClientProfileInfo } from '../../../../ui-components';
-import { ClientProfileQuery } from '../../__generated__/Client.generated';
+import { TClientProfile } from '../types';
 
 type TProps = {
-  clientProfile: ClientProfileQuery['clientProfile'] | undefined;
+  clientProfile?: TClientProfile;
 };
 
 export default function DemographicInfo(props: TProps) {

@@ -1,16 +1,16 @@
 import { View } from 'react-native';
 import { ClientProfileInfo } from '../../../../ui-components';
-import { ClientProfileQuery } from '../../__generated__/Client.generated';
+import { TClientProfile } from '../types';
 
 type TProps = {
-  client: ClientProfileQuery | undefined;
+  clientProfile?: TClientProfile;
 };
 
 export default function FullNameDetails(props: TProps) {
-  const { client } = props;
+  const { clientProfile } = props;
 
-  const { firstName, middleName, lastName } = client?.clientProfile.user || {};
-  const nickname = client?.clientProfile.nickname;
+  const { firstName, middleName, lastName } = clientProfile?.user || {};
+  const nickname = clientProfile?.nickname;
 
   const content = [
     {

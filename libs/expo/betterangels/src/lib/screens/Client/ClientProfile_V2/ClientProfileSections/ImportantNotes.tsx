@@ -1,16 +1,16 @@
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { ClientProfileInfo } from '../../../../ui-components';
-import { ClientProfileQuery } from '../../__generated__/Client.generated';
+import { TClientProfile } from '../types';
 
 type TProps = {
-  client: ClientProfileQuery | undefined;
+  clientProfile?: TClientProfile;
 };
 
 export default function ImportantNotes(props: TProps) {
-  const { client } = props;
+  const { clientProfile } = props;
 
-  const importantNotes = client?.clientProfile.importantNotes;
+  const importantNotes = clientProfile?.importantNotes;
 
   const content = [
     {

@@ -4,6 +4,7 @@ import { Dispatch, ReactElement, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
+import ContactInfo from './ClientProfileSections/ContactInfo';
 import DemographicInfo from './ClientProfileSections/DemographicInfo';
 import FullNameDetails from './ClientProfileSections/FullNameDetails';
 import ImportantNotes from './ClientProfileSections/ImportantNotes';
@@ -22,6 +23,8 @@ export default function ClientProfile(props: ProfileProps) {
   const [expandedTitle, setExpandedTitle] =
     useState<TClientSectionTitle | null>(null);
 
+  const clientProfile = client?.clientProfile;
+
   return (
     <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View>
@@ -30,7 +33,7 @@ export default function ClientProfile(props: ProfileProps) {
           expandedTitle={expandedTitle}
           setExpandedTitle={setExpandedTitle}
         >
-          <FullNameDetails client={client} />
+          <FullNameDetails clientProfile={clientProfile} />
         </AccordionSection>
 
         <AccordionSection
@@ -38,7 +41,7 @@ export default function ClientProfile(props: ProfileProps) {
           expandedTitle={expandedTitle}
           setExpandedTitle={setExpandedTitle}
         >
-          <PersonalInfo client={client} />
+          <PersonalInfo clientProfile={clientProfile} />
         </AccordionSection>
 
         <AccordionSection
@@ -46,16 +49,15 @@ export default function ClientProfile(props: ProfileProps) {
           expandedTitle={expandedTitle}
           setExpandedTitle={setExpandedTitle}
         >
-          <ImportantNotes client={client} />
+          <ImportantNotes clientProfile={clientProfile} />
         </AccordionSection>
 
-        {/* Demographic */}
         <AccordionSection
           section={ClientProfileSectionsEnum.Demographic}
           expandedTitle={expandedTitle}
           setExpandedTitle={setExpandedTitle}
         >
-          <DemographicInfo clientProfile={client?.clientProfile} />
+          <DemographicInfo clientProfile={clientProfile} />
         </AccordionSection>
 
         <AccordionSection
@@ -63,7 +65,7 @@ export default function ClientProfile(props: ProfileProps) {
           expandedTitle={expandedTitle}
           setExpandedTitle={setExpandedTitle}
         >
-          <ImportantNotes client={client} />
+          <ContactInfo clientProfile={clientProfile} />
         </AccordionSection>
 
         <AccordionSection
@@ -71,7 +73,7 @@ export default function ClientProfile(props: ProfileProps) {
           expandedTitle={expandedTitle}
           setExpandedTitle={setExpandedTitle}
         >
-          <ImportantNotes client={client} />
+          <ImportantNotes clientProfile={clientProfile} />
         </AccordionSection>
 
         <AccordionSection
@@ -79,7 +81,7 @@ export default function ClientProfile(props: ProfileProps) {
           expandedTitle={expandedTitle}
           setExpandedTitle={setExpandedTitle}
         >
-          <ImportantNotes client={client} />
+          <ImportantNotes clientProfile={clientProfile} />
         </AccordionSection>
 
         <AccordionSection
@@ -87,7 +89,7 @@ export default function ClientProfile(props: ProfileProps) {
           expandedTitle={expandedTitle}
           setExpandedTitle={setExpandedTitle}
         >
-          <ImportantNotes client={client} />
+          <ImportantNotes clientProfile={clientProfile} />
         </AccordionSection>
       </View>
     </MainScrollContainer>

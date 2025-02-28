@@ -41,6 +41,7 @@ export { default as SearchableDropdown } from './SearchableDropdown';
 export { default as Select } from './Select';
 export { default as SelectButton } from './SelectButton';
 export { default as Snackbar } from './Snackbar';
+export { SocialMediaIcon, TSocialMediaType } from './SocialMediaIcon';
 export { default as StatusBadge } from './StatusBadge';
 export { default as Tag } from './Tag';
 export { default as TextBold } from './TextBold';

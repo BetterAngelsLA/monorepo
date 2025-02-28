@@ -55,6 +55,6 @@ function itemHasContent(item: TInfoListItem): boolean {
 
 const styles = StyleSheet.create({
   container: {
-    gap: Spacings.md,
+    gap: Spacings.lg,
   },
 });

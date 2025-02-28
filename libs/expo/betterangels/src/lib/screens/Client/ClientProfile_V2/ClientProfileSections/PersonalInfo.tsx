@@ -6,14 +6,14 @@ import {
   enumDisplayVeteranStatus,
 } from '../../../../static';
 import { ClientProfileInfo } from '../../../../ui-components';
-import { ClientProfileQuery } from '../../__generated__/Client.generated';
+import { TClientProfile } from '../types';
 
 type TProps = {
-  client: ClientProfileQuery | undefined;
+  clientProfile?: TClientProfile;
 };
 
 export default function PersonalInfo(props: TProps) {
-  const { client } = props;
+  const { clientProfile } = props;
 
   const {
     dateOfBirth,
@@ -21,7 +21,7 @@ export default function PersonalInfo(props: TProps) {
     preferredLanguage,
     veteranStatus,
     livingSituation,
-  } = client?.clientProfile || {};
+  } = clientProfile || {};
 
   const formattedDob = dateOfBirth
     ? format(new Date(dateOfBirth), 'MM/dd/yyyy')
