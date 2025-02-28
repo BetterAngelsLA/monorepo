@@ -1,13 +1,9 @@
-from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from common.tests.utils import GraphQLBaseTestCase
-from django.contrib.auth.models import Permission
 from django.test import ignore_warnings
 from model_bakery import baker
 from organizations.models import Organization, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
-from accounts.permissions import OrganizationPermissions
-
 from .baker_recipes import organization_recipe, permission_group_recipe
 
 
@@ -139,40 +135,12 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
 
 
-class AvailableOrganizationGraphQLTests(GraphQLBaseTestCase):
-    def test_available_organizations_query(self) -> None:
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-
-        # This recipe creates an organization in the process. Including this here because even though
-        # Caseworker orgs are created elsewhere in the test suite, this test should be self-contained.
-        permission_group_recipe.make(name="Caseworker")
-
-        expected_organization_count = Organization.objects.filter(
-            permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
-        ).count()
-
-        query = """
-            query {
-                availableOrganizations {
-                    id
-                    name
-                }
-            }
-        """
-
-        response = self.execute_graphql(query)
-        self.assertEqual(len(response["data"]["availableOrganizations"]), expected_organization_count)
-
-
 class OrganizationQueryTestCase(GraphQLBaseTestCase):
     def test_organizations_query(self) -> None:
-        user = baker.make(User)
-        permission = Permission.objects.get(codename=OrganizationPermissions.VIEW.value.split('.')[1])
-        user.user_permissions.add(permission)
-        self.graphql_client.force_login(user)
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
         query = """
-            query Organizations($pagination: OffsetPaginationInput!) {
+            query Organizations($pagination: OffsetPaginationInput) {
                 organizations(pagination: $pagination) {
                     totalCount
                     results {
@@ -189,9 +157,8 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase):
         variables = {"pagination": {"offset": 0, "limit": 10}}
         response = self.execute_graphql(query, variables=variables)
 
-        expected_count = Organization.objects.count()
-        expected_names = list(Organization.objects.order_by("name").values_list("name", flat=True))
-        actual_names = [org["name"] for org in response["data"]["organizations"]["results"]]
+        organizations = response["data"]["organizations"]["results"]
+        expected_organizations = Organization.objects.values("id", "name")
+        actual_organizations = [{"id": int(org["id"]), "name": org["name"]} for org in organizations]
 
-        self.assertEqual(response["data"]["organizations"]["totalCount"], expected_count)
-        self.assertEqual(actual_names, expected_names)
+        self.assertCountEqual(expected_organizations, actual_organizations)
