@@ -1,0 +1,270 @@
+{% comment %} Render the standard text input {% endcomment %}
+<style>
+  /* Center the SVG on the page */
+  #clock_{{ widget.attrs.id }} {
+    display: none;
+  }
+  #clock_{{ widget.attrs.id }}.cansee {
+    display: block;
+    background: #f9f9f9;
+  }
+  /* Style for each slice */
+  .slice {
+    cursor: pointer;
+    stroke: #333;
+    stroke-width: 1;
+    fill: #eee;
+    transition: fill 0.3s;
+  }
+  .slice:hover {
+    fill: #c1c1c1;
+  }
+  /* Selected slice style */
+  .slice.selected {
+    fill: #5cb85c;
+  }
+  /* Style for the number labels */
+  .slicelabel {
+    font-family: sans-serif;
+    font-size: 14px;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    fill: #333;
+    pointer-events: none;
+  }
+</style>
+<input type="text"
+       name="{{ widget.name }}"
+       value="{{ widget.value }}"
+       readonly
+       {{ widget.flat_attrs|safe }} />
+<svg id="clock_{{ widget.attrs.id }}"
+     width="300"
+     height="300"
+     viewBox="-200 -200 400 400">
+</svg>
+<script>
+  function setUpWidget{{ widget.attrs.id }}(){
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const clock = document.getElementById('clock_{{ widget.attrs.id }}');
+    const segments = 24; // 24 hour segments
+    const r = 140; // Outer radius for slices and circle boundary
+
+    let isMouseDown = false;
+    let dragMode = null;
+
+    document.getElementById('{{ widget.attrs.id }}').addEventListener('click', () => {
+        clock.classList.toggle('cansee');
+      });
+
+    function toggleTime(timeStr) {
+      let match12 = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+      let match24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+
+      if (match12) {
+        // Convert 12-hour format to 24-hour format
+        let hours = parseInt(match12[1]);
+        let minutes = match12[2];
+        let period = match12[3].toUpperCase();
+
+        if (period === 'AM' && hours === 12) {
+          hours = 0; // Midnight case
+        } else if (period === 'PM' && hours !== 12) {
+          hours += 12; // Convert PM hours
+        }
+
+        return `${hours.toString().padStart(2, '0')}:${minutes}`;
+      } else if (match24) {
+        // Convert 24-hour format to 12-hour format
+        let hours = parseInt(match24[1]);
+        let minutes = match24[2];
+        let period = hours >= 12 ? 'PM' : 'AM';
+
+        if (hours === 0) {
+          hours = 12; // Midnight case
+        } else if (hours > 12) {
+          hours -= 12; // Convert to 12-hour format
+        }
+
+        return `${hours.toString().padStart(2, '0')}:${minutes}${period}`;
+      } else {
+        return 'Invalid time format';
+      }
+    }
+
+    function updateTimeInput() {
+      const selectedSlices = clock.querySelectorAll('.slice.selected');
+      // Map each selected slice to an interval object {start, end}
+      const intervals = Array.from(selectedSlices).map((slice) => {
+        const [startStr, endStr] = slice.getAttribute('data-hour').split('-');
+        return { start: parseInt(startStr), end: parseInt(endStr) };
+      });
+
+      // Sort intervals by start time
+      intervals.sort((a, b) => a.start - b.start);
+
+      // Merge continuous intervals: if the end of one equals the start of the next.
+      const merged = [];
+      intervals.forEach((interval) => {
+        if (merged.length === 0) {
+          merged.push(interval);
+        } else {
+          const last = merged[merged.length - 1];
+          if (last.end === interval.start) {
+            // Extend the last interval.
+            last.end = interval.end;
+          } else {
+            merged.push(interval);
+          }
+        }
+      });
+
+      // Format the merged intervals (e.g., "1-5")
+      const formatted = merged.map(
+        (interval) =>
+          `${toggleTime(interval.start + ':00')}-${toggleTime(
+            interval.end + ':00'
+          )}`
+      );
+      document.getElementById('{{ widget.attrs.id }}').value =
+        formatted.join(', ');
+    }
+
+    function updateWheelFromInput() {
+      const inputVal = document.getElementById('{{ widget.attrs.id }}').value;
+      // Expected format: "1-5,10-12"
+      const intervals = inputVal
+        .split(',')
+        .map((rangeStr) => rangeStr.trim())
+        .filter((rangeStr) => rangeStr.length > 0)
+        .map((rangeStr) => {
+          const parts = rangeStr.split('-');
+          if (parts.length !== 2) return null;
+          return { start: parseInt(toggleTime(parts[0]), 10), end: parseInt(toggleTime(parts[1]), 10) };
+        })
+        .filter((x) => x !== null);
+
+      // Loop over all slices and set selection based on the intervals.
+      const slices = clock.querySelectorAll('.slice');
+      slices.forEach((slice) => {
+        const dataHour = slice.getAttribute('data-hour'); // format "start-end"
+        const parts = dataHour.split('-');
+        const sliceStart = parseInt(parts[0], 10);
+        let selected = false;
+        intervals.forEach((interval) => {
+          // For normal intervals (start < end)
+          if (interval.start < interval.end) {
+            if (sliceStart >= interval.start && sliceStart < interval.end) {
+              selected = true;
+            }
+          } else {
+            // If supporting wrap-around intervals (e.g. "22-2")
+            if (sliceStart >= interval.start || sliceStart < interval.end) {
+              selected = true;
+            }
+          }
+        });
+        if (selected) {
+          slice.classList.add('selected');
+        }
+      });
+    }
+
+    // Create the pizza-slice segments for each hour interval.
+    for (let i = 0; i < segments; i++) {
+      // Determine the start and end angles (in degrees)
+      let startAngle = -90 + (i * 360) / segments;
+      let endAngle = startAngle + 360 / segments;
+
+      // Convert angles to radians for coordinate calculations.
+      let startRad = (startAngle * Math.PI) / 180;
+      let endRad = (endAngle * Math.PI) / 180;
+
+      // Calculate coordinates for the slice edges on the circle.
+      let x1 = r * Math.cos(startRad);
+      let y1 = r * Math.sin(startRad);
+      let x2 = r * Math.cos(endRad);
+      let y2 = r * Math.sin(endRad);
+
+      // Create an SVG path for the wedge (slice).
+      // "M 0 0" moves to the center, "L" draws a line to the first boundary,
+      // "A" draws the arc, and "Z" closes the path.
+      let d = `M 0 0 L ${x1} ${y1} A ${r} ${r} 0 0 1 ${x2} ${y2} Z`;
+      const slice = document.createElementNS(svgNS, 'path');
+      slice.setAttribute('d', d);
+      slice.classList.add('slice');
+
+      // Set a data attribute for the time interval (e.g., "0-1").
+      let startHour = i;
+      let endHour = (i + 1) % segments;
+      slice.setAttribute('data-hour', `${startHour}-${endHour}`);
+
+      slice.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Prevent text selection
+        isMouseDown = true;
+        // Determine the drag mode based on the initial slice state.
+        if (slice.classList.contains('selected')) {
+          dragMode = 'deselect';
+          slice.classList.remove('selected');
+        } else {
+          dragMode = 'select';
+          slice.classList.add('selected');
+        }
+        updateTimeInput();
+      });
+
+      slice.addEventListener('mouseover', () => {
+        if (isMouseDown) {
+          if (dragMode === 'select') {
+            slice.classList.add('selected');
+          } else if (dragMode === 'deselect') {
+            slice.classList.remove('selected');
+          }
+          updateTimeInput();
+        }
+      });
+
+      clock.appendChild(slice);
+    }
+
+    document.addEventListener('mouseup', () => {
+      isMouseDown = false;
+    });
+
+    // Create the number labels at the boundaries (the intersection points).
+    for (let i = 0; i < segments; i++) {
+      // Calculate the angle for each boundary.
+      let angle = -90 + (i * 360) / segments;
+      let rad = (angle * Math.PI) / 180;
+
+      // Place the label exactly on the circle's edge.
+      let x = (r + 10) * Math.cos(rad);
+      let y = (r + 10) * Math.sin(rad);
+
+      const text = document.createElementNS(svgNS, 'text');
+      text.setAttribute('x', x);
+      text.setAttribute('y', y);
+      text.classList.add('slicelabel');
+
+      // Use 0-23 for the hour markers.
+      if (i < 12) {
+        if (i === 0) {
+          text.textContent = '12A';
+        } else {
+          text.textContent = i + 'A';
+        }
+      } else {
+        if (i === 12) {
+          text.textContent = '12P';
+        } else {
+          text.textContent = (i % 12) + 'P';
+        }
+      }
+
+      clock.appendChild(text);
+    }
+    updateWheelFromInput();
+  }
+  setUpWidget{{ widget.attrs.id }}()
+</script>
+{{ custom_html|safe }}
