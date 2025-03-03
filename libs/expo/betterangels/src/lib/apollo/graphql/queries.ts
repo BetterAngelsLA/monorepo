@@ -178,24 +178,3 @@ export const GET_NOTES_PAGINATED = gql`
     }
   }
 `;
-
-export const GET_INTERACTION_AUTHORS = gql`
- query InteractionAuthors(
-    $filters: InteractionAuthorFilter
-    $pagination: OffsetPaginationInput
- ) {
-  interactionAuthors(filters: $filters, pagination: $pagination) {
-    totalCount
-    results {
-      firstName
-      id
-      lastName
-      middleName
-    }
-    pageInfo {
-      limit
-      offset
-    }
-  }
- }
-`;

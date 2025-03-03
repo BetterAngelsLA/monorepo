@@ -113,6 +113,7 @@ export function MultiSelect<T>(props: IProps<T>) {
         <BasicInput
           value={search}
           onDelete={() => onSearch('')}
+          autoCorrect={false}
           onChangeText={(query) => onSearch(query)}
           placeholder={filterPlaceholder}
           icon={<SearchIcon color={Colors.NEUTRAL} />}

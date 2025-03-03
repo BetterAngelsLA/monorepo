@@ -7,15 +7,11 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
-  ScrollView,
-  View,
-} from 'react-native';
-import { SelahTeamEnum, useInteractionAuthorsQuery } from '../../../apollo';
-import { useUser } from '../../../hooks';
-import { Modal } from '../../../ui-components';
+import { ScrollView, View } from 'react-native';
+import { SelahTeamEnum } from '../../../../apollo';
+import { useInfiniteScroll, useUser } from '../../../../hooks';
+import { Modal } from '../../../../ui-components';
+import { useInteractionAuthorsQuery } from './__generated__/AuthorsFilter.generated';
 
 type TFilters = {
   teams: { id: SelahTeamEnum; label: string }[];
@@ -52,6 +48,18 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
     },
   });
 
+  const loadMoreInteractions = useCallback(() => {
+    if (!hasMore || loading) return;
+
+    setOffset((prevOffset) => prevOffset + paginationLimit);
+  }, [hasMore, loading]);
+
+  const { handleScroll } = useInfiniteScroll({
+    loading,
+    hasMore,
+    onLoadMore: loadMoreInteractions,
+  });
+
   const handleOnDone = () => {
     setFilters({ ...filters, authors: selected });
     setIsModalVisible(false);
@@ -65,23 +73,6 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
   const handleSelectButtonPress = () => {
     setSelected(filters.authors);
     setIsModalVisible(true);
-  };
-
-  const loadMoreInteractions = useCallback(() => {
-    if (!hasMore || loading) return;
-
-    setOffset((prevOffset) => prevOffset + paginationLimit);
-  }, [hasMore, loading]);
-
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-
-    const isCloseToBottom =
-      layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
-
-    if (isCloseToBottom) {
-      loadMoreInteractions();
-    }
   };
 
   const debounceFetch = useMemo(
