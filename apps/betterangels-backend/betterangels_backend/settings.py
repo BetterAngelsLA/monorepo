@@ -48,6 +48,7 @@ env = environ.Env(
     GOOGLE_MAPS_API_KEY=(str, ""),
     IS_LOCAL_DEV=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, True),
+    MEDIA_URL=(str, "/media/"),
     POST_OFFICE_EMAIL_BACKEND=(str, ""),
     POSTGRES_NAME=(str, "postgres"),
     POSTGRES_USER=(str, "postgres"),
@@ -333,7 +334,7 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Media settings
-MEDIA_URL = "/media/"
+MEDIA_URL = env("MEDIA_URL")
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Default primary key field type
