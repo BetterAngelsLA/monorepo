@@ -65,6 +65,7 @@ class ServiceEnum(models.TextChoices):
     MEDICAL = "medical", _("Medical")
     MEDI_CAL = "medi_cal", _("Medi-Cal")
     METRO_LIFE_TAP = "metro_life_tap", _("Metro LIFE Tap")
+    NOTARY = "notary", _("Notary")
     OTHER = "other", _("Other")
     PET_CARE = "pet_care", _("Pet Care")
     PET_FOOD = "pet_food", _("Pet Food")
