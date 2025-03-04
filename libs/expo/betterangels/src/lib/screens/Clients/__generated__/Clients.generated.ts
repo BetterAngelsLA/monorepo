@@ -145,8 +145,8 @@ export function useClientProfilesLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ClientProfilesQuery, ClientProfilesQueryVariables>(ClientProfilesDocument, options);
         }
-export function useClientProfilesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ClientProfilesQuery, ClientProfilesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+export function useClientProfilesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ClientProfilesQuery, ClientProfilesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<ClientProfilesQuery, ClientProfilesQueryVariables>(ClientProfilesDocument, options);
         }
 export type ClientProfilesQueryHookResult = ReturnType<typeof useClientProfilesQuery>;
@@ -221,8 +221,8 @@ export function useClientProfilesPaginatedLazyQuery(baseOptions?: Apollo.LazyQue
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ClientProfilesPaginatedQuery, ClientProfilesPaginatedQueryVariables>(ClientProfilesPaginatedDocument, options);
         }
-export function useClientProfilesPaginatedSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ClientProfilesPaginatedQuery, ClientProfilesPaginatedQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+export function useClientProfilesPaginatedSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ClientProfilesPaginatedQuery, ClientProfilesPaginatedQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<ClientProfilesPaginatedQuery, ClientProfilesPaginatedQueryVariables>(ClientProfilesPaginatedDocument, options);
         }
 export type ClientProfilesPaginatedQueryHookResult = ReturnType<typeof useClientProfilesPaginatedQuery>;

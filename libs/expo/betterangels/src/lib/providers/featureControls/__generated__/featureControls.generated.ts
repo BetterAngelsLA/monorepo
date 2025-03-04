@@ -54,8 +54,8 @@ export function useGetFeatureControlsLazyQuery(baseOptions?: Apollo.LazyQueryHoo
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<GetFeatureControlsQuery, GetFeatureControlsQueryVariables>(GetFeatureControlsDocument, options);
         }
-export function useGetFeatureControlsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetFeatureControlsQuery, GetFeatureControlsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+export function useGetFeatureControlsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<GetFeatureControlsQuery, GetFeatureControlsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<GetFeatureControlsQuery, GetFeatureControlsQueryVariables>(GetFeatureControlsDocument, options);
         }
 export type GetFeatureControlsQueryHookResult = ReturnType<typeof useGetFeatureControlsQuery>;

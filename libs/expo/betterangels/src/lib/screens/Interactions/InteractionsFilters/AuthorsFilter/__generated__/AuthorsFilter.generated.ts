@@ -55,8 +55,8 @@ export function useInteractionAuthorsLazyQuery(baseOptions?: Apollo.LazyQueryHoo
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<InteractionAuthorsQuery, InteractionAuthorsQueryVariables>(InteractionAuthorsDocument, options);
         }
-export function useInteractionAuthorsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<InteractionAuthorsQuery, InteractionAuthorsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+export function useInteractionAuthorsSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<InteractionAuthorsQuery, InteractionAuthorsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<InteractionAuthorsQuery, InteractionAuthorsQueryVariables>(InteractionAuthorsDocument, options);
         }
 export type InteractionAuthorsQueryHookResult = ReturnType<typeof useInteractionAuthorsQuery>;
