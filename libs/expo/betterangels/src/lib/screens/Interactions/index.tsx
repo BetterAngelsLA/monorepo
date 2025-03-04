@@ -34,7 +34,7 @@ export default function Interactions() {
   const [filterSearch, setFilterSearch] = useState('');
   const [filters, setFilters] = useState<TFilters>({
     teams: [],
-    authors: [{ id: user?.id || '', label: 'Me' }],
+    authors: user ? [{ id: user.id, label: 'Me' }] : [],
   });
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);

@@ -1,4 +1,3 @@
-// useInfiniteScroll.ts
 import { useCallback } from 'react';
 import { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 
