@@ -49,4 +49,7 @@ urlpatterns = [
 
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    from urllib.parse import urlparse
+
+    media_path = urlparse(settings.MEDIA_URL).path
+    urlpatterns += static(media_path, document_root=settings.MEDIA_ROOT)
