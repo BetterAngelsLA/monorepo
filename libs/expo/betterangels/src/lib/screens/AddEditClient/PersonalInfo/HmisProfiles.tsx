@@ -57,6 +57,7 @@ export default function HmisProfiles() {
         <View style={{ gap: Spacings.sm }} key={_.keyId}>
           <View style={{ gap: Spacings.xs }}>
             <TextBold size="sm">Select the type of HMIS ID</TextBold>
+
             {Object.entries(enumDisplayHmisAgency).map(
               ([enumValue, displayValue]) => (
                 <Radio
