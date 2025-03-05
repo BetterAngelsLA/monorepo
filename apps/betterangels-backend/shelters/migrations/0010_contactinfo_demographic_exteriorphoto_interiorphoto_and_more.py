@@ -11,6 +11,7 @@ import places.fields
 import shelters.enums
 import shelters.models
 from django.db import migrations, models
+from ..deprecated import deprecated_enums
 
 
 def clean_altered_fields(apps, schema_editor):
@@ -168,7 +169,7 @@ class Migration(migrations.Migration):
                             ("motel_room", "Motel Room"),
                             ("other", "Other"),
                         ],
-                        choices_enum=shelters.enums.RoomStyleChoices,
+                        choices_enum=deprecated_enums.RoomStyleChoicesV14,
                         max_length=18,
                         null=True,
                         unique=True,

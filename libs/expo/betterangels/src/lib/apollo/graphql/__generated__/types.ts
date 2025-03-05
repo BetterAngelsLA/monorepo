@@ -1567,7 +1567,7 @@ export type RevertNoteInput = {
 export type RevertNotePayload = NoteType | OperationInfo;
 
 export enum RoomStyleChoices {
-  Congregant = 'CONGREGANT',
+  Congregate = 'CONGREGATE',
   CubicleHighWalls = 'CUBICLE_HIGH_WALLS',
   CubicleLowWalls = 'CUBICLE_LOW_WALLS',
   HighBunk = 'HIGH_BUNK',

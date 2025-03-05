@@ -1206,7 +1206,7 @@ input RevertNoteInput {
 union RevertNotePayload = NoteType | OperationInfo
 
 enum RoomStyleChoices {
-  CONGREGANT
+  CONGREGATE
   CUBICLE_LOW_WALLS
   CUBICLE_HIGH_WALLS
   HIGH_BUNK
