@@ -5,7 +5,7 @@ import {
   enumDisplayLivingSituation,
   enumDisplayVeteranStatus,
 } from '../../../../static';
-import { ClientProfileInfo } from '../../../../ui-components';
+import { ClientProfileCard } from '../../../../ui-components';
 import { TClientProfile } from '../types';
 
 type TProps = {
@@ -52,11 +52,10 @@ export default function PersonalInfo(props: TProps) {
 
   return (
     <View>
-      <ClientProfileInfo
+      <ClientProfileCard
         items={content}
         action={{
-          onClick: () => alert('clicked'),
-          accessibilityLabel: 'edit personal info',
+          onClick: () => alert('edit personal info'),
         }}
       />
     </View>

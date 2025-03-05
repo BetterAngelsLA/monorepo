@@ -1,5 +1,5 @@
 import { View } from 'react-native';
-import { ClientProfileInfo } from '../../../../ui-components';
+import { ClientProfileCard } from '../../../../ui-components';
 import { TClientProfile } from '../types';
 
 type TProps = {
@@ -14,30 +14,33 @@ export default function FullNameDetails(props: TProps) {
 
   const content = [
     {
-      title: 'First Name',
-      content: firstName,
+      title: ['First Name', 'HELLO'],
+      // content: firstName,
+      // content: null,
+      content: [['firstA', 'firstB']],
     },
     {
       title: 'Middle Name',
-      content: middleName,
+      // content: middleName,
+      content: null,
     },
     {
       title: 'Last Name',
-      content: lastName,
+      // content: lastName,
+      content: null,
     },
-    {
-      title: 'Nickname',
-      content: nickname,
-    },
+    // {
+    //   title: 'Nickname',
+    //   content: nickname,
+    // },
   ];
 
   return (
     <View>
-      <ClientProfileInfo
+      <ClientProfileCard
         items={content}
         action={{
-          onClick: () => alert('clicked'),
-          accessibilityLabel: 'edit name information',
+          onClick: () => alert('edit full name'),
         }}
       />
     </View>

@@ -13,7 +13,7 @@ import {
   enumDisplayPreferredCommunication,
   enumDisplaySocialMedia,
 } from '../../../../static';
-import { ClientProfileInfo } from '../../../../ui-components';
+import { ClientProfileCard } from '../../../../ui-components';
 import { TClientProfile } from '../types';
 
 type TProps = {
@@ -75,7 +75,7 @@ export default function ContactInfo(props: TProps) {
 
   return (
     <View>
-      <ClientProfileInfo
+      <ClientProfileCard
         items={content}
         action={{
           onClick: () => alert('clicked'),

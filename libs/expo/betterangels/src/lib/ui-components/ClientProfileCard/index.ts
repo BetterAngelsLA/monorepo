@@ -1,0 +1,1 @@
+export { ClientProfileCard } from './ClientProfileCard';

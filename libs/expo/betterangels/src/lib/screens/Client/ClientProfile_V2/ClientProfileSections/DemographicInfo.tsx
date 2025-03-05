@@ -5,7 +5,7 @@ import {
   enumDisplayHairColor,
   enumDisplayRace,
 } from '../../../../static';
-import { ClientProfileInfo } from '../../../../ui-components';
+import { ClientProfileCard } from '../../../../ui-components';
 import { TClientProfile } from '../types';
 
 type TProps = {
@@ -65,7 +65,7 @@ export default function DemographicInfo(props: TProps) {
 
   return (
     <View>
-      <ClientProfileInfo
+      <ClientProfileCard
         items={content}
         action={{
           onClick: () => alert('clicked'),

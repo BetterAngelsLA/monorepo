@@ -1,6 +1,6 @@
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { ClientProfileInfo } from '../../../../ui-components';
+import { ClientProfileCard } from '../../../../ui-components';
 import { TClientProfile } from '../types';
 
 type TProps = {
@@ -20,11 +20,10 @@ export default function ImportantNotes(props: TProps) {
 
   return (
     <View>
-      <ClientProfileInfo
+      <ClientProfileCard
         items={content}
         action={{
-          onClick: () => alert('clicked'),
-          accessibilityLabel: 'edit important notes',
+          onClick: () => alert('edit important notes'),
         }}
       />
     </View>
