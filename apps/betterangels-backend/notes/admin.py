@@ -1,5 +1,8 @@
 from common.admin import AttachmentAdminMixin
 from django.contrib import admin
+from import_export import fields, resources
+from import_export.admin import ExportActionMixin
+from import_export.widgets import ManyToManyWidget
 from notes.enums import ServiceEnum
 
 from .models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest, Task
@@ -36,8 +39,25 @@ class MoodInline(admin.TabularInline):
     extra = 1
 
 
+class NoteResource(resources.ModelResource):
+    requested_services = fields.Field(
+        attribute="requested_services",
+        widget=ManyToManyWidget(ServiceRequest, field="service", separator=", "),
+        column_name="Requested Services",
+    )
+    provided_services = fields.Field(
+        attribute="provided_services",
+        widget=ManyToManyWidget(ServiceRequest, field="service", separator=", "),
+        column_name="Provided Services",
+    )
+
+    class Meta:
+        model = Note
+
+
 @admin.register(Note)
-class NoteAdmin(AttachmentAdminMixin, admin.ModelAdmin):
+class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
+    resource_class = NoteResource
     list_display = (
         "note_purpose",
         "client",
