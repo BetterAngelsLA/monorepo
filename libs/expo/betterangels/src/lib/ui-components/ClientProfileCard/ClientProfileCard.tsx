@@ -1,7 +1,8 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { DataTable, TextBold } from '@monorepo/expo/shared/ui-components';
-import { ReactElement, ReactNode, isValidElement } from 'react';
+import { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { EmptyState } from './EmptyState';
 
 type TClickAction = {
   onClick?: () => void;
@@ -10,22 +11,22 @@ type TClickAction = {
   buttonContent?: ReactElement;
 };
 
-type TTableItem = string | ReactNode;
+type TTableItem = string | ReactNode | undefined | null;
 
-type TClientProfileCardItem = {
-  title?: TTableItem | TTableItem[];
-  content: TTableItem | TTableItem[] | TTableItem[][];
+export type TClientProfileCardItem = {
+  header?: TTableItem[];
+  rows: TTableItem[][];
+  placeholder?: string | ReactNode;
 };
 
 type TClientProfileCard = {
   items: TClientProfileCardItem[];
   showAll?: boolean;
   action?: TClickAction;
-  placeholder?: string | ReactNode;
 };
 
 export function ClientProfileCard(props: TClientProfileCard) {
-  const { items, placeholder, showAll, action = {} } = props;
+  const { items, showAll, action = {} } = props;
 
   const {
     onClick,
@@ -34,33 +35,25 @@ export function ClientProfileCard(props: TClientProfileCard) {
     buttonContent,
   } = action;
 
-  const visibleItems = getVisibleItems({ items, showAll, placeholder });
+  const visibleItems = getVisibleItems({ items, showAll });
 
   return (
     <View style={styles.container}>
       {visibleItems.map((item, idx) => {
-        const titles = Array.isArray(item.title) ? item.title : [item.title];
-        const hasSomeTitle = titles.some((t) => !!t);
-
-        const rows = Array.isArray(item.content)
-          ? item.content
-          : [item.content];
-
-        if (!rows.length) {
-          return null;
-        }
+        const header = item.header || [];
+        const hasTitles = header.some((t) => !!t);
 
         return (
           <DataTable key={idx} style={styles.table}>
-            {hasSomeTitle && (
+            {hasTitles && (
               <DataTable.Header>
-                {titles.map((title, idx) => {
+                {header.map((title, idx) => {
                   return <DataTable.Title key={idx}>{title}</DataTable.Title>;
                 })}
               </DataTable.Header>
             )}
 
-            {rows.map((row, rowIdx) => {
+            {item.rows.map((row, rowIdx) => {
               const rowCells = Array.isArray(row) ? row : [row];
 
               return (
@@ -101,59 +94,73 @@ const styles = StyleSheet.create({
 
 type TGetVisibleItems = {
   items: TClientProfileCardItem[];
-  placeholder?: string | ReactNode;
   showAll?: boolean;
 };
 
 function getVisibleItems(props: TGetVisibleItems) {
-  const { items, placeholder, showAll } = props;
+  const { items, showAll } = props;
 
-  // if (showAll) {
-  //   return items.map((i) => {
-  //     return {
+  const cardHasContent = cardHasData(items);
+  const visibleItems: TClientProfileCardItem[] = [];
 
-  //     }
-  //   })
-  // }
+  for (const item of items) {
+    const rowsAreEmpty = allRowsEmpty(item.rows);
 
-  // return items.filter((item) => !!itemHasContent(item));
-  return items;
+    if (cardHasContent && rowsAreEmpty && !showAll) {
+      continue;
+    }
+
+    const totColumns = item.header?.length;
+    const placeholderValue = <EmptyState placeholder={item.placeholder} />;
+
+    if (rowsAreEmpty) {
+      const emptyRow = new Array(totColumns || 1).fill(placeholderValue);
+
+      item.rows = [emptyRow];
+
+      visibleItems.push(item);
+
+      continue;
+    }
+
+    const updatedRows = [] as TTableItem[][];
+
+    for (const row of item.rows) {
+      if (isEmptyRow(row)) {
+        continue;
+      }
+
+      const updatedRow = row.map((cell) => {
+        return cell || placeholderValue;
+      });
+
+      updatedRows.push(updatedRow);
+    }
+
+    item.rows = updatedRows;
+
+    visibleItems.push(item);
+  }
+
+  return visibleItems;
 }
 
-function hasSomeContent(items: TClientProfileCardItem[]): boolean {
-  return items.some((item) => itemHasContent(item));
+function cardHasData(items: TClientProfileCardItem[]): boolean {
+  return items.some((item) => !allRowsEmpty(item.rows));
 }
 
-function itemHasContent(item: TClientProfileCardItem): boolean {
-  const content = item.content;
-
-  if (Array.isArray(content) && !content.every((i) => !i)) {
-    return false;
+function allRowsEmpty(rows: TTableItem[][]): boolean {
+  if (!rows.length) {
+    return true;
   }
 
-  if (typeof content === 'undefined' || content === null) {
-    return false;
-  }
-
-  if (typeof content === 'string') {
-    return !!content.trim().length;
-  }
-
-  return true;
+  return rows.every((row) => isEmptyRow(row));
 }
 
-export function Placeholder(placeholder?: string | ReactNode | null) {
-  if (placeholder === null) {
-    return null;
+function isEmptyRow(row: TTableItem[]): boolean {
+  if (!row.length) {
+    return true;
   }
 
-  if (isValidElement(placeholder)) {
-    return placeholder;
-  }
-
-  return (
-    <TextBold size="sm" color={Colors.NEUTRAL_DARK}>
-      Not Provided
-    </TextBold>
-  );
+  return row.every((cell) => !cell);
 }

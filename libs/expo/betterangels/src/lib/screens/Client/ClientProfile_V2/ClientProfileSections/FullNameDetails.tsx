@@ -1,5 +1,8 @@
 import { View } from 'react-native';
-import { ClientProfileCard } from '../../../../ui-components';
+import {
+  ClientProfileCard,
+  TClientProfileCardItem,
+} from '../../../../ui-components';
 import { TClientProfile } from '../types';
 
 type TProps = {
@@ -12,33 +15,30 @@ export default function FullNameDetails(props: TProps) {
   const { firstName, middleName, lastName } = clientProfile?.user || {};
   const nickname = clientProfile?.nickname;
 
-  const content = [
+  const content: TClientProfileCardItem[] = [
     {
-      title: ['First Name', 'HELLO'],
-      // content: firstName,
-      // content: null,
-      content: [['firstA', 'firstB']],
+      header: ['First Name'],
+      rows: [[firstName]],
     },
     {
-      title: 'Middle Name',
-      // content: middleName,
-      content: null,
+      header: ['Middle Name'],
+      rows: [[middleName]],
     },
     {
-      title: 'Last Name',
-      // content: lastName,
-      content: null,
+      header: ['Last Name'],
+      rows: [[lastName]],
     },
-    // {
-    //   title: 'Nickname',
-    //   content: nickname,
-    // },
+    {
+      header: ['Nickname'],
+      rows: [[nickname]],
+    },
   ];
 
   return (
     <View>
       <ClientProfileCard
         items={content}
+        showAll
         action={{
           onClick: () => alert('edit full name'),
         }}

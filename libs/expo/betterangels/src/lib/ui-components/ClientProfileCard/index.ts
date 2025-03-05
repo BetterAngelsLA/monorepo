@@ -1,1 +1,1 @@
-export { ClientProfileCard } from './ClientProfileCard';
+export { ClientProfileCard, TClientProfileCardItem } from './ClientProfileCard';

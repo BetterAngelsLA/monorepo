@@ -5,7 +5,10 @@ import {
   enumDisplayLivingSituation,
   enumDisplayVeteranStatus,
 } from '../../../../static';
-import { ClientProfileCard } from '../../../../ui-components';
+import {
+  ClientProfileCard,
+  TClientProfileCardItem,
+} from '../../../../ui-components';
 import { TClientProfile } from '../types';
 
 type TProps = {
@@ -27,26 +30,26 @@ export default function PersonalInfo(props: TProps) {
     ? format(new Date(dateOfBirth), 'MM/dd/yyyy')
     : null;
 
-  const content = [
+  const content: TClientProfileCardItem[] = [
     {
-      title: 'Date of Birth',
-      content: formattedDob,
+      header: ['Date of Birth'],
+      rows: [[formattedDob]],
     },
     {
-      title: 'CA ID #',
-      content: californiaId,
+      header: ['CA ID #'],
+      rows: [[californiaId]],
     },
     {
-      title: 'Preferred Language',
-      content: preferredLanguage && enumDisplayLanguage[preferredLanguage],
+      header: ['Preferred Language'],
+      rows: [[preferredLanguage && enumDisplayLanguage[preferredLanguage]]],
     },
     {
-      title: 'Veteran Status',
-      content: veteranStatus && enumDisplayVeteranStatus[veteranStatus],
+      header: ['Veteran Status'],
+      rows: [[veteranStatus && enumDisplayVeteranStatus[veteranStatus]]],
     },
     {
-      title: 'Living Situation',
-      content: livingSituation && enumDisplayLivingSituation[livingSituation],
+      header: ['Living Situation'],
+      rows: [[livingSituation && enumDisplayLivingSituation[livingSituation]]],
     },
   ];
 
@@ -54,6 +57,7 @@ export default function PersonalInfo(props: TProps) {
     <View>
       <ClientProfileCard
         items={content}
+        // showAll
         action={{
           onClick: () => alert('edit personal info'),
         }}

@@ -4,7 +4,7 @@ export { default as Attachments } from './Attachments';
 export { default as AuthContainer } from './AuthContainer';
 export { default as ClientCard } from './ClientCard';
 export { default as ClientCardModal } from './ClientCardModal';
-export { ClientProfileCard } from './ClientProfileCard';
+export { ClientProfileCard, TClientProfileCardItem } from './ClientProfileCard';
 export { default as ConsentModal } from './ConsentModal';
 export { default as DateOfBirthPicker } from './DateOfBirthPicker';
 export { default as DocumentModal } from './DocumentModal';

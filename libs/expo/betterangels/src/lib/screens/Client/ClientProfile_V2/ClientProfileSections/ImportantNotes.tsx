@@ -1,6 +1,9 @@
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { ClientProfileCard } from '../../../../ui-components';
+import {
+  ClientProfileCard,
+  TClientProfileCardItem,
+} from '../../../../ui-components';
 import { TClientProfile } from '../types';
 
 type TProps = {
@@ -12,9 +15,9 @@ export default function ImportantNotes(props: TProps) {
 
   const importantNotes = clientProfile?.importantNotes;
 
-  const content = [
+  const content: TClientProfileCardItem[] = [
     {
-      content: ImportantNotesContent(importantNotes),
+      rows: [[ImportantNotesContent(importantNotes)]],
     },
   ];
 
@@ -22,6 +25,7 @@ export default function ImportantNotes(props: TProps) {
     <View>
       <ClientProfileCard
         items={content}
+        showAll
         action={{
           onClick: () => alert('edit important notes'),
         }}
@@ -31,7 +35,9 @@ export default function ImportantNotes(props: TProps) {
 }
 
 function ImportantNotesContent(notes?: string | null) {
-  if (!notes) {
+  const isString = typeof notes === 'string';
+
+  if (!isString || !notes.trim().length) {
     return null;
   }
 
