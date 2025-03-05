@@ -8,7 +8,7 @@ import {
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { SelahTeamEnum } from '../../../../apollo';
+import { Ordering, SelahTeamEnum } from '../../../../apollo';
 import { useInfiniteScroll, useUser } from '../../../../hooks';
 import { Modal } from '../../../../ui-components';
 import { useInteractionAuthorsQuery } from './__generated__/AuthorsFilter.generated';
@@ -41,10 +41,13 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { data, loading, error } = useInteractionAuthorsQuery({
     variables: {
-      pagination: { limit: paginationLimit, offset: offset },
-      filters: {
-        search: filterSearch,
+      filters: { search: filterSearch },
+      order: {
+        firstName: Ordering.AscNullsFirst,
+        lastName: Ordering.AscNullsFirst,
+        id: Ordering.Desc,
       },
+      pagination: { limit: paginationLimit, offset: offset },
     },
   });
 
