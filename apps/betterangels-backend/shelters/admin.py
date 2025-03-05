@@ -408,6 +408,12 @@ class ShelterForm(forms.ModelForm):
         return existing_objects
 
 
+@admin.register(ContactInfo)
+class ContactInfoAdmin(admin.ModelAdmin):
+    list_display = ("contact_name", "contact_number", "shelter")
+    search_fields = ("contact_name", "contact_number")
+
+
 class ContactInfoInline(admin.TabularInline):
     model = ContactInfo
     extra = 1
@@ -667,6 +673,7 @@ class ShelterResource(resources.ModelResource):
         return bool(super().skip_row(instance, original, row, import_validation_errors))
 
 
+@admin.register(Shelter)
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
 
@@ -914,7 +921,3 @@ class ShelterAdmin(ImportExportModelAdmin):
             )
 
         return "No updates yet"
-
-
-admin.site.register(Shelter, ShelterAdmin)
-admin.site.register(ContactInfo)

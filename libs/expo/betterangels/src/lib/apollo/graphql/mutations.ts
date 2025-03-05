@@ -31,7 +31,7 @@ export const UPDATE_NOTE = gql`
     updateNote(data: $data) {
       ... on NoteType {
         id
-        title
+        purpose
         publicDetails
         client {
           id
@@ -55,7 +55,7 @@ export const REVERT_NOTE = gql`
     revertNote(data: $data) {
       ... on NoteType {
         id
-        title
+        purpose
         location {
           address {
             id
