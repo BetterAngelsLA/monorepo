@@ -1,9 +1,13 @@
+from typing import Any
+
 from common.admin import AttachmentAdminMixin
 from django.contrib import admin
 from import_export import fields, resources
 from import_export.admin import ExportActionMixin
-from import_export.widgets import ManyToManyWidget
+from import_export.forms import ExportForm
+from import_export.widgets import ForeignKeyWidget
 from notes.enums import ServiceEnum
+from organizations.models import Organization
 
 from .models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest, Task
 
@@ -40,24 +44,40 @@ class MoodInline(admin.TabularInline):
 
 
 class NoteResource(resources.ModelResource):
-    requested_services = fields.Field(
-        attribute="requested_services",
-        widget=ManyToManyWidget(ServiceRequest, field="service", separator=", "),
-        column_name="Requested Services",
-    )
-    provided_services = fields.Field(
-        attribute="provided_services",
-        widget=ManyToManyWidget(ServiceRequest, field="service", separator=", "),
-        column_name="Provided Services",
+    requested_services = fields.Field(column_name="Requested Services")
+    provided_services = fields.Field(column_name="Provided Services")
+    organization = fields.Field(
+        column_name="Organization",
+        attribute="organization",
+        widget=ForeignKeyWidget(Organization, field="name"),
     )
 
     class Meta:
         model = Note
+        fields = (
+            "created_at",
+            "purpose",
+            "provided_services",
+            "requested_services",
+            "team",
+            "organization",
+            "public_details",
+        )
+
+    def dehydrate_requested_services(self, note: Note) -> str:
+        return ", ".join([sr.get_service_display() for sr in note.requested_services.all()])
+
+    def dehydrate_provided_services(self, note: Note) -> str:
+        return ", ".join([sr.get_service_display() for sr in note.provided_services.all()])
 
 
 @admin.register(Note)
 class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
     resource_class = NoteResource
+
+    # def get_export_form(self):
+    #     return NoteExportForm
+
     list_display = (
         "note_purpose",
         "client",
