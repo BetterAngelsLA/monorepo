@@ -1,20 +1,17 @@
 import { ReactNode, isValidElement } from 'react';
-import { StyleProp, StyleSheet, TextStyle } from 'react-native';
-import TextRegular from '../TextRegular';
+import { StyleProp, StyleSheet, Text, TextStyle } from 'react-native';
 
 type TTextOrNode = {
-  content: string | ReactNode;
+  children: string | ReactNode;
   textStyle?: StyleProp<TextStyle>;
 };
 
 export function TextOrNode(props: TTextOrNode) {
-  const { content, textStyle } = props;
+  const { children, textStyle } = props;
 
-  if (isValidElement(content)) {
-    return content;
+  if (isValidElement(children)) {
+    return children;
   }
 
-  return (
-    <TextRegular style={StyleSheet.flatten(textStyle)}>{content}</TextRegular>
-  );
+  return <Text style={StyleSheet.flatten(textStyle)}>{children}</Text>;
 }

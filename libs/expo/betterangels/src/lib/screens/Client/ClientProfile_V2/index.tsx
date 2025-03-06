@@ -4,7 +4,7 @@ import { Dispatch, ReactElement, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
-import ContactInfo from './ClientProfileSections/ContactInfo';
+import { ContactInfo } from './ClientProfileSections/ContactInfo';
 import DemographicInfo from './ClientProfileSections/DemographicInfo';
 import FullNameDetails from './ClientProfileSections/FullNameDetails';
 import ImportantNotes from './ClientProfileSections/ImportantNotes';

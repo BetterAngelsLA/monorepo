@@ -9,7 +9,7 @@ type TProps = {
   clientProfile?: TClientProfile;
 };
 
-export default function FullNameDetails(props: TProps) {
+export default function RelevantContacts(props: TProps) {
   const { clientProfile } = props;
 
   const { firstName, middleName, lastName } = clientProfile?.user || {};

@@ -1,4 +1,4 @@
-import { Text, ViewStyle } from 'react-native';
+import { Text, TextStyle } from 'react-native';
 import { getFormattedLength } from './getFormattedLength';
 import { TLengthFormat, TLengthUnit } from './types';
 
@@ -7,7 +7,7 @@ interface TLength {
   inputUnit: TLengthUnit;
   outputUnit: TLengthUnit;
   format?: TLengthFormat;
-  style?: ViewStyle;
+  style?: TextStyle;
 }
 
 export function Length(props: TLength) {

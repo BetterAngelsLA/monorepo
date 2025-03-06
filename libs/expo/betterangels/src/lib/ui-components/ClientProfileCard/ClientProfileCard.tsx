@@ -1,9 +1,17 @@
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  FontSizes,
+  Radiuses,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { DataTable, TextBold } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { EmptyState } from './EmptyState';
 
+{
+  /* TODO: update or remove once we have a ticket for the Edit Button */
+}
 type TClickAction = {
   onClick?: () => void;
   accessibilityHint?: string;
@@ -28,6 +36,9 @@ type TClientProfileCard = {
 export function ClientProfileCard(props: TClientProfileCard) {
   const { items, showAll, action = {} } = props;
 
+  {
+    /* TODO: update or remove once we have a ticket for the Edit Button */
+  }
   const {
     onClick,
     accessibilityLabel = 'edit',
@@ -48,19 +59,26 @@ export function ClientProfileCard(props: TClientProfileCard) {
             {hasTitles && (
               <DataTable.Header>
                 {header.map((title, idx) => {
-                  return <DataTable.Title key={idx}>{title}</DataTable.Title>;
+                  return (
+                    <DataTable.Title
+                      key={idx}
+                      textStyle={styles.headerTitleText}
+                    >
+                      {title}
+                    </DataTable.Title>
+                  );
                 })}
               </DataTable.Header>
             )}
 
             {item.rows.map((row, rowIdx) => {
-              const rowCells = Array.isArray(row) ? row : [row];
-
               return (
                 <DataTable.Row key={rowIdx}>
-                  {rowCells.map((cellData, cellIdx) => {
+                  {row.map((cellData, cellIdx) => {
                     return (
-                      <DataTable.Cell key={cellIdx}>{cellData}</DataTable.Cell>
+                      <DataTable.Cell key={cellIdx} textStyle={styles.cellText}>
+                        {cellData}
+                      </DataTable.Cell>
                     );
                   })}
                 </DataTable.Row>
@@ -70,6 +88,7 @@ export function ClientProfileCard(props: TClientProfileCard) {
         );
       })}
 
+      {/* TODO: update or remove once we have a ticket for the Edit Button */}
       {!!onClick && (
         <View>
           <Pressable onPress={onClick} style={{ alignSelf: 'flex-end' }}>
@@ -90,6 +109,20 @@ const styles = StyleSheet.create({
     borderRadius: Radiuses.xs,
   },
   table: {},
+  headerTitleText: {
+    color: Colors.PRIMARY_EXTRA_DARK,
+    fontSize: FontSizes.sm.fontSize,
+    lineHeight: FontSizes.sm.lineHeight,
+    fontFamily: 'Poppins-Regular',
+    fontWeight: 400,
+  },
+  cellText: {
+    color: Colors.PRIMARY_EXTRA_DARK,
+    fontSize: FontSizes.sm.fontSize,
+    lineHeight: FontSizes.sm.lineHeight,
+    fontFamily: 'Poppins-SemiBold',
+    fontWeight: 700,
+  },
 });
 
 type TGetVisibleItems = {

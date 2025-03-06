@@ -5,7 +5,10 @@ import {
   enumDisplayHairColor,
   enumDisplayRace,
 } from '../../../../static';
-import { ClientProfileCard } from '../../../../ui-components';
+import {
+  ClientProfileCard,
+  TClientProfileCardItem,
+} from '../../../../ui-components';
 import { TClientProfile } from '../types';
 
 type TProps = {
@@ -32,34 +35,34 @@ export default function DemographicInfo(props: TProps) {
     format: 'feet-inches-symbol',
   });
 
-  const content = [
+  const content: TClientProfileCardItem[] = [
     {
-      title: 'Gender',
-      content: displayGender,
+      header: ['Gender'],
+      rows: [[displayGender]],
     },
     {
-      title: 'Pronouns',
-      content: displayPronouns,
+      header: ['Pronouns'],
+      rows: [[displayPronouns]],
     },
     {
-      title: 'Race',
-      content: race && enumDisplayRace[race],
+      header: ['Race'],
+      rows: [[race && enumDisplayRace[race]]],
     },
     {
-      title: 'Place of Birth',
-      content: placeOfBirth,
+      header: ['Place of Birth'],
+      rows: [[placeOfBirth]],
     },
     {
-      title: 'Height',
-      content: formattedHeight,
+      header: ['Height'],
+      rows: [[formattedHeight]],
     },
     {
-      title: 'Eye Color',
-      content: eyeColor && enumDisplayEyeColor[eyeColor],
+      header: ['Eye Color'],
+      rows: [[eyeColor && enumDisplayEyeColor[eyeColor]]],
     },
     {
-      title: 'Hair Color',
-      content: hairColor && enumDisplayHairColor[hairColor],
+      header: ['Hair Color'],
+      rows: [[hairColor && enumDisplayHairColor[hairColor]]],
     },
   ];
 
@@ -68,8 +71,8 @@ export default function DemographicInfo(props: TProps) {
       <ClientProfileCard
         items={content}
         action={{
-          onClick: () => alert('clicked'),
-          accessibilityLabel: 'edit name information',
+          onClick: () => alert('edit demo information'),
+          accessibilityLabel: 'edit demo information',
         }}
       />
     </View>
