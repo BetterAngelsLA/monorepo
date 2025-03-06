@@ -20,7 +20,7 @@ import { useFeatureFlagActive } from '../../hooks';
 import { FeatureFlags } from '../../providers/featureControls/constants';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
-import ClientProfile from './ClientProfile/index';
+import ClientProfileView from './ClientProfile_V2';
 import ClientTabs from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
@@ -64,7 +64,7 @@ const getTabComponent = (
   }
 
   if (clientRedesignFeatureOn) {
-    return <ClientProfile ref={profileRef} client={client} />;
+    return <ClientProfileView client={client} />;
   }
 
   return <Profile ref={profileRef} client={client} />;
