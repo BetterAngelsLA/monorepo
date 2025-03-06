@@ -10,7 +10,7 @@ export type InteractionAuthorsQueryVariables = Types.Exact<{
 }>;
 
 
-export type InteractionAuthorsQuery = { __typename?: 'Query', interactionAuthors: { __typename?: 'InteractionAuthorTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'InteractionAuthorType', firstName?: string | null, id: string, lastName?: string | null, middleName?: string | null }>, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number } } };
+export type InteractionAuthorsQuery = { __typename?: 'Query', interactionAuthors: { __typename?: 'InteractionAuthorTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'InteractionAuthorType', id: string, firstName?: string | null, lastName?: string | null, middleName?: string | null }>, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number } } };
 
 
 export const InteractionAuthorsDocument = gql`
@@ -18,8 +18,8 @@ export const InteractionAuthorsDocument = gql`
   interactionAuthors(filters: $filters, order: $order, pagination: $pagination) {
     totalCount
     results {
-      firstName
       id
+      firstName
       lastName
       middleName
     }
