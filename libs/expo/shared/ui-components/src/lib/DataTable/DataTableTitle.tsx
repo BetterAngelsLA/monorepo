@@ -5,7 +5,6 @@ import {
   Provider as PaperProvider,
   DataTable as RnpDataTable,
 } from 'react-native-paper';
-import TextOrNode from '../TextOrNode';
 
 export type TDataTableTitle = {
   viewStyle?: StyleProp<ViewStyle>;
@@ -20,13 +19,11 @@ export function DataTableTitle(props: TDataTableTitle) {
   return (
     <PaperProvider theme={{}}>
       <RnpDataTable.Title
-        theme={{ fonts: {}, colors: {} }}
         style={[styles.defaulViewStyle, viewStyle]}
+        textStyle={[styles.defaulTextStyle, textStyle]}
         numberOfLines={maxLines}
       >
-        <TextOrNode textStyle={[styles.defaulTextStyle, textStyle]}>
-          {children}
-        </TextOrNode>
+        {children}
       </RnpDataTable.Title>
     </PaperProvider>
   );
@@ -42,6 +39,6 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm.fontSize,
     lineHeight: FontSizes.sm.lineHeight,
     fontFamily: 'Poppins-SemiBold',
-    fontWeight: 700,
+    fontWeight: 700, // RnpDataTable theme seems to use fontWeight
   },
 });
