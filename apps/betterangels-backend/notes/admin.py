@@ -1,9 +1,8 @@
-from datetime import date
-from typing import Any, Optional
+from typing import Optional
 
 from common.admin import AttachmentAdminMixin
-from common.models import Location
 from django.contrib import admin
+from django.db.models import QuerySet
 from import_export import fields, resources
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
@@ -59,7 +58,7 @@ class NoteResource(resources.ModelResource):
         attribute="organization",
         widget=ForeignKeyWidget(Organization, field="name"),
     )
-    public_details = fields.Field(column_name="Notes")
+    notes = fields.Field(column_name="Notes")
 
     class Meta:
         model = Note
@@ -73,29 +72,40 @@ class NoteResource(resources.ModelResource):
             "location",
             "team",
             "organization",
-            "public_details",
+            "notes",
         )
-
-    def dehydrate_created_on(self, note: Note) -> str:
-        return note.created_at.date().strftime("%m/%d/%Y")
-
-    def dehydrate_team(self, note: Note) -> Optional[str]:
-        return note.get_team_display()
-
-    def dehydrate_location(self, note: Note) -> Optional[str]:
-        return str(note.location) if note.location else None
-
-    def dehydrate_volunteer(self, note: Note) -> Optional[str]:
-        return note.created_by.full_name if note.created_by else None
 
     def dehydrate_client_id(self, note: Note) -> Optional[int]:
         return note.client.client_profile.id if note.client else None
 
+    def dehydrate_created_on(self, note: Note) -> str:
+        return note.created_at.date().strftime("%m/%d/%Y")
+
+    def dehydrate_purpose(self, note: Note) -> Optional[str]:
+        return note.purpose or None
+
+    def _join_services(self, services: QuerySet) -> str:
+        return ", ".join(
+            s.service_other if s.service == ServiceEnum.OTHER else s.get_service_display() for s in services
+        )
+
     def dehydrate_requested_services(self, note: Note) -> str:
-        return ", ".join([sr.get_service_display() for sr in note.requested_services.all()])
+        return self._join_services(note.requested_services.all())
 
     def dehydrate_provided_services(self, note: Note) -> str:
-        return ", ".join([sr.get_service_display() for sr in note.provided_services.all()])
+        return self._join_services(note.provided_services.all())
+
+    def dehydrate_volunteer(self, note: Note) -> Optional[str]:
+        return note.created_by.full_name if note.created_by else None
+
+    def dehydrate_location(self, note: Note) -> Optional[str]:
+        return str(note.location) if note.location else None
+
+    def dehydrate_team(self, note: Note) -> Optional[str]:
+        return note.get_team_display()
+
+    def dehydrate_notes(self, note: Note) -> Optional[str]:
+        return note.public_details or None
 
 
 @admin.register(Note)
