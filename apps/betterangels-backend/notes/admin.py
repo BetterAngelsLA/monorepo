@@ -1,10 +1,11 @@
-from typing import Any
+from datetime import date
+from typing import Any, Optional
 
 from common.admin import AttachmentAdminMixin
 from django.contrib import admin
 from import_export import fields, resources
 from import_export.admin import ExportActionMixin
-from import_export.forms import ExportForm
+from import_export.formats.base_formats import CSV
 from import_export.widgets import ForeignKeyWidget
 from notes.enums import ServiceEnum
 from organizations.models import Organization
@@ -44,8 +45,12 @@ class MoodInline(admin.TabularInline):
 
 
 class NoteResource(resources.ModelResource):
+    client_id = fields.Field(column_name="Client ID")
+    created_on = fields.Field(column_name="Created On")
+    purpose = fields.Field(column_name="Purpose")
     requested_services = fields.Field(column_name="Requested Services")
     provided_services = fields.Field(column_name="Provided Services")
+    volunteer = fields.Field(column_name="Volunteer")
     organization = fields.Field(
         column_name="Organization",
         attribute="organization",
@@ -55,14 +60,31 @@ class NoteResource(resources.ModelResource):
     class Meta:
         model = Note
         fields = (
-            "created_at",
+            "client_id",
+            "created_on",
             "purpose",
             "provided_services",
             "requested_services",
+            "volunteer",
             "team",
             "organization",
             "public_details",
         )
+
+    def dehydrate_created_on(self, note: Note) -> str:
+        return note.created_at.date().strftime("%m/%d/%Y")
+
+    def dehydrate_volunteer(self, note: Note) -> Optional[str]:
+        if note.created_by:
+            return note.created_by.full_name
+
+        return None
+
+    def dehydrate_client_id(self, note: Note) -> Optional[int]:
+        if note.client:
+            return note.client.client_profile.id
+
+        return None
 
     def dehydrate_requested_services(self, note: Note) -> str:
         return ", ".join([sr.get_service_display() for sr in note.requested_services.all()])
@@ -75,8 +97,8 @@ class NoteResource(resources.ModelResource):
 class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
     resource_class = NoteResource
 
-    # def get_export_form(self):
-    #     return NoteExportForm
+    def get_export_formats(self) -> list:
+        return [CSV]
 
     list_display = (
         "note_purpose",
