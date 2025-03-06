@@ -1,6 +1,8 @@
 from common.models import PhoneNumber
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
+from django.urls import reverse
+from django.utils.html import format_html
 
 from .models import (
     ClientProfile,
@@ -22,16 +24,25 @@ class PhoneNumberInline(GenericTabularInline):
 
 @admin.register(ClientProfile)
 class ClientProfileAdmin(admin.ModelAdmin):
-    list_display = ["name", "id"]
+    list_display = ["name", "id", "user__email", "user_id"]
     inlines = [HmisProfileInline, PhoneNumberInline]
 
     def name(self, obj: ClientProfile) -> str:
         return obj.user.full_name
 
+    def user_id(self, obj: ClientProfile) -> str:
+        return format_html(f'<a href="{reverse("admin:accounts_user_change", args=(obj.user.id,))}">{obj.user.id}</a>')
+
+    search_fields = (
+        "nickname",
+        "user__email",
+        "user__first_name",
+        "user__last_name",
+        "user__middle_name",
+    )
+
 
 # Data Import
-
-
 @admin.register(ClientProfileDataImport)
 class ClientProfileDataImportAdmin(admin.ModelAdmin):
     list_display = ("id", "imported_at", "source_file", "imported_by", "record_counts")
