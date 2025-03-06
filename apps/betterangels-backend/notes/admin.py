@@ -2,6 +2,7 @@ from datetime import date
 from typing import Any, Optional
 
 from common.admin import AttachmentAdminMixin
+from common.models import Location
 from django.contrib import admin
 from import_export import fields, resources
 from import_export.admin import ExportActionMixin
@@ -51,11 +52,14 @@ class NoteResource(resources.ModelResource):
     requested_services = fields.Field(column_name="Requested Services")
     provided_services = fields.Field(column_name="Provided Services")
     volunteer = fields.Field(column_name="Volunteer")
+    location = fields.Field(column_name="Location")
+    team = fields.Field(column_name="Team")
     organization = fields.Field(
         column_name="Organization",
         attribute="organization",
         widget=ForeignKeyWidget(Organization, field="name"),
     )
+    public_details = fields.Field(column_name="Notes")
 
     class Meta:
         model = Note
@@ -66,6 +70,7 @@ class NoteResource(resources.ModelResource):
             "provided_services",
             "requested_services",
             "volunteer",
+            "location",
             "team",
             "organization",
             "public_details",
@@ -74,17 +79,17 @@ class NoteResource(resources.ModelResource):
     def dehydrate_created_on(self, note: Note) -> str:
         return note.created_at.date().strftime("%m/%d/%Y")
 
-    def dehydrate_volunteer(self, note: Note) -> Optional[str]:
-        if note.created_by:
-            return note.created_by.full_name
+    def dehydrate_team(self, note: Note) -> Optional[str]:
+        return note.get_team_display()
 
-        return None
+    def dehydrate_location(self, note: Note) -> Optional[str]:
+        return str(note.location) if note.location else None
+
+    def dehydrate_volunteer(self, note: Note) -> Optional[str]:
+        return note.created_by.full_name if note.created_by else None
 
     def dehydrate_client_id(self, note: Note) -> Optional[int]:
-        if note.client:
-            return note.client.client_profile.id
-
-        return None
+        return note.client.client_profile.id if note.client else None
 
     def dehydrate_requested_services(self, note: Note) -> str:
         return ", ".join([sr.get_service_display() for sr in note.requested_services.all()])
