@@ -33,3 +33,13 @@ class SleepingChoices(models.TextChoices):
     MOTEL = "motel", _("Motel")
     SHARED_ROOMS = "shared_rooms", _("Shared Rooms")
     SINGLE_ROOM = "single_room", _("Single Room")
+
+
+class RoomStyleChoicesV14(models.TextChoices):
+    CONGREGANT = "congregant", _("Congregant (Open)")
+    CUBICLE_LOW_WALLS = "cubicle_low_walls", _("Cubicle (Low Walls)")
+    CUBICLE_HIGH_WALLS = "cubicle_high_walls", _("Cubicle (High Walls)")
+    SHARED_ROOMS = "shared_rooms", _("Shared Rooms")
+    SINGLE_ROOM = "single_room", _("Single Room")
+    MOTEL_ROOM = "motel_room", _("Motel Room")
+    OTHER = "other", _("Other")
