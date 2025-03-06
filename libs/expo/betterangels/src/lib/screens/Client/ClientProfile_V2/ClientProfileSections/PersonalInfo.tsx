@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-import { View } from 'react-native';
 import {
   enumDisplayLanguage,
   enumDisplayLivingSituation,
@@ -7,6 +6,7 @@ import {
 } from '../../../../static';
 import {
   ClientProfileCard,
+  ClientProfileCardContainer,
   TClientProfileCardItem,
 } from '../../../../ui-components';
 import { TClientProfile } from '../types';
@@ -15,7 +15,7 @@ type TProps = {
   clientProfile?: TClientProfile;
 };
 
-export default function PersonalInfo(props: TProps) {
+export function PersonalInfo(props: TProps) {
   const { clientProfile } = props;
 
   const {
@@ -54,7 +54,7 @@ export default function PersonalInfo(props: TProps) {
   ];
 
   return (
-    <View>
+    <ClientProfileCardContainer>
       <ClientProfileCard
         items={content}
         // showAll
@@ -62,6 +62,6 @@ export default function PersonalInfo(props: TProps) {
           onClick: () => alert('edit personal info'),
         }}
       />
-    </View>
+    </ClientProfileCardContainer>
   );
 }

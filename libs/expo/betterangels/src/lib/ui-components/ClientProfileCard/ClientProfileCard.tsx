@@ -1,12 +1,7 @@
-import {
-  Colors,
-  FontSizes,
-  Radiuses,
-  Spacings,
-} from '@monorepo/expo/shared/static';
+import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { DataTable, TextBold } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
 import { EmptyState } from './EmptyState';
 
 {
@@ -31,10 +26,11 @@ type TClientProfileCard = {
   items: TClientProfileCardItem[];
   showAll?: boolean;
   action?: TClickAction;
+  style?: ViewStyle;
 };
 
 export function ClientProfileCard(props: TClientProfileCard) {
-  const { items, showAll, action = {} } = props;
+  const { items, showAll, action = {}, style } = props;
 
   {
     /* TODO: update or remove once we have a ticket for the Edit Button */
@@ -49,13 +45,13 @@ export function ClientProfileCard(props: TClientProfileCard) {
   const visibleItems = getVisibleItems({ items, showAll });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       {visibleItems.map((item, idx) => {
         const header = item.header || [];
         const hasTitles = header.some((t) => !!t);
 
         return (
-          <DataTable key={idx} style={styles.table}>
+          <DataTable key={idx}>
             {hasTitles && (
               <DataTable.Header>
                 {header.map((title, idx) => {
@@ -103,12 +99,7 @@ export function ClientProfileCard(props: TClientProfileCard) {
 const styles = StyleSheet.create({
   container: {
     gap: Spacings.lg,
-    backgroundColor: Colors.WHITE,
-    paddingHorizontal: Spacings.sm,
-    paddingVertical: Spacings.md,
-    borderRadius: Radiuses.xs,
   },
-  table: {},
   headerTitleText: {
     color: Colors.PRIMARY_EXTRA_DARK,
     fontSize: FontSizes.sm.fontSize,

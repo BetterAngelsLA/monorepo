@@ -1,5 +1,4 @@
 import { getFormattedLength } from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
 import {
   enumDisplayEyeColor,
   enumDisplayHairColor,
@@ -7,6 +6,7 @@ import {
 } from '../../../../static';
 import {
   ClientProfileCard,
+  ClientProfileCardContainer,
   TClientProfileCardItem,
 } from '../../../../ui-components';
 import { TClientProfile } from '../types';
@@ -15,7 +15,7 @@ type TProps = {
   clientProfile?: TClientProfile;
 };
 
-export default function DemographicInfo(props: TProps) {
+export function DemographicInfo(props: TProps) {
   const { clientProfile } = props;
 
   const {
@@ -67,7 +67,7 @@ export default function DemographicInfo(props: TProps) {
   ];
 
   return (
-    <View>
+    <ClientProfileCardContainer>
       <ClientProfileCard
         items={content}
         action={{
@@ -75,6 +75,6 @@ export default function DemographicInfo(props: TProps) {
           accessibilityLabel: 'edit demo information',
         }}
       />
-    </View>
+    </ClientProfileCardContainer>
   );
 }

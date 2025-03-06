@@ -5,10 +5,11 @@ import { ScrollView, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ContactInfo } from './ClientProfileSections/ContactInfo';
-import DemographicInfo from './ClientProfileSections/DemographicInfo';
-import FullNameDetails from './ClientProfileSections/FullNameDetails';
-import ImportantNotes from './ClientProfileSections/ImportantNotes';
-import PersonalInfo from './ClientProfileSections/PersonalInfo';
+import { DemographicInfo } from './ClientProfileSections/DemographicInfo';
+import { FullNameDetails } from './ClientProfileSections/FullNameDetails';
+import { ImportantNotes } from './ClientProfileSections/ImportantNotes';
+import { PersonalInfo } from './ClientProfileSections/PersonalInfo';
+import { RelevantContacts } from './ClientProfileSections/RelevantContacts';
 import { ClientProfileSectionsEnum, ClientSectionTitles } from './constants';
 import { TClientSectionTitle } from './types';
 
@@ -73,7 +74,7 @@ export default function ClientProfile(props: ProfileProps) {
           expandedTitle={expandedTitle}
           setExpandedTitle={setExpandedTitle}
         >
-          <ImportantNotes clientProfile={clientProfile} />
+          <RelevantContacts clientProfile={clientProfile} />
         </AccordionSection>
 
         <AccordionSection

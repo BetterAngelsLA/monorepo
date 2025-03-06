@@ -1,6 +1,6 @@
-import { View } from 'react-native';
 import {
   ClientProfileCard,
+  ClientProfileCardContainer,
   TClientProfileCardItem,
 } from '../../../../../ui-components';
 import { TClientProfile } from '../../types';
@@ -58,7 +58,7 @@ export default function ContactInfo(props: TProps) {
   ];
 
   return (
-    <View>
+    <ClientProfileCardContainer>
       <ClientProfileCard
         items={content}
         action={{
@@ -66,6 +66,6 @@ export default function ContactInfo(props: TProps) {
           accessibilityLabel: 'edit contact information',
         }}
       />
-    </View>
+    </ClientProfileCardContainer>
   );
 }
