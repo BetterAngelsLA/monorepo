@@ -1011,7 +1011,7 @@ type OffsetPaginationInfo {
 
 input OffsetPaginationInput {
   offset: Int! = 0
-  limit: Int
+  limit: Int = null
 }
 
 input OneToManyInput {
@@ -1279,6 +1279,7 @@ enum ServiceEnum {
   MEDICAL
   MEDI_CAL
   METRO_LIFE_TAP
+  NOTARY
   OTHER
   PET_CARE
   PET_FOOD

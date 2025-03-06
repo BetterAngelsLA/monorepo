@@ -97,8 +97,8 @@ export function useNoteSummaryLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<NoteSummaryQuery, NoteSummaryQueryVariables>(NoteSummaryDocument, options);
         }
-export function useNoteSummarySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<NoteSummaryQuery, NoteSummaryQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+export function useNoteSummarySuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<NoteSummaryQuery, NoteSummaryQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<NoteSummaryQuery, NoteSummaryQueryVariables>(NoteSummaryDocument, options);
         }
 export type NoteSummaryQueryHookResult = ReturnType<typeof useNoteSummaryQuery>;

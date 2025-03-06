@@ -1643,6 +1643,7 @@ export enum ServiceEnum {
   Medical = 'MEDICAL',
   MediCal = 'MEDI_CAL',
   MetroLifeTap = 'METRO_LIFE_TAP',
+  Notary = 'NOTARY',
   Other = 'OTHER',
   PetCare = 'PET_CARE',
   PetFood = 'PET_FOOD',
