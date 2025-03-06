@@ -1,12 +1,17 @@
 query InteractionAuthors(
   $filters: InteractionAuthorFilter
+  $order: InteractionAuthorOrder
   $pagination: OffsetPaginationInput
 ) {
-  interactionAuthors(filters: $filters, pagination: $pagination) {
+  interactionAuthors(
+    filters: $filters
+    order: $order
+    pagination: $pagination
+  ) {
     totalCount
     results {
-      firstName
       id
+      firstName
       lastName
       middleName
     }
