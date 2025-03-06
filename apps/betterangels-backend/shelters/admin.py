@@ -349,13 +349,6 @@ class ShelterForm(forms.ModelForm):
     def clean(self) -> dict:
         cleaned_data = super().clean() or {}
 
-        time_range = cleaned_data.get("op_hours_time_range")
-        if time_range:
-            cleaned_data["operating_hours_start"], cleaned_data["operating_hours_end"] = time_range
-        time_range = cleaned_data.get("intake_hours_time_range")
-        if time_range:
-            cleaned_data["intake_hours_start"], cleaned_data["intake_hours_end"] = time_range
-
         # Dynamically detect all ManyToManyField attributes in the model
         many_to_many_fields = [
             field.name for field in self._meta.model._meta.get_fields() if isinstance(field, models.ManyToManyField)
