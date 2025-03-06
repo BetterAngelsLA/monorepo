@@ -1,10 +1,7 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native';
-import {
-  Provider as PaperProvider,
-  DataTable as RnpDataTable,
-} from 'react-native-paper';
+import { DataTable as RnpDataTable } from 'react-native-paper';
 
 export type TDataTableTitle = {
   viewStyle?: StyleProp<ViewStyle>;
@@ -17,15 +14,13 @@ export function DataTableTitle(props: TDataTableTitle) {
   const { children, maxLines = 1, textStyle, viewStyle } = props;
 
   return (
-    <PaperProvider theme={{}}>
-      <RnpDataTable.Title
-        style={[styles.defaulViewStyle, viewStyle]}
-        textStyle={[styles.defaulTextStyle, textStyle]}
-        numberOfLines={maxLines}
-      >
-        {children}
-      </RnpDataTable.Title>
-    </PaperProvider>
+    <RnpDataTable.Title
+      style={[styles.defaulViewStyle, viewStyle]}
+      textStyle={[styles.defaulTextStyle, textStyle]}
+      numberOfLines={maxLines}
+    >
+      {children}
+    </RnpDataTable.Title>
   );
 }
 

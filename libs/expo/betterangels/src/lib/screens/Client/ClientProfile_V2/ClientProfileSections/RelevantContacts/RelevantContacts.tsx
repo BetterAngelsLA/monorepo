@@ -1,5 +1,6 @@
 import { ClientProfileCardContainer } from '../../../../../ui-components';
 import { TClientProfile } from '../../types';
+import { EmptyState } from './EmptyState';
 import { RelevantContact } from './RelevantContact';
 
 type TProps = {
@@ -12,7 +13,11 @@ export function RelevantContacts(props: TProps) {
   const { contacts } = clientProfile || {};
 
   if (!contacts?.length) {
-    return null;
+    return (
+      <ClientProfileCardContainer>
+        <EmptyState />
+      </ClientProfileCardContainer>
+    );
   }
 
   return (
