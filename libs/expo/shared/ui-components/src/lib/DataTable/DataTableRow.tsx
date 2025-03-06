@@ -1,18 +1,17 @@
 import { ReactNode } from 'react';
-import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { DataTable as RnpDataTable } from 'react-native-paper';
 
 export type TDataTableRow = {
   viewStyle?: StyleProp<ViewStyle>;
-  textStyle?: StyleProp<TextStyle>;
   children: ReactNode;
 };
 
 export function DataTableRow(props: TDataTableRow) {
-  const { children, textStyle, viewStyle } = props;
+  const { children, viewStyle } = props;
 
   return (
-    <RnpDataTable.Row style={styles.defaultRowStyle}>
+    <RnpDataTable.Row style={[styles.defaultRowStyle, viewStyle]}>
       {children}
     </RnpDataTable.Row>
   );
