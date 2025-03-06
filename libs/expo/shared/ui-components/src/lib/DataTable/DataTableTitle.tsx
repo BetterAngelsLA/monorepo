@@ -21,10 +21,10 @@ export function DataTableTitle(props: TDataTableTitle) {
     <PaperProvider theme={{}}>
       <RnpDataTable.Title
         theme={{ fonts: {}, colors: {} }}
-        style={[styles.defaulViewStyle, viewStyle]}
+        style={[styles.defaultViewStyle, viewStyle]}
         numberOfLines={maxLines}
       >
-        <TextOrNode textStyle={[styles.defaulTextStyle, textStyle]}>
+        <TextOrNode textStyle={[styles.defaultTextStyle, textStyle]}>
           {children}
         </TextOrNode>
       </RnpDataTable.Title>
@@ -33,11 +33,11 @@ export function DataTableTitle(props: TDataTableTitle) {
 }
 
 const styles = StyleSheet.create({
-  defaulViewStyle: {
+  defaultViewStyle: {
     paddingVertical: 0,
     paddingRight: Spacings.xs,
   },
-  defaulTextStyle: {
+  defaultTextStyle: {
     color: Colors.PRIMARY_EXTRA_DARK,
     fontSize: FontSizes.sm.fontSize,
     lineHeight: FontSizes.sm.lineHeight,

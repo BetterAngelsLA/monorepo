@@ -26,7 +26,7 @@ const styles = StyleSheet.create({
     marginVertical: 0,
     marginBottom: Spacings.xs,
   },
-  defaulTextStyle: {
+  defaultTextStyle: {
     color: Colors.PRIMARY_EXTRA_DARK,
   },
 });
