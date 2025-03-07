@@ -316,7 +316,14 @@ class InteractionAuthorFilter:
         )
 
 
-@strawberry_django.type(User)
+@strawberry_django.ordering.order(User)
+class InteractionAuthorOrder:
+    first_name: auto
+    last_name: auto
+    id: auto
+
+
+@strawberry_django.type(User, filters=InteractionAuthorFilter, order=InteractionAuthorOrder)  # type: ignore[literal-required]
 class InteractionAuthorType:
     id: ID
     first_name: auto

@@ -15,8 +15,8 @@ export function DataTableTitle(props: TDataTableTitle) {
 
   return (
     <RnpDataTable.Title
-      style={[styles.defaulViewStyle, viewStyle]}
-      textStyle={[styles.defaulTextStyle, textStyle]}
+      style={[styles.defaultViewStyle, viewStyle]}
+      textStyle={[styles.defaultTextStyle, textStyle]}
       numberOfLines={maxLines}
     >
       {children}
@@ -25,11 +25,11 @@ export function DataTableTitle(props: TDataTableTitle) {
 }
 
 const styles = StyleSheet.create({
-  defaulViewStyle: {
+  defaultViewStyle: {
     paddingVertical: 0,
     paddingRight: Spacings.xs,
   },
-  defaulTextStyle: {
+  defaultTextStyle: {
     color: Colors.PRIMARY_EXTRA_DARK,
     fontSize: FontSizes.sm.fontSize,
     lineHeight: FontSizes.sm.lineHeight,

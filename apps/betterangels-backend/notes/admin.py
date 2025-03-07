@@ -1,6 +1,14 @@
+from typing import Optional
+
 from common.admin import AttachmentAdminMixin
 from django.contrib import admin
+from django.db.models import QuerySet
+from import_export import fields, resources
+from import_export.admin import ExportActionMixin
+from import_export.formats.base_formats import CSV
+from import_export.widgets import ForeignKeyWidget
 from notes.enums import ServiceEnum
+from organizations.models import Organization
 
 from .models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest, Task
 
@@ -36,8 +44,77 @@ class MoodInline(admin.TabularInline):
     extra = 1
 
 
+class NoteResource(resources.ModelResource):
+    client_id = fields.Field(column_name="Client ID")
+    created_on = fields.Field(column_name="Created On")
+    purpose = fields.Field(column_name="Purpose")
+    requested_services = fields.Field(column_name="Requested Services")
+    provided_services = fields.Field(column_name="Provided Services")
+    volunteer = fields.Field(column_name="Volunteer")
+    location = fields.Field(column_name="Location")
+    team = fields.Field(column_name="Team")
+    organization = fields.Field(
+        column_name="Organization",
+        attribute="organization",
+        widget=ForeignKeyWidget(Organization, field="name"),
+    )
+    notes = fields.Field(column_name="Notes")
+
+    class Meta:
+        model = Note
+        fields = (
+            "client_id",
+            "created_on",
+            "purpose",
+            "provided_services",
+            "requested_services",
+            "volunteer",
+            "location",
+            "team",
+            "organization",
+            "notes",
+        )
+
+    def dehydrate_client_id(self, note: Note) -> Optional[int]:
+        return note.client.client_profile.id if note.client else None
+
+    def dehydrate_created_on(self, note: Note) -> str:
+        return note.created_at.date().strftime("%m/%d/%Y")
+
+    def dehydrate_purpose(self, note: Note) -> Optional[str]:
+        return note.purpose or None
+
+    def _join_services(self, services: QuerySet) -> str:
+        return ", ".join(
+            s.service_other if s.service == ServiceEnum.OTHER else s.get_service_display() for s in services
+        )
+
+    def dehydrate_requested_services(self, note: Note) -> str:
+        return self._join_services(note.requested_services.all())
+
+    def dehydrate_provided_services(self, note: Note) -> str:
+        return self._join_services(note.provided_services.all())
+
+    def dehydrate_volunteer(self, note: Note) -> Optional[str]:
+        return note.created_by.full_name if note.created_by else None
+
+    def dehydrate_location(self, note: Note) -> Optional[str]:
+        return str(note.location) if note.location else None
+
+    def dehydrate_team(self, note: Note) -> Optional[str]:
+        return note.get_team_display()
+
+    def dehydrate_notes(self, note: Note) -> Optional[str]:
+        return note.public_details or None
+
+
 @admin.register(Note)
-class NoteAdmin(AttachmentAdminMixin, admin.ModelAdmin):
+class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
+    resource_class = NoteResource
+
+    def get_export_formats(self) -> list:
+        return [CSV]
+
     list_display = (
         "note_purpose",
         "client",

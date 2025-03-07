@@ -1,0 +1,23 @@
+query InteractionAuthors(
+  $filters: InteractionAuthorFilter
+  $order: InteractionAuthorOrder
+  $pagination: OffsetPaginationInput
+) {
+  interactionAuthors(
+    filters: $filters
+    order: $order
+    pagination: $pagination
+  ) {
+    totalCount
+    results {
+      id
+      firstName
+      lastName
+      middleName
+    }
+    pageInfo {
+      limit
+      offset
+    }
+  }
+}

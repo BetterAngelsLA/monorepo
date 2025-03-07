@@ -1,3 +1,68 @@
+/** Data tables allow displaying sets of data.
+ *
+ * Based on react-native-paper DataTable
+ * https://github.com/callstack/react-native-paper/blob/main/src/components/DataTable/DataTable.tsx
+ *
+ * ## Usage
+ * ```js
+ *
+ * const content: TClientProfileCardItem[] = [
+ *   {
+ *     header: ['First Name'],
+ *     rows: [[firstName]],
+ *   },
+ *   {
+ *     header: ['Middle Name'],
+ *     rows: [[middleName]],
+ *   },
+ *   {
+ *     header: ['Last Name'],
+ *     rows: [[lastName]],
+ *   },
+ * ];
+ *
+ * return (
+ *   <View style={[styles.container, style]}>
+ *     {content.map((item, idx) => {
+ *       const header = item.header || [];
+ *
+ *       return (
+ *         <DataTable key={idx}>
+ *           {hasTitles && (
+ *             <DataTable.Header>
+ *               {header.map((title, idx) => {
+ *                 return (
+ *                   <DataTable.Title
+ *                     key={idx}
+ *                   >
+ *                     {title}
+ *                   </DataTable.Title>
+ *                 );
+ *               })}
+ *             </DataTable.Header>
+ *           )}
+ *
+ *           {item.rows.map((row, rowIdx) => {
+ *             return (
+ *               <DataTable.Row key={rowIdx}>
+ *                 {row.map((cellData, cellIdx) => {
+ *                   return (
+ *                     <DataTable.Cell key={cellIdx}>
+ *                       {cellData}
+ *                     </DataTable.Cell>
+ *                   );
+ *                 })}
+ *               </DataTable.Row>
+ *             );
+ *           })}
+ *         </DataTable>
+ *       );
+ *     })}
+ *   </View>
+ * );
+ * ```
+ */
+
 import { ReactNode } from 'react';
 import { StyleSheet, ViewStyle } from 'react-native';
 import { DataTable as RnpDataTable } from 'react-native-paper';
@@ -23,7 +88,9 @@ export function DataTable(props: TDataTable) {
   const { style, children, ...rest } = props;
 
   return (
-    <RnpDataTable style={[styles.container, style]}>{children}</RnpDataTable>
+    <RnpDataTable style={[styles.container, style]} {...rest}>
+      {children}
+    </RnpDataTable>
   );
 }
 

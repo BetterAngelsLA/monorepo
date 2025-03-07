@@ -15,7 +15,7 @@ export function DataTableCell(props: TDataTableCell) {
   return (
     <RnpDataTable.Cell
       style={[styles.defaultCellStyle, viewStyle]}
-      textStyle={[styles.defaulTextStyle, textStyle]}
+      textStyle={[styles.defaultTextStyle, textStyle]}
     >
       {children}
     </RnpDataTable.Cell>
@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     marginVertical: 0,
     marginTop: 0,
   },
-  defaulTextStyle: {
+  defaultTextStyle: {
     color: Colors.PRIMARY_EXTRA_DARK,
     fontSize: FontSizes.sm.fontSize,
     lineHeight: FontSizes.sm.lineHeight,

@@ -16,7 +16,7 @@ import {
 } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
 import { MainContainer, NoteCard } from '../../ui-components';
-import InteractionsFilters from './InteractionsFilters/TeamsFilter';
+import InteractionsFilters from './InteractionsFilters';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
 
@@ -24,25 +24,29 @@ const paginationLimit = 10;
 
 type TFilters = {
   teams: { id: SelahTeamEnum; label: string }[];
+  authors: { id: string; label: string }[];
 };
 
 export default function Interactions() {
+  const { user } = useUser();
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState('');
   const [filters, setFilters] = useState<TFilters>({
     teams: [],
+    authors: user ? [{ id: user.id, label: 'Me' }] : [],
   });
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { user } = useUser();
-  const [totalCount, setTotalCount] = useState<number>(0);
 
   const { data, loading, error, refetch } = useNotesPaginatedQuery({
     variables: {
       pagination: { limit: paginationLimit, offset: offset },
       order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
       filters: {
-        createdBy: user?.id,
+        authors: filters.authors.length
+          ? filters.authors.map((item) => item.id)
+          : null,
         search: filterSearch,
         teams: filters.teams.length
           ? filters.teams.map((item) => item.id)
@@ -73,7 +77,7 @@ export default function Interactions() {
   );
 
   const onFiltersReset = () => {
-    setFilters({ teams: [] });
+    setFilters({ teams: [], authors: [] });
   };
 
   const onChange = (e: string) => {
