@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { parseDate } from '@monorepo/expo/shared/ui-components';
 import {
   enumDisplayLanguage,
   enumDisplayLivingSituation,
@@ -26,9 +26,10 @@ export function PersonalInfo(props: TProps) {
     livingSituation,
   } = clientProfile || {};
 
-  const formattedDob = dateOfBirth
-    ? format(new Date(dateOfBirth), 'MM/dd/yyyy')
-    : null;
+  const formattedDob = parseDate({
+    date: dateOfBirth,
+    inputFormat: 'yyyy-MM-dd',
+  });
 
   const content: TClientProfileCardItem[] = [
     {

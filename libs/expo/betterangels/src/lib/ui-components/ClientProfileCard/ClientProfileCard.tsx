@@ -1,7 +1,7 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
-import { DataTable, TextBold } from '@monorepo/expo/shared/ui-components';
+import { DataTable } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, ReactNode } from 'react';
-import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 import { EmptyState } from './EmptyState';
 
 {
@@ -85,13 +85,13 @@ export function ClientProfileCard(props: TClientProfileCard) {
       })}
 
       {/* TODO: update or remove once we have a ticket for the Edit Button */}
-      {!!onClick && (
+      {/* {!!onClick && (
         <View>
           <Pressable onPress={onClick} style={{ alignSelf: 'flex-end' }}>
             <TextBold size="xs">Edit Btn</TextBold>
           </Pressable>
         </View>
-      )}
+      )} */}
     </View>
   );
 }

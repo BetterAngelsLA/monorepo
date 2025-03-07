@@ -21,7 +21,7 @@ export function HouseholdMember(props: TProps) {
 
   const { name, displayGender, dateOfBirth, relationshipToClient } = member;
 
-  const formattedDoB = parseDate({
+  const formattedDob = parseDate({
     date: dateOfBirth,
     inputFormat: 'yyyy-MM-dd',
   });
@@ -37,7 +37,7 @@ export function HouseholdMember(props: TProps) {
     },
     {
       header: ['Date of Birth'],
-      rows: [[formattedDoB]],
+      rows: [[formattedDob]],
     },
   ];
 
