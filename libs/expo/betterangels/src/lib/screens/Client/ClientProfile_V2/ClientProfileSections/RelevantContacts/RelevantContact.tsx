@@ -6,14 +6,10 @@ import {
   ClientProfileCard,
   TClientProfileCardItem,
 } from '../../../../../ui-components';
-import { ClientProfileQuery } from '../../../__generated__/Client.generated';
-
-type TContact = NonNullable<
-  NonNullable<ClientProfileQuery['clientProfile']>['contacts']
->[number];
+import { TClientProfileContact } from '../../types';
 
 type TProps = {
-  contact?: TContact;
+  contact?: TClientProfileContact;
   style?: ViewStyle;
 };
 

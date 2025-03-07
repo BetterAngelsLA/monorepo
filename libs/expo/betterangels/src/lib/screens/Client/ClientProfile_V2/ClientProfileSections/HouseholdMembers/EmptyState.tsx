@@ -18,11 +18,7 @@ export function EmptyState(props: TProps) {
 
   const content: TClientProfileCardItem[] = [
     {
-      header: ['Current Case Manager'],
-      rows: [[]],
-    },
-    {
-      header: ['Other Contacts'],
+      header: ['Household Member'],
       rows: [[]],
     },
   ];

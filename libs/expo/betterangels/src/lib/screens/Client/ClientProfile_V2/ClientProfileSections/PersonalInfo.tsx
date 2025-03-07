@@ -57,7 +57,6 @@ export function PersonalInfo(props: TProps) {
     <ClientProfileCardContainer>
       <ClientProfileCard
         items={content}
-        // showAll
         action={{
           onClick: () => alert('edit personal info'),
         }}

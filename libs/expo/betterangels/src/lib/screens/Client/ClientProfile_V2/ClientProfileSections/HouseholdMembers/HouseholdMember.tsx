@@ -1,18 +1,14 @@
-import { TextBold } from '@monorepo/expo/shared/ui-components';
+import { TextBold, parseDate } from '@monorepo/expo/shared/ui-components';
 import { clientHouseholdMemberEnumDisplay } from 'libs/expo/betterangels/src/lib/static';
 import { View, ViewStyle } from 'react-native';
 import {
   ClientProfileCard,
   TClientProfileCardItem,
 } from '../../../../../ui-components';
-import { ClientProfileQuery } from '../../../__generated__/Client.generated';
-
-type THouseholdMemeber = NonNullable<
-  NonNullable<ClientProfileQuery['clientProfile']>['householdMembers']
->[number];
+import { TClientProfileHouseholdMemeber } from '../../types';
 
 type TProps = {
-  member?: THouseholdMemeber;
+  member?: TClientProfileHouseholdMemeber;
   style?: ViewStyle;
 };
 
@@ -23,7 +19,12 @@ export function HouseholdMember(props: TProps) {
     return null;
   }
 
-  const { name, gender, dateOfBirth, relationshipToClient } = member;
+  const { name, displayGender, dateOfBirth, relationshipToClient } = member;
+
+  const formattedDoB = parseDate({
+    date: dateOfBirth,
+    inputFormat: 'yyyy-MM-dd',
+  });
 
   const content: TClientProfileCardItem[] = [
     {
@@ -32,11 +33,11 @@ export function HouseholdMember(props: TProps) {
     },
     {
       header: ['Gender'],
-      rows: [[gender]],
+      rows: [[displayGender]],
     },
     {
       header: ['Date of Birth'],
-      rows: [[dateOfBirth]],
+      rows: [[formattedDoB]],
     },
   ];
 

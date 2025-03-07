@@ -1,7 +1,7 @@
 import { ClientProfileCardContainer } from '../../../../../ui-components';
 import { TClientProfile } from '../../types';
-import { RelevantContact } from '../RelevantContacts/RelevantContact';
 import { EmptyState } from './EmptyState';
+import { HouseholdMember } from './HouseholdMember';
 
 type TProps = {
   clientProfile?: TClientProfile;
@@ -23,7 +23,7 @@ export function HouseholdMembers(props: TProps) {
   return (
     <ClientProfileCardContainer>
       {householdMembers.map((member, idx) => {
-        return <RelevantContact key={idx} member={member} />;
+        return <HouseholdMember key={idx} member={member} />;
       })}
     </ClientProfileCardContainer>
   );

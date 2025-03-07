@@ -2,13 +2,13 @@ import { Text, TextStyle } from 'react-native';
 import { getFormattedLength } from './getFormattedLength';
 import { TLengthFormat, TLengthUnit } from './types';
 
-interface TLength {
+type TLength = {
   length: number;
   inputUnit: TLengthUnit;
   outputUnit: TLengthUnit;
   format?: TLengthFormat;
   style?: TextStyle;
-}
+};
 
 export function Length(props: TLength) {
   const { length, format, inputUnit, outputUnit, style } = props;
