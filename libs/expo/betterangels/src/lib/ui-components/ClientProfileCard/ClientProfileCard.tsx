@@ -2,7 +2,7 @@ import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { DataTable } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import { EmptyState } from './EmptyState';
+import { ClientProfileCardEmptyState } from './ClientProfileCardEmptyState';
 
 {
   /* TODO: update or remove once we have a ticket for the Edit Button */
@@ -59,6 +59,7 @@ export function ClientProfileCard(props: TClientProfileCard) {
                     <DataTable.Title
                       key={idx}
                       textStyle={styles.headerTitleText}
+                      maxLines={2}
                     >
                       {title}
                     </DataTable.Title>
@@ -135,7 +136,9 @@ function getVisibleItems(props: TGetVisibleItems) {
     }
 
     const totColumns = item.header?.length;
-    const placeholderValue = <EmptyState placeholder={item.placeholder} />;
+    const placeholderValue = (
+      <ClientProfileCardEmptyState placeholder={item.placeholder} />
+    );
 
     if (rowsAreEmpty) {
       const emptyRow = new Array(totColumns || 1).fill(placeholderValue);

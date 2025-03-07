@@ -1,13 +1,9 @@
+import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { View, ViewStyle } from 'react-native';
 import {
   ClientProfileCard,
   TClientProfileCardItem,
 } from '../../../../../ui-components';
-import { ClientProfileQuery } from '../../../__generated__/Client.generated';
-
-type TContact = NonNullable<
-  NonNullable<ClientProfileQuery['clientProfile']>['contacts']
->[number];
 
 type TProps = {
   style?: ViewStyle;
@@ -18,11 +14,12 @@ export function EmptyState(props: TProps) {
 
   const content: TClientProfileCardItem[] = [
     {
-      header: ['Current Case Manager'],
+      header: [CurrentCaseManagerHeader()],
       rows: [[]],
     },
+
     {
-      header: ['Other Contacts'],
+      header: [OtherContactsHeader()],
       rows: [[]],
     },
   ];
@@ -35,6 +32,23 @@ export function EmptyState(props: TProps) {
           onClick: () => alert('add relevant contacts'),
         }}
       />
+    </View>
+  );
+}
+
+function CurrentCaseManagerHeader() {
+  return (
+    <View>
+      <TextBold size="sm">Current Case Manager</TextBold>
+    </View>
+  );
+}
+
+function OtherContactsHeader() {
+  return (
+    <View>
+      <TextBold size="sm">Other Contacts</TextBold>
+      <TextBold size="xs">(Mother, Aunt, Child, Organization, etc)</TextBold>
     </View>
   );
 }

@@ -1,3 +1,4 @@
+import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { View, ViewStyle } from 'react-native';
 import {
   ClientProfileCard,
@@ -18,7 +19,7 @@ export function EmptyState(props: TProps) {
 
   const content: TClientProfileCardItem[] = [
     {
-      header: ['HMIS ID'],
+      header: [Header()],
       rows: [[]],
     },
   ];
@@ -31,6 +32,14 @@ export function EmptyState(props: TProps) {
           onClick: () => alert('add relevant contacts'),
         }}
       />
+    </View>
+  );
+}
+
+function Header() {
+  return (
+    <View>
+      <TextBold size="sm">HMIS ID</TextBold>
     </View>
   );
 }

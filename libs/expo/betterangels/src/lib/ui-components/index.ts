@@ -7,6 +7,7 @@ export { default as ClientCardModal } from './ClientCardModal';
 export {
   ClientProfileCard,
   ClientProfileCardContainer,
+  ClientProfileCardEmptyState,
   TClientProfileCardItem,
 } from './ClientProfileCard';
 export { default as ConsentModal } from './ConsentModal';

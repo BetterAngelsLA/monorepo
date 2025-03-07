@@ -1,3 +1,4 @@
+import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { View, ViewStyle } from 'react-native';
 import {
   ClientProfileCard,
@@ -21,8 +22,8 @@ export function HmisProfile(props: TProps) {
 
   const content: TClientProfileCardItem[] = [
     {
-      header: [agency],
-      rows: [[hmisId]],
+      header: [Header(agency)],
+      rows: [[Row(hmisId)]],
     },
   ];
 
@@ -34,6 +35,30 @@ export function HmisProfile(props: TProps) {
           onClick: () => alert('edit hmis profile'),
         }}
       />
+    </View>
+  );
+}
+
+function Header(agency: string) {
+  if (!agency) {
+    return null;
+  }
+
+  return (
+    <View>
+      <TextBold size="sm">{agency}</TextBold>
+    </View>
+  );
+}
+
+function Row(hmisId: string) {
+  if (!hmisId) {
+    return null;
+  }
+
+  return (
+    <View>
+      <TextBold size="sm">HMIS ID - {hmisId}</TextBold>
     </View>
   );
 }

@@ -6,7 +6,7 @@ type TProps = {
   placeholder?: string | ReactNode | null;
 };
 
-export function EmptyState(props: TProps) {
+export function ClientProfileCardEmptyState(props: TProps) {
   const { placeholder } = props;
 
   if (placeholder === null) {
