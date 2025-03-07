@@ -3,26 +3,23 @@ import {
   ClientProfileCard,
   TClientProfileCardItem,
 } from '../../../../../ui-components';
-import { TClientProfileHmisProfile } from '../../types';
+import { ClientProfileQuery } from '../../../__generated__/Client.generated';
+
+type TContact = NonNullable<
+  NonNullable<ClientProfileQuery['clientProfile']>['contacts']
+>[number];
 
 type TProps = {
-  hmisProfile?: TClientProfileHmisProfile;
   style?: ViewStyle;
 };
 
-export function HmisProfile(props: TProps) {
-  const { hmisProfile, style } = props;
-
-  if (!hmisProfile) {
-    return null;
-  }
-
-  const { hmisId, agency } = hmisProfile;
+export function EmptyState(props: TProps) {
+  const { style } = props;
 
   const content: TClientProfileCardItem[] = [
     {
-      header: [agency],
-      rows: [[hmisId]],
+      header: ['HMIS ID'],
+      rows: [[]],
     },
   ];
 
@@ -31,7 +28,7 @@ export function HmisProfile(props: TProps) {
       <ClientProfileCard
         items={content}
         action={{
-          onClick: () => alert('edit hmis profile'),
+          onClick: () => alert('add relevant contacts'),
         }}
       />
     </View>

@@ -7,6 +7,7 @@ import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ContactInfo } from './ClientProfileSections/ContactInfo';
 import { DemographicInfo } from './ClientProfileSections/DemographicInfo';
 import { FullNameDetails } from './ClientProfileSections/FullNameDetails';
+import { HmisProfiles } from './ClientProfileSections/HmisProfile';
 import { HouseholdMembers } from './ClientProfileSections/HouseholdMembers';
 import { ImportantNotes } from './ClientProfileSections/ImportantNotes';
 import { PersonalInfo } from './ClientProfileSections/PersonalInfo';
@@ -91,7 +92,7 @@ export default function ClientProfile(props: ProfileProps) {
           expandedTitle={expandedTitle}
           setExpandedTitle={setExpandedTitle}
         >
-          <ImportantNotes clientProfile={clientProfile} />
+          <HmisProfiles clientProfile={clientProfile} />
         </AccordionSection>
       </View>
     </MainScrollContainer>
