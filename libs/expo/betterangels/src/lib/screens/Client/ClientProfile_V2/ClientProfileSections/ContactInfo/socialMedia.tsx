@@ -1,8 +1,8 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { SocialMediaEnum } from 'libs/expo/betterangels/src/lib/apollo';
-import { enumDisplaySocialMedia } from 'libs/expo/betterangels/src/lib/static';
 import { View } from 'react-native';
+import { SocialMediaEnum } from '../../../../../apollo';
+import { enumDisplaySocialMedia } from '../../../../../static';
 
 type TSocialMedia = {
   id?: string | null;

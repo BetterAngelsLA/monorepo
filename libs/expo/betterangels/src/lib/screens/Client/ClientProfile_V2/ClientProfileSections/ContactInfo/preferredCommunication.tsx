@@ -1,5 +1,5 @@
-import { PreferredCommunicationEnum } from 'libs/expo/betterangels/src/lib/apollo';
-import { enumDisplayPreferredCommunication } from 'libs/expo/betterangels/src/lib/static';
+import { PreferredCommunicationEnum } from '../../../../../apollo';
+import { enumDisplayPreferredCommunication } from '../../../../../static';
 
 type TProps = {
   communications: PreferredCommunicationEnum[] | null | undefined;

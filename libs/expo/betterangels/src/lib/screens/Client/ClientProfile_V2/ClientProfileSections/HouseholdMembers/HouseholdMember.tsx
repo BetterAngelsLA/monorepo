@@ -1,6 +1,6 @@
 import { TextBold, parseDate } from '@monorepo/expo/shared/ui-components';
-import { clientHouseholdMemberEnumDisplay } from 'libs/expo/betterangels/src/lib/static';
 import { View, ViewStyle } from 'react-native';
+import { clientHouseholdMemberEnumDisplay } from '../../../../../static';
 import {
   ClientProfileCard,
   TClientProfileCardItem,

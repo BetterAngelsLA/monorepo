@@ -4,9 +4,7 @@ import { ReactElement, ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { ClientProfileCardEmptyState } from './ClientProfileCardEmptyState';
 
-{
-  /* TODO: update or remove once we have a ticket for the Edit Button */
-}
+/* TODO: update or remove once we have a ticket for the Edit Button */
 type TClickAction = {
   onClick?: () => void;
   accessibilityHint?: string;
@@ -30,17 +28,16 @@ type TClientProfileCard = {
 };
 
 export function ClientProfileCard(props: TClientProfileCard) {
-  const { items, showAll, action = {}, style } = props;
+  // const { items, showAll, action = {}, style } = props;
+  const { items, showAll, style } = props;
 
-  {
-    /* TODO: update or remove once we have a ticket for the Edit Button */
-  }
-  const {
-    onClick,
-    accessibilityLabel = 'edit',
-    accessibilityHint = '',
-    buttonContent,
-  } = action;
+  /* TODO: update or remove once we have a ticket for the Edit Button */
+  // const {
+  //   onClick,
+  //   accessibilityLabel = 'edit',
+  //   accessibilityHint = '',
+  //   buttonContent,
+  // } = action;
 
   const visibleItems = getVisibleItems({ items, showAll });
 

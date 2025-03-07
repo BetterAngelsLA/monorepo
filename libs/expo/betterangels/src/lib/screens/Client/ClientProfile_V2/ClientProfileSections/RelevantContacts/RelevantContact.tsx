@@ -1,7 +1,7 @@
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
-import { clientRelevantContactEnumDisplay } from 'libs/expo/betterangels/src/lib/static';
 import { View, ViewStyle } from 'react-native';
+import { clientRelevantContactEnumDisplay } from '../../../../../static';
 import {
   ClientProfileCard,
   TClientProfileCardItem,
