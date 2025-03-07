@@ -4,10 +4,10 @@ import {
   CardWrapper,
   TextBold,
   TextRegular,
+  parseDate,
 } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 
-import { format } from 'date-fns';
 import {
   enumDisplayHmisAgency,
   enumDisplayLanguage,
@@ -44,9 +44,11 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     .join(' ')
     .trim();
 
-  const formattedDob = client?.clientProfile.dateOfBirth
-    ? format(new Date(client?.clientProfile.dateOfBirth), 'MM/dd/yyyy')
-    : null;
+  const formattedDob = parseDate({
+    date: client?.clientProfile.dateOfBirth,
+    inputFormat: 'yyyy-MM-dd',
+    outputFormat: 'MM/dd/yyyy',
+  });
   const clientAge = client?.clientProfile.age;
   const displayDob =
     formattedDob && clientAge ? `${formattedDob} (${clientAge})` : null;
