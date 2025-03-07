@@ -1,5 +1,7 @@
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { View, ViewStyle } from 'react-native';
+import { HmisAgencyEnum } from '../../../../../apollo';
+import { enumDisplayHmisAgency } from '../../../../../static';
 import {
   ClientProfileCard,
   TClientProfileCardItem,
@@ -39,14 +41,16 @@ export function HmisProfile(props: TProps) {
   );
 }
 
-function Header(agency: string) {
+function Header(agency: HmisAgencyEnum) {
   if (!agency) {
     return null;
   }
 
   return (
     <View>
-      <TextBold size="sm">{agency}</TextBold>
+      <TextBold size="sm">
+        {enumDisplayHmisAgency[agency] || 'HMIS Agency'}
+      </TextBold>
     </View>
   );
 }
