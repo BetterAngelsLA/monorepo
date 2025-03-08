@@ -14,10 +14,11 @@ interface ISingleSelectProps {
   placeholder?: string;
   onChange: (value: string) => void;
   items: { displayValue: string; value?: string }[];
-  displayValue?: string;
+  selectedValue?: string;
   labelMarginLeft?: TSpacing;
   boldLabel?: boolean;
   error?: string;
+  maxRadioItems?: number;
 }
 
 export function SingleSelect(props: ISingleSelectProps) {
@@ -32,14 +33,18 @@ export function SingleSelect(props: ISingleSelectProps) {
     label,
     onChange,
     placeholder = '',
-    displayValue,
+    selectedValue,
     error,
+    maxRadioItems = 3,
   } = props;
 
-  const useSelect = items.length > 3;
+  const asSelect = items.length > maxRadioItems;
 
-  const selectedItem = items.find((item) => item.displayValue === displayValue);
-  if (useSelect) {
+  const selectedItem = items.find(
+    (item) => item.displayValue === selectedValue
+  );
+
+  if (asSelect) {
     return (
       <Picker
         error={error}
@@ -57,30 +62,30 @@ export function SingleSelect(props: ISingleSelectProps) {
         mx={mx}
       />
     );
-  } else {
-    return (
-      <View
-        style={{
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
-          gap: Spacings.xs,
-        }}
-      >
-        {items.map(({ displayValue, value }) => (
-          <Radio
-            key={value || displayValue}
-            error={error}
-            onPress={onChange}
-            displayValue={displayValue}
-            selectedItem={selectedItem?.value}
-            value={value}
-          />
-        ))}
-      </View>
-    );
   }
+
+  return (
+    <View
+      style={{
+        marginBottom: mb && Spacings[mb],
+        marginTop: mt && Spacings[mt],
+        marginLeft: ml && Spacings[ml],
+        marginRight: mr && Spacings[mr],
+        marginHorizontal: mx && Spacings[mx],
+        marginVertical: my && Spacings[my],
+        gap: Spacings.xs,
+      }}
+    >
+      {items.map(({ displayValue, value }) => (
+        <Radio
+          key={value || displayValue}
+          error={error}
+          onPress={onChange}
+          displayValue={displayValue}
+          selectedItem={selectedItem?.value}
+          value={value}
+        />
+      ))}
+    </View>
+  );
 }
