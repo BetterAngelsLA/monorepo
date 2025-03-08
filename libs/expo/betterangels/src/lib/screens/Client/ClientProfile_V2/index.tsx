@@ -17,14 +17,23 @@ import { TClientSectionTitle } from './types';
 
 interface ProfileProps {
   client: ClientProfileQuery | undefined;
+  openSection?: ClientProfileSectionsEnum | null;
 }
 
+const DEFAULT_OPEN_TITLE: ClientProfileSectionsEnum =
+  ClientProfileSectionsEnum.FullName;
+
 export default function ClientProfile(props: ProfileProps) {
-  const { client } = props;
+  const { client, openSection } = props;
   const scrollRef = useRef<ScrollView>(null);
 
+  const defaultOpenSectionTitle =
+    openSection === null
+      ? null
+      : ClientSectionTitles[openSection || DEFAULT_OPEN_TITLE];
+
   const [expandedTitle, setExpandedTitle] =
-    useState<TClientSectionTitle | null>(null);
+    useState<TClientSectionTitle | null>(defaultOpenSectionTitle);
 
   const clientProfile = client?.clientProfile;
 
@@ -109,11 +118,11 @@ type TAccordionSection = {
 function AccordionSection(props: TAccordionSection) {
   const { expandedTitle, section, setExpandedTitle, children } = props;
 
-  const title = ClientSectionTitles[section];
-  const isExpanded = expandedTitle === title;
+  const sectionTitle = ClientSectionTitles[section];
+  const isExpanded = expandedTitle === sectionTitle;
 
   function onClickExpanded() {
-    setExpandedTitle(isExpanded ? null : title);
+    setExpandedTitle(isExpanded ? null : sectionTitle);
   }
 
   return (
@@ -121,7 +130,7 @@ function AccordionSection(props: TAccordionSection) {
       expanded={expandedTitle}
       setExpanded={() => onClickExpanded()}
       mb="xs"
-      title={title}
+      title={sectionTitle}
     >
       {isExpanded && children}
     </Accordion>
