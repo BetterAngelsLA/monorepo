@@ -52,7 +52,6 @@ function SocialMediaRow(props: TSocialMediaRow) {
         gap: Spacings.xs,
       }}
     >
-      {/* <SocialMediaIcon type={platform.toUpperCase() as TSocialMediaType} /> */}
       <TextBold size="sm">{enumDisplaySocialMedia[platform]}</TextBold>
       <TextRegular size="sm">-</TextRegular>
       <TextBold size="sm">{platformUserId}</TextBold>
