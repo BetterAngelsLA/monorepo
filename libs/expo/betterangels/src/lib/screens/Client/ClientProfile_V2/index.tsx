@@ -4,7 +4,10 @@ import { ScrollView, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { CardAccordion } from './ClientProfileCards/CardAccordion';
+import { ContactInfoCard } from './ClientProfileCards/ContactInfoCard';
+import { DemographicInfoCard } from './ClientProfileCards/DemographicInfoCard';
 import { FullNameCard } from './ClientProfileCards/FullNameCard';
+import { ImportantNotesCard } from './ClientProfileCards/ImportantNotesCard';
 import { PersonalInfoCard } from './ClientProfileCards/PersonalInfoCard';
 import { ClientProfileCardEnum } from './constants';
 import { TClientProfileCardTitle } from './types';
@@ -39,6 +42,30 @@ export default function ClientProfileView(props: ProfileProps) {
           setExpandedTitle={setExpandedTitle}
         >
           <PersonalInfoCard clientProfile={clientProfile} />
+        </CardAccordion>
+
+        <CardAccordion
+          section={ClientProfileCardEnum.ImportantNotes}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <ImportantNotesCard clientProfile={clientProfile} />
+        </CardAccordion>
+
+        <CardAccordion
+          section={ClientProfileCardEnum.Demographic}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <DemographicInfoCard clientProfile={clientProfile} />
+        </CardAccordion>
+
+        <CardAccordion
+          section={ClientProfileCardEnum.ContactInfo}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <ContactInfoCard clientProfile={clientProfile} />
         </CardAccordion>
       </View>
     </MainScrollContainer>
