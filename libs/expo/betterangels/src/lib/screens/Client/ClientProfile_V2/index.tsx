@@ -5,6 +5,7 @@ import { MainScrollContainer } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { CardAccordion } from './ClientProfileCards/CardAccordion';
 import { FullNameCard } from './ClientProfileCards/FullNameCard';
+import { PersonalInfoCard } from './ClientProfileCards/PersonalInfoCard';
 import { ClientProfileCardEnum } from './constants';
 import { TClientProfileCardTitle } from './types';
 
@@ -30,6 +31,14 @@ export default function ClientProfileView(props: ProfileProps) {
           setExpandedTitle={setExpandedTitle}
         >
           <FullNameCard clientProfile={clientProfile} />
+        </CardAccordion>
+
+        <CardAccordion
+          section={ClientProfileCardEnum.PersonalInfo}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <PersonalInfoCard clientProfile={clientProfile} />
         </CardAccordion>
       </View>
     </MainScrollContainer>
