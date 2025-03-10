@@ -72,6 +72,11 @@ export default function Picker(props: IPickerProps) {
           />
         ))}
       </RNPicker>
+      {error && (
+        <TextRegular size="sm" color={Colors.ERROR}>
+          {error}
+        </TextRegular>
+      )}
     </View>
   );
 }

@@ -1,7 +1,8 @@
-import { Spacings, TSpacing } from '@monorepo/expo/shared/static';
+import { Colors, Spacings, TSpacing } from '@monorepo/expo/shared/static';
 import { View } from 'react-native';
 import Picker from '../Picker_V2';
 import Radio from '../Radio_V2';
+import TextRegular from '../TextRegular';
 
 interface ISingleSelectProps {
   mb?: TSpacing;
@@ -79,13 +80,17 @@ export function SingleSelect(props: ISingleSelectProps) {
       {items.map(({ displayValue, value }) => (
         <Radio
           key={value || displayValue}
-          error={error}
           onPress={onChange}
           displayValue={displayValue}
           selectedItem={selectedItem?.value}
           value={value}
         />
       ))}
+      {error && (
+        <TextRegular size="sm" color={Colors.ERROR}>
+          {error}
+        </TextRegular>
+      )}
     </View>
   );
 }

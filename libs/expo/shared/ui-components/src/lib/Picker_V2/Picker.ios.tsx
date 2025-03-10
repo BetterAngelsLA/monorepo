@@ -32,35 +32,42 @@ export default function Picker(props: IPickerProps) {
   const bottomOffset = insets.bottom;
   return (
     <>
-      {label && <TextRegular ml="xs">{label}</TextRegular>}
-      <Pressable
-        onPress={() => {
-          setIsModalVisible(true);
-          if (!localValue && items[0].value) {
-            setLocalValue(items[0].value);
-          }
-        }}
-        style={[
-          styles.selectButton,
-          {
-            borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
-            marginBottom: mb && Spacings[mb],
-            marginTop: mt && Spacings[mt],
-            marginLeft: ml && Spacings[ml],
-            marginRight: mr && Spacings[mr],
-            marginHorizontal: mx && Spacings[mx],
-            marginVertical: my && Spacings[my],
-          },
-        ]}
-        accessibilityRole="button"
-      >
-        <TextRegular
-          color={displayValue ? Colors.PRIMARY_EXTRA_DARK : Colors.NEUTRAL}
+      <View>
+        {label && <TextRegular ml="xs">{label}</TextRegular>}
+        <Pressable
+          onPress={() => {
+            setIsModalVisible(true);
+            if (!localValue && items[0].value) {
+              setLocalValue(items[0].value);
+            }
+          }}
+          style={[
+            styles.selectButton,
+            {
+              borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
+              marginBottom: mb && Spacings[mb],
+              marginTop: mt && Spacings[mt],
+              marginLeft: ml && Spacings[ml],
+              marginRight: mr && Spacings[mr],
+              marginHorizontal: mx && Spacings[mx],
+              marginVertical: my && Spacings[my],
+            },
+          ]}
+          accessibilityRole="button"
         >
-          {displayValue || placeholder}
-        </TextRegular>
-        <ChevronLeftIcon size="sm" rotate={'-90deg'} />
-      </Pressable>
+          <TextRegular
+            color={displayValue ? Colors.PRIMARY_EXTRA_DARK : Colors.NEUTRAL}
+          >
+            {displayValue || placeholder}
+          </TextRegular>
+          <ChevronLeftIcon size="sm" rotate={'-90deg'} />
+        </Pressable>
+        {error && (
+          <TextRegular size="sm" mt="xxs" color={Colors.ERROR}>
+            {error}
+          </TextRegular>
+        )}
+      </View>
       <Modal
         style={styles.modal}
         backdropOpacity={0.5}

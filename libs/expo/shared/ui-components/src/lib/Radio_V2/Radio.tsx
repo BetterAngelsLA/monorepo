@@ -12,11 +12,10 @@ interface IRadioProps {
   onPress: (value: string) => void;
   value?: string;
   selectedItem?: string;
-  error?: string;
 }
 
 export function Radio(props: IRadioProps) {
-  const { displayValue, onPress, value, selectedItem, error } = props;
+  const { displayValue, onPress, value, selectedItem } = props;
 
   return (
     <Pressable
@@ -26,11 +25,8 @@ export function Radio(props: IRadioProps) {
       style={[
         styles.container,
         {
-          backgroundColor: error
-            ? Colors.ERROR
-            : value === selectedItem
-            ? Colors.PRIMARY_EXTRA_LIGHT
-            : Colors.WHITE,
+          backgroundColor:
+            value === selectedItem ? Colors.PRIMARY_EXTRA_LIGHT : Colors.WHITE,
           borderColor: Colors.NEUTRAL_LIGHT,
           paddingHorizontal: Spacings.sm,
           paddingVertical: Spacings.xs,

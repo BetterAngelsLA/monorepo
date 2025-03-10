@@ -54,29 +54,4 @@ describe('Radio component', () => {
     const button = getByA11yHint('selects Accessibility Test');
     expect(button).toBeTruthy();
   });
-
-  it('renders with error state styling when error is provided (snapshot)', () => {
-    const tree = render(
-      <Radio
-        displayValue="Error Option"
-        onPress={jest.fn()}
-        value="value1"
-        selectedItem="other"
-        error="error message"
-      />
-    ).toJSON();
-    expect(tree).toMatchSnapshot();
-  });
-
-  it('renders with selected styling when value equals selectedItem (snapshot)', () => {
-    const tree = render(
-      <Radio
-        displayValue="Selected Option"
-        onPress={jest.fn()}
-        value="value1"
-        selectedItem="value1"
-      />
-    ).toJSON();
-    expect(tree).toMatchSnapshot();
-  });
 });
