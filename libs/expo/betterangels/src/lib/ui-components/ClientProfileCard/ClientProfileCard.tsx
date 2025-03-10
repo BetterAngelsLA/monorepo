@@ -70,7 +70,11 @@ export function ClientProfileCard(props: TClientProfileCard) {
                 <DataTable.Row key={rowIdx}>
                   {row.map((cellData, cellIdx) => {
                     return (
-                      <DataTable.Cell key={cellIdx} textStyle={styles.cellText}>
+                      <DataTable.Cell
+                        key={cellIdx}
+                        numberOfLines={null}
+                        textStyle={styles.cellText}
+                      >
                         {cellData}
                       </DataTable.Cell>
                     );
