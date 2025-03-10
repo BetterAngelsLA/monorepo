@@ -20,25 +20,24 @@ export function PhoneNumberRows(props: TPhoneNumbers) {
     return [];
   }
 
-  return numbers
-    .map((n) => ({
-      ...n,
-      isPrimary: !!n.isPrimary,
-    }))
-    .sort((a, b) => {
-      return Number(b.isPrimary) - Number(a.isPrimary);
-    })
-    .map((phone, idx) => {
-      const row = (
-        <PhoneNumberRow
-          key={idx}
-          number={phone.number}
-          isPrimary={phone.isPrimary}
-        />
-      );
+  const normalizedPhones = numbers.map((n) => ({
+    ...n,
+    isPrimary: !!n.isPrimary,
+  }));
 
-      return [row];
-    });
+  normalizedPhones.sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
+
+  return normalizedPhones.map((phone, idx) => {
+    const row = (
+      <PhoneNumberRow
+        key={idx}
+        number={phone.number}
+        isPrimary={phone.isPrimary}
+      />
+    );
+
+    return [row];
+  });
 }
 
 function PhoneNumberRow(props: TPhoneNumber) {

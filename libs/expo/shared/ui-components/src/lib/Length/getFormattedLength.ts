@@ -12,11 +12,19 @@ interface TFormattedLength {
 export function getFormattedLength(props: TFormattedLength): string {
   const { length, format, inputUnit, outputUnit } = props;
 
-  if (!length) {
+  if (typeof length !== 'number' || isNaN(length)) {
     return '';
   }
 
-  const convertedLength = LENGTH_CONVERSIONS[inputUnit][outputUnit](length);
+  try {
+    const convertedLength = LENGTH_CONVERSIONS[inputUnit][outputUnit](length);
 
-  return formatLength({ value: convertedLength, format });
+    return formatLength({ value: convertedLength, format });
+  } catch (e) {
+    console.error(
+      `getFormattedLength: could not format length [${length}] with inputUnit [${inputUnit}] outputUnit [${outputUnit}] format [${format}]`
+    );
+
+    return '';
+  }
 }
