@@ -17,7 +17,7 @@ interface ProfileProps {
   openCard?: ClientProfileCardEnum | null;
 }
 
-const DEFAULT_OPEN_CARD_TITLE = ClientProfileCardEnum.FullName;
+const DEFAULT_OPEN_CARD = ClientProfileCardEnum.FullName;
 
 export default function ClientProfileView(props: ProfileProps) {
   const { client, openCard } = props;
@@ -26,7 +26,7 @@ export default function ClientProfileView(props: ProfileProps) {
   const defaultOpenCardTitle =
     openCard === null
       ? null
-      : ClientProfileCardTitles[openCard || DEFAULT_OPEN_CARD_TITLE];
+      : ClientProfileCardTitles[openCard || DEFAULT_OPEN_CARD];
 
   const [expandedTitle, setExpandedTitle] =
     useState<TClientProfileCardTitle | null>(defaultOpenCardTitle);

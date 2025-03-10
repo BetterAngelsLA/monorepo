@@ -2,15 +2,15 @@ import { TFeetInches, TLengthUnit } from './types';
 
 export const LENGTH_CONVERSIONS: Record<
   TLengthUnit,
-  Record<TLengthUnit, (h: number) => number>
+  Record<TLengthUnit, (value: number) => number>
 > = {
   inches: {
-    inches: (h) => h,
-    feet: (h) => h / 12,
+    inches: (value) => value,
+    feet: (value) => value / 12,
   },
   feet: {
-    inches: (h) => h * 12,
-    feet: (h) => h,
+    inches: (value) => value * 12,
+    feet: (value) => value,
   },
 };
 

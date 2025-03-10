@@ -1,6 +1,3 @@
-// DemographicInfoCard.tsx
-
-// import { getFormattedLength } from '@monorepo/expo/shared/ui-components';
 import { getFormattedLength } from '@monorepo/expo/shared/ui-components';
 import {
   enumDisplayEyeColor,
