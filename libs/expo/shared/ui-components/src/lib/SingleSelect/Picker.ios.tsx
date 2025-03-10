@@ -87,13 +87,13 @@ export default function Picker(props: IPickerProps) {
                 setIsModalVisible(false);
               }}
             >
-              <TextBold color="#007aff" size="ms">
+              <TextBold color={Colors.IOS_BLUE} size="ms">
                 Done
               </TextBold>
             </Pressable>
           </View>
           <RNPicker
-            style={{ backgroundColor: '#d1d3da' }}
+            style={{ backgroundColor: Colors.IOS_GRAY }}
             selectedValue={localValue}
             onValueChange={(itemValue) => setLocalValue(itemValue)}
           >
