@@ -1,6 +1,6 @@
-import { LENGTH_CONVERSIONS, TLengthUnit } from './conversions';
+import { LENGTH_CONVERSIONS } from './conversions';
 import { formatLength } from './formatLength';
-import { TLengthFormat } from './types';
+import { TLengthFormat, TLengthUnit } from './types';
 
 interface TFormattedLength {
   length?: number | null;

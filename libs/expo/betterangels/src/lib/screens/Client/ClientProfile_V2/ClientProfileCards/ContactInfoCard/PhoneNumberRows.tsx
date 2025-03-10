@@ -5,7 +5,7 @@ import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { View } from 'react-native';
 
 type TPhoneNumber = {
-  number?: any;
+  number?: string;
   isPrimary?: boolean | null;
 };
 
