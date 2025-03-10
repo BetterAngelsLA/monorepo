@@ -6,6 +6,7 @@ import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { CardAccordion } from './ClientProfileCards/CardAccordion';
 import { FullNameCard } from './ClientProfileCards/FullNameCard';
 import { HmisProfilesCards } from './ClientProfileCards/HmisProfilesCard';
+import { HouseholdMembersCard } from './ClientProfileCards/HouseholdMembersCard';
 import { RelevantContactsCard } from './ClientProfileCards/RelevantContactsCard/RelevantContactsCard';
 import { ClientProfileCardEnum } from './constants';
 import { TClientProfileCardTitle } from './types';
@@ -40,6 +41,14 @@ export default function ClientProfileView(props: ProfileProps) {
           setExpandedTitle={setExpandedTitle}
         >
           <RelevantContactsCard clientProfile={clientProfile} />
+        </CardAccordion>
+
+        <CardAccordion
+          section={ClientProfileCardEnum.Household}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <HouseholdMembersCard clientProfile={clientProfile} />
         </CardAccordion>
 
         <CardAccordion
