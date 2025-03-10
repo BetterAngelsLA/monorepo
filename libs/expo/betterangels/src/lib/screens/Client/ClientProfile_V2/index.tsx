@@ -9,19 +9,27 @@ import { DemographicInfoCard } from './ClientProfileCards/DemographicInfoCard';
 import { FullNameCard } from './ClientProfileCards/FullNameCard';
 import { ImportantNotesCard } from './ClientProfileCards/ImportantNotesCard';
 import { PersonalInfoCard } from './ClientProfileCards/PersonalInfoCard';
-import { ClientProfileCardEnum } from './constants';
+import { ClientProfileCardEnum, ClientProfileCardTitles } from './constants';
 import { TClientProfileCardTitle } from './types';
 
 interface ProfileProps {
   client: ClientProfileQuery | undefined;
+  openCard?: ClientProfileCardEnum | null;
 }
 
+const DEFAULT_OPEN_CARD_TITLE = ClientProfileCardEnum.FullName;
+
 export default function ClientProfileView(props: ProfileProps) {
-  const { client } = props;
+  const { client, openCard } = props;
   const scrollRef = useRef<ScrollView>(null);
 
+  const defaultOpenCardTitle =
+    openCard === null
+      ? null
+      : ClientProfileCardTitles[openCard || DEFAULT_OPEN_CARD_TITLE];
+
   const [expandedTitle, setExpandedTitle] =
-    useState<TClientProfileCardTitle | null>(null);
+    useState<TClientProfileCardTitle | null>(defaultOpenCardTitle);
 
   const clientProfile = client?.clientProfile;
 
