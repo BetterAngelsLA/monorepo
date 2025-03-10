@@ -1,7 +1,7 @@
 import { Spacings, TSpacing } from '@monorepo/expo/shared/static';
 import { View } from 'react-native';
-import Picker from './Picker';
-import { Radio } from './Radio';
+import Picker from '../Picker_V2';
+import Radio from '../Radio_V2';
 
 interface ISingleSelectProps {
   mb?: TSpacing;
@@ -13,7 +13,7 @@ interface ISingleSelectProps {
   label?: string;
   placeholder?: string;
   onChange: (value: string) => void;
-  items: { displayValue: string; value?: string }[];
+  items: { displayValue: string; value: string }[];
   selectedValue?: string;
   labelMarginLeft?: TSpacing;
   boldLabel?: boolean;

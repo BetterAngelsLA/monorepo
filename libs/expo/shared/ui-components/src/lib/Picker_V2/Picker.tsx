@@ -14,7 +14,7 @@ export interface IPickerProps {
   displayValue?: string | null;
   value?: string | null;
   placeholder: string;
-  items: { displayValue: string; value?: string }[];
+  items: { displayValue: string; value: string }[];
   label?: string;
   mb?: TSpacing;
   mt?: TSpacing;
