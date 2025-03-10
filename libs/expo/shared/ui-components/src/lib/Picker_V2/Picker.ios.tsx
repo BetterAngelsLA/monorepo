@@ -2,7 +2,7 @@ import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Picker as RNPicker } from '@react-native-picker/picker';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import TextBold from '../TextBold';
@@ -10,31 +10,54 @@ import TextRegular from '../TextRegular';
 import { IPickerProps } from './Picker';
 
 export default function Picker(props: IPickerProps) {
-  const { setSelectedValue, error, value, placeholder, items } = props;
-  const [localValue, setLocalValue] = useState<string | null | undefined>(
-    value || null
-  );
+  const {
+    onChange,
+    error,
+    displayValue,
+    value,
+    placeholder,
+    items,
+    label,
+    mb,
+    mt,
+    my,
+    mx,
+    mr,
+    ml,
+  } = props;
+  const [localValue, setLocalValue] = useState<string | null>(value || null);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
   return (
     <>
+      {label && <TextRegular ml="xs">{label}</TextRegular>}
       <Pressable
         onPress={() => {
           setIsModalVisible(true);
-          if (!localValue) {
+          if (!localValue && items[0].value) {
             setLocalValue(items[0].value);
           }
         }}
         style={[
           styles.selectButton,
-          { borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT },
+          {
+            borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
+            marginBottom: mb && Spacings[mb],
+            marginTop: mt && Spacings[mt],
+            marginLeft: ml && Spacings[ml],
+            marginRight: mr && Spacings[mr],
+            marginHorizontal: mx && Spacings[mx],
+            marginVertical: my && Spacings[my],
+          },
         ]}
         accessibilityRole="button"
       >
-        <TextRegular color={value ? Colors.PRIMARY_EXTRA_DARK : Colors.NEUTRAL}>
-          {value || placeholder}
+        <TextRegular
+          color={displayValue ? Colors.PRIMARY_EXTRA_DARK : Colors.NEUTRAL}
+        >
+          {displayValue || placeholder}
         </TextRegular>
         <ChevronLeftIcon size="sm" rotate={'-90deg'} />
       </Pressable>
@@ -45,7 +68,7 @@ export default function Picker(props: IPickerProps) {
         onBackdropPress={() => setIsModalVisible(false)}
         useNativeDriverForBackdrop={true}
       >
-        <View
+        <SafeAreaView
           style={{
             borderTopLeftRadius: Radiuses.xs,
             borderTopRightRadius: Radiuses.xs,
@@ -58,29 +81,31 @@ export default function Picker(props: IPickerProps) {
               accessibilityHint={`selects ${localValue}`}
               accessibilityRole="button"
               onPress={() => {
-                setSelectedValue(localValue);
+                if (localValue) {
+                  onChange(localValue);
+                }
                 setIsModalVisible(false);
               }}
             >
-              <TextBold color="#007aff" size="ms">
+              <TextBold color={Colors.IOS_BLUE} size="ms">
                 Done
               </TextBold>
             </Pressable>
           </View>
           <RNPicker
-            style={{ backgroundColor: '#d1d3da' }}
+            style={{ backgroundColor: Colors.IOS_GRAY }}
             selectedValue={localValue}
             onValueChange={(itemValue) => setLocalValue(itemValue)}
           >
             {items.map((item) => (
               <RNPicker.Item
                 key={item.value}
-                label={item.label}
+                label={item.displayValue}
                 value={item.value}
               />
             ))}
           </RNPicker>
-        </View>
+        </SafeAreaView>
       </Modal>
     </>
   );

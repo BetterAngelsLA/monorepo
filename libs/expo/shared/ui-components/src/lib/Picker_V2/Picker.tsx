@@ -9,12 +9,12 @@ import { StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
 
 export interface IPickerProps {
-  setSelectedValue: (value: string | null | undefined) => void;
+  onChange: (value: string) => void;
   error?: string;
   displayValue?: string | null;
   value?: string | null;
   placeholder: string;
-  items: { label: string; value?: string }[];
+  items: { displayValue: string; value: string }[];
   label?: string;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -26,7 +26,7 @@ export interface IPickerProps {
 
 export default function Picker(props: IPickerProps) {
   const {
-    setSelectedValue,
+    onChange,
     error,
     displayValue,
     placeholder,
@@ -61,13 +61,13 @@ export default function Picker(props: IPickerProps) {
         style={styles.picker}
         placeholder={placeholder}
         selectedValue={displayValue || ''}
-        onValueChange={setSelectedValue}
+        onValueChange={onChange}
       >
         {items.map((item) => (
           <RNPicker.Item
             style={styles.itemStyle}
             key={item.value}
-            label={item.label}
+            label={item.displayValue}
             value={item.value}
           />
         ))}
