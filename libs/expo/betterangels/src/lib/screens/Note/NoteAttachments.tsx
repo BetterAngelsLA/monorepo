@@ -1,18 +1,11 @@
 import { Radiuses } from '@monorepo/expo/shared/static';
-import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
-import { ViewNoteQuery } from '../../apollo';
 
 const BASE_MARGIN = 5;
 const NUM_COLUMNS = 3;
 
-export default function NoteAttachments({
-  note,
-}: {
-  note: ViewNoteQuery['note'] | undefined;
-}) {
-  const attachments = note?.attachments;
+export default function Noteimages({ images }) {
   const [containerWidth, setContainerWidth] = useState(0);
   const onLayout = (event: { nativeEvent: { layout: { width: number } } }) => {
     const { width } = event.nativeEvent.layout;
@@ -24,17 +17,14 @@ export default function NoteAttachments({
 
   return (
     <View onLayout={onLayout}>
-      <TextBold mb="xs" size="sm">
-        Attachments
-      </TextBold>
       <View style={styles.container}>
-        {attachments?.map((attachment) => (
+        {images?.map((image) => (
           <Image
             style={[styles.image, { width: imageSize, height: imageSize }]}
-            source={{ uri: attachment.file.url }}
+            source={{ uri: image.file.url }}
             resizeMode="cover"
             accessibilityIgnoresInvertColors
-            key={attachment.id}
+            key={image.id}
           />
         ))}
       </View>
