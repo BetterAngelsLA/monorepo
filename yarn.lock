@@ -4813,7 +4813,7 @@ __metadata:
     apollo-link-rest: "npm:^0.9.0"
     apollo-upload-client: "npm:^18.0.1"
     autoprefixer: "npm:10.4.13"
-    axios: "npm:^1.7.3"
+    axios: "npm:^1.8.2"
     babel-jest: "npm:29.7.0"
     babel-plugin-react-native-web: "npm:^0.19.8"
     babel-preset-expo: "npm:12.0.7"
@@ -9892,7 +9892,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.6.0, axios@npm:^1.7.3, axios@npm:^1.7.4":
+"axios@npm:^1.6.0, axios@npm:^1.7.4, axios@npm:^1.8.2":
   version: 1.8.2
   resolution: "axios@npm:1.8.2"
   dependencies:
