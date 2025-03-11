@@ -73,15 +73,6 @@ export const GET_NOTE = gql`
         point
         pointOfInterest
       }
-      attachments {
-        id
-        namespace
-        attachmentType
-        file {
-          url
-          name
-        }
-      }
       moods {
         id
         descriptor
