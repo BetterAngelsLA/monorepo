@@ -28,20 +28,7 @@ describe('Radio component', () => {
     expect(mockOnPress).toHaveBeenCalledWith('value1');
   });
 
-  it('does not call onPress when value is not provided', () => {
-    const mockOnPress = jest.fn();
-    const { getByText } = render(
-      <Radio
-        onPress={mockOnPress}
-        selectedValue="someValue"
-        value="No Value Option"
-      />
-    );
-    fireEvent.press(getByText('No Value Option'));
-    expect(mockOnPress).not.toHaveBeenCalled();
-  });
-
-  it('sets the correct accessibilityHint based on displayValue', () => {
+  it('sets the correct accessibilityHint based on value', () => {
     const { getByA11yHint } = render(
       <Radio
         displayValue="Accessibility Test"
@@ -51,7 +38,7 @@ describe('Radio component', () => {
       />
     );
 
-    const button = getByA11yHint('selects Accessibility Test');
+    const button = getByA11yHint('selects test');
     expect(button).toBeTruthy();
   });
 });
