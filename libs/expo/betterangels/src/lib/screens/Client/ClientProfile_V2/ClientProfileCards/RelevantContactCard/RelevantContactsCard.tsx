@@ -1,4 +1,4 @@
-import { RelationshipTypeEnum } from 'libs/expo/betterangels/src/lib/apollo';
+import { RelationshipTypeEnum } from '../../../../../apollo';
 import { ClientProfileCardContainer } from '../../../../../ui-components';
 import { TClientProfile } from '../../types';
 import { EmptyState } from './EmptyState';
