@@ -9,7 +9,7 @@ import { DemographicInfoCard } from './ClientProfileCards/DemographicInfoCard';
 import { FullNameCard } from './ClientProfileCards/FullNameCard';
 import { ImportantNotesCard } from './ClientProfileCards/ImportantNotesCard';
 import { PersonalInfoCard } from './ClientProfileCards/PersonalInfoCard';
-import { RelevantContactsCard } from './ClientProfileCards/RelevantContactCard';
+import { RelevantContactsCard } from './ClientProfileCards/RelevantContactsCard';
 import { ClientProfileCardEnum, ClientProfileCardTitles } from './constants';
 import { TClientProfileCardTitle } from './types';
 
