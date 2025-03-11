@@ -5,8 +5,8 @@ import {
   TextBold,
   TextMedium,
   TextRegular,
+  parseDate,
 } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
 import { View } from 'react-native';
 import { RelationshipTypeEnum } from '../../../apollo';
 import { clientHouseholdMemberEnumDisplay } from '../../../static/enumDisplayMapping';
@@ -59,9 +59,11 @@ export default function HouseholdMembers(props: IProfileSectionProps) {
               },
               {
                 label: 'Date of Birth',
-                value: householdMember.dateOfBirth
-                  ? format(new Date(householdMember.dateOfBirth), 'MM/dd/yyyy')
-                  : '',
+                value: parseDate({
+                  date: householdMember.dateOfBirth,
+                  inputFormat: 'yyyy-MM-dd',
+                  outputFormat: 'MM/dd/yyyy',
+                }),
               },
             ];
             return (
