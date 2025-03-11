@@ -48,6 +48,7 @@ export function RelevantContactCard(props: TProps) {
           relationshipToClient &&
           clientRelevantContactEnumDisplay[relationshipToClient]
         }
+        compact
         items={content}
       />
     </View>

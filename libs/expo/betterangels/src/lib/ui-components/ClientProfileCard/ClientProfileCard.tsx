@@ -30,10 +30,19 @@ type TClientProfileCard = {
   showAll?: boolean;
   action?: TClickAction;
   style?: ViewStyle;
+  compact?: boolean;
 };
 
 export function ClientProfileCard(props: TClientProfileCard) {
-  const { action = {}, items, showAll, subtitle, title, style } = props;
+  const {
+    action = {},
+    compact,
+    items,
+    showAll,
+    subtitle,
+    title,
+    style,
+  } = props;
 
   {
     /* TODO: update or remove once we have a ticket for the Edit Button */
@@ -46,7 +55,9 @@ export function ClientProfileCard(props: TClientProfileCard) {
     <View style={[styles.container, style]}>
       <ClientProfileCardHeader title={title} subtitle={subtitle} />
 
-      <View style={styles.tableView}>
+      <View
+        style={[styles.tableView, compact ? styles.tableViewCompact : null]}
+      >
         {visibleItems.map((item, idx) => {
           const header = item.header || [];
           const hasTitles = header.some((t) => !!t);
@@ -117,6 +128,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacings.sm,
   },
   tableView: {
+    gap: Spacings.lg,
+  },
+  tableViewCompact: {
     gap: Spacings.sm,
   },
   tableHeaderTitleText: {
