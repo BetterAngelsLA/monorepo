@@ -16,7 +16,7 @@ export type TDataTableCell = {
 export function DataTableCell(props: TDataTableCell) {
   const { children, numberOfLines, textStyle, viewStyle } = props;
 
-  let textNumberOfLines =
+  const textNumberOfLines =
     numberOfLines === null
       ? undefined
       : numberOfLines || DEFAULT_NUMBER_OF_LINES;
