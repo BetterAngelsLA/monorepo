@@ -16,7 +16,6 @@ import {
   FaceSmileIcon,
   FaceTiredIcon,
   IIconProps,
-  PaperclipIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -27,13 +26,6 @@ import {
 import { ComponentType, RefObject, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import MoodSelector from './MoodSelector';
-
-interface IImage {
-  id: string | undefined;
-  uri: string;
-  loading?: boolean;
-  abortController?: AbortController;
-}
 
 interface Mood {
   Icon: ComponentType<IIconProps>;
@@ -212,7 +204,6 @@ export default function Mood(props: IMoodProps) {
     scrollRef,
   } = props;
 
-  const [images, setImages] = useState<IImage[] | undefined>(undefined);
   const [moods, setMoods] = useState<
     | {
         id: string | undefined;
@@ -226,8 +217,6 @@ export default function Mood(props: IMoodProps) {
 
   const isMood = expanded === 'Mood';
   const isLessThanOneMood = moods && moods.length < 1;
-  const isLessThanOneMoodImages = images && images.length < 1;
-  const isGreaterThanZeroMoodImages = images && images?.length > 0;
   const isGreaterThanOneMood = moods && moods.length > 0;
   const isPleasantTab = tab === 'pleasant';
   const isUnpleasantTab = tab === 'unpleasant';
@@ -271,7 +260,7 @@ export default function Mood(props: IMoodProps) {
     setMoods(filteredMoods);
   }, [initialMoods]);
 
-  if (!moods || !images) return null;
+  if (!moods) return null;
 
   return (
     <FieldCard
@@ -279,9 +268,9 @@ export default function Mood(props: IMoodProps) {
       childHeight={isMood ? 'auto' : 0}
       mb="xs"
       actionName={
-        isMood && isLessThanOneMood && isLessThanOneMoodImages ? (
+        isMood && isLessThanOneMood ? (
           ''
-        ) : isGreaterThanOneMood || isGreaterThanZeroMoodImages ? (
+        ) : isGreaterThanOneMood ? (
           <View
             style={{
               flexDirection: 'row',
@@ -300,9 +289,6 @@ export default function Mood(props: IMoodProps) {
                 />
               );
             })}
-            {isGreaterThanZeroMoodImages && (
-              <PaperclipIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
-            )}
           </View>
         ) : (
           <TextMedium size="sm">Add Mood</TextMedium>
