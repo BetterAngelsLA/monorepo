@@ -1,4 +1,4 @@
-FROM python:3.13.0-bullseye AS base
+FROM python:3.13.2-bullseye AS base
 
 ENV PYTHONUNBUFFERED=1
 RUN groupadd --gid 1000 betterangels \
