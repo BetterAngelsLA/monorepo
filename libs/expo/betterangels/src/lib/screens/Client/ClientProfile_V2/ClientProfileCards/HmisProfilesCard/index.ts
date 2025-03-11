@@ -1,0 +1,1 @@
+export { HmisProfilesCard } from './HmisProfilesCard';
