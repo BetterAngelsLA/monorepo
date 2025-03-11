@@ -1,11 +1,9 @@
-from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
 from model_bakery import baker
 from organizations.models import Organization, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
-
 from .baker_recipes import organization_recipe, permission_group_recipe
 
 
@@ -137,26 +135,30 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
 
 
-class AvailableOrganizationGraphQLTests(GraphQLBaseTestCase):
-    def test_available_organizations_query(self) -> None:
+class OrganizationQueryTestCase(GraphQLBaseTestCase):
+    def test_organizations_query(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        # This recipe creates an organization in the process. Including this here because even though
-        # Caseworker orgs are created elsewhere in the test suite, this test should be self-contained.
-        permission_group_recipe.make(name="Caseworker")
-
-        expected_organization_count = Organization.objects.filter(
-            permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
-        ).count()
-
         query = """
-            query {
-                availableOrganizations {
-                    id
-                    name
+            query Organizations($pagination: OffsetPaginationInput) {
+                organizations(pagination: $pagination) {
+                    totalCount
+                    results {
+                        id
+                        name
+                    }
+                    pageInfo {
+                        offset
+                        limit
+                    }
                 }
             }
         """
+        variables = {"pagination": {"offset": 0, "limit": 10}}
+        response = self.execute_graphql(query, variables=variables)
 
-        response = self.execute_graphql(query)
-        self.assertEqual(len(response["data"]["availableOrganizations"]), expected_organization_count)
+        organizations = response["data"]["organizations"]["results"]
+        expected_organizations = Organization.objects.values("id", "name")
+        actual_organizations = [{"id": int(org["id"]), "name": org["name"]} for org in organizations]
+
+        self.assertCountEqual(expected_organizations, actual_organizations)
