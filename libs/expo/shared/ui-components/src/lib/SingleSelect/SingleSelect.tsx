@@ -14,10 +14,8 @@ interface ISingleSelectProps {
   label?: string;
   placeholder?: string;
   onChange: (value: string) => void;
-  items: { displayValue: string; value: string }[];
+  items: { displayValue?: string; value: string }[];
   selectedValue?: string;
-  labelMarginLeft?: TSpacing;
-  boldLabel?: boolean;
   error?: string;
   maxRadioItems?: number;
 }
@@ -41,17 +39,15 @@ export function SingleSelect(props: ISingleSelectProps) {
 
   const asSelect = items.length > maxRadioItems;
 
-  const selectedItem = items.find(
-    (item) => item.displayValue === selectedValue
-  );
+  const selectedItem = items.find((item) => item.value === selectedValue);
 
   if (asSelect) {
     return (
       <Picker
         error={error}
         label={label}
-        value={selectedItem?.value}
-        displayValue={selectedItem?.displayValue}
+        selectedValue={selectedItem?.value}
+        selectedDisplayValue={selectedItem?.displayValue}
         onChange={onChange}
         placeholder={placeholder}
         items={items}
@@ -81,8 +77,8 @@ export function SingleSelect(props: ISingleSelectProps) {
         <Radio
           key={value || displayValue}
           onPress={onChange}
+          selectedValue={selectedItem?.value}
           displayValue={displayValue}
-          selectedItem={selectedItem?.value}
           value={value}
         />
       ))}

@@ -8,7 +8,7 @@ describe('Radio component', () => {
         displayValue="Option Test"
         onPress={jest.fn()}
         value="test"
-        selectedItem="other"
+        selectedValue="other"
       />
     );
     expect(getByText('Option Test')).toBeTruthy();
@@ -21,7 +21,7 @@ describe('Radio component', () => {
         displayValue="Pressable Option"
         onPress={mockOnPress}
         value="value1"
-        selectedItem="notValue1"
+        selectedValue="notValue1"
       />
     );
     fireEvent.press(getByText('Pressable Option'));
@@ -32,9 +32,9 @@ describe('Radio component', () => {
     const mockOnPress = jest.fn();
     const { getByText } = render(
       <Radio
-        displayValue="No Value Option"
         onPress={mockOnPress}
-        selectedItem="someValue"
+        selectedValue="someValue"
+        value="No Value Option"
       />
     );
     fireEvent.press(getByText('No Value Option'));
@@ -47,7 +47,7 @@ describe('Radio component', () => {
         displayValue="Accessibility Test"
         onPress={jest.fn()}
         value="test"
-        selectedItem="other"
+        selectedValue="other"
       />
     );
 

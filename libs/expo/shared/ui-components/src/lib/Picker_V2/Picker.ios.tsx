@@ -13,7 +13,8 @@ export default function Picker(props: IPickerProps) {
   const {
     onChange,
     error,
-    displayValue,
+    selectedDisplayValue,
+    selectedValue,
     value,
     placeholder,
     items,
@@ -56,9 +57,13 @@ export default function Picker(props: IPickerProps) {
           accessibilityRole="button"
         >
           <TextRegular
-            color={displayValue ? Colors.PRIMARY_EXTRA_DARK : Colors.NEUTRAL}
+            color={
+              selectedDisplayValue || selectedValue
+                ? Colors.PRIMARY_EXTRA_DARK
+                : Colors.NEUTRAL
+            }
           >
-            {displayValue || placeholder}
+            {selectedDisplayValue || selectedValue || placeholder}
           </TextRegular>
           <ChevronLeftIcon size="sm" rotate={'-90deg'} />
         </Pressable>
@@ -107,7 +112,7 @@ export default function Picker(props: IPickerProps) {
             {items.map((item) => (
               <RNPicker.Item
                 key={item.value}
-                label={item.displayValue}
+                label={item.displayValue || item.value}
                 value={item.value}
               />
             ))}

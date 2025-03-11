@@ -10,23 +10,23 @@ import TextRegular from '../TextRegular';
 interface IRadioProps {
   displayValue?: string;
   onPress: (value: string) => void;
-  value?: string;
-  selectedItem?: string;
+  value: string;
+  selectedValue?: string;
 }
 
 export function Radio(props: IRadioProps) {
-  const { displayValue, onPress, value, selectedItem } = props;
+  const { displayValue, onPress, value, selectedValue } = props;
 
   return (
     <Pressable
-      accessibilityHint={`selects ${displayValue}`}
+      accessibilityHint={`selects ${value}`}
       accessibilityRole="button"
       accessible
       style={[
         styles.container,
         {
           backgroundColor:
-            value === selectedItem ? Colors.PRIMARY_EXTRA_LIGHT : Colors.WHITE,
+            value === selectedValue ? Colors.PRIMARY_EXTRA_LIGHT : Colors.WHITE,
           borderColor: Colors.NEUTRAL_LIGHT,
           paddingHorizontal: Spacings.sm,
           paddingVertical: Spacings.xs,
@@ -35,13 +35,11 @@ export function Radio(props: IRadioProps) {
       ]}
       onPress={() => {
         Keyboard.dismiss();
-        if (value) {
-          onPress(value);
-        }
+        onPress(value);
       }}
     >
-      {displayValue && <TextRegular ml="xs">{displayValue}</TextRegular>}
-      <View style={[styles.radio, value === selectedItem && styles.checked]} />
+      <TextRegular ml="xs">{displayValue || value}</TextRegular>
+      <View style={[styles.radio, value === selectedValue && styles.checked]} />
     </Pressable>
   );
 }

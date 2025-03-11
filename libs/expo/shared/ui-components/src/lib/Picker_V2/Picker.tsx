@@ -11,10 +11,11 @@ import TextRegular from '../TextRegular';
 export interface IPickerProps {
   onChange: (value: string) => void;
   error?: string;
-  displayValue?: string | null;
+  selectedValue?: string | null;
+  selectedDisplayValue?: string | null;
   value?: string | null;
   placeholder: string;
-  items: { displayValue: string; value: string }[];
+  items: { displayValue?: string; value: string }[];
   label?: string;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -28,7 +29,7 @@ export default function Picker(props: IPickerProps) {
   const {
     onChange,
     error,
-    displayValue,
+    selectedValue,
     placeholder,
     items,
     label,
@@ -60,14 +61,14 @@ export default function Picker(props: IPickerProps) {
       <RNPicker
         style={styles.picker}
         placeholder={placeholder}
-        selectedValue={displayValue || ''}
+        selectedValue={selectedValue || ''}
         onValueChange={onChange}
       >
         {items.map((item) => (
           <RNPicker.Item
             style={styles.itemStyle}
             key={item.value}
-            label={item.displayValue}
+            label={item.displayValue || item.value}
             value={item.value}
           />
         ))}
