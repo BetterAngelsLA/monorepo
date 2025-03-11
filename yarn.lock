@@ -4835,6 +4835,7 @@ __metadata:
     expo-camera: "npm:~16.0.16"
     expo-clipboard: "npm:~7.0.1"
     expo-constants: "npm:~17.0.5"
+    expo-crypto: "npm:~14.0.2"
     expo-dev-client: "npm:~5.0.12"
     expo-document-picker: "npm:^13.0.3"
     expo-font: "npm:~13.0.3"

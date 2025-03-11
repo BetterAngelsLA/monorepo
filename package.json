@@ -39,6 +39,7 @@
     "expo-camera": "~16.0.16",
     "expo-clipboard": "~7.0.1",
     "expo-constants": "~17.0.5",
+    "expo-crypto": "~14.0.2",
     "expo-dev-client": "~5.0.12",
     "expo-document-picker": "^13.0.3",
     "expo-font": "~13.0.3",
