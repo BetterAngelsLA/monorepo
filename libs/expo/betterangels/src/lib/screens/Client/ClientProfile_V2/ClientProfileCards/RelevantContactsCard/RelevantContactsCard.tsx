@@ -1,3 +1,4 @@
+import { RelationshipTypeEnum } from 'libs/expo/betterangels/src/lib/apollo';
 import { ClientProfileCardContainer } from '../../../../../ui-components';
 import { TClientProfile } from '../../types';
 import { EmptyState } from './EmptyState';
@@ -12,19 +13,37 @@ export function RelevantContactsCard(props: TProps) {
 
   const { contacts } = clientProfile || {};
 
-  if (!contacts?.length) {
+  const clientContacts = contacts || [];
+
+  const caseManager = clientContacts.find(
+    (contact) =>
+      contact.relationshipToClient === RelationshipTypeEnum.CurrentCaseManager
+  );
+
+  const otherContacts = clientContacts.filter((contact) => {
     return (
-      <ClientProfileCardContainer>
-        <EmptyState />
-      </ClientProfileCardContainer>
+      contact.relationshipToClient &&
+      contact.relationshipToClient !== RelationshipTypeEnum.CurrentCaseManager
     );
-  }
+  });
 
   return (
     <ClientProfileCardContainer>
-      {contacts.map((contact, idx) => {
-        return <RelevantContactCard key={idx} contact={contact} />;
-      })}
+      {!caseManager && <EmptyState title="Current Case Manager" />}
+
+      {caseManager && <RelevantContactCard contact={caseManager} />}
+
+      {!otherContacts.length && (
+        <EmptyState
+          title="Other Contacts"
+          subtitle="(Mother, Aunt, Child, etc)"
+        />
+      )}
+
+      {!!otherContacts.length &&
+        otherContacts.map((contact, idx) => {
+          return <RelevantContactCard key={idx} contact={contact} />;
+        })}
     </ClientProfileCardContainer>
   );
 }

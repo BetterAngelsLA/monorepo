@@ -18,7 +18,8 @@ export function FullNameCard(props: TProps) {
   const content: TClientProfileCardItem[] = [
     {
       header: ['First Name'],
-      rows: [[firstName]],
+      // rows: [[firstName]],
+      rows: [[]],
     },
     {
       header: ['Middle Name'],

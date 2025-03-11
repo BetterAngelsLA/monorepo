@@ -1,5 +1,4 @@
-import { TextBold } from '@monorepo/expo/shared/ui-components';
-import { View, ViewStyle } from 'react-native';
+import { ViewStyle } from 'react-native';
 import {
   ClientProfileCard,
   TClientProfileCardItem,
@@ -12,24 +11,11 @@ type TProps = {
 export function EmptyState(props: TProps) {
   const { style } = props;
 
-  const content: TClientProfileCardItem[] = [
+  const emptyField: TClientProfileCardItem[] = [
     {
-      header: [Header()],
       rows: [[]],
     },
   ];
 
-  return (
-    <View style={style}>
-      <ClientProfileCard items={content} />
-    </View>
-  );
-}
-
-function Header() {
-  return (
-    <View>
-      <TextBold size="sm">HMIS ID</TextBold>
-    </View>
-  );
+  return <ClientProfileCard style={style} title="HMIS ID" items={emptyField} />;
 }

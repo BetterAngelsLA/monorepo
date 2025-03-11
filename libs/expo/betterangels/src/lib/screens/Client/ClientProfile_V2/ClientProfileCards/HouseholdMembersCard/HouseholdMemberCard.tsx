@@ -1,4 +1,4 @@
-import { TextBold, parseDate } from '@monorepo/expo/shared/ui-components';
+import { parseDate } from '@monorepo/expo/shared/ui-components';
 import { View, ViewStyle } from 'react-native';
 import { clientHouseholdMemberEnumDisplay } from '../../../../../static';
 import {
@@ -43,13 +43,13 @@ export function HouseholdMemberCard(props: TProps) {
 
   return (
     <View style={style}>
-      {!!relationshipToClient && (
-        <TextBold size="md" mb="sm">
-          {clientHouseholdMemberEnumDisplay[relationshipToClient]}
-        </TextBold>
-      )}
-
-      <ClientProfileCard items={content} />
+      <ClientProfileCard
+        title={
+          relationshipToClient &&
+          clientHouseholdMemberEnumDisplay[relationshipToClient]
+        }
+        items={content}
+      />
     </View>
   );
 }

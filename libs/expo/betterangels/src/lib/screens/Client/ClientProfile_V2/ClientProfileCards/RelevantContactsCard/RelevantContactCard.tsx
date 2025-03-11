@@ -1,7 +1,6 @@
-import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
+import { clientRelevantContactEnumDisplay } from 'libs/expo/betterangels/src/lib/static';
 import { View, ViewStyle } from 'react-native';
-import { clientRelevantContactEnumDisplay } from '../../../../../static';
 import {
   ClientProfileCard,
   TClientProfileCardItem,
@@ -44,13 +43,13 @@ export function RelevantContactCard(props: TProps) {
 
   return (
     <View style={style}>
-      {!!relationshipToClient && (
-        <TextBold size="md" mb="sm">
-          {clientRelevantContactEnumDisplay[relationshipToClient]}
-        </TextBold>
-      )}
-
-      <ClientProfileCard items={content} />
+      <ClientProfileCard
+        title={
+          relationshipToClient &&
+          clientRelevantContactEnumDisplay[relationshipToClient]
+        }
+        items={content}
+      />
     </View>
   );
 }

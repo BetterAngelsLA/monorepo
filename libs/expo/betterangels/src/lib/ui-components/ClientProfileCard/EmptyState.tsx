@@ -17,9 +17,11 @@ export function EmptyState(props: TProps) {
     return placeholder;
   }
 
+  const value = placeholder || 'Not Provided';
+
   return (
     <TextBold size="sm" color={Colors.NEUTRAL_DARK}>
-      Not Provided
+      {value}
     </TextBold>
   );
 }
