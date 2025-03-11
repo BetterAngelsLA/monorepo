@@ -11,8 +11,8 @@ import {
   TextBold,
   TextButton,
   TextRegular,
+  parseDate,
 } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
 import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import { HmisProfileType, Maybe } from '../apollo';
@@ -111,8 +111,12 @@ export default function ClientCard(props: IClientCardProps) {
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
             {!!client.dateOfBirth && (
               <TextRegular size="xs">
-                {format(new Date(client.dateOfBirth), 'MM/dd/yyyy')} (
-                {client.age})
+                {parseDate({
+                  date: client.dateOfBirth,
+                  inputFormat: 'yyyy-MM-dd',
+                  outputFormat: 'MM/dd/yyyy',
+                })}{' '}
+                ({client.age})
               </TextRegular>
             )}
             {!!client.dateOfBirth && !!client.heightInInches && (

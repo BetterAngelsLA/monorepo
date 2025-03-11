@@ -786,6 +786,12 @@ export type InteractionAuthorFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type InteractionAuthorOrder = {
+  firstName?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  lastName?: InputMaybe<Ordering>;
+};
+
 export type InteractionAuthorType = {
   __typename?: 'InteractionAuthorType';
   firstName?: Maybe<Scalars['String']['output']>;
@@ -1433,6 +1439,7 @@ export type QueryClientProfilesPaginatedArgs = {
 
 export type QueryInteractionAuthorsArgs = {
   filters?: InputMaybe<InteractionAuthorFilter>;
+  order?: InputMaybe<InteractionAuthorOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

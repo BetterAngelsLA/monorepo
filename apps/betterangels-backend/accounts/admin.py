@@ -1,9 +1,11 @@
-from typing import Type, cast
+from typing import Optional, Type, cast
 
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
+from django.urls import reverse
+from django.utils.html import format_html
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 
 from .admin_request_mixin import AdminRequestMixin
@@ -83,12 +85,16 @@ class UserAdmin(BaseUserAdmin):
     )
     # Not convinced this is the right type; we cast our custom User as a DefaultUser.
     model = cast(Type[DefaultUser], User)
-    list_display = [
-        "id",
-        "full_name",
-        "email",
-        "is_client",
-    ]
+    list_display = ["id", "full_name", "email", "is_client", "client_id"]
 
     def is_client(self, obj: User) -> bool:
         return hasattr(obj, "client_profile")
+
+    def client_id(self, obj: User) -> Optional[str]:
+        return (
+            format_html(
+                f'<a href="{reverse("admin:clients_clientprofile_change", args=(obj.client_profile.id,))}">{obj.client_profile.id}</a>'
+            )
+            if hasattr(obj, "client_profile")
+            else None
+        )

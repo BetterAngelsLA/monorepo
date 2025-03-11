@@ -5,6 +5,7 @@ import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
 export type InteractionAuthorsQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.InteractionAuthorFilter>;
+  order?: Types.InputMaybe<Types.InteractionAuthorOrder>;
   pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
 }>;
 
@@ -13,8 +14,8 @@ export type InteractionAuthorsQuery = { __typename?: 'Query', interactionAuthors
 
 
 export const InteractionAuthorsDocument = gql`
-    query InteractionAuthors($filters: InteractionAuthorFilter, $pagination: OffsetPaginationInput) {
-  interactionAuthors(filters: $filters, pagination: $pagination) {
+    query InteractionAuthors($filters: InteractionAuthorFilter, $order: InteractionAuthorOrder, $pagination: OffsetPaginationInput) {
+  interactionAuthors(filters: $filters, order: $order, pagination: $pagination) {
     totalCount
     results {
       firstName
@@ -43,6 +44,7 @@ export const InteractionAuthorsDocument = gql`
  * const { data, loading, error } = useInteractionAuthorsQuery({
  *   variables: {
  *      filters: // value for 'filters'
+ *      order: // value for 'order'
  *      pagination: // value for 'pagination'
  *   },
  * });
