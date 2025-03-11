@@ -8,6 +8,27 @@
   },
   "author": "",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "@testing-library/react": "*",
+    "react-router-dom": "*",
+    "@tanstack/react-query": "*",
+    "react": "*",
+    "react-native-svg": "*",
+    "jotai": "*",
+    "@sanity/client": "*",
+    "@portabletext/react": "*",
+    "react-mailchimp-subscribe": "*",
+    "remeda": "*",
+    "@portabletext/types": "*",
+    "uuid": "*",
+    "react-ga4": "*",
+    "clsx": "*",
+    "tailwind-merge": "*",
+    "react-dom": "*",
+    "@nx/react": "*",
+    "@nx/vite": "*",
+    "@vitejs/plugin-react": "*",
+    "vite": "*"
+  },
   "devDependencies": {}
 }
