@@ -56,7 +56,11 @@
     "@react-native-picker/picker": "*",
     "react-native-select-dropdown": "*",
     "react-native-paper": "*",
-    "expo-updates": "*"
+    "expo-updates": "*",
+    "@react-native-cookies/cookies": "*",
+    "expo-document-picker": "*",
+    "expo-file-system": "*",
+    "react-native-pdf": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",
