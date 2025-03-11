@@ -1,9 +1,4 @@
-import {
-  Attachments,
-  MoodEnum,
-  NoteNamespaceEnum,
-  ViewNoteQuery,
-} from '@monorepo/expo/betterangels';
+import { MoodEnum, ViewNoteQuery } from '@monorepo/expo/betterangels';
 import {
   FaceAngryIcon,
   FaceCalmIcon,
@@ -54,7 +49,6 @@ interface IMoodProps {
   noteId: string | undefined;
   scrollRef: RefObject<ScrollView>;
   moods: ViewNoteQuery['note']['moods'];
-  attachments: ViewNoteQuery['note']['attachments'];
 }
 
 const MOOD_DATA: Mood[] = [
@@ -215,7 +209,6 @@ export default function Mood(props: IMoodProps) {
     setExpanded,
     noteId,
     moods: initialMoods,
-    attachments,
     scrollRef,
   } = props;
 
@@ -277,18 +270,6 @@ export default function Mood(props: IMoodProps) {
     }));
     setMoods(filteredMoods);
   }, [initialMoods]);
-
-  useEffect(() => {
-    if (attachments.length === 0) {
-      setImages([]);
-      return;
-    }
-    const newImages = attachments.map((attachment) => ({
-      id: attachment.id,
-      uri: attachment.file.url,
-    }));
-    setImages(newImages);
-  }, [attachments]);
 
   if (!moods || !images) return null;
 
@@ -359,12 +340,6 @@ export default function Mood(props: IMoodProps) {
           tab={tab}
           noteId={noteId}
           moodsData={MOOD_DATA}
-        />
-        <Attachments
-          noteId={noteId}
-          namespace={NoteNamespaceEnum.MoodAssessment}
-          images={images}
-          setImages={setImages}
         />
       </View>
     </FieldCard>
