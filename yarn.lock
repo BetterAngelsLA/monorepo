@@ -4773,7 +4773,7 @@ __metadata:
     "@nx/vite": "npm:20.5.0"
     "@nx/web": "npm:20.5.0"
     "@nx/workspace": "npm:20.5.0"
-    "@nxlv/python": "npm:20.5.1"
+    "@nxlv/python": "npm:20.7.0"
     "@portabletext/react": "npm:^3.2.0"
     "@react-native-async-storage/async-storage": "npm:1.23.1"
     "@react-native-community/datetimepicker": "npm:8.2.0"
@@ -5607,9 +5607,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nxlv/python@npm:20.5.1":
-  version: 20.5.1
-  resolution: "@nxlv/python@npm:20.5.1"
+"@nxlv/python@npm:20.7.0":
+  version: 20.7.0
+  resolution: "@nxlv/python@npm:20.7.0"
   dependencies:
     "@iarna/toml": "npm:^2.2.5"
     "@nx/devkit": "npm:^20.0.0"
@@ -5623,7 +5623,7 @@ __metadata:
     semver: "npm:^7.5.3"
     tslib: "npm:^2.3.0"
     uuid: "npm:^9.0.0"
-  checksum: 10/07e0acd9eef5d7b5db5e2520f75ef8d3511c93e43fa86f628f1555c17aa6b06d33b42aa61217827ad32df16bd67bbd474f9a67b17c232b0d9dd48507845bc35a
+  checksum: 10/1796ebcc81d4359ccfefa03065d4d735d3bc7de194c98fd6266cd7251b19a8abeb6c15bc51ebba874a21ced42facba501b1974f92b599e5aee24550df67e8f34
   languageName: node
   linkType: hard
 
