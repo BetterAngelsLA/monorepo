@@ -28,6 +28,7 @@ export { default as ImagePicker } from './ImagePicker';
 export { default as ImageViewer } from './ImageViewer';
 export { default as Input } from './Input';
 export { default as InteractionCamera } from './InteractionCamera';
+export { Length, TLengthUnit, getFormattedLength } from './Length';
 export { default as Loading } from './Loading';
 export { default as MediaPickerModal } from './MediaPickerModal';
 export { BaseModal } from './Modal';

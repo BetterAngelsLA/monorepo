@@ -13,7 +13,7 @@ export const ClientProfileCardTitles: Record<ClientProfileCardEnum, string> = {
   [ClientProfileCardEnum.FullName]: 'Full Name',
   [ClientProfileCardEnum.PersonalInfo]: 'Personal Info',
   [ClientProfileCardEnum.ImportantNotes]: 'Important Notes',
-  [ClientProfileCardEnum.Demographic]: 'Demographic',
+  [ClientProfileCardEnum.Demographic]: 'Demographic Info',
   [ClientProfileCardEnum.ContactInfo]: 'Contact Info',
   [ClientProfileCardEnum.RelevantContacts]: 'Relevant Contacts',
   [ClientProfileCardEnum.Household]: 'Household',
