@@ -47,7 +47,7 @@ RUN ARCH=$(uname -m) && \
 
 # Install Node
 # https://github.com/nodejs/docker-node/blob/151ec75067877000120d634fc7fd2a18c544e3d4/18/bullseye/Dockerfile
-ENV NODE_VERSION=20.12.2
+ENV NODE_VERSION=22.14.0
 
 RUN ARCH= && dpkgArch="$(dpkg --print-architecture)" \
   && case "${dpkgArch##*-}" in \
