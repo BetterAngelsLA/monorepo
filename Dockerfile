@@ -32,7 +32,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
     && apt-get install -y postgresql-client-16
 
 # Pin due to: https://github.com/aws/aws-cli/issues/8320
-ENV AWS_CLI_VERSION=2.15.19
+ENV AWS_CLI_VERSION=2.24.21
 RUN ARCH=$(uname -m) && \
   if [ "$ARCH" = "x86_64" ]; then \
     curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-${AWS_CLI_VERSION}.zip" -o "awscliv2.zip"; \
