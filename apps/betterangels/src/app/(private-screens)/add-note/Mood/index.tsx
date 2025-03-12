@@ -1,9 +1,4 @@
-import {
-  Attachments,
-  MoodEnum,
-  NoteNamespaceEnum,
-  ViewNoteQuery,
-} from '@monorepo/expo/betterangels';
+import { MoodEnum, ViewNoteQuery } from '@monorepo/expo/betterangels';
 import {
   FaceAngryIcon,
   FaceCalmIcon,
@@ -21,7 +16,6 @@ import {
   FaceSmileIcon,
   FaceTiredIcon,
   IIconProps,
-  PaperclipIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -32,13 +26,6 @@ import {
 import { ComponentType, RefObject, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import MoodSelector from './MoodSelector';
-
-interface IImage {
-  id: string | undefined;
-  uri: string;
-  loading?: boolean;
-  abortController?: AbortController;
-}
 
 interface Mood {
   Icon: ComponentType<IIconProps>;
@@ -54,7 +41,6 @@ interface IMoodProps {
   noteId: string | undefined;
   scrollRef: RefObject<ScrollView>;
   moods: ViewNoteQuery['note']['moods'];
-  attachments: ViewNoteQuery['note']['attachments'];
 }
 
 const MOOD_DATA: Mood[] = [
@@ -215,11 +201,9 @@ export default function Mood(props: IMoodProps) {
     setExpanded,
     noteId,
     moods: initialMoods,
-    attachments,
     scrollRef,
   } = props;
 
-  const [images, setImages] = useState<IImage[] | undefined>(undefined);
   const [moods, setMoods] = useState<
     | {
         id: string | undefined;
@@ -233,8 +217,6 @@ export default function Mood(props: IMoodProps) {
 
   const isMood = expanded === 'Mood';
   const isLessThanOneMood = moods && moods.length < 1;
-  const isLessThanOneMoodImages = images && images.length < 1;
-  const isGreaterThanZeroMoodImages = images && images?.length > 0;
   const isGreaterThanOneMood = moods && moods.length > 0;
   const isPleasantTab = tab === 'pleasant';
   const isUnpleasantTab = tab === 'unpleasant';
@@ -278,19 +260,7 @@ export default function Mood(props: IMoodProps) {
     setMoods(filteredMoods);
   }, [initialMoods]);
 
-  useEffect(() => {
-    if (attachments.length === 0) {
-      setImages([]);
-      return;
-    }
-    const newImages = attachments.map((attachment) => ({
-      id: attachment.id,
-      uri: attachment.file.url,
-    }));
-    setImages(newImages);
-  }, [attachments]);
-
-  if (!moods || !images) return null;
+  if (!moods) return null;
 
   return (
     <FieldCard
@@ -298,9 +268,9 @@ export default function Mood(props: IMoodProps) {
       childHeight={isMood ? 'auto' : 0}
       mb="xs"
       actionName={
-        isMood && isLessThanOneMood && isLessThanOneMoodImages ? (
+        isMood && isLessThanOneMood ? (
           ''
-        ) : isGreaterThanOneMood || isGreaterThanZeroMoodImages ? (
+        ) : isGreaterThanOneMood ? (
           <View
             style={{
               flexDirection: 'row',
@@ -319,9 +289,6 @@ export default function Mood(props: IMoodProps) {
                 />
               );
             })}
-            {isGreaterThanZeroMoodImages && (
-              <PaperclipIcon size="md" color={Colors.PRIMARY_EXTRA_DARK} />
-            )}
           </View>
         ) : (
           <TextMedium size="sm">Add Mood</TextMedium>
@@ -359,12 +326,6 @@ export default function Mood(props: IMoodProps) {
           tab={tab}
           noteId={noteId}
           moodsData={MOOD_DATA}
-        />
-        <Attachments
-          noteId={noteId}
-          namespace={NoteNamespaceEnum.MoodAssessment}
-          images={images}
-          setImages={setImages}
         />
       </View>
     </FieldCard>
