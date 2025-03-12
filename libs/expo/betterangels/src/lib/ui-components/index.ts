@@ -14,6 +14,7 @@ export { default as DateOfBirthPicker } from './DateOfBirthPicker';
 export { default as DocumentModal } from './DocumentModal';
 export { default as EyeColorPicker } from './EyeColorPicker';
 export { FileThumbnail } from './FileThumbnail/FileThumbnail';
+export { default as FormCard } from './FormCard';
 export { default as GenderPicker } from './GenderPicker';
 export { default as HairColorPicker } from './HairColorPicker';
 export { default as Header } from './Header';
