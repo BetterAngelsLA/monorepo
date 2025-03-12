@@ -44,6 +44,8 @@ class RoomStyleChoices(models.TextChoices):
     CONGREGANT = "congregant", _("Congregant (Open)")
     CUBICLE_LOW_WALLS = "cubicle_low_walls", _("Cubicle (Low Walls)")
     CUBICLE_HIGH_WALLS = "cubicle_high_walls", _("Cubicle (High Walls)")
+    HIGH_BUNK = "high_bunk", _("High Bunk")
+    LOW_BUNK = "low_bunk", _("Low Bunk")
     SHARED_ROOMS = "shared_rooms", _("Shared Rooms")
     SINGLE_ROOM = "single_room", _("Single Room")
     MOTEL_ROOM = "motel_room", _("Motel Room")
@@ -55,6 +57,7 @@ class RoomStyleChoices(models.TextChoices):
 class AccessibilityChoices(models.TextChoices):
     MEDICAL_EQUIPMENT_PERMITTED = "medical_equipment_permitted", _("Medical Equipment Permitted")
     WHEELCHAIR_ACCESSIBLE = "wheelchair_accessible", _("Wheelchair Accessible")
+    ADA_ROOMS = "ada_rooms", _("ADA Rooms Available")
 
 
 @strawberry.enum
@@ -72,6 +75,7 @@ class PetChoices(models.TextChoices):
     DOGS_OVER_25_LBS = "dogs_over_25_lbs", _("Dogs (> 25 lbs)")
     EXOTICS = "exotics", _("Exotics")
     SERVICE_ANIMALS = "service_animals", _("Service Animals")
+    PET_AREA = "pet_area", _("Pet Area")
     NO_PETS_ALLOWED = "no_pets_allowed", _("No Pets Allowed")
 
 
@@ -104,6 +108,8 @@ class GeneralServiceChoices(models.TextChoices):
     MAIL = "mail", _("Mail")
     PHONE = "phone", _("Phone")
     TRANSPORTATION = "transportation", _("Transportation")
+    LAUNDRY = "laundry", _("Laundry Services")
+    TLS = "tls", _("TLS (Time Limited Subsidies)")
 
 
 @strawberry.enum
@@ -128,6 +134,10 @@ class EntryRequirementChoices(models.TextChoices):
     PHOTO_ID = "photo_id", _("Photo ID")
     REFERRAL = "referral", _("Referral")
     RESERVATION = "reservation", _("Reservation")
+    BACKGROUND = "background", _("Background Check")
+    HOMELESS_VERIFICATION = "homeless_verification", _("Homeless Verification/Observation")
+    WALK_UPS = "walk_ups", _("Walk-Ups")
+    VEHICLE_REGISTRATION = "vehicle_registration", _("Vehicle Registration/Insurance")
 
 
 # Ecosystem Information
@@ -281,3 +291,22 @@ class StatusChoices(models.TextChoices):
     PENDING = "pending", _("Pending")
     APPROVED = "approved", _("Approved")
     INACTIVE = "inactive", _("Inactive")
+
+
+class ExitPolicyChoices(models.TextChoices):
+    MIA = "mia", _("Exit after 72 hours of being MIA")
+    VIOLENCE = "violence", _("Exit due to violence to self or others")
+    MITIGATION = "mitigation", _("30 Days Mitigation plan prior to exits")
+    OTHER = "other", _("Other")
+
+
+class MealServiceChoices(models.TextChoices):
+    BREAKFAST = "breakfast", _("Breakfast")
+    LUNCH = "lunch", _("Lunch")
+    DINNER = "dinner", _("Dinner")
+
+
+class MatchedReferralRequirementChoices(models.TextChoices):
+    SERVICE_PROVIDER_SUBMISSION = "service_provider_submission", _("Service Provider Submission")
+    SELF_REFERRAL = "self_referral", _("Self Referral Option")
+    SAME_DAY_INTAKE = "same_day_intake", _("Same Day Intake")
