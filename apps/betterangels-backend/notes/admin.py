@@ -135,6 +135,10 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         "created_by__email",
         "client__email",
         "organization__name",
+        "client__first_name",
+        "client__last_name",
+        "client__middle_name",
+        "client__client_profile__nickname",
     )
     inlines = [
         MoodInline,
