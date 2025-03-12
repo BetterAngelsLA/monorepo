@@ -74,5 +74,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacings.xs,
     marginBottom: Spacings.xxs,
+    alignItems: 'center',
   },
 });
