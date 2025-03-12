@@ -86,6 +86,7 @@ class UserAdmin(BaseUserAdmin):
     # Not convinced this is the right type; we cast our custom User as a DefaultUser.
     model = cast(Type[DefaultUser], User)
     list_display = ["id", "full_name", "email", "is_client", "client_id"]
+    list_filter = ["organizations_organization", "is_active", "is_staff", "is_superuser"]
 
     def is_client(self, obj: User) -> bool:
         return hasattr(obj, "client_profile")

@@ -241,12 +241,6 @@ export default function AddNote() {
     }
   }
 
-  // TODO: Will be back with moods
-  // const MoodAttachments = useMemo(
-  //   () => filterAttachments(NoteNamespaceEnum.MoodAssessment),
-  //   [data]
-  // );
-
   if (!data || isLoading) {
     return null;
   }
@@ -269,7 +263,6 @@ export default function AddNote() {
 
         {/* TODO: Will be back later */}
         {/* <Mood
-          attachments={MoodAttachments}
           moods={data.note.moods}
           {...props}
         /> */}

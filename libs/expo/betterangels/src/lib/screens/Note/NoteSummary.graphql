@@ -8,15 +8,6 @@ query NoteSummary($id: ID!) {
       publicDetails
       purpose
       team
-      attachments {
-        id
-        namespace
-        attachmentType
-        file {
-          url
-          name
-        }
-      }
       client {
         id
         email
