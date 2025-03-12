@@ -2,6 +2,7 @@ import { StarIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
+import { ReactElement } from 'react';
 import { View } from 'react-native';
 
 type TPhoneNumber = {
@@ -27,7 +28,9 @@ export function PhoneNumberRows(props: TPhoneNumbers) {
 
   normalizedPhones.sort((a, b) => Number(b.isPrimary) - Number(a.isPrimary));
 
-  return normalizedPhones.map((phone, idx) => {
+  const rows: ReactElement[][] = [];
+
+  normalizedPhones.forEach((phone, idx) => {
     const row = (
       <PhoneNumberRow
         key={idx}
@@ -36,14 +39,20 @@ export function PhoneNumberRows(props: TPhoneNumbers) {
       />
     );
 
-    return [row];
+    if (row) {
+      rows.push([row]);
+    }
   });
+
+  return rows;
 }
 
 function PhoneNumberRow(props: TPhoneNumber) {
   const { number, isPrimary } = props;
 
-  if (!number) {
+  const formattedNumber = number && formatPhoneNumber(number);
+
+  if (!formattedNumber) {
     return null;
   }
 
@@ -56,8 +65,8 @@ function PhoneNumberRow(props: TPhoneNumber) {
         alignItems: 'center',
       }}
     >
-      {isPrimary && <StarIcon color={Colors.WARNING} />}
-      <TextBold size="sm">{formatPhoneNumber(number)}</TextBold>
+      <TextBold size="sm">{formattedNumber}</TextBold>
+      {isPrimary && <StarIcon color={Colors.WARNING} size="md" />}
     </View>
   );
 }
