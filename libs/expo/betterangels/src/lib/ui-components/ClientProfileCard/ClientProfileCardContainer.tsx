@@ -1,5 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode } from 'react';
+import { Divider } from '@monorepo/expo/shared/ui-components';
+import { Children, Fragment, ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 
 type TProps = {
@@ -10,7 +11,22 @@ type TProps = {
 export function ClientProfileCardContainer(props: TProps) {
   const { style, children } = props;
 
-  return <View style={[styles.container, style]}>{children}</View>;
+  const childrenArray = Children.toArray(children);
+
+  return (
+    <View style={[styles.container, style]}>
+      {childrenArray.map((child, index) => {
+        const showDivider = index < childrenArray.length - 1;
+
+        return (
+          <Fragment key={index}>
+            {child}
+            {showDivider && <Divider />}
+          </Fragment>
+        );
+      })}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
