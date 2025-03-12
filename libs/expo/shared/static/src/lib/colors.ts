@@ -44,4 +44,7 @@ export enum Colors {
   WARNING = '#FFC700',
   WARNING_DARK = '#685100',
   WARNING_EXTRA_DARK = '#463700',
+
+  IOS_GRAY = '#d1d3da',
+  IOS_BLUE = '#007aff',
 }
