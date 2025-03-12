@@ -76,8 +76,12 @@ class NoteResource(resources.ModelResource):
             "notes",
         )
 
-    def dehydrate_client_id(self, note: Note) -> Optional[int]:
-        return note.client.client_profile.id if note.client else None
+    def dehydrate_client_id(self, note: Note) -> int | str:
+        return (
+            note.client.client_profile.id
+            if note.client and hasattr(note.client, "client_profile")
+            else "MISSING CLIENT ID"
+        )
 
     def dehydrate_interacted_at(self, note: Note) -> Optional[str]:
         return note.interacted_at.date().strftime("%m/%d/%Y") if note.interacted_at else None
