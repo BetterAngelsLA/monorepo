@@ -25,6 +25,7 @@ skip_glob = ["*/migrations/*"]
 
 [tool.poetry.dependencies]
 python = "3.13.2"
+django-admin-rangefilter = "^0.13.2"
 
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"

@@ -9,6 +9,7 @@ from import_export.formats.base_formats import CSV
 from import_export.widgets import ForeignKeyWidget
 from notes.enums import ServiceEnum
 from organizations.models import Organization
+from rangefilter.filters import DateRangeFilterBuilder
 
 from .models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest, Task
 
@@ -124,9 +125,11 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         "updated_at",
     )
     list_filter = (
+        ("interacted_at", DateRangeFilterBuilder()),
+        "organization",
         "is_submitted",
-        "created_at",
-        "updated_at",
+        ("created_at", DateRangeFilterBuilder()),
+        ("updated_at", DateRangeFilterBuilder()),
     )
     search_fields = (
         "purpose",
