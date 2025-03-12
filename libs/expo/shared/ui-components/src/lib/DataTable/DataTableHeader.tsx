@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleProp, StyleSheet, TextStyle, ViewStyle } from 'react-native';
 import { DataTable as RnpDataTable } from 'react-native-paper';
@@ -24,7 +24,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     borderBottomWidth: 0,
     marginVertical: 0,
-    marginBottom: Spacings.xs,
   },
   defaultTextStyle: {
     color: Colors.PRIMARY_EXTRA_DARK,
