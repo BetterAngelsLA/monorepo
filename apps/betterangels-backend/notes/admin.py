@@ -46,7 +46,7 @@ class MoodInline(admin.TabularInline):
 
 class NoteResource(resources.ModelResource):
     client_id = fields.Field(column_name="Client ID")
-    created_on = fields.Field(column_name="Created On")
+    interacted_at = fields.Field(column_name="Interacted At")
     purpose = fields.Field(column_name="Purpose")
     requested_services = fields.Field(column_name="Requested Services")
     provided_services = fields.Field(column_name="Provided Services")
@@ -64,7 +64,7 @@ class NoteResource(resources.ModelResource):
         model = Note
         fields = (
             "client_id",
-            "created_on",
+            "interacted_at",
             "purpose",
             "provided_services",
             "requested_services",
@@ -78,8 +78,8 @@ class NoteResource(resources.ModelResource):
     def dehydrate_client_id(self, note: Note) -> Optional[int]:
         return note.client.client_profile.id if note.client else None
 
-    def dehydrate_created_on(self, note: Note) -> str:
-        return note.created_at.date().strftime("%m/%d/%Y")
+    def dehydrate_interacted_at(self, note: Note) -> Optional[str]:
+        return note.interacted_at.date().strftime("%m/%d/%Y") if note.interacted_at else None
 
     def dehydrate_purpose(self, note: Note) -> Optional[str]:
         return note.purpose or None
