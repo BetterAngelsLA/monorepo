@@ -7,8 +7,11 @@ import { CardAccordion } from './ClientProfileCards/CardAccordion';
 import { ContactInfoCard } from './ClientProfileCards/ContactInfoCard';
 import { DemographicInfoCard } from './ClientProfileCards/DemographicInfoCard';
 import { FullNameCard } from './ClientProfileCards/FullNameCard';
+import { HmisProfilesCard } from './ClientProfileCards/HmisProfilesCard';
+import { HouseholdMembersCard } from './ClientProfileCards/HouseholdMembersCard';
 import { ImportantNotesCard } from './ClientProfileCards/ImportantNotesCard';
 import { PersonalInfoCard } from './ClientProfileCards/PersonalInfoCard';
+import { RelevantContactsCard } from './ClientProfileCards/RelevantContactsCard';
 import { ClientProfileCardEnum, ClientProfileCardTitles } from './constants';
 import { TClientProfileCardTitle } from './types';
 
@@ -74,6 +77,30 @@ export default function ClientProfileView(props: ProfileProps) {
           setExpandedTitle={setExpandedTitle}
         >
           <ContactInfoCard clientProfile={clientProfile} />
+        </CardAccordion>
+
+        <CardAccordion
+          section={ClientProfileCardEnum.RelevantContacts}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <RelevantContactsCard clientProfile={clientProfile} />
+        </CardAccordion>
+
+        <CardAccordion
+          section={ClientProfileCardEnum.Household}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <HouseholdMembersCard clientProfile={clientProfile} />
+        </CardAccordion>
+
+        <CardAccordion
+          section={ClientProfileCardEnum.HmisIds}
+          expandedTitle={expandedTitle}
+          setExpandedTitle={setExpandedTitle}
+        >
+          <HmisProfilesCard clientProfile={clientProfile} />
         </CardAccordion>
       </View>
     </MainScrollContainer>
