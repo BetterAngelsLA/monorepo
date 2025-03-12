@@ -32,6 +32,7 @@ export function HmisProfileCard(props: TProps) {
       <ClientProfileCard
         title={enumDisplayHmisAgency[agency]}
         items={content}
+        compact
       />
     </View>
   );

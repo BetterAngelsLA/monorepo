@@ -1,6 +1,11 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
+import {
+  SocialMediaIcon,
+  TSocialMediaType,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
+import { StyleSheet, View } from 'react-native';
 import { SocialMediaEnum } from '../../../../../apollo';
 import { enumDisplaySocialMedia } from '../../../../../static';
 
@@ -21,11 +26,15 @@ export function SocialMediaRows(props: TSocialMedias) {
     return [];
   }
 
-  return medias.map((media) => {
-    const row = <SocialMediaRow key={media.id} media={media} />;
+  const content = (
+    <View style={styles.container}>
+      {medias.map((media) => (
+        <SocialMediaRow key={media.id} media={media} />
+      ))}
+    </View>
+  );
 
-    return [row];
-  });
+  return [[content]];
 }
 
 type TSocialMediaRow = {
@@ -42,19 +51,29 @@ function SocialMediaRow(props: TSocialMediaRow) {
   }
 
   return (
-    <View
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        gap: Spacings.xs,
-      }}
-    >
-      <TextBold size="sm">{enumDisplaySocialMedia[platform]}</TextBold>
-      <TextRegular size="sm">-</TextRegular>
+    <View style={styles.socialMediaRow}>
+      <View style={styles.socialMediaType}>
+        <SocialMediaIcon type={platform.toUpperCase() as TSocialMediaType} />
+        <TextRegular size="sm">{enumDisplaySocialMedia[platform]}</TextRegular>
+      </View>
       <TextBold size="sm">{platformUserId}</TextBold>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    gap: Spacings.sm,
+  },
+  socialMediaRow: {
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  socialMediaType: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: Spacings.xs,
+    marginBottom: Spacings.xxs,
+    alignItems: 'center',
+  },
+});

@@ -52,7 +52,7 @@ export function ClientProfileCard(props: TClientProfileCard) {
   const visibleItems = getVisibleItems({ items, showAll });
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={style}>
       <ClientProfileCardHeader title={title} subtitle={subtitle} />
 
       <View
@@ -63,7 +63,7 @@ export function ClientProfileCard(props: TClientProfileCard) {
           const hasTitles = header.some((t) => !!t);
 
           return (
-            <DataTable key={idx}>
+            <DataTable key={idx} style={styles.table}>
               {hasTitles && (
                 <DataTable.Header>
                   {header.map((title, idx) => {
@@ -119,7 +119,6 @@ export function ClientProfileCard(props: TClientProfileCard) {
 }
 
 const styles = StyleSheet.create({
-  container: {},
   cardTitleText: {
     color: Colors.PRIMARY_EXTRA_DARK,
     fontSize: FontSizes.md.fontSize,
@@ -132,6 +131,9 @@ const styles = StyleSheet.create({
   },
   tableViewCompact: {
     gap: Spacings.sm,
+  },
+  table: {
+    gap: Spacings.xs,
   },
   tableHeaderTitleText: {
     color: Colors.PRIMARY_EXTRA_DARK,
