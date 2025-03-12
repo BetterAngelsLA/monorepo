@@ -107,8 +107,8 @@ export function useNotesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Note
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<NotesQuery, NotesQueryVariables>(NotesDocument, options);
         }
-export function useNotesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<NotesQuery, NotesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+export function useNotesSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<NotesQuery, NotesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<NotesQuery, NotesQueryVariables>(NotesDocument, options);
         }
 export type NotesQueryHookResult = ReturnType<typeof useNotesQuery>;
@@ -199,8 +199,8 @@ export function useViewNoteLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<V
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<ViewNoteQuery, ViewNoteQueryVariables>(ViewNoteDocument, options);
         }
-export function useViewNoteSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ViewNoteQuery, ViewNoteQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+export function useViewNoteSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<ViewNoteQuery, ViewNoteQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<ViewNoteQuery, ViewNoteQueryVariables>(ViewNoteDocument, options);
         }
 export type ViewNoteQueryHookResult = ReturnType<typeof useViewNoteQuery>;
@@ -292,8 +292,8 @@ export function useNotesPaginatedLazyQuery(baseOptions?: Apollo.LazyQueryHookOpt
           const options = {...defaultOptions, ...baseOptions}
           return Apollo.useLazyQuery<NotesPaginatedQuery, NotesPaginatedQueryVariables>(NotesPaginatedDocument, options);
         }
-export function useNotesPaginatedSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<NotesPaginatedQuery, NotesPaginatedQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+export function useNotesPaginatedSuspenseQuery(baseOptions?: Apollo.SuspenseQueryHookOptions<NotesPaginatedQuery, NotesPaginatedQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
           return Apollo.useSuspenseQuery<NotesPaginatedQuery, NotesPaginatedQueryVariables>(NotesPaginatedDocument, options);
         }
 export type NotesPaginatedQueryHookResult = ReturnType<typeof useNotesPaginatedQuery>;
