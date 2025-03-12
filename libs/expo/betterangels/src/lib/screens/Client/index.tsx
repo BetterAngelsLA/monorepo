@@ -63,7 +63,7 @@ const getTabComponent = (
     return <Component client={client} />;
   }
 
-  if (!clientRedesignFeatureOn) {
+  if (clientRedesignFeatureOn) {
     return <ClientProfileView client={client} />;
   }
 
