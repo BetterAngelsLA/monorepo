@@ -1,3 +1,5 @@
+from typing import Optional
+
 from common.models import PhoneNumber
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
@@ -24,11 +26,35 @@ class PhoneNumberInline(GenericTabularInline):
 
 @admin.register(ClientProfile)
 class ClientProfileAdmin(admin.ModelAdmin):
-    list_display = ["name", "id", "user__email", "user_id"]
+    list_display = [
+        "name",
+        "id",
+        "user__email",
+        "user_id",
+        "dob",
+        "display_gender",
+        "display_pronouns",
+        "race",
+        "eye_color",
+        "hair_color",
+        "preferred_language",
+        "has_ca_id",
+    ]
     inlines = [HmisProfileInline, PhoneNumberInline]
 
+    def dob(self, obj: ClientProfile) -> Optional[str]:
+        return obj.date_of_birth.isoformat() if obj.date_of_birth else None
+
+    def has_ca_id(self, obj: ClientProfile) -> bool:
+        return obj.california_id is not None
+
     def name(self, obj: ClientProfile) -> str:
-        return obj.user.full_name
+        name_parts = list(filter(None, [obj.user.first_name, obj.user.middle_name, obj.user.last_name]))
+
+        if obj.nickname:
+            name_parts.append(f"({obj.nickname})")
+
+        return " ".join(name_parts).strip()
 
     def user_id(self, obj: ClientProfile) -> str:
         return format_html(f'<a href="{reverse("admin:accounts_user_change", args=(obj.user.id,))}">{obj.user.id}</a>')

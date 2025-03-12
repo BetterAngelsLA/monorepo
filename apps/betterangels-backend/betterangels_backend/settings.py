@@ -124,9 +124,10 @@ INSTALLED_APPS = [
     "pghistory.admin",
     "pgtrigger",
     "django_select2",
+    "import_export",
+    "rangefilter",
     "strawberry_django",
     "waffle",
-    "import_export",
     # Our Apps
     "accounts",
     "clients",

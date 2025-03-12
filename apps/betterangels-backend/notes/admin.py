@@ -9,6 +9,7 @@ from import_export.formats.base_formats import CSV
 from import_export.widgets import ForeignKeyWidget
 from notes.enums import ServiceEnum
 from organizations.models import Organization
+from rangefilter.filters import DateRangeFilterBuilder
 
 from .models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest, Task
 
@@ -46,7 +47,7 @@ class MoodInline(admin.TabularInline):
 
 class NoteResource(resources.ModelResource):
     client_id = fields.Field(column_name="Client ID")
-    created_on = fields.Field(column_name="Created On")
+    interacted_at = fields.Field(column_name="Interacted At")
     purpose = fields.Field(column_name="Purpose")
     requested_services = fields.Field(column_name="Requested Services")
     provided_services = fields.Field(column_name="Provided Services")
@@ -64,7 +65,7 @@ class NoteResource(resources.ModelResource):
         model = Note
         fields = (
             "client_id",
-            "created_on",
+            "interacted_at",
             "purpose",
             "provided_services",
             "requested_services",
@@ -75,11 +76,15 @@ class NoteResource(resources.ModelResource):
             "notes",
         )
 
-    def dehydrate_client_id(self, note: Note) -> Optional[int]:
-        return note.client.client_profile.id if note.client else None
+    def dehydrate_client_id(self, note: Note) -> int | str:
+        return (
+            note.client.client_profile.id
+            if note.client and hasattr(note.client, "client_profile")
+            else "MISSING CLIENT ID"
+        )
 
-    def dehydrate_created_on(self, note: Note) -> str:
-        return note.created_at.date().strftime("%m/%d/%Y")
+    def dehydrate_interacted_at(self, note: Note) -> Optional[str]:
+        return note.interacted_at.date().strftime("%m/%d/%Y") if note.interacted_at else None
 
     def dehydrate_purpose(self, note: Note) -> Optional[str]:
         return note.purpose or None
@@ -124,9 +129,11 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         "updated_at",
     )
     list_filter = (
+        ("interacted_at", DateRangeFilterBuilder()),
+        "organization",
         "is_submitted",
-        "created_at",
-        "updated_at",
+        ("created_at", DateRangeFilterBuilder()),
+        ("updated_at", DateRangeFilterBuilder()),
     )
     search_fields = (
         "purpose",
@@ -135,6 +142,10 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         "created_by__email",
         "client__email",
         "organization__name",
+        "client__first_name",
+        "client__last_name",
+        "client__middle_name",
+        "client__client_profile__nickname",
     )
     inlines = [
         MoodInline,
