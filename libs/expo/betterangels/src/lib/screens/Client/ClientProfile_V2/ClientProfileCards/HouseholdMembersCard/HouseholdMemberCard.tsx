@@ -49,6 +49,7 @@ export function HouseholdMemberCard(props: TProps) {
           clientHouseholdMemberEnumDisplay[relationshipToClient]
         }
         items={content}
+        compact
       />
     </View>
   );

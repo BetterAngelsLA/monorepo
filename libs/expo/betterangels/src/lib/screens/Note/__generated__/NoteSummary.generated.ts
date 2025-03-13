@@ -8,7 +8,7 @@ export type NoteSummaryQueryVariables = Types.Exact<{
 }>;
 
 
-export type NoteSummaryQuery = { __typename?: 'Query', note: { __typename?: 'NoteType', id: string, createdAt: any, interactedAt: any, isSubmitted: boolean, publicDetails: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, attachments: Array<{ __typename?: 'NoteAttachmentType', id: string, namespace: Types.NoteNamespaceEnum, attachmentType: Types.AttachmentType, file: { __typename?: 'DjangoFileType', url: string, name: string } }>, client?: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, clientProfile?: { __typename?: 'DjangoModelType', id: string } | null } | null, createdBy: { __typename?: 'UserType', id: string }, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }> } };
+export type NoteSummaryQuery = { __typename?: 'Query', note: { __typename?: 'NoteType', id: string, createdAt: any, interactedAt: any, isSubmitted: boolean, publicDetails: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, client?: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, clientProfile?: { __typename?: 'DjangoModelType', id: string } | null } | null, createdBy: { __typename?: 'UserType', id: string }, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }> } };
 
 
 export const NoteSummaryDocument = gql`
@@ -22,15 +22,6 @@ export const NoteSummaryDocument = gql`
       publicDetails
       purpose
       team
-      attachments {
-        id
-        namespace
-        attachmentType
-        file {
-          url
-          name
-        }
-      }
       client {
         id
         email

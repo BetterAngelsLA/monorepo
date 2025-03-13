@@ -40,7 +40,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         search: filterSearch,
       },
       order: {
-        user_FirstName: Ordering.AscNullsFirst,
+        user_FirstName: Ordering.AscNullsLast,
         id: Ordering.Desc,
       },
     },

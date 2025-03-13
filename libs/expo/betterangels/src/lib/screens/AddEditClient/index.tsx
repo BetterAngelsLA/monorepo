@@ -85,7 +85,7 @@ export default function AddEditClient({ id }: { id?: string }) {
             search: '',
           },
           order: {
-            user_FirstName: Ordering.AscNullsFirst,
+            user_FirstName: Ordering.AscNullsLast,
             id: Ordering.Desc,
           },
         },
@@ -105,7 +105,7 @@ export default function AddEditClient({ id }: { id?: string }) {
               search: '',
             },
             order: {
-              user_FirstName: Ordering.AscNullsFirst,
+              user_FirstName: Ordering.AscNullsLast,
               id: Ordering.Desc,
             },
           },
