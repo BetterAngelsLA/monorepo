@@ -3,7 +3,6 @@ import { useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
-import { CardAccordion } from './ClientProfileCards/CardAccordion';
 import { ContactInfoCard } from './ClientProfileCards/ContactInfoCard';
 import { DemographicInfoCard } from './ClientProfileCards/DemographicInfoCard';
 import { FullNameCard } from './ClientProfileCards/FullNameCard';
@@ -12,8 +11,8 @@ import { HouseholdMembersCard } from './ClientProfileCards/HouseholdMembersCard'
 import { ImportantNotesCard } from './ClientProfileCards/ImportantNotesCard';
 import { PersonalInfoCard } from './ClientProfileCards/PersonalInfoCard';
 import { RelevantContactsCard } from './ClientProfileCards/RelevantContactsCard';
-import { ClientProfileCardEnum, ClientProfileCardTitles } from './constants';
-import { TClientProfileCardTitle } from './types';
+import { ExpandableProfileContainer } from './ExpandableProfileContainer';
+import { ClientProfileCardEnum } from './constants';
 
 interface ProfileProps {
   client: ClientProfileQuery | undefined;
@@ -26,82 +25,102 @@ export default function ClientProfileView(props: ProfileProps) {
   const { client, openCard } = props;
   const scrollRef = useRef<ScrollView>(null);
 
-  const defaultOpenCardTitle =
-    openCard === null
-      ? null
-      : ClientProfileCardTitles[openCard || DEFAULT_OPEN_CARD];
-
-  const [expandedTitle, setExpandedTitle] =
-    useState<TClientProfileCardTitle | null>(defaultOpenCardTitle);
-
   const clientProfile = client?.clientProfile;
+
+  const defaultOpenCard =
+    openCard === null ? null : openCard || DEFAULT_OPEN_CARD;
+
+  const [expandedCard, setExpandedCard] =
+    useState<ClientProfileCardEnum | null>(defaultOpenCard);
+
+  function onOpenCloseClick(card: ClientProfileCardEnum) {
+    if (card === expandedCard) {
+      setExpandedCard(null);
+
+      return;
+    }
+
+    setExpandedCard(card);
+  }
+
+  function onClickEdit(card: ClientProfileCardEnum) {
+    console.log('*****************  on click edit:', card);
+  }
 
   return (
     <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View>
-        <CardAccordion
-          section={ClientProfileCardEnum.FullName}
-          expandedTitle={expandedTitle}
-          setExpandedTitle={setExpandedTitle}
+        <ExpandableProfileContainer
+          card={ClientProfileCardEnum.FullName}
+          openCard={expandedCard}
+          onOpenCloseClick={onOpenCloseClick}
+          onEditClick={onClickEdit}
         >
           <FullNameCard clientProfile={clientProfile} />
-        </CardAccordion>
+        </ExpandableProfileContainer>
 
-        <CardAccordion
-          section={ClientProfileCardEnum.PersonalInfo}
-          expandedTitle={expandedTitle}
-          setExpandedTitle={setExpandedTitle}
+        <ExpandableProfileContainer
+          card={ClientProfileCardEnum.PersonalInfo}
+          openCard={expandedCard}
+          onOpenCloseClick={onOpenCloseClick}
+          onEditClick={onClickEdit}
         >
           <PersonalInfoCard clientProfile={clientProfile} />
-        </CardAccordion>
+        </ExpandableProfileContainer>
 
-        <CardAccordion
-          section={ClientProfileCardEnum.ImportantNotes}
-          expandedTitle={expandedTitle}
-          setExpandedTitle={setExpandedTitle}
+        <ExpandableProfileContainer
+          card={ClientProfileCardEnum.ImportantNotes}
+          openCard={expandedCard}
+          onOpenCloseClick={onOpenCloseClick}
+          onEditClick={onClickEdit}
         >
           <ImportantNotesCard clientProfile={clientProfile} />
-        </CardAccordion>
+        </ExpandableProfileContainer>
 
-        <CardAccordion
-          section={ClientProfileCardEnum.Demographic}
-          expandedTitle={expandedTitle}
-          setExpandedTitle={setExpandedTitle}
+        <ExpandableProfileContainer
+          card={ClientProfileCardEnum.Demographic}
+          openCard={expandedCard}
+          onOpenCloseClick={onOpenCloseClick}
+          onEditClick={onClickEdit}
         >
           <DemographicInfoCard clientProfile={clientProfile} />
-        </CardAccordion>
+        </ExpandableProfileContainer>
 
-        <CardAccordion
-          section={ClientProfileCardEnum.ContactInfo}
-          expandedTitle={expandedTitle}
-          setExpandedTitle={setExpandedTitle}
+        <ExpandableProfileContainer
+          card={ClientProfileCardEnum.ContactInfo}
+          openCard={expandedCard}
+          onOpenCloseClick={onOpenCloseClick}
+          onEditClick={onClickEdit}
         >
           <ContactInfoCard clientProfile={clientProfile} />
-        </CardAccordion>
+        </ExpandableProfileContainer>
 
-        <CardAccordion
-          section={ClientProfileCardEnum.RelevantContacts}
-          expandedTitle={expandedTitle}
-          setExpandedTitle={setExpandedTitle}
+        <ExpandableProfileContainer
+          card={ClientProfileCardEnum.RelevantContacts}
+          openCard={expandedCard}
+          onOpenCloseClick={onOpenCloseClick}
+          onEditClick={onClickEdit}
         >
           <RelevantContactsCard clientProfile={clientProfile} />
-        </CardAccordion>
+        </ExpandableProfileContainer>
 
-        <CardAccordion
-          section={ClientProfileCardEnum.Household}
-          expandedTitle={expandedTitle}
-          setExpandedTitle={setExpandedTitle}
+        <ExpandableProfileContainer
+          card={ClientProfileCardEnum.Household}
+          openCard={expandedCard}
+          onOpenCloseClick={onOpenCloseClick}
+          onEditClick={onClickEdit}
         >
           <HouseholdMembersCard clientProfile={clientProfile} />
-        </CardAccordion>
+        </ExpandableProfileContainer>
 
-        <CardAccordion
-          section={ClientProfileCardEnum.HmisIds}
-          expandedTitle={expandedTitle}
-          setExpandedTitle={setExpandedTitle}
+        <ExpandableProfileContainer
+          card={ClientProfileCardEnum.HmisIds}
+          openCard={expandedCard}
+          onOpenCloseClick={onOpenCloseClick}
+          onEditClick={onClickEdit}
         >
           <HmisProfilesCard clientProfile={clientProfile} />
-        </CardAccordion>
+        </ExpandableProfileContainer>
       </View>
     </MainScrollContainer>
   );
