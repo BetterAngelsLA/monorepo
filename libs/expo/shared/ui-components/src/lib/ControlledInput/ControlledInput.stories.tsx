@@ -2,11 +2,11 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
 import { useForm } from 'react-hook-form';
 import { View } from 'react-native';
-import { FormInput } from './FormInput';
+import { ControlledInput } from './ControlledInput';
 
-const FormInputMeta: ComponentMeta<typeof FormInput> = {
-  title: 'FormInput',
-  component: FormInput,
+const ControlledInputMeta: ComponentMeta<typeof ControlledInput> = {
+  title: 'ControlledInput',
+  component: ControlledInput,
   decorators: [
     (Story) => {
       return (
@@ -20,11 +20,11 @@ const FormInputMeta: ComponentMeta<typeof FormInput> = {
   ],
 };
 
-export default FormInputMeta;
+export default ControlledInputMeta;
 
-type FormInputStory = ComponentStory<typeof FormInput>;
+type ControlledInputStory = ComponentStory<typeof ControlledInput>;
 
-export const Basic: FormInputStory = (args, context) => {
+export const Basic: ControlledInputStory = (args, context) => {
   const { control } = useForm();
-  return <FormInput label="Test" name="test" control={control} />;
+  return <ControlledInput label="Test" name="test" control={control} />;
 };

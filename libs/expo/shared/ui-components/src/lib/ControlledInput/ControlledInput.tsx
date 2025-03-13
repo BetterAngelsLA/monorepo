@@ -7,14 +7,14 @@ type TRules = Omit<
   'disabled' | 'valueAsNumber' | 'valueAsDate' | 'setValueAs'
 >;
 
-interface IFormInputProps extends IInputProps {
+interface IControlledInputProps extends IInputProps {
   name: string;
   control?: Control<any>;
   rules?: TRules;
   onBlur?: () => void;
 }
 
-export function FormInput(props: IFormInputProps) {
+export function ControlledInput(props: IControlledInputProps) {
   const { rules, name, control, ...rest } = props;
 
   const handleBlur = (onBlur: () => void) => {

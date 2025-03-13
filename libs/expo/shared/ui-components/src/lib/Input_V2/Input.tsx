@@ -12,13 +12,13 @@ import {
   Pressable,
   StyleProp,
   StyleSheet,
-  Text,
   TextInput,
   TextInputProps,
   View,
   ViewStyle,
 } from 'react-native';
-import TextRegular from '../TextRegular';
+import FormFieldError from '../FormFieldError';
+import FormFieldLabel from '../FormFieldLabel';
 
 export interface IInputProps extends TextInputProps {
   label?: string;
@@ -56,7 +56,7 @@ export function Input(props: IInputProps) {
     icon,
     value,
     onDelete,
-    autoCorrect = true,
+    autoCorrect = false,
     borderRadius = Radiuses.xs,
     errorMessage,
     ...rest
@@ -77,12 +77,7 @@ export function Input(props: IInputProps) {
         },
       ]}
     >
-      {label && (
-        <View style={styles.label}>
-          <Text style={styles.labelText}>{label}</Text>
-          {required && <Text style={styles.required}>*</Text>}
-        </View>
-      )}
+      {label && <FormFieldLabel label={label} required={required} />}
       <View
         style={[
           styles.input,
@@ -129,11 +124,7 @@ export function Input(props: IInputProps) {
           </Pressable>
         )}
       </View>
-      {errorMessage && (
-        <TextRegular mt="xxs" size="sm" color={Colors.ERROR}>
-          {errorMessage}
-        </TextRegular>
-      )}
+      {errorMessage && <FormFieldError message={errorMessage} />}
     </View>
   );
 }

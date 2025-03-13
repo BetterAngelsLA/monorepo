@@ -1,15 +1,14 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Spacings } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
-  Loading,
+  KeyboardAwareScrollView,
+  LoadingView,
   TextButton,
-  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { ReactNode, useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { applyValidationErrors } from '../../helpers/parseClientProfileErrors';
 import { useSnackbar } from '../../hooks';
 import {
@@ -18,7 +17,7 @@ import {
 } from './__generated__/clientProfile.generated';
 import ContactInfo from './ContactInfo';
 import DemographicInfo from './DemographicInfo';
-import extractFormData from './extractFormData';
+import { extractClientFormData } from './extractClientFormData';
 import Fullname from './Fullname';
 import HmisId from './HmisId';
 import Household from './Household';
@@ -72,7 +71,12 @@ const formConfigs: Record<
 
 export default function ClientProfileForms(props: IClientProfileForms) {
   const { componentName, id } = props;
-  const { data, error, loading, refetch } = useGetClientProfileQuery({
+  const {
+    data,
+    error: fetchError,
+    loading,
+    refetch,
+  } = useGetClientProfileQuery({
     variables: { id },
   });
   const [updateClient, { loading: isUpdating }] =
@@ -98,7 +102,9 @@ export default function ClientProfileForms(props: IClientProfileForms) {
 
   const onSubmit: SubmitHandler<FormValues> = async (values) => {
     try {
-      if (!data || !('clientProfile' in data)) return;
+      if (!data || !('clientProfile' in data)) {
+        return;
+      }
 
       const input = {
         ...values,
@@ -116,15 +122,12 @@ export default function ClientProfileForms(props: IClientProfileForms) {
         'errors'
       ] as TValidationError[] | undefined;
 
-      if (!operationErrors) {
-        refetch();
-      }
-
       if (operationErrors) {
         applyValidationErrors(operationErrors, methods.setError);
         return;
       }
 
+      refetch();
       router.replace(`/client/${id}`);
     } catch (err) {
       console.error(err);
@@ -143,9 +146,11 @@ export default function ClientProfileForms(props: IClientProfileForms) {
   }, [config, navigation]);
 
   useEffect(() => {
-    if (!data || !('clientProfile' in data) || !id) return;
+    if (!data || !('clientProfile' in data) || !id) {
+      return;
+    }
 
-    const formData = extractFormData(
+    const formData = extractClientFormData(
       componentName as keyof FormStateMapping,
       data.clientProfile
     );
@@ -153,22 +158,11 @@ export default function ClientProfileForms(props: IClientProfileForms) {
   }, [data, id]);
 
   if (loading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Loading size="large" />
-      </View>
-    );
+    return <LoadingView />;
   }
 
-  if (error) {
-    console.error(error);
+  if (fetchError) {
+    console.error(fetchError);
 
     showSnackbar({
       message: 'Something went wrong. Please try again.',
@@ -179,21 +173,8 @@ export default function ClientProfileForms(props: IClientProfileForms) {
   return (
     <FormProvider {...methods}>
       <View style={styles.container}>
-        {config ? (
-          <KeyboardAwareScrollView
-            style={{
-              flex: 1,
-            }}
-            contentContainerStyle={styles.contentContainer}
-            bottomOffset={50}
-            extraKeyboardSpace={20}
-            keyboardShouldPersistTaps="handled"
-          >
-            {config.content}
-          </KeyboardAwareScrollView>
-        ) : (
-          <TextRegular>No form available for "{componentName}"</TextRegular>
-        )}
+        <KeyboardAwareScrollView>{config.content}</KeyboardAwareScrollView>
+
         <BottomActions
           disabled={isUpdating}
           cancel={

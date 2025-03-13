@@ -1,7 +1,7 @@
 import { GetClientProfileQuery } from '../AddEditClient/__generated__/AddEditClient.generated';
 import { FormStateMapping, FullnameState } from './types';
 
-const extractClientFormData = (
+export const extractClientFormData = (
   formType: keyof FormStateMapping,
   clientProfile: GetClientProfileQuery['clientProfile']
 ): Partial<FormStateMapping[typeof formType]> => {
@@ -24,5 +24,3 @@ const extractClientFormData = (
       return {};
   }
 };
-
-export default extractClientFormData;
