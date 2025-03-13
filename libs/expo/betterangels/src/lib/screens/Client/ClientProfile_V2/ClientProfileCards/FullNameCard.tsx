@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import {
   ClientProfileCard,
   ClientProfileCardContainer,
@@ -11,6 +12,7 @@ type TProps = {
 
 export function FullNameCard(props: TProps) {
   const { clientProfile } = props;
+  const router = useRouter();
 
   const { firstName, middleName, lastName } = clientProfile?.user || {};
   const nickname = clientProfile?.nickname;
@@ -39,7 +41,13 @@ export function FullNameCard(props: TProps) {
       <ClientProfileCard
         items={content}
         action={{
-          onClick: () => alert('edit full name'),
+          onClick: () =>
+            router.push({
+              pathname: `/clients/edit/${clientProfile?.id}`,
+              params: {
+                componentName: 'fullname',
+              },
+            }),
         }}
       />
     </ClientProfileCardContainer>

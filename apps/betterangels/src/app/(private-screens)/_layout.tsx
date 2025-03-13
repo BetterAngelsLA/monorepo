@@ -199,7 +199,7 @@ export default function PrivateLayout() {
         }}
       />
       <Stack.Screen
-        name="edit-client-v2/[id]"
+        name="clients/edit/[id]"
         options={{
           headerTitleAlign: 'center',
           title: '',
