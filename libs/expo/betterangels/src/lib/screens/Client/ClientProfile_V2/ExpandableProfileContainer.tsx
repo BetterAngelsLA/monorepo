@@ -89,7 +89,6 @@ function EditButton(props: TEditButton) {
           marginLeft: Spacings.xs,
           ...styles.button,
         },
-        ,
       ]}
     >
       <WFEdit size="sm" />
@@ -122,7 +121,6 @@ function OpenCloseButton(props: TOpenCloseButton) {
           marginLeft: 'auto',
           ...styles.button,
         },
-        ,
       ]}
     >
       <ChevronLeftIcon size="sm" rotate={isOpen ? '90deg' : '-90deg'} />
