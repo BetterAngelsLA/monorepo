@@ -38,10 +38,10 @@ from .enums import (
     GeneralServiceChoices,
     HealthServiceChoices,
     ImmediateNeedChoices,
-    MatchedReferralRequirementChoices,
     MealServiceChoices,
     ParkingChoices,
     PetChoices,
+    ReferralRequirementChoices,
     RoomStyleChoices,
     ShelterChoices,
     ShelterProgramChoices,
@@ -326,8 +326,8 @@ class ShelterForm(forms.ModelForm):
         ),
         required=False,
     )
-    matched_referral_requirements = forms.MultipleChoiceField(
-        choices=MatchedReferralRequirementChoices,
+    referral_requirement = forms.MultipleChoiceField(
+        choices=ReferralRequirementChoices,
         widget=Select2MultipleWidget(
             attrs={
                 "data-placeholder": "Select requirements...",
@@ -758,7 +758,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                 "fields": (
                     "entry_info",
                     "entry_requirements",
-                    "matched_referral_requirements",
+                    "referral_requirement",
                     "bed_fees",
                     "program_fees",
                 )

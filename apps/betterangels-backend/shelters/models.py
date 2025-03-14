@@ -26,10 +26,10 @@ from .enums import (
     GeneralServiceChoices,
     HealthServiceChoices,
     ImmediateNeedChoices,
-    MatchedReferralRequirementChoices,
     MealServiceChoices,
     ParkingChoices,
     PetChoices,
+    ReferralRequirementChoices,
     RoomStyleChoices,
     ShelterChoices,
     ShelterProgramChoices,
@@ -180,8 +180,8 @@ class MealService(models.Model):
         return str(self.name)
 
 
-class MatchedReferralRequirement(models.Model):
-    name = TextChoicesField(choices_enum=MatchedReferralRequirementChoices, unique=True, blank=True, null=True)
+class ReferralRequirement(models.Model):
+    name = TextChoicesField(choices_enum=ReferralRequirementChoices, unique=True, blank=True, null=True)
 
     def __str__(self) -> str:
         return str(self.name)
@@ -199,7 +199,7 @@ class Shelter(BaseModel):
     location = PlacesField(blank=True, null=True)
     geolocation = PointField(srid=4326, geography=True, blank=True, null=True)
     email = models.EmailField(max_length=254, blank=True, null=True)
-    phone = PhoneNumberField()
+    phone = PhoneNumberField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
     operating_hours = models.CharField(max_length=255, blank=True, null=True)
 
@@ -246,7 +246,7 @@ class Shelter(BaseModel):
     # Entry Requirements
     entry_info = CKEditor5Field(null=True, blank=True)
     entry_requirements = models.ManyToManyField(EntryRequirement)
-    matched_referral = models.ManyToManyField(MatchedReferralRequirement)
+    referral_requirement = models.ManyToManyField(ReferralRequirement)
     bed_fees = models.CharField(max_length=255, blank=True, null=True)
     program_fees = models.CharField(max_length=255, blank=True, null=True)
 

@@ -306,7 +306,9 @@ class MealServiceChoices(models.TextChoices):
     DINNER = "dinner", _("Dinner")
 
 
-class MatchedReferralRequirementChoices(models.TextChoices):
+class ReferralRequirementChoices(models.TextChoices):
+    REFERRAL_MATCHED = "referral_matched", _("Matched Referral")
+    REFERRAL_NONMATCHED = "referral_nonmatched", _("Non-Matched Referral")
     SERVICE_PROVIDER_SUBMISSION = "service_provider_submission", _("Service Provider Submission")
     SELF_REFERRAL = "self_referral", _("Self Referral Option")
     SAME_DAY_INTAKE = "same_day_intake", _("Same Day Intake")
