@@ -41,7 +41,7 @@ class ShelterChoices(models.TextChoices):
 # Sleeping Details
 @strawberry.enum
 class RoomStyleChoices(models.TextChoices):
-    CONGREGANT = "congregant", _("Congregant (Open)")
+    CONGREGATE = "congregate", _("Congregate (Open)")
     CUBICLE_LOW_WALLS = "cubicle_low_walls", _("Cubicle (Low Walls)")
     CUBICLE_HIGH_WALLS = "cubicle_high_walls", _("Cubicle (High Walls)")
     HIGH_BUNK = "high_bunk", _("High Bunk")
