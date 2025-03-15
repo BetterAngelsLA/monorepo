@@ -13,6 +13,18 @@ import shelters.models
 from django.db import migrations, models
 
 
+class RoomStyleChoicesV14(models.TextChoices):
+    CONGREGANT = "congregant", ("Congregant (Open)")
+    CUBICLE_LOW_WALLS = "cubicle_low_walls", ("Cubicle (Low Walls)")
+    CUBICLE_HIGH_WALLS = "cubicle_high_walls", ("Cubicle (High Walls)")
+    HIGH_BUNK = "high_bunk", ("High Bunk")
+    LOW_BUNK = "low_bunk", ("Low Bunk")
+    SHARED_ROOMS = "shared_rooms", ("Shared Rooms")
+    SINGLE_ROOM = "single_room", ("Single Room")
+    MOTEL_ROOM = "motel_room", ("Motel Room")
+    OTHER = "other", ("Other")
+
+
 def clean_altered_fields(apps, schema_editor):
     """
     Cleans invalid entries for fields that were altered in this migration to use defined choices.
@@ -168,7 +180,7 @@ class Migration(migrations.Migration):
                             ("motel_room", "Motel Room"),
                             ("other", "Other"),
                         ],
-                        choices_enum=shelters.enums.RoomStyleChoices,
+                        choices_enum=RoomStyleChoicesV14,
                         max_length=18,
                         null=True,
                         unique=True,
