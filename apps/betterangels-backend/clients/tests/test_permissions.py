@@ -1,3 +1,5 @@
+from typing import Optional
+
 from accounts.tests.baker_recipes import permission_group_recipe
 from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, LanguageEnum
 from clients.models import ClientProfile
@@ -61,7 +63,7 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     def test_view_client_profile_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
-        mutation = """
+        query = """
             query ViewClientProfile($id: ID!) {
                 clientProfile(pk: $id) {
                     id
@@ -75,7 +77,7 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             }
         """
         variables = {"id": self.client_profile_1["id"]}
-        response = self.execute_graphql(mutation, variables)
+        response = self.execute_graphql(query, variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"])
@@ -120,55 +122,39 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertIsNotNone(response["errors"])
 
     @parametrize(
-        "user_label, should_succeed",
+        "user_label, expected_client_count",
         [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", True),  # CM in different org should succeed
-            ("client_user_1", False),  # Non CM should not succeed
-            (None, False),  # Anonymous user should not succeed
+            ("org_1_case_manager_1", 2),  # Owner should succeed
+            ("org_1_case_manager_2", 2),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", 2),  # CM in different org should succeed
+            ("client_user_1", 0),  # Non CM should not succeed
+            # NOTE: Anon user raising an error may be caused by a strawberry bug.
+            # This test may fail and need updating when the bug is fixed.
+            (None, None),  # Anonymous user should return error
         ],
     )
-    def test_view_client_profiles_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_client_profiles_permission(self, user_label: str, expected_client_count: Optional[int]) -> None:
         self._handle_user_login(user_label)
-        client_count = ClientProfile.objects.count()
-        mutation = """
-            query ViewClientProfiles {
+        query = """
+            query {
                 clientProfiles {
-                    id
-                    user {
-                        firstName
-                        lastName
-                        middleName
-                        email
-                    }
+                    totalCount
                 }
             }
         """
-        variables = {"id": self.client_profile_1["id"]}
+        response = self.execute_graphql(query)
 
-        response = self.execute_graphql(mutation, variables)
-
-        expected_client_count = client_count if should_succeed else 0
-        self.assertTrue(len(response["data"]["clientProfiles"]) == expected_client_count)
+        if expected_client_count is not None:
+            self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_count)
+        else:
+            self.assertTrue("errors" in response)
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
-class ClientDocumentPermessionTestCase(ClientProfileGraphQLBaseTestCase):
+class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.attachment_ids = list(
-            str(attachment_id) for attachment_id in (Attachment.objects.values_list("id", flat=True))
-        )
         self._handle_user_login("org_1_case_manager_1")
-        for _ in range(2):  # Create two attachments for testing
-            response = self._create_client_document_fixture(
-                self.client_profile_1["id"],
-                ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-                b"Test file content for viewing multiple attachments",
-                f"multiple_view_permission_test_{_}.txt",
-            )
-            self.attachment_ids.append(response["data"]["createClientDocument"]["id"])
         self.graphql_client.logout()
 
     @parametrize(
@@ -232,13 +218,13 @@ class ClientDocumentPermessionTestCase(ClientProfileGraphQLBaseTestCase):
     def test_view_client_document_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         query = """
-            query ViewClientDocument($id: ID!) {
+            query ($id: ID!) {
                 clientDocument(pk: $id) {
                     id
                 }
             }
         """
-        variables = {"id": self.attachment_ids[0]}
+        variables = {"id": self.client_profile_1_document_1["id"]}
         response = self.execute_graphql(query, variables)
 
         if should_succeed:
@@ -253,40 +239,33 @@ class ClientDocumentPermessionTestCase(ClientProfileGraphQLBaseTestCase):
             )
 
     @parametrize(
-        "user_label, should_succeed",
+        "user_label, expected_document_count",
         [
-            ("org_1_case_manager_1", True),  # Creator should succeed
-            ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
-            ("org_2_case_manager_1", True),  # CM in a different org should succeed
-            ("client_user_1", False),  # Client should not succeed
-            (None, False),  # Anonymous user should not succeed
+            ("org_1_case_manager_1", 4),  # Creator should succeed
+            ("org_1_case_manager_2", 4),  # Other CM in the same org should succeed
+            ("org_2_case_manager_1", 4),  # CM in a different org should succeed
+            ("client_user_1", 0),  # Client should not succeed
+            # NOTE: Anon user raising an error may be caused by a strawberry bug.
+            # This test may fail and need updating when the bug is fixed.
+            (None, None),  # Anonymous user should return error
         ],
     )
-    def test_view_client_documents_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_client_documents_permission(self, user_label: str, expected_document_count: Optional[int]) -> None:
         self._handle_user_login(user_label)
 
         query = """
-            query ViewClientDocuments {
+            query {
                 clientDocuments {
-                    id
+                    totalCount
                 }
             }
         """
         response = self.execute_graphql(query)
 
-        if should_succeed:
-            returned_ids = {attachment["id"] for attachment in response["data"]["clientDocuments"]}
-            expected_ids = set(self.attachment_ids)
-            self.assertSetEqual(
-                returned_ids,
-                expected_ids,
-                "Should return exactly the expected attachments for the user.",
-            )
+        if expected_document_count is not None:
+            self.assertEqual(response["data"]["clientDocuments"]["totalCount"], expected_document_count)
         else:
-            self.assertTrue(
-                len(response["data"]["clientDocuments"]) == 0,
-                "Should return an empty list for client documents.",
-            )
+            self.assertTrue("errors" in response)
 
 
 class OrganizationPermissionTestCase(GraphQLBaseTestCase):
