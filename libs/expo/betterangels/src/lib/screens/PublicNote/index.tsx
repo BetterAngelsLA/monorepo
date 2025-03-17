@@ -12,12 +12,12 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
+import { KeyboardAwareScrollView as RNKeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUpdateNoteMutation, useViewNoteQuery } from '../../apollo';
 import { generatePublicNote } from '../../helpers';
-import { MainScrollContainer } from '../../ui-components';
 
 export default function PublicNote({ noteId }: { noteId: string }) {
   const { data, loading: isLoading } = useViewNoteQuery({
@@ -97,11 +97,12 @@ export default function PublicNote({ noteId }: { noteId: string }) {
 
   return (
     <>
-      <MainScrollContainer
+      {/* <MainScrollContainer
         pb={Spacings.xl}
         bg={Colors.NEUTRAL_EXTRA_LIGHT}
         keyboardAware
-      >
+      > */}
+      <KeyboardAwareScrollView>
         <View
           style={{
             gap: Spacings.sm,
@@ -143,7 +144,8 @@ export default function PublicNote({ noteId }: { noteId: string }) {
             />
           </View>
         </View>
-      </MainScrollContainer>
+      </KeyboardAwareScrollView>
+      {/* </MainScrollContainer> */}
       <View
         style={{
           flexDirection: 'row',
@@ -207,5 +209,36 @@ const styles = StyleSheet.create({
     borderRadius: Radiuses.xs,
     alignItems: 'center',
     flexDirection: 'row',
+  },
+});
+
+interface IKeyboardAwareScrollView {
+  children: ReactNode;
+  bottomOffset?: number;
+  extraKeyboardSpace?: number;
+}
+
+export function KeyboardAwareScrollView(props: IKeyboardAwareScrollView) {
+  const { children, bottomOffset = 50, extraKeyboardSpace = 20 } = props;
+  return (
+    <RNKeyboardAwareScrollView
+      style={{
+        flex: 1,
+      }}
+      contentContainerStyle={scrollStyles.container}
+      bottomOffset={bottomOffset}
+      extraKeyboardSpace={extraKeyboardSpace}
+      keyboardShouldPersistTaps="handled"
+    >
+      {children}
+    </RNKeyboardAwareScrollView>
+  );
+}
+
+const scrollStyles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    paddingVertical: Spacings.md,
+    paddingHorizontal: Spacings.sm,
   },
 });
