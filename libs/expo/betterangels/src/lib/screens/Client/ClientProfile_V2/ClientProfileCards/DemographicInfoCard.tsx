@@ -68,13 +68,7 @@ export function DemographicInfoCard(props: TProps) {
 
   return (
     <ClientProfileCardContainer>
-      <ClientProfileCard
-        items={content}
-        action={{
-          onClick: () => alert('edit demo information'),
-          accessibilityLabel: 'edit demo information',
-        }}
-      />
+      <ClientProfileCard items={content} />
     </ClientProfileCardContainer>
   );
 }
