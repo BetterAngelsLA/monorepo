@@ -23,13 +23,7 @@ export function ImportantNotesCard(props: TProps) {
 
   return (
     <ClientProfileCardContainer>
-      <ClientProfileCard
-        items={content}
-        showAll
-        action={{
-          onClick: () => alert('edit important notes'),
-        }}
-      />
+      <ClientProfileCard items={content} showAll />
     </ClientProfileCardContainer>
   );
 }

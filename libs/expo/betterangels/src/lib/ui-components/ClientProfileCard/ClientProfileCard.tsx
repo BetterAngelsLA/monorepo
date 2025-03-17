@@ -1,19 +1,9 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
-import { DataTable, TextBold } from '@monorepo/expo/shared/ui-components';
-import { ReactElement, ReactNode } from 'react';
-import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
+import { DataTable } from '@monorepo/expo/shared/ui-components';
+import { ReactNode } from 'react';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 import { ClientProfileCardHeader } from './ClientProfileCardHeader';
 import { getVisibleItems } from './getVisibleItems';
-
-{
-  /* TODO: update or remove once we have a ticket for the Edit Button */
-}
-type TClickAction = {
-  onClick?: () => void;
-  accessibilityHint?: string;
-  accessibilityLabel?: string;
-  buttonContent?: ReactElement;
-};
 
 export type TTableItem = string | ReactNode | undefined | null;
 
@@ -28,26 +18,12 @@ type TClientProfileCard = {
   subtitle?: string | ReactNode;
   items: TClientProfileCardItem[];
   showAll?: boolean;
-  action?: TClickAction;
   style?: ViewStyle;
   compact?: boolean;
 };
 
 export function ClientProfileCard(props: TClientProfileCard) {
-  const {
-    action = {},
-    compact,
-    items,
-    showAll,
-    subtitle,
-    title,
-    style,
-  } = props;
-
-  {
-    /* TODO: update or remove once we have a ticket for the Edit Button */
-  }
-  const { onClick, accessibilityHint, accessibilityLabel } = action;
+  const { compact, items, showAll, subtitle, title, style } = props;
 
   const visibleItems = getVisibleItems({ items, showAll });
 
@@ -100,20 +76,6 @@ export function ClientProfileCard(props: TClientProfileCard) {
           );
         })}
       </View>
-
-      {/* TODO: update or remove once we have a ticket for the Edit Button */}
-      {!!onClick && (
-        <View>
-          <Pressable
-            onPress={onClick}
-            style={{ alignSelf: 'flex-end' }}
-            accessibilityLabel={accessibilityLabel}
-            accessibilityHint={accessibilityHint}
-          >
-            <TextBold size="xs">Edit Btn</TextBold>
-          </Pressable>
-        </View>
-      )}
     </View>
   );
 }
