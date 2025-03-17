@@ -97,7 +97,11 @@ export default function PublicNote({ noteId }: { noteId: string }) {
 
   return (
     <>
-      <MainScrollContainer pb={Spacings.xl} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+      <MainScrollContainer
+        pb={Spacings.xl}
+        bg={Colors.NEUTRAL_EXTRA_LIGHT}
+        keyboardAware
+      >
         <View
           style={{
             gap: Spacings.sm,
