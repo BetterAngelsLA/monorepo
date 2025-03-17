@@ -8,7 +8,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { NotesPaginatedQuery } from '../../../apollo';
+import { NotesQuery } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import {
   ClientProfileQuery,
@@ -18,7 +18,7 @@ import {
 const displayInteractionsSorting = false;
 
 interface IInteractionsSortingProps {
-  notes: NotesPaginatedQuery['notesPaginated']['results'] | undefined;
+  notes: NotesQuery['notes']['results'] | undefined;
   sort: string;
   setSort: (sort: 'list' | 'location' | 'sort') => void;
   client: ClientProfileQuery | undefined;
