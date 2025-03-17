@@ -16,12 +16,12 @@ import {
 import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import { HmisProfileType, Maybe } from '../apollo';
-import { ClientProfilesPaginatedQuery } from '../screens/Clients/__generated__/Clients.generated';
+import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 interface IClientCardProps {
   client:
-    | ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
+    | ClientProfilesQuery['clientProfiles']['results'][number]
     | undefined;
   progress?: DimensionValue;
   mb?: TSpacing;

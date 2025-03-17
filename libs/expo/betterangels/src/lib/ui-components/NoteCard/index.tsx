@@ -1,13 +1,13 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { usePathname, useRouter } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
-import { NotesPaginatedQuery } from '../../apollo';
+import { NotesQuery } from '../../apollo';
 import NoteCardClient from './NoteCardClient';
 import NoteCardHeader from './NoteCardHeader';
 import NoteCardPills from './NoteCardPills';
 
 interface INoteCardProps {
-  note: NotesPaginatedQuery['notesPaginated']['results'][0];
+  note: NotesQuery['notes']['results'][0];
 }
 
 export default function NoteCard(props: INoteCardProps) {
