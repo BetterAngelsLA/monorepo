@@ -9,32 +9,40 @@ export type TMarginProps = {
   mr?: TSpacing;
 };
 
-const marginMap: Record<keyof TMarginProps, string[]> = {
-  mb: ['marginBottom'],
-  mt: ['marginTop'],
-  ml: ['marginLeft'],
-  mr: ['marginRight'],
-  my: ['marginTop', 'marginBottom'],
-  mx: ['marginLeft', 'marginRight'],
+const marginMap: Record<keyof TMarginProps, string> = {
+  mb: 'marginBottom',
+  mt: 'marginTop',
+  ml: 'marginLeft',
+  mr: 'marginRight',
+  my: 'marginVertical',
+  mx: 'marginHorizontal',
 };
 
-export const getMarginStyles = (marginProps: TMarginProps) => {
-  if (!marginProps) {
+const marginMapKeys = Object.keys(marginMap);
+
+export const getMarginStyles = (props: TMarginProps) => {
+  if (!props) {
     return {};
   }
 
   const styles: Record<string, number> = {};
 
-  for (const [key, value] of Object.entries(marginProps)) {
-    const spacingValue = Spacings[value as TSpacing];
+  for (const key of marginMapKeys) {
+    const marginProp = props[key as keyof TMarginProps];
 
-    if (spacingValue === undefined) {
+    if (!marginProp) {
       continue;
     }
 
-    marginMap[key as keyof TMarginProps].forEach((styleKey) => {
-      styles[styleKey] = spacingValue;
-    });
+    const marginValue = Spacings[marginProp as TSpacing];
+
+    if (marginValue === undefined) {
+      continue;
+    }
+
+    const marginPropName = marginMap[key as keyof TMarginProps];
+
+    styles[marginPropName] = marginValue;
   }
 
   return styles;
