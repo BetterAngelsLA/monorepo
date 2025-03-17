@@ -1,18 +1,9 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
-import { DataTable, TextBold } from '@monorepo/expo/shared/ui-components';
-import { ReactElement, ReactNode } from 'react';
-import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
+import { DataTable } from '@monorepo/expo/shared/ui-components';
+import { ReactNode } from 'react';
+import { StyleSheet, View, ViewStyle } from 'react-native';
+import { ClientProfileCardHeader } from './ClientProfileCardHeader';
 import { getVisibleItems } from './getVisibleItems';
-
-{
-  /* TODO: update or remove once we have a ticket for the Edit Button */
-}
-type TClickAction = {
-  onClick?: () => void;
-  accessibilityHint?: string;
-  accessibilityLabel?: string;
-  buttonContent?: ReactElement;
-};
 
 export type TTableItem = string | ReactNode | undefined | null;
 
@@ -23,91 +14,97 @@ export type TClientProfileCardItem = {
 };
 
 type TClientProfileCard = {
+  title?: string | ReactNode;
+  subtitle?: string | ReactNode;
   items: TClientProfileCardItem[];
   showAll?: boolean;
-  action?: TClickAction;
   style?: ViewStyle;
+  compact?: boolean;
 };
 
 export function ClientProfileCard(props: TClientProfileCard) {
-  const { items, showAll, action = {}, style } = props;
-
-  {
-    /* TODO: update or remove once we have a ticket for the Edit Button */
-  }
-  const { onClick, accessibilityHint, accessibilityLabel } = action;
+  const { compact, items, showAll, subtitle, title, style } = props;
 
   const visibleItems = getVisibleItems({ items, showAll });
 
   return (
-    <View style={[styles.container, style]}>
-      {visibleItems.map((item, idx) => {
-        const header = item.header || [];
-        const hasTitles = header.some((t) => !!t);
+    <View style={style}>
+      <ClientProfileCardHeader title={title} subtitle={subtitle} />
 
-        return (
-          <DataTable key={idx}>
-            {hasTitles && (
-              <DataTable.Header>
-                {header.map((title, idx) => {
-                  return (
-                    <DataTable.Title
-                      key={idx}
-                      textStyle={styles.headerTitleText}
-                    >
-                      {title}
-                    </DataTable.Title>
-                  );
-                })}
-              </DataTable.Header>
-            )}
+      <View
+        style={[styles.tableView, compact ? styles.tableViewCompact : null]}
+      >
+        {visibleItems.map((item, idx) => {
+          const header = item.header || [];
+          const hasTitles = header.some((t) => !!t);
 
-            {item.rows.map((row, rowIdx) => {
-              return (
-                <DataTable.Row key={rowIdx}>
-                  {row.map((cellData, cellIdx) => {
+          return (
+            <DataTable key={idx} style={styles.table}>
+              {hasTitles && (
+                <DataTable.Header>
+                  {header.map((title, idx) => {
                     return (
-                      <DataTable.Cell key={cellIdx} textStyle={styles.cellText}>
-                        {cellData}
-                      </DataTable.Cell>
+                      <DataTable.Title
+                        key={idx}
+                        textStyle={styles.tableHeaderTitleText}
+                      >
+                        {title}
+                      </DataTable.Title>
                     );
                   })}
-                </DataTable.Row>
-              );
-            })}
-          </DataTable>
-        );
-      })}
+                </DataTable.Header>
+              )}
 
-      {/* TODO: update or remove once we have a ticket for the Edit Button */}
-      {!!onClick && (
-        <View>
-          <Pressable
-            onPress={onClick}
-            style={{ alignSelf: 'flex-end' }}
-            accessibilityLabel={accessibilityLabel}
-            accessibilityHint={accessibilityHint}
-          >
-            <TextBold size="xs">Edit Btn</TextBold>
-          </Pressable>
-        </View>
-      )}
+              {item.rows.map((row, rowIdx) => {
+                return (
+                  <DataTable.Row key={rowIdx}>
+                    {row.map((cellData, cellIdx) => {
+                      return (
+                        <DataTable.Cell
+                          key={cellIdx}
+                          textStyle={styles.tableCellText}
+                          numberOfLines={null}
+                        >
+                          {cellData}
+                        </DataTable.Cell>
+                      );
+                    })}
+                  </DataTable.Row>
+                );
+              })}
+            </DataTable>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  cardTitleText: {
+    color: Colors.PRIMARY_EXTRA_DARK,
+    fontSize: FontSizes.md.fontSize,
+    lineHeight: FontSizes.md.lineHeight,
+    fontWeight: 600,
+    marginBottom: Spacings.sm,
+  },
+  tableView: {
     gap: Spacings.lg,
   },
-  headerTitleText: {
+  tableViewCompact: {
+    gap: Spacings.sm,
+  },
+  table: {
+    gap: Spacings.xs,
+  },
+  tableHeaderTitleText: {
     color: Colors.PRIMARY_EXTRA_DARK,
     fontSize: FontSizes.sm.fontSize,
     lineHeight: FontSizes.sm.lineHeight,
     fontFamily: 'Poppins-Regular',
     fontWeight: 400,
   },
-  cellText: {
+  tableCellText: {
     color: Colors.PRIMARY_EXTRA_DARK,
     fontSize: FontSizes.sm.fontSize,
     lineHeight: FontSizes.sm.lineHeight,

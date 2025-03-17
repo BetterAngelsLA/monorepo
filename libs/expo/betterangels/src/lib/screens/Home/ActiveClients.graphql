@@ -64,7 +64,7 @@ query ClientProfiles(
   }
 }
 
-query ActiveClientProfilesPaginated(
+query ClientProfilesPaginated(
   $filters: ClientProfileFilter
   $pagination: OffsetPaginationInput
   $order: ClientProfileOrder

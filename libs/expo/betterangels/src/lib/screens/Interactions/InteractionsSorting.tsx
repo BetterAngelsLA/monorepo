@@ -6,13 +6,13 @@ import {
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextMedium } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { NotesQuery } from '../../apollo';
+import { NotesPaginatedQuery } from '../../apollo';
 
 // TODO: Remove this flag when sorting is implemented
 const displayInteractionsSorting = false;
 
 interface IInteractionsSortingProps {
-  notes: NotesQuery['notes'] | undefined;
+  notes: NotesPaginatedQuery['notesPaginated']['results'] | undefined;
   sort: string;
   setSort: (sort: 'list' | 'location' | 'sort') => void;
   totalCount: number;

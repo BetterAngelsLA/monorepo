@@ -11,7 +11,9 @@ import { IPickerProps } from './Picker';
 
 export default function Picker(props: IPickerProps) {
   const { setSelectedValue, error, value, placeholder, items } = props;
-  const [localValue, setLocalValue] = useState<string | null>(value || null);
+  const [localValue, setLocalValue] = useState<string | null | undefined>(
+    value || null
+  );
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
   const insets = useSafeAreaInsets();

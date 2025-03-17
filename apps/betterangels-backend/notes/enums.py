@@ -26,13 +26,6 @@ class MoodEnum(models.TextChoices):
     SUICIDAL = "suicidal", _("Suicidal")
 
 
-@strawberry.enum
-class NoteNamespaceEnum(models.TextChoices):
-    MOOD_ASSESSMENT = "mood_assessment", "Mood Assessment"
-    PROVIDED_SERVICES = "provided_services", "Provided Services"
-    REQUESTED_SERVICES = "requested_services", "Requested Services"
-
-
 class ServiceEnum(models.TextChoices):
     BAG = "bag", _("Bag(s)")
     BATTERIES = "batteries", _("Batteries")
