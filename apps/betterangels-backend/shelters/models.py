@@ -39,6 +39,7 @@ from .enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
+from .widgets import TimeRangeField
 
 
 # Summary Info
@@ -201,7 +202,7 @@ class Shelter(BaseModel):
     email = models.EmailField(max_length=254, blank=True, null=True)
     phone = PhoneNumberField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
-    operating_hours = models.CharField(max_length=255, blank=True, null=True)
+    operating_hours = TimeRangeField(null=True, blank=True)
 
     # Summary Information
     description = CKEditor5Field()
@@ -226,7 +227,7 @@ class Shelter(BaseModel):
 
     # Policies
     max_stay = models.PositiveIntegerField(blank=True, null=True, verbose_name="Max Stay (days)")
-    intake_hours = models.CharField(max_length=255, blank=True, null=True)
+    intake_hours = TimeRangeField(null=True, blank=True)
     curfew = models.TimeField(null=True, blank=True)
     on_site_security = models.BooleanField(null=True, blank=True)
     visitors_allowed = models.BooleanField(null=True, blank=True)
