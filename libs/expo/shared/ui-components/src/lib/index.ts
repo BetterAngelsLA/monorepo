@@ -23,6 +23,7 @@ export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
 export { default as Divider } from './Divider';
 export { default as EventCard } from './EventCard';
+export { default as ExpandableContainer } from './ExpandableContainer';
 export { default as FieldCard } from './FieldCard';
 export { default as FileCard } from './FileCard';
 export { default as FormCard } from './FormCard';
