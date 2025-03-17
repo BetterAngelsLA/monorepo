@@ -59,13 +59,7 @@ export default function ContactInfoCard(props: TProps) {
 
   return (
     <ClientProfileCardContainer>
-      <ClientProfileCard
-        items={content}
-        action={{
-          onClick: () => alert('clicked'),
-          accessibilityLabel: 'edit contact information',
-        }}
-      />
+      <ClientProfileCard items={content} />
     </ClientProfileCardContainer>
   );
 }
