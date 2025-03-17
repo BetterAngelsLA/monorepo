@@ -317,18 +317,12 @@ class Query:
     client_profiles: OffsetPaginated[ClientProfileType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
-    client_profiles_paginated: OffsetPaginated[ClientProfileType] = strawberry_django.offset_paginated(
-        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
-    )
 
     client_document: ClientDocumentType = strawberry_django.field(
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
     client_documents: OffsetPaginated[ClientDocumentType] = strawberry_django.offset_paginated(
-        extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
-    )
-    client_documents_paginated: OffsetPaginated[ClientDocumentType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
