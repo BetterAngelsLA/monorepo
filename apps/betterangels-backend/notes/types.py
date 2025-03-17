@@ -5,40 +5,19 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.types import UserType
-from common.graphql.types import AttachmentInterface, LocationInput, LocationType
-from common.models import Attachment
+from common.graphql.types import LocationInput, LocationType
 from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
 from notes.enums import (
     DueByGroupEnum,
-    NoteNamespaceEnum,
     SelahTeamEnum,
     ServiceRequestTypeEnum,
     TaskTypeEnum,
 )
 from notes.permissions import PrivateDetailsPermissions
 from strawberry import ID, Info, auto
-from strawberry.file_uploads import Upload
 from strawberry_django.utils.query import filter_for_user
 
 from . import models
-
-
-@strawberry_django.filter(Attachment)
-class NoteAttachmentFilter:
-    attachment_type: auto
-    namespace: NoteNamespaceEnum
-
-
-@strawberry_django.type(Attachment, filters=NoteAttachmentFilter, pagination=True)
-class NoteAttachmentType(AttachmentInterface):
-    namespace: NoteNamespaceEnum
-
-
-@strawberry_django.input(Attachment)
-class CreateNoteAttachmentInput:
-    note: ID
-    file: Upload
-    namespace: NoteNamespaceEnum
 
 
 @strawberry_django.type(models.ServiceRequest, pagination=True)
@@ -220,7 +199,6 @@ class NoteType:
     purpose: auto
     team: Optional[SelahTeamEnum]
     location: Optional[LocationType]
-    attachments: List[NoteAttachmentType]
     moods: List[MoodType]
     purposes: List[TaskType]
     next_steps: List[TaskType]
