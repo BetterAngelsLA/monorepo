@@ -18,6 +18,7 @@ import { KeyboardAwareScrollView as RNKeyboardAwareScrollView } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUpdateNoteMutation, useViewNoteQuery } from '../../apollo';
 import { generatePublicNote } from '../../helpers';
+import { MainScrollContainer } from '../../ui-components';
 
 export default function PublicNote({ noteId }: { noteId: string }) {
   const { data, loading: isLoading } = useViewNoteQuery({
@@ -97,12 +98,12 @@ export default function PublicNote({ noteId }: { noteId: string }) {
 
   return (
     <>
-      {/* <MainScrollContainer
+      <MainScrollContainer
         pb={Spacings.xl}
         bg={Colors.NEUTRAL_EXTRA_LIGHT}
         keyboardAware
-      > */}
-      <KeyboardAwareScrollView>
+      >
+        {/* <KeyboardAwareScrollView> */}
         <View
           style={{
             gap: Spacings.sm,
@@ -144,8 +145,8 @@ export default function PublicNote({ noteId }: { noteId: string }) {
             />
           </View>
         </View>
-      </KeyboardAwareScrollView>
-      {/* </MainScrollContainer> */}
+        {/* </KeyboardAwareScrollView> */}
+      </MainScrollContainer>
       <View
         style={{
           flexDirection: 'row',
