@@ -25,6 +25,7 @@ directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeat
 enum AccessibilityChoices {
   MEDICAL_EQUIPMENT_PERMITTED
   WHEELCHAIR_ACCESSIBLE
+  ADA_ROOMS
 }
 
 type AccessibilityType {
@@ -545,6 +546,7 @@ enum DemographicChoices {
   SENIORS
   FAMILIES
   SINGLE_MOMS
+  SINGLE_DADS
   OTHER
 }
 
@@ -586,6 +588,10 @@ enum EntryRequirementChoices {
   PHOTO_ID
   REFERRAL
   RESERVATION
+  BACKGROUND
+  HOMELESS_VERIFICATION
+  WALK_UPS
+  VEHICLE_REGISTRATION
 }
 
 type EntryRequirementType {
@@ -649,6 +655,8 @@ enum GeneralServiceChoices {
   MAIL
   PHONE
   TRANSPORTATION
+  LAUNDRY
+  TLS
 }
 
 type GeneralServiceType {
@@ -1040,6 +1048,7 @@ enum PetChoices {
   DOGS_OVER_25_LBS
   EXOTICS
   SERVICE_ANIMALS
+  PET_AREA
   NO_PETS_ALLOWED
 }
 
@@ -1155,9 +1164,11 @@ input RevertNoteInput {
 union RevertNotePayload = NoteType | OperationInfo
 
 enum RoomStyleChoices {
-  CONGREGANT
+  CONGREGATE
   CUBICLE_LOW_WALLS
   CUBICLE_HIGH_WALLS
+  HIGH_BUNK
+  LOW_BUNK
   SHARED_ROOMS
   SINGLE_ROOM
   MOTEL_ROOM
