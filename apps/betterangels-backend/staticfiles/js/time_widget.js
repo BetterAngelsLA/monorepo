@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
             start: parts[0].includes(':00')
               ? parseInt(toggleTime(parts[0]), 10)
               : parseInt(toggleTime(parts[0]), 10) + 0.5,
-            end: parts[0].includes(':00')
+            end: parts[1].includes(':00')
               ? parseInt(toggleTime(parts[1]), 10)
               : parseInt(toggleTime(parts[1]), 10) + 0.5,
           };

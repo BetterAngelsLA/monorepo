@@ -756,11 +756,11 @@ class ShelterAdmin(ImportExportModelAdmin):
             "Entry Requirements",
             {
                 "fields": (
-                    "entry_info",
                     "entry_requirements",
                     "referral_requirement",
                     "bed_fees",
                     "program_fees",
+                    "entry_info",
                 )
             },
         ),

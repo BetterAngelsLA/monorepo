@@ -86,8 +86,6 @@ class TimeRangeFormField(forms.Field):
                     start_str, end_str = rng.split("-")
                     start_time = datetime.datetime.strptime(start_str.strip(), "%I:%M%p").time()
                     end_time = datetime.datetime.strptime(end_str.strip(), "%I:%M%p").time()
-                    if start_time >= end_time:
-                        raise forms.ValidationError("Each time range must have a start time before the end time.")
                     ranges.append((start_time, end_time))
                 return ranges
             except Exception as e:
@@ -95,12 +93,6 @@ class TimeRangeFormField(forms.Field):
                     "Invalid format for time ranges. Expected format: '8:00AM-12:00PM, 1:00PM-5:00PM, ...'"
                 ) from e
         raise forms.ValidationError("Invalid input type for MultiTimeRangeFormField")
-
-    def validate(self, value: Any) -> None:
-        super().validate(value)
-        for start, end in value:
-            if start >= end:
-                raise forms.ValidationError("Each time range must have a start time before the end time.")
 
 
 class TimeRangeField(models.Field):

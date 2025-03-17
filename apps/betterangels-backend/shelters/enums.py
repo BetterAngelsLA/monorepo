@@ -13,6 +13,7 @@ class DemographicChoices(models.TextChoices):
     SENIORS = "seniors", _("Seniors")
     FAMILIES = "families", _("Families")
     SINGLE_MOMS = "single_moms", _("Single Moms")
+    SINGLE_DADS = "single_dads", _("Single Dads")
     OTHER = "other", _("Other")
 
 
