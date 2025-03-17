@@ -36,12 +36,7 @@ export function FullNameCard(props: TProps) {
 
   return (
     <ClientProfileCardContainer>
-      <ClientProfileCard
-        items={content}
-        action={{
-          onClick: () => alert('edit full name'),
-        }}
-      />
+      <ClientProfileCard items={content} />
     </ClientProfileCardContainer>
   );
 }
