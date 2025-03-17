@@ -7,10 +7,8 @@ from accounts.models import User
 from accounts.utils import get_outreach_authorized_users, get_user_permission_group
 from clients.models import ClientProfileImportRecord
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
-from common.models import Attachment, Location
-from common.permissions.enums import AttachmentPermissions
+from common.models import Location
 from common.permissions.utils import IsAuthenticated
-from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
 from django.db.models import QuerySet
 from django.db.models.expressions import Subquery
@@ -44,7 +42,6 @@ from strawberry_django.utils.query import filter_for_user
 
 from .types import (
     AddNoteTaskInput,
-    CreateNoteAttachmentInput,
     CreateNoteDataImportInput,
     CreateNoteInput,
     CreateNoteMoodInput,
@@ -55,7 +52,6 @@ from .types import (
     ImportNoteInput,
     InteractionAuthorType,
     MoodType,
-    NoteAttachmentType,
     NoteDataImportType,
     NoteFilter,
     NoteImportRecordType,
@@ -83,14 +79,6 @@ class Query:
 
     notes_paginated: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
-    )
-
-    note_attachment: NoteAttachmentType = strawberry_django.field(
-        extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
-    )
-
-    note_attachments: List[NoteAttachmentType] = strawberry_django.field(
-        extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
     service_request: ServiceRequestType = strawberry_django.field(
@@ -218,43 +206,6 @@ class Mutation:
         DeleteDjangoObjectInput,
         extensions=[
             HasRetvalPerm(perms=NotePermissions.DELETE),
-        ],
-    )
-
-    @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])
-    def create_note_attachment(self, info: Info, data: CreateNoteAttachmentInput) -> NoteAttachmentType:
-        with transaction.atomic():
-            user = cast(User, get_current_user(info))
-            note = filter_for_user(
-                Note.objects.all(),
-                user,
-                [NotePermissions.CHANGE],
-            ).get(id=data.note)
-
-            permission_group = get_user_permission_group(user)
-
-            content_type = ContentType.objects.get_for_model(Note)
-            attachment = Attachment.objects.create(
-                file=data.file,
-                namespace=data.namespace,
-                content_type=content_type,
-                object_id=note.id,
-                uploaded_by=user,
-                associated_with=note.client,
-            )
-
-            permissions = [
-                AttachmentPermissions.DELETE,
-            ]
-            for perm in permissions:
-                assign_perm(perm, permission_group.group, attachment)
-
-            return cast(NoteAttachmentType, attachment)
-
-    delete_note_attachment: NoteAttachmentType = mutations.delete(
-        DeleteDjangoObjectInput,
-        extensions=[
-            HasRetvalPerm(perms=AttachmentPermissions.DELETE),
         ],
     )
 

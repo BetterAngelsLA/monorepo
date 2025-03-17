@@ -3,7 +3,6 @@ from typing import Any, Dict
 from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.gis.geos import Point
-from django.core.files.uploadedfile import SimpleUploadedFile
 from model_bakery import baker
 from notes.models import ServiceRequest
 from test_utils.mixins import HasGraphQLProtocol
@@ -425,68 +424,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         """
 
         return self.execute_graphql(mutation, {"id": service_request_id})
-
-    def _create_note_attachment_fixture(
-        self,
-        note_id: str,
-        namespace: str,
-        file_content: bytes,
-        file_name: str = "test_file.txt",
-    ) -> Dict[str, Any]:
-        file = SimpleUploadedFile(name=file_name, content=file_content)
-        response = self.execute_graphql(
-            """
-            mutation CreateNoteAttachment($noteId: ID!, $namespace: NoteNamespaceEnum!, $file: Upload!) {  # noqa: B950
-                createNoteAttachment(data: { note: $noteId, namespace: $namespace, file: $file }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on NoteAttachmentType {
-                        id
-                        attachmentType
-                        mimeType
-                        file {
-                            name
-                        }
-                        originalFilename
-                        namespace
-                    }
-                }
-            }
-            """,
-            variables={
-                "noteId": note_id,
-                "namespace": namespace,
-            },
-            files={"file": file},
-        )
-        return response
-
-    def _delete_note_attachment_fixture(self, attachment_id: int) -> Dict[str, Any]:
-        response = self.execute_graphql(
-            """
-            mutation DeleteNoteAttachment($attachmentId: ID!) {
-                deleteNoteAttachment(data: { id: $attachmentId }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on NoteAttachmentType {
-                        id
-                    }
-                }
-            }
-            """,
-            variables={"attachmentId": attachment_id},
-        )
-        return response
 
 
 class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
