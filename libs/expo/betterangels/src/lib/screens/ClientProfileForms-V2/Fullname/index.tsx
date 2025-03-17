@@ -21,21 +21,20 @@ const FORM_FIELDS: FormField[] = [
 ];
 
 export default function Fullname() {
-  const {
-    control,
-    formState: { errors },
-  } = useFormContext<UpdateClientProfileInput>();
+  const { control } = useFormContext<UpdateClientProfileInput>();
 
   const [firstName, middleName, lastName, nickname] = useWatch({
     control,
     name: ['user.firstName', 'user.middleName', 'user.lastName', 'nickname'],
   });
 
+  const isError = !firstName && !middleName && !lastName && !nickname;
+
   return (
     <FormCard
       title="Full Name*"
       subtitle="Filling out one of the fields required"
-      subtitleError={!!errors.nickname}
+      subtitleError={isError}
     >
       {FORM_FIELDS.map((item) => (
         <ControlledInput
@@ -43,10 +42,10 @@ export default function Fullname() {
           label={item.label}
           name={item.name}
           control={control}
-          error={!!errors.nickname}
+          error={isError}
           rules={{
             validate: () => {
-              if (!firstName && !middleName && !lastName && !nickname) {
+              if (isError) {
                 return 'At least one field must be filled.';
               }
               return true;
