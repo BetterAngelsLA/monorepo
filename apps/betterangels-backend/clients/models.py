@@ -2,6 +2,7 @@ import os
 import uuid
 from typing import Any, List, Optional
 
+import pghistory
 from accounts.models import User
 from betterangels_backend import settings
 from clients.enums import (
@@ -75,7 +76,12 @@ def get_client_profile_photo_file_path(instance: Model, filename: str) -> str:
     return os.path.join("client_profile_photos/", unique_filename)
 
 
-class HmisProfile(models.Model):
+@pghistory.track(
+    pghistory.InsertEvent("hmis_profile.add"),
+    pghistory.UpdateEvent("hmis_profile.update"),
+    pghistory.DeleteEvent("hmis_profile.remove"),
+)
+class HmisProfile(BaseModel):
     client_profile = models.ForeignKey("ClientProfile", on_delete=models.CASCADE, related_name="hmis_profiles")
     hmis_id = models.CharField(max_length=50)
     agency = TextChoicesField(choices_enum=HmisAgencyEnum)
@@ -84,7 +90,12 @@ class HmisProfile(models.Model):
         constraints = [models.UniqueConstraint(fields=["hmis_id", "agency"], name="unique_hmis_id_agency")]
 
 
-class ClientProfile(models.Model):
+@pghistory.track(
+    pghistory.InsertEvent("client_profile.add"),
+    pghistory.UpdateEvent("client_profile.update"),
+    pghistory.DeleteEvent("client_profile.remove"),
+)
+class ClientProfile(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
     ada_accommodation = ArrayField(
         base_field=TextChoicesField(choices_enum=AdaAccommodationEnum), blank=True, null=True
@@ -181,12 +192,22 @@ class ClientProfile(models.Model):
         ordering = ["user__first_name"]
 
 
-class SocialMediaProfile(models.Model):
+@pghistory.track(
+    pghistory.InsertEvent("social_media_profile.add"),
+    pghistory.UpdateEvent("social_media_profile.update"),
+    pghistory.DeleteEvent("social_media_profile.remove"),
+)
+class SocialMediaProfile(BaseModel):
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="social_media_profiles")
     platform = TextChoicesField(choices_enum=SocialMediaEnum)
     platform_user_id = models.CharField(max_length=100)
 
 
+@pghistory.track(
+    pghistory.InsertEvent("client_contact.add"),
+    pghistory.UpdateEvent("client_contact.update"),
+    pghistory.DeleteEvent("client_contact.remove"),
+)
 class ClientContact(BaseModel):
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="contacts")
     name = models.CharField(max_length=100, null=True, blank=True)
@@ -197,7 +218,12 @@ class ClientContact(BaseModel):
     relationship_to_client_other = models.CharField(max_length=100, null=True, blank=True)
 
 
-class ClientHouseholdMember(models.Model):
+@pghistory.track(
+    pghistory.InsertEvent("client_household_member.add"),
+    pghistory.UpdateEvent("client_household_member.update"),
+    pghistory.DeleteEvent("client_household_member.remove"),
+)
+class ClientHouseholdMember(BaseModel):
     client_profile = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="household_members")
     name = models.CharField(max_length=100, null=True, blank=True)
     date_of_birth = models.DateField(blank=True, null=True)
