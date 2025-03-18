@@ -51,6 +51,7 @@ class ClientProfileResource(resources.ModelResource):
     gender = fields.Field(column_name="Gender")
     pronouns = fields.Field(column_name="Pronouns")
     race = fields.Field(column_name="Race")
+    place_of_birth = fields.Field(column_name="Place of Birth")
     ada_accommodation = fields.Field(column_name="ADA Accommodation")
     has_contact_info = fields.Field(column_name="Contact Info Available")
     has_case_manager_info = fields.Field(column_name="Case Manager Reachable")
@@ -67,6 +68,7 @@ class ClientProfileResource(resources.ModelResource):
             "gender",
             "pronouns",
             "race",
+            "place_of_birth",
             "ada_accommodation",
             "has_contact_info",
             "has_case_manager_info",
@@ -100,6 +102,9 @@ class ClientProfileResource(resources.ModelResource):
 
     def dehydrate_race(self, obj: ClientProfile) -> Optional[str]:
         return obj.get_race_display()
+
+    def dehydrate_place_of_birth(self, obj: ClientProfile) -> Optional[str]:
+        return obj.place_of_birth
 
     def dehydrate_ada_accommodation(self, obj: ClientProfile) -> Optional[str]:
         return ", ".join(str(a.label) for a in obj.ada_accommodation) if obj.ada_accommodation else None
