@@ -1,10 +1,11 @@
-from typing import Optional
+import datetime
+from typing import Optional, cast
 
 from clients.enums import LivingSituationEnum, RelationshipTypeEnum
 from common.models import PhoneNumber
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
-from django.db.models import Q
+from django.db.models import Q, QuerySet
 from django.urls import reverse
 from django.utils.html import format_html
 from import_export import fields, resources
@@ -73,14 +74,28 @@ class ClientProfileResource(resources.ModelResource):
             "household_size",
         )
 
+    def get_queryset(self) -> QuerySet[ClientProfile]:
+        qs = cast(QuerySet[ClientProfile], super().get_queryset())
+
+        return qs.select_related("user").prefetch_related(
+            "contacts",
+            "household_members",
+            "phone_numbers",
+            "social_media_profiles",
+        )
+
+    @staticmethod
+    def format_date(dt: datetime.datetime) -> str:
+        return dt.date().isoformat()
+
     def dehydrate_id(self, obj: ClientProfile) -> int:
         return obj.pk
 
     def dehydrate_created_at(self, obj: ClientProfile) -> str:
-        return obj.created_at.date().isoformat()
+        return self.format_date(obj.created_at)
 
     def dehydrate_updated_at(self, obj: ClientProfile) -> str:
-        return obj.updated_at.date().isoformat()
+        return self.format_date(obj.updated_at)
 
     def dehydrate_gender(self, obj: ClientProfile) -> Optional[str]:
         return obj.display_gender
@@ -92,7 +107,7 @@ class ClientProfileResource(resources.ModelResource):
         return obj.get_race_display()
 
     def dehydrate_ada_accommodation(self, obj: ClientProfile) -> Optional[str]:
-        return ", ".join([str(a.label) for a in obj.ada_accommodation]) if obj.ada_accommodation else None
+        return ", ".join(str(a.label) for a in obj.ada_accommodation) if obj.ada_accommodation else None
 
     def dehydrate_has_contact_info(self, obj: ClientProfile) -> str:
         if (
