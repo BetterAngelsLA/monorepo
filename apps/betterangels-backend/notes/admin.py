@@ -151,7 +151,6 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         MoodInline,
     ]
     readonly_fields = (
-        "attachments",
         "interacted_at",
         "updated_at",
     )
@@ -180,7 +179,6 @@ class TaskAdmin(AttachmentAdminMixin, admin.ModelAdmin):
         "client__email",
     )
     readonly_fields = (
-        "attachments",
         "created_at",
         "updated_at",
     )

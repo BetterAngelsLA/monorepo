@@ -1,0 +1,17 @@
+{% comment %} Render the standard text input {% endcomment %}
+{% load static %}
+<link rel="stylesheet"
+      type="text/css"
+      href="{% static 'css/time_widget.css' %}">
+<script type="text/javascript" src="{% static 'js/time_widget.js' %}"></script>
+<div class="time-input-widget">
+    <input type="text"
+           name="{{ widget.name }}"
+           class="times-input"
+           value="{{ widget.value|default_if_none:'' }}"
+           readonly
+           {{ widget.flat_attrs|safe }} />
+    <svg class="clock" width="800" height="100" viewBox="-50 -10 800 50">
+    </svg>
+</div>
+{{ custom_html|safe }}

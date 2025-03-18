@@ -2,11 +2,11 @@ from unittest import skip
 from unittest.mock import ANY, patch
 
 import time_machine
-from common.models import Address, Attachment, Location
-from django.test import ignore_warnings, override_settings
+from common.models import Address, Location
+from django.test import ignore_warnings
 from django.utils import timezone
 from model_bakery import baker
-from notes.enums import DueByGroupEnum, NoteNamespaceEnum, SelahTeamEnum
+from notes.enums import DueByGroupEnum, SelahTeamEnum
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
@@ -1624,59 +1624,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         self.assertEqual(len(not_reverted_note["moods"]), 1)
         self.assertEqual(not_reverted_note["purpose"], "Discarded Purpose")
-
-
-@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
-class NoteAttachmentMutationTestCase(NoteGraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self._handle_user_login("org_1_case_manager_1")
-
-    def test_create_note_attachment(self) -> None:
-        file_content = b"Test attachment content"
-        file_name = "test_attachment.txt"
-
-        expected_query_count = 17
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            create_response = self._create_note_attachment_fixture(
-                self.note["id"],
-                NoteNamespaceEnum.MOOD_ASSESSMENT.name,
-                file_content,
-                file_name,
-            )
-
-        attachment_id = create_response["data"]["createNoteAttachment"]["id"]
-        self.assertEqual(
-            create_response["data"]["createNoteAttachment"]["originalFilename"],
-            file_name,
-        )
-        self.assertIsNotNone(create_response["data"]["createNoteAttachment"]["file"]["name"])
-        self.assertTrue(
-            Attachment.objects.filter(id=attachment_id).exists(),
-            "The attachment should have been created and persisted in the database.",
-        )
-
-    def test_delete_note_attachment(self) -> None:
-        file_content = b"Content for deletion test"
-        file_name = "delete_test_attachment.txt"
-        create_response = self._create_note_attachment_fixture(
-            self.note["id"],
-            NoteNamespaceEnum.MOOD_ASSESSMENT.name,
-            file_content,
-            file_name,
-        )
-
-        attachment_id = create_response["data"]["createNoteAttachment"]["id"]
-        self.assertTrue(Attachment.objects.filter(id=attachment_id).exists())
-
-        expected_query_count = 17
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            self._delete_note_attachment_fixture(attachment_id)
-
-        self.assertFalse(
-            Attachment.objects.filter(id=attachment_id).exists(),
-            "The attachment should have been deleted from the database.",
-        )
 
 
 @ignore_warnings(category=UserWarning)

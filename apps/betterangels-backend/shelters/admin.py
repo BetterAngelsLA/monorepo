@@ -33,12 +33,15 @@ from .enums import (
     CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
+    ExitPolicyChoices,
     FunderChoices,
     GeneralServiceChoices,
     HealthServiceChoices,
     ImmediateNeedChoices,
+    MealServiceChoices,
     ParkingChoices,
     PetChoices,
+    ReferralRequirementChoices,
     RoomStyleChoices,
     ShelterChoices,
     ShelterProgramChoices,
@@ -104,6 +107,7 @@ class ShelterForm(forms.ModelForm):
                 "data-allow-clear": "true",
             }
         ),
+        label="Special Situation",
         required=True,
     )
     shelter_types = forms.MultipleChoiceField(
@@ -292,6 +296,45 @@ class ShelterForm(forms.ModelForm):
                 "placeholder": "Please specify...",
             }
         ),
+    )
+
+    exit_policy = forms.MultipleChoiceField(
+        choices=ExitPolicyChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select exit policies...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    exit_policy_other = forms.CharField(
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "placeholder": "Please specify...",
+            }
+        ),
+    )
+    meal_services = forms.MultipleChoiceField(
+        choices=MealServiceChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select meal services...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
+    )
+    referral_requirement = forms.MultipleChoiceField(
+        choices=ReferralRequirementChoices,
+        widget=Select2MultipleWidget(
+            attrs={
+                "data-placeholder": "Select requirements...",
+                "data-allow-clear": "true",
+            }
+        ),
+        required=False,
     )
 
     class Meta:
@@ -640,6 +683,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "email",
                     "phone",
                     "website",
+                    "operating_hours",
                 ),
             },
         ),
@@ -647,12 +691,12 @@ class ShelterAdmin(ImportExportModelAdmin):
             "Summary Info",
             {
                 "fields": (
-                    "description",
                     "demographics",
                     "demographics_other",
                     "special_situation_restrictions",
                     "shelter_types",
                     "shelter_types_other",
+                    "description",
                 )
             },
         ),
@@ -663,6 +707,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "total_beds",
                     "room_styles",
                     "room_styles_other",
+                    "add_notes_sleeping_details",
                 )
             },
         ),
@@ -674,16 +719,22 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "storage",
                     "pets",
                     "parking",
+                    "add_notes_shelter_details",
                 )
             },
         ),
         (
-            "Restrictions",
+            "Policies",
             {
                 "fields": (
                     "max_stay",
+                    "intake_hours",
                     "curfew",
                     "on_site_security",
+                    "visitors_allowed",
+                    "exit_policy",
+                    "exit_policy_other",
+                    "emergency_surge",
                     "other_rules",
                 )
             },
@@ -696,6 +747,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "general_services",
                     "health_services",
                     "training_services",
+                    "meal_services",
                     "other_services",
                 )
             },
@@ -704,10 +756,11 @@ class ShelterAdmin(ImportExportModelAdmin):
             "Entry Requirements",
             {
                 "fields": (
-                    "entry_info",
                     "entry_requirements",
+                    "referral_requirement",
                     "bed_fees",
                     "program_fees",
+                    "entry_info",
                 )
             },
         ),
