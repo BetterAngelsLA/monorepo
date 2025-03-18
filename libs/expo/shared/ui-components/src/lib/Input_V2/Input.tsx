@@ -46,7 +46,7 @@ export function Input(props: IInputProps) {
     required,
     disabled,
     componentStyle,
-    height = 38,
+    height = 56,
     mb,
     mt,
     my,

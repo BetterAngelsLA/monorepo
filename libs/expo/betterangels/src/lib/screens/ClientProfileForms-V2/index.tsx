@@ -1,4 +1,4 @@
-import { Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
   KeyboardAwareScrollView,
@@ -197,6 +197,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'space-between',
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
   },
   contentContainer: {
     flexGrow: 1,

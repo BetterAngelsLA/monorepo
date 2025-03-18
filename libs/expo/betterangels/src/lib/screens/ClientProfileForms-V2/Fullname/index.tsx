@@ -11,17 +11,26 @@ type AllowedFieldNames =
 interface FormField {
   label: string;
   name: AllowedFieldNames;
+  placeholder: string;
 }
 
 const FORM_FIELDS: FormField[] = [
-  { label: 'First Name', name: 'user.firstName' },
-  { label: 'Middle Name', name: 'user.middleName' },
-  { label: 'Last Name', name: 'user.lastName' },
-  { label: 'Nickname', name: 'nickname' },
+  {
+    label: 'First Name',
+    name: 'user.firstName',
+    placeholder: 'Enter first name',
+  },
+  {
+    label: 'Middle Name',
+    name: 'user.middleName',
+    placeholder: 'Enter middle name',
+  },
+  { label: 'Last Name', name: 'user.lastName', placeholder: 'Enter last name' },
+  { label: 'Nickname', name: 'nickname', placeholder: 'Enter nickname' },
 ];
 
 export default function Fullname() {
-  const { control } = useFormContext<UpdateClientProfileInput>();
+  const { control, setValue } = useFormContext<UpdateClientProfileInput>();
 
   const [firstName, middleName, lastName, nickname] = useWatch({
     control,
@@ -32,7 +41,8 @@ export default function Fullname() {
 
   return (
     <FormCard
-      title="Full Name*"
+      title="Full Name"
+      required
       subtitle="Filling out one of the fields required"
       subtitleError={isError}
     >
@@ -41,8 +51,10 @@ export default function Fullname() {
           key={item.name}
           label={item.label}
           name={item.name}
+          placeholder={item.placeholder}
           control={control}
           error={isError}
+          onDelete={() => setValue(item.name, '')}
           rules={{
             validate: () => {
               if (isError) {
