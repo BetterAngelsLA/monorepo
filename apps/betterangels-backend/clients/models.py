@@ -192,6 +192,15 @@ class ClientProfile(BaseModel):
         ordering = ["user__first_name"]
 
 
+class ClientDocument(Attachment):
+    """This is here to allow for a separate admin interface for Client Documents"""
+
+    class Meta:
+        proxy = True
+        verbose_name = "Client Document"
+        verbose_name_plural = "Client Documents"
+
+
 @pghistory.track(
     pghistory.InsertEvent("social_media_profile.add"),
     pghistory.UpdateEvent("social_media_profile.update"),
