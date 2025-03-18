@@ -1,4 +1,3 @@
-import datetime
 from typing import Optional, cast
 
 from clients.enums import LivingSituationEnum, RelationshipTypeEnum
@@ -84,18 +83,14 @@ class ClientProfileResource(resources.ModelResource):
             "social_media_profiles",
         )
 
-    @staticmethod
-    def format_date(dt: datetime.datetime) -> str:
-        return dt.date().isoformat()
-
     def dehydrate_id(self, obj: ClientProfile) -> int:
         return obj.pk
 
     def dehydrate_created_at(self, obj: ClientProfile) -> str:
-        return self.format_date(obj.created_at)
+        return obj.created_at.date().isoformat()
 
     def dehydrate_updated_at(self, obj: ClientProfile) -> str:
-        return self.format_date(obj.updated_at)
+        return obj.updated_at.date().isoformat()
 
     def dehydrate_gender(self, obj: ClientProfile) -> Optional[str]:
         return obj.display_gender
