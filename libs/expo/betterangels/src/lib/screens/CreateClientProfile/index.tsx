@@ -1,0 +1,151 @@
+import { Spacings } from '@monorepo/expo/shared/static';
+import {
+  BottomActions,
+  ControlledInput,
+  FormCard,
+  KeyboardAwareScrollView,
+  TextButton,
+} from '@monorepo/expo/shared/ui-components';
+import { useRouter } from 'expo-router';
+import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
+import { StyleSheet, View } from 'react-native';
+import { CreateClientProfileInput } from '../../apollo';
+import { applyValidationErrors } from '../../helpers/parseClientProfileErrors';
+import { useSnackbar } from '../../hooks';
+import { useCreateClientProfileMutation } from './__generated__/createClientProfile.generated';
+import { TValidationError } from './types';
+
+type AllowedFieldNames =
+  | 'user.firstName'
+  | 'user.middleName'
+  | 'user.lastName'
+  | 'nickname';
+
+interface FormField {
+  label: string;
+  name: AllowedFieldNames;
+}
+
+const FORM_FIELDS: FormField[] = [
+  { label: 'First Name', name: 'user.firstName' },
+  { label: 'Middle Name', name: 'user.middleName' },
+  { label: 'Last Name', name: 'user.lastName' },
+  { label: 'Nickname', name: 'nickname' },
+];
+
+export default function CreateClientProfile() {
+  const {
+    control,
+    setError,
+    handleSubmit,
+    formState: { isSubmitted },
+  } = useForm<CreateClientProfileInput>();
+  const [createClient, { loading: isCreating }] =
+    useCreateClientProfileMutation();
+
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
+
+  const [firstName, middleName, lastName, nickname] = useWatch({
+    control,
+    name: ['user.firstName', 'user.middleName', 'user.lastName', 'nickname'],
+  });
+
+  const isError = !firstName && !middleName && !lastName && !nickname;
+
+  const onSubmit: SubmitHandler<CreateClientProfileInput> = async (values) => {
+    try {
+      const createResponse = await createClient({
+        variables: {
+          data: values,
+        },
+        errorPolicy: 'all',
+      });
+
+      const operationErrors = createResponse.errors?.[0].extensions?.[
+        'errors'
+      ] as TValidationError[] | undefined;
+
+      if (operationErrors) {
+        applyValidationErrors(operationErrors, setError);
+        return;
+      }
+
+      const result = createResponse.data?.createClientProfile;
+
+      if (result?.__typename === 'ClientProfileType') {
+        router.replace(`/client/${result.id}`);
+      } else {
+        console.log('Unexpected result: ', result);
+        showSnackbar({
+          message: `Something went wrong!`,
+          type: 'error',
+        });
+        router.replace(`/clients`);
+      }
+    } catch (err) {
+      console.error(err);
+
+      showSnackbar({
+        message: 'Sorry, there was an error creating this profile.',
+        type: 'error',
+      });
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <KeyboardAwareScrollView>
+        <FormCard
+          title="Full Name*"
+          subtitle="Filling out one of the fields required"
+          subtitleError={isSubmitted && isError}
+        >
+          {FORM_FIELDS.map((item) => (
+            <ControlledInput
+              key={item.name}
+              label={item.label}
+              name={item.name}
+              control={control}
+              error={isSubmitted && isError}
+              rules={{
+                validate: () => {
+                  if (isError) {
+                    return 'At least one field must be filled.';
+                  }
+                  return true;
+                },
+              }}
+            />
+          ))}
+        </FormCard>
+      </KeyboardAwareScrollView>
+
+      <BottomActions
+        disabled={isCreating}
+        cancel={
+          <TextButton
+            disabled={isCreating}
+            onPress={router.back}
+            fontSize="sm"
+            accessibilityHint={`cancels the create of client profile`}
+            title="Cancel"
+          />
+        }
+        onSubmit={handleSubmit(onSubmit)}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingVertical: Spacings.md,
+    paddingHorizontal: Spacings.sm,
+  },
+});
