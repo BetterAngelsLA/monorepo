@@ -294,6 +294,7 @@ class StatusChoices(models.TextChoices):
     INACTIVE = "inactive", _("Inactive")
 
 
+@strawberry.enum
 class ExitPolicyChoices(models.TextChoices):
     MIA = "mia", _("Exit after 72 hours of being MIA")
     VIOLENCE = "violence", _("Exit due to violence to self or others")
@@ -301,12 +302,14 @@ class ExitPolicyChoices(models.TextChoices):
     OTHER = "other", _("Other")
 
 
+@strawberry.enum
 class MealServiceChoices(models.TextChoices):
     BREAKFAST = "breakfast", _("Breakfast")
     LUNCH = "lunch", _("Lunch")
     DINNER = "dinner", _("Dinner")
 
 
+@strawberry.enum
 class ReferralRequirementChoices(models.TextChoices):
     REFERRAL_MATCHED = "referral_matched", _("Matched Referral")
     REFERRAL_NONMATCHED = "referral_nonmatched", _("Non-Matched Referral")

@@ -7,7 +7,7 @@ from django.db import migrations
 
 def update_enum_values_forward(apps, schema_editor):
     # Use raw SQL to update the enum values directly in the database
-    schema_editor.execute("UPDATE shelters_roomstyle SET name = 'Congregate (Open)' WHERE name = 'Congregant (Open)'")
+    schema_editor.execute("UPDATE shelters_roomstyle SET name = 'congregate' WHERE name = 'congregant'")
 
 
 class Migration(migrations.Migration):
