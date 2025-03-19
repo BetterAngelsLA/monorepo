@@ -1,4 +1,4 @@
-import { Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
   ControlledInput,
@@ -24,13 +24,22 @@ type AllowedFieldNames =
 interface FormField {
   label: string;
   name: AllowedFieldNames;
+  placeholder: string;
 }
 
 const FORM_FIELDS: FormField[] = [
-  { label: 'First Name', name: 'user.firstName' },
-  { label: 'Middle Name', name: 'user.middleName' },
-  { label: 'Last Name', name: 'user.lastName' },
-  { label: 'Nickname', name: 'nickname' },
+  {
+    label: 'First Name',
+    name: 'user.firstName',
+    placeholder: 'Enter first name',
+  },
+  {
+    label: 'Middle Name',
+    name: 'user.middleName',
+    placeholder: 'Enter middle name',
+  },
+  { label: 'Last Name', name: 'user.lastName', placeholder: 'Enter last name' },
+  { label: 'Nickname', name: 'nickname', placeholder: 'Enter nickname' },
 ];
 
 export default function CreateClientProfile() {
@@ -39,6 +48,7 @@ export default function CreateClientProfile() {
     setError,
     handleSubmit,
     formState: { isSubmitted },
+    setValue,
   } = useForm<CreateClientProfileInput>();
   const [createClient, { loading: isCreating }] =
     useCreateClientProfileMutation();
@@ -106,7 +116,9 @@ export default function CreateClientProfile() {
               key={item.name}
               label={item.label}
               name={item.name}
+              placeholder={item.placeholder}
               control={control}
+              onDelete={() => setValue(item.name, '')}
               error={isSubmitted && isError}
               rules={{
                 validate: () => {
@@ -142,6 +154,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'space-between',
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
   },
   contentContainer: {
     flexGrow: 1,
