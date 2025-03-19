@@ -22,7 +22,6 @@ import FormFieldLabel from '../FormFieldLabel';
 
 export interface IInputProps extends TextInputProps {
   label?: string;
-  height?: number;
   required?: boolean;
   disabled?: boolean;
   error?: boolean;
@@ -46,7 +45,6 @@ export function Input(props: IInputProps) {
     required,
     disabled,
     componentStyle,
-    height = 56,
     mb,
     mt,
     my,
@@ -59,6 +57,7 @@ export function Input(props: IInputProps) {
     autoCorrect = false,
     borderRadius = Radiuses.xs,
     errorMessage,
+    style,
     ...rest
   } = props;
 
@@ -90,20 +89,25 @@ export function Input(props: IInputProps) {
       >
         {icon}
         <TextInput
-          style={{
-            color: disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK,
-            paddingLeft: icon ? Spacings.xs : Spacings.sm,
-            paddingRight: onDelete ? 38 : Spacings.sm,
-            flex: 1,
-            fontFamily: 'Poppins-Regular',
-            fontSize: FontSizes.md.fontSize,
-            height,
-            ...Platform.select({
-              web: {
-                outline: 'none',
-              },
-            }),
-          }}
+          style={[
+            {
+              color: disabled
+                ? Colors.NEUTRAL_LIGHT
+                : Colors.PRIMARY_EXTRA_DARK,
+              paddingLeft: icon ? Spacings.xs : Spacings.sm,
+              paddingRight: onDelete ? 38 : Spacings.sm,
+              flex: 1,
+              fontFamily: 'Poppins-Regular',
+              fontSize: FontSizes.md.fontSize,
+              paddingVertical: Spacings.sm,
+              ...Platform.select({
+                web: {
+                  outline: 'none',
+                },
+              }),
+            },
+            style,
+          ]}
           editable={!disabled}
           autoCorrect={autoCorrect}
           {...rest}
@@ -139,7 +143,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    alignItems: 'center',
     flexDirection: 'row',
   },
   label: {
@@ -159,6 +162,7 @@ const styles = StyleSheet.create({
   },
   pressable: {
     position: 'absolute',
+    top: 12,
     right: Spacings.xs,
     height: Spacings.lg,
     width: Spacings.lg,
