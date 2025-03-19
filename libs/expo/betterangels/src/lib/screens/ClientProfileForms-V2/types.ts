@@ -1,56 +1,69 @@
-type ContactInfoState = {
+export type ContactInfoState = {
   // TODO: implement actual contact form
   name: string;
 };
 
-type DemographicInfoState = {
+export type DemographicInfoState = {
   // TODO: implement actual demographic form
   name: string;
 };
 
-type FullnameState = {
-  // TODO: implement actual fullname form
-  name: string;
+export type FullnameState = {
+  id: string;
+  user: {
+    id: string;
+    firstName?: string;
+    middleName?: string;
+    lastName?: string;
+  };
+  nickname?: string;
 };
 
-type HmisIdState = {
+export type HmisIdState = {
   // TODO: implement actual HMIS id form
   name: string;
 };
 
-type HouseholdState = {
+export type HouseholdState = {
   // TODO: implement actual Household form
   name: string;
 };
 
-type ImportantNoteState = {
+export type ImportantNoteState = {
   // TODO: implement actual important form
   name: string;
 };
 
-type PersonalInfoState = {
+export type PersonalInfoState = {
   // TODO: implement actual personal info form
   name: string;
 };
 
-type RelevantContactState = {
+export type RelevantContactState = {
   // TODO: implement actual relevant contact info form
   name: string;
 };
 
 export interface FormStateMapping {
-  // sample
-  ContactInfo: ContactInfoState;
-  DemographicInfo: DemographicInfoState;
-  Fullname: FullnameState;
-  HmisId: HmisIdState;
-  Household: HouseholdState;
-  ImportantNote: ImportantNoteState;
-  PersonalInfo: PersonalInfoState;
-  RelevantContact: RelevantContactState;
+  contactInfo: ContactInfoState;
+  demographicInfo: DemographicInfoState;
+  fullname: FullnameState;
+  hmisId: HmisIdState;
+  household: HouseholdState;
+  importantNote: ImportantNoteState;
+  personalInfo: PersonalInfoState;
+  relevantContact: RelevantContactState;
 }
 
 export interface IClientProfileForms {
   id: string;
   componentName: string;
 }
+
+export type TValidationError = {
+  field: string;
+  location: string | undefined;
+  errorCode: string;
+};
+
+export type FormValues = FormStateMapping[keyof FormStateMapping];
