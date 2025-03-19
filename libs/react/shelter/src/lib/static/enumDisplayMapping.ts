@@ -39,24 +39,26 @@ export const enumDisplayGeneralServiceChoices: {
     'Financial Literacy Assistance',
   [GeneralServiceChoices.HousingNavigation]: 'Housing Navigation',
   [GeneralServiceChoices.LegalAssistance]: 'Legal Assistance',
-  [GeneralServiceChoices.Laundry]: 'Laundry',
+  [GeneralServiceChoices.Laundry]: 'Laundry Services',
   [GeneralServiceChoices.Mail]: 'Mail',
   [GeneralServiceChoices.Phone]: 'Phone',
-  [GeneralServiceChoices.Tls]: 'TLS',
+  [GeneralServiceChoices.Tls]: 'TLS (Time Limited Subsidies)',
   [GeneralServiceChoices.Transportation]: 'Transportation',
 };
 
 export const enumDisplayEntryRequirementChoices: {
   [key in EntryRequirementChoices]: string;
 } = {
-  [EntryRequirementChoices.Background]: 'Background',
-  [EntryRequirementChoices.HomelessVerification]: 'Homeless Verification',
+  [EntryRequirementChoices.Background]: 'Background Check',
+  [EntryRequirementChoices.HomelessVerification]:
+    'Homeless Verification/Observation',
   [EntryRequirementChoices.MedicaidOrMedicare]: 'Medicaid or Medicare',
   [EntryRequirementChoices.PhotoId]: 'Photo ID',
   [EntryRequirementChoices.Referral]: 'Referral',
   [EntryRequirementChoices.Reservation]: 'Reservation',
-  [EntryRequirementChoices.VehicleRegistration]: 'Vehicle Registration',
-  [EntryRequirementChoices.WalkUps]: 'Walk Ups',
+  [EntryRequirementChoices.VehicleRegistration]:
+    'Vehicle Registration/Insurance',
+  [EntryRequirementChoices.WalkUps]: 'Walk-Ups',
 };
 
 export const enumDisplaySpecialSituationRestrictionChoices: {
@@ -84,7 +86,7 @@ export const enumDisplayShelterChoices: {
 };
 
 export const enumDisplayRoomStyles: { [key in RoomStyleChoices]: string } = {
-  [RoomStyleChoices.Congregate]: 'Congregate',
+  [RoomStyleChoices.Congregate]: 'Congregate (Open)',
   [RoomStyleChoices.CubicleHighWalls]: 'Cubicle High Walls',
   [RoomStyleChoices.CubicleLowWalls]: 'Cubicle Low Walls',
   [RoomStyleChoices.HighBunk]: 'High Bunk',
@@ -98,7 +100,7 @@ export const enumDisplayRoomStyles: { [key in RoomStyleChoices]: string } = {
 export const enumDisplayAccessibilityChoices: {
   [key in AccessibilityChoices]: string;
 } = {
-  [AccessibilityChoices.AdaRooms]: 'Ada Rooms',
+  [AccessibilityChoices.AdaRooms]: 'ADA Rooms Available',
   [AccessibilityChoices.MedicalEquipmentPermitted]:
     'Medical Equipment Permitted',
   [AccessibilityChoices.WheelchairAccessible]: 'Wheelchair Accessible',
