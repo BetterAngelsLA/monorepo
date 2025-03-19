@@ -107,7 +107,8 @@ export default function CreateClientProfile() {
     <View style={styles.container}>
       <KeyboardAwareScrollView>
         <FormCard
-          title="Full Name*"
+          title="Full Name"
+          required
           subtitle="Filling out one of the fields required"
           subtitleError={isSubmitted && isError}
         >
