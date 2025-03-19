@@ -45,6 +45,8 @@ export default function ClientProfileView(props: ProfileProps) {
     setExpandedCard(card);
   }
 
+  const editProfileRoute = `/clients/edit/${clientProfile?.id}`;
+
   const routeConfig: Partial<
     Record<
       ClientProfileCardEnum,
@@ -52,9 +54,15 @@ export default function ClientProfileView(props: ProfileProps) {
     >
   > = {
     [ClientProfileCardEnum.FullName]: {
-      pathname: `/clients/edit/${clientProfile?.id}`,
+      pathname: editProfileRoute,
       params: {
         componentName: 'fullname',
+      },
+    },
+    [ClientProfileCardEnum.PersonalInfo]: {
+      pathname: editProfileRoute,
+      params: {
+        componentName: 'personalInfo',
       },
     },
   };

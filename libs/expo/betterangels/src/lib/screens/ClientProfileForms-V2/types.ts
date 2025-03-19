@@ -36,7 +36,12 @@ export type ImportantNoteState = {
 
 export type PersonalInfoState = {
   // TODO: implement actual personal info form
-  name: string;
+  id: string;
+  dateOfBirth?: string;
+  californiaId?: string;
+  preferredLanguage?: string;
+  veteranStatus?: string;
+  livingSituation?: string;
 };
 
 export type RelevantContactState = {
