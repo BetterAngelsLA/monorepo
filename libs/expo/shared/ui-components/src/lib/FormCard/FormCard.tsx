@@ -1,6 +1,7 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
+import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
 type TProps = {
@@ -9,20 +10,23 @@ type TProps = {
   title: string;
   subtitle?: string;
   subtitleError?: boolean;
+  required?: boolean;
 };
 
 export function FormCard(props: TProps) {
-  const { style, children, title, subtitle, subtitleError } = props;
+  const { style, children, title, subtitle, subtitleError, required } = props;
 
   return (
     <View style={[styles.container, style]}>
       <View>
-        <TextRegular>{title}</TextRegular>
+        <TextBold size="lg">
+          {title}
+          {required && <TextBold color={Colors.ERROR}>*</TextBold>}
+        </TextBold>
         {subtitle && (
           <TextRegular
-            mt="xs"
             size="sm"
-            color={subtitleError ? Colors.ERROR : Colors.NEUTRAL}
+            color={subtitleError ? Colors.ERROR : Colors.PRIMARY_EXTRA_DARK}
           >
             {subtitle}
           </TextRegular>
