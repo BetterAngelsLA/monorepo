@@ -1,3 +1,5 @@
+from typing import Optional
+
 from model_bakery import baker
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.tests.utils import (
@@ -269,30 +271,37 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertIsNotNone(response["errors"])
 
     @parametrize(
-        "user_label, should_succeed",
+        "user_label, expected_interaction_count",
         [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", True),  # Other case manager should succeed
-            ("client_user_1", False),  # Non CM should not succeed
-            (None, False),  # Anonymous user should not succeed
+            ("org_1_case_manager_1", 1),  # Owner should succeed
+            ("org_1_case_manager_2", 1),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", 1),  # Other case manager should succeed
+            ("client_user_1", 0),  # Non CM should not succeed
+            # NOTE: Anon user raising an error may be caused by a strawberry bug.
+            # This test may fail and need updating when the bug is fixed.
+            (None, None),  # Anonymous user should return error
         ],
     )
-    def test_view_notes_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_notes_permission(self, user_label: str, expected_interaction_count: Optional[int]) -> None:
         self._handle_user_login(user_label)
 
-        mutation = """
-            query ViewNotes {
+        query = """
+            query {
                 notes {
-                    id
-                    publicDetails
+                    totalCount
+                    results {
+                        id
+                        publicDetails
+                    }
                 }
             }
         """
-        variables = {"id": self.note["id"]}
-        response = self.execute_graphql(mutation, variables)
+        response = self.execute_graphql(query)
 
-        self.assertTrue(len(response["data"]["notes"]) == should_succeed)
+        if expected_interaction_count is not None:
+            self.assertEqual(response["data"]["notes"]["totalCount"], expected_interaction_count)
+        else:
+            self.assertTrue("errors" in response)
 
     @parametrize(
         "user_label, should_succeed",
@@ -362,15 +371,17 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         self._handle_user_login(user_label)
 
         query = """
-            query ViewNotes {
+            query {
                 notes {
-                    id
-                    privateDetails
+                    results {
+                        id
+                        privateDetails
+                    }
                 }
             }
         """
         response = self.execute_graphql(query, {})
-        notes_data = response["data"]["notes"]
+        notes_data = response["data"]["notes"]["results"]
 
         private_details_visible = len([note for note in notes_data if note.get("privateDetails") is not None])
 
