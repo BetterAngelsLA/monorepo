@@ -1,4 +1,4 @@
-import { Colors, FontSizes } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
@@ -17,8 +17,6 @@ export function FormFieldTitle(props: TProps) {
   if (!title && !subtitle) {
     return null;
   }
-
-  const asdf = FontSizes;
 
   return (
     <View style={style}>
