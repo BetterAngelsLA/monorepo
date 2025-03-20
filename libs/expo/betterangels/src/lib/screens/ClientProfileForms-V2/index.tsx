@@ -11,19 +11,19 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 import { applyValidationErrors } from '../../helpers/parseClientProfileErrors';
 import { useSnackbar } from '../../hooks';
-import {
-  useGetClientProfileQuery,
-  useUpdateClientProfileMutation,
-} from './__generated__/clientProfile.generated';
 import ContactInfo from './ContactInfo';
 import DemographicInfo from './DemographicInfo';
-import { extractClientFormData } from './extractClientFormData';
 import Fullname from './Fullname';
 import HmisId from './HmisId';
 import Household from './Household';
 import ImportantNotes from './ImportantNotes';
-import PersonalInfo from './PersonalInfo';
+import PersonalInfoForm from './PersonalInfo';
 import RelevantContact from './RelevantContact';
+import {
+  useGetClientProfileQuery,
+  useUpdateClientProfileMutation,
+} from './__generated__/clientProfile.generated';
+import { extractClientFormData } from './extractClientFormData';
 import {
   FormStateMapping,
   FormValues,
@@ -60,8 +60,8 @@ const formConfigs: Record<
     content: <ImportantNotes />,
   },
   personalInfo: {
-    title: 'Edit Personal Information',
-    content: <PersonalInfo />,
+    title: 'Edit Personal Info',
+    content: <PersonalInfoForm />,
   },
   relevantContact: {
     title: 'Edit Relevant Contact',
@@ -79,6 +79,7 @@ export default function ClientProfileForms(props: IClientProfileForms) {
   } = useGetClientProfileQuery({
     variables: { id },
   });
+
   const [updateClient, { loading: isUpdating }] =
     useUpdateClientProfileMutation();
   const methods = useForm<FormValues>({

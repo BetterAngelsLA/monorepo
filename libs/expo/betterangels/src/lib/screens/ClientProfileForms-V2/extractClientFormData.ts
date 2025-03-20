@@ -1,5 +1,5 @@
 import { GetClientProfileQuery } from '../AddEditClient/__generated__/AddEditClient.generated';
-import { FormStateMapping, FullnameState } from './types';
+import { FormStateMapping, FullnameState, PersonalInfoState } from './types';
 
 export const extractClientFormData = (
   formType: keyof FormStateMapping,
@@ -18,6 +18,25 @@ export const extractClientFormData = (
         },
         nickname,
       } as FullnameState;
+    }
+    case 'personalInfo': {
+      const {
+        id,
+        dateOfBirth,
+        californiaId,
+        preferredLanguage,
+        veteranStatus,
+        livingSituation,
+      } = clientProfile;
+
+      return {
+        id,
+        dateOfBirth,
+        californiaId,
+        preferredLanguage,
+        veteranStatus,
+        livingSituation,
+      } as PersonalInfoState;
     }
     case 'importantNotes': {
       const { id, importantNotes } = clientProfile;
