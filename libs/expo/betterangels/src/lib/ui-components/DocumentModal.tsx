@@ -3,9 +3,11 @@ import {
   DownloadIcon,
   ViewIcon,
 } from '@monorepo/expo/shared/icons';
+import { BasicModal, Button, TextBold, TextButton, TextRegular } from '@monorepo/expo/shared/ui-components';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import { Alert } from 'react-native';
+import { useState } from 'react';
+import { Alert, View } from 'react-native';
 import { ClientDocumentType } from '../apollo';
 import {
   ClientProfileDocument,
@@ -24,6 +26,7 @@ const MIME_TYPE = 'application/octet-stream';
 
 export default function DocumentModal(props: IDocumentModalProps) {
   const { isModalVisible, closeModal, document, clientId } = props;
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteDocument] = useDeleteClientDocumentMutation({
     refetchQueries: [
       {
@@ -106,19 +109,65 @@ export default function DocumentModal(props: IDocumentModalProps) {
     {
       title: `Delete this ${fileTypeText}`,
       Icon: DeleteIcon,
-      onPress: handleDelete,
+      onPress: () => setDeleteModalVisible(true),
     },
   ];
 
   return (
-    <MainModal
-      closeButton
-      vertical
-      actions={ACTIONS}
-      isModalVisible={isModalVisible}
-      closeModal={closeModal}
-      opacity={0.5}
-    />
+    <>
+      <MainModal
+        closeButton
+        vertical
+        actions={ACTIONS}
+        isModalVisible={isModalVisible}
+        closeModal={closeModal}
+        opacity={0.5}
+      />
+
+      <BasicModal
+        visible={deleteModalVisible}
+        onClose={() => setDeleteModalVisible(false)}
+      >
+        <TextBold size="lg">{`Delete ${fileTypeText}?`}</TextBold>
+        <TextRegular size="sm" mt="sm">
+          {`All data associated with this ${fileTypeText} will be deleted.`}
+        </TextRegular>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: 16,
+          }}
+        >
+          <View
+            style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <TextButton
+              fontSize="sm"
+              onPress={() => setDeleteModalVisible(false)}
+              color="#007AFF"
+              accessibilityHint="cancel deletion"
+              title="Cancel"
+            />
+          </View>
+          <View style={{ flex: 1, marginLeft: 8 }}>
+            <Button
+              fontSize="sm"
+              size="full"
+              accessibilityHint={`deletes the ${fileTypeText}`}
+              onPress={() => {
+                handleDelete();
+                setDeleteModalVisible(false);
+                closeModal()
+              }}
+              variant="primary"
+              title="Delete"
+            />
+          </View>
+        </View>
+      </BasicModal>
+    </>
   );
 }
 
