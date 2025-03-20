@@ -1,14 +1,11 @@
 import { ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { FormField } from './FormField';
+import { FormFieldset } from './FormFieldset';
 
 type TProps = {
   style?: ViewStyle;
   children: ReactNode;
-  title?: string;
-  subtitle?: string;
-  subtitleError?: boolean;
-  required?: boolean;
 };
 
 function FormLayout(props: TProps) {
@@ -24,5 +21,6 @@ const styles = StyleSheet.create({
 });
 
 FormLayout.Field = FormField;
+FormLayout.Fieldset = FormFieldset;
 
 export { FormLayout };

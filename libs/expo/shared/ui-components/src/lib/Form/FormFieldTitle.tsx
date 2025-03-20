@@ -1,29 +1,30 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { Colors, FontSizes } from '@monorepo/expo/shared/static';
+import { StyleProp, View, ViewStyle } from 'react-native';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
 type TProps = {
-  style?: ViewStyle;
   title?: string;
   subtitle?: string;
   subtitleError?: boolean;
   required?: boolean;
+  style?: StyleProp<ViewStyle>;
 };
 
-export function FormFieldTitlte(props: TProps) {
+export function FormFieldTitle(props: TProps) {
   const { style, title, required, subtitle, subtitleError } = props;
 
   if (!title && !subtitle) {
     return null;
   }
 
+  const asdf = FontSizes;
+
   return (
-    <View style={[styles.container, style]}>
+    <View style={style}>
       {!!title && (
         <TextBold size="lg">
-          {title}
-          {required && <TextBold color={Colors.ERROR}>*</TextBold>}
+          {title} {required && <TextBold color={Colors.ERROR}>*</TextBold>}
         </TextBold>
       )}
 
@@ -38,9 +39,3 @@ export function FormFieldTitlte(props: TProps) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: Spacings.sm,
-  },
-});

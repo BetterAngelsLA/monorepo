@@ -60,9 +60,6 @@ export default function PersonalInfoForm() {
             onDelete={() => setValue(item.name, '')}
             rules={{
               validate: () => {
-                if (isError) {
-                  return 'At least one field must be filled.';
-                }
                 return true;
               },
             }}

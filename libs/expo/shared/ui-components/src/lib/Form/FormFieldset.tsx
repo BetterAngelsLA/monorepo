@@ -8,12 +8,12 @@ type TProps = {
   title?: string;
   subtitle?: string;
   subtitleError?: boolean;
+  required?: boolean;
   style?: ViewStyle;
   titleStyle?: ViewStyle;
-  required?: boolean;
 };
 
-export function FormField(props: TProps) {
+export function FormFieldset(props: TProps) {
   const {
     style,
     titleStyle,
@@ -40,12 +40,13 @@ export function FormField(props: TProps) {
 
 const styles = StyleSheet.create({
   container: {
+    gap: Spacings.sm,
     backgroundColor: Colors.WHITE,
-    paddingHorizontal: Spacings.sm,
     paddingVertical: Spacings.md,
+    paddingHorizontal: Spacings.sm,
     borderRadius: Radiuses.xs,
   },
   title: {
-    marginBottom: Spacings.sm,
+    marginBottom: Spacings.md,
   },
 });
