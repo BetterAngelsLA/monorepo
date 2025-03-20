@@ -1,4 +1,4 @@
-import { WFEdit } from '@monorepo/expo/shared/icons';
+import { TIconSize, WFEdit } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 
@@ -7,6 +7,7 @@ type TProps = {
   style?: ViewStyle;
   accessibilityHint?: string;
   pressedColor?: Colors;
+  iconSize?: TIconSize;
 };
 
 export function EditButton(props: TProps) {
@@ -14,6 +15,7 @@ export function EditButton(props: TProps) {
     onClick,
     accessibilityHint,
     pressedColor = Colors.GRAY_PRESSED,
+    iconSize = 'md',
     style,
   } = props;
 
@@ -31,7 +33,7 @@ export function EditButton(props: TProps) {
       accessibilityHint={accessibilityHint || 'edit'}
       accessibilityRole="button"
     >
-      <WFEdit size="sm" />
+      <WFEdit size={iconSize} />
     </Pressable>
   );
 }
