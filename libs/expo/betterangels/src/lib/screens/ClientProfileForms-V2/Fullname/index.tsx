@@ -1,4 +1,4 @@
-import { ControlledInput, FormCard } from '@monorepo/expo/shared/ui-components';
+import { ControlledInput, Form } from '@monorepo/expo/shared/ui-components';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { UpdateClientProfileInput } from '../../../apollo';
 
@@ -30,41 +30,48 @@ const FORM_FIELDS: FormField[] = [
 ];
 
 export default function Fullname() {
-  const { control, setValue } = useFormContext<UpdateClientProfileInput>();
+  const { control, setValue, formState } =
+    useFormContext<UpdateClientProfileInput>();
+  const { isSubmitted } = formState;
+
+  const fieldNames = FORM_FIELDS.map((f) => f.name);
 
   const [firstName, middleName, lastName, nickname] = useWatch({
     control,
-    name: ['user.firstName', 'user.middleName', 'user.lastName', 'nickname'],
+    name: fieldNames,
   });
 
   const isError = !firstName && !middleName && !lastName && !nickname;
+  const showError = isSubmitted && isError;
 
   return (
-    <FormCard
-      title="Full Name"
-      required
-      subtitle="Filling out one of the fields required"
-      subtitleError={isError}
-    >
-      {FORM_FIELDS.map((item) => (
-        <ControlledInput
-          key={item.name}
-          label={item.label}
-          name={item.name}
-          placeholder={item.placeholder}
-          control={control}
-          error={isError}
-          onDelete={() => setValue(item.name, '')}
-          rules={{
-            validate: () => {
-              if (isError) {
-                return 'At least one field must be filled.';
-              }
-              return true;
-            },
-          }}
-        />
-      ))}
-    </FormCard>
+    <Form>
+      <Form.Fieldset
+        title="Full Name"
+        subtitle="Filling out one of the fields is required"
+        subtitleError={showError}
+        required
+      >
+        {FORM_FIELDS.map((item) => (
+          <ControlledInput
+            key={item.name}
+            label={item.label}
+            name={item.name}
+            placeholder={item.placeholder}
+            control={control}
+            error={showError}
+            onDelete={() => setValue(item.name, '')}
+            rules={{
+              validate: () => {
+                if (showError) {
+                  return 'At least one field must be filled.';
+                }
+                return true;
+              },
+            }}
+          />
+        ))}
+      </Form.Fieldset>
+    </Form>
   );
 }
