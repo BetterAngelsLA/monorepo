@@ -1,7 +1,6 @@
 import { ControlledInput, Form } from '@monorepo/expo/shared/ui-components';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { UpdateClientProfileInput } from '../../../apollo';
-import { useDirtyFields } from '../../../hooks';
 
 type AllowedFieldNames =
   | 'user.firstName'
@@ -31,7 +30,9 @@ const FORM_FIELDS: FormField[] = [
 ];
 
 export default function Fullname() {
-  const { control, setValue } = useFormContext<UpdateClientProfileInput>();
+  const { control, setValue, formState } =
+    useFormContext<UpdateClientProfileInput>();
+  const { isSubmitted } = formState;
 
   const fieldNames = FORM_FIELDS.map((f) => f.name);
 
@@ -40,10 +41,8 @@ export default function Fullname() {
     name: fieldNames,
   });
 
-  const fieldsAreDirty = useDirtyFields(fieldNames);
-
   const isError = !firstName && !middleName && !lastName && !nickname;
-  const showError = fieldsAreDirty && isError;
+  const showError = isSubmitted && isError;
 
   return (
     <Form>
@@ -60,11 +59,11 @@ export default function Fullname() {
             name={item.name}
             placeholder={item.placeholder}
             control={control}
-            error={isError}
+            error={showError}
             onDelete={() => setValue(item.name, '')}
             rules={{
               validate: () => {
-                if (isError) {
+                if (showError) {
                   return 'At least one field must be filled.';
                 }
                 return true;

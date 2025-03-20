@@ -1,6 +1,5 @@
 export { default as useCaliforniaIdUniqueCheck } from './californiaIdUniqueCheck/useCaliforniaIdUniqueCheck';
 export { default as useFeatureFlagActive } from './featureFlag/useFeatureFlagActive';
-export { default as useDirtyFields } from './form/useDirtyFields';
 export { default as useKeyboardToolbar } from './keyboardToolbar/useKeyboardToolbar';
 export { default as useInfiniteScroll } from './scroll/useInfiniteScroll';
 export { default as useScrollToScreenTop } from './scroll/useScrollToScreenTop';
