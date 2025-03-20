@@ -28,6 +28,7 @@ export type Scalars = {
 };
 
 export enum AccessibilityChoices {
+  AdaRooms = 'ADA_ROOMS',
   MedicalEquipmentPermitted = 'MEDICAL_EQUIPMENT_PERMITTED',
   WheelchairAccessible = 'WHEELCHAIR_ACCESSIBLE'
 }
@@ -565,6 +566,7 @@ export enum DemographicChoices {
   Families = 'FAMILIES',
   Other = 'OTHER',
   Seniors = 'SENIORS',
+  SingleDads = 'SINGLE_DADS',
   SingleMen = 'SINGLE_MEN',
   SingleMoms = 'SINGLE_MOMS',
   SingleWomen = 'SINGLE_WOMEN',
@@ -609,10 +611,14 @@ export enum DueByGroupEnum {
 }
 
 export enum EntryRequirementChoices {
+  Background = 'BACKGROUND',
+  HomelessVerification = 'HOMELESS_VERIFICATION',
   MedicaidOrMedicare = 'MEDICAID_OR_MEDICARE',
   PhotoId = 'PHOTO_ID',
   Referral = 'REFERRAL',
-  Reservation = 'RESERVATION'
+  Reservation = 'RESERVATION',
+  VehicleRegistration = 'VEHICLE_REGISTRATION',
+  WalkUps = 'WALK_UPS'
 }
 
 export type EntryRequirementType = {
@@ -676,9 +682,11 @@ export enum GeneralServiceChoices {
   EmploymentServices = 'EMPLOYMENT_SERVICES',
   FinancialLiteracyAssistance = 'FINANCIAL_LITERACY_ASSISTANCE',
   HousingNavigation = 'HOUSING_NAVIGATION',
+  Laundry = 'LAUNDRY',
   LegalAssistance = 'LEGAL_ASSISTANCE',
   Mail = 'MAIL',
   Phone = 'PHONE',
+  Tls = 'TLS',
   Transportation = 'TRANSPORTATION'
 }
 
@@ -1276,6 +1284,7 @@ export enum PetChoices {
   DogsUnder_25Lbs = 'DOGS_UNDER_25_LBS',
   Exotics = 'EXOTICS',
   NoPetsAllowed = 'NO_PETS_ALLOWED',
+  PetArea = 'PET_AREA',
   ServiceAnimals = 'SERVICE_ANIMALS'
 }
 
@@ -1488,9 +1497,11 @@ export type RevertNoteInput = {
 export type RevertNotePayload = NoteType | OperationInfo;
 
 export enum RoomStyleChoices {
-  Congregant = 'CONGREGANT',
+  Congregate = 'CONGREGATE',
   CubicleHighWalls = 'CUBICLE_HIGH_WALLS',
   CubicleLowWalls = 'CUBICLE_LOW_WALLS',
+  HighBunk = 'HIGH_BUNK',
+  LowBunk = 'LOW_BUNK',
   MotelRoom = 'MOTEL_ROOM',
   Other = 'OTHER',
   SharedRooms = 'SHARED_ROOMS',

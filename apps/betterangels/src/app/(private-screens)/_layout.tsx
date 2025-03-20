@@ -219,6 +219,26 @@ export default function PrivateLayout() {
         }}
       />
       <Stack.Screen
+        name="clients/create"
+        options={{
+          headerTitleAlign: 'center',
+          title: 'Create Client Profile',
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => (
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
+              accessibilityHint="goes to previous screen"
+              title="Back"
+              onPress={router.back}
+            />
+          ),
+        }}
+      />
+      <Stack.Screen
         name="file/[id]"
         options={{
           headerTitleAlign: 'center',
