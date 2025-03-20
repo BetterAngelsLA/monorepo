@@ -10,10 +10,12 @@ import { useRouter } from 'expo-router';
 import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 import { CreateClientProfileInput } from '../../apollo';
-import { applyValidationErrors } from '../../helpers/parseClientProfileErrors';
+import {
+  applyValidationErrors,
+  TValidationError,
+} from '../../helpers/parseClientProfileErrors';
 import { useSnackbar } from '../../hooks';
 import { useCreateClientProfileMutation } from './__generated__/createClientProfile.generated';
-import { TValidationError } from './types';
 
 type AllowedFieldNames =
   | 'user.firstName'
