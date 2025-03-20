@@ -100,6 +100,7 @@ export function Input(props: IInputProps) {
               fontFamily: 'Poppins-Regular',
               fontSize: FontSizes.md.fontSize,
               paddingVertical: Spacings.sm,
+              textAlignVertical: 'top',
               ...Platform.select({
                 web: {
                   outline: 'none',
