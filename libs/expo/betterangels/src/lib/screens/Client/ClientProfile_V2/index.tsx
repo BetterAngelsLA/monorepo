@@ -65,6 +65,12 @@ export default function ClientProfileView(props: ProfileProps) {
         componentName: 'personalInfo',
       },
     },
+    [ClientProfileCardEnum.ImportantNotes]: {
+      pathname: editProfileRoute,
+      params: {
+        componentName: 'importantNotes',
+      },
+    },
   };
 
   function onClickEdit(card: ClientProfileCardEnum) {

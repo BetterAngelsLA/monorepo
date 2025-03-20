@@ -35,9 +35,8 @@ export type HouseholdState = {
   name: string;
 };
 
-export type ImportantNoteState = {
-  // TODO: implement actual important form
-  name: string;
+export type ImportantNotesState = {
+  importantNotes?: string | null;
 };
 
 export type PersonalInfoState = {
@@ -61,7 +60,7 @@ export interface FormStateMapping {
   fullname: FullnameState;
   hmisId: HmisIdState;
   household: HouseholdState;
-  importantNote: ImportantNoteState;
+  importantNotes: ImportantNotesState;
   personalInfo: PersonalInfoState;
   relevantContact: RelevantContactState;
 }

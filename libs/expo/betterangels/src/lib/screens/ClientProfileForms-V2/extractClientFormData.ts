@@ -38,6 +38,13 @@ export const extractClientFormData = (
         livingSituation,
       } as PersonalInfoState;
     }
+    case 'importantNotes': {
+      const { id, importantNotes } = clientProfile;
+      return {
+        id,
+        importantNotes,
+      };
+    }
 
     default:
       return {};
