@@ -19,6 +19,13 @@ export const extractClientFormData = (
         nickname,
       } as FullnameState;
     }
+    case 'importantNotes': {
+      const { id, importantNotes } = clientProfile;
+      return {
+        id,
+        importantNotes,
+      };
+    }
 
     default:
       return {};

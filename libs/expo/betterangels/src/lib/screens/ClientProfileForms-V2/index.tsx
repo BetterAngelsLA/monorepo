@@ -21,7 +21,7 @@ import { extractClientFormData } from './extractClientFormData';
 import Fullname from './Fullname';
 import HmisId from './HmisId';
 import Household from './Household';
-import ImportantNote from './ImportantNote';
+import ImportantNotes from './ImportantNotes';
 import PersonalInfo from './PersonalInfo';
 import RelevantContact from './RelevantContact';
 import {
@@ -55,9 +55,9 @@ const formConfigs: Record<
     title: 'Edit Household Details',
     content: <Household />,
   },
-  importantNote: {
-    title: 'Edit Important Note',
-    content: <ImportantNote />,
+  importantNotes: {
+    title: 'Edit Important Notes',
+    content: <ImportantNotes />,
   },
   personalInfo: {
     title: 'Edit Personal Information',
@@ -154,6 +154,7 @@ export default function ClientProfileForms(props: IClientProfileForms) {
       componentName as keyof FormStateMapping,
       data.clientProfile
     );
+
     methods.reset(formData);
   }, [data, id]);
 
