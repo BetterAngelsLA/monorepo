@@ -45,6 +45,8 @@ env = environ.Env(
     DEBUG=(bool, False),
     DEFAULT_FROM_EMAIL=(str, ""),
     DJANGO_CACHE_URL=(str, ""),
+    DJANGO_CACHE_BLOCKING_TIMEOUT=(float, 1.0),
+    DJANGO_CACHE_MAX_CONNECTIONS=(int, 100),
     GOOGLE_MAPS_API_KEY=(str, ""),
     IS_LOCAL_DEV=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, True),
@@ -248,6 +250,11 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": env("DJANGO_CACHE_URL"),
+        "OPTIONS": {
+            "pool_class": "redis.BlockingConnectionPool",
+            "max_connections": env("DJANGO_CACHE_MAX_CONNECTIONS"),
+            "timeout": env("DJANGO_CACHE_BLOCKING_TIMEOUT"),
+        },
     }
 }
 
