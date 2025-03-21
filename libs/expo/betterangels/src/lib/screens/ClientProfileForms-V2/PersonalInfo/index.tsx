@@ -1,6 +1,7 @@
 import { ControlledInput, Form } from '@monorepo/expo/shared/ui-components';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { UpdateClientProfileInput } from '../../../apollo';
+import { ProfilePhotoField } from './ProfilePhotoField/ProfilePhotoField';
 
 type AllowedFieldNames =
   | 'livingSituation'
@@ -45,10 +46,19 @@ const FORM_FIELDS: FormField[] = [
 export default function PersonalInfoForm() {
   const { control, setValue } = useFormContext<UpdateClientProfileInput>();
 
+  const clientId = useWatch({
+    control,
+    name: 'id',
+  });
+
   const isError = false;
 
   return (
     <Form>
+      <Form.Field>
+        <ProfilePhotoField clientId={clientId} />
+      </Form.Field>
+
       {FORM_FIELDS.map((item, idx) => (
         <Form.Field key={idx} title={item.label}>
           <ControlledInput
