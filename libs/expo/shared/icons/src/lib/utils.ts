@@ -1,7 +1,7 @@
 import { ICON_SIZE } from './constant';
-import { TIconColors, TIconSizes } from './types';
+import { TIconColors, TIconSize } from './types';
 
-export const extractSize = (size: TIconSizes): { h: number; w: number } => {
+export const extractSize = (size: TIconSize): { h: number; w: number } => {
   return ICON_SIZE[size];
 };
 
