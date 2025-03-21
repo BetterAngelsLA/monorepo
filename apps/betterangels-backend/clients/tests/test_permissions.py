@@ -298,7 +298,7 @@ class OrganizationPermissionTestCase(GraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_available_organizations_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_caseworker_organizations_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         # This recipe creates an organization in the process. Including this here because even though
@@ -306,16 +306,24 @@ class OrganizationPermissionTestCase(GraphQLBaseTestCase):
         permission_group_recipe.make(name="Caseworker")
 
         query = """
-            query {
-                availableOrganizations {
-                    id
-                    name
+            query CaseworkerOrganizations($pagination: OffsetPaginationInput) {
+                caseworkerOrganizations(pagination: $pagination) {
+                    totalCount
+                    results {
+                        id
+                        name
+                    }
+                    pageInfo {
+                        offset
+                        limit
+                    }
                 }
             }
         """
-        response = self.execute_graphql(query)
+        variables = {"pagination": {"offset": 0, "limit": 10}}
+        response = self.execute_graphql(query, variables=variables)
 
         if should_succeed:
-            self.assertTrue(len(response["data"]["availableOrganizations"]) > 0)
+            self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) > 0)
         else:
-            self.assertTrue(len(response["data"]["availableOrganizations"]) == 0)
+            self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) == 0)
