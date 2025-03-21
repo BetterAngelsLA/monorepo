@@ -27,6 +27,7 @@ export const extractClientFormData = (
         preferredLanguage,
         veteranStatus,
         livingSituation,
+        profilePhoto,
       } = clientProfile;
 
       return {
@@ -36,6 +37,7 @@ export const extractClientFormData = (
         preferredLanguage,
         veteranStatus,
         livingSituation,
+        profilePhoto,
       } as PersonalInfoState;
     }
     case 'importantNotes': {
