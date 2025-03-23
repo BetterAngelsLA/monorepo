@@ -22,6 +22,7 @@ export { DateLocal, formatDateLocal, parseDate } from './Date';
 export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
 export { default as Divider } from './Divider';
+export { default as EditButton } from './EditButton';
 export { default as EventCard } from './EventCard';
 export { default as ExpandableContainer } from './ExpandableContainer';
 export { default as FieldCard } from './FieldCard';
