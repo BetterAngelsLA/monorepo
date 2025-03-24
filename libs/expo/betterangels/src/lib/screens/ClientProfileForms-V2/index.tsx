@@ -9,7 +9,10 @@ import { useNavigation, useRouter } from 'expo-router';
 import { ReactNode, useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
-import { applyValidationErrors } from '../../helpers/parseClientProfileErrors';
+import {
+  applyValidationErrors,
+  TValidationError,
+} from '../../helpers/parseClientProfileErrors';
 import { useSnackbar } from '../../hooks';
 import ContactInfo from './ContactInfo';
 import DemographicInfo from './DemographicInfo';
@@ -24,12 +27,7 @@ import {
   useUpdateClientProfileMutation,
 } from './__generated__/clientProfile.generated';
 import { extractClientFormData } from './extractClientFormData';
-import {
-  FormStateMapping,
-  FormValues,
-  IClientProfileForms,
-  TValidationError,
-} from './types';
+import { FormStateMapping, FormValues, IClientProfileForms } from './types';
 
 const formConfigs: Record<
   keyof FormStateMapping,
