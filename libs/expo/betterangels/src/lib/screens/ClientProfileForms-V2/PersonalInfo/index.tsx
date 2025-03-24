@@ -3,64 +3,96 @@ import {
   ControlledInput,
   DatePicker,
   Form,
+  SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { UpdateClientProfileInput } from '../../../apollo';
+import {
+  LanguageEnum,
+  LivingSituationEnum,
+  UpdateClientProfileInput,
+  VeteranStatusEnum,
+} from '../../../apollo';
+import {
+  enumDisplayLanguage,
+  enumDisplayLivingSituation,
+  enumDisplayVeteranStatus,
+} from '../../../static';
 import { ProfilePhotoField } from './ProfilePhotoField/ProfilePhotoField';
 
-type AllowedFieldNames =
-  | 'livingSituation'
-  | 'veteranStatus'
-  | 'preferredLanguage'
-  | 'californiaId'
-  | 'dateOfBirth';
+const languageOptions = Object.entries(enumDisplayLanguage).map(
+  ([enumValue, displayValue]) => {
+    return {
+      value: enumValue,
+      displayValue,
+    };
+  }
+);
 
-interface FormField {
-  label: string;
-  name: AllowedFieldNames;
-  placeholder?: string;
-}
+const veteranStatusOptions = Object.entries(enumDisplayVeteranStatus).map(
+  ([enumValue, displayValue]) => {
+    return {
+      value: enumValue,
+      displayValue,
+    };
+  }
+);
 
-const FORM_FIELDS: FormField[] = [
-  {
-    label: 'CA ID#',
-    name: 'californiaId',
-    placeholder: 'Enter CA ID #',
-  },
-  {
-    label: 'Preferred Language',
-    name: 'preferredLanguage',
-    // placeholder: 'open picker',
-  },
-  {
-    label: 'Veteran Status',
-    name: 'veteranStatus',
-    // placeholder: 'open picker',
-  },
-  {
-    label: 'Living Situation',
-    name: 'livingSituation',
-    // placeholder: 'open picker',
-  },
-];
+const livingSituationOptions = Object.entries(enumDisplayLivingSituation).map(
+  ([enumValue, displayValue]) => {
+    return {
+      value: enumValue,
+      displayValue,
+    };
+  }
+);
 
 export default function PersonalInfoForm() {
-  const { control, setValue, watch } =
-    useFormContext<UpdateClientProfileInput>();
-
-  const clientId = useWatch({
+  const {
     control,
-    name: 'id',
-  });
+    setValue,
+    formState: { errors },
+  } = useFormContext<UpdateClientProfileInput>();
 
-  const dateOfBirth = watch('dateOfBirth');
-
-  const isError = false;
+  const [id, dateOfBirth, preferredLanguage, veteranStatus, livingSituation] =
+    useWatch({
+      control,
+      name: [
+        'id',
+        'dateOfBirth',
+        'preferredLanguage',
+        'veteranStatus',
+        'livingSituation',
+      ],
+    });
 
   return (
     <Form>
       <Form.Field>
-        <ProfilePhotoField clientId={clientId} />
+        <ProfilePhotoField clientId={id} />
+      </Form.Field>
+
+      <Form.Field title="CA ID#">
+        <ControlledInput
+          name="californiaId"
+          placeholder="Enter CA ID #"
+          control={control}
+          error={!!errors.californiaId}
+          errorMessage={errors.californiaId?.message}
+          onDelete={() => setValue('californiaId', '')}
+          rules={{
+            validate: (value: string) => {
+              if (value === '') {
+                return true;
+              }
+
+              if (value && !Regex.californiaId.test(value)) {
+                return 'CA ID must be 1 letter followed by 7 digits';
+              }
+
+              return true;
+            },
+          }}
+        />
       </Form.Field>
 
       <Form.Field title="Date of Birth">
@@ -78,23 +110,38 @@ export default function PersonalInfoForm() {
         />
       </Form.Field>
 
-      {FORM_FIELDS.map((item, idx) => (
-        <Form.Field key={idx} title={item.label}>
-          <ControlledInput
-            key={item.name}
-            name={item.name}
-            placeholder={item.placeholder}
-            control={control}
-            error={isError}
-            onDelete={() => setValue(item.name, '')}
-            rules={{
-              validate: () => {
-                return true;
-              },
-            }}
-          />
-        </Form.Field>
-      ))}
+      <Form.Field title="Living Situation">
+        <SingleSelect
+          placeholder="Select situation"
+          items={livingSituationOptions}
+          selectedValue={livingSituation || undefined}
+          onChange={(value) =>
+            setValue('livingSituation', value as LivingSituationEnum)
+          }
+        />
+      </Form.Field>
+
+      <Form.Field title="Veteran Status">
+        <SingleSelect
+          placeholder="Select veteran status"
+          items={veteranStatusOptions}
+          selectedValue={veteranStatus || undefined}
+          onChange={(value) =>
+            setValue('veteranStatus', value as VeteranStatusEnum)
+          }
+        />
+      </Form.Field>
+
+      <Form.Field title="Preferred Language">
+        <SingleSelect
+          placeholder="Select language"
+          items={languageOptions}
+          selectedValue={preferredLanguage || undefined}
+          onChange={(value) =>
+            setValue('preferredLanguage', value as LanguageEnum)
+          }
+        />
+      </Form.Field>
     </Form>
   );
 }
