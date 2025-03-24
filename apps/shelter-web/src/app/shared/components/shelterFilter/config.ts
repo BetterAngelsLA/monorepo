@@ -138,7 +138,7 @@ export const shelterTypeFilter: TFilterConfig = {
 
 // Room Style
 const roomStyleOptions = [
-  RoomStyleChoices.Congregant,
+  RoomStyleChoices.Congregate,
   RoomStyleChoices.CubicleHighWalls,
   RoomStyleChoices.CubicleLowWalls,
   RoomStyleChoices.MotelRoom,

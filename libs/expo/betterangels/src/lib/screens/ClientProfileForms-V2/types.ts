@@ -75,10 +75,4 @@ export interface IClientProfileForms {
   componentName: string;
 }
 
-export type TValidationError = {
-  field: string;
-  location: string | undefined;
-  errorCode: string;
-};
-
 export type FormValues = FormStateMapping[keyof FormStateMapping];
