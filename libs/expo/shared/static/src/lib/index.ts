@@ -5,7 +5,7 @@ export { MimeTypes, TMimeType } from './mimeTypes';
 export { Radiuses, TRadius, TRadiusKey } from './radiuses';
 export { Regex } from './regex';
 export { Shadow } from './shadow';
-export { Spacings, TSpacing } from './spacings';
+export { Spacings } from './spacings';
 export {
   FileThumbnailSizeDefault,
   IdThumbnailSize,
@@ -13,3 +13,4 @@ export {
   TThumbnailSize,
   thumbnailSizes,
 } from './thumbnail';
+export * from './types';

@@ -1,3 +1,9 @@
+import {
+  LanguageEnum,
+  LivingSituationEnum,
+  VeteranStatusEnum,
+} from '../../apollo';
+
 export type ContactInfoState = {
   // TODO: implement actual contact form
   name: string;
@@ -35,7 +41,12 @@ export type ImportantNotesState = {
 
 export type PersonalInfoState = {
   // TODO: implement actual personal info form
-  name: string;
+  id: string;
+  dateOfBirth?: string;
+  californiaId?: string;
+  preferredLanguage?: LanguageEnum;
+  veteranStatus?: VeteranStatusEnum;
+  livingSituation?: LivingSituationEnum;
 };
 
 export type RelevantContactState = {
