@@ -18,11 +18,11 @@ export type FullnameState = {
   id: string;
   user: {
     id: string;
-    firstName?: string;
-    middleName?: string;
-    lastName?: string;
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
   };
-  nickname?: string;
+  nickname?: string | null;
 };
 
 export type HmisIdState = {

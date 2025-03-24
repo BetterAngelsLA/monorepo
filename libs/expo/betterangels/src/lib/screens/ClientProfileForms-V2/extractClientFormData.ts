@@ -1,6 +1,6 @@
 import { parseToDate } from '@monorepo/expo/shared/ui-components';
 import { GetClientProfileQuery } from '../AddEditClient/__generated__/AddEditClient.generated';
-import { FormStateMapping, FullnameState } from './types';
+import { FormStateMapping } from './types';
 
 export const extractClientFormData = (
   formType: keyof FormStateMapping,
@@ -18,7 +18,7 @@ export const extractClientFormData = (
           id: user.id,
         },
         nickname,
-      } as FullnameState;
+      };
     }
     case 'personalInfo': {
       const {
