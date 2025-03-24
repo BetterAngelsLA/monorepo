@@ -11,7 +11,7 @@ import {
   TextBold,
   TextButton,
   TextRegular,
-  parseDate,
+  formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
@@ -113,7 +113,7 @@ export default function ClientCard(props: IClientCardProps) {
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
             {!!client.dateOfBirth && (
               <TextRegular size="xs">
-                {parseDate({
+                {formatDateStatic({
                   date: client.dateOfBirth,
                   inputFormat: 'yyyy-MM-dd',
                   outputFormat: 'MM/dd/yyyy',
