@@ -1,9 +1,9 @@
-import { Client } from '@monorepo/expo/betterangels';
-import { useLocalSearchParams } from 'expo-router';
 import {
+  Client,
   ClientProfileCardEnum,
   isValidClientProfileCardEnum,
-} from 'libs/expo/betterangels/src/lib/screens/Client/ClientProfile_V2/constants';
+} from '@monorepo/expo/betterangels';
+import { useLocalSearchParams } from 'expo-router';
 
 type TSerachParams = {
   id: string;
