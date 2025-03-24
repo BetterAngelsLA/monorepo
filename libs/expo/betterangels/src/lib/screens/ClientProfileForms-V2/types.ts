@@ -46,7 +46,7 @@ type TProfilePhoto = {
 
 export type PersonalInfoState = {
   id: string;
-  dateOfBirth?: Date;
+  dateOfBirth?: Date | null;
   californiaId?: string | null;
   preferredLanguage?: LanguageEnum | null;
   veteranStatus?: VeteranStatusEnum | null;

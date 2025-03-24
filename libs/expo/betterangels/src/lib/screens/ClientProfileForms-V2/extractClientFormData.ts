@@ -1,4 +1,4 @@
-import { parse } from 'date-fns';
+import { parseToDate } from '@monorepo/expo/shared/ui-components';
 import { GetClientProfileQuery } from '../AddEditClient/__generated__/AddEditClient.generated';
 import { FormStateMapping, FullnameState } from './types';
 
@@ -31,15 +31,18 @@ export const extractClientFormData = (
         profilePhoto,
       } = clientProfile;
 
-      let dobAsDate: Date | undefined;
+      let dobAsDate: Date | null | undefined;
 
       if (dateOfBirth) {
-        dobAsDate = parse(dateOfBirth, 'yyyy-MM-dd', new Date());
+        dobAsDate = parseToDate({
+          date: dateOfBirth,
+          inputFormat: 'yyyy-MM-dd',
+        });
       }
 
       return {
         id,
-        dateOfBirth: dobAsDate,
+        dateOfBirth: dobAsDate || undefined,
         californiaId,
         preferredLanguage,
         veteranStatus,

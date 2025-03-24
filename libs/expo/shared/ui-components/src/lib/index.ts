@@ -18,7 +18,12 @@ export { BaseContainer } from './Container';
 export { default as ControlledInput } from './ControlledInput';
 export { default as Copy } from './Copy';
 export { DataTable, TDataTable, TDataTableItem } from './DataTable';
-export { DateLocal, formatDateLocal, parseDate } from './Date';
+export {
+  DateLocal,
+  formatDateLocal,
+  formatDateStatic,
+  parseToDate,
+} from './Date';
 export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
 export { default as Divider } from './Divider';

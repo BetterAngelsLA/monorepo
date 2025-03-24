@@ -2,12 +2,12 @@ import { format as fnsFormat } from 'date-fns';
 
 const DEFAULT_FORMAT = 'MM/dd/yyyy';
 
-interface TFormattedLength {
+interface TProps {
   date?: string | number | Date | null;
   format?: string;
 }
 
-export function formatDateLocal(props: TFormattedLength) {
+export function formatDateLocal(props: TProps): string {
   const { date, format = DEFAULT_FORMAT } = props;
 
   if (!date) {
