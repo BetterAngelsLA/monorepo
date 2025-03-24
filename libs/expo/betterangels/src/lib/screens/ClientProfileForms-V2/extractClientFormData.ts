@@ -1,5 +1,6 @@
 import { parseToDate } from '@monorepo/expo/shared/ui-components';
 import { GetClientProfileQuery } from '../AddEditClient/__generated__/AddEditClient.generated';
+import { ClientProfileCardEnum } from '../Client/ClientProfile_V2/constants';
 import { FormStateMapping } from './types';
 
 export const extractClientFormData = (
@@ -7,7 +8,7 @@ export const extractClientFormData = (
   clientProfile: GetClientProfileQuery['clientProfile']
 ): Partial<FormStateMapping[typeof formType]> => {
   switch (formType) {
-    case 'fullname': {
+    case ClientProfileCardEnum.FullName: {
       const { id, user, nickname } = clientProfile;
       return {
         id,
@@ -20,7 +21,7 @@ export const extractClientFormData = (
         nickname,
       };
     }
-    case 'personalInfo': {
+    case ClientProfileCardEnum.PersonalInfo: {
       const {
         id,
         dateOfBirth,
@@ -50,7 +51,7 @@ export const extractClientFormData = (
         profilePhoto,
       };
     }
-    case 'importantNotes': {
+    case ClientProfileCardEnum.ImportantNotes: {
       const { id, importantNotes } = clientProfile;
       return {
         id,
