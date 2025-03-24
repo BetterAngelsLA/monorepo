@@ -29,10 +29,8 @@ export default function ClientProfileView(props: ProfileProps) {
 
   const clientProfile = client?.clientProfile;
 
-  const defaultOpenCard = openCard ? openCard : DEFAULT_OPEN_CARD;
-
   const [expandedCard, setExpandedCard] =
-    useState<ClientProfileCardEnum | null>(defaultOpenCard);
+    useState<ClientProfileCardEnum | null>(openCard || DEFAULT_OPEN_CARD);
 
   function onOpenCloseClick(card: ClientProfileCardEnum) {
     if (card === expandedCard) {
