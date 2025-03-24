@@ -42,7 +42,7 @@ export const extractClientFormData = (
 
       return {
         id,
-        dateOfBirth: dobAsDate || undefined,
+        dateOfBirth: dobAsDate,
         californiaId,
         preferredLanguage,
         veteranStatus,
