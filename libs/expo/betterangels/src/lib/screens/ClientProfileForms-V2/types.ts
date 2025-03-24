@@ -39,14 +39,19 @@ export type ImportantNotesState = {
   importantNotes?: string | null;
 };
 
+type TProfilePhoto = {
+  name: string;
+  url: string;
+};
+
 export type PersonalInfoState = {
-  // TODO: implement actual personal info form
   id: string;
-  dateOfBirth?: string;
-  californiaId?: string;
-  preferredLanguage?: LanguageEnum;
-  veteranStatus?: VeteranStatusEnum;
-  livingSituation?: LivingSituationEnum;
+  dateOfBirth?: Date;
+  californiaId?: string | null;
+  preferredLanguage?: LanguageEnum | null;
+  veteranStatus?: VeteranStatusEnum | null;
+  livingSituation?: LivingSituationEnum | null;
+  profilePhoto?: TProfilePhoto | null;
 };
 
 export type RelevantContactState = {

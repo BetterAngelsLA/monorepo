@@ -1,5 +1,6 @@
+import { parse } from 'date-fns';
 import { GetClientProfileQuery } from '../AddEditClient/__generated__/AddEditClient.generated';
-import { FormStateMapping, FullnameState, PersonalInfoState } from './types';
+import { FormStateMapping, FullnameState } from './types';
 
 export const extractClientFormData = (
   formType: keyof FormStateMapping,
@@ -30,15 +31,21 @@ export const extractClientFormData = (
         profilePhoto,
       } = clientProfile;
 
+      let dobAsDate: Date | undefined;
+
+      if (dateOfBirth) {
+        dobAsDate = parse(dateOfBirth, 'yyyy-MM-dd', new Date());
+      }
+
       return {
         id,
-        dateOfBirth,
+        dateOfBirth: dobAsDate,
         californiaId,
         preferredLanguage,
         veteranStatus,
         livingSituation,
         profilePhoto,
-      } as PersonalInfoState;
+      };
     }
     case 'importantNotes': {
       const { id, importantNotes } = clientProfile;

@@ -1,4 +1,9 @@
-import { ControlledInput, Form } from '@monorepo/expo/shared/ui-components';
+import { Regex } from '@monorepo/expo/shared/static';
+import {
+  ControlledInput,
+  DatePicker,
+  Form,
+} from '@monorepo/expo/shared/ui-components';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { UpdateClientProfileInput } from '../../../apollo';
 import { ProfilePhotoField } from './ProfilePhotoField/ProfilePhotoField';
@@ -17,10 +22,6 @@ interface FormField {
 }
 
 const FORM_FIELDS: FormField[] = [
-  {
-    label: 'Date of Birth',
-    name: 'dateOfBirth',
-  },
   {
     label: 'CA ID#',
     name: 'californiaId',
@@ -44,12 +45,15 @@ const FORM_FIELDS: FormField[] = [
 ];
 
 export default function PersonalInfoForm() {
-  const { control, setValue } = useFormContext<UpdateClientProfileInput>();
+  const { control, setValue, watch } =
+    useFormContext<UpdateClientProfileInput>();
 
   const clientId = useWatch({
     control,
     name: 'id',
   });
+
+  const dateOfBirth = watch('dateOfBirth');
 
   const isError = false;
 
@@ -57,6 +61,21 @@ export default function PersonalInfoForm() {
     <Form>
       <Form.Field>
         <ProfilePhotoField clientId={clientId} />
+      </Form.Field>
+
+      <Form.Field title="Date of Birth">
+        <DatePicker
+          disabled
+          maxDate={new Date()}
+          pattern={Regex.date}
+          mode="date"
+          format="MM/dd/yyyy"
+          placeholder="Enter Date of Birth"
+          minDate={new Date('1900-01-01')}
+          mt="xs"
+          value={dateOfBirth}
+          setValue={(date) => setValue('dateOfBirth', date)}
+        />
       </Form.Field>
 
       {FORM_FIELDS.map((item, idx) => (
