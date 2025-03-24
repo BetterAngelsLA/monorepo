@@ -9,9 +9,10 @@ import { useNavigation, useRouter } from 'expo-router';
 import { ReactNode, useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
+import { UpdateClientProfileInput } from '../../apollo';
 import {
-  applyValidationErrors,
   TValidationError,
+  applyValidationErrors,
 } from '../../helpers/parseClientProfileErrors';
 import { useSnackbar } from '../../hooks';
 import ContactInfo from './ContactInfo';
@@ -80,6 +81,7 @@ export default function ClientProfileForms(props: IClientProfileForms) {
 
   const [updateClient, { loading: isUpdating }] =
     useUpdateClientProfileMutation();
+
   const methods = useForm<FormValues>({
     defaultValues: {
       id,
@@ -105,25 +107,36 @@ export default function ClientProfileForms(props: IClientProfileForms) {
         return;
       }
 
-      const input = {
-        ...values,
-        id,
-      };
+      const inputs = toUpdateClienProfileInputs(id, values);
+
+      if (!inputs) {
+        return;
+      }
 
       const updateResponse = await updateClient({
         variables: {
-          data: input,
+          data: inputs,
         },
         errorPolicy: 'all',
       });
 
-      const operationErrors = updateResponse.errors?.[0].extensions?.[
-        'errors'
-      ] as TValidationError[] | undefined;
+      // TODO: Consolidate API Error handling - see ticket DEV-1601
+      const errors = updateResponse.errors?.[0];
 
-      if (operationErrors) {
-        applyValidationErrors(operationErrors, methods.setError);
+      const errorViaExtensions = errors?.extensions?.['errors'] as
+        | TValidationError[]
+        | undefined;
+
+      if (errorViaExtensions) {
+        applyValidationErrors(errorViaExtensions, methods.setError);
+
         return;
+      }
+
+      const otherErrors = !errorViaExtensions && errors;
+
+      if (otherErrors) {
+        throw otherErrors.message;
       }
 
       refetch();
@@ -205,3 +218,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacings.sm,
   },
 });
+
+function toUpdateClienProfileInputs(
+  id: string,
+  values: FormValues
+): UpdateClientProfileInput | null {
+  if (!values || !id) {
+    return null;
+  }
+
+  const updatedInputs: UpdateClientProfileInput = { id };
+
+  // convert dateOfBirth to date string and remove time
+  if ('dateOfBirth' in values && values.dateOfBirth) {
+    updatedInputs.dateOfBirth = values.dateOfBirth
+      .toISOString()
+      .split('T')[0] as unknown as Date;
+  }
+
+  // profilePhoto is updated directly within component
+  if ('profilePhoto' in values) {
+    delete values.profilePhoto;
+  }
+
+  return {
+    ...values,
+    ...updatedInputs,
+  };
+}
