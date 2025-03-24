@@ -27,12 +27,7 @@ import {
   useUpdateClientProfileMutation,
 } from './__generated__/clientProfile.generated';
 import { extractClientFormData } from './extractClientFormData';
-import {
-  FormStateMapping,
-  FormValues,
-  IClientProfileForms,
-  TValidationError,
-} from './types';
+import { FormStateMapping, FormValues, IClientProfileForms } from './types';
 
 const formConfigs: Record<
   keyof FormStateMapping,

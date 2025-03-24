@@ -2,7 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
   ControlledInput,
-  FormCard,
+  Form,
   KeyboardAwareScrollView,
   TextButton,
 } from '@monorepo/expo/shared/ui-components';
@@ -108,7 +108,7 @@ export default function CreateClientProfile() {
   return (
     <View style={styles.container}>
       <KeyboardAwareScrollView>
-        <FormCard
+        <Form.Fieldset
           title="Full Name"
           required
           subtitle="Filling out one of the fields required"
@@ -133,7 +133,7 @@ export default function CreateClientProfile() {
               }}
             />
           ))}
-        </FormCard>
+        </Form.Fieldset>
       </KeyboardAwareScrollView>
 
       <BottomActions
