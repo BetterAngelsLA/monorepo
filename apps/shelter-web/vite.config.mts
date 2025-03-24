@@ -20,6 +20,7 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
+
   return {
     base: process.env.SHELTER_BASE_PATH || '/',
     root: __dirname,
@@ -31,11 +32,13 @@ export default defineConfig(({ mode }) => {
       ),
     },
 
-    server: {
-      port: SERVER_PORT,
-      host: 'localhost',
-      proxy: isDev ? devServerProxy : {},
-    },
+    ...(isDev && {
+      server: {
+        port: SERVER_PORT,
+        host: 'localhost',
+        proxy: devServerProxy,
+      },
+    }),
 
     preview: {
       port: 8183,
