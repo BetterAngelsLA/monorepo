@@ -181,5 +181,6 @@
   },
   "engines": {
     "node": "22.14.0"
-  }
+  },
+  "packageManager": "yarn@4.2.2"
 }
