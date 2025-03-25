@@ -1,11 +1,9 @@
-import datetime
 from typing import Optional, cast
 
 from clients.enums import LivingSituationEnum, RelationshipTypeEnum
 from common.models import Attachment, PhoneNumber
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest
 from django.urls import reverse
@@ -230,14 +228,14 @@ class ClientDocumentResource(resources.ModelResource):
 
 
 @admin.register(ClientDocument)
-class ClientDocumentAdmin(admin.ModelAdmin):
+class ClientDocumentAdmin(ExportActionMixin, admin.ModelAdmin):
     resource_class = ClientDocumentResource
 
     def get_export_formats(self) -> list:
         return [CSV]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[ClientDocument]:
-        return super().get_queryset(request).filter(content_type=ContentType.objects.get_for_model(ClientProfile))
+        return super().get_queryset(request).filter(content_type__model="clientprofile")
 
     list_display = (
         "attachment_type",

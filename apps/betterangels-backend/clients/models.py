@@ -23,7 +23,13 @@ from clients.enums import (
     VeteranStatusEnum,
 )
 from common.constants import CALIFORNIA_ID_REGEX
-from common.models import Attachment, BaseModel, PhoneNumber
+from common.models import (
+    Attachment,
+    AttachmentGroupObjectPermission,
+    AttachmentUserObjectPermission,
+    BaseModel,
+    PhoneNumber,
+)
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
@@ -194,6 +200,9 @@ class ClientProfile(BaseModel):
 
 class ClientDocument(Attachment):
     """This is here to allow for a separate admin interface for Client Documents"""
+
+    attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
+    attachmentgroupobjectpermission_set: models.QuerySet["AttachmentGroupObjectPermission"]
 
     class Meta:
         proxy = True
