@@ -16,6 +16,7 @@ from clients.models import (
 from clients.permissions import (
     ClientProfileImportRecordPermissions,
     ClientProfilePermissions,
+    HmisProfilePermissions,
 )
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -49,6 +50,8 @@ from .types import (
     CreateClientDocumentInput,
     CreateClientProfileInput,
     CreateProfileDataImportInput,
+    HmisProfileInput,
+    HmisProfileType,
     ImportClientProfileInput,
     UpdateClientProfileInput,
 )
@@ -200,6 +203,44 @@ def validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str
     return errors
 
 
+# def validate_hmis_profile(hmis_profile: dict[str, Any]) -> dict[str, Any]:
+#     errors = []
+
+#     hmis_id = hmis_profile.get("hmis_id")
+
+#     if not value_exists(hmis_id):
+#         errors.append(
+#             {
+#                 "field": "hmisProfiles",
+#                 "location": f"{idx}__hmisId",
+#                 "errorCode": ErrorCodeEnum.HMIS_ID_NOT_PROVIDED.name,
+#             }
+#         )
+
+#         continue
+
+#     # exclude the hmis profile being updated from the unique check
+#     exclude_arg = {"id": hmis_profile["id"]} if hmis_profile.get("id") else {}
+
+#     if (
+#         HmisProfile.objects.exclude(**exclude_arg)
+#         .filter(
+#             agency=hmis_profile["agency"],
+#             hmis_id__iexact=hmis_profile["hmis_id"],
+#         )
+#         .exists()
+#     ):
+#         errors.append(
+#             {
+#                 "field": "hmisProfiles",
+#                 "location": f"{idx}__hmisId",
+#                 "errorCode": ErrorCodeEnum.HMIS_ID_IN_USE.name,
+#             }
+#         )
+
+#     return errors
+
+
 def validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     errors = []
 
@@ -332,6 +373,14 @@ class Query:
 
     client_documents_paginated: OffsetPaginated[ClientDocumentType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
+    )
+
+    hmis_profile: HmisProfileType = strawberry_django.field(
+        extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
+    )
+
+    hmis_profiles: OffsetPaginated[HmisProfileType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
     )
 
     # Data Import
@@ -579,3 +628,66 @@ class Mutation:
                 error_message=_format_graphql_error(e),
             )
         return cast(ClientProfileImportRecordType, record)
+
+    @strawberry_django.mutation(extensions=[HasPerm(perms=[HmisProfilePermissions.ADD])])
+    def create_hmis_profile(self, info: Info, data: HmisProfileInput) -> HmisProfileType:
+        with transaction.atomic():
+            user = get_current_user(info)
+            get_user_permission_group(user)
+
+            hmis_profile_data: dict = strawberry.asdict(data)
+            hmis_profile = resolvers.create(
+                info,
+                HmisProfile,
+                {
+                    **hmis_profile_data,
+                },
+            )
+
+            return cast(HmisProfileType, hmis_profile)
+
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[HmisProfilePermissions.CHANGE])])
+    def update_hmis_profile(self, info: Info, data: HmisProfileInput) -> HmisProfileType:
+        with transaction.atomic():
+            user = get_current_user(info)
+            try:
+                hmis_profile = filter_for_user(
+                    HmisProfile.objects.all(),
+                    user,
+                    [HmisProfilePermissions.CHANGE],
+                ).get(id=data.id)
+            except HmisProfile.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this client.")
+
+            hmis_profile_data: dict = strawberry.asdict(data)
+            hmis_profile = resolvers.update(
+                info,
+                hmis_profile,
+                {
+                    **hmis_profile_data,
+                },
+            )
+
+            return cast(HmisProfileType, hmis_profile)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def delete_hmis_profile(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
+        with transaction.atomic():
+            user = get_current_user(info)
+
+            try:
+                client_profile = filter_for_user(
+                    ClientProfile.objects.all(),
+                    user,
+                    [ClientProfilePermissions.DELETE],
+                ).get(id=data.id)
+
+                client_profile_id = client_profile.pk
+
+                # Deleting the underlying user will cascade and delete the client profile
+                client_profile.user.delete()
+
+            except ClientProfile.DoesNotExist:
+                raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")
+
+            return DeletedObjectType(id=client_profile_id)

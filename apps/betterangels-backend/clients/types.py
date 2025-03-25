@@ -167,15 +167,20 @@ class ClientProfileFilter:
 
 
 @strawberry_django.type(HmisProfile)
-class HmisProfileType:
-    id: auto
+class HmisProfileBaseType:
     hmis_id: auto
     agency: auto
 
 
+@strawberry_django.type(HmisProfile)
+class HmisProfileType(HmisProfileBaseType):
+    id: auto
+
+
 @strawberry_django.input(HmisProfile)
-class HmisProfileInput(HmisProfileType):
-    "See parent"
+class HmisProfileInput(HmisProfileBaseType):
+    id: ID | None
+    client_profile: ID | None
 
 
 @strawberry_django.type(SocialMediaProfile)

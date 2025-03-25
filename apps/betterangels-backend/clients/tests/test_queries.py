@@ -8,6 +8,7 @@ from clients.enums import (
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
+    HmisAgencyEnum,
     LanguageEnum,
     LivingSituationEnum,
     MaritalStatusEnum,
@@ -16,8 +17,11 @@ from clients.enums import (
     RaceEnum,
     VeteranStatusEnum,
 )
-from clients.models import ClientProfile
-from clients.tests.utils import ClientProfileGraphQLBaseTestCase
+from clients.models import ClientProfile, HmisProfile
+from clients.tests.utils import (
+    ClientProfileGraphQLBaseTestCase,
+    HmisProfileGraphQLBaseTestCase,
+)
 from clients.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from django.test import override_settings
 from model_bakery import baker
@@ -391,6 +395,68 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         response = self.execute_graphql(query, variables={"searchClient": search_fields})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
+
+
+class HmisProfileQueryTestCase(HmisProfileGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        variables = {
+            "agency": HmisAgencyEnum.LAHSA.name,
+            "clientProfile": self.client_profile_id,
+        }
+
+        self.hmis_profile_1 = self._create_hmis_profile_fixture({**variables, "hmisId": "A1"})["data"][
+            "createHmisProfile"
+        ]
+        self.hmis_profile_2 = self._create_hmis_profile_fixture({**variables, "hmisId": "B2"})["data"][
+            "createHmisProfile"
+        ]
+
+    def test_hmis_profile_query(self) -> None:
+        query = f"""
+            query ($id: ID!) {{
+                hmisProfile(pk: $id) {{
+                    {self.hmis_profile_fields}
+                }}
+            }}
+        """
+        variables = {"id": self.hmis_profile_1["id"]}
+
+        expected_query_count = 3
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        self.assertEqual(response["data"]["hmisProfile"], self.hmis_profile_1)
+
+    def test_hmis_profiles_query(self) -> None:
+        query = f"""
+            query ($offset: Int, $limit: Int){{
+                hmisProfiles(pagination: {{offset: $offset, limit: $limit}}) {{
+                    totalCount
+                    pageInfo {{
+                        limit
+                        offset
+                    }}
+                    results {{
+                        {self.hmis_profile_fields}
+                    }}
+                }}
+            }}
+        """
+
+        expected_query_count = 4
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
+
+        results = response["data"]["hmisProfiles"]["results"]
+
+        self.assertEqual(response["data"]["hmisProfiles"]["totalCount"], 2)
+        self.assertEqual(response["data"]["hmisProfiles"]["pageInfo"], {"limit": 10, "offset": 0})
+        self.assertCountEqual(results, [self.hmis_profile_1, self.hmis_profile_2])
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")

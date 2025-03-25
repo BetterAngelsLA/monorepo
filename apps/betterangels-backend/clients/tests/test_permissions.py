@@ -289,6 +289,12 @@ class ClientDocumentPermessionTestCase(ClientProfileGraphQLBaseTestCase):
             )
 
 
+class HmisProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+
 class OrganizationPermissionTestCase(GraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
