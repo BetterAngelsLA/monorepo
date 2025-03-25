@@ -145,7 +145,10 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase):
         # Caseworker orgs are created elsewhere in the test suite, this test should be self-contained.
         permission_group_recipe.make(name="Caseworker")
 
+        non_cw_org = organization_recipe.make()
+
         query = """
+
             query CaseworkerOrganizations($pagination: OffsetPaginationInput) {
                 caseworkerOrganizations(pagination: $pagination) {
                     totalCount
@@ -163,14 +166,13 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase):
         variables = {"pagination": {"offset": 0, "limit": 10}}
         response = self.execute_graphql(query, variables=variables)
 
-        caseworker_organizations = response["data"]["caseworkerOrganizations"]["results"]
-        expected_caseworker_organizations = (
-            Organization.objects.filter(permission_group__name__icontains=GroupTemplateNames.CASEWORKER)
-            .order_by("name")
-            .values("id", "name")
+        caseworker_orgs = response["data"]["caseworkerOrganizations"]["results"]
+        expected_caseworker_org_ids = list(
+            Organization.objects.filter(permission_groups__name__icontains=GroupTemplateNames.CASEWORKER).values_list(
+                "id", flat=True
+            )
         )
-        actual_caseworker_organizations = [
-            {"id": int(cw_org["id"]), "name": cw_org["name"]} for cw_org in caseworker_organizations
-        ]
+        actual_caseworker_org_ids = [int(org["id"]) for org in caseworker_orgs]
 
-        self.assertEqual(expected_caseworker_organizations, actual_caseworker_organizations)
+        self.assertEqual(expected_caseworker_org_ids, actual_caseworker_org_ids)
+        self.assertNotIn(non_cw_org.pk, actual_caseworker_org_ids)
