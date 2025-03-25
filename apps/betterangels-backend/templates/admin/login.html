@@ -1,5 +1,99 @@
 {% extends "admin/login.html" %}
-{% block content %}
-    <div>{% include "account/google_login_button.html" %}</div>
+{% block extrahead %}
     {{ block.super }}
+    <style>
+    /* Container for the login options */
+    #custom-login-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      margin: 0 auto;
+      max-width: 450px;
+    }
+    /* Styling for each login card */
+    .login-section {
+      width: 100%;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background-color: #fff;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .login-section h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+      text-align: center;
+    }
+    /* Divider styling (only used if both sections are shown) */
+    .login-divider {
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .login-divider hr {
+      flex-grow: 1;
+      border: none;
+      border-top: 1px solid #ccc;
+      margin: 0;
+    }
+    .login-divider span {
+      margin: 0 10px;
+      font-weight: bold;
+      color: #666;
+      white-space: nowrap;
+    }
+    /* Form rows */
+    .login-section .form-row {
+      margin-bottom: 15px;
+    }
+    .login-section .submit-row {
+      text-align: center;
+    }
+    /* Full-width email field */
+    .login-section .form-row input[type="email"] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    </style>
+{% endblock extrahead %}
+{% block content %}
+    <div id="custom-login-container">
+        {% if is_local_dev %}
+            <!-- When IS_LOCAL_DEV is true, show password login -->
+            <div class="login-section">
+                <h2>Password Login</h2>
+                {{ block.super }}
+            </div>
+            <!-- Divider to separate the two options -->
+            <div class="login-divider">
+                <hr>
+                <span>OR</span>
+                <hr>
+            </div>
+        {% endif %}
+        <!-- Magic Link Login Section is always shown -->
+        <div class="login-section">
+            <h2>Magic Link Login</h2>
+            {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
+            {% if email_sent %}
+                <p>
+                    We’ve sent a login link to <strong>{{ sent_email_address }}</strong>.
+                    Check your inbox to log in.
+                </p>
+            {% else %}
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <label for="id_magic_email" class="required">Email:</label>
+                        <input type="email" name="email" id="id_magic_email" required>
+                    </div>
+                    <div class="submit-row">
+                        <input type="submit" value="Send Magic Link">
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
 {% endblock content %}

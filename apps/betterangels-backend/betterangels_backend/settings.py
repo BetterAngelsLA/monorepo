@@ -71,7 +71,7 @@ env = environ.Env(
     SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
     USE_IAM_AUTH=(bool, False),
     SESAME_TOKEN_NAME=(str, "token"),
-    SESAME_MAX_AGE=(int, 60 * 60),  # set to 1 hr
+    SESAME_MAX_AGE=(int, 3600),  # set to 1 hr
     SESAME_ONE_TIME=(bool, True),
     SESAME_SALT=(str, "sesame"),
 )

@@ -16,9 +16,9 @@ Including another URLconf
 """
 
 import admin_async_upload.views
+from accounts.admin_site import magic_link_admin_site
 from betterangels_backend import settings
 from django.conf.urls.static import static
-from django.contrib import admin
 from django.urls import include, path
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.generic.base import RedirectView
@@ -29,7 +29,7 @@ from .schema import schema
 urlpatterns = [
     path("", RedirectView.as_view(url="/admin/", permanent=False), name="home"),
     path("", include("accounts.urls")),
-    path("admin/", admin.site.urls),
+    path("admin/", magic_link_admin_site.urls),
     path("accounts/", include("allauth.urls"), name="accounts"),
     path("ckeditor5/", include("django_ckeditor_5.urls")),
     path(
