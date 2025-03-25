@@ -8,8 +8,10 @@ import { Picker as RNPicker } from '@react-native-picker/picker';
 import { StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
 
+const NONE_VALUE = '__none__';
+
 export interface IPickerProps {
-  onChange: (value: string) => void;
+  onChange: (value: string | null) => void;
   error?: string;
   selectedValue?: string | null;
   selectedDisplayValue?: string | null;
@@ -17,6 +19,8 @@ export interface IPickerProps {
   placeholder: string;
   items: { displayValue?: string; value: string }[];
   label?: string;
+  selectNoneLabel?: string;
+  allowSelectNone?: boolean;
   mb?: TSpacing;
   mt?: TSpacing;
   my?: TSpacing;
@@ -33,6 +37,8 @@ export default function Picker(props: IPickerProps) {
     placeholder,
     items,
     label,
+    selectNoneLabel,
+    allowSelectNone,
     mb,
     mt,
     my,
@@ -40,6 +46,12 @@ export default function Picker(props: IPickerProps) {
     ml,
     mr,
   } = props;
+
+  const noneLabel = selectNoneLabel || placeholder || 'Selece one';
+
+  function onValueChange(newValue: string) {
+    onChange(newValue === NONE_VALUE ? null : newValue);
+  }
 
   return (
     <View
@@ -62,8 +74,14 @@ export default function Picker(props: IPickerProps) {
         style={styles.picker}
         placeholder={placeholder}
         selectedValue={selectedValue || ''}
-        onValueChange={onChange}
+        onValueChange={onValueChange}
       >
+        <RNPicker.Item
+          style={styles.itemStyle}
+          label={noneLabel}
+          value={NONE_VALUE}
+          enabled={!!allowSelectNone}
+        />
         {items.map((item) => (
           <RNPicker.Item
             style={styles.itemStyle}
