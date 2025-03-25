@@ -33,7 +33,7 @@ class OrganizationOrder:
     id: auto
 
 
-@strawberry_django.type(Organization, order=OrganizationOrder)  # type ignore
+@strawberry_django.type(Organization, order=OrganizationOrder)  # type: ignore[literal-required]
 class OrganizationType:
     id: ID
     name: auto

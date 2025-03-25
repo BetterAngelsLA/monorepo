@@ -5,6 +5,7 @@ from django.test import ignore_warnings
 from model_bakery import baker
 from organizations.models import Organization, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
+
 from .baker_recipes import organization_recipe, permission_group_recipe
 
 
@@ -163,7 +164,13 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase):
         response = self.execute_graphql(query, variables=variables)
 
         caseworker_organizations = response["data"]["caseworkerOrganizations"]["results"]
-        expected_caseworker_organizations = Organization.objects.filter(permission_group__name__icontains=GroupTemplateNames.CASEWORKER).oder_by('name').values('id', 'name')
-        actual_caseworker_organizations = [{"id": int(cw_org["id"]), "name": cw_org["name"]} for cw_org in caseworker_organizations]
+        expected_caseworker_organizations = (
+            Organization.objects.filter(permission_group__name__icontains=GroupTemplateNames.CASEWORKER)
+            .order_by("name")
+            .values("id", "name")
+        )
+        actual_caseworker_organizations = [
+            {"id": int(cw_org["id"]), "name": cw_org["name"]} for cw_org in caseworker_organizations
+        ]
 
         self.assertEqual(expected_caseworker_organizations, actual_caseworker_organizations)
