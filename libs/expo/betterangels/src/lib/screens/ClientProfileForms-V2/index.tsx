@@ -9,11 +9,16 @@ import { useNavigation, useRouter } from 'expo-router';
 import { ReactNode, useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
+import { UpdateClientProfileInput } from '../../apollo';
 import {
-  applyValidationErrors,
   TValidationError,
+  applyValidationErrors,
 } from '../../helpers/parseClientProfileErrors';
 import { useSnackbar } from '../../hooks';
+import {
+  ClientProfileCardEnum,
+  isValidClientProfileCardEnum,
+} from '../Client/ClientProfile_V2/constants';
 import ContactInfo from './ContactInfo';
 import DemographicInfo from './DemographicInfo';
 import Fullname from './Fullname';
@@ -33,35 +38,35 @@ const formConfigs: Record<
   keyof FormStateMapping,
   { title: string; content: ReactNode }
 > = {
-  contactInfo: {
+  [ClientProfileCardEnum.ContactInfo]: {
     title: 'Edit Contact Information',
     content: <ContactInfo />,
   },
-  demographicInfo: {
+  [ClientProfileCardEnum.Demographic]: {
     title: 'Edit Demographic Details',
     content: <DemographicInfo />,
   },
-  fullname: {
+  [ClientProfileCardEnum.FullName]: {
     title: 'Edit Full Name',
     content: <Fullname />,
   },
-  hmisId: {
+  [ClientProfileCardEnum.HmisIds]: {
     title: 'Edit HMIS ID',
     content: <HmisId />,
   },
-  household: {
+  [ClientProfileCardEnum.Household]: {
     title: 'Edit Household Details',
     content: <Household />,
   },
-  importantNotes: {
+  [ClientProfileCardEnum.ImportantNotes]: {
     title: 'Edit Important Notes',
     content: <ImportantNotes />,
   },
-  personalInfo: {
+  [ClientProfileCardEnum.PersonalInfo]: {
     title: 'Edit Personal Info',
     content: <PersonalInfoForm />,
   },
-  relevantContact: {
+  [ClientProfileCardEnum.RelevantContacts]: {
     title: 'Edit Relevant Contact',
     content: <RelevantContact />,
   },
@@ -80,6 +85,7 @@ export default function ClientProfileForms(props: IClientProfileForms) {
 
   const [updateClient, { loading: isUpdating }] =
     useUpdateClientProfileMutation();
+
   const methods = useForm<FormValues>({
     defaultValues: {
       id,
@@ -90,9 +96,7 @@ export default function ClientProfileForms(props: IClientProfileForms) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const allowedKeys = Object.keys(formConfigs);
-
-  if (!allowedKeys.includes(componentName)) {
+  if (!isValidClientProfileCardEnum(componentName)) {
     throw new Error(`Invalid componentName "${componentName}" provided.`);
   }
 
@@ -105,29 +109,41 @@ export default function ClientProfileForms(props: IClientProfileForms) {
         return;
       }
 
-      const input = {
-        ...values,
-        id,
-      };
+      const inputs = toUpdateClienProfileInputs(id, values);
+
+      if (!inputs) {
+        return;
+      }
 
       const updateResponse = await updateClient({
         variables: {
-          data: input,
+          data: inputs,
         },
         errorPolicy: 'all',
       });
 
-      const operationErrors = updateResponse.errors?.[0].extensions?.[
-        'errors'
-      ] as TValidationError[] | undefined;
+      // TODO: Consolidate API Error handling - see ticket DEV-1601
+      const errors = updateResponse.errors?.[0];
 
-      if (operationErrors) {
-        applyValidationErrors(operationErrors, methods.setError);
+      const errorViaExtensions = errors?.extensions?.['errors'] as
+        | TValidationError[]
+        | undefined;
+
+      if (errorViaExtensions) {
+        applyValidationErrors(errorViaExtensions, methods.setError);
+
         return;
       }
 
+      const otherErrors = !errorViaExtensions && errors;
+
+      if (otherErrors) {
+        throw otherErrors.message;
+      }
+
       refetch();
-      router.replace(`/client/${id}`);
+
+      router.replace(`/client/${id}?openCard=${validComponentName}`);
     } catch (err) {
       console.error(err);
 
@@ -150,7 +166,7 @@ export default function ClientProfileForms(props: IClientProfileForms) {
     }
 
     const formData = extractClientFormData(
-      componentName as keyof FormStateMapping,
+      validComponentName,
       data.clientProfile
     );
 
@@ -205,3 +221,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacings.sm,
   },
 });
+
+function toUpdateClienProfileInputs(
+  id: string,
+  values: FormValues
+): UpdateClientProfileInput | null {
+  if (!values || !id) {
+    return null;
+  }
+
+  const updatedInputs: UpdateClientProfileInput = { id };
+
+  // convert dateOfBirth to date string and remove time
+  if ('dateOfBirth' in values && values.dateOfBirth) {
+    updatedInputs.dateOfBirth = values.dateOfBirth
+      .toISOString()
+      .split('T')[0] as unknown as Date;
+  }
+
+  // profilePhoto is updated directly within component
+  if ('profilePhoto' in values) {
+    delete values.profilePhoto;
+  }
+
+  return {
+    ...values,
+    ...updatedInputs,
+  };
+}

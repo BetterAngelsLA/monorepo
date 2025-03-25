@@ -3,6 +3,7 @@ import {
   LivingSituationEnum,
   VeteranStatusEnum,
 } from '../../apollo';
+import { ClientProfileCardEnum } from '../Client/ClientProfile_V2/constants';
 
 export type ContactInfoState = {
   // TODO: implement actual contact form
@@ -18,11 +19,11 @@ export type FullnameState = {
   id: string;
   user: {
     id: string;
-    firstName?: string;
-    middleName?: string;
-    lastName?: string;
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
   };
-  nickname?: string;
+  nickname?: string | null;
 };
 
 export type HmisIdState = {
@@ -39,30 +40,34 @@ export type ImportantNotesState = {
   importantNotes?: string | null;
 };
 
+type TProfilePhoto = {
+  name: string;
+  url: string;
+};
+
 export type PersonalInfoState = {
-  // TODO: implement actual personal info form
   id: string;
-  dateOfBirth?: string;
-  californiaId?: string;
-  preferredLanguage?: LanguageEnum;
-  veteranStatus?: VeteranStatusEnum;
-  livingSituation?: LivingSituationEnum;
+  dateOfBirth?: Date | null;
+  californiaId?: string | null;
+  preferredLanguage?: LanguageEnum | null;
+  veteranStatus?: VeteranStatusEnum | null;
+  livingSituation?: LivingSituationEnum | null;
+  profilePhoto?: TProfilePhoto | null;
 };
 
 export type RelevantContactState = {
   // TODO: implement actual relevant contact info form
   name: string;
 };
-
 export interface FormStateMapping {
-  contactInfo: ContactInfoState;
-  demographicInfo: DemographicInfoState;
-  fullname: FullnameState;
-  hmisId: HmisIdState;
-  household: HouseholdState;
-  importantNotes: ImportantNotesState;
-  personalInfo: PersonalInfoState;
-  relevantContact: RelevantContactState;
+  [ClientProfileCardEnum.ContactInfo]: ContactInfoState;
+  [ClientProfileCardEnum.Demographic]: DemographicInfoState;
+  [ClientProfileCardEnum.FullName]: FullnameState;
+  [ClientProfileCardEnum.HmisIds]: HmisIdState;
+  [ClientProfileCardEnum.Household]: HouseholdState;
+  [ClientProfileCardEnum.ImportantNotes]: ImportantNotesState;
+  [ClientProfileCardEnum.PersonalInfo]: PersonalInfoState;
+  [ClientProfileCardEnum.RelevantContacts]: RelevantContactState;
 }
 
 export interface IClientProfileForms {
