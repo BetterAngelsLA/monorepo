@@ -2,7 +2,7 @@
 {% block extrahead %}
     {{ block.super }}
     <style>
-    /* Container for the login options */
+    /* Preserved your original styling with admin compatibility */
     #custom-login-container {
       display: flex;
       flex-direction: column;
@@ -11,69 +11,82 @@
       margin: 0 auto;
       max-width: 450px;
     }
-    /* Styling for each login card */
+
     .login-section {
       width: 100%;
       padding: 20px;
-      border: 1px solid #ddd;
+      border: 1px solid var(--hairline-color); /* Admin-compatible variable */
       border-radius: 4px;
-      background-color: #fff;
+      background-color: var(--body-bg); /* Admin background */
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
+
     .login-section h2 {
       margin-top: 0;
       margin-bottom: 15px;
       font-size: 1.2em;
       text-align: center;
+      color: var(--body-quiet-color); /* Admin text color */
     }
-    /* Divider styling (only used if both sections are shown) */
+
     .login-divider {
       display: flex;
       align-items: center;
       width: 100%;
     }
+
     .login-divider hr {
       flex-grow: 1;
       border: none;
-      border-top: 1px solid #ccc;
+      border-top: 1px solid var(--hairline-color); /* Admin border */
       margin: 0;
     }
+
     .login-divider span {
       margin: 0 10px;
       font-weight: bold;
-      color: #666;
+      color: var(--body-quiet-color); /* Admin text color */
       white-space: nowrap;
     }
-    /* Form rows */
+
     .login-section .form-row {
       margin-bottom: 15px;
     }
+
     .login-section .submit-row {
       text-align: center;
     }
-    /* Full-width email field */
+
     .login-section .form-row input[type="email"] {
       width: 100%;
       box-sizing: border-box;
+      padding: 8px;
+      border: 1px solid var(--border-color); /* Admin border */
+    }
+
+    /* Admin-compatible error styling */
+    .errornote {
+      color: var(--error-fg);
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      padding: 10px;
+      margin-bottom: 15px;
     }
     </style>
 {% endblock extrahead %}
 {% block content %}
     <div id="custom-login-container">
         {% if is_local_dev %}
-            <!-- When IS_LOCAL_DEV is true, show password login -->
             <div class="login-section">
                 <h2>Password Login</h2>
                 {{ block.super }}
             </div>
-            <!-- Divider to separate the two options -->
             <div class="login-divider">
                 <hr>
                 <span>OR</span>
                 <hr>
             </div>
         {% endif %}
-        <!-- Magic Link Login Section is always shown -->
         <div class="login-section">
             <h2>Magic Link Login</h2>
             {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
@@ -87,10 +100,16 @@
                     {% csrf_token %}
                     <div class="form-row">
                         <label for="id_magic_email" class="required">Email:</label>
-                        <input type="email" name="email" id="id_magic_email" required>
+                        <input type="email"
+                               name="email"
+                               id="id_magic_email"
+                               required
+                               class="admin-text-input">
+                        <!-- Admin input class -->
                     </div>
                     <div class="submit-row">
-                        <input type="submit" value="Send Magic Link">
+                        <input type="submit" value="Send Magic Link" class="admin-button">
+                        <!-- Admin button class -->
                     </div>
                 </form>
             {% endif %}
