@@ -12,6 +12,7 @@ from import_export import fields, resources
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
 from pghistory.models import Events
+from rangefilter.filters import DateRangeFilterBuilder
 
 from .models import (
     ClientContact,
@@ -244,6 +245,7 @@ class ClientDocumentAdmin(ExportActionMixin, admin.ModelAdmin):
         "updated_at",
         "uploaded_by",
     )
+    list_filter = (("created_at", DateRangeFilterBuilder()),)
     search_fields = (
         "id",
         "attachment_type",
