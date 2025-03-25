@@ -29,11 +29,8 @@ export default function ClientProfileView(props: ProfileProps) {
 
   const clientProfile = client?.clientProfile;
 
-  const defaultOpenCard =
-    openCard === null ? null : openCard || DEFAULT_OPEN_CARD;
-
   const [expandedCard, setExpandedCard] =
-    useState<ClientProfileCardEnum | null>(defaultOpenCard);
+    useState<ClientProfileCardEnum | null>(openCard || DEFAULT_OPEN_CARD);
 
   function onOpenCloseClick(card: ClientProfileCardEnum) {
     if (card === expandedCard) {
@@ -56,19 +53,19 @@ export default function ClientProfileView(props: ProfileProps) {
     [ClientProfileCardEnum.FullName]: {
       pathname: editProfileRoute,
       params: {
-        componentName: 'fullname',
+        componentName: ClientProfileCardEnum.FullName,
       },
     },
     [ClientProfileCardEnum.PersonalInfo]: {
       pathname: editProfileRoute,
       params: {
-        componentName: 'personalInfo',
+        componentName: ClientProfileCardEnum.PersonalInfo,
       },
     },
     [ClientProfileCardEnum.ImportantNotes]: {
       pathname: editProfileRoute,
       params: {
-        componentName: 'importantNotes',
+        componentName: ClientProfileCardEnum.ImportantNotes,
       },
     },
   };

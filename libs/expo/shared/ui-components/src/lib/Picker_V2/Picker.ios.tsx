@@ -1,7 +1,7 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Picker as RNPicker } from '@react-native-picker/picker';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,7 +15,6 @@ export default function Picker(props: IPickerProps) {
     error,
     selectedDisplayValue,
     selectedValue,
-    value,
     placeholder,
     items,
     label,
@@ -26,11 +25,18 @@ export default function Picker(props: IPickerProps) {
     mr,
     ml,
   } = props;
-  const [localValue, setLocalValue] = useState<string | null>(value || null);
+
+  const [localValue, setLocalValue] = useState<string | null>(null);
+
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+
+  useEffect(() => {
+    setLocalValue(selectedValue || null);
+  }, [selectedValue, setLocalValue]);
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
+
   return (
     <>
       <View>

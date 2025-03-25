@@ -13,7 +13,6 @@ export interface IPickerProps {
   error?: string;
   selectedValue?: string | null;
   selectedDisplayValue?: string | null;
-  value?: string | null;
   placeholder: string;
   items: { displayValue?: string; value: string }[];
   label?: string;
