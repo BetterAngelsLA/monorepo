@@ -2,7 +2,6 @@
 {% block extrahead %}
     {{ block.super }}
     <style>
-    /* Preserved your original styling with admin compatibility */
     #custom-login-container {
       display: flex;
       flex-direction: column;
@@ -15,9 +14,9 @@
     .login-section {
       width: 100%;
       padding: 20px;
-      border: 1px solid var(--hairline-color); /* Admin-compatible variable */
+      border: 1px solid var(--hairline-color);
       border-radius: 4px;
-      background-color: var(--body-bg); /* Admin background */
+      background-color: var(--body-bg);
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
@@ -26,7 +25,7 @@
       margin-bottom: 15px;
       font-size: 1.2em;
       text-align: center;
-      color: var(--body-quiet-color); /* Admin text color */
+      color: var(--body-quiet-color);
     }
 
     .login-divider {
@@ -38,14 +37,14 @@
     .login-divider hr {
       flex-grow: 1;
       border: none;
-      border-top: 1px solid var(--hairline-color); /* Admin border */
+      border-top: 1px solid var(--hairline-color);
       margin: 0;
     }
 
     .login-divider span {
       margin: 0 10px;
       font-weight: bold;
-      color: var(--body-quiet-color); /* Admin text color */
+      color: var(--body-quiet-color);
       white-space: nowrap;
     }
 
@@ -61,10 +60,9 @@
       width: 100%;
       box-sizing: border-box;
       padding: 8px;
-      border: 1px solid var(--border-color); /* Admin border */
+      border: 1px solid var(--border-color);
     }
 
-    /* Admin-compatible error styling */
     .errornote {
       color: var(--error-fg);
       background: var(--error-bg);
@@ -105,11 +103,9 @@
                                id="id_magic_email"
                                required
                                class="admin-text-input">
-                        <!-- Admin input class -->
                     </div>
                     <div class="submit-row">
                         <input type="submit" value="Send Magic Link" class="admin-button">
-                        <!-- Admin button class -->
                     </div>
                 </form>
             {% endif %}
