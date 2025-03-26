@@ -103,13 +103,6 @@ class ClientsGraphQLBaseTestCase(GraphQLBaseTestCase):
                 email
             }
         """
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.client_profile = self._create_client_profile_fixture({"user": {"firstName": "Test Client"}})["data"][
-            "createClientProfile"
-        ]
-        self.graphql_client.logout()
-
-        self.client_profile_id = self.client_profile["id"]
 
     def _create_client_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_client_profile_fixture("create", variables)
@@ -460,6 +453,30 @@ class HmisProfileGraphQLBaseTestCase(ClientsGraphQLBaseTestCase):
             agency
             hmisId
         """
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        # TODO: move this to ClientsGraphQLBaseTestCase when client
+        # profile redesign is completed and tests are refactored
+        # vvvvv
+        self.client_profile = self._create_client_profile_fixture({"user": {"firstName": "Test Client"}})["data"][
+            "createClientProfile"
+        ]
+        self.client_profile_id = self.client_profile["id"]
+        # ^^^^^
+        self._setup_hmis_profiles()
+
+    def _setup_hmis_profiles(self) -> None:
+        variables = {
+            "agency": HmisAgencyEnum.LAHSA.name,
+            "clientProfile": self.client_profile_id,
+        }
+        self.hmis_profile_1 = self._create_hmis_profile_fixture({**variables, "hmisId": "hmis id 1"})["data"][
+            "createHmisProfile"
+        ]
+        self.hmis_profile_2 = self._create_hmis_profile_fixture({**variables, "hmisId": "hmis id 2"})["data"][
+            "createHmisProfile"
+        ]
 
     def _create_hmis_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_hmis_profile_fixture("create", variables)

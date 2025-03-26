@@ -8,7 +8,6 @@ from clients.enums import (
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
-    HmisAgencyEnum,
     LanguageEnum,
     LivingSituationEnum,
     MaritalStatusEnum,
@@ -17,7 +16,7 @@ from clients.enums import (
     RaceEnum,
     VeteranStatusEnum,
 )
-from clients.models import ClientProfile, HmisProfile
+from clients.models import ClientProfile
 from clients.tests.utils import (
     ClientProfileGraphQLBaseTestCase,
     HmisProfileGraphQLBaseTestCase,
@@ -402,18 +401,6 @@ class HmisProfileQueryTestCase(HmisProfileGraphQLBaseTestCase):
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        variables = {
-            "agency": HmisAgencyEnum.LAHSA.name,
-            "clientProfile": self.client_profile_id,
-        }
-
-        self.hmis_profile_1 = self._create_hmis_profile_fixture({**variables, "hmisId": "A1"})["data"][
-            "createHmisProfile"
-        ]
-        self.hmis_profile_2 = self._create_hmis_profile_fixture({**variables, "hmisId": "B2"})["data"][
-            "createHmisProfile"
-        ]
-
     def test_hmis_profile_query(self) -> None:
         query = f"""
             query ($id: ID!) {{
@@ -436,10 +423,7 @@ class HmisProfileQueryTestCase(HmisProfileGraphQLBaseTestCase):
             query ($offset: Int, $limit: Int){{
                 hmisProfiles(pagination: {{offset: $offset, limit: $limit}}) {{
                     totalCount
-                    pageInfo {{
-                        limit
-                        offset
-                    }}
+                    pageInfo {{limit offset}}
                     results {{
                         {self.hmis_profile_fields}
                     }}

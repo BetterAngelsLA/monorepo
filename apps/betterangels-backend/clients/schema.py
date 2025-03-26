@@ -203,44 +203,6 @@ def validate_hmis_profiles(hmis_profiles: list[dict[str, Any]]) -> list[dict[str
     return errors
 
 
-# def validate_hmis_profile(hmis_profile: dict[str, Any]) -> dict[str, Any]:
-#     errors = []
-
-#     hmis_id = hmis_profile.get("hmis_id")
-
-#     if not value_exists(hmis_id):
-#         errors.append(
-#             {
-#                 "field": "hmisProfiles",
-#                 "location": f"{idx}__hmisId",
-#                 "errorCode": ErrorCodeEnum.HMIS_ID_NOT_PROVIDED.name,
-#             }
-#         )
-
-#         continue
-
-#     # exclude the hmis profile being updated from the unique check
-#     exclude_arg = {"id": hmis_profile["id"]} if hmis_profile.get("id") else {}
-
-#     if (
-#         HmisProfile.objects.exclude(**exclude_arg)
-#         .filter(
-#             agency=hmis_profile["agency"],
-#             hmis_id__iexact=hmis_profile["hmis_id"],
-#         )
-#         .exists()
-#     ):
-#         errors.append(
-#             {
-#                 "field": "hmisProfiles",
-#                 "location": f"{idx}__hmisId",
-#                 "errorCode": ErrorCodeEnum.HMIS_ID_IN_USE.name,
-#             }
-#         )
-
-#     return errors
-
-
 def validate_contacts(contacts: list[dict[str, Any]]) -> list[dict[str, Any]]:
     errors = []
 
@@ -636,6 +598,7 @@ class Mutation:
             get_user_permission_group(user)
 
             hmis_profile_data: dict = strawberry.asdict(data)
+
             hmis_profile = resolvers.create(
                 info,
                 HmisProfile,
@@ -660,6 +623,7 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this client.")
 
             hmis_profile_data: dict = strawberry.asdict(data)
+
             hmis_profile = resolvers.update(
                 info,
                 hmis_profile,
@@ -670,24 +634,9 @@ class Mutation:
 
             return cast(HmisProfileType, hmis_profile)
 
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def delete_hmis_profile(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
-        with transaction.atomic():
-            user = get_current_user(info)
-
-            try:
-                client_profile = filter_for_user(
-                    ClientProfile.objects.all(),
-                    user,
-                    [ClientProfilePermissions.DELETE],
-                ).get(id=data.id)
-
-                client_profile_id = client_profile.pk
-
-                # Deleting the underlying user will cascade and delete the client profile
-                client_profile.user.delete()
-
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")
-
-            return DeletedObjectType(id=client_profile_id)
+    delete_hmis_profile: HmisProfileType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[
+            HasRetvalPerm(perms=HmisProfilePermissions.DELETE),
+        ],
+    )
