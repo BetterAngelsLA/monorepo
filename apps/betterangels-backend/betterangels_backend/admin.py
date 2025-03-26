@@ -22,8 +22,7 @@ class MagicLinkAdminSite(admin.AdminSite):
                 #   request.build_absolute_uri("/") -> "http://localhost:8000/"
                 # or maybe use your "magic-auth-login" page directly:
                 #   request.build_absolute_uri(reverse("magic-auth-login"))
-                base_url = request.build_absolute_uri("/").rstrip("/")
-                send_magic_link(email, base_url)
+                send_magic_link(email, request)
 
             # Always show a success message (avoid user enumeration)
             context["email_sent"] = True

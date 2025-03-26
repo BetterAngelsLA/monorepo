@@ -1,9 +1,7 @@
-from typing import cast
-from urllib.parse import urljoin
-
 from accounts.models import User
 from django.conf import settings
 from django.core.mail import send_mail
+from django.http import HttpRequest
 from django.template import loader
 from django.urls import reverse
 from sesame.utils import get_query_string
@@ -11,7 +9,7 @@ from sesame.utils import get_query_string
 SUBJECT_LINE = "Your One-Click Login Link for the BetterAngels app"
 
 
-def send_magic_link(email: str, base_url: str) -> str:
+def send_magic_link(email: str, request: HttpRequest) -> str:
     """
     Sends a "magic link" login email to the given address.
     Returns the query string (e.g. "sesame=AbCdEf123...") if a user is found,
@@ -22,8 +20,8 @@ def send_magic_link(email: str, base_url: str) -> str:
         return ""
 
     query_string: str = get_query_string(user)
-
-    magic_link = f"{base_url}{reverse('magic-auth-login')}{query_string}"
+    base_url = request.build_absolute_uri(reverse("magic-auth-login"))
+    magic_link = f"{base_url}{query_string}"
 
     context = {"magic_login_link_url": magic_link}
     subject = SUBJECT_LINE
