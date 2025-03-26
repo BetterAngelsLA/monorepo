@@ -433,6 +433,35 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
                 },
             )
 
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_delete_hmis_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {"object": "HmisProfile", "object_id": self.hmis_profile_1["id"]}
+        response = self._delete_fixture(**variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["deleteHmisProfile"]["id"])
+        else:
+            self.assertEqual(len(response["data"]["deleteHmisProfile"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["deleteHmisProfile"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
 
 class OrganizationPermissionTestCase(GraphQLBaseTestCase):
     @parametrize(
