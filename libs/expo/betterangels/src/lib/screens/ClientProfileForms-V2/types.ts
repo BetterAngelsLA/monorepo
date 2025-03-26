@@ -3,6 +3,7 @@ import {
   LivingSituationEnum,
   VeteranStatusEnum,
 } from '../../apollo';
+import { ClientProfileCardEnum } from '../Client/ClientProfile_V2/constants';
 
 export type ContactInfoState = {
   // TODO: implement actual contact form
@@ -58,16 +59,15 @@ export type RelevantContactState = {
   // TODO: implement actual relevant contact info form
   name: string;
 };
-
 export interface FormStateMapping {
-  contactInfo: ContactInfoState;
-  demographicInfo: DemographicInfoState;
-  fullname: FullnameState;
-  hmisId: HmisIdState;
-  household: HouseholdState;
-  importantNotes: ImportantNotesState;
-  personalInfo: PersonalInfoState;
-  relevantContact: RelevantContactState;
+  [ClientProfileCardEnum.ContactInfo]: ContactInfoState;
+  [ClientProfileCardEnum.Demographic]: DemographicInfoState;
+  [ClientProfileCardEnum.FullName]: FullnameState;
+  [ClientProfileCardEnum.HmisIds]: HmisIdState;
+  [ClientProfileCardEnum.Household]: HouseholdState;
+  [ClientProfileCardEnum.ImportantNotes]: ImportantNotesState;
+  [ClientProfileCardEnum.PersonalInfo]: PersonalInfoState;
+  [ClientProfileCardEnum.RelevantContacts]: RelevantContactState;
 }
 
 export interface IClientProfileForms {

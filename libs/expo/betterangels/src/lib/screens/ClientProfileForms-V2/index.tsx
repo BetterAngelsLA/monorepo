@@ -15,6 +15,10 @@ import {
   applyValidationErrors,
 } from '../../helpers/parseClientProfileErrors';
 import { useSnackbar } from '../../hooks';
+import {
+  ClientProfileCardEnum,
+  isValidClientProfileCardEnum,
+} from '../Client/ClientProfile_V2/constants';
 import ContactInfo from './ContactInfo';
 import DemographicInfo from './DemographicInfo';
 import Fullname from './Fullname';
@@ -34,35 +38,35 @@ const formConfigs: Record<
   keyof FormStateMapping,
   { title: string; content: ReactNode }
 > = {
-  contactInfo: {
+  [ClientProfileCardEnum.ContactInfo]: {
     title: 'Edit Contact Information',
     content: <ContactInfo />,
   },
-  demographicInfo: {
+  [ClientProfileCardEnum.Demographic]: {
     title: 'Edit Demographic Details',
     content: <DemographicInfo />,
   },
-  fullname: {
+  [ClientProfileCardEnum.FullName]: {
     title: 'Edit Full Name',
     content: <Fullname />,
   },
-  hmisId: {
+  [ClientProfileCardEnum.HmisIds]: {
     title: 'Edit HMIS ID',
     content: <HmisId />,
   },
-  household: {
+  [ClientProfileCardEnum.Household]: {
     title: 'Edit Household Details',
     content: <Household />,
   },
-  importantNotes: {
+  [ClientProfileCardEnum.ImportantNotes]: {
     title: 'Edit Important Notes',
     content: <ImportantNotes />,
   },
-  personalInfo: {
+  [ClientProfileCardEnum.PersonalInfo]: {
     title: 'Edit Personal Info',
     content: <PersonalInfoForm />,
   },
-  relevantContact: {
+  [ClientProfileCardEnum.RelevantContacts]: {
     title: 'Edit Relevant Contact',
     content: <RelevantContact />,
   },
@@ -92,9 +96,7 @@ export default function ClientProfileForms(props: IClientProfileForms) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const allowedKeys = Object.keys(formConfigs);
-
-  if (!allowedKeys.includes(componentName)) {
+  if (!isValidClientProfileCardEnum(componentName)) {
     throw new Error(`Invalid componentName "${componentName}" provided.`);
   }
 
@@ -140,7 +142,8 @@ export default function ClientProfileForms(props: IClientProfileForms) {
       }
 
       refetch();
-      router.replace(`/client/${id}`);
+
+      router.replace(`/client/${id}?openCard=${validComponentName}`);
     } catch (err) {
       console.error(err);
 
@@ -163,7 +166,7 @@ export default function ClientProfileForms(props: IClientProfileForms) {
     }
 
     const formData = extractClientFormData(
-      componentName as keyof FormStateMapping,
+      validComponentName,
       data.clientProfile
     );
 

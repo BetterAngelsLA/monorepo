@@ -1,66 +1,169 @@
 import { Regex } from '@monorepo/expo/shared/static';
 import {
+  ActionModal,
   ControlledInput,
   DatePicker,
   Form,
+  SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
+import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { UpdateClientProfileInput } from '../../../apollo';
+import { Keyboard } from 'react-native';
+import {
+  LanguageEnum,
+  LivingSituationEnum,
+  UpdateClientProfileInput,
+  VeteranStatusEnum,
+} from '../../../apollo';
+import {
+  useCaliforniaIdUniqueCheck,
+  useFeatureFlagActive,
+} from '../../../hooks';
+import { FeatureFlags } from '../../../providers/featureControls/constants';
+import {
+  enumDisplayLanguage,
+  enumDisplayLivingSituation,
+  enumDisplayVeteranStatus,
+} from '../../../static';
 import { ProfilePhotoField } from './ProfilePhotoField/ProfilePhotoField';
 
-type AllowedFieldNames =
-  | 'livingSituation'
-  | 'veteranStatus'
-  | 'preferredLanguage'
-  | 'californiaId'
-  | 'dateOfBirth';
+const languageOptions = Object.entries(enumDisplayLanguage).map(
+  ([enumValue, displayValue]) => {
+    return {
+      value: enumValue,
+      displayValue,
+    };
+  }
+);
 
-interface FormField {
-  label: string;
-  name: AllowedFieldNames;
-  placeholder?: string;
-}
+const veteranStatusOptions = Object.entries(enumDisplayVeteranStatus).map(
+  ([enumValue, displayValue]) => {
+    return {
+      value: enumValue,
+      displayValue,
+    };
+  }
+);
 
-const FORM_FIELDS: FormField[] = [
-  {
-    label: 'CA ID#',
-    name: 'californiaId',
-    placeholder: 'Enter CA ID #',
-  },
-  {
-    label: 'Preferred Language',
-    name: 'preferredLanguage',
-    // placeholder: 'open picker',
-  },
-  {
-    label: 'Veteran Status',
-    name: 'veteranStatus',
-    // placeholder: 'open picker',
-  },
-  {
-    label: 'Living Situation',
-    name: 'livingSituation',
-    // placeholder: 'open picker',
-  },
-];
+const livingSituationOptions = Object.entries(enumDisplayLivingSituation).map(
+  ([enumValue, displayValue]) => {
+    return {
+      value: enumValue,
+      displayValue,
+    };
+  }
+);
 
 export default function PersonalInfoForm() {
-  const { control, setValue, watch } =
-    useFormContext<UpdateClientProfileInput>();
-
-  const clientId = useWatch({
+  const {
     control,
-    name: 'id',
+    setValue,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = useFormContext<UpdateClientProfileInput>();
+
+  const [dedupeModalVisible, setDedupeModalVisible] = useState(false);
+
+  const [
+    id,
+    californiaId,
+    dateOfBirth,
+    preferredLanguage,
+    veteranStatus,
+    livingSituation,
+  ] = useWatch({
+    control,
+    name: [
+      'id',
+      'californiaId',
+      'dateOfBirth',
+      'preferredLanguage',
+      'veteranStatus',
+      'livingSituation',
+    ],
   });
 
-  const dateOfBirth = watch('dateOfBirth');
+  const clientDedupeFeatureOn = useFeatureFlagActive(
+    FeatureFlags.CLIENT_DEDUPE_FF
+  );
 
-  const isError = false;
+  const uniqueCheckError = useCaliforniaIdUniqueCheck(
+    californiaId as string,
+    id as string
+  );
+
+  useEffect(() => {
+    if (!clientDedupeFeatureOn) {
+      return;
+    }
+
+    if (!uniqueCheckError) {
+      clearErrors('californiaId');
+
+      return;
+    }
+
+    // uniqueCheckError exists: show Dedupe modal
+    // If keyboard not dismissed, modal does not render fullscreen on some Android devices.
+    Keyboard.dismiss();
+
+    // TODO: confirm if it breaks on Android after upgrade to New Architecture
+    setTimeout(() => {
+      setDedupeModalVisible(true);
+    }, 100);
+  }, [clientDedupeFeatureOn, californiaId, uniqueCheckError, clearErrors]);
 
   return (
     <Form>
       <Form.Field>
-        <ProfilePhotoField clientId={clientId} />
+        <ProfilePhotoField clientId={id} />
+      </Form.Field>
+
+      <Form.Field title="CA ID#">
+        <ActionModal
+          title="This client has the same CA ID as another client."
+          subtitle="Would you like to see a list of clients with the same CA ID?"
+          secondaryButtonTitle="No"
+          primaryButtonTitle="Yes"
+          onPrimaryPress={() => console.log('primary pressed')}
+          onSecondaryPress={() =>
+            setError('californiaId', {
+              type: 'manual',
+              message: uniqueCheckError,
+            })
+          }
+          onClose={() =>
+            setError('californiaId', {
+              type: 'manual',
+              message: uniqueCheckError,
+            })
+          }
+          visible={dedupeModalVisible}
+          setVisible={setDedupeModalVisible}
+        />
+
+        <ControlledInput
+          name="californiaId"
+          placeholder="Enter CA ID #"
+          control={control}
+          error={!!errors.californiaId || !!uniqueCheckError}
+          errorMessage={errors.californiaId?.message || uniqueCheckError}
+          onDelete={() => setValue('californiaId', '')}
+          rules={{
+            validate: (value: string) => {
+              if (value === '') {
+                return true;
+              }
+
+              if (value && !Regex.californiaId.test(value)) {
+                return 'CA ID must be 1 letter followed by 7 digits';
+              }
+
+              return true;
+            },
+          }}
+        />
       </Form.Field>
 
       <Form.Field title="Date of Birth">
@@ -78,23 +181,38 @@ export default function PersonalInfoForm() {
         />
       </Form.Field>
 
-      {FORM_FIELDS.map((item, idx) => (
-        <Form.Field key={idx} title={item.label}>
-          <ControlledInput
-            key={item.name}
-            name={item.name}
-            placeholder={item.placeholder}
-            control={control}
-            error={isError}
-            onDelete={() => setValue(item.name, '')}
-            rules={{
-              validate: () => {
-                return true;
-              },
-            }}
-          />
-        </Form.Field>
-      ))}
+      <Form.Field title="Living Situation">
+        <SingleSelect
+          placeholder="Select situation"
+          items={livingSituationOptions}
+          selectedValue={livingSituation || undefined}
+          onChange={(value) =>
+            setValue('livingSituation', value as LivingSituationEnum)
+          }
+        />
+      </Form.Field>
+
+      <Form.Field title="Veteran Status">
+        <SingleSelect
+          placeholder="Select veteran status"
+          items={veteranStatusOptions}
+          selectedValue={veteranStatus || undefined}
+          onChange={(value) =>
+            setValue('veteranStatus', value as VeteranStatusEnum)
+          }
+        />
+      </Form.Field>
+
+      <Form.Field title="Preferred Language">
+        <SingleSelect
+          placeholder="Select language"
+          items={languageOptions}
+          selectedValue={preferredLanguage || undefined}
+          onChange={(value) =>
+            setValue('preferredLanguage', value as LanguageEnum)
+          }
+        />
+      </Form.Field>
     </Form>
   );
 }
