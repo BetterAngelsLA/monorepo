@@ -1,6 +1,10 @@
 from typing import Optional, cast
 
-from clients.enums import LivingSituationEnum, RelationshipTypeEnum
+from clients.enums import (
+    ClientDocumentNamespaceEnum,
+    LivingSituationEnum,
+    RelationshipTypeEnum,
+)
 from common.models import Attachment, PhoneNumber
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
@@ -222,7 +226,7 @@ class ClientDocumentResource(resources.ModelResource):
         return obj.updated_at.date().isoformat()
 
     def dehydrate_namespace(self, obj: Attachment) -> str | None:
-        return obj.namespace
+        return ClientDocumentNamespaceEnum(obj.namespace).label
 
     def dehydrate_file_name(self, obj: Attachment) -> str | None:
         return obj.original_filename
