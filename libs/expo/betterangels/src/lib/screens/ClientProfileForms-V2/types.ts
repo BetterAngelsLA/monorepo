@@ -1,13 +1,35 @@
 import {
   LanguageEnum,
   LivingSituationEnum,
+  PreferredCommunicationEnum,
+  SocialMediaEnum,
   VeteranStatusEnum,
 } from '../../apollo';
 import { ClientProfileCardEnum } from '../Client/ClientProfile_V2/constants';
 
 export type ContactInfoState = {
-  // TODO: implement actual contact form
-  name: string;
+  id: string;
+  residenceAddress?: string | null;
+  mailingAddress?: string | null;
+  user: {
+    id: string;
+    email?: string | null;
+  };
+  socialMediaProfiles?:
+    | {
+        id?: string | null;
+        platform: SocialMediaEnum;
+        platformUserId: string;
+      }[]
+    | null;
+  preferredCommunication?: PreferredCommunicationEnum[] | null;
+  phoneNumbers?:
+    | {
+        id?: string;
+        number?: string | null;
+        isPrimary?: boolean | null;
+      }[]
+    | null;
 };
 
 export type DemographicInfoState = {
