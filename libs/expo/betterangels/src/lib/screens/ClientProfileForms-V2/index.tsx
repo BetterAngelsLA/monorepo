@@ -124,8 +124,6 @@ export default function ClientProfileForms(props: IClientProfileForms) {
           values.phoneNumbers?.filter((item) => item.number) || [];
       }
 
-      console.log(inputs);
-
       const updateResponse = await updateClient({
         variables: {
           data: inputs,
@@ -181,7 +179,6 @@ export default function ClientProfileForms(props: IClientProfileForms) {
       data.clientProfile
     );
 
-    console.log(formData);
     methods.reset(formData);
   }, [data, id]);
 
