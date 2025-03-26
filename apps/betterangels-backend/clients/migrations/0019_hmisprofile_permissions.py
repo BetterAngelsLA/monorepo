@@ -5,21 +5,20 @@ from django.db import migrations
 
 
 def create_permissions_if_not_exist(apps, schema_editor):
+    HmisProfile = apps.get_model("clients", "HmisProfile")
     Permission = apps.get_model("auth", "Permission")
     ContentType = apps.get_model("contenttypes", "ContentType")
+    HmisProfileContentType = ContentType.objects.get_for_model(HmisProfile)
     db_alias = schema_editor.connection.alias
 
-    HmisProfile = apps.get_model("clients", "HmisProfile")
-    HmisProfileContentType = ContentType.objects.get_for_model(HmisProfile)
-    HMIS_PROFILE_PERM_MAP = {perm.split(".")[1]: perm.label for perm in HmisProfilePermissions}
-
-    for codename, name in HMIS_PROFILE_PERM_MAP.items():
-        cur_perm = Permission.objects.using(db_alias).create(
+    # Generate readable names based on the enum
+    PERM_MAP = {perm.split(".")[1]: perm.label for perm in HmisProfilePermissions}
+    for codename, name in PERM_MAP.items():
+        Permission.objects.using(db_alias).get_or_create(
             codename=codename,
             content_type=HmisProfileContentType,
+            defaults={"name": name, "content_type": HmisProfileContentType},
         )
-        cur_perm.name = name
-        cur_perm.save()
 
 
 def update_caseworker_permission_template(apps, schema_editor):
