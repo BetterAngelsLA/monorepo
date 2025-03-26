@@ -18,10 +18,6 @@ class MagicLinkAdminSite(admin.AdminSite):
 
             # Only send if the user exists
             if user:
-                # Build your base URL properly. For example:
-                #   request.build_absolute_uri("/") -> "http://localhost:8000/"
-                # or maybe use your "magic-auth-login" page directly:
-                #   request.build_absolute_uri(reverse("magic-auth-login"))
                 send_magic_link(email, request)
 
             # Always show a success message (avoid user enumeration)
