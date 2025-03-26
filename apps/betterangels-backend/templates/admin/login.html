@@ -1,7 +1,7 @@
 {% extends "admin/login.html" %}
 {% block extrahead %}
-    {{ block.super }}
-    <style>
+  {{ block.super }}
+  <style>
     #custom-login-container {
       display: flex;
       flex-direction: column;
@@ -70,45 +70,53 @@
       padding: 10px;
       margin-bottom: 15px;
     }
-    </style>
+  </style>
 {% endblock extrahead %}
 {% block content %}
-    <div id="custom-login-container">
-        {% if is_local_dev %}
-            <div class="login-section">
-                <h2>Password Login</h2>
-                {{ block.super }}
-            </div>
-            <div class="login-divider">
-                <hr>
-                <span>OR</span>
-                <hr>
-            </div>
-        {% endif %}
-        <div class="login-section">
-            <h2>Magic Link Login</h2>
-            {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
-            {% if email_sent %}
-                <p>
-                    We’ve sent a login link to <strong>{{ sent_email_address }}</strong>.
-                    Check your inbox to log in.
-                </p>
-            {% else %}
-                <form method="POST">
-                    {% csrf_token %}
-                    <div class="form-row">
-                        <label for="id_magic_email" class="required">Email:</label>
-                        <input type="email"
-                               name="email"
-                               id="id_magic_email"
-                               required
-                               class="admin-text-input">
-                    </div>
-                    <div class="submit-row">
-                        <input type="submit" value="Send Magic Link" class="admin-button">
-                    </div>
-                </form>
-            {% endif %}
-        </div>
+  <div id="custom-login-container">
+    <!--
+       1) Password login form rendered by Django admin:
+       Calling {{ block.super }} is how the default admin puts the
+       username/password form here.
+    -->
+    <div class="login-section">
+      <h2>Password Login</h2>
+      {{ block.super }}
     </div>
+    <!-- Divider -->
+    <div class="login-divider">
+      <hr>
+      <span>OR</span>
+      <hr>
+    </div>
+    <!--
+       2) Magic link form (this is your custom form).
+         - If email_sent is true, show a success message.
+         - Otherwise, keep the form visible so the user can resend.
+    -->
+    <div class="login-section">
+      <h2>Magic Link Login</h2>
+      {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
+      {% if email_sent %}
+        <p>
+          We’ve sent a login link to <strong>{{ sent_email_address }}</strong>.
+          Check your inbox to log in. Need another link? Just request again:
+        </p>
+      {% endif %}
+      <form method="POST">
+        {% csrf_token %}
+        <div class="form-row">
+          <label for="id_magic_email" class="required">Email:</label>
+          <input type="email"
+                 name="email"
+                 id="id_magic_email"
+                 required
+                 class="admin-text-input">
+        </div>
+        <div class="submit-row">
+          <input type="submit" value="Send Magic Link" class="admin-button">
+        </div>
+      </form>
+    </div>
+  </div>
 {% endblock content %}

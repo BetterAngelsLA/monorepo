@@ -95,7 +95,8 @@ INSTALLED_APPS = [
     "admin_async_upload",
     "admin_interface",
     "colorfield",
-    "django.contrib.admin",
+    # "django.contrib.admin",
+    "betterangels_backend.apps.MagicLinkAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.gis",
@@ -392,7 +393,7 @@ POST_OFFICE = {
     "BACKENDS": {
         "default": env("POST_OFFICE_EMAIL_BACKEND"),
     },
-    "CELERY_ENABLED": True,
+    # "CELERY_ENABLED": True,
     "DEFAULT_PRIORITY": "now",  # Required to send emails immediately through Celery
 }
 EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
