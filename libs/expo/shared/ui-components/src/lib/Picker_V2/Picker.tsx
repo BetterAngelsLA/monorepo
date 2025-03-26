@@ -74,11 +74,12 @@ export default function Picker(props: IPickerProps) {
         placeholder={placeholder}
         selectedValue={selectedValue || ''}
         onValueChange={onValueChange}
+        itemStyle={styles.itemStyle}
       >
         <RNPicker.Item
-          style={styles.itemStyle}
           label={noneLabel}
           value={NONE_VALUE}
+          color={allowSelectNone ? styles.itemStyle.color : Colors.NEUTRAL_DARK}
           enabled={!!allowSelectNone}
         />
         {items.map((item) => (
