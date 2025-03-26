@@ -135,6 +135,27 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
 
         return json_address_input, address_input
 
+    def _delete_fixture(self, object: str, object_id: str) -> Dict[str, Any]:
+        mutation = f"""
+            mutation Delete{object}($id: ID!) {{
+                delete{object}(data: {{ id: $id }}) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on {object}Type {{
+                        id
+                    }}
+                }}
+            }}
+        """
+        variables = {"id": object_id}
+
+        return self.execute_graphql(mutation, variables)
+
     def _handle_user_login(self, user_label: Optional[str]) -> None:
         if user_label:
             self.graphql_client.force_login(self.user_map[user_label])

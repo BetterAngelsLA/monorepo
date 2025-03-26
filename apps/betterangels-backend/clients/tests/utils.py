@@ -392,8 +392,8 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
     def _delete_client_document_fixture(self, document_id: int) -> Dict[str, Any]:
         response = self.execute_graphql(
             """
-            mutation DeleteClientDocument($documentId: ID!) {
-                deleteClientDocument(data: { id: $documentId }) {
+            mutation DeleteClientDocument($id: ID!) {
+                deleteClientDocument(data: { id: $id }) {
                     ... on OperationInfo {
                         messages {
                             kind
@@ -407,7 +407,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 }
             }
             """,
-            variables={"documentId": document_id},
+            variables={"id": document_id},
         )
         return response
 

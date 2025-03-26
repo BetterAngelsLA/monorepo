@@ -612,32 +612,14 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
         self.assertEqual(variables, hmis_profile)
 
     def test_delete_hmis_profile_mutation(self) -> None:
-        hmis_profile_id = self.hmis_profile_1["id"]
-
-        mutation = """
-            mutation DeleteHmisProfile($id: ID!) {
-                deleteHmisProfile(data: { id: $id }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on HmisProfileType {
-                        id
-                    }
-                }
-            }
-        """
-        variables = {"id": hmis_profile_id}
+        variables = {"object": "HmisProfile", "object_id": self.hmis_profile_1["id"]}
 
         expected_query_count = 9
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(mutation, variables)
+            response = self._delete_fixture(**variables)
 
         self.assertNotIn("messages", response["data"]["deleteHmisProfile"])
-        self.assertFalse(HmisProfile.objects.filter(id=hmis_profile_id).exists())
+        self.assertFalse(HmisProfile.objects.filter(id=self.hmis_profile_1["id"]).exists())
 
     @parametrize(
         ("hmis_id", "expected_error_message", "expected_query_count"),
