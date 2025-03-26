@@ -75,9 +75,7 @@
 {% block content %}
   <div id="custom-login-container">
     <!--
-       1) Password login form rendered by Django admin:
-       Calling {{ block.super }} is how the default admin puts the
-       username/password form here.
+       1) Password login form rendered by Django admin.
     -->
     <div class="login-section">
       <h2>Password Login</h2>
@@ -90,7 +88,7 @@
       <hr>
     </div>
     <!--
-       2) Magic link form (this is your custom form).
+       2) Magic link form
          - If email_sent is true, show a success message.
          - Otherwise, keep the form visible so the user can resend.
     -->
