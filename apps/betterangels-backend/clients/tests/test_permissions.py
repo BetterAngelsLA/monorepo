@@ -351,7 +351,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
     def test_view_hmis_profile_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
-        mutation = """
+        query = """
             query ($id: ID!) {
                 hmisProfile(pk: $id) {
                     id
@@ -359,12 +359,40 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             }
         """
         variables = {"id": self.hmis_profile_1["id"]}
-        response = self.execute_graphql(mutation, variables)
+        response = self.execute_graphql(query, variables)
 
         if should_succeed:
             self.assertEqual(response["data"]["hmisProfile"]["id"], self.hmis_profile_1["id"])
         else:
             self.assertIsNotNone(response["errors"])
+
+    @parametrize(
+        "user_label, expected_profile_count",
+        [
+            ("org_1_case_manager_1", 2),
+            ("org_1_case_manager_2", 2),
+            ("org_2_case_manager_1", 2),
+            ("client_user_1", 0),  # Non CM should not succeed
+            # NOTE: Anon user raising an error may be caused by a strawberry bug.
+            # This test may fail and need updating when the bug is fixed.
+            (None, None),  # Anonymous user should return error
+        ],
+    )
+    def test_view_hmis_profiles_permission(self, user_label: str, expected_profile_count: int | None) -> None:
+        self._handle_user_login(user_label)
+        query = """
+            query {
+                hmisProfiles {
+                    totalCount
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        if expected_profile_count is not None:
+            self.assertEqual(response["data"]["hmisProfiles"]["totalCount"], expected_profile_count)
+        else:
+            self.assertTrue("errors" in response)
 
     @parametrize(
         "user_label, should_succeed",
