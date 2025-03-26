@@ -19,7 +19,7 @@ from clients.enums import (
 from clients.models import ClientProfile
 from clients.tests.utils import (
     ClientProfileGraphQLBaseTestCase,
-    HmisProfileGraphQLBaseTestCase,
+    HmisProfileBaseTestCase,
 )
 from clients.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from django.test import override_settings
@@ -396,7 +396,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
 
 
-class HmisProfileQueryTestCase(HmisProfileGraphQLBaseTestCase):
+class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)

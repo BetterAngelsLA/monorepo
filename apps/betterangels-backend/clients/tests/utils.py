@@ -23,7 +23,9 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 
 
-class ClientsGraphQLBaseTestCase(GraphQLBaseTestCase):
+# NOTE: This is a temporary solution while we refactor the client profile and tests.
+# This class will be removed once ClientProfileGraphQLBaseTestCase is slimmed down.
+class ClientsBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
@@ -131,7 +133,7 @@ class ClientsGraphQLBaseTestCase(GraphQLBaseTestCase):
         return self.execute_graphql(mutation, {"data": variables})
 
 
-class ClientProfileGraphQLBaseTestCase(ClientsGraphQLBaseTestCase):
+class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self.EXPECTED_CLIENT_AGE = 20
@@ -444,7 +446,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsGraphQLBaseTestCase):
         )
 
 
-class HmisProfileGraphQLBaseTestCase(ClientsGraphQLBaseTestCase):
+class HmisProfileBaseTestCase(ClientsBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
@@ -456,14 +458,13 @@ class HmisProfileGraphQLBaseTestCase(ClientsGraphQLBaseTestCase):
 
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        # TODO: move this to ClientsGraphQLBaseTestCase when client
-        # profile redesign is completed and tests are refactored
-        # vvvvv
+        # TODO: move client profile setup to ClientsBaseTestCase when
+        # client profile redesign is completed and tests are refactored
         self.client_profile = self._create_client_profile_fixture({"user": {"firstName": "Test Client"}})["data"][
             "createClientProfile"
         ]
         self.client_profile_id = self.client_profile["id"]
-        # ^^^^^
+
         self._setup_hmis_profiles()
 
     def _setup_hmis_profiles(self) -> None:

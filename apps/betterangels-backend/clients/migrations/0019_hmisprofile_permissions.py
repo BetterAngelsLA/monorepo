@@ -47,7 +47,7 @@ def update_caseworker_permission_template(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("clients", "0017_clientcontactevent_clienthouseholdmemberevent_and_more"),
+        ("clients", "0018_clientdocument_proxy"),
     ]
 
     operations = [

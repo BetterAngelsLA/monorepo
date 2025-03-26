@@ -22,7 +22,7 @@ from clients.enums import (
 from clients.models import ClientProfile, HmisProfile
 from clients.tests.utils import (
     ClientProfileGraphQLBaseTestCase,
-    HmisProfileGraphQLBaseTestCase,
+    HmisProfileBaseTestCase,
 )
 from common.models import Attachment
 from deepdiff import DeepDiff
@@ -576,7 +576,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         )
 
 
-class HmisProfileMutationTestCase(HmisProfileGraphQLBaseTestCase):
+class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
@@ -592,7 +592,6 @@ class HmisProfileMutationTestCase(HmisProfileGraphQLBaseTestCase):
             )["data"]["createHmisProfile"]
 
         expected_hmis_profile = {"id": ANY, "hmisId": "new hmis id", "agency": HmisAgencyEnum.LAHSA.name}
-
         self.assertEqual(hmis_profile, expected_hmis_profile)
 
         client_hmis_profiles = ClientProfile.objects.filter(id=self.client_profile_id).values_list(
@@ -610,9 +609,7 @@ class HmisProfileMutationTestCase(HmisProfileGraphQLBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             hmis_profile = self._update_hmis_profile_fixture(variables)["data"]["updateHmisProfile"]
 
-        expected_hmis_profile = {**variables}
-
-        self.assertEqual(expected_hmis_profile, hmis_profile)
+        self.assertEqual(variables, hmis_profile)
 
     def test_delete_hmis_profile_mutation(self) -> None:
         hmis_profile_id = self.hmis_profile_1["id"]
@@ -646,10 +643,10 @@ class HmisProfileMutationTestCase(HmisProfileGraphQLBaseTestCase):
         ("hmis_id", "expected_error_message", "expected_query_count"),
         [
             ("hmis id 1", None, 12),
-            (" ", "This field cannot be blank.", 10),
-            ("", "This field cannot be blank.", 10),
-            ("hmis id 2", "Hmis profile with this Hmis id and Agency already exists.", 11),
-            (None, "This field cannot be null.", 10),
+            (" ", "This field cannot be blank.", 11),
+            ("", "This field cannot be blank.", 11),
+            ("hmis id 2", "Hmis profile with this Hmis id and Agency already exists.", 12),
+            (None, "This field cannot be null.", 11),
         ],
     )
     def test_update_hmis_profile_mutation_validate_hmis_id(
