@@ -314,10 +314,9 @@ class Query:
 
         return cast(ClientProfileType, client_profile)
 
-    client_profiles: List[ClientProfileType] = strawberry_django.field(
+    client_profiles: OffsetPaginated[ClientProfileType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
-
     client_profiles_paginated: OffsetPaginated[ClientProfileType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
@@ -326,10 +325,9 @@ class Query:
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
-    client_documents: List[ClientDocumentType] = strawberry_django.field(
+    client_documents: OffsetPaginated[ClientDocumentType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
-
     client_documents_paginated: OffsetPaginated[ClientDocumentType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
