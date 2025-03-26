@@ -95,7 +95,6 @@ INSTALLED_APPS = [
     "admin_async_upload",
     "admin_interface",
     "colorfield",
-    # "django.contrib.admin",
     "betterangels_backend.apps.MagicLinkAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -393,8 +392,7 @@ POST_OFFICE = {
     "BACKENDS": {
         "default": env("POST_OFFICE_EMAIL_BACKEND"),
     },
-    # "CELERY_ENABLED": True,
-    "DEFAULT_PRIORITY": "now",  # Required to send emails immediately through Celery
+    "CELERY_ENABLED": True,
 }
 EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"

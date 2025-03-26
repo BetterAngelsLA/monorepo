@@ -1,4 +1,5 @@
 # admin_site.py
+from re import sub
 from typing import Any, Dict, Optional
 
 from django.conf import settings
@@ -10,6 +11,7 @@ from django.template.response import TemplateResponse
 
 # If you use django-sesame, import and generate tokens as needed:
 # from sesame.utils import get_query_string
+from post_office import mail
 
 UserModel = get_user_model()
 
@@ -39,32 +41,28 @@ class MagicLinkAdminSite(admin.AdminSite):
                     # admin_url = request.build_absolute_uri(self.urls[0][0])
                     # magic_link = f"{admin_url}?{sesame_token}"
 
-                    send_mail(
+                    # send_mail(
+                    #     subject="Magic Link Example",
+                    #     message="Here is your magic link!",
+                    #     from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "admin@example.com"),
+                    #     recipient_list=[email],
+                    #     fail_silently=False,
+                    # )
+                    mail.send(
+                        [email],
                         subject="Magic Link Example",
-                        message="Here is your magic link!",
-                        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "admin@example.com"),
-                        recipient_list=[email],
-                        fail_silently=False,
+                        message="Test Message",
                     )
-
                     context["email_sent"] = True
                     context["sent_email_address"] = email
 
-                #
-                # IMPORTANT: Force the request back to GET mode so that when
-                # we call super().login, Django’s default admin logic will just
-                # render the login form (rather than trying to validate username/password).
-                #
-                request.method = "GET"
+                    #
+                    # IMPORTANT: Force the request back to GET mode so that when
+                    # we call super().login, Django’s default admin logic will just
+                    # render the login form (rather than trying to validate username/password).
+                    #
+                    request.method = "GET"
 
-                return super().login(request, context)
-
-            else:
-                # The user likely posted the username/password form, so let the default
-                # admin login process handle it (including any validation errors).
-                return super().login(request, context)
-
-        # If GET, just do the normal thing:
         return super().login(request, context)
 
 
