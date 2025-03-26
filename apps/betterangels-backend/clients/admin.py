@@ -226,7 +226,7 @@ class ClientDocumentResource(resources.ModelResource):
         return obj.updated_at.date().isoformat()
 
     def dehydrate_namespace(self, obj: Attachment) -> str | None:
-        return ClientDocumentNamespaceEnum(obj.namespace).label
+        return ClientDocumentNamespaceEnum(obj.namespace).label if obj.namespace else None
 
     def dehydrate_file_name(self, obj: Attachment) -> str | None:
         return obj.original_filename
