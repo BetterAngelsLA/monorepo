@@ -137,7 +137,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
 
     def _delete_fixture(self, object: str, object_id: str) -> Dict[str, Any]:
         mutation = f"""
-            mutation Delete{object}($id: ID!) {{
+            mutation ($id: ID!) {{
                 delete{object}(data: {{ id: $id }}) {{
                     ... on OperationInfo {{
                         messages {{

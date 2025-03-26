@@ -581,17 +581,17 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
         super().setUp()
 
     def test_create_hmis_profile_mutation(self) -> None:
+        variables = {
+            "hmisId": "new hmis id",
+            "agency": HmisAgencyEnum.LAHSA.name,
+            "clientProfile": self.client_profile_id,
+        }
+
         expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            hmis_profile = self._create_hmis_profile_fixture(
-                {
-                    "hmisId": "new hmis id",
-                    "agency": HmisAgencyEnum.LAHSA.name,
-                    "clientProfile": self.client_profile_id,
-                }
-            )["data"]["createHmisProfile"]
+            hmis_profile = self._create_hmis_profile_fixture(**variables)["data"]["createHmisProfile"]
 
-        expected_hmis_profile = {"id": ANY, "hmisId": "new hmis id", "agency": HmisAgencyEnum.LAHSA.name}
+        expected_hmis_profile = {**variables, "id": ANY}
         self.assertEqual(hmis_profile, expected_hmis_profile)
 
         client_hmis_profiles = ClientProfile.objects.filter(id=self.client_profile_id).values_list(
@@ -605,6 +605,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
             "hmisId": "hmis id 1 updated",
             "agency": HmisAgencyEnum.PASADENA.name,
         }
+
         expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
             hmis_profile = self._update_hmis_profile_fixture(variables)["data"]["updateHmisProfile"]
@@ -631,7 +632,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
             (None, "This field cannot be null.", 11),
         ],
     )
-    def test_update_hmis_profile_mutation_validate_hmis_id(
+    def test_update_hmis_profile_mutation_validation(
         self, hmis_id: str | None, expected_error_message: str, expected_query_count: int
     ) -> None:
         variables = {

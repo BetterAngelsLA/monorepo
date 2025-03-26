@@ -362,7 +362,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
         response = self.execute_graphql(mutation, variables)
 
         if should_succeed:
-            self.assertIsNotNone(response["data"])
+            self.assertEqual(response["data"]["hmisProfile"]["id"], self.hmis_profile_1["id"])
         else:
             self.assertIsNotNone(response["errors"])
 

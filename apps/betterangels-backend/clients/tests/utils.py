@@ -23,7 +23,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 
 
-# NOTE: This is a temporary solution while we refactor the client profile and tests.
+# TODO: This is a temporary solution while we refactor the client profile and tests.
 # This class will be removed once ClientProfileGraphQLBaseTestCase is slimmed down.
 class ClientsBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
@@ -458,8 +458,8 @@ class HmisProfileBaseTestCase(ClientsBaseTestCase):
 
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        # TODO: move client profile setup to ClientsBaseTestCase when
-        # client profile redesign is completed and tests are refactored
+        # TODO: move client profile setup back to ClientProfileGraphQLBaseTestCase
+        # when client profile redesign is completed and tests are refactored
         self.client_profile = self._create_client_profile_fixture({"user": {"firstName": "Test Client"}})["data"][
             "createClientProfile"
         ]
