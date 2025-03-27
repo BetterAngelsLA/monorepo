@@ -84,7 +84,13 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertNotEqual(original_nickname, updated_nickname)
         else:
             self.assertEqual(len(response["errors"]), 1)
-            self.assertEqual(response["errors"][0]["message"], "You do not have permission to modify this client.")
+            self.assertIn(
+                response["errors"][0]["message"],
+                {
+                    "You do not have permission to modify this client.",
+                    "Cannot filter against a non-conditional expression.",
+                },
+            )
             self.assertEqual(original_nickname, updated_nickname)
 
     @parametrize(

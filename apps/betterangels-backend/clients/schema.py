@@ -408,7 +408,7 @@ class Mutation:
                     [ClientProfilePermissions.CHANGE],
                 ).get(id=data.id)
                 client_user = client_profile.user
-            except (ClientProfile.DoesNotExist, TypeError):
+            except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
