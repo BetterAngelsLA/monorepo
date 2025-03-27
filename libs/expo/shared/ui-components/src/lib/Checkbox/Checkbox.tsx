@@ -7,13 +7,8 @@ import {
   getMarginStyles,
 } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import {
-  DimensionValue,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { DimensionValue, Pressable, StyleSheet } from 'react-native';
+import { CheckboxCheck } from './CheckboxCheck';
 
 interface ICheckboxProps extends TMarginProps {
   label?: ReactNode;
@@ -30,18 +25,13 @@ interface ICheckboxProps extends TMarginProps {
   testId?: string;
 }
 
-const SIZES = {
-  sm: Spacings.sm,
-  md: Spacings.md,
-} as const;
-
 export function Checkbox(props: ICheckboxProps) {
   const {
     label,
     onCheck,
     accessibilityHint,
     accessibilityLabel,
-    size = 'md',
+    size,
     hasBorder,
     labelFirst = true,
     justifyContent = 'space-between',
@@ -73,47 +63,9 @@ export function Checkbox(props: ICheckboxProps) {
       ]}
       onPress={onCheck}
     >
-      {labelFirst ? (
-        <>
-          {label}
-          <View
-            style={[
-              styles.checkbox,
-              isChecked && styles.checked,
-              {
-                height: SIZES[size],
-                width: SIZES[size],
-              },
-            ]}
-          >
-            {isChecked && (
-              <Text style={styles.checkboxLabel} testID={`checkbox-${testId}`}>
-                ✓
-              </Text>
-            )}
-          </View>
-        </>
-      ) : (
-        <>
-          <View
-            style={[
-              styles.checkbox,
-              isChecked && styles.checked,
-              {
-                height: SIZES[size],
-                width: SIZES[size],
-              },
-            ]}
-          >
-            {isChecked && (
-              <Text style={styles.checkboxLabel} testID={`checkbox-${testId}`}>
-                ✓
-              </Text>
-            )}
-          </View>
-          {label}
-        </>
-      )}
+      {!!labelFirst && label}
+      <CheckboxCheck isChecked={isChecked} size={size} testId={testId} />
+      {!labelFirst && label}
     </Pressable>
   );
 }
@@ -124,22 +76,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: Radiuses.xs,
     borderWidth: 1,
-  },
-  checkbox: {
-    width: Spacings.md,
-    height: Spacings.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: Radiuses.xxxs,
-    borderColor: Colors.NEUTRAL_LIGHT,
-  },
-  checked: {
-    backgroundColor: Colors.PRIMARY_EXTRA_DARK,
-  },
-  checkboxLabel: {
-    color: Colors.WHITE,
-    position: 'absolute',
   },
   label: {
     fontSize: FontSizes.md.fontSize,
