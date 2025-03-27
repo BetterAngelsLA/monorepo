@@ -171,9 +171,17 @@ describe('MultiSelect component', () => {
   describe('with custom option component', () => {
     const defaultProps = { ...baseProps };
 
-    defaultProps.renderOption = (option, { isChecked, onClick, testId }) => {
+    defaultProps.renderOption = (
+      option,
+      { isChecked, onClick, testId, accessibilityHint }
+    ) => {
       return (
-        <Pressable onPress={onClick} key={option.id}>
+        <Pressable
+          onPress={onClick}
+          key={option.id}
+          accessibilityHint={accessibilityHint}
+          accessibilityLabel={accessibilityHint}
+        >
           <Text testID={isChecked ? testId : undefined}>{option.label}</Text>
         </Pressable>
       );
