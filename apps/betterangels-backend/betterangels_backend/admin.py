@@ -21,11 +21,13 @@ class MagicLinkAdminSite(admin.AdminSite):
             if UserModel.objects.filter(email=email, is_staff=True).exists():
                 send_magic_link(email, request)
             context.update({"email_sent": True, "sent_email_address": email})
-            if not is_local_dev:
-                # In production, render the login page directly (disable username/password auth)
-                return render(request, "admin/login.html", context)
-            # In local development, switch the method to GET to fall back on default login
+
+            # Keep login form instead of trying to validate empty fields
             request.method = "GET"
+
+        if not is_local_dev:
+            # In production, render the login page directly (disable username/password auth)
+            return render(request, "admin/login.html", context)
 
         return super().login(request, context)
 
