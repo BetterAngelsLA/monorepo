@@ -257,7 +257,8 @@ class ClientContactType(ClientContactBaseType):
 
 @strawberry_django.input(ClientContact, partial=True)
 class ClientContactInput(ClientContactBaseType):
-    id: auto
+    id: ID | None
+    client_profile: ID | None
 
 
 @strawberry_django.type(ClientHouseholdMember)

@@ -19,8 +19,9 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
-from clients.models import ClientProfile, HmisProfile
+from clients.models import ClientContact, ClientProfile, HmisProfile
 from clients.tests.utils import (
+    ClientContactBaseTestCase,
     ClientProfileGraphQLBaseTestCase,
     HmisProfileBaseTestCase,
 )
@@ -576,22 +577,87 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         )
 
 
+class ClientContactMutationTestCase(ClientContactBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_create_client_contact_mutation(self) -> None:
+        variables = {
+            "clientProfile": self.client_profile_id,
+            "email": "client_contact_3@example.com",
+            "mailingAddress": "333 Main Street",
+            "name": "John Smith",
+            "phoneNumber": "2125553232",
+            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClientOther": None,
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            client_contact = self._create_client_contact_fixture(variables)["data"]["createClientContact"]
+
+        expected_client_contact = {"id": ANY, **variables}
+        expected_client_contact.pop("clientProfile")
+
+        self.assertEqual(client_contact, expected_client_contact)
+
+        client_client_contacts = ClientProfile.objects.filter(id=self.client_profile_id).values_list(
+            "contacts", flat=True
+        )
+        self.assertIn(int(client_contact["id"]), client_client_contacts)
+
+    def test_update_client_contact_mutation(self) -> None:
+        variables = {
+            "id": self.client_contact_1["id"],
+            "email": "client_contact_1_update@example.com",
+            "mailingAddress": "111 Main Street Update",
+            "name": "John Smith Update",
+            "phoneNumber": "2125552121",
+            "relationshipToClient": RelationshipTypeEnum.PAST_CASE_MANAGER.name,
+            "relationshipToClientOther": None,
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            client_contact = self._update_client_contact_fixture(variables)["data"]["updateClientContact"]
+
+        self.assertEqual(variables, client_contact)
+
+    def test_delete_client_contact_mutation(self) -> None:
+        variables = {"object": "ClientContact", "object_id": self.client_contact_1["id"]}
+
+        expected_query_count = 9
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._delete_fixture(**variables)
+
+        self.assertNotIn("messages", response["data"]["deleteClientContact"])
+        self.assertFalse(ClientContact.objects.filter(id=self.client_contact_1["id"]).exists())
+
+    # @parametrize(
+    #     (),
+    #     [],
+    # )
+    # def test_update_client_contact_mutation_validation(self) -> None:
+    #     pass
+
+
 class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
     def test_create_hmis_profile_mutation(self) -> None:
+        variables = {
+            "hmisId": "new hmis id",
+            "agency": HmisAgencyEnum.LAHSA.name,
+            "clientProfile": self.client_profile_id,
+        }
+
         expected_query_count = 12
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            hmis_profile = self._create_hmis_profile_fixture(
-                {
-                    "hmisId": "new hmis id",
-                    "agency": HmisAgencyEnum.LAHSA.name,
-                    "clientProfile": self.client_profile_id,
-                }
-            )["data"]["createHmisProfile"]
+            hmis_profile = self._create_hmis_profile_fixture(variables)["data"]["createHmisProfile"]
 
-        expected_hmis_profile = {"id": ANY, "hmisId": "new hmis id", "agency": HmisAgencyEnum.LAHSA.name}
+        expected_hmis_profile = {**variables, "id": ANY}
+        expected_hmis_profile.pop("clientProfile")
         self.assertEqual(hmis_profile, expected_hmis_profile)
 
         client_hmis_profiles = ClientProfile.objects.filter(id=self.client_profile_id).values_list(

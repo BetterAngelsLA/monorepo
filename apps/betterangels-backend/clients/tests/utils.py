@@ -489,7 +489,7 @@ class ClientContactBaseTestCase(ClientsBaseTestCase):
                 "email": "client_contact_2@example.com",
                 "mailingAddress": "222 Main Street",
                 "name": "Joe Doe",
-                "phoneNumber": "2125552121",
+                "phoneNumber": "2125552222",
                 "relationshipToClient": RelationshipTypeEnum.OTHER.name,
                 "relationshipToClientOther": "bff",
             }
