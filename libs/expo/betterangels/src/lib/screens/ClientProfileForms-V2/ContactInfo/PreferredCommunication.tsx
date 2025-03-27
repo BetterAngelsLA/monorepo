@@ -1,7 +1,14 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { Form, MultiSelect } from '@monorepo/expo/shared/ui-components';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Checkbox,
+  Form,
+  MultiSelect,
+  PreferrredCommunicationIcon,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { StyleSheet, View } from 'react-native';
 import {
   PreferredCommunicationEnum,
   UpdateClientProfileInput,
@@ -67,7 +74,41 @@ export default function PreferredCommunication() {
         }))}
         valueKey="id"
         labelKey="label"
+        renderItem={(
+          option,
+          _index,
+          { isChecked, onClick, accessibilityHint, testId }
+        ) => (
+          <Checkbox
+            key={option.id}
+            isChecked={!!isChecked}
+            onCheck={onClick}
+            size="sm"
+            hasBorder
+            accessibilityHint={accessibilityHint || ''}
+            testId={testId}
+            label={
+              <View style={styles.checkboxLabel}>
+                <PreferrredCommunicationIcon
+                  type={option.id}
+                  color={Colors.PRIMARY_EXTRA_DARK}
+                  size="md"
+                />
+                <TextRegular>{option.label}</TextRegular>
+              </View>
+            }
+          />
+        )}
       />
     </Form.Field>
   );
 }
+
+const styles = StyleSheet.create({
+  checkboxLabel: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: Spacings.xxs,
+    alignItems: 'center',
+  },
+});

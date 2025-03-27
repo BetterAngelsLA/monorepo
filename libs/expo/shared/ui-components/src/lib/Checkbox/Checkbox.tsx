@@ -3,6 +3,8 @@ import {
   FontSizes,
   Radiuses,
   Spacings,
+  TMarginProps,
+  getMarginStyles,
 } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
@@ -13,9 +15,7 @@ import {
   View,
 } from 'react-native';
 
-type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-
-interface ICheckboxProps {
+interface ICheckboxProps extends TMarginProps {
   label?: ReactNode;
   onCheck: () => void;
   accessibilityLabel?: string;
@@ -24,12 +24,6 @@ interface ICheckboxProps {
   hasBorder?: boolean;
   labelFirst?: boolean;
   justifyContent?: 'flex-start' | 'space-between';
-  mb?: TSpacing;
-  mt?: TSpacing;
-  my?: TSpacing;
-  mx?: TSpacing;
-  ml?: TSpacing;
-  mr?: TSpacing;
   isChecked: boolean;
   isConsent?: boolean;
   height?: DimensionValue | undefined;
@@ -52,12 +46,6 @@ export function Checkbox(props: ICheckboxProps) {
     labelFirst = true,
     justifyContent = 'space-between',
     isChecked,
-    mb,
-    mt,
-    mr,
-    ml,
-    my,
-    mx,
     height,
     isConsent,
     testId,
@@ -79,12 +67,7 @@ export function Checkbox(props: ICheckboxProps) {
           paddingHorizontal: hasBorder ? Spacings.sm : 0,
           paddingVertical: hasBorder ? Spacings.xs : 0,
           justifyContent,
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
+          ...getMarginStyles(props),
           gap: Spacings.sm,
         },
       ]}
