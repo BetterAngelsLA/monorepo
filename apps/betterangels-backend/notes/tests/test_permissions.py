@@ -16,6 +16,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Logged-in user should succeed
+            ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )

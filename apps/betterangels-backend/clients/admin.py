@@ -209,6 +209,27 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
     )
 
 
+@admin.register(HmisProfile)
+class HmisProfileAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "client_profile__id",
+        "client_name",
+        "hmis_id",
+        "agency",
+    )
+    search_fields = (
+        "client_profile__user__first_name",
+        "client_profile__user__last_name",
+        "client_profile__user__email",
+        "client_profile__nickname",
+    )
+    list_filter = ("agency",)
+
+    def client_name(self, obj: HmisProfile) -> str:
+        return obj.client_profile.user.full_name
+
+
 class ClientDocumentResource(resources.ModelResource):
     parent_id = fields.Field(column_name="Parent ID")
     created_at = fields.Field(column_name="Created On")

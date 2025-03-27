@@ -16,6 +16,7 @@ from clients.models import (
 from clients.permissions import (
     ClientProfileImportRecordPermissions,
     ClientProfilePermissions,
+    HmisProfilePermissions,
 )
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -49,6 +50,8 @@ from .types import (
     CreateClientDocumentInput,
     CreateClientProfileInput,
     CreateProfileDataImportInput,
+    HmisProfileInput,
+    HmisProfileType,
     ImportClientProfileInput,
     UpdateClientProfileInput,
 )
@@ -334,6 +337,14 @@ class Query:
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
+    hmis_profile: HmisProfileType = strawberry_django.field(
+        extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
+    )
+
+    hmis_profiles: OffsetPaginated[HmisProfileType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
+    )
+
     # Data Import
     @strawberry_django.offset_paginated(extensions=[HasPerm(ClientProfileImportRecordPermissions.VIEW)])
     def bulk_client_profile_import_records(
@@ -355,50 +366,10 @@ class Query:
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])
-    def create_client_document(self, info: Info, data: CreateClientDocumentInput) -> ClientDocumentType:
-        with transaction.atomic():
-            user = cast(User, get_current_user(info))
-            client_profile = filter_for_user(
-                ClientProfile.objects.all(),
-                user,
-                [ClientProfilePermissions.CHANGE],
-            ).get(id=data.client_profile)
-
-            permission_group = get_user_permission_group(user)
-
-            content_type = ContentType.objects.get_for_model(ClientProfile)
-            client_document = Attachment.objects.create(
-                file=data.file,
-                namespace=data.namespace,
-                content_type=content_type,
-                object_id=client_profile.id,
-                uploaded_by=user,
-                associated_with=client_profile.user,
-            )
-
-            permissions = [
-                AttachmentPermissions.DELETE,
-            ]
-            for perm in permissions:
-                assign_perm(perm, permission_group.group, client_document)
-
-            return cast(ClientDocumentType, client_document)
-
-    delete_client_document: ClientDocumentType = mutations.delete(
-        DeleteDjangoObjectInput,
-        extensions=[
-            HasRetvalPerm(perms=AttachmentPermissions.DELETE),
-        ],
-    )
-
     @strawberry_django.mutation(extensions=[HasPerm(perms=[ClientProfilePermissions.ADD])])
     def create_client_profile(self, info: Info, data: CreateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
-            user = get_current_user(info)
-            get_user_permission_group(user)
             client_profile_data: dict = strawberry.asdict(data)
-
             validate_client_profile_data(client_profile_data)
 
             user_data = client_profile_data.pop("user")
@@ -441,7 +412,6 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
-
             validate_client_profile_data(client_profile_data)
 
             if user_data := client_profile_data.pop("user", {}):
@@ -487,25 +457,6 @@ class Mutation:
 
             return cast(ClientProfileType, client_profile)
 
-    @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])])
-    def update_client_profile_photo(self, info: Info, data: ClientProfilePhotoInput) -> ClientProfileType:
-        with transaction.atomic():
-            user = get_current_user(info)
-            try:
-                client_profile = filter_for_user(
-                    ClientProfile.objects.all(),
-                    user,
-                    [ClientProfilePermissions.CHANGE],
-                ).get(id=data.client_profile)
-
-                client_profile.profile_photo = data.photo
-                client_profile.save()
-
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this client.")
-
-            return cast(ClientProfileType, client_profile)
-
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_client_profile(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
         with transaction.atomic():
@@ -527,6 +478,77 @@ class Mutation:
                 raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")
 
             return DeletedObjectType(id=client_profile_id)
+
+    create_hmis_profile: HmisProfileType = mutations.create(
+        HmisProfileInput,
+        extensions=[HasPerm(perms=HmisProfilePermissions.ADD)],
+    )
+
+    update_hmis_profile: HmisProfileType = mutations.update(
+        HmisProfileInput,
+        extensions=[HasRetvalPerm(perms=HmisProfilePermissions.CHANGE)],
+    )
+
+    delete_hmis_profile: HmisProfileType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[HasRetvalPerm(perms=HmisProfilePermissions.DELETE)],
+    )
+
+    @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])
+    def create_client_document(self, info: Info, data: CreateClientDocumentInput) -> ClientDocumentType:
+        with transaction.atomic():
+            user = cast(User, get_current_user(info))
+            client_profile = filter_for_user(
+                ClientProfile.objects.all(),
+                user,
+                [ClientProfilePermissions.CHANGE],
+            ).get(id=data.client_profile)
+
+            permission_group = get_user_permission_group(user)
+
+            content_type = ContentType.objects.get_for_model(ClientProfile)
+            client_document = Attachment.objects.create(
+                file=data.file,
+                namespace=data.namespace,
+                content_type=content_type,
+                object_id=client_profile.id,
+                uploaded_by=user,
+                associated_with=client_profile.user,
+            )
+
+            permissions = [
+                AttachmentPermissions.DELETE,
+            ]
+            for perm in permissions:
+                assign_perm(perm, permission_group.group, client_document)
+
+            return cast(ClientDocumentType, client_document)
+
+    delete_client_document: ClientDocumentType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[
+            HasRetvalPerm(perms=AttachmentPermissions.DELETE),
+        ],
+    )
+
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])])
+    def update_client_profile_photo(self, info: Info, data: ClientProfilePhotoInput) -> ClientProfileType:
+        with transaction.atomic():
+            user = get_current_user(info)
+            try:
+                client_profile = filter_for_user(
+                    ClientProfile.objects.all(),
+                    user,
+                    [ClientProfilePermissions.CHANGE],
+                ).get(id=data.client_profile)
+
+                client_profile.profile_photo = data.photo
+                client_profile.save()
+
+            except ClientProfile.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this client.")
+
+            return cast(ClientProfileType, client_profile)
 
     # Data Import
     @strawberry_django.mutation(extensions=[HasPerm(ClientProfileImportRecordPermissions.ADD)])
