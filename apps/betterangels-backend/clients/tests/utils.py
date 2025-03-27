@@ -452,7 +452,6 @@ class ClientContactBaseTestCase(ClientsBaseTestCase):
 
         self.client_contact_fields = """
             id
-            clientProfile
             email
             mailingAddress
             name
@@ -473,16 +472,28 @@ class ClientContactBaseTestCase(ClientsBaseTestCase):
         self._setup_client_contacts()
 
     def _setup_client_contacts(self) -> None:
-        variables = {
-            "agency": HmisAgencyEnum.LAHSA.name,
-            "clientProfile": self.client_profile_id,
-        }
-        self.client_contact_1 = self._create_client_contact_fixture({**variables, "hmisId": "hmis id 1"})["data"][
-            "createClientContact"
-        ]
-        self.client_contact_2 = self._create_client_contact_fixture({**variables, "hmisId": "hmis id 2"})["data"][
-            "createClientContact"
-        ]
+        self.client_contact_1 = self._create_client_contact_fixture(
+            {
+                "clientProfile": self.client_profile_id,
+                "email": "client_contact_1@example.com",
+                "mailingAddress": "111 Main Street",
+                "name": "John Smith",
+                "phoneNumber": "2125551212",
+                "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
+                "relationshipToClientOther": None,
+            }
+        )["data"]["createClientContact"]
+        self.client_contact_2 = self._create_client_contact_fixture(
+            {
+                "clientProfile": self.client_profile_id,
+                "email": "client_contact_2@example.com",
+                "mailingAddress": "222 Main Street",
+                "name": "Joe Doe",
+                "phoneNumber": "2125552121",
+                "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+                "relationshipToClientOther": "bff",
+            }
+        )["data"]["createClientContact"]
 
     def _create_client_contact_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_client_contact_fixture("create", variables)

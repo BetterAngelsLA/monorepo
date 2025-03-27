@@ -18,6 +18,7 @@ from clients.enums import (
 )
 from clients.models import ClientProfile
 from clients.tests.utils import (
+    ClientContactBaseTestCase,
     ClientProfileGraphQLBaseTestCase,
     HmisProfileBaseTestCase,
 )
@@ -394,6 +395,53 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         response = self.execute_graphql(query, variables={"searchClient": search_fields})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
+
+
+class ClientContactQueryTestCase(ClientContactBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_client_contact_query(self) -> None:
+        query = f"""
+            query ($id: ID!) {{
+                clientContact(pk: $id) {{
+                    {self.client_contact_fields}
+                }}
+            }}
+        """
+        variables = {"id": self.client_contact_1["id"]}
+
+        expected_query_count = 3
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        self.assertEqual(response["data"]["clientContact"], self.client_contact_1)
+
+    def test_client_contacts_query(self) -> None:
+        query = f"""
+            query ($offset: Int, $limit: Int){{
+                clientContacts(pagination: {{offset: $offset, limit: $limit}}) {{
+                    totalCount
+                    pageInfo {{limit offset}}
+                    results {{
+                        {self.client_contact_fields}
+                    }}
+                }}
+            }}
+        """
+
+        expected_query_count = 4
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
+
+        results = response["data"]["clientContacts"]["results"]
+
+        self.assertEqual(response["data"]["clientContacts"]["totalCount"], 2)
+        self.assertEqual(response["data"]["clientContacts"]["pageInfo"], {"limit": 10, "offset": 0})
+        self.assertCountEqual(results, [self.client_contact_1, self.client_contact_2])
 
 
 class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
