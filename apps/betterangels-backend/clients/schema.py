@@ -14,6 +14,7 @@ from clients.models import (
     HmisProfile,
 )
 from clients.permissions import (
+    ClientContactPermissions,
     ClientProfileImportRecordPermissions,
     ClientProfilePermissions,
     HmisProfilePermissions,
@@ -41,6 +42,8 @@ from strawberry_django.utils.query import filter_for_user
 
 from .enums import RelationshipTypeEnum
 from .types import (
+    ClientContactInput,
+    ClientContactType,
     ClientDocumentType,
     ClientProfileDataImportType,
     ClientProfileImportRecordsBulkInput,
@@ -345,6 +348,14 @@ class Query:
         extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
     )
 
+    client_contact: ClientContactType = strawberry_django.field(
+        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+    )
+
+    client_contacts: OffsetPaginated[ClientContactType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+    )
+
     # Data Import
     @strawberry_django.offset_paginated(extensions=[HasPerm(ClientProfileImportRecordPermissions.VIEW)])
     def bulk_client_profile_import_records(
@@ -481,6 +492,21 @@ class Mutation:
     delete_hmis_profile: HmisProfileType = mutations.delete(
         DeleteDjangoObjectInput,
         extensions=[HasRetvalPerm(perms=HmisProfilePermissions.DELETE)],
+    )
+
+    create_client_contact: ClientContactType = mutations.create(
+        ClientContactInput,
+        extensions=[HasPerm(perms=ClientContactPermissions.ADD)],
+    )
+
+    update_client_contact: ClientContactType = mutations.update(
+        ClientContactInput,
+        extensions=[HasRetvalPerm(perms=ClientContactPermissions.CHANGE)],
+    )
+
+    delete_client_contact: ClientContactType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[HasRetvalPerm(perms=ClientContactPermissions.DELETE)],
     )
 
     @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])

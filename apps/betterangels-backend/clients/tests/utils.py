@@ -446,6 +446,71 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
         )
 
 
+class ClientContactBaseTestCase(ClientsBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.client_contact_fields = """
+            id
+            clientProfile
+            email
+            mailingAddress
+            name
+            phoneNumber
+            relationshipToClient
+            relationshipToClientOther
+        """
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        # TODO: move client profile setup back to ClientProfileGraphQLBaseTestCase
+        # when client profile redesign is completed and tests are refactored
+        self.client_profile = self._create_client_profile_fixture({"user": {"firstName": "Test Client"}})["data"][
+            "createClientProfile"
+        ]
+        self.client_profile_id = self.client_profile["id"]
+
+        self._setup_client_contacts()
+
+    def _setup_client_contacts(self) -> None:
+        variables = {
+            "agency": HmisAgencyEnum.LAHSA.name,
+            "clientProfile": self.client_profile_id,
+        }
+        self.client_contact_1 = self._create_client_contact_fixture({**variables, "hmisId": "hmis id 1"})["data"][
+            "createClientContact"
+        ]
+        self.client_contact_2 = self._create_client_contact_fixture({**variables, "hmisId": "hmis id 2"})["data"][
+            "createClientContact"
+        ]
+
+    def _create_client_contact_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_client_contact_fixture("create", variables)
+
+    def _update_client_contact_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_client_contact_fixture("update", variables)
+
+    def _create_or_update_client_contact_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+        mutation: str = f"""
+            mutation {operation.capitalize()}ClientContact($data: ClientContactInput!) {{ # noqa: B950
+                {operation}ClientContact(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on ClientContactType {{
+                        {self.client_contact_fields}
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+
 class HmisProfileBaseTestCase(ClientsBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
