@@ -74,24 +74,26 @@
 {% endblock extrahead %}
 {% block content %}
   <div id="custom-login-container">
-    <!--
+    {% if is_local_dev %}
+      <!--
        1) Password login form rendered by Django admin.
     -->
-    <div class="login-section">
-      <h2>Password Login</h2>
-      {{ block.super }}
-    </div>
-    <!-- Divider -->
-    <div class="login-divider">
-      <hr>
-      <span>OR</span>
-      <hr>
-    </div>
-    <!--
+      <div class="login-section">
+        <h2>Password Login</h2>
+        {{ block.super }}
+      </div>
+      <!-- Divider -->
+      <div class="login-divider">
+        <hr>
+        <span>OR</span>
+        <hr>
+      </div>
+      <!--
        2) Magic link form
          - If email_sent is true, show a success message.
          - Otherwise, keep the form visible so the user can resend.
     -->
+    {% endif %}
     <div class="login-section">
       <h2>Magic Link Login</h2>
       {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
