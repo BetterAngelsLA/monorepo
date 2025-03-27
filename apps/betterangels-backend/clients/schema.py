@@ -402,7 +402,6 @@ class Mutation:
         with transaction.atomic():
             user = get_current_user(info)
             try:
-                client_profile_data: dict = strawberry.asdict(data)
                 client_profile = filter_for_user(
                     ClientProfile.objects.all(),
                     user,
@@ -412,6 +411,7 @@ class Mutation:
             except (ClientProfile.DoesNotExist, TypeError):
                 raise PermissionError("You do not have permission to modify this client.")
 
+            client_profile_data: dict = strawberry.asdict(data)
             validate_client_profile_data(client_profile_data)
 
             if user_data := client_profile_data.pop("user", {}):
