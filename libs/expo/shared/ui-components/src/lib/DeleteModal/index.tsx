@@ -12,12 +12,21 @@ type TProps = {
   body?: string;
   onDelete: () => void;
   onCancel?: () => void;
-  button: ReactElement;
+  button?: ReactElement;
   isVisible?: boolean;
+  deleteableItemName?: string;
 };
 
 export default function DeleteModal(props: TProps) {
-  const { isVisible, title, body, onCancel, onDelete, button } = props;
+  const {
+    isVisible,
+    title,
+    body,
+    onCancel,
+    onDelete,
+    button,
+    deleteableItemName,
+  } = props;
 
   const [visible, setVisible] = useState(false);
 
@@ -25,14 +34,16 @@ export default function DeleteModal(props: TProps) {
     setVisible(!!isVisible);
   }, [isVisible]);
 
-  const clonedButton = cloneElement(button as ReactElement<ButtonProps>, {
-    onPress: () => {
-      setVisible(true);
-      if (button.props.onPress) {
-        button.props.onPress();
-      }
-    },
-  });
+  const clonedButton =
+    !!button &&
+    cloneElement(button as ReactElement<ButtonProps>, {
+      onPress: () => {
+        setVisible(true);
+        if (button.props.onPress) {
+          button.props.onPress();
+        }
+      },
+    });
 
   return (
     <>
@@ -62,7 +73,7 @@ export default function DeleteModal(props: TProps) {
                 setVisible(false);
               }}
               color={Colors.PRIMARY}
-              accessibilityHint="continue to work on the interaction"
+              accessibilityHint="cancel the delete action"
               title="Cancel"
             />
           </View>
@@ -70,7 +81,9 @@ export default function DeleteModal(props: TProps) {
             <Button
               fontSize="sm"
               size="full"
-              accessibilityHint="deletes the interaction"
+              accessibilityHint={
+                deleteableItemName ? `delete ${deleteableItemName}` : 'delete'
+              }
               onPress={async () => {
                 onDelete();
                 setVisible(false);

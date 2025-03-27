@@ -3,7 +3,7 @@ import {
   DownloadIcon,
   ViewIcon,
 } from '@monorepo/expo/shared/icons';
-import { Button, DeleteModal } from '@monorepo/expo/shared/ui-components';
+import { DeleteModal } from '@monorepo/expo/shared/ui-components';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
@@ -137,15 +137,7 @@ export default function DocumentModal(props: IDocumentModalProps) {
         onDelete={deleteFile}
         onCancel={() => setDeleteModalVisible(false)}
         isVisible={deleteModalVisible}
-        button={
-          <Button
-            accessibilityHint="deletes file"
-            title="Delete File"
-            variant="negative"
-            size="full"
-            mt="xs"
-          />
-        }
+        deleteableItemName={fileTypeText}
       />
     </>
   );
