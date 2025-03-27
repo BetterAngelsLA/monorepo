@@ -15,7 +15,9 @@ const mockOptions: TTestItem[] = [
   { id: '3', label: 'Option ABC' },
 ];
 
-const baseProps: TMultiSelect<any> = {
+type TOption = { id: string; label: string };
+
+const baseProps: TMultiSelect<TOption> = {
   title: 'Select Options',
   options: mockOptions,
   selected: [],
