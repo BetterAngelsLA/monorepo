@@ -73,25 +73,19 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
     )
     def test_update_client_profile_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
+        original_nickname = ClientProfile.objects.get(id=self.client_profile_1["id"]).nickname
 
-        variables = {
-            "id": self.client_profile_1["id"],
-            "preferredLanguage": LanguageEnum.SPANISH.name,
-        }
+        variables = {"id": self.client_profile_1["id"], "nickname": "updated nick"}
         response = self._update_client_profile_fixture(variables)
+        updated_nickname = ClientProfile.objects.get(id=self.client_profile_1["id"]).nickname
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateClientProfile"]["id"])
+            self.assertNotEqual(original_nickname, updated_nickname)
         else:
-            self.assertEqual(len(response["data"]["updateClientProfile"]["messages"]), 1)
-            self.assertEqual(
-                response["data"]["updateClientProfile"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "updateClientProfile",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
+            self.assertEqual(len(response["errors"]), 1)
+            self.assertEqual(response["errors"][0]["message"], "You do not have permission to modify this client.")
+            self.assertEqual(original_nickname, updated_nickname)
 
     @parametrize(
         "user_label, should_succeed",
