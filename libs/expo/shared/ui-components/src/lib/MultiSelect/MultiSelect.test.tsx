@@ -1,5 +1,6 @@
 import { fireEvent, render } from '@testing-library/react-native';
-import { MultiSelect } from './MultiSelect';
+import { Pressable, Text } from 'react-native';
+import { MultiSelect, TMultiSelect } from './MultiSelect';
 
 interface TTestItem {
   id: string;
@@ -14,7 +15,7 @@ const mockOptions: TTestItem[] = [
   { id: '3', label: 'Option ABC' },
 ];
 
-const baseProps = {
+const baseProps: TMultiSelect<any> = {
   title: 'Select Options',
   options: mockOptions,
   selected: [],
@@ -28,133 +29,211 @@ describe('MultiSelect component', () => {
     mockOnChange.mockClear(); // Clear previous calls before each test
   });
 
-  it('renders all options', () => {
-    const { getByText } = render(<MultiSelect {...baseProps} />);
+  describe('with default checkbox', () => {
+    const defaultProps = { ...baseProps };
 
-    expect(getByText('Option A')).toBeTruthy();
-    expect(getByText('Option AB')).toBeTruthy();
-    expect(getByText('Option ABC')).toBeTruthy();
+    it('renders all options', () => {
+      const { getByText } = render(<MultiSelect {...defaultProps} />);
+
+      expect(getByText('Option A')).toBeTruthy();
+      expect(getByText('Option AB')).toBeTruthy();
+      expect(getByText('Option ABC')).toBeTruthy();
+    });
+
+    it('renders checked options as selected', () => {
+      const props = {
+        ...defaultProps,
+        selected: [mockOptions[0], mockOptions[1]],
+      };
+
+      const { queryByTestId } = render(<MultiSelect {...props} />);
+
+      const checkmarkA = queryByTestId('MultiSelect-option-0');
+      const checkmarkB = queryByTestId('MultiSelect-option-1');
+      const checkmarkC = queryByTestId('MultiSelect-option-2');
+
+      expect(checkmarkA).toBeTruthy();
+      expect(checkmarkB).toBeTruthy();
+      expect(checkmarkC).toBeFalsy();
+    });
+
+    it('selects checkbox', () => {
+      const testOption = mockOptions[1];
+
+      const props = {
+        ...defaultProps,
+        selected: [],
+      };
+
+      const { getByText } = render(<MultiSelect {...props} />);
+
+      const activeOptionEl = getByText(testOption.label);
+
+      fireEvent.press(activeOptionEl);
+
+      expect(mockOnChange).toHaveBeenCalledWith([testOption]);
+    });
+
+    it('unselects checkbox', () => {
+      const testOption = mockOptions[1];
+
+      const props = {
+        ...defaultProps,
+        selected: [testOption],
+      };
+
+      const { getByText } = render(<MultiSelect {...props} />);
+
+      const activeOptionEl = getByText(testOption.label);
+
+      fireEvent.press(activeOptionEl);
+
+      expect(mockOnChange).toHaveBeenCalledWith([]);
+    });
+
+    it('selects All', () => {
+      const props = {
+        ...defaultProps,
+        selected: [],
+        withSelectAll: true,
+        selectAllLabel: 'Select All',
+      };
+
+      const { getByText } = render(<MultiSelect {...props} />);
+
+      const selectAllOption = getByText('Select All');
+
+      fireEvent.press(selectAllOption);
+
+      expect(mockOnChange).toHaveBeenCalledWith(mockOptions);
+    });
+
+    it('unselects All', () => {
+      const props = {
+        ...defaultProps,
+        selected: mockOptions,
+        withSelectAll: true,
+        selectAllLabel: 'Select All',
+      };
+
+      const { getByText } = render(<MultiSelect {...props} />);
+
+      const activeOptionEl = getByText('Select All');
+
+      fireEvent.press(activeOptionEl);
+
+      expect(mockOnChange).toHaveBeenCalledWith([]);
+    });
+
+    it('unselects single item', () => {
+      const testOption = mockOptions[1];
+
+      const props = {
+        ...defaultProps,
+        selected: mockOptions,
+        withSelectAll: true,
+        selectAllLabel: 'Select All',
+      };
+
+      const { getByText } = render(<MultiSelect {...props} />);
+
+      const activeOptionEl = getByText(testOption.label);
+
+      fireEvent.press(activeOptionEl);
+
+      expect(mockOnChange).toHaveBeenCalledWith([
+        mockOptions[0],
+        mockOptions[2],
+      ]);
+    });
+
+    it('filters options correctly', () => {
+      const { getByPlaceholderText, getByText } = render(
+        <MultiSelect
+          {...defaultProps}
+          withFilter
+          filterPlaceholder="Search options"
+        />
+      );
+
+      const input = getByPlaceholderText('Search options');
+
+      fireEvent.changeText(input, 'AB');
+
+      expect(() => getByText('A')).toThrow();
+      expect(getByText('Option AB')).toBeTruthy();
+      expect(getByText('Option ABC')).toBeTruthy();
+    });
   });
 
-  it('renders checked options as selected', () => {
-    const props = {
-      ...baseProps,
-      selected: [mockOptions[0], mockOptions[1]],
+  describe('with custom option component', () => {
+    const defaultProps = { ...baseProps };
+
+    defaultProps.renderOption = (option, { isChecked, onClick, testId }) => {
+      return (
+        <Pressable onPress={onClick} key={option.id}>
+          <Text testID={isChecked ? testId : undefined}>{option.label}</Text>
+        </Pressable>
+      );
     };
 
-    const { queryByTestId } = render(<MultiSelect {...props} />);
+    it('renders all options', () => {
+      const { getByText } = render(<MultiSelect {...defaultProps} />);
 
-    const checkmarkA = queryByTestId('checkbox-MultiSelect-0');
-    const checkmarkB = queryByTestId('checkbox-MultiSelect-1');
-    const checkmarkC = queryByTestId('checkbox-MultiSelect-2');
+      expect(getByText('Option A')).toBeTruthy();
+      expect(getByText('Option AB')).toBeTruthy();
+      expect(getByText('Option ABC')).toBeTruthy();
+    });
 
-    expect(checkmarkA).toBeTruthy();
-    expect(checkmarkB).toBeTruthy();
-    expect(checkmarkC).toBeFalsy();
-  });
+    it('renders checked options as selected', () => {
+      const props = {
+        ...defaultProps,
+        selected: [mockOptions[0], mockOptions[1]],
+      };
 
-  it('selects checkbox', () => {
-    const testOption = mockOptions[1];
+      const { queryByTestId } = render(<MultiSelect {...props} />);
 
-    const props = {
-      ...baseProps,
-      selected: [],
-    };
+      const checkmarkA = queryByTestId('MultiSelect-option-0');
+      const checkmarkB = queryByTestId('MultiSelect-option-1');
+      const checkmarkC = queryByTestId('MultiSelect-option-2');
 
-    const { getByText } = render(<MultiSelect {...props} />);
+      expect(checkmarkA).toBeTruthy();
+      expect(checkmarkB).toBeTruthy();
+      expect(checkmarkC).toBeFalsy();
+    });
 
-    const activeOptionEl = getByText(testOption.label);
+    it('selects checkbox', () => {
+      const testOption = mockOptions[1];
 
-    fireEvent.press(activeOptionEl);
+      const props = {
+        ...defaultProps,
+        selected: [],
+      };
 
-    expect(mockOnChange).toHaveBeenCalledWith([testOption]);
-  });
+      const { getByText } = render(<MultiSelect {...props} />);
 
-  it('unselects checkbox', () => {
-    const testOption = mockOptions[1];
+      const activeOptionEl = getByText(testOption.label);
 
-    const props = {
-      ...baseProps,
-      selected: [testOption],
-    };
+      fireEvent.press(activeOptionEl);
 
-    const { getByText } = render(<MultiSelect {...props} />);
+      expect(mockOnChange).toHaveBeenCalledWith([testOption]);
+    });
 
-    const activeOptionEl = getByText(testOption.label);
+    it('unselects checkbox', () => {
+      const testOption = mockOptions[1];
 
-    fireEvent.press(activeOptionEl);
+      const props = {
+        ...defaultProps,
+        selected: [testOption],
+      };
 
-    expect(mockOnChange).toHaveBeenCalledWith([]);
-  });
+      const { getByText } = render(<MultiSelect {...props} />);
 
-  it('selects All', () => {
-    const props = {
-      ...baseProps,
-      selected: [],
-      withSelectAll: true,
-      selectAllLabel: 'Select All',
-    };
+      const activeOptionEl = getByText(testOption.label);
 
-    const { getByText } = render(<MultiSelect {...props} />);
+      fireEvent.press(activeOptionEl);
 
-    const selectAllOption = getByText('Select All');
-
-    fireEvent.press(selectAllOption);
-
-    expect(mockOnChange).toHaveBeenCalledWith(mockOptions);
-  });
-
-  it('unselects All', () => {
-    const props = {
-      ...baseProps,
-      selected: mockOptions,
-      withSelectAll: true,
-      selectAllLabel: 'Select All',
-    };
-
-    const { getByText } = render(<MultiSelect {...props} />);
-
-    const activeOptionEl = getByText('Select All');
-
-    fireEvent.press(activeOptionEl);
-
-    expect(mockOnChange).toHaveBeenCalledWith([]);
-  });
-
-  it('unselects single item', () => {
-    const testOption = mockOptions[1];
-
-    const props = {
-      ...baseProps,
-      selected: mockOptions,
-      withSelectAll: true,
-      selectAllLabel: 'Select All',
-    };
-
-    const { getByText } = render(<MultiSelect {...props} />);
-
-    const activeOptionEl = getByText(testOption.label);
-
-    fireEvent.press(activeOptionEl);
-
-    expect(mockOnChange).toHaveBeenCalledWith([mockOptions[0], mockOptions[2]]);
-  });
-
-  it('filters options correctly', () => {
-    const { getByPlaceholderText, getByText } = render(
-      <MultiSelect
-        {...baseProps}
-        withFilter
-        filterPlaceholder="Search options"
-      />
-    );
-
-    const input = getByPlaceholderText('Search options');
-
-    fireEvent.changeText(input, 'AB');
-
-    expect(() => getByText('A')).toThrow();
-    expect(getByText('Option AB')).toBeTruthy();
-    expect(getByText('Option ABC')).toBeTruthy();
+      expect(mockOnChange).toHaveBeenCalledWith([]);
+    });
   });
 });

@@ -1,18 +1,16 @@
-import { StyleProp, ViewStyle } from 'react-native';
 import Checkbox from '../Checkbox';
 import TextRegular from '../TextRegular';
 
-interface TMultiSelectItem {
-  style?: StyleProp<ViewStyle>;
-  label: string;
-  testId?: string;
+export interface TMultiSelectItem {
   isChecked?: boolean;
-  accessibilityHint?: string;
+  label: string;
   onClick: () => void;
+  accessibilityHint?: string;
+  testId?: string;
 }
 
 export function MultiSelectItem(props: TMultiSelectItem) {
-  const { style, accessibilityHint, onClick, isChecked, label, testId } = props;
+  const { accessibilityHint, onClick, isChecked, label, testId } = props;
 
   return (
     <Checkbox

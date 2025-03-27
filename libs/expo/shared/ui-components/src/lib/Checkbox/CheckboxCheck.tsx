@@ -27,7 +27,7 @@ export function CheckboxCheck(props: TProps) {
       ]}
     >
       {isChecked && (
-        <Text style={styles.checkboxLabel} testID={`checkbox-${testId}`}>
+        <Text style={styles.checkboxLabel} testID={testId}>
           ✓
         </Text>
       )}

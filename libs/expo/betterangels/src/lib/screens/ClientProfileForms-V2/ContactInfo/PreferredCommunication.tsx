@@ -46,9 +46,8 @@ export default function PreferredCommunication() {
         }))}
         valueKey="id"
         labelKey="label"
-        renderItem={(
+        renderOption={(
           option,
-          _index,
           { isChecked, onClick, accessibilityHint, testId }
         ) => (
           <Checkbox
