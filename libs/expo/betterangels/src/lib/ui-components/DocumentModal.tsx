@@ -43,7 +43,7 @@ export default function DocumentModal(props: IDocumentModalProps) {
     },
   });
 
-  const handleDeleteClick = async () => {
+  const handleClickDelete = async () => {
     setDeleteModalVisible(true);
   };
 
@@ -57,8 +57,8 @@ export default function DocumentModal(props: IDocumentModalProps) {
         },
       });
     } catch (err) {
-      console.error('Error delteing document', err);
-      Alert.alert('Error', 'An error occurred while delteing the document.');
+      console.error('Error deleting document', err);
+      Alert.alert('Error', 'An error occurred while deleting the document.');
     }
   };
 
@@ -116,7 +116,7 @@ export default function DocumentModal(props: IDocumentModalProps) {
     {
       title: `Delete this ${fileTypeText}`,
       Icon: DeleteIcon,
-      onPress: handleDeleteClick,
+      onPress: handleClickDelete,
     },
   ];
 
