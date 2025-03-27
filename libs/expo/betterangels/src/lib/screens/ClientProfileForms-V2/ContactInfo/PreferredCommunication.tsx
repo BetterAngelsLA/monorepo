@@ -1,11 +1,14 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Form, MultiSelect } from '@monorepo/expo/shared/ui-components';
+import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
   PreferredCommunicationEnum,
   UpdateClientProfileInput,
 } from '../../../apollo';
 import { enumDisplayPreferredCommunication } from '../../../static';
+
+type TOption = { id: PreferredCommunicationEnum; label: string };
 
 // TODO: Add Icons in preffered
 // const icons = {
@@ -35,24 +38,30 @@ import { enumDisplayPreferredCommunication } from '../../../static';
 export default function PreferredCommunication() {
   const { setValue, watch } = useFormContext<UpdateClientProfileInput>();
 
-  const preferredCommunication = watch('preferredCommunication') || [];
+  const selectedCommunications = watch('preferredCommunication') || [];
+
+  const options = useMemo(() => {
+    return (
+      Object.entries(enumDisplayPreferredCommunication) as [
+        PreferredCommunicationEnum,
+        string
+      ][]
+    ).map(([enumValue, displayValue]) => ({
+      id: enumValue,
+      label: displayValue,
+    }));
+  }, []);
+
   return (
     <Form.Field style={{ gap: Spacings.sm }} title="Preferred Communication">
-      <MultiSelect
-        onChange={(e: { id: PreferredCommunicationEnum; label: string }[]) => {
-          const selectedEnums = e.map((item) => item.id);
+      <MultiSelect<TOption>
+        onChange={(selected) => {
+          const selectedEnums = selected.map((item) => item.id);
+
           setValue('preferredCommunication', selectedEnums);
         }}
-        options={(
-          Object.entries(enumDisplayPreferredCommunication) as [
-            PreferredCommunicationEnum,
-            string
-          ][]
-        ).map(([enumValue, displayValue]) => ({
-          id: enumValue,
-          label: displayValue,
-        }))}
-        selected={preferredCommunication.map((item) => ({
+        options={options}
+        selected={selectedCommunications.map((item) => ({
           id: item,
           label: enumDisplayPreferredCommunication[item],
         }))}
