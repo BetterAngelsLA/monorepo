@@ -3,8 +3,10 @@ import {
   DownloadIcon,
   ViewIcon,
 } from '@monorepo/expo/shared/icons';
+import { Button, DeleteModal } from '@monorepo/expo/shared/ui-components';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { useState } from 'react';
 import { Alert } from 'react-native';
 import { ClientDocumentType } from '../apollo';
 import {
@@ -24,6 +26,9 @@ const MIME_TYPE = 'application/octet-stream';
 
 export default function DocumentModal(props: IDocumentModalProps) {
   const { isModalVisible, closeModal, document, clientId } = props;
+
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
   const [deleteDocument] = useDeleteClientDocumentMutation({
     refetchQueries: [
       {
@@ -38,8 +43,13 @@ export default function DocumentModal(props: IDocumentModalProps) {
     },
   });
 
-  const handleDelete = async () => {
+  const handleDeleteClick = async () => {
+    setDeleteModalVisible(true);
+  };
+
+  const deleteFile = async () => {
     if (!document?.id) return;
+
     try {
       await deleteDocument({
         variables: {
@@ -47,8 +57,8 @@ export default function DocumentModal(props: IDocumentModalProps) {
         },
       });
     } catch (err) {
-      console.error('Error deleting document', err);
-      Alert.alert('Error', 'An error occurred while deleting the document.');
+      console.error('Error delteing document', err);
+      Alert.alert('Error', 'An error occurred while delteing the document.');
     }
   };
 
@@ -106,19 +116,38 @@ export default function DocumentModal(props: IDocumentModalProps) {
     {
       title: `Delete this ${fileTypeText}`,
       Icon: DeleteIcon,
-      onPress: handleDelete,
+      onPress: handleDeleteClick,
     },
   ];
 
   return (
-    <MainModal
-      closeButton
-      vertical
-      actions={ACTIONS}
-      isModalVisible={isModalVisible}
-      closeModal={closeModal}
-      opacity={0.5}
-    />
+    <>
+      <MainModal
+        closeButton
+        vertical
+        actions={ACTIONS}
+        isModalVisible={isModalVisible}
+        closeModal={closeModal}
+        opacity={0.5}
+      />
+
+      <DeleteModal
+        body={`All data associated with this ${fileTypeText} will be deleted.`}
+        title={`Delete ${fileTypeText}?`}
+        onDelete={deleteFile}
+        onCancel={() => setDeleteModalVisible(false)}
+        isVisible={deleteModalVisible}
+        button={
+          <Button
+            accessibilityHint="deletes file"
+            title="Delete File"
+            variant="negative"
+            size="full"
+            mt="xs"
+          />
+        }
+      />
+    </>
   );
 }
 

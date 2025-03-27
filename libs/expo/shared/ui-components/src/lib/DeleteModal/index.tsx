@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactElement, cloneElement, useState } from 'react';
+import { ReactElement, cloneElement, useEffect, useState } from 'react';
 import { ButtonProps, View } from 'react-native';
 import BasicModal from '../BasicModal';
 import Button from '../Button';
@@ -7,18 +7,23 @@ import TextBold from '../TextBold';
 import TextButton from '../TextButton';
 import TextRegular from '../TextRegular';
 
-export default function DeleteModal({
-  title,
-  body,
-  onDelete,
-  button,
-}: {
+type TProps = {
   title: string;
   body?: string;
   onDelete: () => void;
+  onCancel?: () => void;
   button: ReactElement;
-}) {
+  isVisible?: boolean;
+};
+
+export default function DeleteModal(props: TProps) {
+  const { isVisible, title, body, onCancel, onDelete, button } = props;
+
   const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    setVisible(!!isVisible);
+  }, [isVisible]);
 
   const clonedButton = cloneElement(button as ReactElement<ButtonProps>, {
     onPress: () => {
@@ -52,7 +57,10 @@ export default function DeleteModal({
           >
             <TextButton
               fontSize="sm"
-              onPress={() => setVisible(false)}
+              onPress={async () => {
+                onCancel && onCancel();
+                setVisible(false);
+              }}
               color={Colors.PRIMARY}
               accessibilityHint="continue to work on the interaction"
               title="Cancel"
