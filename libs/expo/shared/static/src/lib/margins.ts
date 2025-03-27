@@ -1,4 +1,5 @@
-import { Spacings, TSpacing } from './spacings';
+import { Spacings } from './spacings';
+import { TSpacing } from './types';
 
 export type TMarginProps = {
   mb?: TSpacing;

@@ -1,4 +1,5 @@
 import { Colors } from '@monorepo/expo/shared/static';
+import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
@@ -24,14 +25,12 @@ const DEFAULT_OPEN_CARD = ClientProfileCardEnum.FullName;
 export default function ClientProfileView(props: ProfileProps) {
   const { client, openCard } = props;
   const scrollRef = useRef<ScrollView>(null);
+  const router = useRouter();
 
   const clientProfile = client?.clientProfile;
 
-  const defaultOpenCard =
-    openCard === null ? null : openCard || DEFAULT_OPEN_CARD;
-
   const [expandedCard, setExpandedCard] =
-    useState<ClientProfileCardEnum | null>(defaultOpenCard);
+    useState<ClientProfileCardEnum | null>(openCard || DEFAULT_OPEN_CARD);
 
   function onOpenCloseClick(card: ClientProfileCardEnum) {
     if (card === expandedCard) {
@@ -43,8 +42,40 @@ export default function ClientProfileView(props: ProfileProps) {
     setExpandedCard(card);
   }
 
+  const editProfileRoute = `/clients/edit/${clientProfile?.id}`;
+
+  const routeConfig: Partial<
+    Record<
+      ClientProfileCardEnum,
+      { pathname: string; params: { componentName: string } }
+    >
+  > = {
+    [ClientProfileCardEnum.FullName]: {
+      pathname: editProfileRoute,
+      params: {
+        componentName: ClientProfileCardEnum.FullName,
+      },
+    },
+    [ClientProfileCardEnum.PersonalInfo]: {
+      pathname: editProfileRoute,
+      params: {
+        componentName: ClientProfileCardEnum.PersonalInfo,
+      },
+    },
+    [ClientProfileCardEnum.ImportantNotes]: {
+      pathname: editProfileRoute,
+      params: {
+        componentName: ClientProfileCardEnum.ImportantNotes,
+      },
+    },
+  };
+
   function onClickEdit(card: ClientProfileCardEnum) {
-    console.log('*****************  on click edit:', card);
+    const route = routeConfig[card];
+    if (!route) {
+      return;
+    }
+    router.push(route);
   }
 
   return (
