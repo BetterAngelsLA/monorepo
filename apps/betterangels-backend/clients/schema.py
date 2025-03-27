@@ -400,17 +400,6 @@ class Mutation:
     @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])])
     def update_client_profile(self, info: Info, data: UpdateClientProfileInput) -> ClientProfileType:
         with transaction.atomic():
-            user = get_current_user(info)
-            try:
-                client_profile = filter_for_user(
-                    ClientProfile.objects.all(),
-                    user,
-                    [ClientProfilePermissions.CHANGE],
-                ).get(id=data.id)
-                client_user = client_profile.user
-            except ClientProfile.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this client.")
-
             client_profile_data: dict = strawberry.asdict(data)
             validate_client_profile_data(client_profile_data)
 
