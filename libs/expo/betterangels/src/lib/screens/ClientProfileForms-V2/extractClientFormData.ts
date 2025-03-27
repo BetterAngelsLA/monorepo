@@ -2,7 +2,7 @@ import { parseToDate } from '@monorepo/expo/shared/ui-components';
 import { SocialMediaEnum } from '../../apollo';
 import { GetClientProfileQuery } from '../AddEditClient/__generated__/AddEditClient.generated';
 import { ClientProfileCardEnum } from '../Client/ClientProfile_V2/constants';
-import { FormStateMapping } from './types';
+import { FormStateMapping, TPhoneNumber } from './types';
 
 const defaultSocialMedias = [
   {
@@ -89,11 +89,9 @@ export const extractClientFormData = (
         user,
       } = clientProfile;
 
-      let updatedPhoneNumbers: {
-        id?: string;
-        number?: string | null;
-        isPrimary?: boolean | null;
-      }[] = [{ number: '', isPrimary: false }];
+      let updatedPhoneNumbers: TPhoneNumber[] = [
+        { number: '', isPrimary: false },
+      ];
 
       if (phoneNumbers?.length) {
         updatedPhoneNumbers = phoneNumbers.map((item) => {

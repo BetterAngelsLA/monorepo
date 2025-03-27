@@ -101,8 +101,9 @@ export default function PhoneNumber() {
         ))}
       </View>
 
-      <View style={{ alignItems: 'flex-start' }}>
+      <View style={{ alignItems: 'flex-start', marginTop: Spacings.lg }}>
         <TextButton
+          fontSize="sm"
           color={Colors.PRIMARY}
           onPress={() =>
             append({

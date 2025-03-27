@@ -2,6 +2,7 @@ import { Regex } from '@monorepo/expo/shared/static';
 import { ControlledInput, Form } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
 import { UpdateClientProfileInput } from '../../../apollo';
+import AddressAutocomplete from '../../../ui-components/AddressField';
 import PhoneNumber from './PhoneNumber';
 import PreferredCommunication from './PreferredCommunication';
 import SocialMedia from './SocialMedia';
@@ -16,20 +17,18 @@ export default function ContactInfo() {
   return (
     <Form>
       <Form.Field title="Residence Address">
-        <ControlledInput
+        <AddressAutocomplete<UpdateClientProfileInput>
           name="residenceAddress"
-          placeholder="Enter residence address"
           control={control}
-          onDelete={() => setValue('residenceAddress', '')}
+          placeholder="Enter residence address"
         />
       </Form.Field>
 
       <Form.Field title="Personal Mailing Address">
-        <ControlledInput
+        <AddressAutocomplete<UpdateClientProfileInput>
           name="mailingAddress"
-          placeholder="Enter personal mailing address"
           control={control}
-          onDelete={() => setValue('mailingAddress', '')}
+          placeholder="Enter personal mailing address"
         />
       </Form.Field>
 

@@ -23,13 +23,13 @@ export type ContactInfoState = {
       }[]
     | null;
   preferredCommunication?: PreferredCommunicationEnum[] | null;
-  phoneNumbers?:
-    | {
-        id?: string;
-        number?: string | null;
-        isPrimary?: boolean | null;
-      }[]
-    | null;
+  phoneNumbers?: TPhoneNumber[] | null;
+};
+
+export type TPhoneNumber = {
+  id?: string;
+  number?: string | null;
+  isPrimary?: boolean | null;
 };
 
 export type DemographicInfoState = {
