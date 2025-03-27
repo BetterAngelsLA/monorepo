@@ -181,6 +181,7 @@ enum CityChoices {
   WESTLAKE_VILLAGE
   WEST_LOS_ANGELES
   WHITTIER
+  WILMINGTON
 }
 
 type CityType {
