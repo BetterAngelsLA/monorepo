@@ -13,9 +13,11 @@ interface ISingleSelectProps {
   mr?: TSpacing;
   label?: string;
   placeholder?: string;
-  onChange: (value: string) => void;
+  onChange: (value: string | null) => void;
   items: { displayValue?: string; value: string }[];
   selectedValue?: string;
+  selectNoneLabel?: string;
+  allowSelectNone?: boolean;
   error?: string;
   maxRadioItems?: number;
 }
@@ -33,6 +35,8 @@ export function SingleSelect(props: ISingleSelectProps) {
     onChange,
     placeholder = '',
     selectedValue,
+    selectNoneLabel,
+    allowSelectNone,
     error,
     maxRadioItems = 3,
   } = props;
@@ -50,6 +54,8 @@ export function SingleSelect(props: ISingleSelectProps) {
         selectedDisplayValue={selectedItem?.displayValue}
         onChange={onChange}
         placeholder={placeholder}
+        selectNoneLabel={selectNoneLabel}
+        allowSelectNone={allowSelectNone}
         items={items}
         mb={mb}
         mt={mt}

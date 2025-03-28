@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, Union
+from typing import NewType, Optional, Union
 
 import strawberry
 import strawberry_django
@@ -12,6 +12,12 @@ PhoneNumberScalar: Union[DjangoPhoneNumber, str] = strawberry.scalar(
     DjangoPhoneNumber,
     serialize=lambda v: str(v.national_number),
     parse_value=lambda v: parse(v, "US"),
+)
+
+NonBlankString = strawberry.scalar(
+    NewType("NonBlankString", str),
+    serialize=lambda v: str(v),
+    parse_value=lambda v: v.strip(),
 )
 
 

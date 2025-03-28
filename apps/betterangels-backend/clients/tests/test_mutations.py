@@ -20,10 +20,14 @@ from clients.enums import (
     VeteranStatusEnum,
 )
 from clients.models import ClientProfile, HmisProfile
-from clients.tests.utils import ClientProfileGraphQLBaseTestCase
+from clients.tests.utils import (
+    ClientProfileGraphQLBaseTestCase,
+    HmisProfileBaseTestCase,
+)
 from common.models import Attachment
 from deepdiff import DeepDiff
 from django.test import override_settings
+from unittest_parametrize import parametrize
 
 
 class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
@@ -570,3 +574,77 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             Attachment.objects.filter(id=client_document_id).exists(),
             "The document should have been deleted from the database.",
         )
+
+
+class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_create_hmis_profile_mutation(self) -> None:
+        expected_query_count = 12
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            hmis_profile = self._create_hmis_profile_fixture(
+                {
+                    "hmisId": "new hmis id",
+                    "agency": HmisAgencyEnum.LAHSA.name,
+                    "clientProfile": self.client_profile_id,
+                }
+            )["data"]["createHmisProfile"]
+
+        expected_hmis_profile = {"id": ANY, "hmisId": "new hmis id", "agency": HmisAgencyEnum.LAHSA.name}
+        self.assertEqual(hmis_profile, expected_hmis_profile)
+
+        client_hmis_profiles = ClientProfile.objects.filter(id=self.client_profile_id).values_list(
+            "hmis_profiles", flat=True
+        )
+        self.assertIn(int(hmis_profile["id"]), client_hmis_profiles)
+
+    def test_update_hmis_profile_mutation(self) -> None:
+        variables = {
+            "id": self.hmis_profile_1["id"],
+            "hmisId": "hmis id 1 updated",
+            "agency": HmisAgencyEnum.PASADENA.name,
+        }
+
+        expected_query_count = 12
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            hmis_profile = self._update_hmis_profile_fixture(variables)["data"]["updateHmisProfile"]
+
+        self.assertEqual(variables, hmis_profile)
+
+    def test_delete_hmis_profile_mutation(self) -> None:
+        variables = {"object": "HmisProfile", "object_id": self.hmis_profile_1["id"]}
+
+        expected_query_count = 9
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._delete_fixture(**variables)
+
+        self.assertNotIn("messages", response["data"]["deleteHmisProfile"])
+        self.assertFalse(HmisProfile.objects.filter(id=self.hmis_profile_1["id"]).exists())
+
+    @parametrize(
+        ("hmis_id", "expected_error_message", "expected_query_count"),
+        [
+            ("hmis id 1", None, 12),
+            (" ", "This field cannot be blank.", 11),
+            ("", "This field cannot be blank.", 11),
+            ("hmis id 2", "Hmis profile with this Hmis id and Agency already exists.", 12),
+            (None, "This field cannot be null.", 11),
+        ],
+    )
+    def test_update_hmis_profile_mutation_validation(
+        self, hmis_id: str | None, expected_error_message: str, expected_query_count: int
+    ) -> None:
+        variables = {
+            "id": self.hmis_profile_1["id"],
+            "hmisId": hmis_id,
+            "agency": HmisAgencyEnum.LAHSA.name,
+        }
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._update_hmis_profile_fixture(variables)["data"]["updateHmisProfile"]
+
+        if expected_error_message:
+            self.assertEqual(len(response["messages"]), 1)
+            self.assertEqual(response["messages"][0]["message"], expected_error_message)
+        else:
+            self.assertEqual(response, variables)

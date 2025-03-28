@@ -3,6 +3,7 @@ import { Loading } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
+import { uniqueBy } from 'remeda';
 import {
   NotesPaginatedQuery,
   Ordering,
@@ -80,6 +81,11 @@ export default function Interactions({
   };
 
   useEffect(() => {
+    setOffset(0);
+    setNotes([]);
+  }, [filterSearch]);
+
+  useEffect(() => {
     if (!data || !('notesPaginated' in data)) {
       return;
     }
@@ -90,7 +96,9 @@ export default function Interactions({
     if (offset === 0) {
       setNotes(results);
     } else {
-      setNotes((prevNotes) => [...prevNotes, ...results]);
+      setNotes((prevNotes) =>
+        uniqueBy([...prevNotes, ...results], (note) => note.id)
+      );
     }
 
     setHasMore(offset + paginationLimit < totalCount);

@@ -1,19 +1,26 @@
 from typing import Optional, cast
 
-from clients.enums import LivingSituationEnum, RelationshipTypeEnum
-from common.models import PhoneNumber
+from clients.enums import (
+    ClientDocumentNamespaceEnum,
+    LivingSituationEnum,
+    RelationshipTypeEnum,
+)
+from common.models import Attachment, PhoneNumber
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db.models import Q, QuerySet
+from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
 from import_export import fields, resources
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
 from pghistory.models import Events
+from rangefilter.filters import DateRangeFilterBuilder
 
 from .models import (
     ClientContact,
+    ClientDocument,
     ClientHouseholdMember,
     ClientProfile,
     ClientProfileDataImport,
@@ -199,6 +206,74 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
         "user__first_name",
         "user__last_name",
         "user__middle_name",
+    )
+
+
+@admin.register(HmisProfile)
+class HmisProfileAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "client_profile__id",
+        "client_name",
+        "hmis_id",
+        "agency",
+    )
+    search_fields = (
+        "client_profile__user__first_name",
+        "client_profile__user__last_name",
+        "client_profile__user__email",
+        "client_profile__nickname",
+    )
+    list_filter = ("agency",)
+
+    def client_name(self, obj: HmisProfile) -> str:
+        return obj.client_profile.user.full_name
+
+
+class ClientDocumentResource(resources.ModelResource):
+    parent_id = fields.Field(column_name="Parent ID")
+    created_at = fields.Field(column_name="Created On")
+    updated_at = fields.Field(column_name="Updated On")
+    namespace = fields.Field(column_name="Type")
+    file_name = fields.Field(column_name="File Name")
+
+    def dehydrate_parent_id(self, obj: Attachment) -> int:
+        return obj.object_id
+
+    def dehydrate_created_at(self, obj: Attachment) -> str:
+        return obj.created_at.date().isoformat()
+
+    def dehydrate_updated_at(self, obj: Attachment) -> str:
+        return obj.updated_at.date().isoformat()
+
+    def dehydrate_namespace(self, obj: Attachment) -> str | None:
+        return ClientDocumentNamespaceEnum(obj.namespace).label if obj.namespace else None
+
+    def dehydrate_file_name(self, obj: Attachment) -> str | None:
+        return obj.original_filename
+
+
+@admin.register(ClientDocument)
+class ClientDocumentAdmin(ExportActionMixin, admin.ModelAdmin):
+    resource_class = ClientDocumentResource
+
+    def get_export_formats(self) -> list:
+        return [CSV]
+
+    def get_queryset(self, request: HttpRequest) -> QuerySet[ClientDocument]:
+        return super().get_queryset(request).filter(content_type__model="clientprofile")
+
+    list_display = (
+        "attachment_type",
+        "content_object",
+        "created_at",
+        "updated_at",
+        "uploaded_by",
+    )
+    list_filter = (("created_at", DateRangeFilterBuilder()),)
+    search_fields = (
+        "id",
+        "attachment_type",
     )
 
 
