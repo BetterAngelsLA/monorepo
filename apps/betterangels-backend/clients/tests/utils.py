@@ -477,7 +477,7 @@ class ClientContactBaseTestCase(ClientsBaseTestCase):
                 "clientProfile": self.client_profile_id,
                 "email": "client_contact_1@example.com",
                 "mailingAddress": "111 Main Street",
-                "name": "John Smith",
+                "name": "Jane Smith",
                 "phoneNumber": "2125551212",
                 "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
                 "relationshipToClientOther": None,

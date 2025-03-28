@@ -14,6 +14,7 @@ from clients.enums import (
     PreferredCommunicationEnum,
     PronounEnum,
     RaceEnum,
+    RelationshipTypeEnum,
     VeteranStatusEnum,
 )
 from clients.models import ClientProfile
@@ -413,11 +414,20 @@ class ClientContactQueryTestCase(ClientContactBaseTestCase):
         variables = {"id": self.client_contact_1["id"]}
 
         expected_query_count = 3
-
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
-        self.assertEqual(response["data"]["clientContact"], self.client_contact_1)
+        expected_client_contact = {
+            "id": str(self.client_contact_1["id"]),
+            "email": "client_contact_1@example.com",
+            "mailingAddress": "111 Main Street",
+            "name": "Jane Smith",
+            "phoneNumber": "2125551212",
+            "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
+            "relationshipToClientOther": None,
+        }
+
+        self.assertEqual(response["data"]["clientContact"], expected_client_contact)
 
     def test_client_contacts_query(self) -> None:
         query = f"""
