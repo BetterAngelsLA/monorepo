@@ -385,6 +385,15 @@ class Mutation:
                 },
             )
 
+            # TODO: Remove in DEV-1611
+            user_fields = ["first_name", "last_name", "middle_name", "email"]
+
+            for field in user_fields:
+                if not client_profile_data.get(field) and user_data and user_data.get(field):
+                    setattr(client_profile, field, user_data.get(field))
+
+            client_profile.save()
+
             content_type = ContentType.objects.get_for_model(ClientProfile)
 
             for phone_number in phone_numbers:
@@ -454,6 +463,15 @@ class Mutation:
                     **client_profile_data,
                 },
             )
+
+            # TODO: Remove in DEV-1611
+            user_fields = ["first_name", "last_name", "middle_name", "email"]
+
+            for field in user_fields:
+                if not client_profile_data.get(field) and user_data and user_data.get(field):
+                    setattr(client_profile, field, user_data.get(field))
+
+            client_profile.save()
 
             return cast(ClientProfileType, client_profile)
 

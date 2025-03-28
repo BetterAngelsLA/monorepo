@@ -508,6 +508,35 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertEqual(HmisProfile.objects.filter(id__in=hmis_profile_ids).count(), 0)
 
+    # TODO: Remove in DEV-1611
+    def test_dual_write(self) -> None:
+        user = {
+            "firstName": "dual first",
+            "lastName": "dual last",
+            "middleName": "dual middle",
+            "email": "dual_email@example.com",
+        }
+        variables = {"user": user}
+        response = self._create_client_profile_fixture(variables)
+        client_profile = response["data"]["createClientProfile"]
+        created_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
+
+        self.assertEqual(created_client_profile.first_name, user["firstName"])
+        self.assertEqual(created_client_profile.last_name, user["lastName"])
+        self.assertEqual(created_client_profile.middle_name, user["middleName"])
+        self.assertEqual(created_client_profile.email, user["email"])
+
+        user["id"] = client_profile["user"]["id"]
+        variables = {"id": client_profile["id"], "user": user}
+        response = self._update_client_profile_fixture(variables)
+        response["data"]["updateClientProfile"]
+        updated_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
+
+        self.assertEqual(updated_client_profile.first_name, user["firstName"])
+        self.assertEqual(updated_client_profile.last_name, user["lastName"])
+        self.assertEqual(updated_client_profile.middle_name, user["middleName"])
+        self.assertEqual(updated_client_profile.email, user["email"])
+
     @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
     def test_update_client_profile_photo(self) -> None:
         client_profile_id = self.client_profile_1["id"]
