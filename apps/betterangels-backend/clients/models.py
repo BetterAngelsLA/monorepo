@@ -118,15 +118,19 @@ class ClientProfile(BaseModel):
     )
     date_of_birth = models.DateField(blank=True, null=True)
     documents = GenericRelation(Attachment)
+    email = models.EmailField(unique=True, null=True, blank=True)
     eye_color = TextChoicesField(choices_enum=EyeColorEnum, blank=True, null=True)
+    first_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
     gender_other = models.CharField(max_length=100, null=True, blank=True)
     hair_color = TextChoicesField(choices_enum=HairColorEnum, blank=True, null=True)
     height_in_inches = models.FloatField(blank=True, null=True)
     important_notes = models.TextField(blank=True, null=True)
+    last_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     living_situation = TextChoicesField(choices_enum=LivingSituationEnum, blank=True, null=True)
     mailing_address = models.TextField(blank=True, null=True)
     marital_status = TextChoicesField(choices_enum=MaritalStatusEnum, blank=True, null=True)
+    middle_name = models.CharField(max_length=50, blank=True, null=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
     phone_number = PhoneNumberField(region="US", blank=True, null=True)
     phone_numbers = GenericRelation(PhoneNumber)
@@ -193,6 +197,11 @@ class ClientProfile(BaseModel):
             self.california_id = None
 
         super().save(*args, **kwargs)
+
+    @model_property
+    def full_name(self: "ClientProfile") -> str:
+        name_parts = filter(None, [self.first_name, self.middle_name, self.last_name])
+        return " ".join(name_parts).strip()
 
     class Meta:
         ordering = ["user__first_name"]
