@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth.forms import UserChangeForm as BaseUserChangeForm
 from django.contrib.sites.models import Site
 from organizations.backends import invitation_backend
+from organizations.models import Organization
 
 from .models import User
 
@@ -76,3 +77,15 @@ class OrganizationUserForm(forms.ModelForm):
         self.instance.user.save()
 
         return cast(User, super().save(*args, **kwargs))
+
+
+class CustomOrganizationForm(forms.ModelForm):
+    class Meta:
+        model = Organization
+        # List all fields except any you want to exclude or customize
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):  # type: ignore
+        super().__init__(*args, **kwargs)
+        # Override the field widget to allow blank input if needed
+        self.fields["slug"].required = False
