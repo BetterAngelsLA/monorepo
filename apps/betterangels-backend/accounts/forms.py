@@ -89,3 +89,4 @@ class CustomOrganizationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Override the field widget to allow blank input if needed
         self.fields["slug"].required = False
+        self.fields["slug"].widget.attrs.update({"readonly": "readonly", "placeholder": "Autofilled on submission..."})
