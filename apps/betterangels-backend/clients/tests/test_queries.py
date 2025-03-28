@@ -8,6 +8,7 @@ from clients.enums import (
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
+    HmisAgencyEnum,
     LanguageEnum,
     LivingSituationEnum,
     MaritalStatusEnum,
@@ -471,11 +472,21 @@ class ClientHouseholdMemberQueryTestCase(ClientHouseholdMemberBaseTestCase):
         variables = {"id": self.client_household_member_1["id"]}
 
         expected_query_count = 3
-
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
-        self.assertEqual(response["data"]["clientHouseholdMember"], self.client_household_member_1)
+        expected_client_household_member = {
+            "id": str(self.client_household_member_1["id"]),
+            "name": "Jane Smith",
+            "dateOfBirth": "2001-01-01",
+            "gender": GenderEnum.FEMALE.name,
+            "genderOther": None,
+            "displayGender": "Female",
+            "relationshipToClient": RelationshipTypeEnum.AUNT.name,
+            "relationshipToClientOther": None,
+        }
+
+        self.assertEqual(response["data"]["clientHouseholdMember"], expected_client_household_member)
 
     def test_client_household_members_query(self) -> None:
         query = f"""
@@ -518,11 +529,16 @@ class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
         variables = {"id": self.hmis_profile_1["id"]}
 
         expected_query_count = 3
-
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
-        self.assertEqual(response["data"]["hmisProfile"], self.hmis_profile_1)
+        expected_hmis_profile = {
+            "id": str(self.hmis_profile_1["id"]),
+            "agency": HmisAgencyEnum.LAHSA.name,
+            "hmisId": "hmis id 1",
+        }
+
+        self.assertEqual(response["data"]["hmisProfile"], expected_hmis_profile)
 
     def test_hmis_profiles_query(self) -> None:
         query = f"""
