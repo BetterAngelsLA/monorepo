@@ -239,6 +239,7 @@ class CityChoices(models.TextChoices):
     WESTLAKE_VILLAGE = "westlake_village", _("Westlake Village")
     WEST_LOS_ANGELES = "west_los_angeles", _("West Los Angeles")
     WHITTIER = "whittier", _("Whittier")
+    WILMINGTON = "wilmington", _("Wilmington")
 
 
 @strawberry.enum

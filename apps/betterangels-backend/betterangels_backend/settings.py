@@ -71,7 +71,7 @@ env = environ.Env(
     SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
     USE_IAM_AUTH=(bool, False),
     SESAME_TOKEN_NAME=(str, "token"),
-    SESAME_MAX_AGE=(int, 60 * 60),  # set to 1 hr
+    SESAME_MAX_AGE=(int, 3600),  # set to 1 hr
     SESAME_ONE_TIME=(bool, True),
     SESAME_SALT=(str, "sesame"),
 )
@@ -95,7 +95,7 @@ INSTALLED_APPS = [
     "admin_async_upload",
     "admin_interface",
     "colorfield",
-    "django.contrib.admin",
+    "betterangels_backend.apps.MagicLinkAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.gis",
@@ -393,7 +393,6 @@ POST_OFFICE = {
         "default": env("POST_OFFICE_EMAIL_BACKEND"),
     },
     "CELERY_ENABLED": True,
-    "DEFAULT_PRIORITY": "now",  # Required to send emails immediately through Celery
 }
 EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"

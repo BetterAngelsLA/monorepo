@@ -60,8 +60,7 @@ class Mutation:
     @strawberry.mutation
     def generate_magic_link(self, info: Info, data: MagicLinkInput) -> MagicLinkResponse:
         request = get_request(info)
-        base_url = request.build_absolute_uri()
-        send_magic_link(data.email, base_url)
+        send_magic_link(data.email, request)
         return MagicLinkResponse(message="Email link sent.")
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])

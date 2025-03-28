@@ -16,6 +16,8 @@ export default function Picker(props: IPickerProps) {
     selectedDisplayValue,
     selectedValue,
     placeholder,
+    allowSelectNone,
+    selectNoneLabel,
     items,
     label,
     mb,
@@ -34,6 +36,24 @@ export default function Picker(props: IPickerProps) {
     setLocalValue(selectedValue || null);
   }, [selectedValue, setLocalValue]);
 
+  function onPressDone() {
+    setIsModalVisible(false);
+
+    if (localValue) {
+      onChange(localValue);
+
+      return;
+    }
+
+    if (allowSelectNone) {
+      onChange(null);
+
+      return;
+    }
+
+    onChange(items[0].value);
+  }
+
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
 
@@ -42,12 +62,7 @@ export default function Picker(props: IPickerProps) {
       <View>
         {label && <TextRegular ml="xs">{label}</TextRegular>}
         <Pressable
-          onPress={() => {
-            setIsModalVisible(true);
-            if (!localValue && items[0].value) {
-              setLocalValue(items[0].value);
-            }
-          }}
+          onPress={() => setIsModalVisible(true)}
           style={[
             styles.selectButton,
             {
@@ -98,12 +113,7 @@ export default function Picker(props: IPickerProps) {
             <Pressable
               accessibilityHint={`selects ${localValue}`}
               accessibilityRole="button"
-              onPress={() => {
-                if (localValue) {
-                  onChange(localValue);
-                }
-                setIsModalVisible(false);
-              }}
+              onPress={onPressDone}
             >
               <TextBold color={Colors.IOS_BLUE} size="ms">
                 Done
@@ -115,6 +125,14 @@ export default function Picker(props: IPickerProps) {
             selectedValue={localValue}
             onValueChange={(itemValue) => setLocalValue(itemValue)}
           >
+            {!!allowSelectNone && (
+              <RNPicker.Item
+                label={selectNoneLabel || placeholder}
+                value={null}
+                enabled={true}
+              />
+            )}
+
             {items.map((item) => (
               <RNPicker.Item
                 key={item.value}
