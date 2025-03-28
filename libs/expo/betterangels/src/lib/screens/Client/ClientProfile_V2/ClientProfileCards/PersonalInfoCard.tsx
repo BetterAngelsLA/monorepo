@@ -1,4 +1,4 @@
-import { parseDate } from '@monorepo/expo/shared/ui-components';
+import { formatDateStatic } from '@monorepo/expo/shared/ui-components';
 import {
   enumDisplayLanguage,
   enumDisplayLivingSituation,
@@ -26,7 +26,7 @@ export function PersonalInfoCard(props: TProps) {
     livingSituation,
   } = clientProfile || {};
 
-  const formattedDob = parseDate({
+  const formattedDob = formatDateStatic({
     date: dateOfBirth,
     inputFormat: 'yyyy-MM-dd',
   });

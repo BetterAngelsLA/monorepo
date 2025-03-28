@@ -6,7 +6,3 @@ export const Spacings = {
   lg: 32,
   xl: 40,
 } as const;
-
-type SpacingsType = typeof Spacings;
-
-export type TSpacing = keyof SpacingsType;

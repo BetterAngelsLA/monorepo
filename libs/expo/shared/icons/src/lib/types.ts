@@ -1,5 +1,7 @@
+import { ICON_SIZE } from './constant';
+
 export interface IIconProps {
-  size?: TIconSizes | number;
+  size?: TIconSize | number;
   color?: string;
   rotate?: string;
   mb?: TSpacing;
@@ -12,7 +14,7 @@ export interface IIconProps {
 
 type TSpacing = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
-export type TIconSizes = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+export type TIconSize = keyof typeof ICON_SIZE;
 
 // TODO: AK type color strings here once they are available
 export type TIconColors = 'white';

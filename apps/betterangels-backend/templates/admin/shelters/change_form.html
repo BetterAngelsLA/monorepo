@@ -5,6 +5,17 @@
     .places-widget > input:first-child {
         width: 100% !important;
     }
+    label.required::after{
+        content: '\00a0*' !important;
+        color: red;
+        position: absolute;
+    }
     </style>
     {{ block.super }}
+{% endblock %}
+{% block content_title %}
+    {{ block.super }}
+    <p style="font-size: 14px; margin-top: 10px;">
+        <span style="color: red;">*</span> indicates a required field
+    </p>
 {% endblock %}

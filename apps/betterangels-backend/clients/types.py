@@ -15,6 +15,7 @@ from clients.enums import (
 )
 from common.graphql.types import (
     AttachmentInterface,
+    NonBlankString,
     PhoneNumberInput,
     PhoneNumberScalar,
     PhoneNumberType,
@@ -167,15 +168,20 @@ class ClientProfileFilter:
 
 
 @strawberry_django.type(HmisProfile)
-class HmisProfileType:
-    id: auto
-    hmis_id: auto
+class HmisProfileBaseType:
+    hmis_id: NonBlankString | None
     agency: auto
 
 
+@strawberry_django.type(HmisProfile)
+class HmisProfileType(HmisProfileBaseType):
+    id: auto
+
+
 @strawberry_django.input(HmisProfile)
-class HmisProfileInput(HmisProfileType):
-    "See parent"
+class HmisProfileInput(HmisProfileBaseType):
+    id: ID | None
+    client_profile: ID | None
 
 
 @strawberry_django.type(SocialMediaProfile)
