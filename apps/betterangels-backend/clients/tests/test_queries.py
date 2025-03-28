@@ -20,6 +20,7 @@ from clients.enums import (
 from clients.models import ClientProfile
 from clients.tests.utils import (
     ClientContactBaseTestCase,
+    ClientHouseholdMemberBaseTestCase,
     ClientProfileGraphQLBaseTestCase,
     HmisProfileBaseTestCase,
 )
@@ -452,6 +453,53 @@ class ClientContactQueryTestCase(ClientContactBaseTestCase):
         self.assertEqual(response["data"]["clientContacts"]["totalCount"], 2)
         self.assertEqual(response["data"]["clientContacts"]["pageInfo"], {"limit": 10, "offset": 0})
         self.assertCountEqual(results, [self.client_contact_1, self.client_contact_2])
+
+
+class ClientHouseholdMemberQueryTestCase(ClientHouseholdMemberBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_client_household_member_query(self) -> None:
+        query = f"""
+            query ($id: ID!) {{
+                clientHouseholdMember(pk: $id) {{
+                    {self.client_household_member_fields}
+                }}
+            }}
+        """
+        variables = {"id": self.client_household_member_1["id"]}
+
+        expected_query_count = 3
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        self.assertEqual(response["data"]["clientHouseholdMember"], self.client_household_member_1)
+
+    def test_client_household_members_query(self) -> None:
+        query = f"""
+            query ($offset: Int, $limit: Int){{
+                clientHouseholdMembers(pagination: {{offset: $offset, limit: $limit}}) {{
+                    totalCount
+                    pageInfo {{limit offset}}
+                    results {{
+                        {self.client_household_member_fields}
+                    }}
+                }}
+            }}
+        """
+
+        expected_query_count = 4
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
+
+        results = response["data"]["clientHouseholdMembers"]["results"]
+
+        self.assertEqual(response["data"]["clientHouseholdMembers"]["totalCount"], 2)
+        self.assertEqual(response["data"]["clientHouseholdMembers"]["pageInfo"], {"limit": 10, "offset": 0})
+        self.assertCountEqual(results, [self.client_household_member_1, self.client_household_member_2])
 
 
 class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
