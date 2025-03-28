@@ -327,15 +327,19 @@ type ClientProfileType {
   age: Int
   californiaId: String
   dateOfBirth: Date
+  email: String
   eyeColor: EyeColorEnum
+  firstName: String
   gender: GenderEnum
   genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
   importantNotes: String
+  lastName: String
   livingSituation: LivingSituationEnum
-  maritalStatus: MaritalStatusEnum
   mailingAddress: String
+  maritalStatus: MaritalStatusEnum
+  middleName: String
   nickname: String
   phoneNumber: PhoneNumber
   physicalDescription: String
@@ -404,15 +408,19 @@ input CreateClientProfileInput {
   age: Int
   californiaId: String
   dateOfBirth: Date
+  email: String
   eyeColor: EyeColorEnum
+  firstName: String
   gender: GenderEnum
   genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
   importantNotes: String
+  lastName: String
   livingSituation: LivingSituationEnum
-  maritalStatus: MaritalStatusEnum
   mailingAddress: String
+  maritalStatus: MaritalStatusEnum
+  middleName: String
   nickname: String
   phoneNumber: PhoneNumber
   physicalDescription: String
@@ -1565,15 +1573,19 @@ input UpdateClientProfileInput {
   age: Int
   californiaId: String
   dateOfBirth: Date
+  email: String
   eyeColor: EyeColorEnum
+  firstName: String
   gender: GenderEnum
   genderOther: String
   hairColor: HairColorEnum
   heightInInches: Float
   importantNotes: String
+  lastName: String
   livingSituation: LivingSituationEnum
-  maritalStatus: MaritalStatusEnum
   mailingAddress: String
+  maritalStatus: MaritalStatusEnum
+  middleName: String
   nickname: String
   phoneNumber: PhoneNumber
   physicalDescription: String
