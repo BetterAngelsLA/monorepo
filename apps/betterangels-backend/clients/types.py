@@ -101,10 +101,10 @@ class ClientProfileFilter:
 
         searchable_fields = [
             "california_id",
+            "first_name",
+            "last_name",
+            "middle_name",
             "nickname",
-            "user__first_name",
-            "user__last_name",
-            "user__middle_name",
         ]
 
         # Build queries for direct fields
