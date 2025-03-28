@@ -19,6 +19,13 @@ class ClientProfileModelTestCase(TestCase):
         client_profile.save()
         self.assertEqual(client_profile.display_pronouns, "she/her/their")
 
+    def test_full_name(self) -> None:
+        client_profile_1 = baker.make(ClientProfile, first_name="Dale", middle_name=None, last_name="Cooper")
+        self.assertEqual(client_profile_1.full_name, "Dale Cooper")
+
+        client_profile_2 = baker.make(ClientProfile, first_name="Dale", middle_name="Bartholomew", last_name="Cooper")
+        self.assertEqual(client_profile_2.full_name, "Dale Bartholomew Cooper")
+
     def test_save(self) -> None:
         client_profile = baker.make(ClientProfile, california_id="x1357642")
         self.assertEqual(client_profile.california_id, "X1357642")
