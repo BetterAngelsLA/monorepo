@@ -209,15 +209,19 @@ class ClientProfileBaseType:
     age: auto
     california_id: auto
     date_of_birth: auto
+    email: auto
     eye_color: auto
+    first_name: auto
     gender: auto
     gender_other: auto
     hair_color: auto
     height_in_inches: auto
     important_notes: auto
+    last_name: auto
     living_situation: Optional[LivingSituationEnum]
-    marital_status: auto
     mailing_address: auto
+    marital_status: auto
+    middle_name: auto
     nickname: auto
     phone_number: Optional[PhoneNumberScalar]  # type: ignore
     physical_description: auto
