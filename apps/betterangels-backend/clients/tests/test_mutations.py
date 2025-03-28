@@ -743,17 +743,6 @@ class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
         self.assertNotIn("messages", response["data"]["deleteClientHouseholdMember"])
         self.assertFalse(ClientHouseholdMember.objects.filter(id=self.client_household_member_1["id"]).exists())
 
-    # @parametrize(
-    #     ("",),
-    #     [
-    #         ("",),
-    #     ],
-    # )
-    # def test_update_client_household_member_mutation_validation(
-    #     self,
-    # ) -> None:
-    #     pass
-
 
 class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
     def setUp(self) -> None:

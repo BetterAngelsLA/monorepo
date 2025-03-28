@@ -2,6 +2,7 @@ from typing import Optional, cast
 
 from clients.enums import (
     ClientDocumentNamespaceEnum,
+    GenderEnum,
     LivingSituationEnum,
     RelationshipTypeEnum,
 )
@@ -209,27 +210,6 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
     )
 
 
-@admin.register(HmisProfile)
-class HmisProfileAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "client_profile__id",
-        "client_name",
-        "hmis_id",
-        "agency",
-    )
-    search_fields = (
-        "client_profile__user__first_name",
-        "client_profile__user__last_name",
-        "client_profile__user__email",
-        "client_profile__nickname",
-    )
-    list_filter = ("agency",)
-
-    def client_name(self, obj: HmisProfile) -> str:
-        return obj.client_profile.user.full_name
-
-
 @admin.register(ClientContact)
 class ClientContactAdmin(admin.ModelAdmin):
     list_display = (
@@ -262,6 +242,72 @@ class ClientContactAdmin(admin.ModelAdmin):
             if obj.relationship_to_client != RelationshipTypeEnum.OTHER
             else obj.relationship_to_client_other
         )
+
+
+@admin.register(ClientHouseholdMember)
+class ClientHouseholdMemberAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "relationship",
+        "name",
+        "date_of_birth",
+        "gender_display",
+        "client_name",
+        "client_profile__id",
+    )
+    search_fields = (
+        "name",
+        "date_of_birth",
+        "gender",
+        "client_profile__user__first_name",
+        "client_profile__user__last_name",
+        "client_profile__user__email",
+        "client_profile__nickname",
+    )
+    list_filter = (
+        "gender",
+        "relationship_to_client",
+    )
+
+    @admin.display(description="Client")
+    def client_name(self, obj: ClientHouseholdMember) -> str:
+        return obj.client_profile.user.full_name
+
+    def date_of_birth(self, obj: ClientHouseholdMember) -> Optional[str]:
+        return obj.date_of_birth.isoformat() if obj.date_of_birth else None
+
+    def relationship(self, obj: ClientHouseholdMember) -> str | None:
+        return (
+            obj.get_relationship_to_client_display()
+            if obj.relationship_to_client != RelationshipTypeEnum.OTHER
+            else obj.relationship_to_client_other
+        )
+
+    @admin.display(description="Gender")
+    def gender_display(self, obj: ClientHouseholdMember) -> str | None:
+        return obj.get_gender_display() if obj.gender != GenderEnum.OTHER else obj.gender_other
+
+
+@admin.register(HmisProfile)
+class HmisProfileAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "client_profile__id",
+        "client_name",
+        "hmis_id",
+        "agency",
+    )
+    search_fields = (
+        "client_profile__user__first_name",
+        "client_profile__user__last_name",
+        "client_profile__user__email",
+        "client_profile__nickname",
+    )
+    list_filter = ("agency",)
+
+    @admin.display(description="Client")
+    def client_name(self, obj: HmisProfile) -> str:
+        return obj.client_profile.user.full_name
 
 
 class ClientDocumentResource(resources.ModelResource):
