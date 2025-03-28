@@ -1514,14 +1514,14 @@ input SocialMediaProfileInput {
   id: ID
   clientProfile: ID
   platform: SocialMediaEnum
-  platformUserId: String
+  platformUserId: NonBlankString
 }
 
 type SocialMediaProfileType {
   id: ID
   clientProfile: DjangoModelType!
   platform: SocialMediaEnum!
-  platformUserId: String!
+  platformUserId: NonBlankString
 }
 
 type SocialMediaProfileTypeOffsetPaginated {

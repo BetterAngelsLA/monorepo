@@ -189,7 +189,7 @@ class SocialMediaProfileBaseType:
     id: Optional[ID]
     client_profile: auto
     platform: auto
-    platform_user_id: auto
+    platform_user_id: NonBlankString | None
 
 
 @strawberry_django.type(SocialMediaProfile)
