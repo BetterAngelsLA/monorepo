@@ -659,3 +659,65 @@ class HmisProfileBaseTestCase(ClientsBaseTestCase):
             }}
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+
+class SocialMediaProfileBaseTestCase(ClientsBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.social_media_profile_fields = """
+            id
+            platform
+            platformUserId
+        """
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        # TODO: move client profile setup back to ClientProfileGraphQLBaseTestCase
+        # when client profile redesign is completed and tests are refactored
+        self.client_profile = self._create_client_profile_fixture({"user": {"firstName": "Test Client"}})["data"][
+            "createClientProfile"
+        ]
+        self.client_profile_id = self.client_profile["id"]
+
+        self._setup_social_media_profiles()
+
+    def _setup_social_media_profiles(self) -> None:
+        variables = {
+            "platform": SocialMediaEnum.FACEBOOK.name,
+            "clientProfile": self.client_profile_id,
+        }
+        self.social_media_profile_1 = self._create_social_media_profile_fixture(
+            {**variables, "platformUserId": "social media id 1"}
+        )["data"]["createSocialMediaProfile"]
+        self.social_media_profile_2 = self._create_social_media_profile_fixture(
+            {**variables, "platformUserId": "social media id 2"}
+        )["data"]["createSocialMediaProfile"]
+
+    def _create_social_media_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_social_media_profile_fixture("create", variables)
+
+    def _update_social_media_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_social_media_profile_fixture("update", variables)
+
+    def _create_or_update_social_media_profile_fixture(
+        self, operation: str, variables: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+        mutation: str = f"""
+            mutation ($data: SocialMediaProfileInput!) {{ # noqa: B950
+                {operation}SocialMediaProfile(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on SocialMediaProfileType {{
+                        {self.social_media_profile_fields}
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})
