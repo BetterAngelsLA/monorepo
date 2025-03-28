@@ -243,7 +243,6 @@ class ClientProfilePhotoInput:
 class ClientContactBaseType:
     name: auto
     email: auto
-    phone_number: Optional[PhoneNumberScalar]  # type: ignore
     mailing_address: auto
     relationship_to_client: auto
     relationship_to_client_other: auto
@@ -253,11 +252,14 @@ class ClientContactBaseType:
 class ClientContactType(ClientContactBaseType):
     id: ID
     client_profile: auto
+    phone_number: Optional[PhoneNumberScalar]  # type: ignore
 
 
 @strawberry_django.input(ClientContact, partial=True)
 class ClientContactInput(ClientContactBaseType):
-    id: auto
+    id: ID | None
+    client_profile: ID | None
+    phone_number: PhoneNumberScalar | None  # type: ignore
 
 
 @strawberry_django.type(ClientHouseholdMember)
@@ -280,6 +282,7 @@ class ClientHouseholdMemberType(ClientHouseholdMemberBaseType):
 @strawberry_django.input(ClientHouseholdMember, partial=True)
 class ClientHouseholdMemberInput(ClientHouseholdMemberBaseType):
     id: auto
+    client_profile: ID | None
 
 
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
