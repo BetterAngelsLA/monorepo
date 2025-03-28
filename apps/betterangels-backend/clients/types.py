@@ -199,6 +199,7 @@ class SocialMediaProfileType(SocialMediaProfileBaseType):
 
 @strawberry_django.input(SocialMediaProfile, partial=True)
 class SocialMediaProfileInput(SocialMediaProfileBaseType):
+    client_profile: ID | None
     "See parent"
 
 
