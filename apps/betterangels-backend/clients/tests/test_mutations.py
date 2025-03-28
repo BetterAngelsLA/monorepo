@@ -19,9 +19,15 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
-from clients.models import ClientContact, ClientProfile, HmisProfile
+from clients.models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    HmisProfile,
+)
 from clients.tests.utils import (
     ClientContactBaseTestCase,
+    ClientHouseholdMemberBaseTestCase,
     ClientProfileGraphQLBaseTestCase,
     HmisProfileBaseTestCase,
 )
@@ -673,6 +679,80 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
                 },
             )
             self.assertEqual(original_phone_number, updated_phone_number)
+
+
+class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_create_client_household_member_mutation(self) -> None:
+        variables = {
+            "clientProfile": self.client_profile_id,
+            "name": "Sam Smith",
+            "dateOfBirth": "2003-03-03",
+            "gender": GenderEnum.FEMALE.name,
+            "genderOther": None,
+            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClientOther": None,
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            client_household_member = self._create_client_household_member_fixture(variables)["data"][
+                "createClientHouseholdMember"
+            ]
+
+        expected_client_household_member = {"id": ANY, "displayGender": "Female", **variables}
+        expected_client_household_member.pop("clientProfile")
+
+        self.assertEqual(client_household_member, expected_client_household_member)
+
+        client_client_household_members = ClientProfile.objects.filter(id=self.client_profile_id).values_list(
+            "household_members", flat=True
+        )
+        self.assertIn(int(client_household_member["id"]), client_client_household_members)
+
+    def test_update_client_household_member_mutation(self) -> None:
+        variables = {
+            "id": self.client_household_member_1["id"],
+            "name": "Joey Doe",
+            "dateOfBirth": "2004-04-04",
+            "gender": GenderEnum.OTHER.name,
+            "genderOther": "gender queer",
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "fren",
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            client_household_member = self._update_client_household_member_fixture(variables)["data"][
+                "updateClientHouseholdMember"
+            ]
+
+        expected_client_household_member = {**variables, "displayGender": "gender queer"}
+
+        self.assertEqual(expected_client_household_member, client_household_member)
+
+    def test_delete_client_household_member_mutation(self) -> None:
+        variables = {"object": "ClientHouseholdMember", "object_id": self.client_household_member_1["id"]}
+
+        expected_query_count = 9
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._delete_fixture(**variables)
+
+        self.assertNotIn("messages", response["data"]["deleteClientHouseholdMember"])
+        self.assertFalse(ClientHouseholdMember.objects.filter(id=self.client_household_member_1["id"]).exists())
+
+    # @parametrize(
+    #     ("",),
+    #     [
+    #         ("",),
+    #     ],
+    # )
+    # def test_update_client_household_member_mutation_validation(
+    #     self,
+    # ) -> None:
+    #     pass
 
 
 class HmisProfileMutationTestCase(HmisProfileBaseTestCase):

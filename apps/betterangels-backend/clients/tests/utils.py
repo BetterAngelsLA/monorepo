@@ -564,7 +564,7 @@ class ClientHouseholdMemberBaseTestCase(ClientsBaseTestCase):
             {
                 "clientProfile": self.client_profile_id,
                 "name": "Joe Doe",
-                "dateOfBirth": "2002-01-01",
+                "dateOfBirth": "2002-02-02",
                 "gender": GenderEnum.OTHER.name,
                 "genderOther": "genderqueer",
                 "relationshipToClient": RelationshipTypeEnum.OTHER.name,
