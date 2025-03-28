@@ -8,16 +8,20 @@ from clients.enums import (
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
+    HmisAgencyEnum,
     LanguageEnum,
     LivingSituationEnum,
     MaritalStatusEnum,
     PreferredCommunicationEnum,
     PronounEnum,
     RaceEnum,
+    RelationshipTypeEnum,
     VeteranStatusEnum,
 )
 from clients.models import ClientProfile
 from clients.tests.utils import (
+    ClientContactBaseTestCase,
+    ClientHouseholdMemberBaseTestCase,
     ClientProfileGraphQLBaseTestCase,
     HmisProfileBaseTestCase,
 )
@@ -396,6 +400,119 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
 
 
+class ClientContactQueryTestCase(ClientContactBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_client_contact_query(self) -> None:
+        query = f"""
+            query ($id: ID!) {{
+                clientContact(pk: $id) {{
+                    {self.client_contact_fields}
+                }}
+            }}
+        """
+        variables = {"id": self.client_contact_1["id"]}
+
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        expected_client_contact = {
+            "id": str(self.client_contact_1["id"]),
+            "email": "client_contact_1@example.com",
+            "mailingAddress": "111 Main Street",
+            "name": "Jane Smith",
+            "phoneNumber": "2125551212",
+            "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
+            "relationshipToClientOther": None,
+        }
+
+        self.assertEqual(response["data"]["clientContact"], expected_client_contact)
+
+    def test_client_contacts_query(self) -> None:
+        query = f"""
+            query ($offset: Int, $limit: Int){{
+                clientContacts(pagination: {{offset: $offset, limit: $limit}}) {{
+                    totalCount
+                    pageInfo {{limit offset}}
+                    results {{
+                        {self.client_contact_fields}
+                    }}
+                }}
+            }}
+        """
+
+        expected_query_count = 4
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
+
+        results = response["data"]["clientContacts"]["results"]
+
+        self.assertEqual(response["data"]["clientContacts"]["totalCount"], 2)
+        self.assertEqual(response["data"]["clientContacts"]["pageInfo"], {"limit": 10, "offset": 0})
+        self.assertCountEqual(results, [self.client_contact_1, self.client_contact_2])
+
+
+class ClientHouseholdMemberQueryTestCase(ClientHouseholdMemberBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_client_household_member_query(self) -> None:
+        query = f"""
+            query ($id: ID!) {{
+                clientHouseholdMember(pk: $id) {{
+                    {self.client_household_member_fields}
+                }}
+            }}
+        """
+        variables = {"id": self.client_household_member_1["id"]}
+
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        expected_client_household_member = {
+            "id": str(self.client_household_member_1["id"]),
+            "name": "Jane Smith",
+            "dateOfBirth": "2001-01-01",
+            "gender": GenderEnum.FEMALE.name,
+            "genderOther": None,
+            "displayGender": "Female",
+            "relationshipToClient": RelationshipTypeEnum.AUNT.name,
+            "relationshipToClientOther": None,
+        }
+
+        self.assertEqual(response["data"]["clientHouseholdMember"], expected_client_household_member)
+
+    def test_client_household_members_query(self) -> None:
+        query = f"""
+            query ($offset: Int, $limit: Int){{
+                clientHouseholdMembers(pagination: {{offset: $offset, limit: $limit}}) {{
+                    totalCount
+                    pageInfo {{limit offset}}
+                    results {{
+                        {self.client_household_member_fields}
+                    }}
+                }}
+            }}
+        """
+
+        expected_query_count = 4
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
+
+        results = response["data"]["clientHouseholdMembers"]["results"]
+
+        self.assertEqual(response["data"]["clientHouseholdMembers"]["totalCount"], 2)
+        self.assertEqual(response["data"]["clientHouseholdMembers"]["pageInfo"], {"limit": 10, "offset": 0})
+        self.assertCountEqual(results, [self.client_household_member_1, self.client_household_member_2])
+
+
 class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -412,11 +529,16 @@ class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
         variables = {"id": self.hmis_profile_1["id"]}
 
         expected_query_count = 3
-
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
-        self.assertEqual(response["data"]["hmisProfile"], self.hmis_profile_1)
+        expected_hmis_profile = {
+            "id": str(self.hmis_profile_1["id"]),
+            "agency": HmisAgencyEnum.LAHSA.name,
+            "hmisId": "hmis id 1",
+        }
+
+        self.assertEqual(response["data"]["hmisProfile"], expected_hmis_profile)
 
     def test_hmis_profiles_query(self) -> None:
         query = f"""

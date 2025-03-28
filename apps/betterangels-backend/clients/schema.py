@@ -14,6 +14,8 @@ from clients.models import (
     HmisProfile,
 )
 from clients.permissions import (
+    ClientContactPermissions,
+    ClientHouseholdMemberPermissions,
     ClientProfileImportRecordPermissions,
     ClientProfilePermissions,
     HmisProfilePermissions,
@@ -41,7 +43,11 @@ from strawberry_django.utils.query import filter_for_user
 
 from .enums import RelationshipTypeEnum
 from .types import (
+    ClientContactInput,
+    ClientContactType,
     ClientDocumentType,
+    ClientHouseholdMemberInput,
+    ClientHouseholdMemberType,
     ClientProfileDataImportType,
     ClientProfileImportRecordsBulkInput,
     ClientProfileImportRecordType,
@@ -337,6 +343,22 @@ class Query:
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
+    client_contact: ClientContactType = strawberry_django.field(
+        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+    )
+
+    client_contacts: OffsetPaginated[ClientContactType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+    )
+
+    client_household_member: ClientHouseholdMemberType = strawberry_django.field(
+        extensions=[HasRetvalPerm(ClientHouseholdMemberPermissions.VIEW)],
+    )
+
+    client_household_members: OffsetPaginated[ClientHouseholdMemberType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(ClientHouseholdMemberPermissions.VIEW)],
+    )
+
     hmis_profile: HmisProfileType = strawberry_django.field(
         extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
     )
@@ -478,6 +500,36 @@ class Mutation:
                 raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")
 
             return DeletedObjectType(id=client_profile_id)
+
+    create_client_contact: ClientContactType = mutations.create(
+        ClientContactInput,
+        extensions=[HasPerm(perms=ClientContactPermissions.ADD)],
+    )
+
+    update_client_contact: ClientContactType = mutations.update(
+        ClientContactInput,
+        extensions=[HasRetvalPerm(perms=ClientContactPermissions.CHANGE)],
+    )
+
+    delete_client_contact: ClientContactType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[HasRetvalPerm(perms=ClientContactPermissions.DELETE)],
+    )
+
+    create_client_household_member: ClientHouseholdMemberType = mutations.create(
+        ClientHouseholdMemberInput,
+        extensions=[HasPerm(perms=ClientHouseholdMemberPermissions.ADD)],
+    )
+
+    update_client_household_member: ClientHouseholdMemberType = mutations.update(
+        ClientHouseholdMemberInput,
+        extensions=[HasRetvalPerm(perms=ClientHouseholdMemberPermissions.CHANGE)],
+    )
+
+    delete_client_household_member: ClientHouseholdMemberType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[HasRetvalPerm(perms=ClientHouseholdMemberPermissions.DELETE)],
+    )
 
     create_hmis_profile: HmisProfileType = mutations.create(
         HmisProfileInput,
