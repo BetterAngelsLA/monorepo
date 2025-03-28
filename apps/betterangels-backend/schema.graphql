@@ -191,23 +191,23 @@ type CityType {
 input ClientContactInput {
   name: String
   email: String
-  phoneNumber: PhoneNumber
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID
   clientProfile: ID
+  phoneNumber: PhoneNumber
 }
 
 type ClientContactType {
   name: String
   email: String
-  phoneNumber: PhoneNumber
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID!
   clientProfile: DjangoModelType!
+  phoneNumber: PhoneNumber
 }
 
 type ClientContactTypeOffsetPaginated {

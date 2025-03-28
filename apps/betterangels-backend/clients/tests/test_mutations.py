@@ -633,12 +633,46 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
         self.assertNotIn("messages", response["data"]["deleteClientContact"])
         self.assertFalse(ClientContact.objects.filter(id=self.client_contact_1["id"]).exists())
 
-    # @parametrize(
-    #     (),
-    #     [],
-    # )
-    # def test_update_client_contact_mutation_validation(self) -> None:
-    #     pass
+    @parametrize(
+        ("phone_number", "should_succeed", "expected_phone_number"),
+        [
+            (None, True, None),
+            (" ", True, None),
+            ("a", False, None),
+            ("212555121", False, None),
+            (" 2125552121 ", True, "2125552121"),
+        ],
+    )
+    def test_update_client_contact_mutation_validation(
+        self,
+        phone_number: str | None,
+        should_succeed: bool,
+        expected_phone_number: str | None,
+    ) -> None:
+        original_phone_number = ClientContact.objects.get(id=self.client_contact_1["id"]).phone_number
+
+        variables = {
+            "id": self.client_contact_1["id"],
+            "phoneNumber": phone_number,
+        }
+
+        response = self._update_client_contact_fixture(variables)
+
+        updated_phone_number = ClientContact.objects.get(id=self.client_contact_1["id"]).phone_number
+
+        if should_succeed:
+            self.assertEqual(response["data"]["updateClientContact"]["phoneNumber"], expected_phone_number)
+        else:
+            self.assertEqual(len(response["data"]["updateClientContact"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["updateClientContact"]["messages"][0],
+                {
+                    "kind": "VALIDATION",
+                    "field": "phoneNumber",
+                    "message": "The phone number entered is not valid.",
+                },
+            )
+            self.assertEqual(original_phone_number, updated_phone_number)
 
 
 class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
