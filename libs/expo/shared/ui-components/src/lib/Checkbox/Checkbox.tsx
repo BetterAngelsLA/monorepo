@@ -3,19 +3,14 @@ import {
   FontSizes,
   Radiuses,
   Spacings,
+  TMarginProps,
+  getMarginStyles,
 } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import {
-  DimensionValue,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { DimensionValue, Pressable, StyleSheet } from 'react-native';
+import { CheckboxCheck } from './CheckboxCheck';
 
-type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-
-interface ICheckboxProps {
+interface ICheckboxProps extends TMarginProps {
   label?: ReactNode;
   onCheck: () => void;
   accessibilityLabel?: string;
@@ -24,22 +19,11 @@ interface ICheckboxProps {
   hasBorder?: boolean;
   labelFirst?: boolean;
   justifyContent?: 'flex-start' | 'space-between';
-  mb?: TSpacing;
-  mt?: TSpacing;
-  my?: TSpacing;
-  mx?: TSpacing;
-  ml?: TSpacing;
-  mr?: TSpacing;
   isChecked: boolean;
   isConsent?: boolean;
   height?: DimensionValue | undefined;
   testId?: string;
 }
-
-const SIZES = {
-  sm: Spacings.sm,
-  md: Spacings.md,
-} as const;
 
 export function Checkbox(props: ICheckboxProps) {
   const {
@@ -47,17 +31,11 @@ export function Checkbox(props: ICheckboxProps) {
     onCheck,
     accessibilityHint,
     accessibilityLabel,
-    size = 'md',
+    size,
     hasBorder,
     labelFirst = true,
     justifyContent = 'space-between',
     isChecked,
-    mb,
-    mt,
-    mr,
-    ml,
-    my,
-    mx,
     height,
     isConsent,
     testId,
@@ -79,58 +57,15 @@ export function Checkbox(props: ICheckboxProps) {
           paddingHorizontal: hasBorder ? Spacings.sm : 0,
           paddingVertical: hasBorder ? Spacings.xs : 0,
           justifyContent,
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
+          ...getMarginStyles(props),
           gap: Spacings.sm,
         },
       ]}
       onPress={onCheck}
     >
-      {labelFirst ? (
-        <>
-          {label}
-          <View
-            style={[
-              styles.checkbox,
-              isChecked && styles.checked,
-              {
-                height: SIZES[size],
-                width: SIZES[size],
-              },
-            ]}
-          >
-            {isChecked && (
-              <Text style={styles.checkboxLabel} testID={`checkbox-${testId}`}>
-                ✓
-              </Text>
-            )}
-          </View>
-        </>
-      ) : (
-        <>
-          <View
-            style={[
-              styles.checkbox,
-              isChecked && styles.checked,
-              {
-                height: SIZES[size],
-                width: SIZES[size],
-              },
-            ]}
-          >
-            {isChecked && (
-              <Text style={styles.checkboxLabel} testID={`checkbox-${testId}`}>
-                ✓
-              </Text>
-            )}
-          </View>
-          {label}
-        </>
-      )}
+      {!!labelFirst && label}
+      <CheckboxCheck isChecked={isChecked} size={size} testId={testId} />
+      {!labelFirst && label}
     </Pressable>
   );
 }
@@ -141,22 +76,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: Radiuses.xs,
     borderWidth: 1,
-  },
-  checkbox: {
-    width: Spacings.md,
-    height: Spacings.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: Radiuses.xxxs,
-    borderColor: Colors.NEUTRAL_LIGHT,
-  },
-  checked: {
-    backgroundColor: Colors.PRIMARY_EXTRA_DARK,
-  },
-  checkboxLabel: {
-    color: Colors.WHITE,
-    position: 'absolute',
   },
   label: {
     fontSize: FontSizes.md.fontSize,
