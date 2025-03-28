@@ -5,9 +5,15 @@ from clients.enums import (
     HmisAgencyEnum,
     LanguageEnum,
 )
-from clients.models import ClientContact, ClientProfile, HmisProfile
+from clients.models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    HmisProfile,
+)
 from clients.tests.utils import (
     ClientContactBaseTestCase,
+    ClientHouseholdMemberBaseTestCase,
     ClientProfileGraphQLBaseTestCase,
     HmisProfileBaseTestCase,
 )
@@ -482,6 +488,163 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             self.assertEqual(len(response["data"]["deleteClientContact"]["messages"]), 1)
             self.assertEqual(
                 response["data"]["deleteClientContact"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+
+class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM user should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_client_household_member_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        query = """
+            query ($id: ID!) {
+                clientHouseholdMember(pk: $id) {
+                    id
+                }
+            }
+        """
+        variables = {"id": self.client_household_member_1["id"]}
+        response = self.execute_graphql(query, variables)
+
+        if should_succeed:
+            self.assertEqual(response["data"]["clientHouseholdMember"]["id"], self.client_household_member_1["id"])
+        else:
+            self.assertIsNotNone(response["errors"])
+
+    @parametrize(
+        "user_label, expected_profile_count",
+        [
+            ("org_1_case_manager_1", 2),
+            ("org_1_case_manager_2", 2),
+            ("org_2_case_manager_1", 2),
+            ("client_user_1", 0),  # Non CM should not succeed
+            # NOTE: Anon user raising an error may be caused by a strawberry bug.
+            # This test may fail and need updating when the bug is fixed.
+            (None, None),  # Anonymous user should return error
+        ],
+    )
+    def test_view_client_household_members_permission(
+        self, user_label: str, expected_profile_count: int | None
+    ) -> None:
+        self._handle_user_login(user_label)
+        query = """
+            query {
+                clientHouseholdMembers {
+                    totalCount
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        if expected_profile_count is not None:
+            self.assertEqual(response["data"]["clientHouseholdMembers"]["totalCount"], expected_profile_count)
+        else:
+            self.assertTrue("errors" in response)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Case manager should succeed
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_create_client_household_member_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        client_household_member_count = ClientHouseholdMember.objects.count()
+        variables = {
+            "name": "Buddy Guy",
+            "clientProfile": self.client_profile["id"],
+        }
+        response = self._create_client_household_member_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["createClientHouseholdMember"]["id"])
+            self.assertEqual(client_household_member_count + 1, ClientHouseholdMember.objects.count())
+        else:
+            self.assertEqual(len(response["data"]["createClientHouseholdMember"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["createClientHouseholdMember"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "createClientHouseholdMember",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+            self.assertEqual(client_household_member_count, ClientHouseholdMember.objects.count())
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_update_client_household_member_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {
+            "id": self.client_household_member_1["id"],
+            "name": "John Joe",
+        }
+        response = self._update_client_household_member_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["updateClientHouseholdMember"]["id"])
+        else:
+            self.assertEqual(len(response["data"]["updateClientHouseholdMember"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["updateClientHouseholdMember"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_delete_client_household_member_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {"object": "ClientHouseholdMember", "object_id": self.client_household_member_1["id"]}
+        response = self._delete_fixture(**variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["deleteClientHouseholdMember"]["id"])
+        else:
+            self.assertEqual(len(response["data"]["deleteClientHouseholdMember"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["deleteClientHouseholdMember"]["messages"][0],
                 {
                     "kind": "PERMISSION",
                     "field": None,
