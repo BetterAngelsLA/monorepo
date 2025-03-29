@@ -29,16 +29,17 @@ export const extractClientFormData = (
 ): Partial<FormStateMapping[typeof formType]> => {
   switch (formType) {
     case ClientProfileCardEnum.FullName: {
-      const { id, user, nickname } = clientProfile;
+      const { id, user, firstName, lastName, middleName, nickname } =
+        clientProfile;
       return {
         id,
+        firstName,
+        middleName,
+        lastName,
+        nickname,
         user: {
-          firstName: user.firstName,
-          middleName: user.middleName,
-          lastName: user.lastName,
           id: user.id,
         },
-        nickname,
       };
     }
     case ClientProfileCardEnum.PersonalInfo: {

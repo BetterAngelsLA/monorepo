@@ -39,13 +39,13 @@ export type DemographicInfoState = {
 
 export type FullnameState = {
   id: string;
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
+  nickname?: string | null;
   user: {
     id: string;
-    firstName?: string | null;
-    middleName?: string | null;
-    lastName?: string | null;
   };
-  nickname?: string | null;
 };
 
 export type HmisIdState = {

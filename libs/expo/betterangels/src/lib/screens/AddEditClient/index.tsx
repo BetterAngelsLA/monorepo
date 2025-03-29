@@ -155,8 +155,8 @@ export default function AddEditClient({ id }: { id?: string }) {
     }
 
     // passing an empty string to the backend will violate unique constraint
-    if (typeof values.user?.email === 'string') {
-      values.user.email = values.user.email || null;
+    if (typeof values.email === 'string') {
+      values.email = values.email || null;
     }
 
     values.householdMembers = values.householdMembers?.map((member) => {
