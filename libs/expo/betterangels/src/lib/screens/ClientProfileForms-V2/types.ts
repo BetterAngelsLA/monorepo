@@ -11,9 +11,9 @@ export type ContactInfoState = {
   id: string;
   residenceAddress?: string | null;
   mailingAddress?: string | null;
+  email?: string | null;
   user: {
     id: string;
-    email?: string | null;
   };
   socialMediaProfiles?:
     | {
