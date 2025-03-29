@@ -118,7 +118,7 @@ class ClientProfile(BaseModel):
     )
     date_of_birth = models.DateField(blank=True, null=True)
     documents = GenericRelation(Attachment)
-    email = models.EmailField(unique=True, null=True, blank=True)
+    email = models.EmailField(unique=True, null=True)
     eye_color = TextChoicesField(choices_enum=EyeColorEnum, blank=True, null=True)
     first_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
