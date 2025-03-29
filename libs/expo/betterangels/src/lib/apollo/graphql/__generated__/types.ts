@@ -18,6 +18,7 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
+  NonBlankString: { input: any; output: any; }
   PhoneNumber: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any; }
@@ -188,7 +189,8 @@ export enum CityChoices {
   WestCovina = 'WEST_COVINA',
   WestHollywood = 'WEST_HOLLYWOOD',
   WestLosAngeles = 'WEST_LOS_ANGELES',
-  Whittier = 'WHITTIER'
+  Whittier = 'WHITTIER',
+  Wilmington = 'WILMINGTON'
 }
 
 export type CityType = {
@@ -345,7 +347,9 @@ export type ClientProfileType = {
   displayGender?: Maybe<Scalars['String']['output']>;
   displayPronouns?: Maybe<Scalars['String']['output']>;
   docReadyDocuments?: Maybe<Array<ClientDocumentType>>;
+  email?: Maybe<Scalars['String']['output']>;
   eyeColor?: Maybe<EyeColorEnum>;
+  firstName?: Maybe<Scalars['String']['output']>;
   gender?: Maybe<GenderEnum>;
   genderOther?: Maybe<Scalars['String']['output']>;
   hairColor?: Maybe<HairColorEnum>;
@@ -354,9 +358,11 @@ export type ClientProfileType = {
   householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
   importantNotes?: Maybe<Scalars['String']['output']>;
+  lastName?: Maybe<Scalars['String']['output']>;
   livingSituation?: Maybe<LivingSituationEnum>;
   mailingAddress?: Maybe<Scalars['String']['output']>;
   maritalStatus?: Maybe<MaritalStatusEnum>;
+  middleName?: Maybe<Scalars['String']['output']>;
   nickname?: Maybe<Scalars['String']['output']>;
   otherDocuments?: Maybe<Array<ClientDocumentType>>;
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
@@ -432,7 +438,9 @@ export type CreateClientProfileInput = {
   californiaId?: InputMaybe<Scalars['String']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderEnum>;
   genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
@@ -440,9 +448,11 @@ export type CreateClientProfileInput = {
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   importantNotes?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
+  middleName?: InputMaybe<Scalars['String']['input']>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
   phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
@@ -462,6 +472,8 @@ export type CreateClientProfileInput = {
 };
 
 export type CreateClientProfilePayload = ClientProfileType | OperationInfo;
+
+export type CreateHmisProfilePayload = HmisProfileType | OperationInfo;
 
 export type CreateNoteDataImportInput = {
   notes: Scalars['String']['input'];
@@ -547,6 +559,8 @@ export type DeleteCurrentUserPayload = DeletedObjectType | OperationInfo;
 export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
+
+export type DeleteHmisProfilePayload = HmisProfileType | OperationInfo;
 
 export type DeleteMoodPayload = DeletedObjectType | OperationInfo;
 
@@ -734,15 +748,25 @@ export enum HmisAgencyEnum {
 
 export type HmisProfileInput = {
   agency: HmisAgencyEnum;
-  hmisId: Scalars['String']['input'];
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
+  hmisId?: InputMaybe<Scalars['NonBlankString']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type HmisProfileType = {
   __typename?: 'HmisProfileType';
   agency: HmisAgencyEnum;
-  hmisId: Scalars['String']['output'];
+  hmisId?: Maybe<Scalars['NonBlankString']['output']>;
   id: Scalars['ID']['output'];
+};
+
+export type HmisProfileTypeOffsetPaginated = {
+  __typename?: 'HmisProfileTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<HmisProfileType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export enum ImmediateNeedChoices {
@@ -907,6 +931,7 @@ export type Mutation = {
   createClientDocument: CreateClientDocumentPayload;
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
+  createHmisProfile: CreateHmisProfilePayload;
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteMood: CreateNoteMoodPayload;
@@ -917,6 +942,7 @@ export type Mutation = {
   deleteClientDocument: DeleteClientDocumentPayload;
   deleteClientProfile: DeleteClientProfilePayload;
   deleteCurrentUser: DeleteCurrentUserPayload;
+  deleteHmisProfile: DeleteHmisProfilePayload;
   deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
@@ -933,6 +959,7 @@ export type Mutation = {
   updateClientProfile: UpdateClientProfilePayload;
   updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
+  updateHmisProfile: UpdateHmisProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateServiceRequest: UpdateServiceRequestPayload;
@@ -963,6 +990,11 @@ export type MutationCreateClientProfileArgs = {
 
 export type MutationCreateClientProfileDataImportArgs = {
   data: CreateProfileDataImportInput;
+};
+
+
+export type MutationCreateHmisProfileArgs = {
+  data: HmisProfileInput;
 };
 
 
@@ -1007,6 +1039,11 @@ export type MutationDeleteClientDocumentArgs = {
 
 
 export type MutationDeleteClientProfileArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteHmisProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -1083,6 +1120,11 @@ export type MutationUpdateClientProfilePhotoArgs = {
 
 export type MutationUpdateCurrentUserArgs = {
   data: UpdateUserInput;
+};
+
+
+export type MutationUpdateHmisProfileArgs = {
+  data: HmisProfileInput;
 };
 
 
@@ -1335,6 +1377,8 @@ export type Query = {
   clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
+  hmisProfile: HmisProfileType;
+  hmisProfiles: HmisProfileTypeOffsetPaginated;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
   notes: Array<NoteType>;
@@ -1384,6 +1428,16 @@ export type QueryClientProfilesArgs = {
 export type QueryClientProfilesPaginatedArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryHmisProfileArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryHmisProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1885,7 +1939,9 @@ export type UpdateClientProfileInput = {
   californiaId?: InputMaybe<Scalars['String']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
+  firstName?: InputMaybe<Scalars['String']['input']>;
   gender?: InputMaybe<GenderEnum>;
   genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
@@ -1894,9 +1950,11 @@ export type UpdateClientProfileInput = {
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];
   importantNotes?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['String']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
+  middleName?: InputMaybe<Scalars['String']['input']>;
   nickname?: InputMaybe<Scalars['String']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
   phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
@@ -1920,6 +1978,8 @@ export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
 export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 
 export type UpdateCurrentUserPayload = OperationInfo | UserType;
+
+export type UpdateHmisProfilePayload = HmisProfileType | OperationInfo;
 
 export type UpdateNoteInput = {
   id: Scalars['ID']['input'];

@@ -17,7 +17,7 @@ export type ClientProfilesQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: Array<{ __typename?: 'ClientProfileType', id: string, age?: number | null, dateOfBirth?: any | null, heightInInches?: number | null, mailingAddress?: string | null, nickname?: string | null, residenceAddress?: string | null, displayCaseManager: string, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', id: string, agency: Types.HmisAgencyEnum, hmisId: string }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string } }> };
+export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: Array<{ __typename?: 'ClientProfileType', id: string, age?: number | null, dateOfBirth?: any | null, email?: string | null, firstName?: string | null, heightInInches?: number | null, lastName?: string | null, mailingAddress?: string | null, middleName?: string | null, nickname?: string | null, residenceAddress?: string | null, displayCaseManager: string, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', id: string, agency: Types.HmisAgencyEnum, hmisId?: any | null }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null, user: { __typename?: 'UserType', id: string } }> };
 
 export type ClientProfilesPaginatedQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.ClientProfileFilter>;
@@ -26,7 +26,7 @@ export type ClientProfilesPaginatedQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfilesPaginatedQuery = { __typename?: 'Query', clientProfilesPaginated: { __typename?: 'ClientProfileTypeOffsetPaginated', totalCount: number, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number }, results: Array<{ __typename?: 'ClientProfileType', id: string, age?: number | null, dateOfBirth?: any | null, heightInInches?: number | null, mailingAddress?: string | null, nickname?: string | null, residenceAddress?: string | null, displayCaseManager: string, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', id: string, agency: Types.HmisAgencyEnum, hmisId: string }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, username: string } }> } };
+export type ClientProfilesPaginatedQuery = { __typename?: 'Query', clientProfilesPaginated: { __typename?: 'ClientProfileTypeOffsetPaginated', totalCount: number, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number }, results: Array<{ __typename?: 'ClientProfileType', id: string, age?: number | null, dateOfBirth?: any | null, email?: string | null, firstName?: string | null, heightInInches?: number | null, lastName?: string | null, mailingAddress?: string | null, middleName?: string | null, nickname?: string | null, residenceAddress?: string | null, displayCaseManager: string, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', id: string, agency: Types.HmisAgencyEnum, hmisId?: any | null }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null, user: { __typename?: 'UserType', id: string } }> } };
 
 
 export const CreateNoteDocument = gql`
@@ -93,8 +93,12 @@ export const ClientProfilesDocument = gql`
       id
       age
       dateOfBirth
+      email
+      firstName
       heightInInches
+      lastName
       mailingAddress
+      middleName
       nickname
       residenceAddress
       hmisProfiles {
@@ -108,10 +112,6 @@ export const ClientProfilesDocument = gql`
       }
       user {
         id
-        email
-        firstName
-        lastName
-        username
       }
       displayCaseManager
     }
@@ -169,8 +169,12 @@ export const ClientProfilesPaginatedDocument = gql`
       id
       age
       dateOfBirth
+      email
+      firstName
       heightInInches
+      lastName
       mailingAddress
+      middleName
       nickname
       residenceAddress
       hmisProfiles {
@@ -184,10 +188,6 @@ export const ClientProfilesPaginatedDocument = gql`
       }
       user {
         id
-        email
-        firstName
-        lastName
-        username
       }
       displayCaseManager
     }

@@ -39,8 +39,12 @@ query ClientProfiles(
       id
       age
       dateOfBirth
+      email
+      firstName
       heightInInches
+      lastName
       mailingAddress
+      middleName
       nickname
       residenceAddress
       hmisProfiles {
@@ -54,10 +58,6 @@ query ClientProfiles(
       }
       user {
         id
-        email
-        firstName
-        lastName
-        username
       }
       displayCaseManager # TODO: This shouldn't be here. Temporary fix while we figure out type generation.
     }
@@ -83,8 +83,12 @@ query ClientProfilesPaginated(
       id
       age
       dateOfBirth
+      email
+      firstName
       heightInInches
+      lastName
       mailingAddress
+      middleName
       nickname
       residenceAddress
       hmisProfiles {
@@ -98,10 +102,6 @@ query ClientProfilesPaginated(
       }
       user {
         id
-        email
-        firstName
-        lastName
-        username
       }
       displayCaseManager # TODO: This shouldn't be here. Temporary fix while we figure out type generation.
     }
