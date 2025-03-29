@@ -79,7 +79,7 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
         onPress={() =>
           createNoteFunction(
             client.clientProfile.user.id,
-            client.clientProfile.user.firstName
+            client.clientProfile.firstName
           )
         }
         variant="secondary"

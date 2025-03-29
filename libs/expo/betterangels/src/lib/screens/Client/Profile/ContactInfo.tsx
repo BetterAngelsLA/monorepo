@@ -73,7 +73,7 @@ export default function ContactInfo(props: IProfileSectionProps) {
 
   const hasContent =
     addresses.some(({ value }) => value) ||
-    !!client?.clientProfile.user?.email ||
+    !!client?.clientProfile.email ||
     !!client?.clientProfile.socialMediaProfiles?.length ||
     !!client?.clientProfile.phoneNumbers?.length ||
     !!client?.clientProfile.preferredCommunication?.length;
@@ -133,12 +133,8 @@ export default function ContactInfo(props: IProfileSectionProps) {
                   ))}
                 </View>
               )}
-              {!!client?.clientProfile.user.email && (
-                <InfoCol
-                  row
-                  label="Email"
-                  value={client.clientProfile.user.email}
-                />
+              {!!client?.clientProfile.email && (
+                <InfoCol row label="Email" value={client.clientProfile.email} />
               )}
               {!!client?.clientProfile.socialMediaProfiles?.length && (
                 <View>

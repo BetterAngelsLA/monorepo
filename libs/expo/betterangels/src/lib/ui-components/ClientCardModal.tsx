@@ -51,7 +51,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
       route: `/add-interaction/${client.id}`,
       onPress: () => {
         if (client) {
-          createNoteFunction(client.user.id, client.user.firstName);
+          createNoteFunction(client.user.id, client.firstName);
         }
       },
     },

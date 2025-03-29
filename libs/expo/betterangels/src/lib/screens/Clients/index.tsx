@@ -220,7 +220,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                     if (select === 'true') {
                       createNoteFunction(
                         clientProfile.user.id,
-                        clientProfile.user.firstName
+                        clientProfile.firstName
                       );
                     } else {
                       setCurrentClient(clientProfile);
