@@ -503,8 +503,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         with self.assertRaises(ClientProfile.DoesNotExist):
             ClientProfile.objects.get(id=client_profile_id)
 
-        with self.assertRaises(User.DoesNotExist):
-            User.objects.get(id=user.pk)
+        if user:
+            self.assertFalse(User.objects.filter(id=user.pk).exists())
 
         self.assertEqual(HmisProfile.objects.filter(id__in=hmis_profile_ids).count(), 0)
 
