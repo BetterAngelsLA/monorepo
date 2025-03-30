@@ -204,7 +204,7 @@ class ClientProfile(BaseModel):
         return " ".join(name_parts).strip()
 
     class Meta:
-        ordering = ["user__first_name"]
+        ordering = ["first_name"]
 
 
 class ClientDocument(Attachment):

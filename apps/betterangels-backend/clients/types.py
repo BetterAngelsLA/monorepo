@@ -56,6 +56,8 @@ class CreateClientDocumentInput:
 class ClientProfileOrder:
     user__first_name: auto
     user__last_name: auto
+    first_name: auto
+    last_name: auto
     id: auto
 
 
@@ -145,16 +147,11 @@ class ClientProfileFilter:
         """
         filters = {}
 
-        client_profile_fields = ["california_id"]
-        user_fields = ["first_name", "middle_name", "last_name"]
+        search_fields = ["california_id", "first_name", "middle_name", "last_name"]
 
-        for field in client_profile_fields:
+        for field in search_fields:
             if field_value := (getattr(value, field) or "").strip():
                 filters[f"{field}__iexact"] = field_value
-
-        for field in user_fields:
-            if field_value := (getattr(value, field) or "").strip():
-                filters[f"user__{field}__iexact"] = field_value
 
         if not filters:
             return (queryset.none(), Q())
