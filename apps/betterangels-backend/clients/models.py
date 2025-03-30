@@ -102,7 +102,7 @@ class HmisProfile(BaseModel):
     pghistory.DeleteEvent("client_profile.remove"),
 )
 class ClientProfile(BaseModel):
-    user = models.OneToOneField(User, on_delete=models.PROTECT, related_name="client_profile", null=True, blank=True)
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, related_name="client_profile", null=True, blank=True)
     ada_accommodation = ArrayField(
         base_field=TextChoicesField(choices_enum=AdaAccommodationEnum), blank=True, null=True
     )
