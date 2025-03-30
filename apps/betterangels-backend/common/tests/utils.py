@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from accounts.models import PermissionGroupTemplate, User
 from accounts.tests.baker_recipes import permission_group_recipe
+from clients.models import ClientProfile
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.test import TestCase
@@ -48,6 +49,8 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self.client_user_2.first_name = "Harry"
         self.client_user_2.last_name = "Truman"
         self.client_user_2.save()
+        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
+        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
 
     def _setup_groups_and_permissions(self) -> None:
         caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")

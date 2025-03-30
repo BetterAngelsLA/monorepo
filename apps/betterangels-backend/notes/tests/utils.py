@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+from clients.models import ClientProfile
 from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.gis.geos import Point
@@ -14,6 +15,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.note_fields = """
             id
             client {
+                id
+            }
+            clientProfile {
                 id
             }
             createdBy {
@@ -72,6 +76,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 status
             }
         """
+        self.client_profile = baker.make(ClientProfile)
         self._setup_note()
         self._setup_note_tasks()
         self._setup_location()
@@ -86,6 +91,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "purpose": f"Session with {self.client_user_1.full_name}",
                 "publicDetails": f"{self.client_user_1.full_name}'s public details",
                 "client": self.client_user_1.pk,
+                "clientProfile": self.client_profile_1.pk,
             },
         )["data"]["createNote"]
         # Logout after setting up the note
@@ -339,6 +345,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         client {
                             id
                         }
+                        clientProfile {
+                            id
+                        }
                         createdBy {
                             id
                         }
@@ -368,6 +377,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         dueBy
                         completedOn
                         client {
+                            id
+                        }
+                        clientProfile {
                             id
                         }
                         createdBy {
@@ -456,6 +468,9 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
                         client {{
                             id
                         }}
+                        clientProfile {{
+                            id
+                        }}
                         createdBy {{
                             id
                         }}
@@ -523,6 +538,9 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
                         dueBy
                         dueByGroup
                         client {{
+                            id
+                        }}
+                        clientProfile {{
                             id
                         }}
                         createdBy {{
