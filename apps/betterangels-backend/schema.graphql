@@ -324,6 +324,7 @@ input ClientProfilePhotoInput {
 }
 
 type ClientProfileType {
+  id: ID
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
@@ -355,7 +356,6 @@ type ClientProfileType {
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: VeteranStatusEnum
-  id: ID!
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
@@ -366,7 +366,7 @@ type ClientProfileType {
   docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  user: UserType!
+  user: UserType
   displayCaseManager: String!
 }
 
@@ -405,6 +405,7 @@ union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 union CreateClientProfileDataImportPayload = ClientProfileDataImportType | OperationInfo
 
 input CreateClientProfileInput {
+  id: ID
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
@@ -441,7 +442,7 @@ input CreateClientProfileInput {
   householdMembers: [ClientHouseholdMemberInput!]
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
-  user: CreateUserInput!
+  user: CreateUserInput
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -517,10 +518,13 @@ input CreateTaskInput {
 union CreateTaskPayload = TaskType | OperationInfo
 
 input CreateUserInput {
+  id: ID
   firstName: String
   lastName: String
   middleName: String
   email: String
+  hasAcceptedTos: Boolean
+  hasAcceptedPrivacyPolicy: Boolean
 }
 
 """Date (isoformat)"""
@@ -1570,6 +1574,7 @@ type TrainingServiceType {
 scalar UUID
 
 input UpdateClientProfileInput {
+  id: ID!
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
@@ -1601,7 +1606,6 @@ input UpdateClientProfileInput {
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: VeteranStatusEnum
-  id: ID!
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
@@ -1667,11 +1671,11 @@ union UpdateTaskLocationPayload = TaskType | OperationInfo
 union UpdateTaskPayload = TaskType | OperationInfo
 
 input UpdateUserInput {
+  id: ID
   firstName: String
   lastName: String
   middleName: String
   email: String
-  id: ID!
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
 }
@@ -1679,14 +1683,14 @@ input UpdateUserInput {
 scalar Upload
 
 type UserType {
+  id: ID
   firstName: String
   lastName: String
   middleName: String
   email: String
-  id: ID!
-  clientProfile: DjangoModelType
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
+  clientProfile: DjangoModelType
   isOutreachAuthorized: Boolean
   organizationsOrganization: [OrganizationType!]
   username: String!
