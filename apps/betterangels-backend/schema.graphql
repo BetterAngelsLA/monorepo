@@ -518,13 +518,10 @@ input CreateTaskInput {
 union CreateTaskPayload = TaskType | OperationInfo
 
 input CreateUserInput {
-  id: ID
   firstName: String
   lastName: String
   middleName: String
   email: String
-  hasAcceptedTos: Boolean
-  hasAcceptedPrivacyPolicy: Boolean
 }
 
 """Date (isoformat)"""
@@ -1609,7 +1606,6 @@ input UpdateClientProfileInput {
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
-  phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: UpdateUserInput
 }
@@ -1671,11 +1667,11 @@ union UpdateTaskLocationPayload = TaskType | OperationInfo
 union UpdateTaskPayload = TaskType | OperationInfo
 
 input UpdateUserInput {
-  id: ID
   firstName: String
   lastName: String
   middleName: String
   email: String
+  id: ID!
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
 }
@@ -1683,14 +1679,14 @@ input UpdateUserInput {
 scalar Upload
 
 type UserType {
-  id: ID
   firstName: String
   lastName: String
   middleName: String
   email: String
+  id: ID!
+  clientProfile: DjangoModelType
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  clientProfile: DjangoModelType
   isOutreachAuthorized: Boolean
   organizationsOrganization: [OrganizationType!]
   username: String!

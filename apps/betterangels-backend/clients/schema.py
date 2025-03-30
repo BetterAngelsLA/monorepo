@@ -47,7 +47,6 @@ from .types import (
     ClientProfileImportRecordType,
     ClientProfilePhotoInput,
     ClientProfileType,
-    ClientProfileInput,
     CreateClientDocumentInput,
     CreateClientProfileInput,
     CreateProfileDataImportInput,
