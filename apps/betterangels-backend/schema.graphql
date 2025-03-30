@@ -451,6 +451,7 @@ input CreateNoteInput {
   publicDetails: String
   privateDetails: String
   client: ID
+  clientProfile: ID
   isSubmitted: Boolean
   interactedAt: DateTime
 }
@@ -493,6 +494,7 @@ input CreateServiceRequestInput {
   status: ServiceRequestStatusEnum!
   serviceOther: String
   client: ID
+  clientProfile: ID
 }
 
 union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
@@ -502,6 +504,7 @@ input CreateTaskInput {
   status: TaskStatusEnum!
   dueBy: DateTime
   client: ID
+  clientProfile: ID
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
@@ -937,6 +940,7 @@ type NoteDataImportType {
 
 input NoteFilter {
   client: ID
+  clientProfile: ID
   createdBy: ID
   isSubmitted: Boolean
   organization: ID
@@ -978,6 +982,7 @@ type NoteType {
   publicDetails: String!
   isSubmitted: Boolean!
   client: UserType
+  clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
   interactedAt: DateTime!
@@ -1311,6 +1316,7 @@ type ServiceRequestType {
   dueBy: DateTime
   completedOn: DateTime
   client: UserType
+  clientProfile: ClientProfileType
   createdBy: UserType!
   createdAt: DateTime!
 }
@@ -1535,6 +1541,7 @@ type TaskType {
   dueBy: DateTime
   dueByGroup: DueByGroupEnum!
   client: UserType
+  clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
 }
@@ -1630,6 +1637,7 @@ input UpdateServiceRequestInput {
   status: ServiceRequestStatusEnum
   dueBy: DateTime
   client: ID
+  clientProfile: ID
 }
 
 union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
@@ -1641,6 +1649,7 @@ input UpdateTaskInput {
   status: TaskStatusEnum
   dueBy: DateTime
   client: ID
+  clientProfile: ID
 }
 
 input UpdateTaskLocationInput {

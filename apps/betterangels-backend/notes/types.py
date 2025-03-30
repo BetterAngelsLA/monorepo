@@ -5,6 +5,7 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.types import UserType
+from clients.types import ClientProfileType
 from common.graphql.types import LocationInput, LocationType
 from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
 from notes.enums import (
@@ -29,6 +30,7 @@ class ServiceRequestType:
     due_by: auto
     completed_on: auto
     client: Optional[UserType]
+    client_profile: ClientProfileType | None
     created_by: UserType
     created_at: auto
 
@@ -39,6 +41,7 @@ class CreateServiceRequestInput:
     status: auto
     service_other: auto
     client: Optional[ID]
+    client_profile: ID | None
 
 
 @strawberry_django.input(models.ServiceRequest)
@@ -56,6 +59,7 @@ class UpdateServiceRequestInput:
     status: auto
     due_by: auto
     client: Optional[ID]
+    client_profile: ID | None
 
 
 @strawberry_django.ordering.order(models.Task)
@@ -73,6 +77,7 @@ class TaskType:
     due_by: auto
     due_by_group: DueByGroupEnum
     client: Optional[UserType]
+    client_profile: ClientProfileType | None
     created_at: auto
     created_by: UserType
 
@@ -83,6 +88,7 @@ class CreateTaskInput:
     status: auto
     due_by: auto
     client: Optional[ID]
+    client_profile: ID | None
 
 
 @strawberry_django.input(models.Task)
@@ -102,6 +108,7 @@ class UpdateTaskInput:
     status: auto
     due_by: auto
     client: Optional[ID]
+    client_profile: ID | None
 
 
 @strawberry_django.type(models.Mood)
@@ -146,9 +153,10 @@ class NoteOrder:
 @strawberry_django.filters.filter(models.Note)
 class NoteFilter:
     client: Optional[ID]
-    created_by: Optional[ID]
+    client_profile: ID | None
+    created_by: ID | None
     is_submitted: auto
-    organization: Optional[ID]
+    organization: ID | None
 
     @strawberry_django.filter_field
     def authors(
@@ -207,6 +215,7 @@ class NoteType:
     public_details: auto
     is_submitted: auto
     client: Optional[UserType]
+    client_profile: ClientProfileType | None
     created_at: auto
     created_by: UserType
     interacted_at: auto
@@ -239,6 +248,7 @@ class CreateNoteInput:
     public_details: auto
     private_details: auto
     client: Optional[ID]
+    client_profile: ID | None
     is_submitted: auto
     interacted_at: auto
 
