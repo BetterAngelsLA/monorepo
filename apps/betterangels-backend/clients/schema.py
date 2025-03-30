@@ -374,6 +374,15 @@ class Mutation:
 
             if user_data := client_profile_data.pop("user", {}):
                 client_user = User.objects.create_client(**user_data)
+            # TODO: Note.client is still an fk to User, so we need to continue creating users until Note.client
+            # is updated to point to ClientProfile. See: DEV-1615
+            else:
+                client_user = User.objects.create_client(
+                    first_name=client_profile_data.get("first_name"),
+                    last_name=client_profile_data.get("last_name"),
+                    middle_name=client_profile_data.get("middle_name"),
+                    email=client_profile_data.get("email"),
+                )
 
             phone_numbers = client_profile_data.pop("phone_numbers", []) or []
 
@@ -382,7 +391,7 @@ class Mutation:
                 ClientProfile,
                 {
                     **client_profile_data,
-                    "user": client_user if user_data else None,
+                    "user": client_user,
                 },
             )
 
@@ -433,6 +442,20 @@ class Mutation:
                     client_user,
                     {
                         **user_data,
+                        "id": client_profile.user.id,
+                    },
+                )
+            # TODO: Note.client is still an fk to User, so we need to continue updating users until Note.client
+            # is updated to point to ClientProfile. See: DEV-1615
+            else:
+                client_user = resolvers.update(
+                    info,
+                    client_user,
+                    {
+                        "first_name": client_profile_data.get("first_name"),
+                        "last_name": client_profile_data.get("last_name"),
+                        "middle_name": client_profile_data.get("middle_name"),
+                        "email": client_profile_data.get("email"),
                         "id": client_profile.user.id,
                     },
                 )
@@ -490,8 +513,11 @@ class Mutation:
 
                 client_profile_id = client_profile.pk
 
-                # Deleting the underlying user will cascade and delete the client profile
-                client_profile.user.delete()
+                # TODO: Remove in DEV-1611
+                if client_profile.user:
+                    client_profile.user.delete()
+
+                client_profile.delete()
 
             except ClientProfile.DoesNotExist:
                 raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")

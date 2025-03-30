@@ -470,7 +470,8 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(error_messages[0]["location"], "email")
         self.assertEqual(error_messages[0]["errorCode"], ErrorCodeEnum.EMAIL_IN_USE.name)
 
-    def test_delete_client_profile_mutation(self) -> None:
+    # TODO: Remove in DEV-1611
+    def test_delete_client_profile_with_user_mutation(self) -> None:
         client_profile_id = self.client_profile_1["id"]
         client_profile = ClientProfile.objects.get(id=client_profile_id)
         user = client_profile.user
@@ -500,16 +501,43 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertIsNotNone(response["data"]["deleteClientProfile"])
 
-        with self.assertRaises(ClientProfile.DoesNotExist):
-            ClientProfile.objects.get(id=client_profile_id)
+        self.assertFalse(ClientProfile.objects.filter(id=client_profile_id).exists())
 
         if user:
             self.assertFalse(User.objects.filter(id=user.pk).exists())
 
         self.assertEqual(HmisProfile.objects.filter(id__in=hmis_profile_ids).count(), 0)
 
+    def test_delete_client_profile_mutation(self) -> None:
+        client_profile = self._create_client_profile_fixture({"firstName": "to delete"})["data"]["createClientProfile"]
+
+        mutation = """
+            mutation DeleteClientProfile($id: ID!) {
+                deleteClientProfile(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"id": client_profile["id"]}
+
+        expected_query_count = 41
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNotNone(response["data"]["deleteClientProfile"])
+        self.assertFalse(ClientProfile.objects.filter(id=client_profile["id"]).exists())
+
     # TODO: Remove in DEV-1611
-    def test_dual_write(self) -> None:
+    def test_dual_write_client(self) -> None:
         user = {
             "firstName": "dual first",
             "lastName": "dual last",
@@ -536,6 +564,35 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(updated_client_profile.last_name, user["lastName"])
         self.assertEqual(updated_client_profile.middle_name, user["middleName"])
         self.assertEqual(updated_client_profile.email, user["email"])
+
+    # TODO: Remove in DEV-1611
+    def test_dual_write_user(self) -> None:
+        variables = {
+            "firstName": "dual first",
+            "lastName": "dual last",
+            "middleName": "dual middle",
+            "email": "dual_email@example.com",
+        }
+        response = self._create_client_profile_fixture(variables)
+        client_profile = response["data"]["createClientProfile"]
+        created_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
+
+        assert created_client_profile.user
+        self.assertEqual(created_client_profile.user.first_name, variables["firstName"])
+        self.assertEqual(created_client_profile.user.last_name, variables["lastName"])
+        self.assertEqual(created_client_profile.user.middle_name, variables["middleName"])
+        self.assertEqual(created_client_profile.user.email, variables["email"])
+
+        variables["id"] = client_profile["id"]
+        response = self._update_client_profile_fixture(variables)
+        response["data"]["updateClientProfile"]
+        updated_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
+
+        assert updated_client_profile.user
+        self.assertEqual(updated_client_profile.user.first_name, variables["firstName"])
+        self.assertEqual(updated_client_profile.user.last_name, variables["lastName"])
+        self.assertEqual(updated_client_profile.user.middle_name, variables["middleName"])
+        self.assertEqual(updated_client_profile.user.email, variables["email"])
 
     @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
     def test_update_client_profile_photo(self) -> None:
