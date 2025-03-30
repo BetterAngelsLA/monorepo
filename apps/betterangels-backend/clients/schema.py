@@ -448,6 +448,7 @@ class Mutation:
             # TODO: Note.client is still an fk to User, so we need to continue updating users until Note.client
             # is updated to point to ClientProfile. See: DEV-1615
             else:
+                email = client_profile_data.get("email")
                 client_user = resolvers.update(
                     info,
                     client_user,
@@ -455,7 +456,7 @@ class Mutation:
                         "first_name": client_profile_data.get("first_name"),
                         "last_name": client_profile_data.get("last_name"),
                         "middle_name": client_profile_data.get("middle_name"),
-                        "email": client_profile_data.get("email"),
+                        "email": email.lower() if email else None,
                         "id": client_profile.user.id,
                     },
                 )
