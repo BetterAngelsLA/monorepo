@@ -47,6 +47,7 @@ from .types import (
     ClientProfileImportRecordType,
     ClientProfilePhotoInput,
     ClientProfileType,
+    ClientProfileInput,
     CreateClientDocumentInput,
     CreateClientProfileInput,
     CreateProfileDataImportInput,
@@ -372,8 +373,9 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             validate_client_profile_data(client_profile_data)
 
-            user_data = client_profile_data.pop("user")
-            client_user = User.objects.create_client(**user_data)
+            if user_data := client_profile_data.pop("user", {}):
+                client_user = User.objects.create_client(**user_data)
+
             phone_numbers = client_profile_data.pop("phone_numbers", []) or []
 
             client_profile = resolvers.create(
@@ -381,7 +383,7 @@ class Mutation:
                 ClientProfile,
                 {
                     **client_profile_data,
-                    "user": client_user,
+                    "user": client_user if user_data else None,
                 },
             )
 
