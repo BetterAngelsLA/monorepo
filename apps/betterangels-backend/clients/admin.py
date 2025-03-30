@@ -10,8 +10,6 @@ from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest
-from django.urls import reverse
-from django.utils.html import format_html
 from import_export import fields, resources
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
@@ -166,7 +164,6 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
         "name",
         "id",
         "email",
-        "user_id",
         "dob",
         "display_gender",
         "display_pronouns",
@@ -196,9 +193,6 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
             name_parts.append(f"({obj.nickname})")
 
         return " ".join(name_parts).strip()
-
-    def user_id(self, obj: ClientProfile) -> str:
-        return format_html(f'<a href="{reverse("admin:accounts_user_change", args=(obj.user.id,))}">{obj.user.id}</a>')
 
     search_fields = (
         "nickname",
