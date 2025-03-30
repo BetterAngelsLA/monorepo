@@ -335,6 +335,7 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     contacts: Optional[List[ClientContactInput]]
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
+    phone_numbers: Optional[List[PhoneNumberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
     user: Optional[UpdateUserInput]
 

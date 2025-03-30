@@ -1606,6 +1606,7 @@ input UpdateClientProfileInput {
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
+  phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
   user: UpdateUserInput
 }
