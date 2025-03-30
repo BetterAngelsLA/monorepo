@@ -2,16 +2,18 @@
 
 from django.db import migrations
 
+USER_FIELDS = ["first_name", "last_name", "middle_name", "email"]
+
 
 def copy_name_and_email_fields(apps, schema_editor):
     ClientProfile = apps.get_model("clients", "ClientProfile")
 
     # Copy name and email fields from client_profile.user to client_profile
     for client_profile in ClientProfile.objects.all():
-        client_profile.first_name = client_profile.user.first_name
-        client_profile.last_name = client_profile.user.last_name
-        client_profile.middle_name = client_profile.user.middle_name
-        client_profile.email = client_profile.user.email
+        for field in USER_FIELDS:
+            if getattr(client_profile.user, field) is not None:
+                setattr(client_profile, field, getattr(client_profile.user, field).strip())
+
         client_profile.save()
 
 
@@ -20,10 +22,9 @@ def clear_name_and_email_fields(apps, schema_editor):
 
     # Clear name and email fields from client_profile.user to client_profile
     for client_profile in ClientProfile.objects.all():
-        client_profile.first_name = None
-        client_profile.last_name = None
-        client_profile.middle_name = None
-        client_profile.email = None
+        for field in USER_FIELDS:
+            setattr(client_profile, field, None)
+
         client_profile.save()
 
 
