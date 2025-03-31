@@ -1,8 +1,10 @@
 from typing import Any, Optional
+from unittest import skip
 
 import strawberry
 from accounts.models import User
 from clients.enums import ErrorCodeEnum, HmisAgencyEnum
+from clients.models import ClientProfile
 from clients.schema import (
     validate_california_id,
     validate_client_name,
@@ -13,7 +15,6 @@ from clients.schema import (
     value_exists,
 )
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
-from model_bakery import baker
 from unittest_parametrize import parametrize
 
 
@@ -49,6 +50,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             ("", None, " ", strawberry.UNSET, "update", False),
         ],
     )
+    @skip("resume in DEV-1611")
     def test_validate_client_name(
         self,
         first_name: Optional[str],
@@ -58,13 +60,14 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         operation: str,
         should_return_error: bool,
     ) -> None:
-        user = User.objects.get(pk=self.client_profile_1["user"]["id"]) if operation == "update" else None
-        user_data = {
+        client_profile = ClientProfile.objects.get(pk=self.client_profile_1["id"]) if operation == "update" else None
+        name_data = {
             "first_name": first_name,
             "last_name": last_name,
             "middle_name": middle_name,
+            "nickname": nickname,
         }
-        errors = validate_client_name(user_data, nickname, user)
+        errors = validate_client_name(name_data, client_profile)
         if should_return_error:
             self.assertEqual(len(errors), 1)
             self.assertEqual(errors[0]["errorCode"], ErrorCodeEnum.NAME_NOT_PROVIDED.name)
@@ -101,7 +104,49 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(len(validate_user_email(email, user)), 0)
 
     # TODO: Remove in DEV-1611
-    def test_validate_user_email_dual_write(self) -> None:
+    def test_validate_name_dual_write(self) -> None:
+        name = "name"
+        client_profile = self._create_client_profile_fixture({"firstName": name})["data"]["createClientProfile"]
+        self.assertEqual(client_profile["firstName"], name)
+        client_profile = self._create_client_profile_fixture({"lastName": name})["data"]["createClientProfile"]
+        self.assertEqual(client_profile["lastName"], name)
+        client_profile = self._create_client_profile_fixture({"middleName": name})["data"]["createClientProfile"]
+        self.assertEqual(client_profile["middleName"], name)
+        client_profile = self._create_client_profile_fixture({"nickname": name})["data"]["createClientProfile"]
+        self.assertEqual(client_profile["nickname"], name)
+        client_profile = self._create_client_profile_fixture({"user": {"firstName": name}})["data"][
+            "createClientProfile"
+        ]
+        self.assertEqual(client_profile["user"]["firstName"], name)
+        client_profile = self._create_client_profile_fixture({"user": {"lastName": name}})["data"][
+            "createClientProfile"
+        ]
+        self.assertEqual(client_profile["user"]["lastName"], name)
+        client_profile = self._create_client_profile_fixture({"user": {"middleName": name}})["data"][
+            "createClientProfile"
+        ]
+        self.assertEqual(client_profile["user"]["middleName"], name)
+
+        no_name_error = self._create_client_profile_fixture(
+            {
+                "firstName": None,
+                "lastName": " ",
+                "nickname": "",
+                "user": {
+                    "firstName": None,
+                    "lastName": " ",
+                    "middleName": "",
+                },
+            }
+        )
+        self.assertIsNone(no_name_error["data"])
+        self.assertEqual(
+            no_name_error["errors"][0]["extensions"]["errors"][0],
+            {"field": "client_name", "location": None, "errorCode": "NAME_NOT_PROVIDED"},
+        )
+
+    # TODO: Remove in DEV-1611
+    def test_validate_email_dual_write(self) -> None:
         # create a client profile with a user
         email = "duplicate_email@example.com"
         client_profile = self._create_client_profile_fixture(

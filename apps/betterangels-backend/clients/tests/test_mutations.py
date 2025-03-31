@@ -288,6 +288,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         variables = {
             "id": self.client_profile_2["id"],
+            "firstName": "",
+            "lastName": "",
+            "middleName": "",
             "californiaId": "invalid id",
             "contacts": [contact],
             "hmisProfiles": [hmis_profile],

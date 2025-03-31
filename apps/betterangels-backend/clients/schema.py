@@ -80,29 +80,76 @@ def value_exists(value: Optional[str]) -> bool:
     return value is not strawberry.UNSET and value is not None and value.strip() != ""
 
 
-def validate_client_name(user_data: dict, nickname: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
+def validate_client_name(
+    data: dict,
+    client_profile: Optional[ClientProfile],
+) -> list[dict[str, Any]]:
     """Verify that either:
     1. The incoming data contains at least one name field OR
     2. The existing user has at least one name field and the incoming data isn't clearing it.
     """
-    if any(
-        (
-            value_exists(user_data.get("first_name")),
-            value_exists(user_data.get("last_name")),
-            value_exists(user_data.get("middle_name")),
-            value_exists(nickname),
-        )
+
+    if (
+        value_exists(data.get("first_name"))
+        or value_exists(data.get("last_name"))
+        or value_exists(data.get("middle_name"))
+        or value_exists(data.get("nickname"))
     ):
         return []
 
-    if user:
-        if any(
-            (
-                user.first_name and user_data.get("first_name") is strawberry.UNSET,
-                user.last_name and user_data.get("last_name") is strawberry.UNSET,
-                user.middle_name and user_data.get("middle_name") is strawberry.UNSET,
-                user.client_profile.nickname and nickname is strawberry.UNSET,
-            )
+    if client_profile:
+        if (
+            (client_profile.first_name and data.get("first_name") is strawberry.UNSET)
+            or (client_profile.last_name and data.get("last_name") is strawberry.UNSET)
+            or (client_profile.middle_name and data.get("middle_name") is strawberry.UNSET)
+            or (client_profile.nickname and data.get("nickname") is strawberry.UNSET)
+        ):
+            return []
+
+    return [{"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name}]
+
+
+def validate_name(
+    data: dict,
+    client_profile: Optional[ClientProfile],
+    user: Optional[User] = None,
+) -> list[dict[str, Any]]:
+    """Verify that either:
+    1. The incoming data contains at least one name field OR
+    2. The existing user has at least one name field and the incoming data isn't clearing it.
+    """
+
+    if (
+        value_exists(data.get("first_name"))
+        or value_exists(data.get("last_name"))
+        or value_exists(data.get("middle_name"))
+        or value_exists(data.get("nickname"))
+    ):
+        return []
+
+    if client_profile:
+        if (
+            (client_profile.first_name and data.get("first_name") is strawberry.UNSET)
+            or (client_profile.last_name and data.get("last_name") is strawberry.UNSET)
+            or (client_profile.middle_name and data.get("middle_name") is strawberry.UNSET)
+            or (client_profile.nickname and data.get("nickname") is strawberry.UNSET)
+        ):
+            return []
+
+    user_data = data.get("user", {})
+
+    if user and user_data is strawberry.UNSET:
+        return []
+
+    if user_data := data.get("user", {}):
+        if user_data is not strawberry.UNSET and (
+            (value_exists(user_data.get("first_name")))
+            or (value_exists(user_data.get("last_name")))
+            or (value_exists(user_data.get("middle_name")))
+            or (user and user.first_name and user_data.get("first_name") is strawberry.UNSET)
+            or (user and user.last_name and user_data.get("last_name") is strawberry.UNSET)
+            or (user and user.middle_name and user_data.get("middle_name") is strawberry.UNSET)
+            or (user and user.client_profile.nickname and data.get("nickname") is strawberry.UNSET)
         ):
             return []
 
@@ -266,10 +313,12 @@ def validate_client_profile_data(data: dict) -> None:
         user = User.objects.filter(client_profile__id=data["id"]).first()
         client_profile = ClientProfile.objects.filter(id=data["id"]).first()
 
-    # errors += validate_client_name(data, client_profile, user)
+    # TODO: enable this in DEV-1611
+    # errors += validate_client_name(data, client_profile)
 
+    # TODO: remove these in DEV-1611
+    errors += validate_name(data, client_profile, user)
     if user_data := data.get("user"):
-        errors += validate_client_name(user_data, data.get("nickname"), user)
         errors += validate_user_email(user_data.get("email"), user)
 
     if email := data.get("email"):
