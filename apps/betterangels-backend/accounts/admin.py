@@ -48,7 +48,8 @@ class CustomOrganizationAdmin(admin.ModelAdmin):
     inlines = [PermissionGroupInline]
     list_display = ("name",)
     search_fields = ("name",)
-    fields = ("name", "is_active")
+    fields = ("name", "is_active", "slug")
+    readonly_fields = ("slug",)
 
 
 @admin.register(OrganizationUser)
