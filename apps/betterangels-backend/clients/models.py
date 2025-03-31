@@ -196,6 +196,11 @@ class ClientProfile(BaseModel):
         else:
             self.california_id = None
 
+        if self.email:
+            self.email = self.email.lower()
+        else:
+            self.email = None
+
         super().save(*args, **kwargs)
 
     @model_property
