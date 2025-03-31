@@ -309,16 +309,6 @@ class ClientProfileType(ClientProfileBaseType):
         return "Not Assigned"
 
 
-# TODO: Cutover to this and remove the Create and Update inputs
-@strawberry_django.input(ClientProfile, partial=True)
-class ClientProfileInput(ClientProfileBaseType):
-    contacts: Optional[List[ClientContactInput]]
-    hmis_profiles: Optional[List[HmisProfileInput]]
-    household_members: Optional[List[ClientHouseholdMemberInput]]
-    phone_numbers: Optional[List[PhoneNumberInput]]
-    social_media_profiles: Optional[List[SocialMediaProfileInput]]
-
-
 @strawberry_django.input(ClientProfile, partial=True)
 class CreateClientProfileInput(ClientProfileBaseType):
     contacts: Optional[List[ClientContactInput]]

@@ -389,9 +389,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         # Manually update profile photo because it's created after the client profile fixture.
         self.client_profile_1["profilePhoto"] = {"name": self.client_profile_1_photo_name}
 
-        variables = {
-            "id": self.client_profile_1["id"],
-        }
+        variables = {"id": self.client_profile_1["id"]}
         response = self._update_client_profile_fixture(variables)
         client_profile = response["data"]["updateClientProfile"]
 
@@ -538,61 +536,74 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
     # TODO: Remove in DEV-1611
     def test_dual_write_client(self) -> None:
-        user = {
+        create_user = {
             "firstName": "dual first",
             "lastName": "dual last",
             "middleName": "dual middle",
             "email": "dual_email@example.com",
         }
-        variables = {"user": user}
+        variables = {"user": create_user}
         response = self._create_client_profile_fixture(variables)
         client_profile = response["data"]["createClientProfile"]
         created_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
 
-        self.assertEqual(created_client_profile.first_name, user["firstName"])
-        self.assertEqual(created_client_profile.last_name, user["lastName"])
-        self.assertEqual(created_client_profile.middle_name, user["middleName"])
-        self.assertEqual(created_client_profile.email, user["email"])
+        self.assertEqual(created_client_profile.first_name, create_user["firstName"])
+        self.assertEqual(created_client_profile.last_name, create_user["lastName"])
+        self.assertEqual(created_client_profile.middle_name, create_user["middleName"])
+        self.assertEqual(created_client_profile.email, create_user["email"])
 
-        user["id"] = client_profile["user"]["id"]
-        variables = {"id": client_profile["id"], "user": user}
+        update_user = {
+            "id": client_profile["user"]["id"],
+            "firstName": "dual first update",
+            "lastName": "dual last update",
+            "middleName": "dual middle update",
+            "email": "dual_email_update@example.com",
+        }
+
+        variables = {"id": client_profile["id"], "user": update_user}
         response = self._update_client_profile_fixture(variables)
         response["data"]["updateClientProfile"]
         updated_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
 
-        self.assertEqual(updated_client_profile.first_name, user["firstName"])
-        self.assertEqual(updated_client_profile.last_name, user["lastName"])
-        self.assertEqual(updated_client_profile.middle_name, user["middleName"])
-        self.assertEqual(updated_client_profile.email, user["email"])
+        self.assertEqual(updated_client_profile.first_name, update_user["firstName"])
+        self.assertEqual(updated_client_profile.last_name, update_user["lastName"])
+        self.assertEqual(updated_client_profile.middle_name, update_user["middleName"])
+        self.assertEqual(updated_client_profile.email, update_user["email"])
 
     # TODO: Remove in DEV-1611
     def test_dual_write_user(self) -> None:
-        variables = {
+        create_variables = {
             "firstName": "dual first",
             "lastName": "dual last",
             "middleName": "dual middle",
             "email": "dual_email@example.com",
         }
-        response = self._create_client_profile_fixture(variables)
+        response = self._create_client_profile_fixture(create_variables)
         client_profile = response["data"]["createClientProfile"]
         created_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
 
         assert created_client_profile.user
-        self.assertEqual(created_client_profile.user.first_name, variables["firstName"])
-        self.assertEqual(created_client_profile.user.last_name, variables["lastName"])
-        self.assertEqual(created_client_profile.user.middle_name, variables["middleName"])
-        self.assertEqual(created_client_profile.user.email, variables["email"])
+        self.assertEqual(created_client_profile.user.first_name, create_variables["firstName"])
+        self.assertEqual(created_client_profile.user.last_name, create_variables["lastName"])
+        self.assertEqual(created_client_profile.user.middle_name, create_variables["middleName"])
+        self.assertEqual(created_client_profile.user.email, create_variables["email"])
 
-        variables["id"] = client_profile["id"]
-        response = self._update_client_profile_fixture(variables)
+        update_variables = {
+            "id": client_profile["id"],
+            "firstName": "dual first update",
+            "lastName": "dual last update",
+            "middleName": "dual middle update",
+            "email": "dual_email_update@example.com",
+        }
+        response = self._update_client_profile_fixture(update_variables)
         response["data"]["updateClientProfile"]
         updated_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
 
         assert updated_client_profile.user
-        self.assertEqual(updated_client_profile.user.first_name, variables["firstName"])
-        self.assertEqual(updated_client_profile.user.last_name, variables["lastName"])
-        self.assertEqual(updated_client_profile.user.middle_name, variables["middleName"])
-        self.assertEqual(updated_client_profile.user.email, variables["email"])
+        self.assertEqual(updated_client_profile.user.first_name, update_variables["firstName"])
+        self.assertEqual(updated_client_profile.user.last_name, update_variables["lastName"])
+        self.assertEqual(updated_client_profile.user.middle_name, update_variables["middleName"])
+        self.assertEqual(updated_client_profile.user.email, update_variables["email"].lower())
 
     @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
     def test_update_client_profile_photo(self) -> None:
