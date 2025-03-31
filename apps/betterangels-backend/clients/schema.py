@@ -80,6 +80,15 @@ def value_exists(value: Optional[str]) -> bool:
     return value is not strawberry.UNSET and value is not None and value.strip() != ""
 
 
+def _payload_has_name(data: dict) -> bool:
+    return (
+        value_exists(data.get("first_name"))
+        or value_exists(data.get("last_name"))
+        or value_exists(data.get("middle_name"))
+        or value_exists(data.get("nickname"))
+    )
+
+
 def validate_client_name(
     data: dict,
     client_profile: Optional[ClientProfile],
@@ -89,12 +98,7 @@ def validate_client_name(
     2. The existing user has at least one name field and the incoming data isn't clearing it.
     """
 
-    if (
-        value_exists(data.get("first_name"))
-        or value_exists(data.get("last_name"))
-        or value_exists(data.get("middle_name"))
-        or value_exists(data.get("nickname"))
-    ):
+    if _payload_has_name(data):
         return []
 
     if client_profile:
@@ -119,12 +123,7 @@ def validate_name(
     2. The existing user has at least one name field and the incoming data isn't clearing it.
     """
 
-    if (
-        value_exists(data.get("first_name"))
-        or value_exists(data.get("last_name"))
-        or value_exists(data.get("middle_name"))
-        or value_exists(data.get("nickname"))
-    ):
+    if _payload_has_name(data):
         return []
 
     if client_profile:
@@ -459,6 +458,7 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             validate_client_profile_data(client_profile_data)
 
+            # TODO: Remove in DEV-1611
             if "user" in client_profile_data and client_profile_data["user"] is not strawberry.UNSET:
                 user_data = client_profile_data.pop("user")
             else:
@@ -466,8 +466,6 @@ class Mutation:
 
             user_fields = ["first_name", "last_name", "middle_name", "email"]
 
-            # TODO: Remove in DEV-1611.
-            # if
             for field in user_fields:
                 if field in user_data and user_data.get(field) is strawberry.UNSET:
                     user_data.pop(field)
@@ -477,7 +475,6 @@ class Mutation:
             # TODO: Remove in DEV-1652. Note.client is still an fk to User, so we need to
             # continue creating users until Note.client is updated to point to ClientProfile.
             else:
-
                 for field in user_fields:
                     if field in client_profile_data and client_profile_data.get(field) is strawberry.UNSET:
                         client_profile_data.pop(field)
@@ -544,17 +541,18 @@ class Mutation:
             validate_client_profile_data(client_profile_data)
 
             if user_data := client_profile_data.pop("user", {}):
-                if email := user_data.get("email", ""):
-                    user_data["email"] = email.lower()
+                if user_data and user_data is not strawberry.UNSET:
+                    if email := user_data.get("email", ""):
+                        user_data["email"] = email.lower()
 
-                client_user = resolvers.update(
-                    info,
-                    client_user,
-                    {
-                        **user_data,
-                        "id": client_profile.user.id,
-                    },
-                )
+                    client_user = resolvers.update(
+                        info,
+                        client_user,
+                        {
+                            **user_data,
+                            "id": client_profile.user.id,
+                        },
+                    )
             # TODO: Remove in DEV-1652. Note.client is still an fk to User, so we need to
             # continue updating users until Note.client is updated to point to ClientProfile.
             else:

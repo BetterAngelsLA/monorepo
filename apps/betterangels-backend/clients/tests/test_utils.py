@@ -151,8 +151,10 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         email = "duplicate_email@example.com"
         client_profile = self._create_client_profile_fixture(
             {
-                "firstName": "fn",
-                "user": {"email": email},
+                "user": {
+                    "email": email,
+                    "firstName": "fn",
+                },
             }
         )[
             "data"

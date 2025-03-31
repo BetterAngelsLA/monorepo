@@ -735,8 +735,8 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
         ("hmis_id", "expected_error_message", "expected_query_count"),
         [
             ("hmis id 1", None, 12),
-            (" ", "This field cannot be blank.", 11),
-            ("", "This field cannot be blank.", 11),
+            (" ", "This field cannot be null.", 11),
+            ("", "This field cannot be null.", 11),
             ("hmis id 2", "Hmis profile with this Hmis id and Agency already exists.", 12),
             (None, "This field cannot be null.", 11),
         ],

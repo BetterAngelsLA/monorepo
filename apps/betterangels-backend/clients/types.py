@@ -299,7 +299,7 @@ class ClientProfileType(ClientProfileBaseType):
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
 
-    user: UserType | None
+    user: Optional[UserType]
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:
@@ -316,7 +316,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
-    user: CreateUserInput | None
+    user: Optional[CreateUserInput]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
