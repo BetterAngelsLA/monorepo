@@ -510,6 +510,30 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         with self.assertRaises(Note.DoesNotExist):
             Note.objects.get(id=self.note["id"])
 
+    def test_dual_write_client(self) -> None:
+        created_note = self._create_note_fixture(
+            {
+                "purpose": "New note purpose",
+                "publicDetails": "New public details",
+                "client": self.client_user_1.pk,
+            }
+        )["data"]["createNote"]
+
+        self.assertEqual(created_note["client"], {"id": str(self.client_user_1.pk)})
+        self.assertEqual(created_note["clientProfile"], {"id": str(self.client_profile_1.pk)})
+
+    def test_write_client_profile_only(self) -> None:
+        created_note = self._create_note_fixture(
+            {
+                "purpose": "New note purpose",
+                "publicDetails": "New public details",
+                "clientProfile": self.client_profile_1.pk,
+            }
+        )["data"]["createNote"]
+
+        self.assertIsNone(created_note["client"])
+        self.assertEqual(created_note["clientProfile"], {"id": str(self.client_profile_1.pk)})
+
 
 class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin, ServiceRequestGraphQLUtilMixin):
     """
