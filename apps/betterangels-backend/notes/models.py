@@ -172,7 +172,7 @@ class Note(BaseModel):
     client_profile = models.ForeignKey(
         "clients.ClientProfile", on_delete=models.SET_NULL, null=True, blank=True, related_name="client_profile_notes"
     )
-    client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_notes")
+    client = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="client_notes")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     # This is the date & time displayed on the note. We don't want to use created_at
     # on the FE because the Note may not be created during the client interaction.
