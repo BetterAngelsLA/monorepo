@@ -1,18 +1,17 @@
 import { SearchIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
-import { Key, useState } from 'react';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Key, ReactNode, useState } from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import BasicInput from '../BasicInput';
-import Checkbox from '../Checkbox';
 import TextBold from '../TextBold';
-import TextRegular from '../TextRegular';
+import { MultiSelectItem, TMultiSelectItem } from './MultiSelectItem';
 import { NoResultsFound } from './NoResultsFound';
 import { SELECT_ALL_LABEL_DEFAULT, SELECT_ALL_VALUE } from './constants';
 import { getVisibleOptions } from './getVisibleOptions';
 
 export type TSelectAllIdx = number | 'last';
 
-interface IProps<T> {
+export interface TMultiSelect<T> {
   style?: StyleProp<ViewStyle>;
   options: T[];
   selected: T[];
@@ -27,9 +26,14 @@ interface IProps<T> {
   filterPlaceholder?: string;
   onSearch?: (search: string) => void;
   search?: string;
+  renderOption?: (
+    option: T,
+    props: TMultiSelectItem,
+    index: number
+  ) => ReactNode;
 }
 
-export function MultiSelect<T>(props: IProps<T>) {
+export function MultiSelect<T>(props: TMultiSelect<T>) {
   const {
     style,
     options,
@@ -45,6 +49,7 @@ export function MultiSelect<T>(props: IProps<T>) {
     selectAllLabel = SELECT_ALL_LABEL_DEFAULT,
     withFilter,
     filterPlaceholder = 'Search',
+    renderOption,
   } = props;
 
   const [searchText, setSearchText] = useState('');
@@ -132,31 +137,34 @@ export function MultiSelect<T>(props: IProps<T>) {
         />
       )}
 
-      <View>
+      <View style={{ gap: Spacings.xs }}>
         {!visibleOptions.length && <NoResultsFound />}
 
         {!!visibleOptions.length &&
           visibleOptions.map((option, index) => {
+            const optionValue = option[valueKey];
             const isChecked = isSelected(option);
+            const label = option[labelKey] as string;
+            const onClick = () => toggleChecked(option);
+            const accessibilityHint = isChecked
+              ? `uncheck option: ${label}`
+              : `check option: ${label}`;
+            const testId = `MultiSelect-option-${index}`;
+
+            const optionProps = {
+              isChecked,
+              onClick,
+              label,
+              accessibilityHint,
+              testId,
+            };
+
+            if (renderOption) {
+              return renderOption(option, optionProps, index);
+            }
 
             return (
-              <Checkbox
-                key={option[valueKey] as Key}
-                mt={index !== 0 ? 'xs' : undefined}
-                isChecked={isChecked}
-                onCheck={() => toggleChecked(option)}
-                size="sm"
-                hasBorder
-                label={
-                  <TextRegular>{(option as T)[labelKey] as string}</TextRegular>
-                }
-                accessibilityHint={
-                  isChecked
-                    ? `uncheck option: ${option[labelKey]}`
-                    : `check option: ${option[labelKey]}`
-                }
-                testId={`MultiSelect-${index}`}
-              />
+              <MultiSelectItem key={optionValue as Key} {...optionProps} />
             );
           })}
       </View>

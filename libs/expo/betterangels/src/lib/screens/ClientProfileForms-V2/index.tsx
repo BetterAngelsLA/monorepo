@@ -115,6 +115,15 @@ export default function ClientProfileForms(props: IClientProfileForms) {
         return;
       }
 
+      if ('socialMediaProfiles' in values) {
+        inputs.socialMediaProfiles =
+          values.socialMediaProfiles?.filter((item) => item.platformUserId) ||
+          [];
+
+        inputs.phoneNumbers =
+          values.phoneNumbers?.filter((item) => item.number) || [];
+      }
+
       const updateResponse = await updateClient({
         variables: {
           data: inputs,

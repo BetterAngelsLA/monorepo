@@ -1,7 +1,27 @@
 import { parseToDate } from '@monorepo/expo/shared/ui-components';
+import { SocialMediaEnum } from '../../apollo';
 import { GetClientProfileQuery } from '../AddEditClient/__generated__/AddEditClient.generated';
 import { ClientProfileCardEnum } from '../Client/ClientProfile_V2/constants';
-import { FormStateMapping } from './types';
+import { FormStateMapping, TPhoneNumber } from './types';
+
+const defaultSocialMedias = [
+  {
+    platform: SocialMediaEnum.Facebook,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Instagram,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Linkedin,
+    platformUserId: '',
+  },
+  {
+    platform: SocialMediaEnum.Tiktok,
+    platformUserId: '',
+  },
+];
 
 export const extractClientFormData = (
   formType: keyof FormStateMapping,
@@ -56,6 +76,57 @@ export const extractClientFormData = (
       return {
         id,
         importantNotes,
+      };
+    }
+    case ClientProfileCardEnum.ContactInfo: {
+      const {
+        id,
+        residenceAddress,
+        mailingAddress,
+        socialMediaProfiles,
+        preferredCommunication,
+        phoneNumbers,
+        user,
+      } = clientProfile;
+
+      let updatedPhoneNumbers: TPhoneNumber[] = [
+        { number: '', isPrimary: false },
+      ];
+
+      if (phoneNumbers?.length) {
+        updatedPhoneNumbers = phoneNumbers.map((item) => {
+          const { __typename, ...rest } = item;
+
+          return rest;
+        });
+      }
+
+      const updatedSocialMediaProfiles = defaultSocialMedias.map(
+        (defaultProfile) => {
+          const existingProfile = socialMediaProfiles?.find(
+            (profile) => profile.platform === defaultProfile.platform
+          );
+
+          if (existingProfile) {
+            const { __typename, ...cleanedProfile } = existingProfile;
+            return cleanedProfile;
+          }
+
+          return defaultProfile;
+        }
+      );
+
+      return {
+        id,
+        residenceAddress,
+        mailingAddress,
+        user: {
+          id: user.id,
+          email: user.email,
+        },
+        socialMediaProfiles: updatedSocialMediaProfiles,
+        preferredCommunication,
+        phoneNumbers: updatedPhoneNumbers,
       };
     }
 
