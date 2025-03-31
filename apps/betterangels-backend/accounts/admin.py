@@ -9,12 +9,7 @@ from django.utils.html import format_html
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 
 from .admin_request_mixin import AdminRequestMixin
-from .forms import (
-    CustomOrganizationForm,
-    OrganizationUserForm,
-    UserChangeForm,
-    UserCreationForm,
-)
+from .forms import OrganizationUserForm, UserChangeForm, UserCreationForm
 from .models import (
     ExtendedOrganizationInvitation,
     PermissionGroup,
@@ -50,10 +45,10 @@ class PermissionGroupInline(admin.TabularInline):
 
 @admin.register(Organization)
 class CustomOrganizationAdmin(admin.ModelAdmin):
-    form = CustomOrganizationForm
     inlines = [PermissionGroupInline]
-    list_display = ("name",)  # Adjust according to your model fields
-    search_fields = ("name",)  # Enables searching by name in the autocomplete fields
+    list_display = ("name",)
+    search_fields = ("name",)
+    fields = ("name", "is_active")
 
 
 @admin.register(OrganizationUser)
