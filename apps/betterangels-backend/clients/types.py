@@ -256,20 +256,20 @@ class ClientProfileBaseType:
     age: auto
     california_id: auto
     date_of_birth: auto
-    email: auto
+    email: Optional[NonBlankString]
     eye_color: auto
-    first_name: auto
+    first_name: Optional[NonBlankString]
     gender: auto
     gender_other: auto
     hair_color: auto
     height_in_inches: auto
     important_notes: auto
-    last_name: auto
+    last_name: Optional[NonBlankString]
     living_situation: Optional[LivingSituationEnum]
     mailing_address: auto
     marital_status: auto
-    middle_name: auto
-    nickname: auto
+    middle_name: Optional[NonBlankString]
+    nickname: Optional[NonBlankString]
     phone_number: Optional[PhoneNumberScalar]  # type: ignore
     physical_description: auto
     place_of_birth: auto
