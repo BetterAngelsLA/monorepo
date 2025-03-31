@@ -50,6 +50,10 @@ export { default as PdfViewer } from './PdfViewer';
 export { default as Picker } from './Picker';
 export { default as Pill } from './Pill';
 export { default as PillContainer } from './PillContainer';
+export {
+  PreferrredCommunicationIcon,
+  TPreferredCommunication,
+} from './PreferrredCommunicationIcon';
 export { default as Radio } from './Radio';
 export { default as RevertModal } from './RevertModal';
 export { default as SearchableDropdown } from './SearchableDropdown';
