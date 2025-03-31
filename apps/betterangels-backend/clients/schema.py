@@ -109,7 +109,10 @@ def validate_client_name(user_data: dict, nickname: Optional[str], user: Optiona
     return [{"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name}]
 
 
-def validate_user_email(email: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
+def validate_user_email(
+    email: Optional[str],
+    user: Optional[User] = None,
+) -> list[dict[str, Any]]:
     if email in [strawberry.UNSET, None, ""]:
         return []
 
@@ -118,10 +121,38 @@ def validate_user_email(email: Optional[str], user: Optional[User] = None) -> li
         return [{"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_INVALID.name}]
 
     # exclude the user being updated from the unique check
-    exclude_arg = {"id": user.pk} if user else {}
+    user_exclude_arg = {"id": user.pk} if user else {}
+    client_profile_exclude_arg = {"user_id": user.pk} if user else {}
 
-    if User.objects.exclude(**exclude_arg).filter(email__iexact=email).exists():
+    if User.objects.exclude(**user_exclude_arg).filter(email__iexact=email).exists():
         return [{"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
+
+    if ClientProfile.objects.exclude(**client_profile_exclude_arg).filter(email__iexact=email).exists():
+        return [{"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
+
+    return []
+
+
+def validate_client_email(
+    email: Optional[str],
+    client_profile: Optional[ClientProfile] = None,
+) -> list[dict[str, Any]]:
+    if email in [strawberry.UNSET, None, ""]:
+        return []
+
+    email: str
+    if not re.search(EMAIL_REGEX, email):
+        return [{"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_INVALID.name}]
+
+    # exclude the client_profile being updated from the unique check
+    user_exclude_arg = {"client_profile": client_profile.pk} if client_profile else {}
+    client_profile_exclude_arg = {"id": client_profile.pk} if client_profile else {}
+
+    if ClientProfile.objects.exclude(**client_profile_exclude_arg).filter(email__iexact=email).exists():
+        return [{"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
+
+    if User.objects.exclude(**user_exclude_arg).filter(email__iexact=email).exists():
+        return [{"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
 
     return []
 
@@ -229,13 +260,20 @@ def validate_client_profile_data(data: dict) -> None:
     errors: list = []
 
     user = None
+    client_profile = None
 
     if value_exists(data.get("id")):
         user = User.objects.filter(client_profile__id=data["id"]).first()
+        client_profile = ClientProfile.objects.filter(id=data["id"]).first()
+
+    # errors += validate_client_name(data, client_profile, user)
 
     if user_data := data.get("user"):
         errors += validate_client_name(user_data, data.get("nickname"), user)
         errors += validate_user_email(user_data.get("email"), user)
+
+    if email := data.get("email"):
+        errors += validate_client_email(email, client_profile)
 
     if data.get("california_id"):
         errors += validate_california_id(data["california_id"], user)
@@ -448,7 +486,6 @@ class Mutation:
             # TODO: Note.client is still an fk to User, so we need to continue updating users until Note.client
             # is updated to point to ClientProfile. See: DEV-1615
             else:
-                email = client_profile_data.get("email")
                 client_user = resolvers.update(
                     info,
                     client_user,
@@ -456,7 +493,7 @@ class Mutation:
                         "first_name": client_profile_data.get("first_name"),
                         "last_name": client_profile_data.get("last_name"),
                         "middle_name": client_profile_data.get("middle_name"),
-                        "email": email.lower() if email else None,
+                        "email": client_profile_data.get("email"),
                         "id": client_profile.user.id,
                     },
                 )
