@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from common.graphql.types import NonBlankString
 import strawberry
 import strawberry_django
 from organizations.models import Organization
@@ -35,10 +36,10 @@ class OrganizationType:
 
 @strawberry_django.type(User)
 class UserBaseType:
-    first_name: auto
-    last_name: auto
-    middle_name: auto
-    email: auto
+    first_name: Optional[NonBlankString]
+    last_name: Optional[NonBlankString]
+    middle_name: Optional[NonBlankString]
+    email: Optional[NonBlankString]
 
 
 @strawberry_django.type(User)

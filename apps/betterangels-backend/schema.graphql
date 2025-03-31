@@ -518,10 +518,10 @@ input CreateTaskInput {
 union CreateTaskPayload = TaskType | OperationInfo
 
 input CreateUserInput {
-  firstName: String
-  lastName: String
-  middleName: String
-  email: String
+  firstName: NonBlankString
+  lastName: NonBlankString
+  middleName: NonBlankString
+  email: NonBlankString
 }
 
 """Date (isoformat)"""
@@ -1668,10 +1668,10 @@ union UpdateTaskLocationPayload = TaskType | OperationInfo
 union UpdateTaskPayload = TaskType | OperationInfo
 
 input UpdateUserInput {
-  firstName: String
-  lastName: String
-  middleName: String
-  email: String
+  firstName: NonBlankString
+  lastName: NonBlankString
+  middleName: NonBlankString
+  email: NonBlankString
   id: ID!
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
@@ -1680,10 +1680,10 @@ input UpdateUserInput {
 scalar Upload
 
 type UserType {
-  firstName: String
-  lastName: String
-  middleName: String
-  email: String
+  firstName: NonBlankString
+  lastName: NonBlankString
+  middleName: NonBlankString
+  email: NonBlankString
   id: ID!
   clientProfile: DjangoModelType
   hasAcceptedTos: Boolean
