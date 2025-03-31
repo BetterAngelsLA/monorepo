@@ -459,11 +459,29 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             validate_client_profile_data(client_profile_data)
 
-            if user_data := client_profile_data.pop("user", {}):
-                client_user = User.objects.create_client(**user_data)
-            # TODO: Note.client is still an fk to User, so we need to continue creating users until Note.client
-            # is updated to point to ClientProfile. See: DEV-1615
+            if "user" in client_profile_data and client_profile_data["user"] is not strawberry.UNSET:
+                user_data = client_profile_data.pop("user")
             else:
+                user_data = {}
+
+            user_fields = ["first_name", "last_name", "middle_name", "email"]
+
+            # TODO: Remove in DEV-1611.
+            # if
+            for field in user_fields:
+                if field in user_data and user_data.get(field) is strawberry.UNSET:
+                    user_data.pop(field)
+
+            if user_data:
+                client_user = User.objects.create_client(**user_data)
+            # TODO: Remove in DEV-1652. Note.client is still an fk to User, so we need to
+            # continue creating users until Note.client is updated to point to ClientProfile.
+            else:
+
+                for field in user_fields:
+                    if field in client_profile_data and client_profile_data.get(field) is strawberry.UNSET:
+                        client_profile_data.pop(field)
+
                 client_user = User.objects.create_client(
                     first_name=client_profile_data.get("first_name"),
                     last_name=client_profile_data.get("last_name"),
@@ -483,13 +501,18 @@ class Mutation:
             )
 
             # TODO: Remove in DEV-1611
-            user_fields = ["first_name", "last_name", "middle_name", "email"]
-
-            for field in user_fields:
-                if not client_profile_data.get(field) and user_data and user_data.get(field):
-                    setattr(client_profile, field, user_data.get(field))
-
-            client_profile.save()
+            # write user name & email fields to client_profile before fe cutover
+            if user_data:
+                client_profile = resolvers.update(
+                    info,
+                    client_profile,
+                    {
+                        "first_name": user_data.get("first_name"),
+                        "last_name": user_data.get("last_name"),
+                        "middle_name": user_data.get("middle_name"),
+                        "email": user_data.get("email"),
+                    },
+                )
 
             content_type = ContentType.objects.get_for_model(ClientProfile)
 
@@ -532,8 +555,8 @@ class Mutation:
                         "id": client_profile.user.id,
                     },
                 )
-            # TODO: Note.client is still an fk to User, so we need to continue updating users until Note.client
-            # is updated to point to ClientProfile. See: DEV-1615
+            # TODO: Remove in DEV-1652. Note.client is still an fk to User, so we need to
+            # continue updating users until Note.client is updated to point to ClientProfile.
             else:
                 client_user = resolvers.update(
                     info,
@@ -576,13 +599,18 @@ class Mutation:
             )
 
             # TODO: Remove in DEV-1611
-            user_fields = ["first_name", "last_name", "middle_name", "email"]
-
-            for field in user_fields:
-                if not client_profile_data.get(field) and user_data and user_data.get(field):
-                    setattr(client_profile, field, user_data.get(field))
-
-            client_profile.save()
+            # write user name & email fields to client_profile before fe cutover
+            if user_data:
+                client_profile = resolvers.update(
+                    info,
+                    client_profile,
+                    {
+                        "first_name": user_data.get("first_name"),
+                        "last_name": user_data.get("last_name"),
+                        "middle_name": user_data.get("middle_name"),
+                        "email": user_data.get("email"),
+                    },
+                )
 
             return cast(ClientProfileType, client_profile)
 

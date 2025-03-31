@@ -1,8 +1,8 @@
 from typing import List, Optional
 
-from common.graphql.types import NonBlankString
 import strawberry
 import strawberry_django
+from common.graphql.types import NonBlankString
 from organizations.models import Organization
 from strawberry import ID, auto
 

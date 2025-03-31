@@ -538,28 +538,27 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertFalse(ClientProfile.objects.filter(id=client_profile["id"]).exists())
 
     # TODO: Remove in DEV-1611
-    def test_dual_write_client(self) -> None:
+    def test_dual_write_user_to_client(self) -> None:
         create_user = {
             "firstName": "dual first",
-            "lastName": "dual last",
-            "middleName": "dual middle",
-            "email": "dual_email@example.com",
+            "lastName": " ",
+            "middleName": None,
         }
-        variables = {"user": create_user}
+        variables = {"user": create_user, "nickname": "nick"}
         response = self._create_client_profile_fixture(variables)
         client_profile = response["data"]["createClientProfile"]
         created_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
 
         self.assertEqual(created_client_profile.first_name, create_user["firstName"])
-        self.assertEqual(created_client_profile.last_name, create_user["lastName"])
-        self.assertEqual(created_client_profile.middle_name, create_user["middleName"])
-        self.assertEqual(created_client_profile.email, create_user["email"])
+        self.assertIsNone(created_client_profile.last_name)
+        self.assertIsNone(created_client_profile.middle_name)
+        self.assertEqual(created_client_profile.nickname, "nick")
+        self.assertIsNone(created_client_profile.email)
 
         update_user = {
             "id": client_profile["user"]["id"],
-            "firstName": "dual first update",
             "lastName": "dual last update",
-            "middleName": "dual middle update",
+            "middleName": " ",
             "email": "dual_email_update@example.com",
         }
 
@@ -568,18 +567,19 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         response["data"]["updateClientProfile"]
         updated_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
 
-        self.assertEqual(updated_client_profile.first_name, update_user["firstName"])
+        self.assertEqual(updated_client_profile.first_name, create_user["firstName"])
         self.assertEqual(updated_client_profile.last_name, update_user["lastName"])
-        self.assertEqual(updated_client_profile.middle_name, update_user["middleName"])
+        self.assertIsNone(updated_client_profile.middle_name)
+        self.assertEqual(updated_client_profile.nickname, "nick")
         self.assertEqual(updated_client_profile.email, update_user["email"])
 
     # TODO: Remove in DEV-1611
-    def test_dual_write_user(self) -> None:
+    def test_dual_write_client_to_user(self) -> None:
         create_variables = {
             "firstName": "dual first",
-            "lastName": "dual last",
-            "middleName": "dual middle",
-            "email": "dual_email@example.com",
+            "lastName": " ",
+            "middleName": None,
+            "nickname": "nick",
         }
         response = self._create_client_profile_fixture(create_variables)
         client_profile = response["data"]["createClientProfile"]
@@ -587,15 +587,15 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         assert created_client_profile.user
         self.assertEqual(created_client_profile.user.first_name, create_variables["firstName"])
-        self.assertEqual(created_client_profile.user.last_name, create_variables["lastName"])
-        self.assertEqual(created_client_profile.user.middle_name, create_variables["middleName"])
-        self.assertEqual(created_client_profile.user.email, create_variables["email"])
+        self.assertIsNone(created_client_profile.user.last_name)
+        self.assertIsNone(created_client_profile.user.middle_name)
+        self.assertEqual(created_client_profile.nickname, "nick")
+        self.assertIsNone(created_client_profile.user.email)
 
         update_variables = {
             "id": client_profile["id"],
-            "firstName": "dual first update",
             "lastName": "dual last update",
-            "middleName": "dual middle update",
+            "middleName": " ",
             "email": "dual_email_update@example.com",
         }
         response = self._update_client_profile_fixture(update_variables)
@@ -603,10 +603,11 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         updated_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
 
         assert updated_client_profile.user
-        self.assertEqual(updated_client_profile.user.first_name, update_variables["firstName"])
-        self.assertEqual(updated_client_profile.user.last_name, update_variables["lastName"])
-        self.assertEqual(updated_client_profile.user.middle_name, update_variables["middleName"])
-        self.assertEqual(updated_client_profile.user.email, update_variables["email"].lower())
+        self.assertEqual(updated_client_profile.first_name, create_variables["firstName"])
+        self.assertEqual(updated_client_profile.last_name, update_variables["lastName"])
+        self.assertIsNone(updated_client_profile.middle_name)
+        self.assertEqual(updated_client_profile.nickname, "nick")
+        self.assertEqual(updated_client_profile.email, update_variables["email"])
 
     @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
     def test_update_client_profile_photo(self) -> None:
