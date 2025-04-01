@@ -1,11 +1,11 @@
 version: 2
 updates:
-  - package-ecosystem: 'yarn'
+  - package-ecosystem: 'npm'
     directory: '/'
     schedule:
       interval: 'weekly'
 
-  - package-ecosystem: 'poetry'
+  - package-ecosystem: 'pip'
     directory: '/'
     schedule:
       interval: 'weekly'
