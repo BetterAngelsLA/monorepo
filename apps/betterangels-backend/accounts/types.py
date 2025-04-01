@@ -28,7 +28,13 @@ class LoginInput:
     password: str
 
 
-@strawberry_django.type(Organization)
+@strawberry_django.ordering.order(Organization)
+class OrganizationOrder:
+    name: auto
+    id: auto
+
+
+@strawberry_django.type(Organization, order=OrganizationOrder)  # type: ignore[literal-required]
 class OrganizationType:
     id: ID
     name: auto
