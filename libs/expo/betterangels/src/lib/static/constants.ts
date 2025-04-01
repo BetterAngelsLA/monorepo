@@ -91,6 +91,6 @@ export const ServicesByCategory = [
   },
   {
     title: 'Legal',
-    items: [ServiceEnum.ContactDpss, ServiceEnum.LegalCounsel],
+    items: [ServiceEnum.ContactDpss, ServiceEnum.LegalCounsel, ServiceEnum.Notary],
   },
 ];
