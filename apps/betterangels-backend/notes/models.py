@@ -38,12 +38,15 @@ if TYPE_CHECKING:
 class ServiceRequest(BaseModel):  # type: ignore[django-manager-missing]
     service = TextChoicesField(choices_enum=ServiceEnum)
     service_other = models.CharField(max_length=100, null=True, blank=True)
-    client = models.ForeignKey(
-        "accounts.User",
+    client_profile = models.ForeignKey(
+        "clients.ClientProfile",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name="client_service_requests",
+        related_name="client_profile_service_requests",
+    )
+    client = models.ForeignKey(
+        "accounts.User", on_delete=models.CASCADE, null=True, blank=True, related_name="client_service_requests"
     )
     status = TextChoicesField(choices_enum=ServiceRequestStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
@@ -95,13 +98,10 @@ class Task(BaseModel):  # type: ignore[django-manager-missing]
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks")
     status = TextChoicesField(choices_enum=TaskStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
-    client = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="client_tasks",
+    client_profile = models.ForeignKey(
+        "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_tasks"
     )
+    client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_tasks")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False, related_name="tasks")
 
     def __str__(self) -> str:
@@ -163,6 +163,9 @@ class Task(BaseModel):  # type: ignore[django-manager-missing]
 )
 class Note(BaseModel):  # type: ignore[django-manager-missing]
     attachments = GenericRelation(Attachment)
+    client_profile = models.ForeignKey(
+        "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_notes"
+    )
     client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_notes")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     # This is the date & time displayed on the note. We don't want to use created_at
