@@ -39,7 +39,7 @@ flake8-bugbear = "^24.12.12"
 django-stubs-ext = "5.0.2"
 djlint = "^1.36.4"
 django-stubs = { extras = ["compatible-mypy"], version = "5.0.2" }
-celery-types = "^0.22.0"
+celery-types = "^0.23.0"
 vcrpy = "^7.0.0"
 djangorestframework-stubs = { extras = [
     "compatible-mypy",
