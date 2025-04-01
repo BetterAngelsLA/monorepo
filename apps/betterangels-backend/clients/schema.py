@@ -458,20 +458,20 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             validate_client_profile_data(client_profile_data)
 
-            # TODO: Remove in DEV-1611
-            if "user" in client_profile_data and client_profile_data["user"] is not strawberry.UNSET:
-                user_data = client_profile_data.pop("user")
-            else:
-                user_data = {}
-
             user_fields = ["first_name", "last_name", "middle_name", "email"]
 
-            for field in user_fields:
-                if field in user_data and user_data.get(field) is strawberry.UNSET:
-                    user_data.pop(field)
+            # TODO: Remove in DEV-1611. After the fe cutover in DEV-1610, `user` won't be on the mutation payload.
+            # The associated user will then be created using client_profile name & email values (else block, below).
+            user_data = client_profile_data.pop("user")
+
+            if user_data is not strawberry.UNSET:
+                for field in user_fields:
+                    if field in user_data and user_data.get(field) is strawberry.UNSET:
+                        user_data.pop(field)
 
             if user_data:
                 client_user = User.objects.create_client(**user_data)
+
             # TODO: Remove in DEV-1652. Note.client is still an fk to User, so we need to
             # continue creating users until Note.client is updated to point to ClientProfile.
             else:
@@ -497,8 +497,8 @@ class Mutation:
                 },
             )
 
-            # TODO: Remove in DEV-1611
-            # write user name & email fields to client_profile before fe cutover
+            # TODO: Remove in DEV-1611. After the fe cutover in DEV-1610, `user` won't be on the mutation payload.
+            # Name & email fields will be available directly on client_profile.
             if user_data:
                 client_profile = resolvers.update(
                     info,
@@ -540,6 +540,8 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             validate_client_profile_data(client_profile_data)
 
+            # TODO: Remove in DEV-1611. After the fe cutover in DEV-1610, `user` won't be on the mutation payload.
+            # The associated user will then be updated using client_profile name & email values (else block, below).
             if user_data := client_profile_data.pop("user", {}):
                 if user_data and user_data is not strawberry.UNSET:
                     if email := user_data.get("email", ""):
