@@ -129,6 +129,35 @@ export const extractClientFormData = (
         phoneNumbers: updatedPhoneNumbers,
       };
     }
+    case ClientProfileCardEnum.Demographic: {
+      const {
+        id,
+        gender,
+        pronouns,
+        race,
+        placeOfBirth,
+        heightInInches,
+        eyeColor,
+        hairColor,
+        maritalStatus,
+        physicalDescription,
+        adaAccommodation,
+      } = clientProfile;
+
+      return {
+        id,
+        gender,
+        pronouns,
+        race,
+        placeOfBirth,
+        heightInInches,
+        eyeColor,
+        hairColor,
+        maritalStatus,
+        physicalDescription,
+        adaAccommodation,
+      };
+    }
 
     default:
       return {};

@@ -1,7 +1,14 @@
 import {
+  AdaAccommodationEnum,
+  EyeColorEnum,
+  GenderEnum,
+  HairColorEnum,
   LanguageEnum,
   LivingSituationEnum,
+  MaritalStatusEnum,
   PreferredCommunicationEnum,
+  PronounEnum,
+  RaceEnum,
   SocialMediaEnum,
   VeteranStatusEnum,
 } from '../../apollo';
@@ -33,8 +40,16 @@ export type TPhoneNumber = {
 };
 
 export type DemographicInfoState = {
-  // TODO: implement actual demographic form
-  name: string;
+  gender?: GenderEnum | null;
+  pronouns?: PronounEnum | null;
+  race?: RaceEnum | null;
+  placeOfBirth?: string | null;
+  heightInInches?: number | null;
+  eyeColor?: EyeColorEnum | null;
+  hairColor?: HairColorEnum | null;
+  maritalStatus?: MaritalStatusEnum | null;
+  physicalDescription?: string | null;
+  adaAccommodation?: AdaAccommodationEnum[] | null;
 };
 
 export type FullnameState = {

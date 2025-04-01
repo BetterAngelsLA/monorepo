@@ -15,7 +15,7 @@ interface ISingleSelectProps {
   placeholder?: string;
   onChange: (value: string | null) => void;
   items: { displayValue?: string; value: string }[];
-  selectedValue?: string;
+  selectedValue?: string | null;
   selectNoneLabel?: string;
   allowSelectNone?: boolean;
   error?: string;
