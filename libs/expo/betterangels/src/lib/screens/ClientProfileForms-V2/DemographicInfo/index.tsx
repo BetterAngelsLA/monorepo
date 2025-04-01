@@ -24,10 +24,19 @@ import Height from './Height';
 export default function DemographicInfo() {
   const { control, setValue } = useFormContext<UpdateClientProfileInput>();
 
-  const [gender, pronouns, race] = useWatch({
-    control,
-    name: ['gender', 'pronouns', 'race'],
-  });
+  const [gender, pronouns, race, eyeColor, hairColor, maritalStatus] = useWatch(
+    {
+      control,
+      name: [
+        'gender',
+        'pronouns',
+        'race',
+        'eyeColor',
+        'hairColor',
+        'maritalStatus',
+      ],
+    }
+  );
 
   return (
     <Form>
@@ -78,7 +87,7 @@ export default function DemographicInfo() {
       <Form.Field title="Eye Color">
         <SingleSelect
           placeholder="Select eye color"
-          selectedValue={pronouns}
+          selectedValue={eyeColor}
           items={Object.entries(enumDisplayEyeColor).map(
             ([value, displayValue]) => ({ value, displayValue })
           )}
@@ -89,7 +98,7 @@ export default function DemographicInfo() {
       <Form.Field title="Hair Color">
         <SingleSelect
           placeholder="Select hair color"
-          selectedValue={pronouns}
+          selectedValue={hairColor}
           items={Object.entries(enumDisplayEyeColor).map(
             ([value, displayValue]) => ({ value, displayValue })
           )}
@@ -100,7 +109,7 @@ export default function DemographicInfo() {
       <Form.Field title="Marital Status">
         <SingleSelect
           placeholder="Select marital status"
-          selectedValue={pronouns}
+          selectedValue={maritalStatus}
           items={Object.entries(enumDisplayEyeColor).map(
             ([value, displayValue]) => ({ value, displayValue })
           )}
