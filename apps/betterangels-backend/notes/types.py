@@ -58,8 +58,6 @@ class UpdateServiceRequestInput:
     service_other: auto
     status: auto
     due_by: auto
-    client: Optional[ID]
-    client_profile: ID | None
 
 
 @strawberry_django.ordering.order(models.Task)
@@ -107,9 +105,6 @@ class UpdateTaskInput:
     location: Optional[ID]
     status: auto
     due_by: auto
-    client: Optional[ID]
-    client_profile: ID | None
-
 
 @strawberry_django.type(models.Mood)
 class MoodType:
