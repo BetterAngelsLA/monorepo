@@ -6,14 +6,17 @@ import {
 } from '@monorepo/expo/shared/static';
 import {
   BaseModal,
+  BasicInput,
+  BottomActions,
   ImageViewer,
   Loading,
   PdfViewer,
   TextBold,
+  TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
-import { useNavigation } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import { ReactNode, useLayoutEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AttachmentType } from '../../apollo';
@@ -33,9 +36,11 @@ type TFileScreenComponent = {
 
 export default function FileScreenComponent(props: TFileScreenComponent) {
   const { id } = props;
+  const router = useRouter();
 
   const navigation = useNavigation();
   const [fileView, setFileView] = useState<TFileView | null>(null);
+  const [filename, setFileName] = useState('');
   const { data } = useClientDocumentQuery({ variables: { id } });
 
   useLayoutEffect(() => {
@@ -43,6 +48,8 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
     navigation.setOptions({
       title: enumDisplayDocumentType[data.clientDocument.namespace],
     });
+    // Initialize filename state with originalfilename
+    setFileName(data.clientDocument.originalFilename || '');
   }, [data, navigation]);
 
   if (!data) {
@@ -65,6 +72,26 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
 
   const isImage = attachmentType === AttachmentType.Image;
   const isPdf = mimeType === MimeTypes.PDF;
+
+  function onFilenameChange(value: string): void {
+    setFileName(value);
+  }
+
+  async function handleSubmit() {
+    try {
+      await updateClientDocument({
+        variables: {
+          data: {
+            id,
+            originalFilename: filename,
+          }
+        }
+      });
+      router.back();
+    } catch (error) {
+      console.error('Error updating filename: ', error);
+    }
+  }
 
   return (
     <>
@@ -114,9 +141,18 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
           <TextBold mt="sm" size="sm">
             File Name
           </TextBold>
-          <TextRegular size="sm" style={{ width: '100%' }}>
-            {originalFilename}
-          </TextRegular>
+          <BasicInput
+            label="File Name"
+            placeholder={'Enter a file name'}
+            value={filename}
+            required
+            mt="sm"
+            errorMessage={
+              !file.name.trim() ? 'file name is required' : undefined
+            }
+            onDelete={() => onFilenameChange('')}
+            onChangeText={(val) => onFilenameChange(val)}
+          />
         </View>
         <TextRegular textAlign="right" size="sm">
           Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')}
@@ -132,6 +168,17 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
           {fileView.content}
         </BaseModal>
       )}
+      <BottomActions
+        cancel={
+          <TextButton
+            onPress={router.back}
+            fontSize="sm"
+            accessibilityHint={`cancels the change of the file name`}
+            title="Cancel"
+          />
+        }
+        onSubmit={handleSubmit()}
+      />
     </>
   );
 }
