@@ -1,10 +1,12 @@
 import { ComponentType } from 'react';
+import { ViewStyle } from 'react-native';
 import { ClientProfileCardEnum } from '../../Client/ClientProfile_V2/constants';
 import { TClientProfile } from '../../Client/ClientProfile_V2/types';
-import { HmisProfiles } from './HmisProfile/HmisProfiles';
+import { HmisProfilesView } from './HmisProfile/HmisProfilesView';
 
 type TRelationComponentProps = {
   clientProfile?: TClientProfile;
+  style?: ViewStyle;
 };
 
 type TRelationConfig = {
@@ -18,6 +20,6 @@ export const clientRelatedModelConfig: Record<string, TRelationConfig> = {
   [ClientProfileCardEnum.HmisIds]: {
     titlePlural: 'HMIS IDs',
     titleSingular: 'HMIS ID',
-    ViewComponent: HmisProfiles,
+    ViewComponent: HmisProfilesView,
   },
 };

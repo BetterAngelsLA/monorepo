@@ -46,7 +46,7 @@ export function ClientRelatedModelForm(props: TClientRelations) {
   useLayoutEffect(() => {
     const navTitle = createMode
       ? `Add ${titleSingular}`
-      : `Edit ${titlePlural}`;
+      : `Edit ${titleSingular}`;
 
     navigation.setOptions({ title: navTitle });
   }, [navigation, clientProfile, section]);

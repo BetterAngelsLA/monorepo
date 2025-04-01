@@ -241,6 +241,10 @@ export default function PrivateLayout() {
         options={getDefaultNavOptions()}
       />
       <Stack.Screen
+        name="clients/[id]/relations/[relationId]/edit"
+        options={getDefaultNavOptions()}
+      />
+      <Stack.Screen
         name="clients/[id]/relations/index"
         options={getDefaultNavOptions()}
       />

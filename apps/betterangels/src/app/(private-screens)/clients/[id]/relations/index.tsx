@@ -1,4 +1,4 @@
-import { ClientRelatedModelView } from '@monorepo/expo/betterangels';
+import { ClientRelatedModelsList } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
 export default function ClientRelationsScreen() {
@@ -12,6 +12,9 @@ export default function ClientRelationsScreen() {
   }
 
   return (
-    <ClientRelatedModelView clientId={clientId} componentName={componentName} />
+    <ClientRelatedModelsList
+      clientId={clientId}
+      componentName={componentName}
+    />
   );
 }

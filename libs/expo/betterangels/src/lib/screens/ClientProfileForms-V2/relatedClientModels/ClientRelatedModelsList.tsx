@@ -1,8 +1,10 @@
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useSnackbar } from '../../../hooks';
+import { MainScrollContainer } from '../../../ui-components';
 import {
   ClientProfileCardEnum,
   isValidClientProfileCardEnum,
@@ -10,16 +12,15 @@ import {
 import { useGetClientProfileQuery } from '../__generated__/clientProfile.generated';
 import { clientRelatedModelConfig } from './config';
 
-type TClientRelations = {
+type TProps = {
   clientId: string;
   componentName: string;
 };
 
-export function ClientRelatedModelView(props: TClientRelations) {
+export function ClientRelatedModelsList(props: TProps) {
   const { clientId, componentName } = props;
 
   const navigation = useNavigation();
-  //   const router = useRouter();
 
   const { showSnackbar } = useSnackbar();
 
@@ -65,10 +66,14 @@ export function ClientRelatedModelView(props: TClientRelations) {
   }
 
   return (
-    <View style={{}}>
-      <Text>HELLO RELATIONS CARD !!!!!</Text>
-
-      <ViewComponent clientProfile={clientProfile} />
-    </View>
+    <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+      <ViewComponent clientProfile={clientProfile} style={styles.container} />
+    </MainScrollContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    gap: Spacings.sm,
+  },
+});
