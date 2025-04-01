@@ -2,30 +2,40 @@
 
 from django.db import migrations
 
-USER_FIELDS = ["first_name", "last_name", "middle_name", "email"]
-
 
 def copy_name_and_email_fields(apps, schema_editor):
-    ClientProfile = apps.get_model("clients", "ClientProfile")
-
-    # Copy name and email fields from client_profile.user to client_profile
-    for client_profile in ClientProfile.objects.all():
-        for field in USER_FIELDS:
-            if getattr(client_profile.user, field) is not None:
-                setattr(client_profile, field, getattr(client_profile.user, field).strip())
-
-        client_profile.save()
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(
+            """
+                UPDATE clients_clientprofile AS cp
+                SET
+                    first_name = NULLIF(TRIM(u.first_name), ''),
+                    last_name = NULLIF(TRIM(u.last_name), ''),
+                    middle_name = NULLIF(TRIM(u.middle_name), ''),
+                    email = NULLIF(TRIM(u.email), '')
+                FROM accounts_user AS u
+                WHERE cp.user_id = u.id
+            """
+        )
 
 
 def clear_name_and_email_fields(apps, schema_editor):
-    ClientProfile = apps.get_model("clients", "ClientProfile")
-
-    # Clear name and email fields from client_profile.user to client_profile
-    for client_profile in ClientProfile.objects.all():
-        for field in USER_FIELDS:
-            setattr(client_profile, field, None)
-
-        client_profile.save()
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(
+            """
+                UPDATE clients_clientprofile
+                SET
+                    first_name = NULL,
+                    last_name = NULL,
+                    middle_name = NULL,
+                    email = NULL
+                WHERE
+                    first_name IS NOT NULL OR
+                    last_name IS NOT NULL OR
+                    middle_name IS NOT NULL OR
+                    email IS NOT NULL;
+            """
+        )
 
 
 class Migration(migrations.Migration):
