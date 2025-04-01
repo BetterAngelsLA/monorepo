@@ -6,7 +6,8 @@ import {
 } from '@monorepo/expo/shared/static';
 import {
   Button,
-  Loading,
+  KeyboardAwareScrollView,
+  LoadingView,
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -17,7 +18,6 @@ import { StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUpdateNoteMutation, useViewNoteQuery } from '../../apollo';
 import { generatePublicNote } from '../../helpers';
-import { MainScrollContainer } from '../../ui-components';
 
 export default function PublicNote({ noteId }: { noteId: string }) {
   const { data, loading: isLoading } = useViewNoteQuery({
@@ -81,23 +81,12 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   }, [data, userChange]);
 
   if (isLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-        }}
-      >
-        <Loading size="large" />
-      </View>
-    );
+    return <LoadingView />;
   }
 
   return (
     <>
-      <MainScrollContainer pb={Spacings.xl} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+      <KeyboardAwareScrollView>
         <View
           style={{
             gap: Spacings.sm,
@@ -139,7 +128,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
             />
           </View>
         </View>
-      </MainScrollContainer>
+      </KeyboardAwareScrollView>
       <View
         style={{
           flexDirection: 'row',

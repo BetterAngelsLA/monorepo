@@ -31,11 +31,13 @@ export default defineConfig(({ mode }) => {
       ),
     },
 
-    server: {
-      port: SERVER_PORT,
-      host: 'localhost',
-      proxy: isDev ? devServerProxy : {},
-    },
+    ...(isDev && {
+      server: {
+        port: SERVER_PORT,
+        host: 'localhost',
+        proxy: devServerProxy,
+      },
+    }),
 
     preview: {
       port: 8183,

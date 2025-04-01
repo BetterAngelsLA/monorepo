@@ -2,13 +2,13 @@ import { format, parse } from 'date-fns';
 
 const DEFAULT_OUTPUT_FORMAT = 'MM/dd/yyyy';
 
-interface TFormattedLength {
+interface TProps {
   date: string;
   inputFormat: string;
   outputFormat?: string;
 }
 
-export function parseDate(props: TFormattedLength): string {
+export function formatDateStatic(props: TProps): string {
   const { date, inputFormat, outputFormat = DEFAULT_OUTPUT_FORMAT } = props;
 
   if (!date) {
@@ -21,7 +21,7 @@ export function parseDate(props: TFormattedLength): string {
     return format(parsed, outputFormat);
   } catch {
     console.error(
-      `parseDate: failed to parse date: [${date}] with inputFormat [${inputFormat}]`
+      `[formatDateStatic]: failed to format date: [${date}] with inputFormat [${inputFormat}] and outputFormat [${outputFormat}]`
     );
 
     return '';

@@ -1,7 +1,7 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Picker as RNPicker } from '@react-native-picker/picker';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,8 +15,9 @@ export default function Picker(props: IPickerProps) {
     error,
     selectedDisplayValue,
     selectedValue,
-    value,
     placeholder,
+    allowSelectNone,
+    selectNoneLabel,
     items,
     label,
     mb,
@@ -26,22 +27,42 @@ export default function Picker(props: IPickerProps) {
     mr,
     ml,
   } = props;
-  const [localValue, setLocalValue] = useState<string | null>(value || null);
+
+  const [localValue, setLocalValue] = useState<string | null>(null);
+
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+
+  useEffect(() => {
+    setLocalValue(selectedValue || null);
+  }, [selectedValue, setLocalValue]);
+
+  function onPressDone() {
+    setIsModalVisible(false);
+
+    if (localValue) {
+      onChange(localValue);
+
+      return;
+    }
+
+    if (allowSelectNone) {
+      onChange(null);
+
+      return;
+    }
+
+    onChange(items[0].value);
+  }
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
+
   return (
     <>
       <View>
         {label && <TextRegular ml="xs">{label}</TextRegular>}
         <Pressable
-          onPress={() => {
-            setIsModalVisible(true);
-            if (!localValue && items[0].value) {
-              setLocalValue(items[0].value);
-            }
-          }}
+          onPress={() => setIsModalVisible(true)}
           style={[
             styles.selectButton,
             {
@@ -92,12 +113,7 @@ export default function Picker(props: IPickerProps) {
             <Pressable
               accessibilityHint={`selects ${localValue}`}
               accessibilityRole="button"
-              onPress={() => {
-                if (localValue) {
-                  onChange(localValue);
-                }
-                setIsModalVisible(false);
-              }}
+              onPress={onPressDone}
             >
               <TextBold color={Colors.IOS_BLUE} size="ms">
                 Done
@@ -109,6 +125,14 @@ export default function Picker(props: IPickerProps) {
             selectedValue={localValue}
             onValueChange={(itemValue) => setLocalValue(itemValue)}
           >
+            {!!allowSelectNone && (
+              <RNPicker.Item
+                label={selectNoneLabel || placeholder}
+                value={null}
+                enabled={true}
+              />
+            )}
+
             {items.map((item) => (
               <RNPicker.Item
                 key={item.value}

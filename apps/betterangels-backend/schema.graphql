@@ -25,6 +25,7 @@ directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeat
 enum AccessibilityChoices {
   MEDICAL_EQUIPMENT_PERMITTED
   WHEELCHAIR_ACCESSIBLE
+  ADA_ROOMS
 }
 
 type AccessibilityType {
@@ -180,6 +181,7 @@ enum CityChoices {
   WESTLAKE_VILLAGE
   WEST_LOS_ANGELES
   WHITTIER
+  WILMINGTON
 }
 
 type CityType {
@@ -434,6 +436,8 @@ input CreateClientProfileInput {
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
 
+union CreateHmisProfilePayload = HmisProfileType | OperationInfo
+
 input CreateNoteDataImportInput {
   sourceFile: String!
   notes: String!
@@ -525,6 +529,8 @@ input DeleteDjangoObjectInput {
   id: ID!
 }
 
+union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
+
 union DeleteMoodPayload = DeletedObjectType | OperationInfo
 
 union DeleteNotePayload = NoteType | OperationInfo
@@ -545,6 +551,7 @@ enum DemographicChoices {
   SENIORS
   FAMILIES
   SINGLE_MOMS
+  SINGLE_DADS
   OTHER
 }
 
@@ -586,6 +593,10 @@ enum EntryRequirementChoices {
   PHOTO_ID
   REFERRAL
   RESERVATION
+  BACKGROUND
+  HOMELESS_VERIFICATION
+  WALK_UPS
+  VEHICLE_REGISTRATION
 }
 
 type EntryRequirementType {
@@ -649,6 +660,8 @@ enum GeneralServiceChoices {
   MAIL
   PHONE
   TRANSPORTATION
+  LAUNDRY
+  TLS
 }
 
 type GeneralServiceType {
@@ -692,15 +705,26 @@ enum HmisAgencyEnum {
 }
 
 input HmisProfileInput {
-  id: ID
-  hmisId: String!
+  hmisId: NonBlankString
   agency: HmisAgencyEnum!
+  id: ID
+  clientProfile: ID
 }
 
 type HmisProfileType {
-  id: ID!
-  hmisId: String!
+  hmisId: NonBlankString
   agency: HmisAgencyEnum!
+  id: ID!
+}
+
+type HmisProfileTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [HmisProfileType!]!
 }
 
 enum ImmediateNeedChoices {
@@ -867,12 +891,15 @@ type Mutation {
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
+  createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_hmisprofile"}], any: true)
+  updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_hmisprofile"}], any: true)
+  deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_hmisprofile"}], any: true)
   deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
-  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
-  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
+  createClientDocument(data: CreateClientDocumentInput!): CreateClientDocumentPayload! @hasPerm(permissions: [{app: "common", permission: "add_attachment"}], any: true)
+  updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
@@ -897,6 +924,8 @@ type Mutation {
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
 }
+
+scalar NonBlankString
 
 type NoteDataImportType {
   id: UUID!
@@ -1017,9 +1046,24 @@ enum Ordering {
   DESC_NULLS_LAST
 }
 
+input OrganizationOrder {
+  name: Ordering
+  id: Ordering
+}
+
 type OrganizationType {
   id: ID!
   name: String!
+}
+
+type OrganizationTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [OrganizationType!]!
 }
 
 enum ParkingChoices {
@@ -1040,6 +1084,7 @@ enum PetChoices {
   DOGS_OVER_25_LBS
   EXOTICS
   SERVICE_ANIMALS
+  PET_AREA
   NO_PETS_ALLOWED
 }
 
@@ -1083,12 +1128,14 @@ enum PronounEnum {
 
 type Query {
   currentUser: UserType!
-  availableOrganizations: [OrganizationType!]! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  caseworkerOrganizations(order: OrganizationOrder, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientProfilesPaginated(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocuments(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocumentsPaginated(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
+  hmisProfile(pk: ID!): HmisProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
+  hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
@@ -1155,9 +1202,11 @@ input RevertNoteInput {
 union RevertNotePayload = NoteType | OperationInfo
 
 enum RoomStyleChoices {
-  CONGREGANT
+  CONGREGATE
   CUBICLE_LOW_WALLS
   CUBICLE_HIGH_WALLS
+  HIGH_BUNK
+  LOW_BUNK
   SHARED_ROOMS
   SINGLE_ROOM
   MOTEL_ROOM
@@ -1568,6 +1617,8 @@ union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
 union UpdateCurrentUserPayload = UserType | OperationInfo
 
+union UpdateHmisProfilePayload = HmisProfileType | OperationInfo
+
 input UpdateNoteInput {
   id: ID!
   purpose: String
@@ -1638,7 +1689,7 @@ type UserType {
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
-  organizationsOrganization: [OrganizationType!]
+  organizationsOrganization(order: OrganizationOrder): [OrganizationType!]
   username: String!
 }
 

@@ -3,10 +3,13 @@ import {
   DownloadIcon,
   ViewIcon,
 } from '@monorepo/expo/shared/icons';
+import { DeleteModal } from '@monorepo/expo/shared/ui-components';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { useState } from 'react';
 import { Alert } from 'react-native';
 import { ClientDocumentType } from '../apollo';
+import { useSnackbar } from '../hooks';
 import {
   ClientProfileDocument,
   useDeleteClientDocumentMutation,
@@ -16,7 +19,7 @@ import MainModal from './MainModal';
 interface IDocumentModalProps {
   closeModal: () => void;
   isModalVisible: boolean;
-  document: ClientDocumentType | undefined;
+  document: ClientDocumentType;
   clientId: string;
 }
 
@@ -24,6 +27,10 @@ const MIME_TYPE = 'application/octet-stream';
 
 export default function DocumentModal(props: IDocumentModalProps) {
   const { isModalVisible, closeModal, document, clientId } = props;
+
+  const { showSnackbar } = useSnackbar();
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
   const [deleteDocument] = useDeleteClientDocumentMutation({
     refetchQueries: [
       {
@@ -33,22 +40,28 @@ export default function DocumentModal(props: IDocumentModalProps) {
         },
       },
     ],
-    onCompleted: () => {
-      closeModal();
-    },
   });
 
-  const handleDelete = async () => {
-    if (!document?.id) return;
+  const onClickDeleteFile = async () => {
+    setDeleteModalVisible(true);
+  };
+
+  const deleteFile = async () => {
+    closeModal();
+
     try {
       await deleteDocument({
         variables: {
-          id: document?.id,
+          id: document.id,
         },
       });
     } catch (err) {
-      console.error('Error deleting document', err);
-      Alert.alert('Error', 'An error occurred while deleting the document.');
+      console.error('[DocumentModal] Error deleting document', err);
+
+      showSnackbar({
+        message: 'An error occurred while deleting the document',
+        type: 'error',
+      });
     }
   };
 
@@ -90,7 +103,7 @@ export default function DocumentModal(props: IDocumentModalProps) {
     }
   };
 
-  const fileTypeText = getFileFileTypeText(document?.mimeType);
+  const fileTypeText = getFileFileTypeText(document.mimeType);
 
   const ACTIONS = [
     {
@@ -106,19 +119,30 @@ export default function DocumentModal(props: IDocumentModalProps) {
     {
       title: `Delete this ${fileTypeText}`,
       Icon: DeleteIcon,
-      onPress: handleDelete,
+      onPress: onClickDeleteFile,
     },
   ];
 
   return (
-    <MainModal
-      closeButton
-      vertical
-      actions={ACTIONS}
-      isModalVisible={isModalVisible}
-      closeModal={closeModal}
-      opacity={0.5}
-    />
+    <>
+      <MainModal
+        closeButton
+        vertical
+        actions={ACTIONS}
+        isModalVisible={isModalVisible}
+        closeModal={closeModal}
+        opacity={0.5}
+      />
+
+      <DeleteModal
+        body={`All data associated with this ${fileTypeText} will be deleted.`}
+        title={`Delete ${fileTypeText}?`}
+        onDelete={deleteFile}
+        onCancel={() => setDeleteModalVisible(false)}
+        isVisible={deleteModalVisible}
+        deleteableItemName={fileTypeText}
+      />
+    </>
   );
 }
 

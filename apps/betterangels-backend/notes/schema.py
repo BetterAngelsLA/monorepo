@@ -106,10 +106,6 @@ class Mutation:
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         with transaction.atomic():
             user = get_current_user(info)
-            # TODO: Handle creating Notes without existing Client.
-            # if not data.client:
-            #     User.create_client()
-
             permission_group = get_user_permission_group(user)
 
             note_data = asdict(data)

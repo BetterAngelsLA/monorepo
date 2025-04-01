@@ -179,3 +179,24 @@ class VideoPermissions(models.TextChoices):
     CHANGE = "shelters.change_video", _("Can change video")
     DELETE = "shelters.delete_video", _("Can delete video")
     VIEW = "shelters.view_video", _("Can view video")
+
+
+class ExitPolicyPermissions(models.TextChoices):
+    ADD = "shelters.add_exitpolicy", _("Can add exit policy")
+    CHANGE = "shelters.change_exitpolicy", _("Can change exit policy")
+    DELETE = "shelters.delete_exitpolicy", _("Can delete exit policy")
+    VIEW = "shelters.view_exitpolicy", _("Can view exit policy")
+
+
+class MealServicePermissions(models.TextChoices):
+    ADD = "shelters.add_mealservice", _("Can add meal service")
+    CHANGE = "shelters.change_mealservice", _("Can change meal service")
+    DELETE = "shelters.delete_mealservice", _("Can delete meal service")
+    VIEW = "shelters.view_mealservice", _("Can view meal service")
+
+
+class ReferralRequirementPermissions(models.TextChoices):
+    ADD = "shelters.add_referralrequirement", _("Can add referral requirement")
+    CHANGE = "shelters.change_referralrequirement", _("Can change referral requirement")
+    DELETE = "shelters.delete_referralrequirement", _("Can delete referral requirement")
+    VIEW = "shelters.view_referralrequirement", _("Can view referral requirement")

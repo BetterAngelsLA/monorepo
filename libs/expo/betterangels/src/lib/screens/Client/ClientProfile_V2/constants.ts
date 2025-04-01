@@ -9,6 +9,12 @@ export enum ClientProfileCardEnum {
   HmisIds = 'HMIS_IDS',
 }
 
+export function isValidClientProfileCardEnum(
+  value: any
+): value is ClientProfileCardEnum {
+  return Object.values(ClientProfileCardEnum).includes(value);
+}
+
 export const ClientProfileCardTitles: Record<ClientProfileCardEnum, string> = {
   [ClientProfileCardEnum.FullName]: 'Full Name',
   [ClientProfileCardEnum.PersonalInfo]: 'Personal Info',

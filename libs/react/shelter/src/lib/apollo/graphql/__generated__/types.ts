@@ -18,6 +18,7 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
+  NonBlankString: { input: any; output: any; }
   PhoneNumber: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any; }
@@ -28,6 +29,7 @@ export type Scalars = {
 };
 
 export enum AccessibilityChoices {
+  AdaRooms = 'ADA_ROOMS',
   MedicalEquipmentPermitted = 'MEDICAL_EQUIPMENT_PERMITTED',
   WheelchairAccessible = 'WHEELCHAIR_ACCESSIBLE'
 }
@@ -187,7 +189,8 @@ export enum CityChoices {
   WestCovina = 'WEST_COVINA',
   WestHollywood = 'WEST_HOLLYWOOD',
   WestLosAngeles = 'WEST_LOS_ANGELES',
-  Whittier = 'WHITTIER'
+  Whittier = 'WHITTIER',
+  Wilmington = 'WILMINGTON'
 }
 
 export type CityType = {
@@ -462,6 +465,8 @@ export type CreateClientProfileInput = {
 
 export type CreateClientProfilePayload = ClientProfileType | OperationInfo;
 
+export type CreateHmisProfilePayload = HmisProfileType | OperationInfo;
+
 export type CreateNoteDataImportInput = {
   notes: Scalars['String']['input'];
   sourceFile: Scalars['String']['input'];
@@ -547,6 +552,8 @@ export type DeleteDjangoObjectInput = {
   id: Scalars['ID']['input'];
 };
 
+export type DeleteHmisProfilePayload = HmisProfileType | OperationInfo;
+
 export type DeleteMoodPayload = DeletedObjectType | OperationInfo;
 
 export type DeleteNotePayload = NoteType | OperationInfo;
@@ -565,6 +572,7 @@ export enum DemographicChoices {
   Families = 'FAMILIES',
   Other = 'OTHER',
   Seniors = 'SENIORS',
+  SingleDads = 'SINGLE_DADS',
   SingleMen = 'SINGLE_MEN',
   SingleMoms = 'SINGLE_MOMS',
   SingleWomen = 'SINGLE_WOMEN',
@@ -609,10 +617,14 @@ export enum DueByGroupEnum {
 }
 
 export enum EntryRequirementChoices {
+  Background = 'BACKGROUND',
+  HomelessVerification = 'HOMELESS_VERIFICATION',
   MedicaidOrMedicare = 'MEDICAID_OR_MEDICARE',
   PhotoId = 'PHOTO_ID',
   Referral = 'REFERRAL',
-  Reservation = 'RESERVATION'
+  Reservation = 'RESERVATION',
+  VehicleRegistration = 'VEHICLE_REGISTRATION',
+  WalkUps = 'WALK_UPS'
 }
 
 export type EntryRequirementType = {
@@ -676,9 +688,11 @@ export enum GeneralServiceChoices {
   EmploymentServices = 'EMPLOYMENT_SERVICES',
   FinancialLiteracyAssistance = 'FINANCIAL_LITERACY_ASSISTANCE',
   HousingNavigation = 'HOUSING_NAVIGATION',
+  Laundry = 'LAUNDRY',
   LegalAssistance = 'LEGAL_ASSISTANCE',
   Mail = 'MAIL',
   Phone = 'PHONE',
+  Tls = 'TLS',
   Transportation = 'TRANSPORTATION'
 }
 
@@ -726,15 +740,25 @@ export enum HmisAgencyEnum {
 
 export type HmisProfileInput = {
   agency: HmisAgencyEnum;
-  hmisId: Scalars['String']['input'];
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
+  hmisId?: InputMaybe<Scalars['NonBlankString']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type HmisProfileType = {
   __typename?: 'HmisProfileType';
   agency: HmisAgencyEnum;
-  hmisId: Scalars['String']['output'];
+  hmisId?: Maybe<Scalars['NonBlankString']['output']>;
   id: Scalars['ID']['output'];
+};
+
+export type HmisProfileTypeOffsetPaginated = {
+  __typename?: 'HmisProfileTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<HmisProfileType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export enum ImmediateNeedChoices {
@@ -899,6 +923,7 @@ export type Mutation = {
   createClientDocument: CreateClientDocumentPayload;
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
+  createHmisProfile: CreateHmisProfilePayload;
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteMood: CreateNoteMoodPayload;
@@ -909,6 +934,7 @@ export type Mutation = {
   deleteClientDocument: DeleteClientDocumentPayload;
   deleteClientProfile: DeleteClientProfilePayload;
   deleteCurrentUser: DeleteCurrentUserPayload;
+  deleteHmisProfile: DeleteHmisProfilePayload;
   deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
@@ -925,6 +951,7 @@ export type Mutation = {
   updateClientProfile: UpdateClientProfilePayload;
   updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
+  updateHmisProfile: UpdateHmisProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateServiceRequest: UpdateServiceRequestPayload;
@@ -955,6 +982,11 @@ export type MutationCreateClientProfileArgs = {
 
 export type MutationCreateClientProfileDataImportArgs = {
   data: CreateProfileDataImportInput;
+};
+
+
+export type MutationCreateHmisProfileArgs = {
+  data: HmisProfileInput;
 };
 
 
@@ -999,6 +1031,11 @@ export type MutationDeleteClientDocumentArgs = {
 
 
 export type MutationDeleteClientProfileArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteHmisProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -1075,6 +1112,11 @@ export type MutationUpdateClientProfilePhotoArgs = {
 
 export type MutationUpdateCurrentUserArgs = {
   data: UpdateUserInput;
+};
+
+
+export type MutationUpdateHmisProfileArgs = {
+  data: HmisProfileInput;
 };
 
 
@@ -1243,10 +1285,24 @@ export enum Ordering {
   DescNullsLast = 'DESC_NULLS_LAST'
 }
 
+export type OrganizationOrder = {
+  id?: InputMaybe<Ordering>;
+  name?: InputMaybe<Ordering>;
+};
+
 export type OrganizationType = {
   __typename?: 'OrganizationType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
+};
+
+export type OrganizationTypeOffsetPaginated = {
+  __typename?: 'OrganizationTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<OrganizationType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export enum ParkingChoices {
@@ -1276,6 +1332,7 @@ export enum PetChoices {
   DogsUnder_25Lbs = 'DOGS_UNDER_25_LBS',
   Exotics = 'EXOTICS',
   NoPetsAllowed = 'NO_PETS_ALLOWED',
+  PetArea = 'PET_AREA',
   ServiceAnimals = 'SERVICE_ANIMALS'
 }
 
@@ -1316,8 +1373,8 @@ export enum PronounEnum {
 
 export type Query = {
   __typename?: 'Query';
-  availableOrganizations: Array<OrganizationType>;
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
+  caseworkerOrganizations: OrganizationTypeOffsetPaginated;
   clientDocument: ClientDocumentType;
   clientDocuments: ClientDocumentTypeOffsetPaginated;
   clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
@@ -1326,6 +1383,8 @@ export type Query = {
   clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
+  hmisProfile: HmisProfileType;
+  hmisProfiles: HmisProfileTypeOffsetPaginated;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
@@ -1341,6 +1400,12 @@ export type Query = {
 
 export type QueryBulkClientProfileImportRecordsArgs = {
   data: ClientProfileImportRecordsBulkInput;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryCaseworkerOrganizationsArgs = {
+  order?: InputMaybe<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1375,6 +1440,16 @@ export type QueryClientProfilesArgs = {
 export type QueryClientProfilesPaginatedArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryHmisProfileArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryHmisProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1488,9 +1563,11 @@ export type RevertNoteInput = {
 export type RevertNotePayload = NoteType | OperationInfo;
 
 export enum RoomStyleChoices {
-  Congregant = 'CONGREGANT',
+  Congregate = 'CONGREGATE',
   CubicleHighWalls = 'CUBICLE_HIGH_WALLS',
   CubicleLowWalls = 'CUBICLE_LOW_WALLS',
+  HighBunk = 'HIGH_BUNK',
+  LowBunk = 'LOW_BUNK',
   MotelRoom = 'MOTEL_ROOM',
   Other = 'OTHER',
   SharedRooms = 'SHARED_ROOMS',
@@ -1910,6 +1987,8 @@ export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 
 export type UpdateCurrentUserPayload = OperationInfo | UserType;
 
+export type UpdateHmisProfilePayload = HmisProfileType | OperationInfo;
+
 export type UpdateNoteInput = {
   id: Scalars['ID']['input'];
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
@@ -1981,6 +2060,11 @@ export type UserType = {
   middleName?: Maybe<Scalars['String']['output']>;
   organizationsOrganization?: Maybe<Array<OrganizationType>>;
   username: Scalars['String']['output'];
+};
+
+
+export type UserTypeOrganizationsOrganizationArgs = {
+  order?: InputMaybe<OrganizationOrder>;
 };
 
 export enum VeteranStatusEnum {

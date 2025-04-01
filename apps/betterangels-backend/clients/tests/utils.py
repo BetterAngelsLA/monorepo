@@ -23,12 +23,12 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 
 
-class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
+# TODO: This is a temporary solution while we refactor the client profile and tests.
+# This class will be removed once ClientProfileGraphQLBaseTestCase is slimmed down.
+class ClientsBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
-        self.EXPECTED_CLIENT_AGE = 20
-        self.date_of_birth = timezone.now().date() - relativedelta(years=self.EXPECTED_CLIENT_AGE)
-        # Order of fields: id -> direct fields and model properties -> display fields -> related fields
+
         self.client_profile_fields = """
             id
             adaAccommodation
@@ -105,6 +105,40 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 email
             }
         """
+
+    def _create_client_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_client_profile_fixture("create", variables)
+
+    def _update_client_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_client_profile_fixture("update", variables)
+
+    def _create_or_update_client_profile_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+        mutation: str = f"""
+            mutation {operation.capitalize()}ClientProfile($data: {operation.capitalize()}ClientProfileInput!) {{ # noqa: B950
+                {operation}ClientProfile(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on ClientProfileType {{
+                        {self.client_profile_fields}
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+
+class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.EXPECTED_CLIENT_AGE = 20
+        self.date_of_birth = timezone.now().date() - relativedelta(years=self.EXPECTED_CLIENT_AGE)
+        # Order of fields: id -> direct fields and model properties -> display fields -> related fields
 
         # Force login the case manager to create client fixtures
         self.graphql_client.force_login(self.org_1_case_manager_1)
@@ -315,32 +349,6 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             "client_profile_1_document_4.txt",
         )["data"]["createClientDocument"]
 
-    def _create_client_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
-        return self._create_or_update_client_profile_fixture("create", variables)
-
-    def _update_client_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
-        return self._create_or_update_client_profile_fixture("update", variables)
-
-    def _create_or_update_client_profile_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
-        assert operation in ["create", "update"], "Invalid operation specified."
-        mutation: str = f"""
-            mutation {operation.capitalize()}ClientProfile($data: {operation.capitalize()}ClientProfileInput!) {{ # noqa: B950
-                {operation}ClientProfile(data: $data) {{
-                    ... on OperationInfo {{
-                        messages {{
-                            kind
-                            field
-                            message
-                        }}
-                    }}
-                    ... on ClientProfileType {{
-                        {self.client_profile_fields}
-                    }}
-                }}
-            }}
-        """
-        return self.execute_graphql(mutation, {"data": variables})
-
     def _create_client_document_fixture(
         self,
         client_profile_id: str,
@@ -384,8 +392,8 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
     def _delete_client_document_fixture(self, document_id: int) -> Dict[str, Any]:
         response = self.execute_graphql(
             """
-            mutation DeleteClientDocument($documentId: ID!) {
-                deleteClientDocument(data: { id: $documentId }) {
+            mutation DeleteClientDocument($id: ID!) {
+                deleteClientDocument(data: { id: $id }) {
                     ... on OperationInfo {
                         messages {
                             kind
@@ -399,7 +407,7 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
                 }
             }
             """,
-            variables={"documentId": document_id},
+            variables={"id": document_id},
         )
         return response
 
@@ -436,3 +444,63 @@ class ClientProfileGraphQLBaseTestCase(GraphQLBaseTestCase):
             },
             files={"photo": photo},
         )
+
+
+class HmisProfileBaseTestCase(ClientsBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.hmis_profile_fields = """
+            id
+            agency
+            hmisId
+        """
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        # TODO: move client profile setup back to ClientProfileGraphQLBaseTestCase
+        # when client profile redesign is completed and tests are refactored
+        self.client_profile = self._create_client_profile_fixture({"user": {"firstName": "Test Client"}})["data"][
+            "createClientProfile"
+        ]
+        self.client_profile_id = self.client_profile["id"]
+
+        self._setup_hmis_profiles()
+
+    def _setup_hmis_profiles(self) -> None:
+        variables = {
+            "agency": HmisAgencyEnum.LAHSA.name,
+            "clientProfile": self.client_profile_id,
+        }
+        self.hmis_profile_1 = self._create_hmis_profile_fixture({**variables, "hmisId": "hmis id 1"})["data"][
+            "createHmisProfile"
+        ]
+        self.hmis_profile_2 = self._create_hmis_profile_fixture({**variables, "hmisId": "hmis id 2"})["data"][
+            "createHmisProfile"
+        ]
+
+    def _create_hmis_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_hmis_profile_fixture("create", variables)
+
+    def _update_hmis_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_hmis_profile_fixture("update", variables)
+
+    def _create_or_update_hmis_profile_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+        mutation: str = f"""
+            mutation {operation.capitalize()}HmisProfile($data: HmisProfileInput!) {{ # noqa: B950
+                {operation}HmisProfile(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on HmisProfileType {{
+                        {self.hmis_profile_fields}
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})

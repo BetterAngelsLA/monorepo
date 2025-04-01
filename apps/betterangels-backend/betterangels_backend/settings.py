@@ -45,6 +45,8 @@ env = environ.Env(
     DEBUG=(bool, False),
     DEFAULT_FROM_EMAIL=(str, ""),
     DJANGO_CACHE_URL=(str, ""),
+    DJANGO_CACHE_BLOCKING_TIMEOUT=(float, 1.0),
+    DJANGO_CACHE_MAX_CONNECTIONS=(int, 100),
     GOOGLE_MAPS_API_KEY=(str, ""),
     IS_LOCAL_DEV=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, True),
@@ -69,7 +71,7 @@ env = environ.Env(
     SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
     USE_IAM_AUTH=(bool, False),
     SESAME_TOKEN_NAME=(str, "token"),
-    SESAME_MAX_AGE=(int, 60 * 60),  # set to 1 hr
+    SESAME_MAX_AGE=(int, 3600),  # set to 1 hr
     SESAME_ONE_TIME=(bool, True),
     SESAME_SALT=(str, "sesame"),
 )
@@ -93,7 +95,7 @@ INSTALLED_APPS = [
     "admin_async_upload",
     "admin_interface",
     "colorfield",
-    "django.contrib.admin",
+    "betterangels_backend.apps.MagicLinkAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.gis",
@@ -248,6 +250,11 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": env("DJANGO_CACHE_URL"),
+        "OPTIONS": {
+            "pool_class": "redis.BlockingConnectionPool",
+            "max_connections": env("DJANGO_CACHE_MAX_CONNECTIONS"),
+            "timeout": env("DJANGO_CACHE_BLOCKING_TIMEOUT"),
+        },
     }
 }
 
@@ -386,7 +393,6 @@ POST_OFFICE = {
         "default": env("POST_OFFICE_EMAIL_BACKEND"),
     },
     "CELERY_ENABLED": True,
-    "DEFAULT_PRIORITY": "now",  # Required to send emails immediately through Celery
 }
 EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"

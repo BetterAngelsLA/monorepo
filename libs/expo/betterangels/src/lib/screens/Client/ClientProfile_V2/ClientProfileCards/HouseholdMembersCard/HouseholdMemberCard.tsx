@@ -1,4 +1,4 @@
-import { parseDate } from '@monorepo/expo/shared/ui-components';
+import { formatDateStatic } from '@monorepo/expo/shared/ui-components';
 import { View, ViewStyle } from 'react-native';
 import { clientHouseholdMemberEnumDisplay } from '../../../../../static';
 import {
@@ -21,7 +21,7 @@ export function HouseholdMemberCard(props: TProps) {
 
   const { name, displayGender, dateOfBirth, relationshipToClient } = member;
 
-  const formattedDob = parseDate({
+  const formattedDob = formatDateStatic({
     date: dateOfBirth,
     inputFormat: 'yyyy-MM-dd',
   });
