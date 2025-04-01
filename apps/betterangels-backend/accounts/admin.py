@@ -46,8 +46,10 @@ class PermissionGroupInline(admin.TabularInline):
 @admin.register(Organization)
 class CustomOrganizationAdmin(admin.ModelAdmin):
     inlines = [PermissionGroupInline]
-    list_display = ("name",)  # Adjust according to your model fields
-    search_fields = ("name",)  # Enables searching by name in the autocomplete fields
+    list_display = ("name",)
+    search_fields = ("name",)
+    fields = ("name", "is_active", "slug")
+    readonly_fields = ("slug",)
 
 
 @admin.register(OrganizationUser)
