@@ -1,0 +1,17 @@
+import { ClientRelatedModelForm } from '@monorepo/expo/betterangels';
+import { useLocalSearchParams } from 'expo-router';
+
+export default function ClientRelatedModelEditScreen() {
+  const { id: clientId, componentName } = useLocalSearchParams<{
+    id: string;
+    componentName: string;
+  }>();
+
+  if (!clientId || !componentName) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
+  return (
+    <ClientRelatedModelForm clientId={clientId} componentName={componentName} />
+  );
+}

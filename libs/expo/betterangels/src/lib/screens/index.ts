@@ -5,6 +5,11 @@ export {
   isValidClientProfileCardEnum,
 } from './Client/ClientProfile_V2/constants';
 export { default as ClientProfileForms } from './ClientProfileForms-V2';
+export {
+  ClientRelatedModelForm,
+  ClientRelatedModelView,
+} from './ClientProfileForms-V2/relatedClientModels';
+export { HmisProfileForm } from './ClientProfileForms-V2/relatedClientModels/HmisProfile/HmisProfileForm';
 export { default as Clients } from './Clients';
 export { default as CreateClientProfile } from './CreateClientProfile';
 export { default as FileScreenComponent } from './FileScreenComponent';

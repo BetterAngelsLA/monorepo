@@ -13,6 +13,7 @@ import { ImportantNotesCard } from './ClientProfileCards/ImportantNotesCard';
 import { PersonalInfoCard } from './ClientProfileCards/PersonalInfoCard';
 import { RelevantContactsCard } from './ClientProfileCards/RelevantContactsCard';
 import { ExpandableProfileContainer } from './ExpandableProfileContainer';
+import { getRouteConfig } from './config';
 import { ClientProfileCardEnum } from './constants';
 
 interface ProfileProps {
@@ -42,45 +43,20 @@ export default function ClientProfileView(props: ProfileProps) {
     setExpandedCard(card);
   }
 
-  const editProfileRoute = `/clients/edit/${clientProfile?.id}`;
-
-  const routeConfig: Partial<
-    Record<
-      ClientProfileCardEnum,
-      { pathname: string; params: { componentName: string } }
-    >
-  > = {
-    [ClientProfileCardEnum.FullName]: {
-      pathname: editProfileRoute,
-      params: {
-        componentName: ClientProfileCardEnum.FullName,
-      },
-    },
-    [ClientProfileCardEnum.PersonalInfo]: {
-      pathname: editProfileRoute,
-      params: {
-        componentName: ClientProfileCardEnum.PersonalInfo,
-      },
-    },
-    [ClientProfileCardEnum.ImportantNotes]: {
-      pathname: editProfileRoute,
-      params: {
-        componentName: ClientProfileCardEnum.ImportantNotes,
-      },
-    },
-    [ClientProfileCardEnum.ContactInfo]: {
-      pathname: editProfileRoute,
-      params: {
-        componentName: ClientProfileCardEnum.ContactInfo,
-      },
-    },
-  };
-
   function onClickEdit(card: ClientProfileCardEnum) {
-    const route = routeConfig[card];
+    if (!clientProfile) {
+      return;
+    }
+
+    const route = getRouteConfig({
+      clientProfile,
+      section: card,
+    });
+
     if (!route) {
       return;
     }
+
     router.push(route);
   }
 
