@@ -96,7 +96,7 @@ class HmisProfile(BaseModel):
     pghistory.DeleteEvent("client_profile.remove"),
 )
 class ClientProfile(BaseModel):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, related_name="client_profile", null=True, blank=True)
     ada_accommodation = ArrayField(
         base_field=TextChoicesField(choices_enum=AdaAccommodationEnum), blank=True, null=True
     )
@@ -190,6 +190,11 @@ class ClientProfile(BaseModel):
         else:
             self.california_id = None
 
+        if self.email:
+            self.email = self.email.lower()
+        else:
+            self.email = None
+
         super().save(*args, **kwargs)
 
     @model_property
@@ -198,7 +203,7 @@ class ClientProfile(BaseModel):
         return " ".join(name_parts).strip()
 
     class Meta:
-        ordering = ["user__first_name"]
+        ordering = ["first_name"]
 
 
 class ClientDocument(Attachment):  # type: ignore[django-manager-missing]
