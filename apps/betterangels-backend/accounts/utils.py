@@ -1,4 +1,4 @@
-from typing import Union, cast
+from typing import Union
 
 from accounts.groups import GroupTemplateNames
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
@@ -33,16 +33,10 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
     # WARNING: Temporary workaround for organization selection
     # TODO: Update once organization selection is implemented. Currently selects
     # the first organization with a default Caseworker role for the user.
-    if not user.is_authenticated or user.pk is None:
-        raise PermissionError("User must be authenticated")
-
-    # Now that we know user is authenticated, cast to our concrete User model.
-    user = cast(User, user)
-
     permission_group = (
         PermissionGroup.objects.select_related("organization", "group")
         .filter(
-            organization__users=user,
+            organization__users=user.pk,
             name=GroupTemplateNames.CASEWORKER,
         )
         .first()
