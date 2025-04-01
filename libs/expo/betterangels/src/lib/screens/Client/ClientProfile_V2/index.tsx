@@ -13,7 +13,7 @@ import { ImportantNotesCard } from './ClientProfileCards/ImportantNotesCard';
 import { PersonalInfoCard } from './ClientProfileCards/PersonalInfoCard';
 import { RelevantContactsCard } from './ClientProfileCards/RelevantContactsCard';
 import { ExpandableProfileContainer } from './ExpandableProfileContainer';
-import { getRouteConfig } from './config';
+import { getClientProfileRouteConfig } from './config';
 import { ClientProfileCardEnum } from './constants';
 
 interface ProfileProps {
@@ -48,7 +48,7 @@ export default function ClientProfileView(props: ProfileProps) {
       return;
     }
 
-    const route = getRouteConfig({
+    const route = getClientProfileRouteConfig({
       clientProfile,
       section: card,
     });

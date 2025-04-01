@@ -229,19 +229,19 @@ export default function PrivateLayout() {
           ),
         }}
       />
-      <Stack.Screen name="clients/edit/[id]" options={getDefaultNavOptions()} />
       <Stack.Screen
         name="clients/create"
         options={getDefaultNavOptions({
           title: 'Create Client Profile',
         })}
       />
+      <Stack.Screen name="clients/[id]/edit" options={getDefaultNavOptions()} />
       <Stack.Screen
-        name="clients/[id]/relations/index"
+        name="clients/[id]/relations/add"
         options={getDefaultNavOptions()}
       />
       <Stack.Screen
-        name="clients/[id]/relations/add"
+        name="clients/[id]/relations/index"
         options={getDefaultNavOptions()}
       />
       <Stack.Screen

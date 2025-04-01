@@ -6,62 +6,66 @@ type TRouteConfig = {
   params: { componentName: ClientProfileCardEnum };
 };
 
-const defaultRouteConfig: Partial<
-  Record<ClientProfileCardEnum, { componentName: ClientProfileCardEnum }>
-> = {
-  [ClientProfileCardEnum.FullName]: {
-    componentName: ClientProfileCardEnum.FullName,
-  },
-  [ClientProfileCardEnum.PersonalInfo]: {
-    componentName: ClientProfileCardEnum.PersonalInfo,
-  },
-  [ClientProfileCardEnum.ImportantNotes]: {
-    componentName: ClientProfileCardEnum.ImportantNotes,
-  },
-  [ClientProfileCardEnum.ContactInfo]: {
-    componentName: ClientProfileCardEnum.ContactInfo,
-  },
-};
-
 type TGetRouteConfig = {
   clientProfile: TClientProfile;
   section: ClientProfileCardEnum;
 };
 
-export function getRouteConfig(props: TGetRouteConfig): TRouteConfig | null {
+export function getClientProfileRouteConfig(
+  props: TGetRouteConfig
+): TRouteConfig | null {
   const { clientProfile, section } = props;
 
   if (!clientProfile) {
     return null;
   }
 
-  const { id: clientProfileId, hmisProfiles } = clientProfile;
+  const {
+    id: profileId,
+    hmisProfiles,
+    householdMembers,
+    contacts,
+  } = clientProfile;
 
-  if (section === ClientProfileCardEnum.HmisIds) {
-    const hasData = !!hmisProfiles?.length;
+  let pathname = '';
 
-    const hmisPath = hasData
-      ? `/clients/${clientProfileId}/relations`
-      : `/clients/${clientProfileId}/relations/add`;
+  switch (section) {
+    case ClientProfileCardEnum.HmisIds:
+      pathname = getRelatedModelPath(profileId, !!hmisProfiles?.length);
 
-    return {
-      pathname: hmisPath,
-      params: {
-        componentName: ClientProfileCardEnum.HmisIds,
-      },
-    };
+      break;
+    case ClientProfileCardEnum.Household:
+      pathname = getRelatedModelPath(profileId, !!householdMembers?.length);
+
+      break;
+    case ClientProfileCardEnum.RelevantContacts:
+      pathname = getRelatedModelPath(profileId, !!contacts?.length);
+
+      break;
+    default:
+      pathname = `/clients/${profileId}/edit`;
+
+      break;
   }
 
-  const config = defaultRouteConfig[section];
-
-  if (!config) {
+  if (!pathname) {
     return null;
   }
 
   return {
-    pathname: `/clients/edit/${clientProfileId}`,
+    pathname,
     params: {
-      componentName: config.componentName,
+      componentName: section,
     },
   };
+}
+
+function getRelatedModelPath(clientProfileId: string, hasData?: boolean) {
+  const rootPath = `/clients/${clientProfileId}/relations`;
+
+  if (hasData) {
+    return rootPath;
+  }
+
+  return `${rootPath}/add`;
 }
