@@ -167,7 +167,5 @@ class TimeRangeField(models.Field):
         choices_form_class: Optional[Type[forms.ChoiceField]] = None,
         **kwargs: Any,
     ) -> Optional[forms.Field]:
-        field = super().formfield(choices_form_class=choices_form_class, **{"form_class": TimeRangeFormField})
-        if field is None:
-            raise ValueError("formfield() returned None, expected a Field instance")
+        field = super().formfield(choices_form_class=choices_form_class, form_class=TimeRangeFormField)
         return field
