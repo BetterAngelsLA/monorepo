@@ -48,10 +48,6 @@ export function getClientProfileRouteConfig(
       break;
   }
 
-  if (!pathname) {
-    return null;
-  }
-
   return {
     pathname,
     params: {
