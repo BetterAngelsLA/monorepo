@@ -501,12 +501,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             response = self.execute_graphql(mutation, variables)
 
         self.assertIsNotNone(response["data"]["deleteClientProfile"])
-
         self.assertFalse(ClientProfile.objects.filter(id=client_profile_id).exists())
-
-        if user:
-            self.assertFalse(User.objects.filter(id=user.pk).exists())
-
+        assert user
+        self.assertFalse(User.objects.filter(id=user.pk).exists())
         self.assertEqual(HmisProfile.objects.filter(id__in=hmis_profile_ids).count(), 0)
 
     def test_delete_client_profile_mutation(self) -> None:
