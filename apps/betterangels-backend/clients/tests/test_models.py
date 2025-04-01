@@ -27,12 +27,15 @@ class ClientProfileModelTestCase(TestCase):
         self.assertEqual(client_profile_2.full_name, "Dale Bartholomew Cooper")
 
     def test_save(self) -> None:
-        client_profile = baker.make(ClientProfile, california_id="x1357642")
+        client_profile = baker.make(ClientProfile, california_id="x1357642", email="UPPER@EXAMPLE.COM")
         self.assertEqual(client_profile.california_id, "X1357642")
+        self.assertEqual(client_profile.email, "upper@example.com")
 
         client_profile.california_id = ""
+        client_profile.email = ""
         client_profile.save()
         self.assertIsNone(client_profile.california_id)
+        self.assertIsNone(client_profile.email)
 
 
 class HmisProfileModelTestCase(TestCase):
