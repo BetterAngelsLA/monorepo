@@ -59,7 +59,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note.requested_services.set(self.requested_services)
 
         query = f"""
-            query ViewNote($id: ID!) {{
+            query ($id: ID!) {{
                 note(pk: $id) {{
                     {self.note_fields}
                 }}
@@ -76,6 +76,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": note_id,
             "client": {"id": str(self.client_user_1.pk)},
+            "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T11:12:13+00:00",
             "isSubmitted": False,
@@ -637,12 +638,11 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             {
                 "id": service_request_id,
                 "status": "COMPLETED",
-                "client": self.client_user_1.pk,
             }
         )
 
         query = """
-            query ViewServiceRequest($id: ID!) {
+            query ($id: ID!) {
                 serviceRequest(pk: $id) {
                     id
                     service
@@ -651,6 +651,9 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     dueBy
                     completedOn
                     client {
+                        id
+                    }
+                    clientProfile {
                         id
                     }
                     createdBy {
@@ -675,6 +678,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": None,
             "completedOn": "2024-03-11T10:11:12+00:00",
             "client": {"id": str(self.client_user_1.pk)},
+            "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -692,6 +696,9 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     dueBy
                     completedOn
                     client {
+                        id
+                    }
+                    clientProfile {
                         id
                     }
                     createdBy {
@@ -727,38 +734,15 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 "location": self.location.pk,
                 "status": "COMPLETED",
                 "dueBy": timezone.now(),
-                "client": self.client_user_1.pk,
             }
         )
 
-        query = """
-            query ViewTask($id: ID!) {
-                task(pk: $id) {
-                    id
-                    title
-                    location {
-                        id
-                        address {
-                            street
-                            city
-                            state
-                            zipCode
-                        }
-                        point
-                        pointOfInterest
-                    }
-                    status
-                    dueBy
-                    dueByGroup
-                    client {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    createdAt
-                }
-            }
+        query = f"""
+            query ($id: ID!) {{
+                task(pk: $id) {{
+                    {self.task_fields}
+                }}
+            }}
         """
         variables = {"id": task_id}
 
@@ -787,6 +771,9 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             "client": {
                 "id": str(self.client_user_1.pk),
             },
+            "clientProfile": {
+                "id": str(self.client_profile_1.pk),
+            },
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -794,34 +781,10 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
         self.assertEqual(task, expected_task)
 
     def test_tasks_query(self) -> None:
-        query = """
-            {
-                tasks {
-                    id
-                    title
-                    location {
-                        id
-                        address {
-                            street
-                            city
-                            state
-                            zipCode
-                        }
-                        point
-                        pointOfInterest
-                    }
-                    status
-                    dueBy
-                    dueByGroup
-                    client {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    createdAt
-                }
-            }
+        query = f"""
+            tasks {{
+                {self.task_fields}
+            }}
         """
         expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):

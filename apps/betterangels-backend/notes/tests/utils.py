@@ -610,6 +610,35 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self._setup_task()
         self._setup_location()
 
+        self.task_fields = """
+            id
+            title
+            location {
+                id
+                address {
+                    street
+                    city
+                    state
+                    zipCode
+                }
+                point
+                pointOfInterest
+            }
+            status
+            dueBy
+            dueByGroup
+            client {
+                id
+            }
+            clientProfile {
+                id
+            }
+            createdBy {
+                id
+            }
+            createdAt
+        """
+
     def _setup_task(self) -> None:
         # Force login the case manager to create a task
         self.graphql_client.force_login(self.org_1_case_manager_1)
