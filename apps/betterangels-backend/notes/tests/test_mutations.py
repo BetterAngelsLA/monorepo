@@ -179,7 +179,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         location = Location.objects.get(id=note.location.pk)  # type: ignore
         self.assertEqual(note, location.notes.first())
 
-    @skip("not implemented")
     @parametrize(
         "task_type, tasks_to_check, expected_query_count",
         [
@@ -187,6 +186,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             ("NEXT_STEP", "next_steps", 36),
         ],
     )
+    @skip("not implemented")
     def test_create_note_task_mutation(
         self,
         task_type: str,
@@ -356,7 +356,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(len(updated_note["requestedServices"]), 0)
         self.assertEqual(len(updated_note["providedServices"]), 0)
 
-    @skip("not implemented")
     @parametrize(
         "task_type, tasks_to_check",
         [
@@ -364,6 +363,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             ("NEXT_STEP", "next_steps"),
         ],
     )
+    @skip("not implemented")
     def test_add_note_task_mutation(self, task_type: str, tasks_to_check: str) -> None:
         variables = {
             "noteId": self.note["id"],
@@ -400,7 +400,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(1, getattr(note, tasks_to_check).count())
         self.assertEqual(int(self.purpose_1["id"]), getattr(note, tasks_to_check).get().id)
 
-    @skip("not implemented")
     @parametrize(
         "task_type, tasks_to_check",
         [
@@ -408,6 +407,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             ("NEXT_STEP", "next_steps"),
         ],
     )
+    @skip("not implemented")
     def test_remove_note_task_mutation(self, task_type: str, tasks_to_check: str) -> None:
         variables = {
             "noteId": self.note["id"],
@@ -1695,7 +1695,6 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "completedOn": None,
             "status": "TO_DO",
             "client": None,
-            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1722,7 +1721,6 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": "2024-03-11T11:12:13+00:00",
             "completedOn": "2024-03-11T12:34:56+00:00",
             "client": None,
-            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1747,7 +1745,6 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": None,
             "completedOn": None,
             "client": None,
-            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1808,7 +1805,6 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "dueBy": None,
             "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
             "client": None,
-            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
@@ -1844,7 +1840,6 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "dueBy": None,
             "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
             "client": None,
-            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
@@ -1868,7 +1863,6 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "dueBy": None,
             "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
             "client": None,
-            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }

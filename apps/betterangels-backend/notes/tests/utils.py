@@ -469,9 +469,6 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
                         client {{
                             id
                         }}
-                        clientProfile {{
-                            id
-                        }}
                         createdBy {{
                             id
                         }}
@@ -541,9 +538,6 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
                         dueBy
                         dueByGroup
                         client {{
-                            id
-                        }}
-                        clientProfile {{
                             id
                         }}
                         createdBy {{
@@ -631,9 +625,6 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             dueBy
             dueByGroup
             client {
-                id
-            }
-            clientProfile {
                 id
             }
             createdBy {

@@ -655,9 +655,6 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     client {
                         id
                     }
-                    clientProfile {
-                        id
-                    }
                     createdBy {
                         id
                     }
@@ -680,7 +677,6 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": None,
             "completedOn": "2024-03-11T10:11:12+00:00",
             "client": None,
-            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -698,9 +694,6 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     dueBy
                     completedOn
                     client {
-                        id
-                    }
-                    clientProfile {
                         id
                     }
                     createdBy {
@@ -772,7 +765,6 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             "dueBy": "2024-03-11T10:11:12+00:00",
             "dueByGroup": DueByGroupEnum.TODAY.name,
             "client": None,
-            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
