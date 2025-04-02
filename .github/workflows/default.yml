@@ -136,7 +136,7 @@ jobs:
 
           yarn nx affected -t generate-graphql-types
           TYPE_GEN_STATUS=$?
-          git diff --exit-code '**/gql-types/*';
+          git diff --exit-code;
           DIFF_STATUS=$?
           if [ $TYPE_GEN_STATUS -ne 0 ] || [ $DIFF_STATUS -ne 0 ]; then
             echo "Error: The GraphQL types do not match or generation failed! Make sure you have run 'yarn nx affected -t generate-graphql-types' locally and committed the changes."
