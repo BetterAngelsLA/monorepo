@@ -18,7 +18,7 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
-  NonBlankString: { input: any; output: any; }
+  NonBlankString: { input: string; output: string; }
   PhoneNumber: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any; }
@@ -324,7 +324,9 @@ export type ClientProfileImportRecordsBulkInput = {
 };
 
 export type ClientProfileOrder = {
+  firstName?: InputMaybe<Ordering>;
   id?: InputMaybe<Ordering>;
+  lastName?: InputMaybe<Ordering>;
   user_FirstName?: InputMaybe<Ordering>;
   user_LastName?: InputMaybe<Ordering>;
 };
@@ -347,7 +349,9 @@ export type ClientProfileType = {
   displayGender?: Maybe<Scalars['String']['output']>;
   displayPronouns?: Maybe<Scalars['String']['output']>;
   docReadyDocuments?: Maybe<Array<ClientDocumentType>>;
+  email?: Maybe<Scalars['NonBlankString']['output']>;
   eyeColor?: Maybe<EyeColorEnum>;
+  firstName?: Maybe<Scalars['NonBlankString']['output']>;
   gender?: Maybe<GenderEnum>;
   genderOther?: Maybe<Scalars['String']['output']>;
   hairColor?: Maybe<HairColorEnum>;
@@ -356,10 +360,12 @@ export type ClientProfileType = {
   householdMembers?: Maybe<Array<ClientHouseholdMemberType>>;
   id: Scalars['ID']['output'];
   importantNotes?: Maybe<Scalars['String']['output']>;
+  lastName?: Maybe<Scalars['NonBlankString']['output']>;
   livingSituation?: Maybe<LivingSituationEnum>;
   mailingAddress?: Maybe<Scalars['String']['output']>;
   maritalStatus?: Maybe<MaritalStatusEnum>;
-  nickname?: Maybe<Scalars['String']['output']>;
+  middleName?: Maybe<Scalars['NonBlankString']['output']>;
+  nickname?: Maybe<Scalars['NonBlankString']['output']>;
   otherDocuments?: Maybe<Array<ClientDocumentType>>;
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
   phoneNumbers?: Maybe<Array<PhoneNumberType>>;
@@ -434,7 +440,9 @@ export type CreateClientProfileInput = {
   californiaId?: InputMaybe<Scalars['String']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
+  email?: InputMaybe<Scalars['NonBlankString']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
+  firstName?: InputMaybe<Scalars['NonBlankString']['input']>;
   gender?: InputMaybe<GenderEnum>;
   genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
@@ -442,10 +450,12 @@ export type CreateClientProfileInput = {
   hmisProfiles?: InputMaybe<Array<HmisProfileInput>>;
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   importantNotes?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
-  nickname?: InputMaybe<Scalars['String']['input']>;
+  middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
+  nickname?: InputMaybe<Scalars['NonBlankString']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
   phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
@@ -459,7 +469,7 @@ export type CreateClientProfileInput = {
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
-  user: CreateUserInput;
+  user?: InputMaybe<CreateUserInput>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
@@ -536,10 +546,10 @@ export type CreateTaskInput = {
 export type CreateTaskPayload = OperationInfo | TaskType;
 
 export type CreateUserInput = {
-  email?: InputMaybe<Scalars['String']['input']>;
-  firstName?: InputMaybe<Scalars['String']['input']>;
-  lastName?: InputMaybe<Scalars['String']['input']>;
-  middleName?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['NonBlankString']['input']>;
+  firstName?: InputMaybe<Scalars['NonBlankString']['input']>;
+  lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
+  middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
 };
 
 export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
@@ -1952,7 +1962,9 @@ export type UpdateClientProfileInput = {
   californiaId?: InputMaybe<Scalars['String']['input']>;
   contacts?: InputMaybe<Array<ClientContactInput>>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
+  email?: InputMaybe<Scalars['NonBlankString']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
+  firstName?: InputMaybe<Scalars['NonBlankString']['input']>;
   gender?: InputMaybe<GenderEnum>;
   genderOther?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
@@ -1961,10 +1973,12 @@ export type UpdateClientProfileInput = {
   householdMembers?: InputMaybe<Array<ClientHouseholdMemberInput>>;
   id: Scalars['ID']['input'];
   importantNotes?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
-  nickname?: InputMaybe<Scalars['String']['input']>;
+  middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
+  nickname?: InputMaybe<Scalars['NonBlankString']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
   phoneNumbers?: InputMaybe<Array<PhoneNumberInput>>;
   physicalDescription?: InputMaybe<Scalars['String']['input']>;
@@ -2039,26 +2053,26 @@ export type UpdateTaskLocationPayload = OperationInfo | TaskType;
 export type UpdateTaskPayload = OperationInfo | TaskType;
 
 export type UpdateUserInput = {
-  email?: InputMaybe<Scalars['String']['input']>;
-  firstName?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['NonBlankString']['input']>;
+  firstName?: InputMaybe<Scalars['NonBlankString']['input']>;
   hasAcceptedPrivacyPolicy?: InputMaybe<Scalars['Boolean']['input']>;
   hasAcceptedTos?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
-  lastName?: InputMaybe<Scalars['String']['input']>;
-  middleName?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
+  middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
 };
 
 export type UserType = {
   __typename?: 'UserType';
   clientProfile?: Maybe<DjangoModelType>;
-  email?: Maybe<Scalars['String']['output']>;
-  firstName?: Maybe<Scalars['String']['output']>;
+  email?: Maybe<Scalars['NonBlankString']['output']>;
+  firstName?: Maybe<Scalars['NonBlankString']['output']>;
   hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;
   hasAcceptedTos?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
-  lastName?: Maybe<Scalars['String']['output']>;
-  middleName?: Maybe<Scalars['String']['output']>;
+  lastName?: Maybe<Scalars['NonBlankString']['output']>;
+  middleName?: Maybe<Scalars['NonBlankString']['output']>;
   organizationsOrganization?: Maybe<Array<OrganizationType>>;
   username: Scalars['String']['output'];
 };

@@ -324,7 +324,6 @@ input ClientProfilePhotoInput {
 }
 
 type ClientProfileType {
-  id: ID
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
@@ -356,6 +355,7 @@ type ClientProfileType {
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: VeteranStatusEnum
+  id: ID!
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
@@ -366,7 +366,7 @@ type ClientProfileType {
   docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  user: UserType
+  user: UserType!
   displayCaseManager: String!
 }
 
@@ -405,7 +405,6 @@ union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 union CreateClientProfileDataImportPayload = ClientProfileDataImportType | OperationInfo
 
 input CreateClientProfileInput {
-  id: ID
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
@@ -1587,7 +1586,6 @@ type TrainingServiceType {
 scalar UUID
 
 input UpdateClientProfileInput {
-  id: ID!
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
@@ -1619,6 +1617,7 @@ input UpdateClientProfileInput {
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: VeteranStatusEnum
+  id: ID!
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
