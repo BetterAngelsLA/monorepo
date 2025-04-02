@@ -142,30 +142,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertFalse(note_differences)
 
     def test_notes_query(self) -> None:
-        """
-        NOTE: This query is deprecated in favor of notesPaginated
-        """
-
         query = f"""
-            query ViewNotes {{
-                notes {{
-                    {self.note_fields}
-                }}
-            }}
-        """
-        expected_query_count = 8
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query)
-
-        notes = response["data"]["notes"]
-        self.assertEqual(len(notes), 1)
-        note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
-        self.assertFalse(note_differences)
-
-    def test_notes_paginated_query(self) -> None:
-        query = f"""
-            query ViewNotes($offset: Int, $limit: Int) {{
-                notes: notesPaginated(pagination: {{offset: $offset, limit: $limit}}) {{
+            query ($offset: Int, $limit: Int) {{
+                notes(pagination: {{offset: $offset, limit: $limit}}) {{
                     totalCount
                     pageInfo {{
                         limit
@@ -272,7 +251,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes: notesPaginated(filters: $filters) {
+                notes(filters: $filters) {
                     totalCount
                     results{
                         id
@@ -354,7 +333,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes: notesPaginated(filters: $filters) {
+                notes(filters: $filters) {
                     totalCount
                     results{
                         id
@@ -437,7 +416,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes: notesPaginated(filters: $filters) {
+                notes(filters: $filters) {
                     totalCount
                     results{
                         id
@@ -549,7 +528,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes: notesPaginated(filters: $filters) {
+                notes(filters: $filters) {
                     totalCount
                     results{
                         id
@@ -598,7 +577,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($order: NoteOrder) {
-                notes: notesPaginated(order: $order) {
+                notes(order: $order) {
                     results{
                         id
                     }
