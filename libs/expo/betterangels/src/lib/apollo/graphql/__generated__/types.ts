@@ -486,6 +486,7 @@ export type CreateNoteDataImportPayload = NoteDataImportType | OperationInfo;
 
 export type CreateNoteInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
@@ -529,6 +530,7 @@ export type CreateProfileDataImportInput = {
 
 export type CreateServiceRequestInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
   service: ServiceEnum;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   status: ServiceRequestStatusEnum;
@@ -538,6 +540,7 @@ export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type CreateTaskInput = {
   client?: InputMaybe<Scalars['ID']['input']>;
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   status: TaskStatusEnum;
   title: Scalars['String']['input'];
@@ -1170,6 +1173,7 @@ export type NoteFilter = {
   OR?: InputMaybe<NoteFilter>;
   authors?: InputMaybe<Array<Scalars['ID']['input']>>;
   client?: InputMaybe<Scalars['ID']['input']>;
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
   organization?: InputMaybe<Scalars['ID']['input']>;
@@ -1197,6 +1201,7 @@ export type NoteOrder = {
 export type NoteType = {
   __typename?: 'NoteType';
   client?: Maybe<UserType>;
+  clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   id: Scalars['ID']['output'];
@@ -1399,12 +1404,8 @@ export type Query = {
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
   notesPaginated: NoteTypeOffsetPaginated;
-  serviceRequest: ServiceRequestType;
-  serviceRequests: Array<ServiceRequestType>;
   shelter: ShelterType;
   shelters: ShelterTypeOffsetPaginated;
-  task: TaskType;
-  tasks: Array<TaskType>;
 };
 
 
@@ -1490,16 +1491,6 @@ export type QueryNotesPaginatedArgs = {
 };
 
 
-export type QueryServiceRequestArgs = {
-  pk: Scalars['ID']['input'];
-};
-
-
-export type QueryServiceRequestsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
 export type QueryShelterArgs = {
   pk: Scalars['ID']['input'];
 };
@@ -1508,17 +1499,6 @@ export type QueryShelterArgs = {
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
   order?: InputMaybe<ShelterOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryTaskArgs = {
-  pk: Scalars['ID']['input'];
-};
-
-
-export type QueryTasksArgs = {
-  order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1696,6 +1676,7 @@ export enum ServiceRequestStatusEnum {
 export type ServiceRequestType = {
   __typename?: 'ServiceRequestType';
   client?: Maybe<UserType>;
+  clientProfile?: Maybe<ClientProfileType>;
   completedOn?: Maybe<Scalars['DateTime']['output']>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
@@ -1929,6 +1910,7 @@ export enum TaskStatusEnum {
 export type TaskType = {
   __typename?: 'TaskType';
   client?: Maybe<UserType>;
+  clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   dueBy?: Maybe<Scalars['DateTime']['output']>;
@@ -2025,7 +2007,6 @@ export type UpdateNoteLocationPayload = NoteType | OperationInfo;
 export type UpdateNotePayload = NoteType | OperationInfo;
 
 export type UpdateServiceRequestInput = {
-  client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id: Scalars['ID']['input'];
   serviceOther?: InputMaybe<Scalars['String']['input']>;
@@ -2035,7 +2016,6 @@ export type UpdateServiceRequestInput = {
 export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type UpdateTaskInput = {
-  client?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   id: Scalars['ID']['input'];
   location?: InputMaybe<Scalars['ID']['input']>;

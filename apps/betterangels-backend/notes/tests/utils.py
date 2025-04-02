@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+from clients.models import ClientProfile
 from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.gis.geos import Point
@@ -14,6 +15,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.note_fields = """
             id
             client {
+                id
+            }
+            clientProfile {
                 id
             }
             createdBy {
@@ -72,6 +76,8 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 status
             }
         """
+        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
+        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
         self._setup_note()
         self._setup_note_tasks()
         self._setup_location()
@@ -86,6 +92,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "purpose": f"Session with {self.client_user_1.full_name}",
                 "publicDetails": f"{self.client_user_1.full_name}'s public details",
                 "client": self.client_user_1.pk,
+                "clientProfile": self.client_profile_1.pk,
             },
         )["data"]["createNote"]
         # Logout after setting up the note
@@ -339,6 +346,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         client {
                             id
                         }
+                        clientProfile {
+                            id
+                        }
                         createdBy {
                             id
                         }
@@ -368,6 +378,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         dueBy
                         completedOn
                         client {
+                            id
+                        }
+                        clientProfile {
                             id
                         }
                         createdBy {
@@ -470,6 +483,8 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
 class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase, ServiceRequestGraphQLUtilMixin):
     def setUp(self) -> None:
         super().setUp()
+        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
+        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
         self._setup_service_request()
 
     def _setup_service_request(self) -> None:
@@ -591,6 +606,34 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         super().setUp()
         self._setup_task()
         self._setup_location()
+
+        self.task_fields = """
+            id
+            title
+            location {
+                id
+                address {
+                    street
+                    city
+                    state
+                    zipCode
+                }
+                point
+                pointOfInterest
+            }
+            status
+            dueBy
+            dueByGroup
+            client {
+                id
+            }
+            createdBy {
+                id
+            }
+            createdAt
+        """
+        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
+        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
 
     def _setup_task(self) -> None:
         # Force login the case manager to create a task
