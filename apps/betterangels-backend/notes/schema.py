@@ -14,21 +14,13 @@ from django.db.models import QuerySet
 from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum, TaskTypeEnum
-from notes.models import (
-    Mood,
-    Note,
-    NoteDataImport,
-    NoteImportRecord,
-    ServiceRequest,
-    Task,
-)
+from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
+from notes.models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest
 from notes.permissions import (
     NoteImportRecordPermissions,
     NotePermissions,
     PrivateDetailsPermissions,
     ServiceRequestPermissions,
-    TaskPermissions,
 )
 from notes.utils import NoteReverter
 from strawberry import asdict
@@ -41,14 +33,11 @@ from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
 from .types import (
-    AddNoteTaskInput,
     CreateNoteDataImportInput,
     CreateNoteInput,
     CreateNoteMoodInput,
     CreateNoteServiceRequestInput,
-    CreateNoteTaskInput,
     CreateServiceRequestInput,
-    CreateTaskInput,
     ImportNoteInput,
     InteractionAuthorType,
     MoodType,
@@ -57,15 +46,11 @@ from .types import (
     NoteImportRecordType,
     NoteType,
     RemoveNoteServiceRequestInput,
-    RemoveNoteTaskInput,
     RevertNoteInput,
     ServiceRequestType,
-    TaskType,
     UpdateNoteInput,
     UpdateNoteLocationInput,
     UpdateServiceRequestInput,
-    UpdateTaskInput,
-    UpdateTaskLocationInput,
 )
 
 
@@ -88,10 +73,6 @@ class Query:
     service_requests: List[ServiceRequestType] = strawberry_django.field(
         extensions=[HasRetvalPerm(ServiceRequestPermissions.VIEW)]
     )
-
-    task: TaskType = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
-
-    tasks: List[TaskType] = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
 
     @strawberry_django.offset_paginated(
         OffsetPaginated[InteractionAuthorType], extensions=[HasPerm(NotePermissions.ADD)]
