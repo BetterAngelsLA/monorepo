@@ -16,12 +16,12 @@ import { Ordering } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
-  ClientProfilesPaginatedQuery,
-  useClientProfilesPaginatedQuery,
+  ClientProfilesQuery,
+  useClientProfilesQuery,
   useCreateNoteMutation,
 } from './__generated__/Clients.generated';
 type TClientProfile =
-  ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'];
+  ClientProfilesQuery['clientProfiles']['results'];
 
 const paginationLimit = 20;
 
@@ -33,7 +33,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [clients, setClients] = useState<TClientProfile>([]);
   const [filterSearch, setFilterSearch] = useState<string>('');
-  const { data, loading } = useClientProfilesPaginatedQuery({
+  const { data, loading } = useClientProfilesQuery({
     variables: {
       pagination: { limit: paginationLimit, offset },
       filters: {
@@ -113,10 +113,10 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfilesPaginated' in data)) {
+    if (!data || !('clientProfiles' in data)) {
       return;
     }
-    const { results, totalCount } = data.clientProfilesPaginated;
+    const { results, totalCount } = data.clientProfiles;
     setTotalCount(totalCount);
 
     if (offset === 0) {

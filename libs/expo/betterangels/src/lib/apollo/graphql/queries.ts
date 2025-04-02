@@ -7,113 +7,6 @@ export const GET_NOTES = gql`
     $order: NoteOrder
   ) {
     notes(filters: $filters, pagination: $pagination, order: $order) {
-      id
-      purpose
-      team
-      location {
-        address {
-          id
-          street
-          city
-          state
-          zipCode
-        }
-        point
-        pointOfInterest
-      }
-      moods {
-        id
-        descriptor
-      }
-      providedServices {
-        id
-        service
-        serviceOther
-      }
-      requestedServices {
-        id
-        service
-        serviceOther
-      }
-      publicDetails
-      isSubmitted
-      client {
-        id
-        email
-        username
-        firstName
-        lastName
-      }
-      createdBy {
-        id
-        email
-        username
-        firstName
-        lastName
-      }
-      interactedAt
-    }
-  }
-`;
-
-export const GET_NOTE = gql`
-  query ViewNote($id: ID!) {
-    note(pk: $id) {
-      id
-      purpose
-      team
-      location {
-        address {
-          id
-          street
-          city
-          state
-          zipCode
-        }
-        point
-        pointOfInterest
-      }
-      moods {
-        id
-        descriptor
-      }
-      providedServices {
-        id
-        service
-        serviceOther
-      }
-      requestedServices {
-        id
-        service
-        serviceOther
-      }
-      publicDetails
-      isSubmitted
-      client {
-        id
-        email
-        firstName
-        lastName
-        clientProfile {
-          id: pk
-        }
-      }
-      createdBy {
-        id
-      }
-      interactedAt
-      createdAt
-    }
-  }
-`;
-
-export const GET_NOTES_PAGINATED = gql`
-  query NotesPaginated(
-    $filters: NoteFilter
-    $pagination: OffsetPaginationInput
-    $order: NoteOrder
-  ) {
-    notesPaginated(filters: $filters, pagination: $pagination, order: $order) {
       totalCount
       pageInfo {
         limit
@@ -166,6 +59,57 @@ export const GET_NOTES_PAGINATED = gql`
         }
         interactedAt
       }
+    }
+  }
+`;
+
+export const GET_NOTE = gql`
+  query ViewNote($id: ID!) {
+    note(pk: $id) {
+      id
+      purpose
+      team
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
+      }
+      moods {
+        id
+        descriptor
+      }
+      providedServices {
+        id
+        service
+        serviceOther
+      }
+      requestedServices {
+        id
+        service
+        serviceOther
+      }
+      publicDetails
+      isSubmitted
+      client {
+        id
+        email
+        firstName
+        lastName
+        clientProfile {
+          id: pk
+        }
+      }
+      createdBy {
+        id
+      }
+      interactedAt
+      createdAt
     }
   }
 `;
