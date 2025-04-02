@@ -7,51 +7,58 @@ export const GET_NOTES = gql`
     $order: NoteOrder
   ) {
     notes(filters: $filters, pagination: $pagination, order: $order) {
-      id
-      purpose
-      team
-      location {
-        address {
-          id
-          street
-          city
-          state
-          zipCode
+      totalCount
+      pageInfo {
+        limit
+        offset
+      }
+      results {
+        id
+        purpose
+        team
+        location {
+          address {
+            id
+            street
+            city
+            state
+            zipCode
+          }
+          point
+          pointOfInterest
         }
-        point
-        pointOfInterest
+        moods {
+          id
+          descriptor
+        }
+        providedServices {
+          id
+          service
+          serviceOther
+        }
+        requestedServices {
+          id
+          service
+          serviceOther
+        }
+        publicDetails
+        isSubmitted
+        client {
+          id
+          email
+          username
+          firstName
+          lastName
+        }
+        createdBy {
+          id
+          email
+          username
+          firstName
+          lastName
+        }
+        interactedAt
       }
-      moods {
-        id
-        descriptor
-      }
-      providedServices {
-        id
-        service
-        serviceOther
-      }
-      requestedServices {
-        id
-        service
-        serviceOther
-      }
-      publicDetails
-      isSubmitted
-      client {
-        id
-        email
-        username
-        firstName
-        lastName
-      }
-      createdBy {
-        id
-        email
-        username
-        firstName
-        lastName
-      }
-      interactedAt
     }
   }
 `;

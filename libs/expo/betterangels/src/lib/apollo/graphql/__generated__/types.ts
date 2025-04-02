@@ -1386,10 +1386,10 @@ export type Query = {
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
   caseworkerOrganizations: OrganizationTypeOffsetPaginated;
   clientDocument: ClientDocumentType;
-  clientDocuments: Array<ClientDocumentType>;
+  clientDocuments: ClientDocumentTypeOffsetPaginated;
   clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
   clientProfile: ClientProfileType;
-  clientProfiles: Array<ClientProfileType>;
+  clientProfiles: ClientProfileTypeOffsetPaginated;
   clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
@@ -1397,7 +1397,7 @@ export type Query = {
   hmisProfiles: HmisProfileTypeOffsetPaginated;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
-  notes: Array<NoteType>;
+  notes: NoteTypeOffsetPaginated;
   notesPaginated: NoteTypeOffsetPaginated;
   serviceRequest: ServiceRequestType;
   serviceRequests: Array<ServiceRequestType>;
