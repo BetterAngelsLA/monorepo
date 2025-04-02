@@ -12,9 +12,19 @@ const config: CodegenConfig = {
   generates: {
     'src/lib/apollo/graphql/__generated__/types.ts': {
       plugins: ['typescript'],
+      config: {
+        scalars: {
+          NonBlankString: 'string',
+        },
+      },
     },
     '../../react/shelter/src/lib/apollo/graphql/__generated__/types.ts': {
       plugins: ['typescript'],
+      config: {
+        scalars: {
+          NonBlankString: 'string',
+        },
+      },
     },
     'src/': {
       preset: 'near-operation-file',
