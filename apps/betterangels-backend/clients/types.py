@@ -250,7 +250,6 @@ class ClientHouseholdMemberInput(ClientHouseholdMemberBaseType):
 
 @strawberry_django.type(ClientProfile)
 class ClientProfileBaseType:
-    id: ID | None
     ada_accommodation: Optional[List[AdaAccommodationEnum]]
     address: auto
     age: auto
@@ -286,6 +285,7 @@ class ClientProfileBaseType:
 
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
+    id: ID
     contacts: Optional[List[ClientContactType]]
     hmis_profiles: Optional[List[HmisProfileType]]
     household_members: Optional[List[ClientHouseholdMemberType]]
@@ -299,7 +299,7 @@ class ClientProfileType(ClientProfileBaseType):
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
 
-    user: Optional[UserType]
+    user: UserType
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:
