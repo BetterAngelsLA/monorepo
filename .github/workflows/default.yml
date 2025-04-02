@@ -125,7 +125,7 @@ jobs:
         # TODO: Upon graphql mismatch, a github action could commit the changes and push into the branch
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx run-many -t validate-graphql-schema
+          yarn nx affected -t validate-graphql-schema
           STATUS=$?
           if [ $STATUS -ne 0 ]; then
             echo "Error: The GraphQL schemas do not match! Make sure you have run 'yarn nx run-many -t generate-graphql-schema' locally and committed the changes."
@@ -134,7 +134,7 @@ jobs:
             echo "Success: The GraphQL schemas match!"
           fi
 
-          yarn nx run-many -t generate-graphql-types
+          yarn nx affected -t generate-graphql-types
           TYPE_GEN_STATUS=$?
           git diff --exit-code;
           DIFF_STATUS=$?
