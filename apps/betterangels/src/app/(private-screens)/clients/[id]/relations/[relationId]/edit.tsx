@@ -17,6 +17,10 @@ export default function ClientRelatedModelEditScreen() {
   }
 
   return (
-    <ClientRelatedModelForm clientId={clientId} componentName={componentName} />
+    <ClientRelatedModelForm
+      clientId={clientId}
+      componentName={componentName}
+      relationId={relationId}
+    />
   );
 }

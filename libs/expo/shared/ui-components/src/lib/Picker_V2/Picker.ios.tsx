@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import FormFieldLabel from '../FormFieldLabel';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 import { IPickerProps } from './Picker';
@@ -20,6 +21,7 @@ export default function Picker(props: IPickerProps) {
     selectNoneLabel,
     items,
     label,
+    required,
     mb,
     mt,
     my,
@@ -60,7 +62,8 @@ export default function Picker(props: IPickerProps) {
   return (
     <>
       <View>
-        {label && <TextRegular ml="xs">{label}</TextRegular>}
+        {label && <FormFieldLabel label={label} required={required} />}
+
         <Pressable
           onPress={() => setIsModalVisible(true)}
           style={[

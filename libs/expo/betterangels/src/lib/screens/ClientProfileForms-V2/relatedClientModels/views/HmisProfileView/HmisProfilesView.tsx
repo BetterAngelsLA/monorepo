@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
 import { View, ViewStyle } from 'react-native';
-import { HmisProfileCard } from '../../../Client/ClientProfile_V2/ClientProfileCards/HmisProfilesCard/HmisProfileCard';
-import { ClientProfileCardEnum } from '../../../Client/ClientProfile_V2/constants';
-import { TClientProfile } from '../../../Client/ClientProfile_V2/types';
-import { ViewItemContainer } from '../shared/ViewItemContainer';
+import { HmisProfileCard } from '../../../../Client/ClientProfile_V2/ClientProfileCards/HmisProfilesCard/HmisProfileCard';
+import { ClientProfileCardEnum } from '../../../../Client/ClientProfile_V2/constants';
+import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
+import { ViewItemContainer } from '../ViewItemContainer';
 
 type TProps = {
   clientProfile?: TClientProfile;

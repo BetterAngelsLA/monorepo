@@ -22,7 +22,6 @@ import {
 import ContactInfo from './ContactInfo';
 import DemographicInfo from './DemographicInfo';
 import Fullname from './Fullname';
-import HmisId from './HmisId';
 import Household from './Household';
 import ImportantNotes from './ImportantNotes';
 import PersonalInfoForm from './PersonalInfo';
@@ -49,10 +48,6 @@ const formConfigs: Record<
   [ClientProfileCardEnum.FullName]: {
     title: 'Edit Full Name',
     content: <Fullname />,
-  },
-  [ClientProfileCardEnum.HmisIds]: {
-    title: 'Edit HMIS ID',
-    content: <HmisId />,
   },
   [ClientProfileCardEnum.Household]: {
     title: 'Edit Household Details',

@@ -48,11 +48,6 @@ export type FullnameState = {
   nickname?: string | null;
 };
 
-export type HmisIdState = {
-  // TODO: implement actual HMIS id form
-  name: string;
-};
-
 export type HouseholdState = {
   // TODO: implement actual Household form
   name: string;
@@ -85,7 +80,6 @@ export interface FormStateMapping {
   [ClientProfileCardEnum.ContactInfo]: ContactInfoState;
   [ClientProfileCardEnum.Demographic]: DemographicInfoState;
   [ClientProfileCardEnum.FullName]: FullnameState;
-  [ClientProfileCardEnum.HmisIds]: HmisIdState;
   [ClientProfileCardEnum.Household]: HouseholdState;
   [ClientProfileCardEnum.ImportantNotes]: ImportantNotesState;
   [ClientProfileCardEnum.PersonalInfo]: PersonalInfoState;

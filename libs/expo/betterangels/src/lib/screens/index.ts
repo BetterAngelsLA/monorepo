@@ -9,7 +9,7 @@ export {
   ClientRelatedModelForm,
   ClientRelatedModelsList,
 } from './ClientProfileForms-V2/relatedClientModels';
-export { HmisProfileForm } from './ClientProfileForms-V2/relatedClientModels/HmisProfile/HmisProfileForm';
+export { HmisProfileForm } from './ClientProfileForms-V2/relatedClientModels/forms/HmisProfileForm';
 export { default as Clients } from './Clients';
 export { default as CreateClientProfile } from './CreateClientProfile';
 export { default as FileScreenComponent } from './FileScreenComponent';

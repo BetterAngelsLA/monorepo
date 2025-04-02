@@ -1,7 +1,11 @@
-import { LoadingView } from '@monorepo/expo/shared/ui-components';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import {
+  KeyboardAwareScrollView,
+  LoadingView,
+} from '@monorepo/expo/shared/ui-components';
 import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useSnackbar } from '../../../hooks';
 import {
   ClientProfileCardEnum,
@@ -13,11 +17,12 @@ import { clientRelatedModelConfig } from './config';
 type TClientRelations = {
   clientId: string;
   componentName: string;
+  relationId?: string;
   createMode?: boolean;
 };
 
 export function ClientRelatedModelForm(props: TClientRelations) {
-  const { clientId, componentName, createMode } = props;
+  const { clientId, relationId, componentName, createMode } = props;
 
   const navigation = useNavigation();
 
@@ -40,7 +45,7 @@ export function ClientRelatedModelForm(props: TClientRelations) {
 
   const { clientProfile } = data || {};
 
-  const { titlePlural, titleSingular, FormComponent } =
+  const { titleSingular, FormComponent } =
     clientRelatedModelConfig[componentName];
 
   useLayoutEffect(() => {
@@ -69,8 +74,21 @@ export function ClientRelatedModelForm(props: TClientRelations) {
   }
 
   return (
-    <View style={{}}>
-      <Text>HELLO Related Model Form !!!!!</Text>
-    </View>
+    <KeyboardAwareScrollView style={styles.container}>
+      <FormComponent
+        clientProfile={clientProfile}
+        style={styles.formComponent}
+        relationId={relationId}
+      />
+    </KeyboardAwareScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+  },
+  formComponent: {
+    gap: Spacings.sm,
+  },
+});
