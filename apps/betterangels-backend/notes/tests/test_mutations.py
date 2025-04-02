@@ -11,7 +11,6 @@ from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
     ServiceRequestGraphQLUtilMixin,
-    TaskGraphQLUtilsMixin,
 )
 from unittest_parametrize import parametrize
 
@@ -24,7 +23,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 37
+        expected_query_count = 35
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -65,7 +64,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 25
+        expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -105,7 +104,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 22
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -354,7 +353,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 24
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])
@@ -363,7 +362,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             Note.objects.get(id=self.note["id"])
 
 
-class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin, ServiceRequestGraphQLUtilMixin):
+class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, ServiceRequestGraphQLUtilMixin):
     """
     Asserts that when revertNote mutation is called, the Note instance and all of
     it's related model instances are reverted to their states at the specified moment.
