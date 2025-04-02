@@ -76,7 +76,8 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 status
             }
         """
-        self.client_profile = baker.make(ClientProfile)
+        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
+        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
         self._setup_note()
         self._setup_note_tasks()
         self._setup_location()
@@ -485,6 +486,8 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
 class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase, ServiceRequestGraphQLUtilMixin):
     def setUp(self) -> None:
         super().setUp()
+        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
+        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
         self._setup_service_request()
 
     def _setup_service_request(self) -> None:
@@ -638,6 +641,8 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
             createdAt
         """
+        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
+        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
 
     def _setup_task(self) -> None:
         # Force login the case manager to create a task
