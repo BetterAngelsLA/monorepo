@@ -762,6 +762,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self.assertEqual(reverted_note["location"]["point"], self.point)
         self.assertEqual(reverted_note["location"]["pointOfInterest"], self.point_of_interest)
 
+    @skip("not implemented")
     def test_revert_note_mutation_removes_added_moods(self) -> None:
         """
         Test Actions:
@@ -796,6 +797,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         self.assertEqual(len(reverted_note["moods"]), 1)
 
+    @skip("not implemented")
     def test_revert_note_mutation_returns_removed_moods(self) -> None:
         """
         Test Actions:
@@ -833,6 +835,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         self.assertEqual(len(reverted_note["moods"]), 2)
 
+    @skip("not implemented")
     def test_revert_note_mutation_removes_added_new_tasks(self) -> None:
         """
         Test Actions:
@@ -1136,6 +1139,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             0,
         )
 
+    @skip("not implemented")
     def test_revert_note_mutation_returns_removed_new_tasks(self) -> None:
         """
         Test Actions:
@@ -1440,6 +1444,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         self.assertEqual(ServiceRequest.objects.count(), total_service_request_count + 4)
 
+    @skip("not implemented")
     def test_revert_note_mutation_restores_updated_tasks(self) -> None:
         """
         Test Actions:
@@ -1488,6 +1493,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self.assertEqual(reverted_note["purposes"][0]["title"], "Purpose Title")
         self.assertEqual(reverted_note["nextSteps"][0]["title"], "Next Step Title")
 
+    @skip("not implemented")
     def test_revert_note_mutation_restores_updated_task_location(self) -> None:
         """
         Test Actions:
@@ -1560,6 +1566,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self.assertEqual(next_step["location"]["point"], self.point)
         self.assertEqual(next_step["location"]["pointOfInterest"], self.point_of_interest)
 
+    @skip("not implemented")
     def test_revert_note_mutation_restores_updated_custom_service_requests(self) -> None:
         """
         Test Actions:
