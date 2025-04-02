@@ -1158,10 +1158,6 @@ type Query {
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(filters: NoteFilter, order: NoteOrder, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notesPaginated(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  serviceRequest(pk: ID!): ServiceRequestType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
-  serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
-  task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
-  tasks(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_task"}], any: true)
   interactionAuthors(filters: InteractionAuthorFilter, order: InteractionAuthorOrder, pagination: OffsetPaginationInput): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
@@ -1667,8 +1663,6 @@ input UpdateServiceRequestInput {
   serviceOther: String
   status: ServiceRequestStatusEnum
   dueBy: DateTime
-  client: ID
-  clientProfile: ID
 }
 
 union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
@@ -1679,8 +1673,6 @@ input UpdateTaskInput {
   location: ID
   status: TaskStatusEnum
   dueBy: DateTime
-  client: ID
-  clientProfile: ID
 }
 
 input UpdateTaskLocationInput {

@@ -1,3 +1,5 @@
+from unittest import skip
+
 from model_bakery import baker
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.tests.utils import (
@@ -27,6 +29,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "purpose": "Test Note",
             "publicDetails": "This is a test note.",
+            "clientProfile": str(self.client_profile_1.pk),
         }
         response = self._create_note_fixture(variables)
 
@@ -471,6 +474,7 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertEqual(service_request_count, ServiceRequest.objects.count())
 
 
+@skip("NoteTasks are not currently implemented")
 class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
@@ -514,6 +518,7 @@ class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertEqual(task_count, Task.objects.count())
 
 
+@skip("Service Requests are not currently implemented")
 class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
@@ -657,6 +662,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
         self.assertTrue(len(response["data"]["serviceRequests"]) == should_succeed)
 
 
+@skip("Tasks are not currently implemented")
 class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",

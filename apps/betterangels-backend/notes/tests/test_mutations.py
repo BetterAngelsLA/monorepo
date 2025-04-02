@@ -33,7 +33,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                     "purpose": "New note purpose",
                     "publicDetails": "New public details",
                     "client": self.client_user_1.pk,
-                    "clientProfile": self.client_profile.pk,
+                    "clientProfile": self.client_profile_1.pk,
                 }
             )
 
@@ -52,7 +52,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "privateDetails": "",
             "isSubmitted": False,
             "client": {"id": str(self.client_user_1.pk)},
-            "clientProfile": {"id": str(self.client_profile.pk)},
+            "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
@@ -510,6 +510,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         with self.assertRaises(Note.DoesNotExist):
             Note.objects.get(id=self.note["id"])
 
+    # TODO: Remove in DEV-1652
     def test_dual_write_client(self) -> None:
         created_note = self._create_note_fixture(
             {
@@ -522,6 +523,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(created_note["client"], {"id": str(self.client_user_1.pk)})
         self.assertEqual(created_note["clientProfile"], {"id": str(self.client_profile_1.pk)})
 
+    # TODO: Remove in DEV-1652
     def test_write_client_profile_only(self) -> None:
         created_note = self._create_note_fixture(
             {
@@ -1657,6 +1659,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         self.assertEqual(not_reverted_note["purpose"], "Discarded Purpose")
 
 
+@skip("Service Requests are not currently implemented")
 @ignore_warnings(category=UserWarning)
 @time_machine.travel("2024-03-11 10:11:12", tick=False)
 class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
@@ -1696,7 +1699,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "COMPLETED",
         }
 
-        expected_query_count = 19
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_service_request_fixture(variables)
 
@@ -1708,8 +1711,8 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": "2024-03-11T11:12:13+00:00",
             "completedOn": "2024-03-11T12:34:56+00:00",
-            "client": {"id": str(self.client_user_1.pk)},
-            "clientProfile": {"id": str(self.client_profile_1.pk)},
+            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1721,7 +1724,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "id": self.service_request["id"],
         }
 
-        expected_query_count = 19
+        expected_query_count = 15
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_service_request_fixture(variables)
 
@@ -1733,8 +1736,8 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "completedOn": None,
-            "client": {"id": str(self.client_user_1.pk)},
-            "clientProfile": {"id": str(self.client_profile_1.pk)},
+            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1769,6 +1772,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             ServiceRequest.objects.get(id=self.service_request["id"])
 
 
+@skip("Tasks are not currently implemented")
 @ignore_warnings(category=UserWarning)
 @time_machine.travel("2024-02-26T10:11:12+00:00", tick=False)
 class TaskMutationTestCase(TaskGraphQLBaseTestCase):
@@ -1808,7 +1812,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
         }
 
-        expected_query_count = 22
+        expected_query_count = 18
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_fixture(variables)
         updated_task = response["data"]["updateTask"]
@@ -1829,8 +1833,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
-            "client": {"id": str(self.client_user_1.pk)},
-            "clientProfile": {"id": str(self.client_profile_1.pk)},
+            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }

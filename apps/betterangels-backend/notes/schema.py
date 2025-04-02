@@ -81,18 +81,6 @@ class Query:
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
 
-    service_request: ServiceRequestType = strawberry_django.field(
-        extensions=[HasRetvalPerm(ServiceRequestPermissions.VIEW)]
-    )
-
-    service_requests: List[ServiceRequestType] = strawberry_django.field(
-        extensions=[HasRetvalPerm(ServiceRequestPermissions.VIEW)]
-    )
-
-    task: TaskType = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
-
-    tasks: List[TaskType] = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
-
     @strawberry_django.offset_paginated(
         OffsetPaginated[InteractionAuthorType], extensions=[HasPerm(NotePermissions.ADD)]
     )

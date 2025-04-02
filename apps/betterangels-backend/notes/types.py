@@ -106,6 +106,7 @@ class UpdateTaskInput:
     status: auto
     due_by: auto
 
+
 @strawberry_django.type(models.Mood)
 class MoodType:
     id: ID
