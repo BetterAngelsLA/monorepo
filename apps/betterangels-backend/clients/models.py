@@ -202,6 +202,9 @@ class ClientProfile(BaseModel):
         name_parts = filter(None, [self.first_name, self.middle_name, self.last_name])
         return " ".join(name_parts).strip()
 
+    def __str__(self: "ClientProfile") -> str:
+        return f"{self.full_name if self.full_name else self.pk}"
+
     class Meta:
         ordering = ["first_name"]
 
