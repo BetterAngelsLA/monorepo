@@ -1,7 +1,7 @@
 alias ynx-check-migrations="yarn nx affected -t check-migrations"
 alias ynx-format-be="yarn nx affected -t format betterangels-backend"
-alias ynx-generate-schema="yarn nx run-many -t generate-graphql-schema"
-alias ynx-generate-types="yarn nx run-many -t generate-graphql-types"
+alias ynx-generate-schema="yarn nx affected -t generate-graphql-schema"
+alias ynx-generate-types="yarn nx affected -t generate-graphql-types"
 alias ynx-generate="ynx-generate-schema && ynx-generate-types"
 alias ynx-lint-be="yarn nx lint betterangels-backend"
 alias ynx-lint-fe="yarn nx lint betterangels"
@@ -16,7 +16,7 @@ alias ynx-start-fe="yarn nx start betterangels"
 alias ynx-test-be="yarn nx test betterangels-backend"
 alias ynx-test-fe="yarn nx test betterangels"
 alias ynx-typecheck="yarn nx affected -t typecheck"
-alias ynx-validate-schema="yarn nx run-many -t validate-graphql-schema"
+alias ynx-validate-schema="yarn nx affected -t validate-graphql-schema"
 
 alias ynx-precommit="ynx-lint && ynx-typecheck && ynx-validate-schema && ynx-check-migrations"
 
