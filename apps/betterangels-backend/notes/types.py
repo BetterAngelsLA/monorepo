@@ -200,8 +200,6 @@ class NoteType:
     team: Optional[SelahTeamEnum]
     location: Optional[LocationType]
     moods: List[MoodType]
-    purposes: List[TaskType]
-    next_steps: List[TaskType]
     provided_services: List[ServiceRequestType]
     requested_services: List[ServiceRequestType]
     public_details: auto
