@@ -1,4 +1,4 @@
-from typing import Dict, List, cast
+from typing import Dict, cast
 
 import pghistory
 import strawberry
