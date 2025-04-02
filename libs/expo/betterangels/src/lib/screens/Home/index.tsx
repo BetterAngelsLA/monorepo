@@ -14,13 +14,13 @@ import { uniqueBy } from 'remeda';
 import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
-  ClientProfilesPaginatedQuery,
-  useClientProfilesPaginatedQuery,
+  ClientProfilesQuery,
+  useClientProfilesQuery,
 } from './__generated__/ActiveClients.generated';
 
 const paginationLimit = 20;
 type TClientProfile =
-  ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'];
+  ClientProfilesQuery['clientProfiles']['results'];
 
 export default function Home({ Logo }: { Logo: ElementType }) {
   const router = useRouter();
@@ -31,7 +31,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   const [totalCount, setTotalCount] = useState<number>(0);
 
   const [clients, setClients] = useState<TClientProfile>([]);
-  const { data, loading } = useClientProfilesPaginatedQuery({
+  const { data, loading } = useClientProfilesQuery({
     variables: {
       filters: { isActive: true },
       pagination: { limit: paginationLimit, offset: offset },
@@ -55,10 +55,10 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfilesPaginated' in data)) {
+    if (!data || !('clientProfiles' in data)) {
       return;
     }
-    const { results, totalCount } = data.clientProfilesPaginated;
+    const { results, totalCount } = data.clientProfiles;
     setTotalCount(totalCount);
 
     if (offset === 0) {
