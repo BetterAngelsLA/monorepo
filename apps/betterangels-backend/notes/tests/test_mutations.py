@@ -5,13 +5,12 @@ from common.models import Address, Location
 from django.test import ignore_warnings
 from django.utils import timezone
 from model_bakery import baker
-from notes.enums import DueByGroupEnum, SelahTeamEnum
-from notes.models import Mood, Note, ServiceRequest, Task
+from notes.enums import SelahTeamEnum
+from notes.models import Mood, Note, ServiceRequest
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
     ServiceRequestGraphQLUtilMixin,
-    TaskGraphQLBaseTestCase,
     TaskGraphQLUtilsMixin,
 )
 from unittest_parametrize import parametrize
@@ -1172,144 +1171,3 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
 
         with self.assertRaises(ServiceRequest.DoesNotExist):
             ServiceRequest.objects.get(id=self.service_request["id"])
-
-
-@ignore_warnings(category=UserWarning)
-@time_machine.travel("2024-02-26T10:11:12+00:00", tick=False)
-class TaskMutationTestCase(TaskGraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self._handle_user_login("org_1_case_manager_1")
-
-    def test_create_task_mutation(self) -> None:
-        expected_query_count = 29
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._create_task_fixture(
-                {
-                    "title": "New Task",
-                    "status": "TO_DO",
-                }
-            )
-        created_task = response["data"]["createTask"]
-        expected_task = {
-            "id": ANY,
-            "title": "New Task",
-            "location": None,
-            "status": "TO_DO",
-            "dueBy": None,
-            "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
-            "client": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "createdAt": "2024-02-26T10:11:12+00:00",
-        }
-        self.assertEqual(created_task, expected_task)
-
-    def test_update_task_mutation(self) -> None:
-        variables = {
-            "id": self.task["id"],
-            "title": "Updated task title",
-            "location": self.location.pk,
-            "status": "COMPLETED",
-            "client": self.client_user_1.pk,
-        }
-
-        expected_query_count = 20
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._update_task_fixture(variables)
-        updated_task = response["data"]["updateTask"]
-        expected_task = {
-            "id": self.task["id"],
-            "title": "Updated task title",
-            "location": {
-                "id": str(self.location.pk),
-                "address": {
-                    "street": self.address.street,
-                    "city": self.address.city,
-                    "state": self.address.state,
-                    "zipCode": self.address.zip_code,
-                },
-                "point": self.point,
-                "pointOfInterest": self.point_of_interest,
-            },
-            "status": "COMPLETED",
-            "dueBy": None,
-            "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
-            "client": {"id": str(self.client_user_1.pk)},
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "createdAt": "2024-02-26T10:11:12+00:00",
-        }
-        self.assertEqual(updated_task, expected_task)
-
-    def test_partial_update_task_mutation(self) -> None:
-        variables = {
-            "id": self.task["id"],
-            "title": "Updated task title",
-        }
-
-        expected_query_count = 15
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._update_task_fixture(variables)
-        updated_task = response["data"]["updateTask"]
-        expected_task = {
-            "id": self.task["id"],
-            "title": "Updated task title",
-            "location": None,
-            "status": "TO_DO",
-            "dueBy": None,
-            "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
-            "client": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "createdAt": "2024-02-26T10:11:12+00:00",
-        }
-        self.assertEqual(updated_task, expected_task)
-
-    def test_update_task_location_mutation(self) -> None:
-        task_id = self.task["id"]
-        json_address_input, address_input = self._get_address_inputs()
-        location = {
-            "address": json_address_input,
-            "point": self.point,
-            "pointOfInterest": self.point_of_interest,
-        }
-        variables = {
-            "id": task_id,
-            "location": location,
-        }
-
-        expected_query_count = 23
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._update_task_location_fixture(variables)
-
-        assert isinstance(address_input["addressComponents"], list)
-        expected_address = {
-            "street": (
-                f"{address_input['addressComponents'][0]['long_name']} "
-                f"{address_input['addressComponents'][1]['long_name']}"
-            ),
-            "city": address_input["addressComponents"][3]["long_name"],
-            "state": address_input["addressComponents"][5]["short_name"],
-            "zipCode": address_input["addressComponents"][7]["long_name"],
-        }
-        expected_location = {
-            "id": ANY,
-            "address": expected_address,
-            "point": self.point,
-            "pointOfInterest": self.point_of_interest,
-        }
-        updated_task_location = response["data"]["updateTaskLocation"]["location"]
-        self.assertEqual(updated_task_location, expected_location)
-
-        task = Task.objects.get(id=task_id)
-        self.assertIsNotNone(task.location)
-
-        location = Location.objects.get(id=task.location.pk)  # type: ignore
-        self.assertEqual(task, location.tasks.first())
-
-    def test_delete_task_mutation(self) -> None:
-        expected_query_count = 10
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._delete_task_fixture(self.task["id"])
-
-        self.assertIsNotNone(response["data"]["deleteTask"])
-        with self.assertRaises(Task.DoesNotExist):
-            Task.objects.get(id=self.task["id"])
