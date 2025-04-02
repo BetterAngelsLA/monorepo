@@ -3,7 +3,7 @@
 from django.db import migrations
 
 
-def copy_client_to_client_profile(apps, schema_editor):
+def copy_note_client_to_client_profile(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
         cursor.execute(
             """
@@ -15,11 +15,33 @@ def copy_client_to_client_profile(apps, schema_editor):
         )
 
 
-def clear_client_profile(apps, schema_editor):
+def clear_note_client_profile(apps, schema_editor):
     with schema_editor.connection.cursor() as cursor:
         cursor.execute(
             """
                 UPDATE notes_note
+                SET client_profile_id = NULL;
+            """
+        )
+
+
+def copy_service_request_client_to_client_profile(apps, schema_editor):
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(
+            """
+                UPDATE notes_servicerequest AS sr
+                SET client_profile_id = cp.id
+                FROM clients_clientprofile AS cp
+                WHERE sr.client_id = cp.user_id;
+            """
+        )
+
+
+def clear_service_request_client_profile(apps, schema_editor):
+    with schema_editor.connection.cursor() as cursor:
+        cursor.execute(
+            """
+                UPDATE notes_servicerequest
                 SET client_profile_id = NULL;
             """
         )
@@ -32,5 +54,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(copy_client_to_client_profile, clear_client_profile),
+        migrations.RunPython(
+            copy_note_client_to_client_profile,
+            clear_note_client_profile,
+        ),
+        migrations.RunPython(
+            copy_service_request_client_to_client_profile,
+            clear_service_request_client_profile,
+        ),
     ]
