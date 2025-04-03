@@ -1,10 +1,12 @@
 import {
   ControlledInput,
   Form,
+  MultiSelect,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext, useWatch } from 'react-hook-form';
 import {
+  AdaAccommodationEnum,
   EyeColorEnum,
   GenderEnum,
   HairColorEnum,
@@ -14,6 +16,7 @@ import {
   UpdateClientProfileInput,
 } from '../../../apollo';
 import {
+  enumDisplayAdaAccommodationEnum,
   enumDisplayEyeColor,
   enumDisplayGender,
   enumDisplayPronoun,
@@ -21,8 +24,21 @@ import {
 } from '../../../static';
 import Height from './Height';
 
+type TOption = { id: AdaAccommodationEnum; label: string };
+
+const options: TOption[] = (
+  Object.entries(enumDisplayAdaAccommodationEnum) as [
+    AdaAccommodationEnum,
+    string
+  ][]
+).map(([enumValue, displayValue]) => ({
+  id: enumValue,
+  label: displayValue,
+}));
+
 export default function DemographicInfo() {
-  const { control, setValue } = useFormContext<UpdateClientProfileInput>();
+  const { control, setValue, watch } =
+    useFormContext<UpdateClientProfileInput>();
 
   const [gender, pronouns, race, eyeColor, hairColor, maritalStatus] = useWatch(
     {
@@ -37,6 +53,8 @@ export default function DemographicInfo() {
       ],
     }
   );
+
+  const adaAccommodation = watch('adaAccommodation') || [];
 
   return (
     <Form>
@@ -123,6 +141,22 @@ export default function DemographicInfo() {
           name="physicalDescription"
           control={control}
           onDelete={() => setValue('physicalDescription', '')}
+        />
+      </Form.Field>
+      <Form.Field title="ADA Accommodation">
+        <MultiSelect<TOption>
+          onChange={(selected) => {
+            const selectedEnums = selected.map((item) => item.id);
+
+            setValue('adaAccommodation', selectedEnums);
+          }}
+          options={options}
+          selected={adaAccommodation.map((item) => ({
+            id: item,
+            label: enumDisplayAdaAccommodationEnum[item],
+          }))}
+          valueKey="id"
+          labelKey="label"
         />
       </Form.Field>
     </Form>
