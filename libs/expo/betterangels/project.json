@@ -4,6 +4,12 @@
   "sourceRoot": "libs/expo/betterangels/src",
   "projectType": "library",
   "tags": [],
+  "namedInputs": {
+    "default": [
+      "{projectRoot}/**/*",
+      "{workspaceRoot}/apps/betterangels-backend/schema.graphql"
+    ]
+  },
   "targets": {
     "generate-graphql-types": {
       "executor": "nx:run-commands",
