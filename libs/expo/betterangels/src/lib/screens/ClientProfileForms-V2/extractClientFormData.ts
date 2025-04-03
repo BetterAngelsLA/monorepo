@@ -123,6 +123,35 @@ export const extractClientFormData = (
         socialMediaProfiles: updatedSocialMediaProfiles,
       };
     }
+    case ClientProfileCardEnum.Demographic: {
+      const {
+        id,
+        gender,
+        pronouns,
+        race,
+        placeOfBirth,
+        heightInInches,
+        eyeColor,
+        hairColor,
+        maritalStatus,
+        physicalDescription,
+        adaAccommodation,
+      } = clientProfile;
+
+      return {
+        id,
+        gender,
+        pronouns,
+        race,
+        placeOfBirth,
+        heightInInches,
+        eyeColor,
+        hairColor,
+        maritalStatus,
+        physicalDescription,
+        adaAccommodation,
+      };
+    }
 
     default:
       return {};
