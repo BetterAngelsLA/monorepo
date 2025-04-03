@@ -46,7 +46,7 @@ def update_caseworker_permission_template(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("clients", "0019_hmisprofile_permissions"),
+        ("clients", "0023_clientprofile_user_required"),
     ]
 
     operations = [

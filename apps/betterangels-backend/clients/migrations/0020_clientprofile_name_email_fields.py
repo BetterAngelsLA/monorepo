@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("clients", "0020_clientprofile_name_email_fields"),
+        ("clients", "0019_hmisprofile_permissions"),
     ]
 
     operations = [
