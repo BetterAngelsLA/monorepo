@@ -23,13 +23,7 @@ from clients.enums import (
     VeteranStatusEnum,
 )
 from common.constants import CALIFORNIA_ID_REGEX
-from common.models import (
-    Attachment,
-    AttachmentGroupObjectPermission,
-    AttachmentUserObjectPermission,
-    BaseModel,
-    PhoneNumber,
-)
+from common.models import Attachment, BaseModel, PhoneNumber
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
@@ -196,6 +190,11 @@ class ClientProfile(BaseModel):
         else:
             self.california_id = None
 
+        if self.email:
+            self.email = self.email.lower()
+        else:
+            self.email = None
+
         super().save(*args, **kwargs)
 
     @model_property
@@ -203,15 +202,15 @@ class ClientProfile(BaseModel):
         name_parts = filter(None, [self.first_name, self.middle_name, self.last_name])
         return " ".join(name_parts).strip()
 
+    def __str__(self: "ClientProfile") -> str:
+        return f"{self.full_name if self.full_name else self.pk}"
+
     class Meta:
-        ordering = ["user__first_name"]
+        ordering = ["first_name"]
 
 
-class ClientDocument(Attachment):
+class ClientDocument(Attachment):  # type: ignore[django-manager-missing]
     """This is here to allow for a separate admin interface for Client Documents"""
-
-    attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
-    attachmentgroupobjectpermission_set: models.QuerySet["AttachmentGroupObjectPermission"]
 
     class Meta:
         proxy = True

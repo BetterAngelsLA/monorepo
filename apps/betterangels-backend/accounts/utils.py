@@ -36,7 +36,7 @@ def get_user_permission_group(user: Union[AbstractBaseUser, AnonymousUser]) -> P
     permission_group = (
         PermissionGroup.objects.select_related("organization", "group")
         .filter(
-            organization__users=user,
+            organization__users=user.pk,
             name=GroupTemplateNames.CASEWORKER,
         )
         .first()

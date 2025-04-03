@@ -15,8 +15,8 @@ PhoneNumberScalar: DjangoPhoneNumber | str = strawberry.scalar(
 
 NonBlankString = strawberry.scalar(
     NewType("NonBlankString", str),
-    serialize=lambda v: str(v),
-    parse_value=lambda v: v.strip(),
+    serialize=lambda v: v,
+    parse_value=lambda v: v.strip() if v.strip() else None,
 )
 
 

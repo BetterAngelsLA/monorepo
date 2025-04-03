@@ -79,7 +79,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "displayGender": "Male",
             "displayPronouns": "He/Him/His",
             "docReadyDocuments": [self.client_profile_1_document_1, self.client_profile_1_document_2],
+            "email": "todd@pblivin.com",
             "eyeColor": EyeColorEnum.BROWN.name,
+            "firstName": "Todd",
             "gender": GenderEnum.MALE.name,
             "genderOther": None,
             "hairColor": HairColorEnum.BROWN.name,
@@ -87,9 +89,11 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisProfiles": self.client_profile_1["hmisProfiles"],
             "householdMembers": self.client_profile_1["householdMembers"],
             "importantNotes": "I am very important",
+            "lastName": "Chavez",
             "livingSituation": LivingSituationEnum.VEHICLE.name,
             "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
+            "middleName": "Gustav",
             "nickname": self.client_profile_1["nickname"],
             "otherDocuments": [self.client_profile_1_document_4],
             "phoneNumber": self.client_profile_1["phoneNumber"],
@@ -112,29 +116,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profile, expected_client_profile)
 
     def test_client_profiles_query(self) -> None:
-        """
-        NOTE: This query is deprecated in favor of clientProfilesPaginated
-        """
-
         query = f"""
-            query ViewClientProfiles {{
-                clientProfiles{{
-                    {self.client_profile_fields}
-                }}
-            }}
-        """
-        expected_query_count = 8
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query)
-
-        client_profiles = response["data"]["clientProfiles"]
-        client_profile_count = ClientProfile.objects.count()
-        self.assertEqual(client_profile_count, len(client_profiles))
-
-    def test_client_profiles_paginated_query(self) -> None:
-        query = f"""
-            query ViewClientProfiles($offset: Int, $limit: Int) {{
-                clientProfiles: clientProfilesPaginated(pagination: {{offset: $offset, limit: $limit}}) {{
+            query ($offset: Int, $limit: Int) {{
+                clientProfiles(pagination: {{offset: $offset, limit: $limit}}) {{
                     totalCount
                     pageInfo {{
                         limit
@@ -162,8 +146,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
     )
     def test_client_profiles_query_order(self, sort_order: Optional[str], expected_first_name: str) -> None:
         query = """
-            query ViewClientProfiles($order: ClientProfileOrder) {
-                clientProfiles: clientProfilesPaginated(order: $order) {
+            query ($order: ClientProfileOrder) {
+                clientProfiles(order: $order) {
                     totalCount
                     results {
                         id
@@ -205,8 +189,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         baker.make(Note, organization=organization, client=client_profile_1.user)
 
         query = """
-            query ClientProfiles($isActive: Boolean) {
-                clientProfiles: clientProfilesPaginated(filters: {isActive: $isActive}) {
+            query ($isActive: Boolean) {
+                clientProfiles(filters: {isActive: $isActive}) {
                     totalCount
                     results {
                         id
@@ -243,8 +227,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         query = """
-            query ClientProfiles($search: String) {
-                clientProfiles: clientProfilesPaginated(filters: {search: $search}) {
+            query ($search: String) {
+                clientProfiles(filters: {search: $search}) {
                     totalCount
                     results {
                         id
@@ -284,8 +268,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         baker.make(Note, organization=organization, client=client_profile_1.user)
 
         query = """
-            query ClientProfiles($isActive: Boolean, $search: String) {
-                clientProfiles: clientProfilesPaginated(filters: {isActive: $isActive, search: $search}) {
+            query ($isActive: Boolean, $search: String) {
+                clientProfiles(filters: {isActive: $isActive, search: $search}) {
                     totalCount
                     results {
                         id
@@ -340,8 +324,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         )
 
         query = """
-            query ClientProfiles($searchClient: ClientSearchInput) {
-                clientProfiles: clientProfilesPaginated(filters: {searchClient: $searchClient}) {
+            query ($searchClient: ClientSearchInput) {
+                clientProfiles(filters: {searchClient: $searchClient}) {
                     totalCount
                     results {
                         id
@@ -378,8 +362,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         query = """
-            query ClientProfiles($searchClient: ClientSearchInput) {
-                clientProfiles: clientProfilesPaginated(filters: {searchClient: $searchClient}) {
+            query ($searchClient: ClientSearchInput) {
+                clientProfiles(filters: {searchClient: $searchClient}) {
                     totalCount
                     results {
                         id
@@ -531,42 +515,10 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         )
 
     def test_client_documents_query(self) -> None:
-        """
-        NOTE: This query is deprecated in favor of clientDocumentsPaginated
-        """
-
         self.graphql_client.force_login(self.org_1_case_manager_1)
         query = """
             query ViewClientDocuments {
                 clientDocuments {
-                    id
-                    file {
-                        name
-                    }
-                    attachmentType
-                    mimeType
-                    originalFilename
-                    namespace
-                }
-            }
-        """
-        response = self.execute_graphql(query)
-
-        self.assertEqual(
-            response["data"]["clientDocuments"],
-            [
-                self.client_profile_1_document_1,
-                self.client_profile_1_document_2,
-                self.client_profile_1_document_3,
-                self.client_profile_1_document_4,
-            ],
-        )
-
-    def test_client_documents_paginated_query(self) -> None:
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        query = """
-            query ViewClientDocuments {
-                clientDocuments: clientDocumentsPaginated {
                     totalCount
                     results {
                         id

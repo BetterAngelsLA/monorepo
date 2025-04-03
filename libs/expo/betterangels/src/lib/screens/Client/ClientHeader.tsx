@@ -42,11 +42,11 @@ export default function ClientHeader(props: IClientHeaderProps) {
           mr="xs"
           size="xl"
           imageUrl={client?.profilePhoto?.url}
-          accessibilityLabel={`${client?.user.firstName} ${client?.user.lastName} avatar`}
+          accessibilityLabel={`${client?.firstName} ${client?.lastName} avatar`}
           accessibilityHint={'clients avatar'}
         />
         <TextMedium size="lg">
-          {client?.user.firstName} {client?.user.lastName}{' '}
+          {client?.firstName} {client?.lastName}{' '}
           {client?.nickname && `(${client.nickname})`}
         </TextMedium>
       </View>

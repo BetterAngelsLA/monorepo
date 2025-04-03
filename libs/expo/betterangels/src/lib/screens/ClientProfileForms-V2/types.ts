@@ -11,10 +11,7 @@ export type ContactInfoState = {
   id: string;
   residenceAddress?: string | null;
   mailingAddress?: string | null;
-  user: {
-    id: string;
-    email?: string | null;
-  };
+  email?: string | null;
   socialMediaProfiles?:
     | {
         id?: string | null;
@@ -39,12 +36,9 @@ export type DemographicInfoState = {
 
 export type FullnameState = {
   id: string;
-  user: {
-    id: string;
-    firstName?: string | null;
-    middleName?: string | null;
-    lastName?: string | null;
-  };
+  firstName?: string | null;
+  middleName?: string | null;
+  lastName?: string | null;
   nickname?: string | null;
 };
 

@@ -36,15 +36,19 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
             age
             californiaId
             dateOfBirth
+            email
             eyeColor
+            firstName
             gender
             genderOther
             hairColor
             heightInInches
             importantNotes
+            lastName
             livingSituation
             mailingAddress
             maritalStatus
+            middleName
             nickname
             phoneNumber
             physicalDescription
@@ -260,17 +264,21 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "californiaId": "L1234567",
                 "contacts": self.client_1_contacts,
                 "dateOfBirth": self.date_of_birth,
+                "email": "todd@pblivin.com",
                 "eyeColor": EyeColorEnum.BROWN.name,
+                "firstName": "Todd",
                 "gender": GenderEnum.MALE.name,
                 "genderOther": None,
                 "hairColor": HairColorEnum.BROWN.name,
                 "heightInInches": 71.75,
                 "hmisProfiles": self.client_1_hmis_profiles,
-                "importantNotes": "I am very important",
                 "householdMembers": self.client_1_household_members,
+                "importantNotes": "I am very important",
+                "lastName": "Chavez",
                 "livingSituation": LivingSituationEnum.VEHICLE.name,
                 "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
                 "maritalStatus": MaritalStatusEnum.SINGLE.name,
+                "middleName": "Gustav",
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "phoneNumbers": self.client_profile_1_phone_numbers,
@@ -296,16 +304,20 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "address": None,
                 "contacts": [],
                 "dateOfBirth": None,
+                "email": "mister@pblivin.com",
                 "eyeColor": None,
+                "firstName": "Mister",
                 "gender": None,
                 "genderOther": None,
                 "hairColor": None,
                 "heightInInches": None,
                 "hmisProfiles": self.client_2_hmis_profiles,
                 "householdMembers": [],
+                "lastName": "Peanutbutter",
                 "livingSituation": None,
                 "mailingAddress": None,
                 "maritalStatus": None,
+                "middleName": "Tee",
                 "nickname": None,
                 "phoneNumber": None,
                 "phoneNumbers": [self.client_2_phone_number_1],
