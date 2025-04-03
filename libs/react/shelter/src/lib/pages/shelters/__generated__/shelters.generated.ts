@@ -1,4 +1,4 @@
-import * as Types from '../../../../../../../expo/betterangels/src/lib/apollo/graphql/__generated__/types';
+import * as Types from '../../../apollo/graphql/__generated__/types';
 
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';

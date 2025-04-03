@@ -316,7 +316,6 @@ input ClientProfilePhotoInput {
 }
 
 type ClientProfileType {
-  id: ID
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
@@ -348,6 +347,7 @@ type ClientProfileType {
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: VeteranStatusEnum
+  id: ID!
   contacts: [ClientContactType!]
   hmisProfiles: [HmisProfileType!]
   householdMembers: [ClientHouseholdMemberType!]
@@ -358,7 +358,7 @@ type ClientProfileType {
   docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  user: UserType
+  user: UserType!
   displayCaseManager: String!
 }
 
@@ -397,7 +397,6 @@ union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 union CreateClientProfileDataImportPayload = ClientProfileDataImportType | OperationInfo
 
 input CreateClientProfileInput {
-  id: ID
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
@@ -454,6 +453,7 @@ input CreateNoteInput {
   publicDetails: String
   privateDetails: String
   client: ID
+  clientProfile: ID
   isSubmitted: Boolean
   interactedAt: DateTime
 }
@@ -486,6 +486,7 @@ input CreateServiceRequestInput {
   status: ServiceRequestStatusEnum!
   serviceOther: String
   client: ID
+  clientProfile: ID
 }
 
 union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
@@ -903,6 +904,7 @@ type NoteDataImportType {
 
 input NoteFilter {
   client: ID
+  clientProfile: ID
   createdBy: ID
   isSubmitted: Boolean
   organization: ID
@@ -942,6 +944,7 @@ type NoteType {
   publicDetails: String!
   isSubmitted: Boolean!
   client: UserType
+  clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
   interactedAt: DateTime!
@@ -1093,10 +1096,10 @@ enum PronounEnum {
 type Query {
   currentUser: UserType!
   caseworkerOrganizations(order: OrganizationOrder, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  clientProfiles(filters: ClientProfileFilter, order: ClientProfileOrder, pagination: OffsetPaginationInput): [ClientProfileType!]! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
+  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientProfilesPaginated(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  clientDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
+  clientDocuments(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocumentsPaginated(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   hmisProfile(pk: ID!): HmisProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
   hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
@@ -1104,10 +1107,8 @@ type Query {
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notes(filters: NoteFilter, order: NoteOrder, pagination: OffsetPaginationInput): [NoteType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notesPaginated(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  serviceRequest(pk: ID!): ServiceRequestType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
-  serviceRequests(pagination: OffsetPaginationInput): [ServiceRequestType!]! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_servicerequest"}], any: true)
   interactionAuthors(filters: InteractionAuthorFilter, order: InteractionAuthorOrder, pagination: OffsetPaginationInput): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
@@ -1281,6 +1282,7 @@ type ServiceRequestType {
   dueBy: DateTime
   completedOn: DateTime
   client: UserType
+  clientProfile: ClientProfileType
   createdBy: UserType!
   createdAt: DateTime!
 }
@@ -1503,7 +1505,6 @@ type TrainingServiceType {
 scalar UUID
 
 input UpdateClientProfileInput {
-  id: ID!
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
@@ -1535,6 +1536,7 @@ input UpdateClientProfileInput {
   residenceAddress: String
   spokenLanguages: [LanguageEnum!]
   veteranStatus: VeteranStatusEnum
+  id: ID!
   contacts: [ClientContactInput!]
   hmisProfiles: [HmisProfileInput!]
   householdMembers: [ClientHouseholdMemberInput!]
@@ -1576,7 +1578,6 @@ input UpdateServiceRequestInput {
   serviceOther: String
   status: ServiceRequestStatusEnum
   dueBy: DateTime
-  client: ID
 }
 
 union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo

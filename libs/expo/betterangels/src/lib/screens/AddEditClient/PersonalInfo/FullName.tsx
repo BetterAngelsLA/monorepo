@@ -26,9 +26,9 @@ export default function FullName() {
   } = useFormContext<TFullNameForm>();
 
   const onReset = () => {
-    setValue('user.firstName', '');
-    setValue('user.middleName', '');
-    setValue('user.lastName', '');
+    setValue('firstName', '');
+    setValue('middleName', '');
+    setValue('lastName', '');
     setValue('nickname', '');
     clearErrors('emptyFormError');
   };
@@ -37,9 +37,9 @@ export default function FullName() {
     const values = getValues();
 
     const validatable = [
-      values.user?.firstName,
-      values.user?.lastName,
-      values.user?.middleName,
+      values.firstName,
+      values.lastName,
+      values.middleName,
       values.nickname,
     ];
 
@@ -86,7 +86,7 @@ export default function FullName() {
         placeholder="Enter First Name"
         autoCorrect={false}
         label="First Name"
-        name="user.firstName"
+        name="firstName"
         control={control}
         rules={{
           validate: oneValueExists,
@@ -96,7 +96,7 @@ export default function FullName() {
         placeholder="Enter Middle Name"
         autoCorrect={false}
         label="Middle Name"
-        name="user.middleName"
+        name="middleName"
         control={control}
         rules={{
           validate: oneValueExists,
@@ -106,7 +106,7 @@ export default function FullName() {
         placeholder="Enter Last Name"
         autoCorrect={false}
         label="Last Name"
-        name="user.lastName"
+        name="lastName"
         control={control}
         rules={{
           validate: oneValueExists,

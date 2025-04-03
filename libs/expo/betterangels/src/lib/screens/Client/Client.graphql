@@ -2,62 +2,38 @@ query ClientProfile($id: ID!) {
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
+      adaAccommodation
       address
+      age
       californiaId
       dateOfBirth
-      gender
-      displayGender
-      displayCaseManager
-      displayPronouns
-      displayPronouns
-      displayCaseManager
-      residenceAddress
-      placeOfBirth
-      heightInInches
+      email
       eyeColor
-      hairColor
-      maritalStatus
-      physicalDescription
+      firstName
+      gender
       genderOther
-      mailingAddress
-      residenceAddress
-      race
-      age
+      hairColor
+      heightInInches
       importantNotes
-      preferredCommunication
-      socialMediaProfiles {
-        id
-        platform
-        platformUserId
-      }
-      hmisProfiles {
-        agency
-        hmisId
-        id
-      }
+      lastName
+      livingSituation
+      mailingAddress
+      maritalStatus
+      middleName
       nickname
       phoneNumber
-      phoneNumbers {
-        id
-        number
-        isPrimary
-      }
+      physicalDescription
+      placeOfBirth
+      preferredCommunication
       preferredLanguage
       pronouns
+      pronounsOther
+      race
+      residenceAddress
       veteranStatus
-      livingSituation
-      adaAccommodation
-      profilePhoto {
-        name
-        url
-      }
-      user {
-        id
-        email
-        firstName
-        middleName
-        lastName
-      }
+      displayCaseManager
+      displayGender
+      displayPronouns
       contacts {
         id
         email
@@ -66,6 +42,11 @@ query ClientProfile($id: ID!) {
         phoneNumber
         relationshipToClient
         relationshipToClientOther
+      }
+      hmisProfiles {
+        agency
+        hmisId
+        id
       }
       householdMembers {
         dateOfBirth
@@ -76,6 +57,20 @@ query ClientProfile($id: ID!) {
         relationshipToClient
         relationshipToClientOther
         id
+      }
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
+      profilePhoto {
+        name
+        url
+      }
+      socialMediaProfiles {
+        id
+        platform
+        platformUserId
       }
       docReadyDocuments {
         id
@@ -159,9 +154,8 @@ mutation CreateNote($data: CreateNoteInput!) {
       id
       purpose
       publicDetails
-      client {
+      clientProfile {
         id
-        username
         firstName
         lastName
         email

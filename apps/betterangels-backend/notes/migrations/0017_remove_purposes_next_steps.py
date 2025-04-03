@@ -7,7 +7,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("notes", "0015_add_client_profile_field"),
+        ("notes", "0016_note_client_profile_data"),
     ]
 
     operations = [

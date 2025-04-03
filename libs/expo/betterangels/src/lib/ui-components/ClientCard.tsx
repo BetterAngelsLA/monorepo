@@ -16,12 +16,12 @@ import {
 import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import { HmisProfileType, Maybe } from '../apollo';
-import { ClientProfilesPaginatedQuery } from '../screens/Clients/__generated__/Clients.generated';
+import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 interface IClientCardProps {
   client:
-    | ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number]
+    | ClientProfilesQuery['clientProfiles']['results'][number]
     | undefined;
   progress?: DimensionValue;
   mb?: TSpacing;
@@ -96,8 +96,8 @@ export default function ClientCard(props: IClientCardProps) {
       ]}
     >
       <Avatar
-        accessibilityHint={`shows avatar of ${client.user.firstName} ${client.user.lastName} if available`}
-        accessibilityLabel={`Avatar of ${client.user.firstName} ${client.user.lastName} client`}
+        accessibilityHint={`shows avatar of ${client.firstName} ${client.lastName} if available`}
+        accessibilityLabel={`Avatar of ${client.firstName} ${client.lastName} client`}
         imageUrl={client.profilePhoto?.url}
         size="xl"
         mr="xs"
@@ -105,7 +105,7 @@ export default function ClientCard(props: IClientCardProps) {
 
       <View style={{ gap: Spacings.xxs, flex: 2 }}>
         <TextBold size="sm">
-          {client.user.firstName} {client.user.lastName}{' '}
+          {client.firstName} {client.lastName}{' '}
           {client.nickname && `(${client.nickname})`}
         </TextBold>
         {(client.dateOfBirth || formattedHeight) && (
@@ -148,7 +148,7 @@ export default function ClientCard(props: IClientCardProps) {
             fontSize="sm"
             title={'Select'}
             onPress={onPress}
-            accessibilityHint={`Add a interaction for client ${client.user.firstName} ${client.user.lastName}`}
+            accessibilityHint={`Add a interaction for client ${client.firstName} ${client.lastName}`}
           />
         ) : (
           <IconButton

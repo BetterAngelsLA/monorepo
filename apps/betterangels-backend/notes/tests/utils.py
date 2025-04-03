@@ -1,5 +1,6 @@
 from typing import Any, Dict
 
+from clients.models import ClientProfile
 from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.gis.geos import Point
@@ -14,6 +15,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.note_fields = """
             id
             client {
+                id
+            }
+            clientProfile {
                 id
             }
             createdBy {
@@ -54,6 +58,8 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 status
             }
         """
+        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
+        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
         self._setup_note()
         self._setup_location()
         self.provided_services = baker.make(ServiceRequest, _quantity=2)
@@ -67,6 +73,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 "purpose": f"Session with {self.client_user_1.full_name}",
                 "publicDetails": f"{self.client_user_1.full_name}'s public details",
                 "client": self.client_user_1.pk,
+                "clientProfile": self.client_profile_1.pk,
             },
         )["data"]["createNote"]
         # Logout after setting up the note
@@ -217,6 +224,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         client {
                             id
                         }
+                        clientProfile {
+                            id
+                        }
                         createdBy {
                             id
                         }
@@ -317,6 +327,8 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
 class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase, ServiceRequestGraphQLUtilMixin):
     def setUp(self) -> None:
         super().setUp()
+        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
+        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
         self._setup_service_request()
 
     def _setup_service_request(self) -> None:

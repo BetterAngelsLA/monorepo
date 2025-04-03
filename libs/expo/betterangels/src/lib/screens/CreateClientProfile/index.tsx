@@ -17,11 +17,7 @@ import {
 import { useSnackbar } from '../../hooks';
 import { useCreateClientProfileMutation } from './__generated__/createClientProfile.generated';
 
-type AllowedFieldNames =
-  | 'user.firstName'
-  | 'user.middleName'
-  | 'user.lastName'
-  | 'nickname';
+type AllowedFieldNames = 'firstName' | 'middleName' | 'lastName' | 'nickname';
 
 interface FormField {
   label: string;
@@ -32,15 +28,15 @@ interface FormField {
 const FORM_FIELDS: FormField[] = [
   {
     label: 'First Name',
-    name: 'user.firstName',
+    name: 'firstName',
     placeholder: 'Enter first name',
   },
   {
     label: 'Middle Name',
-    name: 'user.middleName',
+    name: 'middleName',
     placeholder: 'Enter middle name',
   },
-  { label: 'Last Name', name: 'user.lastName', placeholder: 'Enter last name' },
+  { label: 'Last Name', name: 'lastName', placeholder: 'Enter last name' },
   { label: 'Nickname', name: 'nickname', placeholder: 'Enter nickname' },
 ];
 
@@ -52,7 +48,7 @@ export default function CreateClientProfile() {
     formState: { isSubmitted },
     setValue,
   } = useForm<CreateClientProfileInput>();
-  const [createClient, { loading: isCreating }] =
+  const [createClientProfile, { loading: isCreating }] =
     useCreateClientProfileMutation();
 
   const router = useRouter();
@@ -60,14 +56,14 @@ export default function CreateClientProfile() {
 
   const [firstName, middleName, lastName, nickname] = useWatch({
     control,
-    name: ['user.firstName', 'user.middleName', 'user.lastName', 'nickname'],
+    name: ['firstName', 'middleName', 'lastName', 'nickname'],
   });
 
   const isError = !firstName && !middleName && !lastName && !nickname;
 
   const onSubmit: SubmitHandler<CreateClientProfileInput> = async (values) => {
     try {
-      const createResponse = await createClient({
+      const createResponse = await createClientProfile({
         variables: {
           data: values,
         },

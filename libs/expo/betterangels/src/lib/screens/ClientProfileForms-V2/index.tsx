@@ -83,7 +83,7 @@ export default function ClientProfileForms(props: IClientProfileForms) {
     variables: { id },
   });
 
-  const [updateClient, { loading: isUpdating }] =
+  const [updateClientProfile, { loading: isUpdating }] =
     useUpdateClientProfileMutation();
 
   const methods = useForm<FormValues>({
@@ -124,7 +124,7 @@ export default function ClientProfileForms(props: IClientProfileForms) {
           values.phoneNumbers?.filter((item) => item.number) || [];
       }
 
-      const updateResponse = await updateClient({
+      const updateResponse = await updateClientProfile({
         variables: {
           data: inputs,
         },

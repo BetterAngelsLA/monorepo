@@ -228,9 +228,7 @@ export default function AddNote() {
         throw new Error(`Failed to update interaction: ${updateError}`);
       }
 
-      return router.replace(
-        getClientProfileUrl(data?.note.client?.clientProfile?.id)
-      );
+      return router.replace(getClientProfileUrl(data?.note.clientProfile?.id));
     } catch (err) {
       console.error(err);
 
@@ -305,7 +303,7 @@ export default function AddNote() {
               fontSize="sm"
               onPress={() =>
                 router.navigate(
-                  getClientProfileUrl(data?.note.client?.clientProfile?.id)
+                  getClientProfileUrl(data?.note.clientProfile?.id)
                 )
               }
               accessibilityHint="saves the interaction for later"
@@ -317,12 +315,10 @@ export default function AddNote() {
       />
 
       <SubmittedModal
-        firstName={data.note.client?.firstName}
+        firstName={data.note.clientProfile?.firstName}
         closeModal={() => {
           setSubmitted(false);
-          router.navigate(
-            getClientProfileUrl(data?.note.client?.clientProfile?.id)
-          );
+          router.navigate(getClientProfileUrl(data?.note.clientProfile?.id));
         }}
         isModalVisible={isSubmitted}
       />

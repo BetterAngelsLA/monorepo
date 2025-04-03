@@ -16,12 +16,11 @@ import { Ordering } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { ClientCard, ClientCardModal, Header } from '../../ui-components';
 import {
-  ClientProfilesPaginatedQuery,
-  useClientProfilesPaginatedQuery,
+  ClientProfilesQuery,
+  useClientProfilesQuery,
   useCreateNoteMutation,
 } from './__generated__/Clients.generated';
-type TClientProfile =
-  ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'];
+type TClientProfile = ClientProfilesQuery['clientProfiles']['results'];
 
 const paginationLimit = 20;
 
@@ -33,14 +32,14 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [clients, setClients] = useState<TClientProfile>([]);
   const [filterSearch, setFilterSearch] = useState<string>('');
-  const { data, loading } = useClientProfilesPaginatedQuery({
+  const { data, loading } = useClientProfilesQuery({
     variables: {
       pagination: { limit: paginationLimit, offset },
       filters: {
         search: filterSearch,
       },
       order: {
-        user_FirstName: Ordering.AscNullsLast,
+        firstName: Ordering.AscNullsLast,
         id: Ordering.Desc,
       },
     },
@@ -113,10 +112,10 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   };
 
   useEffect(() => {
-    if (!data || !('clientProfilesPaginated' in data)) {
+    if (!data || !('clientProfiles' in data)) {
       return;
     }
-    const { results, totalCount } = data.clientProfilesPaginated;
+    const { results, totalCount } = data.clientProfiles;
     setTotalCount(totalCount);
 
     if (offset === 0) {
@@ -219,8 +218,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                   onPress={() => {
                     if (select === 'true') {
                       createNoteFunction(
-                        clientProfile.user.id,
-                        clientProfile.user.firstName
+                        clientProfile.id,
+                        clientProfile.firstName
                       );
                     } else {
                       setCurrentClient(clientProfile);
@@ -242,7 +241,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         <ClientCardModal
           isModalVisible={modalIsOpen}
           closeModal={() => setModalIsOpen(false)}
-          client={currentClient}
+          clientProfile={currentClient}
         />
       )}
     </View>
