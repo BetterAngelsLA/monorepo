@@ -43,7 +43,7 @@ const formConfigs: Record<
     content: <ContactInfo />,
   },
   [ClientProfileCardEnum.Demographic]: {
-    title: 'Edit Demographic Details',
+    title: 'Edit Demographic Info',
     content: <DemographicInfo />,
   },
   [ClientProfileCardEnum.FullName]: {

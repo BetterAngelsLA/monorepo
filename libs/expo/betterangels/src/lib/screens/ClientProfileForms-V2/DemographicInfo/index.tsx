@@ -19,6 +19,8 @@ import {
   enumDisplayAdaAccommodationEnum,
   enumDisplayEyeColor,
   enumDisplayGender,
+  enumDisplayHairColor,
+  enumDisplayMaritalStatus,
   enumDisplayPronoun,
   enumDisplayRace,
 } from '../../../static';
@@ -117,7 +119,7 @@ export default function DemographicInfo() {
         <SingleSelect
           placeholder="Select hair color"
           selectedValue={hairColor}
-          items={Object.entries(enumDisplayEyeColor).map(
+          items={Object.entries(enumDisplayHairColor).map(
             ([value, displayValue]) => ({ value, displayValue })
           )}
           onChange={(e) => setValue('hairColor', e as HairColorEnum)}
@@ -128,7 +130,7 @@ export default function DemographicInfo() {
         <SingleSelect
           placeholder="Select marital status"
           selectedValue={maritalStatus}
-          items={Object.entries(enumDisplayEyeColor).map(
+          items={Object.entries(enumDisplayMaritalStatus).map(
             ([value, displayValue]) => ({ value, displayValue })
           )}
           onChange={(e) => setValue('maritalStatus', e as MaritalStatusEnum)}
