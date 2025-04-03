@@ -19,8 +19,7 @@ import {
 } from './__generated__/ActiveClients.generated';
 
 const paginationLimit = 20;
-type TClientProfile =
-  ClientProfilesQuery['clientProfiles']['results'];
+type TClientProfile = ClientProfilesQuery['clientProfiles']['results'];
 
 export default function Home({ Logo }: { Logo: ElementType }) {
   const router = useRouter();
@@ -160,7 +159,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         <ClientCardModal
           isModalVisible={modalIsOpen}
           closeModal={() => setModalIsOpen(false)}
-          client={currentClient}
+          clientProfile={currentClient}
         />
       )}
     </View>

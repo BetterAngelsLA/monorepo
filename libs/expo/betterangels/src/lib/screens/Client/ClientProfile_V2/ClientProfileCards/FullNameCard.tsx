@@ -12,8 +12,7 @@ type TProps = {
 export function FullNameCard(props: TProps) {
   const { clientProfile } = props;
 
-  const { firstName, middleName, lastName } = clientProfile?.user || {};
-  const nickname = clientProfile?.nickname;
+  const { firstName, middleName, lastName, nickname } = clientProfile || {};
 
   const content: TClientProfileCardItem[] = [
     {

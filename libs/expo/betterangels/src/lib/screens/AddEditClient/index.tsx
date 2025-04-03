@@ -85,16 +85,16 @@ export default function AddEditClient({ id }: { id?: string }) {
             search: '',
           },
           order: {
-            user_FirstName: Ordering.AscNullsLast,
+            firstName: Ordering.AscNullsLast,
             id: Ordering.Desc,
           },
         },
       },
     ],
   });
-  const [updateClient, { loading: isUpdating }] =
+  const [updateClientProfile, { loading: isUpdating }] =
     useUpdateClientProfileMutation();
-  const [createClient, { loading: isCreating }] =
+  const [createClientProfile, { loading: isCreating }] =
     useCreateClientProfileMutation({
       refetchQueries: [
         {
@@ -105,7 +105,7 @@ export default function AddEditClient({ id }: { id?: string }) {
               search: '',
             },
             order: {
-              user_FirstName: Ordering.AscNullsLast,
+              firstName: Ordering.AscNullsLast,
               id: Ordering.Desc,
             },
           },
@@ -155,8 +155,8 @@ export default function AddEditClient({ id }: { id?: string }) {
     }
 
     // passing an empty string to the backend will violate unique constraint
-    if (typeof values.user?.email === 'string') {
-      values.user.email = values.user.email || null;
+    if (typeof values.email === 'string') {
+      values.email = values.email || null;
     }
 
     values.householdMembers = values.householdMembers?.map((member) => {
@@ -180,14 +180,10 @@ export default function AddEditClient({ id }: { id?: string }) {
 
         if (!data || !('clientProfile' in data)) return;
 
-        const updateResponse = await updateClient({
+        const updateResponse = await updateClientProfile({
           variables: {
             data: {
               ...input,
-              user: {
-                id: data?.clientProfile.user.id,
-                ...input.user,
-              },
             },
           },
           errorPolicy: 'all',
@@ -202,7 +198,7 @@ export default function AddEditClient({ id }: { id?: string }) {
         }
       } else {
         const input = values as CreateClientProfileInput;
-        const createResponse = await createClient({
+        const createResponse = await createClientProfile({
           variables: { data: input as CreateClientProfileInput },
           errorPolicy: 'all',
         });
@@ -266,9 +262,6 @@ export default function AddEditClient({ id }: { id?: string }) {
       phoneNumbers: existingPhoneNumbers?.length
         ? existingPhoneNumbers
         : phoneNumberEmpyInput,
-      user: {
-        ...updatedClientInput.user,
-      },
     };
 
     if (data.clientProfile.dateOfBirth) {
@@ -302,7 +295,6 @@ export default function AddEditClient({ id }: { id?: string }) {
     }
 
     delete clientInput.__typename;
-    delete clientInput.user.__typename;
     delete clientInput.displayGender;
     delete clientInput.displayPronouns;
 

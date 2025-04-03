@@ -38,7 +38,7 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     firstName = '',
     middleName = '',
     lastName = '',
-  } = client?.clientProfile?.user || {};
+  } = client?.clientProfile || {};
   const fullName = [firstName, middleName, lastName]
     .filter(Boolean)
     .join(' ')
