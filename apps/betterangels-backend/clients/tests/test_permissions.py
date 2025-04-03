@@ -7,8 +7,9 @@ from clients.enums import (
     HmisAgencyEnum,
     LanguageEnum,
 )
-from clients.models import ClientProfile, HmisProfile
+from clients.models import ClientContact, ClientProfile, HmisProfile
 from clients.tests.utils import (
+    ClientContactBaseTestCase,
     ClientProfileGraphQLBaseTestCase,
     HmisProfileBaseTestCase,
 )
@@ -311,6 +312,161 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertEqual(response["data"]["clientDocuments"]["totalCount"], expected_document_count)
         else:
             self.assertTrue("errors" in response)
+
+
+class ClientContactPermissionTestCase(ClientContactBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM user should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_client_contact_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        query = """
+            query ($id: ID!) {
+                clientContact(pk: $id) {
+                    id
+                }
+            }
+        """
+        variables = {"id": self.client_contact_1["id"]}
+        response = self.execute_graphql(query, variables)
+
+        if should_succeed:
+            self.assertEqual(response["data"]["clientContact"]["id"], self.client_contact_1["id"])
+        else:
+            self.assertIsNotNone(response["errors"])
+
+    @parametrize(
+        "user_label, expected_profile_count",
+        [
+            ("org_1_case_manager_1", 2),
+            ("org_1_case_manager_2", 2),
+            ("org_2_case_manager_1", 2),
+            ("client_user_1", 0),  # Non CM should not succeed
+            # NOTE: Anon user raising an error may be caused by a strawberry bug.
+            # This test may fail and need updating when the bug is fixed.
+            (None, None),  # Anonymous user should return error
+        ],
+    )
+    def test_view_client_contacts_permission(self, user_label: str, expected_profile_count: int | None) -> None:
+        self._handle_user_login(user_label)
+        query = """
+            query {
+                clientContacts {
+                    totalCount
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        if expected_profile_count is not None:
+            self.assertEqual(response["data"]["clientContacts"]["totalCount"], expected_profile_count)
+        else:
+            self.assertTrue("errors" in response)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Case manager should succeed
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_create_client_contact_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        client_contact_count = ClientContact.objects.count()
+        variables = {
+            "name": "Buddy Guy",
+            "clientProfile": self.client_profile["id"],
+        }
+        response = self._create_client_contact_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["createClientContact"]["id"])
+            self.assertEqual(client_contact_count + 1, ClientContact.objects.count())
+        else:
+            self.assertEqual(len(response["data"]["createClientContact"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["createClientContact"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "createClientContact",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+            self.assertEqual(client_contact_count, ClientContact.objects.count())
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_update_client_contact_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {
+            "id": self.client_contact_1["id"],
+            "name": "John Joe",
+        }
+        response = self._update_client_contact_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["updateClientContact"]["id"])
+        else:
+            self.assertEqual(len(response["data"]["updateClientContact"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["updateClientContact"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_delete_client_contact_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {"object": "ClientContact", "object_id": self.client_contact_1["id"]}
+        response = self._delete_fixture(**variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["deleteClientContact"]["id"])
+        else:
+            self.assertEqual(len(response["data"]["deleteClientContact"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["deleteClientContact"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
 
 class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):

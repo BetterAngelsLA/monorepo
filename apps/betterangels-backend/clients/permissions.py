@@ -16,6 +16,13 @@ class HmisProfilePermissions(models.TextChoices):
     ADD = "clients.add_hmisprofile", _("Can add hmisprofile")
 
 
+class ClientContactPermissions(models.TextChoices):
+    VIEW = "clients.view_clientcontact", _("Can view clientcontact")
+    CHANGE = "clients.change_clientcontact", _("Can change clientcontact")
+    DELETE = "clients.delete_clientcontact", _("Can delete clientcontact")
+    ADD = "clients.add_clientcontact", _("Can add clientcontact")
+
+
 class ClientProfileImportRecordPermissions(models.TextChoices):
     VIEW = "clients.view_clientprofileimportrecord", _("Can view client profile import record")
     CHANGE = "clients.change_clientprofileimportrecord", _("Can change client profile import record")
