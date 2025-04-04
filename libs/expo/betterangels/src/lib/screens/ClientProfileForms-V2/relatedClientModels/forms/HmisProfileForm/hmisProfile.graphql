@@ -45,16 +45,3 @@ mutation DeleteHmisProfile($id: ID!) {
     }
   }
 }
-
-# input HmisProfileInput {
-#   hmisId: NonBlankString
-#   agency: HmisAgencyEnum!
-#   id: ID
-#   clientProfile: ID
-# }
-
-# createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_hmisprofile"}], any: true)
-
-# updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_hmisprofile"}], any: true)
-
-# deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_hmisprofile"}], any: true)
