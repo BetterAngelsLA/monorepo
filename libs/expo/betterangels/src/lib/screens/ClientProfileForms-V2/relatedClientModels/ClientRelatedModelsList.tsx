@@ -34,15 +34,13 @@ export function ClientRelatedModelsList(props: TProps) {
     data,
     error: fetchError,
     loading,
-    refetch,
   } = useGetClientProfileQuery({
     variables: { id: clientId },
   });
 
   const { clientProfile } = data || {};
 
-  const { titlePlural, ViewComponent } =
-    clientRelatedModelConfig[componentName];
+  const { titlePlural, ViewComponent } = clientRelatedModelConfig[section];
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: `Edit ${titlePlural}` });

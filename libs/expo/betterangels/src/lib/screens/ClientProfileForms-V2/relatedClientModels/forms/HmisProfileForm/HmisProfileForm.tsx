@@ -70,46 +70,35 @@ export function HmisProfileForm(props: TProps) {
     formState: any
   ) => {
     try {
-      const mutationResult = isEditMode
-        ? await updateHmisProfile({
-            variables: {
-              data: {
-                ...formState,
-                clientProfile: clientProfile.id,
-                id: relationId,
-              },
-            },
-            refetchQueries: [
-              {
-                query: ClientProfileDocument,
-                variables: {
-                  id: clientProfile.id,
-                },
-              },
-            ],
-            errorPolicy: 'all',
-          })
-        : await createHmisProfile({
-            variables: {
-              data: {
-                ...formState,
-                clientProfile: clientProfile.id,
-              },
-            },
-            refetchQueries: [
-              {
-                query: ClientProfileDocument,
-                variables: {
-                  id: clientProfile.id,
-                },
-              },
-            ],
-            errorPolicy: 'all',
-          });
+      const mutationVariables = {
+        variables: {
+          data: {
+            clientProfile: clientProfile.id,
+            ...formState,
+            ...(isEditMode ? { id: relationId } : {}),
+          },
+        },
+      };
 
-      // if (updateError || createError) {
-      //   throw updateError || createError;
-      // }
+      const mutation = isEditMode ? updateHmisProfile : createHmisProfile;
+
+      await mutation({
+        ...mutationVariables,
+        refetchQueries: [
+          {
+            query: ClientProfileDocument,
+            variables: {
+              id: clientProfile.id,
+            },
+          },
+        ],
+        errorPolicy: 'all',
+      });
+
+      if (updateError || createError) {
+        // TODO: implement
+        console.error(updateError || createError);
+      }
 
       const returnRoute = getClientProfileRoute({
         id: clientProfile.id,

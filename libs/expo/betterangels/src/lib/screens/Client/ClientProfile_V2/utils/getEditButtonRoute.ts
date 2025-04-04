@@ -20,9 +20,7 @@ export function getEditButtonRoute(props: TProps) {
     case ClientProfileCardEnum.HmisIds:
     case ClientProfileCardEnum.Household:
     case ClientProfileCardEnum.RelevantContacts:
-      const hasData = hasSectionModelData(section, clientProfile);
-
-      if (hasData) {
+      if (hasSectionModelData(section, clientProfile)) {
         return getRelatedModelsViewRoute({
           profileId: clientProfile.id,
           section: section as unknown as TRelatedModelSection,

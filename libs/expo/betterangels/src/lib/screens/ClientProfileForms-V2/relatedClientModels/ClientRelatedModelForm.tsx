@@ -33,7 +33,6 @@ export function ClientRelatedModelForm(props: TClientRelations) {
     data,
     error: fetchError,
     loading,
-    refetch,
   } = useGetClientProfileQuery({
     variables: { id: clientId },
   });

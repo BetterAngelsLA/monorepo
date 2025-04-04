@@ -1,6 +1,6 @@
 import { LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { useSnackbar } from 'libs/expo/betterangels/src/lib/hooks';
+import { useSnackbar } from '../../../../../hooks';
 import {
   ClientProfileSectionEnum,
   getClientProfileRoute,
