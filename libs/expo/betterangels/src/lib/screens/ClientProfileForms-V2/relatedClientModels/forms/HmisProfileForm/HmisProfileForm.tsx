@@ -6,9 +6,8 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { enumDisplayHmisAgency } from '../../../../..//static';
-import { HmisAgencyEnum } from '../../../../../apollo';
 import {
   ClientProfileSectionEnum,
   getClientProfileRoute,
@@ -124,16 +123,22 @@ export function HmisProfileForm(props: TProps) {
       <TextRegular mb="lg">Fill in both HIMIS ID Type and ID#</TextRegular>
       <Form>
         <Form.Fieldset>
-          <SingleSelect
-            // disabled={isLoading}
-            label="Type of HMIS ID"
-            placeholder="Select type of HMIS ID"
-            items={Object.entries(enumDisplayHmisAgency).map(
-              ([value, displayValue]) => ({ value, displayValue })
+          <Controller
+            name="agency"
+            control={control}
+            rules={{ required: 'Type of HMIS ID is required' }}
+            render={({ field }) => (
+              <SingleSelect
+                label="Type of HMIS ID"
+                placeholder="Select type of HMIS ID"
+                items={Object.entries(enumDisplayHmisAgency).map(
+                  ([value, displayValue]) => ({ value, displayValue })
+                )}
+                selectedValue={field.value}
+                onChange={(value) => field.onChange(value)}
+                error={errors.agency ? errors.agency.message : undefined}
+              />
             )}
-            selectedValue={agencyValue}
-            onChange={(value) => setValue('agency', value as HmisAgencyEnum)}
-            error={errors.agency ? 'agency is required' : undefined}
           />
 
           <ControlledInput
