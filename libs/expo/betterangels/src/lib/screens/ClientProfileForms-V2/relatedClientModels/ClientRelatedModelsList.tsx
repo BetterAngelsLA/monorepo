@@ -45,7 +45,7 @@ export function ClientRelatedModelsList(props: TProps) {
     clientRelatedModelConfig[componentName];
 
   useLayoutEffect(() => {
-    navigation.setOptions({ title: titlePlural });
+    navigation.setOptions({ title: `Edit ${titlePlural}` });
   }, [navigation, clientProfile]);
 
   if (loading) {

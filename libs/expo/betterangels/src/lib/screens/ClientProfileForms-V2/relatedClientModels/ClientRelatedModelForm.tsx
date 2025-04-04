@@ -1,11 +1,6 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  KeyboardAwareScrollView,
-  LoadingView,
-} from '@monorepo/expo/shared/ui-components';
+import { LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
-import { StyleSheet } from 'react-native';
 import { useSnackbar } from '../../../hooks';
 import {
   ClientProfileCardEnum,
@@ -74,21 +69,6 @@ export function ClientRelatedModelForm(props: TClientRelations) {
   }
 
   return (
-    <KeyboardAwareScrollView style={styles.container}>
-      <FormComponent
-        clientProfile={clientProfile}
-        style={styles.formComponent}
-        relationId={relationId}
-      />
-    </KeyboardAwareScrollView>
+    <FormComponent clientProfile={clientProfile} relationId={relationId} />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-  },
-  formComponent: {
-    gap: Spacings.sm,
-  },
-});

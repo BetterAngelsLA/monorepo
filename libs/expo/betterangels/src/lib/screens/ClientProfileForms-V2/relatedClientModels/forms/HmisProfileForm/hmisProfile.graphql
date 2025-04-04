@@ -1,0 +1,60 @@
+mutation UpdateHmisProfile($data: HmisProfileInput!) {
+  updateHmisProfile(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on HmisProfileType {
+      id
+    }
+  }
+}
+
+mutation CreateHmisProfile($data: HmisProfileInput!) {
+  createHmisProfile(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on HmisProfileType {
+      id
+    }
+  }
+}
+
+# union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
+mutation DeleteHmisProfile($id: ID!) {
+  deleteHmisProfile(data: { id: $id }) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on HmisProfileType {
+      id
+    }
+  }
+}
+
+# input HmisProfileInput {
+#   hmisId: NonBlankString
+#   agency: HmisAgencyEnum!
+#   id: ID
+#   clientProfile: ID
+# }
+
+# createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_hmisprofile"}], any: true)
+
+# updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_hmisprofile"}], any: true)
+
+# deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_hmisprofile"}], any: true)

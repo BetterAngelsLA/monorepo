@@ -1,8 +1,19 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { View } from 'react-native';
 import Loading from '../Loading';
+import { FullscreenLoadingModal } from './LoadingViewFullScreen';
 
-export function LoadingView() {
+type TProps = {
+  fullScreen?: boolean;
+};
+
+export function LoadingView(props: TProps) {
+  const { fullScreen } = props;
+
+  if (fullScreen) {
+    return <FullscreenLoadingModal />;
+  }
+
   return (
     <View
       style={{

@@ -13,8 +13,8 @@ import { ImportantNotesCard } from './ClientProfileCards/ImportantNotesCard';
 import { PersonalInfoCard } from './ClientProfileCards/PersonalInfoCard';
 import { RelevantContactsCard } from './ClientProfileCards/RelevantContactsCard';
 import { ExpandableProfileContainer } from './ExpandableProfileContainer';
-import { getClientProfileRouteConfig } from './config';
 import { ClientProfileCardEnum } from './constants';
+import { getEditButtonRoute } from './utils/getEditButtonRoute';
 
 interface ProfileProps {
   client: ClientProfileQuery | undefined;
@@ -47,9 +47,8 @@ export default function ClientProfileView(props: ProfileProps) {
     if (!clientProfile) {
       return;
     }
-
-    const route = getClientProfileRouteConfig({
-      clientProfile,
+    const route = getEditButtonRoute({
+      clientProfile: clientProfile,
       section: card,
     });
 

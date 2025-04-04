@@ -1,12 +1,17 @@
 import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
-import { THmisProfileFormInputs, defaultFormState } from './HmisProfileForm';
+import { THmisProfileFormState } from './types';
+
+export const defaultFormState: THmisProfileFormState = {
+  hmisId: '',
+  agency: undefined,
+};
 
 type TProps = {
   clientProfile?: TClientProfile;
   relationId?: string;
 };
 
-export function toHmisFormEntity(props: TProps): THmisProfileFormInputs {
+export function toFormState(props: TProps): THmisProfileFormState {
   const { clientProfile, relationId } = props;
 
   if (!relationId) {
@@ -21,6 +26,6 @@ export function toHmisFormEntity(props: TProps): THmisProfileFormInputs {
 
   return {
     hmisId: hmisId || '',
-    agency: agency || '',
+    agency: agency || undefined,
   };
 }

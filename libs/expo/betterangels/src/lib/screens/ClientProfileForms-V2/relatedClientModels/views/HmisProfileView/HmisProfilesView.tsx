@@ -1,8 +1,13 @@
 import { useRouter } from 'expo-router';
 import { View, ViewStyle } from 'react-native';
+import {
+  ClientProfileSectionEnum,
+  getRelatedModelAddRoute,
+  getRelatedModelEditRoute,
+} from '../../../../../screenRouting/clientProfileRoutes';
 import { HmisProfileCard } from '../../../../Client/ClientProfile_V2/ClientProfileCards/HmisProfilesCard/HmisProfileCard';
-import { ClientProfileCardEnum } from '../../../../Client/ClientProfile_V2/constants';
 import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
+import { AddButton } from '../AddButton';
 import { ViewItemContainer } from '../ViewItemContainer';
 
 type TProps = {
@@ -17,19 +22,28 @@ export function HmisProfilesView(props: TProps) {
 
   const { hmisProfiles, id: profileId } = clientProfile || {};
 
-  if (!hmisProfiles?.length) {
-    return null;
+  if (!profileId) {
+    return;
   }
+
+  const addRoute = getRelatedModelAddRoute({
+    profileId,
+    section: ClientProfileSectionEnum.HmisIds,
+  });
 
   return (
     <View style={style}>
-      {hmisProfiles.map((hmisProfile, idx) => {
+      {(hmisProfiles || []).map((hmisProfile, idx) => {
         return (
           <ViewItemContainer
             key={idx}
             onClickEdit={() =>
               router.navigate(
-                `/clients/${profileId}/relations/${hmisProfile.id}/edit?componentName=${ClientProfileCardEnum.HmisIds}`
+                getRelatedModelEditRoute({
+                  profileId,
+                  relatedlId: hmisProfile.id,
+                  section: ClientProfileSectionEnum.HmisIds,
+                })
               )
             }
           >
@@ -37,6 +51,8 @@ export function HmisProfilesView(props: TProps) {
           </ViewItemContainer>
         );
       })}
+
+      <AddButton itemName="HMIS ID" onClick={() => router.navigate(addRoute)} />
     </View>
   );
 }

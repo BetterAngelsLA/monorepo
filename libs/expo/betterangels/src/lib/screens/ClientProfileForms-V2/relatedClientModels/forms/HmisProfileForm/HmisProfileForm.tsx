@@ -4,24 +4,25 @@ import {
   SingleSelect,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { enumDisplayHmisAgency } from 'libs/expo/betterangels/src/lib/static';
+import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
-import { View } from 'react-native';
+import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
+import { enumDisplayHmisAgency } from '../../../../..//static';
+import { HmisAgencyEnum } from '../../../../../apollo';
+import {
+  ClientProfileSectionEnum,
+  getClientProfileRoute,
+} from '../../../../../screenRouting';
 import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
-import { toHmisFormEntity } from './toHmisFormEntity';
+import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
+import { HmisProfileDelete } from './HmisProfileDelete';
+import {
+  useCreateHmisProfileMutation,
+  useUpdateHmisProfileMutation,
+} from './__generated__/hmisProfile.generated';
+import { defaultFormState, toFormState } from './toFormState';
+import { THmisProfileFormState } from './types';
 
-export type THmisProfileFormInputs = {
-  hmisId: string;
-  agency: string;
-};
-
-export const defaultFormState: THmisProfileFormInputs = {
-  hmisId: '',
-  agency: '',
-};
-
-// TClientProfileHmisProfile
 type TProps = {
   clientProfile?: TClientProfile;
   relationId?: string;
@@ -30,57 +31,144 @@ type TProps = {
 export function HmisProfileForm(props: TProps) {
   const { clientProfile, relationId } = props;
 
+  const router = useRouter();
+
   const {
     control,
     handleSubmit,
     formState: { errors },
     setValue,
-  } = useForm<THmisProfileFormInputs>({
+  } = useForm<THmisProfileFormState>({
     defaultValues: defaultFormState,
   });
 
-  const [hmisIdValue, agencyValue] = useWatch({
+  const [updateHmisProfile, { loading: updateLoading, error: updateError }] =
+    useUpdateHmisProfileMutation();
+
+  const [createHmisProfile, { loading: createLoading, error: createError }] =
+    useCreateHmisProfileMutation();
+
+  const isEditMode = !!relationId;
+
+  const [agencyValue] = useWatch({
     control,
-    name: ['hmisId', 'agency'],
+    name: ['agency'],
   });
 
   useEffect(() => {
-    const { agency, hmisId } = toHmisFormEntity({ clientProfile, relationId });
+    const { agency, hmisId } = toFormState({ clientProfile, relationId });
 
     setValue('hmisId', hmisId);
     setValue('agency', agency);
   }, [clientProfile, relationId, setValue]);
 
+  if (!clientProfile) {
+    return null;
+  }
+
+  const onSubmit: SubmitHandler<THmisProfileFormState> = async (
+    formState: any
+  ) => {
+    try {
+      const mutationResult = isEditMode
+        ? await updateHmisProfile({
+            variables: {
+              data: {
+                ...formState,
+                clientProfile: clientProfile.id,
+                id: relationId,
+              },
+            },
+            refetchQueries: [
+              {
+                query: ClientProfileDocument,
+                variables: {
+                  id: clientProfile.id,
+                },
+              },
+            ],
+            errorPolicy: 'all',
+          })
+        : await createHmisProfile({
+            variables: {
+              data: {
+                ...formState,
+                clientProfile: clientProfile.id,
+              },
+            },
+            refetchQueries: [
+              {
+                query: ClientProfileDocument,
+                variables: {
+                  id: clientProfile.id,
+                },
+              },
+            ],
+            errorPolicy: 'all',
+          });
+
+      // if (updateError || createError) {
+      //   throw updateError || createError;
+      // }
+
+      const returnRoute = getClientProfileRoute({
+        id: clientProfile.id,
+        openCard: ClientProfileSectionEnum.HmisIds,
+      });
+
+      router.replace(returnRoute);
+    } catch (error) {
+      console.error('Error during mutation:', error);
+    }
+  };
+
+  const isLoading = updateLoading || createLoading;
+
   return (
-    <View style={{}}>
+    <Form.Page
+      actionProps={{
+        onSubmit: handleSubmit(onSubmit),
+        onLeftBtnClick: router.back,
+        disabled: isLoading,
+      }}
+    >
       <TextRegular mb="lg">Fill in both HIMIS ID Type and ID#</TextRegular>
       <Form>
         <Form.Fieldset>
           <SingleSelect
+            // disabled={isLoading}
             label="Type of HMIS ID"
-            placeholder="Select situation"
+            placeholder="Select type of HMIS ID"
             items={Object.entries(enumDisplayHmisAgency).map(
               ([value, displayValue]) => ({ value, displayValue })
             )}
             selectedValue={agencyValue}
-            onChange={(value) => setValue('agency', value || '')}
+            onChange={(value) => setValue('agency', value as HmisAgencyEnum)}
+            error={errors.agency ? 'agency is required' : undefined}
           />
 
           <ControlledInput
+            control={control}
+            disabled={isLoading}
             label={'HMIS ID'}
             name={'hmisId'}
             placeholder={'Enter HMIS ID'}
-            control={control}
-            // error={showError}
             onDelete={() => setValue('hmisId', '')}
+            error={!!errors.hmisId}
+            errorMessage={errors.hmisId && 'HMIS ID is required'}
             rules={{
-              validate: () => {
-                return true;
-              },
+              required: true,
             }}
           />
         </Form.Fieldset>
       </Form>
-    </View>
+
+      {isEditMode && (
+        <HmisProfileDelete
+          relationId={relationId}
+          clientProfileId={clientProfile.id}
+        />
+      )}
+    </Form.Page>
   );
 }
