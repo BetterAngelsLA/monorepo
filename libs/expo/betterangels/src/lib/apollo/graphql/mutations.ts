@@ -33,9 +33,8 @@ export const UPDATE_NOTE = gql`
         id
         purpose
         publicDetails
-        client {
+        clientProfile {
           id
-          username
           firstName
           lastName
           email
@@ -69,7 +68,7 @@ export const REVERT_NOTE = gql`
         }
         publicDetails
         isSubmitted
-        client {
+        clientProfile {
           id
         }
         createdBy {
@@ -176,7 +175,7 @@ export const UPDATE_TASK = gql`
         title
         status
         dueBy
-        client {
+        clientProfile {
           id
         }
         createdBy {

@@ -40,8 +40,8 @@ export default function ContactInfo() {
           placeholder="Enter email address"
           control={control}
           onDelete={() => setValue('user.email', '')}
-          error={!!errors.user?.email}
-          errorMessage={(errors.user?.email?.message as string) || undefined}
+          error={!!errors.email}
+          errorMessage={(errors.email?.message as string) || undefined}
           rules={{
             validate: (value: string) => {
               if (value && !Regex.email.test(value)) {

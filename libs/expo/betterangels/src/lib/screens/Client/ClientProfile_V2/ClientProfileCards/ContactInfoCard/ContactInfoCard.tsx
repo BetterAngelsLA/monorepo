@@ -16,15 +16,13 @@ export default function ContactInfoCard(props: TProps) {
   const { clientProfile } = props;
 
   const {
+    email,
     mailingAddress,
     phoneNumbers,
     preferredCommunication,
     residenceAddress,
     socialMediaProfiles,
-    user,
   } = clientProfile || {};
-
-  const email = user?.email;
 
   const content: TClientProfileCardItem[] = [
     {
