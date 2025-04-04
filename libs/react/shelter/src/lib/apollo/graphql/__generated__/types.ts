@@ -46,14 +46,6 @@ export enum AdaAccommodationEnum {
   Visual = 'VISUAL'
 }
 
-export type AddNoteTaskInput = {
-  noteId: Scalars['ID']['input'];
-  taskId: Scalars['ID']['input'];
-  taskType: TaskTypeEnum;
-};
-
-export type AddNoteTaskPayload = NoteType | OperationInfo;
-
 export type AddressInput = {
   addressComponents?: InputMaybe<Scalars['JSON']['input']>;
   formattedAddress?: InputMaybe<Scalars['String']['input']>;
@@ -513,16 +505,6 @@ export type CreateNoteServiceRequestInput = {
 
 export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
 
-export type CreateNoteTaskInput = {
-  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
-  noteId: Scalars['ID']['input'];
-  status: TaskStatusEnum;
-  taskType: TaskTypeEnum;
-  title: Scalars['String']['input'];
-};
-
-export type CreateNoteTaskPayload = OperationInfo | TaskType;
-
 export type CreateProfileDataImportInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
   sourceFile: Scalars['String']['input'];
@@ -537,16 +519,6 @@ export type CreateServiceRequestInput = {
 };
 
 export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
-
-export type CreateTaskInput = {
-  client?: InputMaybe<Scalars['ID']['input']>;
-  clientProfile?: InputMaybe<Scalars['ID']['input']>;
-  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
-  status: TaskStatusEnum;
-  title: Scalars['String']['input'];
-};
-
-export type CreateTaskPayload = OperationInfo | TaskType;
 
 export type CreateUserInput = {
   email?: InputMaybe<Scalars['NonBlankString']['input']>;
@@ -572,8 +544,6 @@ export type DeleteMoodPayload = DeletedObjectType | OperationInfo;
 export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
-
-export type DeleteTaskPayload = DeletedObjectType | OperationInfo;
 
 export type DeletedObjectType = {
   __typename?: 'DeletedObjectType';
@@ -619,15 +589,6 @@ export type DjangoModelType = {
   __typename?: 'DjangoModelType';
   pk: Scalars['ID']['output'];
 };
-
-export enum DueByGroupEnum {
-  FutureTasks = 'FUTURE_TASKS',
-  InTheNextWeek = 'IN_THE_NEXT_WEEK',
-  NoDueDate = 'NO_DUE_DATE',
-  Overdue = 'OVERDUE',
-  Today = 'TODAY',
-  Tomorrow = 'TOMORROW'
-}
 
 export enum EntryRequirementChoices {
   Background = 'BACKGROUND',
@@ -931,7 +892,6 @@ export type MoodType = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  addNoteTask: AddNoteTaskPayload;
   appleAuth: AuthResponse;
   createClientDocument: CreateClientDocumentPayload;
   createClientProfile: CreateClientProfilePayload;
@@ -941,9 +901,7 @@ export type Mutation = {
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteMood: CreateNoteMoodPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
-  createNoteTask: CreateNoteTaskPayload;
   createServiceRequest: CreateServiceRequestPayload;
-  createTask: CreateTaskPayload;
   deleteClientDocument: DeleteClientDocumentPayload;
   deleteClientProfile: DeleteClientProfilePayload;
   deleteCurrentUser: DeleteCurrentUserPayload;
@@ -951,7 +909,6 @@ export type Mutation = {
   deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
-  deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   googleAuth: AuthResponse;
   importClientProfile: ImportClientProfilePayload;
@@ -959,7 +916,6 @@ export type Mutation = {
   login: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
-  removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
   updateClientProfile: UpdateClientProfilePayload;
   updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
@@ -968,13 +924,6 @@ export type Mutation = {
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateServiceRequest: UpdateServiceRequestPayload;
-  updateTask: UpdateTaskPayload;
-  updateTaskLocation: UpdateTaskLocationPayload;
-};
-
-
-export type MutationAddNoteTaskArgs = {
-  data: AddNoteTaskInput;
 };
 
 
@@ -1023,18 +972,8 @@ export type MutationCreateNoteServiceRequestArgs = {
 };
 
 
-export type MutationCreateNoteTaskArgs = {
-  data: CreateNoteTaskInput;
-};
-
-
 export type MutationCreateServiceRequestArgs = {
   data: CreateServiceRequestInput;
-};
-
-
-export type MutationCreateTaskArgs = {
-  data: CreateTaskInput;
 };
 
 
@@ -1068,11 +1007,6 @@ export type MutationDeleteServiceRequestArgs = {
 };
 
 
-export type MutationDeleteTaskArgs = {
-  data: DeleteDjangoObjectInput;
-};
-
-
 export type MutationGenerateMagicLinkArgs = {
   data: MagicLinkInput;
 };
@@ -1100,11 +1034,6 @@ export type MutationLoginArgs = {
 
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
-};
-
-
-export type MutationRemoveNoteTaskArgs = {
-  data: RemoveNoteTaskInput;
 };
 
 
@@ -1145,16 +1074,6 @@ export type MutationUpdateNoteLocationArgs = {
 
 export type MutationUpdateServiceRequestArgs = {
   data: UpdateServiceRequestInput;
-};
-
-
-export type MutationUpdateTaskArgs = {
-  data: UpdateTaskInput;
-};
-
-
-export type MutationUpdateTaskLocationArgs = {
-  data: UpdateTaskLocationInput;
 };
 
 export type NoteDataImportType = {
@@ -1209,30 +1128,16 @@ export type NoteType = {
   isSubmitted: Scalars['Boolean']['output'];
   location?: Maybe<LocationType>;
   moods: Array<MoodType>;
-  nextSteps: Array<TaskType>;
   privateDetails?: Maybe<Scalars['String']['output']>;
   providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];
   purpose?: Maybe<Scalars['String']['output']>;
-  purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
   team?: Maybe<SelahTeamEnum>;
 };
 
 
-export type NoteTypeNextStepsArgs = {
-  order?: InputMaybe<TaskOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
 export type NoteTypeProvidedServicesArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type NoteTypePurposesArgs = {
-  order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1536,14 +1441,6 @@ export type RemoveNoteServiceRequestInput = {
 };
 
 export type RemoveNoteServiceRequestPayload = NoteType | OperationInfo;
-
-export type RemoveNoteTaskInput = {
-  noteId: Scalars['ID']['input'];
-  taskId: Scalars['ID']['input'];
-  taskType: TaskTypeEnum;
-};
-
-export type RemoveNoteTaskPayload = NoteType | OperationInfo;
 
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
@@ -1897,35 +1794,6 @@ export type SwitchType = {
   name: Scalars['String']['output'];
 };
 
-export type TaskOrder = {
-  dueBy?: InputMaybe<Ordering>;
-  id?: InputMaybe<Ordering>;
-};
-
-export enum TaskStatusEnum {
-  Completed = 'COMPLETED',
-  ToDo = 'TO_DO'
-}
-
-export type TaskType = {
-  __typename?: 'TaskType';
-  client?: Maybe<UserType>;
-  clientProfile?: Maybe<ClientProfileType>;
-  createdAt: Scalars['DateTime']['output'];
-  createdBy: UserType;
-  dueBy?: Maybe<Scalars['DateTime']['output']>;
-  dueByGroup: DueByGroupEnum;
-  id: Scalars['ID']['output'];
-  location?: Maybe<LocationType>;
-  status: TaskStatusEnum;
-  title: Scalars['String']['output'];
-};
-
-export enum TaskTypeEnum {
-  NextStep = 'NEXT_STEP',
-  Purpose = 'PURPOSE'
-}
-
 export enum TrainingServiceChoices {
   JobTraining = 'JOB_TRAINING',
   LifeSkillsTraining = 'LIFE_SKILLS_TRAINING',
@@ -2014,23 +1882,6 @@ export type UpdateServiceRequestInput = {
 };
 
 export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
-
-export type UpdateTaskInput = {
-  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
-  id: Scalars['ID']['input'];
-  location?: InputMaybe<Scalars['ID']['input']>;
-  status?: InputMaybe<TaskStatusEnum>;
-  title?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type UpdateTaskLocationInput = {
-  id: Scalars['ID']['input'];
-  location: LocationInput;
-};
-
-export type UpdateTaskLocationPayload = OperationInfo | TaskType;
-
-export type UpdateTaskPayload = OperationInfo | TaskType;
 
 export type UpdateUserInput = {
   email?: InputMaybe<Scalars['NonBlankString']['input']>;

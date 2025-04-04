@@ -6,20 +6,10 @@ from accounts.models import User
 from accounts.tests.baker_recipes import permission_group_recipe
 from deepdiff import DeepDiff
 from django.test import ignore_warnings
-from django.utils import timezone
 from model_bakery import baker
-from notes.enums import (
-    DueByGroupEnum,
-    SelahTeamEnum,
-    ServiceEnum,
-    ServiceRequestStatusEnum,
-)
+from notes.enums import SelahTeamEnum, ServiceEnum, ServiceRequestStatusEnum
 from notes.models import Note
-from notes.tests.utils import (
-    NoteGraphQLBaseTestCase,
-    ServiceRequestGraphQLBaseTestCase,
-    TaskGraphQLBaseTestCase,
-)
+from notes.tests.utils import NoteGraphQLBaseTestCase, ServiceRequestGraphQLBaseTestCase
 from unittest_parametrize import parametrize
 
 
@@ -52,10 +42,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self._create_note_mood_fixture(
             {"descriptor": "EUTHYMIC", "noteId": note_id},
         )
-        # Add purposes and next steps
         note = Note.objects.get(pk=note_id)
-        note.purposes.set([self.purpose_1["id"], self.purpose_2["id"]])
-        note.next_steps.set([self.next_step_1["id"], self.next_step_2["id"]])
         note.provided_services.set(self.provided_services)
         note.requested_services.set(self.requested_services)
 
@@ -68,7 +55,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         """
 
         variables = {"id": note_id}
-        expected_query_count = 8
+        expected_query_count = 6
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -97,14 +84,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 "pointOfInterest": self.point_of_interest,
             },
             "moods": [{"descriptor": "ANXIOUS"}, {"descriptor": "EUTHYMIC"}],
-            "purposes": [
-                {"id": self.purpose_1["id"], "title": self.purpose_1["title"]},
-                {"id": self.purpose_2["id"], "title": self.purpose_2["title"]},
-            ],
-            "nextSteps": [
-                {"id": self.next_step_1["id"], "title": self.next_step_1["title"], "location": None},
-                {"id": self.next_step_2["id"], "title": self.next_step_2["title"], "location": None},
-            ],
             "providedServices": [
                 {
                     "id": str(self.provided_services[0].id),
@@ -156,7 +135,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 }}
             }}
         """
-        expected_query_count = 9
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 
@@ -689,77 +668,3 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
         service_requests = response["data"]["serviceRequests"]
         self.assertEqual(len(service_requests), 1)
         self.assertEqual(service_requests[0], self.service_request)
-
-
-@skip("Tasks are not currently implemented")
-@ignore_warnings(category=UserWarning)
-@time_machine.travel("2024-03-11T10:11:12+00:00", tick=False)
-class TaskQueryTestCase(TaskGraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-
-    def test_task_query(self) -> None:
-        task_id = self.task["id"]
-        # Update fields available on the task input
-        self._update_task_fixture(
-            {
-                "id": task_id,
-                "title": "Updated task title",
-                "location": self.location.pk,
-                "status": "COMPLETED",
-                "dueBy": timezone.now(),
-            }
-        )
-
-        query = f"""
-            query ($id: ID!) {{
-                task(pk: $id) {{
-                    {self.task_fields}
-                }}
-            }}
-        """
-        variables = {"id": task_id}
-
-        expected_query_count = 3
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query, variables)
-
-        task = response["data"]["task"]
-        expected_task = {
-            "id": task_id,
-            "title": "Updated task title",
-            "location": {
-                "id": str(self.location.pk),
-                "address": {
-                    "street": self.address.street,
-                    "city": self.address.city,
-                    "state": self.address.state,
-                    "zipCode": self.address.zip_code,
-                },
-                "point": self.point,
-                "pointOfInterest": self.point_of_interest,
-            },
-            "status": "COMPLETED",
-            "dueBy": "2024-03-11T10:11:12+00:00",
-            "dueByGroup": DueByGroupEnum.TODAY.name,
-            "client": None,
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "createdAt": "2024-03-11T10:11:12+00:00",
-        }
-
-        self.assertEqual(task, expected_task)
-
-    def test_tasks_query(self) -> None:
-        query = f"""
-            tasks {{
-                {self.task_fields}
-            }}
-        """
-        expected_query_count = 1
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query)
-
-        tasks = response["data"]["tasks"]
-        self.assertEqual(len(tasks), 1)
-        self.assertEqual(tasks[0], self.task)
