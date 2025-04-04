@@ -50,11 +50,7 @@ from shelters.models import (
     ShelterProgram,
 )
 from shelters.models import ShelterType as ShelterKind
-from shelters.models import (
-    SpecialSituationRestriction,
-    Storage,
-    TrainingService,
-)
+from shelters.models import SpecialSituationRestriction, Storage, TrainingService
 from strawberry import ID, asdict, auto
 
 
@@ -255,7 +251,7 @@ class ShelterType:
     overall_rating: auto
     parking: List[ParkingType]
     pets: List[PetType]
-    phone: PhoneNumberScalar  # type: ignore
+    phone: Optional[PhoneNumberScalar]  # type: ignore
     program_fees: Optional[str]
     room_styles: List[RoomStyleType]
     room_styles_other: auto

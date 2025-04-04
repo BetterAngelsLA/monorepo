@@ -26,7 +26,7 @@ export default function GeneralInfo({
       icon: <InstagramIcon className="h-6 w-6 fill-primary-20" />,
     },
     {
-      label: shelter?.phone.replace(/(\d{1,3})(\d{1,3})(\d{1,4})/, '($1) $2-$3'),
+      label: shelter?.phone,
       key: 'phone',
       icon: <CallIcon className="h-6 w-6 fill-primary-20" />,
     },
