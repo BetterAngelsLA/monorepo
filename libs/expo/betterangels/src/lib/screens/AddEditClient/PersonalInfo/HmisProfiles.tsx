@@ -90,7 +90,7 @@ export default function HmisProfiles() {
               control={control}
               error={errors.hmisProfiles && !!errors.hmisProfiles?.[index]}
               errorMessage={
-                errors?.hmisProfiles?.[index]?.hmisId?.message ||
+                (errors?.hmisProfiles?.[index]?.hmisId?.message as string) ||
                 (errors?.hmisProfiles?.[index]
                   ? 'Enter HMIS ID or remove this entry'
                   : '')
