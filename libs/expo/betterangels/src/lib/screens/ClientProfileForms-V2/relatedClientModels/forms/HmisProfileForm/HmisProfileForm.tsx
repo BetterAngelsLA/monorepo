@@ -6,7 +6,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { Controller, SubmitHandler, useForm, useWatch } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { enumDisplayHmisAgency } from '../../../../..//static';
 import {
   ClientProfileSectionEnum,
@@ -48,11 +48,6 @@ export function HmisProfileForm(props: TProps) {
     useCreateHmisProfileMutation();
 
   const isEditMode = !!relationId;
-
-  const [agencyValue] = useWatch({
-    control,
-    name: ['agency'],
-  });
 
   useEffect(() => {
     const { agency, hmisId } = toFormState({ clientProfile, relationId });
