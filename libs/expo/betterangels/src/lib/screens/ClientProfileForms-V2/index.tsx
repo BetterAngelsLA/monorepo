@@ -9,11 +9,8 @@ import { useNavigation, useRouter } from 'expo-router';
 import { ReactNode, useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
-import { UpdateClientProfileInput } from '../../apollo';
-import {
-  TValidationError,
-  applyValidationErrors,
-} from '../../helpers/parseClientProfileErrors';
+import { UpdateClientProfileInput, extractExtensionErrors } from '../../apollo';
+import { applyManualFormErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import {
   ClientProfileCardEnum,
@@ -126,20 +123,15 @@ export default function ClientProfileForms(props: IClientProfileForms) {
         errorPolicy: 'all',
       });
 
-      // TODO: Consolidate API Error handling - see ticket DEV-1601
-      const errors = updateResponse.errors?.[0];
-
-      const errorViaExtensions = errors?.extensions?.['errors'] as
-        | TValidationError[]
-        | undefined;
+      const errorViaExtensions = extractExtensionErrors(updateResponse);
 
       if (errorViaExtensions) {
-        applyValidationErrors(errorViaExtensions, methods.setError);
+        applyManualFormErrors(errorViaExtensions, methods.setError);
 
         return;
       }
 
-      const otherErrors = !errorViaExtensions && errors;
+      const otherErrors = updateResponse.errors?.[0];
 
       if (otherErrors) {
         throw otherErrors.message;

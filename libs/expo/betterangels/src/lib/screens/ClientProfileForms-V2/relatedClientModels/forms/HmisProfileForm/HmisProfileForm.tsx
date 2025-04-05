@@ -9,6 +9,11 @@ import { useEffect } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { enumDisplayHmisAgency } from '../../../../..//static';
 import {
+  extractExtensionErrors,
+  extractOperationInfo,
+} from '../../../../../apollo';
+import { applyManualFormErrors } from '../../../../../errors';
+import {
   ClientProfileSectionEnum,
   getClientProfileRoute,
 } from '../../../../../screenRouting';
@@ -16,6 +21,8 @@ import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
 import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
 import { HmisProfileDelete } from './HmisProfileDelete';
 import {
+  CreateHmisProfileMutation,
+  UpdateHmisProfileMutation,
   useCreateHmisProfileMutation,
   useUpdateHmisProfileMutation,
 } from './__generated__/hmisProfile.generated';
@@ -36,18 +43,17 @@ export function HmisProfileForm(props: TProps) {
     control,
     handleSubmit,
     formState: { errors },
+    setError,
     setValue,
   } = useForm<THmisProfileFormState>({
     defaultValues: defaultFormState,
   });
 
-  const [updateHmisProfile, { loading: updateLoading, error: updateError }] =
+  const [updateHmisProfile, { loading: updateLoading }] =
     useUpdateHmisProfileMutation();
 
-  const [createHmisProfile, { loading: createLoading, error: createError }] =
+  const [createHmisProfile, { loading: createLoading }] =
     useCreateHmisProfileMutation();
-
-  const isEditMode = !!relationId;
 
   useEffect(() => {
     const { agency, hmisId } = toFormState({ clientProfile, relationId });
@@ -55,6 +61,8 @@ export function HmisProfileForm(props: TProps) {
     setValue('hmisId', hmisId);
     setValue('agency', agency);
   }, [clientProfile, relationId, setValue]);
+
+  const isEditMode = !!relationId;
 
   if (!clientProfile) {
     return null;
@@ -76,7 +84,7 @@ export function HmisProfileForm(props: TProps) {
 
       const mutation = isEditMode ? updateHmisProfile : createHmisProfile;
 
-      await mutation({
+      const response = await mutation({
         ...mutationVariables,
         refetchQueries: [
           {
@@ -89,9 +97,29 @@ export function HmisProfileForm(props: TProps) {
         errorPolicy: 'all',
       });
 
-      if (updateError || createError) {
-        // TODO: implement
-        console.error(updateError || createError);
+      const extensionErrors = extractExtensionErrors(response);
+
+      if (extensionErrors) {
+        applyManualFormErrors(extensionErrors, setError);
+
+        return;
+      }
+
+      const responseData = response.data;
+
+      if (!responseData) {
+        throw 'Missing HMIS mutation response data';
+      }
+
+      const uniquenessError = hasUniquenessError(
+        responseData,
+        isEditMode ? 'updateHmisProfile' : 'createHmisProfile'
+      );
+
+      if (uniquenessError) {
+        setError('hmisId', { type: 'manual', message: uniquenessError });
+
+        return;
       }
 
       const returnRoute = getClientProfileRoute({
@@ -144,9 +172,9 @@ export function HmisProfileForm(props: TProps) {
             placeholder={'Enter HMIS ID'}
             onDelete={() => setValue('hmisId', '')}
             error={!!errors.hmisId}
-            errorMessage={errors.hmisId && 'HMIS ID is required'}
+            errorMessage={errors.hmisId?.message}
             rules={{
-              required: true,
+              required: 'HMIS ID is required',
             }}
           />
         </Form.Fieldset>
@@ -160,4 +188,26 @@ export function HmisProfileForm(props: TProps) {
       )}
     </Form.Page>
   );
+}
+
+function hasUniquenessError(
+  response: UpdateHmisProfileMutation | CreateHmisProfileMutation,
+  key: 'updateHmisProfile' | 'createHmisProfile'
+): string | null {
+  const operationInfo = extractOperationInfo(response, key);
+
+  const messages = operationInfo?.messages;
+
+  if (!messages?.length) {
+    return null;
+  }
+
+  const uniquenessErrorMessage =
+    'Hmis profile with this Hmis id and Agency already exists.';
+
+  const uniquenessError = messages.find(
+    (m) => m.message === uniquenessErrorMessage
+  );
+
+  return uniquenessError?.message || null;
 }
