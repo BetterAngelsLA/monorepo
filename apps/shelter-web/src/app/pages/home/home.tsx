@@ -1,5 +1,6 @@
 import { useAtom } from 'jotai';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SHELTERS_MAP_ID } from '../../constants.app';
 import { MaxWLayout } from '../../layout/maxWLayout';
 import { locationAtom } from '../../shared/atoms/locationAtom';
@@ -34,6 +35,7 @@ export function Home() {
 
     setShelterMarkers(markers);
   }, [shelters]);
+  const navigate = useNavigate();
 
   const handleClick = (markerId: string | null | undefined) => {
     if (!markerId) {
@@ -41,12 +43,17 @@ export function Home() {
     }
     setModal({
       content: (
-        <ShelterCard
-          className="mt-4"
-          shelter={
-            shelters.find((shelter) => shelter.id === markerId) as TShelter
-          }
-        />
+        <>
+          <ShelterCard
+            className="mt-4"
+            shelter={
+              shelters.find((shelter) => shelter.id === markerId) as TShelter
+            }
+          />
+          <div onClick={() => navigate(`/shelter/${markerId}`)} className="font-semibold text-sm text-center cursor-pointer text-[#216BF8] ">
+            View Details
+          </div>
+        </>
       ),
       animation: ModalAnimationEnum.EXPAND,
       closeOnMaskClick: true,
