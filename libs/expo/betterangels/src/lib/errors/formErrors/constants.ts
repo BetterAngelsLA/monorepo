@@ -1,4 +1,4 @@
-export const FORM_ERROR_MESSAGE: Record<string, string> = {
+export const API_FORM_ERRORS: Record<string, string> = {
   CA_ID_INVALID: 'California ID must be 1 letter followed by 7 numbers',
   CA_ID_IN_USE: 'California ID in use by another client',
   EMAIL_INVALID: 'Enter a valid email address',

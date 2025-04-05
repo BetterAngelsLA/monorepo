@@ -1,4 +1,4 @@
-import { FORM_ERROR_MESSAGE } from './constants';
+import { API_FORM_ERRORS } from './constants';
 import { TFormValidationError } from './types';
 
 export function parseValidationErrors(
@@ -6,7 +6,7 @@ export function parseValidationErrors(
 ): Record<string, string> {
   const formErrors: Record<string, string> = {};
   errors.forEach((error) => {
-    const message = FORM_ERROR_MESSAGE[error.errorCode];
+    const message = API_FORM_ERRORS[error.errorCode];
 
     let fieldKey = error.field;
 
