@@ -33,6 +33,7 @@ export function Radio(props: IRadioProps) {
           paddingHorizontal: Spacings.sm,
           paddingVertical: Spacings.xs,
           justifyContent: 'space-between',
+          opacity: disabled ? 0.5 : 1,
         },
       ]}
       onPress={() => {
