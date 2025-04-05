@@ -1,8 +1,8 @@
 import { FetchResult } from '@apollo/client';
-import { TFormValidationError } from '../../../errors';
+import { TApiValidationError } from './types';
 
 export function extractExtensionErrors(response: FetchResult) {
   const errors = response.errors?.[0];
 
-  return errors?.extensions?.['errors'] as TFormValidationError[] | undefined;
+  return errors?.extensions?.['errors'] as TApiValidationError[] | undefined;
 }
