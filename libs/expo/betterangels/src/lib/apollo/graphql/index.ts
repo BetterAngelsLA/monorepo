@@ -5,4 +5,3 @@ export * from './mutations';
 export * from './queries';
 export * from './response/extractExtensionErrors';
 export * from './response/extractOperationInfo';
-export * from './response/types';
