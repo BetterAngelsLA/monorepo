@@ -20,6 +20,7 @@ export interface IPickerProps {
   items: { displayValue?: string; value: string }[];
   label?: string;
   required?: boolean;
+  disabled?: boolean;
   selectNoneLabel?: string;
   allowSelectNone?: boolean;
   mb?: TSpacing;
@@ -39,6 +40,7 @@ export default function Picker(props: IPickerProps) {
     items,
     label,
     required,
+    disabled,
     selectNoneLabel,
     allowSelectNone,
     mb,
@@ -78,6 +80,7 @@ export default function Picker(props: IPickerProps) {
         placeholder={placeholder}
         selectedValue={selectedValue || ''}
         onValueChange={onValueChange}
+        enabled={!disabled}
         itemStyle={styles.itemStyle}
       >
         <RNPicker.Item

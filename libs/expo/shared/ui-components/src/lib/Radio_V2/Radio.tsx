@@ -12,10 +12,11 @@ interface IRadioProps {
   onPress: (value: string) => void;
   value: string;
   selectedValue?: string;
+  disabled?: boolean;
 }
 
 export function Radio(props: IRadioProps) {
-  const { displayValue, onPress, value, selectedValue } = props;
+  const { disabled, displayValue, onPress, value, selectedValue } = props;
 
   return (
     <Pressable
@@ -33,6 +34,7 @@ export function Radio(props: IRadioProps) {
           justifyContent: 'space-between',
         },
       ]}
+      disabled={disabled}
       onPress={() => {
         Keyboard.dismiss();
         onPress(value);

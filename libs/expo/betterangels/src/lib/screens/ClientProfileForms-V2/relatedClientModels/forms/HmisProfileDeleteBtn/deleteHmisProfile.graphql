@@ -1,0 +1,14 @@
+mutation DeleteHmisProfile($id: ID!) {
+  deleteHmisProfile(data: { id: $id }) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on HmisProfileType {
+      id
+    }
+  }
+}

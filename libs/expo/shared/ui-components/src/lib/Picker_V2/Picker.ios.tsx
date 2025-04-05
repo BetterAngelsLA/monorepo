@@ -22,6 +22,7 @@ export default function Picker(props: IPickerProps) {
     items,
     label,
     required,
+    disabled,
     mb,
     mt,
     my,
@@ -65,6 +66,7 @@ export default function Picker(props: IPickerProps) {
         {label && <FormFieldLabel label={label} required={required} />}
 
         <Pressable
+          disabled={disabled}
           onPress={() => setIsModalVisible(true)}
           style={[
             styles.selectButton,
@@ -82,14 +84,20 @@ export default function Picker(props: IPickerProps) {
         >
           <TextRegular
             color={
-              selectedDisplayValue || selectedValue
+              disabled
+                ? Colors.NEUTRAL_LIGHT
+                : selectedDisplayValue || selectedValue
                 ? Colors.PRIMARY_EXTRA_DARK
                 : Colors.NEUTRAL
             }
           >
             {selectedDisplayValue || selectedValue || placeholder}
           </TextRegular>
-          <ChevronLeftIcon size="sm" rotate={'-90deg'} />
+          <ChevronLeftIcon
+            size="sm"
+            rotate={'-90deg'}
+            color={disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+          />
         </Pressable>
         {error && (
           <TextRegular size="sm" mt="xxs" color={Colors.ERROR}>

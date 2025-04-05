@@ -1,23 +1,25 @@
-import { LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { useSnackbar } from '../../../../../hooks';
 import {
   ClientProfileSectionEnum,
   getClientProfileRoute,
-} from '../../../../../screenRouting';
+} from 'libs/expo/betterangels/src/lib/screenRouting';
+import { Dispatch, SetStateAction } from 'react';
+import { useSnackbar } from '../../../../../hooks';
 import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
 import { DeleteButton } from '../DeleteButton';
-import { useDeleteHmisProfileMutation } from './__generated__/hmisProfile.generated';
+import { useDeleteHmisProfileMutation } from './__generated__/deleteHmisProfile.generated';
 
 const deleteableItemName = 'HMIS ID';
 
 type TProps = {
   relationId: string;
   clientProfileId: string;
+  disabled?: boolean;
+  setIsLoading?: Dispatch<SetStateAction<boolean>>;
 };
 
-export function HmisProfileDelete(props: TProps) {
-  const { clientProfileId, relationId } = props;
+export function HmisProfileDeleteBtn(props: TProps) {
+  const { clientProfileId, disabled, relationId, setIsLoading } = props;
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -27,6 +29,8 @@ export function HmisProfileDelete(props: TProps) {
 
   const onDelete = async () => {
     try {
+      setIsLoading && setIsLoading(true);
+
       await deleteHmisProfile({
         variables: {
           id: relationId as string,
@@ -58,18 +62,18 @@ export function HmisProfileDelete(props: TProps) {
         message: 'Something went wrong. Please try again.',
         type: 'error',
       });
+    } finally {
+      setIsLoading && setIsLoading(false);
     }
   };
 
   return (
     <>
       <DeleteButton
-        disabled={loading}
+        disabled={loading || disabled}
         deleteableItemName={deleteableItemName}
         onDelete={onDelete}
       />
-
-      {!!loading && <LoadingView fullScreen={true} />}
     </>
   );
 }

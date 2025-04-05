@@ -29,19 +29,3 @@ mutation CreateHmisProfile($data: HmisProfileInput!) {
     }
   }
 }
-
-# union DeleteHmisProfilePayload = HmisProfileType | OperationInfo
-mutation DeleteHmisProfile($id: ID!) {
-  deleteHmisProfile(data: { id: $id }) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-    ... on HmisProfileType {
-      id
-    }
-  }
-}

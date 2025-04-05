@@ -5,7 +5,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { enumDisplayHmisAgency } from '../../../../..//static';
 import {
@@ -19,7 +19,7 @@ import {
 } from '../../../../../screenRouting';
 import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
 import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
-import { HmisProfileDelete } from './HmisProfileDelete';
+import { HmisProfileDeleteBtn } from '../HmisProfileDeleteBtn';
 import {
   CreateHmisProfileMutation,
   UpdateHmisProfileMutation,
@@ -38,6 +38,9 @@ export function HmisProfileForm(props: TProps) {
   const { clientProfile, relationId } = props;
 
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
+  const [updateHmisProfile] = useUpdateHmisProfileMutation();
+  const [createHmisProfile] = useCreateHmisProfileMutation();
 
   const {
     control,
@@ -49,12 +52,6 @@ export function HmisProfileForm(props: TProps) {
     defaultValues: defaultFormState,
   });
 
-  const [updateHmisProfile, { loading: updateLoading }] =
-    useUpdateHmisProfileMutation();
-
-  const [createHmisProfile, { loading: createLoading }] =
-    useCreateHmisProfileMutation();
-
   useEffect(() => {
     const { agency, hmisId } = toFormState({ clientProfile, relationId });
 
@@ -62,16 +59,18 @@ export function HmisProfileForm(props: TProps) {
     setValue('agency', agency);
   }, [clientProfile, relationId, setValue]);
 
-  const isEditMode = !!relationId;
-
   if (!clientProfile) {
     return null;
   }
+
+  const isEditMode = !!relationId;
 
   const onSubmit: SubmitHandler<THmisProfileFormState> = async (
     formState: any
   ) => {
     try {
+      setIsLoading(true);
+
       const mutationVariables = {
         variables: {
           data: {
@@ -130,10 +129,10 @@ export function HmisProfileForm(props: TProps) {
       router.replace(returnRoute);
     } catch (error) {
       console.error('Error during mutation:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  const isLoading = updateLoading || createLoading;
 
   return (
     <Form.Page
@@ -152,6 +151,7 @@ export function HmisProfileForm(props: TProps) {
             rules={{ required: 'Type of HMIS ID is required' }}
             render={({ field }) => (
               <SingleSelect
+                disabled={isLoading}
                 label="Type of HMIS ID"
                 placeholder="Select type of HMIS ID"
                 items={Object.entries(enumDisplayHmisAgency).map(
@@ -181,9 +181,11 @@ export function HmisProfileForm(props: TProps) {
       </Form>
 
       {isEditMode && (
-        <HmisProfileDelete
+        <HmisProfileDeleteBtn
           relationId={relationId}
           clientProfileId={clientProfile.id}
+          setIsLoading={setIsLoading}
+          disabled={isLoading}
         />
       )}
     </Form.Page>
