@@ -13,13 +13,12 @@ export function DeleteButton(props: TProps) {
   return (
     <DeleteModal
       title={`Delete ${deleteableItemName}?`}
-      body={`All data associated with your ${deleteableItemName} will be deleted.`}
+      body={`All data associated with this ${deleteableItemName} will be deleted.`}
       onDelete={onDelete}
       deleteableItemName={deleteableItemName}
       button={
         <TextButton
           disabled={disabled}
-          regular
           mt="md"
           mb="lg"
           fontSize="md"
