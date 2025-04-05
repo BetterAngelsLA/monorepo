@@ -40,5 +40,6 @@ const styles = StyleSheet.create({
   },
   contentColumn: {
     flex: 1,
+    marginTop: 6,
   },
 });

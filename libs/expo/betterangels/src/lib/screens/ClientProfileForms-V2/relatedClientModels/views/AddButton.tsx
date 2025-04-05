@@ -13,8 +13,6 @@ export function AddButton(props: TProps) {
   return (
     <TextButton
       disabled={disabled}
-      mt="md"
-      mb="lg"
       fontSize="md"
       color={Colors.PRIMARY}
       accessibilityHint={`add new ${itemName}`}

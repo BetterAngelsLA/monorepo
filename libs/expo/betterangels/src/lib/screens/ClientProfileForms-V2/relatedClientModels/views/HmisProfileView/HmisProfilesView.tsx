@@ -1,5 +1,6 @@
+import { Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
-import { View, ViewStyle } from 'react-native';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 import {
   ClientProfileSectionEnum,
   getRelatedModelAddRoute,
@@ -52,7 +53,19 @@ export function HmisProfilesView(props: TProps) {
         );
       })}
 
-      <AddButton itemName="HMIS ID" onClick={() => router.navigate(addRoute)} />
+      <View style={styles.addButtonView}>
+        <AddButton
+          itemName="HMIS ID"
+          onClick={() => router.navigate(addRoute)}
+        />
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  addButtonView: {
+    marginTop: Spacings.md,
+    marginBottom: Spacings.lg,
+  },
+});

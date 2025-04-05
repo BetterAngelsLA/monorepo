@@ -48,6 +48,7 @@ export function HmisProfileForm(props: TProps) {
     formState: { errors },
     setError,
     setValue,
+    clearErrors,
   } = useForm<THmisProfileFormState>({
     defaultValues: defaultFormState,
   });
@@ -170,7 +171,10 @@ export function HmisProfileForm(props: TProps) {
             label={'HMIS ID'}
             name={'hmisId'}
             placeholder={'Enter HMIS ID'}
-            onDelete={() => setValue('hmisId', '')}
+            onDelete={() => {
+              setValue('hmisId', '');
+              clearErrors('hmisId');
+            }}
             error={!!errors.hmisId}
             errorMessage={errors.hmisId?.message}
             rules={{
@@ -204,12 +208,16 @@ function hasUniquenessError(
     return null;
   }
 
-  const uniquenessErrorMessage =
+  const uniquenessServerErrorMessage =
     'Hmis profile with this Hmis id and Agency already exists.';
 
   const uniquenessError = messages.find(
-    (m) => m.message === uniquenessErrorMessage
+    (m) => m.message === uniquenessServerErrorMessage
   );
 
-  return uniquenessError?.message || null;
+  if (uniquenessError) {
+    return 'This HMIS ID is already associated with another client.';
+  }
+
+  return null;
 }
