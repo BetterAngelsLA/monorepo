@@ -10,6 +10,11 @@ export default function NoteLocation({
 }: {
   note: NoteSummaryQuery['note'] | undefined;
 }) {
+  console.log();
+  console.log('| -------------  NoteLocation  ------------- |');
+  console.log(note?.location);
+  console.log();
+
   return (
     <View>
       <TextBold mb="xs" size="sm">

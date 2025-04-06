@@ -1,11 +1,13 @@
 import {
+  LA_COUNTY_CENTER_LAT,
+  LA_COUNTY_CENTER_LNG,
   MapView,
   Marker,
   PROVIDER_GOOGLE,
   TMapView,
 } from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
-import { LocationPinIcon } from '@monorepo/expo/shared/icons';
+import { MapPinIcon } from '@monorepo/expo/shared/icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
@@ -38,9 +40,14 @@ interface IMapProps {
 
 const apiKey = process.env.EXPO_PUBLIC_GOOGLEMAPS_APIKEY;
 
+const hello = {
+  latitude: LA_COUNTY_CENTER_LAT,
+  longitude: LA_COUNTY_CENTER_LNG,
+};
+
 const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
   const {
-    currentLocation,
+    currentLocation = hello,
     setCurrentLocation,
     setInitialLocation,
     initialLocation,
@@ -105,6 +112,14 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
     }
   }
 
+  console.log('################################### MAPVIEW - modal');
+  console.log();
+  console.log('| ------------- modal -  userLocation  ------------- |');
+  console.log(userLocation);
+  console.log();
+
+  // currentLocation
+
   return (
     <MapView
       ref={ref}
@@ -146,7 +161,12 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
             longitude: currentLocation?.longitude,
           }}
         >
-          <LocationPinIcon size="2xl" />
+          <MapPinIcon
+            outlineColor="green"
+            fillColor="green"
+            text="33"
+            size="M"
+          />
         </Marker>
       )}
     </MapView>
