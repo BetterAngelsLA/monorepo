@@ -241,14 +241,14 @@ class ClientContactAdmin(admin.ModelAdmin):
         "email",
         "phone_number",
         "mailing_address",
-        "client_profile__user__first_name",
-        "client_profile__user__last_name",
-        "client_profile__user__email",
+        "client_profile__first_name",
+        "client_profile__last_name",
+        "client_profile__email",
         "client_profile__nickname",
     )
 
     def client_name(self, obj: ClientContact) -> str:
-        return obj.client_profile.user.full_name
+        return obj.client_profile.full_name
 
     def relationship(self, obj: ClientContact) -> str | None:
         return (
