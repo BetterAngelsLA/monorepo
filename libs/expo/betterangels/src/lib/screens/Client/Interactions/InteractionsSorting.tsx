@@ -78,8 +78,8 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
       <IconButton
         onPress={() =>
           createNoteFunction(
-            client.clientProfile.user.id,
-            client.clientProfile.user.firstName
+            client.clientProfile.id,
+            client.clientProfile.firstName
           )
         }
         variant="secondary"

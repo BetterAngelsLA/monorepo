@@ -26,7 +26,10 @@ export default function Interactions({
     variables: {
       pagination: { limit: paginationLimit, offset: offset },
       order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
-      filters: { client: client?.clientProfile.user.id, search: filterSearch },
+      filters: {
+        client: client?.clientProfile?.id,
+        search: filterSearch,
+      },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',

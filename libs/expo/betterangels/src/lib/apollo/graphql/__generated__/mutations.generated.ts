@@ -18,14 +18,14 @@ export type UpdateNoteMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote: { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: any | null, lastName?: any | null, email?: any | null } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email?: any | null } } | { __typename?: 'OperationInfo' } };
+export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote: { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, createdAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string, firstName?: any | null, lastName?: any | null, email?: any | null } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email?: any | null } } | { __typename?: 'OperationInfo' } };
 
 export type RevertNoteMutationVariables = Types.Exact<{
   data: Types.RevertNoteInput;
 }>;
 
 
-export type RevertNoteMutation = { __typename?: 'Mutation', revertNote: { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, client?: { __typename?: 'UserType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } | { __typename?: 'OperationInfo' } };
+export type RevertNoteMutation = { __typename?: 'Mutation', revertNote: { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } | { __typename?: 'OperationInfo' } };
 
 export type DeleteNoteMutationVariables = Types.Exact<{
   data: Types.DeleteDjangoObjectInput;
@@ -67,7 +67,7 @@ export type UpdateTaskMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'TaskType', id: string, title: string, status: Types.TaskStatusEnum, dueBy?: any | null, createdAt: any, client?: { __typename?: 'UserType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } };
+export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'TaskType', id: string, title: string, status: Types.TaskStatusEnum, dueBy?: any | null, createdAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } };
 
 export type DeleteTaskMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -164,9 +164,8 @@ export const UpdateNoteDocument = gql`
       id
       purpose
       publicDetails
-      client {
+      clientProfile {
         id
-        username
         firstName
         lastName
         email
@@ -226,7 +225,7 @@ export const RevertNoteDocument = gql`
       }
       publicDetails
       isSubmitted
-      client {
+      clientProfile {
         id
       }
       createdBy {
@@ -484,7 +483,7 @@ export const UpdateTaskDocument = gql`
       title
       status
       dueBy
-      client {
+      clientProfile {
         id
       }
       createdBy {
