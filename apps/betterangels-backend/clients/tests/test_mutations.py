@@ -265,6 +265,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "firstName": "",
             "lastName": "",
             "middleName": "",
+            "email": " invalid email",
             "californiaId": "invalid id",
             "contacts": [contact],
             "hmisProfiles": [hmis_profile],
@@ -489,7 +490,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         file_content = b"Test client document content"
         file_name = "test_client_document.txt"
 
-        expected_query_count = 17
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_client_document_fixture(
                 self.client_profile_1["id"],

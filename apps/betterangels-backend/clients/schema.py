@@ -144,7 +144,7 @@ def validate_california_id(
         return [{"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_INVALID.name}]
 
     # exclude the client profile being updated from the unique check
-    exclude_arg = {"client_profile_id": client_profile.pk} if client_profile else {}
+    exclude_arg = {"id": client_profile.pk} if client_profile else {}
 
     if ClientProfile.objects.exclude(**exclude_arg).filter(california_id__iexact=california_id).exists():
         return [{"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_IN_USE.name}]
