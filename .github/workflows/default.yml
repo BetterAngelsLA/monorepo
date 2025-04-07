@@ -183,7 +183,6 @@ jobs:
       - name: 🏗️ Push Monorepo Docker image
         run: |
           docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
-        uses: docker/build-push-action@v6
 
       - name: 🚀 Deploy Changes
         if: ${{ env.BRANCH_NAME == 'main' }}
