@@ -311,8 +311,6 @@ input ClientProfileImportRecordsBulkInput {
 }
 
 input ClientProfileOrder {
-  user_FirstName: Ordering
-  user_LastName: Ordering
   firstName: Ordering
   lastName: Ordering
   id: Ordering

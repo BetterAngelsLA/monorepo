@@ -327,8 +327,6 @@ export type ClientProfileOrder = {
   firstName?: InputMaybe<Ordering>;
   id?: InputMaybe<Ordering>;
   lastName?: InputMaybe<Ordering>;
-  user_FirstName?: InputMaybe<Ordering>;
-  user_LastName?: InputMaybe<Ordering>;
 };
 
 export type ClientProfilePhotoInput = {
