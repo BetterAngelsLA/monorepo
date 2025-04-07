@@ -671,7 +671,6 @@ class Mutation:
                 content_type=content_type,
                 object_id=client_profile.id,
                 uploaded_by=user,
-                associated_with=client_profile.user,
             )
 
             permissions = [
