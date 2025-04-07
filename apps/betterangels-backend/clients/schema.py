@@ -380,58 +380,13 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             validate_client_profile_data(client_profile_data)
 
-            user_fields = ["first_name", "last_name", "middle_name", "email"]
-
-            # TODO: Remove in DEV-1611. After the fe cutover in DEV-1610, `user` won't be on the mutation payload.
-            # The associated user will then be created using client_profile name & email values (else block, below).
-            user_data = client_profile_data.pop("user")
-
-            if user_data is not strawberry.UNSET:
-                for field in user_fields:
-                    if field in user_data and user_data.get(field) is strawberry.UNSET:
-                        user_data.pop(field)
-
-            if user_data:
-                client_user = User.objects.create_client(**user_data)
-
-            # TODO: Remove in DEV-1652. Note.client is still an fk to User, so we need to
-            # continue creating users until Note.client is updated to point to ClientProfile.
-            else:
-                for field in user_fields:
-                    if field in client_profile_data and client_profile_data.get(field) is strawberry.UNSET:
-                        client_profile_data.pop(field)
-
-                client_user = User.objects.create_client(
-                    first_name=client_profile_data.get("first_name"),
-                    last_name=client_profile_data.get("last_name"),
-                    middle_name=client_profile_data.get("middle_name"),
-                    email=client_profile_data.get("email"),
-                )
-
             phone_numbers = client_profile_data.pop("phone_numbers", []) or []
 
             client_profile = resolvers.create(
                 info,
                 ClientProfile,
-                {
-                    **client_profile_data,
-                    "user": client_user,
-                },
+                {**client_profile_data},
             )
-
-            # TODO: Remove in DEV-1611. After the fe cutover in DEV-1610, `user` won't be on the mutation payload.
-            # Name & email fields will be available directly on client_profile.
-            if user_data:
-                client_profile = resolvers.update(
-                    info,
-                    client_profile,
-                    {
-                        "first_name": user_data.get("first_name"),
-                        "last_name": user_data.get("last_name"),
-                        "middle_name": user_data.get("middle_name"),
-                        "email": user_data.get("email"),
-                    },
-                )
 
             content_type = ContentType.objects.get_for_model(ClientProfile)
 
@@ -455,42 +410,11 @@ class Mutation:
                     user,
                     [ClientProfilePermissions.CHANGE],
                 ).get(id=data.id)
-                client_user = client_profile.user
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
             validate_client_profile_data(client_profile_data)
-
-            # TODO: Remove in DEV-1611. After the fe cutover in DEV-1610, `user` won't be on the mutation payload.
-            # The associated user will then be updated using client_profile name & email values (else block, below).
-            if user_data := client_profile_data.pop("user", {}):
-                if user_data and user_data is not strawberry.UNSET:
-                    if email := user_data.get("email", ""):
-                        user_data["email"] = email.lower()
-
-                    client_user = resolvers.update(
-                        info,
-                        client_user,
-                        {
-                            **user_data,
-                            "id": client_profile.user.id,
-                        },
-                    )
-            # TODO: Remove in DEV-1652. Note.client is still an fk to User, so we need to
-            # continue updating users until Note.client is updated to point to ClientProfile.
-            else:
-                client_user = resolvers.update(
-                    info,
-                    client_user,
-                    {
-                        "first_name": client_profile_data.get("first_name"),
-                        "last_name": client_profile_data.get("last_name"),
-                        "middle_name": client_profile_data.get("middle_name"),
-                        "email": client_profile_data.get("email"),
-                        "id": client_profile.user.id,
-                    },
-                )
 
             related_classes = [
                 field
@@ -520,20 +444,6 @@ class Mutation:
                 },
             )
 
-            # TODO: Remove in DEV-1611
-            # write user name & email fields to client_profile before fe cutover
-            if user_data:
-                client_profile = resolvers.update(
-                    info,
-                    client_profile,
-                    {
-                        "first_name": user_data.get("first_name"),
-                        "last_name": user_data.get("last_name"),
-                        "middle_name": user_data.get("middle_name"),
-                        "email": user_data.get("email"),
-                    },
-                )
-
             return cast(ClientProfileType, client_profile)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
@@ -550,14 +460,10 @@ class Mutation:
 
                 client_profile_id = client_profile.pk
 
-                # TODO: Remove in DEV-1611
-                if client_profile.user:
-                    client_profile.user.delete()
-
                 client_profile.delete()
 
             except ClientProfile.DoesNotExist:
-                raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")
+                raise PermissionError("No profile deleted; profile may not exist or lacks proper permissions")
 
             return DeletedObjectType(id=client_profile_id)
 
@@ -595,7 +501,6 @@ class Mutation:
                 content_type=content_type,
                 object_id=client_profile.id,
                 uploaded_by=user,
-                associated_with=client_profile.user,
             )
 
             permissions = [
