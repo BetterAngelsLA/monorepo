@@ -59,26 +59,6 @@ export function Map(props: TMap) {
     console.info(`[map] loading status: ${mapApiStatus}`);
   }, [mapApiStatus]);
 
-  useEffect(() => {
-    const savedCenter = sessionStorage.getItem('mapCenter');
-
-    if (savedCenter) {
-      const { lat, lng } = JSON.parse(savedCenter);
-      setCameraProps({
-        ...cameraProps,
-        center: toGoogleLatLng({
-          latitude: lat,
-          longitude: lng,
-        }) as google.maps.LatLngLiteral,
-      });
-    } else {
-      setCameraProps({
-        center: toGoogleLatLng(defaultCenter) as google.maps.LatLngLiteral,
-        zoom: defaultZoom,
-      });
-    }
-  }, []);
-
   const handleCameraChange = useCallback(
     (event: MapCameraChangedEvent) => {
       setCameraProps(event.detail);
