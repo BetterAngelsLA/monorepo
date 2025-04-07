@@ -99,7 +99,7 @@
     "@nx/eslint": "20.7.0",
     "@nx/eslint-plugin": "20.7.0",
     "@nx/expo": "20.7.0",
-    "@nx/jest": "20.7.0",
+    "@nx/jest": "20.7.1",
     "@nx/js": "20.7.0",
     "@nx/react": "20.7.0",
     "@nx/storybook": "20.7.0",
