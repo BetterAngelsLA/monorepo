@@ -18,9 +18,13 @@
         "outputPath": "dist/apps/shelter-web",
         "configFile": "apps/shelter-web/vite.config.mts"
       },
+      "defaultConfiguration": "production",
       "configurations": {
         "production": {
           "mode": "production"
+        },
+        "development": {
+          "mode": "development"
         }
       }
     }

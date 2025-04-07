@@ -80,12 +80,13 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
         if: ${{ env.BRANCH_NAME == 'main' }}
 
-      # Build Monorepo Image for each commit using GitHub Actions cache
+      # Build and Push Monorepo Image for each commit using GitHub Actions cache
       - name: 🏗️ Build Monorepo Docker image
         uses: docker/build-push-action@v6
         with:
           file: Dockerfile
           load: true
+          push: ${{ env.BRANCH_NAME == 'main' }}
           tags: |
             ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
           cache-from: type=gha
@@ -179,16 +180,6 @@ jobs:
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🏗️ Push Monorepo Docker image
-        uses: docker/build-push-action@v6
-        with:
-          file: Dockerfile
-          push: ${{ env.BRANCH_NAME == 'main' }}
-          tags: |
-            ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: 🚀 Deploy Changes
         if: ${{ env.BRANCH_NAME == 'main' }}
