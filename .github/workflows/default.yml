@@ -68,18 +68,6 @@ jobs:
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 🐳 Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        if: ${{ env.BRANCH_NAME == 'main' }}
-        with:
-          role-to-assume: ${{ env.ASSUMED_ROLE }}
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: 🐳 Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-        if: ${{ env.BRANCH_NAME == 'main' }}
-
       # Build Monorepo Image for each commit using GitHub Actions cache
       - name: 🏗️ Build Monorepo Docker image
         uses: docker/build-push-action@v6
@@ -179,6 +167,18 @@ jobs:
       #   env:
       #     AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
       #     INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐳 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        # if: ${{ env.BRANCH_NAME == 'main' }}
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🐳 Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        # if: ${{ env.BRANCH_NAME == 'main' }}
 
       - name: 🏗️ Push Monorepo Docker image
         run: |
