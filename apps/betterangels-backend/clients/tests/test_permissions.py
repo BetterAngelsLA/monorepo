@@ -34,17 +34,14 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login(user_label)
 
         client_count = ClientProfile.objects.count()
-        client_profile_user = {
+        variables = {
             "firstName": "Firsty",
             "lastName": "Lasty",
             "middleName": "Middly",
             "email": "firsty_lasty@example.com",
-        }
-        variables = {
             "dateOfBirth": self.date_of_birth,
             "gender": GenderEnum.FEMALE.name,
             "preferredLanguage": LanguageEnum.ENGLISH.name,
-            "user": client_profile_user,
         }
         response = self._create_client_profile_fixture(variables)
 
@@ -109,15 +106,13 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login(user_label)
 
         query = """
-            query ViewClientProfile($id: ID!) {
+            query ($id: ID!) {
                 clientProfile(pk: $id) {
                     id
-                    user {
-                        firstName
-                        lastName
-                        middleName
-                        email
-                    }
+                    firstName
+                    lastName
+                    middleName
+                    email
                 }
             }
         """
