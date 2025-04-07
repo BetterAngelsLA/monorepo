@@ -89,38 +89,13 @@ def _payload_has_name(data: dict) -> bool:
     )
 
 
-def validate_client_name(
-    data: dict,
-    client_profile: Optional[ClientProfile],
-) -> list[dict[str, Any]]:
-    """Verify that either:
-    1. The incoming data contains at least one name field OR
-    2. The existing user has at least one name field and the incoming data isn't clearing it.
-    """
-
-    if _payload_has_name(data):
-        return []
-
-    if client_profile:
-        if (
-            (client_profile.first_name and data.get("first_name") is strawberry.UNSET)
-            or (client_profile.last_name and data.get("last_name") is strawberry.UNSET)
-            or (client_profile.middle_name and data.get("middle_name") is strawberry.UNSET)
-            or (client_profile.nickname and data.get("nickname") is strawberry.UNSET)
-        ):
-            return []
-
-    return [{"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name}]
-
-
 def validate_name(
     data: dict,
     client_profile: Optional[ClientProfile],
-    user: Optional[User] = None,
 ) -> list[dict[str, Any]]:
     """Verify that either:
     1. The incoming data contains at least one name field OR
-    2. The existing user has at least one name field and the incoming data isn't clearing it.
+    2. The existing client profile has at least one name field and the incoming data isn't clearing it.
     """
 
     if _payload_has_name(data):
@@ -135,51 +110,10 @@ def validate_name(
         ):
             return []
 
-    user_data = data.get("user", {})
-
-    if user and user_data is strawberry.UNSET:
-        return []
-
-    if user_data := data.get("user", {}):
-        if user_data is not strawberry.UNSET and (
-            (value_exists(user_data.get("first_name")))
-            or (value_exists(user_data.get("last_name")))
-            or (value_exists(user_data.get("middle_name")))
-            or (user and user.first_name and user_data.get("first_name") is strawberry.UNSET)
-            or (user and user.last_name and user_data.get("last_name") is strawberry.UNSET)
-            or (user and user.middle_name and user_data.get("middle_name") is strawberry.UNSET)
-            or (user and user.client_profile.nickname and data.get("nickname") is strawberry.UNSET)
-        ):
-            return []
-
     return [{"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name}]
 
 
-def validate_user_email(
-    email: Optional[str],
-    user: Optional[User] = None,
-) -> list[dict[str, Any]]:
-    if email in [strawberry.UNSET, None, ""]:
-        return []
-
-    email: str
-    if not re.search(EMAIL_REGEX, email):
-        return [{"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_INVALID.name}]
-
-    # exclude the user being updated from the unique check
-    user_exclude_arg = {"id": user.pk} if user else {}
-    client_profile_exclude_arg = {"user_id": user.pk} if user else {}
-
-    if User.objects.exclude(**user_exclude_arg).filter(email__iexact=email).exists():
-        return [{"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
-
-    if ClientProfile.objects.exclude(**client_profile_exclude_arg).filter(email__iexact=email).exists():
-        return [{"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
-
-    return []
-
-
-def validate_client_email(
+def validate_email(
     email: Optional[str],
     client_profile: Optional[ClientProfile] = None,
 ) -> list[dict[str, Any]]:
@@ -191,19 +125,17 @@ def validate_client_email(
         return [{"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_INVALID.name}]
 
     # exclude the client_profile being updated from the unique check
-    user_exclude_arg = {"client_profile": client_profile.pk} if client_profile else {}
-    client_profile_exclude_arg = {"id": client_profile.pk} if client_profile else {}
+    exclude_arg = {"id": client_profile.pk} if client_profile else {}
 
-    if ClientProfile.objects.exclude(**client_profile_exclude_arg).filter(email__iexact=email).exists():
-        return [{"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
-
-    if User.objects.exclude(**user_exclude_arg).filter(email__iexact=email).exists():
+    if ClientProfile.objects.exclude(**exclude_arg).filter(email__iexact=email).exists():
         return [{"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
 
     return []
 
 
-def validate_california_id(california_id: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
+def validate_california_id(
+    california_id: Optional[str], client_profile: Optional[ClientProfile] = None
+) -> list[dict[str, Any]]:
     if california_id in [strawberry.UNSET, None, ""]:
         return []
 
@@ -212,7 +144,7 @@ def validate_california_id(california_id: Optional[str], user: Optional[User] = 
         return [{"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_INVALID.name}]
 
     # exclude the client profile being updated from the unique check
-    exclude_arg = {"user_id": user.pk} if user else {}
+    exclude_arg = {"client_profile_id": client_profile.pk} if client_profile else {}
 
     if ClientProfile.objects.exclude(**exclude_arg).filter(california_id__iexact=california_id).exists():
         return [{"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_IN_USE.name}]
@@ -305,26 +237,18 @@ def validate_client_profile_data(data: dict) -> None:
     """Validates the data for creating or updating a client profile."""
     errors: list = []
 
-    user = None
     client_profile = None
 
     if value_exists(data.get("id")):
-        user = User.objects.filter(client_profile__id=data["id"]).first()
         client_profile = ClientProfile.objects.filter(id=data["id"]).first()
 
-    # TODO: enable this in DEV-1611
-    # errors += validate_client_name(data, client_profile)
-
-    # TODO: remove these in DEV-1611
-    errors += validate_name(data, client_profile, user)
-    if user_data := data.get("user"):
-        errors += validate_user_email(user_data.get("email"), user)
+    errors += validate_name(data, client_profile)
 
     if email := data.get("email"):
-        errors += validate_client_email(email, client_profile)
+        errors += validate_email(email, client_profile)
 
     if data.get("california_id"):
-        errors += validate_california_id(data["california_id"], user)
+        errors += validate_california_id(data["california_id"], client_profile)
 
     if data.get("contacts"):
         errors += validate_contacts(data["contacts"])
