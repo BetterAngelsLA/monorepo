@@ -181,6 +181,7 @@ jobs:
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🏗️ Push Monorepo Docker image
+        if: ${{ env.BRANCH_NAME == 'main' }}
         run: |
           docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
