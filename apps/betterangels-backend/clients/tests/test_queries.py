@@ -107,7 +107,6 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "residenceAddress": "1475 Luck Hoof R Ave, Los Angeles, CA 90046",
             "socialMediaProfiles": self.client_profile_1["socialMediaProfiles"],
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
-            "user": self.client_profile_1["user"],
             "veteranStatus": VeteranStatusEnum.NO.name,
         }
 
@@ -149,21 +148,19 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
                     totalCount
                     results {
                         id
-                        user {
-                            firstName
-                        }
+                        firstName
                     }
                 }
             }
         """
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query, variables={"order": {"user_FirstName": sort_order}})
+            response = self.execute_graphql(query, variables={"order": {"firstName": sort_order}})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], ClientProfile.objects.count())
 
         client_profiles = response["data"]["clientProfiles"]["results"]
-        self.assertEqual(client_profiles[0]["user"]["firstName"], expected_first_name)
+        self.assertEqual(client_profiles[0]["firstName"], expected_first_name)
 
     @parametrize(
         ("is_active, expected_client_profile_count"),
@@ -183,8 +180,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
 
         # Make two notes for Client 1 (inactive)
-        baker.make(Note, organization=organization, client=client_profile_1.user)
-        baker.make(Note, organization=organization, client=client_profile_1.user)
+        baker.make(Note, organization=organization, client_profile=client_profile_1)
+        baker.make(Note, organization=organization, client_profile=client_profile_1)
 
         query = """
             query ($isActive: Boolean) {
@@ -202,8 +199,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             traveller.shift(timedelta(days=MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS["days"] + 1))
 
             # Make two notes for Client 2 (active)
-            baker.make(Note, organization=organization, client=client_profile_2.user)
-            baker.make(Note, organization=organization, client=client_profile_2.user)
+            baker.make(Note, organization=organization, client_profile=client_profile_2)
+            baker.make(Note, organization=organization, client_profile=client_profile_2)
 
             expected_query_count = 4
             with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -262,8 +259,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
 
         # Make two notes for Client 1 (inactive)
-        baker.make(Note, organization=organization, client=client_profile_1.user)
-        baker.make(Note, organization=organization, client=client_profile_1.user)
+        baker.make(Note, organization=organization, client_profile=client_profile_1)
+        baker.make(Note, organization=organization, client_profile=client_profile_1)
 
         query = """
             query ($isActive: Boolean, $search: String) {
@@ -281,8 +278,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             traveller.shift(timedelta(days=MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS["days"] + 1))
 
             # Make two notes for Client 2 (active)
-            baker.make(Note, organization=organization, client=client_profile_2.user)
-            baker.make(Note, organization=organization, client=client_profile_2.user)
+            baker.make(Note, organization=organization, client_profile=client_profile_2)
+            baker.make(Note, organization=organization, client_profile=client_profile_2)
             expected_query_count = 4
             with self.assertNumQueriesWithoutCache(expected_query_count):
                 response = self.execute_graphql(query, variables={"search": search_value, "isActive": is_active})
@@ -312,12 +309,10 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         # create a new client with similar name to client 1, with space in first name
         self._create_client_profile_fixture(
             {
-                "user": {
-                    "firstName": "TODD GUSTAV",
-                    "lastName": "CHAVEZ",
-                    "middleName": None,
-                    "email": "tchavez@pblivin.com",
-                }
+                "firstName": "TODD GUSTAV",
+                "lastName": "CHAVEZ",
+                "middleName": None,
+                "email": "tchavez@pblivin.com",
             }
         )
 
