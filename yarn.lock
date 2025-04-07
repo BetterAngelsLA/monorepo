@@ -5149,7 +5149,7 @@ __metadata:
     react-native-svg-transformer: "npm:1.5.0"
     react-native-web: "npm:0.19.13"
     react-router-dom: "npm:6.11.2"
-    react-test-renderer: "npm:^18.3.0"
+    react-test-renderer: "npm:^19.1.0"
     remeda: "npm:^2.20.0"
     tailwind-merge: "npm:^2.5.5"
     tailwindcss: "npm:3.4.17"
@@ -21984,6 +21984,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-is@npm:^19.1.0":
+  version: 19.1.0
+  resolution: "react-is@npm:19.1.0"
+  checksum: 10/4aceca94492032a19411138bf68c6ca7dce4abee7ae6c7f23db9291d2dff14d6a643717b176ef9a151e8cdf6a2b71fdbc59fd998328e086a6f752512304a252b
+  languageName: node
+  linkType: hard
+
 "react-mailchimp-subscribe@npm:^2.1.3":
   version: 2.1.3
   resolution: "react-mailchimp-subscribe@npm:2.1.3"
@@ -22368,7 +22375,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-test-renderer@npm:18.3.1, react-test-renderer@npm:^18.3.0":
+"react-test-renderer@npm:18.3.1":
   version: 18.3.1
   resolution: "react-test-renderer@npm:18.3.1"
   dependencies:
@@ -22378,6 +22385,18 @@ __metadata:
   peerDependencies:
     react: ^18.3.1
   checksum: 10/d53137315c677bdfba702a7179a69828233fc7635ae1e0c03b203923d643400ace72b343cb3dd3dafba8911c20bef53f55bff7aa2e4ddff3ccc423fdd9deeee2
+  languageName: node
+  linkType: hard
+
+"react-test-renderer@npm:^19.1.0":
+  version: 19.1.0
+  resolution: "react-test-renderer@npm:19.1.0"
+  dependencies:
+    react-is: "npm:^19.1.0"
+    scheduler: "npm:^0.26.0"
+  peerDependencies:
+    react: ^19.1.0
+  checksum: 10/73ae0ea779bacd0ff084dd3644b763a4431d68adf9c6acffdaa3d0810aab5322f24c95c60259c23b77f38b5f36d9d614ffaa46d91a33840536f2d4b7188dcc89
   languageName: node
   linkType: hard
 
