@@ -5,7 +5,6 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.types import CreateUserInput, UpdateUserInput, UserType
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -54,8 +53,6 @@ class CreateClientDocumentInput:
 
 @strawberry_django.ordering.order(ClientProfile)
 class ClientProfileOrder:
-    user__first_name: auto
-    user__last_name: auto
     first_name: auto
     last_name: auto
     id: auto
@@ -84,7 +81,7 @@ class ClientProfileFilter:
         comparison = "gte" if value else "lt"
 
         return (
-            queryset.alias(last_interacted_at=Max("user__client_notes__interacted_at")),
+            queryset.alias(last_interacted_at=Max("client_profile_notes__interacted_at")),
             Q(**{f"last_interacted_at__{comparison}": earliest_interaction_threshold}),
         )
 
