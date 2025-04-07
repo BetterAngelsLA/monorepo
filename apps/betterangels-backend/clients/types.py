@@ -299,8 +299,6 @@ class ClientProfileType(ClientProfileBaseType):
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
 
-    user: UserType
-
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:
         if case_managers := getattr(self, "case_managers", None):
@@ -316,7 +314,6 @@ class CreateClientProfileInput(ClientProfileBaseType):
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
-    user: Optional[CreateUserInput]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
@@ -327,7 +324,6 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
-    user: Optional[UpdateUserInput]
 
 
 # Data Import

@@ -50,10 +50,6 @@ export const GET_NOTES = gql`
           lastName
           # TODO: displayCaseManager and user required for typecheck. remove in clean up
           displayCaseManager
-          user {
-            id
-            username
-          }
         }
         createdBy {
           id

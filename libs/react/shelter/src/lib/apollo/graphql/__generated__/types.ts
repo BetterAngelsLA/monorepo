@@ -380,7 +380,6 @@ export type ClientProfileType = {
   residenceAddress?: Maybe<Scalars['String']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
-  user: UserType;
   veteranStatus?: Maybe<VeteranStatusEnum>;
 };
 
@@ -469,7 +468,6 @@ export type CreateClientProfileInput = {
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
-  user?: InputMaybe<CreateUserInput>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
@@ -547,13 +545,6 @@ export type CreateTaskInput = {
 };
 
 export type CreateTaskPayload = OperationInfo | TaskType;
-
-export type CreateUserInput = {
-  email?: InputMaybe<Scalars['NonBlankString']['input']>;
-  firstName?: InputMaybe<Scalars['NonBlankString']['input']>;
-  lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
-  middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
-};
 
 export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
 
@@ -1974,7 +1965,6 @@ export type UpdateClientProfileInput = {
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
-  user?: InputMaybe<UpdateUserInput>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 

@@ -366,7 +366,6 @@ type ClientProfileType {
   docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  user: UserType!
   displayCaseManager: String!
 }
 
@@ -441,7 +440,6 @@ input CreateClientProfileInput {
   householdMembers: [ClientHouseholdMemberInput!]
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
-  user: CreateUserInput
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -518,13 +516,6 @@ input CreateTaskInput {
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
-
-input CreateUserInput {
-  firstName: NonBlankString
-  lastName: NonBlankString
-  middleName: NonBlankString
-  email: NonBlankString
-}
 
 """Date (isoformat)"""
 scalar Date
@@ -1626,7 +1617,6 @@ input UpdateClientProfileInput {
   householdMembers: [ClientHouseholdMemberInput!]
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
-  user: UpdateUserInput
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
