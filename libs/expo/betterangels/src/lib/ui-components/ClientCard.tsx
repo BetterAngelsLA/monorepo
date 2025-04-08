@@ -9,7 +9,6 @@ import {
   Avatar,
   IconButton,
   TextBold,
-  TextButton,
   TextRegular,
   formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
@@ -144,14 +143,7 @@ export default function ClientCard(props: IClientCardProps) {
         )}
       </View>
       <View style={{ justifyContent: 'center', position: 'relative' }}>
-        {select === 'true' ? (
-          <TextButton
-            fontSize="sm"
-            title={'Select'}
-            onPress={onPress}
-            accessibilityHint={`Add a interaction for client ${client.firstName} ${client.lastName}`}
-          />
-        ) : (
+        {select === 'false' && (
           <IconButton
             onPress={onPress}
             variant="transparent"
