@@ -1842,7 +1842,7 @@ export type ShelterType = {
   overallRating?: Maybe<Scalars['Int']['output']>;
   parking: Array<ParkingType>;
   pets: Array<PetType>;
-  phone: Scalars['PhoneNumber']['output'];
+  phone?: Maybe<Scalars['PhoneNumber']['output']>;
   programFees?: Maybe<Scalars['String']['output']>;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;

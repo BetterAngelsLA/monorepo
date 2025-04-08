@@ -1466,7 +1466,7 @@ type ShelterType {
   overallRating: Int
   parking: [ParkingType!]!
   pets: [PetType!]!
-  phone: PhoneNumber!
+  phone: PhoneNumber
   programFees: String
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String

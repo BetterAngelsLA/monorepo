@@ -6,6 +6,7 @@ import {
   InstagramIcon,
   LocationIcon,
 } from '@monorepo/react/icons';
+import parsePhoneNumber from 'libphonenumber-js';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
 import GeneralServices from './GeneralServices';
 
@@ -26,7 +27,7 @@ export default function GeneralInfo({
       icon: <InstagramIcon className="h-6 w-6 fill-primary-20" />,
     },
     {
-      label: shelter?.phone,
+      label: parsePhoneNumber(shelter?.phone ?? "", 'US')?.formatNational(),
       key: 'phone',
       icon: <CallIcon className="h-6 w-6 fill-primary-20" />,
     },

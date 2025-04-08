@@ -46,7 +46,7 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
         variables: {
           data: {
             purpose: `Session with ${firstName || 'Client'}`,
-            client: id,
+            clientProfile: id,
           },
         },
       });
