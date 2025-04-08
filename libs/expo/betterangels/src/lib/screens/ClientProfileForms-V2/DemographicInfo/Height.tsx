@@ -50,6 +50,7 @@ export default function Height() {
             maxLength={1}
             inputMode="numeric"
             label="Feet"
+            placeholder="Feet"
             value={height?.feet}
             onChangeText={(e) => setHeight({ ...height, feet: e })}
           />
@@ -58,6 +59,7 @@ export default function Height() {
           <Input
             maxLength={2}
             label="Inches"
+            placeholder="Inches"
             inputMode="numeric"
             value={height?.inches}
             onChangeText={(e) => setHeight({ ...height, inches: e })}
