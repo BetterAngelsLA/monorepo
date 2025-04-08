@@ -255,7 +255,7 @@ class ShelterType:
     overall_rating: auto
     parking: List[ParkingType]
     pets: List[PetType]
-    phone: PhoneNumberScalar  # type: ignore
+    phone: Optional[PhoneNumberScalar]  # type: ignore
     program_fees: Optional[str]
     room_styles: List[RoomStyleType]
     room_styles_other: auto

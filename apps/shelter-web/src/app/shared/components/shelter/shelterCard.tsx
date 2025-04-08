@@ -47,11 +47,19 @@ export function ShelterCard(props: TShelterCard) {
 
   const contentCss = ['mt-4'];
 
+  const onNavigate = () => {
+    sessionStorage.setItem(
+      'mapCenter',
+      JSON.stringify({
+        lat: location?.latitude,
+        lng: location?.longitude,
+      })
+    );
+    navigate(`/shelter/${id}`);
+  };
+
   return (
-    <div
-      className={mergeCss(parentCss)}
-      onClick={() => navigate(`/shelter/${id}`)}
-    >
+    <div className={mergeCss(parentCss)} onClick={onNavigate}>
       {heroImage && (
         <div className={mergeCss(heroCss)}>
           <img

@@ -257,6 +257,47 @@ export default function PrivateLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="settings/index"
+        options={{
+          headerTitleAlign: 'center',
+          title: 'Settings',
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => (
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
+              accessibilityHint="goes to previous screen"
+              title="Back"
+              onPress={router.back}
+            />
+          ),
+        }}
+      />
+
+      <Stack.Screen
+        name="settings/about/index"
+        options={{
+          headerTitleAlign: 'center',
+          title: 'About App',
+          headerStyle: {
+            backgroundColor: Colors.BRAND_DARK_BLUE,
+          },
+          headerLeft: () => (
+            <TextButton
+              regular
+              color={Colors.WHITE}
+              fontSize="md"
+              accessibilityHint="goes to previous screen"
+              title="Back"
+              onPress={router.back}
+            />
+          ),
+        }}
+      />
     </Stack>
   );
 }
