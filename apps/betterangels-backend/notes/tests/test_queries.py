@@ -367,6 +367,60 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
 
     @parametrize(
+        ("authors, expected_results_count, returned_note_labels, expected_query_count"),
+        [
+            ([], 3, ["note", "note_2", "note_3"], 4),
+            (["org_1_case_manager_1"], 1, ["note"], 4),
+            (["org_1_case_manager_2"], 2, ["note_2", "note_3"], 4),
+            (["org_2_case_manager_1"], 0, [], 4),
+            (["org_1_case_manager_2", "org_2_case_manager_1"], 2, ["note_2", "note_3"], 4),
+        ],
+    )
+    def test_notes_query_filter_by_authors(
+        self,
+        authors: list[SelahTeamEnum],
+        expected_results_count: int,
+        returned_note_labels: list[str],
+        expected_query_count: int,
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_2)
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
+        self.note_2 = self._create_note_fixture(
+            {
+                "purpose": "Client 1's Note",
+                "clientProfile": self.client_profile_1.pk,
+            }
+        )["data"]["createNote"]
+        self.note_3 = self._create_note_fixture(
+            {
+                "purpose": "Client 2's Note",
+                "clientProfile": self.client_profile_2.pk,
+            }
+        )["data"]["createNote"]
+
+        filters = {"authors": [self.user_map[author].pk for author in authors]}
+
+        query = """
+            query ($filters: NoteFilter) {
+                notes(filters: $filters) {
+                    totalCount
+                    results{
+                        id
+                    }
+                }
+            }
+        """
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
+        notes = response["data"]["notes"]["results"]
+
+        for idx, note_label in enumerate(returned_note_labels):
+            self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
+
+    @parametrize(
         ("teams, expected_results_count, returned_note_labels, expected_query_count"),
         [
             ([], 3, ["note", "note_2", "note_3"], 4),
