@@ -69,7 +69,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: Radiuses.xs,
-    padding: Spacings.sm,
     backgroundColor: Colors.WHITE,
   },
   pressedView: {

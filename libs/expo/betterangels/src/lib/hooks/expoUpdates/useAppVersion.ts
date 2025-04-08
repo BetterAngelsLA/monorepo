@@ -5,12 +5,14 @@ import { useEffect, useState } from 'react';
 type TAppVersions = {
   version?: string;
   runtimeVersion?: string;
+  runtimeVersionShort?: string;
   nativeApplicationVersion: string | null;
 };
 
 const nullVersion: TAppVersions = {
   version: undefined,
   runtimeVersion: undefined,
+  runtimeVersionShort: undefined,
   nativeApplicationVersion: null,
 };
 
@@ -24,13 +26,12 @@ export default function useAppVersion() {
 
     const version = expoConfig?.version;
     const runtimeVersion = manifest2?.runtimeVersion;
-
-    // TODO: return trimmed version after confirming in DEV env
-    // const trimmedRuntimeVersion = runtimeVersion && runtimeVersion.slice(-4);
+    const trimmedRuntimeVersion = runtimeVersion && runtimeVersion.slice(-4);
 
     setVersion({
       version,
       runtimeVersion,
+      runtimeVersionShort: trimmedRuntimeVersion,
       nativeApplicationVersion,
     });
   }, []);
