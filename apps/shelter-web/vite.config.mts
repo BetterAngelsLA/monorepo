@@ -24,6 +24,7 @@ export default defineConfig(({ mode }) => {
       return process.env.VITE_APP_BASE_PATH;
     }
 
+    // This is for CI and must match what is in Terraform
     if (isDev && process.env.BRANCH_NAME) {
       return `/branches/${process.env.BRANCH_NAME}`;
     }
