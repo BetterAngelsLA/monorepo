@@ -36,10 +36,10 @@ export default function ContactInfo() {
 
       <Form.Field title="Email Address">
         <ControlledInput
-          name="user.email"
+          name="email"
           placeholder="Enter email address"
           control={control}
-          onDelete={() => setValue('user.email', '')}
+          onDelete={() => setValue('email', '')}
           error={!!errors.email}
           errorMessage={(errors.email?.message as string) || undefined}
           rules={{
