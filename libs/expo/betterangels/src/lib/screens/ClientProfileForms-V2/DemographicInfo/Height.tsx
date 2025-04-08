@@ -1,5 +1,10 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { Form, Input_V2 as Input } from '@monorepo/expo/shared/ui-components';
+import {
+  feetInchesToInches,
+  Form,
+  inchesToFeetInches,
+  Input_V2 as Input,
+} from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { View } from 'react-native';
@@ -21,9 +26,7 @@ export default function Height() {
   });
 
   useEffect(() => {
-    const feetToInches = parseInt(height.feet, 10) || 0;
-    const inches = parseInt(height.inches, 10) || 0;
-    const heightInInches = feetToInches * 12 + inches;
+    const heightInInches = feetInchesToInches(height.feet, height.inches);
     const currentHeightInInches = getValues('heightInInches');
 
     if (currentHeightInInches !== heightInInches) {
@@ -33,8 +36,8 @@ export default function Height() {
 
   useEffect(() => {
     if (heightInInchesDefault) {
-      const feet = Math.floor(heightInInchesDefault / 12).toString();
-      const inches = (heightInInchesDefault % 12).toString();
+      const { feet, inches } = inchesToFeetInches(heightInInchesDefault);
+
       setHeight({ feet, inches });
     }
   }, [heightInInchesDefault]);

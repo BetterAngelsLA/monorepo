@@ -41,7 +41,13 @@ export { default as ImageViewer } from './ImageViewer';
 export { default as Input } from './Input';
 export { default as Input_V2 } from './Input_V2';
 export { default as KeyboardAwareScrollView } from './KeyboardAwareScrollView';
-export { getFormattedLength, Length, TLengthUnit } from './Length';
+export {
+  feetInchesToInches,
+  getFormattedLength,
+  inchesToFeetInches,
+  Length,
+  TLengthUnit,
+} from './Length';
 export { default as Loading } from './Loading';
 export { default as LoadingView } from './LoadingView';
 export { default as MediaPickerModal } from './MediaPickerModal';
