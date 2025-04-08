@@ -1,4 +1,5 @@
 export { default as useCaliforniaIdUniqueCheck } from './californiaIdUniqueCheck/useCaliforniaIdUniqueCheck';
+export { default as useAppVersion } from './expoUpdates/useAppVersion';
 export { default as useFeatureFlagActive } from './featureFlag/useFeatureFlagActive';
 export { default as useKeyboardToolbar } from './keyboardToolbar/useKeyboardToolbar';
 export { default as useInfiniteScroll } from './scroll/useInfiniteScroll';
