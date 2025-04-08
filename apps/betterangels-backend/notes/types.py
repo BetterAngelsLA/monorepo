@@ -191,7 +191,7 @@ class NoteFilter:
     def teams(
         self, queryset: QuerySet, value: Optional[List[SelahTeamEnum]], prefix: str
     ) -> Tuple[QuerySet[models.Note], Q]:
-        if value is None:
+        if value is None or value == []:
             return queryset, Q()
 
         return queryset.filter(team__in=value), Q()

@@ -369,6 +369,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         ("teams, expected_results_count, returned_note_labels, expected_query_count"),
         [
+            ([], 3, ["note", "note_2", "note_3"], 4),
             ([SelahTeamEnum.WDI_ON_SITE.name, SelahTeamEnum.SLCC_ON_SITE.name], 2, ["note_2", "note_3"], 4),
             ([SelahTeamEnum.SLCC_ON_SITE.name], 1, ["note_3"], 4),
             ([SelahTeamEnum.WDI_ON_SITE.name, "invalid team"], 0, [], 1),
