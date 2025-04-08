@@ -116,12 +116,13 @@ export function Input(props: IInputProps) {
         />
         {value && onDelete && (
           <Pressable
+            disabled={disabled}
             accessible
             accessibilityRole="button"
             accessibilityLabel="delete icon"
             accessibilityHint="deletes input's value"
             onPress={onDelete}
-            style={styles.pressable}
+            style={[{ opacity: disabled ? 0.5 : 1 }, styles.pressable]}
           >
             <View style={styles.icon}>
               <PlusIcon size="xs" rotate="45deg" />

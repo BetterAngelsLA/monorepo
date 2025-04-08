@@ -9,7 +9,6 @@ import {
   Avatar,
   IconButton,
   TextBold,
-  TextButton,
   TextRegular,
   formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
@@ -20,9 +19,7 @@ import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.ge
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 interface IClientCardProps {
-  client:
-    | ClientProfilesQuery['clientProfiles']['results'][number]
-    | undefined;
+  client: ClientProfilesQuery['clientProfiles']['results'][number] | undefined;
   progress?: DimensionValue;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -74,13 +71,16 @@ export default function ClientCard(props: IClientCardProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() =>
-        router.navigate({
-          pathname: `/client/${client.id}`,
-          params: {
-            arrivedFrom,
-          },
-        })
+      onPress={
+        select === 'true'
+          ? onPress
+          : () =>
+              router.navigate({
+                pathname: `/client/${client.id}`,
+                params: {
+                  arrivedFrom,
+                },
+              })
       }
       style={({ pressed }) => [
         styles.container,
@@ -143,14 +143,7 @@ export default function ClientCard(props: IClientCardProps) {
         )}
       </View>
       <View style={{ justifyContent: 'center', position: 'relative' }}>
-        {select === 'true' ? (
-          <TextButton
-            fontSize="sm"
-            title={'Select'}
-            onPress={onPress}
-            accessibilityHint={`Add a interaction for client ${client.firstName} ${client.lastName}`}
-          />
-        ) : (
+        {select === 'false' && (
           <IconButton
             onPress={onPress}
             variant="transparent"

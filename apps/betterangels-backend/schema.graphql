@@ -191,22 +191,33 @@ type CityType {
 input ClientContactInput {
   name: String
   email: String
-  phoneNumber: PhoneNumber
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID
+  clientProfile: ID
+  phoneNumber: PhoneNumber
 }
 
 type ClientContactType {
   name: String
   email: String
-  phoneNumber: PhoneNumber
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID!
   clientProfile: DjangoModelType!
+  phoneNumber: PhoneNumber
+}
+
+type ClientContactTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ClientContactType!]!
 }
 
 enum ClientDocumentNamespaceEnum {
@@ -394,6 +405,8 @@ type ContactInfoType {
   contactNumber: PhoneNumber!
 }
 
+union CreateClientContactPayload = ClientContactType | OperationInfo
+
 input CreateClientDocumentInput {
   clientProfile: ID!
   file: Upload!
@@ -531,6 +544,8 @@ scalar Date
 
 """Date with time (isoformat)"""
 scalar DateTime
+
+union DeleteClientContactPayload = ClientContactType | OperationInfo
 
 union DeleteClientDocumentPayload = ClientDocumentType | OperationInfo
 
@@ -907,6 +922,9 @@ type Mutation {
   createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_hmisprofile"}], any: true)
   updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_hmisprofile"}], any: true)
   deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_hmisprofile"}], any: true)
+  createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
+  updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
+  deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
   deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
@@ -1151,6 +1169,8 @@ type Query {
   clientDocumentsPaginated(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   hmisProfile(pk: ID!): HmisProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
   hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
+  clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
+  clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
@@ -1446,7 +1466,7 @@ type ShelterType {
   overallRating: Int
   parking: [ParkingType!]!
   pets: [PetType!]!
-  phone: PhoneNumber!
+  phone: PhoneNumber
   programFees: String
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String
@@ -1587,6 +1607,8 @@ type TrainingServiceType {
 }
 
 scalar UUID
+
+union UpdateClientContactPayload = ClientContactType | OperationInfo
 
 input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
