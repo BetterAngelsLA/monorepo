@@ -158,7 +158,7 @@ class NoteFilter:
     def authors(
         self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str
     ) -> Tuple[QuerySet[models.Note], Q]:
-        if value in [None, []]:
+        if not value:
             return queryset, Q()
 
         return queryset.filter(created_by__in=value), Q()
@@ -191,7 +191,7 @@ class NoteFilter:
     def teams(
         self, queryset: QuerySet, value: Optional[List[SelahTeamEnum]], prefix: str
     ) -> Tuple[QuerySet[models.Note], Q]:
-        if value in [None, []]:
+        if not value:
             return queryset, Q()
 
         return queryset.filter(team__in=value), Q()
