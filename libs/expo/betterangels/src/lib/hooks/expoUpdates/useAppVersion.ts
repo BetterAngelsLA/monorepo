@@ -26,7 +26,7 @@ export default function useAppVersion() {
 
     const version = expoConfig?.version;
     const runtimeVersion = manifest2?.runtimeVersion;
-    const trimmedRuntimeVersion = runtimeVersion && runtimeVersion.slice(-4);
+    const trimmedRuntimeVersion = runtimeVersion && runtimeVersion.slice(-12);
 
     setVersion({
       version,
