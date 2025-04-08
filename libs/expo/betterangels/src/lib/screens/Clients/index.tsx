@@ -67,7 +67,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         variables: {
           data: {
             purpose: `Session with ${firstName || 'Client'}`,
-            client: id,
+            clientProfile: id,
           },
         },
       });

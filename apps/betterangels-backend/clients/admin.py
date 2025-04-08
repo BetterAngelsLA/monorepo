@@ -224,6 +224,40 @@ class HmisProfileAdmin(admin.ModelAdmin):
         return obj.client_profile.full_name
 
 
+@admin.register(ClientContact)
+class ClientContactAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "relationship",
+        "name",
+        "email",
+        "phone_number",
+        "mailing_address",
+        "client_name",
+        "client_profile__id",
+    )
+    search_fields = (
+        "name",
+        "email",
+        "phone_number",
+        "mailing_address",
+        "client_profile__first_name",
+        "client_profile__last_name",
+        "client_profile__email",
+        "client_profile__nickname",
+    )
+
+    def client_name(self, obj: ClientContact) -> str:
+        return obj.client_profile.full_name
+
+    def relationship(self, obj: ClientContact) -> str | None:
+        return (
+            obj.get_relationship_to_client_display()
+            if obj.relationship_to_client != RelationshipTypeEnum.OTHER
+            else obj.relationship_to_client_other
+        )
+
+
 class ClientDocumentResource(resources.ModelResource):
     parent_id = fields.Field(column_name="Parent ID")
     created_at = fields.Field(column_name="Created On")
