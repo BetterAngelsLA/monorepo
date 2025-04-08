@@ -1,5 +1,6 @@
 import { Card } from '@monorepo/react/components';
 import {
+  BedIcon,
   CallIcon,
   EmailIcon,
   GlobeIcon,
@@ -46,8 +47,9 @@ export default function GeneralInfo({
     <Card px="px-0" pb="pb-0">
       <div className="gap-2 flex flex-col px-6">
         {shelter.totalBeds && (
-          <div>
+          <div className="flex items-center justify-between gap-1">
             <p>{shelter.totalBeds} beds available</p>
+            <BedIcon className="h-6 w-6 fill-primary-20" />
           </div>
         )}
 

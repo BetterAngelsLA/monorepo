@@ -1,5 +1,6 @@
 export { default as ArrowLeftIcon } from './components/arrowLeftIcon';
 export { default as BaShelterLogoIcon } from './components/baShelterLogoIcon';
+export { default as BedIcon } from './components/bedIcon';
 export { default as BenefitsCalIcon } from './components/benefitscalIcon';
 export { default as BetterAngelsLogoIcon } from './components/betterAngelsLogoIcon';
 export { default as CallIcon } from './components/callIcon';
@@ -32,3 +33,4 @@ export { default as WFAlertOnIcon } from './components/wfAlertOn';
 export { default as WFAnnouncement } from './components/wfAnnouncement';
 export { default as WFCheckbox } from './components/wfCheckbox';
 export { default as WFLinkIcon } from './components/wfLinkIcon';
+
