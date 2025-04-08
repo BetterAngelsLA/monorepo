@@ -23,18 +23,19 @@ query GetClientProfile($id: ID!) {
       age
       californiaId
       dateOfBirth
-      displayCaseManager
-      displayGender
-      displayPronouns
+      email
       eyeColor
+      firstName
       gender
       genderOther
       hairColor
       heightInInches
       importantNotes
+      lastName
       livingSituation
       mailingAddress
       maritalStatus
+      middleName
       nickname
       phoneNumber
       physicalDescription
@@ -46,10 +47,9 @@ query GetClientProfile($id: ID!) {
       race
       residenceAddress
       veteranStatus
-      profilePhoto {
-        name
-        url
-      }
+      displayCaseManager
+      displayGender
+      displayPronouns
       contacts {
         id
         email
@@ -78,17 +78,14 @@ query GetClientProfile($id: ID!) {
         number
         isPrimary
       }
+      profilePhoto {
+        name
+        url
+      }
       socialMediaProfiles {
         id
         platform
         platformUserId
-      }
-      user {
-        id
-        email
-        firstName
-        middleName
-        lastName
       }
     }
   }

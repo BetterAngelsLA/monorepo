@@ -36,15 +36,19 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
             age
             californiaId
             dateOfBirth
+            email
             eyeColor
+            firstName
             gender
             genderOther
             hairColor
             heightInInches
             importantNotes
+            lastName
             livingSituation
             mailingAddress
             maritalStatus
+            middleName
             nickname
             phoneNumber
             physicalDescription
@@ -260,17 +264,21 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "californiaId": "L1234567",
                 "contacts": self.client_1_contacts,
                 "dateOfBirth": self.date_of_birth,
+                "email": "todd@pblivin.com",
                 "eyeColor": EyeColorEnum.BROWN.name,
+                "firstName": "Todd",
                 "gender": GenderEnum.MALE.name,
                 "genderOther": None,
                 "hairColor": HairColorEnum.BROWN.name,
                 "heightInInches": 71.75,
                 "hmisProfiles": self.client_1_hmis_profiles,
-                "importantNotes": "I am very important",
                 "householdMembers": self.client_1_household_members,
+                "importantNotes": "I am very important",
+                "lastName": "Chavez",
                 "livingSituation": LivingSituationEnum.VEHICLE.name,
                 "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
                 "maritalStatus": MaritalStatusEnum.SINGLE.name,
+                "middleName": "Gustav",
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "phoneNumbers": self.client_profile_1_phone_numbers,
@@ -296,16 +304,20 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "address": None,
                 "contacts": [],
                 "dateOfBirth": None,
+                "email": "mister@pblivin.com",
                 "eyeColor": None,
+                "firstName": "Mister",
                 "gender": None,
                 "genderOther": None,
                 "hairColor": None,
                 "heightInInches": None,
                 "hmisProfiles": self.client_2_hmis_profiles,
                 "householdMembers": [],
+                "lastName": "Peanutbutter",
                 "livingSituation": None,
                 "mailingAddress": None,
                 "maritalStatus": None,
+                "middleName": "Tee",
                 "nickname": None,
                 "phoneNumber": None,
                 "phoneNumbers": [self.client_2_phone_number_1],
@@ -444,6 +456,82 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
             },
             files={"photo": photo},
         )
+
+
+class ClientContactBaseTestCase(ClientsBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.client_contact_fields = """
+            id
+            email
+            mailingAddress
+            name
+            phoneNumber
+            relationshipToClient
+            relationshipToClientOther
+        """
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        # TODO: move client profile setup back to ClientProfileGraphQLBaseTestCase
+        # when client profile redesign is completed and tests are refactored
+        self.client_profile = self._create_client_profile_fixture({"user": {"firstName": "Test Client"}})["data"][
+            "createClientProfile"
+        ]
+        self.client_profile_id = self.client_profile["id"]
+
+        self._setup_client_contacts()
+
+    def _setup_client_contacts(self) -> None:
+        self.client_contact_1 = self._create_client_contact_fixture(
+            {
+                "clientProfile": self.client_profile_id,
+                "email": "client_contact_1@example.com",
+                "mailingAddress": "111 Main Street",
+                "name": "Jane Smith",
+                "phoneNumber": "2125551212",
+                "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
+                "relationshipToClientOther": None,
+            }
+        )["data"]["createClientContact"]
+        self.client_contact_2 = self._create_client_contact_fixture(
+            {
+                "clientProfile": self.client_profile_id,
+                "email": "client_contact_2@example.com",
+                "mailingAddress": "222 Main Street",
+                "name": "Joe Doe",
+                "phoneNumber": "2125552222",
+                "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+                "relationshipToClientOther": "bff",
+            }
+        )["data"]["createClientContact"]
+
+    def _create_client_contact_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_client_contact_fixture("create", variables)
+
+    def _update_client_contact_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_client_contact_fixture("update", variables)
+
+    def _create_or_update_client_contact_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+        mutation: str = f"""
+            mutation {operation.capitalize()}ClientContact($data: ClientContactInput!) {{ # noqa: B950
+                {operation}ClientContact(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on ClientContactType {{
+                        {self.client_contact_fields}
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})
 
 
 class HmisProfileBaseTestCase(ClientsBaseTestCase):

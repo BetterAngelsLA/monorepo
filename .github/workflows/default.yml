@@ -68,25 +68,12 @@ jobs:
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 🐳 Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        if: ${{ env.BRANCH_NAME == 'main' }}
-        with:
-          role-to-assume: ${{ env.ASSUMED_ROLE }}
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: 🐳 Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-        if: ${{ env.BRANCH_NAME == 'main' }}
-
-      # Build and Push Monorepo Image for each commit using GitHub Actions cache
+      # Build Monorepo Image for each commit using GitHub Actions cache
       - name: 🏗️ Build Monorepo Docker image
         uses: docker/build-push-action@v6
         with:
           file: Dockerfile
           load: true
-          push: ${{ env.BRANCH_NAME == 'main' }}
           tags: |
             ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
           cache-from: type=gha
@@ -125,21 +112,21 @@ jobs:
         # TODO: Upon graphql mismatch, a github action could commit the changes and push into the branch
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t validate-graphql-schema
+          yarn nx run-many -t validate-graphql-schema
           STATUS=$?
           if [ $STATUS -ne 0 ]; then
-            echo "Error: The GraphQL schemas do not match! Make sure you have run 'yarn nx affected -t generate-graphql-schema' locally and committed the changes."
+            echo "Error: The GraphQL schemas do not match! Make sure you have run 'yarn nx run-many -t generate-graphql-schema' locally and committed the changes."
             exit 1
           else
             echo "Success: The GraphQL schemas match!"
           fi
 
-          yarn nx affected -t generate-graphql-types
+          yarn nx run-many -t generate-graphql-types
           TYPE_GEN_STATUS=$?
-          git diff --exit-code '**/gql-types/*';
+          git diff --exit-code;
           DIFF_STATUS=$?
           if [ $TYPE_GEN_STATUS -ne 0 ] || [ $DIFF_STATUS -ne 0 ]; then
-            echo "Error: The GraphQL types do not match or generation failed! Make sure you have run 'yarn nx affected -t generate-graphql-types' locally and committed the changes."
+            echo "Error: The GraphQL types do not match or generation failed! Make sure you have run 'yarn nx run-many -t generate-graphql-types' locally and committed the changes."
             exit 1
           else
             echo "Success: The GraphQL types match!"
@@ -170,6 +157,18 @@ jobs:
           yarn nx affected -t test
           EOF
 
+      - name: 🐳 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        if: ${{ env.BRANCH_NAME == 'main' }}
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🐳 Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        if: ${{ env.BRANCH_NAME == 'main' }}
+
       - name: 🛠️ Build and Push Artifacts
         if: ${{ env.BRANCH_NAME == 'main' }}
         run: |
@@ -180,6 +179,11 @@ jobs:
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Push Monorepo Docker image
+        if: ${{ env.BRANCH_NAME == 'main' }}
+        run: |
+          docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
       - name: 🚀 Deploy Changes
         if: ${{ env.BRANCH_NAME == 'main' }}

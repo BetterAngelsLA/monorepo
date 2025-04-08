@@ -29,27 +29,24 @@ export const extractClientFormData = (
 ): Partial<FormStateMapping[typeof formType]> => {
   switch (formType) {
     case ClientProfileCardEnum.FullName: {
-      const { id, user, nickname } = clientProfile;
+      const { id, firstName, lastName, middleName, nickname } = clientProfile;
       return {
         id,
-        user: {
-          firstName: user.firstName,
-          middleName: user.middleName,
-          lastName: user.lastName,
-          id: user.id,
-        },
+        firstName,
+        lastName,
+        middleName,
         nickname,
       };
     }
     case ClientProfileCardEnum.PersonalInfo: {
       const {
         id,
-        dateOfBirth,
         californiaId,
-        preferredLanguage,
-        veteranStatus,
+        dateOfBirth,
         livingSituation,
+        preferredLanguage,
         profilePhoto,
+        veteranStatus,
       } = clientProfile;
 
       let dobAsDate: Date | null | undefined;
@@ -63,12 +60,12 @@ export const extractClientFormData = (
 
       return {
         id,
-        dateOfBirth: dobAsDate,
         californiaId,
-        preferredLanguage,
-        veteranStatus,
+        dateOfBirth: dobAsDate,
         livingSituation,
+        preferredLanguage,
         profilePhoto,
+        veteranStatus,
       };
     }
     case ClientProfileCardEnum.ImportantNotes: {
@@ -81,12 +78,12 @@ export const extractClientFormData = (
     case ClientProfileCardEnum.ContactInfo: {
       const {
         id,
-        residenceAddress,
+        email,
         mailingAddress,
-        socialMediaProfiles,
-        preferredCommunication,
         phoneNumbers,
-        user,
+        preferredCommunication,
+        residenceAddress,
+        socialMediaProfiles,
       } = clientProfile;
 
       let updatedPhoneNumbers: TPhoneNumber[] = [
@@ -118,15 +115,12 @@ export const extractClientFormData = (
 
       return {
         id,
-        residenceAddress,
+        email,
         mailingAddress,
-        user: {
-          id: user.id,
-          email: user.email,
-        },
-        socialMediaProfiles: updatedSocialMediaProfiles,
-        preferredCommunication,
         phoneNumbers: updatedPhoneNumbers,
+        preferredCommunication,
+        residenceAddress,
+        socialMediaProfiles: updatedSocialMediaProfiles,
       };
     }
     case ClientProfileCardEnum.Demographic: {

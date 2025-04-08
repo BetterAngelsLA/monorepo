@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 from django import forms
 from django.contrib.gis.geos import Point
@@ -157,11 +157,15 @@ class TimeRangeField(models.Field):
             # Convert each tuple into "HH:MM:SS-HH:MM:SS" then join with commas.
             return ",".join(f"{start.strftime('%H:%M:%S')}-{end.strftime('%H:%M:%S')}" for start, end in value)
 
-    def deconstruct(self) -> Tuple[str, str, List[Any], dict]:
+    def deconstruct(self) -> Tuple[str, str, Sequence[Any], dict]:
         name, path, args, kwargs = super().deconstruct()
-        return name, path, args, kwargs  # type: ignore
+        return name, path, args, kwargs
 
-    def formfield(self, **kwargs: Any) -> forms.Field:  # type: ignore
-        defaults: dict = {"form_class": TimeRangeFormField}
-        defaults.update(kwargs)
-        return super().formfield(**defaults)
+    def formfield(
+        self,
+        form_class: Optional[Type[forms.Field]] = None,
+        choices_form_class: Optional[Type[forms.ChoiceField]] = None,
+        **kwargs: Any,
+    ) -> Optional[forms.Field]:
+        field = super().formfield(choices_form_class=choices_form_class, form_class=TimeRangeFormField)
+        return field

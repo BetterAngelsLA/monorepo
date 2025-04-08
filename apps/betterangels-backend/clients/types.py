@@ -56,6 +56,8 @@ class CreateClientDocumentInput:
 class ClientProfileOrder:
     user__first_name: auto
     user__last_name: auto
+    first_name: auto
+    last_name: auto
     id: auto
 
 
@@ -101,10 +103,10 @@ class ClientProfileFilter:
 
         searchable_fields = [
             "california_id",
+            "first_name",
+            "last_name",
+            "middle_name",
             "nickname",
-            "user__first_name",
-            "user__last_name",
-            "user__middle_name",
         ]
 
         # Build queries for direct fields
@@ -145,16 +147,11 @@ class ClientProfileFilter:
         """
         filters = {}
 
-        client_profile_fields = ["california_id"]
-        user_fields = ["first_name", "middle_name", "last_name"]
+        search_fields = ["california_id", "first_name", "middle_name", "last_name"]
 
-        for field in client_profile_fields:
+        for field in search_fields:
             if field_value := (getattr(value, field) or "").strip():
                 filters[f"{field}__iexact"] = field_value
-
-        for field in user_fields:
-            if field_value := (getattr(value, field) or "").strip():
-                filters[f"user__{field}__iexact"] = field_value
 
         if not filters:
             return (queryset.none(), Q())
@@ -202,37 +199,6 @@ class SocialMediaProfileInput(SocialMediaProfileBaseType):
     "See parent"
 
 
-@strawberry_django.type(ClientProfile)
-class ClientProfileBaseType:
-    ada_accommodation: Optional[List[AdaAccommodationEnum]]
-    address: auto
-    age: auto
-    california_id: auto
-    date_of_birth: auto
-    eye_color: auto
-    gender: auto
-    gender_other: auto
-    hair_color: auto
-    height_in_inches: auto
-    important_notes: auto
-    living_situation: Optional[LivingSituationEnum]
-    marital_status: auto
-    mailing_address: auto
-    nickname: auto
-    phone_number: Optional[PhoneNumberScalar]  # type: ignore
-    physical_description: auto
-    place_of_birth: auto
-    preferred_communication: Optional[List[PreferredCommunicationEnum]]
-    preferred_language: auto
-    profile_photo: auto
-    pronouns: auto
-    pronouns_other: auto
-    race: auto
-    residence_address: auto
-    spoken_languages: Optional[List[LanguageEnum]]
-    veteran_status: auto
-
-
 @strawberry.input
 class ClientProfilePhotoInput:
     client_profile: ID
@@ -243,7 +209,6 @@ class ClientProfilePhotoInput:
 class ClientContactBaseType:
     name: auto
     email: auto
-    phone_number: Optional[PhoneNumberScalar]  # type: ignore
     mailing_address: auto
     relationship_to_client: auto
     relationship_to_client_other: auto
@@ -253,11 +218,14 @@ class ClientContactBaseType:
 class ClientContactType(ClientContactBaseType):
     id: ID
     client_profile: auto
+    phone_number: PhoneNumberScalar | None  # type: ignore
 
 
 @strawberry_django.input(ClientContact, partial=True)
 class ClientContactInput(ClientContactBaseType):
-    id: auto
+    id: ID | None
+    client_profile: ID | None
+    phone_number: PhoneNumberScalar | None  # type: ignore
 
 
 @strawberry_django.type(ClientHouseholdMember)
@@ -280,6 +248,41 @@ class ClientHouseholdMemberType(ClientHouseholdMemberBaseType):
 @strawberry_django.input(ClientHouseholdMember, partial=True)
 class ClientHouseholdMemberInput(ClientHouseholdMemberBaseType):
     id: auto
+
+
+@strawberry_django.type(ClientProfile)
+class ClientProfileBaseType:
+    ada_accommodation: Optional[List[AdaAccommodationEnum]]
+    address: auto
+    age: auto
+    california_id: auto
+    date_of_birth: auto
+    email: Optional[NonBlankString]
+    eye_color: auto
+    first_name: Optional[NonBlankString]
+    gender: auto
+    gender_other: auto
+    hair_color: auto
+    height_in_inches: auto
+    important_notes: auto
+    last_name: Optional[NonBlankString]
+    living_situation: Optional[LivingSituationEnum]
+    mailing_address: auto
+    marital_status: auto
+    middle_name: Optional[NonBlankString]
+    nickname: Optional[NonBlankString]
+    phone_number: Optional[PhoneNumberScalar]  # type: ignore
+    physical_description: auto
+    place_of_birth: auto
+    preferred_communication: Optional[List[PreferredCommunicationEnum]]
+    preferred_language: auto
+    profile_photo: auto
+    pronouns: auto
+    pronouns_other: auto
+    race: auto
+    residence_address: auto
+    spoken_languages: Optional[List[LanguageEnum]]
+    veteran_status: auto
 
 
 @strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
@@ -315,7 +318,7 @@ class CreateClientProfileInput(ClientProfileBaseType):
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
-    user: CreateUserInput
+    user: Optional[CreateUserInput]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
@@ -325,18 +328,6 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     hmis_profiles: Optional[List[HmisProfileInput]]
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
-    social_media_profiles: Optional[List[SocialMediaProfileInput]]
-    user: Optional[UpdateUserInput]
-
-
-# TODO: refactor frontend to use ClientProfileInput instead of CreateClientProfileInput and UpdateClientProfileInput.
-# Then, remove CreateClientProfileInput and UpdateClientProfileInput
-@strawberry_django.input(ClientProfile, partial=True)
-class ClientProfileInput(ClientProfileBaseType):
-    id: Optional[ID]
-    contacts: Optional[List[ClientContactInput]]
-    hmis_profiles: Optional[List[HmisProfileInput]]
-    household_members: Optional[List[ClientHouseholdMemberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
     user: Optional[UpdateUserInput]
 

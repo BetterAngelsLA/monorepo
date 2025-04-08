@@ -1,4 +1,5 @@
 from typing import Any, Optional
+from unittest import skip
 
 import time_machine
 from accounts.models import User
@@ -59,7 +60,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note.requested_services.set(self.requested_services)
 
         query = f"""
-            query ViewNote($id: ID!) {{
+            query ($id: ID!) {{
                 note(pk: $id) {{
                     {self.note_fields}
                 }}
@@ -76,6 +77,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": note_id,
             "client": {"id": str(self.client_user_1.pk)},
+            "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T11:12:13+00:00",
             "isSubmitted": False,
@@ -140,30 +142,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertFalse(note_differences)
 
     def test_notes_query(self) -> None:
-        """
-        NOTE: This query is deprecated in favor of notesPaginated
-        """
-
         query = f"""
-            query ViewNotes {{
-                notes {{
-                    {self.note_fields}
-                }}
-            }}
-        """
-        expected_query_count = 8
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query)
-
-        notes = response["data"]["notes"]
-        self.assertEqual(len(notes), 1)
-        note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
-        self.assertFalse(note_differences)
-
-    def test_notes_paginated_query(self) -> None:
-        query = f"""
-            query ViewNotes($offset: Int, $limit: Int) {{
-                notes: notesPaginated(pagination: {{offset: $offset, limit: $limit}}) {{
+            query ($offset: Int, $limit: Int) {{
+                notes(pagination: {{offset: $offset, limit: $limit}}) {{
                     totalCount
                     pageInfo {{
                         limit
@@ -270,7 +251,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes: notesPaginated(filters: $filters) {
+                notes(filters: $filters) {
                     totalCount
                     results{
                         id
@@ -352,7 +333,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes: notesPaginated(filters: $filters) {
+                notes(filters: $filters) {
                     totalCount
                     results{
                         id
@@ -435,7 +416,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes: notesPaginated(filters: $filters) {
+                notes(filters: $filters) {
                     totalCount
                     results{
                         id
@@ -547,7 +528,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes: notesPaginated(filters: $filters) {
+                notes(filters: $filters) {
                     totalCount
                     results{
                         id
@@ -596,7 +577,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($order: NoteOrder) {
-                notes: notesPaginated(order: $order) {
+                notes(order: $order) {
                     results{
                         id
                     }
@@ -624,6 +605,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         )
 
 
+@skip("Service Requests are not currently implemented")
 @ignore_warnings(category=UserWarning)
 @time_machine.travel("2024-03-11T10:11:12+00:00", tick=False)
 class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
@@ -637,12 +619,11 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             {
                 "id": service_request_id,
                 "status": "COMPLETED",
-                "client": self.client_user_1.pk,
             }
         )
 
         query = """
-            query ViewServiceRequest($id: ID!) {
+            query ($id: ID!) {
                 serviceRequest(pk: $id) {
                     id
                     service
@@ -674,7 +655,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "completedOn": "2024-03-11T10:11:12+00:00",
-            "client": {"id": str(self.client_user_1.pk)},
+            "client": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -710,6 +691,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
         self.assertEqual(service_requests[0], self.service_request)
 
 
+@skip("Tasks are not currently implemented")
 @ignore_warnings(category=UserWarning)
 @time_machine.travel("2024-03-11T10:11:12+00:00", tick=False)
 class TaskQueryTestCase(TaskGraphQLBaseTestCase):
@@ -727,38 +709,15 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 "location": self.location.pk,
                 "status": "COMPLETED",
                 "dueBy": timezone.now(),
-                "client": self.client_user_1.pk,
             }
         )
 
-        query = """
-            query ViewTask($id: ID!) {
-                task(pk: $id) {
-                    id
-                    title
-                    location {
-                        id
-                        address {
-                            street
-                            city
-                            state
-                            zipCode
-                        }
-                        point
-                        pointOfInterest
-                    }
-                    status
-                    dueBy
-                    dueByGroup
-                    client {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    createdAt
-                }
-            }
+        query = f"""
+            query ($id: ID!) {{
+                task(pk: $id) {{
+                    {self.task_fields}
+                }}
+            }}
         """
         variables = {"id": task_id}
 
@@ -784,9 +743,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": "2024-03-11T10:11:12+00:00",
             "dueByGroup": DueByGroupEnum.TODAY.name,
-            "client": {
-                "id": str(self.client_user_1.pk),
-            },
+            "client": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -794,36 +751,12 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
         self.assertEqual(task, expected_task)
 
     def test_tasks_query(self) -> None:
-        query = """
-            {
-                tasks {
-                    id
-                    title
-                    location {
-                        id
-                        address {
-                            street
-                            city
-                            state
-                            zipCode
-                        }
-                        point
-                        pointOfInterest
-                    }
-                    status
-                    dueBy
-                    dueByGroup
-                    client {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    createdAt
-                }
-            }
+        query = f"""
+            tasks {{
+                {self.task_fields}
+            }}
         """
-        expected_query_count = 3
+        expected_query_count = 1
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 

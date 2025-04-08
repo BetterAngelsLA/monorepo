@@ -22,7 +22,7 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class Attachment(BaseModel):
+class Attachment(BaseModel):  # type: ignore[django-manager-missing]
     """
     Represents an attachment linked to any model instance within the app.
     Attachments are organized by namespaces to allow for application-specific
@@ -58,9 +58,6 @@ class Attachment(BaseModel):
     associated_with = models.ForeignKey(
         "accounts.User", on_delete=models.CASCADE, related_name="associated_attachments", blank=True, null=True
     )
-
-    attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
-    attachmentgroupobjectpermission_set: models.QuerySet["AttachmentGroupObjectPermission"]
 
     def __str__(self) -> str:
         return f"{self.content_object} {self.object_id} - " f"{self.attachment_type} - {self.original_filename}"

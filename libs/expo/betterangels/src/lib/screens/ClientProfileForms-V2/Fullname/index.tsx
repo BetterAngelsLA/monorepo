@@ -2,11 +2,7 @@ import { ControlledInput, Form } from '@monorepo/expo/shared/ui-components';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { UpdateClientProfileInput } from '../../../apollo';
 
-type AllowedFieldNames =
-  | 'user.firstName'
-  | 'user.middleName'
-  | 'user.lastName'
-  | 'nickname';
+type AllowedFieldNames = 'firstName' | 'middleName' | 'lastName' | 'nickname';
 
 interface FormField {
   label: string;
@@ -17,15 +13,15 @@ interface FormField {
 const FORM_FIELDS: FormField[] = [
   {
     label: 'First Name',
-    name: 'user.firstName',
+    name: 'firstName',
     placeholder: 'Enter first name',
   },
   {
     label: 'Middle Name',
-    name: 'user.middleName',
+    name: 'middleName',
     placeholder: 'Enter middle name',
   },
-  { label: 'Last Name', name: 'user.lastName', placeholder: 'Enter last name' },
+  { label: 'Last Name', name: 'lastName', placeholder: 'Enter last name' },
   { label: 'Nickname', name: 'nickname', placeholder: 'Enter nickname' },
 ];
 

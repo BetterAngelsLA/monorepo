@@ -1,11 +1,11 @@
-from typing import Dict, List, cast
+from typing import Dict, cast
 
 import pghistory
 import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.utils import get_outreach_authorized_users, get_user_permission_group
-from clients.models import ClientProfileImportRecord
+from clients.models import ClientProfile, ClientProfileImportRecord
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Location
 from common.permissions.utils import IsAuthenticated
@@ -73,25 +73,12 @@ from .types import (
 class Query:
     note: NoteType = strawberry_django.field(extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter)
 
-    notes: List[NoteType] = strawberry_django.field(
+    notes: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
-
     notes_paginated: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
-
-    service_request: ServiceRequestType = strawberry_django.field(
-        extensions=[HasRetvalPerm(ServiceRequestPermissions.VIEW)]
-    )
-
-    service_requests: List[ServiceRequestType] = strawberry_django.field(
-        extensions=[HasRetvalPerm(ServiceRequestPermissions.VIEW)]
-    )
-
-    task: TaskType = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
-
-    tasks: List[TaskType] = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
 
     @strawberry_django.offset_paginated(
         OffsetPaginated[InteractionAuthorType], extensions=[HasPerm(NotePermissions.ADD)]
@@ -110,11 +97,19 @@ class Mutation:
             permission_group = get_user_permission_group(user)
 
             note_data = asdict(data)
+
+            user_client = note_data.pop("client", None)
+            client_profile = note_data.pop("client_profile", None) or ClientProfile.objects.get(
+                user_id=str(user_client)
+            )
+
             note = resolvers.create(
                 info,
                 Note,
                 {
                     **note_data,
+                    "client": user_client,
+                    "client_profile": client_profile,
                     "created_by": user,
                     "organization": permission_group.organization,
                 },
@@ -380,6 +375,7 @@ class Mutation:
                         else ServiceRequestStatusEnum.COMPLETED
                     ),
                     "client": note.client,
+                    "client_profile": note.client_profile,
                     "created_by": user,
                 },
             )
@@ -522,6 +518,7 @@ class Mutation:
                 {
                     **task_data,
                     "client": note.client,
+                    "client_profile": note.client_profile,
                     "created_by": user,
                 },
             )

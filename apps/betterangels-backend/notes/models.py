@@ -35,15 +35,18 @@ if TYPE_CHECKING:
     pghistory.UpdateEvent("service_request.update"),
     pghistory.DeleteEvent("service_request.remove"),
 )
-class ServiceRequest(BaseModel):
+class ServiceRequest(BaseModel):  # type: ignore[django-manager-missing]
     service = TextChoicesField(choices_enum=ServiceEnum)
     service_other = models.CharField(max_length=100, null=True, blank=True)
-    client = models.ForeignKey(
-        "accounts.User",
+    client_profile = models.ForeignKey(
+        "clients.ClientProfile",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name="client_service_requests",
+        related_name="client_profile_service_requests",
+    )
+    client = models.ForeignKey(
+        "accounts.User", on_delete=models.CASCADE, null=True, blank=True, related_name="client_service_requests"
     )
     status = TextChoicesField(choices_enum=ServiceRequestStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
@@ -51,9 +54,6 @@ class ServiceRequest(BaseModel):
     created_by = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="service_requests")
 
     objects = models.Manager()
-
-    servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequestUserObjectPermission"]
-    servicerequestgroupobjectpermission_set: models.QuerySet["ServiceRequestGroupObjectPermission"]
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.status == ServiceRequestStatusEnum.COMPLETED:
@@ -93,22 +93,16 @@ class ServiceRequest(BaseModel):
     pghistory.UpdateEvent("task.update"),
     pghistory.DeleteEvent("task.remove"),
 )
-class Task(BaseModel):
+class Task(BaseModel):  # type: ignore[django-manager-missing]
     title = models.CharField(max_length=100, blank=False)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks")
     status = TextChoicesField(choices_enum=TaskStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
-    client = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name="client_tasks",
+    client_profile = models.ForeignKey(
+        "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_tasks"
     )
+    client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_tasks")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False, related_name="tasks")
-
-    taskuserobjectpermission_set: models.QuerySet["TaskUserObjectPermission"]
-    taskgroupobjectpermission_set: models.QuerySet["TaskGroupObjectPermission"]
 
     def __str__(self) -> str:
         return self.title
@@ -167,8 +161,11 @@ class Task(BaseModel):
     pghistory.UpdateEvent("note.update"),
     pghistory.DeleteEvent("note.remove"),
 )
-class Note(BaseModel):
+class Note(BaseModel):  # type: ignore[django-manager-missing]
     attachments = GenericRelation(Attachment)
+    client_profile = models.ForeignKey(
+        "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_notes"
+    )
     client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_notes")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     # This is the date & time displayed on the note. We don't want to use created_at
@@ -188,9 +185,6 @@ class Note(BaseModel):
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
     objects = models.Manager()
-
-    noteuserobjectpermission_set: models.QuerySet["NoteUserObjectPermission"]
-    notegroupobjectpermission_set: models.QuerySet["NoteGroupObjectPermission"]
 
     events: models.QuerySet["Events"]
 
@@ -333,27 +327,27 @@ class Mood(BaseModel):
 
 
 class NoteUserObjectPermission(UserObjectPermissionBase):
-    content_object = models.ForeignKey(Note, on_delete=models.CASCADE)
+    content_object: models.ForeignKey = models.ForeignKey(Note, on_delete=models.CASCADE)
 
 
 class NoteGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(Note, on_delete=models.CASCADE)
+    content_object: models.ForeignKey = models.ForeignKey(Note, on_delete=models.CASCADE)
 
 
 class TaskUserObjectPermission(UserObjectPermissionBase):
-    content_object = models.ForeignKey(Task, on_delete=models.CASCADE)
+    content_object: models.ForeignKey = models.ForeignKey(Task, on_delete=models.CASCADE)
 
 
 class TaskGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(Task, on_delete=models.CASCADE)
+    content_object: models.ForeignKey = models.ForeignKey(Task, on_delete=models.CASCADE)
 
 
 class ServiceRequestUserObjectPermission(UserObjectPermissionBase):
-    content_object = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE)
+    content_object: models.ForeignKey = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE)
 
 
 class ServiceRequestGroupObjectPermission(GroupObjectPermissionBase):
-    content_object = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE)
+    content_object: models.ForeignKey = models.ForeignKey(ServiceRequest, on_delete=models.CASCADE)
 
 
 # Data Import
