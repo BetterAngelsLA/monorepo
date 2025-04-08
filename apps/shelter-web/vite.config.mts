@@ -8,7 +8,6 @@ import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
 const SERVER_PORT = 8083;
 
 const MEDIA_PATH = path.resolve(__dirname, '../betterangels-backend/media');
-
 const devServerProxy: Record<string, string | ProxyOptions> = {
   // to import media from from betterangels-backend
   '/media': {
@@ -20,15 +19,25 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
 
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
+  const basePath = (() => {
+    if (process.env.VITE_APP_BASE_PATH) {
+      return process.env.VITE_APP_BASE_PATH;
+    }
+
+    if (isDev && process.env.BRANCH_NAME) {
+      return `/branches/${process.env.BRANCH_NAME}`;
+    }
+
+    return '/';
+  })();
+
   return {
-    base: process.env.SHELTER_BASE_PATH || '/',
+    base: basePath,
     root: __dirname,
     cacheDir: '../../node_modules/.vite/apps/shelter-web',
 
     define: {
-      'import.meta.env.VITE_SHELTER_BASE_PATH': JSON.stringify(
-        process.env.SHELTER_BASE_PATH || '/'
-      ),
+      'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(basePath),
     },
 
     ...(isDev && {
