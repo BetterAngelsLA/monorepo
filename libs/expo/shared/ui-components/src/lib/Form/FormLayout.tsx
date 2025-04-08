@@ -3,6 +3,7 @@ import { StyleSheet, View, ViewStyle } from 'react-native';
 import { FormField } from './FormField';
 import { FormFieldTitle } from './FormFieldTitle';
 import { FormFieldset } from './FormFieldset';
+import { FormPage } from './FormPage';
 
 type TProps = {
   style?: ViewStyle;
@@ -21,6 +22,7 @@ const styles = StyleSheet.create({
   },
 });
 
+FormLayout.Page = FormPage;
 FormLayout.Field = FormField;
 FormLayout.FieldTitle = FormFieldTitle;
 FormLayout.Fieldset = FormFieldset;
