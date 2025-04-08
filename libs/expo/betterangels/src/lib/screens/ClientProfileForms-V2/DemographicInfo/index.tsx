@@ -63,7 +63,7 @@ export default function DemographicInfo() {
       <Form.Field title="Gender">
         <SingleSelect
           placeholder="Select gender"
-          selectedValue={gender}
+          selectedValue={gender || undefined}
           items={Object.entries(enumDisplayGender).map(
             ([value, displayValue]) => ({ value, displayValue })
           )}
@@ -74,7 +74,7 @@ export default function DemographicInfo() {
       <Form.Field title="Pronouns">
         <SingleSelect
           placeholder="Select pronouns"
-          selectedValue={pronouns}
+          selectedValue={pronouns || undefined}
           items={Object.entries(enumDisplayPronoun).map(
             ([value, displayValue]) => ({ value, displayValue })
           )}
@@ -85,7 +85,7 @@ export default function DemographicInfo() {
       <Form.Field title="Race">
         <SingleSelect
           placeholder="Select race"
-          selectedValue={race}
+          selectedValue={race || undefined}
           items={Object.entries(enumDisplayRace).map(
             ([value, displayValue]) => ({ value, displayValue })
           )}
@@ -107,7 +107,7 @@ export default function DemographicInfo() {
       <Form.Field title="Eye Color">
         <SingleSelect
           placeholder="Select eye color"
-          selectedValue={eyeColor}
+          selectedValue={eyeColor || undefined}
           items={Object.entries(enumDisplayEyeColor).map(
             ([value, displayValue]) => ({ value, displayValue })
           )}
@@ -118,7 +118,7 @@ export default function DemographicInfo() {
       <Form.Field title="Hair Color">
         <SingleSelect
           placeholder="Select hair color"
-          selectedValue={hairColor}
+          selectedValue={hairColor || undefined}
           items={Object.entries(enumDisplayHairColor).map(
             ([value, displayValue]) => ({ value, displayValue })
           )}
@@ -129,7 +129,7 @@ export default function DemographicInfo() {
       <Form.Field title="Marital Status">
         <SingleSelect
           placeholder="Select marital status"
-          selectedValue={maritalStatus}
+          selectedValue={maritalStatus || undefined}
           items={Object.entries(enumDisplayMaritalStatus).map(
             ([value, displayValue]) => ({ value, displayValue })
           )}
