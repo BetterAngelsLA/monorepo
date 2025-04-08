@@ -4,16 +4,15 @@ import { useAppVersion } from '../../hooks';
 import { MainContainer } from '../../ui-components';
 
 export function AboutApp() {
-  const { version, runtimeVersion } = useAppVersion();
-
-  console.log();
-  console.log('| -------------  appVersion  ------------- |');
-  console.log('*****************  version:', version);
-  console.log('*****************  runtimeVersion:', runtimeVersion);
+  const { nativeApplicationVersion, version, runtimeVersion } = useAppVersion();
 
   return (
     <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <TextRegular>About app</TextRegular>
+      <TextRegular>version: {version}</TextRegular>
+      <TextRegular>runtimeVersion: {runtimeVersion}</TextRegular>
+      <TextRegular>
+        nativeApplicationVersion: {nativeApplicationVersion}
+      </TextRegular>
     </MainContainer>
   );
 }
