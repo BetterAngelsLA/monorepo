@@ -75,6 +75,7 @@ from .models import (
     TrainingService,
     Video,
 )
+from .widgets import MultipleFileField
 
 T = TypeVar("T", bound=models.Model)
 logger = logging.getLogger(__name__)
@@ -336,6 +337,9 @@ class ShelterForm(forms.ModelForm):
         ),
         required=False,
     )
+    interior_photos_multiple = MultipleFileField(required=False)
+    exterior_photos_multiple = MultipleFileField(required=False)
+    videos_multiple = MultipleFileField(required=False)
 
     class Meta:
         model = Shelter
@@ -400,6 +404,23 @@ class ShelterForm(forms.ModelForm):
             existing_objects.extend(new_objects)
 
         return existing_objects
+
+    def save(self, commit: bool = True) -> Any:
+        instance = super().save(commit=commit)
+
+        for file in self.cleaned_data["interior_photos_multiple"]:
+            instance.interior_photos.create(file=file)
+        for file in self.cleaned_data["exterior_photos_multiple"]:
+            instance.exterior_photos.create(file=file)
+        for file in self.cleaned_data["videos_multiple"]:
+            instance.videos.create(file=file)
+
+        # Only proceed if instance is saved (commit=True) and files are uploaded
+        if commit:
+            self.instance.save()
+            self._save_m2m()  # type: ignore
+
+        return instance
 
 
 @admin.register(ContactInfo)
@@ -796,6 +817,16 @@ class ShelterAdmin(ImportExportModelAdmin):
                     # "contact_info",
                     "updated_at",
                     "updated_by",
+                )
+            },
+        ),
+        (
+            "Media Upload",
+            {
+                "fields": (
+                    "interior_photos_multiple",
+                    "exterior_photos_multiple",
+                    "videos_multiple",
                 )
             },
         ),
