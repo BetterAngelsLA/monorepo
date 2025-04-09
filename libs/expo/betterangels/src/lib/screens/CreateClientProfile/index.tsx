@@ -9,11 +9,8 @@ import {
 import { useRouter } from 'expo-router';
 import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
-import { CreateClientProfileInput } from '../../apollo';
-import {
-  applyValidationErrors,
-  TValidationError,
-} from '../../helpers/parseClientProfileErrors';
+import { CreateClientProfileInput, extractExtensionErrors } from '../../apollo';
+import { applyManualFormErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { useCreateClientProfileMutation } from './__generated__/createClientProfile.generated';
 
@@ -70,12 +67,11 @@ export default function CreateClientProfile() {
         errorPolicy: 'all',
       });
 
-      const operationErrors = createResponse.errors?.[0].extensions?.[
-        'errors'
-      ] as TValidationError[] | undefined;
+      const extensionErrors = extractExtensionErrors(createResponse);
 
-      if (operationErrors) {
-        applyValidationErrors(operationErrors, setError);
+      if (extensionErrors) {
+        applyManualFormErrors(extensionErrors, setError);
+
         return;
       }
 
