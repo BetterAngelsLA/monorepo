@@ -45,7 +45,7 @@ export function HmisProfileForm(props: TProps) {
   const {
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid: formIsValid },
     setError,
     setValue,
     clearErrors,
@@ -66,9 +66,13 @@ export function HmisProfileForm(props: TProps) {
 
   const isEditMode = !!relationId;
 
-  const onSubmit: SubmitHandler<THmisProfileFormState> = async (
-    formState: any
-  ) => {
+  const onSubmit: SubmitHandler<THmisProfileFormState> = async (formState) => {
+    if (!formIsValid) {
+      return;
+    }
+
+    const validFormState = formState as Required<THmisProfileFormState>;
+
     try {
       setIsLoading(true);
 
@@ -76,7 +80,7 @@ export function HmisProfileForm(props: TProps) {
         variables: {
           data: {
             clientProfile: clientProfile.id,
-            ...formState,
+            ...validFormState,
             ...(isEditMode ? { id: relationId } : {}),
           },
         },
@@ -108,7 +112,7 @@ export function HmisProfileForm(props: TProps) {
       const responseData = response.data;
 
       if (!responseData) {
-        throw 'Missing HMIS mutation response data';
+        throw new Error('Missing HMIS mutation response data');
       }
 
       const uniquenessError = hasUniquenessError(
