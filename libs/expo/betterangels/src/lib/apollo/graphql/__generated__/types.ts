@@ -199,6 +199,7 @@ export type CityType = {
 };
 
 export type ClientContactInput = {
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
@@ -218,6 +219,15 @@ export type ClientContactType = {
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
   relationshipToClient?: Maybe<RelationshipTypeEnum>;
   relationshipToClientOther?: Maybe<Scalars['String']['output']>;
+};
+
+export type ClientContactTypeOffsetPaginated = {
+  __typename?: 'ClientContactTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<ClientContactType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export enum ClientDocumentNamespaceEnum {
@@ -420,6 +430,8 @@ export type ContactInfoType = {
   id: Scalars['ID']['output'];
 };
 
+export type CreateClientContactPayload = ClientContactType | OperationInfo;
+
 export type CreateClientDocumentInput = {
   clientProfile: Scalars['ID']['input'];
   file: Scalars['Upload']['input'];
@@ -543,6 +555,8 @@ export type CreateTaskInput = {
 };
 
 export type CreateTaskPayload = OperationInfo | TaskType;
+
+export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
 export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
 
@@ -922,6 +936,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
   appleAuth: AuthResponse;
+  createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
@@ -933,6 +948,7 @@ export type Mutation = {
   createNoteTask: CreateNoteTaskPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createTask: CreateTaskPayload;
+  deleteClientContact: DeleteClientContactPayload;
   deleteClientDocument: DeleteClientDocumentPayload;
   deleteClientProfile: DeleteClientProfilePayload;
   deleteCurrentUser: DeleteCurrentUserPayload;
@@ -950,6 +966,7 @@ export type Mutation = {
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
+  updateClientContact: UpdateClientContactPayload;
   updateClientProfile: UpdateClientProfilePayload;
   updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
@@ -969,6 +986,11 @@ export type MutationAddNoteTaskArgs = {
 
 export type MutationAppleAuthArgs = {
   input: AuthInput;
+};
+
+
+export type MutationCreateClientContactArgs = {
+  data: ClientContactInput;
 };
 
 
@@ -1024,6 +1046,11 @@ export type MutationCreateServiceRequestArgs = {
 
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
+};
+
+
+export type MutationDeleteClientContactArgs = {
+  data: DeleteDjangoObjectInput;
 };
 
 
@@ -1099,6 +1126,11 @@ export type MutationRemoveNoteTaskArgs = {
 
 export type MutationRevertNoteArgs = {
   data: RevertNoteInput;
+};
+
+
+export type MutationUpdateClientContactArgs = {
+  data: ClientContactInput;
 };
 
 
@@ -1379,6 +1411,8 @@ export type Query = {
   __typename?: 'Query';
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
   caseworkerOrganizations: OrganizationTypeOffsetPaginated;
+  clientContact: ClientContactType;
+  clientContacts: ClientContactTypeOffsetPaginated;
   clientDocument: ClientDocumentType;
   clientDocuments: ClientDocumentTypeOffsetPaginated;
   clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
@@ -1406,6 +1440,16 @@ export type QueryBulkClientProfileImportRecordsArgs = {
 
 export type QueryCaseworkerOrganizationsArgs = {
   order?: InputMaybe<OrganizationOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryClientContactArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryClientContactsArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1787,7 +1831,7 @@ export type ShelterType = {
   overallRating?: Maybe<Scalars['Int']['output']>;
   parking: Array<ParkingType>;
   pets: Array<PetType>;
-  phone: Scalars['PhoneNumber']['output'];
+  phone?: Maybe<Scalars['PhoneNumber']['output']>;
   programFees?: Maybe<Scalars['String']['output']>;
   roomStyles: Array<RoomStyleType>;
   roomStylesOther?: Maybe<Scalars['String']['output']>;
@@ -1925,6 +1969,8 @@ export type TrainingServiceType = {
   __typename?: 'TrainingServiceType';
   name?: Maybe<TrainingServiceChoices>;
 };
+
+export type UpdateClientContactPayload = ClientContactType | OperationInfo;
 
 export type UpdateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
