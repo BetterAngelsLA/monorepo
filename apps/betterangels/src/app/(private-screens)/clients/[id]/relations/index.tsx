@@ -1,5 +1,5 @@
+import { ClientProfileRelatedModelList } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
-import { ClientProfileRelatedModelList } from 'libs/expo/betterangels/src/lib/screens/ClientProfileForms-V2';
 
 export default function ClientRelationsListScreen() {
   const { id: clientId, componentName } = useLocalSearchParams<{
