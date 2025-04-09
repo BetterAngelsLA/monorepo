@@ -2,9 +2,9 @@ import {
   ClientProfileSectionEnum,
   TRelatedModelSection,
   TStandardSection,
-  getClientProfileEditRoute,
+  getEditClientProfileRoute,
   getRelatedModelAddRoute,
-  getRelatedModelsViewRoute,
+  getRelatedModelViewRoute,
 } from '../../../../screenRouting';
 import { TClientProfile } from '../types';
 
@@ -21,7 +21,7 @@ export function getEditButtonRoute(props: TProps) {
     case ClientProfileSectionEnum.Household:
     case ClientProfileSectionEnum.RelevantContacts:
       if (hasSectionModelData(section, clientProfile)) {
-        return getRelatedModelsViewRoute({
+        return getRelatedModelViewRoute({
           profileId: clientProfile.id,
           section: section as TRelatedModelSection,
         });
@@ -32,7 +32,7 @@ export function getEditButtonRoute(props: TProps) {
         section: section as TRelatedModelSection,
       });
     default:
-      return getClientProfileEditRoute({
+      return getEditClientProfileRoute({
         profileId: clientProfile.id,
         section: section as TStandardSection,
       });

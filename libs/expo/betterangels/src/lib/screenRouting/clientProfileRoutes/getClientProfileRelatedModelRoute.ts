@@ -1,27 +1,11 @@
-import { TRelatedModelSection, TStandardSection } from './types';
-
-type TGetRouteProps = {
-  profileId: string;
-  section: TStandardSection;
-};
-
-export function getClientProfileEditRoute(props: TGetRouteProps) {
-  const { profileId, section } = props;
-
-  return {
-    pathname: `/clients/${profileId}/edit`,
-    params: {
-      componentName: section,
-    },
-  };
-}
+import { TRelatedModelSection } from './types';
 
 type TGetRelatedModelsViewRoute = {
   profileId: string;
   section: TRelatedModelSection;
 };
 
-export function getRelatedModelsViewRoute(props: TGetRelatedModelsViewRoute) {
+export function getRelatedModelViewRoute(props: TGetRelatedModelsViewRoute) {
   const { profileId, section } = props;
 
   return {
