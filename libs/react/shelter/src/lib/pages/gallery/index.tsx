@@ -14,7 +14,9 @@ export default function GalleryPage({ id }: { id: string }) {
     url: string;
   } | null>(null);
 
-  if (loading) return null;
+  if (loading) {
+    return null;
+  }
 
   const shelter = data?.shelter;
 
