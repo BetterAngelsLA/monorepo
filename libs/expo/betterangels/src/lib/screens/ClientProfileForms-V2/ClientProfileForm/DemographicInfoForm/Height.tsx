@@ -13,7 +13,7 @@ import {
   UpdateClientProfileInput,
 } from '../../../../apollo';
 
-export default function Height() {
+export function Height() {
   const { setValue, getValues, watch } = useFormContext<
     UpdateClientProfileInput | CreateClientProfileInput
   >();

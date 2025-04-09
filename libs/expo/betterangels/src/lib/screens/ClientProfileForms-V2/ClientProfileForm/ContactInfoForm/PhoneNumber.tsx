@@ -9,7 +9,7 @@ import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import { Platform, Switch, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../../../apollo';
 
-export default function PhoneNumber() {
+export function PhoneNumber() {
   const {
     control,
     setValue,

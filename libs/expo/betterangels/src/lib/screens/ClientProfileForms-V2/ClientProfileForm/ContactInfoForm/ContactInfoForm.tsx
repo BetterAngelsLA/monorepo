@@ -3,7 +3,7 @@ import { ControlledInput, Form } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
 import { UpdateClientProfileInput } from '../../../../apollo';
 import AddressAutocomplete from '../../../../ui-components/AddressField';
-import PhoneNumber from './PhoneNumber';
+import { PhoneNumber } from './PhoneNumber';
 import PreferredCommunication from './PreferredCommunication';
 import SocialMedia from './SocialMedia';
 

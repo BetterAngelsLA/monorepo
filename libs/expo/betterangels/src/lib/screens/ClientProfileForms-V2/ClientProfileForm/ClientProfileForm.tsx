@@ -1,14 +1,9 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import {
-  BottomActions,
-  KeyboardAwareScrollView,
-  LoadingView,
-  TextButton,
-} from '@monorepo/expo/shared/ui-components';
+import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { UpdateClientProfileInput } from '../../../apollo';
 import {
   TValidationError,
@@ -151,23 +146,15 @@ export default function ClientProfileForm(props: IClientProfileForms) {
 
   return (
     <FormProvider {...methods}>
-      <View style={styles.container}>
-        <KeyboardAwareScrollView>{content}</KeyboardAwareScrollView>
-
-        <BottomActions
-          disabled={isUpdating}
-          cancel={
-            <TextButton
-              disabled={isUpdating}
-              onPress={router.back}
-              fontSize="sm"
-              accessibilityHint={`cancels the update of ${screenTitle}`}
-              title="Cancel"
-            />
-          }
-          onSubmit={methods.handleSubmit(onSubmit)}
-        />
-      </View>
+      <Form.Page
+        actionProps={{
+          onSubmit: methods.handleSubmit(onSubmit),
+          onLeftBtnClick: router.back,
+          disabled: loading,
+        }}
+      >
+        {content}
+      </Form.Page>
     </FormProvider>
   );
 }

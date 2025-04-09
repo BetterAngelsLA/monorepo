@@ -24,7 +24,7 @@ import {
   enumDisplayPronoun,
   enumDisplayRace,
 } from '../../../../static';
-import Height from './Height';
+import { Height } from './Height';
 
 type TOption = { id: AdaAccommodationEnum; label: string };
 
