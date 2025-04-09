@@ -1,9 +1,9 @@
 import { useRouter } from 'expo-router';
+import { Dispatch, SetStateAction } from 'react';
 import {
   ClientProfileSectionEnum,
   getViewClientProfileRoute,
-} from 'libs/expo/betterangels/src/lib/screenRouting';
-import { Dispatch, SetStateAction } from 'react';
+} from '../../../../../../lib/screenRouting';
 import { useSnackbar } from '../../../../../hooks';
 import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
 import { DeleteButton } from '../DeleteButton';

@@ -5,18 +5,18 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import {
   extractExtensionErrors,
   extractOperationInfo,
-} from 'libs/expo/betterangels/src/lib/apollo/graphql';
-import { useEffect, useState } from 'react';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { enumDisplayHmisAgency } from '../../../../..//static';
+} from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
 import {
   ClientProfileSectionEnum,
   getViewClientProfileRoute,
 } from '../../../../../screenRouting';
+import { enumDisplayHmisAgency } from '../../../../../static';
 import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
 import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
 import { HmisProfileDeleteBtn } from '../HmisProfileDeleteBtn';
