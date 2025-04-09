@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("clients", "0023_clientprofile_user_required"),
+        ("clients", "0024_clientcontact_permissions"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
