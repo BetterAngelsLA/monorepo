@@ -10,6 +10,9 @@ type TProps = {
 export function HmisProfileForm(props: TProps) {
   const { clientProfile, relationId } = props;
 
+  console.log('*****************  clientProfile:', clientProfile);
+  console.log('*****************  relationId:', relationId);
+
   return (
     <View>
       <TextRegular>HmisProfileForm</TextRegular>

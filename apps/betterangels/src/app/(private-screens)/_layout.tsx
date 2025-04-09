@@ -1,39 +1,11 @@
-import { useUser } from '@monorepo/expo/betterangels';
+import {
+  getDefaultStackNavOptions,
+  useUser,
+} from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
-import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { View } from 'react-native';
-
-type TGetDefaultNavOptions = {
-  title?: string;
-};
-
-function getDefaultNavOptions(
-  props?: TGetDefaultNavOptions
-): NativeStackNavigationOptions {
-  const { title } = props || {};
-
-  const router = useRouter();
-
-  return {
-    headerTitleAlign: 'center',
-    title: title || '',
-    headerStyle: {
-      backgroundColor: Colors.BRAND_DARK_BLUE,
-    },
-    headerLeft: () => (
-      <TextButton
-        regular
-        color={Colors.WHITE}
-        fontSize="md"
-        accessibilityHint="goes to previous screen"
-        title="Back"
-        onPress={router.back}
-      />
-    ),
-  };
-}
 
 export default function PrivateLayout() {
   const { user, isLoading } = useUser();
@@ -231,22 +203,25 @@ export default function PrivateLayout() {
       />
       <Stack.Screen
         name="clients/create"
-        options={getDefaultNavOptions({
+        options={getDefaultStackNavOptions({
           title: 'Create Client Profile',
         })}
       />
-      <Stack.Screen name="clients/[id]/edit" options={getDefaultNavOptions()} />
+      <Stack.Screen
+        name="clients/[id]/edit"
+        options={getDefaultStackNavOptions()}
+      />
       <Stack.Screen
         name="clients/[id]/relations/add"
-        options={getDefaultNavOptions()}
+        options={getDefaultStackNavOptions()}
       />
       <Stack.Screen
         name="clients/[id]/relations/[relationId]/edit"
-        options={getDefaultNavOptions()}
+        options={getDefaultStackNavOptions()}
       />
       <Stack.Screen
         name="clients/[id]/relations/index"
-        options={getDefaultNavOptions()}
+        options={getDefaultStackNavOptions()}
       />
       <Stack.Screen
         name="file/[id]"
@@ -269,13 +244,13 @@ export default function PrivateLayout() {
       />
       <Stack.Screen
         name="settings/index"
-        options={getDefaultNavOptions({
+        options={getDefaultStackNavOptions({
           title: 'Settings',
         })}
       />
       <Stack.Screen
         name="settings/about/index"
-        options={getDefaultNavOptions({
+        options={getDefaultStackNavOptions({
           title: 'About App',
         })}
       />

@@ -23,18 +23,18 @@ export function getEditButtonRoute(props: TProps) {
       if (hasSectionModelData(section, clientProfile)) {
         return getRelatedModelsViewRoute({
           profileId: clientProfile.id,
-          section: section as unknown as TRelatedModelSection,
+          section: section as TRelatedModelSection,
         });
       }
 
       return getRelatedModelAddRoute({
         profileId: clientProfile.id,
-        section: section as unknown as TRelatedModelSection,
+        section: section as TRelatedModelSection,
       });
     default:
       return getClientProfileEditRoute({
         profileId: clientProfile.id,
-        section: section as unknown as TStandardSection,
+        section: section as TStandardSection,
       });
   }
 }
