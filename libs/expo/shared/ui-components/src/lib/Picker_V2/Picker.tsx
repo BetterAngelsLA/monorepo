@@ -6,6 +6,7 @@ import {
 } from '@monorepo/expo/shared/static';
 import { Picker as RNPicker } from '@react-native-picker/picker';
 import { StyleSheet, View } from 'react-native';
+import FormFieldLabel from '../FormFieldLabel';
 import TextRegular from '../TextRegular';
 
 const NONE_VALUE = '__none__';
@@ -18,6 +19,7 @@ export interface IPickerProps {
   placeholder: string;
   items: { displayValue?: string; value: string }[];
   label?: string;
+  required?: boolean;
   disabled?: boolean;
   selectNoneLabel?: string;
   allowSelectNone?: boolean;
@@ -38,6 +40,7 @@ export default function Picker(props: IPickerProps) {
     items,
     label,
     disabled,
+    required,
     selectNoneLabel,
     allowSelectNone,
     mb,
@@ -70,7 +73,8 @@ export default function Picker(props: IPickerProps) {
         },
       ]}
     >
-      {label && <TextRegular ml="xs">{label}</TextRegular>}
+      {label && <FormFieldLabel label={label} required={required} />}
+
       <RNPicker
         style={styles.picker}
         placeholder={placeholder}

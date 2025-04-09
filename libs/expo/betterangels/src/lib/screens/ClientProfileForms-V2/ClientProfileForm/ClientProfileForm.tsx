@@ -2,11 +2,11 @@ import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { UpdateClientProfileInput } from '../../../apollo';
 import {
-  TValidationError,
-  applyValidationErrors,
-} from '../../../helpers/parseClientProfileErrors';
+  UpdateClientProfileInput,
+  extractExtensionErrors,
+} from '../../../apollo';
+import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { isValidClientProfileSectionEnum } from '../../../screenRouting';
 import {
@@ -84,20 +84,15 @@ export default function ClientProfileForm(props: IClientProfileForms) {
         errorPolicy: 'all',
       });
 
-      // TODO: Consolidate API Error handling - see ticket DEV-1601
-      const errors = updateResponse.errors?.[0];
-
-      const errorViaExtensions = errors?.extensions?.['errors'] as
-        | TValidationError[]
-        | undefined;
+      const errorViaExtensions = extractExtensionErrors(updateResponse);
 
       if (errorViaExtensions) {
-        applyValidationErrors(errorViaExtensions, methods.setError);
+        applyManualFormErrors(errorViaExtensions, methods.setError);
 
         return;
       }
 
-      const otherErrors = !errorViaExtensions && errors;
+      const otherErrors = updateResponse.errors?.[0];
 
       if (otherErrors) {
         throw otherErrors.message;
