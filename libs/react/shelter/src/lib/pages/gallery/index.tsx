@@ -56,7 +56,10 @@ export default function GalleryPage({ id }: { id: string }) {
           className="fixed inset-0 z-50 bg-black"
           onClick={() => setSelectedImage(null)}
         >
-          <div className="bg-steel-blue flex items-center gap-8 py-2 mb-24">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-steel-blue flex items-center gap-8 py-2"
+          >
             <div
               onClick={() => setSelectedImage(null)}
               className="ml-5 flex items-center justify-center h-10 w-10"
