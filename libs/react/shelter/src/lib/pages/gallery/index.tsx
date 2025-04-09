@@ -52,14 +52,8 @@ export default function GalleryPage({ id }: { id: string }) {
       </div>
 
       {selectedImage && (
-        <div
-          className="fixed inset-0 z-50 bg-black"
-          onClick={() => setSelectedImage(null)}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-steel-blue flex items-center gap-8 py-2"
-          >
+        <div className="fixed inset-0 z-50 bg-black flex flex-col  h-full">
+          <div className="bg-steel-blue flex items-center gap-8 py-2">
             <div
               onClick={() => setSelectedImage(null)}
               className="ml-5 flex items-center justify-center h-10 w-10"
@@ -69,8 +63,14 @@ export default function GalleryPage({ id }: { id: string }) {
             {/* TODO: define name */}
             {/* <h2 className="font-semibold text-white">{selectedImage.name}</h2> */}
           </div>
-          <div className="flex items-center justify-center">
-            <div className="w-[90vw] max-w-md aspect-square">
+          <div
+            onClick={() => setSelectedImage(null)}
+            className="flex flex-1 items-center justify-center"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-[90vw] max-w-md aspect-square"
+            >
               <img
                 src={selectedImage.url}
                 alt="Fullscreen"
