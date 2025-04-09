@@ -16,9 +16,11 @@ export default function ClientRelatedModelEditScreen() {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  <ClientProfileRelatedModelForm
-    clientId={clientId}
-    componentName={componentName}
-    relationId={relationId}
-  />;
+  return (
+    <ClientProfileRelatedModelForm
+      clientId={clientId}
+      componentName={componentName}
+      relationId={relationId}
+    />
+  );
 }
