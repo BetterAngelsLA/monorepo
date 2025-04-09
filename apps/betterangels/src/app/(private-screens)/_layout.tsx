@@ -1,8 +1,39 @@
 import { useUser } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
+import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { Redirect, Stack, useRouter } from 'expo-router';
 import { View } from 'react-native';
+
+type TGetDefaultNavOptions = {
+  title?: string;
+};
+
+function getDefaultNavOptions(
+  props?: TGetDefaultNavOptions
+): NativeStackNavigationOptions {
+  const { title } = props || {};
+
+  const router = useRouter();
+
+  return {
+    headerTitleAlign: 'center',
+    title: title || '',
+    headerStyle: {
+      backgroundColor: Colors.BRAND_DARK_BLUE,
+    },
+    headerLeft: () => (
+      <TextButton
+        regular
+        color={Colors.WHITE}
+        fontSize="md"
+        accessibilityHint="goes to previous screen"
+        title="Back"
+        onPress={router.back}
+      />
+    ),
+  };
+}
 
 export default function PrivateLayout() {
   const { user, isLoading } = useUser();
@@ -199,44 +230,23 @@ export default function PrivateLayout() {
         }}
       />
       <Stack.Screen
-        name="clients/edit/[id]"
-        options={{
-          headerTitleAlign: 'center',
-          title: '',
-          headerStyle: {
-            backgroundColor: Colors.BRAND_DARK_BLUE,
-          },
-          headerLeft: () => (
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="goes to previous screen"
-              title="Back"
-              onPress={router.back}
-            />
-          ),
-        }}
+        name="clients/create"
+        options={getDefaultNavOptions({
+          title: 'Create Client Profile',
+        })}
+      />
+      <Stack.Screen name="clients/[id]/edit" options={getDefaultNavOptions()} />
+      <Stack.Screen
+        name="clients/[id]/relations/add"
+        options={getDefaultNavOptions()}
       />
       <Stack.Screen
-        name="clients/create"
-        options={{
-          headerTitleAlign: 'center',
-          title: 'Create Client Profile',
-          headerStyle: {
-            backgroundColor: Colors.BRAND_DARK_BLUE,
-          },
-          headerLeft: () => (
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="goes to previous screen"
-              title="Back"
-              onPress={router.back}
-            />
-          ),
-        }}
+        name="clients/[id]/relations/[relationId]/edit"
+        options={getDefaultNavOptions()}
+      />
+      <Stack.Screen
+        name="clients/[id]/relations/index"
+        options={getDefaultNavOptions()}
       />
       <Stack.Screen
         name="file/[id]"
@@ -259,44 +269,15 @@ export default function PrivateLayout() {
       />
       <Stack.Screen
         name="settings/index"
-        options={{
-          headerTitleAlign: 'center',
+        options={getDefaultNavOptions({
           title: 'Settings',
-          headerStyle: {
-            backgroundColor: Colors.BRAND_DARK_BLUE,
-          },
-          headerLeft: () => (
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="goes to previous screen"
-              title="Back"
-              onPress={router.back}
-            />
-          ),
-        }}
+        })}
       />
-
       <Stack.Screen
         name="settings/about/index"
-        options={{
-          headerTitleAlign: 'center',
+        options={getDefaultNavOptions({
           title: 'About App',
-          headerStyle: {
-            backgroundColor: Colors.BRAND_DARK_BLUE,
-          },
-          headerLeft: () => (
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="goes to previous screen"
-              title="Back"
-              onPress={router.back}
-            />
-          ),
-        }}
+        })}
       />
     </Stack>
   );
