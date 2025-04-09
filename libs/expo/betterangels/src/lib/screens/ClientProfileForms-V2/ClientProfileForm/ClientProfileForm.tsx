@@ -1,9 +1,7 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { StyleSheet } from 'react-native';
 import { UpdateClientProfileInput } from '../../../apollo';
 import {
   TValidationError,
@@ -24,8 +22,8 @@ export default function ClientProfileForm(props: IClientProfileForms) {
 
   const {
     data,
-    error: fetchError,
-    loading,
+    error: fetchProfileError,
+    loading: isFetchingProfile,
     refetch,
   } = useGetClientProfileQuery({
     variables: { id },
@@ -131,12 +129,12 @@ export default function ClientProfileForm(props: IClientProfileForms) {
     methods.reset(formData);
   }, [data, id]);
 
-  if (loading) {
+  if (isFetchingProfile) {
     return <LoadingView />;
   }
 
-  if (fetchError) {
-    console.error(fetchError);
+  if (fetchProfileError) {
+    console.error(fetchProfileError);
 
     showSnackbar({
       message: 'Something went wrong. Please try again.',
@@ -150,7 +148,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
         actionProps={{
           onSubmit: methods.handleSubmit(onSubmit),
           onLeftBtnClick: router.back,
-          disabled: loading,
+          disabled: isUpdating,
         }}
       >
         {content}
@@ -158,19 +156,6 @@ export default function ClientProfileForm(props: IClientProfileForms) {
     </FormProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'space-between',
-    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-  },
-  contentContainer: {
-    flexGrow: 1,
-    paddingVertical: Spacings.md,
-    paddingHorizontal: Spacings.sm,
-  },
-});
 
 function toUpdateClienProfileInputs(
   id: string,
