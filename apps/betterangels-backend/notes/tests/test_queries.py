@@ -76,7 +76,6 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note = response["data"]["note"]
         expected_note = {
             "id": note_id,
-            "client": {"id": str(self.client_user_1.pk)},
             "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T11:12:13+00:00",
@@ -234,14 +233,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
-        self.note_2 = self._create_note_fixture({"purpose": "Client 1's Note", "client": self.client_user_1.pk})[
-            "data"
-        ]["createNote"]
+        self.note_2 = self._create_note_fixture(
+            {"purpose": "Client 1's Note", "clientProfile": self.client_profile_1.pk}
+        )["data"]["createNote"]
         self.graphql_client.logout()
         self.graphql_client.force_login(self.org_2_case_manager_1)
-        self.note_3 = self._create_note_fixture({"purpose": "Client 2's Note", "client": self.client_user_2.pk})[
-            "data"
-        ]["createNote"]
+        self.note_3 = self._create_note_fixture(
+            {"purpose": "Client 2's Note", "clientProfile": self.client_profile_2.pk}
+        )["data"]["createNote"]
         self._update_note_fixture(
             {
                 "id": self.note_3["id"],
@@ -266,7 +265,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             filters["createdBy"] = self.user_map[case_manager_label].pk
 
         if client_label:
-            filters["client"] = getattr(self, client_label).pk
+            filters["clientProfile"] = getattr(self, client_label).pk
 
         if org_label:
             filters["organization"] = getattr(self, org_label).pk
@@ -316,14 +315,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
-        self.note_2 = self._create_note_fixture({"purpose": "Client 1's Note", "client": self.client_user_1.pk})[
-            "data"
-        ]["createNote"]
+        self.note_2 = self._create_note_fixture(
+            {"purpose": "Client 1's Note", "clientProfile": self.client_profile_1.pk}
+        )["data"]["createNote"]
         self.graphql_client.logout()
         self.graphql_client.force_login(self.org_2_case_manager_1)
-        self.note_3 = self._create_note_fixture({"purpose": "Client 2's Note", "client": self.client_user_2.pk})[
-            "data"
-        ]["createNote"]
+        self.note_3 = self._create_note_fixture(
+            {"purpose": "Client 2's Note", "clientProfile": self.client_profile_2.pk}
+        )["data"]["createNote"]
         self._update_note_fixture(
             {
                 "id": self.note_3["id"],
@@ -441,19 +440,15 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.note_2 = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
-                "client": self.client_user_1.pk,
+                "clientProfile": self.client_profile_1.pk,
             }
-        )[
-            "data"
-        ]["createNote"]
+        )["data"]["createNote"]
         self.note_3 = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
-                "client": self.client_user_2.pk,
+                "clientProfile": self.client_profile_2.pk,
             }
-        )[
-            "data"
-        ]["createNote"]
+        )["data"]["createNote"]
         self._update_note_fixture(
             {
                 "id": self.note_2["id"],
@@ -511,20 +506,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
 
-        query = """
-            query InteractionAuthors($filters: InteractionAuthorFilter) {
-                interactionAuthors(filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                    }
-                }
-            }
-        """
+        baker.make(User, first_name="Alex", last_name="Johnson"),
 
         test_user_map = {
             "interaction_author": baker.make(User, first_name="Alexa", last_name="Danvers", middle_name="J."),
-            "client": baker.make(User, first_name="Alex", last_name="Johnson"),
             "interaction_author_2": baker.make(User, first_name="Wanda", last_name="Maximoff", middle_name="A."),
             "interaction_author_3": baker.make(User, first_name="Alexandria", last_name="Daniels", middle_name="M."),
         }
@@ -537,6 +522,17 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         perm_group.organization.add_user(interaction_author)
         perm_group.organization.add_user(interaction_author_2)
         perm_group.organization.add_user(interaction_author_3)
+
+        query = """
+            query InteractionAuthors($filters: InteractionAuthorFilter) {
+                interactionAuthors(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
 
         filters: dict[str, Any] = {"search": name_search}
 
@@ -570,14 +566,14 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             {
                 "purpose": "Client 1's Note",
                 "publicDetails": "deets",
-                "client": self.client_user_1.pk,
+                "clientProfile": self.client_profile_1.pk,
             }
         )["data"]["createNote"]
         self.note_3 = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
                 "publicDetails": "more deets",
-                "client": self.client_user_2.pk,
+                "clientProfile": self.client_profile_2.pk,
             }
         )["data"]["createNote"]
 
@@ -613,21 +609,17 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         older_note = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
-                "client": self.client_user_1.pk,
+                "clientProfile": self.client_profile_1.pk,
             }
-        )[
-            "data"
-        ]["createNote"]
+        )["data"]["createNote"]
         self._update_note_fixture({"id": older_note["id"], "interactedAt": "2024-03-10T10:11:12+00:00"})
 
         oldest_note = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
-                "client": self.client_user_2.pk,
+                "clientProfile": self.client_profile_2.pk,
             }
-        )[
-            "data"
-        ]["createNote"]
+        )["data"]["createNote"]
         self._update_note_fixture({"id": oldest_note["id"], "interactedAt": "2024-01-10T10:11:12+00:00"})
 
         query = """
@@ -686,7 +678,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     status
                     dueBy
                     completedOn
-                    client {
+                    clientProfile {
                         id
                     }
                     createdBy {
@@ -710,7 +702,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "completedOn": "2024-03-11T10:11:12+00:00",
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -727,7 +719,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     status
                     dueBy
                     completedOn
-                    client {
+                    clientProfile {
                         id
                     }
                     createdBy {
@@ -798,7 +790,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": "2024-03-11T10:11:12+00:00",
             "dueByGroup": DueByGroupEnum.TODAY.name,
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }

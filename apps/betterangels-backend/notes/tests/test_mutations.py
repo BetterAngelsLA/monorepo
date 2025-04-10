@@ -32,7 +32,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 {
                     "purpose": "New note purpose",
                     "publicDetails": "New public details",
-                    "client": self.client_user_1.pk,
                     "clientProfile": self.client_profile_1.pk,
                 }
             )
@@ -51,7 +50,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "New public details",
             "privateDetails": "",
             "isSubmitted": False,
-            "client": {"id": str(self.client_user_1.pk)},
             "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
@@ -99,7 +97,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
-            "client": {"id": str(self.client_user_1.pk)},
             "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
@@ -132,7 +129,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": f"{self.client_user_1.full_name}'s public details",
             "privateDetails": "",
             "isSubmitted": True,
-            "client": {"id": str(self.client_user_1.pk)},
             "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
@@ -212,7 +208,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
-            "client": self.note["client"],
+            "clientProfile": self.note["clientProfile"],
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": ANY,
         }
@@ -256,7 +252,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "serviceOther": None,
             "dueBy": None,
             "completedOn": ANY,
-            "client": self.note["client"],
             "clientProfile": self.note["clientProfile"],
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": ANY,
@@ -304,7 +299,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "serviceOther": "Other Service",
             "dueBy": None,
             "completedOn": ANY,
-            "client": self.note["client"],
             "clientProfile": self.note["clientProfile"],
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": ANY,
@@ -512,32 +506,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
         with self.assertRaises(Note.DoesNotExist):
             Note.objects.get(id=self.note["id"])
-
-    # TODO: Remove in DEV-1652
-    def test_dual_write_client(self) -> None:
-        created_note = self._create_note_fixture(
-            {
-                "purpose": "New note purpose",
-                "publicDetails": "New public details",
-                "client": self.client_user_1.pk,
-            }
-        )["data"]["createNote"]
-
-        self.assertEqual(created_note["client"], {"id": str(self.client_user_1.pk)})
-        self.assertEqual(created_note["clientProfile"], {"id": str(self.client_profile_1.pk)})
-
-    # TODO: Remove in DEV-1652
-    def test_write_client_profile_only(self) -> None:
-        created_note = self._create_note_fixture(
-            {
-                "purpose": "New note purpose",
-                "publicDetails": "New public details",
-                "clientProfile": self.client_profile_1.pk,
-            }
-        )["data"]["createNote"]
-
-        self.assertIsNone(created_note["client"])
-        self.assertEqual(created_note["clientProfile"], {"id": str(self.client_profile_1.pk)})
 
 
 class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin, ServiceRequestGraphQLUtilMixin):
@@ -1694,7 +1662,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": None,
             "completedOn": None,
             "status": "TO_DO",
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1720,7 +1688,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": "2024-03-11T11:12:13+00:00",
             "completedOn": "2024-03-11T12:34:56+00:00",
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1744,7 +1712,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "completedOn": None,
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1804,7 +1772,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
@@ -1839,7 +1807,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
@@ -1862,7 +1830,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }

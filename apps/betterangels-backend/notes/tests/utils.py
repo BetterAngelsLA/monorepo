@@ -14,9 +14,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         self.note_fields = """
             id
-            client {
-                id
-            }
             clientProfile {
                 id
             }
@@ -91,7 +88,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             {
                 "purpose": f"Session with {self.client_user_1.full_name}",
                 "publicDetails": f"{self.client_user_1.full_name}'s public details",
-                "client": self.client_user_1.pk,
                 "clientProfile": self.client_profile_1.pk,
             },
         )["data"]["createNote"]
@@ -343,9 +339,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         status
                         dueBy
                         dueByGroup
-                        client {
-                            id
-                        }
                         clientProfile {
                             id
                         }
@@ -377,9 +370,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         status
                         dueBy
                         completedOn
-                        client {
-                            id
-                        }
                         clientProfile {
                             id
                         }
@@ -466,9 +456,6 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
                         status
                         dueBy
                         completedOn
-                        client {{
-                            id
-                        }}
                         createdBy {{
                             id
                         }}
@@ -537,9 +524,6 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
                         status
                         dueBy
                         dueByGroup
-                        client {{
-                            id
-                        }}
                         createdBy {{
                             id
                         }}
@@ -624,9 +608,6 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             status
             dueBy
             dueByGroup
-            client {
-                id
-            }
             createdBy {
                 id
             }
