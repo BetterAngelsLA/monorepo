@@ -1,6 +1,6 @@
 import { ClientProfileSectionEnum } from './constants';
 
-type TRelatedModelSectionKeys = 'HmisIds' | 'Household' | 'Household';
+type TRelatedModelSectionKeys = 'HmisIds' | 'Household' | 'RelevantContacts';
 type TStandardSectionKeys =
   | 'FullName'
   | 'PersonalInfo'

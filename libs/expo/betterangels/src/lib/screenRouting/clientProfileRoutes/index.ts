@@ -8,4 +8,5 @@ export {
   getRelatedModelViewRoute,
 } from './getClientProfileRelatedModelRoute';
 export { getEditClientProfileRoute } from './getEditClientProfileRoute';
+export { getViewClientProfileRoute } from './getViewClientProfileRoute';
 export { TRelatedModelSection, TStandardSection } from './types';
