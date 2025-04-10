@@ -45,7 +45,8 @@ export function HmisProfileForm(props: TProps) {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid: formIsValid },
+    // formState: { errors, isValid: formIsValid },
+    formState: { errors },
     setError,
     setValue,
     clearErrors,
