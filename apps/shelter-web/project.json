@@ -32,6 +32,17 @@
         "production": {},
         "preview": {}
       }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./tools/deploy/cloudfront_deploy.sh"
+      },
+      "configurations": {
+        "production": {},
+        "preview": {}
+      },
+      "dependsOn": ["build"]
     }
   }
 }

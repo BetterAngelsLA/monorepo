@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euxo pipefail
+set -euo pipefail
 
 # Fail fast if required environment variables are not set
 : "${S3_BUCKET:?Need to set S3_BUCKET}"
@@ -12,7 +12,7 @@ S3_PATH=$(echo "$VITE_APP_BASE_PATH" | sed 's|^/||' | sed 's|/$||')  # e.g. "bra
 CF_PATH="$VITE_APP_BASE_PATH"                                       # e.g. "/branches/staging" or "/"
 
 # Get the app's root folder using Nx metadata
-APP_ROOT=$(yarn nx show projects --json | jq -r --arg name "$NX_TASK_TARGET_PROJECT" '.[$name].root')
+APP_ROOT=$(yarn nx show project "$NX_TASK_TARGET_PROJECT" --json | jq -r '.root')
 DIST_PATH="dist/$APP_ROOT"
 
 echo "📦 Project: $NX_TASK_TARGET_PROJECT"
@@ -29,6 +29,6 @@ echo "✅ S3 sync complete."
 # Invalidate CloudFront cache for the deployed path
 aws cloudfront create-invalidation \
   --distribution-id "$CF_DISTRIBUTION_ID" \
-  --paths "$CF_PATH/*"
+  --paths "$CF_PATH/*" > /dev/null
 
 echo "✅ CloudFront invalidation sent."
