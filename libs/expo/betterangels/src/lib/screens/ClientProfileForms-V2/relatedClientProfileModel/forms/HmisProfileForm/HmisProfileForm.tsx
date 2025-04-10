@@ -92,14 +92,6 @@ export function HmisProfileForm(props: TProps) {
 
       const response = await mutation({
         ...mutationVariables,
-        refetchQueries: [
-          {
-            query: ClientProfileDocument,
-            variables: {
-              id: clientProfile.id,
-            },
-          },
-        ],
         errorPolicy: 'all',
       });
 
@@ -127,6 +119,20 @@ export function HmisProfileForm(props: TProps) {
 
         return;
       }
+
+      // refetch only on success
+      await mutation({
+        ...mutationVariables,
+        refetchQueries: [
+          {
+            query: ClientProfileDocument,
+            variables: {
+              id: clientProfile.id,
+            },
+          },
+        ],
+        errorPolicy: 'all',
+      });
 
       const returnRoute = getViewClientProfileRoute({
         id: clientProfile.id,
@@ -208,16 +214,16 @@ function hasUniquenessError(
 ): string | null {
   const operationInfo = extractOperationInfo(response, key);
 
-  const messages = operationInfo?.messages;
+  const operationMessages = operationInfo?.messages;
 
-  if (!messages?.length) {
+  if (!operationMessages?.length) {
     return null;
   }
 
   const uniquenessServerErrorMessage =
     'Hmis profile with this Hmis id and Agency already exists.';
 
-  const uniquenessError = messages.find(
+  const uniquenessError = operationMessages.find(
     (m) => m.message === uniquenessServerErrorMessage
   );
 
