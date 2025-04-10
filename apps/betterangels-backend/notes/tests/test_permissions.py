@@ -135,7 +135,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 {
                     "purpose": "New Note",
                     "publicDetails": "New public details",
-                    "client": self.client_user_1.pk,
+                    "clientProfile": self.client_profile_1.pk,
                 }
             )["data"]["createNote"]["id"]
 
@@ -200,7 +200,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 {
                     "purpose": "New Note",
                     "publicDetails": "New public details",
-                    "client": self.client_user_1.pk,
+                    "clientProfile": self.client_profile_1.pk,
                 }
             )["data"]["createNote"]["id"]
 

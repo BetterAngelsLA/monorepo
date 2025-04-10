@@ -215,9 +215,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             ),  # CM 1 created one note
             ("org_2_case_manager_1", None, None, True, 1, ["note_3"]),  # Org 2 CM 1 submitted 1 note
             ("org_1_case_manager_2", None, None, False, 1, ["note_2"]),  # CM 2 has one unsubmitted note
-            ("org_1_case_manager_1", "client_user_2", None, None, 0, []),  # CM 1 has no notes for client 2
+            ("org_1_case_manager_1", "client_profile_2", None, None, 0, []),  # CM 1 has no notes for client 2
             # CM 1 has one unsubmitted note for client 1
-            ("org_1_case_manager_1", "client_user_1", None, False, 1, ["note"]),
+            ("org_1_case_manager_1", "client_profile_1", None, False, 1, ["note"]),
             (None, None, "org_2", True, 1, ["note_3"]),  # There is one submitted note from org 2
         ],
     )
@@ -232,7 +232,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         returned_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
-        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
             {"purpose": "Client 1's Note", "clientProfile": self.client_profile_1.pk}
         )["data"]["createNote"]
@@ -298,9 +298,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             ),  # CM 1 created one note
             (["org_2_case_manager_1"], None, None, True, 1, ["note_3"]),  # Org 2 CM 1 submitted 1 note
             (["org_1_case_manager_2"], None, None, False, 1, ["note_2"]),  # CM 2 has one unsubmitted note
-            (["org_1_case_manager_1"], "client_user_2", None, None, 0, []),  # CM 1 has no notes for client 2
+            (["org_1_case_manager_1"], "client_profile_2", None, None, 0, []),  # CM 1 has no notes for client 2
             # CM 1 has one unsubmitted note for client 1
-            (["org_1_case_manager_1"], "client_user_1", None, False, 1, ["note"]),
+            (["org_1_case_manager_1"], "client_profile_1", None, False, 1, ["note"]),
             (None, None, "org_2", True, 1, ["note_3"]),  # There is one submitted note from org 2
         ],
     )
@@ -314,7 +314,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         returned_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
-        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
             {"purpose": "Client 1's Note", "clientProfile": self.client_profile_1.pk}
         )["data"]["createNote"]
@@ -383,7 +383,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_query_count: int,
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
-        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
@@ -436,7 +436,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_query_count: int,
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
-        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
@@ -561,7 +561,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         returned_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
-        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",

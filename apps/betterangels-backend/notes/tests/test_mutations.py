@@ -26,7 +26,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 39
+        expected_query_count = 37
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -69,7 +69,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 27
+        expected_query_count = 25
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -111,7 +111,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 24
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -221,8 +221,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
         [
-            ("REQUESTED", "requested_services", "TO_DO", 36),
-            ("PROVIDED", "provided_services", "COMPLETED", 36),
+            ("REQUESTED", "requested_services", "TO_DO", 34),
+            ("PROVIDED", "provided_services", "COMPLETED", 34),
         ],
     )
     def test_create_note_service_request_mutation(
@@ -268,8 +268,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
         [
-            ("REQUESTED", "requested_services", "TO_DO", 36),
-            ("PROVIDED", "provided_services", "COMPLETED", 36),
+            ("REQUESTED", "requested_services", "TO_DO", 34),
+            ("PROVIDED", "provided_services", "COMPLETED", 34),
         ],
     )
     def test_create_note_custom_service_request_mutation(
@@ -574,7 +574,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             }
         """
 
-        expected_query_count = 31
+        expected_query_count = 30
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
@@ -644,7 +644,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
                 }
             }
         """
-        expected_query_count = 33
+        expected_query_count = 32
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
@@ -656,7 +656,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         revert_before_timestamp = timezone.now()
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 27
+        expected_query_count = 26
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
@@ -1325,7 +1325,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 52
+        expected_query_count = 50
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -1403,7 +1403,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 52
+        expected_query_count = 50
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
