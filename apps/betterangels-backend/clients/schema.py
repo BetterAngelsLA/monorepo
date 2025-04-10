@@ -94,7 +94,6 @@ def _payload_has_name(data: dict) -> bool:
 
 def validate_name(
     data: dict,
-    client_profile: Optional[ClientProfile],
 ) -> list[dict[str, Any]]:
     """Verify that either:
     1. The incoming data contains at least one name field OR
@@ -103,6 +102,8 @@ def validate_name(
 
     if _payload_has_name(data):
         return []
+
+    client_profile = ClientProfile.objects.filter(id=data["id"]).first() if data.get("id") else None
 
     if client_profile:
         if (
@@ -118,7 +119,7 @@ def validate_name(
 
 def validate_email(
     email: Optional[str],
-    client_profile: Optional[ClientProfile] = None,
+    client_profile_id: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     if email in [strawberry.UNSET, None, ""]:
         return []
@@ -128,7 +129,7 @@ def validate_email(
         return [{"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_INVALID.name}]
 
     # exclude the client_profile being updated from the unique check
-    exclude_arg = {"id": client_profile.pk} if client_profile else {}
+    exclude_arg = {"id": client_profile_id} if client_profile_id else {}
 
     if ClientProfile.objects.exclude(**exclude_arg).filter(email__iexact=email).exists():
         return [{"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
@@ -137,7 +138,7 @@ def validate_email(
 
 
 def validate_california_id(
-    california_id: Optional[str], client_profile: Optional[ClientProfile] = None
+    california_id: Optional[str], client_profile_id: Optional[str] = None
 ) -> list[dict[str, Any]]:
     if california_id in [strawberry.UNSET, None, ""]:
         return []
@@ -147,7 +148,7 @@ def validate_california_id(
         return [{"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_INVALID.name}]
 
     # exclude the client profile being updated from the unique check
-    exclude_arg = {"id": client_profile.pk} if client_profile else {}
+    exclude_arg = {"id": client_profile_id} if client_profile_id else {}
 
     if ClientProfile.objects.exclude(**exclude_arg).filter(california_id__iexact=california_id).exists():
         return [{"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_IN_USE.name}]
@@ -240,18 +241,13 @@ def validate_client_profile_data(data: dict) -> None:
     """Validates the data for creating or updating a client profile."""
     errors: list = []
 
-    client_profile = None
-
-    if value_exists(data.get("id")):
-        client_profile = ClientProfile.objects.filter(id=data["id"]).first()
-
-    errors += validate_name(data, client_profile)
+    errors += validate_name(data)
 
     if email := data.get("email"):
-        errors += validate_email(email, client_profile)
+        errors += validate_email(email, data.get("id"))
 
-    if data.get("california_id"):
-        errors += validate_california_id(data["california_id"], client_profile)
+    if california_id := data.get("california_id"):
+        errors += validate_california_id(california_id, data.get("id"))
 
     if data.get("contacts"):
         errors += validate_contacts(data["contacts"])
@@ -396,7 +392,7 @@ class Mutation:
             client_profile = resolvers.create(
                 info,
                 ClientProfile,
-                {**client_profile_data},
+                client_profile_data,
             )
 
             content_type = ContentType.objects.get_for_model(ClientProfile)

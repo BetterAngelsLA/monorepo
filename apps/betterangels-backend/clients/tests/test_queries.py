@@ -178,12 +178,10 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
         organization = organization_recipe.make()
-        client_profile_1 = ClientProfile.objects.get(id=self.client_profile_1["id"])
-        client_profile_2 = ClientProfile.objects.get(id=self.client_profile_2["id"])
 
         # Make two notes for Client 1 (inactive)
-        baker.make(Note, organization=organization, client_profile=client_profile_1)
-        baker.make(Note, organization=organization, client_profile=client_profile_1)
+        baker.make(Note, organization=organization, client_profile_id=self.client_profile_1["id"])
+        baker.make(Note, organization=organization, client_profile_id=self.client_profile_1["id"])
 
         query = """
             query ($isActive: Boolean) {
@@ -201,8 +199,8 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             traveller.shift(timedelta(days=MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS["days"] + 1))
 
             # Make two notes for Client 2 (active)
-            baker.make(Note, organization=organization, client_profile=client_profile_2)
-            baker.make(Note, organization=organization, client_profile=client_profile_2)
+            baker.make(Note, organization=organization, client_profile_id=self.client_profile_2["id"])
+            baker.make(Note, organization=organization, client_profile_id=self.client_profile_2["id"])
 
             expected_query_count = 4
             with self.assertNumQueriesWithoutCache(expected_query_count):

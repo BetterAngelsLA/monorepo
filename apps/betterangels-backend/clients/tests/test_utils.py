@@ -57,14 +57,15 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         operation: str,
         should_return_error: bool,
     ) -> None:
-        client_profile = ClientProfile.objects.get(pk=self.client_profile_1["id"]) if operation == "update" else None
-        name_data = {
+        data = {
+            "id": self.client_profile_1["id"] if operation == "update" else None,
             "first_name": first_name,
             "last_name": last_name,
             "middle_name": middle_name,
             "nickname": nickname,
         }
-        errors = validate_name(name_data, client_profile)
+
+        errors = validate_name(data)
         if should_return_error:
             self.assertEqual(len(errors), 1)
             self.assertEqual(errors[0]["errorCode"], ErrorCodeEnum.NAME_NOT_PROVIDED.name)
@@ -74,7 +75,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "email, expected_error_code",
         [
-            (strawberry.UNSET, None),
+            (strawberry.UNSET, strawberry.UNSET),
             (None, None),
             ("", None),
             ("valid_email@example.co", None),
@@ -95,15 +96,12 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertEqual(len(errors), 0)
 
     def test_validate_email_update_existing(self) -> None:
-        client_profile = ClientProfile.objects.get(id=self.client_profile_1["id"])
-        email = client_profile.email
-
-        self.assertEqual(len(validate_email(email, client_profile)), 0)
+        self.assertEqual(len(validate_email(self.client_profile_1["email"], self.client_profile_1["id"])), 0)
 
     @parametrize(
         "california_id, expected_error_code",
         [
-            (strawberry.UNSET, None),
+            (strawberry.UNSET, strawberry.UNSET),
             (None, None),
             ("", None),
             ("V9753100", None),
@@ -127,13 +125,16 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertEqual(errors[0]["errorCode"], expected_error_code)
 
     def test_validate_california_id_update_existing(self) -> None:
-        client_profile = ClientProfile.objects.get(pk=self.client_profile_1["id"])
-        california_id = self.client_profile_1["californiaId"]
-
-        errors = validate_california_id(california_id, client_profile)
+        errors = validate_california_id(
+            self.client_profile_1["californiaId"],
+            self.client_profile_1["id"],
+        )
         self.assertEqual(len(errors), 0)
 
-        errors = validate_california_id(california_id, None)
+        errors = validate_california_id(
+            self.client_profile_1["californiaId"],
+            strawberry.UNSET,
+        )
         self.assertEqual(len(errors), 1)
         self.assertEqual(errors[0]["field"], "californiaId")
         self.assertEqual(errors[0]["errorCode"], ErrorCodeEnum.CA_ID_IN_USE.name)
