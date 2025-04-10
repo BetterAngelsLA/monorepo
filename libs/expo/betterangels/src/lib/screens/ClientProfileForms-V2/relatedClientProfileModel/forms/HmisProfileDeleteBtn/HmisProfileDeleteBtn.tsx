@@ -33,7 +33,7 @@ export function HmisProfileDeleteBtn(props: TProps) {
 
       await deleteHmisProfile({
         variables: {
-          id: relationId as string,
+          id: relationId,
         },
         refetchQueries: [
           {
@@ -68,12 +68,10 @@ export function HmisProfileDeleteBtn(props: TProps) {
   };
 
   return (
-    <>
-      <DeleteButton
-        disabled={loading || disabled}
-        deleteableItemName={deleteableItemName}
-        onDelete={onDelete}
-      />
-    </>
+    <DeleteButton
+      disabled={loading || disabled}
+      deleteableItemName={deleteableItemName}
+      onDelete={onDelete}
+    />
   );
 }

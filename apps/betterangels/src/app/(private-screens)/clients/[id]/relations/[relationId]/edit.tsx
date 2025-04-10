@@ -3,7 +3,7 @@ import { useLocalSearchParams } from 'expo-router';
 
 export default function ClientRelatedModelEditScreen() {
   const {
-    id: clientId,
+    id: clientProfileId,
     relationId,
     componentName,
   } = useLocalSearchParams<{
@@ -12,13 +12,13 @@ export default function ClientRelatedModelEditScreen() {
     componentName: string;
   }>();
 
-  if (!clientId || !componentName || !relationId) {
+  if (!clientProfileId || !componentName || !relationId) {
     throw new Error('Something went wrong. Please try again.');
   }
 
   return (
     <ClientProfileRelatedModelForm
-      clientId={clientId}
+      clientProfileId={clientProfileId}
       componentName={componentName}
       relationId={relationId}
     />

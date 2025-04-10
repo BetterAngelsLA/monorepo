@@ -9,15 +9,15 @@ import {
 import { useGetClientProfileQuery } from '../ClientProfileForm/__generated__/clientProfile.generated';
 import { clientRelatedModelConfig } from './config';
 
-type TClientRelations = {
-  clientId: string;
+type TProps = {
+  clientProfileId: string;
   componentName: string;
   relationId?: string;
   createMode?: boolean;
 };
 
-export function ClientProfileRelatedModelForm(props: TClientRelations) {
-  const { clientId, relationId, componentName, createMode } = props;
+export function ClientProfileRelatedModelForm(props: TProps) {
+  const { clientProfileId, relationId, componentName, createMode } = props;
 
   const navigation = useNavigation();
 
@@ -34,7 +34,7 @@ export function ClientProfileRelatedModelForm(props: TClientRelations) {
     error: fetchError,
     loading,
   } = useGetClientProfileQuery({
-    variables: { id: clientId },
+    variables: { id: clientProfileId },
   });
 
   const { clientProfile } = data || {};
