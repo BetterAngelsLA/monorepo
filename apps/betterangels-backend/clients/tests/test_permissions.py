@@ -27,7 +27,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -67,7 +67,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -99,7 +99,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", True),  # CM in different org should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -131,7 +131,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", True),  # CM in different org should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -168,7 +168,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", 2),  # Owner should succeed
             ("org_1_case_manager_2", 2),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", 2),  # CM in different org should succeed
-            ("client_user_1", 0),  # Non CM should not succeed
+            ("non_case_manager_user", 0),  # Non CM should not succeed
             # NOTE: Anon user raising an error may be caused by a strawberry bug.
             # This test may fail and need updating when the bug is fixed.
             (None, None),  # Anonymous user should return error
@@ -204,7 +204,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", True),  # CM in different org should succeed
-            ("client_user_1", False),  # Client modifying client profile should not succeed
+            ("non_case_manager_user", False),  # Client modifying client profile should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -228,7 +228,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # CM in a different org should not succeed
-            ("client_user_1", False),  # Client should not succeed
+            ("non_case_manager_user", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -252,7 +252,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Creator should succeed
             ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
             ("org_2_case_manager_1", True),  # CM in a different org should succeed
-            ("client_user_1", False),  # Client should not succeed
+            ("non_case_manager_user", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -285,7 +285,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", 4),  # Creator should succeed
             ("org_1_case_manager_2", 4),  # Other CM in the same org should succeed
             ("org_2_case_manager_1", 4),  # CM in a different org should succeed
-            ("client_user_1", 0),  # Client should not succeed
+            ("non_case_manager_user", 0),  # Client should not succeed
             # NOTE: Anon user raising an error may be caused by a strawberry bug.
             # This test may fail and need updating when the bug is fixed.
             (None, None),  # Anonymous user should return error
@@ -319,7 +319,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM user should not succeed
+            ("non_case_manager_user", False),  # Non CM user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -347,7 +347,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             ("org_1_case_manager_1", 2),
             ("org_1_case_manager_2", 2),
             ("org_2_case_manager_1", 2),
-            ("client_user_1", 0),  # Non CM should not succeed
+            ("non_case_manager_user", 0),  # Non CM should not succeed
             # NOTE: Anon user raising an error may be caused by a strawberry bug.
             # This test may fail and need updating when the bug is fixed.
             (None, None),  # Anonymous user should return error
@@ -373,7 +373,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Case manager should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -408,7 +408,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -440,7 +440,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -474,7 +474,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM user should not succeed
+            ("non_case_manager_user", False),  # Non CM user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -502,7 +502,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             ("org_1_case_manager_1", 2),
             ("org_1_case_manager_2", 2),
             ("org_2_case_manager_1", 2),
-            ("client_user_1", 0),  # Non CM should not succeed
+            ("non_case_manager_user", 0),  # Non CM should not succeed
             # NOTE: Anon user raising an error may be caused by a strawberry bug.
             # This test may fail and need updating when the bug is fixed.
             (None, None),  # Anonymous user should return error
@@ -528,7 +528,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Case manager should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -564,7 +564,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -597,7 +597,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -626,7 +626,7 @@ class OrganizationPermissionTestCase(GraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Case Manager should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
