@@ -1561,6 +1561,26 @@ prevent-xss = ["bleach"]
 test = ["tox (>=2.3)"]
 
 [[package]]
+name = "django-s3file"
+version = "5.5.7"
+description = "A lightweight file uploader input for Django and Amazon S3."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "django_s3file-5.5.7-py3-none-any.whl", hash = "sha256:7746893df64a28bb7c7df2794d4bd7a4932f2d72c5eef6244c1c42ec82b8e60c"},
+    {file = "django_s3file-5.5.7.tar.gz", hash = "sha256:2165e1f7f260f716a9894286a31013e44f393684a8dfde5f15e317ddac77ee9a"},
+]
+
+[package.dependencies]
+boto3 = "*"
+django = ">=2.0"
+django-storages = ">=1.6"
+
+[package.extras]
+test = ["pytest (>=2.7.3)", "pytest-cov", "pytest-django", "selenium"]
+
+[[package]]
 name = "django-select2"
 version = "8.4.0"
 description = "This is a Django_ integration of Select2_."
@@ -4378,4 +4398,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "3.13.2"
-content-hash = "3e60071553280120ca89e7bce70f65fca01ad49f495c782fad627e2d4c2bafba"
+content-hash = "3f79434856d69317da817eb8edcdeeb4aab8017b5b9800c4f4b5c374c2f96abe"
