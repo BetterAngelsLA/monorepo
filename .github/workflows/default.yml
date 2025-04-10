@@ -186,11 +186,10 @@ jobs:
           docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
       - name: 🚀 Deploy Changes
-        if: ${{ env.BRANCH_NAME == 'main' }}
         run: |
           docker compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t deploy --exclude=^betterangels$,^shelter$
+          yarn nx affected -t deploy:preview --exclude=^betterangels$,^shelter$,^nginx$
           EOF
 
       - name: ⏹️ Spin down monorepo environment
