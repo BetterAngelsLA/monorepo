@@ -85,6 +85,17 @@ jobs:
           sudo setfacl --modify user:1000:rw /var/run/docker.sock
           sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
 
+      - name: 🐳 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🐳 Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+        if: ${{ env.BRANCH_NAME == 'main' }}
+
       - name: 🔄 Spin up monorepo environment
         run: |
           docker compose up -d
@@ -156,18 +167,6 @@ jobs:
       #     # Exclude Betterangels Frontend Given its CI is not setup yet
       #     yarn nx affected -t test
       #     EOF
-
-      - name: 🐳 Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        if: ${{ env.BRANCH_NAME == 'main' }}
-        with:
-          role-to-assume: ${{ env.ASSUMED_ROLE }}
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: 🐳 Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-        if: ${{ env.BRANCH_NAME == 'main' }}
 
       - name: 🛠️ Build and Push Artifacts
         if: ${{ env.BRANCH_NAME == 'main' }}
