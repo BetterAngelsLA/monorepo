@@ -1,5 +1,4 @@
 from typing import Any, Optional
-from unittest import skip
 
 import strawberry
 from clients.enums import ErrorCodeEnum, HmisAgencyEnum
@@ -49,7 +48,6 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             ("", None, " ", strawberry.UNSET, "update", False),
         ],
     )
-    @skip("resume in DEV-1611")
     def test_validate_name(
         self,
         first_name: Optional[str],
