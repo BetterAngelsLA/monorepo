@@ -118,7 +118,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         updated_note = response["data"]["updateNote"]
         expected_note = {
             "id": self.note["id"],
-            "purpose": f"Session with {self.client_user_1.full_name}",
+            "purpose": f"Session with {self.client_profile_1.full_name}",
             "team": None,
             "location": None,
             "moods": [],
@@ -126,7 +126,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "nextSteps": [],
             "providedServices": [],
             "requestedServices": [],
-            "publicDetails": f"{self.client_user_1.full_name}'s public details",
+            "publicDetails": f"{self.client_profile_1.full_name}'s public details",
             "privateDetails": "",
             "isSubmitted": True,
             "clientProfile": {"id": str(self.client_profile_1.pk)},

@@ -74,22 +74,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 status
             }
         """
-        # TODO: Remove in DEV-1652
-        self.client_user_1 = baker.make(User, first_name="Dale", last_name="Cooper")
-        self.client_user_2 = baker.make(User, first_name="Harry", last_name="Truman")
 
-        self.client_profile_1 = baker.make(
-            ClientProfile,
-            first_name=self.client_user_1.first_name,
-            last_name=self.client_user_1.last_name,
-            user=self.client_user_1,
-        )
-        self.client_profile_2 = baker.make(
-            ClientProfile,
-            first_name=self.client_user_2.first_name,
-            last_name=self.client_user_2.last_name,
-            user=self.client_user_2,
-        )
+        self.client_profile_1 = baker.make(ClientProfile, first_name="Dale", last_name="Cooper")
+        self.client_profile_2 = baker.make(ClientProfile, first_name="Harry", last_name="Truman")
         self._setup_note()
         self._setup_note_tasks()
         self._setup_location()
@@ -485,8 +472,9 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
 class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase, ServiceRequestGraphQLUtilMixin):
     def setUp(self) -> None:
         super().setUp()
-        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
-        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
+
+        self.client_profile_1 = baker.make(ClientProfile)
+        self.client_profile_2 = baker.make(ClientProfile)
         self._setup_service_request()
 
     def _setup_service_request(self) -> None:
@@ -628,8 +616,8 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
             createdAt
         """
-        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
-        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
+        self.client_profile_1 = baker.make(ClientProfile)
+        self.client_profile_2 = baker.make(ClientProfile)
 
     def _setup_task(self) -> None:
         # Force login the case manager to create a task

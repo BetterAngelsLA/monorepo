@@ -347,7 +347,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             filters["authors"] = [self.user_map[label].pk for label in case_manager_labels]
 
         if client_label:
-            filters["client"] = getattr(self, client_label).pk
+            filters["clientProfile"] = getattr(self, client_label).pk
 
         if org_label:
             filters["organization"] = getattr(self, org_label).pk
