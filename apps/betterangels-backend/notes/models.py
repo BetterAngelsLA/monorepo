@@ -45,9 +45,6 @@ class ServiceRequest(BaseModel):  # type: ignore[django-manager-missing]
         blank=True,
         related_name="client_profile_service_requests",
     )
-    client = models.ForeignKey(
-        "accounts.User", on_delete=models.CASCADE, null=True, blank=True, related_name="client_service_requests"
-    )
     status = TextChoicesField(choices_enum=ServiceRequestStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
     completed_on = models.DateTimeField(null=True, blank=True)
@@ -101,7 +98,6 @@ class Task(BaseModel):  # type: ignore[django-manager-missing]
     client_profile = models.ForeignKey(
         "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_tasks"
     )
-    client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_tasks")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False, related_name="tasks")
 
     def __str__(self) -> str:
@@ -166,7 +162,6 @@ class Note(BaseModel):  # type: ignore[django-manager-missing]
     client_profile = models.ForeignKey(
         "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_notes"
     )
-    client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_notes")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     # This is the date & time displayed on the note. We don't want to use created_at
     # on the FE because the Note may not be created during the client interaction.
