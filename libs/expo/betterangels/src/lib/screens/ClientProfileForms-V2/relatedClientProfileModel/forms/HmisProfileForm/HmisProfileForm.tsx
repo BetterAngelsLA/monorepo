@@ -45,8 +45,7 @@ export function HmisProfileForm(props: TProps) {
   const {
     control,
     handleSubmit,
-    // formState: { errors, isValid: formIsValid },
-    formState: { errors },
+    formState: { errors, isValid: formIsValid },
     setError,
     setValue,
     clearErrors,
@@ -70,9 +69,9 @@ export function HmisProfileForm(props: TProps) {
   const onSubmit: SubmitHandler<THmisProfileFormState> = async (
     formState: any
   ) => {
-    // if (!formIsValid) {
-    //   return;
-    // }
+    if (!formIsValid) {
+      return;
+    }
 
     const validFormState = formState as Required<THmisProfileFormState>;
 
