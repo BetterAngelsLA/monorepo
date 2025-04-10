@@ -469,7 +469,6 @@ input CreateNoteInput {
   team: SelahTeamEnum
   publicDetails: String
   privateDetails: String
-  client: ID
   clientProfile: ID
   isSubmitted: Boolean
   interactedAt: DateTime
@@ -512,7 +511,6 @@ input CreateServiceRequestInput {
   service: ServiceEnum!
   status: ServiceRequestStatusEnum!
   serviceOther: String
-  client: ID
   clientProfile: ID
 }
 
@@ -522,7 +520,6 @@ input CreateTaskInput {
   title: String!
   status: TaskStatusEnum!
   dueBy: DateTime
-  client: ID
   clientProfile: ID
 }
 
@@ -956,7 +953,6 @@ type NoteDataImportType {
 }
 
 input NoteFilter {
-  client: ID
   clientProfile: ID
   createdBy: ID
   isSubmitted: Boolean
@@ -998,7 +994,6 @@ type NoteType {
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   publicDetails: String!
   isSubmitted: Boolean!
-  client: UserType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
@@ -1346,7 +1341,6 @@ type ServiceRequestType {
   status: ServiceRequestStatusEnum!
   dueBy: DateTime
   completedOn: DateTime
-  client: UserType
   clientProfile: ClientProfileType
   createdBy: UserType!
   createdAt: DateTime!
@@ -1571,7 +1565,6 @@ type TaskType {
   status: TaskStatusEnum!
   dueBy: DateTime
   dueByGroup: DueByGroupEnum!
-  client: UserType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
