@@ -11,6 +11,42 @@
         position: absolute;
     }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("HELLO HELLO HELLO HELLO HELLO HELLO HELLO");
+            Array.from(document.getElementsByClassName("s3file")).forEach(element => {
+                const bars = document.createElement('progress');
+                bars.setAttribute('value', 0);
+                bars.setAttribute('max', 100);
+                bars.setAttribute('id', "bar_for" + element.id);
+                element.parentNode.appendChild(bars);
+                element.addEventListener('progress', function (event) {
+                    // event.detail.progress is a value between 0 and 1
+                    console.log(event.detail.progress);
+                    var percent = Math.round(event.detail.progress * 100);
+                    bars.value = percent;
+                });
+            });
+            const bar = document.createElement('progress');
+            bar.setAttribute('value', 0);
+            bar.setAttribute('max', 100);
+            bar.setAttribute('id', "bar_for_save");
+            const form_prog = document.createElement('label');
+            form_prog.setAttribute('for', '_save');
+            form_prog.appendChild(bar);
+            form_prog.style.display = 'none';
+            document.querySelectorAll(".submit-row")[0].appendChild(form_prog);
+            var form = document.getElementsByTagName('form')[1];
+            console.log(form);
+            form.addEventListener('progress', function (event) {
+                // event.detail.progress is a value between 0 and 1
+                form_prog.style.display = 'block';
+                console.log(event.detail.progress);
+                var percent = Math.round(event.detail.progress * 100);
+                bar.value = percent;
+            });
+        });
+    </script>
     {{ block.super }}
 {% endblock %}
 {% block content_title %}
