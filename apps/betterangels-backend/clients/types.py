@@ -371,3 +371,10 @@ class ImportClientProfileInput:
     source_name: auto
     raw_data: auto
     client_profile: CreateClientProfileInput
+
+
+# Input for updating a client document
+@strawberry_django.input(Attachment, fields=["id", "original_filename"])
+class UpdateClientDocumentInput:
+    id: strawberry.ID
+    original_filename: str
