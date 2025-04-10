@@ -66,10 +66,12 @@ export function HmisProfileForm(props: TProps) {
 
   const isEditMode = !!relationId;
 
-  const onSubmit: SubmitHandler<THmisProfileFormState> = async (formState) => {
-    if (!formIsValid) {
-      return;
-    }
+  const onSubmit: SubmitHandler<THmisProfileFormState> = async (
+    formState: any
+  ) => {
+    // if (!formIsValid) {
+    //   return;
+    // }
 
     const validFormState = formState as Required<THmisProfileFormState>;
 
