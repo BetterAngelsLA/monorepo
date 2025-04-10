@@ -5,6 +5,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
+import { useSnackbar } from 'libs/expo/betterangels/src/lib/hooks';
 import { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import {
@@ -37,8 +38,10 @@ type TProps = {
 export function HmisProfileForm(props: TProps) {
   const { clientProfile, relationId } = props;
 
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
   const [updateHmisProfile] = useUpdateHmisProfileMutation();
   const [createHmisProfile] = useCreateHmisProfileMutation();
 
@@ -89,6 +92,9 @@ export function HmisProfileForm(props: TProps) {
       };
 
       const mutation = isEditMode ? updateHmisProfile : createHmisProfile;
+      const mutationKey = isEditMode
+        ? 'updateHmisProfile'
+        : 'createHmisProfile';
 
       const response = await mutation({
         ...mutationVariables,
@@ -109,15 +115,16 @@ export function HmisProfileForm(props: TProps) {
         throw new Error('Missing HMIS mutation response data');
       }
 
-      const uniquenessError = hasUniquenessError(
-        responseData,
-        isEditMode ? 'updateHmisProfile' : 'createHmisProfile'
-      );
+      const uniquenessError = hasUniquenessError(responseData, mutationKey);
 
       if (uniquenessError) {
         setError('hmisId', { type: 'manual', message: uniquenessError });
 
         return;
+      }
+
+      if (!isSuccessMutationResponse(responseData)) {
+        throw new Error('invalid response');
       }
 
       // refetch only on success
@@ -142,6 +149,11 @@ export function HmisProfileForm(props: TProps) {
       router.replace(returnRoute);
     } catch (error) {
       console.error('Error during mutation:', error);
+
+      showSnackbar({
+        message: 'Something went wrong. Please try again.',
+        type: 'error',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -206,6 +218,30 @@ export function HmisProfileForm(props: TProps) {
       )}
     </Form.Page>
   );
+}
+
+function isSuccessMutationResponse(
+  responseData: UpdateHmisProfileMutation | CreateHmisProfileMutation
+): boolean {
+  const modelTypename = 'HmisProfileType';
+
+  if ('updateHmisProfile' in responseData) {
+    const typename = responseData.updateHmisProfile.__typename;
+
+    if (typename === modelTypename) {
+      return true;
+    }
+  }
+
+  if ('createHmisProfile' in responseData) {
+    const typename = responseData.createHmisProfile.__typename;
+
+    if (typename === modelTypename) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function hasUniquenessError(
