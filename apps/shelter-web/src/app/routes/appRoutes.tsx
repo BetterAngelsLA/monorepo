@@ -1,4 +1,5 @@
 import { Link, RouteObject } from 'react-router-dom';
+import Gallery from '../pages/gallery/gallery';
 import { Home } from '../pages/home/home';
 import Shelter from '../pages/shelter/shelter';
 
@@ -10,6 +11,10 @@ export const routeChildren: RouteObject[] = [
   {
     path: '/shelter/:id',
     element: <Shelter />,
+  },
+  {
+    path: '/shelter/:id/gallery',
+    element: <Gallery />,
   },
   {
     path: '/page-2',

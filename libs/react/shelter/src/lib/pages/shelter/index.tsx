@@ -1,4 +1,5 @@
 import { Button, Card } from '@monorepo/react/components';
+import { useNavigate } from 'react-router-dom';
 import { useViewShelterQuery } from './__generated__/shelter.generated';
 import Actions from './Actions';
 import EcosystemInfo from './EcosystemInfo';
@@ -20,6 +21,8 @@ export default function ShelterPage({ id }: { id: string }) {
     },
   });
 
+  const navigate = useNavigate();
+
   if (loading) return null;
 
   const shelter = data?.shelter;
@@ -32,7 +35,12 @@ export default function ShelterPage({ id }: { id: string }) {
     <div className="w-full">
       <Header shelter={shelter} />
       <OperationHours />
-      <Button variant="secondary" size="sm" className="w-full">
+      <Button
+        onClick={() => navigate(`/shelter/${id}/gallery`)}
+        variant="secondary"
+        size="sm"
+        className="w-full"
+      >
         See all photos
       </Button>
       <Actions />
