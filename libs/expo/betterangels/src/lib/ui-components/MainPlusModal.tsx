@@ -7,7 +7,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useFeatureFlagActive } from '../hooks';
-import { FeatureFlags } from '../providers/featureControls/constants';
+import { FeatureFlags } from '../providers';
 import MainModal from './MainModal';
 
 interface IMainPlusModalProps {

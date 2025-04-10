@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useGetFeatureControlsQuery } from './__generated__/featureControls.generated';
 import { FeatureControlContext } from './featureControlContext';
-import { FeatureControlDictionary, FeatureControlGroups } from './interfaces';
+import { FeatureControlDictionary, FeatureControlGroups } from './types';
 
 interface FeatureControlProviderProps {
   children: React.ReactNode;

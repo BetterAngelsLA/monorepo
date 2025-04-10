@@ -1,6 +1,6 @@
-import { createContext, useContext } from 'react';
+import { createContext } from 'react';
 import { useGetFeatureControlsQuery } from './__generated__/featureControls.generated';
-import { FeatureControlGroups } from './interfaces';
+import { FeatureControlGroups } from './types';
 
 export interface TFeatureControlContext extends FeatureControlGroups {
   clearFeatureFlags: () => void;
@@ -10,13 +10,3 @@ export interface TFeatureControlContext extends FeatureControlGroups {
 export const FeatureControlContext = createContext<
   TFeatureControlContext | undefined
 >(undefined);
-
-export const useFeatureControls = (): TFeatureControlContext => {
-  const context = useContext(FeatureControlContext);
-  if (context === undefined) {
-    throw new Error(
-      'useFeatureControls must be used within a FeatureControlProvider'
-    );
-  }
-  return context;
-};
