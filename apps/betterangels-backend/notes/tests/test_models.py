@@ -24,52 +24,6 @@ class NoteModelTestCase(TestCase):
             organization=self.organization,
         )
 
-    def test_label_with_client(self) -> None:
-        # Note with client
-        self.assertEqual(
-            self.note.label_with_client, f"Note {self.note.id}: Session with Dale (with Dale Cooper 2024-03-11)"
-        )
-
-        # Note without Client name
-        self.client_user.first_name = None
-        self.client_user.last_name = None
-        self.client_user.save()
-        self.assertEqual(
-            self.note.label_with_client,
-            f"Note {self.note.id}: Session with Dale (with {self.client_user.id} 2024-03-11)",
-        )
-
-        # Note without Client
-        self.note.client = None
-        self.note.save()
-
-        self.assertEqual(
-            self.note.label_with_client, f"Note {self.note.id}: Session with Dale (with Client 2024-03-11)"
-        )
-
-    def test_label_with_created_by(self) -> None:
-        # Note with Case Manager
-        self.assertEqual(
-            self.note.label_with_created_by, f"Note {self.note.id}: Session with Dale (by Harry Truman 2024-03-11)"
-        )
-
-        # Note without Case Manager name
-        self.created_by_user.first_name = None
-        self.created_by_user.last_name = None
-        self.created_by_user.save()
-        self.assertEqual(
-            self.note.label_with_created_by,
-            f"Note {self.note.id}: Session with Dale (by {self.created_by_user.id} 2024-03-11)",
-        )
-
-        # Note without Case Manager
-        self.note.created_by = None
-        self.note.save()
-
-        self.assertEqual(
-            self.note.label_with_created_by, f"Note {self.note.id}: Session with Dale (by Case Manager 2024-03-11)"
-        )
-
 
 class ServiceRequestModelTestCase(TestCase):
     def setUp(self) -> None:
