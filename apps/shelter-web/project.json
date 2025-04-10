@@ -24,6 +24,7 @@
     },
     "build": {
       "executor": "@nx/vite:build",
+      "dependsOn": ["set-env"],
       "options": {
         "outputPath": "dist/apps/shelter-web",
         "configFile": "apps/shelter-web/vite.config.mts"
