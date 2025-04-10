@@ -55,6 +55,7 @@ export function Input(props: IInputProps) {
     value,
     onDelete,
     autoCorrect = false,
+    autoCapitalize = 'none',
     borderRadius = Radiuses.xs,
     errorMessage,
     style,
@@ -111,6 +112,7 @@ export function Input(props: IInputProps) {
           ]}
           editable={!disabled}
           autoCorrect={autoCorrect}
+          autoCapitalize={autoCapitalize}
           {...rest}
           value={value}
         />
