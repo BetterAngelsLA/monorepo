@@ -1,6 +1,7 @@
 import {
   DeleteIcon,
   DownloadIcon,
+  EditIcon,
   ViewIcon,
 } from '@monorepo/expo/shared/icons';
 import { DeleteModal } from '@monorepo/expo/shared/ui-components';
@@ -109,6 +110,11 @@ export default function DocumentModal(props: IDocumentModalProps) {
     {
       title: `View this ${fileTypeText}`,
       Icon: ViewIcon,
+      route: `/file/${document?.id}`,
+    },
+    {
+      title: `Edit the file name`,
+      Icon: EditIcon,
       route: `/file/${document?.id}`,
     },
     {
