@@ -7,14 +7,15 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { ReactElement } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { ClientProfileCardEnum, ClientProfileCardTitles } from './constants';
+import { ClientProfileSectionEnum } from '../../../screenRouting';
+import { ClientProfileCardTitles } from './constants';
 
 type TProps = {
-  card: ClientProfileCardEnum;
-  openCard: ClientProfileCardEnum | null;
+  card: ClientProfileSectionEnum;
+  openCard: ClientProfileSectionEnum | null;
   children: ReactElement;
-  onOpenCloseClick: (card: ClientProfileCardEnum) => void;
-  onEditClick: (card: ClientProfileCardEnum) => void;
+  onOpenCloseClick: (card: ClientProfileSectionEnum) => void;
+  onEditClick: (card: ClientProfileSectionEnum) => void;
 };
 
 export function ExpandableProfileContainer(props: TProps) {
@@ -39,7 +40,7 @@ export function ExpandableProfileContainer(props: TProps) {
 }
 
 type THeader = {
-  card: ClientProfileCardEnum;
+  card: ClientProfileSectionEnum;
   isOpen?: boolean;
   onOpenCloseClick: () => void;
   onEditClick: () => void;
