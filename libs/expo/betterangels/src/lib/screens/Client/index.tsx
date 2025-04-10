@@ -18,10 +18,10 @@ import {
 import { Pressable, View } from 'react-native';
 import { useFeatureFlagActive } from '../../hooks';
 import { FeatureFlags } from '../../providers/featureControls/constants';
+import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
 import ClientProfileView from './ClientProfile_V2';
-import { ClientProfileCardEnum } from './ClientProfile_V2/constants';
 import ClientTabs from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
@@ -43,7 +43,7 @@ const getTabComponent = (
   client: ClientProfileQuery | undefined,
   clientRedesignFeatureOn: boolean,
   profileRef?: RefObject<ProfileRef>,
-  openCard?: ClientProfileCardEnum
+  openCard?: ClientProfileSectionEnum
 ): ReactElement | null => {
   const components: {
     [key: string]: ForwardRefExoticComponent<any> | ComponentType<any>;
@@ -79,7 +79,7 @@ export default function Client({
 }: {
   id: string;
   arrivedFrom?: string;
-  openCard?: ClientProfileCardEnum;
+  openCard?: ClientProfileSectionEnum;
 }) {
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
   const [tab, setTab] = useState('Profile');
