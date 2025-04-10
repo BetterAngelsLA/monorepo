@@ -5,7 +5,6 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { useSnackbar } from 'libs/expo/betterangels/src/lib/hooks';
 import { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import {
@@ -13,6 +12,7 @@ import {
   extractOperationInfo,
 } from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
+import { useSnackbar } from '../../../../../hooks';
 import {
   ClientProfileSectionEnum,
   getViewClientProfileRoute,
