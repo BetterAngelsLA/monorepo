@@ -3,6 +3,7 @@ from typing import Any
 from unittest.mock import ANY
 
 from accounts.tests.baker_recipes import organization_recipe
+from django.contrib.gis.geos import Polygon
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery.recipe import seq
@@ -380,6 +381,48 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         result_shelter_ids = [r["id"] for r in results]
         # s1 is ~27 miles away from the reference point, so it was not included in the response payload
         self.assertEqual(result_shelter_ids, [str(s3.pk), str(s2.pk)])
+
+    def test_shelter_polygon_filter(self) -> None:
+        reference_point = {
+            "latitude": -2,
+            "longitude": -2,
+        }
+
+        _, s2, s3, s4, _ = [
+            Shelter.objects.create(
+                location=Places(
+                    place=f"place {i}",
+                    # Each subsequent shelter is one degree further from the reference point
+                    latitude=f"{reference_point["latitude"] + i}",
+                    longitude=f"{reference_point["longitude"] + i}",
+                )
+            )
+            for i in range(0, 10, 2)
+        ]
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {}
+        filters["bounds"] = [[[0.0, 0.0], [0.0, 5.0], [5.0, 5.0], [5.0, 0.0], [0.0, 0.0]]]
+
+        expected_query_count = 3
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        result_ids = {s["id"] for s in response["data"]["shelters"]["results"]}
+        expected_ids = {str(s.id) for s in [s2, s3, s4]}
+
+        self.assertEqual(len(result_ids), 3)
+        self.assertEqual(result_ids, expected_ids)
 
     @parametrize(
         "property_filters, expected_result_count",

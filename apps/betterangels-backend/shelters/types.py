@@ -50,12 +50,9 @@ from shelters.models import (
     ShelterProgram,
 )
 from shelters.models import ShelterType as ShelterKind
-from shelters.models import (
-    SpecialSituationRestriction,
-    Storage,
-    TrainingService,
-)
+from shelters.models import SpecialSituationRestriction, Storage, TrainingService
 from strawberry import ID, asdict, auto
+from strawberry_django.fields.types import Polygon
 
 
 @strawberry_django.type(ContactInfo)
@@ -194,6 +191,19 @@ class ShelterFilter:
         filters = {f"{k}__name__in": v for k, v in value_dict.items() if v is not None}
 
         return queryset.filter(**filters).distinct(), Q()
+
+    @strawberry_django.filter_field
+    def bounds(
+        self,
+        queryset: QuerySet,
+        value: Optional[Polygon],
+        prefix: str,
+    ) -> Tuple[QuerySet[Shelter], Q]:
+        if not value:
+            return queryset, Q()
+
+        queryset = queryset.filter(geolocation__contained=value)
+        return queryset, Q()
 
     @strawberry_django.filter_field
     def geolocation(

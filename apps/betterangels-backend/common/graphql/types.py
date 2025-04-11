@@ -4,6 +4,7 @@ from typing import NewType, Optional
 import strawberry
 import strawberry_django
 from common.models import Address, Attachment, Location, PhoneNumber
+from django.contrib.gis.geos import LinearRing, Polygon
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from strawberry import ID, auto
 
@@ -12,6 +13,13 @@ PhoneNumberScalar: DjangoPhoneNumber | str = strawberry.scalar(
     serialize=lambda v: str(v.national_number),
     parse_value=lambda v: str(v.strip()) if v.strip() else None,
 )
+
+# PolygonScalar = strawberry.scalar(
+#     NewType("PolygonScalar", tuple[tuple[float, float], ...]),
+#     serialize=lambda v: v.tuple if isinstance(v, Polygon) else v,
+#     parse_value=lambda v: Polygon(*[LinearRing(x) for x in v]),
+#     description="A geographical object that gets 1 or 2 LinearRing objects as external and internal rings.",
+# )
 
 NonBlankString = strawberry.scalar(
     NewType("NonBlankString", str),
