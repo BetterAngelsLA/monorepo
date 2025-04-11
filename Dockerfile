@@ -98,6 +98,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       build-essential \
       curl \
       git \
+      jq \
       wget \
       zip \
     # Install Python Lib Requirements

@@ -9,13 +9,13 @@ const SERVER_PORT = 8200;
 const SERVER_PORT_PREVIEW = 8201;
 
 export default defineConfig({
-  base: process.env.APP_BASE_PATH || '/',
+  base: process.env.VITE_APP_BASE_PATH || '/',
   root: __dirname,
   cacheDir: '../../node_modules/.vite/apps/wildfires',
 
   define: {
     'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(
-      process.env.APP_BASE_PATH || '/'
+      process.env.VITE_APP_BASE_PATH || '/'
     ),
   },
 

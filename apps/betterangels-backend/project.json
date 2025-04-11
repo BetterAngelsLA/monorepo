@@ -25,7 +25,13 @@
       "options": {}
     },
     "deploy": {
-      "command": "tools/deploy/ecs_deploy.sh"
+      "command": "tools/deploy/ecs_deploy.sh",
+      "configurations": {
+        "production": {},
+        "preview": {
+          "command": "echo 'Skipping deploy'"
+        }
+      }
     },
     "makemigrations": {
       "executor": "@nxlv/python:run-commands",
