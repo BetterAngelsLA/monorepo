@@ -1,4 +1,4 @@
-export const FeatureFlags = {
+export const FeatureFlag = {
   PROFILE_REDESIGN_FF: 'ffClientProfileRedesign',
   CLIENT_DEDUPE_FF: 'ffClientDedupe',
   APP_UPDATE_PROMPT_FF: 'ffAppUpdatePrompt',

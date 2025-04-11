@@ -1,9 +1,7 @@
 import { useContext } from 'react';
 import { FeatureControlContext, TFeatureFlagValue } from '../../providers';
 
-export default function useFeatureFlagActive(
-  flagName: TFeatureFlagValue
-): boolean {
+export function useFeatureFlagActive(flagName: TFeatureFlagValue): boolean {
   const context = useContext(FeatureControlContext);
 
   if (!context) {

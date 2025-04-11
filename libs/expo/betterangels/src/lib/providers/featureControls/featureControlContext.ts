@@ -1,8 +1,10 @@
 import { createContext } from 'react';
 import { useGetFeatureControlsQuery } from './__generated__/featureControls.generated';
-import { FeatureControlGroups } from './types';
+import { TFeatureControlGroup } from './types';
 
-export interface TFeatureControlContext extends FeatureControlGroups {
+export const BYE = 'bye';
+
+export interface TFeatureControlContext extends TFeatureControlGroup {
   clearFeatureFlags: () => void;
   refetchFeatureFlags: ReturnType<typeof useGetFeatureControlsQuery>['refetch'];
 }

@@ -12,5 +12,6 @@
     "src/**/*.spec.ts",
     "src/**/*.test.ts",
     "src/lib/apollo/gql"
+    // "test-setup.ts"
   ]
 }

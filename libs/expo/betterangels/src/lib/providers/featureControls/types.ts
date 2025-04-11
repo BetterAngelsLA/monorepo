@@ -1,14 +1,27 @@
-import { FeatureFlags } from './constants';
+import { FeatureFlag } from './constants';
 
-export type TFeatureFlagKey = keyof typeof FeatureFlags;
-export type TFeatureFlagValue = (typeof FeatureFlags)[TFeatureFlagKey];
+export type TFeatureFlagKey = keyof typeof FeatureFlag;
+export type TFeatureFlagValue = (typeof FeatureFlag)[TFeatureFlagKey];
 
-export interface FeatureControlDictionary {
-  [key: string]: { isActive: boolean; lastModified?: string | null };
-}
+export type TFeatureData = {
+  isActive: boolean;
+  lastModified?: Date;
+};
 
-export interface FeatureControlGroups {
-  flags: FeatureControlDictionary;
-  switches: FeatureControlDictionary;
-  samples: FeatureControlDictionary;
-}
+export type TControlInput = {
+  name: string;
+  isActive?: boolean | null;
+  lastModified?: Date;
+};
+
+export type TFeatureControls = Record<TFeatureFlagValue, TFeatureData>;
+
+export type TFeatureControlGroup = {
+  flags: TFeatureControls | {};
+  switches: TFeatureControls | {};
+  samples: TFeatureControls | {};
+};
+
+export type TFeatureControlMapKey = 'flags' | 'samples' | 'switches';
+
+export type TFeatureControlMap = Record<TFeatureControlMapKey, TFeatureData>;
