@@ -2,27 +2,10 @@ from datetime import datetime, timedelta, timezone
 
 import time_machine
 from accounts.models import User
-from accounts.tests.baker_recipes import organization_recipe
 from django.test import TestCase
 from model_bakery import baker
 from notes.enums import DueByGroupEnum, ServiceEnum, ServiceRequestStatusEnum
 from notes.models import Note, ServiceRequest, Task
-
-
-class NoteModelTestCase(TestCase):
-    @time_machine.travel("03-11-2024 10:11:12", tick=False)
-    def setUp(self) -> None:
-        self.organization = organization_recipe.make()
-        self.client_user: User = baker.make(User, first_name="Dale", last_name="Cooper")
-        self.created_by_user: User = baker.make(User, first_name="Harry", last_name="Truman")
-        self.note = baker.make(
-            Note,
-            purpose="Session with Dale",
-            interacted_at=datetime.now(),
-            client=self.client_user,
-            created_by=self.created_by_user,
-            organization=self.organization,
-        )
 
 
 class ServiceRequestModelTestCase(TestCase):

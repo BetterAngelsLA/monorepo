@@ -506,7 +506,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
 
-        baker.make(User, first_name="Alex", last_name="Johnson"),
+        baker.make(User, first_name="Alex", last_name="Johnson")
 
         test_user_map = {
             "interaction_author": baker.make(User, first_name="Alexa", last_name="Danvers", middle_name="J."),

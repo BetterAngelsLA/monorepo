@@ -1,6 +1,5 @@
 from typing import Any, Dict
 
-from accounts.models import User
 from clients.models import ClientProfile
 from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase

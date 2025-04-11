@@ -2,7 +2,6 @@ from typing import Any, Optional
 
 import strawberry
 from clients.enums import ErrorCodeEnum, HmisAgencyEnum
-from clients.models import ClientProfile
 from clients.schema import (
     validate_california_id,
     validate_contacts,
