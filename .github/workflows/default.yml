@@ -96,6 +96,14 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
         if: ${{ env.BRANCH_NAME == 'main' }}
 
+      - name: Simulate Policy
+        run: |
+          aws iam simulate-principal-policy \
+          --policy-source-arn arn:aws:iam::174477281453:role/github-actions-oidc-role \
+          --action-names sts:AssumeRole \
+          --resource-arns arn:aws:iam::784154756963:role/github-actions-deploy \
+          --output text
+
       - name: Check assume role
         run: |
           aws sts assume-role   --role-arn arn:aws:iam::784154756963:role/github-actions-deploy   --role-session-name debug-run   --debug
