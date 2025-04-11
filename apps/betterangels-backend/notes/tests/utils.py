@@ -14,9 +14,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
         self.note_fields = """
             id
-            client {
-                id
-            }
             clientProfile {
                 id
             }
@@ -76,8 +73,9 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 status
             }
         """
-        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
-        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
+
+        self.client_profile_1 = baker.make(ClientProfile, first_name="Dale", last_name="Cooper")
+        self.client_profile_2 = baker.make(ClientProfile, first_name="Harry", last_name="Truman")
         self._setup_note()
         self._setup_note_tasks()
         self._setup_location()
@@ -89,9 +87,8 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.note = self._create_note_fixture(
             {
-                "purpose": f"Session with {self.client_user_1.full_name}",
-                "publicDetails": f"{self.client_user_1.full_name}'s public details",
-                "client": self.client_user_1.pk,
+                "purpose": f"Session with {self.client_profile_1.full_name}",
+                "publicDetails": f"{self.client_profile_1.full_name}'s public details",
                 "clientProfile": self.client_profile_1.pk,
             },
         )["data"]["createNote"]
@@ -343,9 +340,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         status
                         dueBy
                         dueByGroup
-                        client {
-                            id
-                        }
                         clientProfile {
                             id
                         }
@@ -377,9 +371,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         status
                         dueBy
                         completedOn
-                        client {
-                            id
-                        }
                         clientProfile {
                             id
                         }
@@ -466,9 +457,6 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
                         status
                         dueBy
                         completedOn
-                        client {{
-                            id
-                        }}
                         createdBy {{
                             id
                         }}
@@ -483,8 +471,9 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
 class ServiceRequestGraphQLBaseTestCase(GraphQLBaseTestCase, ServiceRequestGraphQLUtilMixin):
     def setUp(self) -> None:
         super().setUp()
-        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
-        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
+
+        self.client_profile_1 = baker.make(ClientProfile)
+        self.client_profile_2 = baker.make(ClientProfile)
         self._setup_service_request()
 
     def _setup_service_request(self) -> None:
@@ -537,9 +526,6 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
                         status
                         dueBy
                         dueByGroup
-                        client {{
-                            id
-                        }}
                         createdBy {{
                             id
                         }}
@@ -624,16 +610,13 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             status
             dueBy
             dueByGroup
-            client {
-                id
-            }
             createdBy {
                 id
             }
             createdAt
         """
-        self.client_profile_1 = baker.make(ClientProfile, user=self.client_user_1)
-        self.client_profile_2 = baker.make(ClientProfile, user=self.client_user_2)
+        self.client_profile_1 = baker.make(ClientProfile)
+        self.client_profile_2 = baker.make(ClientProfile)
 
     def _setup_task(self) -> None:
         # Force login the case manager to create a task
