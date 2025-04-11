@@ -96,9 +96,13 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
         if: ${{ env.BRANCH_NAME == 'main' }}
 
-      - name: 🔄 Spin up monorepo environment
+      - name: Check assume role
         run: |
-          docker compose up -d
+          aws sts assume-role   --role-arn arn:aws:iam::784154756963:role/github-actions-deploy   --role-session-name debug-run   --debug
+
+      # - name: 🔄 Spin up monorepo environment
+      #   run: |
+      #     docker compose up -d
 
       # - name: 🧹 Lint
       #   run: |
@@ -168,28 +172,28 @@ jobs:
       #     yarn nx affected -t test
       #     EOF
 
-      - name: 🛠️ Build and Push Artifacts
-        if: ${{ env.BRANCH_NAME == 'main' }}
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t build --exclude=^betterangels$,^shelter$
-          EOF
-        env:
-          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
-          INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: 🛠️ Build and Push Artifacts
+      #   if: ${{ env.BRANCH_NAME == 'main' }}
+      #   run: |
+      #     docker compose run better-angels bash <<'EOF'
+      #     # Exclude Betterangels Frontend Given its CI is not setup yet
+      #     yarn nx affected -t build --exclude=^betterangels$,^shelter$
+      #     EOF
+      #   env:
+      #     AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+      #     INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🏗️ Push Monorepo Docker image
-        if: ${{ env.BRANCH_NAME == 'main' }}
-        run: |
-          docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
+      # - name: 🏗️ Push Monorepo Docker image
+      #   if: ${{ env.BRANCH_NAME == 'main' }}
+      #   run: |
+      #     docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
-      - name: 🚀 Deploy Changes
-        run: |
-          docker compose run better-angels bash <<'EOF'
-          # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t deploy --exclude=^betterangels$,^shelter$,^nginx$ --configuration preview
-          EOF
+      # - name: 🚀 Deploy Changes
+      #   run: |
+      #     docker compose run better-angels bash <<'EOF'
+      #     # Exclude Betterangels Frontend Given its CI is not setup yet
+      #     yarn nx affected -t deploy --exclude=^betterangels$,^shelter$,^nginx$ --configuration preview
+      #     EOF
 
       - name: ⏹️ Spin down monorepo environment
         if: always()
