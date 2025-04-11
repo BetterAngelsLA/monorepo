@@ -9,8 +9,14 @@ if (!project) {
   process.exit(1);
 }
 
-// Get the current git branch name, used if in non-production mode.
 function getBranchName() {
+  // Use the CI-provided env var if available
+  const branchFromEnv = process.env.BRANCH_NAME;
+  if (branchFromEnv) {
+    return branchFromEnv.replace(/\//g, '-');
+  }
+
+  // Fallback to Git for local use
   try {
     const branch = execSync('git rev-parse --abbrev-ref HEAD')
       .toString()
