@@ -6,7 +6,7 @@ import {
   TMarginProps,
   getMarginStyles,
 } from '@monorepo/expo/shared/static';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -17,7 +17,7 @@ import {
 import TextOrNode from '../TextOrNode';
 
 interface IExpandableContainer extends TMarginProps {
-  onClick?: () => void;
+  onClick?: (newOpen: boolean) => void;
   isOpen?: boolean;
   title?: string | ReactNode;
   icon?: ReactNode;
@@ -45,31 +45,45 @@ export function ExpandableContainer(props: IExpandableContainer) {
     onClick,
   } = props;
 
+  const [expanded, setExpanded] = useState<boolean>(!!isOpen);
+
+  useEffect(() => {
+    setExpanded(!!isOpen);
+  }, [isOpen]);
+
   const accessibilityHintTitle = typeof title === 'string' ? title : 'section';
 
-  const accessibilityHintText = isOpen
+  const accessibilityHintText = expanded
     ? `close ${accessibilityHintTitle}`
     : `open ${accessibilityHintTitle}`;
 
+  function onExpandCollapse() {
+    const newExpanded = !expanded;
+
+    setExpanded(newExpanded);
+
+    onClick && onClick(newExpanded);
+  }
+
   return (
     <View style={[styles.container, getMarginStyles(props), style]}>
-      <Pressable
-        onPress={onClick}
-        disabled={disabled}
-        accessible
-        accessibilityRole="button"
-        accessibilityHint={accessibilityHintText}
-        style={({ pressed }) => [
-          {
-            backgroundColor: pressed ? bgPressed : undefined,
-            maxWidth: '100%',
-            width: '100%',
-            display: 'flex',
-          },
-        ]}
-      >
-        {header}
-        {!header && (
+      {header && header}
+      {!header && (
+        <Pressable
+          onPress={onExpandCollapse}
+          disabled={disabled}
+          accessible
+          accessibilityRole="button"
+          accessibilityHint={accessibilityHintText}
+          style={({ pressed }) => [
+            {
+              backgroundColor: pressed ? bgPressed : undefined,
+              maxWidth: '100%',
+              width: '100%',
+              display: 'flex',
+            },
+          ]}
+        >
           <View style={[styles.headerView, stylesHeader]}>
             <TextOrNode textStyle={[styles.stylesTitleText, stylesTitleText]}>
               {title}
@@ -77,12 +91,15 @@ export function ExpandableContainer(props: IExpandableContainer) {
 
             {icon}
             {!icon && (
-              <ChevronLeftIcon size="sm" rotate={isOpen ? '90deg' : '-90deg'} />
+              <ChevronLeftIcon
+                size="sm"
+                rotate={expanded ? '90deg' : '-90deg'}
+              />
             )}
           </View>
-        )}
-      </Pressable>
-      {isOpen && <View>{children}</View>}
+        </Pressable>
+      )}
+      {expanded && <View>{children}</View>}
     </View>
   );
 }
@@ -95,7 +112,6 @@ const styles = StyleSheet.create({
   headerView: {
     justifyContent: 'space-between',
     flexDirection: 'row',
-    paddingHorizontal: Spacings.xs,
     paddingVertical: Spacings.sm,
     alignItems: 'center',
   },
