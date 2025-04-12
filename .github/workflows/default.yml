@@ -186,10 +186,16 @@ jobs:
 
       - name: 🚀 Deploy Changes
         run: |
-          docker compose run better-angels bash <<'EOF'
-          # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t deploy --exclude=^betterangels$,^shelter$,^nginx$ --configuration preview
-          EOF
+
+      - name: 💬 Post preview link to PR
+        if: github.event_name == 'pull_request'
+        run: |
+          yarn nx affected -t post-pr-preview
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
 
       - name: ⏹️ Spin down monorepo environment
         if: always()
