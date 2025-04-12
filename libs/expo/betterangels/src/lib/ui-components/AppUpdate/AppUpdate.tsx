@@ -49,6 +49,7 @@ export function AppUpdate() {
 
       setUpdateStatus(newUpdateStatus);
     } catch (e) {
+      alert(e);
       console.log(e);
     }
   };
