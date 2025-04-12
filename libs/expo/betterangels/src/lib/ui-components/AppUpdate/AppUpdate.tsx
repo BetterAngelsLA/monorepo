@@ -68,7 +68,16 @@ export function AppUpdate() {
   // const storedEnv = await AsyncStorage.getItem('currentEnvironment');
 
   return (
-    <View style={{ marginTop: 48, padding: 16, gap: 16 }}>
+    <View
+      style={{
+        marginTop: 48,
+        padding: 16,
+        gap: 16,
+        borderWidth: 1,
+        borderColor: 'purple',
+        minHeight: 200,
+      }}
+    >
       <KeyboardAwareScrollView>
         <TextRegular>isLocalEnv: {String(isLocalEnv)}</TextRegular>
         <TextRegular>
