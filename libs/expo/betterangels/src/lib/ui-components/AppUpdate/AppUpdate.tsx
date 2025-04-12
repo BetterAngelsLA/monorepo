@@ -10,6 +10,9 @@ const isLocalEnv = process.env.NODE_ENV === 'development';
 export function AppUpdate() {
   const updatesChannel = Updates.channel;
 
+  const { currentlyRunning, isUpdateAvailable, isUpdatePending } =
+    Updates.useUpdates();
+
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [becameActive, setBecameActive] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<
@@ -70,7 +73,10 @@ export function AppUpdate() {
       <TextRegular>movedToForeground : {String(becameActive)}</TextRegular>
       <TextRegular>updateStatus</TextRegular>
       <TextRegular>{JSON.stringify(updateStatus)}</TextRegular>
-      <TextRegular>updateAvailable : {String(updateAvailable)}</TextRegular>
+      <TextRegular>my updateAvailable : {String(updateAvailable)}</TextRegular>
+      <TextRegular>currentlyRunning : {String(currentlyRunning)}</TextRegular>
+      <TextRegular>isUpdateAvailable : {String(isUpdateAvailable)}</TextRegular>
+      <TextRegular>isUpdatePending : {String(isUpdatePending)}</TextRegular>
     </View>
   );
 }
