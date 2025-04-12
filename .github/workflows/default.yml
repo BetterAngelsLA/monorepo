@@ -192,10 +192,6 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           yarn nx affected -t post-pr-preview
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_EVENT_PATH: ${{ github.event_path }}
 
       - name: ⏹️ Spin down monorepo environment
         if: always()
