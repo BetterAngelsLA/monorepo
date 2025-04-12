@@ -1,4 +1,7 @@
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  KeyboardAwareScrollView,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import * as Updates from 'expo-updates';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -66,28 +69,38 @@ export function AppUpdate() {
 
   return (
     <View style={{ marginTop: 48, padding: 16, gap: 16 }}>
-      <TextRegular>isLocalEnv: {String(isLocalEnv)}</TextRegular>
-      <TextRegular>featureFlagActive: {String(featureFlagActive)}</TextRegular>
-      <TextRegular>updatesChannel: {updatesChannel}</TextRegular>
-      <TextRegular>__DEV__ : {__DEV__}</TextRegular>
-      <TextRegular>movedToForeground : {String(becameActive)}</TextRegular>
-      <TextRegular>updateStatus</TextRegular>
-      <TextRegular>{JSON.stringify(updateStatus)}</TextRegular>
-      <TextRegular>my updateAvailable : {String(updateAvailable)}</TextRegular>
-      <TextRegular>
-        currentlyRunning : {JSON.stringify(currentlyRunning)}
-      </TextRegular>
-      <TextRegular>isUpdateAvailable : {String(isUpdateAvailable)}</TextRegular>
-      <TextRegular>isUpdatePending : {String(isUpdatePending)}</TextRegular>
-      <TextRegular>--- Updates constants ---</TextRegular>
-      <TextRegular>Updates.isEnabled : {String(Updates.isEnabled)}</TextRegular>
-      <TextRegular>Updates.channel : {Updates.channel}</TextRegular>
-      <TextRegular>
-        Updates.checkAutomatically : {Updates.checkAutomatically}
-      </TextRegular>
-      <TextRegular>
-        Updates.isEmbeddedLaunch : {Updates.isEmbeddedLaunch}
-      </TextRegular>
+      <KeyboardAwareScrollView>
+        <TextRegular>isLocalEnv: {String(isLocalEnv)}</TextRegular>
+        <TextRegular>
+          featureFlagActive: {String(featureFlagActive)}
+        </TextRegular>
+        <TextRegular>updatesChannel: {updatesChannel}</TextRegular>
+        <TextRegular>__DEV__ : {__DEV__}</TextRegular>
+        <TextRegular>movedToForeground : {String(becameActive)}</TextRegular>
+        <TextRegular>updateStatus</TextRegular>
+        <TextRegular>{JSON.stringify(updateStatus)}</TextRegular>
+        <TextRegular>
+          my updateAvailable : {String(updateAvailable)}
+        </TextRegular>
+        <TextRegular>
+          currentlyRunning : {JSON.stringify(currentlyRunning, null, 2)}
+        </TextRegular>
+        <TextRegular>
+          isUpdateAvailable : {String(isUpdateAvailable)}
+        </TextRegular>
+        <TextRegular>isUpdatePending : {String(isUpdatePending)}</TextRegular>
+        <TextRegular>--- Updates constants ---</TextRegular>
+        <TextRegular>
+          Updates.isEnabled : {String(Updates.isEnabled)}
+        </TextRegular>
+        <TextRegular>Updates.channel : {Updates.channel}</TextRegular>
+        <TextRegular>
+          Updates.checkAutomatically : {Updates.checkAutomatically}
+        </TextRegular>
+        <TextRegular>
+          Updates.isEmbeddedLaunch : {Updates.isEmbeddedLaunch}
+        </TextRegular>
+      </KeyboardAwareScrollView>
     </View>
   );
 }
