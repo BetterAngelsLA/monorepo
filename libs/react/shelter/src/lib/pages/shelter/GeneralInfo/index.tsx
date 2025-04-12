@@ -1,11 +1,13 @@
 import { Card } from '@monorepo/react/components';
 import {
+  BedIcon,
   CallIcon,
   EmailIcon,
   GlobeIcon,
   InstagramIcon,
   LocationIcon,
 } from '@monorepo/react/icons';
+import parsePhoneNumber from 'libphonenumber-js';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
 import GeneralServices from './GeneralServices';
 
@@ -26,7 +28,7 @@ export default function GeneralInfo({
       icon: <InstagramIcon className="h-6 w-6 fill-primary-20" />,
     },
     {
-      label: shelter?.phone,
+      label: parsePhoneNumber(shelter?.phone ?? "", 'US')?.formatNational(),
       key: 'phone',
       icon: <CallIcon className="h-6 w-6 fill-primary-20" />,
     },
@@ -45,8 +47,9 @@ export default function GeneralInfo({
     <Card px="px-0" pb="pb-0">
       <div className="gap-2 flex flex-col px-6">
         {shelter.totalBeds && (
-          <div>
+          <div className="flex items-center justify-between gap-1">
             <p>{shelter.totalBeds} beds available</p>
+            <BedIcon className="h-6 w-6 fill-primary-20" />
           </div>
         )}
 

@@ -5,6 +5,7 @@ import { MaxWLayout } from '../../layout/maxWLayout';
 import { locationAtom } from '../../shared/atoms/locationAtom';
 import { modalAtom } from '../../shared/atoms/modalAtom';
 import { sheltersAtom } from '../../shared/atoms/sheltersAtom';
+import { LA_COUNTY_CENTER } from '../../shared/components/map/constants.maps';
 import { Map } from '../../shared/components/map/map';
 import { TLatLng, TMarker } from '../../shared/components/map/types.maps';
 import {
@@ -19,6 +20,7 @@ export function Home() {
   const [shelters] = useAtom(sheltersAtom);
   const [_modal, setModal] = useAtom(modalAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
+  const [defaultCenter, setDefaultCenter] = useState<TLatLng>();
 
   useEffect(() => {
     const markers = shelters
@@ -60,10 +62,25 @@ export function Home() {
     });
   }
 
+  useEffect(() => {
+    const savedCenter = sessionStorage.getItem('mapCenter');
+
+    if (savedCenter) {
+      const { lat, lng } = JSON.parse(savedCenter);
+      setDefaultCenter({
+        latitude: lat,
+        longitude: lng,
+      });
+    } else {
+      setDefaultCenter(LA_COUNTY_CENTER);
+    }
+  }, []);
+
   return (
     <>
       <MaxWLayout className="-mx-4">
         <Map
+          defaultCenter={defaultCenter}
           className="h-[70vh] md:h-80"
           mapId={SHELTERS_MAP_ID}
           markers={shelterMarkers}

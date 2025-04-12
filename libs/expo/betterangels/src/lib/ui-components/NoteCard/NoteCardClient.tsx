@@ -12,7 +12,7 @@ interface INoteCardClientProps {
 
 export default function NoteCardClient(props: INoteCardClientProps) {
   const { clientProfile, createdBy, isOnInteractionsPage, isSubmitted } = props;
-  const displayDetails = isOnInteractionsPage ? createdBy : clientProfile;
+  const displayDetails = isOnInteractionsPage ? clientProfile : createdBy;
 
   return (
     <View
