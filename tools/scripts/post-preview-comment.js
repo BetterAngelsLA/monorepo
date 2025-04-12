@@ -1,12 +1,23 @@
 import fs from 'fs';
 import fetch from 'node-fetch';
 
-const { GITHUB_TOKEN, GITHUB_REPOSITORY, GITHUB_EVENT_PATH } = process.env;
+// Collect required env vars
+const REQUIRED_ENV_VARS = [
+  'GITHUB_TOKEN',
+  'GITHUB_REPOSITORY',
+  'GITHUB_EVENT_PATH',
+];
+const missing = REQUIRED_ENV_VARS.filter((v) => !process.env[v]);
 
-if (!GITHUB_TOKEN || !GITHUB_REPOSITORY || !GITHUB_EVENT_PATH) {
-  console.error('❌ Missing required environment variables.');
+if (missing.length > 0) {
+  console.error(
+    `❌ Missing required environment variables: ${missing.join(', ')}`
+  );
   process.exit(1);
 }
+
+// Destructure after validation
+const { GITHUB_TOKEN, GITHUB_REPOSITORY, GITHUB_EVENT_PATH } = process.env;
 
 const event = JSON.parse(fs.readFileSync(GITHUB_EVENT_PATH, 'utf8'));
 const prNumber = event.pull_request?.number;
