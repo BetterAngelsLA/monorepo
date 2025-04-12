@@ -1,5 +1,6 @@
 export { default as AdaAccommodationPicker } from './AdaAccommodationPicker';
 export { default as AddressField } from './AddressField';
+export { AppUpdate } from './AppUpdate';
 export { default as AuthContainer } from './AuthContainer';
 export { default as ClientCard } from './ClientCard';
 export { default as ClientCardModal } from './ClientCardModal';

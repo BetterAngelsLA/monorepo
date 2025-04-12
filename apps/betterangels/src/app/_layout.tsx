@@ -1,6 +1,7 @@
 import 'expo-dev-client';
 
 import {
+  AppUpdate,
   FeatureControlProvider,
   KeyboardToolbarProvider,
   SnackbarProvider,
@@ -38,6 +39,7 @@ export default function RootLayout() {
               <UserProvider>
                 <SnackbarProvider>
                   <StatusBar style="light" />
+                  <AppUpdate />
                   <Stack>
                     <Stack.Screen
                       name="(tabs)"
