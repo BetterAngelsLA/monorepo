@@ -8,7 +8,7 @@ export function AppUpdate() {
   // const updatesChannel = Updates.channel;
   // const { currentlyRunning, isUpdateAvailable, isUpdatePending } =
   //   Updates.useUpdates();
-  const [_updateAvailable, setUpdateAvailable] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
   // const [becameActive, setBecameActive] = useState(false);
   // const [updateStatus, setUpdateStatus] = useState<
   //   Updates.UpdateCheckResult | undefined
@@ -43,6 +43,8 @@ export function AppUpdate() {
       if (newUpdateStatus.isAvailable) {
         setUpdateAvailable(true);
       }
+
+      console.log('*****************  updateAvailable:', updateAvailable);
 
       // LOG  Error checking updates:
       //   [Error: Updates.checkForUpdateAsync() is not supported in development builds.]
