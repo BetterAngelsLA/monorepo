@@ -74,9 +74,20 @@ export function AppUpdate() {
       <TextRegular>updateStatus</TextRegular>
       <TextRegular>{JSON.stringify(updateStatus)}</TextRegular>
       <TextRegular>my updateAvailable : {String(updateAvailable)}</TextRegular>
-      <TextRegular>currentlyRunning : {String(currentlyRunning)}</TextRegular>
+      <TextRegular>
+        currentlyRunning : {JSON.stringify(currentlyRunning)}
+      </TextRegular>
       <TextRegular>isUpdateAvailable : {String(isUpdateAvailable)}</TextRegular>
       <TextRegular>isUpdatePending : {String(isUpdatePending)}</TextRegular>
+      <TextRegular>--- Updates constants ---</TextRegular>
+      <TextRegular>Updates.isEnabled : {String(Updates.isEnabled)}</TextRegular>
+      <TextRegular>Updates.channel : {Updates.channel}</TextRegular>
+      <TextRegular>
+        Updates.checkAutomatically : {Updates.checkAutomatically}
+      </TextRegular>
+      <TextRegular>
+        Updates.isEmbeddedLaunch : {Updates.isEmbeddedLaunch}
+      </TextRegular>
     </View>
   );
 }
