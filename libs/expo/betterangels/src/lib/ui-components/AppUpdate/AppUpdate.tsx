@@ -70,12 +70,13 @@ export function AppUpdate() {
   return (
     <View
       style={{
-        marginTop: 48,
+        flex: 1,
+        marginTop: 42,
         padding: 16,
         gap: 16,
         borderWidth: 1,
         borderColor: 'purple',
-        minHeight: 200,
+        minHeight: 300,
       }}
     >
       <KeyboardAwareScrollView>
