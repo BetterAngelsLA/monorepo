@@ -10,12 +10,11 @@ const isLocalEnv = process.env.NODE_ENV === 'development';
 export function AppUpdate() {
   const updatesChannel = Updates.channel;
 
+  const [updateAvailable, setUpdateAvailable] = useState(false);
   const [becameActive, setBecameActive] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<
     Updates.UpdateCheckResult | undefined
   >(undefined);
-
-  //   const [updateAvailable, setUpdateAvailable] = useState(false);
 
   const { movedToForeground } = useAppState();
 
@@ -44,6 +43,11 @@ export function AppUpdate() {
     try {
       const newUpdateStatus: Updates.UpdateCheckResult =
         await Updates.checkForUpdateAsync();
+
+      if (newUpdateStatus.isAvailable) {
+        setUpdateAvailable(true);
+      }
+
       // LOG  Error checking updates:
       //   [Error: Updates.checkForUpdateAsync() is not supported in development builds.]
 
@@ -66,6 +70,7 @@ export function AppUpdate() {
       <TextRegular>movedToForeground : {String(becameActive)}</TextRegular>
       <TextRegular>updateStatus</TextRegular>
       <TextRegular>{JSON.stringify(updateStatus)}</TextRegular>
+      <TextRegular>updateAvailable : {String(updateAvailable)}</TextRegular>
     </View>
   );
 }
