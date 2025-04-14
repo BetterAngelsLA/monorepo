@@ -20,6 +20,7 @@ const devServerProxy: Record<string, string | ProxyOptions> = {
 export default defineConfig(({ mode }) => {
   const isDev = mode === 'development';
   const basePath = isDev ? '/' : process.env.VITE_APP_BASE_PATH;
+  console.log(process.env.VITE_SHELTER_API_URL);
   return {
     base: basePath,
     root: __dirname,

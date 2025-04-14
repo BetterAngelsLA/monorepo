@@ -30,17 +30,8 @@
         "configFile": "apps/shelter-web/vite.config.mts"
       },
       "configurations": {
-        "production": {
-          "env": {
-            "VITE_SHELTER_API_URL": "https://api.prod.betterangels.la",
-            "VITE_APP_BASE_PATH": "/"
-          }
-        },
-        "preview": {
-          "env": {
-            "VITE_SHELTER_API_URL": "https://api.dev.betterangels.la"
-          }
-        }
+        "production": {},
+        "preview": {}
       }
     },
     "deploy": {
@@ -50,13 +41,7 @@
       },
       "configurations": {
         "production": {},
-        "preview": {
-          "env": {
-            "S3_BUCKET": "development-us-west-2-shelter-web",
-            "CF_DISTRIBUTION_ID": "E3O1PERRKPOUDF",
-            "ASSUME_ROLE": "arn:aws:iam::784154756963:role/github-actions-deploy"
-          }
-        }
+        "preview": {}
       },
       "dependsOn": ["build"]
     },
