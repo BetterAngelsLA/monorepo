@@ -54,6 +54,7 @@ from .types import (
     HmisProfileType,
     ImportClientProfileInput,
     UpdateClientProfileInput,
+    UpdateClientDocumentInput,
 )
 
 
@@ -676,6 +677,7 @@ class Mutation:
 
             permissions = [
                 AttachmentPermissions.DELETE,
+                AttachmentPermissions.CHANGE,
             ]
             for perm in permissions:
                 assign_perm(perm, permission_group.group, client_document)
@@ -759,3 +761,29 @@ class Mutation:
                 error_message=_format_graphql_error(e),
             )
         return cast(ClientProfileImportRecordType, record)
+
+    @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[AttachmentPermissions.CHANGE])])
+    def update_client_document(self, info: Info, data: UpdateClientDocumentInput) -> ClientDocumentType:
+        with transaction.atomic():
+            user = get_current_user(info)
+            try:
+                # Validate filename
+                if not data.original_filename or not data.original_filename.strip():
+                    raise GraphQLError("Filename cannot be empty")
+
+                # Get document and verify permissions
+                document = filter_for_user(
+                    Attachment.objects.filter(
+                        content_type=ContentType.objects.get_for_model(ClientProfile)
+                    ),
+                    user,
+                    [AttachmentPermissions.CHANGE],
+                ).get(id=data.id)
+
+                # Update filename
+                document.original_filename = data.original_filename
+                document.save()
+
+                return cast(ClientDocumentType, document)
+            except Attachment.DoesNotExist:
+                raise PermissionError("You do not have permission to modify this document.")

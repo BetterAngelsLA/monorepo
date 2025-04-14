@@ -1,6 +1,8 @@
 from unittest.mock import ANY
 
 from accounts.models import User
+from accounts.utils import get_user_permission_group
+from guardian.shortcuts import assign_perm
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -25,6 +27,7 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
 )
 from common.models import Attachment
+from common.permissions.enums import AttachmentPermissions
 from deepdiff import DeepDiff
 from django.test import override_settings
 from unittest_parametrize import parametrize
@@ -643,6 +646,12 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
+        self._setup_client_documents()
+
+        # Ensure permissions are set correctly
+        permission_group = get_user_permission_group(self.org_1_case_manager_1)
+        document = Attachment.objects.get(id=self.client_profile_1_document_1["id"])
+        assign_perm(AttachmentPermissions.CHANGE, permission_group.group, document)
 
     def test_create_client_document(self) -> None:
         file_content = b"Test client document content"
@@ -681,6 +690,77 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "The document should have been deleted from the database.",
         )
 
+    def test_update_client_document_success(self) -> None:
+        """Test successful update of a client document's filename."""
+
+        self._handle_user_login("org_1_case_manager_1")
+
+        new_filename = "updated_document_name.txt"
+        document_id = self.client_profile_1_document_1["id"]
+
+        response = self.execute_graphql(
+            """
+                mutation UpdateClientDocument($data: UpdateClientDocumentInput!) {
+                    updateClientDocument(data: $data) {
+                        ... on ClientDocumentType {
+                            id
+                            originalFilename
+                        }
+                    }
+                }
+            """,
+            variables={
+                "data": {
+                    "id": document_id,
+                    "originalFilename": new_filename,
+                }
+            },
+        )
+
+        self.assertIsNotNone(response.get("data"))
+        self.assertIsNotNone(response["data"].get("updateClientDocument"))
+        self.assertEqual(response["data"]["updateClientDocument"]["originalFilename"], new_filename)
+
+        # Verify database was updated
+        document = Attachment.objects.get(id=document_id)
+        self.assertEqual(document.original_filename, new_filename)
+
+    def test_update_client_document_empty_filename(self) -> None:
+        """Test validation of empty filename."""
+        self._handle_user_login("org_1_case_manager_1")
+        document_id = self.client_profile_1_document_1["id"]
+
+        response = self.execute_graphql(
+            """
+            mutation UpdateClientDocument($data: UpdateClientDocumentInput!) {
+                    updateClientDocument(data: $data) {
+                        ... on ClientDocumentType {
+                            id
+                            originalFilename
+                        }
+                    }
+                }
+            """,
+            variables={
+                "data": {
+                    "id": document_id,
+                    "originalFilename": "",
+                }
+            },
+        )
+        print("\n Full GraphQL Response: ", response)
+
+        self.assertIn("errors", response)
+        self.assertEqual(response["data"], None)    # data should be none where there's an error
+        self.assertEqual(
+            response["errors"][0]["message"],
+            "Filename cannot be empty"
+        )
+
+        # verify database wasn't updated
+        document = Attachment.objects.get(id=document_id)
+        original_filename = document.original_filename
+        self.assertEqual(original_filename, "client_profile_1_document_1.txt")
 
 class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
     def setUp(self) -> None:
