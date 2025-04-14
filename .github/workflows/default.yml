@@ -16,6 +16,7 @@ env:
 jobs:
   BuildTestDeploy:
     runs-on: ubuntu-latest
+    environment: preview
     permissions:
       actions: read # Required to find the last successful workflow run
       contents: read # Required for actions/checkout
