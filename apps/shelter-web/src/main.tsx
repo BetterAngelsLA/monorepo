@@ -7,7 +7,7 @@ import App from './app/app';
 import { createApolloClient } from './app/shared/clients/apollo/client';
 
 const apolloClient = createApolloClient({
-  apiUrl: import.meta.env.VITE_API_URL,
+  apiUrl: import.meta.env.VITE_SHELTER_API_URL,
 });
 
 // to allow preview by branch
