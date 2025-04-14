@@ -699,7 +699,7 @@ type GeneralServiceType {
 input GeolocationInput {
   latitude: Float!
   longitude: Float!
-  rangeInMiles: Int
+  rangeInMiles: Int = null
 }
 
 enum HairColorEnum {
@@ -1142,6 +1142,11 @@ type PhoneNumberType {
 """Represents a point as `(x, y, z)` or `(x, y)`."""
 scalar Point
 
+"""
+A geographical object that gets 1 or 2 LinearRing objects as external and internal rings.
+"""
+scalar Polygon
+
 enum PreferredCommunicationEnum {
   CALL
   EMAIL
@@ -1384,6 +1389,7 @@ input ShelterFilter {
   NOT: ShelterFilter
   DISTINCT: Boolean
   properties: ShelterPropertyInput
+  bounds: Polygon
   geolocation: GeolocationInput
 }
 

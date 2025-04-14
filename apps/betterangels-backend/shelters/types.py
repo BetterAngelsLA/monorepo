@@ -50,7 +50,11 @@ from shelters.models import (
     ShelterProgram,
 )
 from shelters.models import ShelterType as ShelterKind
-from shelters.models import SpecialSituationRestriction, Storage, TrainingService
+from shelters.models import (
+    SpecialSituationRestriction,
+    Storage,
+    TrainingService,
+)
 from strawberry import ID, asdict, auto
 from strawberry_django.fields.types import Polygon
 
@@ -165,7 +169,7 @@ class FunderType:
 class GeolocationInput:
     latitude: float
     longitude: float
-    range_in_miles: Optional[int]
+    range_in_miles: Optional[int] = None
 
 
 @strawberry.input
@@ -202,8 +206,7 @@ class ShelterFilter:
         if not value:
             return queryset, Q()
 
-        queryset = queryset.filter(geolocation__contained=value)
-        return queryset, Q()
+        return queryset.filter(geolocation__contained=value), Q()
 
     @strawberry_django.filter_field
     def geolocation(
@@ -214,16 +217,10 @@ class ShelterFilter:
 
         reference_point = Point(x=value.longitude, y=value.latitude, srid=4326)
 
-        queryset = (
-            queryset.filter(
-                geolocation__dwithin=(
-                    reference_point,
-                    D(mi=value.range_in_miles),
-                )
-            )
-            .annotate(distance=Distance("geolocation", reference_point))
-            .order_by("distance")
-        )
+        queryset = queryset.annotate(distance=Distance("geolocation", reference_point)).order_by("distance")
+
+        if value.range_in_miles:
+            queryset = queryset.filter(geolocation__dwithin=(reference_point, D(mi=value.range_in_miles)))
 
         return queryset, Q()
 

@@ -3,7 +3,6 @@ from typing import Any
 from unittest.mock import ANY
 
 from accounts.tests.baker_recipes import organization_recipe
-from django.contrib.gis.geos import Polygon
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery.recipe import seq
@@ -372,7 +371,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "rangeInMiles": search_range_in_miles,
         }
 
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
@@ -383,9 +382,40 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         self.assertEqual(result_shelter_ids, [str(s3.pk), str(s2.pk)])
 
     def test_shelter_polygon_filter(self) -> None:
+        """Test polygon filter for querying shelters within a defined area.
+
+        1. Create 5 shelters at coordinates:
+           - (-4, -4)
+           - (-2, -2)
+           - (0, 0)
+           - (2, 2)
+           - (4, 4)
+
+        2. Define the polygon:
+           - Construct a square polygon defined by the following coordinates:
+             [[-3, -3], [-3, 3], [3, 3], [3, -3], [-3, -3]]
+           - Note that the polygon's first and last coordinates are the same, to close the shape.
+
+        3. Execute query and verify results:
+           - Query shelters with the polygon filter.
+           - Confirm that only the three shelters within the polygon are returned.
+
+         4                          x
+         3     ┌─────────────────┐
+         2     │              x  │
+         1     │                 │
+         0     │        x        │
+        -1     │                 │
+        -2     │  x              │
+        -3     └─────────────────┘
+        -4  x
+        -4 -3 -2 -1  0  1  2  3  4
+
+        """
+
         reference_point = {
-            "latitude": -2,
-            "longitude": -2,
+            "latitude": 4,
+            "longitude": 4,
         }
 
         _, s2, s3, s4, _ = [
@@ -393,11 +423,11 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 location=Places(
                     place=f"place {i}",
                     # Each subsequent shelter is one degree further from the reference point
-                    latitude=f"{reference_point["latitude"] + i}",
-                    longitude=f"{reference_point["longitude"] + i}",
+                    latitude=f"{reference_point["latitude"] - i}",
+                    longitude=f"{reference_point["longitude"] - i}",
                 )
             )
-            for i in range(0, 10, 2)
+            for i in range(8, -2, -2)
         ]
 
         query = """
@@ -411,15 +441,61 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }
         """
 
-        filters: dict[str, Any] = {}
-        filters["bounds"] = [[[0.0, 0.0], [0.0, 5.0], [5.0, 5.0], [5.0, 0.0], [0.0, 0.0]]]
+        filters: dict[str, Any] = {"bounds": [[[-3, -3], [-3, 3], [3, 3], [3, -3], [-3, -3]]]}
 
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         result_ids = {s["id"] for s in response["data"]["shelters"]["results"]}
         expected_ids = {str(s.id) for s in [s2, s3, s4]}
+
+        self.assertEqual(len(result_ids), 3)
+        self.assertEqual(result_ids, expected_ids)
+
+    def test_shelter_combined_filters(self) -> None:
+        reference_point = {
+            "latitude": 4,
+            "longitude": 4,
+        }
+
+        _, s2, s3, s4, _ = [
+            Shelter.objects.create(
+                location=Places(
+                    place=f"place {i}",
+                    # Each subsequent shelter is one degree further from the reference point
+                    latitude=f"{reference_point["latitude"] - i}",
+                    longitude=f"{reference_point["longitude"] - i}",
+                )
+            )
+            for i in range(8, -2, -2)
+        ]
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {
+            "bounds": [[[-3, -3], [-3, 3], [3, 3], [3, -3], [-3, -3]]],
+            "geolocation": {
+                "latitude": reference_point["latitude"],
+                "longitude": reference_point["longitude"],
+            },
+        }
+
+        expected_query_count = 3
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        result_ids = [s["id"] for s in response["data"]["shelters"]["results"]]
+        expected_ids = [str(s.id) for s in [s4, s3, s2]]
 
         self.assertEqual(len(result_ids), 3)
         self.assertEqual(result_ids, expected_ids)
