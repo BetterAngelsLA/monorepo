@@ -4,6 +4,7 @@ services:
     volumes:
       - .git:/workspace/.git
       - ${HOME}/.docker/:/home/betterangels/.docker/
+      - ${GITHUB_EVENT_PATH}:${GITHUB_EVENT_PATH}:ro
     working_dir: /workspace
     # Pass in GitHub Actions Envs into the container
     environment:
