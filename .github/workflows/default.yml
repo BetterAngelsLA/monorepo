@@ -183,6 +183,7 @@ jobs:
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
 
       - name: 🏗️ Push Monorepo Docker image
         if: matrix.environment == 'production'
@@ -194,8 +195,6 @@ jobs:
           docker compose run better-angels bash <<'EOF'
           yarn nx affected -t deploy --exclude=^betterangels$,^shelter$ --configuration=${{ matrix.environment }}
           EOF
-        env:
-          VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
 
       - name: 💬 Post preview link to PR
         if: github.event_name == 'pull_request'
