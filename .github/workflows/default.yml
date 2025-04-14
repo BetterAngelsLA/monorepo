@@ -18,12 +18,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: [preview, production]
+        environment: ${{ fromJson(github.ref == 'refs/heads/main' && '["preview", "production"]' || '["preview"]') }}
 
     runs-on: ubuntu-latest
-    # Skip the production slice on PRs
-    if: ${{ github.ref == 'refs/heads/main' || matrix.environment == 'preview' }}
-
     environment: ${{ matrix.environment }}
     permissions:
       actions: read # Required to find the last successful workflow run
