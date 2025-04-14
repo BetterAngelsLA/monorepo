@@ -5,6 +5,7 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
+from accounts.types import UserType
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -297,6 +298,8 @@ class ClientProfileType(ClientProfileBaseType):
     doc_ready_documents: Optional[List[ClientDocumentType]]
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
+
+    user: UserType | None
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:
