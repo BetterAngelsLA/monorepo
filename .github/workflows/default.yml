@@ -184,11 +184,11 @@ jobs:
       #   run: |
       #     docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
-      # - name: 🚀 Deploy Changes
-      #   run: |
-      #     docker compose run better-angels bash <<'EOF'
-      #     yarn nx affected -t deploy --exclude=^betterangels$,^shelter$,^nginx$ --configuration preview
-      #     EOF
+      - name: 🚀 Deploy Changes
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t deploy --exclude=^betterangels$,^shelter$,^nginx$ --configuration preview
+          EOF
 
       - name: 💬 Post preview link to PR
         if: github.event_name == 'pull_request'
