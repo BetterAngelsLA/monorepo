@@ -5,6 +5,8 @@ services:
       - ${GITHUB_WORKSPACE}:/workspace # Mounts the full repository
       - ${HOME}/.docker/:/home/betterangels/.docker/
       - ${GITHUB_EVENT_PATH}:${GITHUB_EVENT_PATH}:ro
+      # Mount an anonymous volume to override node_modules
+      - /workspace/node_modules
     working_dir: /workspace
     # Pass in GitHub Actions Envs into the container
     environment:
