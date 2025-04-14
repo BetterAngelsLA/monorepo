@@ -63,7 +63,6 @@ async function main() {
   if (!urlArg) {
     throw new Error('Missing --url argument');
   }
-  console.log(urlArg);
   const previewUrl = urlArg.split('=')[1].trim();
   const project = NX_TASK_TARGET_PROJECT || 'default';
 
