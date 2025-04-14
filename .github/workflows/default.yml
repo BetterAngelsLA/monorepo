@@ -196,6 +196,8 @@ jobs:
           docker compose run better-angels bash <<'EOF'
           yarn nx affected -t post-pr-preview
           EOF
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: ⏹️ Spin down monorepo environment
         if: always()

@@ -36,23 +36,37 @@ const previewUrl = urlArg.split('=')[1];
 const commentPrefix = `🔍 Preview available at:`;
 const fullComment = `${commentPrefix} [${previewUrl}](${previewUrl})`;
 
-// Step 1: Get existing comments
-const commentsRes = await fetch(
-  `https://api.github.com/repos/${owner}/${repo}/issues/${prNumber}/comments`,
-  {
-    headers: {
-      Authorization: `Bearer ${GITHUB_TOKEN}`,
-      Accept: 'application/vnd.github+json',
-    },
-  }
-);
+// Step 1: Get all comments with pagination
+let comments = [];
+let page = 1;
+let hasMorePages = true;
 
-if (!commentsRes.ok) {
-  const err = await commentsRes.text();
-  throw new Error(`Failed to fetch comments: ${err}`);
+while (hasMorePages) {
+  const commentsRes = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${prNumber}/comments?page=${page}`,
+    {
+      headers: {
+        Authorization: `Bearer ${GITHUB_TOKEN}`,
+        Accept: 'application/vnd.github+json',
+      },
+    }
+  );
+
+  if (!commentsRes.ok) {
+    const err = await commentsRes.text();
+    throw new Error(`Failed to fetch comments (page ${page}): ${err}`);
+  }
+
+  const pageComments = await commentsRes.json();
+  comments = comments.concat(pageComments);
+
+  if (pageComments.length < 30) {
+    hasMorePages = false;
+  } else {
+    page += 1;
+  }
 }
 
-const comments = await commentsRes.json();
 const existing = comments.find((c) => c.body.startsWith(commentPrefix));
 
 if (existing) {
