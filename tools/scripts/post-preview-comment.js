@@ -58,6 +58,15 @@ async function main() {
     NX_TASK_TARGET_PROJECT,
   } = process.env;
 
+  // Process the CLI argument for --url
+  const urlArg = process.argv.find((arg) => arg.startsWith('--url='));
+  if (!urlArg) {
+    throw new Error('Missing --url argument');
+  }
+  console.log(urlArg);
+  const previewUrl = urlArg.split('=')[1].trim();
+  const project = NX_TASK_TARGET_PROJECT || 'default';
+
   // Get the event payload safely
   const event = getEventPayload(GITHUB_EVENT_PATH);
   const prNumber = event.pull_request?.number;
@@ -65,14 +74,6 @@ async function main() {
     throw new Error('Not a pull_request event.');
   }
   const [owner, repo] = GITHUB_REPOSITORY.split('/');
-
-  // Process the CLI argument for --url
-  const urlArg = process.argv.find((arg) => arg.startsWith('--url='));
-  if (!urlArg) {
-    throw new Error('Missing --url argument');
-  }
-  const previewUrl = urlArg.split('=')[1].trim();
-  const project = NX_TASK_TARGET_PROJECT || 'default';
 
   // Construct the comment content (with timestamp)
   const commentPrefix = `🔍 [${project}] Preview available at:`;
