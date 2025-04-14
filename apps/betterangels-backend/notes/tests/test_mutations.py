@@ -26,13 +26,12 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 39
+        expected_query_count = 37
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
                     "purpose": "New note purpose",
                     "publicDetails": "New public details",
-                    "client": self.client_user_1.pk,
                     "clientProfile": self.client_profile_1.pk,
                 }
             )
@@ -51,7 +50,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "New public details",
             "privateDetails": "",
             "isSubmitted": False,
-            "client": {"id": str(self.client_user_1.pk)},
             "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
@@ -71,7 +69,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 27
+        expected_query_count = 25
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -99,7 +97,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "publicDetails": "Updated public details",
             "privateDetails": "Updated private details",
             "isSubmitted": False,
-            "client": {"id": str(self.client_user_1.pk)},
             "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
@@ -114,14 +111,14 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 24
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
         updated_note = response["data"]["updateNote"]
         expected_note = {
             "id": self.note["id"],
-            "purpose": f"Session with {self.client_user_1.full_name}",
+            "purpose": f"Session with {self.client_profile_1.full_name}",
             "team": None,
             "location": None,
             "moods": [],
@@ -129,10 +126,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "nextSteps": [],
             "providedServices": [],
             "requestedServices": [],
-            "publicDetails": f"{self.client_user_1.full_name}'s public details",
+            "publicDetails": f"{self.client_profile_1.full_name}'s public details",
             "privateDetails": "",
             "isSubmitted": True,
-            "client": {"id": str(self.client_user_1.pk)},
             "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
@@ -212,7 +208,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
-            "client": self.note["client"],
+            "clientProfile": self.note["clientProfile"],
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": ANY,
         }
@@ -225,8 +221,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
         [
-            ("REQUESTED", "requested_services", "TO_DO", 36),
-            ("PROVIDED", "provided_services", "COMPLETED", 36),
+            ("REQUESTED", "requested_services", "TO_DO", 34),
+            ("PROVIDED", "provided_services", "COMPLETED", 34),
         ],
     )
     def test_create_note_service_request_mutation(
@@ -256,7 +252,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "serviceOther": None,
             "dueBy": None,
             "completedOn": ANY,
-            "client": self.note["client"],
             "clientProfile": self.note["clientProfile"],
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": ANY,
@@ -273,8 +268,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
         [
-            ("REQUESTED", "requested_services", "TO_DO", 36),
-            ("PROVIDED", "provided_services", "COMPLETED", 36),
+            ("REQUESTED", "requested_services", "TO_DO", 34),
+            ("PROVIDED", "provided_services", "COMPLETED", 34),
         ],
     )
     def test_create_note_custom_service_request_mutation(
@@ -304,7 +299,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "serviceOther": "Other Service",
             "dueBy": None,
             "completedOn": ANY,
-            "client": self.note["client"],
             "clientProfile": self.note["clientProfile"],
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": ANY,
@@ -513,32 +507,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         with self.assertRaises(Note.DoesNotExist):
             Note.objects.get(id=self.note["id"])
 
-    # TODO: Remove in DEV-1652
-    def test_dual_write_client(self) -> None:
-        created_note = self._create_note_fixture(
-            {
-                "purpose": "New note purpose",
-                "publicDetails": "New public details",
-                "client": self.client_user_1.pk,
-            }
-        )["data"]["createNote"]
-
-        self.assertEqual(created_note["client"], {"id": str(self.client_user_1.pk)})
-        self.assertEqual(created_note["clientProfile"], {"id": str(self.client_profile_1.pk)})
-
-    # TODO: Remove in DEV-1652
-    def test_write_client_profile_only(self) -> None:
-        created_note = self._create_note_fixture(
-            {
-                "purpose": "New note purpose",
-                "publicDetails": "New public details",
-                "clientProfile": self.client_profile_1.pk,
-            }
-        )["data"]["createNote"]
-
-        self.assertIsNone(created_note["client"])
-        self.assertEqual(created_note["clientProfile"], {"id": str(self.client_profile_1.pk)})
-
 
 class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin, ServiceRequestGraphQLUtilMixin):
     """
@@ -606,7 +574,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
             }
         """
 
-        expected_query_count = 31
+        expected_query_count = 30
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
@@ -676,7 +644,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
                 }
             }
         """
-        expected_query_count = 33
+        expected_query_count = 32
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
@@ -688,7 +656,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         revert_before_timestamp = timezone.now()
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
-        expected_query_count = 27
+        expected_query_count = 26
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, note_fields)["data"]["revertNote"]
 
@@ -1357,7 +1325,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 52
+        expected_query_count = 50
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -1435,7 +1403,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 52
+        expected_query_count = 50
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -1694,7 +1662,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "dueBy": None,
             "completedOn": None,
             "status": "TO_DO",
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1720,7 +1688,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": "2024-03-11T11:12:13+00:00",
             "completedOn": "2024-03-11T12:34:56+00:00",
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1744,7 +1712,7 @@ class ServiceRequestMutationTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "completedOn": None,
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -1804,7 +1772,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
@@ -1839,7 +1807,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
@@ -1862,7 +1830,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "status": "TO_DO",
             "dueBy": None,
             "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
-            "client": None,
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }

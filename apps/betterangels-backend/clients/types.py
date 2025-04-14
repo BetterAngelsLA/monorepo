@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.types import CreateUserInput, UpdateUserInput, UserType
+from accounts.types import UserType
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -54,8 +54,6 @@ class CreateClientDocumentInput:
 
 @strawberry_django.ordering.order(ClientProfile)
 class ClientProfileOrder:
-    user__first_name: auto
-    user__last_name: auto
     first_name: auto
     last_name: auto
     id: auto
@@ -84,7 +82,7 @@ class ClientProfileFilter:
         comparison = "gte" if value else "lt"
 
         return (
-            queryset.alias(last_interacted_at=Max("user__client_notes__interacted_at")),
+            queryset.alias(last_interacted_at=Max("client_profile_notes__interacted_at")),
             Q(**{f"last_interacted_at__{comparison}": earliest_interaction_threshold}),
         )
 
@@ -301,7 +299,7 @@ class ClientProfileType(ClientProfileBaseType):
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
 
-    user: UserType
+    user: UserType | None
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:
@@ -318,7 +316,6 @@ class CreateClientProfileInput(ClientProfileBaseType):
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
-    user: Optional[CreateUserInput]
 
 
 @strawberry_django.input(ClientProfile, partial=True)
@@ -329,7 +326,6 @@ class UpdateClientProfileInput(ClientProfileBaseType):
     household_members: Optional[List[ClientHouseholdMemberInput]]
     phone_numbers: Optional[List[PhoneNumberInput]]
     social_media_profiles: Optional[List[SocialMediaProfileInput]]
-    user: Optional[UpdateUserInput]
 
 
 # Data Import
