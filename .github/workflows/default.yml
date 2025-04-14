@@ -20,9 +20,8 @@ jobs:
       actions: read # Required to find the last successful workflow run
       contents: read # Required for actions/checkout
       id-token: write # Required for requesting the JWT
-      pull-requests: read
+      pull-requests: write # Required to post PR comments
       checks: write # Required for graphql inspector
-      issues: write # Required for preview comment posting
 
     steps:
       - name: 🚦 Turnstyle
