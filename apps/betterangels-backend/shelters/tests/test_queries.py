@@ -422,7 +422,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             Shelter.objects.create(
                 location=Places(
                     place=f"place {i}",
-                    # Each subsequent shelter is one degree further from the reference point
+                    # Each subsequent shelter is two degrees further from the reference point
                     latitude=f"{reference_point["latitude"] - i}",
                     longitude=f"{reference_point["longitude"] - i}",
                 )
@@ -463,7 +463,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             Shelter.objects.create(
                 location=Places(
                     place=f"place {i}",
-                    # Each subsequent shelter is one degree further from the reference point
+                    # Each subsequent shelter is two degrees further from the reference point
                     latitude=f"{reference_point["latitude"] - i}",
                     longitude=f"{reference_point["longitude"] - i}",
                 )
