@@ -189,6 +189,8 @@ jobs:
           docker compose run better-angels bash <<'EOF'
           yarn nx affected -t deploy --exclude=^betterangels$,^shelter$,^nginx$ --configuration preview
           EOF
+        env:
+          VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
 
       - name: 💬 Post preview link to PR
         if: github.event_name == 'pull_request'
