@@ -2,7 +2,7 @@ services:
   better-angels:
     image: ${MONOREPO_IMAGE}:${DOCKER_TAG}
     volumes:
-      - .git:/workspace/.git
+      - ${GITHUB_WORKSPACE}:/workspace # Mounts the full repository
       - ${HOME}/.docker/:/home/betterangels/.docker/
       - ${GITHUB_EVENT_PATH}:${GITHUB_EVENT_PATH}:ro
     working_dir: /workspace
