@@ -2,7 +2,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Divider } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { useAppVersion, useFeatureFlagActive } from '../../../hooks';
-import { FeatureFlags } from '../../../providers/featureControls/constants';
+import { FeatureFlags } from '../../../providers';
 import { MainContainer } from '../../../ui-components';
 import { AppDataCard } from './AppDataCard';
 import { UpdatesDebugInfo } from './UpdatesDebugInfo';
