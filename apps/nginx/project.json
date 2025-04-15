@@ -23,6 +23,9 @@
           "images": ["${ECR_REGISTRY}/${APP_NAME}"],
           "tags": ["${DOCKER_TAG}"]
         }
+      },
+      "preview": {
+        "command": "echo 'Skipping deploy'"
       }
     },
     "deploy": {
