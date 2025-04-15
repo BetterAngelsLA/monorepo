@@ -331,8 +331,11 @@ if env("AWS_S3_MEDIA_STORAGE_ENABLED"):
             "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
         },
     }
-
-AWS_STORAGE_BUCKET_NAME = ""
+else:
+    # Cannot define STORAGES dict the same way with "BACKEND": "<Django's default FileSystemStorage>"
+    # because FileSystemStorage does not take "bucket_name" as argument but django.s3file still needs bucket name defined
+    # therefore we use the following for dev environment
+    AWS_STORAGE_BUCKET_NAME = ""
 
 ADMIN_RESUMABLE_CHUNKSIZE = 10 * 1024 * 1024
 ADMIN_RESUMABLE_SHOW_THUMB = True
