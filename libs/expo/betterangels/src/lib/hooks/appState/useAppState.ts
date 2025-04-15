@@ -8,11 +8,10 @@ import {
 let appStateSubscription: NativeEventSubscription | null = null;
 
 export default function useAppState() {
-  // storing as Refs as would not want to trigger renders on change
-  const appState = useRef(AppState.currentState);
-  // const movedToForeground = useRef(false);
+  const [currentState, setCurrentState] = useState<AppStateStatus>(
+    AppState.currentState
+  );
   const [becameActive, setBecameActive] = useState(false);
-  // const movedToForeground = useRef(false);
 
   useEffect(() => {
     if (!appStateSubscription) {
@@ -28,19 +27,18 @@ export default function useAppState() {
     };
   }, []);
 
-  const handleAppStateChange = (nextAppState: AppStateStatus) => {
-    const newMovedToforegroundState =
-      appState.current !== 'active' && nextAppState === 'active';
+  const handleAppStateChange = (newState: AppStateStatus) => {
+    setCurrentState((prevState) => {
+      const becameActive = prevState !== 'active' && newState === 'active';
 
-    // movedToForeground.current = newMovedToforegroundState;
-    setBecameActive(newMovedToforegroundState);
+      setBecameActive(becameActive);
 
-    appState.current = nextAppState;
+      return newState;
+    });
   };
 
   return {
-    currentState: appState.current,
-    // movedToForeground: movedToForeground.current,
-    movedToForeground: becameActive,
+    currentAppState: currentState,
+    appBecameActive: becameActive,
   };
 }

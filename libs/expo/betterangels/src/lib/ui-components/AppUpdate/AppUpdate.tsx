@@ -10,7 +10,7 @@ import { updateAvailable } from './updateAvailable';
 export function AppUpdate() {
   const [promptModalVisible, setPromptModalVisible] = useState(false);
 
-  const { movedToForeground } = useAppState();
+  const { appBecameActive } = useAppState();
 
   useEffect(() => {
     const showPrompt = async () => {
@@ -22,12 +22,12 @@ export function AppUpdate() {
       }
     };
 
-    if (!movedToForeground) {
+    if (!appBecameActive) {
       return;
     }
 
     showPrompt();
-  }, [movedToForeground]);
+  }, [appBecameActive]);
 
   async function onAccept() {
     setPromptModalVisible(false);
