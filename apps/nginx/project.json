@@ -26,10 +26,10 @@
       },
       "configurations": {
         "preview": {
-          "executor": "nx:run-commands",
-          "options": {
-            "command": "echo 'Skipping build'"
-          }
+          "command": "echo 'Skipping deploy'"
+        },
+        "production": {
+          "command": "tools/deploy/ecs_deploy.sh"
         }
       }
     },
