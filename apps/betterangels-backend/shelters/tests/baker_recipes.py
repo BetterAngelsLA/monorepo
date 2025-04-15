@@ -79,7 +79,7 @@ def _generate_range(after: datetime.datetime) -> tuple[datetime.datetime, dateti
 
 
 def get_random_hour_ranges() -> list[tuple[Any, Any]]:
-    midnight = datetime.datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
+    midnight = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
     ranges: list[tuple[datetime.datetime, datetime.datetime]] = []
     current_range = _generate_range(midnight)
