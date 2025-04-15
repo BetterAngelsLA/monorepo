@@ -24,8 +24,10 @@
           "tags": ["${DOCKER_TAG}"]
         }
       },
-      "preview": {
-        "command": "echo 'Skipping deploy'"
+      "configurations": {
+        "preview": {
+          "command": "echo 'Skipping build'"
+        }
       }
     },
     "deploy": {
