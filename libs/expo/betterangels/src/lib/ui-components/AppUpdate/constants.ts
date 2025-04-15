@@ -1,4 +1,10 @@
-import { hoursToMilliseconds } from 'date-fns';
+import { hoursToMilliseconds, minutesToMilliseconds } from 'date-fns';
 
-export const DO_NOT_REPEAT_INTERVAL_MS = hoursToMilliseconds(24 * 7); // 7 days
+// Extra safety check to avoid any rate limiting.
+export const MIN_UPDATE_CHECK_INTERVAL_MS = minutesToMilliseconds(5);
+// Interval to prevent showing update prompt for a period after user dismisses it.
+export const DO_NOT_REPEAT_INTERVAL_MS = hoursToMilliseconds(24 * 7);
+
+// storage keys
 export const UPDATE_DISMISSED_TS_KEY = 'updateDismissedTsKey';
+export const LAST_UPDATE_CHECK_TS_KEY = 'lastUpdateCheckTsKey';

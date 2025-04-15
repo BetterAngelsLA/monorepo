@@ -4,20 +4,24 @@ import { useEffect, useState } from 'react';
 import { useAppState } from '../../hooks';
 import { AppUpdatePromptModal } from './AppUpdatePromptModal';
 import { canShowPromptAgain } from './canShowPromptAgain';
-import { UPDATE_DISMISSED_TS_KEY } from './constants';
-import { updateAvailable } from './updateAvailable';
+import { checkForUpdate } from './checkForUpdate';
+import { LAST_UPDATE_CHECK_TS_KEY, UPDATE_DISMISSED_TS_KEY } from './constants';
 
 export function AppUpdate() {
   const [promptModalVisible, setPromptModalVisible] = useState(false);
-
   const { appBecameActive } = useAppState();
 
   useEffect(() => {
     const showPrompt = async () => {
-      const canShowAgain = await canShowPromptAgain(UPDATE_DISMISSED_TS_KEY);
-      const isAvailable = await updateAvailable();
+      const canShowAgain = await canShowPromptAgain();
 
-      if (canShowAgain && isAvailable) {
+      if (!canShowAgain) {
+        return;
+      }
+
+      const isAvailable = await checkForUpdate();
+
+      if (isAvailable) {
         setPromptModalVisible(true);
       }
     };
@@ -34,16 +38,22 @@ export function AppUpdate() {
 
     try {
       await Updates.fetchUpdateAsync();
-      await Updates.reloadAsync(); // reload app with update
+
+      // reset storage data before reload
+      await Promise.all([
+        AsyncStorage.setItem(UPDATE_DISMISSED_TS_KEY, ''),
+        AsyncStorage.setItem(LAST_UPDATE_CHECK_TS_KEY, String(Date.now())),
+      ]);
+
+      // reload app with update
+      await Updates.reloadAsync();
     } catch (e) {
       console.log('Error updating app:', e);
     }
   }
 
   async function onDismiss() {
-    await Promise.all([
-      AsyncStorage.setItem(UPDATE_DISMISSED_TS_KEY, String(Date.now())),
-    ]);
+    await AsyncStorage.setItem(UPDATE_DISMISSED_TS_KEY, String(Date.now()));
   }
 
   return (
