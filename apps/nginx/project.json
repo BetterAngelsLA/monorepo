@@ -26,10 +26,9 @@
       },
       "configurations": {
         "preview": {
-          "command": "echo 'Skipping deploy'"
-        },
-        "production": {
-          "command": "tools/deploy/ecs_deploy.sh"
+          "options": {
+            "push": false
+          }
         }
       }
     },

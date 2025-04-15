@@ -100,7 +100,6 @@ jobs:
 
       - name: 🐳 Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
-        if: matrix.environment == 'production'
 
       - name: 🔄 Spin up monorepo environment
         run: |
