@@ -1,61 +1,57 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Updates from 'expo-updates';
 import { useEffect, useState } from 'react';
 import { useAppState } from '../../hooks';
-
-const isLocalEnv = process.env.NODE_ENV === 'development';
+import { AppUpdatePromptModal } from './AppUpdatePromptModal';
+import { canShowPromptAgain } from './canShowPromptAgain';
+import { UPDATE_DISMISSED_TS_KEY } from './constants';
+import { updateAvailable } from './updateAvailable';
 
 export function AppUpdate() {
-  // const updatesChannel = Updates.channel;
-  // const { currentlyRunning, isUpdateAvailable, isUpdatePending } =
-  //   Updates.useUpdates();
-  const [updateAvailable, setUpdateAvailable] = useState(false);
-  // const [becameActive, setBecameActive] = useState(false);
-  // const [updateStatus, setUpdateStatus] = useState<
-  //   Updates.UpdateCheckResult | undefined
-  // >(undefined);
+  const [promptModalVisible, setPromptModalVisible] = useState(false);
 
   const { movedToForeground } = useAppState();
 
-  // const featureFlagActive = useFeatureFlagActive(
-  //   FeatureFlags.APP_UPDATE_PROMPT_FF
-  // );
-
   useEffect(() => {
-    if (movedToForeground) {
-      checkForUpdates();
-    }
-  }, [movedToForeground]);
+    const showPrompt = async () => {
+      const canShowAgain = await canShowPromptAgain(UPDATE_DISMISSED_TS_KEY);
+      const isAvailable = await updateAvailable();
 
-  const checkForUpdates = async () => {
-    if (isLocalEnv) {
+      if (canShowAgain && isAvailable) {
+        setPromptModalVisible(true);
+      }
+    };
+
+    if (!movedToForeground) {
       return;
     }
 
-    // type UpdateCheckResult =
-    //     Updates.UpdateCheckResultRollBack |
-    //     Updates.UpdateCheckResultAvailable |
-    //     Updates.UpdateCheckResultNotAvailable
+    showPrompt();
+  }, [movedToForeground]);
+
+  async function onAccept() {
+    setPromptModalVisible(false);
 
     try {
-      const newUpdateStatus: Updates.UpdateCheckResult =
-        await Updates.checkForUpdateAsync();
-
-      if (newUpdateStatus.isAvailable) {
-        setUpdateAvailable(true);
-      }
-
-      console.log('*****************  updateAvailable:', updateAvailable);
-
-      // LOG  Error checking updates:
-      //   [Error: Updates.checkForUpdateAsync() is not supported in development builds.]
+      await Updates.fetchUpdateAsync();
+      await Updates.reloadAsync(); // reload app with update
     } catch (e) {
-      alert(e);
-      console.log(e);
+      console.log('Error updating app:', e);
     }
-  };
+  }
 
-  // await Promise.all([AsyncStorage.setItem('currentEnvironment', env)]);
-  // const storedEnv = await AsyncStorage.getItem('currentEnvironment');
+  async function onDismiss() {
+    await Promise.all([
+      AsyncStorage.setItem(UPDATE_DISMISSED_TS_KEY, String(Date.now())),
+    ]);
+  }
 
-  return null;
+  return (
+    <AppUpdatePromptModal
+      visible={promptModalVisible}
+      setVisible={setPromptModalVisible}
+      onAccept={onAccept}
+      onDismiss={onDismiss}
+    />
+  );
 }
