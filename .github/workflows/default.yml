@@ -192,7 +192,8 @@ jobs:
       - name: 🚀 Deploy Changes
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx affected -t deploy --exclude=^betterangels$,^shelter$ --configuration ${{ matrix.environment }}
+          echo Test
+          # yarn nx affected -t deploy --exclude=^betterangels$,^shelter$ --configuration ${{ matrix.environment }}
           EOF
 
       - name: 💬 Post preview link to PR
