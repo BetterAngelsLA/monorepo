@@ -1,4 +1,4 @@
-FROM python:3.13.2-bullseye AS base
+FROM python:3.13.3-bullseye AS base
 
 ENV PYTHONUNBUFFERED=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=false \
