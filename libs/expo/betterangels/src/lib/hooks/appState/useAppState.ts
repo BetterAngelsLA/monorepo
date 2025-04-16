@@ -5,21 +5,28 @@ import {
   NativeEventSubscription,
 } from 'react-native';
 
+type TAppState = {
+  currentAppState: AppStateStatus;
+  appBecameActive: boolean;
+};
+
 export default function useAppState() {
   const appStateSubscription = useRef<NativeEventSubscription | null>(null);
 
-  const [becameActive, setBecameActive] = useState(false);
-  const [currentState, setCurrentState] = useState<AppStateStatus>(
-    AppState.currentState
-  );
+  const [appState, setAppState] = useState<TAppState>({
+    currentAppState: AppState.currentState,
+    appBecameActive: false,
+  });
 
   const handleAppStateChange = useCallback((newState: AppStateStatus) => {
-    setCurrentState((prevState) => {
-      const becameActive = prevState !== 'active' && newState === 'active';
+    setAppState((prevState) => {
+      const { currentAppState: prevCurrent } = prevState;
+      const becameActive = prevCurrent !== 'active' && newState === 'active';
 
-      setBecameActive(becameActive);
-
-      return newState;
+      return {
+        currentAppState: newState,
+        appBecameActive: becameActive,
+      };
     });
   }, []);
 
@@ -37,8 +44,5 @@ export default function useAppState() {
     };
   }, [handleAppStateChange]);
 
-  return {
-    currentAppState: currentState,
-    appBecameActive: becameActive,
-  };
+  return appState;
 }
