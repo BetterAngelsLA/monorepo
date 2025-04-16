@@ -669,6 +669,22 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "The client document should have been created and persisted in the database.",
         )
 
+    def test_update_client_document(self) -> None:
+        self._handle_user_login("org_1_case_manager_1")
+
+        new_filename = "Updated Document Name"
+        document_id = self.client_profile_1_document_1["id"]
+
+        response = self._update_client_document_fixture({"id": document_id, "originalFilename": new_filename})
+
+        self.assertIsNotNone(response.get("data"))
+        self.assertIsNotNone(response["data"].get("updateClientDocument"))
+        self.assertEqual(response["data"]["updateClientDocument"]["originalFilename"], new_filename)
+
+        # Verify database was updated
+        document = Attachment.objects.get(id=document_id)
+        self.assertEqual(document.original_filename, new_filename)
+
     def test_delete_client_document(self) -> None:
         client_document_id = self.client_profile_1_document_1["id"]
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())

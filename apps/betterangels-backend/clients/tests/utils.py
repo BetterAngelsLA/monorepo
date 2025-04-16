@@ -401,6 +401,32 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
         )
         return response
 
+    def _update_client_document_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        mutation = """
+            mutation ($data: UpdateClientDocumentInput!) {  # noqa: B950
+                updateClientDocument(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ClientDocumentType {
+                        id
+                        attachmentType
+                        mimeType
+                        file {
+                            name
+                        }
+                        originalFilename
+                        namespace
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
     def _delete_client_document_fixture(self, document_id: int) -> Dict[str, Any]:
         response = self.execute_graphql(
             """

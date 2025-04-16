@@ -56,6 +56,7 @@ from .types import (
     HmisProfileInput,
     HmisProfileType,
     ImportClientProfileInput,
+    UpdateClientDocumentInput,
     UpdateClientProfileInput,
 )
 
@@ -702,11 +703,17 @@ class Mutation:
 
             permissions = [
                 AttachmentPermissions.DELETE,
+                AttachmentPermissions.CHANGE,
             ]
             for perm in permissions:
                 assign_perm(perm, permission_group.group, client_document)
 
             return cast(ClientDocumentType, client_document)
+
+    update_client_document: ClientDocumentType = mutations.update(
+        UpdateClientDocumentInput,
+        extensions=[HasRetvalPerm(perms=AttachmentPermissions.CHANGE)],
+    )
 
     delete_client_document: ClientDocumentType = mutations.delete(
         DeleteDjangoObjectInput,

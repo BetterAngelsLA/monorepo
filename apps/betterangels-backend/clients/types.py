@@ -52,6 +52,12 @@ class CreateClientDocumentInput:
     namespace: ClientDocumentNamespaceEnum
 
 
+@strawberry_django.input(Attachment)
+class UpdateClientDocumentInput:
+    id: ID
+    original_filename: auto
+
+
 @strawberry_django.ordering.order(ClientProfile)
 class ClientProfileOrder:
     user__first_name: auto

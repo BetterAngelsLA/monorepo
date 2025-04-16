@@ -978,6 +978,7 @@ export type Mutation = {
   removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
+  updateClientDocument: UpdateClientDocumentPayload;
   updateClientProfile: UpdateClientProfilePayload;
   updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
@@ -1142,6 +1143,11 @@ export type MutationRevertNoteArgs = {
 
 export type MutationUpdateClientContactArgs = {
   data: ClientContactInput;
+};
+
+
+export type MutationUpdateClientDocumentArgs = {
+  data: UpdateClientDocumentInput;
 };
 
 
@@ -1982,6 +1988,13 @@ export type TrainingServiceType = {
 };
 
 export type UpdateClientContactPayload = ClientContactType | OperationInfo;
+
+export type UpdateClientDocumentInput = {
+  id: Scalars['ID']['input'];
+  originalFilename?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
 export type UpdateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;

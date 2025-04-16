@@ -919,6 +919,7 @@ type Mutation {
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
+  updateClientDocument(data: UpdateClientDocumentInput!): UpdateClientDocumentPayload!
   createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_hmisprofile"}], any: true)
   updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_hmisprofile"}], any: true)
   deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_hmisprofile"}], any: true)
@@ -1609,6 +1610,13 @@ type TrainingServiceType {
 scalar UUID
 
 union UpdateClientContactPayload = ClientContactType | OperationInfo
+
+input UpdateClientDocumentInput {
+  id: ID!
+  originalFilename: String
+}
+
+union UpdateClientDocumentPayload = ClientDocumentType | OperationInfo
 
 input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
