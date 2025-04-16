@@ -1,6 +1,10 @@
 FROM python:3.13.2-bullseye AS base
 
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONUNBUFFERED=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=false \
+    POETRY_VIRTUALENVS_PATH="/home/betterangels/.venvs" \
+    YARN_CACHE_FOLDER="/home/betterangels/.cache/yarn"
+
 RUN groupadd --gid 1000 betterangels \
   && useradd --uid 1000 --gid betterangels --shell /bin/bash --create-home betterangels
 
@@ -106,7 +110,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
     libpq5 \
     gdal-bin
 ENV PATH=/workspace/.venv/bin:$PATH:$HOME/.local/bin
-RUN mkdir -p /workspace/.venv mkdir -p /workspace/node_modules  \
+RUN mkdir -p /workspace/node_modules  \
     && chown -R betterangels:betterangels /workspace
 WORKDIR /workspace
 USER betterangels
@@ -140,8 +144,7 @@ RUN --mount=type=cache,uid=1000,gid=1000,target=/home/betterangels/.cache/pypoet
 
 FROM base AS yarn
 COPY --chown=betterangels .yarnrc.yml yarn.lock package.json .yarnrc.yml /workspace/
-COPY --chown=betterangels .yarn /workspace/.yarn
-RUN --mount=type=cache,uid=1000,gid=1000,target=/workspace/.yarn/cache \
+RUN --mount=type=cache,uid=1000,gid=1000,target=$YARN_CACHE_FOLDER \
     yarn install
 
 # Production Build
