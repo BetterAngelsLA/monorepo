@@ -1,7 +1,5 @@
 services:
   better-angels:
-    build:
-      context: .
     environment:
       - IS_LOCAL_DEV=True
     volumes:
