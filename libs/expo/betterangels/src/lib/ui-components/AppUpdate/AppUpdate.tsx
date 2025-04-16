@@ -19,7 +19,7 @@ export function AppUpdate() {
         return;
       }
 
-      const isAvailable = await checkForUpdate();
+      const { isAvailable } = await checkForUpdate();
 
       if (isAvailable) {
         setPromptModalVisible(true);

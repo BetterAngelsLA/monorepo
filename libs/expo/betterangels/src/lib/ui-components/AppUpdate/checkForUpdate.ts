@@ -1,19 +1,19 @@
 import * as Updates from 'expo-updates';
 
-const isLocalEnv = process.env.NODE_ENV === 'development';
-
 export async function checkForUpdate() {
-  if (isLocalEnv) {
-    return false;
+  const { channel, checkForUpdateAsync } = Updates;
+
+  if (channel !== 'production') {
+    return {} as Updates.UpdateCheckResult;
   }
 
   try {
-    const update = await Updates.checkForUpdateAsync();
+    const update = await checkForUpdateAsync();
 
-    return update.isAvailable;
+    return update;
   } catch (e) {
     console.error(e);
 
-    return false;
+    return {} as Updates.UpdateCheckResult;
   }
 }

@@ -7,31 +7,21 @@ import {
 import * as Updates from 'expo-updates';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-
-const isLocalEnv = process.env.NODE_ENV === 'development';
+import { checkForUpdate } from '../../../ui-components/AppUpdate';
 
 export function UpdatesDebugInfo() {
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+
   const { channel, checkAutomatically, isEnabled, isEmbeddedLaunch } = Updates;
 
-  const [newUpdateAvailable, setUpdateAvailable] = useState<boolean>(false);
-
-  const checkForUpdates = async () => {
-    if (isLocalEnv) {
-      return;
-    }
-
-    try {
-      const newUpdateStatus: Updates.UpdateCheckResult =
-        await Updates.checkForUpdateAsync();
-
-      setUpdateAvailable(newUpdateStatus.isAvailable);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   useEffect(() => {
-    checkForUpdates();
+    const fetchUpdate = async () => {
+      const { isAvailable } = await checkForUpdate();
+
+      setUpdateAvailable(isAvailable);
+    };
+
+    fetchUpdate();
   }, []);
 
   return (
@@ -41,15 +31,16 @@ export function UpdatesDebugInfo() {
         stylesTitleText={{ fontWeight: 700 }}
       >
         <View style={styles.content}>
-          <TextRegular>isLocalEnv: {String(isLocalEnv)}</TextRegular>
           <TextRegular>
-            newUpdateAvailable : {String(newUpdateAvailable)}
+            new Update Available : {String(updateAvailable)}
           </TextRegular>
           <TextBold mt="sm">Updates Data:</TextBold>
           <TextRegular>isEnabled : {String(isEnabled)}</TextRegular>
-          <TextRegular>Updateschannel : {channel}</TextRegular>
+          <TextRegular>Updates channel : {channel || 'undefined'}</TextRegular>
           <TextRegular>checkAutomatically : {checkAutomatically}</TextRegular>
-          <TextRegular>isEmbeddedLaunch : {isEmbeddedLaunch}</TextRegular>
+          <TextRegular>
+            isEmbeddedLaunch : {isEmbeddedLaunch || 'undefined'}
+          </TextRegular>
         </View>
       </ExpandableContainer>
     </View>
