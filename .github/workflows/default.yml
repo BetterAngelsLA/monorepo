@@ -103,7 +103,10 @@ jobs:
 
       - name: 🔄 Spin up monorepo environment
         run: |
-          docker compose up -d
+          docker compose up -d.
+          docker compose run better-angels bash <<'EOF'
+          yarn install
+          EOF
 
       - name: 🧹 Lint
         run: |
