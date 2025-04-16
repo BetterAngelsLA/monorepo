@@ -15,13 +15,6 @@ services:
       - AWS_CONFIG_FILE=/workspace/.aws/config
       - AWS_PROFILE=Development
 
-    volumes:
-      # Update this to wherever you want VS Code to mount the folder of your project
-      - .:/workspace:cached
-      - node_modules:/workspace/node_modules
-      - venv:/home/betterangels/.venvs
-      - .bash_aliases:/home/betterangels/.bash_aliases
-
     # Uncomment the next four lines if you will use a ptrace-based debugger like C++, Go, and Rust.
     # cap_add:
     #   - SYS_PTRACE
@@ -30,12 +23,3 @@ services:
 
     # Overrides default command so things don't shut down after the process ends.
     command: /bin/sh -c "while sleep 1000; do :; done"
-
-  db:
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-volumes:
-  node_modules:
-  pgdata:
-  venv:
