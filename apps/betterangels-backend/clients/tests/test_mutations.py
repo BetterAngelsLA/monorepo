@@ -677,11 +677,8 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         response = self._update_client_document_fixture({"id": document_id, "originalFilename": new_filename})
 
-        self.assertIsNotNone(response.get("data"))
-        self.assertIsNotNone(response["data"].get("updateClientDocument"))
         self.assertEqual(response["data"]["updateClientDocument"]["originalFilename"], new_filename)
 
-        # Verify database was updated
         document = Attachment.objects.get(id=document_id)
         self.assertEqual(document.original_filename, new_filename)
 
