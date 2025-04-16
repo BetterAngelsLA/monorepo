@@ -26,8 +26,6 @@ export function AppUpdatePrompt() {
       }
     };
 
-    console.log('*****************  appBecameActive:', appBecameActive);
-
     if (!appBecameActive) {
       return;
     }

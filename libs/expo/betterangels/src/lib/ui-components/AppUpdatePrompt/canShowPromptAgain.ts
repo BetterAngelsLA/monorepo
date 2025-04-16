@@ -16,12 +16,10 @@ export async function canShowPromptAgain() {
     return false;
   }
 
-  const updateDismissedCheck = await passedTimeThreshold(
+  return await passedTimeThreshold(
     UPDATE_DISMISSED_TS_KEY,
     DO_NOT_REPEAT_INTERVAL_MS
   );
-
-  return updateDismissedCheck;
 }
 
 async function passedTimeThreshold(

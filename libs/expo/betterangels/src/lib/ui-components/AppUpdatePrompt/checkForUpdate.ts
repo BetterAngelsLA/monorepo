@@ -8,12 +8,8 @@ export async function checkForUpdate() {
   }
 
   try {
-    const update = await checkForUpdateAsync();
-
-    return update;
+    return await checkForUpdateAsync();
   } catch (e) {
-    console.error(e);
-
     return {} as Updates.UpdateCheckResult;
   }
 }
