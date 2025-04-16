@@ -1,11 +1,22 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Button, TextBold } from '@monorepo/expo/shared/ui-components';
 import { ErrorBoundaryProps } from 'expo-router';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AppUpdatePrompt } from '../AppUpdatePrompt';
 
 export default function ErrorCrashView(props: ErrorBoundaryProps) {
   const { retry } = props;
+
+  const [hasRetried, setHasRetried] = useState(false);
+
+  const handleRetry = () => {
+    if (!hasRetried) {
+      setHasRetried(true);
+
+      retry();
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -13,10 +24,9 @@ export default function ErrorCrashView(props: ErrorBoundaryProps) {
         <TextBold size="lg">Sorry, something went wrong.</TextBold>
 
         <Button
-          style={{
-            paddingHorizontal: 60,
-          }}
-          onPress={retry}
+          style={styles.retryButton}
+          onPress={handleRetry}
+          disabled={hasRetried}
           size="full"
           fontSize="sm"
           accessibilityHint="reload the app"
@@ -42,5 +52,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacings.sm,
     alignItems: 'center',
     textAlign: 'center',
+  },
+  retryButton: {
+    paddingHorizontal: 60,
   },
 });
