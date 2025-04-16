@@ -48,7 +48,7 @@ export function AppUpdate() {
       // reload app with update
       await Updates.reloadAsync();
     } catch (e) {
-      console.log('Error updating app:', e);
+      console.error('Error updating app:', e);
     }
   }
 

@@ -26,7 +26,7 @@ export function UpdatesDebugInfo() {
 
       setUpdateAvailable(newUpdateStatus.isAvailable);
     } catch (e) {
-      console.log(e);
+      console.error(e);
     }
   };
 

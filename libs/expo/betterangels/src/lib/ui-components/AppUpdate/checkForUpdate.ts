@@ -12,7 +12,7 @@ export async function checkForUpdate() {
 
     return update.isAvailable;
   } catch (e) {
-    console.log(e);
+    console.error(e);
 
     return false;
   }
