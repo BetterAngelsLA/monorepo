@@ -4,9 +4,7 @@ import { ErrorBoundaryProps } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { AppUpdatePrompt } from '../AppUpdatePrompt';
 
-interface TProps extends ErrorBoundaryProps {}
-
-export default function ErrorCrashView(props: TProps) {
+export default function ErrorCrashView(props: ErrorBoundaryProps) {
   const { retry } = props;
 
   return (
