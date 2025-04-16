@@ -8,7 +8,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - .:/workspace:cached
       - node_modules:/workspace/node_modules
-      - venv:/home/betterangels/.venvs
+      - venv:/workspace/.venv
       - .bash_aliases:/home/betterangels/.bash_aliases
 
     ports:
