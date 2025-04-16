@@ -1,6 +1,5 @@
 services:
   better-angels:
-    image: 0c365cbbe229
     image: ${MONOREPO_IMAGE}:${DOCKER_TAG}
     volumes:
       - ${GITHUB_WORKSPACE}:/workspace # Mounts the full repository
