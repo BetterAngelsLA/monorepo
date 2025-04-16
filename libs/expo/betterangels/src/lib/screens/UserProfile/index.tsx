@@ -10,7 +10,7 @@ import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 import { useDeleteCurrentUserMutation } from '../../apollo';
 import { useSignOut, useSnackbar, useUser } from '../../hooks';
-import { useFeatureControls } from '../../providers/featureControls/featureControlContext';
+import { useFeatureControls } from '../../providers';
 import InfoCard from './InfoCard';
 
 export default function UserProfile() {

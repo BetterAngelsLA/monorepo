@@ -1,6 +1,5 @@
 import { useContext } from 'react';
-import { TFeatureFlagValue } from '../../providers/featureControls/constants';
-import { FeatureControlContext } from '../../providers/featureControls/featureControlContext';
+import { FeatureControlContext, TFeatureFlagValue } from '../../providers';
 
 export default function useFeatureFlagActive(
   flagName: TFeatureFlagValue
