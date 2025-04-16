@@ -104,10 +104,6 @@ jobs:
       - name: 🔄 Spin up monorepo environment
         run: |
           docker compose up -d
-          docker compose run better-angels bash <<'EOF'
-          yarn install
-          poetry install --no-interaction --no-ansi
-          EOF
 
       - name: 🧹 Lint
         run: |
@@ -196,8 +192,7 @@ jobs:
       - name: 🚀 Deploy Changes
         run: |
           docker compose run better-angels bash <<'EOF'
-          echo Test
-          # yarn nx affected -t deploy --exclude=^betterangels$,^shelter$ --configuration ${{ matrix.environment }}
+          yarn nx affected -t deploy --exclude=^betterangels$,^shelter$ --configuration ${{ matrix.environment }}
           EOF
 
       - name: 💬 Post preview link to PR
