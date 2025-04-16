@@ -10,7 +10,7 @@ type TShelterCard = {
 export function ShelterCardHero(props: TShelterCard) {
   const { imageUrl, shelterName, className } = props;
 
-  const imageCss = ['aspect-[4/3] rounded-[20px]'];
+  const imageCss = ['aspect-[4/3] w-full object-cover rounded-[20px]'];
   const placeholderCss = ['border border-neutral-90', imageCss, className];
 
   if (!imageUrl) {
