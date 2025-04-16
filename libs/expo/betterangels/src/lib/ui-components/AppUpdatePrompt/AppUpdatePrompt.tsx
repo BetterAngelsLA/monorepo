@@ -7,13 +7,19 @@ import { canShowPromptAgain } from './canShowPromptAgain';
 import { checkForUpdate } from './checkForUpdate';
 import { LAST_UPDATE_CHECK_TS_KEY, UPDATE_DISMISSED_TS_KEY } from './constants';
 
-export function AppUpdatePrompt() {
+type TProps = {
+  forceCanShow?: boolean;
+};
+
+export function AppUpdatePrompt(props: TProps) {
+  const { forceCanShow } = props;
+
   const [promptModalVisible, setPromptModalVisible] = useState(false);
   const { appBecameActive } = useAppState();
 
   useEffect(() => {
     const showPrompt = async () => {
-      const canShowAgain = await canShowPromptAgain();
+      const canShowAgain = forceCanShow || (await canShowPromptAgain());
 
       if (!canShowAgain) {
         return;
@@ -26,12 +32,10 @@ export function AppUpdatePrompt() {
       }
     };
 
-    if (!appBecameActive) {
-      return;
+    if (forceCanShow || appBecameActive) {
+      showPrompt();
     }
-
-    showPrompt();
-  }, [appBecameActive]);
+  }, [appBecameActive, forceCanShow]);
 
   async function onAccept() {
     setPromptModalVisible(false);
