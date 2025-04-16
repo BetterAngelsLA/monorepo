@@ -18,6 +18,7 @@ export { default as EmailOutlinedIcon } from './components/emailOutlinedIcon';
 export { default as FilterIcon } from './components/filterIcon';
 export { default as FindMeIcon } from './components/findMeIcon';
 export { default as GlobeIcon } from './components/globeIcon';
+export { default as ImageIcon } from './components/imageIcon';
 export { default as InfoIcon } from './components/infoIcon';
 export { default as InstagramIcon } from './components/instagramIcon';
 export { default as LightBulbIcon } from './components/lightBulbIcon';
@@ -33,4 +34,3 @@ export { default as WFAlertOnIcon } from './components/wfAlertOn';
 export { default as WFAnnouncement } from './components/wfAnnouncement';
 export { default as WFCheckbox } from './components/wfCheckbox';
 export { default as WFLinkIcon } from './components/wfLinkIcon';
-
