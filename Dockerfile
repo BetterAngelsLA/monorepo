@@ -150,7 +150,6 @@ RUN --mount=type=cache,uid=1000,gid=1000,target=$YARN_CACHE_FOLDER \
     --mount=type=cache,uid=1000,gid=1000,target=$COREPACK_CACHE_FOLDER \
     yarn install
 
-
 # Production Build
 FROM base AS production
 COPY --from=poetry /workspace /workspace
