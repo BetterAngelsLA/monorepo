@@ -1,6 +1,8 @@
 services:
   better-angels:
     image: ${MONOREPO_IMAGE}:${DOCKER_TAG}
+    tmpfs:
+      - /workspace/webpack:rw,size=512m
     volumes:
       - ${GITHUB_WORKSPACE}:/workspace # Mounts the full repository
       - ${HOME}/.docker/:/home/betterangels/.docker/
