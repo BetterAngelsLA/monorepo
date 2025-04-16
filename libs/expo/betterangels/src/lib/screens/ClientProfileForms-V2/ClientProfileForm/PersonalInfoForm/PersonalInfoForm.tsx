@@ -19,7 +19,7 @@ import {
   useCaliforniaIdUniqueCheck,
   useFeatureFlagActive,
 } from '../../../../hooks';
-import { FeatureFlags } from '../../../../providers/featureControls/constants';
+import { FeatureFlags } from '../../../../providers';
 import {
   enumDisplayLanguage,
   enumDisplayLivingSituation,

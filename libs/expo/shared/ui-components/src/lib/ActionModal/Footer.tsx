@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import Button from '../Button';
 import TextButton from '../TextButton';
 
-export default function ActionModalBody({
+export default function ActionModalFooter({
   onPrimaryPress,
   onSecondaryPress,
   secondaryButtonTitle,

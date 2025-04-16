@@ -1,4 +1,8 @@
-export { useFeatureControls } from './featureControls/featureControlContext';
+export * from './featureControls/constants';
+export {
+  FeatureControlContext,
+  useFeatureControls,
+} from './featureControls/featureControlContext';
 export { FeatureControlProvider } from './featureControls/featureControlProvider';
 export { default as KeyboardToolbarProvider } from './keyboardToolbar/keyboardToolbarProvider';
 export { default as SnackbarProvider } from './snackbar/SnackbarProvider';
