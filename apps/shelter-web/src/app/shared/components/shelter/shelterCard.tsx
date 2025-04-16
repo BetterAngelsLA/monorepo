@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { TLatLng } from '../map/types.maps';
 import { DistanceAway } from './distanceAway';
+import { ShelterCardHero } from './shelterCardHero';
 
 export type TShelterLocation = {
   latitude: number;
@@ -43,8 +44,6 @@ export function ShelterCard(props: TShelterCard) {
     className,
   ];
 
-  const heroCss = ['md:w-96', 'md:mr-4'];
-
   const contentCss = ['mt-4'];
 
   const onNavigate = () => {
@@ -60,16 +59,11 @@ export function ShelterCard(props: TShelterCard) {
 
   return (
     <div className={mergeCss(parentCss)} onClick={onNavigate}>
-      {heroImage && (
-        <div className={mergeCss(heroCss)}>
-          <img
-            src={heroImage}
-            alt={`hero for ${name}`}
-            loading="lazy"
-            className="aspect-[4/3] rounded-[20px]"
-          />
-        </div>
-      )}
+      <ShelterCardHero
+        className="md:w-96 md:mr-4"
+        imageUrl={heroImage}
+        shelterName={name}
+      />
 
       <div className={mergeCss(contentCss)}>
         <div className="font-semibold text-sm md:text-lg leading-[1.125rem] tracking-[.03125rem]">
