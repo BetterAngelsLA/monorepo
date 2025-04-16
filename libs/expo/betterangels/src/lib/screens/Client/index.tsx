@@ -17,7 +17,7 @@ import {
 } from 'react';
 import { Pressable, View } from 'react-native';
 import { useFeatureFlagActive } from '../../hooks';
-import { FeatureFlags } from '../../providers/featureControls/constants';
+import { FeatureFlags } from '../../providers';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
