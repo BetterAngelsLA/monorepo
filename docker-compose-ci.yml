@@ -5,7 +5,6 @@ services:
       - ${GITHUB_WORKSPACE}:/workspace # Mounts the full repository
       - ${HOME}/.docker/:/home/betterangels/.docker/
       - ${GITHUB_EVENT_PATH}:${GITHUB_EVENT_PATH}:ro
-    working_dir: /workspace
     # Pass in GitHub Actions Envs into the container
     environment:
       - AWS_REGION
