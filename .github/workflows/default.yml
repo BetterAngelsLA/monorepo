@@ -106,6 +106,7 @@ jobs:
           docker compose up -d
           docker compose run better-angels bash <<'EOF'
           yarn install
+          poetry install --no-interaction --no-ansi
           EOF
 
       - name: 🧹 Lint
