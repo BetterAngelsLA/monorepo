@@ -408,12 +408,15 @@ class ShelterForm(forms.ModelForm):
     def save(self, commit: bool = True) -> Any:
         instance = super().save(commit=commit)
 
-        for file in self.cleaned_data["interior_photos_multiple"]:
-            instance.interior_photos.create(file=file)
-        for file in self.cleaned_data["exterior_photos_multiple"]:
-            instance.exterior_photos.create(file=file)
-        for file in self.cleaned_data["videos_multiple"]:
-            instance.videos.create(file=file)
+        file_fields = {
+            "interior_photos_multiple": instance.interior_photos,
+            "exterior_photos_multiple": instance.exterior_photos,
+            "videos_multiple": instance.videos,
+        }
+
+        for field_name, manager in file_fields.items():
+            for file in self.cleaned_data.get(field_name, []):
+                manager.create(file=file)
 
         # Only proceed if instance is saved (commit=True) and files are uploaded
         if commit:
