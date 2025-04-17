@@ -11,6 +11,34 @@
         position: absolute;
     }
     </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            ['id_interior_photos_multiple', 'id_exterior_photos_multiple', 'id_videos_multiple'].forEach(element => {
+                const target = document.getElementById(element);
+                let allVals = {newFiles:[], filesCount:0};
+                document.getElementById(element + "_input_file").addEventListener("change", function () { // Enable if a file is selected, disable if not
+                    const files = this.files;
+                    allVals.newFiles = [];
+                    allVals.filesCount = files.length;
+                    console.log(files);
+                });
+
+                const observer = new MutationObserver(() => {
+                    console.log('Value possibly changed (attribute mutation). New value:', target.value);
+                    allVals.newFiles.push(target.value);
+                    if(allVals.newFiles.length === allVals.filesCount){
+                        console.log(allVals);
+                        target.value = allVals.newFiles.toString();
+                    }
+                });
+
+                observer.observe(target, {
+                    attributes: true,
+                    attributeFilter: ['value'] // Only listen to value attribute changes
+                });
+            });
+        });
+    </script>
     {{ block.super }}
 {% endblock %}
 {% block content_title %}

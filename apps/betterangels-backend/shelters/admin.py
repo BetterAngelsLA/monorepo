@@ -75,6 +75,7 @@ from .models import (
     TrainingService,
     Video,
 )
+from .widgets import MultipleFormResumableFileField, MultipleResumableAdminWidget
 
 T = TypeVar("T", bound=models.Model)
 logger = logging.getLogger(__name__)
@@ -337,6 +338,16 @@ class ShelterForm(forms.ModelForm):
         required=False,
     )
 
+    interior_photos_multiple = MultipleFormResumableFileField(
+        required=False, widget=MultipleResumableAdminWidget(attrs={"model": InteriorPhoto, "field_name": "file"})
+    )
+    exterior_photos_multiple = MultipleFormResumableFileField(
+        required=False, widget=MultipleResumableAdminWidget(attrs={"model": ExteriorPhoto, "field_name": "file"})
+    )
+    videos_multiple = MultipleFormResumableFileField(
+        required=False, widget=MultipleResumableAdminWidget(attrs={"model": Video, "field_name": "file"})
+    )
+
     class Meta:
         model = Shelter
         fields = "__all__"
@@ -401,6 +412,33 @@ class ShelterForm(forms.ModelForm):
 
         return existing_objects
 
+    def save(self, commit: bool = True) -> Any:
+        instance = super().save(commit=commit)
+
+        file_fields = {
+            "interior_photos_multiple": instance.interior_photos,
+            "exterior_photos_multiple": instance.exterior_photos,
+            "videos_multiple": instance.videos,
+        }
+        new_cleaned_data = {}
+        for field_name in file_fields:
+            new_cleaned_data[field_name] = (
+                self.cleaned_data.get(field_name, [])[0].split(",")
+                if (self.cleaned_data.get(field_name, []) and self.cleaned_data.get(field_name, [])[0])
+                else []
+            )
+
+        for field_name, manager in file_fields.items():
+            for file in new_cleaned_data.get(field_name, []):
+                manager.create(file=file)
+
+        # Only proceed if instance is saved (commit=True) and files are uploaded
+        if commit:
+            self.instance.save()
+            self._save_m2m()  # type: ignore
+
+        return instance
+
 
 @admin.register(ContactInfo)
 class ContactInfoAdmin(admin.ModelAdmin):
@@ -418,17 +456,23 @@ class ContactInfoInline(admin.TabularInline):
 
 class ExteriorPhotoInline(admin.TabularInline):
     model = ExteriorPhoto
-    extra = 1
+    extra = 0
+    verbose_name = "Exterior Photo View"
+    verbose_name_plural = "Exterior Photos View"
 
 
 class InterPhotoInline(admin.TabularInline):
     model = InteriorPhoto
-    extra = 1
+    extra = 0
+    verbose_name = "Interior Photo View"
+    verbose_name_plural = "Interior Photos View"
 
 
 class VideoInline(admin.TabularInline):
     model = Video
-    extra = 1
+    extra = 0
+    verbose_name = "Video View"
+    verbose_name_plural = "Videos View"
 
 
 class ShelterResource(resources.ModelResource):
@@ -796,6 +840,16 @@ class ShelterAdmin(ImportExportModelAdmin):
                     # "contact_info",
                     "updated_at",
                     "updated_by",
+                )
+            },
+        ),
+        (
+            "Media Upload",
+            {
+                "fields": (
+                    "interior_photos_multiple",
+                    "exterior_photos_multiple",
+                    "videos_multiple",
                 )
             },
         ),
