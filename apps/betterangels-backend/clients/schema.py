@@ -418,6 +418,22 @@ class Query:
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
+    hmis_profile: HmisProfileType = strawberry_django.field(
+        extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
+    )
+
+    hmis_profiles: OffsetPaginated[HmisProfileType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
+    )
+
+    client_contact: ClientContactType = strawberry_django.field(
+        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+    )
+
+    client_contacts: OffsetPaginated[ClientContactType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+    )
+
     # Data Import
     @strawberry_django.offset_paginated(extensions=[HasPerm(ClientProfileImportRecordPermissions.VIEW)])
     def bulk_client_profile_import_records(
