@@ -4,6 +4,11 @@ services:
       - IS_LOCAL_DEV=True
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+      - .:/workspace:cached
+      - node_modules:/workspace/node_modules
+      - venv:/workspace/.venv
+      - .bash_aliases:/home/betterangels/.bash_aliases
+
     ports:
       - '8000:8000'
   db:
@@ -15,5 +20,13 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     command: postgres -c log_statement=all -c log_destination=stderr
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   valkey:
     image: valkey/valkey:8.0.2
+
+volumes:
+  node_modules:
+  pgdata:
+  venv:

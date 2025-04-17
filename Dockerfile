@@ -1,4 +1,4 @@
-FROM python:3.13.2-bullseye AS base
+FROM python:3.13.3-bullseye AS base
 
 ENV PYTHONUNBUFFERED=1
 RUN groupadd --gid 1000 betterangels \
@@ -98,6 +98,7 @@ RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,t
       build-essential \
       curl \
       git \
+      jq \
       wget \
       zip \
     # Install Python Lib Requirements
