@@ -111,14 +111,6 @@ export function Map(props: TMap) {
       onCameraChanged={handleCameraChange}
       {...cameraProps}
     >
-      <AdvancedMarker
-        position={cameraProps.center}
-        draggable={false}
-        zIndex={101}
-      >
-        <MapPinIcon className="h-10" type="primary" />
-      </AdvancedMarker>
-
       {markers.map((marker) => (
         <AdvancedMarker
           key={marker.id}
