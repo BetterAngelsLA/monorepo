@@ -16,5 +16,5 @@ export default function FeatureFlagControlled(props: TProps) {
     return null;
   }
 
-  return <>{children}</>;
+  return children;
 }
