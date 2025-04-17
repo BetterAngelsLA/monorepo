@@ -382,7 +382,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         self.assertEqual(result_shelter_ids, [str(s3.pk), str(s2.pk)])
 
     def test_shelter_polygon_filter(self) -> None:
-        """Test polygon filter for querying shelters within a defined area.
+        """Test map bounds filter for querying shelters within a defined area.
 
         1. Create 5 shelters at coordinates:
            - (-4, -4)
@@ -391,13 +391,13 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
            - (2, 2)
            - (4, 4)
 
-        2. Define the polygon:
-           - Construct a square polygon defined by the following coordinates:
-             [[-3, -3], [-3, 3], [3, 3], [3, -3], [-3, -3]]
-           - Note that the polygon's first and last coordinates are the same, to close the shape.
+        2. Define the map boundary:
+           - Construct a square boundary box defined by the following latitude and longitude values:
+             (-3, 3, 3, -3)
+           - Note that the boundary box's values correspond to: west, north, east, south
 
         3. Execute query and verify results:
-           - Query shelters with the polygon filter.
+           - Query shelters with the map bounds filter.
            - Confirm that only the three shelters within the polygon are returned.
 
          4                          x
@@ -441,7 +441,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }
         """
 
-        filters: dict[str, Any] = {"bounds": [[[-3, -3], [-3, 3], [3, 3], [3, -3], [-3, -3]]]}
+        filters: dict[str, Any] = {"mapBounds": (-3, 3, 3, -3)}
 
         expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
@@ -483,7 +483,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         """
 
         filters: dict[str, Any] = {
-            "bounds": [[[-3, -3], [-3, 3], [3, 3], [3, -3], [-3, -3]]],
+            "mapBounds": (-3, 3, 3, -3),
             "geolocation": {
                 "latitude": reference_point["latitude"],
                 "longitude": reference_point["longitude"],

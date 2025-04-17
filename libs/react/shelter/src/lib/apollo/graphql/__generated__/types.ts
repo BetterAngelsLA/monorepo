@@ -22,8 +22,6 @@ export type Scalars = {
   PhoneNumber: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
   Point: { input: any; output: any; }
-  /** A geographical object that gets 1 or 2 LinearRing objects as external and internal rings. */
-  Polygon: { input: any; output: any; }
   /** Time (isoformat) */
   Time: { input: any; output: any; }
   UUID: { input: any; output: any; }
@@ -1753,8 +1751,8 @@ export type ShelterFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<ShelterFilter>;
   OR?: InputMaybe<ShelterFilter>;
-  bounds?: InputMaybe<Scalars['Polygon']['input']>;
   geolocation?: InputMaybe<GeolocationInput>;
+  mapBounds?: InputMaybe<Array<Scalars['Float']['input']>>;
   properties?: InputMaybe<ShelterPropertyInput>;
 };
 

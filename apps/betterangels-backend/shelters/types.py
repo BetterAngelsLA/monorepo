@@ -6,7 +6,7 @@ import strawberry_django
 from accounts.types import OrganizationType
 from common.graphql.types import PhoneNumberScalar
 from django.contrib.gis.db.models.functions import Distance
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
 from django.db.models import Prefetch, Q, QuerySet
 from shelters.enums import (
@@ -56,7 +56,6 @@ from shelters.models import (
     TrainingService,
 )
 from strawberry import ID, asdict, auto
-from strawberry_django.fields.types import Polygon
 
 
 @strawberry_django.type(ContactInfo)
@@ -197,16 +196,18 @@ class ShelterFilter:
         return queryset.filter(**filters).distinct(), Q()
 
     @strawberry_django.filter_field
-    def bounds(
+    def map_bounds(
         self,
         queryset: QuerySet,
-        value: Optional[Polygon],
+        value: Optional[tuple[float, float, float, float]],
         prefix: str,
     ) -> Tuple[QuerySet[Shelter], Q]:
         if not value:
             return queryset, Q()
 
-        return queryset.filter(geolocation__contained=value), Q()
+        polygon = Polygon.from_bbox(value)
+
+        return queryset.filter(geolocation__contained=polygon), Q()
 
     @strawberry_django.filter_field
     def geolocation(
