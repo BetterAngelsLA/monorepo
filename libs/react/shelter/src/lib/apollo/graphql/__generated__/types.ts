@@ -221,15 +221,6 @@ export type ClientContactType = {
   relationshipToClientOther?: Maybe<Scalars['String']['output']>;
 };
 
-export type ClientContactTypeOffsetPaginated = {
-  __typename?: 'ClientContactTypeOffsetPaginated';
-  pageInfo: OffsetPaginationInfo;
-  /** List of paginated results. */
-  results: Array<ClientContactType>;
-  /** Total count of existing results. */
-  totalCount: Scalars['Int']['output'];
-};
-
 export enum ClientDocumentNamespaceEnum {
   BirthCertificate = 'BIRTH_CERTIFICATE',
   ConsentForm = 'CONSENT_FORM',
@@ -777,15 +768,6 @@ export type HmisProfileType = {
   agency: HmisAgencyEnum;
   hmisId?: Maybe<Scalars['NonBlankString']['output']>;
   id: Scalars['ID']['output'];
-};
-
-export type HmisProfileTypeOffsetPaginated = {
-  __typename?: 'HmisProfileTypeOffsetPaginated';
-  pageInfo: OffsetPaginationInfo;
-  /** List of paginated results. */
-  results: Array<HmisProfileType>;
-  /** Total count of existing results. */
-  totalCount: Scalars['Int']['output'];
 };
 
 export enum ImmediateNeedChoices {
@@ -1422,22 +1404,15 @@ export type Query = {
   __typename?: 'Query';
   bulkClientProfileImportRecords: ClientProfileImportRecordTypeOffsetPaginated;
   caseworkerOrganizations: OrganizationTypeOffsetPaginated;
-  clientContact: ClientContactType;
-  clientContacts: ClientContactTypeOffsetPaginated;
   clientDocument: ClientDocumentType;
   clientDocuments: ClientDocumentTypeOffsetPaginated;
-  clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
   clientProfile: ClientProfileType;
   clientProfiles: ClientProfileTypeOffsetPaginated;
-  clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
-  hmisProfile: HmisProfileType;
-  hmisProfiles: HmisProfileTypeOffsetPaginated;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
-  notesPaginated: NoteTypeOffsetPaginated;
   shelter: ShelterType;
   shelters: ShelterTypeOffsetPaginated;
 };
@@ -1455,27 +1430,12 @@ export type QueryCaseworkerOrganizationsArgs = {
 };
 
 
-export type QueryClientContactArgs = {
-  pk: Scalars['ID']['input'];
-};
-
-
-export type QueryClientContactsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
 export type QueryClientDocumentArgs = {
   pk: Scalars['ID']['input'];
 };
 
 
 export type QueryClientDocumentsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryClientDocumentsPaginatedArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1488,23 +1448,6 @@ export type QueryClientProfileArgs = {
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryClientProfilesPaginatedArgs = {
-  filters?: InputMaybe<ClientProfileFilter>;
-  order?: InputMaybe<ClientProfileOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryHmisProfileArgs = {
-  pk: Scalars['ID']['input'];
-};
-
-
-export type QueryHmisProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1522,13 +1465,6 @@ export type QueryNoteArgs = {
 
 
 export type QueryNotesArgs = {
-  filters?: InputMaybe<NoteFilter>;
-  order?: InputMaybe<NoteOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryNotesPaginatedArgs = {
   filters?: InputMaybe<NoteFilter>;
   order?: InputMaybe<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
