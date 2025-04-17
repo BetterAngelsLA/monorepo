@@ -29,7 +29,7 @@ class MoodAdmin(admin.ModelAdmin):
     search_fields = (
         "note__title",
         "note__created_by__email",
-        "note__client__email",
+        "note__client_profile__email",
     )
     readonly_fields = ("created_at",)
 
@@ -77,11 +77,12 @@ class NoteResource(resources.ModelResource):
         )
 
     def dehydrate_client_id(self, note: Note) -> int | str:
-        return (
-            note.client.client_profile.id
-            if note.client and hasattr(note.client, "client_profile")
-            else "MISSING CLIENT ID"
-        )
+        if client_profile := note.client_profile:
+            return str(client_profile.id)
+        if note.client and hasattr(note.client, "client_profile"):
+            return note.client.client_profile.id
+        else:
+            return "MISSING CLIENT ID"
 
     def dehydrate_interacted_at(self, note: Note) -> Optional[str]:
         return note.interacted_at.date().strftime("%m/%d/%Y") if note.interacted_at else None
@@ -122,7 +123,7 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
 
     list_display = (
         "note_purpose",
-        "client",
+        "client_profile",
         "created_by",
         "organization",
         "interacted_at",
@@ -139,13 +140,13 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         "purpose",
         "public_details",
         "private_details",
+        "client_profile__email",
+        "client_profile__first_name",
+        "client_profile__last_name",
+        "client_profile__middle_name",
+        "client_profile__nickname",
         "created_by__email",
-        "client__email",
         "organization__name",
-        "client__first_name",
-        "client__last_name",
-        "client__middle_name",
-        "client__client_profile__nickname",
     )
     inlines = [
         MoodInline,
@@ -163,7 +164,7 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
 class TaskAdmin(AttachmentAdminMixin, admin.ModelAdmin):
     list_display = (
         "title",
-        "client",
+        "client_profile",
         "due_by",
         "status",
     )
@@ -176,7 +177,7 @@ class TaskAdmin(AttachmentAdminMixin, admin.ModelAdmin):
     search_fields = (
         "title",
         "created_by__email",
-        "client__email",
+        "client_profile__email",
     )
     readonly_fields = (
         "created_at",
@@ -191,7 +192,7 @@ class ServiceRequestAdmin(admin.ModelAdmin):
         "status",
         "due_by",
         "completed_on",
-        "client",
+        "client_profile",
         "created_by",
         "created_at",
     )
@@ -208,9 +209,9 @@ class ServiceRequestAdmin(admin.ModelAdmin):
         "created_by__email",
         "created_by__first_name",
         "created_by__last_name",
-        "client__email",
-        "client__first_name",
-        "client__last_name",
+        "client_profile__email",
+        "client_profile__first_name",
+        "client_profile__last_name",
     )
     readonly_fields = ("created_at",)
 

@@ -15,7 +15,7 @@ export default function NoteCard(props: INoteCardProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const isInteractionsPage = pathname === '/interactions';
+  const isOnInteractionsPage = pathname === '/interactions';
 
   return (
     <Pressable
@@ -35,7 +35,9 @@ export default function NoteCard(props: INoteCardProps) {
     >
       <NoteCardHeader purpose={note.purpose} interactedAt={note.interactedAt} />
       <NoteCardClient
-        client={isInteractionsPage ? note.client : note.createdBy}
+        isOnInteractionsPage={isOnInteractionsPage}
+        createdBy={note.createdBy}
+        clientProfile={note.clientProfile}
         isSubmitted={note.isSubmitted}
       />
       {!!note.providedServices.length && (

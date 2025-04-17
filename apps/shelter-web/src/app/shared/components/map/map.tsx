@@ -62,6 +62,17 @@ export function Map(props: TMap) {
   const handleCameraChange = useCallback(
     (event: MapCameraChangedEvent) => {
       setCameraProps(event.detail);
+      const { center } = event.detail;
+
+      if (center) {
+        sessionStorage.setItem(
+          'mapCenter',
+          JSON.stringify({
+            lat: center.lat,
+            lng: center.lng,
+          })
+        );
+      }
     },
     [map]
   );
@@ -100,14 +111,6 @@ export function Map(props: TMap) {
       onCameraChanged={handleCameraChange}
       {...cameraProps}
     >
-      <AdvancedMarker
-        position={cameraProps.center}
-        draggable={false}
-        zIndex={101}
-      >
-        <MapPinIcon className="h-10" type="primary" />
-      </AdvancedMarker>
-
       {markers.map((marker) => (
         <AdvancedMarker
           key={marker.id}

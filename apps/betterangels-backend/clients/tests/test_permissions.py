@@ -1,20 +1,33 @@
 from typing import Optional
 
 from accounts.tests.baker_recipes import permission_group_recipe
-from clients.enums import ClientDocumentNamespaceEnum, GenderEnum, LanguageEnum
-from clients.models import ClientProfile
-from clients.tests.utils import ClientProfileGraphQLBaseTestCase
+from clients.enums import (
+    ClientDocumentNamespaceEnum,
+    GenderEnum,
+    HmisAgencyEnum,
+    LanguageEnum,
+)
+from clients.models import ClientContact, ClientProfile, HmisProfile
+from clients.tests.utils import (
+    ClientContactBaseTestCase,
+    ClientProfileGraphQLBaseTestCase,
+    HmisProfileBaseTestCase,
+)
 from common.models import Attachment
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import override_settings
 from unittest_parametrize import parametrize
 
 
-class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
+class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
     @parametrize(
         "user_label, should_succeed",
         [
-            ("org_1_case_manager_1", True),  # Case manager should succeed
+            ("org_1_case_manager_1", True),
+            ("client_user_1", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -40,6 +53,7 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"]["createClientProfile"]["id"])
             self.assertEqual(client_count + 1, ClientProfile.objects.count())
         else:
+            self.assertEqual(len(response["data"]["createClientProfile"]["messages"]), 1)
             self.assertEqual(
                 response["data"]["createClientProfile"]["messages"][0],
                 {
@@ -49,6 +63,38 @@ class ClientPermissionTestCase(ClientProfileGraphQLBaseTestCase):
                 },
             )
             self.assertEqual(client_count, ClientProfile.objects.count())
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_update_client_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+        original_nickname = ClientProfile.objects.get(id=self.client_profile_1["id"]).nickname
+
+        variables = {"id": self.client_profile_1["id"], "nickname": "updated nick"}
+        response = self._update_client_profile_fixture(variables)
+        updated_nickname = ClientProfile.objects.get(id=self.client_profile_1["id"]).nickname
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["updateClientProfile"]["id"])
+            self.assertNotEqual(original_nickname, updated_nickname)
+        else:
+            self.assertEqual(len(response["errors"]), 1)
+            self.assertIn(
+                response["errors"][0]["message"],
+                {
+                    "You do not have permission to modify this client.",
+                    "Cannot filter against a non-conditional expression.",
+                },
+            )
+            self.assertEqual(original_nickname, updated_nickname)
 
     @parametrize(
         "user_label, should_succeed",
@@ -268,6 +314,318 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertTrue("errors" in response)
 
 
+class ClientContactPermissionTestCase(ClientContactBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM user should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_client_contact_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        query = """
+            query ($id: ID!) {
+                clientContact(pk: $id) {
+                    id
+                }
+            }
+        """
+        variables = {"id": self.client_contact_1["id"]}
+        response = self.execute_graphql(query, variables)
+
+        if should_succeed:
+            self.assertEqual(response["data"]["clientContact"]["id"], self.client_contact_1["id"])
+        else:
+            self.assertIsNotNone(response["errors"])
+
+    @parametrize(
+        "user_label, expected_profile_count",
+        [
+            ("org_1_case_manager_1", 2),
+            ("org_1_case_manager_2", 2),
+            ("org_2_case_manager_1", 2),
+            ("client_user_1", 0),  # Non CM should not succeed
+            # NOTE: Anon user raising an error may be caused by a strawberry bug.
+            # This test may fail and need updating when the bug is fixed.
+            (None, None),  # Anonymous user should return error
+        ],
+    )
+    def test_view_client_contacts_permission(self, user_label: str, expected_profile_count: int | None) -> None:
+        self._handle_user_login(user_label)
+        query = """
+            query {
+                clientContacts {
+                    totalCount
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        if expected_profile_count is not None:
+            self.assertEqual(response["data"]["clientContacts"]["totalCount"], expected_profile_count)
+        else:
+            self.assertTrue("errors" in response)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Case manager should succeed
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_create_client_contact_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        client_contact_count = ClientContact.objects.count()
+        variables = {
+            "name": "Buddy Guy",
+            "clientProfile": self.client_profile["id"],
+        }
+        response = self._create_client_contact_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["createClientContact"]["id"])
+            self.assertEqual(client_contact_count + 1, ClientContact.objects.count())
+        else:
+            self.assertEqual(len(response["data"]["createClientContact"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["createClientContact"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "createClientContact",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+            self.assertEqual(client_contact_count, ClientContact.objects.count())
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_update_client_contact_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {
+            "id": self.client_contact_1["id"],
+            "name": "John Joe",
+        }
+        response = self._update_client_contact_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["updateClientContact"]["id"])
+        else:
+            self.assertEqual(len(response["data"]["updateClientContact"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["updateClientContact"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_delete_client_contact_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {"object": "ClientContact", "object_id": self.client_contact_1["id"]}
+        response = self._delete_fixture(**variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["deleteClientContact"]["id"])
+        else:
+            self.assertEqual(len(response["data"]["deleteClientContact"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["deleteClientContact"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+
+class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM user should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_hmis_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        query = """
+            query ($id: ID!) {
+                hmisProfile(pk: $id) {
+                    id
+                }
+            }
+        """
+        variables = {"id": self.hmis_profile_1["id"]}
+        response = self.execute_graphql(query, variables)
+
+        if should_succeed:
+            self.assertEqual(response["data"]["hmisProfile"]["id"], self.hmis_profile_1["id"])
+        else:
+            self.assertIsNotNone(response["errors"])
+
+    @parametrize(
+        "user_label, expected_profile_count",
+        [
+            ("org_1_case_manager_1", 2),
+            ("org_1_case_manager_2", 2),
+            ("org_2_case_manager_1", 2),
+            ("client_user_1", 0),  # Non CM should not succeed
+            # NOTE: Anon user raising an error may be caused by a strawberry bug.
+            # This test may fail and need updating when the bug is fixed.
+            (None, None),  # Anonymous user should return error
+        ],
+    )
+    def test_view_hmis_profiles_permission(self, user_label: str, expected_profile_count: int | None) -> None:
+        self._handle_user_login(user_label)
+        query = """
+            query {
+                hmisProfiles {
+                    totalCount
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        if expected_profile_count is not None:
+            self.assertEqual(response["data"]["hmisProfiles"]["totalCount"], expected_profile_count)
+        else:
+            self.assertTrue("errors" in response)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Case manager should succeed
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_create_hmis_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        hmis_profile_count = HmisProfile.objects.count()
+        variables = {
+            "hmisId": "permission test",
+            "agency": HmisAgencyEnum.LAHSA.name,
+            "clientProfile": self.client_profile["id"],
+        }
+        response = self._create_hmis_profile_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["createHmisProfile"]["id"])
+            self.assertEqual(hmis_profile_count + 1, HmisProfile.objects.count())
+        else:
+            self.assertEqual(len(response["data"]["createHmisProfile"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["createHmisProfile"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "createHmisProfile",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+            self.assertEqual(hmis_profile_count, HmisProfile.objects.count())
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_update_hmis_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {
+            "id": self.hmis_profile_1["id"],
+            "hmisId": "update",
+            "agency": HmisAgencyEnum.LAHSA.name,
+        }
+        response = self._update_hmis_profile_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["updateHmisProfile"]["id"])
+        else:
+            self.assertEqual(len(response["data"]["updateHmisProfile"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["updateHmisProfile"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("client_user_1", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_delete_hmis_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {"object": "HmisProfile", "object_id": self.hmis_profile_1["id"]}
+        response = self._delete_fixture(**variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["deleteHmisProfile"]["id"])
+        else:
+            self.assertEqual(len(response["data"]["deleteHmisProfile"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["deleteHmisProfile"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+
 class OrganizationPermissionTestCase(GraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
@@ -277,7 +635,7 @@ class OrganizationPermissionTestCase(GraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_available_organizations_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_caseworker_organizations_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         # This recipe creates an organization in the process. Including this here because even though
@@ -285,16 +643,24 @@ class OrganizationPermissionTestCase(GraphQLBaseTestCase):
         permission_group_recipe.make(name="Caseworker")
 
         query = """
-            query {
-                availableOrganizations {
-                    id
-                    name
+            query CaseworkerOrganizations($pagination: OffsetPaginationInput) {
+                caseworkerOrganizations(pagination: $pagination) {
+                    totalCount
+                    results {
+                        id
+                        name
+                    }
+                    pageInfo {
+                        offset
+                        limit
+                    }
                 }
             }
         """
-        response = self.execute_graphql(query)
+        variables = {"pagination": {"offset": 0, "limit": 10}}
+        response = self.execute_graphql(query, variables=variables)
 
         if should_succeed:
-            self.assertTrue(len(response["data"]["availableOrganizations"]) > 0)
+            self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) > 0)
         else:
-            self.assertTrue(len(response["data"]["availableOrganizations"]) == 0)
+            self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) == 0)

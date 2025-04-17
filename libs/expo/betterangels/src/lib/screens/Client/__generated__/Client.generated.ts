@@ -8,7 +8,7 @@ export type ClientProfileQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, address?: string | null, californiaId?: string | null, dateOfBirth?: any | null, gender?: Types.GenderEnum | null, displayGender?: string | null, displayCaseManager: string, displayPronouns?: string | null, residenceAddress?: string | null, placeOfBirth?: string | null, heightInInches?: number | null, eyeColor?: Types.EyeColorEnum | null, hairColor?: Types.HairColorEnum | null, maritalStatus?: Types.MaritalStatusEnum | null, physicalDescription?: string | null, genderOther?: string | null, mailingAddress?: string | null, race?: Types.RaceEnum | null, age?: number | null, importantNotes?: string | null, preferredCommunication?: Array<Types.PreferredCommunicationEnum> | null, nickname?: string | null, phoneNumber?: any | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, veteranStatus?: Types.VeteranStatusEnum | null, livingSituation?: Types.LivingSituationEnum | null, adaAccommodation?: Array<Types.AdaAccommodationEnum> | null, socialMediaProfiles?: Array<{ __typename?: 'SocialMediaProfileType', id?: string | null, platform: Types.SocialMediaEnum, platformUserId: string }> | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId: string, id: string }> | null, phoneNumbers?: Array<{ __typename?: 'PhoneNumberType', id: string, number?: any | null, isPrimary?: boolean | null }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null, user: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, middleName?: string | null, lastName?: string | null }, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: any | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null }> | null, householdMembers?: Array<{ __typename?: 'ClientHouseholdMemberType', dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, displayGender?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, docReadyDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, consentFormDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, otherDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null } };
+export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, adaAccommodation?: Array<Types.AdaAccommodationEnum> | null, address?: string | null, age?: number | null, californiaId?: string | null, dateOfBirth?: any | null, email?: any | null, eyeColor?: Types.EyeColorEnum | null, firstName?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, hairColor?: Types.HairColorEnum | null, heightInInches?: number | null, importantNotes?: string | null, lastName?: any | null, livingSituation?: Types.LivingSituationEnum | null, mailingAddress?: string | null, maritalStatus?: Types.MaritalStatusEnum | null, middleName?: any | null, nickname?: any | null, phoneNumber?: any | null, physicalDescription?: string | null, placeOfBirth?: string | null, preferredCommunication?: Array<Types.PreferredCommunicationEnum> | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, pronounsOther?: string | null, race?: Types.RaceEnum | null, residenceAddress?: string | null, veteranStatus?: Types.VeteranStatusEnum | null, displayCaseManager: string, displayGender?: string | null, displayPronouns?: string | null, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: any | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null }> | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId?: any | null, id: string }> | null, householdMembers?: Array<{ __typename?: 'ClientHouseholdMemberType', dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, displayGender?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, phoneNumbers?: Array<{ __typename?: 'PhoneNumberType', id: string, number?: any | null, isPrimary?: boolean | null }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null, socialMediaProfiles?: Array<{ __typename?: 'SocialMediaProfileType', id?: string | null, platform: Types.SocialMediaEnum, platformUserId: string }> | null, docReadyDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, consentFormDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, otherDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null } };
 
 export type CreateClientDocumentMutationVariables = Types.Exact<{
   data: Types.CreateClientDocumentInput;
@@ -29,7 +29,7 @@ export type CreateNoteMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, createdAt: any, client?: { __typename?: 'UserType', id: string, username: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email?: string | null } } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, createdAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string, firstName?: any | null, lastName?: any | null, email?: any | null } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email?: any | null } } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 
 export const ClientProfileDocument = gql`
@@ -37,62 +37,38 @@ export const ClientProfileDocument = gql`
   clientProfile(pk: $id) {
     ... on ClientProfileType {
       id
+      adaAccommodation
       address
+      age
       californiaId
       dateOfBirth
-      gender
-      displayGender
-      displayCaseManager
-      displayPronouns
-      displayPronouns
-      displayCaseManager
-      residenceAddress
-      placeOfBirth
-      heightInInches
+      email
       eyeColor
-      hairColor
-      maritalStatus
-      physicalDescription
+      firstName
+      gender
       genderOther
-      mailingAddress
-      residenceAddress
-      race
-      age
+      hairColor
+      heightInInches
       importantNotes
-      preferredCommunication
-      socialMediaProfiles {
-        id
-        platform
-        platformUserId
-      }
-      hmisProfiles {
-        agency
-        hmisId
-        id
-      }
+      lastName
+      livingSituation
+      mailingAddress
+      maritalStatus
+      middleName
       nickname
       phoneNumber
-      phoneNumbers {
-        id
-        number
-        isPrimary
-      }
+      physicalDescription
+      placeOfBirth
+      preferredCommunication
       preferredLanguage
       pronouns
+      pronounsOther
+      race
+      residenceAddress
       veteranStatus
-      livingSituation
-      adaAccommodation
-      profilePhoto {
-        name
-        url
-      }
-      user {
-        id
-        email
-        firstName
-        middleName
-        lastName
-      }
+      displayCaseManager
+      displayGender
+      displayPronouns
       contacts {
         id
         email
@@ -101,6 +77,11 @@ export const ClientProfileDocument = gql`
         phoneNumber
         relationshipToClient
         relationshipToClientOther
+      }
+      hmisProfiles {
+        agency
+        hmisId
+        id
       }
       householdMembers {
         dateOfBirth
@@ -111,6 +92,20 @@ export const ClientProfileDocument = gql`
         relationshipToClient
         relationshipToClientOther
         id
+      }
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
+      profilePhoto {
+        name
+        url
+      }
+      socialMediaProfiles {
+        id
+        platform
+        platformUserId
       }
       docReadyDocuments {
         id
@@ -280,9 +275,8 @@ export const CreateNoteDocument = gql`
       id
       purpose
       publicDetails
-      client {
+      clientProfile {
         id
-        username
         firstName
         lastName
         email

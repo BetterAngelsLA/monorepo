@@ -1,17 +1,22 @@
 from datetime import datetime
-from typing import Optional, Union
+from typing import NewType, Optional
 
 import strawberry
 import strawberry_django
 from common.models import Address, Attachment, Location, PhoneNumber
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
-from phonenumbers import parse
 from strawberry import ID, auto
 
-PhoneNumberScalar: Union[DjangoPhoneNumber, str] = strawberry.scalar(
+PhoneNumberScalar: DjangoPhoneNumber | str = strawberry.scalar(
     DjangoPhoneNumber,
     serialize=lambda v: str(v.national_number),
-    parse_value=lambda v: parse(v, "US"),
+    parse_value=lambda v: str(v.strip()) if v.strip() else None,
+)
+
+NonBlankString = strawberry.scalar(
+    NewType("NonBlankString", str),
+    serialize=lambda v: v,
+    parse_value=lambda v: v.strip() if v.strip() else None,
 )
 
 

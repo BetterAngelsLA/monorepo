@@ -8,14 +8,11 @@ query NoteSummary($id: ID!) {
       publicDetails
       purpose
       team
-      client {
+      clientProfile {
         id
         email
         firstName
         lastName
-        clientProfile {
-          id: pk
-        }
       }
       createdBy {
         id

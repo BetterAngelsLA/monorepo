@@ -43,12 +43,17 @@ export const GET_NOTES = gql`
         }
         publicDetails
         isSubmitted
-        client {
+        clientProfile {
           id
           email
-          username
           firstName
           lastName
+          # TODO: displayCaseManager and user required for typecheck. remove in clean up
+          displayCaseManager
+          user {
+            id
+            username
+          }
         }
         createdBy {
           id
@@ -96,14 +101,11 @@ export const GET_NOTE = gql`
       }
       publicDetails
       isSubmitted
-      client {
+      clientProfile {
         id
         email
         firstName
         lastName
-        clientProfile {
-          id: pk
-        }
       }
       createdBy {
         id

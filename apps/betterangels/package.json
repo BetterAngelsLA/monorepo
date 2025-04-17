@@ -68,7 +68,10 @@
     "expo-web-browser": "*",
     "react-native-open-maps": "*",
     "expo-location": "*",
-    "expo-dev-client": "*"
+    "expo-dev-client": "*",
+    "expo-constants": "*",
+    "expo-application": "*",
+    "@react-navigation/native-stack": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",

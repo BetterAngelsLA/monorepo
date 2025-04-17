@@ -5,7 +5,7 @@ import {
   TextBold,
   TextMedium,
   TextRegular,
-  parseDate,
+  formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { RelationshipTypeEnum } from '../../../apollo';
@@ -59,7 +59,7 @@ export default function HouseholdMembers(props: IProfileSectionProps) {
               },
               {
                 label: 'Date of Birth',
-                value: parseDate({
+                value: formatDateStatic({
                   date: householdMember.dateOfBirth,
                   inputFormat: 'yyyy-MM-dd',
                   outputFormat: 'MM/dd/yyyy',

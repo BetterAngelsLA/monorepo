@@ -23,10 +23,24 @@
           "images": ["${ECR_REGISTRY}/${APP_NAME}"],
           "tags": ["${DOCKER_TAG}"]
         }
+      },
+      "configurations": {
+        "preview": {
+          "options": {
+            "push": false
+          }
+        }
       }
     },
     "deploy": {
-      "command": "tools/deploy/ecs_deploy.sh"
+      "configurations": {
+        "preview": {
+          "command": "echo 'Skipping deploy'"
+        },
+        "production": {
+          "command": "tools/deploy/ecs_deploy.sh"
+        }
+      }
     }
   }
 }

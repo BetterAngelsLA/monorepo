@@ -4,7 +4,7 @@ import {
   CardWrapper,
   TextBold,
   TextRegular,
-  parseDate,
+  formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 
@@ -38,13 +38,13 @@ export default function PersonalInfo(props: IProfileSectionProps) {
     firstName = '',
     middleName = '',
     lastName = '',
-  } = client?.clientProfile?.user || {};
+  } = client?.clientProfile || {};
   const fullName = [firstName, middleName, lastName]
     .filter(Boolean)
     .join(' ')
     .trim();
 
-  const formattedDob = parseDate({
+  const formattedDob = formatDateStatic({
     date: client?.clientProfile.dateOfBirth,
     inputFormat: 'yyyy-MM-dd',
     outputFormat: 'MM/dd/yyyy',

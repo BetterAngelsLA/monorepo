@@ -20,8 +20,7 @@ import {
   useClientProfilesQuery,
   useCreateNoteMutation,
 } from './__generated__/Clients.generated';
-type TClientProfile =
-  ClientProfilesQuery['clientProfiles']['results'];
+type TClientProfile = ClientProfilesQuery['clientProfiles']['results'];
 
 const paginationLimit = 20;
 
@@ -40,7 +39,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         search: filterSearch,
       },
       order: {
-        user_FirstName: Ordering.AscNullsLast,
+        firstName: Ordering.AscNullsLast,
         id: Ordering.Desc,
       },
     },
@@ -68,7 +67,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         variables: {
           data: {
             purpose: `Session with ${firstName || 'Client'}`,
-            client: id,
+            clientProfile: id,
           },
         },
       });
@@ -219,8 +218,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                   onPress={() => {
                     if (select === 'true') {
                       createNoteFunction(
-                        clientProfile.user.id,
-                        clientProfile.user.firstName
+                        clientProfile.id,
+                        clientProfile.firstName
                       );
                     } else {
                       setCurrentClient(clientProfile);
@@ -242,7 +241,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
         <ClientCardModal
           isModalVisible={modalIsOpen}
           closeModal={() => setModalIsOpen(false)}
-          client={currentClient}
+          clientProfile={currentClient}
         />
       )}
     </View>

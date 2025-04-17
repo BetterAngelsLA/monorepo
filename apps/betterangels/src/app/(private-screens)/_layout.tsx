@@ -1,4 +1,7 @@
-import { useUser } from '@monorepo/expo/betterangels';
+import {
+  getDefaultStackNavOptions,
+  useUser,
+} from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { Loading, TextButton } from '@monorepo/expo/shared/ui-components';
 import { Redirect, Stack, useRouter } from 'expo-router';
@@ -199,24 +202,26 @@ export default function PrivateLayout() {
         }}
       />
       <Stack.Screen
-        name="edit-client-v2/[id]"
-        options={{
-          headerTitleAlign: 'center',
-          title: '',
-          headerStyle: {
-            backgroundColor: Colors.BRAND_DARK_BLUE,
-          },
-          headerLeft: () => (
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="goes to previous screen"
-              title="Back"
-              onPress={router.back}
-            />
-          ),
-        }}
+        name="clients/create"
+        options={getDefaultStackNavOptions({
+          title: 'Create Client Profile',
+        })}
+      />
+      <Stack.Screen
+        name="clients/[id]/edit"
+        options={getDefaultStackNavOptions()}
+      />
+      <Stack.Screen
+        name="clients/[id]/relations/add"
+        options={getDefaultStackNavOptions()}
+      />
+      <Stack.Screen
+        name="clients/[id]/relations/[relationId]/edit"
+        options={getDefaultStackNavOptions()}
+      />
+      <Stack.Screen
+        name="clients/[id]/relations/index"
+        options={getDefaultStackNavOptions()}
       />
       <Stack.Screen
         name="file/[id]"
@@ -236,6 +241,18 @@ export default function PrivateLayout() {
             />
           ),
         }}
+      />
+      <Stack.Screen
+        name="settings/index"
+        options={getDefaultStackNavOptions({
+          title: 'Settings',
+        })}
+      />
+      <Stack.Screen
+        name="settings/about/index"
+        options={getDefaultStackNavOptions({
+          title: 'About App',
+        })}
       />
     </Stack>
   );

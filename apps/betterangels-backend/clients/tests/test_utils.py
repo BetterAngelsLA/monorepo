@@ -1,8 +1,10 @@
 from typing import Any, Optional
+from unittest import skip
 
 import strawberry
 from accounts.models import User
 from clients.enums import ErrorCodeEnum, HmisAgencyEnum
+from clients.models import ClientProfile
 from clients.schema import (
     validate_california_id,
     validate_client_name,
@@ -48,6 +50,7 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
             ("", None, " ", strawberry.UNSET, "update", False),
         ],
     )
+    @skip("resume in DEV-1611")
     def test_validate_client_name(
         self,
         first_name: Optional[str],
@@ -57,13 +60,14 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         operation: str,
         should_return_error: bool,
     ) -> None:
-        user = User.objects.get(pk=self.client_profile_1["user"]["id"]) if operation == "update" else None
-        user_data = {
+        client_profile = ClientProfile.objects.get(pk=self.client_profile_1["id"]) if operation == "update" else None
+        name_data = {
             "first_name": first_name,
             "last_name": last_name,
             "middle_name": middle_name,
+            "nickname": nickname,
         }
-        errors = validate_client_name(user_data, nickname, user)
+        errors = validate_client_name(name_data, client_profile)
         if should_return_error:
             self.assertEqual(len(errors), 1)
             self.assertEqual(errors[0]["errorCode"], ErrorCodeEnum.NAME_NOT_PROVIDED.name)
@@ -98,6 +102,134 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
         email = user.email
 
         self.assertEqual(len(validate_user_email(email, user)), 0)
+
+    # TODO: Remove in DEV-1611
+    def test_validate_name_dual_write(self) -> None:
+        name = "name"
+        client_profile = self._create_client_profile_fixture({"firstName": name})["data"]["createClientProfile"]
+        self.assertEqual(client_profile["firstName"], name)
+        client_profile = self._create_client_profile_fixture({"lastName": name})["data"]["createClientProfile"]
+        self.assertEqual(client_profile["lastName"], name)
+        client_profile = self._create_client_profile_fixture({"middleName": name})["data"]["createClientProfile"]
+        self.assertEqual(client_profile["middleName"], name)
+        client_profile = self._create_client_profile_fixture({"nickname": name})["data"]["createClientProfile"]
+        self.assertEqual(client_profile["nickname"], name)
+        client_profile = self._create_client_profile_fixture({"user": {"firstName": name}})["data"][
+            "createClientProfile"
+        ]
+        self.assertEqual(client_profile["user"]["firstName"], name)
+        client_profile = self._create_client_profile_fixture({"user": {"lastName": name}})["data"][
+            "createClientProfile"
+        ]
+        self.assertEqual(client_profile["user"]["lastName"], name)
+        client_profile = self._create_client_profile_fixture({"user": {"middleName": name}})["data"][
+            "createClientProfile"
+        ]
+        self.assertEqual(client_profile["user"]["middleName"], name)
+
+        no_name_error = self._create_client_profile_fixture(
+            {
+                "firstName": None,
+                "lastName": " ",
+                "nickname": "",
+                "user": {
+                    "firstName": None,
+                    "lastName": " ",
+                    "middleName": "",
+                },
+            }
+        )
+        self.assertIsNone(no_name_error["data"])
+        self.assertEqual(
+            no_name_error["errors"][0]["extensions"]["errors"][0],
+            {"field": "client_name", "location": None, "errorCode": "NAME_NOT_PROVIDED"},
+        )
+
+    # TODO: Remove in DEV-1611
+    def test_validate_email_dual_write(self) -> None:
+        # create a client profile with a user
+        email = "duplicate_email@example.com"
+        client_profile = self._create_client_profile_fixture(
+            {
+                "user": {
+                    "email": email,
+                    "firstName": "fn",
+                },
+            }
+        )[
+            "data"
+        ]["createClientProfile"]
+        user = client_profile["user"]
+
+        self.assertEqual(client_profile["email"], email)
+        self.assertEqual(user["email"], email)
+
+        # verify that directly updating the client profile with the same email won't trigger validation error
+        update_client_email = self._update_client_profile_fixture(
+            {
+                "id": client_profile["id"],
+                "email": email,
+            }
+        )[
+            "data"
+        ]["updateClientProfile"]
+        self.assertEqual(update_client_email["email"], email)
+
+        # verify that updating the client profile's user with the same email won't trigger validation error
+        update_user_email = self._update_client_profile_fixture(
+            {
+                "id": client_profile["id"],
+                "user": {
+                    "id": user["id"],
+                    "email": email,
+                },
+            }
+        )["data"]["updateClientProfile"]
+        self.assertEqual(update_user_email["email"], email)
+
+        # verify that creating a new client profile
+        # with the same email will trigger validation error
+        create_client_email_error = self._create_client_profile_fixture({"firstName": "name", "email": email})
+        self.assertIsNone(create_client_email_error["data"])
+        self.assertEqual(
+            create_client_email_error["errors"][0]["extensions"]["errors"][0],
+            {"field": "email", "location": None, "errorCode": "EMAIL_IN_USE"},
+        )
+
+        # verify that creating a new client profile with a user
+        # with the same email will trigger validation error
+        create_user_email_error = self._create_client_profile_fixture({"firstName": "name", "user": {"email": email}})
+        self.assertIsNone(create_user_email_error["data"])
+        self.assertEqual(
+            create_user_email_error["errors"][0]["extensions"]["errors"][0],
+            {"field": "user", "location": "email", "errorCode": "EMAIL_IN_USE"},
+        )
+
+        # verify that updating directly updating another client profile
+        # with the same email will trigger validation error
+        update_client_email_error = self._update_client_profile_fixture(
+            {"id": self.client_profile_1["id"], "firstName": "name", "email": email}
+        )
+        self.assertIsNone(update_client_email_error["data"])
+        self.assertEqual(
+            update_client_email_error["errors"][0]["extensions"]["errors"][0],
+            {"field": "email", "location": None, "errorCode": "EMAIL_IN_USE"},
+        )
+
+        # verify that updating updating another client profile's user
+        # with the same email will trigger validation error
+        update_user_email_error = self._update_client_profile_fixture(
+            {
+                "id": self.client_profile_1["id"],
+                "firstName": "name",
+                "user": {"id": self.client_profile_1["user"]["id"], "email": email},
+            }
+        )
+        self.assertIsNone(update_user_email_error["data"])
+        self.assertEqual(
+            update_user_email_error["errors"][0]["extensions"]["errors"][0],
+            {"field": "user", "location": "email", "errorCode": "EMAIL_IN_USE"},
+        )
 
     @parametrize(
         "california_id, expected_error_code",

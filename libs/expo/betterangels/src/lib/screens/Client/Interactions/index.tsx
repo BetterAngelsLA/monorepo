@@ -3,6 +3,7 @@ import { Loading } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
+import { uniqueBy } from 'remeda';
 import { NotesQuery, Ordering, useNotesQuery } from '../../../apollo';
 import { MainContainer, NoteCard } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
@@ -25,7 +26,10 @@ export default function Interactions({
     variables: {
       pagination: { limit: paginationLimit, offset: offset },
       order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
-      filters: { client: client?.clientProfile.user.id, search: filterSearch },
+      filters: {
+        clientProfile: client?.clientProfile?.id,
+        search: filterSearch,
+      },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -84,7 +88,9 @@ export default function Interactions({
     if (offset === 0) {
       setNotes(results);
     } else {
-      setNotes((prevNotes) => [...prevNotes, ...results]);
+      setNotes((prevNotes) =>
+        uniqueBy([...prevNotes, ...results], (note) => note.id)
+      );
     }
 
     setHasMore(offset + paginationLimit < totalCount);

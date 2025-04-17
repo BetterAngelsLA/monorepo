@@ -21,6 +21,7 @@ export const enumDisplayDemographics: { [key in DemographicChoices]: string } =
     [DemographicChoices.Families]: 'Families',
     [DemographicChoices.Other]: 'Others',
     [DemographicChoices.Seniors]: 'Seniors',
+    [DemographicChoices.SingleDads]: 'Single Dads',
     [DemographicChoices.SingleMen]: 'Single Men',
     [DemographicChoices.SingleMoms]: 'Single Moms',
     [DemographicChoices.SingleWomen]: 'Single Women',
@@ -38,18 +39,26 @@ export const enumDisplayGeneralServiceChoices: {
     'Financial Literacy Assistance',
   [GeneralServiceChoices.HousingNavigation]: 'Housing Navigation',
   [GeneralServiceChoices.LegalAssistance]: 'Legal Assistance',
+  [GeneralServiceChoices.Laundry]: 'Laundry Services',
   [GeneralServiceChoices.Mail]: 'Mail',
   [GeneralServiceChoices.Phone]: 'Phone',
+  [GeneralServiceChoices.Tls]: 'TLS (Time Limited Subsidies)',
   [GeneralServiceChoices.Transportation]: 'Transportation',
 };
 
 export const enumDisplayEntryRequirementChoices: {
   [key in EntryRequirementChoices]: string;
 } = {
+  [EntryRequirementChoices.Background]: 'Background Check',
+  [EntryRequirementChoices.HomelessVerification]:
+    'Homeless Verification/Observation',
   [EntryRequirementChoices.MedicaidOrMedicare]: 'Medicaid or Medicare',
   [EntryRequirementChoices.PhotoId]: 'Photo ID',
   [EntryRequirementChoices.Referral]: 'Referral',
   [EntryRequirementChoices.Reservation]: 'Reservation',
+  [EntryRequirementChoices.VehicleRegistration]:
+    'Vehicle Registration/Insurance',
+  [EntryRequirementChoices.WalkUps]: 'Walk-Ups',
 };
 
 export const enumDisplaySpecialSituationRestrictionChoices: {
@@ -77,9 +86,11 @@ export const enumDisplayShelterChoices: {
 };
 
 export const enumDisplayRoomStyles: { [key in RoomStyleChoices]: string } = {
-  [RoomStyleChoices.Congregant]: 'Congregant',
+  [RoomStyleChoices.Congregate]: 'Congregate (Open)',
   [RoomStyleChoices.CubicleHighWalls]: 'Cubicle High Walls',
   [RoomStyleChoices.CubicleLowWalls]: 'Cubicle Low Walls',
+  [RoomStyleChoices.HighBunk]: 'High Bunk',
+  [RoomStyleChoices.LowBunk]: 'Low Bunk',
   [RoomStyleChoices.MotelRoom]: 'Motel Room',
   [RoomStyleChoices.Other]: 'Other',
   [RoomStyleChoices.SharedRooms]: 'Shared Room',
@@ -89,6 +100,7 @@ export const enumDisplayRoomStyles: { [key in RoomStyleChoices]: string } = {
 export const enumDisplayAccessibilityChoices: {
   [key in AccessibilityChoices]: string;
 } = {
+  [AccessibilityChoices.AdaRooms]: 'ADA Rooms Available',
   [AccessibilityChoices.MedicalEquipmentPermitted]:
     'Medical Equipment Permitted',
   [AccessibilityChoices.WheelchairAccessible]: 'Wheelchair Accessible',
@@ -107,6 +119,7 @@ export const enumDisplayPetChoices: { [key in PetChoices]: string } = {
   [PetChoices.DogsUnder_25Lbs]: 'Dogs (< 25 lbs)',
   [PetChoices.Exotics]: 'Exotics',
   [PetChoices.NoPetsAllowed]: 'No Pets Allowed',
+  [PetChoices.PetArea]: 'Pet Area',
   [PetChoices.ServiceAnimals]: 'Service Animals',
 };
 
@@ -210,6 +223,7 @@ export const enumDisplayCityChoices: { [key in CityChoices]: string } = {
   [CityChoices.WestlakeVillage]: 'Westlake Village',
   [CityChoices.WestLosAngeles]: 'West Los Angeles',
   [CityChoices.Whittier]: 'Whittier',
+  [CityChoices.Wilmington]: 'Wilmington',
 };
 
 export const enumDisplaySpaChoices: { [key in SpaChoices]: string } = {

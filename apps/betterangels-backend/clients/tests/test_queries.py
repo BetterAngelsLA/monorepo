@@ -14,10 +14,15 @@ from clients.enums import (
     PreferredCommunicationEnum,
     PronounEnum,
     RaceEnum,
+    RelationshipTypeEnum,
     VeteranStatusEnum,
 )
 from clients.models import ClientProfile
-from clients.tests.utils import ClientProfileGraphQLBaseTestCase
+from clients.tests.utils import (
+    ClientContactBaseTestCase,
+    ClientProfileGraphQLBaseTestCase,
+    HmisProfileBaseTestCase,
+)
 from clients.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from django.test import override_settings
 from model_bakery import baker
@@ -74,7 +79,9 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "displayGender": "Male",
             "displayPronouns": "He/Him/His",
             "docReadyDocuments": [self.client_profile_1_document_1, self.client_profile_1_document_2],
+            "email": "todd@pblivin.com",
             "eyeColor": EyeColorEnum.BROWN.name,
+            "firstName": "Todd",
             "gender": GenderEnum.MALE.name,
             "genderOther": None,
             "hairColor": HairColorEnum.BROWN.name,
@@ -82,9 +89,11 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "hmisProfiles": self.client_profile_1["hmisProfiles"],
             "householdMembers": self.client_profile_1["householdMembers"],
             "importantNotes": "I am very important",
+            "lastName": "Chavez",
             "livingSituation": LivingSituationEnum.VEHICLE.name,
             "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
             "maritalStatus": MaritalStatusEnum.SINGLE.name,
+            "middleName": "Gustav",
             "nickname": self.client_profile_1["nickname"],
             "otherDocuments": [self.client_profile_1_document_4],
             "phoneNumber": self.client_profile_1["phoneNumber"],
@@ -371,6 +380,109 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         response = self.execute_graphql(query, variables={"searchClient": search_fields})
 
         self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_profile_count)
+
+
+class ClientContactQueryTestCase(ClientContactBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_client_contact_query(self) -> None:
+        query = f"""
+            query ($id: ID!) {{
+                clientContact(pk: $id) {{
+                    {self.client_contact_fields}
+                }}
+            }}
+        """
+        variables = {"id": self.client_contact_1["id"]}
+
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        expected_client_contact = {
+            "id": str(self.client_contact_1["id"]),
+            "email": "client_contact_1@example.com",
+            "mailingAddress": "111 Main Street",
+            "name": "Jane Smith",
+            "phoneNumber": "2125551212",
+            "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
+            "relationshipToClientOther": None,
+        }
+
+        self.assertEqual(response["data"]["clientContact"], expected_client_contact)
+
+    def test_client_contacts_query(self) -> None:
+        query = f"""
+            query ($offset: Int, $limit: Int){{
+                clientContacts(pagination: {{offset: $offset, limit: $limit}}) {{
+                    totalCount
+                    pageInfo {{limit offset}}
+                    results {{
+                        {self.client_contact_fields}
+                    }}
+                }}
+            }}
+        """
+
+        expected_query_count = 4
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
+
+        results = response["data"]["clientContacts"]["results"]
+
+        self.assertEqual(response["data"]["clientContacts"]["totalCount"], 2)
+        self.assertEqual(response["data"]["clientContacts"]["pageInfo"], {"limit": 10, "offset": 0})
+        self.assertCountEqual(results, [self.client_contact_1, self.client_contact_2])
+
+
+class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_hmis_profile_query(self) -> None:
+        query = f"""
+            query ($id: ID!) {{
+                hmisProfile(pk: $id) {{
+                    {self.hmis_profile_fields}
+                }}
+            }}
+        """
+        variables = {"id": self.hmis_profile_1["id"]}
+
+        expected_query_count = 3
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        self.assertEqual(response["data"]["hmisProfile"], self.hmis_profile_1)
+
+    def test_hmis_profiles_query(self) -> None:
+        query = f"""
+            query ($offset: Int, $limit: Int){{
+                hmisProfiles(pagination: {{offset: $offset, limit: $limit}}) {{
+                    totalCount
+                    pageInfo {{limit offset}}
+                    results {{
+                        {self.hmis_profile_fields}
+                    }}
+                }}
+            }}
+        """
+
+        expected_query_count = 4
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
+
+        results = response["data"]["hmisProfiles"]["results"]
+
+        self.assertEqual(response["data"]["hmisProfiles"]["totalCount"], 2)
+        self.assertEqual(response["data"]["hmisProfiles"]["pageInfo"], {"limit": 10, "offset": 0})
+        self.assertCountEqual(results, [self.hmis_profile_1, self.hmis_profile_2])
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")

@@ -9,9 +9,8 @@ import {
   Avatar,
   IconButton,
   TextBold,
-  TextButton,
   TextRegular,
-  parseDate,
+  formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
@@ -20,9 +19,7 @@ import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.ge
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 interface IClientCardProps {
-  client:
-    | ClientProfilesQuery['clientProfiles']['results'][number]
-    | undefined;
+  client: ClientProfilesQuery['clientProfiles']['results'][number] | undefined;
   progress?: DimensionValue;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -74,13 +71,16 @@ export default function ClientCard(props: IClientCardProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() =>
-        router.navigate({
-          pathname: `/client/${client.id}`,
-          params: {
-            arrivedFrom,
-          },
-        })
+      onPress={
+        select === 'true'
+          ? onPress
+          : () =>
+              router.navigate({
+                pathname: `/client/${client.id}`,
+                params: {
+                  arrivedFrom,
+                },
+              })
       }
       style={({ pressed }) => [
         styles.container,
@@ -96,8 +96,8 @@ export default function ClientCard(props: IClientCardProps) {
       ]}
     >
       <Avatar
-        accessibilityHint={`shows avatar of ${client.user.firstName} ${client.user.lastName} if available`}
-        accessibilityLabel={`Avatar of ${client.user.firstName} ${client.user.lastName} client`}
+        accessibilityHint={`shows avatar of ${client.firstName} ${client.lastName} if available`}
+        accessibilityLabel={`Avatar of ${client.firstName} ${client.lastName} client`}
         imageUrl={client.profilePhoto?.url}
         size="xl"
         mr="xs"
@@ -105,7 +105,7 @@ export default function ClientCard(props: IClientCardProps) {
 
       <View style={{ gap: Spacings.xxs, flex: 2 }}>
         <TextBold size="sm">
-          {client.user.firstName} {client.user.lastName}{' '}
+          {client.firstName} {client.lastName}{' '}
           {client.nickname && `(${client.nickname})`}
         </TextBold>
         {(client.dateOfBirth || formattedHeight) && (
@@ -113,7 +113,7 @@ export default function ClientCard(props: IClientCardProps) {
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
             {!!client.dateOfBirth && (
               <TextRegular size="xs">
-                {parseDate({
+                {formatDateStatic({
                   date: client.dateOfBirth,
                   inputFormat: 'yyyy-MM-dd',
                   outputFormat: 'MM/dd/yyyy',
@@ -143,14 +143,7 @@ export default function ClientCard(props: IClientCardProps) {
         )}
       </View>
       <View style={{ justifyContent: 'center', position: 'relative' }}>
-        {select === 'true' ? (
-          <TextButton
-            fontSize="sm"
-            title={'Select'}
-            onPress={onPress}
-            accessibilityHint={`Add a interaction for client ${client.user.firstName} ${client.user.lastName}`}
-          />
-        ) : (
+        {select === 'false' && (
           <IconButton
             onPress={onPress}
             variant="transparent"

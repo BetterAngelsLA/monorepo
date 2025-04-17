@@ -1,0 +1,22 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+
+  - package-ecosystem: 'pip'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+
+  - package-ecosystem: 'docker'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+
+  # App Level Scanning
+  - package-ecosystem: 'docker'
+    directory: '/apps/nginx'
+    schedule:
+      interval: 'weekly'

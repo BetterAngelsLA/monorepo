@@ -28,7 +28,7 @@ export function Button(props: IButtonProps) {
 
   const variantClasses = {
     primary: 'bg-primary-20 text-white',
-    secondary: 'bg-neutral-99 text-primary-20',
+    secondary: 'bg-neutral-99 text-primary-20 active:bg-neutral-98',
   };
 
   const buttonClass = clsx(

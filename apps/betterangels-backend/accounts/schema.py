@@ -8,12 +8,14 @@ from accounts.services import send_magic_link
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
+from django.db.models import QuerySet
 from notes.permissions import NotePermissions
 from organizations.models import Organization
 from strawberry.types import Info
 from strawberry_django import auth
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
+from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 from strawberry_django.utils.requests import get_request
 
@@ -33,9 +35,12 @@ from .types import (
 class Query:
     current_user: UserType = auth.current_user()  # type: ignore
 
-    @strawberry.field(extensions=[HasPerm(NotePermissions.ADD)])
-    def available_organizations(self, info: Info) -> list[OrganizationType]:
-        return list(Organization.objects.filter(permission_groups__name__icontains=GroupTemplateNames.CASEWORKER))
+    @strawberry_django.offset_paginated(OffsetPaginated[OrganizationType], extensions=[HasPerm(NotePermissions.ADD)])
+    def caseworker_organizations(self) -> QuerySet[Organization]:
+        queryset: QuerySet[Organization] = Organization.objects.filter(
+            permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
+        )
+        return queryset
 
 
 @strawberry.type
@@ -60,8 +65,7 @@ class Mutation:
     @strawberry.mutation
     def generate_magic_link(self, info: Info, data: MagicLinkInput) -> MagicLinkResponse:
         request = get_request(info)
-        base_url = request.build_absolute_uri()
-        send_magic_link(data.email, base_url)
+        send_magic_link(data.email, request)
         return MagicLinkResponse(message="Email link sent.")
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
