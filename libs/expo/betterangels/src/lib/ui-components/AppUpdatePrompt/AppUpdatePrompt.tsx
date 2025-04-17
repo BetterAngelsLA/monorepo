@@ -43,7 +43,10 @@ export function AppUpdatePrompt(props: TProps) {
     try {
       await Updates.fetchUpdateAsync();
 
-      // reset storage data before reload
+      // Reseting storage data before reload since it's not recommended
+      // to run code after Updates.reloadAsync due to possible errors.
+      // Resetting LAST_UPDATE_CHECK_TS_KEY to prevent immediately showing modal again
+      // and any possible error infinite loop.
       await Promise.all([
         AsyncStorage.setItem(UPDATE_DISMISSED_TS_KEY, ''),
         AsyncStorage.setItem(LAST_UPDATE_CHECK_TS_KEY, String(Date.now())),
