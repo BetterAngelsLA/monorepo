@@ -5,6 +5,7 @@ from urllib.parse import quote
 
 import places
 import requests
+from admin_async_upload.widgets import ResumableAdminWidget
 from betterangels_backend import settings
 from common.models import Location
 from django import forms
@@ -75,7 +76,7 @@ from .models import (
     TrainingService,
     Video,
 )
-from .widgets import MultipleFormResumableFileField, MultipleResumableAdminWidget
+from .widgets import MultipleFormResumableFileField
 
 T = TypeVar("T", bound=models.Model)
 logger = logging.getLogger(__name__)
@@ -339,13 +340,13 @@ class ShelterForm(forms.ModelForm):
     )
 
     interior_photos_multiple = MultipleFormResumableFileField(
-        required=False, widget=MultipleResumableAdminWidget(attrs={"model": InteriorPhoto, "field_name": "file"})
+        required=False, widget=ResumableAdminWidget(attrs={"model": InteriorPhoto, "field_name": "file"})
     )
     exterior_photos_multiple = MultipleFormResumableFileField(
-        required=False, widget=MultipleResumableAdminWidget(attrs={"model": ExteriorPhoto, "field_name": "file"})
+        required=False, widget=ResumableAdminWidget(attrs={"model": ExteriorPhoto, "field_name": "file"})
     )
     videos_multiple = MultipleFormResumableFileField(
-        required=False, widget=MultipleResumableAdminWidget(attrs={"model": Video, "field_name": "file"})
+        required=False, widget=ResumableAdminWidget(attrs={"model": Video, "field_name": "file"})
     )
 
     class Meta:
