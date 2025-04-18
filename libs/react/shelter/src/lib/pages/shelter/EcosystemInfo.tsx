@@ -18,27 +18,6 @@ export default function EcosystemInfo({
 }: {
   shelter: ViewShelterQuery['shelter'];
 }) {
-  if (!shelter) {
-    return;
-  }
-  const displayPrograms = [
-    ...shelter.shelterPrograms
-      .filter(
-        (program): program is { name: ShelterProgramChoices } => !!program.name
-      )
-      .map((program) => enumDisplayShelterProgramChoices[program.name]),
-
-    ...(shelter.shelterProgramsOther ? [shelter.shelterProgramsOther] : []),
-  ].join(', ');
-
-  const displayFunders = [
-    ...shelter.funders
-      .filter((funder): funder is { name: FunderChoices } => !!funder.name)
-      .map((funder) => enumDisplayFunderChoices[funder.name]),
-
-    ...(shelter.fundersOther ? [shelter.fundersOther] : []),
-  ].join(', ');
-
   return (
     <Card title="Ecosystem Information">
       <div className="flex flex-col gap-2">
@@ -70,14 +49,27 @@ export default function EcosystemInfo({
             SD: {shelter.supervisorialDistrict}
           </div>
         )}
-        {!!displayPrograms && (
+        {!!shelter.shelterPrograms.length && (
           <div className="flex items-center gap-2">
-            Programs: {displayPrograms}
+            Program:{' '}
+            {shelter.shelterPrograms
+              .filter(
+                (program): program is { name: ShelterProgramChoices } =>
+                  !!program.name
+              )
+              .map((program) => enumDisplayShelterProgramChoices[program.name])
+              .join(', ')}
           </div>
         )}
-        {!!displayFunders && (
+        {!!shelter.funders.length && (
           <div className="flex items-center gap-2">
-            Funders: {displayFunders}
+            Program:{' '}
+            {shelter.funders
+              .filter(
+                (funder): funder is { name: FunderChoices } => !!funder.name
+              )
+              .map((funder) => enumDisplayFunderChoices[funder.name])
+              .join(', ')}
           </div>
         )}
       </div>
