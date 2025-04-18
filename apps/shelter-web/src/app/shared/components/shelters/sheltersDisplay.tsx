@@ -12,7 +12,7 @@ import { useAtom } from 'jotai';
 import { useEffect } from 'react';
 import { TLocationSource } from '../../atoms/locationAtom';
 import { sheltersAtom } from '../../atoms/sheltersAtom';
-import { TLatLng } from '../map/types.maps';
+import { TLatLng, TMapBounds } from '../map/types.maps';
 import { SearchSource } from './searchSource';
 import { ShelterList } from './shelterList';
 
@@ -31,6 +31,7 @@ type TProps = {
   className?: string;
   coordinates?: TLatLng | null;
   coordinatesSource?: TLocationSource;
+  mapBounds?: TMapBounds | null;
   rangeInMiles?: number;
   propertyFilters?: TShelterPropertyFilters;
 };
@@ -39,6 +40,7 @@ export function SheltersDisplay(props: TProps) {
   const {
     coordinates,
     coordinatesSource,
+    mapBounds,
     rangeInMiles = SEARCH_RANGE_MILES,
     propertyFilters,
     className = '',
@@ -62,6 +64,13 @@ export function SheltersDisplay(props: TProps) {
         longitude,
         rangeInMiles,
       };
+    }
+
+    if (mapBounds) {
+      queryVariables = queryVariables || {};
+      queryVariables.filters = queryVariables.filters || {};
+
+      queryVariables.filters.mapBounds = mapBounds;
     }
 
     if (propertyFilters) {

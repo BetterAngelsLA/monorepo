@@ -97,6 +97,7 @@ export function ShelterSearch() {
       <SheltersDisplay
         className="mt-8"
         coordinates={location}
+        mapBounds={mapBounds}
         coordinatesSource={location?.source}
         propertyFilters={queryFilters}
       />
