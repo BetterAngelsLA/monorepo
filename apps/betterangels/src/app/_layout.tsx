@@ -1,7 +1,11 @@
 import 'expo-dev-client';
 
 import {
+  AppUpdatePrompt,
+  ErrorCrashView,
   FeatureControlProvider,
+  FeatureFlagControlled,
+  FeatureFlags,
   KeyboardToolbarProvider,
   SnackbarProvider,
   UserProvider,
@@ -19,12 +23,17 @@ import { View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
-export { ErrorBoundary } from 'expo-router';
+import { type ErrorBoundaryProps } from 'expo-router';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: '(tabs)',
 };
+
+// Render Error page on uncaught error
+export function ErrorBoundary(props: ErrorBoundaryProps) {
+  return <ErrorCrashView {...props} />;
+}
 
 export default function RootLayout() {
   const router = useRouter();
@@ -38,6 +47,11 @@ export default function RootLayout() {
               <UserProvider>
                 <SnackbarProvider>
                   <StatusBar style="light" />
+                  <FeatureFlagControlled
+                    flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
+                  >
+                    <AppUpdatePrompt />
+                  </FeatureFlagControlled>
                   <Stack>
                     <Stack.Screen
                       name="(tabs)"

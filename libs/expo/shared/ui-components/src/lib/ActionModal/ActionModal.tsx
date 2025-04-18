@@ -1,11 +1,12 @@
-import { Dispatch, SetStateAction } from 'react';
+import { Dispatch, ReactNode, SetStateAction } from 'react';
 import BasicModal from '../BasicModal';
-import Body from './Body';
+import Footer from './Footer';
 import Header from './Header';
 
 export interface IActionModalProps {
-  title: string;
+  title?: string;
   subtitle?: string;
+  body?: ReactNode;
   primaryButtonTitle: string;
   secondaryButtonTitle?: string;
   visible: boolean;
@@ -21,6 +22,7 @@ export function ActionModal(props: IActionModalProps) {
     setVisible,
     title,
     subtitle,
+    body,
     onPrimaryPress,
     onSecondaryPress,
     secondaryButtonTitle,
@@ -38,7 +40,8 @@ export function ActionModal(props: IActionModalProps) {
   return (
     <BasicModal visible={visible} onClose={handleOnClose}>
       <Header title={title} subtitle={subtitle} />
-      <Body
+      {!!body && body}
+      <Footer
         setVisible={setVisible}
         onPrimaryPress={onPrimaryPress}
         onSecondaryPress={onSecondaryPress}
