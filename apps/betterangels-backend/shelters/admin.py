@@ -75,6 +75,7 @@ from .models import (
     TrainingService,
     Video,
 )
+from .widgets import MultipleFileField
 
 T = TypeVar("T", bound=models.Model)
 logger = logging.getLogger(__name__)
@@ -336,6 +337,9 @@ class ShelterForm(forms.ModelForm):
         ),
         required=False,
     )
+    interior_photos_multiple = MultipleFileField(required=False)
+    exterior_photos_multiple = MultipleFileField(required=False)
+    videos_multiple = MultipleFileField(required=False)
 
     class Meta:
         model = Shelter
@@ -418,17 +422,20 @@ class ContactInfoInline(admin.TabularInline):
 
 class ExteriorPhotoInline(admin.TabularInline):
     model = ExteriorPhoto
-    extra = 1
+    extra = 0
+    verbose_name_plural = "Exterior Photos View"
 
 
 class InterPhotoInline(admin.TabularInline):
     model = InteriorPhoto
-    extra = 1
+    extra = 0
+    verbose_name_plural = "Interior Photos View"
 
 
 class VideoInline(admin.TabularInline):
     model = Video
-    extra = 1
+    extra = 0
+    verbose_name_plural = "Videos View"
 
 
 class ShelterResource(resources.ModelResource):
@@ -671,7 +678,7 @@ class ShelterResource(resources.ModelResource):
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
 
-    inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
+    inlines = [ExteriorPhotoInline, InterPhotoInline, VideoInline, ContactInfoInline]
     fieldsets = (
         (
             "Basic Information",
@@ -799,6 +806,16 @@ class ShelterAdmin(ImportExportModelAdmin):
                 )
             },
         ),
+        (
+            "Media Upload",
+            {
+                "fields": (
+                    "interior_photos_multiple",
+                    "exterior_photos_multiple",
+                    "videos_multiple",
+                )
+            },
+        ),
     )
 
     list_display = (
@@ -915,3 +932,15 @@ class ShelterAdmin(ImportExportModelAdmin):
             )
 
         return "No updates yet"
+
+    def save_model(self, request: HttpRequest, obj: Any, form: Any, change: Any) -> None:
+        super().save_model(request, obj, form, change)
+        file_fields = {
+            "interior_photos_multiple": obj.interior_photos,
+            "exterior_photos_multiple": obj.exterior_photos,
+            "videos_multiple": obj.videos,
+        }
+
+        for field_name, manager in file_fields.items():
+            for file in form.cleaned_data.get(field_name, []):
+                manager.create(file=file)

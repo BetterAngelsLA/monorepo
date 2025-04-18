@@ -169,3 +169,21 @@ class TimeRangeField(models.Field):
     ) -> Optional[forms.Field]:
         field = super().formfield(choices_form_class=choices_form_class, form_class=TimeRangeFormField)
         return field
+
+
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs.setdefault("widget", MultipleFileInput())
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data: Any, initial: Any = None) -> Any:
+        single_file_clean = super().clean
+        if isinstance(data, (list, tuple)):
+            result = [single_file_clean(d, initial) for d in data]
+        else:
+            result = [single_file_clean(data, initial)]
+        return result
