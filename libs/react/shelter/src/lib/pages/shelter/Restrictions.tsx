@@ -16,9 +16,11 @@ export default function Restrictions({
           <div className="flex gap-1">Curfew: {shelter.curfew}</div>
         )}
 
-        <div className="flex gap-1">
-          On-site Security: {shelter.onSiteSecurity ? 'Yes' : 'No'}
-        </div>
+        {shelter.onSiteSecurity != null && (
+          <div className="flex gap-1">
+            On-site Security: {shelter.onSiteSecurity ? 'Yes' : 'No'}
+          </div>
+        )}
 
         {shelter.otherRules && (
           <div

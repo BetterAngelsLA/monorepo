@@ -31,6 +31,41 @@ export default function ShelterPage({ id }: { id: string }) {
     return null;
   }
 
+  const hasGeneralInfo =
+    !!shelter.totalBeds ||
+    !!shelter.website ||
+    !!shelter.phone ||
+    !!shelter.email ||
+    !!shelter.location?.place;
+  const hasDescription = !!shelter.description;
+  const hasEntryRequirements =
+    !!shelter.entryRequirements?.length ||
+    !!shelter.entryInfo ||
+    !!shelter.bedFees ||
+    !!shelter.programFees;
+  const hasSpecialRestrictions = !!shelter.specialSituationRestrictions?.length;
+  const hasShelterTypes =
+    !!shelter.shelterTypes?.length || !!shelter.shelterTypesOther;
+  const hasRoomStyles = !!shelter.roomStyles?.length;
+  const hasDetail =
+    !!shelter.accessibility?.length ||
+    !!shelter.storage?.length ||
+    !!shelter.pets?.length ||
+    !!shelter.parking?.length;
+  const hasRestrictions =
+    !!shelter.maxStay ||
+    !!shelter.curfew ||
+    !!shelter.onSiteSecurity ||
+    !!shelter.otherRules;
+  const hasOtherServices = !!shelter.otherServices;
+  const hasEcosystemInfo =
+    !!shelter.cities?.length ||
+    !!shelter.spa?.length ||
+    !!shelter.cityCouncilDistrict ||
+    !!shelter.supervisorialDistrict ||
+    !!shelter.shelterPrograms?.length ||
+    !!shelter.funders?.length;
+
   return (
     <div className="w-full">
       <Header shelter={shelter} />
@@ -45,20 +80,20 @@ export default function ShelterPage({ id }: { id: string }) {
       </Button>
       <Actions />
       <div className="bg-neutral-99 py-2 px-4 -mx-4 flex flex-col gap-2">
-        <GeneralInfo shelter={shelter} />
-        {shelter?.description && (
+        {hasGeneralInfo && <GeneralInfo shelter={shelter} />}
+        {hasDescription && (
           <Card title="Description">
             <div dangerouslySetInnerHTML={{ __html: shelter.description }} />
           </Card>
         )}
-        <EntryRequirements shelter={shelter} />
-        <SpecialRestrictions shelter={shelter} />
-        <ShelterTypes shelter={shelter} />
-        <RoomStyles shelter={shelter} />
-        <ShelterDetail shelter={shelter} />
-        <Restrictions shelter={shelter} />
-        <OtherServices shelter={shelter} />
-        <EcosystemInfo shelter={shelter} />
+        {hasEntryRequirements && <EntryRequirements shelter={shelter} />}
+        {hasSpecialRestrictions && <SpecialRestrictions shelter={shelter} />}
+        {hasShelterTypes && <ShelterTypes shelter={shelter} />}
+        {hasRoomStyles && <RoomStyles shelter={shelter} />}
+        {hasDetail && <ShelterDetail shelter={shelter} />}
+        {hasRestrictions && <Restrictions shelter={shelter} />}
+        {hasOtherServices && <OtherServices shelter={shelter} />}
+        {hasEcosystemInfo && <EcosystemInfo shelter={shelter} />}
       </div>
     </div>
   );
