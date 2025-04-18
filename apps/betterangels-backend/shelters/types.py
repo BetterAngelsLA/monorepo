@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.types import OrganizationType
-from common.graphql.types import PhoneNumberScalar
+from common.graphql.types import LatitudeScalar, LongitudeScalar, PhoneNumberScalar
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
@@ -50,7 +50,11 @@ from shelters.models import (
     ShelterProgram,
 )
 from shelters.models import ShelterType as ShelterKind
-from shelters.models import SpecialSituationRestriction, Storage, TrainingService
+from shelters.models import (
+    SpecialSituationRestriction,
+    Storage,
+    TrainingService,
+)
 from strawberry import ID, asdict, auto
 
 
@@ -169,10 +173,10 @@ class GeolocationInput:
 
 @strawberry.input
 class MapBoundsInput:
-    west_lng: float
-    north_lat: float
-    east_lng: float
-    south_lat: float
+    west_lng: LongitudeScalar
+    north_lat: LatitudeScalar
+    east_lng: LongitudeScalar
+    south_lat: LatitudeScalar
 
 
 @strawberry.input

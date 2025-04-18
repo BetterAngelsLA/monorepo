@@ -840,6 +840,8 @@ enum LanguageEnum {
   VIETNAMESE
 }
 
+scalar LatitudeScalar
+
 enum LivingSituationEnum {
   HOUSING
   OPEN_AIR
@@ -867,6 +869,8 @@ input LoginInput {
   password: String!
 }
 
+scalar LongitudeScalar
+
 input MagicLinkInput {
   email: String!
 }
@@ -876,10 +880,10 @@ type MagicLinkResponse {
 }
 
 input MapBoundsInput {
-  westLng: Float!
-  northLat: Float!
-  eastLng: Float!
-  southLat: Float!
+  westLng: LongitudeScalar!
+  northLat: LatitudeScalar!
+  eastLng: LongitudeScalar!
+  southLat: LatitudeScalar!
 }
 
 enum MaritalStatusEnum {

@@ -381,7 +381,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         # s1 is ~27 miles away from the reference point, so it was not included in the response payload
         self.assertEqual(result_shelter_ids, [str(s3.pk), str(s2.pk)])
 
-    def test_shelter_polygon_filter(self) -> None:
+    def test_shelter_map_bounds_filter(self) -> None:
         """Test map bounds filter for querying shelters within a defined area.
 
         1. Create 5 shelters at coordinates:
@@ -511,6 +511,43 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         self.assertEqual(len(result_ids), 3)
         self.assertEqual(result_ids, expected_ids)
+
+    def test_shelter_map_bounds_filter_validation(self) -> None:
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {
+            "mapBounds": {
+                "westLng": -181,
+                "northLat": 91,
+                "eastLng": 3,
+                "southLat": -3,
+            },
+        }
+
+        response = self.execute_graphql(query, variables={"filters": filters})
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 2)
+
+        error_messages = [e["message"] for e in response["errors"]]
+        expected_error_messages = [
+            "Longitude value must be between -180.0 and 180.0",
+            "Latitude value must be between -90.0 and 90.0",
+        ]
+
+        for e in expected_error_messages:
+            self.assertTrue(
+                any(e in msg for msg in error_messages), f"Expected to find {e!r} in one of {error_messages!r}"
+            )
 
     @parametrize(
         "property_filters, expected_result_count",
