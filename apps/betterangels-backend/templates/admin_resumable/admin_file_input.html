@@ -1,0 +1,192 @@
+{% load i18n %}
+<script>
+(function($) {
+  if (window.djangoAdminResumableBulkUploadInitialized) return;
+  window.djangoAdminResumableBulkUploadInitialized = true;
+
+  const chunkSize = {{ chunk_size }};
+  const simultaneousUploads = {{ simultaneous_uploads }};
+  const csrfToken = $("input[name='csrfmiddlewaretoken']").val();
+  const fieldName = '{{ field_name }}';
+  const contentTypeId = '{{ content_type_id }}';
+
+  function getTotalForms(prefix) {
+    return +$(`#id_${prefix}-TOTAL_FORMS`).val();
+  }
+
+  function incrementTotalForms(prefix) {
+    $(`#id_${prefix}-TOTAL_FORMS`).val(getTotalForms(prefix) + 1);
+  }
+
+  function updateFormAttrs($form, index) {
+    $form.find(":input, label, span, progress").each(function() {
+      ["id", "name", "for"].forEach(attr => {
+        const val = $(this).attr(attr);
+        if (val) $(this).attr(attr, val.replace(/__prefix__/g, index));
+      });
+    });
+  }
+
+  function cloneEmptyForm(prefix) {
+    const $template = $(`#${prefix}-empty`);
+    const index = getTotalForms(prefix);
+    const $newForm = $template.clone(true)
+      .removeClass("empty-form")
+      .addClass(`dynamic-${prefix}`)
+      .attr("id", `${prefix}-${index}`);
+
+    updateFormAttrs($newForm, index);
+    $template.before($newForm);
+    incrementTotalForms(prefix);
+    return index;
+  }
+
+  function setupUploader($dropZone, prefix) {
+    const uploader = new Resumable({
+      target: '{% url "admin_resumable" %}',
+      chunkSize,
+      testChunks: false,
+      simultaneousUploads,
+      query: {
+        csrfmiddlewaretoken: csrfToken,
+        field_name: fieldName,
+        content_type_id: contentTypeId
+      }
+    });
+
+    uploader.assignBrowse($dropZone[0]);
+    uploader.assignDrop($dropZone[0]);
+
+    $dropZone.on("dragenter", () => $dropZone.addClass("drag-hover"));
+    $dropZone.on("dragleave drop", () => $dropZone.removeClass("drag-hover"));
+
+    uploader.on("fileAdded", file => {
+      const index = cloneEmptyForm(prefix);
+      const inputId = `#id_${prefix}-${index}-${fieldName}`;
+      file._meta = {
+        inputId,
+        statusId: `${inputId}_uploaded_status`,
+        progressId: `${inputId}_progress`
+      };
+      $(file._meta.statusId).text(`${file.fileName} ⏳ Uploading…`);
+      uploader.upload();
+    });
+
+    uploader.on("fileSuccess", (file, response) => {
+      const trimmed = response.trim();
+      const isChunk = trimmed.toLowerCase().includes("chunk uploaded");
+
+      $(file._meta.statusId).text(isChunk
+        ? "❌ Incomplete upload — retry"
+        : `${trimmed} ✅ Uploaded`
+      );
+
+      if (!isChunk) {
+        $(file._meta.inputId).val(trimmed);
+        $(file._meta.progressId).val(1);
+      }
+    });
+
+    uploader.on("fileError", (file, message) => {
+      $(file._meta.statusId).text(`❌ ${message}`);
+    });
+
+    uploader.on("progress", () => {
+      const progress = Math.max(0.05, uploader.progress());
+      uploader.files.forEach(file => {
+        if (file._meta?.progressId) {
+          $(file._meta.progressId).val(progress);
+        }
+      });
+    });
+  }
+
+  function hideInputsForExistingFiles() {
+    $(".file-upload").each(function() {
+      const $block = $(this);
+      const $fileInput = $block.find("input[type='file']");
+      const hasFile = $block.find("a, img").length > 0;
+
+      if (hasFile) {
+        $block.contents().filter((_, node) =>
+          node.nodeType === 3 && node.textContent.includes("Change")
+        ).remove();
+
+        $fileInput.hide();
+
+        const inputId = $fileInput.attr("id");
+        if (inputId) {
+          const progressSelector = "#" + inputId.replace(/_input_file$/, "_progress");
+          $(progressSelector).hide();
+        }
+      }
+    });
+  }
+
+  function initDropzones() {
+    $(".django-admin-resumable-file").each(function() {
+      const $input = $(this);
+      const $inlineGroup = $input.closest(".inline-group");
+      if (!$inlineGroup.length || $inlineGroup.data("upload-initialized")) return;
+
+      const prefix = $inlineGroup.attr("id")?.replace(/-group$/, '');
+      if (!prefix) return;
+
+      const $heading = $inlineGroup.find("h2.inline-heading:first");
+      if (!$heading.length) return;
+
+      const $dropZone = $('<div class="bulk-dropzone">📥 Click or drop files here to upload</div>');
+      $heading.append($dropZone);
+
+      setupUploader($dropZone, prefix);
+      $inlineGroup.data("upload-initialized", true);
+    });
+  }
+
+  $(function() {
+    initDropzones();
+    hideInputsForExistingFiles();
+  });
+})(typeof django !== "undefined" ? django.jQuery : jQuery);
+</script>
+<style>
+.bulk-dropzone {
+  margin-top: 10px;
+  padding: 12px;
+  border: 2px dashed #ccc;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 14px;
+  background-color: #f9f9f9;
+  color: #555;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+.bulk-dropzone.drag-hover {
+  border-color: #66afe9;
+  background-color: #eef9ff;
+}
+</style>
+<div id="container">
+  <p class="file-upload">
+    {% if value %}
+      {% trans "Currently" %}:
+      {% if file_url %}
+        <a id="{{ id }}_link" target="_new" href="{{ file_url }}">{{ file_name }}</a>
+        {% if show_thumb %}<img src="{{ file_url }}" style="width:250px;">{% endif %}
+      {% else %}
+        {{ value }}
+      {% endif %}
+      {{ clear_checkbox }}
+      <br>
+      {% trans "Change" %}:
+    {% endif %}
+    <span id="{{ id }}_uploaded_status"></span>
+    <input type="file"
+           id="{{ id }}_input_file"
+           class="django-admin-resumable-file">
+  </p>
+  <progress id="{{ id }}_progress" value="0" max="1" style="width:500px"></progress>
+</div>
+<input type="hidden" name="{{ name }}" id="{{ id }}" value="{{ value }}">

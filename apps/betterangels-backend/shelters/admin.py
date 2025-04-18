@@ -418,17 +418,17 @@ class ContactInfoInline(admin.TabularInline):
 
 class ExteriorPhotoInline(admin.TabularInline):
     model = ExteriorPhoto
-    extra = 1
+    max_num = 0
 
 
 class InterPhotoInline(admin.TabularInline):
     model = InteriorPhoto
-    extra = 1
+    max_num = 0
 
 
 class VideoInline(admin.TabularInline):
     model = Video
-    extra = 1
+    max_num = 0
 
 
 class ShelterResource(resources.ModelResource):
