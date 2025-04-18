@@ -412,33 +412,6 @@ class ShelterForm(forms.ModelForm):
 
         return existing_objects
 
-    def save(self, commit: bool = True) -> Any:
-        instance = super().save(commit=commit)
-
-        file_fields = {
-            "interior_photos_multiple": instance.interior_photos,
-            "exterior_photos_multiple": instance.exterior_photos,
-            "videos_multiple": instance.videos,
-        }
-        new_cleaned_data = {}
-        for field_name in file_fields:
-            new_cleaned_data[field_name] = (
-                self.cleaned_data.get(field_name, [])[0].split(",")
-                if (self.cleaned_data.get(field_name, []) and self.cleaned_data.get(field_name, [])[0])
-                else []
-            )
-
-        for field_name, manager in file_fields.items():
-            for file in new_cleaned_data.get(field_name, []):
-                manager.create(file=file)
-
-        # Only proceed if instance is saved (commit=True) and files are uploaded
-        if commit:
-            self.instance.save()
-            self._save_m2m()  # type: ignore
-
-        return instance
-
 
 @admin.register(ContactInfo)
 class ContactInfoAdmin(admin.ModelAdmin):
@@ -715,7 +688,7 @@ class ShelterResource(resources.ModelResource):
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
 
-    inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
+    inlines = [ExteriorPhotoInline, InterPhotoInline, VideoInline, ContactInfoInline]
     fieldsets = (
         (
             "Basic Information",
@@ -969,3 +942,23 @@ class ShelterAdmin(ImportExportModelAdmin):
             )
 
         return "No updates yet"
+
+    def save_model(self, request: HttpRequest, obj: Any, form: Any, change: Any) -> None:
+        super().save_model(request, obj, form, change)
+
+        file_fields = {
+            "interior_photos_multiple": obj.interior_photos,
+            "exterior_photos_multiple": obj.exterior_photos,
+            "videos_multiple": obj.videos,
+        }
+        new_cleaned_data = {}
+        for field_name in file_fields:
+            new_cleaned_data[field_name] = (
+                form.cleaned_data.get(field_name, [])[0].split(",")
+                if (form.cleaned_data.get(field_name, []) and form.cleaned_data.get(field_name, [])[0])
+                else []
+            )
+
+        for field_name, manager in file_fields.items():
+            for file in new_cleaned_data.get(field_name, []):
+                manager.create(file=file)
