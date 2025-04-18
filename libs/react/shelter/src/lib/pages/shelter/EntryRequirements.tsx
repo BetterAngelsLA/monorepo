@@ -20,7 +20,6 @@ export default function EntryRequirements({
         })}
         {shelter.entryInfo && (
           <div
-            className="flex gap-1"
             dangerouslySetInnerHTML={{
               __html: 'Entry Info: ' + shelter?.entryInfo,
             }}
@@ -28,7 +27,6 @@ export default function EntryRequirements({
         )}
         {shelter.bedFees && (
           <div
-            className="flex gap-1"
             dangerouslySetInnerHTML={{
               __html: 'Bed Fees: ' + shelter?.bedFees,
             }}
@@ -36,7 +34,6 @@ export default function EntryRequirements({
         )}
         {shelter.programFees && (
           <div
-            className="flex gap-1"
             dangerouslySetInnerHTML={{
               __html: 'Program Fees: ' + shelter?.programFees,
             }}
