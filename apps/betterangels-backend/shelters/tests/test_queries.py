@@ -441,7 +441,14 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }
         """
 
-        filters: dict[str, Any] = {"mapBounds": (-3, 3, 3, -3)}
+        filters: dict[str, Any] = {
+            "mapBounds": {
+                "westLng": -3,
+                "northLat": 3,
+                "eastLng": 3,
+                "southLat": -3,
+            }
+        }
 
         expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
@@ -483,7 +490,12 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         """
 
         filters: dict[str, Any] = {
-            "mapBounds": (-3, 3, 3, -3),
+            "mapBounds": {
+                "westLng": -3,
+                "northLat": 3,
+                "eastLng": 3,
+                "southLat": -3,
+            },
             "geolocation": {
                 "latitude": reference_point["latitude"],
                 "longitude": reference_point["longitude"],

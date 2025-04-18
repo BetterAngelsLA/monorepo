@@ -875,6 +875,13 @@ type MagicLinkResponse {
   message: String!
 }
 
+input MapBoundsInput {
+  westLng: Float!
+  northLat: Float!
+  eastLng: Float!
+  southLat: Float!
+}
+
 enum MaritalStatusEnum {
   DIVORCED
   MARRIED
@@ -1384,7 +1391,7 @@ input ShelterFilter {
   NOT: ShelterFilter
   DISTINCT: Boolean
   properties: ShelterPropertyInput
-  mapBounds: [Float!]
+  mapBounds: MapBoundsInput
   geolocation: GeolocationInput
 }
 

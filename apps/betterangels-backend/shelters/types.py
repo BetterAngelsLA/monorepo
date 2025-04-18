@@ -50,11 +50,7 @@ from shelters.models import (
     ShelterProgram,
 )
 from shelters.models import ShelterType as ShelterKind
-from shelters.models import (
-    SpecialSituationRestriction,
-    Storage,
-    TrainingService,
-)
+from shelters.models import SpecialSituationRestriction, Storage, TrainingService
 from strawberry import ID, asdict, auto
 
 
@@ -172,6 +168,14 @@ class GeolocationInput:
 
 
 @strawberry.input
+class MapBoundsInput:
+    west_lng: float
+    north_lat: float
+    east_lng: float
+    south_lat: float
+
+
+@strawberry.input
 class ShelterPropertyInput:
     pets: Optional[List[PetChoices]] = None
     demographics: Optional[List[DemographicChoices]] = None
@@ -199,13 +203,19 @@ class ShelterFilter:
     def map_bounds(
         self,
         queryset: QuerySet,
-        value: Optional[tuple[float, float, float, float]],
+        value: Optional[MapBoundsInput],
         prefix: str,
     ) -> Tuple[QuerySet[Shelter], Q]:
         if not value:
             return queryset, Q()
 
-        polygon = Polygon.from_bbox(value)
+        bbox: tuple = (
+            value.west_lng,
+            value.north_lat,
+            value.east_lng,
+            value.south_lat,
+        )
+        polygon = Polygon.from_bbox(bbox)
 
         return queryset.filter(geolocation__contained=polygon), Q()
 
