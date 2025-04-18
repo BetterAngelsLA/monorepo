@@ -31,6 +31,14 @@ export default function EcosystemInfo({
     ...(shelter.shelterProgramsOther ? [shelter.shelterProgramsOther] : []),
   ].join(', ');
 
+  const displayFunders = [
+    ...shelter.funders
+      .filter((funder): funder is { name: FunderChoices } => !!funder.name)
+      .map((funder) => enumDisplayFunderChoices[funder.name]),
+
+    ...(shelter.fundersOther ? [shelter.fundersOther] : []),
+  ].join(', ');
+
   return (
     <Card title="Ecosystem Information">
       <div className="flex flex-col gap-2">
@@ -67,15 +75,9 @@ export default function EcosystemInfo({
             Programs: {displayPrograms}
           </div>
         )}
-        {!!shelter.funders.length && (
+        {!!displayFunders && (
           <div className="flex items-center gap-2">
-            Funders:{' '}
-            {shelter.funders
-              .filter(
-                (funder): funder is { name: FunderChoices } => !!funder.name
-              )
-              .map((funder) => enumDisplayFunderChoices[funder.name])
-              .join(', ')}
+            Funders: {displayFunders}
           </div>
         )}
       </div>
