@@ -29,6 +29,11 @@
                 var percent = Math.round(event.detail.progress * 100);
                 bar.value = percent;
             });
+            ["interior_photos", "exterior_photos", "videos"].forEach(element =>{
+                if(!document.querySelector(`#${element}-0`)){
+                    document.getElementById(element + "-group").style = "display: none;";
+                }
+            });
         });
     </script>
     {{ block.super }}
