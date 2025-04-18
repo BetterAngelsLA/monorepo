@@ -44,13 +44,14 @@ export default function ShelterPage({ id }: { id: string }) {
     !!shelter.bedFees ||
     !!shelter.programFees;
   const hasSpecialRestrictions = !!shelter.specialSituationRestrictions?.length;
-  const hasShelterTypes = !!shelter.shelterTypes?.length;
+  const hasShelterTypes =
+    !!shelter.shelterTypes?.length || !!shelter.shelterTypesOther;
   const hasRoomStyles = !!shelter.roomStyles?.length;
   const hasDetail =
-    !!shelter.accessibility ||
-    !!shelter.storage ||
-    !!shelter.pets ||
-    !!shelter.parking;
+    !!shelter.accessibility?.length ||
+    !!shelter.storage?.length ||
+    !!shelter.pets?.length ||
+    !!shelter.parking?.length;
   const hasRestrictions =
     !!shelter.maxStay ||
     !!shelter.curfew ||
