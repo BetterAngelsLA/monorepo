@@ -20,7 +20,7 @@ export default function ShelterDetail({
 }) {
   return (
     <Card title="Shelter Details">
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col">
         <div className="flex items-center gap-2">
           {shelter.accessibility
             .filter(
@@ -53,9 +53,9 @@ export default function ShelterDetail({
         <div className="flex items-center gap-2">
           {shelter.parking
             .filter(
-              (parging): parging is { name: ParkingChoices } => !!parging.name
+              (parking): parking is { name: ParkingChoices } => !!parking.name
             )
-            .map((parging) => enumDisplayParkingChoices[parging.name])
+            .map((parking) => enumDisplayParkingChoices[parking.name])
             .join(', ')}
         </div>
       </div>
