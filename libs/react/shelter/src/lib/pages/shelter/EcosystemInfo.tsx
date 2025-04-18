@@ -51,7 +51,7 @@ export default function EcosystemInfo({
         )}
         {!!shelter.shelterPrograms.length && (
           <div className="flex items-center gap-2">
-            Program:{' '}
+            Programs:{' '}
             {shelter.shelterPrograms
               .filter(
                 (program): program is { name: ShelterProgramChoices } =>
@@ -63,7 +63,7 @@ export default function EcosystemInfo({
         )}
         {!!shelter.funders.length && (
           <div className="flex items-center gap-2">
-            Program:{' '}
+            Funders:{' '}
             {shelter.funders
               .filter(
                 (funder): funder is { name: FunderChoices } => !!funder.name
