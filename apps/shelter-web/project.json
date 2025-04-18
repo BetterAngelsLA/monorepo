@@ -12,16 +12,43 @@
         "jestConfig": "apps/shelter-web/jest.config.ts"
       }
     },
+    "set-env": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/set-base-path.js"
+      },
+      "configurations": {
+        "production": {},
+        "preview": {}
+      }
+    },
     "build": {
       "executor": "@nx/vite:build",
+      "dependsOn": ["set-env"],
       "options": {
         "outputPath": "dist/apps/shelter-web",
         "configFile": "apps/shelter-web/vite.config.mts"
       },
       "configurations": {
-        "production": {
-          "mode": "production"
-        }
+        "production": {},
+        "preview": {}
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./tools/deploy/cloudfront_deploy.sh"
+      },
+      "configurations": {
+        "production": {},
+        "preview": {}
+      },
+      "dependsOn": ["build"]
+    },
+    "post-pr-preview": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/post-preview-comment.js --url=https://shelter.dev.betterangels.la$VITE_APP_BASE_PATH"
       }
     }
   }

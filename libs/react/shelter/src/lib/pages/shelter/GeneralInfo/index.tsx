@@ -23,12 +23,12 @@ export default function GeneralInfo({
       icon: <GlobeIcon className="h-6 w-6 stroke-primary-20" />,
     },
     {
-      label: 'instagram',
+      label: 'Instagram',
       key: 'instagram',
       icon: <InstagramIcon className="h-6 w-6 fill-primary-20" />,
     },
     {
-      label: parsePhoneNumber(shelter?.phone ?? "", 'US')?.formatNational(),
+      label: parsePhoneNumber(shelter?.phone ?? '', 'US')?.formatNational(),
       key: 'phone',
       icon: <CallIcon className="h-6 w-6 fill-primary-20" />,
     },

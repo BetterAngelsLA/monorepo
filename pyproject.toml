@@ -24,7 +24,7 @@ profile = "black"
 skip_glob = ["*/migrations/*"]
 
 [tool.poetry.dependencies]
-python = "3.13.2"
+python = "3.13.3"
 django-s3file = "^5.5.7"
 
 [tool.poetry.dependencies.betterangels-backend]
