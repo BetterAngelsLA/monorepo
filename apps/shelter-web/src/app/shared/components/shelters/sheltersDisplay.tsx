@@ -17,12 +17,12 @@ import { SearchSource } from './searchSource';
 import { ShelterList } from './shelterList';
 
 export type TShelterPropertyFilters = {
-  pets?: PetChoices[] | null;
   demographics?: DemographicChoices[] | null;
-  specialSituationRestrictions?: SpecialSituationRestrictionChoices[] | null;
-  shelterTypes?: ShelterChoices[] | null;
-  roomStyles?: RoomStyleChoices[] | null;
   parking?: ParkingChoices[] | null;
+  pets?: PetChoices[] | null;
+  roomStyles?: RoomStyleChoices[] | null;
+  shelterTypes?: ShelterChoices[] | null;
+  specialSituationRestrictions?: SpecialSituationRestrictionChoices[] | null;
 };
 
 const SEARCH_RANGE_MILES = 20;
@@ -31,21 +31,20 @@ type TProps = {
   className?: string;
   coordinates?: TLatLng | null;
   coordinatesSource?: TLocationSource;
-  mapBounds?: TMapBounds | null;
-  rangeInMiles?: number;
+  mapBoundsFilter?: TMapBounds | null;
   propertyFilters?: TShelterPropertyFilters;
+  rangeInMiles?: number;
 };
 
 export function SheltersDisplay(props: TProps) {
   const {
     coordinates,
     coordinatesSource,
-    mapBounds,
-    rangeInMiles = SEARCH_RANGE_MILES,
+    mapBoundsFilter,
     propertyFilters,
+    rangeInMiles = SEARCH_RANGE_MILES,
     className = '',
   } = props;
-
   const [getShelters, { loading, data, error }] = useViewSheltersLazyQuery();
 
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
@@ -66,11 +65,11 @@ export function SheltersDisplay(props: TProps) {
       };
     }
 
-    if (mapBounds) {
+    if (mapBoundsFilter) {
       queryVariables = queryVariables || {};
       queryVariables.filters = queryVariables.filters || {};
 
-      queryVariables.filters.mapBounds = mapBounds;
+      queryVariables.filters.mapBounds = mapBoundsFilter;
     }
 
     if (propertyFilters) {
@@ -89,7 +88,7 @@ export function SheltersDisplay(props: TProps) {
     }
 
     getShelters({ variables: queryVariables });
-  }, [coordinates, propertyFilters]);
+  }, [coordinates, mapBoundsFilter, propertyFilters]);
 
   const shelters = data?.shelters?.results;
 
