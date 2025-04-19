@@ -3,6 +3,13 @@ export type TLatLng = {
   longitude: number;
 };
 
+export type TMapBounds = {
+  westLng: number;
+  northLat: number;
+  eastLng: number;
+  southLat: number;
+};
+
 export interface TAddress extends TLatLng {
   address: string;
 }

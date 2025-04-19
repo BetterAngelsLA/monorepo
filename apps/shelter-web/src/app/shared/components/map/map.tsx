@@ -10,7 +10,13 @@ import {
   useApiLoadingStatus,
   useMap,
 } from '@vis.gl/react-google-maps';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import {
   DEFAULT_GESTURE_HANDLING,
@@ -30,7 +36,10 @@ type TMap = {
   gestureHandling?: TMapGestureHandling;
   disableDefaultUI?: boolean;
   controlsPosition?: ControlPosition;
+  showSearchButton?: boolean;
+  setShowSearchButton: Dispatch<SetStateAction<boolean>>;
   onCenterSelect?: (center: TLatLng) => void;
+  onSearchMapArea?: () => void;
   markers?: TMarker[];
 };
 
@@ -43,10 +52,12 @@ export function Map(props: TMap) {
     gestureHandling = DEFAULT_GESTURE_HANDLING,
     disableDefaultUI = true,
     controlsPosition = ControlPosition.INLINE_END_BLOCK_END,
+    showSearchButton = false,
+    setShowSearchButton,
     onCenterSelect,
+    onSearchMapArea,
     markers = [],
   } = props;
-
   const map = useMap();
   const mapApiStatus = useApiLoadingStatus();
 
@@ -62,7 +73,19 @@ export function Map(props: TMap) {
   const handleCameraChange = useCallback(
     (event: MapCameraChangedEvent) => {
       setCameraProps(event.detail);
-      const { center } = event.detail;
+      const { center, bounds } = event.detail;
+
+      if (bounds) {
+        sessionStorage.setItem(
+          'mapBounds',
+          JSON.stringify({
+            westLng: bounds.west,
+            northLat: bounds.north,
+            eastLng: bounds.east,
+            southLat: bounds.south,
+          })
+        );
+      }
 
       if (center) {
         sessionStorage.setItem(
@@ -103,34 +126,46 @@ export function Map(props: TMap) {
   const mapCss = ['h-12', 'w-full', className];
 
   return (
-    <GoogleMap
-      mapId={mapId}
-      className={mergeCss(mapCss)}
-      disableDefaultUI={disableDefaultUI}
-      gestureHandling={gestureHandling}
-      onCameraChanged={handleCameraChange}
-      {...cameraProps}
-    >
-      {markers.map((marker) => (
-        <AdvancedMarker
-          key={marker.id}
-          position={toGoogleLatLng(marker.position)}
-          zIndex={99}
-          onClick={marker.onClick}
-        >
-          <MapPinIcon className="h-10" type="secondary" />
-        </AdvancedMarker>
-      ))}
+    <div className="relative mt-8">
+      <GoogleMap
+        mapId={mapId}
+        className={mergeCss(mapCss)}
+        disableDefaultUI={disableDefaultUI}
+        gestureHandling={gestureHandling}
+        onCameraChanged={handleCameraChange}
+        onIdle={() => setShowSearchButton(true)}
+        {...cameraProps}
+      >
+        {markers.map((marker) => (
+          <AdvancedMarker
+            key={marker.id}
+            position={toGoogleLatLng(marker.position)}
+            zIndex={99}
+            onClick={marker.onClick}
+          >
+            <MapPinIcon className="h-10" type="secondary" />
+          </AdvancedMarker>
+        ))}
 
-      <MapControl position={controlsPosition}>
-        <div className="mr-4">
-          <ZoomControls />
-          <CurrentLocationBtn
-            className="mt-5"
-            onLocationSucccess={onCurrentLocationChange}
-          />
-        </div>
-      </MapControl>
-    </GoogleMap>
+        <MapControl position={controlsPosition}>
+          <div className="mr-4">
+            <ZoomControls />
+            <CurrentLocationBtn
+              className="mt-5"
+              onLocationSucccess={onCurrentLocationChange}
+            />
+          </div>
+        </MapControl>
+      </GoogleMap>
+      {showSearchButton && (
+        <button
+          onClick={onSearchMapArea}
+          className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10
+                       bg-white px-4 py-1 shadow rounded"
+        >
+          Search map area
+        </button>
+      )}
+    </div>
   );
 }
