@@ -15,13 +15,13 @@ export function ShelterList(props: TShelterList) {
     return null;
   }
 
-  const borderCss = ['border-b', 'border-neutral-90', '-mx-4', 'mt-5'];
+  const borderCss = ['border-b', 'border-neutral-90', '-mx-4', 'mt-6'];
 
   return (
     <div className={className}>
       {shelters.map((shelter, index) => {
         return (
-          <div key={index} className="mb-5 last:mb-0">
+          <div key={index} className="mb-6 last:mb-0">
             <ShelterCard
               key={index}
               shelter={shelter}
