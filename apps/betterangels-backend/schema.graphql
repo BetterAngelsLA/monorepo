@@ -699,7 +699,7 @@ type GeneralServiceType {
 input GeolocationInput {
   latitude: Float!
   longitude: Float!
-  rangeInMiles: Int
+  rangeInMiles: Int = null
 }
 
 enum HairColorEnum {
@@ -840,6 +840,8 @@ enum LanguageEnum {
   VIETNAMESE
 }
 
+scalar LatitudeScalar
+
 enum LivingSituationEnum {
   HOUSING
   OPEN_AIR
@@ -867,12 +869,21 @@ input LoginInput {
   password: String!
 }
 
+scalar LongitudeScalar
+
 input MagicLinkInput {
   email: String!
 }
 
 type MagicLinkResponse {
   message: String!
+}
+
+input MapBoundsInput {
+  westLng: LongitudeScalar!
+  northLat: LatitudeScalar!
+  eastLng: LongitudeScalar!
+  southLat: LatitudeScalar!
 }
 
 enum MaritalStatusEnum {
@@ -1384,6 +1395,7 @@ input ShelterFilter {
   NOT: ShelterFilter
   DISTINCT: Boolean
   properties: ShelterPropertyInput
+  mapBounds: MapBoundsInput
   geolocation: GeolocationInput
 }
 
