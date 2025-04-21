@@ -23,7 +23,7 @@ export default SearchableDropdownMeta;
 
 type SearchableDropdownStory = ComponentStory<typeof SearchableDropdown>;
 
-export const Basic: SearchableDropdownStory = (args, context) => {
+export const Basic: SearchableDropdownStory = () => {
   return (
     <SearchableDropdown
       extraTitle="Add Team"
