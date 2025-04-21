@@ -18,6 +18,8 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
+  LatitudeScalar: { input: any; output: any; }
+  LongitudeScalar: { input: any; output: any; }
   NonBlankString: { input: string; output: string; }
   PhoneNumber: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
@@ -906,6 +908,13 @@ export type MagicLinkResponse = {
   message: Scalars['String']['output'];
 };
 
+export type MapBoundsInput = {
+  eastLng: Scalars['LongitudeScalar']['input'];
+  northLat: Scalars['LatitudeScalar']['input'];
+  southLat: Scalars['LatitudeScalar']['input'];
+  westLng: Scalars['LongitudeScalar']['input'];
+};
+
 export enum MaritalStatusEnum {
   Divorced = 'DIVORCED',
   Married = 'MARRIED',
@@ -1730,6 +1739,7 @@ export type ShelterFilter = {
   NOT?: InputMaybe<ShelterFilter>;
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
+  mapBounds?: InputMaybe<MapBoundsInput>;
   properties?: InputMaybe<ShelterPropertyInput>;
 };
 
