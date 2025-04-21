@@ -1435,10 +1435,8 @@ export type Query = {
   clientContacts: ClientContactTypeOffsetPaginated;
   clientDocument: ClientDocumentType;
   clientDocuments: ClientDocumentTypeOffsetPaginated;
-  clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
   clientProfile: ClientProfileType;
   clientProfiles: ClientProfileTypeOffsetPaginated;
-  clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
   hmisProfile: HmisProfileType;
@@ -1446,7 +1444,6 @@ export type Query = {
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
-  notesPaginated: NoteTypeOffsetPaginated;
   shelter: ShelterType;
   shelters: ShelterTypeOffsetPaginated;
 };
@@ -1484,24 +1481,12 @@ export type QueryClientDocumentsArgs = {
 };
 
 
-export type QueryClientDocumentsPaginatedArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
 export type QueryClientProfileArgs = {
   pk: Scalars['ID']['input'];
 };
 
 
 export type QueryClientProfilesArgs = {
-  filters?: InputMaybe<ClientProfileFilter>;
-  order?: InputMaybe<ClientProfileOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryClientProfilesPaginatedArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1531,13 +1516,6 @@ export type QueryNoteArgs = {
 
 
 export type QueryNotesArgs = {
-  filters?: InputMaybe<NoteFilter>;
-  order?: InputMaybe<NoteOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryNotesPaginatedArgs = {
   filters?: InputMaybe<NoteFilter>;
   order?: InputMaybe<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
