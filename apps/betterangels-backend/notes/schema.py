@@ -76,9 +76,6 @@ class Query:
     notes: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
-    notes_paginated: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
-        extensions=[HasRetvalPerm(NotePermissions.VIEW)],
-    )
 
     @strawberry_django.offset_paginated(
         OffsetPaginated[InteractionAuthorType], extensions=[HasPerm(NotePermissions.ADD)]
