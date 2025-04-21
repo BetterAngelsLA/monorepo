@@ -20,9 +20,14 @@ import { ShelterSearch } from '../../shared/components/shelters/shelterSearch';
 import { ModalAnimationEnum } from '../../shared/modal/modal';
 
 export function Home() {
+  // Temporary suppression to allow incremental cleanup without regressions.
+  // ⚠️ If you're modifying this file, please remove these ignores and fix the issues.
+  /* eslint-disable @typescript-eslint/no-unused-vars, no-console */
   const [_location, setLocation] = useAtom(locationAtom);
-  const [shelters] = useAtom(sheltersAtom);
   const [_modal, setModal] = useAtom(modalAtom);
+  /* eslint-enable @typescript-eslint/no-unused-vars, no-console */
+
+  const [shelters] = useAtom(sheltersAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
   const [defaultCenter, setDefaultCenter] = useState<TLatLng>();
   const [showSearchButton, setShowSearchButton] = useState(false);

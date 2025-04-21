@@ -47,6 +47,9 @@ export function SheltersDisplay(props: TProps) {
   } = props;
   const [getShelters, { loading, data, error }] = useViewSheltersLazyQuery();
 
+  // Temporary suppression to allow incremental cleanup without regressions.
+  // ⚠️ If you're modifying this file, please remove this ignore and fix the issue.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
 
   useEffect(() => {

@@ -45,6 +45,10 @@
       },
       "dependsOn": ["build"]
     },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
     "post-pr-preview": {
       "executor": "nx:run-commands",
       "options": {

@@ -29,7 +29,6 @@ class ServiceRequestType:
     status: auto
     due_by: auto
     completed_on: auto
-    client: Optional[UserType]
     client_profile: ClientProfileType | None
     created_by: UserType
     created_at: auto
@@ -40,7 +39,6 @@ class CreateServiceRequestInput:
     service: auto
     status: auto
     service_other: auto
-    client: Optional[ID]
     client_profile: ID | None
 
 
@@ -74,7 +72,6 @@ class TaskType:
     status: auto
     due_by: auto
     due_by_group: DueByGroupEnum
-    client: Optional[UserType]
     client_profile: ClientProfileType | None
     created_at: auto
     created_by: UserType
@@ -85,7 +82,6 @@ class CreateTaskInput:
     title: auto
     status: auto
     due_by: auto
-    client: Optional[ID]
     client_profile: ID | None
 
 
@@ -148,7 +144,6 @@ class NoteOrder:
 
 @strawberry_django.filters.filter(models.Note)
 class NoteFilter:
-    client: Optional[ID]
     client_profile: ID | None
     created_by: ID | None
     is_submitted: auto
@@ -175,8 +170,8 @@ class NoteFilter:
 
         for term in search_terms:
             q_search = Q(
-                Q(client__first_name__icontains=term)
-                | Q(client__last_name__icontains=term)
+                Q(client_profile__first_name__icontains=term)
+                | Q(client_profile__last_name__icontains=term)
                 | Q(public_details__icontains=term)
             )
 
@@ -210,7 +205,6 @@ class NoteType:
     requested_services: List[ServiceRequestType]
     public_details: auto
     is_submitted: auto
-    client: Optional[UserType]
     client_profile: ClientProfileType | None
     created_at: auto
     created_by: UserType
@@ -243,7 +237,6 @@ class CreateNoteInput:
     team: Optional[SelahTeamEnum]
     public_details: auto
     private_details: auto
-    client: Optional[ID]
     client_profile: ID | None
     is_submitted: auto
     interacted_at: auto
