@@ -15,6 +15,9 @@ import { ShelterFilters } from '../shelterFilter/shelterFilters';
 import { SheltersDisplay, TShelterPropertyFilters } from './sheltersDisplay';
 
 export function ShelterSearch() {
+  // Temporary suppression to allow incremental cleanup without regressions.
+  // ⚠️ If you're modifying this file, please remove this ignore and fix the issue.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_modal, setModal] = useAtom(modalAtom);
   const [location, setLocation] = useAtom(locationAtom);
   const [queryFilters, setQueryFilters] = useState<TShelterPropertyFilters>();
