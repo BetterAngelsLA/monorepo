@@ -35,6 +35,9 @@ export function Modal(props: IModal): ReactElement | null {
     onClose,
   } = props;
 
+  // Temporary suppression to allow incremental cleanup without regressions.
+  // ⚠️ If you're modifying this file, please remove this ignore and fix the issue.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_modal, setModal] = useAtom(modalAtom);
 
   function onModalClose(): void {

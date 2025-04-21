@@ -8,6 +8,9 @@ type TProps = {
 };
 
 export function ZoomControls(props: TProps) {
+  // Temporary suppression to allow incremental cleanup without regressions.
+  // ⚠️ If you're modifying this file, please remove this ignore and fix the issue.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { className = '', zoomBy = 1 } = props;
 
   const map = useMap();
