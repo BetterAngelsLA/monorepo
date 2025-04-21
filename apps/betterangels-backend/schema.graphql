@@ -322,8 +322,6 @@ input ClientProfileImportRecordsBulkInput {
 }
 
 input ClientProfileOrder {
-  user_FirstName: Ordering
-  user_LastName: Ordering
   firstName: Ordering
   lastName: Ordering
   id: Ordering
@@ -377,7 +375,7 @@ type ClientProfileType {
   docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  user: UserType!
+  user: UserType
   displayCaseManager: String!
 }
 
@@ -454,7 +452,6 @@ input CreateClientProfileInput {
   householdMembers: [ClientHouseholdMemberInput!]
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
-  user: CreateUserInput
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -473,7 +470,6 @@ input CreateNoteInput {
   team: SelahTeamEnum
   publicDetails: String
   privateDetails: String
-  client: ID
   clientProfile: ID
   isSubmitted: Boolean
   interactedAt: DateTime
@@ -516,7 +512,6 @@ input CreateServiceRequestInput {
   service: ServiceEnum!
   status: ServiceRequestStatusEnum!
   serviceOther: String
-  client: ID
   clientProfile: ID
 }
 
@@ -526,18 +521,10 @@ input CreateTaskInput {
   title: String!
   status: TaskStatusEnum!
   dueBy: DateTime
-  client: ID
   clientProfile: ID
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
-
-input CreateUserInput {
-  firstName: NonBlankString
-  lastName: NonBlankString
-  middleName: NonBlankString
-  email: NonBlankString
-}
 
 """Date (isoformat)"""
 scalar Date
@@ -978,7 +965,6 @@ type NoteDataImportType {
 }
 
 input NoteFilter {
-  client: ID
   clientProfile: ID
   createdBy: ID
   isSubmitted: Boolean
@@ -1020,7 +1006,6 @@ type NoteType {
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   publicDetails: String!
   isSubmitted: Boolean!
-  client: UserType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
@@ -1365,7 +1350,6 @@ type ServiceRequestType {
   status: ServiceRequestStatusEnum!
   dueBy: DateTime
   completedOn: DateTime
-  client: UserType
   clientProfile: ClientProfileType
   createdBy: UserType!
   createdAt: DateTime!
@@ -1591,7 +1575,6 @@ type TaskType {
   status: TaskStatusEnum!
   dueBy: DateTime
   dueByGroup: DueByGroupEnum!
-  client: UserType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
@@ -1657,7 +1640,6 @@ input UpdateClientProfileInput {
   householdMembers: [ClientHouseholdMemberInput!]
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
-  user: UpdateUserInput
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
