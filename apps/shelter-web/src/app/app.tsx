@@ -3,7 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 import { MainLayout } from './layout/mainLayout';
 import { routeChildren } from './routes/appRoutes';
 
-const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const googleMapsApiKey = import.meta.env.VITE_SHELTER_GOOGLE_MAPS_API_KEY;
 
 export function App() {
   function onMapsProviderError(error: unknown) {

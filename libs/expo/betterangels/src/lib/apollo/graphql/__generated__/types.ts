@@ -18,6 +18,8 @@ export type Scalars = {
   DateTime: { input: any; output: any; }
   /** The `JSON` scalar type represents JSON values as specified by [ECMA-404](https://ecma-international.org/wp-content/uploads/ECMA-404_2nd_edition_december_2017.pdf). */
   JSON: { input: any; output: any; }
+  LatitudeScalar: { input: any; output: any; }
+  LongitudeScalar: { input: any; output: any; }
   NonBlankString: { input: string; output: string; }
   PhoneNumber: { input: any; output: any; }
   /** Represents a point as `(x, y, z)` or `(x, y)`. */
@@ -337,8 +339,6 @@ export type ClientProfileOrder = {
   firstName?: InputMaybe<Ordering>;
   id?: InputMaybe<Ordering>;
   lastName?: InputMaybe<Ordering>;
-  user_FirstName?: InputMaybe<Ordering>;
-  user_LastName?: InputMaybe<Ordering>;
 };
 
 export type ClientProfilePhotoInput = {
@@ -390,7 +390,7 @@ export type ClientProfileType = {
   residenceAddress?: Maybe<Scalars['String']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
-  user: UserType;
+  user?: Maybe<UserType>;
   veteranStatus?: Maybe<VeteranStatusEnum>;
 };
 
@@ -481,7 +481,6 @@ export type CreateClientProfileInput = {
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
-  user?: InputMaybe<CreateUserInput>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
@@ -497,7 +496,6 @@ export type CreateNoteDataImportInput = {
 export type CreateNoteDataImportPayload = NoteDataImportType | OperationInfo;
 
 export type CreateNoteInput = {
-  client?: InputMaybe<Scalars['ID']['input']>;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   interactedAt?: InputMaybe<Scalars['DateTime']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -541,7 +539,6 @@ export type CreateProfileDataImportInput = {
 };
 
 export type CreateServiceRequestInput = {
-  client?: InputMaybe<Scalars['ID']['input']>;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   service: ServiceEnum;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
@@ -551,7 +548,6 @@ export type CreateServiceRequestInput = {
 export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type CreateTaskInput = {
-  client?: InputMaybe<Scalars['ID']['input']>;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
   status: TaskStatusEnum;
@@ -559,13 +555,6 @@ export type CreateTaskInput = {
 };
 
 export type CreateTaskPayload = OperationInfo | TaskType;
-
-export type CreateUserInput = {
-  email?: InputMaybe<Scalars['NonBlankString']['input']>;
-  firstName?: InputMaybe<Scalars['NonBlankString']['input']>;
-  lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
-  middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
-};
 
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
@@ -906,6 +895,13 @@ export type MagicLinkResponse = {
   message: Scalars['String']['output'];
 };
 
+export type MapBoundsInput = {
+  eastLng: Scalars['LongitudeScalar']['input'];
+  northLat: Scalars['LatitudeScalar']['input'];
+  southLat: Scalars['LatitudeScalar']['input'];
+  westLng: Scalars['LongitudeScalar']['input'];
+};
+
 export enum MaritalStatusEnum {
   Divorced = 'DIVORCED',
   Married = 'MARRIED',
@@ -1204,7 +1200,6 @@ export type NoteFilter = {
   NOT?: InputMaybe<NoteFilter>;
   OR?: InputMaybe<NoteFilter>;
   authors?: InputMaybe<Array<Scalars['ID']['input']>>;
-  client?: InputMaybe<Scalars['ID']['input']>;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1232,7 +1227,6 @@ export type NoteOrder = {
 
 export type NoteType = {
   __typename?: 'NoteType';
-  client?: Maybe<UserType>;
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
@@ -1426,10 +1420,8 @@ export type Query = {
   clientContacts: ClientContactTypeOffsetPaginated;
   clientDocument: ClientDocumentType;
   clientDocuments: ClientDocumentTypeOffsetPaginated;
-  clientDocumentsPaginated: ClientDocumentTypeOffsetPaginated;
   clientProfile: ClientProfileType;
   clientProfiles: ClientProfileTypeOffsetPaginated;
-  clientProfilesPaginated: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
   hmisProfile: HmisProfileType;
@@ -1437,7 +1429,6 @@ export type Query = {
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
-  notesPaginated: NoteTypeOffsetPaginated;
   shelter: ShelterType;
   shelters: ShelterTypeOffsetPaginated;
 };
@@ -1475,24 +1466,12 @@ export type QueryClientDocumentsArgs = {
 };
 
 
-export type QueryClientDocumentsPaginatedArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
 export type QueryClientProfileArgs = {
   pk: Scalars['ID']['input'];
 };
 
 
 export type QueryClientProfilesArgs = {
-  filters?: InputMaybe<ClientProfileFilter>;
-  order?: InputMaybe<ClientProfileOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryClientProfilesPaginatedArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1522,13 +1501,6 @@ export type QueryNoteArgs = {
 
 
 export type QueryNotesArgs = {
-  filters?: InputMaybe<NoteFilter>;
-  order?: InputMaybe<NoteOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type QueryNotesPaginatedArgs = {
   filters?: InputMaybe<NoteFilter>;
   order?: InputMaybe<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
@@ -1719,7 +1691,6 @@ export enum ServiceRequestStatusEnum {
 
 export type ServiceRequestType = {
   __typename?: 'ServiceRequestType';
-  client?: Maybe<UserType>;
   clientProfile?: Maybe<ClientProfileType>;
   completedOn?: Maybe<Scalars['DateTime']['output']>;
   createdAt: Scalars['DateTime']['output'];
@@ -1752,6 +1723,7 @@ export type ShelterFilter = {
   NOT?: InputMaybe<ShelterFilter>;
   OR?: InputMaybe<ShelterFilter>;
   geolocation?: InputMaybe<GeolocationInput>;
+  mapBounds?: InputMaybe<MapBoundsInput>;
   properties?: InputMaybe<ShelterPropertyInput>;
 };
 
@@ -1953,7 +1925,6 @@ export enum TaskStatusEnum {
 
 export type TaskType = {
   __typename?: 'TaskType';
-  client?: Maybe<UserType>;
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
@@ -2020,7 +1991,6 @@ export type UpdateClientProfileInput = {
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
-  user?: InputMaybe<UpdateUserInput>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
 };
 
