@@ -31,18 +31,24 @@ export default function ShelterPage({ id }: { id: string }) {
     return null;
   }
 
+  function containsNonWhitespaceValue(value?: string | null | undefined) {
+    // Rich text (CKEditor5) fields aren't empty when empty.
+    // By default, they contain a non-breaking space char.
+    return !!value && value !== '<p>&nbsp;</p>';
+  }
+
   const hasGeneralInfo =
     !!shelter.totalBeds ||
     !!shelter.website ||
     !!shelter.phone ||
     !!shelter.email ||
     !!shelter.location?.place;
-  const hasDescription = !!shelter.description;
+  const hasDescription = containsNonWhitespaceValue(shelter.description);
   const hasEntryRequirements =
     !!shelter.entryRequirements?.length ||
-    !!shelter.entryInfo ||
-    !!shelter.bedFees ||
-    !!shelter.programFees;
+    containsNonWhitespaceValue(shelter.entryInfo) ||
+    containsNonWhitespaceValue(shelter.bedFees) ||
+    containsNonWhitespaceValue(shelter.programFees);
   const hasSpecialRestrictions = !!shelter.specialSituationRestrictions?.length;
   const hasShelterTypes =
     !!shelter.shelterTypes?.length || !!shelter.shelterTypesOther;
@@ -56,8 +62,8 @@ export default function ShelterPage({ id }: { id: string }) {
     !!shelter.maxStay ||
     !!shelter.curfew ||
     !!shelter.onSiteSecurity ||
-    !!shelter.otherRules;
-  const hasOtherServices = !!shelter.otherServices;
+    containsNonWhitespaceValue(shelter.otherRules);
+  const hasOtherServices = containsNonWhitespaceValue(shelter.otherServices);
   const hasEcosystemInfo =
     !!shelter.cities?.length ||
     !!shelter.spa?.length ||
@@ -65,7 +71,6 @@ export default function ShelterPage({ id }: { id: string }) {
     !!shelter.supervisorialDistrict ||
     !!shelter.shelterPrograms?.length ||
     !!shelter.funders?.length;
-
   return (
     <div className="w-full">
       <Header shelter={shelter} />
