@@ -1,5 +1,6 @@
 import { MapPinIcon } from '@monorepo/react/icons';
 
+import { Button } from '@monorepo/react/components';
 import {
   AdvancedMarker,
   ControlPosition,
@@ -124,7 +125,16 @@ export function Map(props: TMap) {
   }
 
   const mapCss = ['h-12', 'w-full', className];
-
+  const searchMapAreaCss = [
+    'absolute',
+    'text-primary-60',
+    'top-2',
+    'left-1/2',
+    '-translate-x-1/2',
+    'bg-white',
+    'shadow',
+    'text-xs',
+  ];
   return (
     <div className="relative mt-8">
       <GoogleMap
@@ -158,13 +168,14 @@ export function Map(props: TMap) {
         </MapControl>
       </GoogleMap>
       {showSearchButton && (
-        <button
+        <Button
           onClick={onSearchMapArea}
-          className="absolute top-2 left-1/2 transform -translate-x-1/2 z-10
-                       bg-white px-4 py-1 shadow rounded"
+          variant="secondary"
+          size="md"
+          className={mergeCss(searchMapAreaCss)}
         >
-          Search map area
-        </button>
+          Search this area
+        </Button>
       )}
     </div>
   );
