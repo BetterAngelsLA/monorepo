@@ -1,5 +1,5 @@
+import { CurrentLocationDot } from '@monorepo/react/components';
 import { MapPinIcon } from '@monorepo/react/icons';
-
 import {
   AdvancedMarker,
   ControlPosition,
@@ -54,6 +54,8 @@ export function Map(props: TMap) {
     center: toGoogleLatLng(defaultCenter) as google.maps.LatLngLiteral,
     zoom: defaultZoom,
   });
+  const [userLocation, setUserLocation] =
+    useState<google.maps.LatLngLiteral | null>(null);
 
   useEffect(() => {
     console.info(`[map] loading status: ${mapApiStatus}`);
@@ -77,9 +79,9 @@ export function Map(props: TMap) {
     [map]
   );
 
-  function onCurrentLocationChange(location: TLatLng) {
+  function handleCenterToUserLocation(location: TLatLng) {
     if (!map) {
-      console.warn('[map::onCurrentLocationChange] map missing.');
+      console.warn('[map::handleCenterToUserLocation] map missing.');
 
       return;
     }
@@ -100,6 +102,24 @@ export function Map(props: TMap) {
     map.setCenter(newCenter);
   }
 
+  useEffect(() => {
+    if (!map) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const newCenter = { lat: latitude, lng: longitude };
+        setUserLocation(newCenter);
+      },
+      (error) => {
+        console.error('Geolocation error', error);
+      },
+      {
+        enableHighAccuracy: true,
+      }
+    );
+  }, [map]);
+
   const mapCss = ['h-12', 'w-full', className];
 
   return (
@@ -111,6 +131,11 @@ export function Map(props: TMap) {
       onCameraChanged={handleCameraChange}
       {...cameraProps}
     >
+      {userLocation && (
+        <AdvancedMarker position={userLocation} zIndex={999}>
+          <CurrentLocationDot />
+        </AdvancedMarker>
+      )}
       {markers.map((marker) => (
         <AdvancedMarker
           key={marker.id}
@@ -127,7 +152,7 @@ export function Map(props: TMap) {
           <ZoomControls />
           <CurrentLocationBtn
             className="mt-5"
-            onLocationSucccess={onCurrentLocationChange}
+            onLocationSucccess={handleCenterToUserLocation}
           />
         </div>
       </MapControl>
