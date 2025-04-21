@@ -1,4 +1,4 @@
-import { Card } from '@monorepo/react/components';
+import { Card, formatWebsite, isWebsite } from '@monorepo/react/components';
 import {
   BedIcon,
   CallIcon,
@@ -10,6 +10,23 @@ import {
 import parsePhoneNumber from 'libphonenumber-js';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
 import GeneralServices from './GeneralServices';
+
+function renderLabel(label?: string | null) {
+  if (!label) return 'Not Available';
+  if (isWebsite(label)) {
+    return (
+      <a
+        href={formatWebsite(label)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline"
+      >
+        {label}
+      </a>
+    );
+  }
+  return label;
+}
 
 export default function GeneralInfo({
   shelter,
@@ -28,7 +45,7 @@ export default function GeneralInfo({
       icon: <InstagramIcon className="h-6 w-6 fill-primary-20" />,
     },
     {
-      label: parsePhoneNumber(shelter?.phone ?? "", 'US')?.formatNational(),
+      label: parsePhoneNumber(shelter?.phone ?? '', 'US')?.formatNational(),
       key: 'phone',
       icon: <CallIcon className="h-6 w-6 fill-primary-20" />,
     },
@@ -60,7 +77,7 @@ export default function GeneralInfo({
           key={info.key}
           className="border-t border-neutral-90 flex items-center justify-between px-6 py-4 gap-1"
         >
-          {info.label || 'Not Available'}
+          {renderLabel(info.label)}
           {info.icon}
         </div>
       ))}

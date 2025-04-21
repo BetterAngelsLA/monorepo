@@ -1,3 +1,5 @@
+export { default as formatWebsite } from '../utils/formatWebsite';
+export { default as isWebsite } from '../utils/isWebsite';
 export { default as Button } from './Button';
 export { default as Card } from './Card';
 export { default as ExpandableContainer } from './ExpandableContainer';
