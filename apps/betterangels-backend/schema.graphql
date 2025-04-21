@@ -210,6 +210,16 @@ type ClientContactType {
   phoneNumber: PhoneNumber
 }
 
+type ClientContactTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ClientContactType!]!
+}
+
 enum ClientDocumentNamespaceEnum {
   DRIVERS_LICENSE_FRONT
   DRIVERS_LICENSE_BACK
@@ -735,6 +745,16 @@ type HmisProfileType {
   id: ID!
 }
 
+type HmisProfileTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [HmisProfileType!]!
+}
+
 enum ImmediateNeedChoices {
   CLOTHING
   FOOD
@@ -1145,6 +1165,10 @@ type Query {
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocuments(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
+  hmisProfile(pk: ID!): HmisProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
+  hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
+  clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
+  clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
