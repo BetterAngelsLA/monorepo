@@ -26,7 +26,13 @@
       "files": ["*.ts", "*.tsx"],
       "extends": ["plugin:@nx/typescript", "plugin:react-native-a11y/all"],
       "rules": {
-        "@typescript-eslint/no-unused-vars": "error",
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            "destructuredArrayIgnorePattern": "^_",
+            "varsIgnorePattern": "^_"
+          }
+        ],
         "no-multiple-empty-lines": [
           "error",
           {
