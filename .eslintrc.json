@@ -30,7 +30,9 @@
           "error",
           {
             "destructuredArrayIgnorePattern": "^_",
-            "varsIgnorePattern": "^_"
+            "varsIgnorePattern": "^_",
+            "argsIgnorePattern": "^_",
+            "ignoreRestSiblings": true
           }
         ],
         "no-multiple-empty-lines": [
