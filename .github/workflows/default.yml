@@ -15,12 +15,18 @@ env:
 
 jobs:
   BuildTestDeploy:
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(github.ref == 'refs/heads/main' && '["preview", "production"]' || '["preview"]') }}
+
     runs-on: ubuntu-latest
+    environment: ${{ matrix.environment }}
     permissions:
       actions: read # Required to find the last successful workflow run
       contents: read # Required for actions/checkout
       id-token: write # Required for requesting the JWT
-      pull-requests: read
+      pull-requests: write # Required to post PR comments
       checks: write # Required for graphql inspector
 
     steps:
@@ -68,25 +74,12 @@ jobs:
       - name: 🐳 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 🐳 Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        if: ${{ env.BRANCH_NAME == 'main' }}
-        with:
-          role-to-assume: ${{ env.ASSUMED_ROLE }}
-          role-session-name: GitHub_to_AWS_via_FederatedOIDC
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: 🐳 Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-        if: ${{ env.BRANCH_NAME == 'main' }}
-
-      # Build and Push Monorepo Image for each commit using GitHub Actions cache
+      # Build Monorepo Image for each commit using GitHub Actions cache
       - name: 🏗️ Build Monorepo Docker image
         uses: docker/build-push-action@v6
         with:
           file: Dockerfile
           load: true
-          push: ${{ env.BRANCH_NAME == 'main' }}
           tags: |
             ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
           cache-from: type=gha
@@ -94,9 +87,19 @@ jobs:
 
       - name: 🔑 Prep Container Permissions
         run: |
-          sudo chown -R 1000:1000 .git
+          sudo chown -R 1000:1000 $GITHUB_WORKSPACE
           sudo setfacl --modify user:1000:rw /var/run/docker.sock
           sudo setfacl -Rm u:1000:rwX,d:u:1000:rwX $HOME/.docker
+
+      - name: 🐳 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.ASSUMED_ROLE }}
+          role-session-name: GitHub_to_AWS_via_FederatedOIDC
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🐳 Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: 🔄 Spin up monorepo environment
         run: |
@@ -125,7 +128,7 @@ jobs:
         # TODO: Upon graphql mismatch, a github action could commit the changes and push into the branch
         run: |
           docker compose run better-angels bash <<'EOF'
-          yarn nx run-many -t validate-graphql-schema
+          yarn nx affected -t validate-graphql-schema
           STATUS=$?
           if [ $STATUS -ne 0 ]; then
             echo "Error: The GraphQL schemas do not match! Make sure you have run 'yarn nx run-many -t generate-graphql-schema' locally and committed the changes."
@@ -134,7 +137,7 @@ jobs:
             echo "Success: The GraphQL schemas match!"
           fi
 
-          yarn nx run-many -t generate-graphql-types
+          yarn nx affected -t generate-graphql-types
           TYPE_GEN_STATUS=$?
           git diff --exit-code;
           DIFF_STATUS=$?
@@ -171,26 +174,40 @@ jobs:
           EOF
 
       - name: 🛠️ Build and Push Artifacts
-        if: ${{ env.BRANCH_NAME == 'main' }}
         run: |
           docker compose run better-angels bash <<'EOF'
           # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t build --exclude=^betterangels$,^shelter$
+          yarn nx affected -t build --exclude=^betterangels$,^shelter$ --configuration ${{ matrix.environment }}
           EOF
         env:
           AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
           INPUT_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_SHELTER_GOOGLE_MAPS_API_KEY: ${{ secrets.VITE_SHELTER_GOOGLE_MAPS_API_KEY }}
+
+      - name: 🏗️ Push Monorepo Docker image
+        if: matrix.environment == 'production'
+        run: |
+          docker push ${{ env.MONOREPO_IMAGE }}:${{ env.DOCKER_TAG }}
 
       - name: 🚀 Deploy Changes
-        if: ${{ env.BRANCH_NAME == 'main' }}
         run: |
           docker compose run better-angels bash <<'EOF'
-          # Exclude Betterangels Frontend Given its CI is not setup yet
-          yarn nx affected -t deploy --exclude=^betterangels$,^shelter$
+          yarn nx affected -t deploy --exclude=^betterangels$,^shelter$ --configuration ${{ matrix.environment }}
           EOF
+
+      - name: 💬 Post preview link to PR
+        if: github.event_name == 'pull_request'
+        run: |
+          docker compose run better-angels bash <<'EOF'
+          yarn nx affected -t post-pr-preview
+          EOF
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
 
       - name: ⏹️ Spin down monorepo environment
         if: always()
         run: |
           docker compose down
-          sudo chown -R 1001:1001 .git
+          sudo chown -R 1001:1001 $GITHUB_WORKSPACE

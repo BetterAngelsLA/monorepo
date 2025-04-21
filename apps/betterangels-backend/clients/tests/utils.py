@@ -101,13 +101,6 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
                 platform
                 platformUserId
             }
-            user {
-                id
-                firstName
-                lastName
-                middleName
-                email
-            }
         """
 
     def _create_client_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
@@ -152,18 +145,6 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
         self.graphql_client.logout()
 
     def _setup_clients(self) -> None:
-        self.client_profile_1_user = {
-            "firstName": "Todd",
-            "lastName": "Chavez",
-            "middleName": "Gustav",
-            "email": "todd@pblivin.com",
-        }
-        self.client_profile_2_user = {
-            "firstName": "Mister",
-            "lastName": "Peanutbutter",
-            "middleName": "Tee",
-            "email": "mister@pblivin.com",
-        }
         self.client_profile_1_contact_1 = {
             "name": "Jerry",
             "email": "jerry@example.co",
@@ -291,7 +272,6 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "residenceAddress": "1475 Luck Hoof R Ave, Los Angeles, CA 90046",
                 "socialMediaProfiles": self.client_1_social_media_profiles,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
-                "user": self.client_profile_1_user,
                 "veteranStatus": VeteranStatusEnum.NO.name,
             }
         )["data"]["createClientProfile"]
@@ -330,7 +310,6 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "residenceAddress": None,
                 "socialMediaProfiles": [],
                 "spokenLanguages": [],
-                "user": self.client_profile_2_user,
                 "veteranStatus": None,
             }
         )["data"]["createClientProfile"]
@@ -458,6 +437,82 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
         )
 
 
+class ClientContactBaseTestCase(ClientsBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.client_contact_fields = """
+            id
+            email
+            mailingAddress
+            name
+            phoneNumber
+            relationshipToClient
+            relationshipToClientOther
+        """
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        # TODO: move client profile setup back to ClientProfileGraphQLBaseTestCase
+        # when client profile redesign is completed and tests are refactored
+        self.client_profile = self._create_client_profile_fixture({"firstName": "Test Client"})["data"][
+            "createClientProfile"
+        ]
+        self.client_profile_id = self.client_profile["id"]
+
+        self._setup_client_contacts()
+
+    def _setup_client_contacts(self) -> None:
+        self.client_contact_1 = self._create_client_contact_fixture(
+            {
+                "clientProfile": self.client_profile_id,
+                "email": "client_contact_1@example.com",
+                "mailingAddress": "111 Main Street",
+                "name": "Jane Smith",
+                "phoneNumber": "2125551212",
+                "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
+                "relationshipToClientOther": None,
+            }
+        )["data"]["createClientContact"]
+        self.client_contact_2 = self._create_client_contact_fixture(
+            {
+                "clientProfile": self.client_profile_id,
+                "email": "client_contact_2@example.com",
+                "mailingAddress": "222 Main Street",
+                "name": "Joe Doe",
+                "phoneNumber": "2125552222",
+                "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+                "relationshipToClientOther": "bff",
+            }
+        )["data"]["createClientContact"]
+
+    def _create_client_contact_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_client_contact_fixture("create", variables)
+
+    def _update_client_contact_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_client_contact_fixture("update", variables)
+
+    def _create_or_update_client_contact_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+        mutation: str = f"""
+            mutation {operation.capitalize()}ClientContact($data: ClientContactInput!) {{ # noqa: B950
+                {operation}ClientContact(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on ClientContactType {{
+                        {self.client_contact_fields}
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+
 class HmisProfileBaseTestCase(ClientsBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -472,7 +527,7 @@ class HmisProfileBaseTestCase(ClientsBaseTestCase):
 
         # TODO: move client profile setup back to ClientProfileGraphQLBaseTestCase
         # when client profile redesign is completed and tests are refactored
-        self.client_profile = self._create_client_profile_fixture({"user": {"firstName": "Test Client"}})["data"][
+        self.client_profile = self._create_client_profile_fixture({"firstName": "Test Client"})["data"][
             "createClientProfile"
         ]
         self.client_profile_id = self.client_profile["id"]

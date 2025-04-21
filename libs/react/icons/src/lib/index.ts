@@ -1,5 +1,6 @@
 export { default as ArrowLeftIcon } from './components/arrowLeftIcon';
 export { default as BaShelterLogoIcon } from './components/baShelterLogoIcon';
+export { default as BedIcon } from './components/bedIcon';
 export { default as BenefitsCalIcon } from './components/benefitscalIcon';
 export { default as BetterAngelsLogoIcon } from './components/betterAngelsLogoIcon';
 export { default as CallIcon } from './components/callIcon';
@@ -17,6 +18,7 @@ export { default as EmailOutlinedIcon } from './components/emailOutlinedIcon';
 export { default as FilterIcon } from './components/filterIcon';
 export { default as FindMeIcon } from './components/findMeIcon';
 export { default as GlobeIcon } from './components/globeIcon';
+export { default as ImageIcon } from './components/imageIcon';
 export { default as InfoIcon } from './components/infoIcon';
 export { default as InstagramIcon } from './components/instagramIcon';
 export { default as LightBulbIcon } from './components/lightBulbIcon';

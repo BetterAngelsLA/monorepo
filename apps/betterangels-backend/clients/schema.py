@@ -14,6 +14,7 @@ from clients.models import (
     HmisProfile,
 )
 from clients.permissions import (
+    ClientContactPermissions,
     ClientProfileImportRecordPermissions,
     ClientProfilePermissions,
     HmisProfilePermissions,
@@ -41,6 +42,8 @@ from strawberry_django.utils.query import filter_for_user
 
 from .enums import RelationshipTypeEnum
 from .types import (
+    ClientContactInput,
+    ClientContactType,
     ClientDocumentType,
     ClientProfileDataImportType,
     ClientProfileImportRecordsBulkInput,
@@ -89,42 +92,18 @@ def _payload_has_name(data: dict) -> bool:
     )
 
 
-def validate_client_name(
-    data: dict,
-    client_profile: Optional[ClientProfile],
-) -> list[dict[str, Any]]:
-    """Verify that either:
-    1. The incoming data contains at least one name field OR
-    2. The existing user has at least one name field and the incoming data isn't clearing it.
-    """
-
-    if _payload_has_name(data):
-        return []
-
-    if client_profile:
-        if (
-            (client_profile.first_name and data.get("first_name") is strawberry.UNSET)
-            or (client_profile.last_name and data.get("last_name") is strawberry.UNSET)
-            or (client_profile.middle_name and data.get("middle_name") is strawberry.UNSET)
-            or (client_profile.nickname and data.get("nickname") is strawberry.UNSET)
-        ):
-            return []
-
-    return [{"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name}]
-
-
 def validate_name(
     data: dict,
-    client_profile: Optional[ClientProfile],
-    user: Optional[User] = None,
 ) -> list[dict[str, Any]]:
     """Verify that either:
     1. The incoming data contains at least one name field OR
-    2. The existing user has at least one name field and the incoming data isn't clearing it.
+    2. The existing client profile has at least one name field and the incoming data isn't clearing it.
     """
 
     if _payload_has_name(data):
         return []
+
+    client_profile = ClientProfile.objects.filter(id=data["id"]).first() if data.get("id") else None
 
     if client_profile:
         if (
@@ -135,53 +114,12 @@ def validate_name(
         ):
             return []
 
-    user_data = data.get("user", {})
-
-    if user and user_data is strawberry.UNSET:
-        return []
-
-    if user_data := data.get("user", {}):
-        if user_data is not strawberry.UNSET and (
-            (value_exists(user_data.get("first_name")))
-            or (value_exists(user_data.get("last_name")))
-            or (value_exists(user_data.get("middle_name")))
-            or (user and user.first_name and user_data.get("first_name") is strawberry.UNSET)
-            or (user and user.last_name and user_data.get("last_name") is strawberry.UNSET)
-            or (user and user.middle_name and user_data.get("middle_name") is strawberry.UNSET)
-            or (user and user.client_profile.nickname and data.get("nickname") is strawberry.UNSET)
-        ):
-            return []
-
     return [{"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name}]
 
 
-def validate_user_email(
+def validate_email(
     email: Optional[str],
-    user: Optional[User] = None,
-) -> list[dict[str, Any]]:
-    if email in [strawberry.UNSET, None, ""]:
-        return []
-
-    email: str
-    if not re.search(EMAIL_REGEX, email):
-        return [{"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_INVALID.name}]
-
-    # exclude the user being updated from the unique check
-    user_exclude_arg = {"id": user.pk} if user else {}
-    client_profile_exclude_arg = {"user_id": user.pk} if user else {}
-
-    if User.objects.exclude(**user_exclude_arg).filter(email__iexact=email).exists():
-        return [{"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
-
-    if ClientProfile.objects.exclude(**client_profile_exclude_arg).filter(email__iexact=email).exists():
-        return [{"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
-
-    return []
-
-
-def validate_client_email(
-    email: Optional[str],
-    client_profile: Optional[ClientProfile] = None,
+    client_profile_id: Optional[str] = None,
 ) -> list[dict[str, Any]]:
     if email in [strawberry.UNSET, None, ""]:
         return []
@@ -191,19 +129,17 @@ def validate_client_email(
         return [{"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_INVALID.name}]
 
     # exclude the client_profile being updated from the unique check
-    user_exclude_arg = {"client_profile": client_profile.pk} if client_profile else {}
-    client_profile_exclude_arg = {"id": client_profile.pk} if client_profile else {}
+    exclude_arg = {"id": client_profile_id} if client_profile_id else {}
 
-    if ClientProfile.objects.exclude(**client_profile_exclude_arg).filter(email__iexact=email).exists():
-        return [{"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
-
-    if User.objects.exclude(**user_exclude_arg).filter(email__iexact=email).exists():
+    if ClientProfile.objects.exclude(**exclude_arg).filter(email__iexact=email).exists():
         return [{"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name}]
 
     return []
 
 
-def validate_california_id(california_id: Optional[str], user: Optional[User] = None) -> list[dict[str, Any]]:
+def validate_california_id(
+    california_id: Optional[str], client_profile_id: Optional[str] = None
+) -> list[dict[str, Any]]:
     if california_id in [strawberry.UNSET, None, ""]:
         return []
 
@@ -212,7 +148,7 @@ def validate_california_id(california_id: Optional[str], user: Optional[User] = 
         return [{"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_INVALID.name}]
 
     # exclude the client profile being updated from the unique check
-    exclude_arg = {"user_id": user.pk} if user else {}
+    exclude_arg = {"id": client_profile_id} if client_profile_id else {}
 
     if ClientProfile.objects.exclude(**exclude_arg).filter(california_id__iexact=california_id).exists():
         return [{"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_IN_USE.name}]
@@ -305,26 +241,13 @@ def validate_client_profile_data(data: dict) -> None:
     """Validates the data for creating or updating a client profile."""
     errors: list = []
 
-    user = None
-    client_profile = None
-
-    if value_exists(data.get("id")):
-        user = User.objects.filter(client_profile__id=data["id"]).first()
-        client_profile = ClientProfile.objects.filter(id=data["id"]).first()
-
-    # TODO: enable this in DEV-1611
-    # errors += validate_client_name(data, client_profile)
-
-    # TODO: remove these in DEV-1611
-    errors += validate_name(data, client_profile, user)
-    if user_data := data.get("user"):
-        errors += validate_user_email(user_data.get("email"), user)
+    errors += validate_name(data)
 
     if email := data.get("email"):
-        errors += validate_client_email(email, client_profile)
+        errors += validate_email(email, data.get("id"))
 
-    if data.get("california_id"):
-        errors += validate_california_id(data["california_id"], user)
+    if california_id := data.get("california_id"):
+        errors += validate_california_id(california_id, data.get("id"))
 
     if data.get("contacts"):
         errors += validate_contacts(data["contacts"])
@@ -406,18 +329,12 @@ class Query:
     client_profiles: OffsetPaginated[ClientProfileType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
     )
-    client_profiles_paginated: OffsetPaginated[ClientProfileType] = strawberry_django.offset_paginated(
-        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])],
-    )
 
     client_document: ClientDocumentType = strawberry_django.field(
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
     client_documents: OffsetPaginated[ClientDocumentType] = strawberry_django.offset_paginated(
-        extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
-    )
-    client_documents_paginated: OffsetPaginated[ClientDocumentType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
@@ -427,6 +344,14 @@ class Query:
 
     hmis_profiles: OffsetPaginated[HmisProfileType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
+    )
+
+    client_contact: ClientContactType = strawberry_django.field(
+        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+    )
+
+    client_contacts: OffsetPaginated[ClientContactType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
     )
 
     # Data Import
@@ -456,58 +381,13 @@ class Mutation:
             client_profile_data: dict = strawberry.asdict(data)
             validate_client_profile_data(client_profile_data)
 
-            user_fields = ["first_name", "last_name", "middle_name", "email"]
-
-            # TODO: Remove in DEV-1611. After the fe cutover in DEV-1610, `user` won't be on the mutation payload.
-            # The associated user will then be created using client_profile name & email values (else block, below).
-            user_data = client_profile_data.pop("user")
-
-            if user_data is not strawberry.UNSET:
-                for field in user_fields:
-                    if field in user_data and user_data.get(field) is strawberry.UNSET:
-                        user_data.pop(field)
-
-            if user_data:
-                client_user = User.objects.create_client(**user_data)
-
-            # TODO: Remove in DEV-1652. Note.client is still an fk to User, so we need to
-            # continue creating users until Note.client is updated to point to ClientProfile.
-            else:
-                for field in user_fields:
-                    if field in client_profile_data and client_profile_data.get(field) is strawberry.UNSET:
-                        client_profile_data.pop(field)
-
-                client_user = User.objects.create_client(
-                    first_name=client_profile_data.get("first_name"),
-                    last_name=client_profile_data.get("last_name"),
-                    middle_name=client_profile_data.get("middle_name"),
-                    email=client_profile_data.get("email"),
-                )
-
             phone_numbers = client_profile_data.pop("phone_numbers", []) or []
 
             client_profile = resolvers.create(
                 info,
                 ClientProfile,
-                {
-                    **client_profile_data,
-                    "user": client_user,
-                },
+                client_profile_data,
             )
-
-            # TODO: Remove in DEV-1611. After the fe cutover in DEV-1610, `user` won't be on the mutation payload.
-            # Name & email fields will be available directly on client_profile.
-            if user_data:
-                client_profile = resolvers.update(
-                    info,
-                    client_profile,
-                    {
-                        "first_name": user_data.get("first_name"),
-                        "last_name": user_data.get("last_name"),
-                        "middle_name": user_data.get("middle_name"),
-                        "email": user_data.get("email"),
-                    },
-                )
 
             content_type = ContentType.objects.get_for_model(ClientProfile)
 
@@ -531,42 +411,11 @@ class Mutation:
                     user,
                     [ClientProfilePermissions.CHANGE],
                 ).get(id=data.id)
-                client_user = client_profile.user
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
             validate_client_profile_data(client_profile_data)
-
-            # TODO: Remove in DEV-1611. After the fe cutover in DEV-1610, `user` won't be on the mutation payload.
-            # The associated user will then be updated using client_profile name & email values (else block, below).
-            if user_data := client_profile_data.pop("user", {}):
-                if user_data and user_data is not strawberry.UNSET:
-                    if email := user_data.get("email", ""):
-                        user_data["email"] = email.lower()
-
-                    client_user = resolvers.update(
-                        info,
-                        client_user,
-                        {
-                            **user_data,
-                            "id": client_profile.user.id,
-                        },
-                    )
-            # TODO: Remove in DEV-1652. Note.client is still an fk to User, so we need to
-            # continue updating users until Note.client is updated to point to ClientProfile.
-            else:
-                client_user = resolvers.update(
-                    info,
-                    client_user,
-                    {
-                        "first_name": client_profile_data.get("first_name"),
-                        "last_name": client_profile_data.get("last_name"),
-                        "middle_name": client_profile_data.get("middle_name"),
-                        "email": client_profile_data.get("email"),
-                        "id": client_profile.user.id,
-                    },
-                )
 
             related_classes = [
                 field
@@ -596,20 +445,6 @@ class Mutation:
                 },
             )
 
-            # TODO: Remove in DEV-1611
-            # write user name & email fields to client_profile before fe cutover
-            if user_data:
-                client_profile = resolvers.update(
-                    info,
-                    client_profile,
-                    {
-                        "first_name": user_data.get("first_name"),
-                        "last_name": user_data.get("last_name"),
-                        "middle_name": user_data.get("middle_name"),
-                        "email": user_data.get("email"),
-                    },
-                )
-
             return cast(ClientProfileType, client_profile)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
@@ -626,14 +461,10 @@ class Mutation:
 
                 client_profile_id = client_profile.pk
 
-                # TODO: Remove in DEV-1611
-                if client_profile.user:
-                    client_profile.user.delete()
-
                 client_profile.delete()
 
             except ClientProfile.DoesNotExist:
-                raise PermissionError("No user deleted; profile may not exist or lacks proper permissions")
+                raise PermissionError("No profile deleted; profile may not exist or lacks proper permissions")
 
             return DeletedObjectType(id=client_profile_id)
 
@@ -650,6 +481,21 @@ class Mutation:
     delete_hmis_profile: HmisProfileType = mutations.delete(
         DeleteDjangoObjectInput,
         extensions=[HasRetvalPerm(perms=HmisProfilePermissions.DELETE)],
+    )
+
+    create_client_contact: ClientContactType = mutations.create(
+        ClientContactInput,
+        extensions=[HasPerm(perms=ClientContactPermissions.ADD)],
+    )
+
+    update_client_contact: ClientContactType = mutations.update(
+        ClientContactInput,
+        extensions=[HasRetvalPerm(perms=ClientContactPermissions.CHANGE)],
+    )
+
+    delete_client_contact: ClientContactType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[HasRetvalPerm(perms=ClientContactPermissions.DELETE)],
     )
 
     @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])
@@ -671,7 +517,6 @@ class Mutation:
                 content_type=content_type,
                 object_id=client_profile.id,
                 uploaded_by=user,
-                associated_with=client_profile.user,
             )
 
             permissions = [

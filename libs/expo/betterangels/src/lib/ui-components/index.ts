@@ -1,5 +1,6 @@
 export { default as AdaAccommodationPicker } from './AdaAccommodationPicker';
 export { default as AddressField } from './AddressField';
+export { AppUpdatePrompt } from './AppUpdatePrompt';
 export { default as AuthContainer } from './AuthContainer';
 export { default as ClientCard } from './ClientCard';
 export { default as ClientCardModal } from './ClientCardModal';
@@ -11,7 +12,9 @@ export {
 export { default as ConsentModal } from './ConsentModal';
 export { default as DateOfBirthPicker } from './DateOfBirthPicker';
 export { default as DocumentModal } from './DocumentModal';
+export { default as ErrorCrashView } from './ErrorCrashView/ErrorCrashView';
 export { default as EyeColorPicker } from './EyeColorPicker';
+export { default as FeatureFlagControlled } from './FeatureFlagControlled/FeatureFlagControlled';
 export { FileThumbnail } from './FileThumbnail/FileThumbnail';
 export { default as GenderPicker } from './GenderPicker';
 export { default as HairColorPicker } from './HairColorPicker';
@@ -22,6 +25,7 @@ export { default as MainPlusModal } from './MainPlusModal';
 export { default as MainScrollContainer } from './MainScrollContainer';
 export { default as MaritalStatusPicker } from './MaritalStatusPicker';
 export { default as Modal } from './Modal';
+export * from './Nav';
 export { default as NavModal } from './NavModal';
 export { default as NoteCard } from './NoteCard';
 export { default as PreferredCommunicationPicker } from './PreferredCommunicationPicker';

@@ -2,6 +2,7 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
+import { ClientProfileSectionEnum } from '../../../screenRouting';
 import { MainScrollContainer } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ContactInfoCard } from './ClientProfileCards/ContactInfoCard';
@@ -13,14 +14,14 @@ import { ImportantNotesCard } from './ClientProfileCards/ImportantNotesCard';
 import { PersonalInfoCard } from './ClientProfileCards/PersonalInfoCard';
 import { RelevantContactsCard } from './ClientProfileCards/RelevantContactsCard';
 import { ExpandableProfileContainer } from './ExpandableProfileContainer';
-import { ClientProfileCardEnum } from './constants';
+import { getEditButtonRoute } from './utils/getEditButtonRoute';
 
 interface ProfileProps {
   client: ClientProfileQuery | undefined;
-  openCard?: ClientProfileCardEnum | null;
+  openCard?: ClientProfileSectionEnum | null;
 }
 
-const DEFAULT_OPEN_CARD = ClientProfileCardEnum.FullName;
+const DEFAULT_OPEN_CARD = ClientProfileSectionEnum.FullName;
 
 export default function ClientProfileView(props: ProfileProps) {
   const { client, openCard } = props;
@@ -30,9 +31,9 @@ export default function ClientProfileView(props: ProfileProps) {
   const clientProfile = client?.clientProfile;
 
   const [expandedCard, setExpandedCard] =
-    useState<ClientProfileCardEnum | null>(openCard || DEFAULT_OPEN_CARD);
+    useState<ClientProfileSectionEnum | null>(openCard || DEFAULT_OPEN_CARD);
 
-  function onOpenCloseClick(card: ClientProfileCardEnum) {
+  function onOpenCloseClick(card: ClientProfileSectionEnum) {
     if (card === expandedCard) {
       setExpandedCard(null);
 
@@ -42,45 +43,15 @@ export default function ClientProfileView(props: ProfileProps) {
     setExpandedCard(card);
   }
 
-  const editProfileRoute = `/clients/edit/${clientProfile?.id}`;
-
-  const routeConfig: Partial<
-    Record<
-      ClientProfileCardEnum,
-      { pathname: string; params: { componentName: string } }
-    >
-  > = {
-    [ClientProfileCardEnum.FullName]: {
-      pathname: editProfileRoute,
-      params: {
-        componentName: ClientProfileCardEnum.FullName,
-      },
-    },
-    [ClientProfileCardEnum.PersonalInfo]: {
-      pathname: editProfileRoute,
-      params: {
-        componentName: ClientProfileCardEnum.PersonalInfo,
-      },
-    },
-    [ClientProfileCardEnum.ImportantNotes]: {
-      pathname: editProfileRoute,
-      params: {
-        componentName: ClientProfileCardEnum.ImportantNotes,
-      },
-    },
-    [ClientProfileCardEnum.ContactInfo]: {
-      pathname: editProfileRoute,
-      params: {
-        componentName: ClientProfileCardEnum.ContactInfo,
-      },
-    },
-  };
-
-  function onClickEdit(card: ClientProfileCardEnum) {
-    const route = routeConfig[card];
-    if (!route) {
+  function onClickEdit(card: ClientProfileSectionEnum) {
+    if (!clientProfile) {
       return;
     }
+    const route = getEditButtonRoute({
+      clientProfile: clientProfile,
+      section: card,
+    });
+
     router.push(route);
   }
 
@@ -88,7 +59,7 @@ export default function ClientProfileView(props: ProfileProps) {
     <MainScrollContainer ref={scrollRef} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View>
         <ExpandableProfileContainer
-          card={ClientProfileCardEnum.FullName}
+          card={ClientProfileSectionEnum.FullName}
           openCard={expandedCard}
           onOpenCloseClick={onOpenCloseClick}
           onEditClick={onClickEdit}
@@ -97,7 +68,7 @@ export default function ClientProfileView(props: ProfileProps) {
         </ExpandableProfileContainer>
 
         <ExpandableProfileContainer
-          card={ClientProfileCardEnum.PersonalInfo}
+          card={ClientProfileSectionEnum.PersonalInfo}
           openCard={expandedCard}
           onOpenCloseClick={onOpenCloseClick}
           onEditClick={onClickEdit}
@@ -106,7 +77,7 @@ export default function ClientProfileView(props: ProfileProps) {
         </ExpandableProfileContainer>
 
         <ExpandableProfileContainer
-          card={ClientProfileCardEnum.ImportantNotes}
+          card={ClientProfileSectionEnum.ImportantNotes}
           openCard={expandedCard}
           onOpenCloseClick={onOpenCloseClick}
           onEditClick={onClickEdit}
@@ -115,7 +86,7 @@ export default function ClientProfileView(props: ProfileProps) {
         </ExpandableProfileContainer>
 
         <ExpandableProfileContainer
-          card={ClientProfileCardEnum.Demographic}
+          card={ClientProfileSectionEnum.Demographic}
           openCard={expandedCard}
           onOpenCloseClick={onOpenCloseClick}
           onEditClick={onClickEdit}
@@ -124,7 +95,7 @@ export default function ClientProfileView(props: ProfileProps) {
         </ExpandableProfileContainer>
 
         <ExpandableProfileContainer
-          card={ClientProfileCardEnum.ContactInfo}
+          card={ClientProfileSectionEnum.ContactInfo}
           openCard={expandedCard}
           onOpenCloseClick={onOpenCloseClick}
           onEditClick={onClickEdit}
@@ -133,7 +104,7 @@ export default function ClientProfileView(props: ProfileProps) {
         </ExpandableProfileContainer>
 
         <ExpandableProfileContainer
-          card={ClientProfileCardEnum.RelevantContacts}
+          card={ClientProfileSectionEnum.RelevantContacts}
           openCard={expandedCard}
           onOpenCloseClick={onOpenCloseClick}
           onEditClick={onClickEdit}
@@ -142,7 +113,7 @@ export default function ClientProfileView(props: ProfileProps) {
         </ExpandableProfileContainer>
 
         <ExpandableProfileContainer
-          card={ClientProfileCardEnum.Household}
+          card={ClientProfileSectionEnum.Household}
           openCard={expandedCard}
           onOpenCloseClick={onOpenCloseClick}
           onEditClick={onClickEdit}
@@ -151,7 +122,7 @@ export default function ClientProfileView(props: ProfileProps) {
         </ExpandableProfileContainer>
 
         <ExpandableProfileContainer
-          card={ClientProfileCardEnum.HmisIds}
+          card={ClientProfileSectionEnum.HmisIds}
           openCard={expandedCard}
           onOpenCloseClick={onOpenCloseClick}
           onEditClick={onClickEdit}

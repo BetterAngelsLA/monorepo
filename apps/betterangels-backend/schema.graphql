@@ -191,22 +191,33 @@ type CityType {
 input ClientContactInput {
   name: String
   email: String
-  phoneNumber: PhoneNumber
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID
+  clientProfile: ID
+  phoneNumber: PhoneNumber
 }
 
 type ClientContactType {
   name: String
   email: String
-  phoneNumber: PhoneNumber
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID!
   clientProfile: DjangoModelType!
+  phoneNumber: PhoneNumber
+}
+
+type ClientContactTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ClientContactType!]!
 }
 
 enum ClientDocumentNamespaceEnum {
@@ -311,8 +322,6 @@ input ClientProfileImportRecordsBulkInput {
 }
 
 input ClientProfileOrder {
-  user_FirstName: Ordering
-  user_LastName: Ordering
   firstName: Ordering
   lastName: Ordering
   id: Ordering
@@ -366,7 +375,7 @@ type ClientProfileType {
   docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  user: UserType!
+  user: UserType
   displayCaseManager: String!
 }
 
@@ -393,6 +402,8 @@ type ContactInfoType {
   contactName: String!
   contactNumber: PhoneNumber!
 }
+
+union CreateClientContactPayload = ClientContactType | OperationInfo
 
 input CreateClientDocumentInput {
   clientProfile: ID!
@@ -441,7 +452,6 @@ input CreateClientProfileInput {
   householdMembers: [ClientHouseholdMemberInput!]
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
-  user: CreateUserInput
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -460,7 +470,6 @@ input CreateNoteInput {
   team: SelahTeamEnum
   publicDetails: String
   privateDetails: String
-  client: ID
   clientProfile: ID
   isSubmitted: Boolean
   interactedAt: DateTime
@@ -503,7 +512,6 @@ input CreateServiceRequestInput {
   service: ServiceEnum!
   status: ServiceRequestStatusEnum!
   serviceOther: String
-  client: ID
   clientProfile: ID
 }
 
@@ -513,24 +521,18 @@ input CreateTaskInput {
   title: String!
   status: TaskStatusEnum!
   dueBy: DateTime
-  client: ID
   clientProfile: ID
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
-
-input CreateUserInput {
-  firstName: NonBlankString
-  lastName: NonBlankString
-  middleName: NonBlankString
-  email: NonBlankString
-}
 
 """Date (isoformat)"""
 scalar Date
 
 """Date with time (isoformat)"""
 scalar DateTime
+
+union DeleteClientContactPayload = ClientContactType | OperationInfo
 
 union DeleteClientDocumentPayload = ClientDocumentType | OperationInfo
 
@@ -684,7 +686,7 @@ type GeneralServiceType {
 input GeolocationInput {
   latitude: Float!
   longitude: Float!
-  rangeInMiles: Int
+  rangeInMiles: Int = null
 }
 
 enum HairColorEnum {
@@ -825,6 +827,8 @@ enum LanguageEnum {
   VIETNAMESE
 }
 
+scalar LatitudeScalar
+
 enum LivingSituationEnum {
   HOUSING
   OPEN_AIR
@@ -852,12 +856,21 @@ input LoginInput {
   password: String!
 }
 
+scalar LongitudeScalar
+
 input MagicLinkInput {
   email: String!
 }
 
 type MagicLinkResponse {
   message: String!
+}
+
+input MapBoundsInput {
+  westLng: LongitudeScalar!
+  northLat: LatitudeScalar!
+  eastLng: LongitudeScalar!
+  southLat: LatitudeScalar!
 }
 
 enum MaritalStatusEnum {
@@ -907,6 +920,9 @@ type Mutation {
   createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_hmisprofile"}], any: true)
   updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_hmisprofile"}], any: true)
   deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_hmisprofile"}], any: true)
+  createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
+  updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
+  deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
   deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
@@ -949,7 +965,6 @@ type NoteDataImportType {
 }
 
 input NoteFilter {
-  client: ID
   clientProfile: ID
   createdBy: ID
   isSubmitted: Boolean
@@ -991,7 +1006,6 @@ type NoteType {
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   publicDetails: String!
   isSubmitted: Boolean!
-  client: UserType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
@@ -1145,18 +1159,17 @@ type Query {
   currentUser: UserType!
   caseworkerOrganizations(order: OrganizationOrder, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
-  clientProfilesPaginated(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocuments(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  clientDocumentsPaginated(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   hmisProfile(pk: ID!): HmisProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
   hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
+  clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
+  clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notesPaginated(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   interactionAuthors(filters: InteractionAuthorFilter, order: InteractionAuthorOrder, pagination: OffsetPaginationInput): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
@@ -1337,7 +1350,6 @@ type ServiceRequestType {
   status: ServiceRequestStatusEnum!
   dueBy: DateTime
   completedOn: DateTime
-  client: UserType
   clientProfile: ClientProfileType
   createdBy: UserType!
   createdAt: DateTime!
@@ -1364,6 +1376,7 @@ input ShelterFilter {
   NOT: ShelterFilter
   DISTINCT: Boolean
   properties: ShelterPropertyInput
+  mapBounds: MapBoundsInput
   geolocation: GeolocationInput
 }
 
@@ -1446,7 +1459,7 @@ type ShelterType {
   overallRating: Int
   parking: [ParkingType!]!
   pets: [PetType!]!
-  phone: PhoneNumber!
+  phone: PhoneNumber
   programFees: String
   roomStyles: [RoomStyleType!]!
   roomStylesOther: String
@@ -1562,7 +1575,6 @@ type TaskType {
   status: TaskStatusEnum!
   dueBy: DateTime
   dueByGroup: DueByGroupEnum!
-  client: UserType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
@@ -1587,6 +1599,8 @@ type TrainingServiceType {
 }
 
 scalar UUID
+
+union UpdateClientContactPayload = ClientContactType | OperationInfo
 
 input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
@@ -1626,7 +1640,6 @@ input UpdateClientProfileInput {
   householdMembers: [ClientHouseholdMemberInput!]
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
-  user: UpdateUserInput
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo

@@ -39,7 +39,6 @@ export default function Interactions() {
   });
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-
   const { data, loading, error, refetch } = useNotesQuery({
     variables: {
       pagination: { limit: paginationLimit, offset: offset },
@@ -69,7 +68,6 @@ export default function Interactions() {
 
   useEffect(() => {
     setOffset(0);
-    setNotes([]);
   }, [filterSearch, filters]);
 
   const debounceFetch = useMemo(
@@ -82,6 +80,8 @@ export default function Interactions() {
 
   const onFiltersReset = () => {
     setFilters({ teams: [], authors: [] });
+    setSearch('');
+    setFilterSearch('');
   };
 
   const onChange = (e: string) => {
