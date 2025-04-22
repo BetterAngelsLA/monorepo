@@ -666,7 +666,7 @@ class SocialMediaProfileBaseTestCase(ClientsBaseTestCase):
 
         # TODO: move client profile setup back to ClientProfileGraphQLBaseTestCase
         # when client profile redesign is completed and tests are refactored
-        self.client_profile = self._create_client_profile_fixture({"user": {"firstName": "Test Client"}})["data"][
+        self.client_profile = self._create_client_profile_fixture({"firstName": "Test Client"})["data"][
             "createClientProfile"
         ]
         self.client_profile_id = self.client_profile["id"]

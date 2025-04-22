@@ -23,10 +23,7 @@ from clients.models import (
     ClientHouseholdMember,
     ClientProfile,
     HmisProfile,
-<<<<<<< HEAD
     SocialMediaProfile,
-=======
->>>>>>> main
 )
 from clients.tests.utils import (
     ClientContactBaseTestCase,
@@ -653,167 +650,6 @@ class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
         self.assertFalse(ClientHouseholdMember.objects.filter(id=self.client_household_member_1["id"]).exists())
 
 
-class ClientContactMutationTestCase(ClientContactBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-
-    def test_create_client_contact_mutation(self) -> None:
-        variables = {
-            "clientProfile": self.client_profile_id,
-            "email": "client_contact_3@example.com",
-            "mailingAddress": "333 Main Street",
-            "name": "Sam Smith",
-            "phoneNumber": "2125553232",
-            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
-            "relationshipToClientOther": None,
-        }
-
-        expected_query_count = 11
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            client_contact = self._create_client_contact_fixture(variables)["data"]["createClientContact"]
-
-        expected_client_contact = {"id": ANY, **variables}
-        expected_client_contact.pop("clientProfile")
-
-        self.assertEqual(client_contact, expected_client_contact)
-
-        client_client_contacts = ClientProfile.objects.filter(id=self.client_profile_id).values_list(
-            "contacts", flat=True
-        )
-        self.assertIn(int(client_contact["id"]), client_client_contacts)
-
-    def test_update_client_contact_mutation(self) -> None:
-        variables = {
-            "id": self.client_contact_1["id"],
-            "email": "client_contact_1_update@example.com",
-            "mailingAddress": "111 Main Street Update",
-            "name": "Jane Smith Update",
-            "phoneNumber": "2125552121",
-            "relationshipToClient": RelationshipTypeEnum.PAST_CASE_MANAGER.name,
-            "relationshipToClientOther": None,
-        }
-
-        expected_query_count = 11
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            client_contact = self._update_client_contact_fixture(variables)["data"]["updateClientContact"]
-
-        self.assertEqual(variables, client_contact)
-
-    def test_delete_client_contact_mutation(self) -> None:
-        variables = {"object": "ClientContact", "object_id": self.client_contact_1["id"]}
-
-        expected_query_count = 9
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._delete_fixture(**variables)
-
-        self.assertNotIn("messages", response["data"]["deleteClientContact"])
-        self.assertFalse(ClientContact.objects.filter(id=self.client_contact_1["id"]).exists())
-
-    @parametrize(
-        ("phone_number", "should_succeed", "expected_phone_number"),
-        [
-            (None, True, None),
-            (" ", True, None),
-            ("a", False, None),
-            ("212555121", False, None),
-            (" 2125552121 ", True, "2125552121"),
-        ],
-    )
-    def test_update_client_contact_mutation_validation(
-        self,
-        phone_number: str | None,
-        should_succeed: bool,
-        expected_phone_number: str | None,
-    ) -> None:
-        original_phone_number = ClientContact.objects.get(id=self.client_contact_1["id"]).phone_number
-
-        variables = {
-            "id": self.client_contact_1["id"],
-            "phoneNumber": phone_number,
-        }
-
-        response = self._update_client_contact_fixture(variables)
-
-        updated_phone_number = ClientContact.objects.get(id=self.client_contact_1["id"]).phone_number
-
-        if should_succeed:
-            self.assertEqual(response["data"]["updateClientContact"]["phoneNumber"], expected_phone_number)
-        else:
-            self.assertEqual(len(response["data"]["updateClientContact"]["messages"]), 1)
-            self.assertEqual(
-                response["data"]["updateClientContact"]["messages"][0],
-                {
-                    "kind": "VALIDATION",
-                    "field": "phoneNumber",
-                    "message": "The phone number entered is not valid.",
-                },
-            )
-            self.assertEqual(original_phone_number, updated_phone_number)
-
-
-class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-
-    def test_create_client_household_member_mutation(self) -> None:
-        variables = {
-            "clientProfile": self.client_profile_id,
-            "name": "Sam Smith",
-            "dateOfBirth": "2003-03-03",
-            "gender": GenderEnum.FEMALE.name,
-            "genderOther": None,
-            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
-            "relationshipToClientOther": None,
-        }
-
-        expected_query_count = 11
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            client_household_member = self._create_client_household_member_fixture(variables)["data"][
-                "createClientHouseholdMember"
-            ]
-
-        expected_client_household_member = {"id": ANY, "displayGender": "Female", **variables}
-        expected_client_household_member.pop("clientProfile")
-
-        self.assertEqual(client_household_member, expected_client_household_member)
-
-        client_client_household_members = ClientProfile.objects.filter(id=self.client_profile_id).values_list(
-            "household_members", flat=True
-        )
-        self.assertIn(int(client_household_member["id"]), client_client_household_members)
-
-    def test_update_client_household_member_mutation(self) -> None:
-        variables = {
-            "id": self.client_household_member_1["id"],
-            "name": "Joey Doe",
-            "dateOfBirth": "2004-04-04",
-            "gender": GenderEnum.OTHER.name,
-            "genderOther": "gender queer",
-            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
-            "relationshipToClientOther": "fren",
-        }
-
-        expected_query_count = 11
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            client_household_member = self._update_client_household_member_fixture(variables)["data"][
-                "updateClientHouseholdMember"
-            ]
-
-        expected_client_household_member = {**variables, "displayGender": "gender queer"}
-
-        self.assertEqual(expected_client_household_member, client_household_member)
-
-    def test_delete_client_household_member_mutation(self) -> None:
-        variables = {"object": "ClientHouseholdMember", "object_id": self.client_household_member_1["id"]}
-
-        expected_query_count = 9
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._delete_fixture(**variables)
-
-        self.assertNotIn("messages", response["data"]["deleteClientHouseholdMember"])
-        self.assertFalse(ClientHouseholdMember.objects.filter(id=self.client_household_member_1["id"]).exists())
-
-
 class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -943,7 +779,7 @@ class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
     @parametrize(
         ("platform_user_id", "expected_error_message"),
         [
-            (" ", "This field cannot be blank."),
+            (" ", "This field cannot be null."),
             (None, "This field cannot be null."),
         ],
     )
@@ -977,7 +813,7 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         file_content = b"Test client document content"
         file_name = "test_client_document.txt"
 
-        expected_query_count = 17
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_client_document_fixture(
                 self.client_profile_1["id"],

@@ -315,9 +315,9 @@ class SocialMediaProfileAdmin(admin.ModelAdmin):
         "platform_user_id",
     )
     search_fields = (
-        "client_profile__user__first_name",
-        "client_profile__user__last_name",
-        "client_profile__user__email",
+        "client_profile__first_name",
+        "client_profile__last_name",
+        "client_profile__email",
         "client_profile__nickname",
         "platform_user_id",
     )
@@ -325,7 +325,7 @@ class SocialMediaProfileAdmin(admin.ModelAdmin):
 
     @admin.display(description="Client")
     def client_name(self, obj: SocialMediaProfile) -> str:
-        return obj.client_profile.user.full_name
+        return obj.client_profile.full_name
 
 
 class ClientDocumentResource(resources.ModelResource):

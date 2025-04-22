@@ -360,22 +360,6 @@ class Query:
         extensions=[HasRetvalPerm(ClientHouseholdMemberPermissions.VIEW)],
     )
 
-    client_contact: ClientContactType = strawberry_django.field(
-        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
-    )
-
-    client_contacts: OffsetPaginated[ClientContactType] = strawberry_django.offset_paginated(
-        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
-    )
-
-    client_household_member: ClientHouseholdMemberType = strawberry_django.field(
-        extensions=[HasRetvalPerm(ClientHouseholdMemberPermissions.VIEW)],
-    )
-
-    client_household_members: OffsetPaginated[ClientHouseholdMemberType] = strawberry_django.offset_paginated(
-        extensions=[HasRetvalPerm(ClientHouseholdMemberPermissions.VIEW)],
-    )
-
     hmis_profile: HmisProfileType = strawberry_django.field(
         extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
     )
