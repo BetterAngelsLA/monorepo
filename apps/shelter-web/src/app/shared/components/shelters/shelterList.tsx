@@ -1,3 +1,4 @@
+import { mergeCss } from '../../utils/styles/mergeCss';
 import { TLatLng } from '../map/types.maps';
 import { ShelterCard, TShelter } from '../shelter/shelterCard';
 
@@ -14,16 +15,20 @@ export function ShelterList(props: TShelterList) {
     return null;
   }
 
+  const borderCss = ['border-b', 'border-neutral-90', '-mx-4', 'mt-6'];
+
   return (
     <div className={className}>
       {shelters.map((shelter, index) => {
         return (
-          <ShelterCard
-            key={index}
-            className="mb-8 last:mb-0"
-            shelter={shelter}
-            originCoordinates={originCoordinates}
-          />
+          <div key={index} className="mb-6 last:mb-0">
+            <ShelterCard
+              key={index}
+              shelter={shelter}
+              originCoordinates={originCoordinates}
+            />
+            <div className={mergeCss(borderCss)}></div>
+          </div>
         );
       })}
     </div>
