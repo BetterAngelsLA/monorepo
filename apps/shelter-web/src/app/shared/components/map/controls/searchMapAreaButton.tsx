@@ -9,8 +9,9 @@ export function SearchMapAreaButton(props: TProps) {
 
   const searchMapAreaCss = [
     '[box-shadow:0_3px_1px_0_#00000040]',
-    'mt-3',
+    'bg-white',
     'font-primary',
+    'mt-3',
     'rounded-lg',
     'text-primary-60',
   ];
