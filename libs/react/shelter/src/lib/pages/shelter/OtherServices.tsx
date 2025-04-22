@@ -11,7 +11,6 @@ export default function OtherServices({
   return (
     <Card title="Other Services">
       <div
-        className="flex gap-1"
         dangerouslySetInnerHTML={{
           __html: shelter?.otherServices,
         }}
