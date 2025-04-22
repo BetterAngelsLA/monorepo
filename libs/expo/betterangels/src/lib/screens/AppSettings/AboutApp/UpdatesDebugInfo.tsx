@@ -6,20 +6,33 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import * as Updates from 'expo-updates';
+import { ExpoUpdatesManifest } from 'expo/config';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { checkForUpdate } from '../../../ui-components/AppUpdatePrompt';
 
+type TUpdate = {
+  isAvailable?: boolean;
+  id?: string;
+  runtimeVersion?: string;
+};
+
 export function UpdatesDebugInfo() {
-  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [update, setUpdate] = useState<TUpdate>({});
 
   const { channel, checkAutomatically, isEnabled, isEmbeddedLaunch } = Updates;
 
   useEffect(() => {
     const fetchUpdate = async () => {
-      const { isAvailable } = await checkForUpdate();
+      const { isAvailable, manifest = {} } = await checkForUpdate();
 
-      setUpdateAvailable(isAvailable);
+      const { id, runtimeVersion } = manifest as ExpoUpdatesManifest;
+
+      setUpdate({
+        isAvailable,
+        id,
+        runtimeVersion,
+      });
     };
 
     fetchUpdate();
@@ -43,14 +56,22 @@ export function UpdatesDebugInfo() {
       >
         <View style={styles.content}>
           <TextRegular>
-            new Update Available : {String(updateAvailable)}
+            New update available : {String(update.isAvailable)}
           </TextRegular>
+
           <TextBold mt="sm">Updates Data:</TextBold>
+
           <TextRegular>isEnabled : {String(isEnabled)}</TextRegular>
           <TextRegular>Updates channel : {channel || 'undefined'}</TextRegular>
-          <TextRegular>checkAutomatically : {checkAutomatically}</TextRegular>
           <TextRegular>
-            isEmbeddedLaunch : {isEmbeddedLaunch || 'undefined'}
+            checkAutomatically : {checkAutomatically || 'undefined'}
+          </TextRegular>
+          <TextRegular>
+            isEmbeddedLaunch : {String(isEmbeddedLaunch)}
+          </TextRegular>
+          <TextRegular>Id : {String(update.id) || 'undefined'}</TextRegular>
+          <TextRegular>
+            Runtime version : {String(update.runtimeVersion) || 'undefined'}
           </TextRegular>
         </View>
       </ExpandableContainer>
