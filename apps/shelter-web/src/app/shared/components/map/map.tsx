@@ -24,7 +24,7 @@ import {
   LA_COUNTY_CENTER,
 } from './constants.maps';
 import { CurrentLocationBtn } from './controls/currentLocationBtn';
-import { SearchMapArea } from './controls/searchMapArea';
+import { SearchMapAreaButton } from './controls/searchMapAreaButton';
 import { ZoomControls } from './controls/zoomControls';
 import { TLatLng, TMapGestureHandling, TMapZoom, TMarker } from './types.maps';
 import { toGoogleLatLng } from './utils/toGoogleLatLng';
@@ -40,7 +40,7 @@ type TMap = {
   showSearchButton?: boolean;
   setShowSearchButton: Dispatch<SetStateAction<boolean>>;
   onCenterSelect?: (center: TLatLng) => void;
-  onSearchMapArea?: () => void;
+  onSearchMapArea?: (bounds?: google.maps.LatLngBounds) => void;
   markers?: TMarker[];
 };
 
@@ -74,19 +74,7 @@ export function Map(props: TMap) {
   const handleCameraChange = useCallback(
     (event: MapCameraChangedEvent) => {
       setCameraProps(event.detail);
-      const { center, bounds } = event.detail;
-
-      if (bounds) {
-        sessionStorage.setItem(
-          'mapBounds',
-          JSON.stringify({
-            westLng: bounds.west,
-            northLat: bounds.north,
-            eastLng: bounds.east,
-            southLat: bounds.south,
-          })
-        );
-      }
+      const { center } = event.detail;
 
       if (center) {
         sessionStorage.setItem(
@@ -146,11 +134,15 @@ export function Map(props: TMap) {
             <MapPinIcon className="h-10" type="secondary" />
           </AdvancedMarker>
         ))}
-        {showSearchButton && (
+
+        {showSearchButton && onSearchMapArea && (
           <MapControl position={ControlPosition.TOP_CENTER}>
-            <SearchMapArea onClick={onSearchMapArea} />
+            <SearchMapAreaButton
+              onClick={() => onSearchMapArea(map?.getBounds())}
+            />
           </MapControl>
         )}
+
         <MapControl position={controlsPosition}>
           <div className="mr-4">
             <ZoomControls />

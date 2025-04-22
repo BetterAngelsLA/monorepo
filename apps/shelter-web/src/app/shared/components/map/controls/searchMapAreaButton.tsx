@@ -5,7 +5,7 @@ type TProps = {
   onClick?: () => void;
 };
 
-export function SearchMapArea(props: TProps) {
+export function SearchMapAreaButton(props: TProps) {
   const { onClick } = props;
 
   const map = useMap();

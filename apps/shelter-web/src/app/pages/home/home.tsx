@@ -12,6 +12,7 @@ import {
   TMapBounds,
   TMarker,
 } from '../../shared/components/map/types.maps';
+import { toMapBounds } from '../../shared/components/map/utils/toMapBounds';
 import {
   ShelterCard,
   TShelter,
@@ -73,17 +74,18 @@ export function Home() {
     });
   }
 
-  function onSearchMapArea() {
-    const mapBounds = sessionStorage.getItem('mapBounds');
+  function onSearchMapArea(bounds?: google.maps.LatLngBounds) {
+    if (!bounds) {
+      return;
+    }
 
-    if (!mapBounds) return;
+    const mapBounds = toMapBounds(bounds);
 
-    const bounds = JSON.parse(mapBounds);
     setMapBoundsFilter({
-      westLng: bounds.westLng,
-      northLat: bounds.northLat,
-      eastLng: bounds.eastLng,
-      southLat: bounds.southLat,
+      westLng: mapBounds.westLng,
+      northLat: mapBounds.northLat,
+      eastLng: mapBounds.eastLng,
+      southLat: mapBounds.southLat,
     });
 
     setShowSearchButton(false);
