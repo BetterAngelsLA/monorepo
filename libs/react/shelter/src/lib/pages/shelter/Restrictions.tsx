@@ -24,7 +24,6 @@ export default function Restrictions({
 
         {shelter.otherRules && (
           <div
-            className="flex gap-1"
             dangerouslySetInnerHTML={{
               __html: 'Other rules: ' + shelter?.otherRules,
             }}

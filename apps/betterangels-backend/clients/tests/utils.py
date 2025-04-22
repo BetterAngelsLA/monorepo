@@ -112,7 +112,7 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
     def _create_or_update_client_profile_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
         mutation: str = f"""
-            mutation {operation.capitalize()}ClientProfile($data: {operation.capitalize()}ClientProfileInput!) {{ # noqa: B950
+            mutation ($data: {operation.capitalize()}ClientProfileInput!) {{ # noqa: B950
                 {operation}ClientProfile(data: $data) {{
                     ... on OperationInfo {{
                         messages {{
@@ -495,7 +495,7 @@ class ClientContactBaseTestCase(ClientsBaseTestCase):
     def _create_or_update_client_contact_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
         mutation: str = f"""
-            mutation {operation.capitalize()}ClientContact($data: ClientContactInput!) {{ # noqa: B950
+            mutation ($data: ClientContactInput!) {{ # noqa: B950
                 {operation}ClientContact(data: $data) {{
                     ... on OperationInfo {{
                         messages {{
@@ -506,6 +506,85 @@ class ClientContactBaseTestCase(ClientsBaseTestCase):
                     }}
                     ... on ClientContactType {{
                         {self.client_contact_fields}
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+
+class ClientHouseholdMemberBaseTestCase(ClientsBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.client_household_member_fields = """
+            id
+            name
+            dateOfBirth
+            gender
+            genderOther
+            displayGender
+            relationshipToClient
+            relationshipToClientOther
+        """
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        # TODO: move client profile setup back to ClientProfileGraphQLBaseTestCase
+        # when client profile redesign is completed and tests are refactored
+        self.client_profile = self._create_client_profile_fixture({"firstName": "Test Client"})["data"][
+            "createClientProfile"
+        ]
+        self.client_profile_id = self.client_profile["id"]
+
+        self._setup_client_household_members()
+
+    def _setup_client_household_members(self) -> None:
+        self.client_household_member_1 = self._create_client_household_member_fixture(
+            {
+                "clientProfile": self.client_profile_id,
+                "name": "Jane Smith",
+                "dateOfBirth": "2001-01-01",
+                "gender": GenderEnum.FEMALE.name,
+                "genderOther": None,
+                "relationshipToClient": RelationshipTypeEnum.AUNT.name,
+                "relationshipToClientOther": None,
+            }
+        )["data"]["createClientHouseholdMember"]
+        self.client_household_member_2 = self._create_client_household_member_fixture(
+            {
+                "clientProfile": self.client_profile_id,
+                "name": "Joe Doe",
+                "dateOfBirth": "2002-02-02",
+                "gender": GenderEnum.OTHER.name,
+                "genderOther": "genderqueer",
+                "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+                "relationshipToClientOther": "bff",
+            }
+        )["data"]["createClientHouseholdMember"]
+
+    def _create_client_household_member_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_client_household_member_fixture("create", variables)
+
+    def _update_client_household_member_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_client_household_member_fixture("update", variables)
+
+    def _create_or_update_client_household_member_fixture(
+        self, operation: str, variables: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        assert operation in ["create", "update"], "Invalid operation specified."
+        mutation: str = f"""
+            mutation ($data: ClientHouseholdMemberInput!) {{ # noqa: B950
+                {operation}ClientHouseholdMember(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on ClientHouseholdMemberType {{
+                        {self.client_household_member_fields}
                     }}
                 }}
             }}
@@ -555,7 +634,7 @@ class HmisProfileBaseTestCase(ClientsBaseTestCase):
     def _create_or_update_hmis_profile_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
         assert operation in ["create", "update"], "Invalid operation specified."
         mutation: str = f"""
-            mutation {operation.capitalize()}HmisProfile($data: HmisProfileInput!) {{ # noqa: B950
+            mutation ($data: HmisProfileInput!) {{ # noqa: B950
                 {operation}HmisProfile(data: $data) {{
                     ... on OperationInfo {{
                         messages {{

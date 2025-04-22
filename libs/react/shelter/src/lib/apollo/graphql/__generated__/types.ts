@@ -268,6 +268,7 @@ export type ClientDocumentTypeOffsetPaginated = {
 };
 
 export type ClientHouseholdMemberInput = {
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
   dateOfBirth?: InputMaybe<Scalars['Date']['input']>;
   gender?: InputMaybe<GenderEnum>;
   genderOther?: InputMaybe<Scalars['String']['input']>;
@@ -288,6 +289,15 @@ export type ClientHouseholdMemberType = {
   name?: Maybe<Scalars['String']['output']>;
   relationshipToClient?: Maybe<RelationshipTypeEnum>;
   relationshipToClientOther?: Maybe<Scalars['String']['output']>;
+};
+
+export type ClientHouseholdMemberTypeOffsetPaginated = {
+  __typename?: 'ClientHouseholdMemberTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<ClientHouseholdMemberType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export type ClientProfileDataImportType = {
@@ -443,6 +453,8 @@ export type CreateClientDocumentInput = {
 
 export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
+export type CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
+
 export type CreateClientProfileDataImportPayload = ClientProfileDataImportType | OperationInfo;
 
 export type CreateClientProfileInput = {
@@ -559,6 +571,8 @@ export type CreateTaskPayload = OperationInfo | TaskType;
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
 export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
+
+export type DeleteClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
 
 export type DeleteClientProfilePayload = DeletedObjectType | OperationInfo;
 
@@ -945,6 +959,7 @@ export type Mutation = {
   appleAuth: AuthResponse;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
+  createClientHouseholdMember: CreateClientHouseholdMemberPayload;
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
   createHmisProfile: CreateHmisProfilePayload;
@@ -957,6 +972,7 @@ export type Mutation = {
   createTask: CreateTaskPayload;
   deleteClientContact: DeleteClientContactPayload;
   deleteClientDocument: DeleteClientDocumentPayload;
+  deleteClientHouseholdMember: DeleteClientHouseholdMemberPayload;
   deleteClientProfile: DeleteClientProfilePayload;
   deleteCurrentUser: DeleteCurrentUserPayload;
   deleteHmisProfile: DeleteHmisProfilePayload;
@@ -974,6 +990,7 @@ export type Mutation = {
   removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
+  updateClientHouseholdMember: UpdateClientHouseholdMemberPayload;
   updateClientProfile: UpdateClientProfilePayload;
   updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
@@ -1003,6 +1020,11 @@ export type MutationCreateClientContactArgs = {
 
 export type MutationCreateClientDocumentArgs = {
   data: CreateClientDocumentInput;
+};
+
+
+export type MutationCreateClientHouseholdMemberArgs = {
+  data: ClientHouseholdMemberInput;
 };
 
 
@@ -1062,6 +1084,11 @@ export type MutationDeleteClientContactArgs = {
 
 
 export type MutationDeleteClientDocumentArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteClientHouseholdMemberArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -1138,6 +1165,11 @@ export type MutationRevertNoteArgs = {
 
 export type MutationUpdateClientContactArgs = {
   data: ClientContactInput;
+};
+
+
+export type MutationUpdateClientHouseholdMemberArgs = {
+  data: ClientHouseholdMemberInput;
 };
 
 
@@ -1420,6 +1452,8 @@ export type Query = {
   clientContacts: ClientContactTypeOffsetPaginated;
   clientDocument: ClientDocumentType;
   clientDocuments: ClientDocumentTypeOffsetPaginated;
+  clientHouseholdMember: ClientHouseholdMemberType;
+  clientHouseholdMembers: ClientHouseholdMemberTypeOffsetPaginated;
   clientProfile: ClientProfileType;
   clientProfiles: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
@@ -1462,6 +1496,16 @@ export type QueryClientDocumentArgs = {
 
 
 export type QueryClientDocumentsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryClientHouseholdMemberArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryClientHouseholdMembersArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1953,6 +1997,8 @@ export type TrainingServiceType = {
 };
 
 export type UpdateClientContactPayload = ClientContactType | OperationInfo;
+
+export type UpdateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
 
 export type UpdateClientProfileInput = {
   adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
