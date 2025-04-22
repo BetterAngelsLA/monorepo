@@ -32,7 +32,6 @@ export function SearchableDropdown({
   setExternalValue,
   height = 56,
   disabled,
-  placeholder,
   onExtraPress,
   mb,
   mt,
