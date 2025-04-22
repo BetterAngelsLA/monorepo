@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 import pghistory
 from admin_async_upload.models import AsyncFileField
@@ -317,7 +317,7 @@ ATTACHMENT_MAX_FILENAME_LENGTH = 100
 UPLOAD_BASE_DIR = "shelters/"
 
 
-def upload_path(instance: models.Model, filename: str) -> str:
+def upload_path(instance: Optional[Shelter], filename: str) -> str:
     """
     Uses the default storage's get_available_name to generate a unique path
     that does not exceed the field's max_length.
