@@ -45,9 +45,6 @@ class ServiceRequest(BaseModel):  # type: ignore[django-manager-missing]
         blank=True,
         related_name="client_profile_service_requests",
     )
-    client = models.ForeignKey(
-        "accounts.User", on_delete=models.CASCADE, null=True, blank=True, related_name="client_service_requests"
-    )
     status = TextChoicesField(choices_enum=ServiceRequestStatusEnum)
     due_by = models.DateTimeField(blank=True, null=True)
     completed_on = models.DateTimeField(null=True, blank=True)
@@ -101,7 +98,6 @@ class Task(BaseModel):  # type: ignore[django-manager-missing]
     client_profile = models.ForeignKey(
         "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_tasks"
     )
-    client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_tasks")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False, related_name="tasks")
 
     def __str__(self) -> str:
@@ -166,7 +162,6 @@ class Note(BaseModel):  # type: ignore[django-manager-missing]
     client_profile = models.ForeignKey(
         "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_notes"
     )
-    client = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="client_notes")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
     # This is the date & time displayed on the note. We don't want to use created_at
     # on the FE because the Note may not be created during the client interaction.
@@ -193,24 +188,6 @@ class Note(BaseModel):  # type: ignore[django-manager-missing]
 
     def __str__(self) -> str:
         return self.purpose or str(self.id)
-
-    @property
-    def label_with_client(self) -> str:
-        if client := self.client:
-            client_label = client.full_name or client.id
-        else:
-            client_label = "Client"
-
-        return f"Note {self.id}: {self.purpose} (with {client_label} {self.interacted_at.date()})"
-
-    @property
-    def label_with_created_by(self) -> str:
-        if created_by := self.created_by:
-            created_by_label = created_by.full_name or created_by.id
-        else:
-            created_by_label = "Case Manager"
-
-        return f"Note {self.id}: {self.purpose} (by {created_by_label} {self.interacted_at.date()})"
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:

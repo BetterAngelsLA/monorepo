@@ -6,12 +6,16 @@ export default function ActionModalHeader({
   title,
   subtitle,
 }: {
-  title: string;
+  title?: string;
   subtitle?: string;
 }) {
+  if (!title && !subtitle) {
+    return null;
+  }
+
   return (
     <View style={{ gap: Spacings.xxs }}>
-      <TextBold size="xs">{title}</TextBold>
+      {title && <TextBold size="xs">{title}</TextBold>}
       {subtitle && <TextBold size="lg">{subtitle}</TextBold>}
     </View>
   );

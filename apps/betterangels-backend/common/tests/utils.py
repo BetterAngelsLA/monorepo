@@ -29,10 +29,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
             "org_1_case_manager_1",
             "org_1_case_manager_2",
             "org_2_case_manager_1",
-            # Calling these client_users because they're note Client instances,
-            # but ordinary users created to facilitate testing.
-            "client_user_1",
-            "client_user_2",
+            "non_case_manager_user",
         ]
         self.user_map = {
             user_label: baker.make(User, username=f"{user_label}_{uuid.uuid4()}") for user_label in self.user_labels
@@ -40,14 +37,7 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self.org_1_case_manager_1 = self.user_map["org_1_case_manager_1"]
         self.org_1_case_manager_2 = self.user_map["org_1_case_manager_2"]
         self.org_2_case_manager_1 = self.user_map["org_2_case_manager_1"]
-        self.client_user_1 = self.user_map["client_user_1"]
-        self.client_user_1.first_name = "Dale"
-        self.client_user_1.last_name = "Cooper"
-        self.client_user_1.save()
-        self.client_user_2 = self.user_map["client_user_2"]
-        self.client_user_2.first_name = "Harry"
-        self.client_user_2.last_name = "Truman"
-        self.client_user_2.save()
+        self.non_case_manager_user = self.user_map["non_case_manager_user"]
 
     def _setup_groups_and_permissions(self) -> None:
         caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")
