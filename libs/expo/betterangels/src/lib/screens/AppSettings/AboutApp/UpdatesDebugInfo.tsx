@@ -56,10 +56,10 @@ export function UpdatesDebugInfo() {
       >
         <View style={styles.content}>
           <TextRegular>
-            New update available : {String(update.isAvailable)}
+            Update available : {String(update.isAvailable)}
           </TextRegular>
 
-          <TextBold mt="sm">Updates Data:</TextBold>
+          <TextBold mt="sm">Update Data:</TextBold>
 
           <TextRegular>isEnabled : {String(isEnabled)}</TextRegular>
           <TextRegular>Updates channel : {channel || 'undefined'}</TextRegular>
