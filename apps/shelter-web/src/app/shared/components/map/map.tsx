@@ -1,6 +1,5 @@
 import { MapPinIcon } from '@monorepo/react/icons';
 
-import { Button } from '@monorepo/react/components';
 import {
   AdvancedMarker,
   ControlPosition,
@@ -25,6 +24,7 @@ import {
   LA_COUNTY_CENTER,
 } from './constants.maps';
 import { CurrentLocationBtn } from './controls/currentLocationBtn';
+import { SearchMapArea } from './controls/searchMapArea';
 import { ZoomControls } from './controls/zoomControls';
 import { TLatLng, TMapGestureHandling, TMapZoom, TMarker } from './types.maps';
 import { toGoogleLatLng } from './utils/toGoogleLatLng';
@@ -125,18 +125,8 @@ export function Map(props: TMap) {
   }
 
   const mapCss = ['h-12', 'w-full', className];
-  const searchMapAreaCss = [
-    'absolute',
-    'text-primary-60',
-    'top-2',
-    'left-1/2',
-    '-translate-x-1/2',
-    'bg-white',
-    'shadow',
-    'text-xs',
-  ];
   return (
-    <div className="relative mt-8">
+    <div>
       <GoogleMap
         mapId={mapId}
         className={mergeCss(mapCss)}
@@ -156,7 +146,11 @@ export function Map(props: TMap) {
             <MapPinIcon className="h-10" type="secondary" />
           </AdvancedMarker>
         ))}
-
+        {showSearchButton && (
+          <MapControl position={ControlPosition.TOP_CENTER}>
+            <SearchMapArea onClick={onSearchMapArea} />
+          </MapControl>
+        )}
         <MapControl position={controlsPosition}>
           <div className="mr-4">
             <ZoomControls />
@@ -167,16 +161,6 @@ export function Map(props: TMap) {
           </div>
         </MapControl>
       </GoogleMap>
-      {showSearchButton && (
-        <Button
-          onClick={onSearchMapArea}
-          variant="secondary"
-          size="md"
-          className={mergeCss(searchMapAreaCss)}
-        >
-          Search this area
-        </Button>
-      )}
     </div>
   );
 }

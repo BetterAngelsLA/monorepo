@@ -20,6 +20,7 @@ type TProps = {
 };
 
 export function ShelterSearch(props: TProps) {
+  const { mapBoundsFilter } = props;
   const [_modal, setModal] = useAtom(modalAtom);
   const [location, setLocation] = useAtom(locationAtom);
   const [queryFilters, setQueryFilters] = useState<TShelterPropertyFilters>();
@@ -28,8 +29,6 @@ export function ShelterSearch(props: TProps) {
   const resetFilters = useResetAtom(shelterFiltersAtom);
 
   const map = useMap();
-
-  const { mapBoundsFilter } = props;
 
   useEffect(() => {
     if (!map) {
