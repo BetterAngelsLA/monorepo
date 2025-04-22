@@ -1,5 +1,4 @@
 import { Button, mergeCss } from '@monorepo/react/components';
-import { useMap } from '@vis.gl/react-google-maps';
 
 type TProps = {
   onClick?: () => void;
@@ -8,20 +7,7 @@ type TProps = {
 export function SearchMapAreaButton(props: TProps) {
   const { onClick } = props;
 
-  const map = useMap();
-
-  if (!map) {
-    return;
-  }
-
-  const searchMapAreaCss = [
-    'bg-white',
-    'drop-shadow-lg',
-    'mt-2',
-    'rounded',
-    'text-primary-60',
-    'text-sm',
-  ];
+  const searchMapAreaCss = ['drop-shadow-lg', 'mt-3', 'text-primary-60'];
 
   return (
     <Button
