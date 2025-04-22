@@ -23,14 +23,14 @@ export default DatePickerMeta;
 
 type DatePickerStory = ComponentStory<typeof DatePicker>;
 
-export const Basic: DatePickerStory = (args, context) => {
+export const Basic: DatePickerStory = () => {
   return (
     <DatePicker
       label="Test"
       height={56}
       mode={'time'}
       format={''}
-      setValue={function (e: Date): void {
+      setValue={function (_e: Date): void {
         throw new Error('Function not implemented.');
       }}
       value={new Date()}
