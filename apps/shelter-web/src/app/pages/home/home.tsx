@@ -74,15 +74,7 @@ export function Home() {
       return;
     }
 
-    const mapBounds = toMapBounds(bounds);
-
-    setMapBoundsFilter({
-      westLng: mapBounds.westLng,
-      northLat: mapBounds.northLat,
-      eastLng: mapBounds.eastLng,
-      southLat: mapBounds.southLat,
-    });
-
+    setMapBoundsFilter(toMapBounds(bounds));
     setShowSearchButton(false);
   }
 
