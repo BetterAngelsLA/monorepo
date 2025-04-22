@@ -1,4 +1,3 @@
-import os
 from typing import Any
 
 import pghistory
@@ -326,11 +325,9 @@ def upload_path(instance: models.Model, filename: str) -> str:
     This defers deduplication logic (suffixing) to the storage backend while
     still respecting length limits.
     """
-    base_name, extension = os.path.splitext(filename)
-    sanitized = base_name.replace(" ", "_")
-    raw_path = f"{UPLOAD_BASE_DIR}{sanitized}{extension}"
+    file_path = f"{UPLOAD_BASE_DIR}{filename}"
 
-    return default_storage.get_available_name(raw_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
+    return default_storage.get_available_name(file_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
 
 
 class InteriorPhoto(BaseModel):
