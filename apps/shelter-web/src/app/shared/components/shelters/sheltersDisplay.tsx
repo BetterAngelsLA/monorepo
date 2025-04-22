@@ -12,17 +12,17 @@ import { useAtom } from 'jotai';
 import { useEffect } from 'react';
 import { TLocationSource } from '../../atoms/locationAtom';
 import { sheltersAtom } from '../../atoms/sheltersAtom';
-import { TLatLng } from '../map/types.maps';
+import { TLatLng, TMapBounds } from '../map/types.maps';
 import { SearchSource } from './searchSource';
 import { ShelterList } from './shelterList';
 
 export type TShelterPropertyFilters = {
-  pets?: PetChoices[] | null;
   demographics?: DemographicChoices[] | null;
-  specialSituationRestrictions?: SpecialSituationRestrictionChoices[] | null;
-  shelterTypes?: ShelterChoices[] | null;
-  roomStyles?: RoomStyleChoices[] | null;
   parking?: ParkingChoices[] | null;
+  pets?: PetChoices[] | null;
+  roomStyles?: RoomStyleChoices[] | null;
+  shelterTypes?: ShelterChoices[] | null;
+  specialSituationRestrictions?: SpecialSituationRestrictionChoices[] | null;
 };
 
 const SEARCH_RANGE_MILES = 20;
@@ -31,21 +31,25 @@ type TProps = {
   className?: string;
   coordinates?: TLatLng | null;
   coordinatesSource?: TLocationSource;
-  rangeInMiles?: number;
+  mapBoundsFilter?: TMapBounds | null;
   propertyFilters?: TShelterPropertyFilters;
+  rangeInMiles?: number;
 };
 
 export function SheltersDisplay(props: TProps) {
   const {
     coordinates,
     coordinatesSource,
-    rangeInMiles = SEARCH_RANGE_MILES,
+    mapBoundsFilter,
     propertyFilters,
+    rangeInMiles = SEARCH_RANGE_MILES,
     className = '',
   } = props;
-
   const [getShelters, { loading, data, error }] = useViewSheltersLazyQuery();
 
+  // Temporary suppression to allow incremental cleanup without regressions.
+  // ⚠️ If you're modifying this file, please remove this ignore and fix the issue.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_sheltersData, setSheltersData] = useAtom(sheltersAtom);
 
   useEffect(() => {
@@ -64,6 +68,13 @@ export function SheltersDisplay(props: TProps) {
       };
     }
 
+    if (mapBoundsFilter) {
+      queryVariables = queryVariables || {};
+      queryVariables.filters = queryVariables.filters || {};
+
+      queryVariables.filters.mapBounds = mapBoundsFilter;
+    }
+
     if (propertyFilters) {
       const prunedFilters = pruneFilters(propertyFilters);
 
@@ -80,7 +91,7 @@ export function SheltersDisplay(props: TProps) {
     }
 
     getShelters({ variables: queryVariables });
-  }, [coordinates, propertyFilters]);
+  }, [coordinates, mapBoundsFilter, propertyFilters]);
 
   const shelters = data?.shelters?.results;
 

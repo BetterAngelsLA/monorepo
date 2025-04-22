@@ -9,19 +9,12 @@ import {
 import { useRouter } from 'expo-router';
 import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
-import { CreateClientProfileInput } from '../../apollo';
-import {
-  applyValidationErrors,
-  TValidationError,
-} from '../../helpers/parseClientProfileErrors';
+import { CreateClientProfileInput, extractExtensionErrors } from '../../apollo';
+import { applyManualFormErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { useCreateClientProfileMutation } from './__generated__/createClientProfile.generated';
 
-type AllowedFieldNames =
-  | 'user.firstName'
-  | 'user.middleName'
-  | 'user.lastName'
-  | 'nickname';
+type AllowedFieldNames = 'firstName' | 'middleName' | 'lastName' | 'nickname';
 
 interface FormField {
   label: string;
@@ -32,15 +25,15 @@ interface FormField {
 const FORM_FIELDS: FormField[] = [
   {
     label: 'First Name',
-    name: 'user.firstName',
+    name: 'firstName',
     placeholder: 'Enter first name',
   },
   {
     label: 'Middle Name',
-    name: 'user.middleName',
+    name: 'middleName',
     placeholder: 'Enter middle name',
   },
-  { label: 'Last Name', name: 'user.lastName', placeholder: 'Enter last name' },
+  { label: 'Last Name', name: 'lastName', placeholder: 'Enter last name' },
   { label: 'Nickname', name: 'nickname', placeholder: 'Enter nickname' },
 ];
 
@@ -52,7 +45,7 @@ export default function CreateClientProfile() {
     formState: { isSubmitted },
     setValue,
   } = useForm<CreateClientProfileInput>();
-  const [createClient, { loading: isCreating }] =
+  const [createClientProfile, { loading: isCreating }] =
     useCreateClientProfileMutation();
 
   const router = useRouter();
@@ -60,26 +53,25 @@ export default function CreateClientProfile() {
 
   const [firstName, middleName, lastName, nickname] = useWatch({
     control,
-    name: ['user.firstName', 'user.middleName', 'user.lastName', 'nickname'],
+    name: ['firstName', 'middleName', 'lastName', 'nickname'],
   });
 
   const isError = !firstName && !middleName && !lastName && !nickname;
 
   const onSubmit: SubmitHandler<CreateClientProfileInput> = async (values) => {
     try {
-      const createResponse = await createClient({
+      const createResponse = await createClientProfile({
         variables: {
           data: values,
         },
         errorPolicy: 'all',
       });
 
-      const operationErrors = createResponse.errors?.[0].extensions?.[
-        'errors'
-      ] as TValidationError[] | undefined;
+      const extensionErrors = extractExtensionErrors(createResponse);
 
-      if (operationErrors) {
-        applyValidationErrors(operationErrors, setError);
+      if (extensionErrors) {
+        applyManualFormErrors(extensionErrors, setError);
+
         return;
       }
 

@@ -55,6 +55,7 @@ export function Input(props: IInputProps) {
     value,
     onDelete,
     autoCorrect = false,
+    autoCapitalize = 'none',
     borderRadius = Radiuses.xs,
     errorMessage,
     style,
@@ -111,17 +112,19 @@ export function Input(props: IInputProps) {
           ]}
           editable={!disabled}
           autoCorrect={autoCorrect}
+          autoCapitalize={autoCapitalize}
           {...rest}
           value={value}
         />
         {value && onDelete && (
           <Pressable
+            disabled={disabled}
             accessible
             accessibilityRole="button"
             accessibilityLabel="delete icon"
             accessibilityHint="deletes input's value"
             onPress={onDelete}
-            style={styles.pressable}
+            style={[{ opacity: disabled ? 0.5 : 1 }, styles.pressable]}
           >
             <View style={styles.icon}>
               <PlusIcon size="xs" rotate="45deg" />

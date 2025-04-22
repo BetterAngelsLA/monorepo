@@ -10,10 +10,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { uniqueBy } from 'remeda';
 import {
-  NotesPaginatedQuery,
+  NotesQuery,
   Ordering,
   SelahTeamEnum,
-  useNotesPaginatedQuery,
+  useNotesQuery,
 } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
 import { MainContainer, NoteCard } from '../../ui-components';
@@ -39,8 +39,7 @@ export default function Interactions() {
   });
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-
-  const { data, loading, error, refetch } = useNotesPaginatedQuery({
+  const { data, loading, error, refetch } = useNotesQuery({
     variables: {
       pagination: { limit: paginationLimit, offset: offset },
       order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
@@ -57,9 +56,7 @@ export default function Interactions() {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  const [notes, setNotes] = useState<
-    NotesPaginatedQuery['notesPaginated']['results']
-  >([]);
+  const [notes, setNotes] = useState<NotesQuery['notes']['results']>([]);
   const [sort, setSort] = useState<'list' | 'location' | 'sort'>('list');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -71,7 +68,6 @@ export default function Interactions() {
 
   useEffect(() => {
     setOffset(0);
-    setNotes([]);
   }, [filterSearch, filters]);
 
   const debounceFetch = useMemo(
@@ -84,6 +80,8 @@ export default function Interactions() {
 
   const onFiltersReset = () => {
     setFilters({ teams: [], authors: [] });
+    setSearch('');
+    setFilterSearch('');
   };
 
   const onChange = (e: string) => {
@@ -98,8 +96,8 @@ export default function Interactions() {
       const response = await refetch({
         pagination: { limit: paginationLimit, offset: 0 },
       });
-      if (response.data && 'notesPaginated' in response.data) {
-        const { totalCount } = response.data.notesPaginated;
+      if (response.data && 'notes' in response.data) {
+        const { totalCount } = response.data.notes;
         setTotalCount(totalCount);
         setHasMore(paginationLimit < totalCount);
       }
@@ -110,11 +108,11 @@ export default function Interactions() {
   };
 
   useEffect(() => {
-    if (!data || !('notesPaginated' in data)) {
+    if (!data || !('notes' in data)) {
       return;
     }
 
-    const { results, totalCount } = data.notesPaginated;
+    const { results, totalCount } = data.notes;
     setTotalCount(totalCount);
     if (offset === 0) {
       setNotes(results);

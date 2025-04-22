@@ -1,4 +1,5 @@
 import { Button, Card } from '@monorepo/react/components';
+import { useNavigate } from 'react-router-dom';
 import { useViewShelterQuery } from './__generated__/shelter.generated';
 import Actions from './Actions';
 import EcosystemInfo from './EcosystemInfo';
@@ -20,6 +21,8 @@ export default function ShelterPage({ id }: { id: string }) {
     },
   });
 
+  const navigate = useNavigate();
+
   if (loading) return null;
 
   const shelter = data?.shelter;
@@ -28,29 +31,74 @@ export default function ShelterPage({ id }: { id: string }) {
     return null;
   }
 
+  function containsNonWhitespaceValue(value?: string | null | undefined) {
+    // Rich text (CKEditor5) fields aren't empty when empty.
+    // By default, they contain a non-breaking space char.
+    return !!value && value !== '<p>&nbsp;</p>';
+  }
+
+  const hasGeneralInfo =
+    !!shelter.totalBeds ||
+    !!shelter.website ||
+    !!shelter.phone ||
+    !!shelter.email ||
+    !!shelter.location?.place;
+  const hasDescription = containsNonWhitespaceValue(shelter.description);
+  const hasEntryRequirements =
+    !!shelter.entryRequirements?.length ||
+    containsNonWhitespaceValue(shelter.entryInfo) ||
+    containsNonWhitespaceValue(shelter.bedFees) ||
+    containsNonWhitespaceValue(shelter.programFees);
+  const hasSpecialRestrictions = !!shelter.specialSituationRestrictions?.length;
+  const hasShelterTypes =
+    !!shelter.shelterTypes?.length || !!shelter.shelterTypesOther;
+  const hasRoomStyles = !!shelter.roomStyles?.length;
+  const hasDetail =
+    !!shelter.accessibility?.length ||
+    !!shelter.storage?.length ||
+    !!shelter.pets?.length ||
+    !!shelter.parking?.length;
+  const hasRestrictions =
+    !!shelter.maxStay ||
+    !!shelter.curfew ||
+    !!shelter.onSiteSecurity ||
+    containsNonWhitespaceValue(shelter.otherRules);
+  const hasOtherServices = containsNonWhitespaceValue(shelter.otherServices);
+  const hasEcosystemInfo =
+    !!shelter.cities?.length ||
+    !!shelter.spa?.length ||
+    !!shelter.cityCouncilDistrict ||
+    !!shelter.supervisorialDistrict ||
+    !!shelter.shelterPrograms?.length ||
+    !!shelter.funders?.length;
   return (
     <div className="w-full">
       <Header shelter={shelter} />
       <OperationHours />
-      <Button variant="secondary" size="sm" className="w-full">
+      <Button
+        onClick={() => navigate(`/shelter/${id}/gallery`)}
+        variant="secondary"
+        size="sm"
+        className="w-full"
+      >
         See all photos
       </Button>
       <Actions />
       <div className="bg-neutral-99 py-2 px-4 -mx-4 flex flex-col gap-2">
-        <GeneralInfo shelter={shelter} />
-        {shelter?.description && (
+        {hasGeneralInfo && <GeneralInfo shelter={shelter} />}
+        {hasDescription && (
           <Card title="Description">
             <div dangerouslySetInnerHTML={{ __html: shelter.description }} />
           </Card>
         )}
-        <EntryRequirements shelter={shelter} />
-        <SpecialRestrictions shelter={shelter} />
-        <ShelterTypes shelter={shelter} />
-        <RoomStyles shelter={shelter} />
-        <ShelterDetail shelter={shelter} />
-        <Restrictions shelter={shelter} />
-        <OtherServices shelter={shelter} />
-        <EcosystemInfo shelter={shelter} />
+        {hasEntryRequirements && <EntryRequirements shelter={shelter} />}
+        {hasSpecialRestrictions && <SpecialRestrictions shelter={shelter} />}
+        {hasShelterTypes && <ShelterTypes shelter={shelter} />}
+        {hasRoomStyles && <RoomStyles shelter={shelter} />}
+        {hasDetail && <ShelterDetail shelter={shelter} />}
+        {hasRestrictions && <Restrictions shelter={shelter} />}
+        {hasOtherServices && <OtherServices shelter={shelter} />}
+        {hasEcosystemInfo && <EcosystemInfo shelter={shelter} />}
       </div>
     </div>
   );

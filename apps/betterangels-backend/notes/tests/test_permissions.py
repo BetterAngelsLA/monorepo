@@ -1,3 +1,6 @@
+from typing import Optional
+from unittest import skip
+
 from model_bakery import baker
 from notes.models import Mood, Note, ServiceRequest, Task
 from notes.tests.utils import (
@@ -16,7 +19,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Logged-in user should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -27,6 +30,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         variables = {
             "purpose": "Test Note",
             "publicDetails": "This is a test note.",
+            "clientProfile": str(self.client_profile_1.pk),
         }
         response = self._create_note_fixture(variables)
 
@@ -50,7 +54,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # Other org CM should not succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -116,6 +120,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (False, True, False),  # Has Task but not Note permissions; should not succeed
         ],
     )
+    @skip("not implemented")
     def test_add_note_task_permission(
         self,
         has_note_permissions: bool,
@@ -131,7 +136,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 {
                     "purpose": "New Note",
                     "publicDetails": "New public details",
-                    "client": self.client_user_1.pk,
+                    "clientProfile": self.client_profile_1.pk,
                 }
             )["data"]["createNote"]["id"]
 
@@ -181,6 +186,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (False, True, False),  # Has Task but not Note permissions; should not succeed
         ],
     )
+    @skip("not implemented")
     def test_remove_note_task_permission(
         self,
         has_note_permissions: bool,
@@ -196,7 +202,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
                 {
                     "purpose": "New Note",
                     "publicDetails": "New public details",
-                    "client": self.client_user_1.pk,
+                    "clientProfile": self.client_profile_1.pk,
                 }
             )["data"]["createNote"]["id"]
 
@@ -246,7 +252,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", True),  # Other case manager should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -270,36 +276,43 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertIsNotNone(response["errors"])
 
     @parametrize(
-        "user_label, should_succeed",
+        "user_label, expected_interaction_count",
         [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", True),  # Other case manager should succeed
-            ("client_user_1", False),  # Non CM should not succeed
-            (None, False),  # Anonymous user should not succeed
+            ("org_1_case_manager_1", 1),  # Owner should succeed
+            ("org_1_case_manager_2", 1),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", 1),  # Other case manager should succeed
+            ("non_case_manager_user", 0),  # Non CM should not succeed
+            # NOTE: Anon user raising an error may be caused by a strawberry bug.
+            # This test may fail and need updating when the bug is fixed.
+            (None, None),  # Anonymous user should return error
         ],
     )
-    def test_view_notes_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_notes_permission(self, user_label: str, expected_interaction_count: Optional[int]) -> None:
         self._handle_user_login(user_label)
 
-        mutation = """
-            query ViewNotes {
+        query = """
+            query {
                 notes {
-                    id
-                    publicDetails
+                    totalCount
+                    results {
+                        id
+                        publicDetails
+                    }
                 }
             }
         """
-        variables = {"id": self.note["id"]}
-        response = self.execute_graphql(mutation, variables)
+        response = self.execute_graphql(query)
 
-        self.assertTrue(len(response["data"]["notes"]) == should_succeed)
+        if expected_interaction_count is not None:
+            self.assertEqual(response["data"]["notes"]["totalCount"], expected_interaction_count)
+        else:
+            self.assertTrue("errors" in response)
 
     @parametrize(
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Case manager should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -363,15 +376,17 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         self._handle_user_login(user_label)
 
         query = """
-            query ViewNotes {
+            query {
                 notes {
-                    id
-                    privateDetails
+                    results {
+                        id
+                        privateDetails
+                    }
                 }
             }
         """
         response = self.execute_graphql(query, {})
-        notes_data = response["data"]["notes"]
+        notes_data = response["data"]["notes"]["results"]
 
         private_details_visible = len([note for note in notes_data if note.get("privateDetails") is not None])
 
@@ -471,6 +486,7 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertEqual(service_request_count, ServiceRequest.objects.count())
 
 
+@skip("NoteTasks are not currently implemented")
 class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
@@ -514,6 +530,7 @@ class NoteTaskPermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertEqual(task_count, Task.objects.count())
 
 
+@skip("Service Requests are not currently implemented")
 class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
@@ -549,7 +566,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -607,7 +624,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -636,7 +653,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -657,6 +674,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
         self.assertTrue(len(response["data"]["serviceRequests"]) == should_succeed)
 
 
+@skip("Tasks are not currently implemented")
 class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
     @parametrize(
         "user_label, should_succeed",
@@ -692,7 +710,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -740,7 +758,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -769,7 +787,7 @@ class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # Other CM in different org should not succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )

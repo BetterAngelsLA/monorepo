@@ -1,7 +1,7 @@
 import {
   Client,
-  ClientProfileCardEnum,
-  isValidClientProfileCardEnum,
+  ClientProfileSectionEnum,
+  isValidClientProfileSectionEnum,
 } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
@@ -18,10 +18,10 @@ export default function ClientScreen() {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  let openCardName: ClientProfileCardEnum | undefined = undefined;
+  let openCardName: ClientProfileSectionEnum | undefined = undefined;
 
-  if (isValidClientProfileCardEnum(openCard)) {
-    openCardName = openCard as ClientProfileCardEnum;
+  if (isValidClientProfileSectionEnum(openCard)) {
+    openCardName = openCard as ClientProfileSectionEnum;
   }
 
   return <Client id={id} arrivedFrom={arrivedFrom} openCard={openCardName} />;

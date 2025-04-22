@@ -12,13 +12,15 @@ interface IRadioProps {
   onPress: (value: string) => void;
   value: string;
   selectedValue?: string;
+  disabled?: boolean;
 }
 
 export function Radio(props: IRadioProps) {
-  const { displayValue, onPress, value, selectedValue } = props;
+  const { disabled, displayValue, onPress, value, selectedValue } = props;
 
   return (
     <Pressable
+      disabled={disabled}
       accessibilityHint={`selects ${value}`}
       accessibilityRole="button"
       accessible
@@ -31,6 +33,7 @@ export function Radio(props: IRadioProps) {
           paddingHorizontal: Spacings.sm,
           paddingVertical: Spacings.xs,
           justifyContent: 'space-between',
+          opacity: disabled ? 0.5 : 1,
         },
       ]}
       onPress={() => {

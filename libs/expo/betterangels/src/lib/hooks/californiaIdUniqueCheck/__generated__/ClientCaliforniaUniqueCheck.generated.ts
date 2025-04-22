@@ -8,13 +8,13 @@ export type ClientCaliforniaUniqueCheckQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientCaliforniaUniqueCheckQuery = { __typename?: 'Query', clientProfiles: Array<{ __typename?: 'ClientProfileType', id: string }> };
+export type ClientCaliforniaUniqueCheckQuery = { __typename?: 'Query', clientProfiles: { __typename?: 'ClientProfileTypeOffsetPaginated', results: Array<{ __typename?: 'ClientProfileType', id: string }> } };
 
 
 export const ClientCaliforniaUniqueCheckDocument = gql`
     query ClientCaliforniaUniqueCheck($filters: ClientProfileFilter) {
   clientProfiles(filters: $filters) {
-    ... on ClientProfileType {
+    results {
       id
     }
   }

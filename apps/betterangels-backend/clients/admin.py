@@ -11,8 +11,6 @@ from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest
-from django.urls import reverse
-from django.utils.html import format_html
 from import_export import fields, resources
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
@@ -87,7 +85,7 @@ class ClientProfileResource(resources.ModelResource):
     def get_queryset(self) -> QuerySet[ClientProfile]:
         qs = cast(QuerySet[ClientProfile], super().get_queryset())
 
-        return qs.select_related("user").prefetch_related(
+        return qs.prefetch_related(
             "contacts",
             "household_members",
             "phone_numbers",
@@ -120,7 +118,7 @@ class ClientProfileResource(resources.ModelResource):
 
     def dehydrate_has_contact_info(self, obj: ClientProfile) -> str:
         if (
-            obj.user.email
+            obj.email
             or obj.phone_numbers.exists()
             or obj.social_media_profiles.exists()
             or obj.mailing_address
@@ -167,8 +165,7 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
     list_display = [
         "name",
         "id",
-        "user__email",
-        "user_id",
+        "email",
         "dob",
         "display_gender",
         "display_pronouns",
@@ -192,22 +189,19 @@ class ClientProfileAdmin(ExportActionMixin, admin.ModelAdmin):
         return obj.california_id is not None
 
     def name(self, obj: ClientProfile) -> str:
-        name_parts = list(filter(None, [obj.user.first_name, obj.user.middle_name, obj.user.last_name]))
+        name_parts = list(filter(None, [obj.first_name, obj.middle_name, obj.last_name]))
 
         if obj.nickname:
             name_parts.append(f"({obj.nickname})")
 
         return " ".join(name_parts).strip()
 
-    def user_id(self, obj: ClientProfile) -> str:
-        return format_html(f'<a href="{reverse("admin:accounts_user_change", args=(obj.user.id,))}">{obj.user.id}</a>')
-
     search_fields = (
         "nickname",
-        "user__email",
-        "user__first_name",
-        "user__last_name",
-        "user__middle_name",
+        "email",
+        "first_name",
+        "last_name",
+        "middle_name",
     )
 
 
@@ -228,14 +222,14 @@ class ClientContactAdmin(admin.ModelAdmin):
         "email",
         "phone_number",
         "mailing_address",
-        "client_profile__user__first_name",
-        "client_profile__user__last_name",
-        "client_profile__user__email",
+        "client_profile__first_name",
+        "client_profile__last_name",
+        "client_profile__email",
         "client_profile__nickname",
     )
 
     def client_name(self, obj: ClientContact) -> str:
-        return obj.client_profile.user.full_name
+        return obj.client_profile.full_name
 
     def relationship(self, obj: ClientContact) -> str | None:
         return (
@@ -260,9 +254,9 @@ class ClientHouseholdMemberAdmin(admin.ModelAdmin):
         "name",
         "date_of_birth",
         "gender",
-        "client_profile__user__first_name",
-        "client_profile__user__last_name",
-        "client_profile__user__email",
+        "client_profile__first_name",
+        "client_profile__last_name",
+        "client_profile__email",
         "client_profile__nickname",
     )
     list_filter = (
@@ -272,7 +266,7 @@ class ClientHouseholdMemberAdmin(admin.ModelAdmin):
 
     @admin.display(description="Client")
     def client_name(self, obj: ClientHouseholdMember) -> str:
-        return obj.client_profile.user.full_name
+        return obj.client_profile.full_name
 
     def date_of_birth(self, obj: ClientHouseholdMember) -> Optional[str]:
         return obj.date_of_birth.isoformat() if obj.date_of_birth else None
@@ -299,16 +293,16 @@ class HmisProfileAdmin(admin.ModelAdmin):
         "agency",
     )
     search_fields = (
-        "client_profile__user__first_name",
-        "client_profile__user__last_name",
-        "client_profile__user__email",
+        "client_profile__first_name",
+        "client_profile__last_name",
+        "client_profile__email",
         "client_profile__nickname",
     )
     list_filter = ("agency",)
 
     @admin.display(description="Client")
     def client_name(self, obj: HmisProfile) -> str:
-        return obj.client_profile.user.full_name
+        return obj.client_profile.full_name
 
 
 @admin.register(SocialMediaProfile)

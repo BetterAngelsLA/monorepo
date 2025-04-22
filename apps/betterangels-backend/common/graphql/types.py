@@ -7,6 +7,33 @@ from common.models import Address, Attachment, Location, PhoneNumber
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from strawberry import ID, auto
 
+
+def _parse_latitude(v: float) -> float:
+    if abs(v) > 90:
+        raise ValueError("Latitude value must be between -90.0 and 90.0")
+
+    return v
+
+
+def _parse_longitude(v: float) -> float:
+    if abs(v) > 180:
+        raise ValueError("Longitude value must be between -180.0 and 180.0")
+
+    return v
+
+
+LatitudeScalar = strawberry.scalar(
+    NewType("LatitudeScalar", float),
+    serialize=lambda v: v,
+    parse_value=lambda v: _parse_latitude(v),
+)
+
+LongitudeScalar = strawberry.scalar(
+    NewType("LongitudeScalar", float),
+    serialize=lambda v: v,
+    parse_value=lambda v: _parse_longitude(v),
+)
+
 PhoneNumberScalar: DjangoPhoneNumber | str = strawberry.scalar(
     DjangoPhoneNumber,
     serialize=lambda v: str(v.national_number),
@@ -15,8 +42,8 @@ PhoneNumberScalar: DjangoPhoneNumber | str = strawberry.scalar(
 
 NonBlankString = strawberry.scalar(
     NewType("NonBlankString", str),
-    serialize=lambda v: str(v),
-    parse_value=lambda v: v.strip(),
+    serialize=lambda v: v,
+    parse_value=lambda v: v.strip() if v.strip() else None,
 )
 
 

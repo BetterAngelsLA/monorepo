@@ -1,0 +1,1 @@
+export { AboutApp } from './AboutApp';

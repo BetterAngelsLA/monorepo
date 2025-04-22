@@ -8,13 +8,20 @@ import { modalAtom } from '../../atoms/modalAtom';
 import { shelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { ModalAnimationEnum } from '../../modal/modal';
 import { AddressAutocomplete } from '../address/AddressAutocomplete';
+import { TMapBounds } from '../map/types.maps';
 import { toGoogleLatLng } from '../map/utils/toGoogleLatLng';
 import { FilterPills } from '../shelterFilter/filterPills';
 import { FiltersActions } from '../shelterFilter/filtersActions';
 import { ShelterFilters } from '../shelterFilter/shelterFilters';
 import { SheltersDisplay, TShelterPropertyFilters } from './sheltersDisplay';
 
-export function ShelterSearch() {
+type TProps = {
+  mapBoundsFilter?: TMapBounds;
+};
+
+export function ShelterSearch(props: TProps) {
+  const { mapBoundsFilter } = props;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_modal, setModal] = useAtom(modalAtom);
   const [location, setLocation] = useAtom(locationAtom);
   const [queryFilters, setQueryFilters] = useState<TShelterPropertyFilters>();
@@ -30,7 +37,6 @@ export function ShelterSearch() {
     }
 
     const center = toGoogleLatLng(location);
-
     center && map.setCenter(center);
   }, [map, location]);
 
@@ -93,10 +99,10 @@ export function ShelterSearch() {
       </div>
 
       <FilterPills className="mt-2" filters={filters} />
-
       <SheltersDisplay
         className="mt-8"
         coordinates={location}
+        mapBoundsFilter={mapBoundsFilter}
         coordinatesSource={location?.source}
         propertyFilters={queryFilters}
       />

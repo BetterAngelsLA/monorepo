@@ -1,6 +1,6 @@
 query ClientCaliforniaUniqueCheck($filters: ClientProfileFilter) {
   clientProfiles(filters: $filters) {
-    ... on ClientProfileType {
+    results {
       id
     }
   }

@@ -10,73 +10,75 @@ export type NotesQueryVariables = Types.Exact<{
 }>;
 
 
-export type NotesQuery = { __typename?: 'Query', notes: Array<{ __typename?: 'NoteType', id: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, client?: { __typename?: 'UserType', id: string, email?: string | null, username: string, firstName?: string | null, lastName?: string | null } | null, createdBy: { __typename?: 'UserType', id: string, email?: string | null, username: string, firstName?: string | null, lastName?: string | null } }> };
+export type NotesQuery = { __typename?: 'Query', notes: { __typename?: 'NoteTypeOffsetPaginated', totalCount: number, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number }, results: Array<{ __typename?: 'NoteType', id: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, clientProfile?: { __typename?: 'ClientProfileType', id: string, email?: any | null, firstName?: any | null, lastName?: any | null, displayCaseManager: string, user?: { __typename?: 'UserType', id: string, username: string } | null } | null, createdBy: { __typename?: 'UserType', id: string, email?: any | null, username: string, firstName?: any | null, lastName?: any | null } }> } };
 
 export type ViewNoteQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteType', id: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, client?: { __typename?: 'UserType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, clientProfile?: { __typename?: 'DjangoModelType', id: string } | null } | null, createdBy: { __typename?: 'UserType', id: string } } };
-
-export type NotesPaginatedQueryVariables = Types.Exact<{
-  filters?: Types.InputMaybe<Types.NoteFilter>;
-  pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
-  order?: Types.InputMaybe<Types.NoteOrder>;
-}>;
-
-
-export type NotesPaginatedQuery = { __typename?: 'Query', notesPaginated: { __typename?: 'NoteTypeOffsetPaginated', totalCount: number, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number }, results: Array<{ __typename?: 'NoteType', id: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, client?: { __typename?: 'UserType', id: string, email?: string | null, username: string, firstName?: string | null, lastName?: string | null } | null, createdBy: { __typename?: 'UserType', id: string, email?: string | null, username: string, firstName?: string | null, lastName?: string | null } }> } };
+export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteType', id: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, clientProfile?: { __typename?: 'ClientProfileType', id: string, email?: any | null, firstName?: any | null, lastName?: any | null } | null, createdBy: { __typename?: 'UserType', id: string } } };
 
 
 export const NotesDocument = gql`
     query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput, $order: NoteOrder) {
   notes(filters: $filters, pagination: $pagination, order: $order) {
-    id
-    purpose
-    team
-    location {
-      address {
-        id
-        street
-        city
-        state
-        zipCode
+    totalCount
+    pageInfo {
+      limit
+      offset
+    }
+    results {
+      id
+      purpose
+      team
+      location {
+        address {
+          id
+          street
+          city
+          state
+          zipCode
+        }
+        point
+        pointOfInterest
       }
-      point
-      pointOfInterest
+      moods {
+        id
+        descriptor
+      }
+      providedServices {
+        id
+        service
+        serviceOther
+      }
+      requestedServices {
+        id
+        service
+        serviceOther
+      }
+      publicDetails
+      isSubmitted
+      clientProfile {
+        id
+        email
+        firstName
+        lastName
+        displayCaseManager
+        user {
+          id
+          username
+        }
+      }
+      createdBy {
+        id
+        email
+        username
+        firstName
+        lastName
+      }
+      interactedAt
     }
-    moods {
-      id
-      descriptor
-    }
-    providedServices {
-      id
-      service
-      serviceOther
-    }
-    requestedServices {
-      id
-      service
-      serviceOther
-    }
-    publicDetails
-    isSubmitted
-    client {
-      id
-      email
-      username
-      firstName
-      lastName
-    }
-    createdBy {
-      id
-      email
-      username
-      firstName
-      lastName
-    }
-    interactedAt
   }
 }
     `;
@@ -148,14 +150,11 @@ export const ViewNoteDocument = gql`
     }
     publicDetails
     isSubmitted
-    client {
+    clientProfile {
       id
       email
       firstName
       lastName
-      clientProfile {
-        id: pk
-      }
     }
     createdBy {
       id
@@ -198,96 +197,3 @@ export type ViewNoteQueryHookResult = ReturnType<typeof useViewNoteQuery>;
 export type ViewNoteLazyQueryHookResult = ReturnType<typeof useViewNoteLazyQuery>;
 export type ViewNoteSuspenseQueryHookResult = ReturnType<typeof useViewNoteSuspenseQuery>;
 export type ViewNoteQueryResult = Apollo.QueryResult<ViewNoteQuery, ViewNoteQueryVariables>;
-export const NotesPaginatedDocument = gql`
-    query NotesPaginated($filters: NoteFilter, $pagination: OffsetPaginationInput, $order: NoteOrder) {
-  notesPaginated(filters: $filters, pagination: $pagination, order: $order) {
-    totalCount
-    pageInfo {
-      limit
-      offset
-    }
-    results {
-      id
-      purpose
-      team
-      location {
-        address {
-          id
-          street
-          city
-          state
-          zipCode
-        }
-        point
-        pointOfInterest
-      }
-      moods {
-        id
-        descriptor
-      }
-      providedServices {
-        id
-        service
-        serviceOther
-      }
-      requestedServices {
-        id
-        service
-        serviceOther
-      }
-      publicDetails
-      isSubmitted
-      client {
-        id
-        email
-        username
-        firstName
-        lastName
-      }
-      createdBy {
-        id
-        email
-        username
-        firstName
-        lastName
-      }
-      interactedAt
-    }
-  }
-}
-    `;
-
-/**
- * __useNotesPaginatedQuery__
- *
- * To run a query within a React component, call `useNotesPaginatedQuery` and pass it any options that fit your needs.
- * When your component renders, `useNotesPaginatedQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useNotesPaginatedQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useNotesPaginatedQuery(baseOptions?: Apollo.QueryHookOptions<NotesPaginatedQuery, NotesPaginatedQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<NotesPaginatedQuery, NotesPaginatedQueryVariables>(NotesPaginatedDocument, options);
-      }
-export function useNotesPaginatedLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<NotesPaginatedQuery, NotesPaginatedQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<NotesPaginatedQuery, NotesPaginatedQueryVariables>(NotesPaginatedDocument, options);
-        }
-export function useNotesPaginatedSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<NotesPaginatedQuery, NotesPaginatedQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<NotesPaginatedQuery, NotesPaginatedQueryVariables>(NotesPaginatedDocument, options);
-        }
-export type NotesPaginatedQueryHookResult = ReturnType<typeof useNotesPaginatedQuery>;
-export type NotesPaginatedLazyQueryHookResult = ReturnType<typeof useNotesPaginatedLazyQuery>;
-export type NotesPaginatedSuspenseQueryHookResult = ReturnType<typeof useNotesPaginatedSuspenseQuery>;
-export type NotesPaginatedQueryResult = Apollo.QueryResult<NotesPaginatedQuery, NotesPaginatedQueryVariables>;

@@ -23,13 +23,7 @@ from clients.enums import (
     VeteranStatusEnum,
 )
 from common.constants import CALIFORNIA_ID_REGEX
-from common.models import (
-    Attachment,
-    AttachmentGroupObjectPermission,
-    AttachmentUserObjectPermission,
-    BaseModel,
-    PhoneNumber,
-)
+from common.models import Attachment, BaseModel, PhoneNumber
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.fields import ArrayField
@@ -102,7 +96,7 @@ class HmisProfile(BaseModel):
     pghistory.DeleteEvent("client_profile.remove"),
 )
 class ClientProfile(BaseModel):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="client_profile")
+    user = models.OneToOneField(User, on_delete=models.SET_NULL, blank=True, null=True, related_name="client_profile")
     ada_accommodation = ArrayField(
         base_field=TextChoicesField(choices_enum=AdaAccommodationEnum), blank=True, null=True
     )
@@ -118,15 +112,19 @@ class ClientProfile(BaseModel):
     )
     date_of_birth = models.DateField(blank=True, null=True)
     documents = GenericRelation(Attachment)
+    email = models.EmailField(unique=True, null=True, blank=True)
     eye_color = TextChoicesField(choices_enum=EyeColorEnum, blank=True, null=True)
+    first_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
     gender_other = models.CharField(max_length=100, null=True, blank=True)
     hair_color = TextChoicesField(choices_enum=HairColorEnum, blank=True, null=True)
     height_in_inches = models.FloatField(blank=True, null=True)
     important_notes = models.TextField(blank=True, null=True)
+    last_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     living_situation = TextChoicesField(choices_enum=LivingSituationEnum, blank=True, null=True)
     mailing_address = models.TextField(blank=True, null=True)
     marital_status = TextChoicesField(choices_enum=MaritalStatusEnum, blank=True, null=True)
+    middle_name = models.CharField(max_length=50, blank=True, null=True)
     nickname = models.CharField(max_length=50, blank=True, null=True)
     phone_number = PhoneNumberField(region="US", blank=True, null=True)
     phone_numbers = GenericRelation(PhoneNumber)
@@ -192,17 +190,27 @@ class ClientProfile(BaseModel):
         else:
             self.california_id = None
 
+        if self.email:
+            self.email = self.email.lower()
+        else:
+            self.email = None
+
         super().save(*args, **kwargs)
 
+    @model_property
+    def full_name(self: "ClientProfile") -> str:
+        name_parts = filter(None, [self.first_name, self.middle_name, self.last_name])
+        return " ".join(name_parts).strip()
+
+    def __str__(self: "ClientProfile") -> str:
+        return f"{self.full_name if self.full_name else self.pk}"
+
     class Meta:
-        ordering = ["user__first_name"]
+        ordering = ["first_name"]
 
 
-class ClientDocument(Attachment):
+class ClientDocument(Attachment):  # type: ignore[django-manager-missing]
     """This is here to allow for a separate admin interface for Client Documents"""
-
-    attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
-    attachmentgroupobjectpermission_set: models.QuerySet["AttachmentGroupObjectPermission"]
 
     class Meta:
         proxy = True
