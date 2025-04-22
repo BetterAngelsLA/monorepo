@@ -1935,7 +1935,7 @@ export type SocialMediaProfileInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   platform?: InputMaybe<SocialMediaEnum>;
-  platformUserId: Scalars['NonBlankString']['input'];
+  platformUserId?: InputMaybe<Scalars['NonBlankString']['input']>;
 };
 
 export type SocialMediaProfileType = {
