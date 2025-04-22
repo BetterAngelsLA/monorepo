@@ -1,4 +1,5 @@
-from typing import Any, Optional
+import os
+from typing import Any
 
 import pghistory
 from admin_async_upload.models import AsyncFileField
@@ -6,6 +7,7 @@ from common.models import BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
+from django.core.files.storage import default_storage
 from django.db import models
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
@@ -298,13 +300,6 @@ class Shelter(BaseModel):
         super().save(*args, **kwargs)
 
 
-def upload_path(instance: Optional[Shelter], filename: str) -> str:
-    """
-    Generate a flat upload path for all files.
-    """
-    return f"shelters/{filename}"
-
-
 @pghistory.track(
     pghistory.InsertEvent("shelter.contact_info.add"),
     pghistory.UpdateEvent("shelter.contact_info.update"),
@@ -319,18 +314,37 @@ class ContactInfo(models.Model):
         return f"{self.contact_name} - {self.contact_number}"
 
 
+ATTACHMENT_MAX_FILENAME_LENGTH = 100
+UPLOAD_BASE_DIR = "shelters/"
+
+
+def upload_path(instance: models.Model, filename: str) -> str:
+    """
+    Uses the default storage's get_available_name to generate a unique path
+    that does not exceed the field's max_length.
+
+    This defers deduplication logic (suffixing) to the storage backend while
+    still respecting length limits.
+    """
+    base_name, extension = os.path.splitext(filename)
+    sanitized = base_name.replace(" ", "_")
+    raw_path = f"{UPLOAD_BASE_DIR}{sanitized}{extension}"
+
+    return default_storage.get_available_name(raw_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
+
+
 class InteriorPhoto(BaseModel):
-    file = AsyncFileField(upload_to=upload_path)
+    file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="interior_photos")
 
 
 class ExteriorPhoto(BaseModel):
-    file = AsyncFileField(upload_to=upload_path)
+    file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="exterior_photos")
 
 
 class Video(BaseModel):
-    file = AsyncFileField(upload_to=upload_path)
+    file = AsyncFileField(upload_to=upload_path, max_length=ATTACHMENT_MAX_FILENAME_LENGTH)
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="videos")
 
 
