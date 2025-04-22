@@ -1,13 +1,13 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { usePathname, useRouter } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
-import { NotesPaginatedQuery } from '../../apollo';
+import { NotesQuery } from '../../apollo';
 import NoteCardClient from './NoteCardClient';
 import NoteCardHeader from './NoteCardHeader';
 import NoteCardPills from './NoteCardPills';
 
 interface INoteCardProps {
-  note: NotesPaginatedQuery['notesPaginated']['results'][0];
+  note: NotesQuery['notes']['results'][0];
 }
 
 export default function NoteCard(props: INoteCardProps) {
@@ -15,7 +15,7 @@ export default function NoteCard(props: INoteCardProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const isInteractionsPage = pathname === '/interactions';
+  const isOnInteractionsPage = pathname === '/interactions';
 
   return (
     <Pressable
@@ -35,7 +35,9 @@ export default function NoteCard(props: INoteCardProps) {
     >
       <NoteCardHeader purpose={note.purpose} interactedAt={note.interactedAt} />
       <NoteCardClient
-        client={isInteractionsPage ? note.client : note.createdBy}
+        isOnInteractionsPage={isOnInteractionsPage}
+        createdBy={note.createdBy}
+        clientProfile={note.clientProfile}
         isSubmitted={note.isSubmitted}
       />
       {!!note.providedServices.length && (

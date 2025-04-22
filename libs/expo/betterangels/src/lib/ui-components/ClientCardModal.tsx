@@ -1,18 +1,18 @@
 import { FilePlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
 import { useRouter } from 'expo-router';
 import { useSnackbar } from '../hooks';
-import { ClientProfilesPaginatedQuery } from '../screens/Clients/__generated__/Clients.generated';
+import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
 import { useCreateNoteMutation } from '../screens/Home/__generated__/ActiveClients.generated';
 import MainModal from './MainModal';
 
 interface IMainPlusModalProps {
   closeModal: () => void;
   isModalVisible: boolean;
-  client: ClientProfilesPaginatedQuery['clientProfilesPaginated']['results'][number];
+  clientProfile: ClientProfilesQuery['clientProfiles']['results'][number];
 }
 
 export default function ClientCardModal(props: IMainPlusModalProps) {
-  const { isModalVisible, closeModal, client } = props;
+  const { isModalVisible, closeModal, clientProfile } = props;
   const [createNote] = useCreateNoteMutation();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -26,7 +26,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
         variables: {
           data: {
             purpose: `Session with ${firstName || 'Client'}`,
-            client: id,
+            clientProfile: id,
           },
         },
       });
@@ -48,17 +48,17 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
     {
       title: 'Add Interaction',
       Icon: FilePlusIcon,
-      route: `/add-interaction/${client.id}`,
+      route: `/add-interaction/${clientProfile.id}`,
       onPress: () => {
-        if (client) {
-          createNoteFunction(client.user.id, client.user.firstName);
+        if (clientProfile) {
+          createNoteFunction(clientProfile.id, clientProfile.firstName);
         }
       },
     },
     {
       title: 'Upload Documents',
       Icon: UploadIcon,
-      route: `/client/${client.id}?newTab=Docs`,
+      route: `/client/${clientProfile.id}?newTab=Docs`,
     },
   ];
   return (

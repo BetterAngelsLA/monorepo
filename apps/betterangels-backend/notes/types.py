@@ -5,6 +5,7 @@ import strawberry
 import strawberry_django
 from accounts.models import User
 from accounts.types import UserType
+from clients.types import ClientProfileType
 from common.graphql.types import LocationInput, LocationType
 from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
 from notes.enums import (
@@ -28,7 +29,7 @@ class ServiceRequestType:
     status: auto
     due_by: auto
     completed_on: auto
-    client: Optional[UserType]
+    client_profile: ClientProfileType | None
     created_by: UserType
     created_at: auto
 
@@ -38,7 +39,7 @@ class CreateServiceRequestInput:
     service: auto
     status: auto
     service_other: auto
-    client: Optional[ID]
+    client_profile: ID | None
 
 
 @strawberry_django.input(models.ServiceRequest)
@@ -55,7 +56,6 @@ class UpdateServiceRequestInput:
     service_other: auto
     status: auto
     due_by: auto
-    client: Optional[ID]
 
 
 @strawberry_django.ordering.order(models.Task)
@@ -72,7 +72,7 @@ class TaskType:
     status: auto
     due_by: auto
     due_by_group: DueByGroupEnum
-    client: Optional[UserType]
+    client_profile: ClientProfileType | None
     created_at: auto
     created_by: UserType
 
@@ -82,7 +82,7 @@ class CreateTaskInput:
     title: auto
     status: auto
     due_by: auto
-    client: Optional[ID]
+    client_profile: ID | None
 
 
 @strawberry_django.input(models.Task)
@@ -101,7 +101,6 @@ class UpdateTaskInput:
     location: Optional[ID]
     status: auto
     due_by: auto
-    client: Optional[ID]
 
 
 @strawberry_django.type(models.Mood)
@@ -145,16 +144,16 @@ class NoteOrder:
 
 @strawberry_django.filters.filter(models.Note)
 class NoteFilter:
-    client: Optional[ID]
-    created_by: Optional[ID]
+    client_profile: ID | None
+    created_by: ID | None
     is_submitted: auto
-    organization: Optional[ID]
+    organization: ID | None
 
     @strawberry_django.filter_field
     def authors(
         self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str
     ) -> Tuple[QuerySet[models.Note], Q]:
-        if value is None:
+        if not value:
             return queryset, Q()
 
         return queryset.filter(created_by__in=value), Q()
@@ -171,8 +170,8 @@ class NoteFilter:
 
         for term in search_terms:
             q_search = Q(
-                Q(client__first_name__icontains=term)
-                | Q(client__last_name__icontains=term)
+                Q(client_profile__first_name__icontains=term)
+                | Q(client_profile__last_name__icontains=term)
                 | Q(public_details__icontains=term)
             )
 
@@ -187,7 +186,7 @@ class NoteFilter:
     def teams(
         self, queryset: QuerySet, value: Optional[List[SelahTeamEnum]], prefix: str
     ) -> Tuple[QuerySet[models.Note], Q]:
-        if value is None:
+        if not value:
             return queryset, Q()
 
         return queryset.filter(team__in=value), Q()
@@ -206,7 +205,7 @@ class NoteType:
     requested_services: List[ServiceRequestType]
     public_details: auto
     is_submitted: auto
-    client: Optional[UserType]
+    client_profile: ClientProfileType | None
     created_at: auto
     created_by: UserType
     interacted_at: auto
@@ -238,7 +237,7 @@ class CreateNoteInput:
     team: Optional[SelahTeamEnum]
     public_details: auto
     private_details: auto
-    client: Optional[ID]
+    client_profile: ID | None
     is_submitted: auto
     interacted_at: auto
 

@@ -2,6 +2,7 @@ import {
   BarsIcon,
   HouseLineIcon,
   NoteIcon,
+  SettingsOutlineIcon,
   SignOutIcon,
   UsersLineIcon,
 } from '@monorepo/expo/shared/icons';
@@ -28,6 +29,11 @@ const ACTIONS = [
     title: 'Interactions',
     Icon: NoteIcon,
     route: '/interactions',
+  },
+  {
+    title: 'Settings',
+    Icon: SettingsOutlineIcon,
+    route: '/settings',
   },
 ];
 

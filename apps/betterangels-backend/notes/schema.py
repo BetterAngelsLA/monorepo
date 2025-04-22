@@ -1,4 +1,4 @@
-from typing import Dict, List, cast
+from typing import Dict, cast
 
 import pghistory
 import strawberry
@@ -73,25 +73,9 @@ from .types import (
 class Query:
     note: NoteType = strawberry_django.field(extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter)
 
-    notes: List[NoteType] = strawberry_django.field(
+    notes: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
-
-    notes_paginated: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
-        extensions=[HasRetvalPerm(NotePermissions.VIEW)],
-    )
-
-    service_request: ServiceRequestType = strawberry_django.field(
-        extensions=[HasRetvalPerm(ServiceRequestPermissions.VIEW)]
-    )
-
-    service_requests: List[ServiceRequestType] = strawberry_django.field(
-        extensions=[HasRetvalPerm(ServiceRequestPermissions.VIEW)]
-    )
-
-    task: TaskType = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
-
-    tasks: List[TaskType] = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
 
     @strawberry_django.offset_paginated(
         OffsetPaginated[InteractionAuthorType], extensions=[HasPerm(NotePermissions.ADD)]
@@ -110,6 +94,7 @@ class Mutation:
             permission_group = get_user_permission_group(user)
 
             note_data = asdict(data)
+
             note = resolvers.create(
                 info,
                 Note,
@@ -379,7 +364,7 @@ class Mutation:
                         if service_request_type == ServiceRequestTypeEnum.REQUESTED
                         else ServiceRequestStatusEnum.COMPLETED
                     ),
-                    "client": note.client,
+                    "client_profile": note.client_profile,
                     "created_by": user,
                 },
             )
@@ -521,7 +506,7 @@ class Mutation:
                 Task,
                 {
                     **task_data,
-                    "client": note.client,
+                    "client_profile": note.client_profile,
                     "created_by": user,
                 },
             )

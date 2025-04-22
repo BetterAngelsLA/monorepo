@@ -36,15 +36,19 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
             age
             californiaId
             dateOfBirth
+            email
             eyeColor
+            firstName
             gender
             genderOther
             hairColor
             heightInInches
             importantNotes
+            lastName
             livingSituation
             mailingAddress
             maritalStatus
+            middleName
             nickname
             phoneNumber
             physicalDescription
@@ -97,13 +101,6 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
                 platform
                 platformUserId
             }
-            user {
-                id
-                firstName
-                lastName
-                middleName
-                email
-            }
         """
 
     def _create_client_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
@@ -148,18 +145,6 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
         self.graphql_client.logout()
 
     def _setup_clients(self) -> None:
-        self.client_profile_1_user = {
-            "firstName": "Todd",
-            "lastName": "Chavez",
-            "middleName": "Gustav",
-            "email": "todd@pblivin.com",
-        }
-        self.client_profile_2_user = {
-            "firstName": "Mister",
-            "lastName": "Peanutbutter",
-            "middleName": "Tee",
-            "email": "mister@pblivin.com",
-        }
         self.client_profile_1_contact_1 = {
             "name": "Jerry",
             "email": "jerry@example.co",
@@ -260,17 +245,21 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "californiaId": "L1234567",
                 "contacts": self.client_1_contacts,
                 "dateOfBirth": self.date_of_birth,
+                "email": "todd@pblivin.com",
                 "eyeColor": EyeColorEnum.BROWN.name,
+                "firstName": "Todd",
                 "gender": GenderEnum.MALE.name,
                 "genderOther": None,
                 "hairColor": HairColorEnum.BROWN.name,
                 "heightInInches": 71.75,
                 "hmisProfiles": self.client_1_hmis_profiles,
-                "importantNotes": "I am very important",
                 "householdMembers": self.client_1_household_members,
+                "importantNotes": "I am very important",
+                "lastName": "Chavez",
                 "livingSituation": LivingSituationEnum.VEHICLE.name,
                 "mailingAddress": "1475 Luck Hoof M Ave, Los Angeles, CA 90046",
                 "maritalStatus": MaritalStatusEnum.SINGLE.name,
+                "middleName": "Gustav",
                 "nickname": "Toad",
                 "phoneNumber": "2125551212",
                 "phoneNumbers": self.client_profile_1_phone_numbers,
@@ -283,7 +272,6 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "residenceAddress": "1475 Luck Hoof R Ave, Los Angeles, CA 90046",
                 "socialMediaProfiles": self.client_1_social_media_profiles,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
-                "user": self.client_profile_1_user,
                 "veteranStatus": VeteranStatusEnum.NO.name,
             }
         )["data"]["createClientProfile"]
@@ -296,16 +284,20 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "address": None,
                 "contacts": [],
                 "dateOfBirth": None,
+                "email": "mister@pblivin.com",
                 "eyeColor": None,
+                "firstName": "Mister",
                 "gender": None,
                 "genderOther": None,
                 "hairColor": None,
                 "heightInInches": None,
                 "hmisProfiles": self.client_2_hmis_profiles,
                 "householdMembers": [],
+                "lastName": "Peanutbutter",
                 "livingSituation": None,
                 "mailingAddress": None,
                 "maritalStatus": None,
+                "middleName": "Tee",
                 "nickname": None,
                 "phoneNumber": None,
                 "phoneNumbers": [self.client_2_phone_number_1],
@@ -318,7 +310,6 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "residenceAddress": None,
                 "socialMediaProfiles": [],
                 "spokenLanguages": [],
-                "user": self.client_profile_2_user,
                 "veteranStatus": None,
             }
         )["data"]["createClientProfile"]
@@ -464,7 +455,7 @@ class ClientContactBaseTestCase(ClientsBaseTestCase):
 
         # TODO: move client profile setup back to ClientProfileGraphQLBaseTestCase
         # when client profile redesign is completed and tests are refactored
-        self.client_profile = self._create_client_profile_fixture({"user": {"firstName": "Test Client"}})["data"][
+        self.client_profile = self._create_client_profile_fixture({"firstName": "Test Client"})["data"][
             "createClientProfile"
         ]
         self.client_profile_id = self.client_profile["id"]
@@ -615,7 +606,7 @@ class HmisProfileBaseTestCase(ClientsBaseTestCase):
 
         # TODO: move client profile setup back to ClientProfileGraphQLBaseTestCase
         # when client profile redesign is completed and tests are refactored
-        self.client_profile = self._create_client_profile_fixture({"user": {"firstName": "Test Client"}})["data"][
+        self.client_profile = self._create_client_profile_fixture({"firstName": "Test Client"})["data"][
             "createClientProfile"
         ]
         self.client_profile_id = self.client_profile["id"]

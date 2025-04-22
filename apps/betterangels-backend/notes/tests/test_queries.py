@@ -1,4 +1,5 @@
 from typing import Any, Optional
+from unittest import skip
 
 import time_machine
 from accounts.models import User
@@ -59,7 +60,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note.requested_services.set(self.requested_services)
 
         query = f"""
-            query ViewNote($id: ID!) {{
+            query ($id: ID!) {{
                 note(pk: $id) {{
                     {self.note_fields}
                 }}
@@ -75,7 +76,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         note = response["data"]["note"]
         expected_note = {
             "id": note_id,
-            "client": {"id": str(self.client_user_1.pk)},
+            "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T11:12:13+00:00",
             "isSubmitted": False,
@@ -140,30 +141,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertFalse(note_differences)
 
     def test_notes_query(self) -> None:
-        """
-        NOTE: This query is deprecated in favor of notesPaginated
-        """
-
         query = f"""
-            query ViewNotes {{
-                notes {{
-                    {self.note_fields}
-                }}
-            }}
-        """
-        expected_query_count = 8
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query)
-
-        notes = response["data"]["notes"]
-        self.assertEqual(len(notes), 1)
-        note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
-        self.assertFalse(note_differences)
-
-    def test_notes_paginated_query(self) -> None:
-        query = f"""
-            query ViewNotes($offset: Int, $limit: Int) {{
-                notes: notesPaginated(pagination: {{offset: $offset, limit: $limit}}) {{
+            query ($offset: Int, $limit: Int) {{
+                notes(pagination: {{offset: $offset, limit: $limit}}) {{
                     totalCount
                     pageInfo {{
                         limit
@@ -235,9 +215,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             ),  # CM 1 created one note
             ("org_2_case_manager_1", None, None, True, 1, ["note_3"]),  # Org 2 CM 1 submitted 1 note
             ("org_1_case_manager_2", None, None, False, 1, ["note_2"]),  # CM 2 has one unsubmitted note
-            ("org_1_case_manager_1", "client_user_2", None, None, 0, []),  # CM 1 has no notes for client 2
+            ("org_1_case_manager_1", "client_profile_2", None, None, 0, []),  # CM 1 has no notes for client 2
             # CM 1 has one unsubmitted note for client 1
-            ("org_1_case_manager_1", "client_user_1", None, False, 1, ["note"]),
+            ("org_1_case_manager_1", "client_profile_1", None, False, 1, ["note"]),
             (None, None, "org_2", True, 1, ["note_3"]),  # There is one submitted note from org 2
         ],
     )
@@ -252,15 +232,15 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         returned_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
-        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
-        self.note_2 = self._create_note_fixture({"purpose": "Client 1's Note", "client": self.client_user_1.pk})[
-            "data"
-        ]["createNote"]
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
+        self.note_2 = self._create_note_fixture(
+            {"purpose": "Client 1's Note", "clientProfile": self.client_profile_1.pk}
+        )["data"]["createNote"]
         self.graphql_client.logout()
         self.graphql_client.force_login(self.org_2_case_manager_1)
-        self.note_3 = self._create_note_fixture({"purpose": "Client 2's Note", "client": self.client_user_2.pk})[
-            "data"
-        ]["createNote"]
+        self.note_3 = self._create_note_fixture(
+            {"purpose": "Client 2's Note", "clientProfile": self.client_profile_2.pk}
+        )["data"]["createNote"]
         self._update_note_fixture(
             {
                 "id": self.note_3["id"],
@@ -270,7 +250,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes: notesPaginated(filters: $filters) {
+                notes(filters: $filters) {
                     totalCount
                     results{
                         id
@@ -285,7 +265,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             filters["createdBy"] = self.user_map[case_manager_label].pk
 
         if client_label:
-            filters["client"] = getattr(self, client_label).pk
+            filters["clientProfile"] = getattr(self, client_label).pk
 
         if org_label:
             filters["organization"] = getattr(self, org_label).pk
@@ -318,9 +298,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             ),  # CM 1 created one note
             (["org_2_case_manager_1"], None, None, True, 1, ["note_3"]),  # Org 2 CM 1 submitted 1 note
             (["org_1_case_manager_2"], None, None, False, 1, ["note_2"]),  # CM 2 has one unsubmitted note
-            (["org_1_case_manager_1"], "client_user_2", None, None, 0, []),  # CM 1 has no notes for client 2
+            (["org_1_case_manager_1"], "client_profile_2", None, None, 0, []),  # CM 1 has no notes for client 2
             # CM 1 has one unsubmitted note for client 1
-            (["org_1_case_manager_1"], "client_user_1", None, False, 1, ["note"]),
+            (["org_1_case_manager_1"], "client_profile_1", None, False, 1, ["note"]),
             (None, None, "org_2", True, 1, ["note_3"]),  # There is one submitted note from org 2
         ],
     )
@@ -334,15 +314,15 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         returned_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
-        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
-        self.note_2 = self._create_note_fixture({"purpose": "Client 1's Note", "client": self.client_user_1.pk})[
-            "data"
-        ]["createNote"]
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
+        self.note_2 = self._create_note_fixture(
+            {"purpose": "Client 1's Note", "clientProfile": self.client_profile_1.pk}
+        )["data"]["createNote"]
         self.graphql_client.logout()
         self.graphql_client.force_login(self.org_2_case_manager_1)
-        self.note_3 = self._create_note_fixture({"purpose": "Client 2's Note", "client": self.client_user_2.pk})[
-            "data"
-        ]["createNote"]
+        self.note_3 = self._create_note_fixture(
+            {"purpose": "Client 2's Note", "clientProfile": self.client_profile_2.pk}
+        )["data"]["createNote"]
         self._update_note_fixture(
             {
                 "id": self.note_3["id"],
@@ -352,7 +332,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes: notesPaginated(filters: $filters) {
+                notes(filters: $filters) {
                     totalCount
                     results{
                         id
@@ -367,7 +347,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             filters["authors"] = [self.user_map[label].pk for label in case_manager_labels]
 
         if client_label:
-            filters["client"] = getattr(self, client_label).pk
+            filters["clientProfile"] = getattr(self, client_label).pk
 
         if org_label:
             filters["organization"] = getattr(self, org_label).pk
@@ -386,8 +366,63 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
 
     @parametrize(
+        ("authors, expected_results_count, returned_note_labels, expected_query_count"),
+        [
+            ([], 3, ["note", "note_2", "note_3"], 4),
+            (["org_1_case_manager_1"], 1, ["note"], 4),
+            (["org_1_case_manager_2"], 2, ["note_2", "note_3"], 4),
+            (["org_2_case_manager_1"], 0, [], 4),
+            (["org_1_case_manager_2", "org_2_case_manager_1"], 2, ["note_2", "note_3"], 4),
+        ],
+    )
+    def test_notes_query_filter_by_authors(
+        self,
+        authors: list[SelahTeamEnum],
+        expected_results_count: int,
+        returned_note_labels: list[str],
+        expected_query_count: int,
+    ) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_2)
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
+        self.note_2 = self._create_note_fixture(
+            {
+                "purpose": "Client 1's Note",
+                "clientProfile": self.client_profile_1.pk,
+            }
+        )["data"]["createNote"]
+        self.note_3 = self._create_note_fixture(
+            {
+                "purpose": "Client 2's Note",
+                "clientProfile": self.client_profile_2.pk,
+            }
+        )["data"]["createNote"]
+
+        filters = {"authors": [self.user_map[author].pk for author in authors]}
+
+        query = """
+            query ($filters: NoteFilter) {
+                notes(filters: $filters) {
+                    totalCount
+                    results{
+                        id
+                    }
+                }
+            }
+        """
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
+        notes = response["data"]["notes"]["results"]
+
+        for idx, note_label in enumerate(returned_note_labels):
+            self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
+
+    @parametrize(
         ("teams, expected_results_count, returned_note_labels, expected_query_count"),
         [
+            ([], 3, ["note", "note_2", "note_3"], 4),
             ([SelahTeamEnum.WDI_ON_SITE.name, SelahTeamEnum.SLCC_ON_SITE.name], 2, ["note_2", "note_3"], 4),
             ([SelahTeamEnum.SLCC_ON_SITE.name], 1, ["note_3"], 4),
             ([SelahTeamEnum.WDI_ON_SITE.name, "invalid team"], 0, [], 1),
@@ -401,23 +436,19 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         expected_query_count: int,
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
-        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
-                "client": self.client_user_1.pk,
+                "clientProfile": self.client_profile_1.pk,
             }
-        )[
-            "data"
-        ]["createNote"]
+        )["data"]["createNote"]
         self.note_3 = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
-                "client": self.client_user_2.pk,
+                "clientProfile": self.client_profile_2.pk,
             }
-        )[
-            "data"
-        ]["createNote"]
+        )["data"]["createNote"]
         self._update_note_fixture(
             {
                 "id": self.note_2["id"],
@@ -435,7 +466,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes: notesPaginated(filters: $filters) {
+                notes(filters: $filters) {
                     totalCount
                     results{
                         id
@@ -475,20 +506,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
 
-        query = """
-            query InteractionAuthors($filters: InteractionAuthorFilter) {
-                interactionAuthors(filters: $filters) {
-                    totalCount
-                    results {
-                        id
-                    }
-                }
-            }
-        """
+        baker.make(User, first_name="Alex", last_name="Johnson")
 
         test_user_map = {
             "interaction_author": baker.make(User, first_name="Alexa", last_name="Danvers", middle_name="J."),
-            "client": baker.make(User, first_name="Alex", last_name="Johnson"),
             "interaction_author_2": baker.make(User, first_name="Wanda", last_name="Maximoff", middle_name="A."),
             "interaction_author_3": baker.make(User, first_name="Alexandria", last_name="Daniels", middle_name="M."),
         }
@@ -501,6 +522,17 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         perm_group.organization.add_user(interaction_author)
         perm_group.organization.add_user(interaction_author_2)
         perm_group.organization.add_user(interaction_author_3)
+
+        query = """
+            query InteractionAuthors($filters: InteractionAuthorFilter) {
+                interactionAuthors(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
 
         filters: dict[str, Any] = {"search": name_search}
 
@@ -529,25 +561,25 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         returned_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
-        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_user_1
+        # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
         self.note_2 = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
                 "publicDetails": "deets",
-                "client": self.client_user_1.pk,
+                "clientProfile": self.client_profile_1.pk,
             }
         )["data"]["createNote"]
         self.note_3 = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
                 "publicDetails": "more deets",
-                "client": self.client_user_2.pk,
+                "clientProfile": self.client_profile_2.pk,
             }
         )["data"]["createNote"]
 
         query = """
             query Notes($filters: NoteFilter) {
-                notes: notesPaginated(filters: $filters) {
+                notes(filters: $filters) {
                     totalCount
                     results{
                         id
@@ -577,26 +609,22 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         older_note = self._create_note_fixture(
             {
                 "purpose": "Client 1's Note",
-                "client": self.client_user_1.pk,
+                "clientProfile": self.client_profile_1.pk,
             }
-        )[
-            "data"
-        ]["createNote"]
+        )["data"]["createNote"]
         self._update_note_fixture({"id": older_note["id"], "interactedAt": "2024-03-10T10:11:12+00:00"})
 
         oldest_note = self._create_note_fixture(
             {
                 "purpose": "Client 2's Note",
-                "client": self.client_user_2.pk,
+                "clientProfile": self.client_profile_2.pk,
             }
-        )[
-            "data"
-        ]["createNote"]
+        )["data"]["createNote"]
         self._update_note_fixture({"id": oldest_note["id"], "interactedAt": "2024-01-10T10:11:12+00:00"})
 
         query = """
             query Notes($order: NoteOrder) {
-                notes: notesPaginated(order: $order) {
+                notes(order: $order) {
                     results{
                         id
                     }
@@ -624,6 +652,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         )
 
 
+@skip("Service Requests are not currently implemented")
 @ignore_warnings(category=UserWarning)
 @time_machine.travel("2024-03-11T10:11:12+00:00", tick=False)
 class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
@@ -637,12 +666,11 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             {
                 "id": service_request_id,
                 "status": "COMPLETED",
-                "client": self.client_user_1.pk,
             }
         )
 
         query = """
-            query ViewServiceRequest($id: ID!) {
+            query ($id: ID!) {
                 serviceRequest(pk: $id) {
                     id
                     service
@@ -650,7 +678,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     status
                     dueBy
                     completedOn
-                    client {
+                    clientProfile {
                         id
                     }
                     createdBy {
@@ -674,7 +702,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": None,
             "completedOn": "2024-03-11T10:11:12+00:00",
-            "client": {"id": str(self.client_user_1.pk)},
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -691,7 +719,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
                     status
                     dueBy
                     completedOn
-                    client {
+                    clientProfile {
                         id
                     }
                     createdBy {
@@ -710,6 +738,7 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
         self.assertEqual(service_requests[0], self.service_request)
 
 
+@skip("Tasks are not currently implemented")
 @ignore_warnings(category=UserWarning)
 @time_machine.travel("2024-03-11T10:11:12+00:00", tick=False)
 class TaskQueryTestCase(TaskGraphQLBaseTestCase):
@@ -727,38 +756,15 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 "location": self.location.pk,
                 "status": "COMPLETED",
                 "dueBy": timezone.now(),
-                "client": self.client_user_1.pk,
             }
         )
 
-        query = """
-            query ViewTask($id: ID!) {
-                task(pk: $id) {
-                    id
-                    title
-                    location {
-                        id
-                        address {
-                            street
-                            city
-                            state
-                            zipCode
-                        }
-                        point
-                        pointOfInterest
-                    }
-                    status
-                    dueBy
-                    dueByGroup
-                    client {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    createdAt
-                }
-            }
+        query = f"""
+            query ($id: ID!) {{
+                task(pk: $id) {{
+                    {self.task_fields}
+                }}
+            }}
         """
         variables = {"id": task_id}
 
@@ -784,9 +790,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             "status": "COMPLETED",
             "dueBy": "2024-03-11T10:11:12+00:00",
             "dueByGroup": DueByGroupEnum.TODAY.name,
-            "client": {
-                "id": str(self.client_user_1.pk),
-            },
+            "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-03-11T10:11:12+00:00",
         }
@@ -794,36 +798,12 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
         self.assertEqual(task, expected_task)
 
     def test_tasks_query(self) -> None:
-        query = """
-            {
-                tasks {
-                    id
-                    title
-                    location {
-                        id
-                        address {
-                            street
-                            city
-                            state
-                            zipCode
-                        }
-                        point
-                        pointOfInterest
-                    }
-                    status
-                    dueBy
-                    dueByGroup
-                    client {
-                        id
-                    }
-                    createdBy {
-                        id
-                    }
-                    createdAt
-                }
-            }
+        query = f"""
+            tasks {{
+                {self.task_fields}
+            }}
         """
-        expected_query_count = 3
+        expected_query_count = 1
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query)
 

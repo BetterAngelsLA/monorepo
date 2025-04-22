@@ -15,13 +15,13 @@ export default function EmailAddress() {
   return (
     <CardWrapper title="Email Address">
       <Input
-        name="user.email"
+        name="email"
         autoCapitalize="none"
         autoCorrect={false}
         placeholder="Enter email address"
         control={control}
-        error={!!errors.user?.email}
-        errorMessage={(errors.user?.email?.message as string) || undefined}
+        error={!!errors.email}
+        errorMessage={(errors.email?.message as string) || undefined}
         rules={{
           validate: (value: string) => {
             if (value && !Regex.email.test(value)) {

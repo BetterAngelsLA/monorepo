@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Dict, Iterable, Tuple
+from typing import Any, Dict, Iterable, Tuple
 
 import pghistory
 from accounts.groups import GroupTemplateNames
@@ -16,21 +16,13 @@ from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionA
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from strawberry_django.descriptors import model_property
 
-if TYPE_CHECKING:
-    from common.models import AttachmentUserObjectPermission
-    from notes.models import (
-        NoteUserObjectPermission,
-        ServiceRequestUserObjectPermission,
-        TaskUserObjectPermission,
-    )
-
 
 @pghistory.track(
     pghistory.InsertEvent("user.add"),
     pghistory.UpdateEvent("user.update"),
     pghistory.DeleteEvent("user.remove"),
 )
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-missing]
     username_validator = UnicodeUsernameValidator()
 
     email = models.EmailField(unique=True, null=True, blank=True)
@@ -70,13 +62,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     organizations_organization: models.QuerySet[Organization]
     organizations_organizationuser: models.QuerySet[OrganizationUser]
-
-    # MyPy hints for Permission Reverses
-    attachmentuserobjectpermission_set: models.QuerySet["AttachmentUserObjectPermission"]
-    biguserobjectpermission_set: models.QuerySet["BigUserObjectPermission"]
-    noteuserobjectpermission_set: models.QuerySet["NoteUserObjectPermission"]
-    taskuserobjectpermission_set: models.QuerySet["TaskUserObjectPermission"]
-    servicerequestuserobjectpermission_set: models.QuerySet["ServiceRequestUserObjectPermission"]
 
     def __str__(self: "User") -> str:
         return f"{self.full_name if self.full_name else self.pk}"
@@ -123,13 +108,13 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 
 class ExtendedOrganizationInvitation(OrganizationInvitation):
-    accepted = models.BooleanField(default=False)
+    accepted: models.BooleanField = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Organization Invitation"
         verbose_name_plural = "Organization Invitations"
 
-    organization_invitation = models.OneToOneField(
+    organization_invitation: OrganizationInvitation = models.OneToOneField(
         OrganizationInvitation,
         on_delete=models.CASCADE,
         parent_link=True,
@@ -139,7 +124,7 @@ class ExtendedOrganizationInvitation(OrganizationInvitation):
 
 class BigGroupObjectPermission(GroupObjectPermissionAbstract):
     # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_user_obj_perms_model
-    id = models.BigAutoField(editable=False, unique=True, primary_key=True)
+    id: models.BigAutoField = models.BigAutoField(editable=False, unique=True, primary_key=True)
 
     class Meta(GroupObjectPermissionAbstract.Meta):
         abstract = False
@@ -152,7 +137,7 @@ class BigGroupObjectPermission(GroupObjectPermissionAbstract):
 
 class BigUserObjectPermission(UserObjectPermissionAbstract):
     # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
-    id = models.BigAutoField(editable=False, unique=True, primary_key=True)
+    id: models.BigAutoField = models.BigAutoField(editable=False, unique=True, primary_key=True)
 
     class Meta(UserObjectPermissionAbstract.Meta):
         abstract = False

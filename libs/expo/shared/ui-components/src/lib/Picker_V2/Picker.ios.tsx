@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import FormFieldLabel from '../FormFieldLabel';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 import { IPickerProps } from './Picker';
@@ -20,6 +21,8 @@ export default function Picker(props: IPickerProps) {
     selectNoneLabel,
     items,
     label,
+    required,
+    disabled,
     mb,
     mt,
     my,
@@ -60,8 +63,10 @@ export default function Picker(props: IPickerProps) {
   return (
     <>
       <View>
-        {label && <TextRegular ml="xs">{label}</TextRegular>}
+        {label && <FormFieldLabel label={label} required={required} />}
+
         <Pressable
+          disabled={disabled}
           onPress={() => setIsModalVisible(true)}
           style={[
             styles.selectButton,
@@ -79,14 +84,20 @@ export default function Picker(props: IPickerProps) {
         >
           <TextRegular
             color={
-              selectedDisplayValue || selectedValue
+              disabled
+                ? Colors.NEUTRAL_LIGHT
+                : selectedDisplayValue || selectedValue
                 ? Colors.PRIMARY_EXTRA_DARK
                 : Colors.NEUTRAL
             }
           >
             {selectedDisplayValue || selectedValue || placeholder}
           </TextRegular>
-          <ChevronLeftIcon size="sm" rotate={'-90deg'} />
+          <ChevronLeftIcon
+            size="sm"
+            rotate={'-90deg'}
+            color={disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+          />
         </Pressable>
         {error && (
           <TextRegular size="sm" mt="xxs" color={Colors.ERROR}>

@@ -2,9 +2,9 @@ services:
   better-angels:
     image: ${MONOREPO_IMAGE}:${DOCKER_TAG}
     volumes:
-      - .git:/workspace/.git
+      - ${GITHUB_WORKSPACE}:/workspace # Mounts the full repository
       - ${HOME}/.docker/:/home/betterangels/.docker/
-    working_dir: /workspace
+      - ${GITHUB_EVENT_PATH}:${GITHUB_EVENT_PATH}:ro
     # Pass in GitHub Actions Envs into the container
     environment:
       - AWS_REGION
@@ -18,10 +18,14 @@ services:
       - IMAGE_TAG_PREFIX
       - DOCKER_TAG
       - GITHUB_ACTIONS
+      - GITHUB_EVENT_PATH
       - GITHUB_REPOSITORY
+      - GITHUB_TOKEN
       - MONOREPO_IMAGE
       - AWS_DEFAULT_REGION
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
       - AWS_SESSION_TOKEN
       - INPUT_GITHUB_TOKEN
+      # App Secrets
+      - VITE_SHELTER_GOOGLE_MAPS_API_KEY

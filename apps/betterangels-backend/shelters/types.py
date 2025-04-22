@@ -4,9 +4,9 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.types import OrganizationType
-from common.graphql.types import PhoneNumberScalar
+from common.graphql.types import LatitudeScalar, LongitudeScalar, PhoneNumberScalar
 from django.contrib.gis.db.models.functions import Distance
-from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import Point, Polygon
 from django.contrib.gis.measure import D
 from django.db.models import Prefetch, Q, QuerySet
 from shelters.enums import (
@@ -168,7 +168,15 @@ class FunderType:
 class GeolocationInput:
     latitude: float
     longitude: float
-    range_in_miles: Optional[int]
+    range_in_miles: Optional[int] = None
+
+
+@strawberry.input
+class MapBoundsInput:
+    west_lng: LongitudeScalar
+    north_lat: LatitudeScalar
+    east_lng: LongitudeScalar
+    south_lat: LatitudeScalar
 
 
 @strawberry.input
@@ -196,6 +204,26 @@ class ShelterFilter:
         return queryset.filter(**filters).distinct(), Q()
 
     @strawberry_django.filter_field
+    def map_bounds(
+        self,
+        queryset: QuerySet,
+        value: Optional[MapBoundsInput],
+        prefix: str,
+    ) -> Tuple[QuerySet[Shelter], Q]:
+        if not value:
+            return queryset, Q()
+
+        bbox: tuple = (
+            value.west_lng,
+            value.north_lat,
+            value.east_lng,
+            value.south_lat,
+        )
+        polygon = Polygon.from_bbox(bbox)
+
+        return queryset.filter(geolocation__contained=polygon), Q()
+
+    @strawberry_django.filter_field
     def geolocation(
         self, queryset: QuerySet, value: Optional[GeolocationInput], prefix: str
     ) -> Tuple[QuerySet[Shelter], Q]:
@@ -204,16 +232,10 @@ class ShelterFilter:
 
         reference_point = Point(x=value.longitude, y=value.latitude, srid=4326)
 
-        queryset = (
-            queryset.filter(
-                geolocation__dwithin=(
-                    reference_point,
-                    D(mi=value.range_in_miles),
-                )
-            )
-            .annotate(distance=Distance("geolocation", reference_point))
-            .order_by("distance")
-        )
+        queryset = queryset.annotate(distance=Distance("geolocation", reference_point)).order_by("distance")
+
+        if value.range_in_miles:
+            queryset = queryset.filter(geolocation__dwithin=(reference_point, D(mi=value.range_in_miles)))
 
         return queryset, Q()
 
@@ -255,7 +277,7 @@ class ShelterType:
     overall_rating: auto
     parking: List[ParkingType]
     pets: List[PetType]
-    phone: PhoneNumberScalar  # type: ignore
+    phone: Optional[PhoneNumberScalar]  # type: ignore
     program_fees: Optional[str]
     room_styles: List[RoomStyleType]
     room_styles_other: auto

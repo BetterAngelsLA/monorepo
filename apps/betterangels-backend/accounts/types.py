@@ -2,6 +2,7 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
+from common.graphql.types import NonBlankString
 from organizations.models import Organization
 from strawberry import ID, auto
 
@@ -27,7 +28,13 @@ class LoginInput:
     password: str
 
 
-@strawberry_django.type(Organization)
+@strawberry_django.ordering.order(Organization)
+class OrganizationOrder:
+    name: auto
+    id: auto
+
+
+@strawberry_django.type(Organization, order=OrganizationOrder)  # type: ignore[literal-required]
 class OrganizationType:
     id: ID
     name: auto
@@ -35,10 +42,10 @@ class OrganizationType:
 
 @strawberry_django.type(User)
 class UserBaseType:
-    first_name: auto
-    last_name: auto
-    middle_name: auto
-    email: auto
+    first_name: Optional[NonBlankString]
+    last_name: Optional[NonBlankString]
+    middle_name: Optional[NonBlankString]
+    email: Optional[NonBlankString]
 
 
 @strawberry_django.type(User)
