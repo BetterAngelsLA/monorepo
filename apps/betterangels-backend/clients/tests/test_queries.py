@@ -79,7 +79,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayCaseManager": self.client_profile_1_contact_2["name"],
             "displayGender": "Male",
-            "displayPronouns": "He/Him/His",
+            "displayPronouns": "He/Him",
             "docReadyDocuments": [self.client_profile_1_document_1, self.client_profile_1_document_2],
             "email": "todd@pblivin.com",
             "eyeColor": EyeColorEnum.BROWN.name,

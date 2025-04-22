@@ -127,9 +127,9 @@ class PreferredCommunicationEnum(models.TextChoices):
 
 
 class PronounEnum(models.TextChoices):
-    HE_HIM_HIS = "he_him_his", _("He/Him/His")
-    SHE_HER_HERS = "she_her_hers", _("She/Her/Hers")
-    THEY_THEM_THEIRS = "they_them_theirs", _("They/Them/Theirs")
+    HE_HIM_HIS = "he_him_his", _("He/Him")
+    SHE_HER_HERS = "she_her_hers", _("She/Her")
+    THEY_THEM_THEIRS = "they_them_theirs", _("They/Them")
     OTHER = "other", _("Other")
 
 
