@@ -1935,7 +1935,7 @@ export type SocialMediaProfileInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   platform?: InputMaybe<SocialMediaEnum>;
-  platformUserId?: InputMaybe<Scalars['NonBlankString']['input']>;
+  platformUserId: Scalars['NonBlankString']['input'];
 };
 
 export type SocialMediaProfileType = {
@@ -1943,7 +1943,7 @@ export type SocialMediaProfileType = {
   clientProfile: DjangoModelType;
   id?: Maybe<Scalars['ID']['output']>;
   platform: SocialMediaEnum;
-  platformUserId?: Maybe<Scalars['NonBlankString']['output']>;
+  platformUserId: Scalars['NonBlankString']['output'];
 };
 
 export type SocialMediaProfileTypeOffsetPaginated = {
