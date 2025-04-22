@@ -71,7 +71,8 @@
     "expo-dev-client": "*",
     "expo-constants": "*",
     "expo-application": "*",
-    "@react-navigation/native-stack": "*"
+    "@react-navigation/native-stack": "*",
+    "expo-updates": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",
