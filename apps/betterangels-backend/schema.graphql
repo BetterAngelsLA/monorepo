@@ -322,8 +322,6 @@ input ClientProfileImportRecordsBulkInput {
 }
 
 input ClientProfileOrder {
-  user_FirstName: Ordering
-  user_LastName: Ordering
   firstName: Ordering
   lastName: Ordering
   id: Ordering
@@ -377,7 +375,7 @@ type ClientProfileType {
   docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  user: UserType!
+  user: UserType
   displayCaseManager: String!
 }
 
@@ -454,7 +452,6 @@ input CreateClientProfileInput {
   householdMembers: [ClientHouseholdMemberInput!]
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
-  user: CreateUserInput
 }
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
@@ -473,7 +470,6 @@ input CreateNoteInput {
   team: SelahTeamEnum
   publicDetails: String
   privateDetails: String
-  client: ID
   clientProfile: ID
   isSubmitted: Boolean
   interactedAt: DateTime
@@ -516,7 +512,6 @@ input CreateServiceRequestInput {
   service: ServiceEnum!
   status: ServiceRequestStatusEnum!
   serviceOther: String
-  client: ID
   clientProfile: ID
 }
 
@@ -526,18 +521,10 @@ input CreateTaskInput {
   title: String!
   status: TaskStatusEnum!
   dueBy: DateTime
-  client: ID
   clientProfile: ID
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
-
-input CreateUserInput {
-  firstName: NonBlankString
-  lastName: NonBlankString
-  middleName: NonBlankString
-  email: NonBlankString
-}
 
 """Date (isoformat)"""
 scalar Date
@@ -699,7 +686,7 @@ type GeneralServiceType {
 input GeolocationInput {
   latitude: Float!
   longitude: Float!
-  rangeInMiles: Int
+  rangeInMiles: Int = null
 }
 
 enum HairColorEnum {
@@ -840,6 +827,8 @@ enum LanguageEnum {
   VIETNAMESE
 }
 
+scalar LatitudeScalar
+
 enum LivingSituationEnum {
   HOUSING
   OPEN_AIR
@@ -867,12 +856,21 @@ input LoginInput {
   password: String!
 }
 
+scalar LongitudeScalar
+
 input MagicLinkInput {
   email: String!
 }
 
 type MagicLinkResponse {
   message: String!
+}
+
+input MapBoundsInput {
+  westLng: LongitudeScalar!
+  northLat: LatitudeScalar!
+  eastLng: LongitudeScalar!
+  southLat: LatitudeScalar!
 }
 
 enum MaritalStatusEnum {
@@ -967,7 +965,6 @@ type NoteDataImportType {
 }
 
 input NoteFilter {
-  client: ID
   clientProfile: ID
   createdBy: ID
   isSubmitted: Boolean
@@ -1009,7 +1006,6 @@ type NoteType {
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   publicDetails: String!
   isSubmitted: Boolean!
-  client: UserType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
@@ -1163,10 +1159,8 @@ type Query {
   currentUser: UserType!
   caseworkerOrganizations(order: OrganizationOrder, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
-  clientProfilesPaginated(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocuments(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  clientDocumentsPaginated(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   hmisProfile(pk: ID!): HmisProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
   hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
@@ -1176,7 +1170,6 @@ type Query {
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notesPaginated(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   interactionAuthors(filters: InteractionAuthorFilter, order: InteractionAuthorOrder, pagination: OffsetPaginationInput): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
@@ -1357,7 +1350,6 @@ type ServiceRequestType {
   status: ServiceRequestStatusEnum!
   dueBy: DateTime
   completedOn: DateTime
-  client: UserType
   clientProfile: ClientProfileType
   createdBy: UserType!
   createdAt: DateTime!
@@ -1384,6 +1376,7 @@ input ShelterFilter {
   NOT: ShelterFilter
   DISTINCT: Boolean
   properties: ShelterPropertyInput
+  mapBounds: MapBoundsInput
   geolocation: GeolocationInput
 }
 
@@ -1582,7 +1575,6 @@ type TaskType {
   status: TaskStatusEnum!
   dueBy: DateTime
   dueByGroup: DueByGroupEnum!
-  client: UserType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
@@ -1648,7 +1640,6 @@ input UpdateClientProfileInput {
   householdMembers: [ClientHouseholdMemberInput!]
   phoneNumbers: [PhoneNumberInput!]
   socialMediaProfiles: [SocialMediaProfileInput!]
-  user: UpdateUserInput
 }
 
 union UpdateClientProfilePayload = ClientProfileType | OperationInfo
