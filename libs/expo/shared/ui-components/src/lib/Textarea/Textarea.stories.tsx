@@ -24,7 +24,7 @@ export default TextareaMeta;
 
 type TextareaStory = ComponentStory<typeof Textarea>;
 
-export const Basic: TextareaStory = (args, context) => {
+export const Basic: TextareaStory = () => {
   const { control } = useForm();
   return <Textarea label="Test" height={200} name="test" control={control} />;
 };

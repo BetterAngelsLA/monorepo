@@ -23,7 +23,7 @@ export default SelectMeta;
 
 type SelectStory = ComponentStory<typeof Select>;
 
-export const Basic: SelectStory = (args, context) => {
+export const Basic: SelectStory = () => {
   return (
     <Select
       label="Test"

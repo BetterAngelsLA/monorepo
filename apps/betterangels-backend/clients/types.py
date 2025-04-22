@@ -246,6 +246,7 @@ class ClientHouseholdMemberType(ClientHouseholdMemberBaseType):
 @strawberry_django.input(ClientHouseholdMember, partial=True)
 class ClientHouseholdMemberInput(ClientHouseholdMemberBaseType):
     id: auto
+    client_profile: ID | None
 
 
 @strawberry_django.type(ClientProfile)
