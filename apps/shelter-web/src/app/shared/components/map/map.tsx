@@ -114,45 +114,43 @@ export function Map(props: TMap) {
 
   const mapCss = ['h-12', 'w-full', className];
   return (
-    <div>
-      <GoogleMap
-        mapId={mapId}
-        className={mergeCss(mapCss)}
-        disableDefaultUI={disableDefaultUI}
-        gestureHandling={gestureHandling}
-        onCameraChanged={handleCameraChange}
-        onIdle={() => setShowSearchButton(true)}
-        {...cameraProps}
-      >
-        {markers.map((marker) => (
-          <AdvancedMarker
-            key={marker.id}
-            position={toGoogleLatLng(marker.position)}
-            zIndex={99}
-            onClick={marker.onClick}
-          >
-            <MapPinIcon className="h-10" type="secondary" />
-          </AdvancedMarker>
-        ))}
+    <GoogleMap
+      mapId={mapId}
+      className={mergeCss(mapCss)}
+      disableDefaultUI={disableDefaultUI}
+      gestureHandling={gestureHandling}
+      onCameraChanged={handleCameraChange}
+      onIdle={() => setShowSearchButton(true)}
+      {...cameraProps}
+    >
+      {markers.map((marker) => (
+        <AdvancedMarker
+          key={marker.id}
+          position={toGoogleLatLng(marker.position)}
+          zIndex={99}
+          onClick={marker.onClick}
+        >
+          <MapPinIcon className="h-10" type="secondary" />
+        </AdvancedMarker>
+      ))}
 
-        {showSearchButton && onSearchMapArea && (
-          <MapControl position={ControlPosition.TOP_CENTER}>
-            <SearchMapAreaButton
-              onClick={() => onSearchMapArea(map?.getBounds())}
-            />
-          </MapControl>
-        )}
-
-        <MapControl position={controlsPosition}>
-          <div className="mr-4">
-            <ZoomControls />
-            <CurrentLocationBtn
-              className="mt-5"
-              onLocationSucccess={onCurrentLocationChange}
-            />
-          </div>
+      {showSearchButton && onSearchMapArea && (
+        <MapControl position={ControlPosition.TOP_CENTER}>
+          <SearchMapAreaButton
+            onClick={() => onSearchMapArea(map?.getBounds())}
+          />
         </MapControl>
-      </GoogleMap>
-    </div>
+      )}
+
+      <MapControl position={controlsPosition}>
+        <div className="mr-4">
+          <ZoomControls />
+          <CurrentLocationBtn
+            className="mt-5"
+            onLocationSucccess={onCurrentLocationChange}
+          />
+        </div>
+      </MapControl>
+    </GoogleMap>
   );
 }
