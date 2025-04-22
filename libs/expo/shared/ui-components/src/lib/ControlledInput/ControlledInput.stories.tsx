@@ -24,7 +24,7 @@ export default ControlledInputMeta;
 
 type ControlledInputStory = ComponentStory<typeof ControlledInput>;
 
-export const Basic: ControlledInputStory = () => {
+export const Basic: ControlledInputStory = (args, context) => {
   const { control } = useForm();
   return <ControlledInput label="Test" name="test" control={control} />;
 };

@@ -2,7 +2,7 @@ import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { ClientProfileQuery } from './__generated__/Client.generated';
 
 export default function Services({
-  client: _client,
+  client,
 }: {
   client: ClientProfileQuery | undefined;
 }) {

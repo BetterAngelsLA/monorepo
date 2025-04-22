@@ -24,7 +24,7 @@ export default BasicTextareaMeta;
 
 type BasicTextareaStory = ComponentStory<typeof BasicTextarea>;
 
-export const Basic: BasicTextareaStory = () => {
+export const Basic: BasicTextareaStory = (args, context) => {
   const [value, setValue] = useState('');
   return (
     <BasicTextarea

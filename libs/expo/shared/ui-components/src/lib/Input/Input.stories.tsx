@@ -24,7 +24,7 @@ export default InputMeta;
 
 type InputStory = ComponentStory<typeof Input>;
 
-export const Basic: InputStory = () => {
+export const Basic: InputStory = (args, context) => {
   const { control } = useForm();
   return <Input label="Test" height={56} name="test" control={control} />;
 };

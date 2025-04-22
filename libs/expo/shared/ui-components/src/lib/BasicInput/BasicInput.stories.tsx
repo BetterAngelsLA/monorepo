@@ -24,7 +24,7 @@ export default BasicInputMeta;
 
 type BasicInputStory = ComponentStory<typeof BasicInput>;
 
-export const Basic: BasicInputStory = () => {
+export const Basic: BasicInputStory = (args, context) => {
   const [value, setValue] = useState('');
   return (
     <BasicInput

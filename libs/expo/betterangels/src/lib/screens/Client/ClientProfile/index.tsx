@@ -14,7 +14,7 @@ interface ProfileProps {
 }
 
 const ClientProfile = forwardRef<ProfileRef, ProfileProps>(
-  ({ client: _client }, ref) => {
+  ({ client }, ref) => {
     const scrollRef = useRef<ScrollView>(null);
     const viewRef = useRef<View>(null);
 

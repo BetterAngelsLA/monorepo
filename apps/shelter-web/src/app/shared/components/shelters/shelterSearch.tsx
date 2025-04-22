@@ -21,6 +21,7 @@ type TProps = {
 
 export function ShelterSearch(props: TProps) {
   const { mapBoundsFilter } = props;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_modal, setModal] = useAtom(modalAtom);
   const [location, setLocation] = useAtom(locationAtom);
   const [queryFilters, setQueryFilters] = useState<TShelterPropertyFilters>();

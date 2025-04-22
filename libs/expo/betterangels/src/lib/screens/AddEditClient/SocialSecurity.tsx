@@ -16,7 +16,7 @@ interface ISocialSecurityProps {
 //   ssn3: '',
 // };
 
-export default function SocialSecurity(_props: ISocialSecurityProps) {
+export default function SocialSecurity(props: ISocialSecurityProps) {
   return null;
 }
 //   const { expanded, setExpanded, client, setClient, scrollRef } = props;

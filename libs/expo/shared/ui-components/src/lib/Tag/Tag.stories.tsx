@@ -23,6 +23,6 @@ export default TagMeta;
 
 type TagStory = ComponentStory<typeof Tag>;
 
-export const Basic: TagStory = () => {
+export const Basic: TagStory = (args, context) => {
   return <Tag onRemove={() => console.log('Removed')} value="Tag 1" />;
 };
