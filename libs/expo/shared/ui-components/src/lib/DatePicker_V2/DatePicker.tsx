@@ -140,7 +140,9 @@ export function DatePicker(props: IDatePickerProps) {
 
               onChange(date);
 
-              Platform.OS !== 'ios' && setPickerVisible(false);
+              if (Platform.OS !== 'ios') {
+                setPickerVisible(false);
+              }
             }}
             style={styles.dateTimePicker}
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
@@ -197,7 +199,6 @@ const styles = StyleSheet.create({
     paddingRight: 38,
     fontFamily: 'Poppins-Regular',
     fontSize: FontSizes.md.fontSize,
-    borderColor: 'red',
   },
   dateTimePicker: {
     backgroundColor: Colors.WHITE,
