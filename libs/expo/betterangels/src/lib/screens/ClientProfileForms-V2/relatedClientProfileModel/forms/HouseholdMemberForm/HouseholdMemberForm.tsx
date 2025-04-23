@@ -1,7 +1,7 @@
 import { Regex } from '@monorepo/expo/shared/static';
 import {
   ControlledInput,
-  DatePicker,
+  DatePicker_V2 as DatePicker,
   Form,
   SingleSelect,
   TextRegular,
@@ -187,19 +187,19 @@ export function HouseholdMemberForm(props: TProps) {
           <Controller
             name="dateOfBirth"
             control={control}
-            render={({ field }) => (
+            render={({ field: { value, onChange } }) => (
               <DatePicker
-                label="Date of birth"
+                label="Date of Birth"
                 disabled={isLoading}
                 maxDate={new Date()}
                 pattern={Regex.date}
                 mode="date"
                 format="MM/dd/yyyy"
-                placeholder="Enter date of Birth"
+                placeholder="Enter date of birth"
                 minDate={new Date('1900-01-01')}
                 mt="xs"
-                value={field.value}
-                setValue={(date) => setValue('dateOfBirth', date)}
+                value={value}
+                onChange={onChange}
               />
             )}
           />
