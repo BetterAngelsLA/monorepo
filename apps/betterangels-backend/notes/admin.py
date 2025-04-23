@@ -34,7 +34,7 @@ class MoodAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
 
     def note_client(self, obj: Mood) -> str:
-        return str(obj.note.client)
+        return str(obj.note.client_profile)
 
     def created_by(self, obj: Mood) -> str:
         return str(obj.note.created_by)
@@ -79,8 +79,6 @@ class NoteResource(resources.ModelResource):
     def dehydrate_client_id(self, note: Note) -> int | str:
         if client_profile := note.client_profile:
             return str(client_profile.id)
-        if note.client and hasattr(note.client, "client_profile"):
-            return note.client.client_profile.id
         else:
             return "MISSING CLIENT ID"
 

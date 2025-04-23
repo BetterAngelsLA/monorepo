@@ -10,7 +10,13 @@ import {
   useApiLoadingStatus,
   useMap,
 } from '@vis.gl/react-google-maps';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import {
   DEFAULT_GESTURE_HANDLING,
@@ -18,6 +24,7 @@ import {
   LA_COUNTY_CENTER,
 } from './constants.maps';
 import { CurrentLocationBtn } from './controls/currentLocationBtn';
+import { SearchMapAreaButton } from './controls/searchMapAreaButton';
 import { ZoomControls } from './controls/zoomControls';
 import { TLatLng, TMapGestureHandling, TMapZoom, TMarker } from './types.maps';
 import { toGoogleLatLng } from './utils/toGoogleLatLng';
@@ -30,7 +37,10 @@ type TMap = {
   gestureHandling?: TMapGestureHandling;
   disableDefaultUI?: boolean;
   controlsPosition?: ControlPosition;
+  showSearchButton?: boolean;
+  setShowSearchButton: Dispatch<SetStateAction<boolean>>;
   onCenterSelect?: (center: TLatLng) => void;
+  onSearchMapArea?: (bounds?: google.maps.LatLngBounds) => void;
   markers?: TMarker[];
 };
 
@@ -43,10 +53,12 @@ export function Map(props: TMap) {
     gestureHandling = DEFAULT_GESTURE_HANDLING,
     disableDefaultUI = true,
     controlsPosition = ControlPosition.INLINE_END_BLOCK_END,
+    showSearchButton = false,
+    setShowSearchButton,
     onCenterSelect,
+    onSearchMapArea,
     markers = [],
   } = props;
-
   const map = useMap();
   const mapApiStatus = useApiLoadingStatus();
 
@@ -121,7 +133,6 @@ export function Map(props: TMap) {
   }, [map]);
 
   const mapCss = ['h-12', 'w-full', className];
-
   return (
     <GoogleMap
       mapId={mapId}
@@ -129,6 +140,7 @@ export function Map(props: TMap) {
       disableDefaultUI={disableDefaultUI}
       gestureHandling={gestureHandling}
       onCameraChanged={handleCameraChange}
+      onIdle={() => setShowSearchButton(true)}
       {...cameraProps}
     >
       {userLocation && (
@@ -146,6 +158,14 @@ export function Map(props: TMap) {
           <MapPinIcon className="h-10" type="secondary" />
         </AdvancedMarker>
       ))}
+
+      {showSearchButton && onSearchMapArea && (
+        <MapControl position={ControlPosition.TOP_CENTER}>
+          <SearchMapAreaButton
+            onClick={() => onSearchMapArea(map?.getBounds())}
+          />
+        </MapControl>
+      )}
 
       <MapControl position={controlsPosition}>
         <div className="mr-4">

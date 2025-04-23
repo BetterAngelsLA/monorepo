@@ -9,7 +9,7 @@ export default function OperationHours() {
         <h3 className="font-semibold">Operation Hours</h3>
       </div>
       {notAvailable ? (
-        <p>Not Available. Contact the institute.</p>
+        <p>Not Available. Contact the institution.</p>
       ) : (
         <>
           <div className="flex items-center gap-2">
