@@ -123,7 +123,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayCaseManager": "Not Assigned",
             "displayGender": "genderqueer",
-            "displayPronouns": "She/Her/Hers",
+            "displayPronouns": "She/Her",
             "hmisProfiles": expected_hmis_profiles,
             "householdMembers": expected_household_members,
             "phoneNumbers": expected_phone_numbers,
