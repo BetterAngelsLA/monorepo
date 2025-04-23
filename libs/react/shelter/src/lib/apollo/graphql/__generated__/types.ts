@@ -559,6 +559,8 @@ export type CreateServiceRequestInput = {
 
 export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
+export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
+
 export type CreateTaskInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;
@@ -589,6 +591,8 @@ export type DeleteMoodPayload = DeletedObjectType | OperationInfo;
 export type DeleteNotePayload = NoteType | OperationInfo;
 
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
+
+export type DeleteSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type DeleteTaskPayload = DeletedObjectType | OperationInfo;
 
@@ -969,6 +973,7 @@ export type Mutation = {
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
   createNoteTask: CreateNoteTaskPayload;
   createServiceRequest: CreateServiceRequestPayload;
+  createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
   deleteClientContact: DeleteClientContactPayload;
   deleteClientDocument: DeleteClientDocumentPayload;
@@ -979,6 +984,7 @@ export type Mutation = {
   deleteMood: DeleteMoodPayload;
   deleteNote: DeleteNotePayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
+  deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
   generateMagicLink: MagicLinkResponse;
   googleAuth: AuthResponse;
@@ -998,6 +1004,7 @@ export type Mutation = {
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
   updateServiceRequest: UpdateServiceRequestPayload;
+  updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
   updateTaskLocation: UpdateTaskLocationPayload;
 };
@@ -1073,6 +1080,11 @@ export type MutationCreateServiceRequestArgs = {
 };
 
 
+export type MutationCreateSocialMediaProfileArgs = {
+  data: SocialMediaProfileInput;
+};
+
+
 export type MutationCreateTaskArgs = {
   data: CreateTaskInput;
 };
@@ -1114,6 +1126,11 @@ export type MutationDeleteNoteArgs = {
 
 
 export type MutationDeleteServiceRequestArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteSocialMediaProfileArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -1205,6 +1222,11 @@ export type MutationUpdateNoteLocationArgs = {
 
 export type MutationUpdateServiceRequestArgs = {
   data: UpdateServiceRequestInput;
+};
+
+
+export type MutationUpdateSocialMediaProfileArgs = {
+  data: SocialMediaProfileInput;
 };
 
 
@@ -1317,10 +1339,6 @@ export type OffsetPaginationInfo = {
 export type OffsetPaginationInput = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: Scalars['Int']['input'];
-};
-
-export type OneToManyInput = {
-  set?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type OperationInfo = {
@@ -1465,6 +1483,8 @@ export type Query = {
   notes: NoteTypeOffsetPaginated;
   shelter: ShelterType;
   shelters: ShelterTypeOffsetPaginated;
+  socialMediaProfile: SocialMediaProfileType;
+  socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
 };
 
 
@@ -1559,6 +1579,16 @@ export type QueryShelterArgs = {
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
   order?: InputMaybe<ShelterOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QuerySocialMediaProfileArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QuerySocialMediaProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1902,10 +1932,10 @@ export enum SocialMediaEnum {
 }
 
 export type SocialMediaProfileInput = {
-  clientProfile?: InputMaybe<OneToManyInput>;
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   platform?: InputMaybe<SocialMediaEnum>;
-  platformUserId?: InputMaybe<Scalars['String']['input']>;
+  platformUserId?: InputMaybe<Scalars['NonBlankString']['input']>;
 };
 
 export type SocialMediaProfileType = {
@@ -1913,7 +1943,16 @@ export type SocialMediaProfileType = {
   clientProfile: DjangoModelType;
   id?: Maybe<Scalars['ID']['output']>;
   platform: SocialMediaEnum;
-  platformUserId: Scalars['String']['output'];
+  platformUserId: Scalars['NonBlankString']['output'];
+};
+
+export type SocialMediaProfileTypeOffsetPaginated = {
+  __typename?: 'SocialMediaProfileTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<SocialMediaProfileType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export enum SpecialSituationRestrictionChoices {
@@ -2076,6 +2115,8 @@ export type UpdateServiceRequestInput = {
 };
 
 export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
+
+export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type UpdateTaskInput = {
   dueBy?: InputMaybe<Scalars['DateTime']['input']>;

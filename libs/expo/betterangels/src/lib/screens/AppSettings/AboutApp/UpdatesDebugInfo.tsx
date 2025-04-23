@@ -1,6 +1,5 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
-  Button,
   ExpandableContainer,
   TextBold,
   TextRegular,
@@ -44,17 +43,8 @@ export function UpdatesDebugInfo() {
     fetchUpdate();
   }, []);
 
-  // TOOD: remove after testing ErrorCrashView via ErrorBoundary in _layout.
-  // Using state as click handler errors will not bubble up to ErrorBoundary.
-  const [shouldCrash, setShouldCrash] = useState(false);
   const [lastDismissedTs, setLastDismissedTs] = useState('');
   const [lastUpdatedTs, setLastUpdatedTs] = useState('');
-
-  useEffect(() => {
-    if (shouldCrash) {
-      throw new Error('Fake app crash');
-    }
-  }, [shouldCrash]);
 
   useEffect(() => {
     async function updateFromStorage() {
@@ -101,23 +91,13 @@ export function UpdatesDebugInfo() {
           </TextRegular>
         </View>
       </ExpandableContainer>
-
-      {/* TODO: remove after testing Crash Error screen */}
-      <View style={{ marginTop: 24 }}>
-        <Button
-          variant="negative"
-          title="Crash App"
-          onPress={() => setShouldCrash(true)}
-          accessibilityHint="crashes app."
-        />
-      </View>
     </View>
   );
 }
 
 function formatTs(ts?: string) {
   try {
-    return format(new Date(ts || ''), 'MM/dd/yyyy hh:mm:ss');
+    return format(new Date(parseInt(ts || '')), 'MM/dd/yyyy hh:mm:ss');
   } catch (e) {
     return 'n/a';
   }

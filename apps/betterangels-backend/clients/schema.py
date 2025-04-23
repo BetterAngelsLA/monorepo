@@ -19,6 +19,7 @@ from clients.permissions import (
     ClientProfileImportRecordPermissions,
     ClientProfilePermissions,
     HmisProfilePermissions,
+    SocialMediaProfilePermissions,
 )
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -59,6 +60,8 @@ from .types import (
     HmisProfileInput,
     HmisProfileType,
     ImportClientProfileInput,
+    SocialMediaProfileInput,
+    SocialMediaProfileType,
     UpdateClientProfileInput,
 )
 
@@ -365,6 +368,14 @@ class Query:
         extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
     )
 
+    social_media_profile: SocialMediaProfileType = strawberry_django.field(
+        extensions=[HasRetvalPerm(SocialMediaProfilePermissions.VIEW)],
+    )
+
+    social_media_profiles: OffsetPaginated[SocialMediaProfileType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(SocialMediaProfilePermissions.VIEW)],
+    )
+
     # Data Import
     @strawberry_django.offset_paginated(extensions=[HasPerm(ClientProfileImportRecordPermissions.VIEW)])
     def bulk_client_profile_import_records(
@@ -522,6 +533,21 @@ class Mutation:
     delete_hmis_profile: HmisProfileType = mutations.delete(
         DeleteDjangoObjectInput,
         extensions=[HasRetvalPerm(perms=HmisProfilePermissions.DELETE)],
+    )
+
+    create_social_media_profile: SocialMediaProfileType = mutations.create(
+        SocialMediaProfileInput,
+        extensions=[HasPerm(perms=SocialMediaProfilePermissions.ADD)],
+    )
+
+    update_social_media_profile: SocialMediaProfileType = mutations.update(
+        SocialMediaProfileInput,
+        extensions=[HasRetvalPerm(perms=SocialMediaProfilePermissions.CHANGE)],
+    )
+
+    delete_social_media_profile: SocialMediaProfileType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[HasRetvalPerm(perms=SocialMediaProfilePermissions.DELETE)],
     )
 
     @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])
