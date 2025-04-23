@@ -19,10 +19,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: >-
-          ${{ github.event_name == 'push' && github.ref == 'refs/heads/main'
-              && '["preview","production"]'
-              || '["preview"]' }}
+      environment: >-
+        ${{ fromJson(github.event_name == 'push' && github.ref == 'refs/heads/main'
+            && '{"environment":["preview","production"]}'
+            || '{"environment":["preview"]}') }}
 
     runs-on: ubuntu-latest
     environment: ${{ matrix.environment }}
