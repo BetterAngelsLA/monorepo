@@ -1,5 +1,3 @@
-// HouseholdMemeberForm.tsx
-
 import { Regex } from '@monorepo/expo/shared/static';
 import {
   ControlledInput,
@@ -10,23 +8,29 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { extractExtensionErrors } from '../../../../../apollo';
+import { applyManualFormErrors } from '../../../../../errors';
 import { useSnackbar } from '../../../../../hooks';
+import {
+  ClientProfileSectionEnum,
+  getViewClientProfileRoute,
+} from '../../../../../screenRouting';
 import {
   clientHouseholdMemberEnumDisplay,
   enumDisplayGender,
 } from '../../../../../static';
 import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
-import { HmisProfileDeleteBtn } from '../HmisProfileDeleteBtn';
+import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
+import { HouseholdMemeberDeleteBtn } from '../HouseholdMemeberDeleteBtn';
+import {
+  CreateClientHouseholdMemberMutation,
+  UpdateClientHouseholdMemberMutation,
+  useCreateClientHouseholdMemberMutation,
+  useUpdateClientHouseholdMemberMutation,
+} from './__generated__/householdMember.generated';
 import { defaultFormState, toFormState } from './toFormState';
-// import {
-//   CreateHmisProfileMutation,
-//   UpdateHmisProfileMutation,
-//   useCreateHmisProfileMutation,
-//   useUpdateHmisProfileMutation,
-// } from './__generated__/hmisProfile.generated';
-// import { defaultFormState, toFormState } from './toFormState';
-// import { THmisProfileFormState } from './types';
+import { THouseholdMemberFormState } from './types';
 
 type TProps = {
   clientProfile?: TClientProfile;
@@ -36,12 +40,11 @@ type TProps = {
 export function HouseholdMemeberForm(props: TProps) {
   const { clientProfile, relationId } = props;
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const router = useRouter();
+  const [updateHouseholdMember] = useUpdateClientHouseholdMemberMutation();
+  const [createHouseholdMember] = useCreateClientHouseholdMemberMutation();
   const { showSnackbar } = useSnackbar();
-  //   const [updateHmisProfile] = useUpdateHmisProfileMutation();
-  //   const [createHmisProfile] = useCreateHmisProfileMutation();
+  const [isLoading, setIsLoading] = useState(false);
 
   const {
     control,
@@ -50,8 +53,12 @@ export function HouseholdMemeberForm(props: TProps) {
     setError,
     setValue,
     clearErrors,
-  } = useForm<any>({
+  } = useForm<THouseholdMemberFormState>({
     defaultValues: defaultFormState,
+  });
+
+  const [reFetchClientProfile] = useGetClientProfileLazyQuery({
+    fetchPolicy: 'network-only',
   });
 
   useEffect(() => {
@@ -72,101 +79,86 @@ export function HouseholdMemeberForm(props: TProps) {
 
   const isEditMode = !!relationId;
 
-  // const onSubmit: SubmitHandler<THouseholdMemberFormState> = async (
-  //   formState: any
-  // ) => {
-  //   if (!formIsValid) {
-  //     return;
-  //   }
+  const onSubmit: SubmitHandler<THouseholdMemberFormState> = async (
+    formState: any
+  ) => {
+    if (!formIsValid) {
+      return;
+    }
 
-  //   const validFormState = formState as Required<THouseholdMemberFormState>;
+    const apiInputs = toApiInputs(formState);
 
-  //   try {
-  //     setIsLoading(true);
+    if (!apiInputs) {
+      return;
+    }
 
-  //     const mutationVariables = {
-  //       variables: {
-  //         data: {
-  //           clientProfile: clientProfile.id,
-  //           ...validFormState,
-  //           ...(isEditMode ? { id: relationId } : {}),
-  //         },
-  //       },
-  //     };
+    try {
+      setIsLoading(true);
 
-  //     const mutation = isEditMode ? updateHmisProfile : createHmisProfile;
-  //     const mutationKey = isEditMode
-  //       ? 'updateHmisProfile'
-  //       : 'createHmisProfile';
+      const mutationVariables = {
+        variables: {
+          data: {
+            clientProfile: clientProfile.id,
+            ...apiInputs,
+            ...(isEditMode ? { id: relationId } : {}),
+          },
+        },
+      };
 
-  //     const response = await mutation({
-  //       ...mutationVariables,
-  //       errorPolicy: 'all',
-  //     });
+      const mutation = isEditMode
+        ? updateHouseholdMember
+        : createHouseholdMember;
 
-  //     const extensionErrors = extractExtensionErrors(response);
+      const response = await mutation({
+        ...mutationVariables,
+        errorPolicy: 'all',
+      });
 
-  //     if (extensionErrors) {
-  //       applyManualFormErrors(extensionErrors, setError);
+      const extensionErrors = extractExtensionErrors(response);
 
-  //       return;
-  //     }
+      if (extensionErrors) {
+        applyManualFormErrors(extensionErrors, setError);
 
-  //     const responseData = response.data;
+        return;
+      }
 
-  //     if (!responseData) {
-  //       throw new Error('Missing HMIS mutation response data');
-  //     }
+      const responseData = response.data;
 
-  //     const uniquenessError = hasUniquenessError(responseData, mutationKey);
+      if (!responseData) {
+        throw new Error('Missing Household member mutation response data');
+      }
 
-  //     if (uniquenessError) {
-  //       setError('hmisId', { type: 'manual', message: uniquenessError });
+      if (!isSuccessMutationResponse(responseData)) {
+        throw new Error('invalid response');
+      }
 
-  //       return;
-  //     }
+      // refetch only on success
+      await reFetchClientProfile({
+        variables: { id: clientProfile.id },
+      });
 
-  //     if (!isSuccessMutationResponse(responseData)) {
-  //       throw new Error('invalid response');
-  //     }
+      const returnRoute = getViewClientProfileRoute({
+        id: clientProfile.id,
+        openCard: ClientProfileSectionEnum.Household,
+      });
 
-  //     // refetch only on success
-  //     await mutation({
-  //       ...mutationVariables,
-  //       refetchQueries: [
-  //         {
-  //           query: ClientProfileDocument,
-  //           variables: {
-  //             id: clientProfile.id,
-  //           },
-  //         },
-  //       ],
-  //       errorPolicy: 'all',
-  //     });
+      router.replace(returnRoute);
+    } catch (error) {
+      console.error('Error during mutation:', error);
 
-  //     const returnRoute = getViewClientProfileRoute({
-  //       id: clientProfile.id,
-  //       openCard: ClientProfileSectionEnum.HmisIds,
-  //     });
-
-  //     router.replace(returnRoute);
-  //   } catch (error) {
-  //     console.error('Error during mutation:', error);
-
-  //     showSnackbar({
-  //       message: 'Something went wrong. Please try again.',
-  //       type: 'error',
-  //     });
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+      showSnackbar({
+        message: 'Something went wrong. Please try again.',
+        type: 'error',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <Form.Page
       actionProps={{
-        // onSubmit: handleSubmit(onSubmit),
-        onSubmit: () => {},
+        onSubmit: handleSubmit(onSubmit),
         onLeftBtnClick: router.back,
         disabled: isLoading,
       }}
@@ -180,37 +172,17 @@ export function HouseholdMemeberForm(props: TProps) {
           <Controller
             name="relationshipToClient"
             control={control}
-            // rules={{ required: 'Type of HMIS ID is required' }}
             render={({ field }) => (
               <SingleSelect
                 disabled={isLoading}
                 label="Type of Household Member"
-                placeholder="Select type of Household Member"
+                placeholder="Select type of household member"
                 items={Object.entries(clientHouseholdMemberEnumDisplay).map(
                   ([value, displayValue]) => ({ value, displayValue })
                 )}
                 selectedValue={field.value}
                 onChange={(value) => field.onChange(value)}
-                // error={errors.agency ? errors.agency.message : undefined}
-              />
-            )}
-          />
-
-          <Controller
-            name="gender"
-            control={control}
-            // rules={{ required: 'Type of HMIS ID is required' }}
-            render={({ field }) => (
-              <SingleSelect
-                disabled={isLoading}
-                label="Gender"
-                placeholder="Select Gender"
-                items={Object.entries(enumDisplayGender).map(
-                  ([value, displayValue]) => ({ value, displayValue })
-                )}
-                selectedValue={field.value}
-                onChange={(value) => field.onChange(value)}
-                // error={errors.agency ? errors.agency.message : undefined}
+                error={errors.relationshipToClient?.message}
               />
             )}
           />
@@ -223,22 +195,35 @@ export function HouseholdMemeberForm(props: TProps) {
             placeholder={'Enter name'}
             onDelete={() => {
               setValue('name', '');
-              // clearErrors('name');
+              clearErrors('name');
             }}
-            // error={!!errors.name}
-            // errorMessage={errors.hmisId?.message}
-            // rules={{
-            //   required: 'HMIS ID is required',
-            // }}
+            errorMessage={errors.name?.message}
+          />
+
+          <Controller
+            name="gender"
+            control={control}
+            render={({ field }) => (
+              <SingleSelect
+                disabled={isLoading}
+                label="Gender"
+                placeholder="Select Gender"
+                items={Object.entries(enumDisplayGender).map(
+                  ([value, displayValue]) => ({ value, displayValue })
+                )}
+                selectedValue={field.value}
+                onChange={(value) => field.onChange(value)}
+                error={errors.gender?.message}
+              />
+            )}
           />
 
           <Controller
             name="dateOfBirth"
             control={control}
-            // rules={{ required: 'Type of HMIS ID is required' }}
             render={({ field }) => (
               <DatePicker
-                label="Date of Birth"
+                label="Date of birth"
                 disabled={isLoading}
                 maxDate={new Date()}
                 pattern={Regex.date}
@@ -256,7 +241,7 @@ export function HouseholdMemeberForm(props: TProps) {
       </Form>
 
       {isEditMode && (
-        <HmisProfileDeleteBtn
+        <HouseholdMemeberDeleteBtn
           relationId={relationId}
           clientProfileId={clientProfile.id}
           setIsLoading={setIsLoading}
@@ -267,52 +252,45 @@ export function HouseholdMemeberForm(props: TProps) {
   );
 }
 
-// function isSuccessMutationResponse(
-//   responseData: UpdateHmisProfileMutation | CreateHmisProfileMutation
-// ): boolean {
-//   const modelTypename = 'HmisProfileType';
+function isSuccessMutationResponse(
+  responseData:
+    | UpdateClientHouseholdMemberMutation
+    | CreateClientHouseholdMemberMutation
+): boolean {
+  const modelTypename = 'ClientHouseholdMemberType';
 
-//   if ('updateHmisProfile' in responseData) {
-//     const typename = responseData.updateHmisProfile.__typename;
+  if ('updateClientHouseholdMember' in responseData) {
+    const typename = responseData.updateClientHouseholdMember.__typename;
 
-//     if (typename === modelTypename) {
-//       return true;
-//     }
-//   }
+    if (typename === modelTypename) {
+      return true;
+    }
+  }
 
-//   if ('createHmisProfile' in responseData) {
-//     const typename = responseData.createHmisProfile.__typename;
+  if ('createClientHouseholdMember' in responseData) {
+    const typename = responseData.createClientHouseholdMember.__typename;
 
-//     if (typename === modelTypename) {
-//       return true;
-//     }
-//   }
+    if (typename === modelTypename) {
+      return true;
+    }
+  }
 
-//   return false;
-// }
+  return false;
+}
 
-// function hasUniquenessError(
-//   response: UpdateHmisProfileMutation | CreateHmisProfileMutation,
-//   key: 'updateHmisProfile' | 'createHmisProfile'
-// ): string | null {
-//   const operationInfo = extractOperationInfo(response, key);
+function toApiInputs(values: THouseholdMemberFormState) {
+  const { name, gender, dateOfBirth, relationshipToClient } = values || {};
 
-//   const operationMessages = operationInfo?.messages;
+  if (!name && !gender && !dateOfBirth && !relationshipToClient) {
+    return null;
+  }
 
-//   if (!operationMessages?.length) {
-//     return null;
-//   }
+  // convert dateOfBirth to date string and remove time
+  if ('dateOfBirth' in values && values.dateOfBirth) {
+    values.dateOfBirth = values.dateOfBirth
+      .toISOString()
+      .split('T')[0] as unknown as Date;
+  }
 
-//   const uniquenessServerErrorMessage =
-//     'Hmis profile with this Hmis id and Agency already exists.';
-
-//   const uniquenessError = operationMessages.find(
-//     (m) => m.message === uniquenessServerErrorMessage
-//   );
-
-//   if (uniquenessError) {
-//     return 'This HMIS ID is already associated with another client.';
-//   }
-
-//   return null;
-// }
+  return values;
+}

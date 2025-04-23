@@ -1,7 +1,5 @@
-import {
-  TClientProfile,
-  TClientProfileHouseholdMemeber,
-} from '../../../../Client/ClientProfile_V2/types';
+import { parseToDate } from '@monorepo/expo/shared/ui-components';
+import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
 import { THouseholdMemberFormState } from './types';
 
 export const defaultFormState: THouseholdMemberFormState = {
@@ -11,23 +9,10 @@ export const defaultFormState: THouseholdMemberFormState = {
   relationshipToClient: undefined,
 };
 
-const hello: TClientProfileHouseholdMemeber | null = null;
-
 type TProps = {
   clientProfile?: TClientProfile;
   relationId?: string;
 };
-
-// {
-//     "__typename": "ClientHouseholdMemberType",
-//     "dateOfBirth": null,
-//     "gender": null,
-//     "genderOther": null,
-//     "id": "3",
-//     "name": "",
-//     "relationshipToClient": "AUNT",
-//     "relationshipToClientOther": null
-// }
 
 export function toFormState(props: TProps): THouseholdMemberFormState {
   const { clientProfile, relationId } = props;
@@ -43,10 +28,15 @@ export function toFormState(props: TProps): THouseholdMemberFormState {
   const { name, gender, dateOfBirth, relationshipToClient } =
     householdMember || {};
 
+  const dobAsDate = parseToDate({
+    date: dateOfBirth,
+    inputFormat: 'yyyy-MM-dd',
+  });
+
   return {
     name: name || '',
     gender: gender || undefined,
-    dateOfBirth,
+    dateOfBirth: dobAsDate,
     relationshipToClient: relationshipToClient || undefined,
   };
 }

@@ -46,8 +46,6 @@ export function HouseholdMemebersView(props: TProps) {
         // console.log(householdMember);
         // console.log();
 
-        // TClientProfileHouseholdMemeber
-
         return (
           <ViewItemContainer
             key={idx}
