@@ -8,9 +8,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { extractExtensionErrors } from '../../../../../apollo';
-import { applyManualFormErrors } from '../../../../../errors';
+import { Controller, useForm } from 'react-hook-form';
 import { useSnackbar } from '../../../../../hooks';
 import {
   ClientProfileSectionEnum,
@@ -24,11 +22,10 @@ import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
 import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import { HouseholdMemeberDeleteBtn } from '../HouseholdMemeberDeleteBtn';
 import {
-  CreateClientHouseholdMemberMutation,
-  UpdateClientHouseholdMemberMutation,
   useCreateClientHouseholdMemberMutation,
   useUpdateClientHouseholdMemberMutation,
 } from './__generated__/householdMember.generated';
+import { submitHouseholdMemberForm } from './submitHouseholdMemberForm';
 import { defaultFormState, toFormState } from './toFormState';
 import { THouseholdMemberFormState } from './types';
 
@@ -41,8 +38,6 @@ export function HouseholdMemeberForm(props: TProps) {
   const { clientProfile, relationId } = props;
 
   const router = useRouter();
-  const [updateHouseholdMember] = useUpdateClientHouseholdMemberMutation();
-  const [createHouseholdMember] = useCreateClientHouseholdMemberMutation();
   const { showSnackbar } = useSnackbar();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -57,10 +52,6 @@ export function HouseholdMemeberForm(props: TProps) {
     defaultValues: defaultFormState,
   });
 
-  const [reFetchClientProfile] = useGetClientProfileLazyQuery({
-    fetchPolicy: 'network-only',
-  });
-
   useEffect(() => {
     const { name, dateOfBirth, gender, relationshipToClient } = toFormState({
       clientProfile,
@@ -73,78 +64,49 @@ export function HouseholdMemeberForm(props: TProps) {
     setValue('relationshipToClient', relationshipToClient);
   }, [clientProfile, relationId, setValue]);
 
+  const [createHouseholdMember] = useCreateClientHouseholdMemberMutation();
+  const [updateHouseholdMember] = useUpdateClientHouseholdMemberMutation();
+  const [reFetchClientProfile] = useGetClientProfileLazyQuery({
+    fetchPolicy: 'network-only',
+  });
+
   if (!clientProfile) {
     return null;
   }
 
+  const clientProfileId = clientProfile.id;
+
   const isEditMode = !!relationId;
 
-  const onSubmit: SubmitHandler<THouseholdMemberFormState> = async (
-    formState: THouseholdMemberFormState
-  ) => {
+  const onSubmit = async (formData: THouseholdMemberFormState) => {
     if (!formIsValid) {
-      return;
-    }
-
-    const apiInputs = toApiInputs(formState);
-
-    if (!apiInputs) {
       return;
     }
 
     try {
       setIsLoading(true);
 
-      const mutationVariables = {
-        variables: {
-          data: {
-            clientProfile: clientProfile.id,
-            ...apiInputs,
-            ...(isEditMode ? { id: relationId } : {}),
-          },
-        },
-      };
-
-      const mutation = isEditMode
-        ? updateHouseholdMember
-        : createHouseholdMember;
-
-      const response = await mutation({
-        ...mutationVariables,
-        errorPolicy: 'all',
+      await submitHouseholdMemberForm({
+        formData,
+        clientProfileId,
+        relationId,
+        setError,
+        createHouseholdMember,
+        updateHouseholdMember,
       });
 
-      const extensionErrors = extractExtensionErrors(response);
-
-      if (extensionErrors) {
-        applyManualFormErrors(extensionErrors, setError);
-
-        return;
-      }
-
-      const responseData = response.data;
-
-      if (!responseData) {
-        throw new Error('Missing Household member mutation response data');
-      }
-
-      if (!isSuccessMutationResponse(responseData)) {
-        throw new Error('invalid response');
-      }
-
-      // refetch only on success
       await reFetchClientProfile({
-        variables: { id: clientProfile.id },
+        variables: { id: clientProfileId },
       });
 
-      const returnRoute = getViewClientProfileRoute({
-        id: clientProfile.id,
-        openCard: ClientProfileSectionEnum.Household,
-      });
-
-      router.replace(returnRoute);
-    } catch (error) {
-      console.error('Error during mutation:', error);
+      router.replace(
+        getViewClientProfileRoute({
+          id: clientProfileId,
+          openCard: ClientProfileSectionEnum.Household,
+        })
+      );
+    } catch (e) {
+      console.error('Error during mutation:', e);
 
       showSnackbar({
         message: 'Something went wrong. Please try again.',
@@ -243,54 +205,11 @@ export function HouseholdMemeberForm(props: TProps) {
       {isEditMode && (
         <HouseholdMemeberDeleteBtn
           relationId={relationId}
-          clientProfileId={clientProfile.id}
+          clientProfileId={clientProfileId}
           setIsLoading={setIsLoading}
           disabled={isLoading}
         />
       )}
     </Form.Page>
   );
-}
-
-function isSuccessMutationResponse(
-  responseData:
-    | UpdateClientHouseholdMemberMutation
-    | CreateClientHouseholdMemberMutation
-): boolean {
-  const modelTypename = 'ClientHouseholdMemberType';
-
-  if ('updateClientHouseholdMember' in responseData) {
-    const typename = responseData.updateClientHouseholdMember.__typename;
-
-    if (typename === modelTypename) {
-      return true;
-    }
-  }
-
-  if ('createClientHouseholdMember' in responseData) {
-    const typename = responseData.createClientHouseholdMember.__typename;
-
-    if (typename === modelTypename) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function toApiInputs(values: THouseholdMemberFormState) {
-  const { name, gender, dateOfBirth, relationshipToClient } = values || {};
-
-  if (!name && !gender && !dateOfBirth && !relationshipToClient) {
-    return null;
-  }
-
-  // convert dateOfBirth to date string and remove time
-  if ('dateOfBirth' in values && values.dateOfBirth) {
-    values.dateOfBirth = values.dateOfBirth
-      .toISOString()
-      .split('T')[0] as unknown as Date;
-  }
-
-  return values;
 }
