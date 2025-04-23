@@ -1,4 +1,4 @@
-import { Card, formatWebsite, isWebsite } from '@monorepo/react/components';
+import { Card, isWebsite, toValidWebURL } from '@monorepo/react/components';
 import {
   BedIcon,
   CallIcon,
@@ -19,12 +19,12 @@ function renderLabel(label?: string | null) {
   if (isWebsite(label)) {
     return (
       <a
-        href={formatWebsite(label)}
+        href={toValidWebURL(label)}
         target="_blank"
         rel="noopener noreferrer"
         className="underline"
       >
-        {label}
+        Website
       </a>
     );
   }
