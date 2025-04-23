@@ -177,7 +177,8 @@
     "cross-spawn": ">=7.0.5",
     "metro-resolver": "^0.81.0",
     "metro-config": "^0.81.0",
-    "micromatch": ">=4.0.8"
+    "micromatch": ">=4.0.8",
+    "ws": ">=8.17.1"
   },
   "engines": {
     "node": "22.14.0"
