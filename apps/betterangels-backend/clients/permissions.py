@@ -30,6 +30,13 @@ class HmisProfilePermissions(models.TextChoices):
     ADD = "clients.add_hmisprofile", _("Can add hmisprofile")
 
 
+class SocialMediaProfilePermissions(models.TextChoices):
+    VIEW = "clients.view_socialmediaprofile", _("Can view socialmediaprofile")
+    CHANGE = "clients.change_socialmediaprofile", _("Can change socialmediaprofile")
+    DELETE = "clients.delete_socialmediaprofile", _("Can delete socialmediaprofile")
+    ADD = "clients.add_socialmediaprofile", _("Can add socialmediaprofile")
+
+
 class ClientProfileImportRecordPermissions(models.TextChoices):
     VIEW = "clients.view_clientprofileimportrecord", _("Can view client profile import record")
     CHANGE = "clients.change_clientprofileimportrecord", _("Can change client profile import record")
