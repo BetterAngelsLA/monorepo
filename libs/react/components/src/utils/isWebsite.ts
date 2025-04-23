@@ -1,7 +1,9 @@
-export default function isWebsite(value: string | undefined): boolean {
-  if (!value) return false;
+import validator from 'validator';
 
-  const isDomainLike = value.includes('.') && !value.includes(' ');
-
-  return value.startsWith('http') || value.startsWith('www.') || isDomainLike;
+export default function isWebsite(value: string) {
+  return validator.isURL(value, {
+    protocols: ['http', 'https'],
+    require_protocol: false,
+    require_tld: true,
+  });
 }

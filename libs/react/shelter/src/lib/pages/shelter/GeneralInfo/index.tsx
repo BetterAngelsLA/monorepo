@@ -12,7 +12,10 @@ import { ViewShelterQuery } from '../__generated__/shelter.generated';
 import GeneralServices from './GeneralServices';
 
 function renderLabel(label?: string | null) {
-  if (!label) return 'Not Available';
+  if (!label) {
+    return 'Not Available';
+  }
+
   if (isWebsite(label)) {
     return (
       <a
