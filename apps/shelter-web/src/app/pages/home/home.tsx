@@ -57,7 +57,7 @@ export function Home() {
               shelters.find((shelter) => shelter.id === markerId) as TShelter
             }
           />
-          <div onClick={() => navigate(`/shelter/${markerId}`)} className="font-semibold text-sm text-center cursor-pointer pt-6 md:pt-10 text-[#216BF8] ">
+          <div onClick={() => navigate(`/shelter/${markerId}`)} className="font-semibold text-sm text-center cursor-pointer pt-6 md:pt-10 text-[#216BF8] active:text-[#1650C1]">
             View Details
           </div>
         </>
