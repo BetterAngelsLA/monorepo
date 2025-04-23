@@ -71,6 +71,7 @@ export function HouseholdMemeberDeleteBtn(props: TProps) {
     <DeleteButton
       disabled={loading || disabled}
       deleteableItemName={deleteableItemName}
+      deleteableItemNameBody={deleteableItemName.toLowerCase()}
       onDelete={onDelete}
     />
   );

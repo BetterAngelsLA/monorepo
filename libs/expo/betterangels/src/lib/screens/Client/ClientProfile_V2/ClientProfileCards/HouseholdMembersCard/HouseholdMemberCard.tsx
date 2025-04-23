@@ -13,11 +13,12 @@ import { TClientProfileHouseholdMemeber } from '../../types';
 
 type TProps = {
   member?: TClientProfileHouseholdMemeber;
+  showAllFields?: boolean;
   style?: ViewStyle;
 };
 
 export function HouseholdMemberCard(props: TProps) {
-  const { member, style } = props;
+  const { member, showAllFields, style } = props;
 
   if (!member) {
     return null;
@@ -54,6 +55,7 @@ export function HouseholdMemberCard(props: TProps) {
         }
         items={content}
         compact
+        showAll={!!showAllFields}
       />
     </View>
   );

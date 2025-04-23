@@ -46,7 +46,10 @@ export function HouseholdMemebersView(props: TProps) {
             key={idx}
             onClickEdit={() => router.navigate(editRoute)}
           >
-            <HouseholdMemberCard member={householdMember} />
+            <HouseholdMemberCard
+              member={householdMember}
+              showAllFields={true}
+            />
           </ViewItemContainer>
         );
       })}
