@@ -25,7 +25,7 @@ import {
   useCreateClientHouseholdMemberMutation,
   useUpdateClientHouseholdMemberMutation,
 } from './__generated__/householdMember.generated';
-import { submitHouseholdMemberForm } from './submitHouseholdMemberForm';
+import { processHouseholdMemberForm } from './processHouseholdMemberForm';
 import { defaultFormState, toFormState } from './toFormState';
 import { THouseholdMemberFormState } from './types';
 
@@ -86,7 +86,7 @@ export function HouseholdMemeberForm(props: TProps) {
     try {
       setIsLoading(true);
 
-      await submitHouseholdMemberForm({
+      const processed = await processHouseholdMemberForm({
         formData,
         clientProfileId,
         relationId,
@@ -94,6 +94,10 @@ export function HouseholdMemeberForm(props: TProps) {
         createHouseholdMember,
         updateHouseholdMember,
       });
+
+      if (!processed) {
+        return;
+      }
 
       await reFetchClientProfile({
         variables: { id: clientProfileId },

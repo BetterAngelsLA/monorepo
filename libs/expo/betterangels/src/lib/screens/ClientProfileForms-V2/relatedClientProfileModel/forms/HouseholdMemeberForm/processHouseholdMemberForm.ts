@@ -1,3 +1,4 @@
+import { FetchResult } from '@apollo/client';
 import { UseFormSetError } from 'react-hook-form';
 import { extractExtensionErrors } from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
@@ -18,7 +19,9 @@ type TProps = {
   updateHouseholdMember: UpdateClientHouseholdMemberMutationFn;
 };
 
-export async function submitHouseholdMemberForm(props: TProps) {
+export async function processHouseholdMemberForm(
+  props: TProps
+): Promise<boolean> {
   const {
     formData,
     clientProfileId,
@@ -30,7 +33,7 @@ export async function submitHouseholdMemberForm(props: TProps) {
   const apiInputs = toApiInputs(formData);
 
   if (!apiInputs) {
-    return;
+    return false;
   }
 
   const mutationFn = relationId ? updateHouseholdMember : createHouseholdMember;
@@ -51,20 +54,14 @@ export async function submitHouseholdMemberForm(props: TProps) {
   if (extensionErrors) {
     applyManualFormErrors(extensionErrors, setError);
 
-    return;
+    return false;
   }
 
-  const responseData = response.data;
-
-  if (!responseData) {
-    throw new Error('Missing Household member mutation response data');
+  if (!isSuccessMutationResponse(response)) {
+    throw new Error('invalid mutation response');
   }
 
-  if (!isSuccessMutationResponse(responseData)) {
-    throw new Error('invalid response');
-  }
-
-  return;
+  return true;
 }
 
 function toApiInputs(values: THouseholdMemberFormState) {
@@ -85,10 +82,16 @@ function toApiInputs(values: THouseholdMemberFormState) {
 }
 
 function isSuccessMutationResponse(
-  responseData:
-    | UpdateClientHouseholdMemberMutation
-    | CreateClientHouseholdMemberMutation
+  response: FetchResult<
+    UpdateClientHouseholdMemberMutation | CreateClientHouseholdMemberMutation
+  >
 ): boolean {
+  const responseData = response.data;
+
+  if (!responseData) {
+    return false;
+  }
+
   const modelTypename = 'ClientHouseholdMemberType';
 
   if ('updateClientHouseholdMember' in responseData) {
