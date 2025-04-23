@@ -34,7 +34,7 @@ type TProps = {
   relationId?: string;
 };
 
-export function HouseholdMemeberForm(props: TProps) {
+export function HouseholdMemberForm(props: TProps) {
   const { clientProfile, relationId } = props;
 
   const router = useRouter();
