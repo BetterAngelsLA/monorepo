@@ -25,7 +25,7 @@ interface IAccordionProps {
   mr?: TSpacing;
   expanded: string | undefined | null;
   setExpanded: () => void;
-  scrollRef?: RefObject<ScrollView>;
+  scrollRef?: RefObject<ScrollView | null>;
   bg?: string;
   borderWidth?: number;
   borderRadius?: number;

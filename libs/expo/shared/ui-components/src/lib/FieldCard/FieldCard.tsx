@@ -28,7 +28,7 @@ interface IFieldCardProps {
   setExpanded: () => void;
   info?: ReactNode;
   childHeight?: DimensionValue | undefined;
-  scrollRef?: RefObject<ScrollView>;
+  scrollRef?: RefObject<ScrollView | null>;
   overflow?: 'hidden' | 'visible' | 'scroll' | undefined;
 }
 
