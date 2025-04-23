@@ -41,11 +41,6 @@ export function HouseholdMemebersView(props: TProps) {
           section: ClientProfileSectionEnum.Household,
         });
 
-        // console.log();
-        // console.log('| -------------  householdMember  ------------- |');
-        // console.log(householdMember);
-        // console.log();
-
         return (
           <ViewItemContainer
             key={idx}

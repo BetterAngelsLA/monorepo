@@ -80,7 +80,7 @@ export function HouseholdMemeberForm(props: TProps) {
   const isEditMode = !!relationId;
 
   const onSubmit: SubmitHandler<THouseholdMemberFormState> = async (
-    formState: any
+    formState: THouseholdMemberFormState
   ) => {
     if (!formIsValid) {
       return;
