@@ -263,6 +263,7 @@ input ClientHouseholdMemberInput {
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID
+  clientProfile: ID
 }
 
 type ClientHouseholdMemberType {
@@ -275,6 +276,16 @@ type ClientHouseholdMemberType {
   id: ID!
   clientProfile: DjangoModelType!
   displayGender: String
+}
+
+type ClientHouseholdMemberTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [ClientHouseholdMemberType!]!
 }
 
 type ClientProfileDataImportType {
@@ -413,6 +424,8 @@ input CreateClientDocumentInput {
 
 union CreateClientDocumentPayload = ClientDocumentType | OperationInfo
 
+union CreateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo
+
 union CreateClientProfileDataImportPayload = ClientProfileDataImportType | OperationInfo
 
 input CreateClientProfileInput {
@@ -517,6 +530,8 @@ input CreateServiceRequestInput {
 
 union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
 
+union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
+
 input CreateTaskInput {
   title: String!
   status: TaskStatusEnum!
@@ -536,6 +551,8 @@ union DeleteClientContactPayload = ClientContactType | OperationInfo
 
 union DeleteClientDocumentPayload = ClientDocumentType | OperationInfo
 
+union DeleteClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo
+
 union DeleteClientProfilePayload = DeletedObjectType | OperationInfo
 
 union DeleteCurrentUserPayload = DeletedObjectType | OperationInfo
@@ -551,6 +568,8 @@ union DeleteMoodPayload = DeletedObjectType | OperationInfo
 union DeleteNotePayload = NoteType | OperationInfo
 
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
+
+union DeleteSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 union DeleteTaskPayload = DeletedObjectType | OperationInfo
 
@@ -917,12 +936,18 @@ type Mutation {
   generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
-  createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_hmisprofile"}], any: true)
-  updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_hmisprofile"}], any: true)
-  deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_hmisprofile"}], any: true)
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
   deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
+  createClientHouseholdMember(data: ClientHouseholdMemberInput!): CreateClientHouseholdMemberPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clienthouseholdmember"}], any: true)
+  updateClientHouseholdMember(data: ClientHouseholdMemberInput!): UpdateClientHouseholdMemberPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clienthouseholdmember"}], any: true)
+  deleteClientHouseholdMember(data: DeleteDjangoObjectInput!): DeleteClientHouseholdMemberPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clienthouseholdmember"}], any: true)
+  createHmisProfile(data: HmisProfileInput!): CreateHmisProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_hmisprofile"}], any: true)
+  updateHmisProfile(data: HmisProfileInput!): UpdateHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_hmisprofile"}], any: true)
+  deleteHmisProfile(data: DeleteDjangoObjectInput!): DeleteHmisProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_hmisprofile"}], any: true)
+  createSocialMediaProfile(data: SocialMediaProfileInput!): CreateSocialMediaProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_socialmediaprofile"}], any: true)
+  updateSocialMediaProfile(data: SocialMediaProfileInput!): UpdateSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_socialmediaprofile"}], any: true)
+  deleteSocialMediaProfile(data: DeleteDjangoObjectInput!): DeleteSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_socialmediaprofile"}], any: true)
   deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
@@ -1031,10 +1056,6 @@ type OffsetPaginationInfo {
 input OffsetPaginationInput {
   offset: Int! = 0
   limit: Int
-}
-
-input OneToManyInput {
-  set: ID
 }
 
 type OperationInfo {
@@ -1161,10 +1182,14 @@ type Query {
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocuments(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  hmisProfile(pk: ID!): HmisProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
-  hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
   clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
+  clientHouseholdMember(pk: ID!): ClientHouseholdMemberType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clienthouseholdmember"}], any: true)
+  clientHouseholdMembers(pagination: OffsetPaginationInput): ClientHouseholdMemberTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clienthouseholdmember"}], any: true)
+  hmisProfile(pk: ID!): HmisProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
+  hmisProfiles(pagination: OffsetPaginationInput): HmisProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_hmisprofile"}], any: true)
+  socialMediaProfile(pk: ID!): SocialMediaProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
+  socialMediaProfiles(pagination: OffsetPaginationInput): SocialMediaProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
@@ -1508,16 +1533,26 @@ enum SocialMediaEnum {
 
 input SocialMediaProfileInput {
   id: ID
-  clientProfile: OneToManyInput
+  clientProfile: ID
   platform: SocialMediaEnum
-  platformUserId: String
+  platformUserId: NonBlankString
 }
 
 type SocialMediaProfileType {
   id: ID
   clientProfile: DjangoModelType!
   platform: SocialMediaEnum!
-  platformUserId: String!
+  platformUserId: NonBlankString!
+}
+
+type SocialMediaProfileTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [SocialMediaProfileType!]!
 }
 
 enum SpecialSituationRestrictionChoices {
@@ -1602,6 +1637,8 @@ scalar UUID
 
 union UpdateClientContactPayload = ClientContactType | OperationInfo
 
+union UpdateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo
+
 input UpdateClientProfileInput {
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
@@ -1678,6 +1715,8 @@ input UpdateServiceRequestInput {
 }
 
 union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
+
+union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 input UpdateTaskInput {
   id: ID!

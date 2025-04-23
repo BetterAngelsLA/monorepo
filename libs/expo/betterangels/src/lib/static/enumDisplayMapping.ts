@@ -70,9 +70,9 @@ export const enumDisplayGender: { [key in GenderEnum]: string } = {
 };
 
 export const enumDisplayPronoun: { [key in PronounEnum]: string } = {
-  [PronounEnum.HeHimHis]: 'He/Him/His',
-  [PronounEnum.SheHerHers]: 'She/Her/Hers',
-  [PronounEnum.TheyThemTheirs]: 'They/Them/Theirs',
+  [PronounEnum.HeHimHis]: 'He/Him',
+  [PronounEnum.SheHerHers]: 'She/Her',
+  [PronounEnum.TheyThemTheirs]: 'They/Them',
   [PronounEnum.Other]: 'Other',
 };
 

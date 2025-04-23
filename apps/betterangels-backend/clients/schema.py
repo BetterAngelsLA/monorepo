@@ -15,9 +15,11 @@ from clients.models import (
 )
 from clients.permissions import (
     ClientContactPermissions,
+    ClientHouseholdMemberPermissions,
     ClientProfileImportRecordPermissions,
     ClientProfilePermissions,
     HmisProfilePermissions,
+    SocialMediaProfilePermissions,
 )
 from common.constants import CALIFORNIA_ID_REGEX, EMAIL_REGEX
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -45,6 +47,8 @@ from .types import (
     ClientContactInput,
     ClientContactType,
     ClientDocumentType,
+    ClientHouseholdMemberInput,
+    ClientHouseholdMemberType,
     ClientProfileDataImportType,
     ClientProfileImportRecordsBulkInput,
     ClientProfileImportRecordType,
@@ -56,6 +60,8 @@ from .types import (
     HmisProfileInput,
     HmisProfileType,
     ImportClientProfileInput,
+    SocialMediaProfileInput,
+    SocialMediaProfileType,
     UpdateClientProfileInput,
 )
 
@@ -338,6 +344,22 @@ class Query:
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
+    client_contact: ClientContactType = strawberry_django.field(
+        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+    )
+
+    client_contacts: OffsetPaginated[ClientContactType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+    )
+
+    client_household_member: ClientHouseholdMemberType = strawberry_django.field(
+        extensions=[HasRetvalPerm(ClientHouseholdMemberPermissions.VIEW)],
+    )
+
+    client_household_members: OffsetPaginated[ClientHouseholdMemberType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(ClientHouseholdMemberPermissions.VIEW)],
+    )
+
     hmis_profile: HmisProfileType = strawberry_django.field(
         extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
     )
@@ -346,12 +368,12 @@ class Query:
         extensions=[HasRetvalPerm(HmisProfilePermissions.VIEW)],
     )
 
-    client_contact: ClientContactType = strawberry_django.field(
-        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+    social_media_profile: SocialMediaProfileType = strawberry_django.field(
+        extensions=[HasRetvalPerm(SocialMediaProfilePermissions.VIEW)],
     )
 
-    client_contacts: OffsetPaginated[ClientContactType] = strawberry_django.offset_paginated(
-        extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
+    social_media_profiles: OffsetPaginated[SocialMediaProfileType] = strawberry_django.offset_paginated(
+        extensions=[HasRetvalPerm(SocialMediaProfilePermissions.VIEW)],
     )
 
     # Data Import
@@ -468,6 +490,36 @@ class Mutation:
 
             return DeletedObjectType(id=client_profile_id)
 
+    create_client_contact: ClientContactType = mutations.create(
+        ClientContactInput,
+        extensions=[HasPerm(perms=ClientContactPermissions.ADD)],
+    )
+
+    update_client_contact: ClientContactType = mutations.update(
+        ClientContactInput,
+        extensions=[HasRetvalPerm(perms=ClientContactPermissions.CHANGE)],
+    )
+
+    delete_client_contact: ClientContactType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[HasRetvalPerm(perms=ClientContactPermissions.DELETE)],
+    )
+
+    create_client_household_member: ClientHouseholdMemberType = mutations.create(
+        ClientHouseholdMemberInput,
+        extensions=[HasPerm(perms=ClientHouseholdMemberPermissions.ADD)],
+    )
+
+    update_client_household_member: ClientHouseholdMemberType = mutations.update(
+        ClientHouseholdMemberInput,
+        extensions=[HasRetvalPerm(perms=ClientHouseholdMemberPermissions.CHANGE)],
+    )
+
+    delete_client_household_member: ClientHouseholdMemberType = mutations.delete(
+        DeleteDjangoObjectInput,
+        extensions=[HasRetvalPerm(perms=ClientHouseholdMemberPermissions.DELETE)],
+    )
+
     create_hmis_profile: HmisProfileType = mutations.create(
         HmisProfileInput,
         extensions=[HasPerm(perms=HmisProfilePermissions.ADD)],
@@ -483,19 +535,19 @@ class Mutation:
         extensions=[HasRetvalPerm(perms=HmisProfilePermissions.DELETE)],
     )
 
-    create_client_contact: ClientContactType = mutations.create(
-        ClientContactInput,
-        extensions=[HasPerm(perms=ClientContactPermissions.ADD)],
+    create_social_media_profile: SocialMediaProfileType = mutations.create(
+        SocialMediaProfileInput,
+        extensions=[HasPerm(perms=SocialMediaProfilePermissions.ADD)],
     )
 
-    update_client_contact: ClientContactType = mutations.update(
-        ClientContactInput,
-        extensions=[HasRetvalPerm(perms=ClientContactPermissions.CHANGE)],
+    update_social_media_profile: SocialMediaProfileType = mutations.update(
+        SocialMediaProfileInput,
+        extensions=[HasRetvalPerm(perms=SocialMediaProfilePermissions.CHANGE)],
     )
 
-    delete_client_contact: ClientContactType = mutations.delete(
+    delete_social_media_profile: SocialMediaProfileType = mutations.delete(
         DeleteDjangoObjectInput,
-        extensions=[HasRetvalPerm(perms=ClientContactPermissions.DELETE)],
+        extensions=[HasRetvalPerm(perms=SocialMediaProfilePermissions.DELETE)],
     )
 
     @strawberry_django.mutation(extensions=[HasPerm(AttachmentPermissions.ADD)])

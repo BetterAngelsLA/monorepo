@@ -18,11 +18,19 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
-from clients.models import ClientContact, ClientProfile, HmisProfile
+from clients.models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    HmisProfile,
+    SocialMediaProfile,
+)
 from clients.tests.utils import (
     ClientContactBaseTestCase,
+    ClientHouseholdMemberBaseTestCase,
     ClientProfileGraphQLBaseTestCase,
     HmisProfileBaseTestCase,
+    SocialMediaProfileBaseTestCase,
 )
 from common.models import Attachment
 from deepdiff import DeepDiff
@@ -117,7 +125,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayCaseManager": "Not Assigned",
             "displayGender": "genderqueer",
-            "displayPronouns": "She/Her/Hers",
+            "displayPronouns": "She/Her",
             "hmisProfiles": expected_hmis_profiles,
             "householdMembers": expected_household_members,
             "phoneNumbers": expected_phone_numbers,
@@ -481,50 +489,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profile.profile_photo.name, updated_photo_name)
 
 
-@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
-class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self._handle_user_login("org_1_case_manager_1")
-
-    def test_create_client_document(self) -> None:
-        file_content = b"Test client document content"
-        file_name = "test_client_document.txt"
-
-        expected_query_count = 16
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._create_client_document_fixture(
-                self.client_profile_1["id"],
-                ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-                file_content,
-                file_name,
-            )
-
-        client_document_id = response["data"]["createClientDocument"]["id"]
-        self.assertEqual(
-            response["data"]["createClientDocument"]["originalFilename"],
-            file_name,
-        )
-        self.assertIsNotNone(response["data"]["createClientDocument"]["file"]["name"])
-        self.assertTrue(
-            Attachment.objects.filter(id=client_document_id).exists(),
-            "The client document should have been created and persisted in the database.",
-        )
-
-    def test_delete_client_document(self) -> None:
-        client_document_id = self.client_profile_1_document_1["id"]
-        self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
-
-        expected_query_count = 17
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            self._delete_client_document_fixture(client_document_id)
-
-        self.assertFalse(
-            Attachment.objects.filter(id=client_document_id).exists(),
-            "The document should have been deleted from the database.",
-        )
-
-
 class ClientContactMutationTestCase(ClientContactBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -623,6 +587,69 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
             self.assertEqual(original_phone_number, updated_phone_number)
 
 
+class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_create_client_household_member_mutation(self) -> None:
+        variables = {
+            "clientProfile": self.client_profile_id,
+            "name": "Sam Smith",
+            "dateOfBirth": "2003-03-03",
+            "gender": GenderEnum.FEMALE.name,
+            "genderOther": None,
+            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClientOther": None,
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            client_household_member = self._create_client_household_member_fixture(variables)["data"][
+                "createClientHouseholdMember"
+            ]
+
+        expected_client_household_member = {"id": ANY, "displayGender": "Female", **variables}
+        expected_client_household_member.pop("clientProfile")
+
+        self.assertEqual(client_household_member, expected_client_household_member)
+
+        client_client_household_members = ClientProfile.objects.filter(id=self.client_profile_id).values_list(
+            "household_members", flat=True
+        )
+        self.assertIn(int(client_household_member["id"]), client_client_household_members)
+
+    def test_update_client_household_member_mutation(self) -> None:
+        variables = {
+            "id": self.client_household_member_1["id"],
+            "name": "Joey Doe",
+            "dateOfBirth": "2004-04-04",
+            "gender": GenderEnum.OTHER.name,
+            "genderOther": "gender queer",
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "fren",
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            client_household_member = self._update_client_household_member_fixture(variables)["data"][
+                "updateClientHouseholdMember"
+            ]
+
+        expected_client_household_member = {**variables, "displayGender": "gender queer"}
+
+        self.assertEqual(expected_client_household_member, client_household_member)
+
+    def test_delete_client_household_member_mutation(self) -> None:
+        variables = {"object": "ClientHouseholdMember", "object_id": self.client_household_member_1["id"]}
+
+        expected_query_count = 9
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._delete_fixture(**variables)
+
+        self.assertNotIn("messages", response["data"]["deleteClientHouseholdMember"])
+        self.assertFalse(ClientHouseholdMember.objects.filter(id=self.client_household_member_1["id"]).exists())
+
+
 class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -696,3 +723,125 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
             self.assertEqual(response["messages"][0]["message"], expected_error_message)
         else:
             self.assertEqual(response, variables)
+
+
+class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_create_social_media_profile_mutation(self) -> None:
+        variables = {
+            "platformUserId": "new social media id",
+            "platform": SocialMediaEnum.TWITTER.name,
+            "clientProfile": self.client_profile_id,
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            social_media_profile = self._create_social_media_profile_fixture(variables)["data"][
+                "createSocialMediaProfile"
+            ]
+
+        expected_social_media_profile = {**variables, "id": ANY}
+        expected_social_media_profile.pop("clientProfile")
+        self.assertEqual(social_media_profile, expected_social_media_profile)
+
+        client_social_media_profiles = ClientProfile.objects.filter(id=self.client_profile_id).values_list(
+            "social_media_profiles", flat=True
+        )
+        self.assertIn(int(social_media_profile["id"]), client_social_media_profiles)
+
+    def test_update_social_media_profile_mutation(self) -> None:
+        variables = {
+            "id": self.social_media_profile_1["id"],
+            "platformUserId": "social media id 1 updated",
+            "platform": SocialMediaEnum.WHATSAPP.name,
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            social_media_profile = self._update_social_media_profile_fixture(variables)["data"][
+                "updateSocialMediaProfile"
+            ]
+
+        self.assertEqual(variables, social_media_profile)
+
+    def test_delete_social_media_profile_mutation(self) -> None:
+        variables = {"object": "SocialMediaProfile", "object_id": self.social_media_profile_1["id"]}
+
+        expected_query_count = 9
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._delete_fixture(**variables)
+
+        self.assertNotIn("messages", response["data"]["deleteSocialMediaProfile"])
+        self.assertFalse(SocialMediaProfile.objects.filter(id=self.social_media_profile_1["id"]).exists())
+
+    @parametrize(
+        ("platform_user_id", "expected_error_message"),
+        [
+            (" ", "This field cannot be null."),
+            (None, "This field cannot be null."),
+        ],
+    )
+    def test_update_social_media_profile_mutation_validation(
+        self, platform_user_id: str | None, expected_error_message: str
+    ) -> None:
+        variables = {
+            "id": self.social_media_profile_1["id"],
+            "platformUserId": platform_user_id,
+            "platform": SocialMediaEnum.FACEBOOK.name,
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._update_social_media_profile_fixture(variables)["data"]["updateSocialMediaProfile"]
+
+        if expected_error_message:
+            self.assertEqual(len(response["messages"]), 1)
+            self.assertEqual(response["messages"][0]["message"], expected_error_message)
+        else:
+            self.assertEqual(response, variables)
+
+
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def test_create_client_document(self) -> None:
+        file_content = b"Test client document content"
+        file_name = "test_client_document.txt"
+
+        expected_query_count = 16
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._create_client_document_fixture(
+                self.client_profile_1["id"],
+                ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+                file_content,
+                file_name,
+            )
+
+        client_document_id = response["data"]["createClientDocument"]["id"]
+        self.assertEqual(
+            response["data"]["createClientDocument"]["originalFilename"],
+            file_name,
+        )
+        self.assertIsNotNone(response["data"]["createClientDocument"]["file"]["name"])
+        self.assertTrue(
+            Attachment.objects.filter(id=client_document_id).exists(),
+            "The client document should have been created and persisted in the database.",
+        )
+
+    def test_delete_client_document(self) -> None:
+        client_document_id = self.client_profile_1_document_1["id"]
+        self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
+
+        expected_query_count = 17
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            self._delete_client_document_fixture(client_document_id)
+
+        self.assertFalse(
+            Attachment.objects.filter(id=client_document_id).exists(),
+            "The document should have been deleted from the database.",
+        )

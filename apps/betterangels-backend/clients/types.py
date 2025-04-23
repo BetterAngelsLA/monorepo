@@ -184,17 +184,17 @@ class SocialMediaProfileBaseType:
     id: Optional[ID]
     client_profile: auto
     platform: auto
-    platform_user_id: auto
 
 
 @strawberry_django.type(SocialMediaProfile)
 class SocialMediaProfileType(SocialMediaProfileBaseType):
-    "See parent"
+    platform_user_id: NonBlankString
 
 
 @strawberry_django.input(SocialMediaProfile, partial=True)
 class SocialMediaProfileInput(SocialMediaProfileBaseType):
-    "See parent"
+    client_profile: ID | None
+    platform_user_id: NonBlankString | None
 
 
 @strawberry.input
@@ -246,6 +246,7 @@ class ClientHouseholdMemberType(ClientHouseholdMemberBaseType):
 @strawberry_django.input(ClientHouseholdMember, partial=True)
 class ClientHouseholdMemberInput(ClientHouseholdMemberBaseType):
     id: auto
+    client_profile: ID | None
 
 
 @strawberry_django.type(ClientProfile)
