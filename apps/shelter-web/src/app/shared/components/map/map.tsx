@@ -125,13 +125,11 @@ export function Map(props: TMap) {
         setGeolocationPermission(result.state);
         permissionStatus = result;
 
-        // Track changes
         result.onchange = () => {
           setGeolocationPermission(result.state);
         };
       });
 
-    // Cleanup on unmount
     return () => {
       if (permissionStatus) {
         permissionStatus.onchange = null;
