@@ -118,9 +118,14 @@ export function Map(props: TMap) {
 
   useEffect(() => {
     let permissionStatus: PermissionStatus;
+    const permissionQuery = navigator.permissoms;
 
-    navigator.permissions
-      ?.query({ name: 'geolocation' as PermissionName })
+    if (!permissionQuery) {
+      return;
+    }
+
+    permissionQuery
+      .query({ name: 'geolocation' as PermissionName })
       .then((result) => {
         setGeolocationPermission(result.state);
         permissionStatus = result;
