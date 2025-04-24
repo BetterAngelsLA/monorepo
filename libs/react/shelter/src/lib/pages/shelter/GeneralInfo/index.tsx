@@ -1,4 +1,9 @@
-import { Card, isWebsite, toValidWebURL } from '@monorepo/react/components';
+import {
+  Card,
+  isEmail,
+  isValidURL,
+  toValidWebURL,
+} from '@monorepo/react/components';
 import {
   BedIcon,
   CallIcon,
@@ -11,15 +16,22 @@ import parsePhoneNumber from 'libphonenumber-js';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
 import GeneralServices from './GeneralServices';
 
-function renderLabel(label?: string | null) {
-  if (!label) {
-    return 'Not Available';
+function renderLabel(label?: string | null): React.ReactNode {
+  if (!label) return 'Not Available';
+
+  if (isEmail(label)) {
+    return (
+      <a href={`mailto:${label}`} className="underline">
+        {label}
+      </a>
+    );
   }
 
-  if (isWebsite(label)) {
+  if (isValidURL(label)) {
+    const href = toValidWebURL(label);
     return (
       <a
-        href={toValidWebURL(label)}
+        href={href}
         target="_blank"
         rel="noopener noreferrer"
         className="underline"
@@ -28,6 +40,7 @@ function renderLabel(label?: string | null) {
       </a>
     );
   }
+
   return label;
 }
 

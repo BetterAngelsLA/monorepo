@@ -1,9 +1,8 @@
-import isWebsite from './isWebsite';
+import { isValidURL } from './isValidURL';
 
-export default function toValidWebURL(value: string): string {
-  if (isWebsite(value)) {
-    return value;
+export function toValidWebURL(value: string): string {
+  if (isValidURL(value)) {
+    return value.startsWith('http') ? value : `https://${value}`;
   }
-
-  return `https://${value}`;
+  return '';
 }
