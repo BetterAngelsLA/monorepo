@@ -68,7 +68,8 @@ export function Map(props: TMap) {
   });
   const [userLocation, setUserLocation] =
     useState<google.maps.LatLngLiteral | null>(null);
-  const [locationAllowed, setLocationAllowed] = useState(true);
+  const [geolocationPermission, setGeolocationPermission] =
+    useState<PermissionState | null>(null);
 
   useEffect(() => {
     console.info(`[map] loading status: ${mapApiStatus}`);
@@ -116,36 +117,43 @@ export function Map(props: TMap) {
   }
 
   useEffect(() => {
-    if (!map) return;
+    let permissionStatus: PermissionStatus;
 
     navigator.permissions
       ?.query({ name: 'geolocation' as PermissionName })
       .then((result) => {
-        if (result.state === 'denied') {
-          setLocationAllowed(false);
-          return;
-        }
+        setGeolocationPermission(result.state);
+        permissionStatus = result;
 
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            const newCenter = { lat: latitude, lng: longitude };
-            setUserLocation(newCenter);
-          },
-          (error) => {
-            console.error('Geolocation error', error);
-            setLocationAllowed(false);
-          },
-          { enableHighAccuracy: true }
-        );
-
+        // Track changes
         result.onchange = () => {
-          if (result.state === 'denied') {
-            setLocationAllowed(false);
-          }
+          setGeolocationPermission(result.state);
         };
       });
-  }, [map]);
+
+    // Cleanup on unmount
+    return () => {
+      if (permissionStatus) {
+        permissionStatus.onchange = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!map || geolocationPermission !== 'granted') return;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const newCenter = { lat: latitude, lng: longitude };
+        setUserLocation(newCenter);
+      },
+      (error) => {
+        console.error('Geolocation error', error);
+      },
+      { enableHighAccuracy: true }
+    );
+  }, [map, geolocationPermission]);
 
   const mapCss = ['h-12', 'w-full', className];
   return (
@@ -185,7 +193,7 @@ export function Map(props: TMap) {
       <MapControl position={controlsPosition}>
         <div className="mr-4">
           <ZoomControls />
-          {locationAllowed && (
+          {geolocationPermission !== 'denied' && (
             <CurrentLocationBtn
               className="mt-5"
               onLocationSuccess={handleCenterToUserLocation}
