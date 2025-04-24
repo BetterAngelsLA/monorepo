@@ -76,17 +76,6 @@ export function Map(props: TMap) {
   const handleCameraChange = useCallback(
     (event: MapCameraChangedEvent) => {
       setCameraProps(event.detail);
-      const { center } = event.detail;
-
-      if (center) {
-        sessionStorage.setItem(
-          'mapCenter',
-          JSON.stringify({
-            lat: center.lat,
-            lng: center.lng,
-          })
-        );
-      }
     },
     [map]
   );
