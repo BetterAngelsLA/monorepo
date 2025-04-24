@@ -68,6 +68,7 @@ export function Map(props: TMap) {
   });
   const [userLocation, setUserLocation] =
     useState<google.maps.LatLngLiteral | null>(null);
+  const [locationAllowed, setLocationAllowed] = useState(true);
 
   useEffect(() => {
     console.info(`[map] loading status: ${mapApiStatus}`);
@@ -117,19 +118,33 @@ export function Map(props: TMap) {
   useEffect(() => {
     if (!map) return;
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const newCenter = { lat: latitude, lng: longitude };
-        setUserLocation(newCenter);
-      },
-      (error) => {
-        console.error('Geolocation error', error);
-      },
-      {
-        enableHighAccuracy: true,
-      }
-    );
+    navigator.permissions
+      ?.query({ name: 'geolocation' as PermissionName })
+      .then((result) => {
+        if (result.state === 'denied') {
+          setLocationAllowed(false);
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            const newCenter = { lat: latitude, lng: longitude };
+            setUserLocation(newCenter);
+          },
+          (error) => {
+            console.error('Geolocation error', error);
+            setLocationAllowed(false);
+          },
+          { enableHighAccuracy: true }
+        );
+
+        result.onchange = () => {
+          if (result.state === 'denied') {
+            setLocationAllowed(false);
+          }
+        };
+      });
   }, [map]);
 
   const mapCss = ['h-12', 'w-full', className];
@@ -170,10 +185,12 @@ export function Map(props: TMap) {
       <MapControl position={controlsPosition}>
         <div className="mr-4">
           <ZoomControls />
-          <CurrentLocationBtn
-            className="mt-5"
-            onLocationSucccess={handleCenterToUserLocation}
-          />
+          {locationAllowed && (
+            <CurrentLocationBtn
+              className="mt-5"
+              onLocationSucccess={handleCenterToUserLocation}
+            />
+          )}
         </div>
       </MapControl>
     </GoogleMap>
