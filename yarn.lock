@@ -5049,6 +5049,7 @@ __metadata:
     "@types/react": "npm:~18.3.12"
     "@types/react-dom": "npm:~18.3.1"
     "@types/react-mailchimp-subscribe": "npm:^2.1.4"
+    "@types/validator": "npm:^13.15.0"
     "@typescript-eslint/eslint-plugin": "npm:7.17.0"
     "@typescript-eslint/parser": "npm:7.17.0"
     "@vis.gl/react-google-maps": "npm:^1.4.2"
@@ -5142,6 +5143,7 @@ __metadata:
     ts-node: "npm:10.9.1"
     tslib: "npm:^2.3.0"
     typescript: "npm:~5.3.3"
+    validator: "npm:^13.15.0"
     vite: "npm:6.2.4"
     vite-plugin-svgr: "npm:^4.3.0"
     vitest: "npm:^1.6.1"
@@ -8991,6 +8993,13 @@ __metadata:
   version: 9.0.8
   resolution: "@types/uuid@npm:9.0.8"
   checksum: 10/b8c60b7ba8250356b5088302583d1704a4e1a13558d143c549c408bf8920535602ffc12394ede77f8a8083511b023704bc66d1345792714002bfa261b17c5275
+  languageName: node
+  linkType: hard
+
+"@types/validator@npm:^13.15.0":
+  version: 13.15.0
+  resolution: "@types/validator@npm:13.15.0"
+  checksum: 10/8aa22984979782a1565972dfa4ab98d49f414cf501423e650f96d0afe5e9d4c5bf029c6bde1c3dabc5c82da2a70cf946d6ee55d58cdba3bd23f838d3f5c0d00f
   languageName: node
   linkType: hard
 
@@ -26467,6 +26476,13 @@ __metadata:
   version: 5.0.1
   resolution: "validate-npm-package-name@npm:5.0.1"
   checksum: 10/0d583a1af23aeffea7748742cf22b6802458736fb8b60323ba5949763824d46f796474b0e1b9206beb716f9d75269e19dbd7795d6b038b29d561be95dd827381
+  languageName: node
+  linkType: hard
+
+"validator@npm:^13.15.0":
+  version: 13.15.0
+  resolution: "validator@npm:13.15.0"
+  checksum: 10/cc4435e37a72d65c01d0a90d0f65da1fe09a805de35be1ec37e5379e1a612ab280277d7034a5369cd491a4f94c3b551f75dc4851090efafedf529a1ef76b1e0f
   languageName: node
   linkType: hard
 
