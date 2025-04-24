@@ -25,6 +25,28 @@ class RoomStyleChoicesV14(models.TextChoices):
     OTHER = "other", ("Other")
 
 
+class DemographicChoicesV18(models.TextChoices):
+    ALL = "all", ("All")
+    SINGLE_MEN = "single_men", ("Single Men")
+    SINGLE_WOMEN = "single_women", ("Single Women")
+    TAY_TEEN = "tay_teen", ("TAY/Teen")
+    SENIORS = "seniors", ("Seniors")
+    FAMILIES = "families", ("Families")
+    SINGLE_MOMS = "single_moms", ("Single Moms")
+    SINGLE_DADS = "single_dads", ("Single Dads")
+    OTHER = "other", ("Other")
+
+
+class SpecialSituationRestrictionChoicesV18(models.TextChoices):
+    NONE = "none", ("None")
+    DOMESTIC_VIOLENCE = "domestic_violence", ("Domestic Violence (DV/IPV)")
+    HIV_AIDS = "hiv_aids", ("HIV/AIDS")
+    HUMAN_TRAFFICKING = "human_trafficking", ("Human Trafficking")
+    LGBTQ_PLUS = "lgbtq_plus", ("LGBTQ+")
+    JUSTICE_SYSTEMS = "justice_systems", ("Persons Exiting Justice Systems")
+    VETERANS = "veterans", ("Veterans")
+
+
 def clean_altered_fields(apps, schema_editor):
     """
     Cleans invalid entries for fields that were altered in this migration to use defined choices.
@@ -141,7 +163,7 @@ class Migration(migrations.Migration):
                             ("single_moms", "Single Moms"),
                             ("other", "Other"),
                         ],
-                        choices_enum=shelters.enums.DemographicChoices,
+                        choices_enum=DemographicChoicesV18,
                         max_length=12,
                         null=True,
                         unique=True,
@@ -328,7 +350,7 @@ class Migration(migrations.Migration):
                             ("justice_systems", "Persons Exiting Justice Systems"),
                             ("veterans", "Veterans"),
                         ],
-                        choices_enum=shelters.enums.SpecialSituationRestrictionChoices,
+                        choices_enum=SpecialSituationRestrictionChoicesV18,
                         max_length=17,
                         null=True,
                         unique=True,
