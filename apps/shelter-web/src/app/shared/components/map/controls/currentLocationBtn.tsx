@@ -7,12 +7,12 @@ import { ControlBtnWrapper } from './controlBtnWrapper';
 
 type TProps = {
   className?: string;
-  onLocationSucccess?: (location: TLatLng) => void;
+  onLocationSuccess?: (location: TLatLng) => void;
   onError?: (location: TLocationError) => void;
 };
 
 export function CurrentLocationBtn(props: TProps) {
-  const { className = '', onError, onLocationSucccess } = props;
+  const { className = '', onError, onLocationSuccess } = props;
 
   const map = useMap();
 
@@ -21,7 +21,7 @@ export function CurrentLocationBtn(props: TProps) {
   }
 
   function onLocationChange(location: TLatLng) {
-    onLocationSucccess && onLocationSucccess(location);
+    onLocationSuccess && onLocationSuccess(location);
   }
 
   function onLocationError(error: TLocationError) {

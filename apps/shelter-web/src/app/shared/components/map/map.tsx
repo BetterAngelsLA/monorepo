@@ -188,7 +188,7 @@ export function Map(props: TMap) {
           {locationAllowed && (
             <CurrentLocationBtn
               className="mt-5"
-              onLocationSucccess={handleCenterToUserLocation}
+              onLocationSuccess={handleCenterToUserLocation}
             />
           )}
         </div>
