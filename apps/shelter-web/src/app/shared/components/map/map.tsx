@@ -138,7 +138,8 @@ export function Map(props: TMap) {
   }, []);
 
   useEffect(() => {
-    if (!map || geolocationPermission !== 'granted') return;
+    if (!map || !navigator.geolocation || geolocationPermission !== 'granted')
+      return;
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
