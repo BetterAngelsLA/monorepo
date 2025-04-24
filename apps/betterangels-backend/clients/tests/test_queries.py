@@ -16,6 +16,7 @@ from clients.enums import (
     PronounEnum,
     RaceEnum,
     RelationshipTypeEnum,
+    SocialMediaEnum,
     VeteranStatusEnum,
 )
 from clients.models import ClientProfile
@@ -24,6 +25,7 @@ from clients.tests.utils import (
     ClientHouseholdMemberBaseTestCase,
     ClientProfileGraphQLBaseTestCase,
     HmisProfileBaseTestCase,
+    SocialMediaProfileBaseTestCase,
 )
 from clients.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
 from django.test import override_settings
@@ -79,7 +81,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayCaseManager": self.client_profile_1_contact_2["name"],
             "displayGender": "Male",
-            "displayPronouns": "He/Him/His",
+            "displayPronouns": "He/Him",
             "docReadyDocuments": [self.client_profile_1_document_1, self.client_profile_1_document_2],
             "email": "todd@pblivin.com",
             "eyeColor": EyeColorEnum.BROWN.name,
@@ -540,6 +542,58 @@ class HmisProfileQueryTestCase(HmisProfileBaseTestCase):
         self.assertEqual(response["data"]["hmisProfiles"]["totalCount"], 2)
         self.assertEqual(response["data"]["hmisProfiles"]["pageInfo"], {"limit": 10, "offset": 0})
         self.assertCountEqual(results, [self.hmis_profile_1, self.hmis_profile_2])
+
+
+class SocialMediaProfileQueryTestCase(SocialMediaProfileBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_social_media_profile_query(self) -> None:
+        query = f"""
+            query ($id: ID!) {{
+                socialMediaProfile(pk: $id) {{
+                    {self.social_media_profile_fields}
+                }}
+            }}
+        """
+        variables = {"id": self.social_media_profile_1["id"]}
+
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        expected_social_media_profile = {
+            "id": str(self.social_media_profile_1["id"]),
+            "platform": SocialMediaEnum.FACEBOOK.name,
+            "platformUserId": "social media id 1",
+        }
+
+        self.assertEqual(response["data"]["socialMediaProfile"], expected_social_media_profile)
+
+    def test_social_media_profiles_query(self) -> None:
+        query = f"""
+            query ($offset: Int, $limit: Int){{
+                socialMediaProfiles(pagination: {{offset: $offset, limit: $limit}}) {{
+                    totalCount
+                    pageInfo {{limit offset}}
+                    results {{
+                        {self.social_media_profile_fields}
+                    }}
+                }}
+            }}
+        """
+
+        expected_query_count = 4
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
+
+        results = response["data"]["socialMediaProfiles"]["results"]
+
+        self.assertEqual(response["data"]["socialMediaProfiles"]["totalCount"], 2)
+        self.assertEqual(response["data"]["socialMediaProfiles"]["pageInfo"], {"limit": 10, "offset": 0})
+        self.assertCountEqual(results, [self.social_media_profile_1, self.social_media_profile_2])
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")

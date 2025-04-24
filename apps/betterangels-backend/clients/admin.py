@@ -25,6 +25,7 @@ from .models import (
     ClientProfileDataImport,
     ClientProfileImportRecord,
     HmisProfile,
+    SocialMediaProfile,
 )
 
 
@@ -301,6 +302,29 @@ class HmisProfileAdmin(admin.ModelAdmin):
 
     @admin.display(description="Client")
     def client_name(self, obj: HmisProfile) -> str:
+        return obj.client_profile.full_name
+
+
+@admin.register(SocialMediaProfile)
+class SocialMediaProfileAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "client_profile__id",
+        "client_name",
+        "platform",
+        "platform_user_id",
+    )
+    search_fields = (
+        "client_profile__first_name",
+        "client_profile__last_name",
+        "client_profile__email",
+        "client_profile__nickname",
+        "platform_user_id",
+    )
+    list_filter = ("platform",)
+
+    @admin.display(description="Client")
+    def client_name(self, obj: SocialMediaProfile) -> str:
         return obj.client_profile.full_name
 
 
