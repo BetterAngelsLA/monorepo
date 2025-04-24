@@ -7,9 +7,15 @@ from clients.enums import (
     HmisAgencyEnum,
     LanguageEnum,
 )
-from clients.models import ClientContact, ClientProfile, HmisProfile
+from clients.models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    HmisProfile,
+)
 from clients.tests.utils import (
     ClientContactBaseTestCase,
+    ClientHouseholdMemberBaseTestCase,
     ClientProfileGraphQLBaseTestCase,
     HmisProfileBaseTestCase,
 )
@@ -27,7 +33,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -35,17 +41,14 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login(user_label)
 
         client_count = ClientProfile.objects.count()
-        client_profile_user = {
+        variables = {
             "firstName": "Firsty",
             "lastName": "Lasty",
             "middleName": "Middly",
             "email": "firsty_lasty@example.com",
-        }
-        variables = {
             "dateOfBirth": self.date_of_birth,
             "gender": GenderEnum.FEMALE.name,
             "preferredLanguage": LanguageEnum.ENGLISH.name,
-            "user": client_profile_user,
         }
         response = self._create_client_profile_fixture(variables)
 
@@ -70,7 +73,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -102,7 +105,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", True),  # CM in different org should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -110,15 +113,13 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login(user_label)
 
         query = """
-            query ViewClientProfile($id: ID!) {
+            query ($id: ID!) {
                 clientProfile(pk: $id) {
                     id
-                    user {
-                        firstName
-                        lastName
-                        middleName
-                        email
-                    }
+                    firstName
+                    lastName
+                    middleName
+                    email
                 }
             }
         """
@@ -136,7 +137,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", True),  # CM in different org should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -173,7 +174,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", 2),  # Owner should succeed
             ("org_1_case_manager_2", 2),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", 2),  # CM in different org should succeed
-            ("client_user_1", 0),  # Non CM should not succeed
+            ("non_case_manager_user", 0),  # Non CM should not succeed
             # NOTE: Anon user raising an error may be caused by a strawberry bug.
             # This test may fail and need updating when the bug is fixed.
             (None, None),  # Anonymous user should return error
@@ -209,7 +210,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", True),  # CM in different org should succeed
-            ("client_user_1", False),  # Client modifying client profile should not succeed
+            ("non_case_manager_user", False),  # Client modifying client profile should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -233,7 +234,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # CM in a different org should not succeed
-            ("client_user_1", False),  # Client should not succeed
+            ("non_case_manager_user", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -257,7 +258,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Creator should succeed
             ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
             ("org_2_case_manager_1", True),  # CM in a different org should succeed
-            ("client_user_1", False),  # Client should not succeed
+            ("non_case_manager_user", False),  # Client should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -290,7 +291,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", 4),  # Creator should succeed
             ("org_1_case_manager_2", 4),  # Other CM in the same org should succeed
             ("org_2_case_manager_1", 4),  # CM in a different org should succeed
-            ("client_user_1", 0),  # Client should not succeed
+            ("non_case_manager_user", 0),  # Client should not succeed
             # NOTE: Anon user raising an error may be caused by a strawberry bug.
             # This test may fail and need updating when the bug is fixed.
             (None, None),  # Anonymous user should return error
@@ -324,7 +325,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM user should not succeed
+            ("non_case_manager_user", False),  # Non CM user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -352,7 +353,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             ("org_1_case_manager_1", 2),
             ("org_1_case_manager_2", 2),
             ("org_2_case_manager_1", 2),
-            ("client_user_1", 0),  # Non CM should not succeed
+            ("non_case_manager_user", 0),  # Non CM should not succeed
             # NOTE: Anon user raising an error may be caused by a strawberry bug.
             # This test may fail and need updating when the bug is fixed.
             (None, None),  # Anonymous user should return error
@@ -378,7 +379,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Case manager should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -413,7 +414,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -445,7 +446,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -469,6 +470,163 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             )
 
 
+class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("non_case_manager_user", False),  # Non CM user should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_view_client_household_member_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        query = """
+            query ($id: ID!) {
+                clientHouseholdMember(pk: $id) {
+                    id
+                }
+            }
+        """
+        variables = {"id": self.client_household_member_1["id"]}
+        response = self.execute_graphql(query, variables)
+
+        if should_succeed:
+            self.assertEqual(response["data"]["clientHouseholdMember"]["id"], self.client_household_member_1["id"])
+        else:
+            self.assertIsNotNone(response["errors"])
+
+    @parametrize(
+        "user_label, expected_profile_count",
+        [
+            ("org_1_case_manager_1", 2),
+            ("org_1_case_manager_2", 2),
+            ("org_2_case_manager_1", 2),
+            ("non_case_manager_user", 0),  # Non CM should not succeed
+            # NOTE: Anon user raising an error may be caused by a strawberry bug.
+            # This test may fail and need updating when the bug is fixed.
+            (None, None),  # Anonymous user should return error
+        ],
+    )
+    def test_view_client_household_members_permission(
+        self, user_label: str, expected_profile_count: int | None
+    ) -> None:
+        self._handle_user_login(user_label)
+        query = """
+            query {
+                clientHouseholdMembers {
+                    totalCount
+                }
+            }
+        """
+        response = self.execute_graphql(query)
+
+        if expected_profile_count is not None:
+            self.assertEqual(response["data"]["clientHouseholdMembers"]["totalCount"], expected_profile_count)
+        else:
+            self.assertTrue("errors" in response)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Case manager should succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_create_client_household_member_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        client_household_member_count = ClientHouseholdMember.objects.count()
+        variables = {
+            "name": "Buddy Guy",
+            "clientProfile": self.client_profile["id"],
+        }
+        response = self._create_client_household_member_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["createClientHouseholdMember"]["id"])
+            self.assertEqual(client_household_member_count + 1, ClientHouseholdMember.objects.count())
+        else:
+            self.assertEqual(len(response["data"]["createClientHouseholdMember"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["createClientHouseholdMember"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "createClientHouseholdMember",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+            self.assertEqual(client_household_member_count, ClientHouseholdMember.objects.count())
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("non_case_manager_user", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_update_client_household_member_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {
+            "id": self.client_household_member_1["id"],
+            "name": "John Joe",
+        }
+        response = self._update_client_household_member_fixture(variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["updateClientHouseholdMember"]["id"])
+        else:
+            self.assertEqual(len(response["data"]["updateClientHouseholdMember"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["updateClientHouseholdMember"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),
+            ("org_1_case_manager_2", True),
+            ("org_2_case_manager_1", True),
+            ("non_case_manager_user", False),  # Non CM should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_delete_client_household_member_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+
+        variables = {"object": "ClientHouseholdMember", "object_id": self.client_household_member_1["id"]}
+        response = self._delete_fixture(**variables)
+
+        if should_succeed:
+            self.assertIsNotNone(response["data"]["deleteClientHouseholdMember"]["id"])
+        else:
+            self.assertEqual(len(response["data"]["deleteClientHouseholdMember"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["deleteClientHouseholdMember"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
+
+
 class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -479,7 +637,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM user should not succeed
+            ("non_case_manager_user", False),  # Non CM user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -507,7 +665,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             ("org_1_case_manager_1", 2),
             ("org_1_case_manager_2", 2),
             ("org_2_case_manager_1", 2),
-            ("client_user_1", 0),  # Non CM should not succeed
+            ("non_case_manager_user", 0),  # Non CM should not succeed
             # NOTE: Anon user raising an error may be caused by a strawberry bug.
             # This test may fail and need updating when the bug is fixed.
             (None, None),  # Anonymous user should return error
@@ -533,7 +691,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Case manager should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -569,7 +727,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -602,7 +760,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             ("org_1_case_manager_1", True),
             ("org_1_case_manager_2", True),
             ("org_2_case_manager_1", True),
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -631,7 +789,7 @@ class OrganizationPermissionTestCase(GraphQLBaseTestCase):
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Case Manager should succeed
-            ("client_user_1", False),  # Non CM should not succeed
+            ("non_case_manager_user", False),  # Non CM should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )

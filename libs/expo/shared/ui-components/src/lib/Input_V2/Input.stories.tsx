@@ -24,7 +24,7 @@ export default InputMeta;
 
 type InputStory = ComponentStory<typeof Input>;
 
-export const Basic: InputStory = (args, context) => {
+export const Basic: InputStory = () => {
   const [value, setValue] = useState('');
   return (
     <Input label="Test" height={56} value={value} onChangeText={setValue} />

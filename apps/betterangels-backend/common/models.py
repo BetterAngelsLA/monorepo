@@ -38,7 +38,6 @@ class Attachment(BaseModel):  # type: ignore[django-manager-missing]
         content_object: Generic relation to the associated model instance.
         namespace: Optional field for further categorization within specific contexts.
         uploaded_by: Reference to the User who uploaded the file.
-        associated_with: The User with whom the attachment is associated, if any.
     """
 
     file = models.FileField(upload_to=get_unique_file_path)
@@ -54,9 +53,6 @@ class Attachment(BaseModel):  # type: ignore[django-manager-missing]
 
     uploaded_by = models.ForeignKey(
         "accounts.User", on_delete=models.SET_NULL, null=True, related_name="uploaded_attachments"
-    )
-    associated_with = models.ForeignKey(
-        "accounts.User", on_delete=models.CASCADE, related_name="associated_attachments", blank=True, null=True
     )
 
     def __str__(self) -> str:

@@ -7,7 +7,12 @@ import { modalAtom } from '../../shared/atoms/modalAtom';
 import { sheltersAtom } from '../../shared/atoms/sheltersAtom';
 import { LA_COUNTY_CENTER } from '../../shared/components/map/constants.maps';
 import { Map } from '../../shared/components/map/map';
-import { TLatLng, TMarker } from '../../shared/components/map/types.maps';
+import {
+  TLatLng,
+  TMapBounds,
+  TMarker,
+} from '../../shared/components/map/types.maps';
+import { toMapBounds } from '../../shared/components/map/utils/toMapBounds';
 import {
   ShelterCard,
   TShelter,
@@ -17,10 +22,12 @@ import { ModalAnimationEnum } from '../../shared/modal/modal';
 
 export function Home() {
   const [_location, setLocation] = useAtom(locationAtom);
-  const [shelters] = useAtom(sheltersAtom);
   const [_modal, setModal] = useAtom(modalAtom);
+  const [shelters] = useAtom(sheltersAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
   const [defaultCenter, setDefaultCenter] = useState<TLatLng>();
+  const [showSearchButton, setShowSearchButton] = useState(false);
+  const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
 
   useEffect(() => {
     const markers = shelters
@@ -62,6 +69,15 @@ export function Home() {
     });
   }
 
+  function onSearchMapArea(bounds?: google.maps.LatLngBounds) {
+    if (!bounds) {
+      return;
+    }
+
+    setMapBoundsFilter(toMapBounds(bounds));
+    setShowSearchButton(false);
+  }
+
   useEffect(() => {
     const savedCenter = sessionStorage.getItem('mapCenter');
 
@@ -84,10 +100,13 @@ export function Home() {
           className="h-[70vh] md:h-80"
           mapId={SHELTERS_MAP_ID}
           markers={shelterMarkers}
+          showSearchButton={showSearchButton}
+          setShowSearchButton={setShowSearchButton}
           onCenterSelect={onCenterSelect}
+          onSearchMapArea={onSearchMapArea}
         />
       </MaxWLayout>
-      <ShelterSearch />
+      <ShelterSearch mapBoundsFilter={mapBoundsFilter} />
     </>
   );
 }

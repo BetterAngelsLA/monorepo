@@ -29,7 +29,7 @@ export function Footer(props: IParams): ReactElement {
       </div>
       <div className="mt-6 border-t-[0.5px] border-white pt-6 flex justify-end">
         <div className="text-xs">
-          © 2024 Better Angels Inc. All rights reserved.
+          © 2025 Better Angels Inc. All rights reserved.
         </div>
       </div>
     </footer>

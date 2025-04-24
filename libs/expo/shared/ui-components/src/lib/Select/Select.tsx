@@ -76,7 +76,7 @@ export function Select(props: ISelectProps) {
         onFocus={() => Keyboard.dismiss()}
         defaultValue={selectedItem}
         data={items}
-        onSelect={(selectedItem, index) => {
+        onSelect={(selectedItem) => {
           onValueChange(selectedItem.value);
         }}
         renderButton={(selectedItem, isOpened) => {

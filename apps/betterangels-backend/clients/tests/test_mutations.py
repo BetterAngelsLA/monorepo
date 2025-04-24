@@ -1,6 +1,5 @@
 from unittest.mock import ANY
 
-from accounts.models import User
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -19,11 +18,19 @@ from clients.enums import (
     SocialMediaEnum,
     VeteranStatusEnum,
 )
-from clients.models import ClientContact, ClientProfile, HmisProfile
+from clients.models import (
+    ClientContact,
+    ClientHouseholdMember,
+    ClientProfile,
+    HmisProfile,
+    SocialMediaProfile,
+)
 from clients.tests.utils import (
     ClientContactBaseTestCase,
+    ClientHouseholdMemberBaseTestCase,
     ClientProfileGraphQLBaseTestCase,
     HmisProfileBaseTestCase,
+    SocialMediaProfileBaseTestCase,
 )
 from common.models import Attachment
 from deepdiff import DeepDiff
@@ -37,12 +44,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_create_client_profile_mutation(self) -> None:
-        user = {
-            "firstName": "Firsty",
-            "lastName": "Lasty",
-            "middleName": "Middly",
-            "email": "firsty_lasty@example.com",
-        }
         contact = {
             "name": "Jerry",
             "email": "jerry@example.co",
@@ -106,7 +107,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "residenceAddress": "1234 Residence Street",
             "socialMediaProfiles": social_media_profile,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
-            "user": user,
             "veteranStatus": VeteranStatusEnum.YES.name,
         }
         response = self._create_client_profile_fixture(variables)
@@ -117,7 +117,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         expected_household_members = [{"id": ANY, "displayGender": "Female", **household_member}]
         expected_phone_numbers = [{"id": ANY, **phone_number}]
         expected_social_media_profiles = [{"id": ANY, **social_media_profile}]
-        expected_user = {"id": ANY, **user}
         expected_client_profile = {
             **variables,  # Needs to be first because we're overwriting some fields
             "id": ANY,
@@ -126,13 +125,12 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayCaseManager": "Not Assigned",
             "displayGender": "genderqueer",
-            "displayPronouns": "She/Her/Hers",
+            "displayPronouns": "She/Her",
             "hmisProfiles": expected_hmis_profiles,
             "householdMembers": expected_household_members,
             "phoneNumbers": expected_phone_numbers,
             "profilePhoto": None,
             "socialMediaProfiles": expected_social_media_profiles,
-            "user": expected_user,
             "veteranStatus": VeteranStatusEnum.YES.name,
         }
         client_differences = DeepDiff(
@@ -145,14 +143,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertFalse(client_differences)
 
     def test_update_client_profile_mutation(self) -> None:
-        user = {
-            "id": self.client_profile_1["user"]["id"],
-            "firstName": "Firstey",
-            "lastName": "Lastey",
-            "middleName": "Middley",
-            "email": "firstey_lastey@example.com",
-        }
-
         contacts: list = []
 
         hmis_profile_update = {
@@ -236,7 +226,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "residenceAddress": "1234 Residence St",
             "socialMediaProfiles": social_media_profiles,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
-            "user": user,
             "veteranStatus": VeteranStatusEnum.YES.name,
         }
         response = self._update_client_profile_fixture(variables)
@@ -279,25 +268,18 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "number": "125551212",
             "isPrimary": True,
         }
-        user = {
-            "id": self.client_profile_2["user"]["id"],
-            "firstName": "",
-            "lastName": "",
-            "middleName": "",
-            "email": " invalid email",
-        }
 
         variables = {
             "id": self.client_profile_2["id"],
             "firstName": "",
             "lastName": "",
             "middleName": "",
+            "email": " invalid email",
             "californiaId": "invalid id",
             "contacts": [contact],
             "hmisProfiles": [hmis_profile],
             "nickname": "",
             "phoneNumbers": [phone_number],
-            "user": user,
         }
 
         update_response = self._update_client_profile_fixture(variables)
@@ -305,7 +287,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         expected_update_error_messages = [
             {"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name},
-            {"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_INVALID.name},
+            {"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_INVALID.name},
             {"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_INVALID.name},
             {
                 "field": "contacts",
@@ -319,10 +301,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertCountEqual(update_response["errors"][0]["extensions"]["errors"], expected_update_error_messages)
 
         variables.pop("id")
-        variables["user"].pop("id")
 
         variables["californiaId"] = self.client_profile_1["californiaId"]
-        variables["user"]["email"] = self.client_profile_1["user"]["email"]
+        variables["email"] = self.client_profile_1["email"]
         variables["hmisProfiles"][0]["hmisId"] = self.client_profile_1["hmisProfiles"][0]["hmisId"].upper()
 
         create_response = self._create_client_profile_fixture(variables)
@@ -330,7 +311,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         expected_create_error_messages = [
             {"field": "client_name", "location": None, "errorCode": ErrorCodeEnum.NAME_NOT_PROVIDED.name},
-            {"field": "user", "location": "email", "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name},
+            {"field": "email", "location": None, "errorCode": ErrorCodeEnum.EMAIL_IN_USE.name},
             {"field": "californiaId", "location": None, "errorCode": ErrorCodeEnum.CA_ID_IN_USE.name},
             {
                 "field": "contacts",
@@ -344,10 +325,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertCountEqual(create_response["errors"][0]["extensions"]["errors"], expected_create_error_messages)
 
     def test_client_profile_mutation_client_name_validation(self) -> None:
-        variables = {
-            "user": {},
-            "nickname": "Mikey",
-        }
+        variables = {"nickname": "Mikey"}
 
         response = self._create_client_profile_fixture(variables)
         self.assertIsNone(response.get("errors"))
@@ -400,46 +378,30 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self.assertEqual(client_profile, self.client_profile_1)
 
     def test_update_client_profile_email_upper_mutation(self) -> None:
-        email_upper = "EMAIL@EXAMPLE.com"
-        user_update = {
-            "id": self.client_profile_1["user"]["id"],
-            "email": email_upper,
-        }
-
         variables = {
             "id": self.client_profile_1["id"],
-            "user": user_update,
+            "email": "EMAIL@EXAMPLE.com",
         }
         response = self._update_client_profile_fixture(variables)
-
         client_profile = response["data"]["updateClientProfile"]
 
-        self.assertEqual(client_profile["user"]["email"], "email@example.com")
+        self.assertEqual(client_profile["email"], "email@example.com")
 
     def test_update_client_profile_null_email(self) -> None:
-        user_update = {
-            "id": self.client_profile_1["user"]["id"],
-            "email": None,
-        }
         variables = {
             "id": self.client_profile_1["id"],
-            "user": user_update,
+            "email": None,
         }
 
         response = self._update_client_profile_fixture(variables)
-        client_profile_user = response["data"]["updateClientProfile"]["user"]
-        self.assertEqual(client_profile_user["email"], None)
+        client_profile = response["data"]["updateClientProfile"]
+        self.assertEqual(client_profile["email"], None)
 
     def test_update_client_profile_duplicate_email_lower_mutation(self) -> None:
-        dupe_email_lower = self.client_profile_2["user"]["email"].lower()
-        user_update = {
-            "id": self.client_profile_1["user"]["id"],
-            "email": dupe_email_lower,
-        }
-
+        dupe_email_lower = self.client_profile_2["email"].lower()
         variables = {
             "id": self.client_profile_1["id"],
-            "user": user_update,
+            "email": dupe_email_lower,
         }
         response = self._update_client_profile_fixture(variables)
         validation_errors = response["errors"][0]
@@ -447,20 +409,15 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertEqual(validation_errors["message"], "Validation Errors")
         self.assertEqual(len(error_messages), 1)
-        self.assertEqual(error_messages[0]["field"], "user")
-        self.assertEqual(error_messages[0]["location"], "email")
+        self.assertEqual(error_messages[0]["field"], "email")
+        self.assertEqual(error_messages[0]["location"], None)
         self.assertEqual(error_messages[0]["errorCode"], ErrorCodeEnum.EMAIL_IN_USE.name)
 
     def test_update_client_profile_duplicate_email_upper_mutation(self) -> None:
-        dupe_email_upper = self.client_profile_2["user"]["email"].upper()
-        user_update = {
-            "id": self.client_profile_1["user"]["id"],
-            "email": dupe_email_upper,
-        }
-
+        dupe_email_upper = self.client_profile_2["email"].upper()
         variables = {
             "id": self.client_profile_1["id"],
-            "user": user_update,
+            "email": dupe_email_upper,
         }
         response = self._update_client_profile_fixture(variables)
         validation_errors = response["errors"][0]
@@ -468,44 +425,9 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.assertEqual(validation_errors["message"], "Validation Errors")
         self.assertEqual(len(error_messages), 1)
-        self.assertEqual(error_messages[0]["field"], "user")
-        self.assertEqual(error_messages[0]["location"], "email")
+        self.assertEqual(error_messages[0]["field"], "email")
+        self.assertEqual(error_messages[0]["location"], None)
         self.assertEqual(error_messages[0]["errorCode"], ErrorCodeEnum.EMAIL_IN_USE.name)
-
-    # TODO: Remove in DEV-1611
-    def test_delete_client_profile_with_user_mutation(self) -> None:
-        client_profile_id = self.client_profile_1["id"]
-        client_profile = ClientProfile.objects.get(id=client_profile_id)
-        user = client_profile.user
-        hmis_profile_ids = client_profile.hmis_profiles.values_list("id", flat=True)
-
-        mutation = """
-            mutation DeleteClientProfile($id: ID!) {
-                deleteClientProfile(data: { id: $id }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on DeletedObjectType {
-                        id
-                    }
-                }
-            }
-        """
-        variables = {"id": client_profile_id}
-
-        expected_query_count = 64
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(mutation, variables)
-
-        self.assertIsNotNone(response["data"]["deleteClientProfile"])
-        self.assertFalse(ClientProfile.objects.filter(id=client_profile_id).exists())
-        assert user
-        self.assertFalse(User.objects.filter(id=user.pk).exists())
-        self.assertEqual(HmisProfile.objects.filter(id__in=hmis_profile_ids).count(), 0)
 
     def test_delete_client_profile_mutation(self) -> None:
         client_profile = self._create_client_profile_fixture({"firstName": "to delete"})["data"]["createClientProfile"]
@@ -528,84 +450,12 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         """
         variables = {"id": client_profile["id"]}
 
-        expected_query_count = 55
+        expected_query_count = 16
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
 
         self.assertIsNotNone(response["data"]["deleteClientProfile"])
         self.assertFalse(ClientProfile.objects.filter(id=client_profile["id"]).exists())
-
-    # TODO: Remove in DEV-1611
-    def test_dual_write_user_to_client(self) -> None:
-        create_user = {
-            "firstName": "dual first",
-            "lastName": " ",
-            "middleName": None,
-        }
-        variables = {"user": create_user, "nickname": "nick"}
-        response = self._create_client_profile_fixture(variables)
-        client_profile = response["data"]["createClientProfile"]
-        created_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
-
-        self.assertEqual(created_client_profile.first_name, create_user["firstName"])
-        self.assertIsNone(created_client_profile.last_name)
-        self.assertIsNone(created_client_profile.middle_name)
-        self.assertEqual(created_client_profile.nickname, "nick")
-        self.assertIsNone(created_client_profile.email)
-
-        update_user = {
-            "id": client_profile["user"]["id"],
-            "lastName": "dual last update",
-            "middleName": " ",
-            "email": "dual_email_update@example.com",
-        }
-
-        variables = {"id": client_profile["id"], "user": update_user}
-        response = self._update_client_profile_fixture(variables)
-        response["data"]["updateClientProfile"]
-        updated_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
-
-        self.assertEqual(updated_client_profile.first_name, create_user["firstName"])
-        self.assertEqual(updated_client_profile.last_name, update_user["lastName"])
-        self.assertIsNone(updated_client_profile.middle_name)
-        self.assertEqual(updated_client_profile.nickname, "nick")
-        self.assertEqual(updated_client_profile.email, update_user["email"])
-
-    # TODO: Remove in DEV-1611
-    def test_dual_write_client_to_user(self) -> None:
-        create_variables = {
-            "firstName": "dual first",
-            "lastName": " ",
-            "middleName": None,
-            "nickname": "nick",
-        }
-        response = self._create_client_profile_fixture(create_variables)
-        client_profile = response["data"]["createClientProfile"]
-        created_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
-
-        assert created_client_profile.user
-        self.assertEqual(created_client_profile.user.first_name, create_variables["firstName"])
-        self.assertIsNone(created_client_profile.user.last_name)
-        self.assertIsNone(created_client_profile.user.middle_name)
-        self.assertEqual(created_client_profile.nickname, "nick")
-        self.assertIsNone(created_client_profile.user.email)
-
-        update_variables = {
-            "id": client_profile["id"],
-            "lastName": "dual last update",
-            "middleName": " ",
-            "email": "dual_email_update@example.com",
-        }
-        response = self._update_client_profile_fixture(update_variables)
-        response["data"]["updateClientProfile"]
-        updated_client_profile = ClientProfile.objects.get(pk=client_profile["id"])
-
-        assert updated_client_profile.user
-        self.assertEqual(updated_client_profile.first_name, create_variables["firstName"])
-        self.assertEqual(updated_client_profile.last_name, update_variables["lastName"])
-        self.assertIsNone(updated_client_profile.middle_name)
-        self.assertEqual(updated_client_profile.nickname, "nick")
-        self.assertEqual(updated_client_profile.email, update_variables["email"])
 
     @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
     def test_update_client_profile_photo(self) -> None:
@@ -637,50 +487,6 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         updated_photo_name = response["data"]["updateClientProfilePhoto"]["profilePhoto"]["name"]
         client_profile.refresh_from_db()
         self.assertEqual(client_profile.profile_photo.name, updated_photo_name)
-
-
-@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
-class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self._handle_user_login("org_1_case_manager_1")
-
-    def test_create_client_document(self) -> None:
-        file_content = b"Test client document content"
-        file_name = "test_client_document.txt"
-
-        expected_query_count = 17
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._create_client_document_fixture(
-                self.client_profile_1["id"],
-                ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-                file_content,
-                file_name,
-            )
-
-        client_document_id = response["data"]["createClientDocument"]["id"]
-        self.assertEqual(
-            response["data"]["createClientDocument"]["originalFilename"],
-            file_name,
-        )
-        self.assertIsNotNone(response["data"]["createClientDocument"]["file"]["name"])
-        self.assertTrue(
-            Attachment.objects.filter(id=client_document_id).exists(),
-            "The client document should have been created and persisted in the database.",
-        )
-
-    def test_delete_client_document(self) -> None:
-        client_document_id = self.client_profile_1_document_1["id"]
-        self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
-
-        expected_query_count = 17
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            self._delete_client_document_fixture(client_document_id)
-
-        self.assertFalse(
-            Attachment.objects.filter(id=client_document_id).exists(),
-            "The document should have been deleted from the database.",
-        )
 
 
 class ClientContactMutationTestCase(ClientContactBaseTestCase):
@@ -781,6 +587,69 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
             self.assertEqual(original_phone_number, updated_phone_number)
 
 
+class ClientHouseholdMemberMutationTestCase(ClientHouseholdMemberBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_create_client_household_member_mutation(self) -> None:
+        variables = {
+            "clientProfile": self.client_profile_id,
+            "name": "Sam Smith",
+            "dateOfBirth": "2003-03-03",
+            "gender": GenderEnum.FEMALE.name,
+            "genderOther": None,
+            "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
+            "relationshipToClientOther": None,
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            client_household_member = self._create_client_household_member_fixture(variables)["data"][
+                "createClientHouseholdMember"
+            ]
+
+        expected_client_household_member = {"id": ANY, "displayGender": "Female", **variables}
+        expected_client_household_member.pop("clientProfile")
+
+        self.assertEqual(client_household_member, expected_client_household_member)
+
+        client_client_household_members = ClientProfile.objects.filter(id=self.client_profile_id).values_list(
+            "household_members", flat=True
+        )
+        self.assertIn(int(client_household_member["id"]), client_client_household_members)
+
+    def test_update_client_household_member_mutation(self) -> None:
+        variables = {
+            "id": self.client_household_member_1["id"],
+            "name": "Joey Doe",
+            "dateOfBirth": "2004-04-04",
+            "gender": GenderEnum.OTHER.name,
+            "genderOther": "gender queer",
+            "relationshipToClient": RelationshipTypeEnum.OTHER.name,
+            "relationshipToClientOther": "fren",
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            client_household_member = self._update_client_household_member_fixture(variables)["data"][
+                "updateClientHouseholdMember"
+            ]
+
+        expected_client_household_member = {**variables, "displayGender": "gender queer"}
+
+        self.assertEqual(expected_client_household_member, client_household_member)
+
+    def test_delete_client_household_member_mutation(self) -> None:
+        variables = {"object": "ClientHouseholdMember", "object_id": self.client_household_member_1["id"]}
+
+        expected_query_count = 9
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._delete_fixture(**variables)
+
+        self.assertNotIn("messages", response["data"]["deleteClientHouseholdMember"])
+        self.assertFalse(ClientHouseholdMember.objects.filter(id=self.client_household_member_1["id"]).exists())
+
+
 class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -854,3 +723,125 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
             self.assertEqual(response["messages"][0]["message"], expected_error_message)
         else:
             self.assertEqual(response, variables)
+
+
+class SocialMediaProfileMutationTestCase(SocialMediaProfileBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_create_social_media_profile_mutation(self) -> None:
+        variables = {
+            "platformUserId": "new social media id",
+            "platform": SocialMediaEnum.TWITTER.name,
+            "clientProfile": self.client_profile_id,
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            social_media_profile = self._create_social_media_profile_fixture(variables)["data"][
+                "createSocialMediaProfile"
+            ]
+
+        expected_social_media_profile = {**variables, "id": ANY}
+        expected_social_media_profile.pop("clientProfile")
+        self.assertEqual(social_media_profile, expected_social_media_profile)
+
+        client_social_media_profiles = ClientProfile.objects.filter(id=self.client_profile_id).values_list(
+            "social_media_profiles", flat=True
+        )
+        self.assertIn(int(social_media_profile["id"]), client_social_media_profiles)
+
+    def test_update_social_media_profile_mutation(self) -> None:
+        variables = {
+            "id": self.social_media_profile_1["id"],
+            "platformUserId": "social media id 1 updated",
+            "platform": SocialMediaEnum.WHATSAPP.name,
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            social_media_profile = self._update_social_media_profile_fixture(variables)["data"][
+                "updateSocialMediaProfile"
+            ]
+
+        self.assertEqual(variables, social_media_profile)
+
+    def test_delete_social_media_profile_mutation(self) -> None:
+        variables = {"object": "SocialMediaProfile", "object_id": self.social_media_profile_1["id"]}
+
+        expected_query_count = 9
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._delete_fixture(**variables)
+
+        self.assertNotIn("messages", response["data"]["deleteSocialMediaProfile"])
+        self.assertFalse(SocialMediaProfile.objects.filter(id=self.social_media_profile_1["id"]).exists())
+
+    @parametrize(
+        ("platform_user_id", "expected_error_message"),
+        [
+            (" ", "This field cannot be null."),
+            (None, "This field cannot be null."),
+        ],
+    )
+    def test_update_social_media_profile_mutation_validation(
+        self, platform_user_id: str | None, expected_error_message: str
+    ) -> None:
+        variables = {
+            "id": self.social_media_profile_1["id"],
+            "platformUserId": platform_user_id,
+            "platform": SocialMediaEnum.FACEBOOK.name,
+        }
+
+        expected_query_count = 11
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._update_social_media_profile_fixture(variables)["data"]["updateSocialMediaProfile"]
+
+        if expected_error_message:
+            self.assertEqual(len(response["messages"]), 1)
+            self.assertEqual(response["messages"][0]["message"], expected_error_message)
+        else:
+            self.assertEqual(response, variables)
+
+
+@override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
+class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+
+    def test_create_client_document(self) -> None:
+        file_content = b"Test client document content"
+        file_name = "test_client_document.txt"
+
+        expected_query_count = 16
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._create_client_document_fixture(
+                self.client_profile_1["id"],
+                ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+                file_content,
+                file_name,
+            )
+
+        client_document_id = response["data"]["createClientDocument"]["id"]
+        self.assertEqual(
+            response["data"]["createClientDocument"]["originalFilename"],
+            file_name,
+        )
+        self.assertIsNotNone(response["data"]["createClientDocument"]["file"]["name"])
+        self.assertTrue(
+            Attachment.objects.filter(id=client_document_id).exists(),
+            "The client document should have been created and persisted in the database.",
+        )
+
+    def test_delete_client_document(self) -> None:
+        client_document_id = self.client_profile_1_document_1["id"]
+        self.assertTrue(Attachment.objects.filter(id=client_document_id).exists())
+
+        expected_query_count = 17
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            self._delete_client_document_fixture(client_document_id)
+
+        self.assertFalse(
+            Attachment.objects.filter(id=client_document_id).exists(),
+            "The document should have been deleted from the database.",
+        )
