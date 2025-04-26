@@ -74,6 +74,8 @@ export function HouseholdMemberForm(props: TProps) {
     return null;
   }
 
+  // TODO: delete me.
+
   const clientProfileId = clientProfile.id;
 
   const isEditMode = !!relationId;
