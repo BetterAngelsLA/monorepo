@@ -15,6 +15,7 @@ interface ISingleSelectProps {
   placeholder?: string;
   onChange: (value: string | null) => void;
   items: { displayValue?: string; value: string }[];
+  required?: boolean;
   disabled?: boolean;
   selectedValue?: string;
   selectNoneLabel?: string;
@@ -34,6 +35,7 @@ export function SingleSelect(props: ISingleSelectProps) {
     mx,
     label,
     onChange,
+    required,
     disabled,
     placeholder = '',
     selectedValue,
@@ -52,8 +54,8 @@ export function SingleSelect(props: ISingleSelectProps) {
       <Picker
         error={error}
         label={label}
+        required={required}
         selectedValue={selectedItem?.value}
-        selectedDisplayValue={selectedItem?.displayValue}
         onChange={onChange}
         disabled={disabled}
         placeholder={placeholder}

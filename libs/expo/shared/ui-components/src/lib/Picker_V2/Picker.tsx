@@ -2,7 +2,8 @@ import {
   Colors,
   Radiuses,
   Spacings,
-  TSpacing,
+  TMarginProps,
+  getMarginStyles,
 } from '@monorepo/expo/shared/static';
 import { Picker as RNPicker } from '@react-native-picker/picker';
 import { StyleSheet, View } from 'react-native';
@@ -11,24 +12,22 @@ import TextRegular from '../TextRegular';
 
 const NONE_VALUE = '__none__';
 
-export interface IPickerProps {
+export type TPickerItem = {
+  displayValue?: string;
+  value: string;
+};
+
+export interface IPickerProps extends TMarginProps {
   onChange: (value: string | null) => void;
   error?: string;
   selectedValue?: string | null;
-  selectedDisplayValue?: string | null;
   placeholder: string;
-  items: { displayValue?: string; value: string }[];
+  items: TPickerItem[];
   label?: string;
   required?: boolean;
   disabled?: boolean;
   selectNoneLabel?: string;
   allowSelectNone?: boolean;
-  mb?: TSpacing;
-  mt?: TSpacing;
-  my?: TSpacing;
-  mx?: TSpacing;
-  ml?: TSpacing;
-  mr?: TSpacing;
 }
 
 export default function Picker(props: IPickerProps) {
@@ -43,12 +42,6 @@ export default function Picker(props: IPickerProps) {
     required,
     selectNoneLabel,
     allowSelectNone,
-    mb,
-    mt,
-    my,
-    mx,
-    ml,
-    mr,
   } = props;
 
   const noneLabel = selectNoneLabel || placeholder || 'Selece one';
@@ -66,12 +59,7 @@ export default function Picker(props: IPickerProps) {
           styles.pickerContainer,
           {
             borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
-            marginBottom: mb && Spacings[mb],
-            marginTop: mt && Spacings[mt],
-            marginLeft: ml && Spacings[ml],
-            marginRight: mr && Spacings[mr],
-            marginHorizontal: mx && Spacings[mx],
-            marginVertical: my && Spacings[my],
+            ...getMarginStyles(props),
           },
         ]}
       >
