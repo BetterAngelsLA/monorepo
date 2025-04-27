@@ -1,16 +1,16 @@
-import { Colors, Spacings, TSpacing } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  Spacings,
+  TMarginProps,
+  getMarginStyles,
+} from '@monorepo/expo/shared/static';
 import { View } from 'react-native';
+import FormFieldLabel from '../FormFieldLabel';
 import Picker from '../Picker_V2';
 import Radio from '../Radio_V2';
 import TextRegular from '../TextRegular';
 
-interface ISingleSelectProps {
-  mb?: TSpacing;
-  mt?: TSpacing;
-  my?: TSpacing;
-  mx?: TSpacing;
-  ml?: TSpacing;
-  mr?: TSpacing;
+interface ISingleSelectProps extends TMarginProps {
   label?: string;
   placeholder?: string;
   onChange: (value: string | null) => void;
@@ -27,22 +27,15 @@ interface ISingleSelectProps {
 export function SingleSelect(props: ISingleSelectProps) {
   const {
     items,
-    mb,
-    mt,
-    mr,
-    ml,
-    my,
-    mx,
     label,
     onChange,
     required,
     disabled,
     placeholder = '',
     selectedValue,
-    selectNoneLabel,
-    allowSelectNone,
     error,
     maxRadioItems = 3,
+    ...rest
   } = props;
 
   const asSelect = items.length > maxRadioItems;
@@ -59,15 +52,8 @@ export function SingleSelect(props: ISingleSelectProps) {
         onChange={onChange}
         disabled={disabled}
         placeholder={placeholder}
-        selectNoneLabel={selectNoneLabel}
-        allowSelectNone={allowSelectNone}
         items={items}
-        mb={mb}
-        mt={mt}
-        mr={mr}
-        ml={ml}
-        my={my}
-        mx={mx}
+        {...rest}
       />
     );
   }
@@ -75,15 +61,12 @@ export function SingleSelect(props: ISingleSelectProps) {
   return (
     <View
       style={{
-        marginBottom: mb && Spacings[mb],
-        marginTop: mt && Spacings[mt],
-        marginLeft: ml && Spacings[ml],
-        marginRight: mr && Spacings[mr],
-        marginHorizontal: mx && Spacings[mx],
-        marginVertical: my && Spacings[my],
+        ...getMarginStyles(props),
         gap: Spacings.xs,
       }}
     >
+      {label && <FormFieldLabel label={label} required={required} />}
+
       {items.map(({ displayValue, value }) => (
         <Radio
           key={value || displayValue}

@@ -1,4 +1,3 @@
-import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import {
   Colors,
   FontSizes,
@@ -34,10 +33,10 @@ export interface IInputProps extends TMarginProps, TextInputProps {
   onDelete?: () => void;
   slotLeft?: TInputSlot;
   slotRight?: TInputSlot;
-  asPicker?: boolean;
+  asSelect?: boolean;
 }
 
-const defaultAsPickerProps: TextInputProps = {
+const defaultAsSelectProps: TextInputProps = {
   showSoftInputOnFocus: false,
   caretHidden: true,
 };
@@ -58,11 +57,11 @@ export function Input(props: IInputProps) {
     autoCapitalize = 'none',
     borderRadius = Radiuses.xs,
     errorMessage,
-    asPicker,
+    asSelect,
     ...rest
   } = props;
   const inputRef = useRef<TextInput>(null);
-  const asPickerProps = asPicker ? defaultAsPickerProps : {};
+  const asSelectProps = asSelect ? defaultAsSelectProps : {};
 
   return (
     <View
@@ -79,8 +78,7 @@ export function Input(props: IInputProps) {
         style={[
           styles.input,
           {
-            // borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
-            borderColor: 'green',
+            borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
             borderRadius,
           },
         ]}
@@ -118,7 +116,7 @@ export function Input(props: IInputProps) {
           editable={!disabled}
           autoCorrect={autoCorrect}
           autoCapitalize={autoCapitalize}
-          {...asPickerProps}
+          {...asSelectProps}
           {...rest}
           value={value}
         />
@@ -131,18 +129,6 @@ export function Input(props: IInputProps) {
             accessibilityLabel="clear input"
             accessibilityHint={`clear value for ${label || 'input'}`}
             component={<InputClearIcon />}
-          />
-        )}
-
-        {asPicker && (
-          <InputSlot
-            placement="right"
-            inputRef={inputRef}
-            focusableInput={true}
-            disabled={disabled}
-            component={<ChevronLeftIcon size="sm" rotate={'-90deg'} />}
-            accessibilityLabel={`selector for ${label || 'input'}`}
-            accessibilityHint={`opens selector for ${label || 'input'}`}
           />
         )}
 

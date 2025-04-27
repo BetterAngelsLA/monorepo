@@ -1,3 +1,4 @@
+import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import {
   Colors,
   Radiuses,
@@ -81,7 +82,7 @@ export default function Picker(props: IPickerProps) {
         ]}
       >
         <Input
-          asPicker
+          asSelect
           disabled={disabled}
           required={required}
           placeholder={placeholder}
@@ -92,6 +93,12 @@ export default function Picker(props: IPickerProps) {
           onFocus={() => {
             Keyboard.dismiss();
             setIsModalVisible(true);
+          }}
+          slotRight={{
+            focusableInput: true,
+            component: <ChevronLeftIcon size="sm" rotate={'-90deg'} />,
+            accessibilityLabel: `selector for ${label || 'field'}`,
+            accessibilityHint: `opens selector for ${label || 'field'}`,
           }}
         />
       </View>
