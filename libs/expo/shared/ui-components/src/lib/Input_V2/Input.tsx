@@ -5,6 +5,7 @@ import {
   Spacings,
   TMarginProps,
   getMarginStyles,
+  omitMarginProps,
 } from '@monorepo/expo/shared/static';
 import { useRef } from 'react';
 import {
@@ -60,7 +61,9 @@ export function Input(props: IInputProps) {
     asSelect,
     ...rest
   } = props;
+
   const inputRef = useRef<TextInput>(null);
+  const nonMarginOtherProps = omitMarginProps(rest);
   const asSelectProps = asSelect ? defaultAsSelectProps : {};
 
   return (
@@ -117,7 +120,7 @@ export function Input(props: IInputProps) {
           autoCorrect={autoCorrect}
           autoCapitalize={autoCapitalize}
           {...asSelectProps}
-          {...rest}
+          {...nonMarginOtherProps}
           value={value}
         />
 
@@ -173,6 +176,6 @@ const styles = StyleSheet.create({
   },
   required: {
     marginLeft: 2,
-    color: 'red',
+    color: Colors.ERROR_DARK,
   },
 });

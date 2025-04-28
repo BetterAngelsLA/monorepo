@@ -5,6 +5,7 @@ import {
   Spacings,
   TMarginProps,
   getMarginStyles,
+  omitMarginProps,
 } from '@monorepo/expo/shared/static';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format as dateFnsFormat } from 'date-fns';
@@ -41,18 +42,17 @@ export function DatePicker(props: IDatePickerProps) {
     label,
     onChange,
     error,
-    required,
-    disabled,
     style,
     minDate,
     maxDate,
     mode,
-    placeholder,
     format = 'MM/dd/yyyy',
     value,
     ...rest
   } = props;
   const [pickerVisible, setPickerVisible] = useState(false);
+
+  const nonMarginOtherProps = omitMarginProps(rest);
 
   return (
     <View
@@ -66,9 +66,6 @@ export function DatePicker(props: IDatePickerProps) {
     >
       <Input
         asSelect
-        disabled={disabled}
-        required={required}
-        placeholder={placeholder}
         value={value ? dateFnsFormat(value, format) : undefined}
         label={label}
         error={!!error}
@@ -83,7 +80,7 @@ export function DatePicker(props: IDatePickerProps) {
           accessibilityLabel: 'date selector',
           accessibilityHint: `opens date selector for ${label || 'date field'}`,
         }}
-        {...rest}
+        {...nonMarginOtherProps}
       />
       {pickerVisible && (
         <View style={{ marginTop: Spacings.xs }}>
