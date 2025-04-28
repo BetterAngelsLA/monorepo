@@ -68,6 +68,8 @@ export function Map(props: TMap) {
   });
   const [userLocation, setUserLocation] =
     useState<google.maps.LatLngLiteral | null>(null);
+  const [geolocationPermission, setGeolocationPermission] =
+    useState<PermissionState | null>(null);
 
   useEffect(() => {
     console.info(`[map] loading status: ${mapApiStatus}`);
@@ -76,17 +78,6 @@ export function Map(props: TMap) {
   const handleCameraChange = useCallback(
     (event: MapCameraChangedEvent) => {
       setCameraProps(event.detail);
-      const { center } = event.detail;
-
-      if (center) {
-        sessionStorage.setItem(
-          'mapCenter',
-          JSON.stringify({
-            lat: center.lat,
-            lng: center.lng,
-          })
-        );
-      }
     },
     [map]
   );
@@ -115,7 +106,34 @@ export function Map(props: TMap) {
   }
 
   useEffect(() => {
-    if (!map) return;
+    let permissionStatus: PermissionStatus;
+    const permissionQuery = navigator.permissions;
+
+    if (!permissionQuery) {
+      return;
+    }
+
+    permissionQuery
+      .query({ name: 'geolocation' as PermissionName })
+      .then((result) => {
+        setGeolocationPermission(result.state);
+        permissionStatus = result;
+
+        result.onchange = () => {
+          setGeolocationPermission(result.state);
+        };
+      });
+
+    return () => {
+      if (permissionStatus) {
+        permissionStatus.onchange = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!map || !navigator.geolocation || geolocationPermission !== 'granted')
+      return;
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -126,11 +144,9 @@ export function Map(props: TMap) {
       (error) => {
         console.error('Geolocation error', error);
       },
-      {
-        enableHighAccuracy: true,
-      }
+      { enableHighAccuracy: true }
     );
-  }, [map]);
+  }, [map, geolocationPermission]);
 
   const mapCss = ['h-12', 'w-full', className];
   return (
@@ -170,10 +186,12 @@ export function Map(props: TMap) {
       <MapControl position={controlsPosition}>
         <div className="mr-4">
           <ZoomControls />
-          <CurrentLocationBtn
-            className="mt-5"
-            onLocationSucccess={handleCenterToUserLocation}
-          />
+          {geolocationPermission !== 'denied' && (
+            <CurrentLocationBtn
+              className="mt-5"
+              onLocationSuccess={handleCenterToUserLocation}
+            />
+          )}
         </div>
       </MapControl>
     </GoogleMap>

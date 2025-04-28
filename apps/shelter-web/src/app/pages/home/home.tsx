@@ -83,12 +83,22 @@ export function Home() {
 
     if (savedCenter) {
       const { lat, lng } = JSON.parse(savedCenter);
+
       setDefaultCenter({
         latitude: lat,
         longitude: lng,
       });
+      setLocation({
+        latitude: lat,
+        longitude: lng,
+        source: 'address',
+      });
     } else {
       setDefaultCenter(LA_COUNTY_CENTER);
+      setLocation({
+        ...LA_COUNTY_CENTER,
+        source: 'address',
+      });
     }
   }, []);
 
