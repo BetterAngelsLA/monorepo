@@ -118,7 +118,7 @@ export function Map(props: TMap) {
 
   useEffect(() => {
     let permissionStatus: PermissionStatus;
-    const permissionQuery = navigator.permissoms;
+    const permissionQuery = navigator.permissions;
 
     if (!permissionQuery) {
       return;
