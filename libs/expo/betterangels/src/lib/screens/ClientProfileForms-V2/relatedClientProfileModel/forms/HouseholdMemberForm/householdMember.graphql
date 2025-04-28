@@ -1,0 +1,31 @@
+mutation UpdateClientHouseholdMember($data: ClientHouseholdMemberInput!) {
+  updateClientHouseholdMember(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on ClientHouseholdMemberType {
+      id
+    }
+  }
+}
+
+mutation CreateClientHouseholdMember($data: ClientHouseholdMemberInput!) {
+  createClientHouseholdMember(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on ClientHouseholdMemberType {
+      id
+    }
+  }
+}

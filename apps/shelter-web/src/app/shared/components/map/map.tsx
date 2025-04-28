@@ -1,5 +1,5 @@
+import { CurrentLocationDot } from '@monorepo/react/components';
 import { MapPinIcon } from '@monorepo/react/icons';
-
 import {
   AdvancedMarker,
   ControlPosition,
@@ -10,7 +10,13 @@ import {
   useApiLoadingStatus,
   useMap,
 } from '@vis.gl/react-google-maps';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import {
   DEFAULT_GESTURE_HANDLING,
@@ -18,6 +24,7 @@ import {
   LA_COUNTY_CENTER,
 } from './constants.maps';
 import { CurrentLocationBtn } from './controls/currentLocationBtn';
+import { SearchMapAreaButton } from './controls/searchMapAreaButton';
 import { ZoomControls } from './controls/zoomControls';
 import { TLatLng, TMapGestureHandling, TMapZoom, TMarker } from './types.maps';
 import { toGoogleLatLng } from './utils/toGoogleLatLng';
@@ -30,7 +37,10 @@ type TMap = {
   gestureHandling?: TMapGestureHandling;
   disableDefaultUI?: boolean;
   controlsPosition?: ControlPosition;
+  showSearchButton?: boolean;
+  setShowSearchButton: Dispatch<SetStateAction<boolean>>;
   onCenterSelect?: (center: TLatLng) => void;
+  onSearchMapArea?: (bounds?: google.maps.LatLngBounds) => void;
   markers?: TMarker[];
 };
 
@@ -43,10 +53,12 @@ export function Map(props: TMap) {
     gestureHandling = DEFAULT_GESTURE_HANDLING,
     disableDefaultUI = true,
     controlsPosition = ControlPosition.INLINE_END_BLOCK_END,
+    showSearchButton = false,
+    setShowSearchButton,
     onCenterSelect,
+    onSearchMapArea,
     markers = [],
   } = props;
-
   const map = useMap();
   const mapApiStatus = useApiLoadingStatus();
 
@@ -54,6 +66,8 @@ export function Map(props: TMap) {
     center: toGoogleLatLng(defaultCenter) as google.maps.LatLngLiteral,
     zoom: defaultZoom,
   });
+  const [userLocation, setUserLocation] =
+    useState<google.maps.LatLngLiteral | null>(null);
 
   useEffect(() => {
     console.info(`[map] loading status: ${mapApiStatus}`);
@@ -62,13 +76,24 @@ export function Map(props: TMap) {
   const handleCameraChange = useCallback(
     (event: MapCameraChangedEvent) => {
       setCameraProps(event.detail);
+      const { center } = event.detail;
+
+      if (center) {
+        sessionStorage.setItem(
+          'mapCenter',
+          JSON.stringify({
+            lat: center.lat,
+            lng: center.lng,
+          })
+        );
+      }
     },
     [map]
   );
 
-  function onCurrentLocationChange(location: TLatLng) {
+  function handleCenterToUserLocation(location: TLatLng) {
     if (!map) {
-      console.warn('[map::onCurrentLocationChange] map missing.');
+      console.warn('[map::handleCenterToUserLocation] map missing.');
 
       return;
     }
@@ -89,8 +114,25 @@ export function Map(props: TMap) {
     map.setCenter(newCenter);
   }
 
-  const mapCss = ['h-12', 'w-full', className];
+  useEffect(() => {
+    if (!map) return;
 
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const newCenter = { lat: latitude, lng: longitude };
+        setUserLocation(newCenter);
+      },
+      (error) => {
+        console.error('Geolocation error', error);
+      },
+      {
+        enableHighAccuracy: true,
+      }
+    );
+  }, [map]);
+
+  const mapCss = ['h-12', 'w-full', className];
   return (
     <GoogleMap
       mapId={mapId}
@@ -98,16 +140,14 @@ export function Map(props: TMap) {
       disableDefaultUI={disableDefaultUI}
       gestureHandling={gestureHandling}
       onCameraChanged={handleCameraChange}
+      onIdle={() => setShowSearchButton(true)}
       {...cameraProps}
     >
-      <AdvancedMarker
-        position={cameraProps.center}
-        draggable={false}
-        zIndex={101}
-      >
-        <MapPinIcon className="h-10" type="primary" />
-      </AdvancedMarker>
-
+      {userLocation && (
+        <AdvancedMarker position={userLocation} zIndex={999}>
+          <CurrentLocationDot />
+        </AdvancedMarker>
+      )}
       {markers.map((marker) => (
         <AdvancedMarker
           key={marker.id}
@@ -119,12 +159,20 @@ export function Map(props: TMap) {
         </AdvancedMarker>
       ))}
 
+      {showSearchButton && onSearchMapArea && (
+        <MapControl position={ControlPosition.TOP_CENTER}>
+          <SearchMapAreaButton
+            onClick={() => onSearchMapArea(map?.getBounds())}
+          />
+        </MapControl>
+      )}
+
       <MapControl position={controlsPosition}>
         <div className="mr-4">
           <ZoomControls />
           <CurrentLocationBtn
             className="mt-5"
-            onLocationSucccess={onCurrentLocationChange}
+            onLocationSucccess={handleCenterToUserLocation}
           />
         </div>
       </MapControl>

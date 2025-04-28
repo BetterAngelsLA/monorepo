@@ -11,7 +11,7 @@ const apolloClient = createApolloClient({
 });
 
 // to allow preview by branch
-const basename = import.meta.env.VITE_SHELTER_BASE_PATH || '/';
+const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement

@@ -12,7 +12,7 @@ class ClientProfileModelTestCase(TestCase):
 
         client_profile.pronouns = PronounEnum.HE_HIM_HIS
         client_profile.save()
-        self.assertEqual(client_profile.display_pronouns, "He/Him/His")
+        self.assertEqual(client_profile.display_pronouns, "He/Him")
 
         client_profile.pronouns = PronounEnum.OTHER
         client_profile.pronouns_other = "she/her/their"

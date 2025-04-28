@@ -371,7 +371,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "rangeInMiles": search_range_in_miles,
         }
 
-        expected_query_count = 3
+        expected_query_count = 2
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables={"filters": filters})
 
@@ -380,6 +380,174 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         result_shelter_ids = [r["id"] for r in results]
         # s1 is ~27 miles away from the reference point, so it was not included in the response payload
         self.assertEqual(result_shelter_ids, [str(s3.pk), str(s2.pk)])
+
+    def test_shelter_map_bounds_filter(self) -> None:
+        """Test map bounds filter for querying shelters within a defined area.
+
+        1. Create 5 shelters at coordinates:
+           - (-4, -4)
+           - (-2, -2)
+           - (0, 0)
+           - (2, 2)
+           - (4, 4)
+
+        2. Define the map boundary:
+           - Construct a square boundary box defined by the following latitude and longitude values:
+             (-3, 3, 3, -3)
+           - Note that the boundary box's values correspond to: west, north, east, south
+
+        3. Execute query and verify results:
+           - Query shelters with the map bounds filter.
+           - Confirm that only the three shelters within the polygon are returned.
+
+         4                          x
+         3     ┌─────────────────┐
+         2     │              x  │
+         1     │                 │
+         0     │        x        │
+        -1     │                 │
+        -2     │  x              │
+        -3     └─────────────────┘
+        -4  x
+           -4 -3 -2 -1  0  1  2  3  4
+
+        """
+
+        reference_point = {
+            "latitude": 4,
+            "longitude": 4,
+        }
+
+        _, s2, s3, s4, _ = [
+            Shelter.objects.create(
+                location=Places(
+                    place=f"place {i}",
+                    # Each subsequent shelter is two degrees further from the reference point
+                    latitude=f"{reference_point["latitude"] - i}",
+                    longitude=f"{reference_point["longitude"] - i}",
+                )
+            )
+            for i in range(8, -2, -2)
+        ]
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {
+            "mapBounds": {
+                "westLng": -3,
+                "northLat": 3,
+                "eastLng": 3,
+                "southLat": -3,
+            }
+        }
+
+        expected_query_count = 2
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        result_ids = {s["id"] for s in response["data"]["shelters"]["results"]}
+        expected_ids = {str(s.id) for s in [s2, s3, s4]}
+
+        self.assertEqual(len(result_ids), 3)
+        self.assertEqual(result_ids, expected_ids)
+
+    def test_shelter_combined_filters(self) -> None:
+        reference_point = {
+            "latitude": 4,
+            "longitude": 4,
+        }
+
+        _, s2, s3, s4, _ = [
+            Shelter.objects.create(
+                location=Places(
+                    place=f"place {i}",
+                    # Each subsequent shelter is two degrees further from the reference point
+                    latitude=f"{reference_point["latitude"] - i}",
+                    longitude=f"{reference_point["longitude"] - i}",
+                )
+            )
+            for i in range(8, -2, -2)
+        ]
+
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {
+            "mapBounds": {
+                "westLng": -3,
+                "northLat": 3,
+                "eastLng": 3,
+                "southLat": -3,
+            },
+            "geolocation": {
+                "latitude": reference_point["latitude"],
+                "longitude": reference_point["longitude"],
+            },
+        }
+
+        expected_query_count = 3
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables={"filters": filters})
+
+        result_ids = [s["id"] for s in response["data"]["shelters"]["results"]]
+        expected_ids = [str(s.id) for s in [s4, s3, s2]]
+
+        self.assertEqual(len(result_ids), 3)
+        self.assertEqual(result_ids, expected_ids)
+
+    def test_shelter_map_bounds_filter_validation(self) -> None:
+        query = """
+            query ($filters: ShelterFilter) {
+                shelters(filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {
+            "mapBounds": {
+                "westLng": -181,
+                "northLat": 91,
+                "eastLng": 3,
+                "southLat": -3,
+            },
+        }
+
+        response = self.execute_graphql(query, variables={"filters": filters})
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 2)
+
+        error_messages = [e["message"] for e in response["errors"]]
+        expected_error_messages = [
+            "Longitude value must be between -180.0 and 180.0",
+            "Latitude value must be between -90.0 and 90.0",
+        ]
+
+        for e in expected_error_messages:
+            self.assertTrue(
+                any(e in msg for msg in error_messages), f"Expected to find {e!r} in one of {error_messages!r}"
+            )
 
     @parametrize(
         "property_filters, expected_result_count",
