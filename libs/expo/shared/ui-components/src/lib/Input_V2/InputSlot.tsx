@@ -13,7 +13,7 @@ export type TInputSlot = {
   style?: ViewStyle;
   disabledStyle?: ViewStyle;
   onPress?: () => void;
-  focusableInput?: boolean;
+  focusableInput?: boolean; // if true, will trigger focus on inputRef
   accessibilityLabel?: string;
   accessibilityHint?: string;
 };
