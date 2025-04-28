@@ -200,6 +200,12 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
+        self.client_document = self._create_client_document_fixture(
+            self.client_profile_1["id"],
+            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+            b"This is a test file",
+            "test.txt",
+        )["data"]["createClientDocument"]
         self.graphql_client.logout()
 
     @parametrize(
@@ -286,9 +292,9 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     @parametrize(
         "user_label, expected_document_count",
         [
-            ("org_1_case_manager_1", 4),  # Creator should succeed
-            ("org_1_case_manager_2", 4),  # Other CM in the same org should succeed
-            ("org_2_case_manager_1", 4),  # CM in a different org should succeed
+            ("org_1_case_manager_1", 5),  # Creator should succeed
+            ("org_1_case_manager_2", 5),  # Other CM in the same org should succeed
+            ("org_2_case_manager_1", 5),  # CM in a different org should succeed
             ("client_user_1", 0),  # Client should not succeed
             # NOTE: Anon user raising an error may be caused by a strawberry bug.
             # This test may fail and need updating when the bug is fixed.
@@ -311,6 +317,39 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertEqual(response["data"]["clientDocuments"]["totalCount"], expected_document_count)
         else:
             self.assertTrue("errors" in response)
+
+    @parametrize(
+        "user_label, should_succeed",
+        [
+            ("org_1_case_manager_1", True),  # Owner should succeed
+            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
+            ("org_2_case_manager_1", False),  # CM in different org should not succeed
+            ("client_user_1", False),  # Client modifying client profile should not succeed
+            (None, False),  # Anonymous user should not succeed
+        ],
+    )
+    def test_update_client_document_permission(self, user_label: str, should_succeed: bool) -> None:
+        self._handle_user_login(user_label)
+        variables = {
+            "id": self.client_document["id"],
+            "originalFilename": "Updated name",
+        }
+        response = self._update_client_document_fixture(variables)
+
+        if should_succeed:
+            document = Attachment.objects.get(id=self.client_document["id"])
+            self.assertIsNotNone(response["data"]["updateClientDocument"]["id"])
+            self.assertEqual(document.original_filename, "Updated name")
+        else:
+            self.assertEqual(len(response["data"]["updateClientDocument"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["updateClientDocument"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
 
 class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
