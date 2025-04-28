@@ -16,7 +16,7 @@ export function AddButton(props: TProps) {
       fontSize="md"
       color={Colors.PRIMARY}
       accessibilityHint={`add new ${itemName}`}
-      title={`Add another ${itemName}`}
+      title={`Add a new ${itemName}`}
       onPress={onClick}
     />
   );

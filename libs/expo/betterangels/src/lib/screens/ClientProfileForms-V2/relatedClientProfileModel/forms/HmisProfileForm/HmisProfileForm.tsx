@@ -19,7 +19,7 @@ import {
 } from '../../../../../screenRouting';
 import { enumDisplayHmisAgency } from '../../../../../static';
 import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
-import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
+import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import { HmisProfileDeleteBtn } from '../HmisProfileDeleteBtn';
 import {
   CreateHmisProfileMutation,
@@ -54,6 +54,10 @@ export function HmisProfileForm(props: TProps) {
     clearErrors,
   } = useForm<THmisProfileFormState>({
     defaultValues: defaultFormState,
+  });
+
+  const [reFetchClientProfile] = useGetClientProfileLazyQuery({
+    fetchPolicy: 'network-only',
   });
 
   useEffect(() => {
@@ -128,17 +132,8 @@ export function HmisProfileForm(props: TProps) {
       }
 
       // refetch only on success
-      await mutation({
-        ...mutationVariables,
-        refetchQueries: [
-          {
-            query: ClientProfileDocument,
-            variables: {
-              id: clientProfile.id,
-            },
-          },
-        ],
-        errorPolicy: 'all',
+      await reFetchClientProfile({
+        variables: { id: clientProfile.id },
       });
 
       const returnRoute = getViewClientProfileRoute({
