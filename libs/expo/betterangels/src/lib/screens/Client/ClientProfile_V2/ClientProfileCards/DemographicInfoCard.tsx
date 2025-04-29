@@ -39,6 +39,7 @@ export function DemographicInfoCard(props: TProps) {
   });
 
   const adaAccommodationDisplay = (adaAccommodation || [])
+    .filter((key) => !!key)
     .map((key) => enumDisplayAdaAccommodationEnum[key])
     .join(', ');
 
