@@ -21,14 +21,14 @@ const marginMap: Record<keyof TMarginProps, string> = {
 
 export const marginPropKeys = Object.keys(marginMap) as (keyof TMarginProps)[];
 
-export function omitMarginProps<T extends Record<string, any>>(props: T) {
-  const cloneProps: Record<string, any> = { ...props };
+export function omitMarginProps<T extends Record<string, unknown>>(props: T) {
+  const clone = { ...props };
 
   for (const key of marginPropKeys) {
-    delete cloneProps[key];
+    delete clone[key];
   }
 
-  return cloneProps as Omit<T, keyof TMarginProps>;
+  return clone as Omit<T, keyof TMarginProps>;
 }
 
 export const getMarginStyles = (props: TMarginProps) => {
