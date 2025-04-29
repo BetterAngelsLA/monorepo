@@ -586,6 +586,7 @@ enum DemographicChoices {
   FAMILIES
   SINGLE_MOMS
   SINGLE_DADS
+  LGBTQ_PLUS
   OTHER
 }
 
@@ -1560,7 +1561,6 @@ enum SpecialSituationRestrictionChoices {
   DOMESTIC_VIOLENCE
   HIV_AIDS
   HUMAN_TRAFFICKING
-  LGBTQ_PLUS
   JUSTICE_SYSTEMS
   VETERANS
 }

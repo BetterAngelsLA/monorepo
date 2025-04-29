@@ -604,6 +604,7 @@ export type DeletedObjectType = {
 export enum DemographicChoices {
   All = 'ALL',
   Families = 'FAMILIES',
+  LgbtqPlus = 'LGBTQ_PLUS',
   Other = 'OTHER',
   Seniors = 'SENIORS',
   SingleDads = 'SINGLE_DADS',
@@ -1960,7 +1961,6 @@ export enum SpecialSituationRestrictionChoices {
   HivAids = 'HIV_AIDS',
   HumanTrafficking = 'HUMAN_TRAFFICKING',
   JusticeSystems = 'JUSTICE_SYSTEMS',
-  LgbtqPlus = 'LGBTQ_PLUS',
   None = 'NONE',
   Veterans = 'VETERANS'
 }
