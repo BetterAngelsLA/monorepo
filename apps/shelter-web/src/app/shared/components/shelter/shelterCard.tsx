@@ -1,4 +1,5 @@
 import { LocationIcon } from '@monorepo/react/icons';
+import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { TLatLng } from '../map/types.maps';
@@ -23,6 +24,7 @@ type TShelterCard = {
   className?: string;
   shelter: TShelter;
   originCoordinates?: TLatLng | null;
+  footer?: ReactNode | null;
 };
 
 export function ShelterCard(props: TShelterCard) {
@@ -30,6 +32,7 @@ export function ShelterCard(props: TShelterCard) {
     shelter: { id, name, heroImage, distanceInMiles, location },
     originCoordinates,
     className,
+    footer,
   } = props;
 
   const navigate = useNavigate();
@@ -42,6 +45,7 @@ export function ShelterCard(props: TShelterCard) {
     'md:flex-row',
     'cursor-pointer',
     className,
+    footer? 'pb-6':'',
   ];
 
   const contentCss = ['mt-4'];
@@ -88,6 +92,8 @@ export function ShelterCard(props: TShelterCard) {
           </div>
         )}
       </div>
+
+      {footer}
     </div>
   );
 }
