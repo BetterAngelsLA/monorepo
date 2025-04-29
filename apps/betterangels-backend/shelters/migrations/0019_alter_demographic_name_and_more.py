@@ -28,7 +28,7 @@ def update_enum_values_forward(apps, schema_editor):
 
         DELETE FROM shelters_specialsituationrestriction WHERE name = 'lgbtq_plus';
     """
-    )  # NOT FINISHED!! MUST HANDLE CASE WHERE LGBTQ+ WAS ONLY SELECTION SINCE SPECIAL SITUATION RESTRICTION IS A REQUIRED FIELD THEREFORE CANNOT BE BLANK
+    )
 
 
 class Migration(migrations.Migration):
