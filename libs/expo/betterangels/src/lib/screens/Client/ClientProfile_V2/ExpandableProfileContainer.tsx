@@ -33,7 +33,7 @@ export function ExpandableProfileContainer(props: TProps) {
   );
 
   return (
-    <ExpandableContainer isOpen={isOpen} header={header}>
+    <ExpandableContainer controlled isOpen={isOpen} header={header}>
       {children}
     </ExpandableContainer>
   );
