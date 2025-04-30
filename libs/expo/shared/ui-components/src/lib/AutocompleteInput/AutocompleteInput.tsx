@@ -8,6 +8,7 @@ type TAutocompleteInput<T> = {
   value?: string;
   predictions: T[];
   label?: string;
+  disabled?: boolean;
   onChangeText: (input: string) => void;
   onReset?: () => void;
   onFocus?: () => void;
@@ -22,6 +23,7 @@ export function AutocompleteInput<T>(props: TAutocompleteInput<T>) {
   const {
     value,
     errorMessage,
+    disabled,
     predictions,
     onChangeText,
     onReset,
@@ -40,6 +42,7 @@ export function AutocompleteInput<T>(props: TAutocompleteInput<T>) {
       <BasicInput
         label={label}
         value={value || ''}
+        disabled={disabled}
         onChangeText={onChangeText}
         onDelete={onReset}
         placeholder={placeholder}

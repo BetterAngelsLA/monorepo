@@ -9,11 +9,12 @@ import { TClientProfileContact } from '../../types';
 
 type TProps = {
   contact?: TClientProfileContact;
+  showAllFields?: boolean;
   style?: ViewStyle;
 };
 
 export function RelevantContactCard(props: TProps) {
-  const { contact, style } = props;
+  const { contact, showAllFields, style } = props;
 
   if (!contact) {
     return null;
@@ -49,6 +50,7 @@ export function RelevantContactCard(props: TProps) {
           clientRelevantContactEnumDisplay[relationshipToClient]
         }
         items={content}
+        showAll={!!showAllFields}
         compact
       />
     </View>

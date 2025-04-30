@@ -1,3 +1,4 @@
+import { FetchResult } from '@apollo/client';
 import {
   ControlledInput,
   Form,
@@ -119,7 +120,7 @@ export function HmisProfileForm(props: TProps) {
         throw new Error('Missing HMIS mutation response data');
       }
 
-      const uniquenessError = hasUniquenessError(responseData, mutationKey);
+      const uniquenessError = hasUniquenessError(response, mutationKey);
 
       if (uniquenessError) {
         setError('hmisId', { type: 'manual', message: uniquenessError });
@@ -171,7 +172,6 @@ export function HmisProfileForm(props: TProps) {
             rules={{ required: 'Type of HMIS ID is required' }}
             render={({ field }) => (
               <SingleSelect
-                required={true}
                 disabled={isLoading}
                 label="Type of HMIS ID"
                 placeholder="Select type of HMIS ID"
@@ -187,7 +187,6 @@ export function HmisProfileForm(props: TProps) {
 
           <ControlledInput
             control={control}
-            required={true}
             disabled={isLoading}
             label={'HMIS ID'}
             name={'hmisId'}
@@ -242,7 +241,7 @@ function isSuccessMutationResponse(
 }
 
 function hasUniquenessError(
-  response: UpdateHmisProfileMutation | CreateHmisProfileMutation,
+  response: FetchResult<UpdateHmisProfileMutation | CreateHmisProfileMutation>,
   key: 'updateHmisProfile' | 'createHmisProfile'
 ): string | null {
   const operationInfo = extractOperationInfo(response, key);

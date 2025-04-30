@@ -2,8 +2,10 @@ import { ComponentType } from 'react';
 import { ViewStyle } from 'react-native';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
 import { TClientProfile } from '../../Client/ClientProfile_V2/types';
+import { ClientContactForm } from './forms/ClientContactsForm';
 import { HmisProfileForm } from './forms/HmisProfileForm/HmisProfileForm';
 import { HouseholdMemberForm } from './forms/HouseholdMemberForm';
+import { ClientContactsView } from './views/ClientContactsView';
 import { HmisProfilesView } from './views/HmisProfilesView';
 import { HouseholdMemebersView } from './views/HouseholdMemebersView';
 
@@ -32,5 +34,11 @@ export const clientRelatedModelConfig: Record<string, TRelationConfig> = {
     titleSingular: 'Household',
     ViewComponent: HouseholdMemebersView,
     FormComponent: HouseholdMemberForm,
+  },
+  [ClientProfileSectionEnum.RelevantContacts]: {
+    titlePlural: 'Relevant Contacts',
+    titleSingular: 'Relevant Contact',
+    ViewComponent: ClientContactsView,
+    FormComponent: ClientContactForm,
   },
 };
