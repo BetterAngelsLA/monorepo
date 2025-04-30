@@ -30,6 +30,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Model
+from django.db.models.functions import Lower
 from django.utils import timezone
 from django_choices_field import TextChoicesField
 from phonenumber_field.modelfields import PhoneNumberField
@@ -87,7 +88,7 @@ class HmisProfile(BaseModel):
     agency = TextChoicesField(choices_enum=HmisAgencyEnum)
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["hmis_id", "agency"], name="unique_hmis_id_agency")]
+        constraints = [models.UniqueConstraint(Lower("hmis_id"), "agency", name="unique_hmis_id_agency")]
 
 
 @pghistory.track(
