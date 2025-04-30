@@ -1,10 +1,6 @@
 import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
 import { TClientContactFormState } from './types';
 
-export const formKeys = Object.keys(
-  {} as TClientContactFormState
-) as (keyof TClientContactFormState)[];
-
 export const defaultFormState: TClientContactFormState = {
   relationshipToClient: undefined,
   name: '',
