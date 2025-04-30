@@ -254,7 +254,7 @@ function hasUniquenessError(
   }
 
   const uniquenessServerErrorMessage =
-    'Hmis profile with this Hmis id and Agency already exists.';
+    'Constraint “unique_hmis_id_agency” is violated.';
 
   const uniquenessError = operationMessages.find(
     (m) => m.message === uniquenessServerErrorMessage
