@@ -34,7 +34,7 @@ export function ClientContactsView(props: TProps) {
 
   return (
     <View style={style}>
-      {(contacts || []).map((contact, idx) => {
+      {(contacts || []).map((contact) => {
         const editRoute = getRelatedModelEditRoute({
           profileId,
           relatedlId: contact.id,
@@ -43,7 +43,7 @@ export function ClientContactsView(props: TProps) {
 
         return (
           <ViewItemContainer
-            key={idx}
+            key={contact.id}
             onClickEdit={() => router.navigate(editRoute)}
           >
             <RelevantContactCard contact={contact} showAllFields={true} />

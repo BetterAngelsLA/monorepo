@@ -6,26 +6,15 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { useRef } from 'react';
+import { Controller } from 'react-hook-form';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSnackbar } from '../../../../../hooks';
-import {
-  ClientProfileSectionEnum,
-  getViewClientProfileRoute,
-} from '../../../../../screenRouting';
 import { clientRelevantContactEnumDisplay } from '../../../../../static';
 import AddressAutocomplete from '../../../../../ui-components/AddressField';
 import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
-import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import { ClientContactDeleteBtn } from '../ClientContactDeleteBtn';
-import {
-  useCreateClientContactMutation,
-  useUpdateClientContactMutation,
-} from './__generated__/clientContact.generated';
-import { processClientContactForm } from './processClientContactForm';
-import { defaultFormState, toFormState } from './toFormState';
-import { TClientContactFormState } from './types';
+import { useClientContactForm } from './useClientContactForm';
 
 type TProps = {
   clientProfile?: TClientProfile;
@@ -35,102 +24,29 @@ type TProps = {
 export function ClientContactForm(props: TProps) {
   const { clientProfile, relationId } = props;
 
+  const scrollRef = useRef<ScrollView | null>(null);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [isLoading, setIsLoading] = useState(false);
 
   const {
     control,
-    formState: { errors, isValid: formIsValid, isSubmitted },
+    errors,
+    isSubmitted,
     handleSubmit,
-    setError,
+    onSubmit,
+    isLoading,
+    setIsLoading,
+    isError,
     setValue,
     clearErrors,
-  } = useForm<TClientContactFormState>({
-    defaultValues: defaultFormState,
-  });
-
-  useEffect(() => {
-    const { name, email, phoneNumber, mailingAddress, relationshipToClient } =
-      toFormState({
-        clientProfile,
-        relationId,
-      });
-
-    setValue('name', name);
-    setValue('email', email);
-    setValue('phoneNumber', phoneNumber);
-    setValue('mailingAddress', mailingAddress);
-    setValue('relationshipToClient', relationshipToClient);
-  }, [clientProfile, relationId, setValue]);
-
-  const [email, phoneNumber, mailingAddress, relationshipToClient] = useWatch({
-    control,
-    name: ['email', 'phoneNumber', 'mailingAddress', 'relationshipToClient'],
-  });
-
-  const oneOfMissingError = !email && !phoneNumber && !mailingAddress;
-  const isError = oneOfMissingError || !relationshipToClient;
-
-  const [createContact] = useCreateClientContactMutation();
-  const [updateContact] = useUpdateClientContactMutation();
-  const [reFetchClientProfile] = useGetClientProfileLazyQuery({
-    fetchPolicy: 'network-only',
-  });
-
-  if (!clientProfile) {
-    return null;
-  }
-
-  const clientProfileId = clientProfile.id;
+  } = useClientContactForm({ clientProfile, relationId, router, showSnackbar });
 
   const isEditMode = !!relationId;
+  const clientProfileId = clientProfile?.id;
 
-  const onSubmit = async (formData: TClientContactFormState) => {
-    if (isError || !formIsValid) {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-
-      const processed = await processClientContactForm({
-        formData,
-        clientProfileId,
-        relationId,
-        setError,
-        clearErrors,
-        createContact,
-        updateContact,
-      });
-
-      if (!processed) {
-        return;
-      }
-
-      await reFetchClientProfile({
-        variables: { id: clientProfileId },
-      });
-
-      router.replace(
-        getViewClientProfileRoute({
-          id: clientProfileId,
-          openCard: ClientProfileSectionEnum.RelevantContacts,
-        })
-      );
-    } catch (e) {
-      console.error('Error updating Relevant Contact:', e);
-
-      showSnackbar({
-        message: 'Something went wrong. Please try again.',
-        type: 'error',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const scrollRef = useRef<ScrollView | null>(null);
+  if (!clientProfileId) {
+    return null;
+  }
 
   return (
     <Form.Page
