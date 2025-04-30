@@ -6,5 +6,6 @@ export type TClientContactFormState = {
   email?: string;
   phoneNumber?: string;
   mailingAddress?: string;
-  missingOneOfError?: string;
 };
+
+export type TFormKey = keyof TClientContactFormState;

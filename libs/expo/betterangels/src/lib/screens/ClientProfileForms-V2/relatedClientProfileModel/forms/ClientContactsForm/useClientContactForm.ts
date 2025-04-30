@@ -1,8 +1,12 @@
 import { FetchResult } from '@apollo/client';
 import { Router } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
-import { extractExtensionErrors } from '../../../../../apollo';
+import { UseFormSetError, useForm, useWatch } from 'react-hook-form';
+import {
+  OperationMessage,
+  extractExtensionErrors,
+  extractOperationInfo,
+} from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
 import { TShowSnackbar } from '../../../../../providers/snackbar/SnackbarProvider';
 import {
@@ -18,7 +22,7 @@ import {
   useUpdateClientContactMutation,
 } from './__generated__/clientContact.generated';
 import { defaultFormState, toFormState } from './toFormState';
-import { TClientContactFormState } from './types';
+import { TClientContactFormState, TFormKey } from './types';
 
 type TProps = {
   clientProfile?: TClientProfile;
@@ -92,17 +96,17 @@ export function useClientContactForm(props: TProps) {
         errorPolicy: 'all',
       });
 
-      const responseData = response?.data;
-
-      if (!responseData) {
-        throw new Error(`${mutationKey} response data missing.`);
+      if (!response) {
+        throw new Error(`${mutationKey} response missing.`);
       }
 
-      const extensionErrors = extractExtensionErrors(response);
+      const errorsApplied = applyValidationErrors(
+        response,
+        mutationKey,
+        setError
+      );
 
-      if (extensionErrors) {
-        applyManualFormErrors(extensionErrors, setError);
-
+      if (errorsApplied) {
         return false;
       }
 
@@ -179,4 +183,49 @@ function isSuccessMutationResponse(
   }
 
   return false;
+}
+
+function applyValidationErrors(
+  response: FetchResult<
+    CreateClientContactMutation | UpdateClientContactMutation
+  >,
+  key: 'updateClientContact' | 'createClientContact',
+  setError: UseFormSetError<TClientContactFormState>
+): boolean {
+  let hasErrors = false;
+
+  const operationInfo = extractOperationInfo(response, key);
+  const operationMessages: OperationMessage[] = operationInfo?.messages || [];
+
+  const formKeys: TFormKey[] = [
+    'name',
+    'email',
+    'phoneNumber',
+    'mailingAddress',
+    'relationshipToClient',
+  ];
+
+  operationMessages.forEach((m) => {
+    const err =
+      formKeys.includes(m.field as TFormKey) && m.kind === 'VALIDATION';
+
+    if (err) {
+      setError(m.field as TFormKey, {
+        type: 'manual',
+        message: m.message || 'Invalid field.',
+      });
+
+      hasErrors = true;
+    }
+  });
+
+  const extensionErrors = extractExtensionErrors(response);
+
+  if (extensionErrors) {
+    applyManualFormErrors(extensionErrors, setError);
+
+    hasErrors = true;
+  }
+
+  return hasErrors;
 }
