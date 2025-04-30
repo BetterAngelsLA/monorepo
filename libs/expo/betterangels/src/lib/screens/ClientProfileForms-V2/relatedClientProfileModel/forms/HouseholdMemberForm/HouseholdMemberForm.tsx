@@ -138,6 +138,7 @@ export function HouseholdMemberForm(props: TProps) {
           <Controller
             name="relationshipToClient"
             control={control}
+            rules={{ required: 'Household Member type is required.' }}
             render={({ field }) => (
               <SingleSelect
                 disabled={isLoading}
