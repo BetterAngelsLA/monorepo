@@ -24,14 +24,13 @@ export function ClientContactDeleteBtn(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const [deleteClientContact, { loading, error }] =
-    useDeleteClientContactMutation();
+  const [deleteClientContact, { loading }] = useDeleteClientContactMutation();
 
   const onDelete = async () => {
     try {
       setIsLoading && setIsLoading(true);
 
-      await deleteClientContact({
+      const { errors } = await deleteClientContact({
         variables: {
           id: relationId,
         },
@@ -43,10 +42,11 @@ export function ClientContactDeleteBtn(props: TProps) {
             },
           },
         ],
+        errorPolicy: 'all',
       });
 
-      if (error) {
-        throw error;
+      if (errors?.length) {
+        throw errors[0];
       }
 
       const returnRoute = getViewClientProfileRoute({

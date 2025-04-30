@@ -148,6 +148,7 @@ export function ClientContactForm(props: TProps) {
 
             <AddressAutocomplete
               control={control}
+              disabled={isLoading}
               label="Mailing Address"
               name="mailingAddress"
               placeholder="Enter mailing address"

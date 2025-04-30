@@ -44,6 +44,7 @@ export function useClientContactForm(props: TProps) {
   useEffect(() => {
     const { name, email, phoneNumber, mailingAddress, relationshipToClient } =
       toFormState({ clientProfile, relationId });
+
     setValue('name', name);
     setValue('email', email);
     setValue('phoneNumber', phoneNumber);
@@ -59,8 +60,8 @@ export function useClientContactForm(props: TProps) {
   const oneOfMissingError = !email && !phoneNumber && !mailingAddress;
   const isError = oneOfMissingError || !relationshipToClient;
 
-  const [createContact] = useCreateClientContactMutation();
-  const [updateContact] = useUpdateClientContactMutation();
+  const [createClientContact] = useCreateClientContactMutation();
+  const [updateClientContact] = useUpdateClientContactMutation();
   const [reFetchClientProfile] = useGetClientProfileLazyQuery({
     fetchPolicy: 'network-only',
   });
@@ -75,7 +76,10 @@ export function useClientContactForm(props: TProps) {
     try {
       setIsLoading(true);
 
-      const mutationFn = relationId ? updateContact : createContact;
+      const mutationFn = relationId ? updateClientContact : createClientContact;
+      const mutationKey = relationId
+        ? 'updateClientContact'
+        : 'createClientContact';
 
       const response = await mutationFn({
         variables: {
@@ -88,8 +92,10 @@ export function useClientContactForm(props: TProps) {
         errorPolicy: 'all',
       });
 
-      if (!response) {
-        throw new Error('update/create contact mutation response missing.');
+      const responseData = response?.data;
+
+      if (!responseData) {
+        throw new Error(`${mutationKey} response data missing.`);
       }
 
       const extensionErrors = extractExtensionErrors(response);
@@ -101,7 +107,7 @@ export function useClientContactForm(props: TProps) {
       }
 
       if (!isSuccessMutationResponse(response)) {
-        throw new Error('invalid mutation response');
+        throw new Error(`invalid ${mutationKey} response.`);
       }
 
       await reFetchClientProfile({ variables: { id: clientProfileId } });
