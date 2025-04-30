@@ -19,6 +19,7 @@ import {
 } from '../../shared/components/shelter/shelterCard';
 import { ShelterSearch } from '../../shared/components/shelters/shelterSearch';
 import { ModalAnimationEnum } from '../../shared/modal/modal';
+import { mergeCss } from '../../shared/utils/styles/mergeCss';
 
 export function Home() {
   const [_location, setLocation] = useAtom(locationAtom);
@@ -44,6 +45,20 @@ export function Home() {
     setShelterMarkers(markers);
   }, [shelters]);
 
+  const footer_style = [
+    'font-semibold',
+    'text-sm',
+    'text-center',
+    'cursor-pointer',
+    'text-primary-60',
+    'active:text-primary-dark',
+    'absolute',
+    'bottom-0',
+    'left-0',
+    'w-full',
+    'pb-6',
+  ];
+
   const handleClick = (markerId: string | null | undefined) => {
     if (!markerId) {
       return;
@@ -56,7 +71,7 @@ export function Home() {
             shelters.find((shelter) => shelter.id === markerId) as TShelter
           }
           footer={
-            <div className="absolute bottom-0 left-0 w-full pb-6 font-semibold text-sm text-center cursor-pointer text-primary-60 active:text-primary-dark">
+            <div className={mergeCss(footer_style)}>
               View Details
             </div>
           }

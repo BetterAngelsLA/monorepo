@@ -45,7 +45,6 @@ export function ShelterCard(props: TShelterCard) {
     'md:flex-row',
     'cursor-pointer',
     className,
-    footer? 'pb-6':'',
   ];
 
   const contentCss = ['mt-4'];
