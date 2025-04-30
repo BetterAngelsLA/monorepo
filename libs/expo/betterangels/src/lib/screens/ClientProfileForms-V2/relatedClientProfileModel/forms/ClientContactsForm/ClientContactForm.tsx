@@ -9,6 +9,10 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useSnackbar } from '../../../../../hooks';
+import {
+  ClientProfileSectionEnum,
+  getViewClientProfileRoute,
+} from '../../../../../screenRouting';
 import { clientRelevantContactEnumDisplay } from '../../../../../static';
 import AddressAutocomplete from '../../../../../ui-components/AddressField';
 import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
@@ -18,6 +22,7 @@ import {
   useCreateClientContactMutation,
   useUpdateClientContactMutation,
 } from './__generated__/clientContact.generated';
+import { processClientContactForm } from './processClientContactForm';
 import { defaultFormState, toFormState } from './toFormState';
 import { TClientContactFormState } from './types';
 
@@ -83,6 +88,44 @@ export function ClientContactForm(props: TProps) {
   const onSubmit = async (formData: TClientContactFormState) => {
     if (isError || !formIsValid) {
       return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const processed = await processClientContactForm({
+        formData,
+        clientProfileId,
+        relationId,
+        setError,
+        clearErrors,
+        createContact,
+        updateContact,
+      });
+
+      if (!processed) {
+        return;
+      }
+
+      await reFetchClientProfile({
+        variables: { id: clientProfileId },
+      });
+
+      router.replace(
+        getViewClientProfileRoute({
+          id: clientProfileId,
+          openCard: ClientProfileSectionEnum.RelevantContacts,
+        })
+      );
+    } catch (e) {
+      console.error('Error updating Relevant Contact:', e);
+
+      showSnackbar({
+        message: 'Something went wrong. Please try again.',
+        type: 'error',
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 

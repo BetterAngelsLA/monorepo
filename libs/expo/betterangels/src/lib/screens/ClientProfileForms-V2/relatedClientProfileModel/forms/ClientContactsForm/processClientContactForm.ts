@@ -16,8 +16,8 @@ type TProps = {
   relationId: string | undefined;
   setError: UseFormSetError<TClientContactFormState>;
   clearErrors: UseFormClearErrors<TClientContactFormState>;
-  createMutation: CreateClientContactMutationFn;
-  updateMutation: UpdateClientContactMutationFn;
+  createContact: CreateClientContactMutationFn;
+  updateContact: UpdateClientContactMutationFn;
 };
 
 export async function processClientContactForm(
@@ -28,14 +28,14 @@ export async function processClientContactForm(
     clientProfileId,
     relationId,
     setError,
-    createMutation,
-    updateMutation,
+    createContact,
+    updateContact,
   } = props;
   if (!formData) {
     return false;
   }
 
-  const mutationFn = relationId ? updateMutation : createMutation;
+  const mutationFn = relationId ? updateContact : createContact;
 
   const response = await mutationFn({
     variables: {
