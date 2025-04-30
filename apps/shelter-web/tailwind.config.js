@@ -33,6 +33,7 @@ module.exports = {
         'neutral-99': 'var(--color-neutral-99)',
         'success-30': 'var(--color-success-30)',
         'success-90': 'var(--color-success-90)',
+        'primary-dark': 'var(--color-primary-dark)',
       },
     },
     keyframes: {

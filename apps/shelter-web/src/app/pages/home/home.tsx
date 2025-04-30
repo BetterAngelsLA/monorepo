@@ -56,7 +56,7 @@ export function Home() {
             shelters.find((shelter) => shelter.id === markerId) as TShelter
           }
           footer={
-            <div className="absolute bottom-0 left-0 w-full pb-6 font-semibold text-sm text-center cursor-pointer text-[#216BF8] active:text-[#1650C1]">
+            <div className="absolute bottom-0 left-0 w-full pb-6 font-semibold text-sm text-center cursor-pointer text-primary-60 active:text-primary-dark">
               View Details
             </div>
           }
