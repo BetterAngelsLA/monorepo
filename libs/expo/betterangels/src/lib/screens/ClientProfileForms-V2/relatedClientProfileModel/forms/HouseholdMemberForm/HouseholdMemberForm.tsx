@@ -168,7 +168,7 @@ export function HouseholdMemberForm(props: TProps) {
           <Controller
             name="gender"
             control={control}
-            render={({ field: { value, onChange } }) => (
+            render={({ field }) => (
               <SingleSelect
                 disabled={isLoading}
                 label="Gender"
@@ -176,8 +176,8 @@ export function HouseholdMemberForm(props: TProps) {
                 items={Object.entries(enumDisplayGender).map(
                   ([value, displayValue]) => ({ value, displayValue })
                 )}
-                selectedValue={value}
-                onChange={(value) => onChange(value)}
+                selectedValue={field.value}
+                onChange={(value) => field.onChange(value)}
                 error={errors.gender?.message}
               />
             )}
@@ -197,7 +197,6 @@ export function HouseholdMemberForm(props: TProps) {
                 minDate={new Date('1900-01-01')}
                 value={value}
                 onChange={onChange}
-                error={errors.dateOfBirth?.message}
               />
             )}
           />

@@ -171,7 +171,6 @@ export function HmisProfileForm(props: TProps) {
             rules={{ required: 'Type of HMIS ID is required' }}
             render={({ field }) => (
               <SingleSelect
-                required={true}
                 disabled={isLoading}
                 label="Type of HMIS ID"
                 placeholder="Select type of HMIS ID"
@@ -187,7 +186,6 @@ export function HmisProfileForm(props: TProps) {
 
           <ControlledInput
             control={control}
-            required={true}
             disabled={isLoading}
             label={'HMIS ID'}
             name={'hmisId'}

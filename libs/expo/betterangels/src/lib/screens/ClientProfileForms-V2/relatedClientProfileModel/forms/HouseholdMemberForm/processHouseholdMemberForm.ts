@@ -65,9 +65,9 @@ export async function processHouseholdMemberForm(
 }
 
 function toApiInputs(values: THouseholdMemberFormState) {
-  const { name, gender, dateOfBirth, relationshipToClient } = values || {};
+  const hasNoValues = !values || !Object.values(values).some(Boolean);
 
-  if (!name && !gender && !dateOfBirth && !relationshipToClient) {
+  if (hasNoValues) {
     return null;
   }
 

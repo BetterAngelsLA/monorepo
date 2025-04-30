@@ -6,7 +6,7 @@ import {
   getRelatedModelAddRoute,
   getRelatedModelEditRoute,
 } from '../../../../../screenRouting/clientProfileRoutes';
-import { HouseholdMemberCard } from '../../../../Client/ClientProfile_V2/ClientProfileCards/HouseholdMembersCard';
+import { RelevantContactCard } from '../../../../Client/ClientProfile_V2/ClientProfileCards/RelevantContactsCard/RelevantContactCard';
 import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
 import { AddButton } from '../AddButton';
 import { ViewItemContainer } from '../ViewItemContainer';
@@ -16,12 +16,12 @@ type TProps = {
   style?: ViewStyle;
 };
 
-export function HouseholdMemebersView(props: TProps) {
+export function ClientContactsView(props: TProps) {
   const { clientProfile, style } = props;
 
   const router = useRouter();
 
-  const { householdMembers, id: profileId } = clientProfile || {};
+  const { contacts, id: profileId } = clientProfile || {};
 
   if (!profileId) {
     return;
@@ -29,16 +29,16 @@ export function HouseholdMemebersView(props: TProps) {
 
   const addRoute = getRelatedModelAddRoute({
     profileId,
-    section: ClientProfileSectionEnum.Household,
+    section: ClientProfileSectionEnum.RelevantContacts,
   });
 
   return (
     <View style={style}>
-      {(householdMembers || []).map((householdMember, idx) => {
+      {(contacts || []).map((contact, idx) => {
         const editRoute = getRelatedModelEditRoute({
           profileId,
-          relatedlId: householdMember.id,
-          section: ClientProfileSectionEnum.Household,
+          relatedlId: contact.id,
+          section: ClientProfileSectionEnum.RelevantContacts,
         });
 
         return (
@@ -46,17 +46,14 @@ export function HouseholdMemebersView(props: TProps) {
             key={idx}
             onClickEdit={() => router.navigate(editRoute)}
           >
-            <HouseholdMemberCard
-              member={householdMember}
-              showAllFields={true}
-            />
+            <RelevantContactCard contact={contact} showAllFields={true} />
           </ViewItemContainer>
         );
       })}
 
       <View style={styles.addButtonView}>
         <AddButton
-          itemName="household member"
+          itemName="relevant contact"
           onClick={() => router.navigate(addRoute)}
         />
       </View>

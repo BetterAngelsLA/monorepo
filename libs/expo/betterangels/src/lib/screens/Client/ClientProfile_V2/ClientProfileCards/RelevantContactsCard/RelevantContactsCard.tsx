@@ -21,10 +21,9 @@ export function RelevantContactsCard(props: TProps) {
   );
 
   const otherContacts = clientContacts.filter((contact) => {
-    return (
-      contact.relationshipToClient &&
-      contact.relationshipToClient !== RelationshipTypeEnum.CurrentCaseManager
-    );
+    const { relationshipToClient } = contact;
+
+    return relationshipToClient !== RelationshipTypeEnum.CurrentCaseManager;
   });
 
   return (
