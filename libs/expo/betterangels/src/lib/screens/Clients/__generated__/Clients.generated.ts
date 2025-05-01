@@ -105,7 +105,6 @@ export const ClientProfilesDocument = gql`
         name
         url
       }
-      displayCaseManager
     }
   }
 }
