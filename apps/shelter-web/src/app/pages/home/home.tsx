@@ -31,6 +31,7 @@ export function Home() {
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
   const [hasInitialized, setHasInitialized] = useState(false);
   const map = useMap();
+  const mapBounds = map?.getBounds();
 
   useEffect(() => {
     const markers = shelters
@@ -99,14 +100,13 @@ export function Home() {
   };
 
   useEffect(() => {
-    if (!map || hasInitialized) return;
+    if (!mapBounds || hasInitialized) return;
 
-    const bounds = map.getBounds();
     const savedCenter = sessionStorage.getItem('mapCenter');
 
     if (savedCenter) {
       const { lat, lng } = JSON.parse(savedCenter);
-      applyMapCenter(lat, lng, 'address', bounds);
+      applyMapCenter(lat, lng, 'address', mapBounds);
       return;
     }
 
@@ -117,7 +117,7 @@ export function Home() {
             position.coords.latitude,
             position.coords.longitude,
             'currentLocation',
-            bounds
+            mapBounds
           );
         },
         () => {
@@ -125,7 +125,7 @@ export function Home() {
             LA_COUNTY_CENTER.latitude,
             LA_COUNTY_CENTER.longitude,
             'address',
-            bounds
+            mapBounds
           );
         },
         { enableHighAccuracy: true, timeout: 5000 }
@@ -135,10 +135,10 @@ export function Home() {
         LA_COUNTY_CENTER.latitude,
         LA_COUNTY_CENTER.longitude,
         'address',
-        bounds
+        mapBounds
       );
     }
-  }, [map, hasInitialized]);
+  }, [mapBounds, hasInitialized]);
 
   return (
     <>
