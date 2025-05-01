@@ -22,7 +22,7 @@ import { ShelterSearch } from '../../shared/components/shelters/shelterSearch';
 import { ModalAnimationEnum } from '../../shared/modal/modal';
 
 export function Home() {
-  const [_location, setLocation] = useAtom(locationAtom);
+  const [atomLocation, setLocation] = useAtom(locationAtom);
   const [_modal, setModal] = useAtom(modalAtom);
   const [shelters] = useAtom(sheltersAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
@@ -85,19 +85,19 @@ export function Home() {
   const applyMapCenter = (
     lat: number,
     lng: number,
-    source: 'address' | 'currentLocation',
-    bounds?: google.maps.LatLngBounds | null
+    source: 'address' | 'currentLocation'
   ) => {
     const location = { latitude: lat, longitude: lng };
     setDefaultCenter(location);
     setLocation({ ...location, source });
-
-    if (bounds) {
-      setMapBoundsFilter(toMapBounds(bounds));
-    }
-
-    setHasInitialized(true);
   };
+
+  useEffect(() => {
+    if (mapBounds) {
+      setMapBoundsFilter(toMapBounds(mapBounds));
+      setHasInitialized(true);
+    }
+  }, [atomLocation]);
 
   useEffect(() => {
     if (!mapBounds || hasInitialized) return;
@@ -106,7 +106,7 @@ export function Home() {
 
     if (savedCenter) {
       const { lat, lng } = JSON.parse(savedCenter);
-      applyMapCenter(lat, lng, 'address', mapBounds);
+      applyMapCenter(lat, lng, 'address');
       return;
     }
 
@@ -116,16 +116,14 @@ export function Home() {
           applyMapCenter(
             position.coords.latitude,
             position.coords.longitude,
-            'currentLocation',
-            mapBounds
+            'currentLocation'
           );
         },
         () => {
           applyMapCenter(
             LA_COUNTY_CENTER.latitude,
             LA_COUNTY_CENTER.longitude,
-            'address',
-            mapBounds
+            'address'
           );
         },
         { enableHighAccuracy: true, timeout: 5000 }
@@ -134,8 +132,7 @@ export function Home() {
       applyMapCenter(
         LA_COUNTY_CENTER.latitude,
         LA_COUNTY_CENTER.longitude,
-        'address',
-        mapBounds
+        'address'
       );
     }
   }, [mapBounds, hasInitialized]);
