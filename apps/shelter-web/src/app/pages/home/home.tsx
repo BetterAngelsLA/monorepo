@@ -1,3 +1,4 @@
+import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useEffect, useState } from 'react';
 import { SHELTERS_MAP_ID } from '../../constants.app';
@@ -28,6 +29,8 @@ export function Home() {
   const [defaultCenter, setDefaultCenter] = useState<TLatLng>();
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
+  const [hasInitialized, setHasInitialized] = useState(false);
+  const map = useMap();
 
   useEffect(() => {
     const markers = shelters
@@ -78,29 +81,64 @@ export function Home() {
     setShowSearchButton(false);
   }
 
+  const applyMapCenter = (
+    lat: number,
+    lng: number,
+    source: 'address' | 'currentLocation',
+    bounds?: google.maps.LatLngBounds | null
+  ) => {
+    const location = { latitude: lat, longitude: lng };
+    setDefaultCenter(location);
+    setLocation({ ...location, source });
+
+    if (bounds) {
+      setMapBoundsFilter(toMapBounds(bounds));
+    }
+
+    setHasInitialized(true);
+  };
+
   useEffect(() => {
+    if (!map || hasInitialized) return;
+
+    const bounds = map.getBounds();
     const savedCenter = sessionStorage.getItem('mapCenter');
 
     if (savedCenter) {
       const { lat, lng } = JSON.parse(savedCenter);
-
-      setDefaultCenter({
-        latitude: lat,
-        longitude: lng,
-      });
-      setLocation({
-        latitude: lat,
-        longitude: lng,
-        source: 'address',
-      });
-    } else {
-      setDefaultCenter(LA_COUNTY_CENTER);
-      setLocation({
-        ...LA_COUNTY_CENTER,
-        source: 'address',
-      });
+      applyMapCenter(lat, lng, 'address', bounds);
+      return;
     }
-  }, []);
+
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          applyMapCenter(
+            position.coords.latitude,
+            position.coords.longitude,
+            'currentLocation',
+            bounds
+          );
+        },
+        () => {
+          applyMapCenter(
+            LA_COUNTY_CENTER.latitude,
+            LA_COUNTY_CENTER.longitude,
+            'address',
+            bounds
+          );
+        },
+        { enableHighAccuracy: true, timeout: 5000 }
+      );
+    } else {
+      applyMapCenter(
+        LA_COUNTY_CENTER.latitude,
+        LA_COUNTY_CENTER.longitude,
+        'address',
+        bounds
+      );
+    }
+  }, [map, hasInitialized]);
 
   return (
     <>
