@@ -857,27 +857,12 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         new_filename = "updated_document_name.txt"
         document_id = self.client_profile_1_document_1["id"]
 
-        response = self.execute_graphql(
-            """
-                mutation UpdateClientDocument($data: UpdateClientDocumentInput!) {
-                    updateClientDocument(data: $data) {
-                        ... on ClientDocumentType {
-                            id
-                            originalFilename
-                        }
-                    }
-                }
-            """,
-            variables={
-                "data": {
-                    "id": document_id,
-                    "originalFilename": new_filename,
-                }
-            },
-        )
+        variables = {
+            "id": document_id,
+            "originalFilename": new_filename,
+        }
+        response = self._update_client_document_fixture(variables)
 
-        self.assertIsNotNone(response.get("data"))
-        self.assertIsNotNone(response["data"].get("updateClientDocument"))
         self.assertEqual(response["data"]["updateClientDocument"]["originalFilename"], new_filename)
 
         # Verify database was updated
