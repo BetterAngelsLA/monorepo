@@ -52,11 +52,6 @@ export function Home() {
     'cursor-pointer',
     'text-primary-60',
     'active:text-primary-dark',
-    'absolute',
-    'bottom-0',
-    'left-0',
-    'w-full',
-    'pb-6',
   ];
 
   const handleClick = (markerId: string | null | undefined) => {

@@ -25,6 +25,7 @@ type TShelterCard = {
   shelter: TShelter;
   originCoordinates?: TLatLng | null;
   footer?: ReactNode | null;
+  footerName?: string;
 };
 
 export function ShelterCard(props: TShelterCard) {
@@ -33,6 +34,7 @@ export function ShelterCard(props: TShelterCard) {
     originCoordinates,
     className,
     footer,
+    footerName,
   } = props;
 
   const navigate = useNavigate();
@@ -42,10 +44,24 @@ export function ShelterCard(props: TShelterCard) {
   const parentCss = [
     'flex',
     'flex-col',
-    'md:flex-row',
     'cursor-pointer',
     className,
   ];
+
+  const bodyCss = [
+    'flex',
+    'flex-col',
+    'md:flex-row',
+    'cursor-pointer',
+  ];
+
+  const footerCss = [
+    'mt-4',
+    'py-2',
+    'md:mt-10',
+    'md:py-0',
+    footerName,
+  ]
 
   const contentCss = ['mt-4'];
 
@@ -62,37 +78,42 @@ export function ShelterCard(props: TShelterCard) {
 
   return (
     <div className={mergeCss(parentCss)} onClick={onNavigate}>
-      <ShelterCardHero
-        className="md:w-96 md:mr-4"
-        imageUrl={heroImage}
-        shelterName={name}
-      />
+      <div className={mergeCss(bodyCss)}>
+        <ShelterCardHero
+          className="md:w-96 md:mr-4"
+          imageUrl={heroImage}
+          shelterName={name}
+        />
 
-      <div className={mergeCss(contentCss)}>
-        <div className="font-semibold text-sm md:text-lg leading-[1.125rem] tracking-[.03125rem]">
-          {name}
-        </div>
-
-        {formattedAddress && (
-          <div className="text-xs md:text-sm mt-1.5 flex items-start">
-            <LocationIcon className="h-4 mr-2" />
-
-            <div className="flex-inline flex-wrap">
-              <span>{formattedAddress}</span>
-
-              <DistanceAway
-                className="ml-1 inline"
-                distanceInMiles={distanceInMiles}
-                originCoordinates={originCoordinates}
-                targetCoordinates={location}
-                formatFn={(distance) => `(${distance} away)`}
-              />
-            </div>
+        <div className={mergeCss(contentCss)}>
+          <div className="font-semibold text-sm md:text-lg leading-[1.125rem] tracking-[.03125rem]">
+            {name}
           </div>
-        )}
-      </div>
 
-      {footer}
+          {formattedAddress && (
+            <div className="text-xs md:text-sm mt-1.5 flex items-start">
+              <LocationIcon className="h-4 mr-2" />
+
+              <div className="flex-inline flex-wrap">
+                <span>{formattedAddress}</span>
+
+                <DistanceAway
+                  className="ml-1 inline"
+                  distanceInMiles={distanceInMiles}
+                  originCoordinates={originCoordinates}
+                  targetCoordinates={location}
+                  formatFn={(distance) => `(${distance} away)`}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+      {footer && (
+        <div className={mergeCss(footerCss)}>
+          {footer}
+        </div>
+      )}
     </div>
   );
 }
