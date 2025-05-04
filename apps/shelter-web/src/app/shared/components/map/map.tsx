@@ -1,199 +1,86 @@
 import { CurrentLocationDot } from '@monorepo/react/components';
-import { MapPinIcon } from '@monorepo/react/icons';
 import {
   AdvancedMarker,
-  ControlPosition,
   Map as GoogleMap,
-  MapCameraChangedEvent,
-  MapCameraProps,
-  MapControl,
-  useApiLoadingStatus,
   useMap,
 } from '@vis.gl/react-google-maps';
+import { DEFAULT_GESTURE_HANDLING, DEFAULT_MAP_ZOOM } from './constants.maps';
+import { MapMarkers } from './controls/mapMarkers';
+import { SearchAreaControl } from './controls/searchAreaControl';
+import { ZoomAndLocateControls } from './controls/zoomAndLocateControls';
+import { useCenterSync } from './hooks/useCenterSync';
+import { useMapLifecycle } from './hooks/useMapLifecycle';
+import { useUserLocation } from './hooks/useUserLocation';
 import {
-  Dispatch,
-  SetStateAction,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
-import { mergeCss } from '../../utils/styles/mergeCss';
-import {
-  DEFAULT_GESTURE_HANDLING,
-  DEFAULT_MAP_ZOOM,
-  LA_COUNTY_CENTER,
-} from './constants.maps';
-import { CurrentLocationBtn } from './controls/currentLocationBtn';
-import { SearchMapAreaButton } from './controls/searchMapAreaButton';
-import { ZoomControls } from './controls/zoomControls';
-import { TLatLng, TMapGestureHandling, TMapZoom, TMarker } from './types.maps';
-import { toGoogleLatLng } from './utils/toGoogleLatLng';
+  LatLngLiteral,
+  TMapGestureHandling,
+  TMapState,
+  TMapZoom,
+  TMarker,
+} from './types.maps';
 
 type TMap = {
   mapId: string;
+  defaultCenter: LatLngLiteral;
   className?: string;
-  defaultCenter?: TLatLng | google.maps.LatLngLiteral | null;
   defaultZoom?: TMapZoom;
+  markers?: TMarker[];
+  enableUseUserLocation?: boolean;
   gestureHandling?: TMapGestureHandling;
   disableDefaultUI?: boolean;
-  controlsPosition?: ControlPosition;
-  showSearchButton?: boolean;
-  setShowSearchButton: Dispatch<SetStateAction<boolean>>;
-  onCenterSelect?: (center: TLatLng) => void;
+  onInit?: (mapState: TMapState) => void;
+  onCenterInit?: (mapState: TMapState) => void;
+  onIdle?: (mapState: TMapState | null) => void;
   onSearchMapArea?: (bounds?: google.maps.LatLngBounds) => void;
-  markers?: TMarker[];
 };
 
 export function Map(props: TMap) {
   const {
     mapId,
-    className = '',
-    defaultZoom = DEFAULT_MAP_ZOOM,
-    defaultCenter = LA_COUNTY_CENTER,
-    gestureHandling = DEFAULT_GESTURE_HANDLING,
-    disableDefaultUI = true,
-    controlsPosition = ControlPosition.INLINE_END_BLOCK_END,
-    showSearchButton = false,
-    setShowSearchButton,
-    onCenterSelect,
-    onSearchMapArea,
+    className,
+    defaultCenter,
     markers = [],
+    defaultZoom = DEFAULT_MAP_ZOOM,
+    disableDefaultUI = true,
+    gestureHandling = DEFAULT_GESTURE_HANDLING,
+    enableUseUserLocation = false,
+    onInit,
+    onIdle,
+    onCenterInit,
+    onSearchMapArea,
   } = props;
   const map = useMap();
-  const mapApiStatus = useApiLoadingStatus();
 
-  const [cameraProps, setCameraProps] = useState<MapCameraProps>({
-    center: toGoogleLatLng(defaultCenter) as google.maps.LatLngLiteral,
-    zoom: defaultZoom,
-  });
-  const [userLocation, setUserLocation] =
-    useState<google.maps.LatLngLiteral | null>(null);
-  const [geolocationPermission, setGeolocationPermission] =
-    useState<PermissionState | null>(null);
-
-  useEffect(() => {
-    console.info(`[map] loading status: ${mapApiStatus}`);
-  }, [mapApiStatus]);
-
-  const handleCameraChange = useCallback(
-    (event: MapCameraChangedEvent) => {
-      setCameraProps(event.detail);
-    },
-    [map]
+  const { userLocation, fetchLocation } = useUserLocation(
+    enableUseUserLocation,
+    !!map
   );
 
-  function handleCenterToUserLocation(location: TLatLng) {
-    if (!map) {
-      console.warn('[map::handleCenterToUserLocation] map missing.');
+  useMapLifecycle(userLocation, onInit, onIdle, onCenterInit);
+  useCenterSync(userLocation);
 
-      return;
-    }
+  const classes = `h-12 w-full ${className}`;
 
-    const { latitude, longitude } = location;
-
-    const newCenter = {
-      lat: latitude,
-      lng: longitude,
-    };
-
-    onCenterSelect &&
-      onCenterSelect({
-        latitude,
-        longitude,
-      });
-
-    map.setCenter(newCenter);
-  }
-
-  useEffect(() => {
-    let permissionStatus: PermissionStatus;
-    const permissionQuery = navigator.permissions;
-
-    if (!permissionQuery) {
-      return;
-    }
-
-    permissionQuery
-      .query({ name: 'geolocation' as PermissionName })
-      .then((result) => {
-        setGeolocationPermission(result.state);
-        permissionStatus = result;
-
-        result.onchange = () => {
-          setGeolocationPermission(result.state);
-        };
-      });
-
-    return () => {
-      if (permissionStatus) {
-        permissionStatus.onchange = null;
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!map || !navigator.geolocation || geolocationPermission !== 'granted')
-      return;
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        const newCenter = { lat: latitude, lng: longitude };
-        setUserLocation(newCenter);
-      },
-      (error) => {
-        console.error('Geolocation error', error);
-      },
-      { enableHighAccuracy: true }
-    );
-  }, [map, geolocationPermission]);
-
-  const mapCss = ['h-12', 'w-full', className];
   return (
     <GoogleMap
       mapId={mapId}
-      className={mergeCss(mapCss)}
+      className={classes}
       disableDefaultUI={disableDefaultUI}
       gestureHandling={gestureHandling}
-      onCameraChanged={handleCameraChange}
-      onIdle={() => setShowSearchButton(true)}
-      {...cameraProps}
+      defaultCenter={defaultCenter}
+      defaultZoom={defaultZoom}
     >
       {userLocation && (
         <AdvancedMarker position={userLocation} zIndex={999}>
           <CurrentLocationDot />
         </AdvancedMarker>
       )}
-      {markers.map((marker) => (
-        <AdvancedMarker
-          key={marker.id}
-          position={toGoogleLatLng(marker.position)}
-          zIndex={99}
-          onClick={marker.onClick}
-        >
-          <MapPinIcon className="h-10" type="secondary" />
-        </AdvancedMarker>
-      ))}
 
-      {showSearchButton && onSearchMapArea && (
-        <MapControl position={ControlPosition.TOP_CENTER}>
-          <SearchMapAreaButton
-            onClick={() => onSearchMapArea(map?.getBounds())}
-          />
-        </MapControl>
-      )}
+      <MapMarkers markers={markers} />
 
-      <MapControl position={controlsPosition}>
-        <div className="mr-4">
-          <ZoomControls />
-          {geolocationPermission !== 'denied' && (
-            <CurrentLocationBtn
-              className="mt-5"
-              onLocationSuccess={handleCenterToUserLocation}
-            />
-          )}
-        </div>
-      </MapControl>
+      <SearchAreaControl onSearchMapArea={onSearchMapArea!} />
+
+      <ZoomAndLocateControls onLocate={fetchLocation} />
     </GoogleMap>
   );
 }

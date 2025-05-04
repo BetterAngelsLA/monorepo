@@ -8,11 +8,12 @@ import { sheltersAtom } from '../../shared/atoms/sheltersAtom';
 import { LA_COUNTY_CENTER } from '../../shared/components/map/constants.maps';
 import { Map } from '../../shared/components/map/map';
 import {
-  TLatLng,
   TMapBounds,
+  TMapState,
   TMarker,
 } from '../../shared/components/map/types.maps';
-import { toMapBounds } from '../../shared/components/map/utils/toMapBounds';
+import { toGoogleLatLngLiteral } from '../../shared/components/map/utils/toGoogleLatLngLiteral';
+import { toTMapBounds } from '../../shared/components/map/utils/toMapBounds';
 import {
   ShelterCard,
   TShelter,
@@ -25,7 +26,6 @@ export function Home() {
   const [_modal, setModal] = useAtom(modalAtom);
   const [shelters] = useAtom(sheltersAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
-  const [defaultCenter, setDefaultCenter] = useState<TLatLng>();
   const [showSearchButton, setShowSearchButton] = useState(false);
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
 
@@ -62,58 +62,69 @@ export function Home() {
     });
   };
 
-  function onCenterSelect(center: TLatLng) {
-    setLocation({
-      ...center,
-      source: 'currentLocation',
-    });
-  }
-
   function onSearchMapArea(bounds?: google.maps.LatLngBounds) {
     if (!bounds) {
       return;
     }
 
-    setMapBoundsFilter(toMapBounds(bounds));
-    setShowSearchButton(false);
+    setMapBoundsFilter(toTMapBounds(bounds));
   }
 
-  useEffect(() => {
-    const savedCenter = sessionStorage.getItem('mapCenter');
+  function onIdle(state: TMapState | null) {
+    console.log('*****************  onIdle:', state?.center);
+  }
 
-    if (savedCenter) {
-      const { lat, lng } = JSON.parse(savedCenter);
+  function onInit(state: TMapState) {
+    console.log('*****************  onInit:', state.center);
+  }
 
-      setDefaultCenter({
-        latitude: lat,
-        longitude: lng,
-      });
-      setLocation({
-        latitude: lat,
-        longitude: lng,
-        source: 'address',
-      });
-    } else {
-      setDefaultCenter(LA_COUNTY_CENTER);
-      setLocation({
-        ...LA_COUNTY_CENTER,
-        source: 'address',
-      });
-    }
-  }, []);
+  function onCenterInit(state: TMapState) {
+    console.log('*****************  onCenterInit:', state.center);
+    setMapBoundsFilter(toTMapBounds(state.bounds));
+  }
+
+  // useEffect(() => {
+  //   const savedCenter = sessionStorage.getItem('mapCenter');
+
+  //   console.log(
+  //     '################################### Home: savedCenter: ',
+  //     savedCenter
+  //   );
+
+  //   if (savedCenter) {
+  //     const { lat, lng } = JSON.parse(savedCenter);
+
+  //     setDefaultCenter({
+  //       latitude: lat,
+  //       longitude: lng,
+  //     });
+  //     setLocation({
+  //       latitude: lat,
+  //       longitude: lng,
+  //       source: 'address',
+  //     });
+  //   } else {
+  //     setDefaultCenter(LA_COUNTY_CENTER);
+  //     setLocation({
+  //       ...LA_COUNTY_CENTER,
+  //       source: 'address',
+  //     });
+  //   }
+  // }, []);
 
   return (
     <>
       <MaxWLayout className="-mx-4">
         <Map
-          defaultCenter={defaultCenter}
-          className="h-[70vh] md:h-80"
           mapId={SHELTERS_MAP_ID}
+          className="h-[70vh] md:h-80"
+          defaultCenter={toGoogleLatLngLiteral(LA_COUNTY_CENTER)}
           markers={shelterMarkers}
-          showSearchButton={showSearchButton}
-          setShowSearchButton={setShowSearchButton}
-          onCenterSelect={onCenterSelect}
           onSearchMapArea={onSearchMapArea}
+          onIdle={onIdle}
+          onInit={onInit}
+          onCenterInit={onCenterInit}
+          enableUseUserLocation
         />
       </MaxWLayout>
       <ShelterSearch mapBoundsFilter={mapBoundsFilter} />

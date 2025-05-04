@@ -4,7 +4,7 @@ import {
   MILES_TO_DEGREES_AT_EQUATOR,
 } from '../constants.maps';
 import { TLatLng } from '../types.maps';
-import { toGoogleLatLng } from './toGoogleLatLng';
+import { toGoogleLatLngLiteral } from './toGoogleLatLngLiteral';
 
 type TGetPlacesBounds = {
   boundsCenter?: TLatLng | google.maps.LatLngLiteral;
@@ -21,7 +21,9 @@ export function getPlacesBounds(
 
   const boundsRadiusDegrees = boundsRadiusMiles / MILES_TO_DEGREES_AT_EQUATOR;
 
-  const center = toGoogleLatLng(boundsCenter) as google.maps.LatLngLiteral;
+  const center = toGoogleLatLngLiteral(
+    boundsCenter
+  ) as google.maps.LatLngLiteral;
 
   return {
     north: center.lat + boundsRadiusDegrees,

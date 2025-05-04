@@ -2,6 +2,7 @@ import { PlusIcon } from '@monorepo/react/icons';
 import { useMap } from '@vis.gl/react-google-maps';
 import { ReactNode } from 'react';
 import { mergeCss } from '../../../utils/styles/mergeCss';
+import { MapControlBtn } from './mapControlBtn';
 
 type TProps = {
   zoomBy: number;
@@ -34,31 +35,22 @@ export function ZoomButton(props: TProps) {
     map.setZoom(map.getZoom()! + zoomBy);
   }
 
-  const parentCss = [
-    'w-full',
-    'h-full',
-    'flex',
-    'items-center',
-    'justify-center',
-    'text-neutral-40',
-    'text-2xl',
-    className,
-  ];
+  const parentCss = ['text-neutral-40', 'text-2xl', className];
 
   if (!zoomBy) {
     return null;
   }
 
   return (
-    <button onClick={onZoom} className={mergeCss(parentCss)}>
+    <MapControlBtn onClick={onZoom} className={mergeCss(parentCss)}>
       {zoomIcon}
-    </button>
+    </MapControlBtn>
   );
 }
 
 function getIcon(zoomBy: number) {
   if (zoomBy > 0) {
-    return <PlusIcon className="w-4 text-neutral-40" />;
+    return <PlusIcon className="w-4" />;
   }
 
   return <div className="w-4 h-[2.5px] bg-neutral-40 rounded opacity-95"></div>;

@@ -6,5 +6,6 @@ export const LA_COUNTY_CENTER: TLatLng = {
   latitude: 34.04499,
   longitude: -118.251601,
 };
+// export const DEFAULT_MAP_ZOOM = 16;
 export const DEFAULT_MAP_ZOOM = 13;
 export const DEFAULT_GESTURE_HANDLING = 'greedy';

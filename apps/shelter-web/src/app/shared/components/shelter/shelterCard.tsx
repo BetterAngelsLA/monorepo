@@ -59,6 +59,9 @@ export function ShelterCard(props: TShelterCard) {
 
   return (
     <div className={mergeCss(parentCss)} onClick={onNavigate}>
+      <div>{location?.latitude}</div>
+      <div>{location?.longitude}</div>
+
       <ShelterCardHero
         className="md:w-96 md:mr-4"
         imageUrl={heroImage}

@@ -1,3 +1,12 @@
+export type LatLngLiteral = google.maps.LatLngLiteral;
+export type LatLngBoundsLiteral = google.maps.LatLngBoundsLiteral;
+
+export type TMapState = {
+  center: LatLngLiteral;
+  bounds: LatLngBoundsLiteral;
+  zoomLevel: TMapZoom;
+};
+
 export type TLatLng = {
   latitude: number;
   longitude: number;

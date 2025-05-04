@@ -1,5 +1,4 @@
 import { useMap } from '@vis.gl/react-google-maps';
-import { ControlBtnWrapper } from './controlBtnWrapper';
 import { ZoomButton } from './zoomButton';
 
 type TProps = {
@@ -21,12 +20,8 @@ export function ZoomControls(props: TProps) {
 
   return (
     <div className={className}>
-      <ControlBtnWrapper>
-        <ZoomButton zoomBy={1} />
-      </ControlBtnWrapper>
-      <ControlBtnWrapper className="mt-1">
-        <ZoomButton zoomBy={-1} />
-      </ControlBtnWrapper>
+      <ZoomButton zoomBy={1} />
+      <ZoomButton zoomBy={-1} className="mt-1" />
     </div>
   );
 }

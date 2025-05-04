@@ -9,7 +9,7 @@ import { shelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { ModalAnimationEnum } from '../../modal/modal';
 import { AddressAutocomplete } from '../address/AddressAutocomplete';
 import { TMapBounds } from '../map/types.maps';
-import { toGoogleLatLng } from '../map/utils/toGoogleLatLng';
+import { toGoogleLatLngLiteral } from '../map/utils/toGoogleLatLngLiteral';
 import { FilterPills } from '../shelterFilter/filterPills';
 import { FiltersActions } from '../shelterFilter/filtersActions';
 import { ShelterFilters } from '../shelterFilter/shelterFilters';
@@ -32,12 +32,11 @@ export function ShelterSearch(props: TProps) {
   const map = useMap();
 
   useEffect(() => {
-    if (!map) {
+    if (!map || !location) {
       return;
     }
 
-    const center = toGoogleLatLng(location);
-    center && map.setCenter(center);
+    map.setCenter(toGoogleLatLngLiteral(location));
   }, [map, location]);
 
   function onPlaceSelect(address: google.maps.places.PlaceResult | null) {
