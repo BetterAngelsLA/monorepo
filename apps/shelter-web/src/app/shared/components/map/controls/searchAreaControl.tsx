@@ -1,12 +1,14 @@
 import { ControlPosition, MapControl, useMap } from '@vis.gl/react-google-maps';
 import { useCallback, useRef, useState } from 'react';
 import { useOnMapIdle } from '../hooks/useOnMapIdle';
+import { TMapState } from '../types.maps';
+import { getMapState } from '../utils/getMapState';
 import { SearchMapAreaButton } from './searchMapAreaButton';
 
 export function SearchAreaControl({
   onSearchMapArea,
 }: {
-  onSearchMapArea: (bounds?: google.maps.LatLngBounds) => void;
+  onSearchMapArea: (mapState: TMapState) => void;
 }) {
   const map = useMap();
 
@@ -30,8 +32,12 @@ export function SearchAreaControl({
 
     setVisible(false);
 
-    onSearchMapArea(map.getBounds());
-  }, [map, onSearchMapArea]);
+    const state = getMapState(map);
+
+    if (state) {
+      onSearchMapArea(state);
+    }
+  }, [map, onSearchMapArea, getMapState]);
 
   if (!visible) {
     return null;

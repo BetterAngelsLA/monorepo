@@ -46,7 +46,18 @@ export function ShelterCard(props: TShelterCard) {
 
   const contentCss = ['mt-4'];
 
+  // {"lat":33.9749,"lng":-118.4779}
+
   const onNavigate = () => {
+    console.log();
+    console.log('| ------------- SET sessionStorage   ------------- |');
+    console.log(
+      JSON.stringify({
+        lat: location?.latitude,
+        lng: location?.longitude,
+      })
+    );
+    console.log();
     sessionStorage.setItem(
       'mapCenter',
       JSON.stringify({

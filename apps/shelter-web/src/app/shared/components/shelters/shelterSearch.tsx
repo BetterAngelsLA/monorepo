@@ -36,6 +36,7 @@ export function ShelterSearch(props: TProps) {
       return;
     }
 
+    console.log('################################### SHELTER map.setCenter');
     map.setCenter(toGoogleLatLngLiteral(location));
   }, [map, location]);
 
