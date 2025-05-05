@@ -10,7 +10,6 @@ export {
   TClientProfileCardItem,
 } from './ClientProfileCard';
 export { default as ConsentModal } from './ConsentModal';
-export { default as DateOfBirthPicker } from './DateOfBirthPicker';
 export { default as DocumentModal } from './DocumentModal';
 export { default as ErrorCrashView } from './ErrorCrashView/ErrorCrashView';
 export { default as EyeColorPicker } from './EyeColorPicker';
