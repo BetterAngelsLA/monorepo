@@ -6,8 +6,8 @@ import {
   getRelatedModelAddRoute,
   getRelatedModelEditRoute,
 } from '../../../../../screenRouting/clientProfileRoutes';
-import { HouseholdMemberCard } from '../../../../Client/ClientProfile_V2/ClientProfileCards/HouseholdMembersCard';
-import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
+import { HouseholdMemberCard } from '../../../../Client/ClientProfile/ClientProfileCards/HouseholdMembersCard';
+import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { AddButton } from '../AddButton';
 import { ViewItemContainer } from '../ViewItemContainer';
 

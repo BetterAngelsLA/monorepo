@@ -6,8 +6,6 @@ import {
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { useFeatureFlagActive } from '../hooks';
-import { FeatureFlags } from '../providers';
 import MainModal from './MainModal';
 
 interface IMainPlusModalProps {
@@ -17,9 +15,6 @@ interface IMainPlusModalProps {
 
 export default function MainPlusModal(props: IMainPlusModalProps) {
   const { isModalVisible, closeModal } = props;
-  const clientRedesignFeatureOn = useFeatureFlagActive(
-    FeatureFlags.PROFILE_REDESIGN_FF
-  );
 
   const ACTIONS = [
     {
@@ -34,7 +29,7 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
     {
       title: 'Add client',
       Icon: UserAddIcon,
-      route: clientRedesignFeatureOn ? '/clients/create' : '/add-client',
+      route: '/clients/create',
     },
   ];
 
