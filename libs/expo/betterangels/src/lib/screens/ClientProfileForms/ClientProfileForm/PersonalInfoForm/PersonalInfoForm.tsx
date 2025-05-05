@@ -2,7 +2,7 @@ import { Regex } from '@monorepo/expo/shared/static';
 import {
   ActionModal,
   ControlledInput,
-  DatePicker_V2 as DatePicker,
+  DatePicker,
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';

@@ -45,7 +45,7 @@ export default function DateComponent(props: IDateProps) {
           mb="md"
           maxDate={endOfDay}
           value={dateValue}
-          setValue={(e) => console.log(e)}
+          onChange={(date) => console.log(date)}
         />
       )}
     </FieldCard>
