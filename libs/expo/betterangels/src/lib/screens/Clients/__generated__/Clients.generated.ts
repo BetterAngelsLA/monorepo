@@ -17,7 +17,7 @@ export type ClientProfilesQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: { __typename?: 'ClientProfileTypeOffsetPaginated', totalCount: number, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number }, results: Array<{ __typename?: 'ClientProfileType', id: string, age?: number | null, dateOfBirth?: any | null, email?: string | null, firstName?: string | null, heightInInches?: number | null, lastName?: string | null, mailingAddress?: string | null, middleName?: string | null, nickname?: string | null, residenceAddress?: string | null, displayCaseManager: string, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', id: string, agency: Types.HmisAgencyEnum, hmisId?: string | null }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null }> } };
+export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: { __typename?: 'ClientProfileTypeOffsetPaginated', totalCount: number, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number }, results: Array<{ __typename?: 'ClientProfileType', id: string, age?: number | null, dateOfBirth?: any | null, email?: string | null, firstName?: string | null, heightInInches?: number | null, lastName?: string | null, mailingAddress?: string | null, middleName?: string | null, nickname?: string | null, residenceAddress?: string | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', id: string, agency: Types.HmisAgencyEnum, hmisId?: string | null }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null }> } };
 
 
 export const CreateNoteDocument = gql`
@@ -105,7 +105,6 @@ export const ClientProfilesDocument = gql`
         name
         url
       }
-      displayCaseManager
     }
   }
 }
