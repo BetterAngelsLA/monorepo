@@ -1,3 +1,4 @@
+import { FetchResult } from '@apollo/client';
 import {
   ControlledInput,
   Form,
@@ -119,7 +120,7 @@ export function HmisProfileForm(props: TProps) {
         throw new Error('Missing HMIS mutation response data');
       }
 
-      const uniquenessError = hasUniquenessError(responseData, mutationKey);
+      const uniquenessError = hasUniquenessError(response, mutationKey);
 
       if (uniquenessError) {
         setError('hmisId', { type: 'manual', message: uniquenessError });
@@ -240,7 +241,7 @@ function isSuccessMutationResponse(
 }
 
 function hasUniquenessError(
-  response: UpdateHmisProfileMutation | CreateHmisProfileMutation,
+  response: FetchResult<UpdateHmisProfileMutation | CreateHmisProfileMutation>,
   key: 'updateHmisProfile' | 'createHmisProfile'
 ): string | null {
   const operationInfo = extractOperationInfo(response, key);
@@ -252,7 +253,7 @@ function hasUniquenessError(
   }
 
   const uniquenessServerErrorMessage =
-    'Hmis profile with this Hmis id and Agency already exists.';
+    'Constraint “unique_hmis_id_agency” is violated.';
 
   const uniquenessError = operationMessages.find(
     (m) => m.message === uniquenessServerErrorMessage

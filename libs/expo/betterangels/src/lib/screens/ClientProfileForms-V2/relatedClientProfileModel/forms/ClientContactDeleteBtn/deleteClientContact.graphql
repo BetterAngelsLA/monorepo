@@ -1,0 +1,14 @@
+mutation DeleteClientContact($id: ID!) {
+  deleteClientContact(data: { id: $id }) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on ClientContactType {
+      id
+    }
+  }
+}

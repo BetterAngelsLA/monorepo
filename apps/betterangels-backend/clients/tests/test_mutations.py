@@ -705,7 +705,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
             ("hmis id 1", None, 12),
             (" ", "This field cannot be null.", 11),
             ("", "This field cannot be null.", 11),
-            ("hmis id 2", "Hmis profile with this Hmis id and Agency already exists.", 12),
+            ("hmis id 2", "Constraint “unique_hmis_id_agency” is violated.", 12),
             (None, "This field cannot be null.", 11),
         ],
     )

@@ -1,4 +1,3 @@
-import { Regex } from '@monorepo/expo/shared/static';
 import {
   ControlledInput,
   DatePicker_V2 as DatePicker,
@@ -138,6 +137,7 @@ export function HouseholdMemberForm(props: TProps) {
           <Controller
             name="relationshipToClient"
             control={control}
+            rules={{ required: 'Household Member type is required.' }}
             render={({ field }) => (
               <SingleSelect
                 disabled={isLoading}
@@ -169,7 +169,7 @@ export function HouseholdMemberForm(props: TProps) {
           <Controller
             name="gender"
             control={control}
-            render={({ field }) => (
+            render={({ field: { value, onChange } }) => (
               <SingleSelect
                 disabled={isLoading}
                 label="Gender"
@@ -177,8 +177,8 @@ export function HouseholdMemberForm(props: TProps) {
                 items={Object.entries(enumDisplayGender).map(
                   ([value, displayValue]) => ({ value, displayValue })
                 )}
-                selectedValue={field.value}
-                onChange={(value) => field.onChange(value)}
+                selectedValue={value}
+                onChange={(value) => onChange(value)}
                 error={errors.gender?.message}
               />
             )}
@@ -192,14 +192,13 @@ export function HouseholdMemberForm(props: TProps) {
                 label="Date of Birth"
                 disabled={isLoading}
                 maxDate={new Date()}
-                pattern={Regex.date}
                 mode="date"
                 format="MM/dd/yyyy"
                 placeholder="Enter date of birth"
                 minDate={new Date('1900-01-01')}
-                mt="xs"
                 value={value}
                 onChange={onChange}
+                error={errors.dateOfBirth?.message}
               />
             )}
           />
