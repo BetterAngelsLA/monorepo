@@ -1,7 +1,7 @@
 import { ComponentType } from 'react';
 import { ViewStyle } from 'react-native';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
-import { TClientProfile } from '../../Client/ClientProfile_V2/types';
+import { TClientProfile } from '../../Client/ClientProfile/types';
 import { ClientContactForm } from './forms/ClientContactsForm';
 import { HmisProfileForm } from './forms/HmisProfileForm/HmisProfileForm';
 import { HouseholdMemberForm } from './forms/HouseholdMemberForm';

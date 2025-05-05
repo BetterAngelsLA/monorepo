@@ -12,7 +12,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSnackbar } from '../../../../../hooks';
 import { clientRelevantContactEnumDisplay } from '../../../../../static';
 import AddressAutocomplete from '../../../../../ui-components/AddressField';
-import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
+import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { ClientContactDeleteBtn } from '../ClientContactDeleteBtn';
 import { useClientContactForm } from './useClientContactForm';
 

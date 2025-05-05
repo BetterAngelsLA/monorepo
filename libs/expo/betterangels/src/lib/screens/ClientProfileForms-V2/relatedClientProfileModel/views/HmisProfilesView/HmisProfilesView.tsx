@@ -6,8 +6,8 @@ import {
   getRelatedModelAddRoute,
   getRelatedModelEditRoute,
 } from '../../../../../screenRouting/clientProfileRoutes';
-import { HmisProfileCard } from '../../../../Client/ClientProfile_V2/ClientProfileCards/HmisProfilesCard/HmisProfileCard';
-import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
+import { HmisProfileCard } from '../../../../Client/ClientProfile/ClientProfileCards/HmisProfilesCard/HmisProfileCard';
+import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { AddButton } from '../AddButton';
 import { ViewItemContainer } from '../ViewItemContainer';
 

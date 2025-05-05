@@ -1,5 +1,5 @@
 import { parseToDate } from '@monorepo/expo/shared/ui-components';
-import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
+import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { THouseholdMemberFormState } from './types';
 
 export const defaultFormState: THouseholdMemberFormState = {

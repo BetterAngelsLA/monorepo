@@ -19,7 +19,7 @@ import {
   getViewClientProfileRoute,
 } from '../../../../../screenRouting';
 import { enumDisplayHmisAgency } from '../../../../../static';
-import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
+import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import { HmisProfileDeleteBtn } from '../HmisProfileDeleteBtn';
 import {
