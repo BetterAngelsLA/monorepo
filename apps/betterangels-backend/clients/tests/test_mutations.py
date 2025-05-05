@@ -33,10 +33,8 @@ from clients.tests.utils import (
     SocialMediaProfileBaseTestCase,
 )
 from common.models import Attachment
-from common.permissions.enums import AttachmentPermissions
 from deepdiff import DeepDiff
 from django.test import override_settings
-from guardian.shortcuts import assign_perm
 from unittest_parametrize import parametrize
 
 
