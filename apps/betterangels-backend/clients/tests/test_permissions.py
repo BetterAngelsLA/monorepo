@@ -216,7 +216,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", True),  # CM in different org should succeed
-            ("non_case_manager_user", False),  # Client modifying client profile should not succeed
+            ("non_case_manager_user", False),  # Non-CM user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -240,7 +240,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # CM in a different org should not succeed
-            ("non_case_manager_user", False),  # Client should not succeed
+            ("non_case_manager_user", False),  # Non-CM user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -264,7 +264,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Creator should succeed
             ("org_1_case_manager_2", True),  # Other CM in the same org should succeed
             ("org_2_case_manager_1", True),  # CM in a different org should succeed
-            ("non_case_manager_user", False),  # Client should not succeed
+            ("non_case_manager_user", False),  # Non-CM user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
@@ -297,7 +297,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", 5),  # Creator should succeed
             ("org_1_case_manager_2", 5),  # Other CM in the same org should succeed
             ("org_2_case_manager_1", 5),  # CM in a different org should succeed
-            ("non_case_manager_user", 0),  # Client should not succeed
+            ("non_case_manager_user", 0),  # Non-CM user should not succeed
             # NOTE: Anon user raising an error may be caused by a strawberry bug.
             # This test may fail and need updating when the bug is fixed.
             (None, None),  # Anonymous user should return error
@@ -326,7 +326,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_1", True),  # Owner should succeed
             ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
             ("org_2_case_manager_1", False),  # CM in different org should not succeed
-            ("non_case_manager_user", False),  # Client modifying client profile should not succeed
+            ("non_case_manager_user", False),  # Non-CM user should not succeed
             (None, False),  # Anonymous user should not succeed
         ],
     )
