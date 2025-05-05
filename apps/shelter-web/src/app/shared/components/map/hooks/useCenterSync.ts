@@ -1,8 +1,11 @@
 import { useMap } from '@vis.gl/react-google-maps';
-import { useEffect } from 'react';
+import { Dispatch, SetStateAction, useEffect } from 'react';
 import { LatLngLiteral } from '../types.maps';
 
-export function useCenterSync(targetCenter: LatLngLiteral | null | undefined) {
+export function useCenterSync(
+  targetCenter: LatLngLiteral | null | undefined,
+  setSearchAreaControlVisible?: Dispatch<SetStateAction<boolean>>
+) {
   const map = useMap();
 
   useEffect(() => {
@@ -10,6 +13,9 @@ export function useCenterSync(targetCenter: LatLngLiteral | null | undefined) {
       return;
     }
 
+    console.log('*****************  useCenterSync:', targetCenter);
+
     map.setCenter(targetCenter);
+    // setSearchAreaControlVisible?.(true);
   }, [map, targetCenter]);
 }

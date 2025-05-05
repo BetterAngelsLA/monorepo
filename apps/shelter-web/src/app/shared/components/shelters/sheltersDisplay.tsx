@@ -12,7 +12,7 @@ import { useAtom } from 'jotai';
 import { useEffect } from 'react';
 import { TLocationSource } from '../../atoms/locationAtom';
 import { sheltersAtom } from '../../atoms/sheltersAtom';
-import { TLatLng, TMapBounds } from '../map/types.maps';
+import { TMapBounds } from '../map/types.maps';
 import { SearchSource } from './searchSource';
 import { ShelterList } from './shelterList';
 
@@ -25,11 +25,8 @@ export type TShelterPropertyFilters = {
   specialSituationRestrictions?: SpecialSituationRestrictionChoices[] | null;
 };
 
-const SEARCH_RANGE_MILES = 20;
-
 type TProps = {
   className?: string;
-  coordinates?: TLatLng | null;
   coordinatesSource?: TLocationSource;
   mapBoundsFilter?: TMapBounds | null;
   propertyFilters?: TShelterPropertyFilters;
@@ -38,11 +35,9 @@ type TProps = {
 
 export function SheltersDisplay(props: TProps) {
   const {
-    coordinates,
     coordinatesSource,
     mapBoundsFilter,
     propertyFilters,
-    rangeInMiles = SEARCH_RANGE_MILES,
     className = '',
   } = props;
   const [getShelters, { loading, data, error }] = useViewSheltersLazyQuery();
@@ -54,19 +49,6 @@ export function SheltersDisplay(props: TProps) {
 
   useEffect(() => {
     let queryVariables: ViewSheltersQueryVariables | undefined;
-
-    if (coordinates) {
-      const { latitude, longitude } = coordinates;
-
-      queryVariables = queryVariables || {};
-      queryVariables.filters = queryVariables.filters || {};
-
-      queryVariables.filters.geolocation = {
-        latitude,
-        longitude,
-        rangeInMiles,
-      };
-    }
 
     if (mapBoundsFilter) {
       queryVariables = queryVariables || {};
@@ -91,7 +73,7 @@ export function SheltersDisplay(props: TProps) {
     }
 
     getShelters({ variables: queryVariables });
-  }, [coordinates, mapBoundsFilter, propertyFilters]);
+  }, [mapBoundsFilter, propertyFilters]);
 
   const shelters = data?.shelters?.results;
 

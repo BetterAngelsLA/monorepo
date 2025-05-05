@@ -1,33 +1,65 @@
+import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { SHELTERS_MAP_ID } from '../../constants.app';
 import { MaxWLayout } from '../../layout/maxWLayout';
-import { locationAtom } from '../../shared/atoms/locationAtom';
 import { modalAtom } from '../../shared/atoms/modalAtom';
 import { sheltersAtom } from '../../shared/atoms/sheltersAtom';
 import { LA_COUNTY_CENTER } from '../../shared/components/map/constants.maps';
 import { Map } from '../../shared/components/map/map';
 import {
+  LatLngLiteral,
   TMapBounds,
   TMapState,
   TMarker,
 } from '../../shared/components/map/types.maps';
 import { toGoogleLatLngLiteral } from '../../shared/components/map/utils/toGoogleLatLngLiteral';
 import { toTMapBounds } from '../../shared/components/map/utils/toMapBounds';
-import {
-  ShelterCard,
-  TShelter,
-} from '../../shared/components/shelter/shelterCard';
+import { ShelterCard } from '../../shared/components/shelter/shelterCard';
 import { ShelterSearch } from '../../shared/components/shelters/shelterSearch';
-import { ModalAnimationEnum } from '../../shared/modal/modal';
 
 export function Home() {
-  const [_location, setLocation] = useAtom(locationAtom);
+  const map = useMap();
+  const navigate = useNavigate();
+
   const [_modal, setModal] = useAtom(modalAtom);
   const [shelters] = useAtom(sheltersAtom);
   const [shelterMarkers, setShelterMarkers] = useState<TMarker[]>([]);
-  const [showSearchButton, setShowSearchButton] = useState(false);
   const [mapBoundsFilter, setMapBoundsFilter] = useState<TMapBounds>();
+
+  const handleMarkerClick = (shelterId: string | null | undefined) => {
+    if (!shelterId) {
+      return;
+    }
+
+    const shelter = shelters.find((shelter) => shelter.id === shelterId);
+
+    if (!shelter) {
+      return;
+    }
+
+    const { location } = shelter;
+
+    const onCardClick = () => {
+      sessionStorage.setItem(
+        'mapCenter',
+        JSON.stringify({
+          lat: location?.latitude,
+          lng: location?.longitude,
+        })
+      );
+
+      navigate(`/shelter/${shelter.id}`);
+    };
+
+    setModal({
+      content: (
+        <ShelterCard className="mt-4" shelter={shelter} onClick={onCardClick} />
+      ),
+      closeOnMaskClick: true,
+    });
+  };
 
   useEffect(() => {
     const markers = shelters
@@ -37,30 +69,12 @@ export function Home() {
           id: shelter.id,
           position: shelter.location,
           label: shelter.name,
-          onClick: () => handleClick(shelter.id),
+          onClick: () => handleMarkerClick(shelter.id),
         } as TMarker;
       });
 
     setShelterMarkers(markers);
   }, [shelters]);
-
-  const handleClick = (markerId: string | null | undefined) => {
-    if (!markerId) {
-      return;
-    }
-    setModal({
-      content: (
-        <ShelterCard
-          className="mt-4"
-          shelter={
-            shelters.find((shelter) => shelter.id === markerId) as TShelter
-          }
-        />
-      ),
-      animation: ModalAnimationEnum.EXPAND,
-      closeOnMaskClick: true,
-    });
-  };
 
   function onSearchMapArea(bounds?: google.maps.LatLngBounds) {
     if (!bounds) {
@@ -76,6 +90,8 @@ export function Home() {
 
   function onInit(state: TMapState) {
     console.log('*****************  onInit:', state.center);
+
+    setSavedCenter();
   }
 
   function onCenterInit(state: TMapState) {
@@ -83,34 +99,34 @@ export function Home() {
     setMapBoundsFilter(toTMapBounds(state.bounds));
   }
 
-  // useEffect(() => {
-  //   const savedCenter = sessionStorage.getItem('mapCenter');
+  function onSearchLocationSelect(coordinates: LatLngLiteral) {
+    console.log('*****************  onSearchLocationSelect:', coordinates);
+    if (!map) {
+      return;
+    }
 
-  //   console.log(
-  //     '################################### Home: savedCenter: ',
-  //     savedCenter
-  //   );
+    map.setCenter(coordinates);
 
-  //   if (savedCenter) {
-  //     const { lat, lng } = JSON.parse(savedCenter);
+    const bounds = map.getBounds();
 
-  //     setDefaultCenter({
-  //       latitude: lat,
-  //       longitude: lng,
-  //     });
-  //     setLocation({
-  //       latitude: lat,
-  //       longitude: lng,
-  //       source: 'address',
-  //     });
-  //   } else {
-  //     setDefaultCenter(LA_COUNTY_CENTER);
-  //     setLocation({
-  //       ...LA_COUNTY_CENTER,
-  //       source: 'address',
-  //     });
-  //   }
-  // }, []);
+    if (bounds) {
+      setMapBoundsFilter(toTMapBounds(bounds));
+    }
+  }
+
+  function setSavedCenter() {
+    if (!map) {
+      return;
+    }
+
+    const savedCenter = sessionStorage.getItem('mapCenter');
+
+    if (savedCenter && map) {
+      const newCenter = JSON.parse(savedCenter);
+
+      map.setCenter(newCenter);
+    }
+  }
 
   return (
     <>
@@ -124,10 +140,13 @@ export function Home() {
           onIdle={onIdle}
           onInit={onInit}
           onCenterInit={onCenterInit}
-          enableUseUserLocation
+          enableUseUserLocation={true}
         />
       </MaxWLayout>
-      <ShelterSearch mapBoundsFilter={mapBoundsFilter} />
+      <ShelterSearch
+        mapBoundsFilter={mapBoundsFilter}
+        onLocationSelect={onSearchLocationSelect}
+      />
     </>
   );
 }

@@ -1,15 +1,12 @@
 import { FilterIcon } from '@monorepo/react/icons';
-import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useResetAtom } from 'jotai/utils';
 import { useEffect, useState } from 'react';
-import { locationAtom } from '../../atoms/locationAtom';
 import { modalAtom } from '../../atoms/modalAtom';
 import { shelterFiltersAtom } from '../../atoms/shelterFiltersAtom';
 import { ModalAnimationEnum } from '../../modal/modal';
 import { AddressAutocomplete } from '../address/AddressAutocomplete';
-import { TMapBounds } from '../map/types.maps';
-import { toGoogleLatLngLiteral } from '../map/utils/toGoogleLatLngLiteral';
+import { LatLngLiteral, TMapBounds } from '../map/types.maps';
 import { FilterPills } from '../shelterFilter/filterPills';
 import { FiltersActions } from '../shelterFilter/filtersActions';
 import { ShelterFilters } from '../shelterFilter/shelterFilters';
@@ -17,46 +14,29 @@ import { SheltersDisplay, TShelterPropertyFilters } from './sheltersDisplay';
 
 type TProps = {
   mapBoundsFilter?: TMapBounds;
+  onLocationSelect?: (coordinates: LatLngLiteral) => void;
 };
 
 export function ShelterSearch(props: TProps) {
-  const { mapBoundsFilter } = props;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_modal, setModal] = useAtom(modalAtom);
-  const [location, setLocation] = useAtom(locationAtom);
+  const { mapBoundsFilter, onLocationSelect } = props;
+
+  const [_modal, setFilterModal] = useAtom(modalAtom);
+  // const [location, setLocation] = useAtom(locationAtom);
   const [queryFilters, setQueryFilters] = useState<TShelterPropertyFilters>();
   const [submitQueryTs, setSubmitQueryTs] = useState<number>();
   const [filters] = useAtom(shelterFiltersAtom);
   const resetFilters = useResetAtom(shelterFiltersAtom);
 
-  const map = useMap();
-
-  useEffect(() => {
-    if (!map || !location) {
-      return;
-    }
-
-    map.setCenter(toGoogleLatLngLiteral(location));
-  }, [map, location]);
-
   function onPlaceSelect(address: google.maps.places.PlaceResult | null) {
-    if (!address) {
+    const location = address?.geometry?.location;
+
+    if (!location) {
       return;
     }
 
-    const { geometry } = address;
-
-    const latitude = geometry?.location?.lat();
-    const longitude = geometry?.location?.lng();
-
-    if (!latitude || !longitude) {
-      return;
-    }
-
-    setLocation({
-      latitude,
-      longitude,
-      source: 'address',
+    onLocationSelect?.({
+      lat: location.lat(),
+      lng: location.lng(),
     });
   }
 
@@ -70,11 +50,11 @@ export function ShelterSearch(props: TProps) {
 
   function onSubmitFilters() {
     setSubmitQueryTs(Date.now());
-    setModal(null);
+    setFilterModal(null);
   }
 
   function onFilterClick() {
-    setModal({
+    setFilterModal({
       content: <ShelterFilters className="w-full" />,
       animation: ModalAnimationEnum.SLIDE_UP,
       type: 'fullscreen',
@@ -100,9 +80,9 @@ export function ShelterSearch(props: TProps) {
       <FilterPills className="mt-2" filters={filters} />
       <SheltersDisplay
         className="mt-8"
-        coordinates={location}
+        // coordinates={location}
         mapBoundsFilter={mapBoundsFilter}
-        coordinatesSource={location?.source}
+        // coordinatesSource={location?.source}
         propertyFilters={queryFilters}
       />
     </>

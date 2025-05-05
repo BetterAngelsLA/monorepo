@@ -1,5 +1,4 @@
 import { LocationIcon } from '@monorepo/react/icons';
-import { useNavigate } from 'react-router-dom';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { TLatLng } from '../map/types.maps';
 import { DistanceAway } from './distanceAway';
@@ -23,16 +22,16 @@ type TShelterCard = {
   className?: string;
   shelter: TShelter;
   originCoordinates?: TLatLng | null;
+  onClick?: () => void;
 };
 
 export function ShelterCard(props: TShelterCard) {
   const {
     shelter: { id, name, heroImage, distanceInMiles, location },
     originCoordinates,
+    onClick,
     className,
   } = props;
-
-  const navigate = useNavigate();
 
   const formattedAddress = location?.place.replace(/, USA$/, '');
 
@@ -46,19 +45,8 @@ export function ShelterCard(props: TShelterCard) {
 
   const contentCss = ['mt-4'];
 
-  const onNavigate = () => {
-    sessionStorage.setItem(
-      'mapCenter',
-      JSON.stringify({
-        lat: location?.latitude,
-        lng: location?.longitude,
-      })
-    );
-    navigate(`/shelter/${id}`);
-  };
-
   return (
-    <div className={mergeCss(parentCss)} onClick={onNavigate}>
+    <div className={mergeCss(parentCss)} onClick={onClick}>
       <div>{location?.latitude}</div>
       <div>{location?.longitude}</div>
 

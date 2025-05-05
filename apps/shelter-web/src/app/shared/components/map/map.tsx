@@ -4,6 +4,7 @@ import {
   Map as GoogleMap,
   useMap,
 } from '@vis.gl/react-google-maps';
+import { useState } from 'react';
 import { DEFAULT_GESTURE_HANDLING, DEFAULT_MAP_ZOOM } from './constants.maps';
 import { MapMarkers } from './controls/mapMarkers';
 import { SearchAreaControl } from './controls/searchAreaControl';
@@ -51,13 +52,21 @@ export function Map(props: TMap) {
   } = props;
   const map = useMap();
 
-  const { userLocation, fetchLocation } = useUserLocation(
-    enableUseUserLocation,
-    !!map
-  );
+  const [searchAreaControlVisible, setSearchAreaControlVisible] =
+    useState(false);
+
+  const { userLocation, fetchLocation } = useUserLocation({
+    enabled: enableUseUserLocation,
+    initialized: !!map,
+    onLocateMe: () => setSearchAreaControlVisible(true),
+  });
 
   useMapLifecycle(userLocation, onInit, onIdle, onCenterInit);
-  useCenterSync(userLocation);
+  useCenterSync(userLocation, setSearchAreaControlVisible);
+
+  function onDragZoomChange() {
+    setSearchAreaControlVisible(true);
+  }
 
   const classes = `h-12 w-full ${className}`;
 
@@ -69,6 +78,8 @@ export function Map(props: TMap) {
       gestureHandling={gestureHandling}
       defaultCenter={defaultCenter}
       defaultZoom={defaultZoom}
+      onDragend={onDragZoomChange}
+      onZoomChanged={onDragZoomChange}
     >
       {userLocation && (
         <AdvancedMarker position={userLocation} zIndex={999}>
@@ -78,9 +89,13 @@ export function Map(props: TMap) {
 
       <MapMarkers markers={markers} />
 
-      <SearchAreaControl onSearchMapArea={onSearchMapArea!} />
+      <SearchAreaControl
+        onSearchMapArea={onSearchMapArea!}
+        visible={searchAreaControlVisible}
+        setVisible={setSearchAreaControlVisible}
+      />
 
-      <ZoomAndLocateControls onLocate={fetchLocation} />
+      <ZoomAndLocateControls onLocate={() => fetchLocation(true)} />
     </GoogleMap>
   );
 }
