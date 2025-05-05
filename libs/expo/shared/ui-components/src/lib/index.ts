@@ -25,7 +25,6 @@ export {
   parseToDate,
 } from './Date';
 export { default as DatePicker } from './DatePicker';
-export { default as DatePicker_V2 } from './DatePicker_V2';
 export { default as DeleteModal } from './DeleteModal';
 export { default as Divider } from './Divider';
 export { default as EditButton } from './EditButton';
