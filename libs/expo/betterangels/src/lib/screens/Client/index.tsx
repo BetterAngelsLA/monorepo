@@ -1,75 +1,48 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import {
-  Loading,
-  TextButton,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import {
   ComponentType,
-  ForwardRefExoticComponent,
   ReactElement,
-  RefObject,
   useEffect,
   useLayoutEffect,
-  useRef,
   useState,
 } from 'react';
 import { Pressable, View } from 'react-native';
-import { useFeatureFlagActive } from '../../hooks';
-import { FeatureFlags } from '../../providers';
+import { validateAsEnum } from '../../helpers/validateAsEnum';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
-import ClientProfileView from './ClientProfile_V2';
-import ClientTabs from './ClientTabs';
+import ClientProfileView from './ClientProfile';
+import ClientTabs, { ClientTabEnum } from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
-import Locations from './Locations';
-import Profile from './Profile';
-import Schedule from './Schedule';
-import Services from './Services';
-import Tasks from './Tasks';
 import {
   ClientProfileQuery,
   useClientProfileQuery,
 } from './__generated__/Client.generated';
-interface ProfileRef {
-  scrollToRelevantContacts: () => void;
-}
+
+const tabComponentMap: Partial<Record<ClientTabEnum, ComponentType<any>>> = {
+  [ClientTabEnum.Docs]: Docs,
+  [ClientTabEnum.Interactions]: Interactions,
+};
 
 const getTabComponent = (
-  key: string,
+  tabKey: ClientTabEnum,
   client: ClientProfileQuery | undefined,
-  clientRedesignFeatureOn: boolean,
-  profileRef?: RefObject<ProfileRef>,
   openCard?: ClientProfileSectionEnum
 ): ReactElement | null => {
-  const components: {
-    [key: string]: ForwardRefExoticComponent<any> | ComponentType<any>;
-  } = {
-    Docs,
-    Interactions,
-    Locations,
-    Profile,
-    Schedule,
-    Services,
-    Tasks,
-  };
-
-  const Component = components[key];
-
-  if (!Component) return null;
-
-  if (key !== 'Profile') {
-    return <Component client={client} />;
-  }
-
-  if (clientRedesignFeatureOn) {
+  if (tabKey === ClientTabEnum.Profile) {
     return <ClientProfileView client={client} openCard={openCard} />;
   }
 
-  return <Profile ref={profileRef} client={client} />;
+  const Component = tabComponentMap[tabKey];
+
+  if (!Component) {
+    return null;
+  }
+
+  return <Component client={client} />;
 };
 
 export default function Client({
@@ -82,24 +55,16 @@ export default function Client({
   openCard?: ClientProfileSectionEnum;
 }) {
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
-  const [tab, setTab] = useState('Profile');
-  const clientRedesignFeatureOn = useFeatureFlagActive(
-    FeatureFlags.PROFILE_REDESIGN_FF
-  );
-
-  const profileRef = useRef<ProfileRef | null>(null);
-
-  const handleScrollToRelevantContacts = async () => {
-    await setTab('Profile');
-    profileRef.current?.scrollToRelevantContacts();
-  };
+  const [tab, setTab] = useState<ClientTabEnum>(ClientTabEnum.Profile);
 
   const navigation = useNavigation();
   const router = useRouter();
   const { newTab } = useLocalSearchParams<{ newTab?: string }>();
 
+  const isValidTab = validateAsEnum(newTab, ClientTabEnum);
+
   useEffect(() => {
-    if (newTab) {
+    if (isValidTab) {
       setTab(newTab);
     }
   }, [newTab]);
@@ -117,16 +82,6 @@ export default function Client({
         >
           <TextRegular color={Colors.WHITE}>Back</TextRegular>
         </Pressable>
-      ),
-      headerRight: () => (
-        <TextButton
-          regular
-          color={Colors.WHITE}
-          fontSize="md"
-          accessibilityHint="goes to Edit screen"
-          title="Edit"
-          onPress={() => router.navigate(`/edit-client/${id}`)}
-        />
       ),
     });
   }, []);
@@ -151,18 +106,9 @@ export default function Client({
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      <ClientHeader
-        onCaseManagerPress={handleScrollToRelevantContacts}
-        client={data?.clientProfile}
-      />
+      <ClientHeader client={data?.clientProfile} />
       <ClientTabs tab={tab} setTab={setTab} />
-      {getTabComponent(
-        tab,
-        data,
-        clientRedesignFeatureOn,
-        profileRef,
-        openCard
-      )}
+      {getTabComponent(tab, data, openCard)}
     </MainContainer>
   );
 }

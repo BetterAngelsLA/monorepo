@@ -1,4 +1,4 @@
-import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
+import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { THmisProfileFormState } from './types';
 
 export const defaultFormState: THmisProfileFormState = {

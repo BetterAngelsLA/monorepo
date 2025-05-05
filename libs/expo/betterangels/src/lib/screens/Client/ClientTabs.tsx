@@ -2,20 +2,16 @@ import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 
-interface IClientTabsProps {
-  tab: string;
-  setTab: (tab: string) => void;
+export enum ClientTabEnum {
+  Profile = 'Profile',
+  Docs = 'Docs',
+  Interactions = 'Interactions',
 }
 
-const TABS = [
-  'Profile',
-  'Docs',
-  'Interactions',
-  // 'Tasks',
-  // 'Services',
-  // 'Schedule',
-  // 'Locations',
-];
+interface IClientTabsProps {
+  tab: ClientTabEnum;
+  setTab: (tab: ClientTabEnum) => void;
+}
 
 export default function ClientTabs(props: IClientTabsProps) {
   const { tab, setTab } = props;
@@ -32,7 +28,7 @@ export default function ClientTabs(props: IClientTabsProps) {
         showsHorizontalScrollIndicator={false}
         horizontal
       >
-        {TABS.map((t) => (
+        {Object.values(ClientTabEnum).map((t) => (
           <View
             style={{
               position: 'relative',

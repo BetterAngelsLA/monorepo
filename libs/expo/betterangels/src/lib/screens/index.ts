@@ -1,4 +1,3 @@
-export { default as AddEditClient } from './AddEditClient';
 export * from './AppSettings';
 export { default as Client } from './Client';
 export * from './ClientProfileForms-V2';

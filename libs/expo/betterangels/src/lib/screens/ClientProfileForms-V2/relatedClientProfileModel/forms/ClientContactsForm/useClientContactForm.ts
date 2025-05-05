@@ -13,7 +13,7 @@ import {
   ClientProfileSectionEnum,
   getViewClientProfileRoute,
 } from '../../../../../screenRouting';
-import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
+import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import {
   CreateClientContactMutation,

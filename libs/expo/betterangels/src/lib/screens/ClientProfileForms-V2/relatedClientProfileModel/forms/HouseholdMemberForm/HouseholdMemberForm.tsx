@@ -17,7 +17,7 @@ import {
   clientHouseholdMemberEnumDisplay,
   enumDisplayGender,
 } from '../../../../../static';
-import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
+import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import { HouseholdMemeberDeleteBtn } from '../HouseholdMemeberDeleteBtn';
 import {

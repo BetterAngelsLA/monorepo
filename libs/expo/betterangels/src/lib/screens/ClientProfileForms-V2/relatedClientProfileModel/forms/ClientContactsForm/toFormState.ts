@@ -1,4 +1,4 @@
-import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
+import { TClientProfile } from '../../../../Client/ClientProfile/types';
 import { TClientContactFormState } from './types';
 
 export const defaultFormState: TClientContactFormState = {
