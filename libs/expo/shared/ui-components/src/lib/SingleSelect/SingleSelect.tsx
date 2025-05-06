@@ -6,7 +6,7 @@ import {
 } from '@monorepo/expo/shared/static';
 import { View } from 'react-native';
 import FormFieldLabel from '../FormFieldLabel';
-import Picker from '../Picker_V2';
+import Picker from '../Picker';
 import Radio from '../Radio_V2';
 import TextRegular from '../TextRegular';
 

@@ -40,7 +40,6 @@ export { default as IconButton } from './IconButton';
 export { default as ImageViewer } from './ImageViewer';
 export { default as Input } from './Input';
 export { default as Input_V2 } from './Input_V2';
-// DatePicker
 export { default as KeyboardAwareScrollView } from './KeyboardAwareScrollView';
 export {
   Length,
