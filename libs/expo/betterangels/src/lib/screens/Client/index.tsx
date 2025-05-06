@@ -1,9 +1,5 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import {
-  Loading,
-  TextButton,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import {
   ComponentType,
@@ -85,16 +81,6 @@ export default function Client({
         >
           <TextRegular color={Colors.WHITE}>Back</TextRegular>
         </Pressable>
-      ),
-      headerRight: () => (
-        <TextButton
-          regular
-          color={Colors.WHITE}
-          fontSize="md"
-          accessibilityHint="goes to Edit screen"
-          title="Edit"
-          onPress={() => router.navigate(`/edit-client/${id}`)}
-        />
       ),
     });
   }, []);

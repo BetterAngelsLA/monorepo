@@ -1,7 +1,7 @@
 import { parseToDate } from '@monorepo/expo/shared/ui-components';
 import { SocialMediaEnum } from '../../../apollo';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
-import { GetClientProfileQuery } from '../../AddEditClient/__generated__/AddEditClient.generated';
+import { GetClientProfileQuery } from './__generated__/clientProfile.generated';
 import { FormStateMapping, TPhoneNumber } from './types';
 
 const defaultSocialMedias = [
