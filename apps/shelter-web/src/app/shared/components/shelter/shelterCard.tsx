@@ -1,5 +1,6 @@
 import { LocationIcon } from '@monorepo/react/icons';
 import { useMap } from '@vis.gl/react-google-maps';
+import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { TLatLng } from '../map/types.maps';
