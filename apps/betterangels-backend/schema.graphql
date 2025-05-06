@@ -949,6 +949,7 @@ type Mutation {
   updateSocialMediaProfile(data: SocialMediaProfileInput!): UpdateSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_socialmediaprofile"}], any: true)
   deleteSocialMediaProfile(data: DeleteDjangoObjectInput!): DeleteSocialMediaProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_socialmediaprofile"}], any: true)
   deleteClientDocument(data: DeleteDjangoObjectInput!): DeleteClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "delete_attachment"}], any: true)
+  updateClientDocument(data: UpdateClientDocumentInput!): UpdateClientDocumentPayload! @hasRetvalPerm(permissions: [{app: "common", permission: "change_attachment"}], any: true)
   createClientProfile(data: CreateClientProfileInput!): CreateClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofile"}], any: true)
   updateClientProfile(data: UpdateClientProfileInput!): UpdateClientProfilePayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   deleteClientProfile(data: DeleteDjangoObjectInput!): DeleteClientProfilePayload!
@@ -1636,6 +1637,13 @@ type TrainingServiceType {
 scalar UUID
 
 union UpdateClientContactPayload = ClientContactType | OperationInfo
+
+input UpdateClientDocumentInput {
+  id: ID!
+  originalFilename: String
+}
+
+union UpdateClientDocumentPayload = ClientDocumentType | OperationInfo
 
 union UpdateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo
 
