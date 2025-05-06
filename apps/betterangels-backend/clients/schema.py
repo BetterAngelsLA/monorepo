@@ -62,6 +62,7 @@ from .types import (
     ImportClientProfileInput,
     SocialMediaProfileInput,
     SocialMediaProfileType,
+    UpdateClientDocumentInput,
     UpdateClientProfileInput,
 )
 
@@ -573,6 +574,7 @@ class Mutation:
 
             permissions = [
                 AttachmentPermissions.DELETE,
+                AttachmentPermissions.CHANGE,
             ]
             for perm in permissions:
                 assign_perm(perm, permission_group.group, client_document)
@@ -656,3 +658,8 @@ class Mutation:
                 error_message=_format_graphql_error(e),
             )
         return cast(ClientProfileImportRecordType, record)
+
+    update_client_document: ClientDocumentType = mutations.update(
+        UpdateClientDocumentInput,
+        extensions=[HasRetvalPerm(perms=AttachmentPermissions.CHANGE)],
+    )
