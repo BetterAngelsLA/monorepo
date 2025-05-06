@@ -1,4 +1,6 @@
+import { useMap } from '@vis.gl/react-google-maps';
 import { useCallback, useEffect, useState } from 'react';
+import { LatLngLiteral } from '../types.maps';
 import { getCurrentPosition } from '../utils/getCurrentPosition';
 import { useGeolocationPermission } from './useGeolocationPermission';
 
@@ -10,30 +12,34 @@ type TReturns = {
 type TProps = {
   enabled: boolean;
   initialized: boolean;
-  onLocateMe?: () => void;
+  onLocateMeClick?: (location: LatLngLiteral) => void;
 };
 
 export function useUserLocation(props: TProps): TReturns {
-  const { enabled, initialized, onLocateMe } = props;
+  const { enabled, initialized, onLocateMeClick } = props;
 
   const [userLocation, setUserLocation] = useState<
     google.maps.LatLngLiteral | null | undefined
   >(undefined);
   const permission = useGeolocationPermission();
+  const map = useMap();
 
-  const fetchLocation = useCallback(async (onManualClick?: boolean) => {
-    try {
-      const location = await getCurrentPosition();
+  const fetchLocation = useCallback(
+    async (onManualClick?: boolean) => {
+      try {
+        const location = await getCurrentPosition();
 
-      setUserLocation(location);
+        setUserLocation(location);
 
-      if (onManualClick) {
-        onLocateMe?.();
+        if (onManualClick && onLocateMeClick) {
+          onLocateMeClick(location);
+        }
+      } catch {
+        setUserLocation(null);
       }
-    } catch {
-      setUserLocation(null);
-    }
-  }, []);
+    },
+    [map]
+  );
 
   useEffect(() => {
     if (!initialized || userLocation !== undefined) {

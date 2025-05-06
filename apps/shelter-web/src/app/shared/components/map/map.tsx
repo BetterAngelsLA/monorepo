@@ -19,6 +19,8 @@ import {
   TMapZoom,
   TMarker,
 } from './types.maps';
+import { getMapState } from './utils/getMapState';
+import { setMapCenter } from './utils/setMapCenter';
 
 type TMap = {
   mapId: string;
@@ -33,6 +35,7 @@ type TMap = {
   onCenterInit?: (mapState: TMapState) => void;
   onIdle?: (mapState: TMapState | null) => void;
   onSearchMapArea?: (bounds?: google.maps.LatLngBounds) => void;
+  onLocateMeClick?: (mapState: TMapState) => void;
 };
 
 export function Map(props: TMap) {
@@ -49,23 +52,35 @@ export function Map(props: TMap) {
     onIdle,
     onCenterInit,
     onSearchMapArea,
+    onLocateMeClick,
   } = props;
   const map = useMap();
 
-  const [searchAreaControlVisible, setSearchAreaControlVisible] =
-    useState(false);
+  const [searchBtnVisible, setSearchBtnVisible] = useState(false);
 
   const { userLocation, fetchLocation } = useUserLocation({
     enabled: enableUseUserLocation,
     initialized: !!map,
-    onLocateMe: () => setSearchAreaControlVisible(true),
+    onLocateMeClick: (location: LatLngLiteral) => {
+      setMapCenter({
+        center: location,
+        map,
+        onCenterSet: () => {
+          const state = getMapState(map);
+
+          if (state) {
+            onLocateMeClick?.(state);
+          }
+        },
+      });
+    },
   });
 
   useMapLifecycle(userLocation, onInit, onIdle, onCenterInit);
-  useCenterSync(userLocation, setSearchAreaControlVisible);
+  useCenterSync(userLocation);
 
   function onDragZoomChange() {
-    setSearchAreaControlVisible(true);
+    setSearchBtnVisible(true);
   }
 
   const classes = `h-12 w-full ${className}`;
@@ -91,8 +106,8 @@ export function Map(props: TMap) {
 
       <SearchAreaControl
         onSearchMapArea={onSearchMapArea!}
-        visible={searchAreaControlVisible}
-        setVisible={setSearchAreaControlVisible}
+        visible={searchBtnVisible}
+        setVisible={setSearchBtnVisible}
       />
 
       <ZoomAndLocateControls onLocate={() => fetchLocation(true)} />

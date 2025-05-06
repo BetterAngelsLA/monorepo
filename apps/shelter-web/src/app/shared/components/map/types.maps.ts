@@ -1,5 +1,6 @@
 export type LatLngLiteral = google.maps.LatLngLiteral;
 export type LatLngBoundsLiteral = google.maps.LatLngBoundsLiteral;
+export type LatLngBounds = google.maps.LatLngBounds;
 
 export type TMapState = {
   center: LatLngLiteral;

@@ -9,6 +9,8 @@ import { sheltersAtom } from '../../shared/atoms/sheltersAtom';
 import { LA_COUNTY_CENTER } from '../../shared/components/map/constants.maps';
 import { Map } from '../../shared/components/map/map';
 import {
+  LatLngBounds,
+  LatLngBoundsLiteral,
   LatLngLiteral,
   TMapBounds,
   TMapState,
@@ -76,7 +78,7 @@ export function Home() {
     setShelterMarkers(markers);
   }, [shelters]);
 
-  function onSearchMapArea(bounds?: google.maps.LatLngBounds) {
+  function setMapBounds(bounds?: LatLngBounds | LatLngBoundsLiteral) {
     if (!bounds) {
       return;
     }
@@ -85,18 +87,17 @@ export function Home() {
   }
 
   function onIdle(state: TMapState | null) {
-    console.log('*****************  onIdle:', state?.center);
+    // console.log('*****************  onIdle:', state?.center);
   }
 
   function onInit(state: TMapState) {
     console.log('*****************  onInit:', state.center);
-
-    setSavedCenter();
+    // setSavedCenter();
   }
 
   function onCenterInit(state: TMapState) {
     console.log('*****************  onCenterInit:', state.center);
-    setMapBoundsFilter(toTMapBounds(state.bounds));
+    setMapBounds(state.bounds);
   }
 
   function onSearchLocationSelect(coordinates: LatLngLiteral) {
@@ -110,7 +111,7 @@ export function Home() {
     const bounds = map.getBounds();
 
     if (bounds) {
-      setMapBoundsFilter(toTMapBounds(bounds));
+      setMapBounds(bounds);
     }
   }
 
@@ -136,11 +137,14 @@ export function Home() {
           className="h-[70vh] md:h-80"
           defaultCenter={toGoogleLatLngLiteral(LA_COUNTY_CENTER)}
           markers={shelterMarkers}
-          onSearchMapArea={onSearchMapArea}
+          onSearchMapArea={setMapBounds}
           onIdle={onIdle}
           onInit={onInit}
           onCenterInit={onCenterInit}
           enableUseUserLocation={true}
+          onLocateMeClick={(mapState) => {
+            setMapBounds(mapState.bounds);
+          }}
         />
       </MaxWLayout>
       <ShelterSearch
