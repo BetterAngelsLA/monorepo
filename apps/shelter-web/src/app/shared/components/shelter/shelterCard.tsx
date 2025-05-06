@@ -1,4 +1,5 @@
 import { LocationIcon } from '@monorepo/react/icons';
+import { useMap } from '@vis.gl/react-google-maps';
 import { useNavigate } from 'react-router-dom';
 import { mergeCss } from '../../utils/styles/mergeCss';
 import { TLatLng } from '../map/types.maps';
@@ -31,6 +32,7 @@ export function ShelterCard(props: TShelterCard) {
     originCoordinates,
     className,
   } = props;
+  const map = useMap();
 
   const navigate = useNavigate();
 
@@ -52,6 +54,7 @@ export function ShelterCard(props: TShelterCard) {
       JSON.stringify({
         lat: location?.latitude,
         lng: location?.longitude,
+        zoom: map?.getZoom(),
       })
     );
     navigate(`/shelter/${id}`);
