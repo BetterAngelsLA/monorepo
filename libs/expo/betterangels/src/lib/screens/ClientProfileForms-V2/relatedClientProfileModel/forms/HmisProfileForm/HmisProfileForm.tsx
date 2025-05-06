@@ -1,3 +1,4 @@
+import { FetchResult } from '@apollo/client';
 import {
   ControlledInput,
   Form,
@@ -19,7 +20,7 @@ import {
 } from '../../../../../screenRouting';
 import { enumDisplayHmisAgency } from '../../../../../static';
 import { TClientProfile } from '../../../../Client/ClientProfile_V2/types';
-import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
+import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import { HmisProfileDeleteBtn } from '../HmisProfileDeleteBtn';
 import {
   CreateHmisProfileMutation,
@@ -54,6 +55,10 @@ export function HmisProfileForm(props: TProps) {
     clearErrors,
   } = useForm<THmisProfileFormState>({
     defaultValues: defaultFormState,
+  });
+
+  const [reFetchClientProfile] = useGetClientProfileLazyQuery({
+    fetchPolicy: 'network-only',
   });
 
   useEffect(() => {
@@ -115,7 +120,7 @@ export function HmisProfileForm(props: TProps) {
         throw new Error('Missing HMIS mutation response data');
       }
 
-      const uniquenessError = hasUniquenessError(responseData, mutationKey);
+      const uniquenessError = hasUniquenessError(response, mutationKey);
 
       if (uniquenessError) {
         setError('hmisId', { type: 'manual', message: uniquenessError });
@@ -128,17 +133,8 @@ export function HmisProfileForm(props: TProps) {
       }
 
       // refetch only on success
-      await mutation({
-        ...mutationVariables,
-        refetchQueries: [
-          {
-            query: ClientProfileDocument,
-            variables: {
-              id: clientProfile.id,
-            },
-          },
-        ],
-        errorPolicy: 'all',
+      await reFetchClientProfile({
+        variables: { id: clientProfile.id },
       });
 
       const returnRoute = getViewClientProfileRoute({
@@ -245,7 +241,7 @@ function isSuccessMutationResponse(
 }
 
 function hasUniquenessError(
-  response: UpdateHmisProfileMutation | CreateHmisProfileMutation,
+  response: FetchResult<UpdateHmisProfileMutation | CreateHmisProfileMutation>,
   key: 'updateHmisProfile' | 'createHmisProfile'
 ): string | null {
   const operationInfo = extractOperationInfo(response, key);
@@ -257,7 +253,7 @@ function hasUniquenessError(
   }
 
   const uniquenessServerErrorMessage =
-    'Hmis profile with this Hmis id and Agency already exists.';
+    'Constraint “unique_hmis_id_agency” is violated.';
 
   const uniquenessError = operationMessages.find(
     (m) => m.message === uniquenessServerErrorMessage

@@ -19,7 +19,17 @@ const marginMap: Record<keyof TMarginProps, string> = {
   mx: 'marginHorizontal',
 };
 
-const marginMapKeys = Object.keys(marginMap);
+export const marginPropKeys = Object.keys(marginMap) as (keyof TMarginProps)[];
+
+export function omitMarginProps<T extends Record<string, unknown>>(props: T) {
+  const clone = { ...props };
+
+  for (const key of marginPropKeys) {
+    delete clone[key];
+  }
+
+  return clone as Omit<T, keyof TMarginProps>;
+}
 
 export const getMarginStyles = (props: TMarginProps) => {
   if (!props) {
@@ -28,8 +38,8 @@ export const getMarginStyles = (props: TMarginProps) => {
 
   const styles: Record<string, number> = {};
 
-  for (const key of marginMapKeys) {
-    const marginProp = props[key as keyof TMarginProps];
+  for (const key of marginPropKeys) {
+    const marginProp = props[key];
 
     if (!marginProp) {
       continue;

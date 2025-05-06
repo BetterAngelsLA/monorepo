@@ -1,5 +1,6 @@
 import { getFormattedLength } from '@monorepo/expo/shared/ui-components';
 import {
+  enumDisplayAdaAccommodationEnum,
   enumDisplayEyeColor,
   enumDisplayHairColor,
   enumDisplayRace,
@@ -26,6 +27,8 @@ export function DemographicInfoCard(props: TProps) {
     heightInInches,
     placeOfBirth,
     race,
+    physicalDescription,
+    adaAccommodation,
   } = clientProfile || {};
 
   const formattedHeight = getFormattedLength({
@@ -34,6 +37,11 @@ export function DemographicInfoCard(props: TProps) {
     outputUnit: 'inches',
     format: 'feet-inches-symbol',
   });
+
+  const adaAccommodationDisplay = (adaAccommodation || [])
+    .filter((key) => !!key)
+    .map((key) => enumDisplayAdaAccommodationEnum[key])
+    .join(', ');
 
   const content: TClientProfileCardItem[] = [
     {
@@ -63,6 +71,14 @@ export function DemographicInfoCard(props: TProps) {
     {
       header: ['Hair Color'],
       rows: [[hairColor && enumDisplayHairColor[hairColor]]],
+    },
+    {
+      header: ['Physical Description'],
+      rows: [[physicalDescription]],
+    },
+    {
+      header: ['ADA Accommodation'],
+      rows: [[adaAccommodationDisplay]],
     },
   ];
 

@@ -1,6 +1,10 @@
 import { formatDateStatic } from '@monorepo/expo/shared/ui-components';
 import { View, ViewStyle } from 'react-native';
-import { clientHouseholdMemberEnumDisplay } from '../../../../../static';
+import { GenderEnum } from '../../../../../apollo';
+import {
+  clientHouseholdMemberEnumDisplay,
+  enumDisplayGender,
+} from '../../../../../static';
 import {
   ClientProfileCard,
   TClientProfileCardItem,
@@ -9,17 +13,18 @@ import { TClientProfileHouseholdMemeber } from '../../types';
 
 type TProps = {
   member?: TClientProfileHouseholdMemeber;
+  showAllFields?: boolean;
   style?: ViewStyle;
 };
 
 export function HouseholdMemberCard(props: TProps) {
-  const { member, style } = props;
+  const { member, showAllFields, style } = props;
 
   if (!member) {
     return null;
   }
 
-  const { name, displayGender, dateOfBirth, relationshipToClient } = member;
+  const { name, dateOfBirth, relationshipToClient, gender } = member;
 
   const formattedDob = formatDateStatic({
     date: dateOfBirth,
@@ -33,7 +38,7 @@ export function HouseholdMemberCard(props: TProps) {
     },
     {
       header: ['Gender'],
-      rows: [[displayGender]],
+      rows: [[enumDisplayGender[gender as GenderEnum]]],
     },
     {
       header: ['Date of Birth'],
@@ -50,6 +55,7 @@ export function HouseholdMemberCard(props: TProps) {
         }
         items={content}
         compact
+        showAll={!!showAllFields}
       />
     </View>
   );

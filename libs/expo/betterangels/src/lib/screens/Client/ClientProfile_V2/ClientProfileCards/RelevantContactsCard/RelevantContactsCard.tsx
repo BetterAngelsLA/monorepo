@@ -15,23 +15,25 @@ export function RelevantContactsCard(props: TProps) {
 
   const clientContacts = contacts || [];
 
-  const caseManager = clientContacts.find(
+  const caseManagers = clientContacts.filter(
     (contact) =>
       contact.relationshipToClient === RelationshipTypeEnum.CurrentCaseManager
   );
 
   const otherContacts = clientContacts.filter((contact) => {
-    return (
-      contact.relationshipToClient &&
-      contact.relationshipToClient !== RelationshipTypeEnum.CurrentCaseManager
-    );
+    const { relationshipToClient } = contact;
+
+    return relationshipToClient !== RelationshipTypeEnum.CurrentCaseManager;
   });
 
   return (
     <ClientProfileCardContainer>
-      {!caseManager && <EmptyState title="Current Case Manager" />}
+      {!caseManagers.length && <EmptyState title="Current Case Manager" />}
 
-      {caseManager && <RelevantContactCard contact={caseManager} />}
+      {!!caseManagers.length &&
+        caseManagers.map((contact, idx) => {
+          return <RelevantContactCard key={idx} contact={contact} />;
+        })}
 
       {!otherContacts.length && (
         <EmptyState

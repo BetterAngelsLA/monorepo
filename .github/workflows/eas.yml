@@ -1,11 +1,12 @@
 name: 📱 FE App Deployment
 
 on:
+  merge_group:
+    types: [checks_requested]
   pull_request:
     types: [opened, synchronize]
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   prepare:
@@ -21,7 +22,7 @@ jobs:
 
       # This line is needed for nx affected to work when CI is running on a PR
       - name: 🔀 Track main if PR
-        if: github.ref != 'refs/heads/main'
+        if: github.event_name == 'pull_request'
         run: git branch --track main origin/main
 
       - name: 🔧 Configure NX SHAs
@@ -80,7 +81,7 @@ jobs:
     steps:
       - name: 🚦 Turnstyle
         uses: softprops/turnstyle@master
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 🏗 Check out repo
@@ -184,7 +185,7 @@ jobs:
           } >> $GITHUB_OUTPUT
 
       - name: 📣 Post to Slack
-        if: ${{ env.BRANCH_NAME == 'main' }}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
@@ -228,7 +229,10 @@ jobs:
         working-directory: apps/${{ matrix.project }}
 
   production:
-    if: github.ref == 'refs/heads/main' && needs.prepare.outputs.is_matrix_empty == 'false'
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.prepare.outputs.is_matrix_empty == 'false'
     needs: prepare
     environment: production
     runs-on: ubuntu-latest
@@ -240,7 +244,7 @@ jobs:
     steps:
       - name: 🚦 Turnstyle
         uses: softprops/turnstyle@master
-        if: github.ref == 'refs/heads/main'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 🏗 Check out repo
