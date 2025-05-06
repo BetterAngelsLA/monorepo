@@ -62,6 +62,9 @@ export function Map(props: TMap) {
     enabled: enableUseUserLocation,
     initialized: !!map,
     onLocateMeClick: (location: LatLngLiteral) => {
+      console.log(
+        '################################### map.setCenter ON LOCATE_ME CLICK'
+      );
       setMapCenter({
         center: location,
         map,

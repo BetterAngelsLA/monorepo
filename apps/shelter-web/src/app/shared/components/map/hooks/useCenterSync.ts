@@ -10,7 +10,10 @@ export function useCenterSync(targetCenter: LatLngLiteral | null | undefined) {
       return;
     }
 
-    console.log('*****************  useCenterSync:', targetCenter);
+    console.log(
+      '################################### map.setCenter ON useCenterSync',
+      targetCenter
+    );
 
     map.setCenter(targetCenter);
   }, [map, targetCenter]);

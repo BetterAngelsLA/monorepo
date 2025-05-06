@@ -83,16 +83,19 @@ export function Home() {
       return;
     }
 
+    console.log('################################### SET MAP BOUNDS !!!!!!');
+
     setMapBoundsFilter(toTMapBounds(bounds));
+    // HIDE SEARCH BUTTON
   }
 
   function onIdle(state: TMapState | null) {
-    // console.log('*****************  onIdle:', state?.center);
+    console.log('*****************  onIdle:', state?.center);
   }
 
   function onInit(state: TMapState) {
     console.log('*****************  onInit:', state.center);
-    // setSavedCenter();
+    setSavedCenter();
   }
 
   function onCenterInit(state: TMapState) {
@@ -106,6 +109,7 @@ export function Home() {
       return;
     }
 
+    console.log('################################### map.setCenter ON SEARCH');
     map.setCenter(coordinates);
 
     const bounds = map.getBounds();
@@ -125,6 +129,7 @@ export function Home() {
     if (savedCenter && map) {
       const newCenter = JSON.parse(savedCenter);
 
+      console.log('################################### map.setCenter ON SAVED');
       map.setCenter(newCenter);
     }
   }
