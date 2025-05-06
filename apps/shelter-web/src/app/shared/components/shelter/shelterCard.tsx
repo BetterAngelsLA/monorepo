@@ -25,7 +25,7 @@ type TShelterCard = {
   shelter: TShelter;
   originCoordinates?: TLatLng | null;
   footer?: ReactNode | null;
-  footerName?: string;
+  footerClassName?: string;
 };
 
 export function ShelterCard(props: TShelterCard) {
@@ -34,7 +34,7 @@ export function ShelterCard(props: TShelterCard) {
     originCoordinates,
     className,
     footer,
-    footerName,
+    footerClassName,
   } = props;
 
   const navigate = useNavigate();
@@ -57,10 +57,8 @@ export function ShelterCard(props: TShelterCard) {
 
   const footerCss = [
     'mt-4',
-    'py-2',
     'md:mt-10',
-    'md:py-0',
-    footerName,
+    footerClassName,
   ]
 
   const contentCss = ['mt-4'];

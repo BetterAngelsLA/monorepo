@@ -45,7 +45,7 @@ export function Home() {
     setShelterMarkers(markers);
   }, [shelters]);
 
-  const footer_style = [
+  const footerStyle = [
     'font-semibold',
     'text-sm',
     'text-center',
@@ -66,7 +66,7 @@ export function Home() {
             shelters.find((shelter) => shelter.id === markerId) as TShelter
           }
           footer={
-            <div className={mergeCss(footer_style)}>
+            <div className={mergeCss(footerStyle)}>
               View Details
             </div>
           }
