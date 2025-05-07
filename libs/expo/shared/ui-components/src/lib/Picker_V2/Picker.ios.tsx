@@ -1,20 +1,29 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  Radiuses,
+  Spacings,
+  getMarginStyles,
+} from '@monorepo/expo/shared/static';
 import { Picker as RNPicker } from '@react-native-picker/picker';
-import { useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  Keyboard,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import FormFieldLabel from '../FormFieldLabel';
+import Input from '../Input_V2';
 import TextBold from '../TextBold';
-import TextRegular from '../TextRegular';
 import { IPickerProps } from './Picker';
 
 export default function Picker(props: IPickerProps) {
   const {
     onChange,
     error,
-    selectedDisplayValue,
     selectedValue,
     placeholder,
     allowSelectNone,
@@ -23,16 +32,8 @@ export default function Picker(props: IPickerProps) {
     label,
     required,
     disabled,
-    mb,
-    mt,
-    my,
-    mx,
-    mr,
-    ml,
   } = props;
-
   const [localValue, setLocalValue] = useState<string | null>(null);
-
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export default function Picker(props: IPickerProps) {
   }, [selectedValue, setLocalValue]);
 
   function onPressDone() {
+    Keyboard.dismiss();
     setIsModalVisible(false);
 
     if (localValue) {
@@ -57,53 +59,48 @@ export default function Picker(props: IPickerProps) {
     onChange(items[0].value);
   }
 
+  const getDisplayValue = useCallback(
+    (value?: string | null) => {
+      const item = items.find((item) => item.value === value);
+
+      return item?.displayValue ?? item?.value;
+    },
+    [items]
+  );
+
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
 
   return (
     <>
-      <View>
-        {label && <FormFieldLabel label={label} required={required} />}
-
-        <Pressable
+      <View
+        style={[
+          {
+            borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
+            ...getMarginStyles(props),
+          },
+        ]}
+      >
+        <Input
+          asSelect
           disabled={disabled}
-          onPress={() => setIsModalVisible(true)}
-          style={[
-            styles.selectButton,
-            {
-              borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
-              marginBottom: mb && Spacings[mb],
-              marginTop: mt && Spacings[mt],
-              marginLeft: ml && Spacings[ml],
-              marginRight: mr && Spacings[mr],
-              marginHorizontal: mx && Spacings[mx],
-              marginVertical: my && Spacings[my],
-            },
-          ]}
-          accessibilityRole="button"
-        >
-          <TextRegular
-            color={
-              disabled
-                ? Colors.NEUTRAL_LIGHT
-                : selectedDisplayValue || selectedValue
-                ? Colors.PRIMARY_EXTRA_DARK
-                : Colors.NEUTRAL
-            }
-          >
-            {selectedDisplayValue || selectedValue || placeholder}
-          </TextRegular>
-          <ChevronLeftIcon
-            size="sm"
-            rotate={'-90deg'}
-            color={disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
-          />
-        </Pressable>
-        {error && (
-          <TextRegular size="sm" mt="xxs" color={Colors.ERROR}>
-            {error}
-          </TextRegular>
-        )}
+          required={required}
+          placeholder={placeholder}
+          value={getDisplayValue(localValue)}
+          label={label}
+          error={!!error}
+          errorMessage={error}
+          onFocus={() => {
+            Keyboard.dismiss();
+            setIsModalVisible(true);
+          }}
+          slotRight={{
+            focusableInput: true,
+            component: <ChevronLeftIcon size="sm" rotate={'-90deg'} />,
+            accessibilityLabel: `selector for ${label || 'field'}`,
+            accessibilityHint: `opens selector for ${label || 'field'}`,
+          }}
+        />
       </View>
       <Modal
         style={styles.modal}
@@ -159,16 +156,6 @@ export default function Picker(props: IPickerProps) {
 }
 
 const styles = StyleSheet.create({
-  selectButton: {
-    backgroundColor: Colors.WHITE,
-    height: 56,
-    paddingHorizontal: Spacings.sm,
-    borderWidth: 1,
-    borderRadius: Radiuses.xs,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   modal: {
     margin: 0,
     flex: 1,

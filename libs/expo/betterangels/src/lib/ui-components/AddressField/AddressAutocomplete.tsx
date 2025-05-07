@@ -20,6 +20,7 @@ type TAddressAutocomplete<TForm extends FieldValues> = {
   control: Control<TForm>;
   label?: string;
   placeholder?: string;
+  disabled?: boolean;
   debounceMs?: number;
   onFocus?: () => void;
   onBlur?: () => void;
@@ -36,6 +37,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
     name,
     control,
     label,
+    disabled,
     onFocus,
     onBlur,
     placeholder,
@@ -111,6 +113,7 @@ export function AddressAutocomplete<TForm extends FieldValues>(
               value={value || ''}
               placeholder={placeholder}
               label={label}
+              disabled={disabled}
               predictions={predictions}
               onChangeText={handleChange}
               onFocus={handleFocus}

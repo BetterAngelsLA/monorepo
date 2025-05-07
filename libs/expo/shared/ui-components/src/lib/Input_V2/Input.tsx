@@ -1,15 +1,15 @@
-import { PlusIcon } from '@monorepo/expo/shared/icons';
 import {
   Colors,
   FontSizes,
   Radiuses,
   Spacings,
-  TSpacing,
+  TMarginProps,
+  getMarginStyles,
+  omitMarginProps,
 } from '@monorepo/expo/shared/static';
-import { ReactNode } from 'react';
+import { useRef } from 'react';
 import {
   Platform,
-  Pressable,
   StyleProp,
   StyleSheet,
   TextInput,
@@ -19,24 +19,28 @@ import {
 } from 'react-native';
 import FormFieldError from '../FormFieldError';
 import FormFieldLabel from '../FormFieldLabel';
+import { InputClearIcon } from './InputClearIcon';
+import { InputSlot, TInputSlot } from './InputSlot';
 
-export interface IInputProps extends TextInputProps {
+export interface IInputProps extends TMarginProps, TextInputProps {
   label?: string;
   required?: boolean;
   disabled?: boolean;
   error?: boolean;
   errorMessage?: string;
-  componentStyle?: StyleProp<ViewStyle>;
-  mb?: TSpacing;
-  mt?: TSpacing;
-  my?: TSpacing;
-  mx?: TSpacing;
-  ml?: TSpacing;
-  mr?: TSpacing;
-  icon?: ReactNode;
-  onDelete?: () => void;
+  style?: StyleProp<ViewStyle>;
+  inputStyle?: StyleProp<ViewStyle>;
   borderRadius?: number;
+  onDelete?: () => void;
+  slotLeft?: TInputSlot;
+  slotRight?: TInputSlot;
+  asSelect?: boolean;
 }
+
+const defaultAsSelectProps: TextInputProps = {
+  showSoftInputOnFocus: false,
+  caretHidden: true,
+};
 
 export function Input(props: IInputProps) {
   const {
@@ -44,36 +48,31 @@ export function Input(props: IInputProps) {
     error,
     required,
     disabled,
-    componentStyle,
-    mb,
-    mt,
-    my,
-    mx,
-    ml,
-    mr,
-    icon,
+    style,
+    inputStyle,
     value,
     onDelete,
+    slotLeft,
+    slotRight,
     autoCorrect = false,
     autoCapitalize = 'none',
     borderRadius = Radiuses.xs,
     errorMessage,
-    style,
+    asSelect,
     ...rest
   } = props;
+
+  const inputRef = useRef<TextInput>(null);
+  const nonMarginOtherProps = omitMarginProps(rest);
+  const asSelectProps = asSelect ? defaultAsSelectProps : {};
 
   return (
     <View
       style={[
-        styles.inputContainer,
-        componentStyle,
+        styles.container,
+        style,
         {
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
+          ...getMarginStyles(props),
         },
       ]}
     >
@@ -82,21 +81,28 @@ export function Input(props: IInputProps) {
         style={[
           styles.input,
           {
-            paddingLeft: icon ? Spacings.sm : 0,
             borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
             borderRadius,
           },
         ]}
       >
-        {icon}
+        {slotLeft && (
+          <InputSlot
+            placement="left"
+            disabled={disabled}
+            inputRef={inputRef}
+            {...slotLeft}
+          />
+        )}
+
         <TextInput
+          ref={inputRef}
           style={[
             {
               color: disabled
                 ? Colors.NEUTRAL_LIGHT
                 : Colors.PRIMARY_EXTRA_DARK,
-              paddingLeft: icon ? Spacings.xs : Spacings.sm,
-              paddingRight: onDelete ? 38 : Spacings.sm,
+              paddingHorizontal: Spacings.sm,
               flex: 1,
               fontFamily: 'Poppins-Regular',
               fontSize: FontSizes.md.fontSize,
@@ -108,39 +114,47 @@ export function Input(props: IInputProps) {
                 },
               }),
             },
-            style,
+            inputStyle,
           ]}
           editable={!disabled}
           autoCorrect={autoCorrect}
           autoCapitalize={autoCapitalize}
-          {...rest}
+          {...asSelectProps}
+          {...nonMarginOtherProps}
           value={value}
         />
+
         {value && onDelete && (
-          <Pressable
+          <InputSlot
+            placement="right"
             disabled={disabled}
-            accessible
-            accessibilityRole="button"
-            accessibilityLabel="delete icon"
-            accessibilityHint="deletes input's value"
             onPress={onDelete}
-            style={[{ opacity: disabled ? 0.5 : 1 }, styles.pressable]}
-          >
-            <View style={styles.icon}>
-              <PlusIcon size="xs" rotate="45deg" />
-            </View>
-          </Pressable>
+            accessibilityLabel="clear input"
+            accessibilityHint={`clear value for ${label || 'input'}`}
+            component={<InputClearIcon />}
+          />
+        )}
+
+        {slotRight && (
+          <InputSlot
+            placement="right"
+            disabled={disabled}
+            inputRef={inputRef}
+            {...slotRight}
+          />
         )}
       </View>
+
       {errorMessage && <FormFieldError message={errorMessage} />}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  inputContainer: {
+  container: {
     position: 'relative',
     width: '100%',
+    display: 'flex',
   },
   input: {
     position: 'relative',
@@ -162,23 +176,6 @@ const styles = StyleSheet.create({
   },
   required: {
     marginLeft: 2,
-    color: 'red',
-  },
-  pressable: {
-    position: 'absolute',
-    top: 12,
-    right: Spacings.xs,
-    height: Spacings.lg,
-    width: Spacings.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  icon: {
-    height: Spacings.sm,
-    width: Spacings.sm,
-    backgroundColor: Colors.NEUTRAL_LIGHT,
-    borderRadius: Radiuses.xxxl,
-    alignItems: 'center',
-    justifyContent: 'center',
+    color: Colors.ERROR_DARK,
   },
 });

@@ -8,6 +8,10 @@ interface TProps {
 export function parseToDate(props: TProps): Date | null {
   const { date, inputFormat } = props;
 
+  if (!date) {
+    return null;
+  }
+
   try {
     const parsed = parse(date, inputFormat, new Date());
 
