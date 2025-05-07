@@ -24,7 +24,7 @@ export default function Header({
       />
       <div className='mb-4'>
         <h1 className="font-medium text-xl">{shelter.name}</h1>
-        <p className="text-sm">{shelter.organization?"By " + shelter.organization.name:''}</p>
+        {shelter.organization && <p className="text-sm">{"By " + shelter.organization.name}</p>}
       </div>
       <div className="flex gap-2 items-center">
         <UsersIcon className="w-6 h-6 fill-primary-20" />
