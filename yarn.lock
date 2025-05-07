@@ -4867,7 +4867,7 @@ __metadata:
     "@react-native-picker/picker": "npm:2.11.0"
     "@sanity/client": "npm:^6.27.1"
     "@storybook/addon-essentials": "npm:8.6.12"
-    "@storybook/addon-react-native-web": "npm:^0.0.24"
+    "@storybook/addon-react-native-web": "npm:^0.0.29"
     "@storybook/core-server": "npm:8.6.12"
     "@storybook/react-native": "npm:^8.4.2"
     "@storybook/react-webpack5": "npm:8.6.12"
@@ -4888,7 +4888,7 @@ __metadata:
     "@types/jest": "npm:29.5.14"
     "@types/node": "npm:18.19.14"
     "@types/react": "npm:~19.0.10"
-    "@types/react-dom": "npm:~18.3.1"
+    "@types/react-dom": "npm:~19.0.1"
     "@types/react-mailchimp-subscribe": "npm:^2.1.4"
     "@types/react-native": "npm:^0.73.0"
     "@types/validator": "npm:^13.15.0"
@@ -7041,16 +7041,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/addon-react-native-web@npm:^0.0.24":
-  version: 0.0.24
-  resolution: "@storybook/addon-react-native-web@npm:0.0.24"
+"@storybook/addon-react-native-web@npm:^0.0.29":
+  version: 0.0.29
+  resolution: "@storybook/addon-react-native-web@npm:0.0.29"
   peerDependencies:
     "@babel/preset-react": "*"
     "@react-native/babel-preset": "*"
     babel-plugin-react-native-web: "*"
     metro-react-native-babel-preset: "*"
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
   peerDependenciesMeta:
     "@react-native/babel-preset":
       optional: true
@@ -7060,7 +7060,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: 10/2189622b4b617d57f80f32b0bef98d3c0628d1dc6e44184f7c57e1a91a0531fcb7b41a8192a38a8761cfed289bf646df5333f8b4d02d32c1bb7ef144c3cffaa4
+  checksum: 10/984c4d81d0593a47308f3ff2eea8acdf1943c64bd1f632c8ddb91dc3a1b5b1158ef809d0e19be4be5c775b9ae94b74c8180a1b5224f2a90c84b13d016917c8fb
   languageName: node
   linkType: hard
 
@@ -8444,12 +8444,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:~18.3.1":
-  version: 18.3.7
-  resolution: "@types/react-dom@npm:18.3.7"
+"@types/react-dom@npm:~19.0.1":
+  version: 19.0.6
+  resolution: "@types/react-dom@npm:19.0.6"
   peerDependencies:
-    "@types/react": ^18.0.0
-  checksum: 10/317569219366d487a3103ba1e5e47154e95a002915fdcf73a44162c48fe49c3a57fcf7f57fc6979e70d447112681e6b13c6c3c1df289db8b544df4aab2d318f3
+    "@types/react": ^19.0.0
+  checksum: 10/4ba1fa3005dc9f59b949903bc32d610b7efcc55791f51cc092bfc707f6c53faa6a5078f1729ce2cc32ae37f4e48124a277dcd767752e68f5b329d4be8c59f357
   languageName: node
   linkType: hard
 
