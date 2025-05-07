@@ -4890,7 +4890,6 @@ __metadata:
     "@types/react": "npm:~19.0.10"
     "@types/react-dom": "npm:~19.0.1"
     "@types/react-mailchimp-subscribe": "npm:^2.1.4"
-    "@types/react-native": "npm:^0.73.0"
     "@types/validator": "npm:^13.15.0"
     "@typescript-eslint/eslint-plugin": "npm:7.17.0"
     "@typescript-eslint/parser": "npm:7.17.0"
@@ -8460,15 +8459,6 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 10/9ebda2d2bc19179d3e4001d5e0b6d72bda857235532b5549e7f7cc8672fcc507dd31ca1f681bbd2f359d1b816040ea947f4eca08fe891da2f1200a9f8175e835
-  languageName: node
-  linkType: hard
-
-"@types/react-native@npm:^0.73.0":
-  version: 0.73.0
-  resolution: "@types/react-native@npm:0.73.0"
-  dependencies:
-    react-native: "npm:*"
-  checksum: 10/a764ca5d876dae3c109da449f736c44271b3b236d0d6e836c078247af1419f6d851600c56bb0c26f3e0d1b4be6eaac56b65c1f74ad0f0d05baf8b65dd1d5c597
   languageName: node
   linkType: hard
 
@@ -21999,7 +21989,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native@npm:*, react-native@npm:0.79.2":
+"react-native@npm:0.79.2":
   version: 0.79.2
   resolution: "react-native@npm:0.79.2"
   dependencies:
