@@ -18042,9 +18042,9 @@ __metadata:
   linkType: hard
 
 "libphonenumber-js@npm:^1.12.6":
-  version: 1.12.7
-  resolution: "libphonenumber-js@npm:1.12.7"
-  checksum: 10/ccb8bb9087387e7fe5c49adbe19e9fb86086fd921e6f8949a0c1c93b6984a30f2e209ed974322dea43a8ca24c4f60f1b2168d37a830d9bf5468aad7f0bec031c
+  version: 1.12.8
+  resolution: "libphonenumber-js@npm:1.12.8"
+  checksum: 10/476e5268f5a86509de80ed5e573afbd2aff457d88cbe116208d167563f538705d3b29c9cc45e8d58dc6b5d00babc348443e49239c367c4e2e26e8c71e96372bc
   languageName: node
   linkType: hard
 
@@ -21401,12 +21401,12 @@ __metadata:
   linkType: hard
 
 "react-devtools-core@npm:^6.1.1":
-  version: 6.1.1
-  resolution: "react-devtools-core@npm:6.1.1"
+  version: 6.1.2
+  resolution: "react-devtools-core@npm:6.1.2"
   dependencies:
     shell-quote: "npm:^1.6.1"
     ws: "npm:^7"
-  checksum: 10/0cd89c9c45aab383f98a66f0200ece4738b3f1ea3a6a5c947afc3a822aa22094b69f9bedc6bef5c961a3715ecc8d5350e0d87ad0eb90e4d2c752fb585c51b4f7
+  checksum: 10/439c86343f0cff52512c11ecb4a52522cf92bbd4e5cf18a2a08ce0592aa6e8ae2f0f16058b0b9fb741ab67a5caa24a86ac240291d5042756bbd4f6e2c03cb8c6
   languageName: node
   linkType: hard
 
