@@ -22,7 +22,10 @@ export default function Header({
         shelterName={shelter.name}
         imgUrl={shelter.heroImage}
       />
-      <h1 className="font-medium text-xl mb-2">{shelter.name}</h1>
+      <div className='mb-4'>
+        <h1 className="font-medium text-xl">{shelter.name}</h1>
+        <p className="text-sm">{shelter.organization?"By " + shelter.organization.name:''}</p>
+      </div>
       <div className="flex gap-2 items-center">
         <UsersIcon className="w-6 h-6 fill-primary-20" />
         <p className="text-sm">
