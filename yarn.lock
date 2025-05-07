@@ -4943,7 +4943,7 @@ __metadata:
     jest-circus: "npm:^29.4.1"
     jest-environment-jsdom: "npm:29.7.0"
     jest-environment-node: "npm:^29.4.1"
-    jest-expo: "npm:~53.0.0-preview.3"
+    jest-expo: "npm:~53.0.5"
     jiti: "npm:2.4.2"
     jotai: "npm:^2.10.3"
     jsdom: "npm:~22.1.0"
@@ -17109,7 +17109,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-expo@npm:~53.0.0-preview.3":
+"jest-expo@npm:~53.0.5":
   version: 53.0.5
   resolution: "jest-expo@npm:53.0.5"
   dependencies:
