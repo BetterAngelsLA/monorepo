@@ -4890,6 +4890,7 @@ __metadata:
     "@types/react": "npm:~19.0.10"
     "@types/react-dom": "npm:~18.3.1"
     "@types/react-mailchimp-subscribe": "npm:^2.1.4"
+    "@types/react-native": "npm:^0.73.0"
     "@types/validator": "npm:^13.15.0"
     "@typescript-eslint/eslint-plugin": "npm:7.17.0"
     "@typescript-eslint/parser": "npm:7.17.0"
@@ -4968,7 +4969,7 @@ __metadata:
     react-native-open-maps: "npm:^0.4.3"
     react-native-paper: "npm:^5.12.5"
     react-native-pdf: "npm:^6.7.7"
-    react-native-reanimated: "npm:~3.17.4"
+    react-native-reanimated: "npm:~3.17.5"
     react-native-safe-area-context: "npm:5.4.0"
     react-native-screens: "npm:~4.10.0"
     react-native-select-dropdown: "npm:^4.0.1"
@@ -8458,6 +8459,15 @@ __metadata:
   dependencies:
     "@types/react": "npm:*"
   checksum: 10/9ebda2d2bc19179d3e4001d5e0b6d72bda857235532b5549e7f7cc8672fcc507dd31ca1f681bbd2f359d1b816040ea947f4eca08fe891da2f1200a9f8175e835
+  languageName: node
+  linkType: hard
+
+"@types/react-native@npm:^0.73.0":
+  version: 0.73.0
+  resolution: "@types/react-native@npm:0.73.0"
+  dependencies:
+    react-native: "npm:*"
+  checksum: 10/a764ca5d876dae3c109da449f736c44271b3b236d0d6e836c078247af1419f6d851600c56bb0c26f3e0d1b4be6eaac56b65c1f74ad0f0d05baf8b65dd1d5c597
   languageName: node
   linkType: hard
 
@@ -21807,19 +21817,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-maps@npm:1.23.7":
-  version: 1.23.7
-  resolution: "react-native-maps@npm:1.23.7"
+"react-native-maps@npm:1.20.1":
+  version: 1.20.1
+  resolution: "react-native-maps@npm:1.20.1"
   dependencies:
     "@types/geojson": "npm:^7946.0.13"
   peerDependencies:
-    react: ">= 18.3.1"
-    react-native: ">= 0.76.0"
+    react: ">= 17.0.1"
+    react-native: ">= 0.64.3"
     react-native-web: ">= 0.11"
   peerDependenciesMeta:
     react-native-web:
       optional: true
-  checksum: 10/10a23151f997dda12aa727b2961138deba5c950ee2eb9ca0f8e87558fb72124ad36de3680415d41923b4a58c045eae7e592a07c943d9f942a3c5dc5fdf20b30b
+  checksum: 10/582fbf4d2f210251626e7f8296cf05451453a974b56b6855dae44839c895462781057b0ebcece920cb413e58d2e4c57ec229bd55678da25d5600278317dc3e51
   languageName: node
   linkType: hard
 
@@ -21874,7 +21884,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-reanimated@npm:~3.17.4":
+"react-native-reanimated@npm:~3.17.5":
   version: 3.17.5
   resolution: "react-native-reanimated@npm:3.17.5"
   dependencies:
@@ -21987,7 +21997,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native@npm:0.79.2":
+"react-native@npm:*, react-native@npm:0.79.2":
   version: 0.79.2
   resolution: "react-native@npm:0.79.2"
   dependencies:
