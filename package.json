@@ -179,6 +179,7 @@
     "metro-resolver": "^0.81.0",
     "metro-config": "^0.81.0",
     "micromatch": ">=4.0.8",
+    "react-native-maps": "1.23.7",
     "ws": ">=8.17.1"
   },
   "engines": {

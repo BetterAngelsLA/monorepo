@@ -21807,19 +21807,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-maps@npm:1.20.1":
-  version: 1.20.1
-  resolution: "react-native-maps@npm:1.20.1"
+"react-native-maps@npm:1.23.7":
+  version: 1.23.7
+  resolution: "react-native-maps@npm:1.23.7"
   dependencies:
     "@types/geojson": "npm:^7946.0.13"
   peerDependencies:
-    react: ">= 17.0.1"
-    react-native: ">= 0.64.3"
+    react: ">= 18.3.1"
+    react-native: ">= 0.76.0"
     react-native-web: ">= 0.11"
   peerDependenciesMeta:
     react-native-web:
       optional: true
-  checksum: 10/582fbf4d2f210251626e7f8296cf05451453a974b56b6855dae44839c895462781057b0ebcece920cb413e58d2e4c57ec229bd55678da25d5600278317dc3e51
+  checksum: 10/10a23151f997dda12aa727b2961138deba5c950ee2eb9ca0f8e87558fb72124ad36de3680415d41923b4a58c045eae7e592a07c943d9f942a3c5dc5fdf20b30b
   languageName: node
   linkType: hard
 
