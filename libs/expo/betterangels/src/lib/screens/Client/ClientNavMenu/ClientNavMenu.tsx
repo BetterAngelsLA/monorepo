@@ -48,6 +48,7 @@ export function ClientNavMenu(props: TProps) {
           {clientProfileId && (
             <ClientNavMenuBtn
               text="Delete Profile"
+              accessibilityHint="delete client profile"
               color={Colors.ERROR}
               onClick={async () => {
                 setVisible(false);
@@ -60,7 +61,11 @@ export function ClientNavMenu(props: TProps) {
       }
       onClose={() => setVisible(false)}
     >
-      <Pressable onPress={() => setVisible(true)}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityHint="toggle client profile menu"
+        onPress={() => setVisible(true)}
+      >
         {({ pressed }) => (
           <ThreeDotIcon
             size="lg"
