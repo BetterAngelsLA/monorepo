@@ -47,6 +47,7 @@ export default function ClientProfileView(props: ProfileProps) {
     if (!clientProfile) {
       return;
     }
+
     const route = getEditButtonRoute({
       clientProfile: clientProfile,
       section: card,

@@ -997,6 +997,7 @@ export type Mutation = {
   removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
+  updateClientDocument: UpdateClientDocumentPayload;
   updateClientHouseholdMember: UpdateClientHouseholdMemberPayload;
   updateClientProfile: UpdateClientProfilePayload;
   updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
@@ -1183,6 +1184,11 @@ export type MutationRevertNoteArgs = {
 
 export type MutationUpdateClientContactArgs = {
   data: ClientContactInput;
+};
+
+
+export type MutationUpdateClientDocumentArgs = {
+  data: UpdateClientDocumentInput;
 };
 
 
@@ -2036,6 +2042,13 @@ export type TrainingServiceType = {
 };
 
 export type UpdateClientContactPayload = ClientContactType | OperationInfo;
+
+export type UpdateClientDocumentInput = {
+  id: Scalars['ID']['input'];
+  originalFilename?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateClientDocumentPayload = ClientDocumentType | OperationInfo;
 
 export type UpdateClientHouseholdMemberPayload = ClientHouseholdMemberType | OperationInfo;
 

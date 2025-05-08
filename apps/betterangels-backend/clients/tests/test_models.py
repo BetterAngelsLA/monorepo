@@ -40,9 +40,13 @@ class ClientProfileModelTestCase(TestCase):
 
 class HmisProfileModelTestCase(TestCase):
     def test_hmis_profile_unique_constraint(self) -> None:
+        original_hmis_profile_count = HmisProfile.objects.count()
+
         baker.make(HmisProfile, hmis_id="hmisID1", agency=HmisAgencyEnum.LAHSA)
         baker.make(HmisProfile, hmis_id="hmisID2", agency=HmisAgencyEnum.LAHSA)
         baker.make(HmisProfile, hmis_id="hmisID1", agency=HmisAgencyEnum.PASADENA)
 
+        self.assertEqual(HmisProfile.objects.count(), original_hmis_profile_count + 3)
+
         with self.assertRaises(IntegrityError):
-            baker.make(HmisProfile, hmis_id="hmisID1", agency=HmisAgencyEnum.LAHSA)
+            baker.make(HmisProfile, hmis_id="HMISid1", agency=HmisAgencyEnum.LAHSA)

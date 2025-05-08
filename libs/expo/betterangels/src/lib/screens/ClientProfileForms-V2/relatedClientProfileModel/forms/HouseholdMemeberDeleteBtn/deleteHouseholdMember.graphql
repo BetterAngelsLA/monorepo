@@ -1,0 +1,14 @@
+mutation DeleteClientHouseholdMember($id: ID!) {
+  deleteClientHouseholdMember(data: { id: $id }) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on ClientHouseholdMemberType {
+      id
+    }
+  }
+}

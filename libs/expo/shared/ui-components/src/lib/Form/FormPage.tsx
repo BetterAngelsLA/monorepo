@@ -1,6 +1,6 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { ReactNode } from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { ReactNode, RefObject } from 'react';
+import { ScrollView, StyleSheet, View, ViewStyle } from 'react-native';
 import KeyboardAwareScrollView from '../KeyboardAwareScrollView';
 import { FormButtons, TFormButtons } from './FormButtons';
 
@@ -8,14 +8,17 @@ type TProps = {
   style?: ViewStyle;
   children: ReactNode;
   actionProps?: TFormButtons;
+  scrollViewRef?: RefObject<ScrollView>;
 };
 
 export function FormPage(props: TProps) {
-  const { actionProps, style, children } = props;
+  const { actionProps, style, scrollViewRef, children } = props;
 
   return (
     <View style={[styles.container, style]}>
-      <KeyboardAwareScrollView>{children}</KeyboardAwareScrollView>
+      <KeyboardAwareScrollView ref={scrollViewRef}>
+        {children}
+      </KeyboardAwareScrollView>
 
       {!!actionProps && <FormButtons {...actionProps} />}
     </View>

@@ -703,7 +703,7 @@ class HmisProfileMutationTestCase(HmisProfileBaseTestCase):
             ("hmis id 1", None, 12),
             (" ", "This field cannot be null.", 11),
             ("", "This field cannot be null.", 11),
-            ("hmis id 2", "Hmis profile with this Hmis id and Agency already exists.", 12),
+            ("hmis id 2", "Constraint “unique_hmis_id_agency” is violated.", 12),
             (None, "This field cannot be null.", 11),
         ],
     )
@@ -808,12 +808,13 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
+        self._setup_client_documents()
 
     def test_create_client_document(self) -> None:
         file_content = b"Test client document content"
         file_name = "test_client_document.txt"
 
-        expected_query_count = 16
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_client_document_fixture(
                 self.client_profile_1["id"],
@@ -845,3 +846,23 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             Attachment.objects.filter(id=client_document_id).exists(),
             "The document should have been deleted from the database.",
         )
+
+    def test_update_client_document(self) -> None:
+        """Test successful update of a client document's filename."""
+
+        self._handle_user_login("org_1_case_manager_1")
+
+        new_filename = "updated_document_name.txt"
+        document_id = self.client_profile_1_document_1["id"]
+
+        variables = {
+            "id": document_id,
+            "originalFilename": new_filename,
+        }
+        response = self._update_client_document_fixture(variables)
+
+        self.assertEqual(response["data"]["updateClientDocument"]["originalFilename"], new_filename)
+
+        # Verify database was updated
+        document = Attachment.objects.get(id=document_id)
+        self.assertEqual(document.original_filename, new_filename)

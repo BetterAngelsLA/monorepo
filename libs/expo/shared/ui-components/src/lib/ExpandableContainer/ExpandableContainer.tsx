@@ -6,7 +6,7 @@ import {
   TMarginProps,
   getMarginStyles,
 } from '@monorepo/expo/shared/static';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -17,8 +17,10 @@ import {
 import TextOrNode from '../TextOrNode';
 
 interface IExpandableContainer extends TMarginProps {
-  onClick?: (newOpen: boolean) => void;
+  controlled?: boolean; // controls expanded state via isOpen prop
   isOpen?: boolean;
+  defaultOpen?: boolean;
+  onToggle?: (newOpen: boolean) => void;
   title?: string | ReactNode;
   icon?: ReactNode;
   header?: ReactNode;
@@ -32,6 +34,8 @@ interface IExpandableContainer extends TMarginProps {
 
 export function ExpandableContainer(props: IExpandableContainer) {
   const {
+    controlled = false,
+    defaultOpen = false,
     isOpen,
     children,
     title,
@@ -42,14 +46,28 @@ export function ExpandableContainer(props: IExpandableContainer) {
     stylesTitleText,
     bgPressed = Colors.GRAY_PRESSED,
     disabled,
-    onClick,
+    onToggle,
   } = props;
 
-  const [expanded, setExpanded] = useState<boolean>(!!isOpen);
+  const [expandedLocal, setExpandedLocal] = useState<boolean>(defaultOpen);
 
-  useEffect(() => {
-    setExpanded(!!isOpen);
-  }, [isOpen]);
+  const expanded = controlled ? !!isOpen : expandedLocal;
+
+  function toggleExpanded() {
+    if (controlled) {
+      onToggle?.(!isOpen);
+
+      return;
+    }
+
+    setExpandedLocal((prev) => {
+      const newOpen = !prev;
+
+      onToggle?.(newOpen);
+
+      return newOpen;
+    });
+  }
 
   const accessibilityHintTitle = typeof title === 'string' ? title : 'section';
 
@@ -57,26 +75,18 @@ export function ExpandableContainer(props: IExpandableContainer) {
     ? `close ${accessibilityHintTitle}`
     : `open ${accessibilityHintTitle}`;
 
-  function onExpandCollapse() {
-    const newExpanded = !expanded;
-
-    setExpanded(newExpanded);
-
-    onClick && onClick(newExpanded);
-  }
-
   return (
     <View style={[styles.container, getMarginStyles(props), style]}>
       {header && header}
       {!header && (
         <Pressable
-          onPress={onExpandCollapse}
+          onPress={toggleExpanded}
           disabled={disabled}
           accessible
           accessibilityRole="button"
           accessibilityHint={accessibilityHintText}
           style={({ pressed }) => [
-            { backgroundColor: pressed ? bgPressed : undefined },
+            { backgroundColor: pressed ? bgPressed : 'transparent' },
             styles.defaultHeaderPressable,
           ]}
         >
