@@ -10,7 +10,7 @@ interface IPublicNoteProps {
   setIsPublicNoteEdited: (isPublicNoteEdited: boolean) => void;
   note: string;
   noteId: string;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
 }
 
 export default function PublicNote(props: IPublicNoteProps) {

@@ -4,12 +4,12 @@ import { Keyboard, ScrollView, View, findNodeHandle } from 'react-native';
 type TListener = { remove: () => void };
 
 export default function useScrollToScreenTop<T extends View>(
-  parentScrollViewRef?: RefObject<ScrollView>
+  parentScrollViewRef?: RefObject<ScrollView | null>
 ) {
   const keyboardDidShowListenerRef = useRef<TListener | null>(null);
 
   const scrollToTop = useCallback(
-    (fieldRef: RefObject<T>) => {
+    (fieldRef: RefObject<T | null>) => {
       const parentScrollView = parentScrollViewRef?.current;
       const field = fieldRef?.current;
 

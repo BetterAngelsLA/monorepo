@@ -1,4 +1,4 @@
-import Maps from './map'
+import Maps from './map';
 
 import RNMapView from 'react-native-maps';
 
@@ -7,9 +7,4 @@ const MapView = Maps.default;
 const Marker = Maps.Marker;
 const PROVIDER_GOOGLE = Maps?.PROVIDER_GOOGLE || 'google';
 
-export {
-    TMapView,
-    MapView,
-    Marker,
-    PROVIDER_GOOGLE,
-}
+export { MapView, Marker, PROVIDER_GOOGLE, TMapView };

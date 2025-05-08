@@ -18,7 +18,7 @@ import { ScrollView, View } from 'react-native';
 interface IDateAndTimeProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
   interactedAt: Date;
   noteId: string | undefined;
 }

@@ -16,7 +16,7 @@ import Race from './Race';
 interface IDemographicInfoProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
 }
 
 export default function DemographicInfo(props: IDemographicInfoProps) {

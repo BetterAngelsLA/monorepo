@@ -3,7 +3,7 @@ import { Button } from './button/Button';
 
 interface GeneratePDFProps {
   className?: string;
-  printRef: React.RefObject<HTMLDivElement>;
+  printRef: React.RefObject<HTMLDivElement | null>;
 }
 
 // Define a type for the Lambda response

@@ -13,7 +13,7 @@ const FIELD_NAME = 'mailingAddress';
 type TForm = UpdateClientProfileInput | CreateClientProfileInput;
 
 type TProps = {
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
 };
 
 export default function MailingAddress(props: TProps) {

@@ -13,7 +13,7 @@ import Contact from './Contact';
 interface IRelevantContactsProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
 }
 
 export default function RelevantContacts(props: IRelevantContactsProps) {

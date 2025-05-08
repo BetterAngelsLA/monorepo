@@ -1,5 +1,5 @@
 import { CloseIcon } from '@monorepo/react/icons';
-import { InputHTMLAttributes, ReactElement, Ref, forwardRef } from 'react';
+import { InputHTMLAttributes, JSX, ReactElement, Ref, forwardRef } from 'react';
 
 type AllowedTypes = string | number;
 interface IInput<T extends AllowedTypes = string>

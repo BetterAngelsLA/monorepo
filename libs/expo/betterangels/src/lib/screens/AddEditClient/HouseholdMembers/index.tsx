@@ -12,7 +12,7 @@ import HouseholdMember from './HouseholdMember';
 interface IHouseholdMembersProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
 }
 
 export default function HouseholdMembers(props: IHouseholdMembersProps) {

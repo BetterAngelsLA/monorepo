@@ -10,7 +10,7 @@ import { ScrollView } from 'react-native';
 
 interface IProvidedServicesProps {
   noteId: string;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
   services: ViewNoteQuery['note']['providedServices'];
   refetch: (
     variables?: Partial<ViewNoteQueryVariables>

@@ -12,7 +12,7 @@ import ServicesModal from './ServicesModal';
 
 interface IRequestedServicesProps {
   noteId: string;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
   services:
     | ViewNoteQuery['note']['requestedServices']
     | ViewNoteQuery['note']['providedServices'];

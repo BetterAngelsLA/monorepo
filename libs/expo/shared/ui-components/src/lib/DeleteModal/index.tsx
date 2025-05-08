@@ -12,7 +12,7 @@ type TProps = {
   body?: string;
   onDelete: () => void;
   onCancel?: () => void;
-  button?: ReactElement;
+  button?: ReactElement<ButtonProps>;
   isVisible?: boolean;
   deleteableItemName?: string;
 };
@@ -35,13 +35,11 @@ export default function DeleteModal(props: TProps) {
   }, [isVisible]);
 
   const clonedButton =
-    !!button &&
-    cloneElement(button as ReactElement<ButtonProps>, {
-      onPress: () => {
+    button &&
+    cloneElement(button, {
+      onPress: (e) => {
         setVisible(true);
-        if (button.props.onPress) {
-          button.props.onPress();
-        }
+        button.props.onPress?.(e);
       },
     });
 

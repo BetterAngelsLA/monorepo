@@ -17,7 +17,7 @@ import { ScrollView, View } from 'react-native';
 interface IPurposeProps {
   expanded: string | undefined | null;
   setExpanded: (expanded: string | undefined | null) => void;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
   purpose: string | null | undefined;
   noteId: string | undefined;
   errors: {

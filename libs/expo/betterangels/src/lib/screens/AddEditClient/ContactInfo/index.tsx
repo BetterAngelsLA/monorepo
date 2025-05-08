@@ -12,7 +12,7 @@ import SocialMedia from './SocialMedia';
 interface IContactInfoProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
 }
 
 export default function ContactInfo(props: IContactInfoProps) {
