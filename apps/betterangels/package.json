@@ -72,7 +72,8 @@
     "expo-constants": "*",
     "expo-application": "*",
     "@react-navigation/native-stack": "*",
-    "expo-updates": "*"
+    "expo-updates": "*",
+    "react-native-walkthrough-tooltip": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",
