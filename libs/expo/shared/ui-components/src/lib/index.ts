@@ -25,7 +25,6 @@ export {
   parseToDate,
 } from './Date';
 export { default as DatePicker } from './DatePicker';
-export { default as DatePicker_V2 } from './DatePicker_V2';
 export { default as DeleteModal } from './DeleteModal';
 export { default as Divider } from './Divider';
 export { default as EditButton } from './EditButton';
@@ -39,9 +38,7 @@ export { default as FormFieldError } from './FormFieldError';
 export { default as FormFieldLabel } from './FormFieldLabel';
 export { default as IconButton } from './IconButton';
 export { default as ImageViewer } from './ImageViewer';
-export { default as Input } from './Input';
-export { default as Input_V2 } from './Input_V2';
-// DatePicker
+export * from './Input';
 export { default as KeyboardAwareScrollView } from './KeyboardAwareScrollView';
 export {
   Length,
