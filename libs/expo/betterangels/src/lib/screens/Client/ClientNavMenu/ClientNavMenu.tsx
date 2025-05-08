@@ -29,8 +29,6 @@ export function ClientNavMenu(props: TProps) {
     <Tooltip
       isVisible={visible}
       backgroundColor="transparent"
-      closeOnContentInteraction={true}
-      closeOnChildInteraction={true}
       arrowSize={{
         width: 0,
         height: 0,
@@ -43,21 +41,8 @@ export function ClientNavMenu(props: TProps) {
         right: 12,
       }}
       disableShadow={true}
-      tooltipStyle={{
-        marginTop: 8,
-        backgroundColor: Colors.WHITE,
-        shadowColor: Colors.BLACK,
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 0.2,
-        shadowRadius: 32,
-        borderRadius: 12,
-      }}
-      contentStyle={{
-        padding: 0,
-        height: 'auto',
-        borderRadius: 12,
-        overflow: 'hidden',
-      }}
+      tooltipStyle={styles.contentWrapper}
+      contentStyle={styles.content}
       content={
         <>
           {clientProfileId && (
@@ -74,7 +59,6 @@ export function ClientNavMenu(props: TProps) {
         </>
       }
       onClose={() => setVisible(false)}
-      // topAdjustment={Platform.OS === 'android' ? -StatusBar.currentHeight : 0}
     >
       <Pressable onPress={() => setVisible(true)}>
         {({ pressed }) => (
@@ -89,10 +73,19 @@ export function ClientNavMenu(props: TProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  contentWrapper: {
+    marginTop: 8,
+    backgroundColor: Colors.WHITE,
+    shadowColor: Colors.BLACK,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 32,
+    borderRadius: 12,
+  },
+  content: {
+    padding: 0,
+    borderRadius: 12,
+    height: 'auto',
     overflow: 'hidden',
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
   },
 });

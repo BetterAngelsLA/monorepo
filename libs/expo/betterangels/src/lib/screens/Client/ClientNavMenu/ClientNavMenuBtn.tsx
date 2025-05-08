@@ -40,10 +40,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Spacings.sm,
-    // paddingVertical: 11,
     minWidth: 218,
     height: 44,
-    // borderWidth: 1,
-    // borderColor: 'red',
   },
 });

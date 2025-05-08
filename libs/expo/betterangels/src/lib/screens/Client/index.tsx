@@ -73,14 +73,13 @@ export default function Client({
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: 'Client',
       headerLeft: () => (
         <Pressable
           accessibilityRole="button"
           accessible
           accessibilityHint="goes to previous screen"
           onPress={() =>
-            arrivedFrom ? router.navigate(arrivedFrom) : router.back()
+            arrivedFrom ? router.navigate(arrivedFrom) : router.navigate('/')
           }
         >
           <TextRegular color={Colors.WHITE}>Back</TextRegular>
