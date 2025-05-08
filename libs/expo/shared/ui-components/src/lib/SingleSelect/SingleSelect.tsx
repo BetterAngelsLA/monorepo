@@ -7,7 +7,7 @@ import {
 import { View } from 'react-native';
 import FormFieldLabel from '../FormFieldLabel';
 import Picker from '../Picker';
-import Radio from '../Radio_V2';
+import Radio from '../Radio';
 import TextRegular from '../TextRegular';
 
 interface ISingleSelectProps extends TMarginProps {

@@ -3,7 +3,7 @@ import {
   feetInchesToInches,
   Form,
   inchesToFeetInches,
-  Input_V2 as Input,
+  Input,
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';

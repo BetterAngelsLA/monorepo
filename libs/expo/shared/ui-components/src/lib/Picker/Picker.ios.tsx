@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Input from '../Input_V2';
+import { Input } from '../Input';
 import TextBold from '../TextBold';
 import { IPickerProps } from './Picker';
 

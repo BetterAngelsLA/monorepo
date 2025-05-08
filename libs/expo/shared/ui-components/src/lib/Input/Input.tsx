@@ -1,186 +1,166 @@
-import { PlusIcon } from '@monorepo/expo/shared/icons';
 import {
   Colors,
   FontSizes,
   Radiuses,
   Spacings,
+  TMarginProps,
+  getMarginStyles,
+  omitMarginProps,
 } from '@monorepo/expo/shared/static';
-import { ReactNode } from 'react';
-import { Control, Controller, RegisterOptions } from 'react-hook-form';
+import { useRef } from 'react';
 import {
   Platform,
-  Pressable,
   StyleProp,
   StyleSheet,
-  Text,
   TextInput,
   TextInputProps,
   View,
   ViewStyle,
 } from 'react-native';
-import TextRegular from '../TextRegular';
+import FormFieldError from '../FormFieldError';
+import FormFieldLabel from '../FormFieldLabel';
+import { InputClearIcon } from './InputClearIcon';
+import { InputSlot, TInputSlot } from './InputSlot';
 
-type TRules = Omit<
-  RegisterOptions,
-  'disabled' | 'valueAsNumber' | 'valueAsDate' | 'setValueAs'
->;
-
-type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-
-interface IInputProps extends TextInputProps {
+export interface IInputProps extends TMarginProps, TextInputProps {
   label?: string;
-  control?: Control<any>;
-  height?: 40 | 56 | 200;
-  name: string;
   required?: boolean;
   disabled?: boolean;
   error?: boolean;
-  rules?: TRules;
-  componentStyle?: StyleProp<ViewStyle>;
-  mb?: TSpacing;
-  mt?: TSpacing;
-  my?: TSpacing;
-  mx?: TSpacing;
-  ml?: TSpacing;
-  mr?: TSpacing;
-  onBlur?: () => void;
-  onFocus?: () => void;
-  icon?: ReactNode;
   errorMessage?: string;
+  style?: StyleProp<ViewStyle>;
+  inputStyle?: StyleProp<ViewStyle>;
+  borderRadius?: number;
+  onDelete?: () => void;
+  slotLeft?: TInputSlot;
+  slotRight?: TInputSlot;
+  asSelect?: boolean;
 }
+
+const defaultAsSelectProps: TextInputProps = {
+  showSoftInputOnFocus: false,
+  caretHidden: true,
+};
 
 export function Input(props: IInputProps) {
   const {
     label,
-    control,
-    rules,
-    name,
     error,
     required,
     disabled,
-    componentStyle,
-    height = 56,
-    mb,
-    mt,
-    my,
-    mx,
-    ml,
-    mr,
-    icon,
+    style,
+    inputStyle,
+    value,
+    onDelete,
+    slotLeft,
+    slotRight,
+    autoCorrect = false,
+    autoCapitalize = 'none',
+    borderRadius = Radiuses.xs,
     errorMessage,
+    asSelect,
     ...rest
   } = props;
 
-  const handleBlur = (onBlur: () => void) => {
-    onBlur();
-    if (props.onBlur) {
-      props.onBlur();
-    }
-  };
-
-  const handleFocus = () => {
-    if (props.onFocus) {
-      props.onFocus();
-    }
-  };
+  const inputRef = useRef<TextInput>(null);
+  const nonMarginOtherProps = omitMarginProps(rest);
+  const asSelectProps = asSelect ? defaultAsSelectProps : {};
 
   return (
-    <Controller
-      control={control}
-      name={name}
-      rules={rules}
-      render={({ field: { value, onBlur, onChange } }) => (
-        <View
+    <View
+      style={[
+        styles.container,
+        style,
+        {
+          ...getMarginStyles(props),
+        },
+      ]}
+    >
+      {label && <FormFieldLabel label={label} required={required} />}
+      <View
+        style={[
+          styles.input,
+          {
+            borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
+            borderRadius,
+          },
+        ]}
+      >
+        {slotLeft && (
+          <InputSlot
+            placement="left"
+            disabled={disabled}
+            inputRef={inputRef}
+            {...slotLeft}
+          />
+        )}
+
+        <TextInput
+          ref={inputRef}
           style={[
-            styles.inputContainer,
-            componentStyle,
             {
-              marginBottom: mb && Spacings[mb],
-              marginTop: mt && Spacings[mt],
-              marginLeft: ml && Spacings[ml],
-              marginRight: mr && Spacings[mr],
-              marginHorizontal: mx && Spacings[mx],
-              marginVertical: my && Spacings[my],
+              color: disabled
+                ? Colors.NEUTRAL_LIGHT
+                : Colors.PRIMARY_EXTRA_DARK,
+              paddingHorizontal: Spacings.sm,
+              flex: 1,
+              fontFamily: 'Poppins-Regular',
+              fontSize: FontSizes.md.fontSize,
+              paddingVertical: Spacings.sm,
+              textAlignVertical: 'top',
+              ...Platform.select({
+                web: {
+                  outline: 'none',
+                },
+              }),
             },
+            inputStyle,
           ]}
-        >
-          {label && (
-            <View style={styles.label}>
-              <Text style={styles.labelText}>{label}</Text>
-              {required && <Text style={styles.required}>*</Text>}
-            </View>
-          )}
-          <View
-            style={[
-              styles.input,
-              {
-                borderColor: error ? 'red' : Colors.NEUTRAL_LIGHT,
-              },
-            ]}
-          >
-            {icon && icon}
-            <TextInput
-              style={{
-                color: disabled
-                  ? Colors.NEUTRAL_LIGHT
-                  : Colors.PRIMARY_EXTRA_DARK,
-                paddingLeft: icon ? Spacings.xs : Spacings.sm,
-                paddingRight: 38,
-                flex: 1,
-                fontFamily: 'Poppins-Regular',
-                fontSize: FontSizes.md.fontSize,
-                height,
-                ...Platform.select({
-                  web: {
-                    outline: 'none',
-                  },
-                }),
-              }}
-              value={value}
-              onBlur={() => handleBlur(onBlur)}
-              onFocus={() => handleFocus()}
-              onChangeText={onChange}
-              editable={!disabled}
-              {...rest}
-            />
-            {value && (
-              <Pressable
-                accessible
-                accessibilityRole="button"
-                accessibilityLabel="delete icon"
-                accessibilityHint="deletes input's value"
-                onPress={() => onChange('')}
-                style={styles.pressable}
-              >
-                <View style={styles.icon}>
-                  <PlusIcon size="xs" rotate="45deg" />
-                </View>
-              </Pressable>
-            )}
-          </View>
-          {errorMessage && (
-            <TextRegular mt="xxs" size="sm" color={Colors.ERROR}>
-              {errorMessage}
-            </TextRegular>
-          )}
-        </View>
-      )}
-    />
+          editable={!disabled}
+          autoCorrect={autoCorrect}
+          autoCapitalize={autoCapitalize}
+          {...asSelectProps}
+          {...nonMarginOtherProps}
+          value={value}
+        />
+
+        {value && onDelete && (
+          <InputSlot
+            placement="right"
+            disabled={disabled}
+            onPress={onDelete}
+            accessibilityLabel="clear input"
+            accessibilityHint={`clear value for ${label || 'input'}`}
+            component={<InputClearIcon />}
+          />
+        )}
+
+        {slotRight && (
+          <InputSlot
+            placement="right"
+            disabled={disabled}
+            inputRef={inputRef}
+            {...slotRight}
+          />
+        )}
+      </View>
+
+      {errorMessage && <FormFieldError message={errorMessage} />}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  inputContainer: {
+  container: {
     position: 'relative',
     width: '100%',
+    display: 'flex',
   },
   input: {
     position: 'relative',
     fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    borderRadius: Radiuses.xs,
-    alignItems: 'center',
     flexDirection: 'row',
   },
   label: {
@@ -196,22 +176,6 @@ const styles = StyleSheet.create({
   },
   required: {
     marginLeft: 2,
-    color: 'red',
-  },
-  pressable: {
-    position: 'absolute',
-    right: Spacings.xs,
-    height: Spacings.lg,
-    width: Spacings.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  icon: {
-    height: Spacings.sm,
-    width: Spacings.sm,
-    backgroundColor: Colors.NEUTRAL_LIGHT,
-    borderRadius: Radiuses.xxxl,
-    alignItems: 'center',
-    justifyContent: 'center',
+    color: Colors.ERROR_DARK,
   },
 });
