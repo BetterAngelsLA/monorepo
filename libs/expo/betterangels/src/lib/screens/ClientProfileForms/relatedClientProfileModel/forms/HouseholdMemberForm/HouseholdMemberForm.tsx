@@ -1,6 +1,6 @@
 import {
   ControlledInput,
-  DatePicker_V2 as DatePicker,
+  DatePicker,
   Form,
   SingleSelect,
   TextRegular,

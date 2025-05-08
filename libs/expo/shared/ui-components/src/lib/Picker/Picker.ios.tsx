@@ -1,43 +1,107 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  Radiuses,
+  Spacings,
+  getMarginStyles,
+} from '@monorepo/expo/shared/static';
 import { Picker as RNPicker } from '@react-native-picker/picker';
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  Keyboard,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Input from '../Input_V2';
 import TextBold from '../TextBold';
-import TextRegular from '../TextRegular';
 import { IPickerProps } from './Picker';
 
 export default function Picker(props: IPickerProps) {
-  const { setSelectedValue, error, value, placeholder, items } = props;
-  const [localValue, setLocalValue] = useState<string | null | undefined>(
-    value || null
-  );
+  const {
+    onChange,
+    error,
+    selectedValue,
+    placeholder,
+    allowSelectNone,
+    selectNoneLabel,
+    items,
+    label,
+    required,
+    disabled,
+  } = props;
+  const [localValue, setLocalValue] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+
+  useEffect(() => {
+    setLocalValue(selectedValue || null);
+  }, [selectedValue, setLocalValue]);
+
+  function onPressDone() {
+    Keyboard.dismiss();
+    setIsModalVisible(false);
+
+    if (localValue) {
+      onChange(localValue);
+
+      return;
+    }
+
+    if (allowSelectNone) {
+      onChange(null);
+
+      return;
+    }
+
+    onChange(items[0].value);
+  }
+
+  const getDisplayValue = useCallback(
+    (value?: string | null) => {
+      const item = items.find((item) => item.value === value);
+
+      return item?.displayValue ?? item?.value;
+    },
+    [items]
+  );
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
+
   return (
     <>
-      <Pressable
-        onPress={() => {
-          setIsModalVisible(true);
-          if (!localValue) {
-            setLocalValue(items[0].value);
-          }
-        }}
+      <View
         style={[
-          styles.selectButton,
-          { borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT },
+          {
+            borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
+            ...getMarginStyles(props),
+          },
         ]}
-        accessibilityRole="button"
       >
-        <TextRegular color={value ? Colors.PRIMARY_EXTRA_DARK : Colors.NEUTRAL}>
-          {value || placeholder}
-        </TextRegular>
-        <ChevronLeftIcon size="sm" rotate={'-90deg'} />
-      </Pressable>
+        <Input
+          asSelect
+          disabled={disabled}
+          required={required}
+          placeholder={placeholder}
+          value={getDisplayValue(localValue)}
+          label={label}
+          error={!!error}
+          errorMessage={error}
+          onFocus={() => {
+            Keyboard.dismiss();
+            setIsModalVisible(true);
+          }}
+          slotRight={{
+            focusableInput: true,
+            component: <ChevronLeftIcon size="sm" rotate={'-90deg'} />,
+            accessibilityLabel: `selector for ${label || 'field'}`,
+            accessibilityHint: `opens selector for ${label || 'field'}`,
+          }}
+        />
+      </View>
       <Modal
         style={styles.modal}
         backdropOpacity={0.5}
@@ -45,7 +109,7 @@ export default function Picker(props: IPickerProps) {
         onBackdropPress={() => setIsModalVisible(false)}
         useNativeDriverForBackdrop={true}
       >
-        <View
+        <SafeAreaView
           style={{
             borderTopLeftRadius: Radiuses.xs,
             borderTopRightRadius: Radiuses.xs,
@@ -57,46 +121,41 @@ export default function Picker(props: IPickerProps) {
             <Pressable
               accessibilityHint={`selects ${localValue}`}
               accessibilityRole="button"
-              onPress={() => {
-                setSelectedValue(localValue);
-                setIsModalVisible(false);
-              }}
+              onPress={onPressDone}
             >
-              <TextBold color="#007aff" size="ms">
+              <TextBold color={Colors.IOS_BLUE} size="ms">
                 Done
               </TextBold>
             </Pressable>
           </View>
           <RNPicker
-            style={{ backgroundColor: '#d1d3da' }}
+            style={{ backgroundColor: Colors.IOS_GRAY }}
             selectedValue={localValue}
             onValueChange={(itemValue) => setLocalValue(itemValue)}
           >
+            {!!allowSelectNone && (
+              <RNPicker.Item
+                label={selectNoneLabel || placeholder}
+                value={null}
+                enabled={true}
+              />
+            )}
+
             {items.map((item) => (
               <RNPicker.Item
                 key={item.value}
-                label={item.label}
+                label={item.displayValue || item.value}
                 value={item.value}
               />
             ))}
           </RNPicker>
-        </View>
+        </SafeAreaView>
       </Modal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  selectButton: {
-    backgroundColor: Colors.WHITE,
-    height: 56,
-    paddingHorizontal: Spacings.sm,
-    borderWidth: 1,
-    borderRadius: Radiuses.xs,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   modal: {
     margin: 0,
     flex: 1,
