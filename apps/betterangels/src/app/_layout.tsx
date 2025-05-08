@@ -1,5 +1,4 @@
 import 'expo-dev-client';
-import NewRelic from 'newrelic-react-native-agent';
 
 import {
   AppUpdatePrompt,
@@ -10,6 +9,7 @@ import {
   KeyboardToolbarProvider,
   SnackbarProvider,
   useAppVersion,
+  useNewRelic,
   UserProvider,
 } from '@monorepo/expo/betterangels';
 import {
@@ -21,12 +21,11 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Link, Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, View } from 'react-native';
+import { View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
 import { type ErrorBoundaryProps } from 'expo-router';
-import { useEffect } from 'react';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -42,31 +41,7 @@ export default function RootLayout() {
   const router = useRouter();
   const { version, runtimeVersionShort } = useAppVersion();
 
-  useEffect(() => {
-    const appToken = process.env.EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY;
-
-    if (!appToken) {
-      console.warn('New Relic not initialized: missing mobile license key');
-      return;
-    }
-
-    NewRelic.startAgent(appToken, {
-      crashReportingEnabled: true,
-      networkRequestEnabled: true,
-      interactionTracingEnabled: true,
-      analyticsEventEnabled: true,
-      loggingEnabled: true,
-      logLevel: NewRelic.LogLevel.INFO,
-      customAttributes: {
-        env: process.env.EXPO_PUBLIC_APP_ENV,
-        version: version,
-        runtimeVersion: runtimeVersionShort,
-        platform: Platform.OS,
-      },
-    });
-
-    NewRelic.setJSAppVersion(version as string);
-  }, []);
+  useNewRelic(version, runtimeVersionShort);
 
   return (
     <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
