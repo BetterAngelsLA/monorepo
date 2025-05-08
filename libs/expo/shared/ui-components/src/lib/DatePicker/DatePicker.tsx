@@ -19,7 +19,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import Button from '../Button';
-import Input from '../Input_V2';
+import Input from '../Input';
 
 interface IDatePickerProps extends TMarginProps {
   mode: 'date' | 'time';

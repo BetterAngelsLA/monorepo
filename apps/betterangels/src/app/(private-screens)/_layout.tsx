@@ -44,24 +44,6 @@ export default function PrivateLayout() {
         }}
       />
       <Stack.Screen
-        name="form/index"
-        options={{
-          headerStyle: {
-            backgroundColor: Colors.BRAND_DARK_BLUE,
-          },
-          headerLeft: () => (
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="goes to previous screen"
-              title="Back"
-              onPress={router.back}
-            />
-          ),
-        }}
-      />
-      <Stack.Screen
         name="interactions"
         options={{
           title: 'Interactions',

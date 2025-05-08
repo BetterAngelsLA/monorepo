@@ -1,6 +1,6 @@
 import { Control, Controller, RegisterOptions } from 'react-hook-form';
-import Input from '../Input_V2';
-import { IInputProps } from '../Input_V2/Input';
+import Input from '../Input';
+import { IInputProps } from '../Input/Input';
 
 type TRules = Omit<
   RegisterOptions,

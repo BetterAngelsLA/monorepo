@@ -6,7 +6,6 @@ import {
 import {
   HouseLineIcon,
   HouseSolidIcon,
-  PlusIcon,
   UsersLineIcon,
   UsersSolidIcon,
 } from '@monorepo/expo/shared/icons';
@@ -14,7 +13,7 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { Redirect, Tabs, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { privacyPolicyUrl, termsOfServiceUrl } from '../../../config';
 
@@ -98,34 +97,6 @@ export default function TabLayout() {
         />
 
         <Tabs.Screen
-          name="drawerPlaceholder"
-          listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              setModalVisible(true);
-            },
-          }}
-          options={{
-            title: '',
-            tabBarIcon: () => (
-              <View style={styles.plusButtonWrapper}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityHint="Opening homepage main modal"
-                  onPress={() => setModalVisible(true)}
-                  style={({ pressed }) => [
-                    styles.plusButton,
-                    pressed && styles.plusButtonPressed,
-                  ]}
-                >
-                  <PlusIcon color={Colors.WHITE} />
-                </Pressable>
-              </View>
-            ),
-          }}
-        />
-
-        <Tabs.Screen
           name="clients"
           listeners={{
             tabPress: (e) => {
@@ -149,11 +120,6 @@ export default function TabLayout() {
             ),
           }}
         />
-
-        {/* Hidden routes */}
-        {['map', 'teams', 'calendar', 'appointment'].map((name) => (
-          <Tabs.Screen key={name} name={name} options={{ href: null }} />
-        ))}
       </Tabs>
 
       <MainPlusModal
