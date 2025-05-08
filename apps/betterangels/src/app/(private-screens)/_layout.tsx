@@ -104,7 +104,7 @@ export default function PrivateLayout() {
       <Stack.Screen
         name="client/[id]"
         options={{
-          title: 'Client',
+          title: 'Client--x',
           headerTitleAlign: 'center',
           headerStyle: {
             backgroundColor: Colors.BRAND_DARK_BLUE,
@@ -115,7 +115,7 @@ export default function PrivateLayout() {
               color={Colors.WHITE}
               fontSize="md"
               accessibilityHint="goes to previous screen"
-              title="Back"
+              title="Back-X"
               onPress={router.back}
             />
           ),

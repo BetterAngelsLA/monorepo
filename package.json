@@ -79,6 +79,7 @@
     "react-native-select-dropdown": "^4.0.1",
     "react-native-svg": "15.8.0",
     "react-native-svg-transformer": "1.5.0",
+    "react-native-walkthrough-tooltip": "^1.6.0",
     "react-native-web": "0.19.13",
     "react-router-dom": "6.11.2",
     "remeda": "^2.20.0",

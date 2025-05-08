@@ -13,6 +13,7 @@ import { Pressable, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
+import { ClientNavMenu } from './ClientNavMenu/ClientNavMenu';
 import ClientProfileView from './ClientProfile';
 import ClientTabs from './ClientTabs';
 import Docs from './Docs';
@@ -47,7 +48,7 @@ const getTabComponent = (
 };
 
 export default function Client({
-  id,
+  id: clientProfileId,
   arrivedFrom,
   openCard,
 }: {
@@ -55,7 +56,9 @@ export default function Client({
   arrivedFrom?: string;
   openCard?: ClientProfileSectionEnum;
 }) {
-  const { data, loading, error } = useClientProfileQuery({ variables: { id } });
+  const { data, loading, error } = useClientProfileQuery({
+    variables: { id: clientProfileId },
+  });
   const [tab, setTab] = useState('Profile');
 
   const navigation = useNavigation();
@@ -70,20 +73,22 @@ export default function Client({
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      title: 'Client',
       headerLeft: () => (
         <Pressable
           accessibilityRole="button"
           accessible
           accessibilityHint="goes to previous screen"
           onPress={() =>
-            arrivedFrom ? router.navigate(arrivedFrom) : router.navigate('/')
+            arrivedFrom ? router.navigate(arrivedFrom) : router.back()
           }
         >
           <TextRegular color={Colors.WHITE}>Back</TextRegular>
         </Pressable>
       ),
+      headerRight: () => <ClientNavMenu clientProfileId={clientProfileId} />,
     });
-  }, []);
+  }, [clientProfileId]);
 
   if (loading) {
     return (

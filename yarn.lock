@@ -5133,6 +5133,7 @@ __metadata:
     react-native-select-dropdown: "npm:^4.0.1"
     react-native-svg: "npm:15.8.0"
     react-native-svg-transformer: "npm:1.5.0"
+    react-native-walkthrough-tooltip: "npm:^1.6.0"
     react-native-web: "npm:0.19.13"
     react-router-dom: "npm:6.11.2"
     react-test-renderer: "npm:^18.3.0"
@@ -22009,7 +22010,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prop-types@npm:*, prop-types@npm:^15.5.10, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
+"prop-types@npm:*, prop-types@npm:^15.5.10, prop-types@npm:^15.6.1, prop-types@npm:^15.6.2, prop-types@npm:^15.7.2, prop-types@npm:^15.8.1":
   version: 15.8.1
   resolution: "prop-types@npm:15.8.1"
   dependencies:
@@ -22293,6 +22294,13 @@ __metadata:
   peerDependencies:
     react: ^19.1.0
   checksum: 10/c5b58605862c7b0bb044416b01c73647bb8e89717fb5d7a2c279b11815fb7b49b619fe685c404e59f55eb52c66831236cc565c25ee1c2d042739f4a2cc538aa2
+  languageName: node
+  linkType: hard
+
+"react-fast-compare@npm:^2.0.4":
+  version: 2.0.4
+  resolution: "react-fast-compare@npm:2.0.4"
+  checksum: 10/e4e3218c0f5c29b88e9f184a12adb77b0a93a803dbd45cb98bbb754c8310dc74e6266c53dd70b90ba4d0939e0e1b8a182cb05d081bcab22507a0390fbcd768ac
   languageName: node
   linkType: hard
 
@@ -22609,6 +22617,18 @@ __metadata:
   peerDependencies:
     react-native: "*"
   checksum: 10/6a8d605eeb1b0ee9b0f47f1866acc2edfa2131a4a8fb1ea3839ceb507e225b894ed66f49a3bd826fc964f2c8005b3678c9d3b65d07eb0a3b979be830cb618686
+  languageName: node
+  linkType: hard
+
+"react-native-walkthrough-tooltip@npm:^1.6.0":
+  version: 1.6.0
+  resolution: "react-native-walkthrough-tooltip@npm:1.6.0"
+  dependencies:
+    prop-types: "npm:^15.6.1"
+    react-fast-compare: "npm:^2.0.4"
+  peerDependencies:
+    "@types/react": ">=16.8.24"
+  checksum: 10/62e5d4b946e50b866ffc500deaa7a4a2d9d8935413dd972933d8dff8be469dedb28b7b500989385375f440db59f3a961d2e17b5cfc11559edec8b3915f783c5e
   languageName: node
   linkType: hard
 
