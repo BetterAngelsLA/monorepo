@@ -80,6 +80,7 @@ export default {
       bundler: 'metro',
     },
     plugins: [
+      'newrelic-react-native-agent',
       '@config-plugins/react-native-blob-util',
       '@config-plugins/react-native-pdf',
       'expo-apple-authentication',
