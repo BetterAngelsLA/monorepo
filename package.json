@@ -69,7 +69,7 @@
     "react-native-gesture-handler": "~2.24.0",
     "react-native-keyboard-controller": "^1.13.0",
     "react-native-maps": "1.20.1",
-    "react-native-modal": "^13.0.1",
+    "react-native-modal": "^14.0.0-rc.1",
     "react-native-open-maps": "^0.4.3",
     "react-native-paper": "^5.12.5",
     "react-native-pdf": "^6.7.7",
