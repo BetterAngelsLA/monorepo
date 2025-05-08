@@ -47,6 +47,7 @@ export function ClientNavMenu(props: TProps) {
         <>
           {clientProfileId && (
             <ClientNavMenuBtn
+              disabled={isDeleting}
               text="Delete Profile"
               accessibilityHint="delete client profile"
               color={Colors.ERROR}

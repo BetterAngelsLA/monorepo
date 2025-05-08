@@ -7,15 +7,21 @@ type TProps = {
   text?: string;
   icon?: ReactNode;
   color?: Colors;
+  disabled?: boolean;
   accessibilityHint?: string;
   onClick: () => void;
 };
 
 export function ClientNavMenuBtn(props: TProps) {
-  const { text, icon, color, onClick, accessibilityHint } = props;
+  const { text, icon, color, onClick, accessibilityHint, disabled } = props;
+
+  if (!text && !icon) {
+    return null;
+  }
 
   return (
     <Pressable
+      disabled={disabled}
       onPress={onClick}
       accessibilityRole="button"
       accessibilityHint={accessibilityHint}
