@@ -28,7 +28,9 @@ export default function Team(props: ITeamProps) {
   const { showSnackbar } = useSnackbar();
 
   const updateNoteFunction = async (value: string) => {
-    if (!noteId || !value) return;
+    if (!noteId) {
+      return;
+    }
     setLocalTeam(value);
     const enumValue = valueAsSelahTeamEnum[value] as SelahTeamEnum;
     const selectedTeam = enumValue !== undefined ? enumValue : null;
