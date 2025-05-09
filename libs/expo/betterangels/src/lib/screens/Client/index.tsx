@@ -85,6 +85,7 @@ export default function Client({
 }) {
   const { data, loading, error } = useClientProfileQuery({ variables: { id } });
   const [tab, setTab] = useState('Profile');
+  const [headerVisible, setHeaderVisible] = useState(true);
   const clientRedesignFeatureOn = useFeatureFlagActive(
     FeatureFlags.PROFILE_REDESIGN_FF
   );
@@ -105,6 +106,10 @@ export default function Client({
       setTab(newTab);
     }
   }, [newTab]);
+
+  useEffect(() => {
+    setHeaderVisible(tab !== 'Cluster');
+  }, [tab]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -153,10 +158,12 @@ export default function Client({
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      <ClientHeader
-        onCaseManagerPress={handleScrollToRelevantContacts}
-        client={data?.clientProfile}
-      />
+      {headerVisible && (
+        <ClientHeader
+          onCaseManagerPress={handleScrollToRelevantContacts}
+          client={data?.clientProfile}
+        />
+      )}
       <ClientTabs tab={tab} setTab={setTab} />
       {getTabComponent(
         tab,
