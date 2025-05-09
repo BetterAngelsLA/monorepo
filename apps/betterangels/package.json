@@ -73,7 +73,8 @@
     "expo-application": "*",
     "@react-navigation/native-stack": "*",
     "expo-updates": "*",
-    "newrelic-react-native-agent": "*"
+    "newrelic-react-native-agent": "*",
+    "supercluster": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches",

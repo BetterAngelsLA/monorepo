@@ -1,12 +1,49 @@
-import { LocationPinIcon } from '@monorepo/expo/shared/icons';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
-import { MapView, Marker, PROVIDER_GOOGLE } from '../../maps';
-import { LA_COUNTY_CENTER } from '../../services';
-import { laLocations } from './locations';
+import { Region } from 'react-native-maps';
+import Supercluster from 'supercluster';
+import { MapView, Marker, PROVIDER_GOOGLE, TMapView } from '../../maps';
+import { ClusterMarker } from './ClusterMarker';
+import { defaultRegion } from './contants';
+import { TMapFeature } from './types';
+import { calcBbox } from './utils/calcBbox';
+import { getGeoPoints } from './utils/getGeoPoints';
 
-type TProps = {};
+const points = getGeoPoints();
 
-export function BaMap(props?: TProps) {
+export function BaMap() {
+  const mapRef = useRef<TMapView>(null);
+  const [region, setRegion] = useState<Region | null>(null);
+  const [clusters, setClusters] = useState<TMapFeature[]>([]);
+
+  const superclusterRef = useRef(
+    new Supercluster({
+      radius: 40,
+      maxZoom: 20,
+    })
+  );
+
+  // 2. Load points into supercluster
+  useEffect(() => {
+    superclusterRef.current.load(points);
+  }, []);
+
+  useEffect(() => {
+    if (!region) {
+      return;
+    }
+
+    const bbox = calcBbox(region);
+    const zoom = Math.round(Math.log(360 / region.longitudeDelta) / Math.LN2);
+
+    const newClusters = superclusterRef.current.getClusters(
+      bbox,
+      zoom
+    ) as TMapFeature[];
+
+    setClusters(newClusters);
+  }, [region]);
+
   return (
     <MapView
       provider={PROVIDER_GOOGLE}
@@ -15,26 +52,59 @@ export function BaMap(props?: TProps) {
       zoomControlEnabled
       mapType="standard"
       style={styles.map}
-      initialRegion={{
-        longitudeDelta: 0.1,
-        latitudeDelta: 0.1,
-        latitude: LA_COUNTY_CENTER.lat,
-        longitude: LA_COUNTY_CENTER.lng,
-      }}
+      initialRegion={defaultRegion}
+      onRegionChangeComplete={setRegion}
     >
-      {laLocations.map((marker, idx) => (
-        <Marker key={idx} coordinate={marker} zIndex={99}>
-          <LocationPinIcon size="lg" />
-        </Marker>
-      ))}
-      {/* <Marker
-        coordinate={{
-          latitude: LA_COUNTY_CENTER.lat,
-          longitude: LA_COUNTY_CENTER?.lng,
-        }}
-      >
-        <LocationPinIcon size="2xl" />
-      </Marker> */}
+      {clusters.map((cluster, idx) => {
+        const [longitude, latitude] = cluster.geometry.coordinates;
+        const isCluster = !!(cluster.properties as any).cluster;
+
+        if (!isCluster) {
+          return (
+            <Marker
+              key={`marker-${cluster.id}-${idx}`}
+              coordinate={{ latitude, longitude }}
+              title={'location'}
+              onPress={() => {
+                const expansionZoom =
+                  superclusterRef.current.getClusterExpansionZoom(
+                    cluster.id as number
+                  );
+                // Implement zoom behavior here if desired
+              }}
+            />
+          );
+        }
+
+        if (isCluster) {
+          const count = (cluster.properties as any).point_count as number;
+
+          return (
+            <ClusterMarker
+              key={`cluster-${cluster.id}-${idx}`}
+              coordinate={{ latitude, longitude }}
+              count={count}
+              onPress={() => {
+                const expansionZoom =
+                  superclusterRef.current.getClusterExpansionZoom(
+                    cluster.id as number
+                  );
+                // Optional: animate to that zoom level
+              }}
+            />
+          );
+        }
+
+        return;
+
+        // return (
+        //   <Marker
+        //     key={`point-${cluster.properties.pointId}`}
+        //     coordinate={{ latitude, longitude }}
+        //     title={cluster.properties.name}
+        //   />
+        // );
+      })}
     </MapView>
   );
 }
