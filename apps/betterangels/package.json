@@ -72,7 +72,8 @@
     "expo-constants": "*",
     "expo-application": "*",
     "@react-navigation/native-stack": "*",
-    "expo-updates": "*"
+    "expo-updates": "*",
+    "supercluster": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",
