@@ -11,6 +11,7 @@ const TABS = [
   'Profile',
   'Docs',
   'Interactions',
+  'Cluster',
   // 'Tasks',
   // 'Services',
   // 'Schedule',
