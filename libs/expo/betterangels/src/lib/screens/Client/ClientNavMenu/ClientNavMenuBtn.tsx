@@ -29,8 +29,7 @@ export function ClientNavMenuBtn(props: TProps) {
         styles.container,
         {
           color: color,
-          // backgroundColor: pressed ? Colors.GRAY_PRESSED : undefined,
-          backgroundColor: disabled ? Colors.BRAND_ANGEL_BLUE : undefined,
+          backgroundColor: pressed ? Colors.GRAY_PRESSED : undefined,
         },
       ]}
     >
