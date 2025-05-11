@@ -1,21 +1,17 @@
-import { laLocations } from '../locations';
-import { TGeoFeature } from '../types';
+import { TCoordinates, TGeoPoint } from '../types';
 
-export function getGeoPoints(): TGeoFeature[] {
-  const tsStart = Date.now();
-
-  const points: TGeoFeature[] = laLocations.map((loc, id) => ({
+export function getGeoPoints<T extends TCoordinates>(
+  locations: T[]
+): TGeoPoint<T>[] {
+  return locations.map((loc, id) => ({
     type: 'Feature',
-    properties: { pointId: id, name: loc.name },
+    properties: {
+      pointId: id,
+      ...loc,
+    },
     geometry: {
       type: 'Point',
       coordinates: [loc.longitude, loc.latitude],
     },
   }));
-  console.log(
-    '################################### GET_POINTS: ',
-    Date.now() - tsStart
-  );
-
-  return points;
 }

@@ -1,5 +1,15 @@
-export const laLocations = [
-  { name: 'Downtown Los Angeles', latitude: 34.044727, longitude: -118.249283 },
+export type TLaLocation = {
+  name: string;
+  latitude: number;
+  longitude: number;
+};
+
+export const laLocations: TLaLocation[] = [
+  {
+    name: 'Downtown Los Angeles',
+    latitude: 34.044727,
+    longitude: -118.249283,
+  },
   { name: 'Hollywood', latitude: 34.098907, longitude: -118.327759 },
   { name: 'Santa Monica Pier', latitude: 34.009242, longitude: -118.497604 },
   { name: 'Venice Beach', latitude: 33.985047, longitude: -118.469483 },

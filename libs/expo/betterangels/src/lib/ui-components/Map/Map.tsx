@@ -2,17 +2,24 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import Supercluster from 'supercluster';
-import { MapView, Marker, PROVIDER_GOOGLE, TMapView } from '../../maps';
+import { MapView, Marker, PROVIDER_GOOGLE } from '../../maps';
 import { ClusterMarker } from './ClusterMarker';
 import { defaultRegion } from './contants';
-import { TMapFeature } from './types';
+import { laLocations } from './locations';
+import { TGeoPoint, TMapFeature } from './types';
 import { calcBbox } from './utils/calcBbox';
 import { getGeoPoints } from './utils/getGeoPoints';
 
-const points = getGeoPoints();
+const points = getGeoPoints(laLocations);
 
-export function BaMap() {
-  const mapRef = useRef<TMapView>(null);
+type TBaMapProps = {
+  onSelectedChange?: (items: TGeoPoint[]) => void;
+};
+
+export function BaMap(props: TBaMapProps) {
+  const { onSelectedChange } = props;
+
+  // const mapRef = useRef<TMapView>(null);
   const [region, setRegion] = useState<Region | null>(null);
   const [clusters, setClusters] = useState<TMapFeature[]>([]);
 
@@ -70,6 +77,11 @@ export function BaMap() {
                   superclusterRef.current.getClusterExpansionZoom(
                     cluster.id as number
                   );
+
+                console.log();
+                console.log('| ------------- NOT cluster  ------------- |');
+                console.log(cluster);
+                console.log();
                 // Implement zoom behavior here if desired
               }}
             />
@@ -89,13 +101,32 @@ export function BaMap() {
                   superclusterRef.current.getClusterExpansionZoom(
                     cluster.id as number
                   );
+
+                const leaves = superclusterRef.current.getLeaves(
+                  cluster.id as number
+                ) as TGeoPoint[];
+
+                onSelectedChange?.(leaves);
+
+                console.log();
+                console.log(
+                  '| -------------  cluster.properties  ------------- |'
+                );
+                console.log(cluster.properties);
+                console.log();
+
+                console.log();
+                console.log('| -------------  cluster  ------------- |');
+                console.log(cluster);
+                console.log();
+
                 // Optional: animate to that zoom level
               }}
             />
           );
         }
 
-        return;
+        return null;
 
         // return (
         //   <Marker
