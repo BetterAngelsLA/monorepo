@@ -30,12 +30,16 @@ export function ClientNavMenu(props: TProps) {
         width: 0,
         height: 0,
       }}
-      displayInsets={{
-        top: 0,
-        bottom: 0,
-        left: 0,
-        right: 12,
-      }}
+      displayInsets={
+        Platform.OS === 'android'
+          ? undefined
+          : {
+              top: 0,
+              bottom: 0,
+              left: 0,
+              right: 12,
+            }
+      }
       tooltipStyle={[
         styles.contentWrapper,
         {
