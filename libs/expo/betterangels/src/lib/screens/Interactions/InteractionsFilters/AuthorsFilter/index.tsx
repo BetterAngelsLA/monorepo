@@ -68,6 +68,11 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
     setIsModalVisible(false);
   };
 
+  const clearBoxes = () => {
+    setSelected([]);
+    setIsModalVisible(true);
+  }
+
   const handleCloseModal = () => {
     setSelected(filters.authors);
     setIsModalVisible(false);
@@ -159,6 +164,14 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
               </View>
             )}
           </ScrollView>
+
+          <Button
+            onPress={clearBoxes}
+            size="full"
+            title="Clear"
+            variant="primary"
+            accessibilityHint="apply selected created by filter"
+          />
 
           <Button
             onPress={handleOnDone}
