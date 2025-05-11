@@ -1,10 +1,9 @@
-import { DeleteIcon, ThreeDotIcon } from '@monorepo/expo/shared/icons';
+import { ThreeDotIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { useState } from 'react';
 import { Platform, Pressable, StyleSheet } from 'react-native';
 import Tooltip from 'react-native-walkthrough-tooltip';
-import { useDeleteClientProfile } from '../ClientProfile/hooks/useDeleteClientProfile';
-import { ClientNavMenuBtn } from './ClientNavMenuBtn';
+import { ClientNavMenuContent } from './ClientNavMenuContent';
 
 type TProps = {
   clientProfileId?: string;
@@ -12,35 +11,31 @@ type TProps = {
 export function ClientNavMenu(props: TProps) {
   const { clientProfileId } = props;
 
-  const [visible, setVisible] = useState(false);
+  const [menuVisible, setMenuVisible] = useState(false);
 
-  const { deleteProfile, loading: isDeleting } =
-    useDeleteClientProfile(clientProfileId);
-
-  const onDeleteClientProfile = async () => {
-    if (!clientProfileId || isDeleting) {
-      return;
-    }
-
-    await deleteProfile(clientProfileId);
-  };
+  function toggleMenu() {
+    setMenuVisible((prev) => {
+      return !prev;
+    });
+  }
 
   return (
     <Tooltip
-      isVisible={visible}
+      isVisible={menuVisible}
       backgroundColor="transparent"
+      placement="bottom"
+      disableShadow={true}
+      onClose={() => setMenuVisible(false)}
       arrowSize={{
         width: 0,
         height: 0,
       }}
-      placement="bottom"
       displayInsets={{
         top: 0,
         bottom: 0,
         left: 0,
         right: 12,
       }}
-      disableShadow={true}
       tooltipStyle={[
         styles.contentWrapper,
         {
@@ -49,28 +44,16 @@ export function ClientNavMenu(props: TProps) {
       ]}
       contentStyle={styles.content}
       content={
-        <>
-          {clientProfileId && (
-            <ClientNavMenuBtn
-              disabled={isDeleting}
-              text="Delete Profile"
-              accessibilityHint="delete client profile"
-              color={Colors.ERROR}
-              onClick={async () => {
-                setVisible(false);
-                onDeleteClientProfile();
-              }}
-              icon={<DeleteIcon color={Colors.ERROR} size="sm" />}
-            />
-          )}
-        </>
+        <ClientNavMenuContent
+          clientProfileId={clientProfileId}
+          onItemClick={() => setMenuVisible(false)}
+        />
       }
-      onClose={() => setVisible(false)}
     >
       <Pressable
         accessibilityRole="button"
         accessibilityHint="toggle client profile menu"
-        onPress={() => setVisible(true)}
+        onPress={toggleMenu}
       >
         {({ pressed }) => (
           <ThreeDotIcon

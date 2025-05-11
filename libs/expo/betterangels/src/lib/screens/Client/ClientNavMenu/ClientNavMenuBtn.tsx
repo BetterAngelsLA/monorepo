@@ -9,11 +9,11 @@ type TProps = {
   color?: Colors;
   disabled?: boolean;
   accessibilityHint?: string;
-  onClick: () => void;
+  onPress?: () => void;
 };
 
 export function ClientNavMenuBtn(props: TProps) {
-  const { text, icon, color, onClick, accessibilityHint, disabled } = props;
+  const { text, icon, color, onPress, accessibilityHint, disabled } = props;
 
   if (!text && !icon) {
     return null;
@@ -22,14 +22,15 @@ export function ClientNavMenuBtn(props: TProps) {
   return (
     <Pressable
       disabled={disabled}
-      onPress={onClick}
+      onPress={onPress}
       accessibilityRole="button"
       accessibilityHint={accessibilityHint}
       style={({ pressed }) => [
         styles.container,
         {
           color: color,
-          backgroundColor: pressed ? Colors.GRAY_PRESSED : undefined,
+          // backgroundColor: pressed ? Colors.GRAY_PRESSED : undefined,
+          backgroundColor: disabled ? Colors.BRAND_ANGEL_BLUE : undefined,
         },
       ]}
     >
