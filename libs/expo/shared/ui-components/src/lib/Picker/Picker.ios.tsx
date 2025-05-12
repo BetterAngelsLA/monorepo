@@ -20,6 +20,8 @@ import { Input } from '../Input';
 import TextBold from '../TextBold';
 import { IPickerProps } from './Picker';
 
+const NONE_VALUE = '__none__';
+
 export default function Picker(props: IPickerProps) {
   const {
     onChange,
@@ -44,19 +46,13 @@ export default function Picker(props: IPickerProps) {
     Keyboard.dismiss();
     setIsModalVisible(false);
 
-    if (localValue) {
-      onChange(localValue);
-
-      return;
-    }
-
-    if (allowSelectNone) {
+    if (localValue === NONE_VALUE) {
       onChange(null);
 
       return;
     }
 
-    onChange(items[0].value);
+    onChange(localValue || items[0].value);
   }
 
   const getDisplayValue = useCallback(
@@ -136,7 +132,9 @@ export default function Picker(props: IPickerProps) {
             {!!allowSelectNone && (
               <RNPicker.Item
                 label={selectNoneLabel || placeholder}
-                value={null}
+                // using null value will return a string with value of `null`,
+                // so using NONE_VALUE to be consistent with Android
+                value={NONE_VALUE}
                 enabled={true}
               />
             )}

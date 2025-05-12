@@ -5,7 +5,7 @@ import {
   useUpdateNoteMutation,
 } from '@monorepo/expo/betterangels';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { SingleSelect } from '@monorepo/expo/shared/ui-components';
+import { Picker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { View } from 'react-native';
 
@@ -23,8 +23,8 @@ export default function Team(props: ITeamProps) {
   const [updateNote] = useUpdateNoteMutation();
   const { showSnackbar } = useSnackbar();
 
-  const updateNoteFunction = async (selectedTeam: SelahTeamEnum) => {
-    if (!noteId || !selectedTeam) {
+  const updateNoteFunction = async (selectedTeam: SelahTeamEnum | null) => {
+    if (!noteId) {
       return;
     }
 
@@ -40,8 +40,6 @@ export default function Team(props: ITeamProps) {
         },
       });
     } catch (err) {
-      setLocalTeam(team || undefined);
-
       showSnackbar({
         message: 'Failed to update interaction.',
         type: 'error',
@@ -53,15 +51,14 @@ export default function Team(props: ITeamProps) {
 
   return (
     <View style={{ marginBottom: Spacings.xs }}>
-      <SingleSelect
-        placeholder="Team"
-        selectedValue={localTeam || undefined}
+      <Picker
+        allowSelectNone
+        placeholder="Select Team"
+        selectedValue={localTeam}
         items={Object.entries(enumDisplaySelahTeam).map(
           ([value, displayValue]) => ({ value, displayValue })
         )}
-        onChange={(value) => {
-          updateNoteFunction(value as SelahTeamEnum);
-        }}
+        onChange={(t) => updateNoteFunction(t as SelahTeamEnum | null)}
       />
     </View>
   );
