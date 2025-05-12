@@ -48,6 +48,7 @@ export const ApiConfigProvider = ({
 
     try {
       await CookieManager.clearAll();
+      await CookieManager.flush();
       await Promise.all([AsyncStorage.setItem('currentEnvironment', env)]);
       setEnvironment(env);
     } catch (error) {
