@@ -255,7 +255,7 @@ export default function PrivateLayout() {
         })}
       />
       <Stack.Screen
-        name="provided-services/modal-screen"
+        name="modal-screen"
         options={{
           presentation: 'modal',
           headerShown: false,

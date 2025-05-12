@@ -25,7 +25,7 @@ export default function NoteScreen() {
           title="Open Services Modal (POC)"
           onPress={() =>
             router.push(
-              `/provided-services/modal-screen?noteId=${id}&type=PROVIDED`
+              `/modal-screen?noteId=${id}&type=PROVIDED`
             )
           }
           variant="primary"
