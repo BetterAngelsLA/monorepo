@@ -11,19 +11,17 @@ const logLevelMap = {
   DEBUG: NewRelic.LogLevel.DEBUG,
 };
 
-const platformKeys = {
-  ios: 'EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS',
-  android: 'EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID',
-};
-
 export default function useNewRelic() {
-  const { version, runtimeVersion, otaUpdateId } = useAppVersion();
+  const { version, runtimeVersion, otaUpdateId, otaUpdateIdShort } =
+    useAppVersion();
 
   useEffect(() => {
     if (!version || !runtimeVersion) return;
 
     const appToken =
-      process.env[platformKeys[Platform.OS as keyof typeof platformKeys]];
+      Platform.OS === 'ios'
+        ? process.env['EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS']
+        : process.env['EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID'];
 
     if (!appToken) {
       console.warn('New Relic not initialized: missing mobile license key');
@@ -35,7 +33,9 @@ export default function useNewRelic() {
     ] as keyof typeof logLevelMap;
     const logLevel = logLevelMap[envLogLevel] ?? NewRelic.LogLevel.DEBUG;
 
-    const combinedVersion = otaUpdateId ? `${version}-${otaUpdateId}` : version;
+    const combinedVersion = otaUpdateIdShort
+      ? `${version}-${otaUpdateIdShort}`
+      : version;
 
     NewRelic.startAgent(appToken, {
       crashReportingEnabled: true,
@@ -55,5 +55,5 @@ export default function useNewRelic() {
     });
 
     NewRelic.setJSAppVersion(combinedVersion);
-  }, [version, runtimeVersion, otaUpdateId]);
+  }, [version, runtimeVersion, otaUpdateId, otaUpdateIdShort]);
 }
