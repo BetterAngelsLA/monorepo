@@ -34,7 +34,7 @@ export default function useNewRelic() {
     const logLevel = logLevelMap[envLogLevel] ?? NewRelic.LogLevel.DEBUG;
 
     const combinedVersion = otaUpdateIdShort
-      ? `${version}-${otaUpdateIdShort}`
+      ? `${version}.${otaUpdateIdShort}`
       : version;
 
     NewRelic.startAgent(appToken, {
