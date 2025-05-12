@@ -112,7 +112,9 @@ export default function Client({
   }, [newTab]);
 
   useEffect(() => {
-    setHeaderVisible(tab !== 'Cluster' && tab !== 'ClusterB');
+    setHeaderVisible(
+      tab !== 'ClusterA' && tab !== 'ClusterG' && tab !== 'ClusterAlt'
+    );
   }, [tab]);
 
   useLayoutEffect(() => {
