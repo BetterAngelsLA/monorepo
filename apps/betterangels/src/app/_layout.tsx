@@ -8,7 +8,6 @@ import {
   FeatureFlags,
   KeyboardToolbarProvider,
   SnackbarProvider,
-  useAppVersion,
   useNewRelic,
   UserProvider,
 } from '@monorepo/expo/betterangels';
@@ -39,9 +38,7 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 
 export default function RootLayout() {
   const router = useRouter();
-  const { version, runtimeVersionShort } = useAppVersion();
-
-  useNewRelic(version, runtimeVersionShort);
+  useNewRelic();
 
   return (
     <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>

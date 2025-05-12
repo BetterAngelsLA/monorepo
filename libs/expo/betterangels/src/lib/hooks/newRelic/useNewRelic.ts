@@ -2,6 +2,7 @@ import * as Updates from 'expo-updates';
 import NewRelic from 'newrelic-react-native-agent';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
+import useAppVersion from '../expoUpdates/useAppVersion';
 
 const logLevelMap = {
   ERROR: NewRelic.LogLevel.ERROR,
@@ -10,12 +11,19 @@ const logLevelMap = {
   DEBUG: NewRelic.LogLevel.DEBUG,
 };
 
-export default function useNewRelic(version?: string, runtimeVersion?: string) {
+const platformKeys = {
+  ios: 'EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_IOS',
+  android: 'EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_ANDROID',
+};
+
+export default function useNewRelic() {
+  const { version, runtimeVersion, otaUpdateId } = useAppVersion();
+
   useEffect(() => {
     if (!version || !runtimeVersion) return;
 
-    const platformKey = `EXPO_PUBLIC_NEW_RELIC_MOBILE_LICENSE_KEY_${Platform.OS.toUpperCase()}`;
-    const appToken = process.env[platformKey];
+    const appToken =
+      process.env[platformKeys[Platform.OS as keyof typeof platformKeys]];
 
     if (!appToken) {
       console.warn('New Relic not initialized: missing mobile license key');
@@ -27,9 +35,7 @@ export default function useNewRelic(version?: string, runtimeVersion?: string) {
     ] as keyof typeof logLevelMap;
     const logLevel = logLevelMap[envLogLevel] ?? NewRelic.LogLevel.DEBUG;
 
-    const combinedVersion = Updates.updateId
-      ? `${version}-${Updates.updateId}`
-      : version;
+    const combinedVersion = otaUpdateId ? `${version}-${otaUpdateId}` : version;
 
     NewRelic.startAgent(appToken, {
       crashReportingEnabled: true,
@@ -43,11 +49,11 @@ export default function useNewRelic(version?: string, runtimeVersion?: string) {
         version,
         runtimeVersion,
         platform: Platform.OS,
-        ...(Updates.updateId && { otaUpdateId: Updates.updateId }),
+        ...(otaUpdateId && { otaUpdateId }),
         ...(Updates.channel && { channel: Updates.channel }),
       },
     });
 
     NewRelic.setJSAppVersion(combinedVersion);
-  }, [version, runtimeVersion]);
+  }, [version, runtimeVersion, otaUpdateId]);
 }
