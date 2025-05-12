@@ -11,7 +11,7 @@ import { AppDataCard } from './AppDataCard';
 import { UpdatesDebugInfo } from './UpdatesDebugInfo';
 
 export function AboutApp() {
-  const { version, runtimeVersionShort } = useAppVersion();
+  const { version, runtimeVersionShort, otaUpdateIdShort } = useAppVersion();
 
   return (
     <MainScrollContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
@@ -21,6 +21,10 @@ export function AboutApp() {
         <Divider style={{ marginVertical: Spacings.xxs }} />
 
         <AppDataCard label="Runtime Version" value={runtimeVersionShort} />
+
+        <Divider style={{ marginVertical: Spacings.xxs }} />
+
+        <AppDataCard label="OTA Update" value={otaUpdateIdShort} />
       </View>
 
       <FeatureFlagControlled flag={FeatureFlags.SHOW_DEBUG_INFO_FF}>
