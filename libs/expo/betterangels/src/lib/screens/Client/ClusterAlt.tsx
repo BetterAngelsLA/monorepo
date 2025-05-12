@@ -15,10 +15,11 @@ export default function ClusterAlt() {
         <TextRegular>ClusterB</TextRegular>
         <MapView
           ref={mapRef}
+          // provider="google"
           initialRegion={defaultRegion}
           style={styles.map}
           clusterColor="purple"
-          radius={60}
+          radius={40}
           maxZoom={20}
         >
           {laLocations.map((loc, idx) => {

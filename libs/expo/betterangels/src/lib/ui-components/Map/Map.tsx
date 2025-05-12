@@ -35,7 +35,7 @@ export function BaMap(props: TBaMapProps) {
 
   const superclusterRef = useRef(
     new Supercluster<TPointProperties<TLaLocation>>({
-      radius: 60,
+      radius: 40,
       maxZoom: 20,
     })
   );
