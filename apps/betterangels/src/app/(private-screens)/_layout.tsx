@@ -254,6 +254,13 @@ export default function PrivateLayout() {
           title: 'About App',
         })}
       />
+      <Stack.Screen
+        name="provided-services/modal-screen"
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

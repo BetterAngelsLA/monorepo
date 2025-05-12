@@ -1,7 +1,10 @@
 import { Note } from '@monorepo/expo/betterangels';
-import { useLocalSearchParams } from 'expo-router';
+import { Button } from '@monorepo/expo/shared/ui-components';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { View } from 'react-native';
 
 export default function NoteScreen() {
+  const router = useRouter();
   const { id, arrivedFrom } = useLocalSearchParams<{
     id: string;
     arrivedFrom?: string;
@@ -11,5 +14,24 @@ export default function NoteScreen() {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  return <Note id={id} arrivedFrom={arrivedFrom} />;
+  return (
+    <View style={{ flex: 1 }}>
+      {/* Note display */}
+      <Note id={id} arrivedFrom={arrivedFrom} />
+
+      {/* Proof-of-Concept Modal Trigger */}
+      <View style={{ padding: 16 }}>
+        <Button
+          title="Open Services Modal (POC)"
+          onPress={() =>
+            router.push(
+              `/provided-services/modal-screen?noteId=${id}&type=PROVIDED`
+            )
+          }
+          variant="primary"
+          accessibilityHint="Opens the new modal screen"
+        />
+      </View>
+    </View>
+  );
 }
