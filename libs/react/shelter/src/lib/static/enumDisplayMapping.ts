@@ -19,6 +19,7 @@ export const enumDisplayDemographics: { [key in DemographicChoices]: string } =
   {
     [DemographicChoices.All]: 'All',
     [DemographicChoices.Families]: 'Families',
+    [DemographicChoices.LgbtqPlus]: 'LGBTQ+',
     [DemographicChoices.Other]: 'Others',
     [DemographicChoices.Seniors]: 'Seniors',
     [DemographicChoices.SingleDads]: 'Single Dads',
@@ -68,7 +69,6 @@ export const enumDisplaySpecialSituationRestrictionChoices: {
   [SpecialSituationRestrictionChoices.HivAids]: 'HIV/AIDS',
   [SpecialSituationRestrictionChoices.HumanTrafficking]: 'Human Trafficking',
   [SpecialSituationRestrictionChoices.JusticeSystems]: 'Justice Systems',
-  [SpecialSituationRestrictionChoices.LgbtqPlus]: 'LGBTQ+',
   [SpecialSituationRestrictionChoices.None]: 'None',
   [SpecialSituationRestrictionChoices.Veterans]: 'Veterans',
 };
