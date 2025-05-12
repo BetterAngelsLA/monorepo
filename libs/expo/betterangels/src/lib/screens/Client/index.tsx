@@ -42,7 +42,7 @@ const getTabComponent = (
   key: string,
   client: ClientProfileQuery | undefined,
   clientRedesignFeatureOn: boolean,
-  profileRef?: RefObject<ProfileRef>,
+  profileRef?: RefObject<ProfileRef | null>,
   openCard?: ClientProfileSectionEnum
 ): ReactElement | null => {
   const components: {

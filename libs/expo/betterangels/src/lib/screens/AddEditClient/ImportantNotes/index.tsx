@@ -11,7 +11,7 @@ import {
 interface IImportantNotesProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
 }
 
 export default function ImportantNotes(props: IImportantNotesProps) {

@@ -57,7 +57,8 @@
     "react-native-pdf": "*",
     "@react-native-picker/picker": "*",
     "react-native-safe-area-context": "*",
-    "react-native-select-dropdown": "*"
+    "react-native-select-dropdown": "*",
+    "react-native-keyboard-controller": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",
