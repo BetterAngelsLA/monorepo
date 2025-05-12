@@ -126,10 +126,10 @@ export function BaMap(props: TBaMapProps) {
               coordinate={{ latitude, longitude }}
               count={count}
               onPress={() => {
-                const expansionZoom =
-                  superclusterRef.current.getClusterExpansionZoom(
-                    cluster.id as number
-                  );
+                // const expansionZoom =
+                //   superclusterRef.current.getClusterExpansionZoom(
+                //     cluster.id as number
+                //   );
 
                 const leaves = superclusterRef.current.getLeaves(
                   cluster.id as number,

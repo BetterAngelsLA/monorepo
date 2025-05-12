@@ -9,7 +9,7 @@ type TSelectedState = {
   zoomLevel?: number;
 };
 
-export default function ClusterG(google?: boolean) {
+export default function ClusterG() {
   const [selectedState, setSelectedState] = useState<TSelectedState | null>(
     null
   );
