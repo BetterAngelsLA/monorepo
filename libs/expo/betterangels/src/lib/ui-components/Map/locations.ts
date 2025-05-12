@@ -25,7 +25,6 @@ export const laLocations: TLaLocation[] = [
     latitude: 34.138117,
     longitude: -118.353378,
   },
-  { name: 'Staples Center', latitude: 34.043017, longitude: -118.267254 },
   {
     name: 'Los Angeles County Museum of Art (LACMA)',
     latitude: 34.063932,

@@ -2,29 +2,34 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import Supercluster from 'supercluster';
-import { MapView, Marker, PROVIDER_GOOGLE } from '../../maps';
+import { MapView, Marker, PROVIDER_GOOGLE, TMapView } from '../../maps';
 import { ClusterMarker } from './ClusterMarker';
 import { defaultRegion } from './contants';
-import { laLocations } from './locations';
-import { TGeoPoint, TMapFeature } from './types';
+import { TLaLocation, laLocations } from './locations';
+import { TGeoPoint, TMapFeature, TPointProperties } from './types';
 import { calcBbox } from './utils/calcBbox';
 import { getGeoPoints } from './utils/getGeoPoints';
+import { zoomToCluster } from './utils/zoomToCluster';
 
 const points = getGeoPoints(laLocations);
 
 type TBaMapProps = {
-  onSelectedChange?: (items: TGeoPoint[]) => void;
+  onRegionChangeComplete?: (region: Region) => void;
+  onSelectedChange?: (
+    items: TMapFeature<TLaLocation>[],
+    zoomLevel: number
+  ) => void;
 };
 
 export function BaMap(props: TBaMapProps) {
-  const { onSelectedChange } = props;
+  const { onRegionChangeComplete, onSelectedChange } = props;
 
-  // const mapRef = useRef<TMapView>(null);
+  const mapRef = useRef<TMapView>(null);
   const [region, setRegion] = useState<Region | null>(null);
   const [clusters, setClusters] = useState<TMapFeature[]>([]);
 
   const superclusterRef = useRef(
-    new Supercluster({
+    new Supercluster<TPointProperties<TLaLocation>>({
       radius: 40,
       maxZoom: 20,
     })
@@ -43,6 +48,19 @@ export function BaMap(props: TBaMapProps) {
     const bbox = calcBbox(region);
     const zoom = Math.round(Math.log(360 / region.longitudeDelta) / Math.LN2);
 
+    if (zoom > 17) {
+      const rawPoints = points.filter((point) => {
+        const [lng, lat] = point.geometry.coordinates;
+        return (
+          lng >= bbox[0] && lat >= bbox[1] && lng <= bbox[2] && lat <= bbox[3]
+        );
+      });
+
+      setClusters(rawPoints as TGeoPoint[]);
+
+      return;
+    }
+
     const newClusters = superclusterRef.current.getClusters(
       bbox,
       zoom
@@ -53,6 +71,7 @@ export function BaMap(props: TBaMapProps) {
 
   return (
     <MapView
+      ref={mapRef}
       provider={PROVIDER_GOOGLE}
       zoomEnabled
       scrollEnabled
@@ -60,7 +79,10 @@ export function BaMap(props: TBaMapProps) {
       mapType="standard"
       style={styles.map}
       initialRegion={defaultRegion}
-      onRegionChangeComplete={setRegion}
+      onRegionChangeComplete={(region) => {
+        setRegion(region);
+        onRegionChangeComplete?.(region);
+      }}
     >
       {clusters.map((cluster, idx) => {
         const [longitude, latitude] = cluster.geometry.coordinates;
@@ -69,20 +91,21 @@ export function BaMap(props: TBaMapProps) {
         if (!isCluster) {
           return (
             <Marker
-              key={`marker-${cluster.id}-${idx}`}
+              key={`marker-${cluster.properties.pointId}`}
               coordinate={{ latitude, longitude }}
-              title={'location'}
               onPress={() => {
-                const expansionZoom =
-                  superclusterRef.current.getClusterExpansionZoom(
-                    cluster.id as number
-                  );
+                if (!region) {
+                  return;
+                }
 
-                console.log();
-                console.log('| ------------- NOT cluster  ------------- |');
-                console.log(cluster);
-                console.log();
-                // Implement zoom behavior here if desired
+                const zoomLevel = Math.round(
+                  Math.log2(360 / region.longitudeDelta)
+                );
+
+                onSelectedChange?.(
+                  [cluster as TGeoPoint<TLaLocation>],
+                  zoomLevel
+                );
               }}
             />
           );
@@ -103,38 +126,31 @@ export function BaMap(props: TBaMapProps) {
                   );
 
                 const leaves = superclusterRef.current.getLeaves(
-                  cluster.id as number
-                ) as TGeoPoint[];
-
-                onSelectedChange?.(leaves);
-
-                console.log();
-                console.log(
-                  '| -------------  cluster.properties  ------------- |'
+                  cluster.id as number,
+                  100
                 );
-                console.log(cluster.properties);
-                console.log();
 
-                console.log();
-                console.log('| -------------  cluster  ------------- |');
-                console.log(cluster);
-                console.log();
+                if (!region) {
+                  return;
+                }
 
-                // Optional: animate to that zoom level
+                const zoomLevel = Math.round(
+                  Math.log2(360 / region.longitudeDelta)
+                );
+
+                onSelectedChange?.(leaves, zoomLevel);
+
+                zoomToCluster(
+                  mapRef,
+                  superclusterRef.current,
+                  cluster.id as number
+                );
               }}
             />
           );
         }
 
         return null;
-
-        // return (
-        //   <Marker
-        //     key={`point-${cluster.properties.pointId}`}
-        //     coordinate={{ latitude, longitude }}
-        //     title={cluster.properties.name}
-        //   />
-        // );
       })}
     </MapView>
   );
@@ -143,6 +159,6 @@ export function BaMap(props: TBaMapProps) {
 const styles = StyleSheet.create({
   map: {
     width: '100%',
-    height: 450,
+    height: 350,
   },
 });
