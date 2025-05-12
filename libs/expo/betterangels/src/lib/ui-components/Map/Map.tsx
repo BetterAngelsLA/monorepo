@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import Supercluster from 'supercluster';
-import { MapView, Marker, PROVIDER_GOOGLE, TMapView } from '../../maps';
+import { MapView, Marker, TMapView } from '../../maps';
 import { ClusterMarker } from './ClusterMarker';
 import { defaultRegion } from './contants';
 import { TLaLocation, laLocations } from './locations';
@@ -14,6 +14,7 @@ import { zoomToCluster } from './utils/zoomToCluster';
 const points = getGeoPoints(laLocations);
 
 type TBaMapProps = {
+  provider?: 'google';
   onRegionChangeComplete?: (region: Region) => void;
   onSelectedChange?: (
     items: TMapFeature<TLaLocation>[],
@@ -22,7 +23,11 @@ type TBaMapProps = {
 };
 
 export function BaMap(props: TBaMapProps) {
-  const { onRegionChangeComplete, onSelectedChange } = props;
+  const {
+    provider: mapPovider,
+    onRegionChangeComplete,
+    onSelectedChange,
+  } = props;
 
   const mapRef = useRef<TMapView>(null);
   const [region, setRegion] = useState<Region | null>(null);
@@ -38,6 +43,7 @@ export function BaMap(props: TBaMapProps) {
   // 2. Load points into supercluster
   useEffect(() => {
     superclusterRef.current.load(points);
+    setRegion(defaultRegion);
   }, []);
 
   useEffect(() => {
@@ -72,7 +78,7 @@ export function BaMap(props: TBaMapProps) {
   return (
     <MapView
       ref={mapRef}
-      provider={PROVIDER_GOOGLE}
+      provider={mapPovider}
       zoomEnabled
       scrollEnabled
       zoomControlEnabled

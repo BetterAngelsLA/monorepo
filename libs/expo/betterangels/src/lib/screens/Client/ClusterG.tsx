@@ -9,7 +9,7 @@ type TSelectedState = {
   zoomLevel?: number;
 };
 
-export default function Cluster() {
+export default function ClusterG(google?: boolean) {
   const [selectedState, setSelectedState] = useState<TSelectedState | null>(
     null
   );
@@ -28,6 +28,7 @@ export default function Cluster() {
     <ScrollView>
       <View>
         <BaMap
+          provider="google"
           onSelectedChange={onSelectedChange}
           onRegionChangeComplete={(region) => {
             console.log('onRegionChange: ', region);

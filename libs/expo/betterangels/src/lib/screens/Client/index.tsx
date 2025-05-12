@@ -23,7 +23,9 @@ import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
 import ClientProfileView from './ClientProfile_V2';
 import ClientTabs from './ClientTabs';
-import Cluster from './Cluster';
+import ClusterA from './ClusterA';
+import ClusterAlt from './ClusterAlt';
+import ClusterG from './ClusterG';
 import Docs from './Docs';
 import Interactions from './Interactions';
 import Locations from './Locations';
@@ -54,7 +56,9 @@ const getTabComponent = (
     Locations,
     Profile,
     Schedule,
-    Cluster,
+    ClusterG,
+    ClusterA,
+    ClusterAlt,
     Services,
     Tasks,
   };
@@ -108,7 +112,7 @@ export default function Client({
   }, [newTab]);
 
   useEffect(() => {
-    setHeaderVisible(tab !== 'Cluster');
+    setHeaderVisible(tab !== 'Cluster' && tab !== 'ClusterB');
   }, [tab]);
 
   useLayoutEffect(() => {

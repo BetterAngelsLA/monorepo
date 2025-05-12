@@ -74,7 +74,8 @@
     "@react-navigation/native-stack": "*",
     "expo-updates": "*",
     "newrelic-react-native-agent": "*",
-    "supercluster": "*"
+    "supercluster": "*",
+    "react-native-map-clustering": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches",
