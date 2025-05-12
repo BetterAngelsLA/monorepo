@@ -25,8 +25,8 @@ type TAddressAutocomplete<TForm extends FieldValues> = {
   onFocus?: () => void;
   onBlur?: () => void;
   focusScroll?: {
-    scrollViewRef: RefObject<ScrollView>;
-    targetRef?: RefObject<View>;
+    scrollViewRef: RefObject<ScrollView | null>;
+    targetRef?: RefObject<View | null>;
   };
 };
 

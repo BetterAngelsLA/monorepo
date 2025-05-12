@@ -16,16 +16,14 @@ export default function RevertModal({
   title: string;
   body: string;
   onRevert: () => void;
-  button: ReactElement;
+  button: ReactElement<ButtonProps>;
 }) {
   const [visible, setVisible] = useState(false);
 
-  const clonedButton = cloneElement(button as ReactElement<ButtonProps>, {
-    onPress: () => {
+  const clonedButton = cloneElement(button, {
+    onPress: (e) => {
       setVisible(true);
-      if (button.props.onPress) {
-        button.props.onPress();
-      }
+      button.props.onPress?.(e);
     },
   });
 

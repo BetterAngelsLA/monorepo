@@ -14,7 +14,7 @@ import VeteranStatus from './VeteranStatus';
 interface IPersonalInfoProps {
   expanded: undefined | string | null;
   setExpanded: (expanded: undefined | string | null) => void;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
   clientId?: string;
 }
 

@@ -26,7 +26,7 @@ type TForm = UpdateClientProfileInput | CreateClientProfileInput;
 interface IContactProps {
   index: number;
   remove: (index: number) => void;
-  scrollRef: RefObject<ScrollView>;
+  scrollRef: RefObject<ScrollView | null>;
 }
 
 export default function Contact(props: IContactProps) {

@@ -4,6 +4,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
+        "EAS_NO_FROZEN_LOCKFILE": "1",
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_APP_ENV": "development",
         "EXPO_PUBLIC_DEMO_API_URL": "http://localhost:8000",
@@ -21,6 +22,7 @@
       "distribution": "internal",
       "developmentClient": true,
       "env": {
+        "EAS_NO_FROZEN_LOCKFILE": "1",
         "EXPO_PUBLIC_APP_ENV": "development",
         "EXPO_PUBLIC_API_URL": "https://api.dev.betterangels.la",
         "EXPO_PUBLIC_DEMO_API_URL": "http://localhost:8000",
@@ -36,6 +38,7 @@
       },
       "env": {
         "APP_VARIANT": "production",
+        "EAS_NO_FROZEN_LOCKFILE": "1",
         "EXPO_PUBLIC_APP_ENV": "production",
         "EXPO_PUBLIC_API_URL": "https://api.prod.betterangels.la",
         "EXPO_PUBLIC_DEMO_API_URL": "https://api.dev.betterangels.la",
