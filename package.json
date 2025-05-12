@@ -59,6 +59,7 @@
     "i": "^0.3.7",
     "jotai": "^2.10.3",
     "libphonenumber-js": "^1.12.6",
+    "newrelic-react-native-agent": "^1.5.3",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-ga4": "^2.1.0",

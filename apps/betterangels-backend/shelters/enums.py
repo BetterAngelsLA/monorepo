@@ -14,6 +14,7 @@ class DemographicChoices(models.TextChoices):
     FAMILIES = "families", _("Families")
     SINGLE_MOMS = "single_moms", _("Single Moms")
     SINGLE_DADS = "single_dads", _("Single Dads")
+    LGBTQ_PLUS = "lgbtq_plus", _("LGBTQ+")
     OTHER = "other", _("Other")
 
 
@@ -23,7 +24,6 @@ class SpecialSituationRestrictionChoices(models.TextChoices):
     DOMESTIC_VIOLENCE = "domestic_violence", _("Domestic Violence (DV/IPV)")
     HIV_AIDS = "hiv_aids", _("HIV/AIDS")
     HUMAN_TRAFFICKING = "human_trafficking", _("Human Trafficking")
-    LGBTQ_PLUS = "lgbtq_plus", _("LGBTQ+")
     JUSTICE_SYSTEMS = "justice_systems", _("Persons Exiting Justice Systems")
     VETERANS = "veterans", _("Veterans")
 

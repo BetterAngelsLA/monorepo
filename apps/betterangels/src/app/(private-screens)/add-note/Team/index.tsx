@@ -5,7 +5,7 @@ import {
   useUpdateNoteMutation,
 } from '@monorepo/expo/betterangels';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { Picker } from '@monorepo/expo/shared/ui-components';
+import { Picker_V2 as Picker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { View } from 'react-native';
 
@@ -28,15 +28,19 @@ export default function Team(props: ITeamProps) {
   const { showSnackbar } = useSnackbar();
 
   const updateNoteFunction = async (value: string) => {
-    if (!noteId || !value) return;
+    if (!noteId) {
+      return;
+    }
     setLocalTeam(value);
+    const enumValue = valueAsSelahTeamEnum[value] as SelahTeamEnum;
+    const selectedTeam = enumValue !== undefined ? enumValue : null;
 
     try {
       await updateNote({
         variables: {
           data: {
             id: noteId,
-            team: valueAsSelahTeamEnum[value] as SelahTeamEnum,
+            team: selectedTeam,
           },
         },
       });
@@ -53,12 +57,13 @@ export default function Team(props: ITeamProps) {
     <View style={{ marginBottom: Spacings.xs }}>
       <Picker
         placeholder="Team"
-        value={localTeam}
+        allowSelectNone
+        selectedValue={localTeam}
         items={Object.values(SelahTeamEnum).map((item) => ({
           label: enumDisplaySelahTeam[item],
           value: enumDisplaySelahTeam[item],
         }))}
-        setSelectedValue={(t) => updateNoteFunction(t as SelahTeamEnum)}
+        onChange={(t) => updateNoteFunction(t as SelahTeamEnum)}
       />
     </View>
   );
