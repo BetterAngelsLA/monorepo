@@ -35,7 +35,7 @@ export function BaMap(props: TBaMapProps) {
 
   const superclusterRef = useRef(
     new Supercluster<TPointProperties<TLaLocation>>({
-      radius: 40,
+      radius: 60,
       maxZoom: 20,
     })
   );
@@ -44,7 +44,7 @@ export function BaMap(props: TBaMapProps) {
   useEffect(() => {
     superclusterRef.current.load(points);
     setRegion(defaultRegion);
-  }, []);
+  }, [mapPovider]);
 
   useEffect(() => {
     if (!region) {
@@ -73,7 +73,7 @@ export function BaMap(props: TBaMapProps) {
     ) as TMapFeature[];
 
     setClusters(newClusters);
-  }, [region]);
+  }, [mapPovider, region]);
 
   return (
     <MapView

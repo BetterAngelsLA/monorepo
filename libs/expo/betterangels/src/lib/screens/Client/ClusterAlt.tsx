@@ -18,7 +18,7 @@ export default function ClusterAlt() {
           initialRegion={defaultRegion}
           style={styles.map}
           clusterColor="purple"
-          radius={40}
+          radius={60}
           maxZoom={20}
         >
           {laLocations.map((loc, idx) => {

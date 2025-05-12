@@ -9,7 +9,7 @@ type TSelectedState = {
   zoomLevel?: number;
 };
 
-export function SuperClusterMap({ notGoogle }: { notGoogle?: boolean }) {
+export function SuperClusterMap({ google }: { google?: boolean }) {
   const [selectedState, setSelectedState] = useState<TSelectedState | null>(
     null
   );
@@ -28,7 +28,7 @@ export function SuperClusterMap({ notGoogle }: { notGoogle?: boolean }) {
     <ScrollView>
       <View>
         <BaMap
-          provider={notGoogle ? undefined : 'google'}
+          provider={google ? 'google' : undefined}
           onSelectedChange={onSelectedChange}
           onRegionChangeComplete={(region) => {
             console.log('onRegionChange: ', region);
