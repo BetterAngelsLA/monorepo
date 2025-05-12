@@ -1,3 +1,4 @@
+import { MapPinIcon } from '@monorepo/expo/shared/icons';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
@@ -99,6 +100,7 @@ export function BaMap(props: TBaMapProps) {
             <Marker
               key={`marker-${cluster.properties.pointId}`}
               coordinate={{ latitude, longitude }}
+              zIndex={99999}
               onPress={() => {
                 if (!region) {
                   return;
@@ -113,7 +115,17 @@ export function BaMap(props: TBaMapProps) {
                   zoomLevel
                 );
               }}
-            />
+              // />
+            >
+              <MapPinIcon
+                outlineColor="green"
+                fillColor="green"
+                text="33"
+                // size="L"
+                size="M"
+                // size="S"
+              />
+            </Marker>
           );
         }
 
