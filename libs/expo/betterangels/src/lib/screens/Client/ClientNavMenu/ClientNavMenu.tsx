@@ -39,7 +39,7 @@ export function ClientNavMenu(props: TProps) {
       tooltipStyle={[
         styles.contentWrapper,
         {
-          marginTop: Platform.OS === 'android' ? 14 : 8,
+          marginTop: Platform.OS === 'android' ? 14 : 8, // push tooltip below navbar
         },
       ]}
       contentStyle={styles.content}
