@@ -6,7 +6,7 @@ import { Marker } from 'react-native-maps';
 import { defaultRegion } from '../../ui-components/Map/contants';
 import { laLocations } from '../../ui-components/Map/locations';
 
-export default function ClusterB() {
+export default function ClusterAlt() {
   const mapRef = useRef<MapView>(null);
 
   return (
