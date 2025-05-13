@@ -1,13 +1,14 @@
 diff --git a/ios/DevTools/ExpoRequestInterceptorProtocol.swift b/ios/DevTools/ExpoRequestInterceptorProtocol.swift
-index 4e8682e..0fe3aa4 100644
+index 4e8682e3727580a6a95c1fa9db328e23d51b5550..5811acf2152d94c7b54c4fdf8ed791bc8e4f0354 100644
 --- a/ios/DevTools/ExpoRequestInterceptorProtocol.swift
 +++ b/ios/DevTools/ExpoRequestInterceptorProtocol.swift
 @@ -164,9 +164,6 @@ public final class ExpoRequestInterceptorProtocol: URLProtocol, URLSessionDataDe
-     totalBytesExpectedToSend: Int64
-   ) {
+     // Workaround to get the original task's URLSessionDelegate through the internal property and send upload process
+     // Fixes https://github.com/expo/expo/issues/28269
+     // swiftlint:enable line_length
 -    guard let task = self.task else {
 -      return
 -    }
      if #available(iOS 15.0, tvOS 15.0, macOS 12.0, *), let delegate = task.delegate {
+       // For the case if the task has a dedicated delegate than the default delegate from its URLSession
        delegate.urlSession?(session, task: task, didSendBodyData: bytesSent, totalBytesSent: totalBytesSent, totalBytesExpectedToSend: totalBytesExpectedToSend)
-       return
