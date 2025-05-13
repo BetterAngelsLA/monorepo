@@ -73,7 +73,8 @@
     "expo-application": "*",
     "@react-navigation/native-stack": "*",
     "expo-updates": "*",
-    "react-native-walkthrough-tooltip": "*"
+    "react-native-walkthrough-tooltip": "*",
+    "newrelic-react-native-agent": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",
