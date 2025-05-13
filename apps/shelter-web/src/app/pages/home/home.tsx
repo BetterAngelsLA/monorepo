@@ -20,6 +20,7 @@ import {
 } from '../../shared/components/shelter/shelterCard';
 import { ShelterSearch } from '../../shared/components/shelters/shelterSearch';
 import { ModalAnimationEnum } from '../../shared/modal/modal';
+import { mergeCss } from '../../shared/utils/styles/mergeCss';
 
 export function Home() {
   const [atomLocation, setLocation] = useAtom(locationAtom);
@@ -48,6 +49,15 @@ export function Home() {
     setShelterMarkers(markers);
   }, [shelters]);
 
+  const footerStyle = [
+    'font-semibold',
+    'text-sm',
+    'text-center',
+    'cursor-pointer',
+    'text-primary-60',
+    'active:text-primary-dark',
+  ];
+
   const handleClick = (markerId: string | null | undefined) => {
     if (!markerId) {
       return;
@@ -58,6 +68,11 @@ export function Home() {
           className="mt-4"
           shelter={
             shelters.find((shelter) => shelter.id === markerId) as TShelter
+          }
+          footer={
+            <div className={mergeCss(footerStyle)}>
+              View Details
+            </div>
           }
         />
       ),

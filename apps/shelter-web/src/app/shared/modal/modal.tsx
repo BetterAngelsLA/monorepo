@@ -70,7 +70,6 @@ export function Modal(props: IModal): ReactElement | null {
     'max-h-[calc(100vh - 88)]',
     'overflow-hidden',
     'overflow-y-auto',
-    type === 'default' ? 'pb-12' : '',
   ];
 
   const closeCss = ['ml-auto'];
