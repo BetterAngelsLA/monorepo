@@ -138,7 +138,6 @@ const MapPinIcon = (props: TProps) => {
             {!!subscriptAfter && (
               <Text
                 style={[
-                  styles.subscript,
                   {
                     fontSize: subscriptAfterSize,
                     color: textColor,
@@ -170,43 +169,26 @@ const styles = StyleSheet.create({
 
     alignItems: 'center',
     justifyContent: 'center',
-
-    // borderWidth: 1,
-    // borderColor: 'blue',
   },
   textSlot: {
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'baseline',
-
-    // borderWidth: 1,
-    // borderColor: 'red',
-  },
-  textContent: {
-    // display: 'flex',
-    // flexDirection: 'row',
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-Regular',
-
-    // alignContent: 'flex-end',
-    // alignItems: 'baseline',
-    alignContent: 'flex-start',
-    // padding: 0,
-
-    // textAlign: 'center',
-    // textAlign: 'center',
-    // alignItems: 'center',
-    // alignItems: 'center',
-    // alignContent: ''
-  },
-  subscript: {
-    // fontWeight: 'bold',
-    // color: 'red',
-    // alignSelf: 'flex-start',
   },
 });
 
-const memoMapPinIcon = memo(MapPinIcon);
+const areEqual = (prev: TProps, next: TProps) => {
+  return (
+    prev.text === next.text &&
+    prev.textColor === next.textColor &&
+    prev.fillColor === next.fillColor &&
+    prev.outlineColor === next.outlineColor &&
+    prev.shadowColor === next.shadowColor &&
+    prev.size === next.size &&
+    prev.subscriptAfter === next.subscriptAfter
+  );
+};
 
-// export default memoMapPinIcon;
-export default MapPinIcon;
+const memoMapPinIcon = memo(MapPinIcon, areEqual);
+
+export default memoMapPinIcon;
