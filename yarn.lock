@@ -14236,9 +14236,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-modules-core@patch:expo-modules-core@npm%3A2.3.13#.yarn/patches/expo-modules-core-npm-2.3.13-79c161064c.patch::locator=%40monorepo%2Fsource%40workspace%3A.":
+"expo-modules-core@patch:expo-modules-core@npm%3A2.3.13#~/.yarn/patches/expo-modules-core-npm-2.3.13-79c161064c.patch":
   version: 2.3.13
-  resolution: "expo-modules-core@patch:expo-modules-core@npm%3A2.3.13#.yarn/patches/expo-modules-core-npm-2.3.13-79c161064c.patch::version=2.3.13&hash=859cfd&locator=%40monorepo%2Fsource%40workspace%3A."
+  resolution: "expo-modules-core@patch:expo-modules-core@npm%3A2.3.13#~/.yarn/patches/expo-modules-core-npm-2.3.13-79c161064c.patch::version=2.3.13&hash=859cfd"
   dependencies:
     invariant: "npm:^2.2.4"
   checksum: 10/61ccd1b8598a5d56217f7748c3351e661bfd2b41e3d82679b22d94d5beda5084f4d14dbb7498a1af2238d710865c2ae61f609520015743f0cf2ea30d47098674
