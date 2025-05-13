@@ -3,7 +3,7 @@ import Supercluster from 'supercluster';
 import { TMapView } from '../../../maps';
 
 export function zoomToCluster(
-  mapRef: React.RefObject<TMapView>,
+  mapRef: React.RefObject<TMapView | null>,
   supercluster: Supercluster<any>,
   clusterId: number,
   options?: {
@@ -18,7 +18,7 @@ export function zoomToCluster(
     fallbackDelta = 0.02,
   } = options || {};
 
-  if (!mapRef.current) {
+  if (!mapRef?.current) {
     console.warn('zoomToCluster: missing mapRef.current');
 
     return;

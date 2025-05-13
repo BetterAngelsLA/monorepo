@@ -1,10 +1,10 @@
 import { MapPinIcon } from '@monorepo/expo/shared/icons';
+import { Colors } from '@monorepo/expo/shared/static';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import Supercluster from 'supercluster';
 import { MapView, Marker, TMapView } from '../../maps';
-import { ClusterMarker } from './ClusterMarker';
 import { defaultRegion } from './contants';
 import { TLaLocation, laLocations } from './locations';
 import { TGeoPoint, TMapFeature, TPointProperties } from './types';
@@ -30,7 +30,7 @@ export function BaMap(props: TBaMapProps) {
     onSelectedChange,
   } = props;
 
-  const mapRef = useRef<TMapView>(null);
+  const mapRef = useRef<TMapView | null>(null);
   const [region, setRegion] = useState<Region | null>(null);
   const [clusters, setClusters] = useState<TMapFeature[]>([]);
 
@@ -119,9 +119,7 @@ export function BaMap(props: TBaMapProps) {
             >
               <MapPinIcon
                 // outlineColor="green"
-                // fillColor="green"
-                text="44"
-                subscriptAfter="+"
+                // fillColor={Colors.ERROR}
                 // size="L"
                 size="M"
                 // size="S"
@@ -134,10 +132,10 @@ export function BaMap(props: TBaMapProps) {
           const count = (cluster.properties as any).point_count as number;
 
           return (
-            <ClusterMarker
+            <Marker
               key={`cluster-${cluster.id}-${idx}`}
               coordinate={{ latitude, longitude }}
-              count={count}
+              zIndex={99999}
               onPress={() => {
                 // const expansionZoom =
                 //   superclusterRef.current.getClusterExpansionZoom(
@@ -165,7 +163,18 @@ export function BaMap(props: TBaMapProps) {
                   cluster.id as number
                 );
               }}
-            />
+            >
+              <MapPinIcon
+                // outlineColor="green"
+                fillColor={Colors.ERROR}
+                textColor={Colors.WHITE}
+                text={String(count)}
+                // subscriptAfter="+"
+                // size="L"
+                size="M"
+                // size="S"
+              />
+            </Marker>
           );
         }
 
