@@ -118,9 +118,10 @@ export function BaMap(props: TBaMapProps) {
               // />
             >
               <MapPinIcon
-                outlineColor="green"
-                fillColor="green"
-                text="33"
+                // outlineColor="green"
+                // fillColor="green"
+                text="44"
+                subscriptAfter="+"
                 // size="L"
                 size="M"
                 // size="S"

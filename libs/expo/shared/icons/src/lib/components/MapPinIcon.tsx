@@ -1,6 +1,7 @@
+import { Colors } from '@monorepo/expo/shared/static';
 import { memo } from 'react';
-import { View } from 'react-native';
-import Svg, { Ellipse, G, Mask, Path, TSpan, Text } from 'react-native-svg';
+import { StyleSheet, Text, View } from 'react-native';
+import Svg, { Ellipse, G, Mask, Path } from 'react-native-svg';
 
 type TWidthHeight = {
   width: string;
@@ -9,7 +10,7 @@ type TWidthHeight = {
 
 type TSize = 'S' | 'M' | 'L';
 
-const sizeMap: Record<TSize, TWidthHeight> = {
+const iconSizeMap: Record<TSize, TWidthHeight> = {
   S: {
     width: '25', // 0.6944444444
     height: '36,',
@@ -19,16 +20,42 @@ const sizeMap: Record<TSize, TWidthHeight> = {
     height: '58,',
   },
   L: {
-    width: '60', // 0.7058823529
-    height: '85,',
+    width: '84', // 0.7
+    height: '120,',
   },
 };
 
 const fontSizeMap: Record<TSize, number> = {
-  S: 13,
-  M: 14,
-  L: 15,
+  S: 10,
+  M: 16,
+  L: 32,
 };
+
+type TFontsizes = {
+  fontSize: number;
+  subscriptAfterSize: number;
+};
+
+const withSubscriptMultiplier = 0.925;
+const subscriptAfterMultiplier = 0.75;
+
+function getFontSize(size: TSize, subscriptAfter?: boolean): TFontsizes {
+  const fontSize = fontSizeMap[size];
+
+  if (subscriptAfter) {
+    const withSubscriptSize = fontSize * withSubscriptMultiplier;
+
+    return {
+      fontSize: withSubscriptSize,
+      subscriptAfterSize: withSubscriptSize * subscriptAfterMultiplier,
+    };
+  }
+
+  return {
+    fontSize,
+    subscriptAfterSize: fontSize * subscriptAfterMultiplier,
+  };
+}
 
 type TProps = {
   outlineColor?: string;
@@ -37,28 +64,27 @@ type TProps = {
   textColor?: string;
   shadowColor?: string;
   size?: TSize;
-  withPlus?: boolean;
+  subscriptAfter?: string;
 };
+
+const hel = Colors.WHITE;
 
 const MapPinIcon = (props: TProps) => {
   const {
     text,
-    textColor = '#FFFFFF',
-    outlineColor = '#CB0808',
-    fillColor = '#FFFFFF',
-    shadowColor = '#A8AEB8',
+    textColor = Colors.WHITE,
+    outlineColor = Colors.ERROR,
+    fillColor = Colors.WHITE,
+    shadowColor = Colors.NEUTRAL,
     size = 'L',
-    withPlus,
+    subscriptAfter,
   } = props;
 
+  const { fontSize, subscriptAfterSize } = getFontSize(size, !!subscriptAfter);
+
   return (
-    <View
-      style={{
-        borderWidth: 1,
-        borderColor: 'red',
-      }}
-    >
-      <Svg {...sizeMap[size]} viewBox="0 0 40 58" fill="none">
+    <View style={styles.container}>
+      <Svg {...iconSizeMap[size]} viewBox="0 0 40 58" fill="none">
         <G id="Map Pin">
           {/* Shadow ellipse */}
           <Ellipse
@@ -92,29 +118,93 @@ const MapPinIcon = (props: TProps) => {
               mask="url(#path-2-inside-1_176_3645)"
             />
           </G>
-
-          {text && (
-            <Text
-              x="52%"
-              y="52%"
-              dx="-.35em"
-              dy="-.35em"
-              textAnchor="middle"
-              fontWeight="bold"
-              fill={textColor}
-              fontFamily="Poppins-Regular"
-            >
-              <TSpan fontSize={fontSizeMap[size]}>55</TSpan>
-              <TSpan dx={-5} fontSize={Math.round(fontSizeMap[size] * 0.7)}>
-                +
-              </TSpan>
-            </Text>
-          )}
         </G>
       </Svg>
+
+      {!!text && (
+        <View style={[styles.textSlotContainer]}>
+          <View style={[styles.textSlot]}>
+            <Text
+              style={[
+                {
+                  color: textColor,
+                  fontSize: fontSize,
+                  fontWeight: 'bold',
+                },
+              ]}
+            >
+              {text}
+            </Text>
+            {!!subscriptAfter && (
+              <Text
+                style={[
+                  styles.subscript,
+                  {
+                    fontSize: subscriptAfterSize,
+                    color: textColor,
+                    fontWeight: 'bold',
+                  },
+                ]}
+              >
+                {subscriptAfter}
+              </Text>
+            )}
+          </View>
+        </View>
+      )}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'relative',
+  },
+  textSlotContainer: {
+    position: 'absolute',
+    top: 0,
+    width: '100%',
+    height: '62%',
+    padding: 5,
+    overflow: 'hidden',
+
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    // borderWidth: 1,
+    // borderColor: 'blue',
+  },
+  textSlot: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'baseline',
+
+    // borderWidth: 1,
+    // borderColor: 'red',
+  },
+  textContent: {
+    // display: 'flex',
+    // flexDirection: 'row',
+    fontWeight: 'bold',
+    fontFamily: 'Poppins-Regular',
+
+    // alignContent: 'flex-end',
+    // alignItems: 'baseline',
+    alignContent: 'flex-start',
+    // padding: 0,
+
+    // textAlign: 'center',
+    // textAlign: 'center',
+    // alignItems: 'center',
+    // alignItems: 'center',
+    // alignContent: ''
+  },
+  subscript: {
+    // fontWeight: 'bold',
+    // color: 'red',
+    // alignSelf: 'flex-start',
+  },
+});
 
 const memoMapPinIcon = memo(MapPinIcon);
 
