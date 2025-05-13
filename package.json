@@ -175,6 +175,7 @@
     "vitest": "^1.6.1"
   },
   "resolutions": {
+    "@expo/config-plugins": ">=10.0.2",
     "cookie": ">=0.7.0",
     "cross-spawn": ">=7.0.5",
     "metro-resolver": ">=0.82.0",
