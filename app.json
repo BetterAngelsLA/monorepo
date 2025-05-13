@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "53171ba4-60ca-40cb-b3e6-b0c2393677b8"
+      }
+    },
+    "owner": "better-angels",
+    "slug": "betterangels"
+  }
+}
