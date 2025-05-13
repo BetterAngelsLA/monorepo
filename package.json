@@ -18,6 +18,7 @@
     "@config-plugins/react-native-pdf": "^9.0.0",
     "@expo/metro-config": "~0.20.0",
     "@likashefqet/react-native-image-zoom": "^4.2.1",
+    "@peterek/vite-plugin-favicons": "^2.1.0",
     "@portabletext/react": "^3.2.0",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/datetimepicker": "8.3.0",
