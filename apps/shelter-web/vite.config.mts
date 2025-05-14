@@ -1,5 +1,6 @@
 /// <reference types='vitest' />
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import favicons from '@peterek/vite-plugin-favicons';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
@@ -42,7 +43,12 @@ export default defineConfig(({ mode }) => {
       host: 'localhost',
     },
 
-    plugins: [react(), rawSvgPlugin(), nxViteTsPaths()],
+    plugins: [
+      react(),
+      rawSvgPlugin(),
+      nxViteTsPaths(),
+      favicons('src/assets/icon.png'),
+    ],
 
     resolve: {},
 

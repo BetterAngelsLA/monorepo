@@ -111,6 +111,7 @@
     "@nx/web": "21.0.1",
     "@nx/workspace": "21.0.1",
     "@nxlv/python": "20.15.1",
+    "@peterek/vite-plugin-favicons": "^2.1.0",
     "@storybook/addon-essentials": "8.6.12",
     "@storybook/addon-react-native-web": "^0.0.29",
     "@storybook/core-server": "8.6.12",
