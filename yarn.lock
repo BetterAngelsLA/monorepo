@@ -14216,10 +14216,10 @@ __metadata:
 
 "expo-modules-core@patch:expo-modules-core@npm%3A2.3.13#~/.yarn/patches/expo-modules-core-npm-2.3.13-79c161064c.patch":
   version: 2.3.13
-  resolution: "expo-modules-core@patch:expo-modules-core@npm%3A2.3.13#~/.yarn/patches/expo-modules-core-npm-2.3.13-79c161064c.patch::version=2.3.13&hash=00e544"
+  resolution: "expo-modules-core@patch:expo-modules-core@npm%3A2.3.13#~/.yarn/patches/expo-modules-core-npm-2.3.13-79c161064c.patch::version=2.3.13&hash=009b5a"
   dependencies:
     invariant: "npm:^2.2.4"
-  checksum: 10/819706d7ca5c4215cc8542444afa1aa81f635406acd20ef0e9262e22e6905bc40373f163b5096574395d585f10c7c0a3381167511380b74adc034517fc19eb99
+  checksum: 10/c0afe316fe8a2dd2d848666d6760e4697792e5290e8a8f222ba1c4a69f54e0cf8bb5831d57c6ce5d18a26fe67c95e9a7a618a61fe61e9d646eded9943c77e2d6
   languageName: node
   linkType: hard
 
