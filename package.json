@@ -181,6 +181,7 @@
     "metro-config": ">=0.82.0",
     "micromatch": ">=4.0.8",
     "ws": ">=8.17.1",
+    "@expo/config-plugins": ">=10.0.0",
     "expo-modules-core@npm:2.3.13": "patch:expo-modules-core@npm%3A2.3.13#~/.yarn/patches/expo-modules-core-npm-2.3.13-79c161064c.patch"
   },
   "engines": {
