@@ -1,5 +1,4 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { memo } from 'react';
 import Svg, { Ellipse, G, Mask, Path } from 'react-native-svg';
 import { iconSizeMap } from './constants';
 
@@ -13,7 +12,7 @@ type TProps = {
   height?: string;
 };
 
-const MapPinSvgRaw = (props: TProps) => {
+export const MapPinSvg = (props: TProps) => {
   const {
     outlineColor = Colors.ERROR,
     fillColor = Colors.WHITE,
@@ -64,7 +63,3 @@ const MapPinSvgRaw = (props: TProps) => {
     </Svg>
   );
 };
-
-const MapPinSvg = memo(MapPinSvgRaw);
-
-export { MapPinSvg };

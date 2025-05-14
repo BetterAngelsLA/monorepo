@@ -32,20 +32,20 @@ export const MapPinText = (props: TMapPinText) => {
           ]}
         >
           {text}
-        </Text>
-      )}
-      {!!subscriptAfter && (
-        <Text
-          style={[
-            styles.defaultText,
-            {
-              fontSize: subscriptAfterSize,
-              lineHeight: subscriptAfterSize,
-            },
-            style,
-          ]}
-        >
-          {subscriptAfter}
+          {!!subscriptAfter && (
+            <Text
+              style={[
+                styles.defaultText,
+                {
+                  fontSize: subscriptAfterSize,
+                  lineHeight: subscriptAfterSize,
+                },
+                style,
+              ]}
+            >
+              {subscriptAfter}
+            </Text>
+          )}
         </Text>
       )}
     </View>
@@ -56,14 +56,13 @@ const styles = StyleSheet.create({
   container: {
     display: 'flex',
     flexDirection: 'row',
-    alignItems: 'baseline',
-    alignContent: 'center',
-    textAlignVertical: 'center',
+    alignItems: 'center',
   },
   defaultText: {
     fontFamily: 'Poppins',
     fontWeight: 700,
     color: Colors.ERROR,
     letterSpacing: -1.5,
+    includeFontPadding: false, // android
   },
 });
