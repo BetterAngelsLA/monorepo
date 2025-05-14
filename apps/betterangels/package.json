@@ -72,7 +72,8 @@
     "expo-constants": "*",
     "expo-application": "*",
     "@react-navigation/native-stack": "*",
-    "expo-updates": "*"
+    "expo-updates": "*",
+    "newrelic-react-native-agent": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",

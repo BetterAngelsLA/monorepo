@@ -67,6 +67,7 @@ const demographicOptions = [
   DemographicChoices.Seniors,
   DemographicChoices.Families,
   DemographicChoices.SingleMoms,
+  DemographicChoices.LgbtqPlus,
   DemographicChoices.Other,
 ];
 
@@ -91,7 +92,6 @@ const specialSituationOptions = [
   SpecialSituationRestrictionChoices.HivAids,
   SpecialSituationRestrictionChoices.HumanTrafficking,
   SpecialSituationRestrictionChoices.JusticeSystems,
-  SpecialSituationRestrictionChoices.LgbtqPlus,
   SpecialSituationRestrictionChoices.Veterans,
   SpecialSituationRestrictionChoices.None,
 ];

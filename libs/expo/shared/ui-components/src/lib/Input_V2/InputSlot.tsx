@@ -21,7 +21,7 @@ export type TInputSlot = {
 interface TProps extends TInputSlot {
   placement: 'left' | 'right';
   disabled?: boolean;
-  inputRef?: React.RefObject<TextInput>;
+  inputRef?: React.RefObject<TextInput | null>;
 }
 
 export function InputSlot(props: TProps) {

@@ -8,7 +8,7 @@ type TProps = {
   style?: ViewStyle;
   children: ReactNode;
   actionProps?: TFormButtons;
-  scrollViewRef?: RefObject<ScrollView>;
+  scrollViewRef?: RefObject<ScrollView | null>;
 };
 
 export function FormPage(props: TProps) {
