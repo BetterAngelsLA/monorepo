@@ -63,6 +63,7 @@ export { default as LocationArrowIcon } from './components/LocationArrowIcon';
 export { default as LocationDotIcon } from './components/LocationDotIcon';
 export { default as LocationDotSolidIcon } from './components/LocationDotSolidIcon';
 export { default as LocationPinIcon } from './components/LocationPinIcon';
+export * from './components/MapLineIcon';
 export { default as MapLineIcon } from './components/MapLineIcon';
 export { default as MapSolidIcon } from './components/MapSolidIcon';
 export { default as NoteIcon } from './components/NoteIcon';
