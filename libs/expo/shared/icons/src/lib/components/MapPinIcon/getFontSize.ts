@@ -16,7 +16,7 @@ export function getFontSize(
 ): TFontsizes {
   const defaultSize = fontSizeMap[size];
 
-  let fontSize = subscriptAfter
+  const fontSize = subscriptAfter
     ? defaultSize
     : defaultSize * withSubscriptFontSizeMultiplier;
 

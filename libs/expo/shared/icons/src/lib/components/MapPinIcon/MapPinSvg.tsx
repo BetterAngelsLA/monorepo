@@ -21,8 +21,8 @@ export const MapPinSvg = (props: TProps) => {
     height,
   } = props;
 
-  let svgWidth = width || String(defaultSize.width);
-  let svgHeight = height || String(defaultSize.height);
+  const svgWidth = width || String(defaultSize.width);
+  const svgHeight = height || String(defaultSize.height);
 
   return (
     <Svg viewBox="0 0 40 58" fill="none" width={svgWidth} height={svgHeight}>
