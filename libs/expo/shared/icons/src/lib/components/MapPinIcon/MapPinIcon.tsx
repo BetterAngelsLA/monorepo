@@ -1,4 +1,6 @@
 import { Colors } from '@monorepo/expo/shared/static';
+import { memo } from 'react';
+import isEqual from 'react-fast-compare';
 import { StyleSheet, TextStyle, View } from 'react-native';
 import { MapPinSvg } from './MapPinSvg';
 import { MapPinText } from './MapPinText';
@@ -16,7 +18,7 @@ type TProps = {
   textStyle?: TextStyle;
 };
 
-export const MapPinIcon = (props: TProps) => {
+const PinIcon = (props: TProps) => {
   const {
     color = Colors.ERROR,
     size = 'M',
@@ -82,3 +84,5 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
 });
+
+export const MapPinIcon = memo(PinIcon, isEqual);
