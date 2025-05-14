@@ -31,7 +31,7 @@ export function SuperClusterMap({ google }: { google?: boolean }) {
           provider={google ? 'google' : undefined}
           onSelectedChange={onSelectedChange}
           onRegionChangeComplete={(region) => {
-            console.log('onRegionChange: ', region);
+            // console.log('onRegionChange: ', region);
           }}
         />
       </View>

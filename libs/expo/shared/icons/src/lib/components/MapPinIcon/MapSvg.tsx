@@ -1,11 +1,13 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { memo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { View } from 'react-native';
 import Svg, { Ellipse, G, Mask, Path } from 'react-native-svg';
 
 type TWidthHeight = {
   width: string;
   height: string;
+  // width: number;
+  // height: number;
 };
 
 type TSize = 'S' | 'M' | 'L';
@@ -13,49 +15,17 @@ type TSize = 'S' | 'M' | 'L';
 const iconSizeMap: Record<TSize, TWidthHeight> = {
   S: {
     width: '25', // 0.6944444444
-    height: '36,',
+    height: '36',
   },
   M: {
     width: '40', // 0.6896551724
-    height: '58,',
+    height: '58',
   },
   L: {
     width: '84', // 0.7
-    height: '120,',
+    height: '120',
   },
 };
-
-const fontSizeMap: Record<TSize, number> = {
-  S: 10,
-  M: 16,
-  L: 32,
-};
-
-type TFontsizes = {
-  fontSize: number;
-  subscriptAfterSize: number;
-};
-
-const withSubscriptMultiplier = 0.925;
-const subscriptAfterMultiplier = 0.75;
-
-function getFontSize(size: TSize, subscriptAfter?: boolean): TFontsizes {
-  const fontSize = fontSizeMap[size];
-
-  if (subscriptAfter) {
-    const withSubscriptSize = fontSize * withSubscriptMultiplier;
-
-    return {
-      fontSize: withSubscriptSize,
-      subscriptAfterSize: withSubscriptSize * subscriptAfterMultiplier,
-    };
-  }
-
-  return {
-    fontSize,
-    subscriptAfterSize: fontSize * subscriptAfterMultiplier,
-  };
-}
 
 type TProps = {
   outlineColor?: string;
@@ -67,24 +37,25 @@ type TProps = {
   subscriptAfter?: string;
 };
 
-const hel = Colors.WHITE;
-
-const MapPinIcon = (props: TProps) => {
+const MapPinSvgRaw = (props: TProps) => {
   const {
-    text,
-    textColor = Colors.WHITE,
     outlineColor = Colors.ERROR,
     fillColor = Colors.WHITE,
     shadowColor = Colors.NEUTRAL,
     size = 'L',
-    subscriptAfter,
   } = props;
 
-  const { fontSize, subscriptAfterSize } = getFontSize(size, !!subscriptAfter);
+  const { width, height } = iconSizeMap[size];
 
   return (
-    <View style={styles.container}>
-      <Svg {...iconSizeMap[size]} viewBox="0 0 40 58" fill="none">
+    <View
+      style={{
+        width: Number(width),
+        height: Number(height),
+      }}
+    >
+      {/* <Svg width={width} height={height} viewBox="0 0 40 58" fill="none"> */}
+      <Svg viewBox="0 0 40 58" fill="none" width="100%" height="100%">
         <G id="Map Pin">
           {/* Shadow ellipse */}
           <Ellipse
@@ -120,75 +91,10 @@ const MapPinIcon = (props: TProps) => {
           </G>
         </G>
       </Svg>
-
-      {!!text && (
-        <View style={[styles.textSlotContainer]}>
-          <View style={[styles.textSlot]}>
-            <Text
-              style={[
-                {
-                  color: textColor,
-                  fontSize: fontSize,
-                  fontWeight: 'bold',
-                },
-              ]}
-            >
-              {text}
-            </Text>
-            {!!subscriptAfter && (
-              <Text
-                style={[
-                  {
-                    fontSize: subscriptAfterSize,
-                    color: textColor,
-                    fontWeight: 'bold',
-                  },
-                ]}
-              >
-                {subscriptAfter}
-              </Text>
-            )}
-          </View>
-        </View>
-      )}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-  },
-  textSlotContainer: {
-    position: 'absolute',
-    top: 0,
-    width: '100%',
-    height: '62%',
-    padding: 5,
-    overflow: 'hidden',
+const MapPinSvg = memo(MapPinSvgRaw);
 
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  textSlot: {
-    display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-});
-
-const areEqual = (prev: TProps, next: TProps) => {
-  return (
-    prev.text === next.text &&
-    prev.textColor === next.textColor &&
-    prev.fillColor === next.fillColor &&
-    prev.outlineColor === next.outlineColor &&
-    prev.shadowColor === next.shadowColor &&
-    prev.size === next.size &&
-    prev.subscriptAfter === next.subscriptAfter
-  );
-};
-
-const memoMapPinIcon = memo(MapPinIcon, areEqual);
-
-export default memoMapPinIcon;
+export { MapPinSvg };

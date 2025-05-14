@@ -1,6 +1,6 @@
 import { MapPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import Supercluster from 'supercluster';
@@ -31,12 +31,13 @@ export function BaMap(props: TBaMapProps) {
   } = props;
 
   const mapRef = useRef<TMapView | null>(null);
+  const [mapReady, setMapReady] = useState(false);
   const [region, setRegion] = useState<Region | null>(null);
   const [clusters, setClusters] = useState<TMapFeature[]>([]);
 
   const superclusterRef = useRef(
     new Supercluster<TPointProperties<TLaLocation>>({
-      radius: 40,
+      radius: 30,
       maxZoom: 20,
     })
   );
@@ -76,6 +77,8 @@ export function BaMap(props: TBaMapProps) {
     setClusters(newClusters);
   }, [mapPovider, region]);
 
+  console.log('');
+  console.log('------');
   return (
     <MapView
       ref={mapRef}
@@ -84,102 +87,53 @@ export function BaMap(props: TBaMapProps) {
       scrollEnabled
       zoomControlEnabled
       mapType="standard"
-      style={styles.map}
       initialRegion={defaultRegion}
+      onMapReady={() => {
+        setTimeout(() => {
+          setMapReady(true);
+        }, 100);
+      }}
       onRegionChangeComplete={(region) => {
         setRegion(region);
         onRegionChangeComplete?.(region);
       }}
+      style={styles.map}
     >
-      {clusters.map((cluster, idx) => {
-        const [longitude, latitude] = cluster.geometry.coordinates;
-        const isCluster = !!(cluster.properties as any).cluster;
+      {!!mapReady &&
+        clusters.map((cluster, idx) => {
+          const isCluster = !!(cluster.properties as any).cluster;
 
-        if (!isCluster) {
-          return (
-            <Marker
-              key={`marker-${cluster.properties.pointId}`}
-              coordinate={{ latitude, longitude }}
-              zIndex={99999}
-              onPress={() => {
-                if (!region) {
-                  return;
-                }
+          // if (!isCluster) {
+          //   console.log(
+          //     '*****************  cluster.properties.pointId:',
+          //     cluster.properties.pointId
+          //   );
+          //   return (
+          //     <PointMarker
+          //       key={`point-${cluster.properties.pointId}-${idx}`}
+          //       cluster={cluster}
+          //       onSelectedChange={onSelectedChange}
+          //       region={region}
+          //     />
+          //   );
+          // }
 
-                const zoomLevel = Math.round(
-                  Math.log2(360 / region.longitudeDelta)
-                );
-
-                onSelectedChange?.(
-                  [cluster as TGeoPoint<TLaLocation>],
-                  zoomLevel
-                );
-              }}
-              // />
-            >
-              <MapPinIcon
-                // outlineColor="green"
-                // fillColor={Colors.ERROR}
-                // size="L"
-                size="M"
-                // size="S"
+          if (isCluster) {
+            console.log('*****************  cluster.id:', cluster.id);
+            return (
+              <ClusterMarker
+                key={`cluster-${cluster.id}`}
+                cluster={cluster}
+                region={region}
+                mapRef={mapRef}
+                superclusterRef={superclusterRef}
+                onSelectedChange={onSelectedChange}
               />
-            </Marker>
-          );
-        }
+            );
+          }
 
-        if (isCluster) {
-          const count = (cluster.properties as any).point_count as number;
-
-          return (
-            <Marker
-              key={`cluster-${cluster.id}-${idx}`}
-              coordinate={{ latitude, longitude }}
-              zIndex={99999}
-              onPress={() => {
-                // const expansionZoom =
-                //   superclusterRef.current.getClusterExpansionZoom(
-                //     cluster.id as number
-                //   );
-
-                const leaves = superclusterRef.current.getLeaves(
-                  cluster.id as number,
-                  100
-                );
-
-                if (!region) {
-                  return;
-                }
-
-                const zoomLevel = Math.round(
-                  Math.log2(360 / region.longitudeDelta)
-                );
-
-                onSelectedChange?.(leaves, zoomLevel);
-
-                zoomToCluster(
-                  mapRef,
-                  superclusterRef.current,
-                  cluster.id as number
-                );
-              }}
-            >
-              <MapPinIcon
-                // outlineColor="green"
-                fillColor={Colors.ERROR}
-                textColor={Colors.WHITE}
-                text={String(count)}
-                // subscriptAfter="+"
-                // size="L"
-                size="M"
-                // size="S"
-              />
-            </Marker>
-          );
-        }
-
-        return null;
-      })}
+          return null;
+        })}
     </MapView>
   );
 }
@@ -190,3 +144,110 @@ const styles = StyleSheet.create({
     height: 350,
   },
 });
+
+type TPointMarker = {
+  cluster: TMapFeature;
+  region?: Region | null;
+  onSelectedChange?: (
+    items: TMapFeature<TLaLocation>[],
+    zoomLevel: number
+  ) => void;
+};
+
+function PointMarker(props: TPointMarker) {
+  const { cluster, region, onSelectedChange } = props;
+
+  const [longitude, latitude] = cluster.geometry.coordinates;
+  const coordinate = useMemo(
+    () => ({ latitude, longitude }),
+    [latitude, longitude]
+  );
+
+  console.log('*****************  coordinate:', coordinate);
+
+  return (
+    <Marker
+      // coordinate={coordinate}
+      coordinate={{ longitude, latitude }}
+      zIndex={20000}
+      // tracksViewChanges={false}
+      onPress={() => {
+        if (!region) {
+          return;
+        }
+
+        const zoomLevel = Math.round(Math.log2(360 / region.longitudeDelta));
+
+        onSelectedChange?.([cluster as TGeoPoint<TLaLocation>], zoomLevel);
+      }}
+    >
+      {/* <MapPinSvg outlineColor="green" size="M" /> */}
+      {/* <MapPinIcon
+        // fillColor={Colors.ERROR}
+        // textColor={Colors.WHITE}
+        // subscriptAfter="+"
+        size="M"
+      /> */}
+    </Marker>
+  );
+}
+
+type TClusterMarker = {
+  cluster: TMapFeature;
+  region?: Region | null;
+  mapRef: any;
+  superclusterRef: any;
+  onSelectedChange?: (
+    items: TMapFeature<TLaLocation>[],
+    zoomLevel: number
+  ) => void;
+};
+
+function ClusterMarker(props: TClusterMarker) {
+  const { cluster, mapRef, superclusterRef, region, onSelectedChange } = props;
+
+  const [longitude, latitude] = cluster.geometry.coordinates;
+  const coordinate = useMemo(
+    () => ({ latitude, longitude }),
+    [latitude, longitude]
+  );
+
+  const count = (cluster.properties as any).point_count as number;
+
+  return (
+    <Marker
+      tracksViewChanges={false}
+      coordinate={coordinate}
+      // zIndex={1000}
+      onPress={() => {
+        // const expansionZoom =
+        //   superclusterRef.current.getClusterExpansionZoom(
+        //     cluster.id as number
+        //   );
+
+        const leaves = superclusterRef.current.getLeaves(
+          cluster.id as number,
+          100
+        );
+
+        if (!region) {
+          return;
+        }
+
+        const zoomLevel = Math.round(Math.log2(360 / region.longitudeDelta));
+
+        onSelectedChange?.(leaves, zoomLevel);
+
+        zoomToCluster(mapRef, superclusterRef.current, cluster.id as number);
+      }}
+    >
+      <MapPinIcon
+        fillColor={Colors.ERROR}
+        textColor={Colors.WHITE}
+        text={String(count)}
+        // subscriptAfter="+"
+        size="M"
+      />
+    </Marker>
+  );
+}
