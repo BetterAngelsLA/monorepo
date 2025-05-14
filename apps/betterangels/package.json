@@ -77,7 +77,7 @@
     "newrelic-react-native-agent": "*"
   },
   "scripts": {
-    "eas-build-pre-install": "corepack enable",
+    "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches",
     "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/betterangels",
     "android": "expo run:android",
     "ios": "expo run:ios"

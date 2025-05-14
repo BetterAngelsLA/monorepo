@@ -2556,7 +2556,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@expo/config-plugins@npm:>=10.0.2":
+"@expo/config-plugins@npm:>=10.0.0":
   version: 10.0.2
   resolution: "@expo/config-plugins@npm:10.0.2"
   dependencies:
@@ -14212,6 +14212,15 @@ __metadata:
   dependencies:
     invariant: "npm:^2.2.4"
   checksum: 10/850d424c8203a43ea2556b00d2ff3b9992e0f7b474f91b1a813a570a2ab7bf99a5c8c90562f4f2acee5ce411fbc6d5304fc98049bfd5ba5699d082fe179f1869
+  languageName: node
+  linkType: hard
+
+"expo-modules-core@patch:expo-modules-core@npm%3A2.3.13#~/.yarn/patches/expo-modules-core-npm-2.3.13-79c161064c.patch":
+  version: 2.3.13
+  resolution: "expo-modules-core@patch:expo-modules-core@npm%3A2.3.13#~/.yarn/patches/expo-modules-core-npm-2.3.13-79c161064c.patch::version=2.3.13&hash=009b5a"
+  dependencies:
+    invariant: "npm:^2.2.4"
+  checksum: 10/c0afe316fe8a2dd2d848666d6760e4697792e5290e8a8f222ba1c4a69f54e0cf8bb5831d57c6ce5d18a26fe67c95e9a7a618a61fe61e9d646eded9943c77e2d6
   languageName: node
   linkType: hard
 
