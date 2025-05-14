@@ -2,76 +2,98 @@ import {
   Colors,
   Radiuses,
   Spacings,
-  TSpacing,
+  TMarginProps,
+  getMarginStyles,
 } from '@monorepo/expo/shared/static';
 import { Picker as RNPicker } from '@react-native-picker/picker';
 import { StyleSheet, View } from 'react-native';
+import FormFieldLabel from '../FormFieldLabel';
 import TextRegular from '../TextRegular';
 
-export interface IPickerProps {
-  setSelectedValue: (value: string | null | undefined) => void;
+const NONE_VALUE = '__none__';
+
+export type TPickerItem = {
+  displayValue?: string;
+  value: string;
+};
+
+export interface IPickerProps extends TMarginProps {
+  onChange: (value: string | null) => void;
   error?: string;
-  displayValue?: string | null;
-  value?: string | null;
+  selectedValue?: string | null;
   placeholder: string;
-  items: { label: string; value?: string }[];
+  items: TPickerItem[];
   label?: string;
-  mb?: TSpacing;
-  mt?: TSpacing;
-  my?: TSpacing;
-  mx?: TSpacing;
-  ml?: TSpacing;
-  mr?: TSpacing;
+  required?: boolean;
+  disabled?: boolean;
+  selectNoneLabel?: string;
+  allowSelectNone?: boolean;
 }
 
 export default function Picker(props: IPickerProps) {
   const {
-    setSelectedValue,
+    onChange,
     error,
-    displayValue,
+    selectedValue,
     placeholder,
     items,
     label,
-    mb,
-    mt,
-    my,
-    mx,
-    ml,
-    mr,
+    disabled,
+    required,
+    selectNoneLabel,
+    allowSelectNone,
   } = props;
 
-  return (
-    <View
-      style={[
-        styles.pickerContainer,
+  const noneLabel = selectNoneLabel || placeholder || 'Selece one';
 
-        {
-          borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
-        },
-      ]}
-    >
-      {label && <TextRegular ml="xs">{label}</TextRegular>}
-      <RNPicker
-        style={styles.picker}
-        placeholder={placeholder}
-        selectedValue={displayValue || ''}
-        onValueChange={setSelectedValue}
+  function onValueChange(newValue: string) {
+    onChange(newValue === NONE_VALUE ? null : newValue);
+  }
+
+  return (
+    <View>
+      {label && <FormFieldLabel label={label} required={required} />}
+
+      <View
+        style={[
+          styles.pickerContainer,
+          {
+            borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
+            ...getMarginStyles(props),
+          },
+        ]}
       >
-        {items.map((item) => (
+        <RNPicker
+          style={styles.picker}
+          placeholder={placeholder}
+          selectedValue={selectedValue || ''}
+          onValueChange={onValueChange}
+          enabled={!disabled}
+          itemStyle={styles.itemStyle}
+        >
           <RNPicker.Item
-            style={styles.itemStyle}
-            key={item.value}
-            label={item.label}
-            value={item.value}
+            label={noneLabel}
+            value={NONE_VALUE}
+            color={
+              allowSelectNone ? styles.itemStyle.color : Colors.NEUTRAL_DARK
+            }
+            enabled={!!allowSelectNone}
           />
-        ))}
-      </RNPicker>
+          {items.map((item) => (
+            <RNPicker.Item
+              style={styles.itemStyle}
+              key={item.value}
+              label={item.displayValue || item.value}
+              value={item.value}
+            />
+          ))}
+        </RNPicker>
+      </View>
+      {error && (
+        <TextRegular mt="xxs" size="sm" color={Colors.ERROR}>
+          {error}
+        </TextRegular>
+      )}
     </View>
   );
 }

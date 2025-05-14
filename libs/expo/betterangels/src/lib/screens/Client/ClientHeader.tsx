@@ -16,7 +16,7 @@ import { ClientProfileQuery } from './__generated__/Client.generated';
 
 interface IClientHeaderProps {
   client: ClientProfileQuery['clientProfile'] | undefined;
-  onCaseManagerPress: () => void;
+  onCaseManagerPress?: () => void;
 }
 
 export default function ClientHeader(props: IClientHeaderProps) {
@@ -91,7 +91,8 @@ export default function ClientHeader(props: IClientHeaderProps) {
         <PersonIcon color={Colors.PRIMARY_EXTRA_DARK} />
         <TextRegular>
           Current Case Manager:{' '}
-          {client?.displayCaseManager !== 'Not Assigned' ? (
+          {client?.displayCaseManager !== 'Not Assigned' &&
+          onCaseManagerPress ? (
             <TextRegular
               onPress={onCaseManagerPress}
               textDecorationLine="underline"
