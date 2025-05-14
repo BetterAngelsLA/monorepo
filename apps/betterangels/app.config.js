@@ -147,7 +147,7 @@ export default {
       },
     },
     newArchEnabled: false,
-    // owner: 'better-angels',
+    owner: 'better-angels',
     runtimeVersion: process.env.RUNTIME_VERSION,
   },
 };
