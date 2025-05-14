@@ -1,6 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SelahTeamEnum } from '../../../apollo';
 import AuthorsFilter from './AuthorsFilter';
 import TeamsFilter from './TeamsFilter';
@@ -25,8 +25,13 @@ export default function InteractionsFilters(props: IInteractionsFiltersProps) {
         gap: Spacings.xs,
       }}
     >
-      <TeamsFilter {...props} />
-      <AuthorsFilter {...props} />
+      <ScrollView
+        showsHorizontalScrollIndicator={false}
+        horizontal
+      >
+        <TeamsFilter {...props} />
+        <AuthorsFilter {...props} />
+      </ScrollView>
     </View>
   );
 }
