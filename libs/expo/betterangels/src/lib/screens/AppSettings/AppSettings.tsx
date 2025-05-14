@@ -37,17 +37,81 @@ export const defaultRegion: Region = {
 };
 
 const locations = [
-  { name: 'A', latitude: 34.0905, longitude: -118.2878, size: 'S' },
-  { name: 'A 2', latitude: 34.0905, longitude: -118.2478, size: 'M' },
-  { name: 'A 3', latitude: 34.0825, longitude: -118.2078, size: 'L' },
+  {
+    name: 'A',
+    latitude: 34.0905,
+    longitude: -118.2878,
+    size: 'S',
+    variant: 'outline',
+    text: '3',
+  },
+  {
+    name: 'A 2',
+    latitude: 34.0905,
+    longitude: -118.2478,
+    size: 'M',
+    variant: 'outline',
+    text: '20',
+  },
+  {
+    name: 'A 3',
+    latitude: 34.0825,
+    longitude: -118.2078,
+    size: 'L',
+    variant: 'outline',
+    text: '44',
+  },
 
-  { name: 'B', latitude: 34.0505, longitude: -118.2878, size: 'S' },
-  { name: 'B 2', latitude: 34.0505, longitude: -118.2478, size: 'M' },
-  { name: 'B 3', latitude: 34.0425, longitude: -118.2078, size: 'L' },
+  {
+    name: 'B',
+    latitude: 34.0505,
+    longitude: -118.2878,
+    size: 'S',
+    text: '44',
+    subscriptAfter: '+',
+  },
+  {
+    name: 'B 2',
+    latitude: 34.0505,
+    longitude: -118.2478,
+    size: 'M',
+    text: '44',
+    subscriptAfter: '+',
+  },
+  {
+    name: 'B 3',
+    latitude: 34.0425,
+    longitude: -118.2078,
+    size: 'L',
+    text: '44',
+    subscriptAfter: '+',
+  },
 
-  { name: 'C', latitude: 34.0005, longitude: -118.2878, size: 'S' },
-  { name: 'C 2', latitude: 34.0005, longitude: -118.2478, size: 'M' },
-  { name: 'C 3', latitude: 34.0005, longitude: -118.2078, size: 'L' },
+  { name: 'C', latitude: 34.0175, longitude: -118.2878, size: 'S' },
+  { name: 'C 2', latitude: 34.0175, longitude: -118.2478, size: 'M' },
+  { name: 'C 3', latitude: 34.0151, longitude: -118.2078, size: 'L' },
+
+  {
+    name: 'D',
+    latitude: 33.9815,
+    longitude: -118.2878,
+    size: 'S',
+    variant: 'outline',
+  },
+  {
+    name: 'D 2',
+    latitude: 33.9815,
+    longitude: -118.2478,
+    size: 'M',
+    variant: 'outline',
+  },
+  {
+    name: 'D 3',
+    latitude: 33.9781,
+    longitude: -118.2078,
+    size: 'L',
+    variant: 'outline',
+  },
 ];
 
 function DemoMap() {
@@ -71,7 +135,12 @@ function DemoMap() {
                 longitude: loc.longitude,
               }}
             >
-              <MapPinIcon size={(loc.size || 'M') as any} />
+              <MapPinIcon
+                size={(loc.size || 'M') as any}
+                text={loc.text}
+                subscriptAfter={loc.subscriptAfter}
+                variant={loc.variant as any}
+              />
             </Marker>
           );
         })}
