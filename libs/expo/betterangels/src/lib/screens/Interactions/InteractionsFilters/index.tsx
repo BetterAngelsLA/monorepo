@@ -22,10 +22,12 @@ export default function InteractionsFilters(props: IInteractionsFiltersProps) {
         marginBottom: Spacings.xl,
         alignItems: 'flex-start',
         flexDirection: 'row',
-        gap: Spacings.xs,
       }}
     >
       <ScrollView
+        contentContainerStyle={{
+          gap: Spacings.xs,
+        }}
         showsHorizontalScrollIndicator={false}
         horizontal
       >
