@@ -27,7 +27,6 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   const [updateNote, { error }] = useUpdateNoteMutation();
   const [autoNote, setAutoNote] = useState<string>('');
   const [publicNote, setPublicNote] = useState<string>('');
-  const [userChange, setUserChange] = useState(false);
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -57,13 +56,12 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   ).current;
 
   const onChange = (value: string) => {
-    setUserChange(true);
     setPublicNote(value);
     updateNoteFunction(value);
   };
 
   useEffect(() => {
-    if (!data || !('note' in data) || userChange) return;
+    if (!data || !('note' in data)) return;
     const autoNote = generatePublicNote({
       purpose: data.note.purpose,
       moods: data.note.moods,
@@ -72,7 +70,8 @@ export default function PublicNote({ noteId }: { noteId: string }) {
     });
 
     setAutoNote(autoNote);
-  }, [data, userChange]);
+    setPublicNote(data.note.publicDetails);
+  }, [data]);
 
   if (isLoading) {
     return <LoadingView />;
@@ -132,9 +131,12 @@ export default function PublicNote({ noteId }: { noteId: string }) {
           <Button
             onPress={() => {
               if (!publicNote) {
-                return setPublicNote(autoNote);
+                setPublicNote(autoNote);
+                onChange(autoNote);
+              } else {
+                setPublicNote('');
+                onChange('');
               }
-              onChange('');
             }}
             height="xl"
             accessibilityHint="Generates or clears GIRP note"
