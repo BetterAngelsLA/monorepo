@@ -53,7 +53,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         }
         """
         query = f"""
-            query ViewClientProfile($id: ID!) {{
+            query ($id: ID!) {{
                 clientProfile(pk: $id) {{
                     {self.client_profile_fields}
                     docReadyDocuments {document_fields}
@@ -73,13 +73,13 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
         expected_client_profile = {
             "id": str(client_profile_id),
             "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
-            "address": self.client_profile_1["address"],
+            "address": "1475 Luck Hoof Ave, Los Angeles, CA 90046",
             "age": self.EXPECTED_CLIENT_AGE,
             "californiaId": "L1234567",
             "consentFormDocuments": [self.client_profile_1_document_3],
             "contacts": self.client_profile_1["contacts"],
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
-            "displayCaseManager": self.client_profile_1_contact_2["name"],
+            "displayCaseManager": "Gary",
             "displayGender": "Male",
             "displayPronouns": "He/Him",
             "docReadyDocuments": [self.client_profile_1_document_1, self.client_profile_1_document_2],
@@ -111,6 +111,7 @@ class ClientProfileQueryTestCase(ClientProfileGraphQLBaseTestCase):
             "pronounsOther": None,
             "race": RaceEnum.WHITE_CAUCASIAN.name,
             "residenceAddress": "1475 Luck Hoof R Ave, Los Angeles, CA 90046",
+            "residenceGeolocation": self.residence_geolocation,
             "socialMediaProfiles": self.client_profile_1["socialMediaProfiles"],
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": VeteranStatusEnum.NO.name,
