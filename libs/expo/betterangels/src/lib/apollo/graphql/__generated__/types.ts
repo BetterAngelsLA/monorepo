@@ -398,6 +398,7 @@ export type ClientProfileType = {
   pronounsOther?: Maybe<Scalars['String']['output']>;
   race?: Maybe<RaceEnum>;
   residenceAddress?: Maybe<Scalars['String']['output']>;
+  residenceGeolocation?: Maybe<Scalars['Point']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
   user?: Maybe<UserType>;
@@ -491,6 +492,7 @@ export type CreateClientProfileInput = {
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
+  residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
@@ -2087,6 +2089,7 @@ export type UpdateClientProfileInput = {
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
+  residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;

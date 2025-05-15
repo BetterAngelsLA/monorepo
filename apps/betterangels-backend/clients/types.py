@@ -280,6 +280,7 @@ class ClientProfileBaseType:
     pronouns_other: auto
     race: auto
     residence_address: auto
+    residence_geolocation: auto
     spoken_languages: Optional[List[LanguageEnum]]
     veteran_status: auto
 
