@@ -9,8 +9,11 @@ interface IClientTabsProps {
 
 const TABS = [
   'Profile',
-  'Docs',
-  'Interactions',
+  // 'Docs',
+  // 'Interactions',
+  'ClusterG',
+  'ClusterA',
+  'ClusterAlt',
   // 'Tasks',
   // 'Services',
   // 'Schedule',

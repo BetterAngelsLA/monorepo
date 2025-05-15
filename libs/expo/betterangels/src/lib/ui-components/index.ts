@@ -23,6 +23,7 @@ export { default as LoginForm } from './LoginForm';
 export { default as MainContainer } from './MainContainer';
 export { default as MainPlusModal } from './MainPlusModal';
 export { default as MainScrollContainer } from './MainScrollContainer';
+export * from './Map';
 export { default as MaritalStatusPicker } from './MaritalStatusPicker';
 export { default as Modal } from './Modal';
 export * from './Nav';

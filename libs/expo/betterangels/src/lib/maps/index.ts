@@ -6,5 +6,6 @@ type TMapView = RNMapView; // pointing to RN for type as react-native-web-maps M
 const MapView = Maps.default;
 const Marker = Maps.Marker;
 const PROVIDER_GOOGLE = Maps?.PROVIDER_GOOGLE || 'google';
+// const Hello = Maps.MapMarker;
 
 export { MapView, Marker, PROVIDER_GOOGLE, TMapView };
