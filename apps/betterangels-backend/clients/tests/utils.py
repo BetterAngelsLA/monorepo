@@ -59,6 +59,7 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
             pronounsOther
             race
             residenceAddress
+            residenceGeolocation
             spokenLanguages
             veteranStatus
             displayCaseManager
@@ -135,6 +136,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
         super().setUp()
         self.EXPECTED_CLIENT_AGE = 20
         self.date_of_birth = timezone.now().date() - relativedelta(years=self.EXPECTED_CLIENT_AGE)
+        self.residence_geolocation = [-118.2437207, 34.0521723]
         # Order of fields: id -> direct fields and model properties -> display fields -> related fields
 
         # Force login the case manager to create client fixtures
@@ -270,6 +272,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "pronouns": PronounEnum.HE_HIM_HIS.name,
                 "race": RaceEnum.WHITE_CAUCASIAN.name,
                 "residenceAddress": "1475 Luck Hoof R Ave, Los Angeles, CA 90046",
+                "residenceGeolocation": self.residence_geolocation,
                 "socialMediaProfiles": self.client_1_social_media_profiles,
                 "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
                 "veteranStatus": VeteranStatusEnum.NO.name,
@@ -308,6 +311,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
                 "pronouns": None,
                 "race": None,
                 "residenceAddress": None,
+                "residenceGeolocation": None,
                 "socialMediaProfiles": [],
                 "spokenLanguages": [],
                 "veteranStatus": None,
