@@ -72,12 +72,6 @@ export default function PublicNote({ noteId }: { noteId: string }) {
     });
 
     setAutoNote(autoNote);
-
-    if (data.note.publicDetails) {
-      setPublicNote(data.note.publicDetails);
-    } else {
-      onChange(autoNote);
-    }
   }, [data, userChange]);
 
   if (isLoading) {
@@ -94,22 +88,8 @@ export default function PublicNote({ noteId }: { noteId: string }) {
           }}
         >
           <TextBold size="lg">Write Note</TextBold>
-          {autoNote !== publicNote && (
-            <View
-              style={{
-                padding: Spacings.xs,
-                borderRadius: Radiuses.xs,
-                backgroundColor: Colors.WARNING_EXTRA_LIGHT,
-              }}
-            >
-              <TextRegular size="sm" color={Colors.WARNING_DARK}>
-                You changed the form above. Please review note text for
-                consistency.
-              </TextRegular>
-            </View>
-          )}
           <TextRegular size="md">
-            Use the generated text below to get started. When finished, click
+            Use the generated text below to get started. When finished, tap
             “Save Note.”
           </TextRegular>
 
@@ -123,7 +103,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
               accessibilityLabel="Note input"
               style={styles.input}
               placeholder={
-                "Describe your interaction or tap 'Regenerate' to automatically create it in GIRP format"
+                'Tap “Generate” to auto-draft a note in GIRP format. When finished, tap “Save Note.”'
               }
             />
           </View>
@@ -151,16 +131,16 @@ export default function PublicNote({ noteId }: { noteId: string }) {
         >
           <Button
             onPress={() => {
-              if (autoNote !== publicNote) {
+              if (!publicNote) {
                 return setPublicNote(autoNote);
               }
               onChange('');
             }}
             height="xl"
-            accessibilityHint="clears HMIS input"
+            accessibilityHint="Generates or clears GIRP note"
             size="full"
             variant="secondary"
-            title={autoNote !== publicNote ? 'Regenerate' : 'Clear'}
+            title={(!!publicNote && 'Clear') || 'Generate'}
           />
         </View>
 
