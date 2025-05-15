@@ -21,6 +21,7 @@ export default function InteractionsFilters(props: IInteractionsFiltersProps) {
       style={{
         marginBottom: Spacings.xl,
         flexGrow: 0,
+        flexShrink: 0,
       }}
       contentContainerStyle={{
         gap: Spacings.xs,
