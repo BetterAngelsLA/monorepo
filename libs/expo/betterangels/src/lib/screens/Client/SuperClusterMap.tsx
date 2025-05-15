@@ -30,9 +30,7 @@ export function SuperClusterMap({ google }: { google?: boolean }) {
         <BaMap
           provider={google ? 'google' : undefined}
           onSelectedChange={onSelectedChange}
-          onRegionChangeComplete={(region) => {
-            // console.log('onRegionChange: ', region);
-          }}
+          // onRegionChangeComplete={() => {}}
         />
       </View>
       <View

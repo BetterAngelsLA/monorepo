@@ -67,8 +67,6 @@ type TProps = {
   subscriptAfter?: string;
 };
 
-const hel = Colors.WHITE;
-
 export const MapPinIcon = (props: TProps) => {
   const {
     text,

@@ -103,20 +103,20 @@ export function BaMap(props: TBaMapProps) {
         clusters.map((cluster, idx) => {
           const isCluster = !!(cluster.properties as any).cluster;
 
-          // if (!isCluster) {
-          //   console.log(
-          //     '*****************  cluster.properties.pointId:',
-          //     cluster.properties.pointId
-          //   );
-          //   return (
-          //     <PointMarker
-          //       key={`point-${cluster.properties.pointId}-${idx}`}
-          //       cluster={cluster}
-          //       onSelectedChange={onSelectedChange}
-          //       region={region}
-          //     />
-          //   );
-          // }
+          if (!isCluster) {
+            console.log(
+              '*****************  cluster.properties.pointId:',
+              cluster.properties.pointId
+            );
+            return (
+              <PointMarker
+                key={`point-${cluster.properties.pointId}-${idx}`}
+                cluster={cluster}
+                onSelectedChange={onSelectedChange}
+                region={region}
+              />
+            );
+          }
 
           if (isCluster) {
             console.log('*****************  cluster.id:', cluster.id);
