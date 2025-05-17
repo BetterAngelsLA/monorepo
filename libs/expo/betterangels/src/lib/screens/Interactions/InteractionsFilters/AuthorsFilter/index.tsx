@@ -68,7 +68,7 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
     setIsModalVisible(false);
   };
 
-  const clearBoxes = () => {
+  const handleClearBoxes = () => {
     setSelected([]);
     setIsModalVisible(true);
   }
@@ -166,7 +166,7 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
           </ScrollView>
 
           <Button
-            onPress={clearBoxes}
+            onPress={handleClearBoxes}
             size="full"
             title="Clear"
             variant="primary"
