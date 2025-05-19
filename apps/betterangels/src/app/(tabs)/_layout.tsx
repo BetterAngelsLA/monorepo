@@ -124,7 +124,6 @@ export default function TabLayout() {
             ),
           }}
         />
-
         <Tabs.Screen
           name="clients"
           listeners={{
@@ -149,11 +148,6 @@ export default function TabLayout() {
             ),
           }}
         />
-
-        {/* Hidden routes */}
-        {['map', 'teams', 'calendar', 'appointment'].map((name) => (
-          <Tabs.Screen key={name} name={name} options={{ href: null }} />
-        ))}
       </Tabs>
 
       <MainPlusModal

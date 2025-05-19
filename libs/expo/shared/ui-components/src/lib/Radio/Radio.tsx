@@ -7,67 +7,42 @@ import {
 import { Keyboard, Pressable, StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
 
-type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
-
 interface IRadioProps {
-  label: string | number;
-  onPress: () => void;
-  accessibilityLabel?: string;
-  accessibilityHint: string;
-  mb?: TSpacing;
-  mt?: TSpacing;
-  my?: TSpacing;
-  mx?: TSpacing;
-  ml?: TSpacing;
-  mr?: TSpacing;
-  value: string | undefined | null;
+  displayValue?: string;
+  onPress: (value: string) => void;
+  value: string;
+  selectedValue?: string;
+  disabled?: boolean;
 }
 
 export function Radio(props: IRadioProps) {
-  const {
-    label,
-    onPress,
-    accessibilityHint,
-    accessibilityLabel,
-    value,
-    mb,
-    mt,
-    mr,
-    ml,
-    my,
-    mx,
-  } = props;
+  const { disabled, displayValue, onPress, value, selectedValue } = props;
 
   return (
     <Pressable
-      accessibilityLabel={accessibilityLabel}
-      accessibilityHint={accessibilityHint}
+      disabled={disabled}
+      accessibilityHint={`selects ${value}`}
       accessibilityRole="button"
       accessible
       style={[
         styles.container,
         {
           backgroundColor:
-            value === label ? Colors.PRIMARY_EXTRA_LIGHT : Colors.WHITE,
+            value === selectedValue ? Colors.PRIMARY_EXTRA_LIGHT : Colors.WHITE,
           borderColor: Colors.NEUTRAL_LIGHT,
           paddingHorizontal: Spacings.sm,
           paddingVertical: Spacings.xs,
           justifyContent: 'space-between',
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
+          opacity: disabled ? 0.5 : 1,
         },
       ]}
       onPress={() => {
         Keyboard.dismiss();
-        onPress();
+        onPress(value);
       }}
     >
-      <TextRegular ml="xs">{label}</TextRegular>
-      <View style={[styles.radio, value === label && styles.checked]} />
+      <TextRegular ml="xs">{displayValue || value}</TextRegular>
+      <View style={[styles.radio, value === selectedValue && styles.checked]} />
     </Pressable>
   );
 }

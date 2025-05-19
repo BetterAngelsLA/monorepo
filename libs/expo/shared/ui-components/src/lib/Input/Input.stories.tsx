@@ -1,6 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { useForm } from 'react-hook-form';
+import { useState } from 'react';
 import { View } from 'react-native';
 import { Input } from './Input';
 
@@ -25,6 +25,8 @@ export default InputMeta;
 type InputStory = ComponentStory<typeof Input>;
 
 export const Basic: InputStory = () => {
-  const { control } = useForm();
-  return <Input label="Test" height={56} name="test" control={control} />;
+  const [value, setValue] = useState('');
+  return (
+    <Input label="Test" height={56} value={value} onChangeText={setValue} />
+  );
 };
