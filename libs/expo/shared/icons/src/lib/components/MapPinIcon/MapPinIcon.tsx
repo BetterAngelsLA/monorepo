@@ -1,16 +1,21 @@
-import { Colors } from '@monorepo/expo/shared/static';
 import { memo } from 'react';
 import isEqual from 'react-fast-compare';
 import { StyleSheet, TextStyle, View } from 'react-native';
 import { MapPinSvg } from './MapPinSvg';
 import { MapPinText } from './MapPinText';
-import { iconSizeMap } from './constants';
+import { iconSizeMap, variantStyleMap } from './constants';
 
 export type TMapPinIconSize = 'S' | 'M' | 'L';
-export type TMapPinVariant = 'outline' | 'filled';
+export type TMapPinVariant =
+  | 'primary'
+  | 'primaryFill'
+  | 'secondary'
+  | 'secondaryFill';
 
 type TProps = {
-  color?: string;
+  borderColor?: string;
+  fillColor?: string;
+  textColor?: string;
   size?: TMapPinIconSize;
   variant?: TMapPinVariant;
   text?: string;
@@ -20,9 +25,11 @@ type TProps = {
 
 const PinIcon = (props: TProps) => {
   const {
-    color = Colors.ERROR,
     size = 'M',
-    variant = 'filled',
+    variant = 'primary',
+    borderColor,
+    fillColor,
+    textColor,
     text,
     subscriptAfter,
     textStyle,
@@ -30,9 +37,11 @@ const PinIcon = (props: TProps) => {
 
   const { width, height } = iconSizeMap[size];
 
-  const outlineColor = color;
-  const fillColor = variant === 'filled' ? color : Colors.WHITE;
-  const textColor = variant === 'filled' ? Colors.WHITE : color;
+  const {
+    borderColor: variantBorderColor,
+    fillColor: variantFillColor,
+    textColor: variantTextColor,
+  } = variantStyleMap[variant];
 
   return (
     <View
@@ -45,8 +54,8 @@ const PinIcon = (props: TProps) => {
       ]}
     >
       <MapPinSvg
-        outlineColor={outlineColor}
-        fillColor={fillColor}
+        outlineColor={borderColor || variantBorderColor}
+        fillColor={fillColor || variantFillColor}
         width="100%"
         height="100%"
       />
@@ -57,7 +66,7 @@ const PinIcon = (props: TProps) => {
             size={size}
             text={text}
             subscriptAfter={subscriptAfter}
-            style={[{ color: textColor }, textStyle]}
+            style={[{ color: textColor || variantTextColor }, textStyle]}
           />
         </View>
       )}

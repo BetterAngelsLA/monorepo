@@ -32,20 +32,19 @@ export const MapPinText = (props: TMapPinText) => {
           ]}
         >
           {text}
-          {!!subscriptAfter && (
-            <Text
-              style={[
-                styles.defaultText,
-                {
-                  fontSize: subscriptAfterSize,
-                  lineHeight: subscriptAfterSize,
-                },
-                style,
-              ]}
-            >
-              {subscriptAfter}
-            </Text>
-          )}
+        </Text>
+      )}
+      {!!subscriptAfter && (
+        <Text
+          style={[
+            styles.defaultText,
+            {
+              fontSize: subscriptAfterSize,
+            },
+            style,
+          ]}
+        >
+          {subscriptAfter}
         </Text>
       )}
     </View>
@@ -56,7 +55,7 @@ const styles = StyleSheet.create({
   container: {
     display: 'flex',
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'baseline',
   },
   defaultText: {
     fontFamily: 'Poppins',

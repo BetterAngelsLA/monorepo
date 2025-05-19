@@ -1,4 +1,34 @@
-import { TMapPinIconSize } from './MapPinIcon';
+import { Colors } from '@monorepo/expo/shared/static';
+import { TMapPinIconSize, TMapPinVariant } from './MapPinIcon';
+
+type TVariantStyle = {
+  borderColor: Colors;
+  fillColor: Colors;
+  textColor: Colors;
+};
+
+export const variantStyleMap: Record<TMapPinVariant, TVariantStyle> = {
+  primary: {
+    borderColor: Colors.ERROR,
+    fillColor: Colors.WHITE,
+    textColor: Colors.ERROR,
+  },
+  primaryFill: {
+    borderColor: Colors.ERROR,
+    fillColor: Colors.ERROR,
+    textColor: Colors.WHITE,
+  },
+  secondary: {
+    borderColor: Colors.SUCCESS_DARK,
+    fillColor: Colors.SUCCESS_DARK,
+    textColor: Colors.WHITE,
+  },
+  secondaryFill: {
+    borderColor: Colors.SUCCESS_DARK,
+    fillColor: Colors.SUCCESS,
+    textColor: Colors.WHITE,
+  },
+};
 
 type TWidthHeight = {
   width: number;

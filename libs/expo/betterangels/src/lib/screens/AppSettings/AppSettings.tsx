@@ -42,7 +42,7 @@ const locations = [
     latitude: 34.0905,
     longitude: -118.2878,
     size: 'S',
-    variant: 'outline',
+    variant: 'primary',
     text: '3',
   },
   {
@@ -50,7 +50,7 @@ const locations = [
     latitude: 34.0905,
     longitude: -118.2478,
     size: 'M',
-    variant: 'outline',
+    variant: 'primary',
     text: '20',
   },
   {
@@ -58,59 +58,78 @@ const locations = [
     latitude: 34.0825,
     longitude: -118.2078,
     size: 'L',
-    variant: 'outline',
-    text: '44',
+    variant: 'primary',
+    text: '9',
   },
 
   {
     name: 'B',
     latitude: 34.0505,
     longitude: -118.2878,
+    variant: 'primaryFill',
     size: 'S',
-    text: '44',
-    subscriptAfter: '+',
+    text: '37',
   },
   {
     name: 'B 2',
     latitude: 34.0505,
     longitude: -118.2478,
+    variant: 'primaryFill',
     size: 'M',
-    text: '44',
-    subscriptAfter: '+',
+    text: '6',
   },
   {
     name: 'B 3',
     latitude: 34.0425,
     longitude: -118.2078,
+    variant: 'primaryFill',
     size: 'L',
-    text: '44',
+    text: '99',
     subscriptAfter: '+',
   },
 
-  { name: 'C', latitude: 34.0175, longitude: -118.2878, size: 'S' },
-  { name: 'C 2', latitude: 34.0175, longitude: -118.2478, size: 'M' },
-  { name: 'C 3', latitude: 34.0151, longitude: -118.2078, size: 'L' },
+  {
+    name: 'C',
+    latitude: 34.0175,
+    longitude: -118.2878,
+    size: 'S',
+    variant: 'secondary',
+  },
+  {
+    name: 'C 2',
+    latitude: 34.0175,
+    longitude: -118.2478,
+    size: 'M',
+    variant: 'secondary',
+  },
+  {
+    name: 'C 3',
+    latitude: 34.0151,
+    longitude: -118.2078,
+    size: 'L',
+    variant: 'secondary',
+  },
 
   {
     name: 'D',
     latitude: 33.9815,
     longitude: -118.2878,
     size: 'S',
-    variant: 'outline',
+    variant: 'secondaryFill',
   },
   {
     name: 'D 2',
     latitude: 33.9815,
     longitude: -118.2478,
     size: 'M',
-    variant: 'outline',
+    variant: 'secondaryFill',
   },
   {
     name: 'D 3',
     latitude: 33.9781,
     longitude: -118.2078,
     size: 'L',
-    variant: 'outline',
+    variant: 'secondaryFill',
   },
 ];
 
@@ -134,6 +153,7 @@ function DemoMap() {
                 latitude: loc.latitude,
                 longitude: loc.longitude,
               }}
+              tracksViewChanges={false}
             >
               <MapPinIcon
                 size={(loc.size || 'M') as any}
