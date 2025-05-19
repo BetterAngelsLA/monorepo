@@ -109,7 +109,7 @@ export default function Client({
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      <ClientHeader client={data?.clientProfile} />
+      {tab !== 'Locations' && <ClientHeader client={data?.clientProfile} />}
       <ClientTabs tab={tab} setTab={setTab} />
       {getTabComponent(tab, data, openCard)}
     </MainContainer>

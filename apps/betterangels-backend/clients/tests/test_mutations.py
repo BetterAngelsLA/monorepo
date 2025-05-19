@@ -105,6 +105,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "pronounsOther": None,
             "race": RaceEnum.ASIAN.name,
             "residenceAddress": "1234 Residence Street",
+            "residenceGeolocation": self.residence_geolocation,
             "socialMediaProfiles": social_media_profile,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": VeteranStatusEnum.YES.name,
@@ -118,7 +119,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         expected_phone_numbers = [{"id": ANY, **phone_number}]
         expected_social_media_profiles = [{"id": ANY, **social_media_profile}]
         expected_client_profile = {
-            **variables,  # Needs to be first because we're overwriting some fields
+            **variables,
             "id": ANY,
             "age": self.EXPECTED_CLIENT_AGE,
             "contacts": expected_contacts,
@@ -224,6 +225,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "pronounsOther": "she/her/theirs",
             "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
             "residenceAddress": "1234 Residence St",
+            "residenceGeolocation": [-118, 34],
             "socialMediaProfiles": social_media_profiles,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": VeteranStatusEnum.YES.name,
@@ -238,7 +240,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         variables["householdMembers"] = expected_household_members
 
         expected_client_profile = {
-            **variables,  # Needs to be first because we're overwriting dob
+            **variables,
             "age": self.EXPECTED_CLIENT_AGE,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayCaseManager": "Not Assigned",
