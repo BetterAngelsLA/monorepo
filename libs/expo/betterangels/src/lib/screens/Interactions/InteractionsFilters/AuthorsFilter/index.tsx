@@ -7,7 +7,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Ordering, SelahTeamEnum } from '../../../../apollo';
 import { useInfiniteScroll, useUser } from '../../../../hooks';
 import { Modal } from '../../../../ui-components';
@@ -71,7 +71,7 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
   const handleClearBoxes = () => {
     setSelected([]);
     setIsModalVisible(true);
-  }
+  };
 
   const handleCloseModal = () => {
     setSelected(filters.authors);
@@ -165,23 +165,26 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
             )}
           </ScrollView>
 
-          <Button
-            onPress={handleClearBoxes}
-            size="full"
-            title="Clear"
-            variant="primary"
-            accessibilityHint="apply selected created by filter"
-          />
+          <View>
+            <Button
+              onPress={handleClearBoxes}
+              size="full"
+              title="Clear"
+              variant="primary"
+              accessibilityHint="apply selected created by filter"
+            />
 
-          <Button
-            onPress={handleOnDone}
-            size="full"
-            title="Done"
-            variant="primary"
-            accessibilityHint="apply selected created by filter"
-          />
+            <Button
+              onPress={handleOnDone}
+              size="full"
+              title="Done"
+              variant="primary"
+              accessibilityHint="apply selected created by filter"
+            />
+          </View>
         </View>
       </Modal>
     </View>
   );
 }
+
