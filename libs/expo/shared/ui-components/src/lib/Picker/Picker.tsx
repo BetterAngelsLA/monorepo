@@ -77,7 +77,7 @@ export default function Picker(props: IPickerProps) {
             color={
               allowSelectNone ? styles.itemStyle.color : Colors.NEUTRAL_DARK
             }
-            enabled={!!allowSelectNone}
+            enabled={!!allowSelectNone || !selectedValue}
           />
           {items.map((item) => (
             <RNPicker.Item
