@@ -373,6 +373,7 @@ type ClientProfileType {
   pronounsOther: String
   race: RaceEnum
   residenceAddress: String
+  residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
   veteranStatus: VeteranStatusEnum
   id: ID!
@@ -458,6 +459,7 @@ input CreateClientProfileInput {
   pronounsOther: String
   race: RaceEnum
   residenceAddress: String
+  residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
   veteranStatus: VeteranStatusEnum
   contacts: [ClientContactInput!]
@@ -1677,6 +1679,7 @@ input UpdateClientProfileInput {
   pronounsOther: String
   race: RaceEnum
   residenceAddress: String
+  residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
   veteranStatus: VeteranStatusEnum
   id: ID!

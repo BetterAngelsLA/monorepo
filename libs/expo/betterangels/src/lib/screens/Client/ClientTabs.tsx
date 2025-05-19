@@ -1,6 +1,8 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useFeatureFlagActive } from '../../hooks';
+import { FeatureFlags } from '../../providers';
 
 interface IClientTabsProps {
   tab: string;
@@ -11,14 +13,17 @@ const TABS = [
   'Profile',
   'Docs',
   'Interactions',
+  'Locations',
   // 'Tasks',
   // 'Services',
   // 'Schedule',
-  // 'Locations',
 ];
 
 export default function ClientTabs(props: IClientTabsProps) {
   const { tab, setTab } = props;
+  const clientLocationHistoryFeatureOn = useFeatureFlagActive(
+    FeatureFlags.LOCATION_HISTORY_FF
+  );
   return (
     <View
       style={{
@@ -32,7 +37,10 @@ export default function ClientTabs(props: IClientTabsProps) {
         showsHorizontalScrollIndicator={false}
         horizontal
       >
-        {TABS.map((t) => (
+        {(!clientLocationHistoryFeatureOn
+          ? TABS.filter((t) => t !== 'Locations')
+          : TABS
+        ).map((t) => (
           <View
             style={{
               position: 'relative',

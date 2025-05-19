@@ -151,10 +151,12 @@ export default function Client({
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      <ClientHeader
-        onCaseManagerPress={handleScrollToRelevantContacts}
-        client={data?.clientProfile}
-      />
+      {tab !== 'Locations' && (
+        <ClientHeader
+          onCaseManagerPress={handleScrollToRelevantContacts}
+          client={data?.clientProfile}
+        />
+      )}
       <ClientTabs tab={tab} setTab={setTab} />
       {getTabComponent(
         tab,
