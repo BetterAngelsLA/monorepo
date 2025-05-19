@@ -27,7 +27,6 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   const [updateNote, { error }] = useUpdateNoteMutation();
   const [autoNote, setAutoNote] = useState<string>('');
   const [publicNote, setPublicNote] = useState<string>('');
-  const [userChange, setUserChange] = useState(false);
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -57,13 +56,12 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   ).current;
 
   const onChange = (value: string) => {
-    setUserChange(true);
     setPublicNote(value);
     updateNoteFunction(value);
   };
 
   useEffect(() => {
-    if (!data || !('note' in data) || userChange) return;
+    if (!data || !('note' in data)) return;
     const autoNote = generatePublicNote({
       purpose: data.note.purpose,
       moods: data.note.moods,
@@ -72,13 +70,8 @@ export default function PublicNote({ noteId }: { noteId: string }) {
     });
 
     setAutoNote(autoNote);
-
-    if (data.note.publicDetails) {
-      setPublicNote(data.note.publicDetails);
-    } else {
-      onChange(autoNote);
-    }
-  }, [data, userChange]);
+    setPublicNote(data.note.publicDetails);
+  }, [data]);
 
   if (isLoading) {
     return <LoadingView />;
@@ -94,22 +87,8 @@ export default function PublicNote({ noteId }: { noteId: string }) {
           }}
         >
           <TextBold size="lg">Write Note</TextBold>
-          {autoNote !== publicNote && (
-            <View
-              style={{
-                padding: Spacings.xs,
-                borderRadius: Radiuses.xs,
-                backgroundColor: Colors.WARNING_EXTRA_LIGHT,
-              }}
-            >
-              <TextRegular size="sm" color={Colors.WARNING_DARK}>
-                You changed the form above. Please review note text for
-                consistency.
-              </TextRegular>
-            </View>
-          )}
           <TextRegular size="md">
-            Use the generated text below to get started. When finished, click
+            Use the generated text below to get started. When finished, tap
             “Save Note.”
           </TextRegular>
 
@@ -123,7 +102,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
               accessibilityLabel="Note input"
               style={styles.input}
               placeholder={
-                "Describe your interaction or tap 'Regenerate' to automatically create it in GIRP format"
+                'Tap “Generate” to auto-draft a note in GIRP format. When finished, tap “Save Note.”'
               }
             />
           </View>
@@ -151,16 +130,19 @@ export default function PublicNote({ noteId }: { noteId: string }) {
         >
           <Button
             onPress={() => {
-              if (autoNote !== publicNote) {
-                return setPublicNote(autoNote);
+              if (!publicNote) {
+                setPublicNote(autoNote);
+                onChange(autoNote);
+              } else {
+                setPublicNote('');
+                onChange('');
               }
-              onChange('');
             }}
             height="xl"
-            accessibilityHint="clears HMIS input"
+            accessibilityHint="Generates or clears GIRP note"
             size="full"
             variant="secondary"
-            title={autoNote !== publicNote ? 'Regenerate' : 'Clear'}
+            title={(!!publicNote && 'Clear') || 'Generate'}
           />
         </View>
 
