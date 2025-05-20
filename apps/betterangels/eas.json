@@ -1,9 +1,7 @@
 {
   "build": {
     "e2e-test": {
-      "config": "build-and-maestro-test.yml",
       "developmentClient": false,
-      "withoutCredentials": true,
       "ios": {
         "simulator": true,
         "image": "latest"
