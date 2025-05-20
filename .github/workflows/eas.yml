@@ -230,14 +230,6 @@ jobs:
           rm -f .env
         working-directory: apps/${{ matrix.project }}
 
-  android_e2e_test:
-    name: Android E2E Tests
-    type: maestro
-    needs: preview
-    params:
-      build_id: ${{ needs.preview.outputs.android-build-id }}
-      flow_path: ['.maestro/flows/landing.yml']
-
   production:
     if: |
       github.event_name == 'push' &&
