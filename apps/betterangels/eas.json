@@ -1,7 +1,7 @@
 {
   "build": {
     "development-simulator": {
-      "developmentClient": true,
+      "developmentClient": false,
       "distribution": "internal",
       "env": {
         "EAS_NO_FROZEN_LOCKFILE": "1",
@@ -13,6 +13,9 @@
         "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "INFO"
       },
       "channel": "development",
+      "android": {
+        "buildType": "apk"
+      },
       "ios": {
         "simulator": true
       },
