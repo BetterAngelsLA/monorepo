@@ -165,18 +165,18 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
             )}
           </ScrollView>
 
-          <View>
+          <View style={{'flexDirection': 'row', 'justifyContent': 'center', 'gap': 10}}>
             <Button
               onPress={handleClearBoxes}
-              size="full"
+              size="md"
               title="Clear"
-              variant="primary"
+              variant="secondary"
               accessibilityHint="apply selected created by filter"
             />
 
             <Button
               onPress={handleOnDone}
-              size="full"
+              size="md"
               title="Done"
               variant="primary"
               accessibilityHint="apply selected created by filter"
