@@ -10,7 +10,9 @@
     "ba": "nx start betterangels",
     "ba:build-dev": "nx build betterangels --profile development",
     "shelter": "nx serve shelter-web --port 8083",
-    "fires": "nx serve wildfires --port 8200"
+    "fires": "nx serve wildfires --port 8200",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@apollo/client": "^3.11.1",
@@ -145,6 +147,7 @@
     "babel-preset-expo": "~13.0.0",
     "babel-preset-vite": "^1.1.3",
     "core-js": "3.36.1",
+    "eas-cli": "^0.24.1",
     "eslint": "8.57.0",
     "eslint-config-prettier": "10.1.1",
     "eslint-plugin-import": "2.27.5",

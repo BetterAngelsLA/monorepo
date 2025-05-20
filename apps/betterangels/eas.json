@@ -1,7 +1,20 @@
 {
   "build": {
-    "development-simulator": {
+    "e2e-test": {
+      "config": "build-and-maestro-test.yml",
       "developmentClient": false,
+      "withoutCredentials": true,
+      "ios": {
+        "simulator": true,
+        "build": "latest"
+      },
+      "android": {
+        "buildType": "apk",
+        "build": "latest"
+      }
+    },
+    "development-simulator": {
+      "developmentClient": true,
       "distribution": "internal",
       "env": {
         "EAS_NO_FROZEN_LOCKFILE": "1",
@@ -13,9 +26,6 @@
         "EXPO_PUBLIC_NEW_RELIC_LOG_LEVEL": "INFO"
       },
       "channel": "development",
-      "android": {
-        "buildType": "apk"
-      },
       "ios": {
         "simulator": true
       },

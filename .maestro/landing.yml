@@ -1,4 +1,4 @@
-appId: la.betterangels.dev.app
+appId: '${APP_ID}'
 ---
 - launchApp
 - assertVisible: Get Started
