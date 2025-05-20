@@ -1,17 +1,13 @@
 import {
-  enumDisplaySelahTeam,
   SelahTeamEnum,
+  enumDisplaySelahTeam,
   useSnackbar,
   useUpdateNoteMutation,
 } from '@monorepo/expo/betterangels';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { Picker_V2 as Picker } from '@monorepo/expo/shared/ui-components';
+import { Picker } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { View } from 'react-native';
-
-const valueAsSelahTeamEnum = Object.fromEntries(
-  Object.entries(enumDisplaySelahTeam).map(([key, value]) => [value, key])
-);
 
 interface ITeamProps {
   team?: SelahTeamEnum | null;
@@ -20,20 +16,19 @@ interface ITeamProps {
 
 export default function Team(props: ITeamProps) {
   const { team, noteId } = props;
-  const [localTeam, setLocalTeam] = useState<string | null | undefined>(
-    team ? enumDisplaySelahTeam[team] : null
+  const [localTeam, setLocalTeam] = useState<SelahTeamEnum | undefined | null>(
+    team
   );
 
   const [updateNote] = useUpdateNoteMutation();
   const { showSnackbar } = useSnackbar();
 
-  const updateNoteFunction = async (value: string) => {
+  const updateNoteFunction = async (selectedTeam: SelahTeamEnum | null) => {
     if (!noteId) {
       return;
     }
-    setLocalTeam(value);
-    const enumValue = valueAsSelahTeamEnum[value] as SelahTeamEnum;
-    const selectedTeam = enumValue !== undefined ? enumValue : null;
+
+    setLocalTeam(selectedTeam);
 
     try {
       await updateNote({
@@ -49,6 +44,7 @@ export default function Team(props: ITeamProps) {
         message: 'Failed to update interaction.',
         type: 'error',
       });
+
       console.error('Failed to update interaction:', err);
     }
   };
@@ -56,14 +52,13 @@ export default function Team(props: ITeamProps) {
   return (
     <View style={{ marginBottom: Spacings.xs }}>
       <Picker
-        placeholder="Team"
         allowSelectNone
+        placeholder="Select Team"
         selectedValue={localTeam}
-        items={Object.values(SelahTeamEnum).map((item) => ({
-          label: enumDisplaySelahTeam[item],
-          value: enumDisplaySelahTeam[item],
-        }))}
-        onChange={(t) => updateNoteFunction(t as SelahTeamEnum)}
+        items={Object.entries(enumDisplaySelahTeam).map(
+          ([value, displayValue]) => ({ value, displayValue })
+        )}
+        onChange={(t) => updateNoteFunction(t as SelahTeamEnum | null)}
       />
     </View>
   );
