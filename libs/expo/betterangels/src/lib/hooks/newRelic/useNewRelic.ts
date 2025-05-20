@@ -10,7 +10,7 @@ const logLevelMap = {
   INFO: NewRelic.LogLevel.INFO,
   DEBUG: NewRelic.LogLevel.DEBUG,
 };
-
+console.log('push this');
 export default function useNewRelic() {
   const { version, runtimeVersion, otaUpdateId, otaUpdateIdShort } =
     useAppVersion();
