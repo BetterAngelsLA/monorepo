@@ -1,0 +1,5 @@
+appId: la.betterangels.dev.app
+---
+- launchApp
+- waitForAnimationToEnd
+- assertVisible: 'Get Started'
