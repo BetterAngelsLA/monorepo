@@ -15,12 +15,10 @@ import {
   ApiConfigProvider,
   ApolloClientProvider,
 } from '@monorepo/expo/shared/clients';
-import { ArrowLeftIcon, ChevronLeftIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
-import { IconButton, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { Link, Stack, useRouter } from 'expo-router';
+import { ArrowLeftIcon } from '@monorepo/expo/shared/icons';
+import { IconButton } from '@monorepo/expo/shared/ui-components';
+import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
@@ -62,28 +60,6 @@ export default function RootLayout() {
                     <Stack.Screen
                       name="(private-screens)"
                       options={{ headerShown: false, gestureEnabled: false }}
-                    />
-                    <Stack.Screen
-                      name="team"
-                      options={{
-                        title: '',
-                        presentation: 'modal',
-                        headerLeft: () => (
-                          <Link href="/teams">
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                              }}
-                            >
-                              <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
-                              <TextRegular color={Colors.PRIMARY_LIGHT}>
-                                Teams
-                              </TextRegular>
-                            </View>
-                          </Link>
-                        ),
-                      }}
                     />
                     <Stack.Screen
                       name="modal"

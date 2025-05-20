@@ -4,7 +4,6 @@ import {
   UpdateNoteMutation,
   UpdateNoteMutationVariables,
 } from '@monorepo/expo/betterangels';
-import { Regex } from '@monorepo/expo/shared/static';
 import {
   DatePicker,
   FieldCard,
@@ -113,28 +112,23 @@ export default function DateAndTime(props: IDateAndTimeProps) {
       >
         <DatePicker
           required
-          disabled
-          initialDate={interactedAt}
-          pattern={Regex.date}
           maxDate={endOfDay}
           mode="date"
           format="MM/dd/yyyy"
           placeholder="MM/DD/YYYY"
-          mt="xs"
           value={new Date(dateTime.date) || new Date()}
-          setValue={(date) => onChange('date', date)}
+          onChange={(date) => onChange('date', date)}
         />
         <DatePicker
-          disabled
           required
           maxDate={endOfDay}
-          initialDate={interactedAt}
           mode="time"
           format="h:mm a"
           placeholder="h:mm a"
           mt="xs"
+          mb="sm"
           value={new Date(dateTime.time) || new Date()}
-          setValue={(time) => onChange('time', time)}
+          onChange={(time) => onChange('time', time)}
         />
       </View>
     </FieldCard>

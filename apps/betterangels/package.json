@@ -73,6 +73,7 @@
     "expo-application": "*",
     "@react-navigation/native-stack": "*",
     "expo-updates": "*",
+    "react-native-walkthrough-tooltip": "*",
     "newrelic-react-native-agent": "*"
   },
   "scripts": {

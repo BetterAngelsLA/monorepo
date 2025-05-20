@@ -1,5 +1,4 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { Input } from '@monorepo/expo/shared/ui-components';
+import { ControlledInput } from '@monorepo/expo/shared/ui-components';
 import { useForm } from 'react-hook-form';
 import ServiceOtherCheckbox from './ServiceOtherCheckbox';
 
@@ -48,13 +47,16 @@ export default function OtherCategory(props: IOtherCategoryProps) {
           />
         );
       })}
-      <Input
-        placeholder="Enter other category"
-        onSubmitEditing={(e) => handleAddOtherCategory(e.nativeEvent.text)}
+
+      <ControlledInput
         mt="xs"
         name="otherCategory"
-        height={Spacings.xl}
+        placeholder="Enter other category"
         control={control}
+        onDelete={() => setValue('otherCategory', '')}
+        onSubmitEditing={(e) => {
+          handleAddOtherCategory(e.nativeEvent.text);
+        }}
       />
     </>
   );
