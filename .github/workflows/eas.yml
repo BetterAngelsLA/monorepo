@@ -131,6 +131,14 @@ jobs:
           project: ${{ matrix.project }}
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
+      - name: 🔍 E2E Build & Test
+        id: e2e-build
+        uses: ./.github/actions/expo-build
+        with:
+          profile: e2e-test
+          project: ${{ matrix.project }}
+          runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
+
       - name: 📱 Simulator Build
         id: simulator-build
         uses: ./.github/actions/expo-build
@@ -230,23 +238,23 @@ jobs:
           rm -f .env
         working-directory: apps/${{ matrix.project }}
 
-  android_e2e:
-    name: Android E2E
-    needs: preview
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  # android_e2e:
+  #   name: Android E2E
+  #   needs: preview
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - name: Setup EAS CLI
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+  #     - name: Setup EAS CLI
+  #       uses: expo/expo-github-action@v8
+  #       with:
+  #         eas-version: latest
+  #         token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Trigger EAS Workflow
-        run: |
-          npx eas-cli@latest workflow:run .github/workflows/android-e2e.yml \
-            --non-interactive --wait
+  #     - name: Trigger EAS Workflow
+  #       run: |
+  #         npx eas-cli@latest workflow:run .github/workflows/android-e2e.yml \
+  #           --non-interactive --wait
 
   production:
     if: |

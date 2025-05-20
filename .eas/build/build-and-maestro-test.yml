@@ -1,0 +1,8 @@
+build:
+  name: Create a build and run Maestro
+  steps:
+    - eas/build
+    - eas/maestro_test:
+        inputs:
+          flow_path: |
+            maestro/landing.yml
