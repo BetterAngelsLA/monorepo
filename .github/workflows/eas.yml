@@ -78,6 +78,8 @@ jobs:
     permissions:
       pull-requests: write # REQUIRED: Allow comments on PRs
       actions: write # REQUIRED: Allow updating fingerprint in action caches
+    outputs:
+      android-build-id: ${{ steps.preview-build.outputs.android-build-id }}
     steps:
       - name: 🚦 Turnstyle
         uses: softprops/turnstyle@master
@@ -227,6 +229,19 @@ jobs:
         run: |
           rm -f .env
         working-directory: apps/${{ matrix.project }}
+
+  android_e2e_test:
+    name: Android E2E Tests
+    runs-on: ubuntu-latest
+    needs: preview
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Maestro E2E
+        run: |
+          maestro test \
+            --build-id ${{ steps.preview-build.outputs.android-build-id }} \
+            --flow-path .maestro/flows/landing.yml
 
   production:
     if: |

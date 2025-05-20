@@ -1,5 +1,11 @@
 appId: la.betterangels.dev.app
 ---
 - launchApp
-- waitForAnimationToEnd
-- assertVisible: 'Get Started'
+- assertVisible: Get Started
+# - tapOn: Get Started
+# - assertVisible: Enter email address
+# - tapOn: Enter email address
+# - inputText: admin@example.com
+# - tapOn: Enter password
+# - inputText: password
+# - tapOn: Sign In
