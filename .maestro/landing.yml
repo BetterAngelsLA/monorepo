@@ -1,11 +1,19 @@
-appId: '${APP_ID}'
+appId: la.betterangels.dev.app
+platform: ios
 ---
 - launchApp
-- assertVisible: Get Started
-# - tapOn: Get Started
-# - assertVisible: Enter email address
-# - tapOn: Enter email address
-# - inputText: admin@example.com
-# - tapOn: Enter password
-# - inputText: password
-# - tapOn: Sign In
+- openLink: la.betterangels.dev.app://expo-development-client/?url=http://localhost:8081
+- runFlow:
+    when:
+      visible: 'Open'
+    commands:
+      - tapOn: 'Open'
+- runFlow:
+    when:
+      visible: 'Continue'
+    commands:
+      - tapOn:
+          point: 50%,10%
+- assertVisible: 'Get Started'
+- tapOn: 'Get Started'
+- assertVisible: 'Welcome!'
