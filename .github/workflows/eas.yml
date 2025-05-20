@@ -232,31 +232,36 @@ jobs:
 
   android_e2e_test:
     name: Android E2E Tests
-    runs-on: ubuntu-latest
+    type: maestro
     needs: preview
-    steps:
-      - uses: actions/checkout@v4
+    params:
+      build_id: ${{ needs.build_android_for_e2e.outputs.build_id }}
+      flow_path: ['.maestro/flows/landing.yml']
 
-      - name: Install JDK (prerequisite for Maestro)
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'temurin'
-          java-version: '11'
+    # runs-on: ubuntu-latest
+    # steps:
+    #   - uses: actions/checkout@v4
 
-      - name: Install Maestro CLI
-        run: curl -fsSL https://get.maestro.mobile.dev | bash
+    #   - name: Install JDK (prerequisite for Maestro)
+    #     uses: actions/setup-java@v3
+    #     with:
+    #       distribution: 'temurin'
+    #       java-version: '11'
 
-      - name: Add Maestro to PATH
-        run: echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+    #   - name: Install Maestro CLI
+    #     run: curl -fsSL https://get.maestro.mobile.dev | bash
 
-      - name: Verify Maestro is on PATH
-        run: which maestro && maestro --version
+    #   - name: Add Maestro to PATH
+    #     run: echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
-      - name: Run Maestro E2E
-        run: |
-          maestro test \
-            --build-id ${{ needs.preview.outputs.android-build-id }} \
-            --flow-path .maestro/flows/landing.yml
+    #   - name: Verify Maestro is on PATH
+    #     run: which maestro && maestro --version
+
+    #   - name: Run Maestro E2E
+    #     run: |
+    #       maestro test \
+    #         --build-id ${{ needs.preview.outputs.android-build-id }} \
+    #         --flow-path .maestro/flows/landing.yml
 
   production:
     if: |
