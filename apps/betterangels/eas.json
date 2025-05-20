@@ -6,11 +6,11 @@
       "withoutCredentials": true,
       "ios": {
         "simulator": true,
-        "build": "latest"
+        "image": "latest"
       },
       "android": {
         "buildType": "apk",
-        "build": "latest"
+        "image": "latest"
       }
     },
     "development-simulator": {
@@ -73,8 +73,5 @@
         "releaseStatus": "draft"
       }
     }
-  },
-  "cli": {
-    "version": ">= 5"
   }
 }
