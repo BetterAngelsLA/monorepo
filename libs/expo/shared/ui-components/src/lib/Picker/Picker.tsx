@@ -74,6 +74,7 @@ export default function Picker(props: IPickerProps) {
           <RNPicker.Item
             label={noneLabel}
             value={NONE_VALUE}
+            style={styles.itemStyle}
             color={
               allowSelectNone ? styles.itemStyle.color : Colors.NEUTRAL_DARK
             }
@@ -82,6 +83,7 @@ export default function Picker(props: IPickerProps) {
           {items.map((item) => (
             <RNPicker.Item
               style={styles.itemStyle}
+              color={styles.itemStyle.color}
               key={item.value}
               label={item.displayValue || item.value}
               value={item.value}
@@ -112,5 +114,7 @@ const styles = StyleSheet.create({
   },
   itemStyle: {
     color: Colors.PRIMARY_EXTRA_DARK,
+    borderRadius: Radiuses.xs,
+    backgroundColor: Colors.WHITE,
   },
 });
