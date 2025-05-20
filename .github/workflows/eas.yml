@@ -240,7 +240,7 @@ jobs:
       - name: Run Maestro E2E
         run: |
           maestro test \
-            --build-id ${{ steps.preview-build.outputs.android-build-id }} \
+            --build-id ${{ steps.preview.outputs.android-build-id }} \
             --flow-path .maestro/flows/landing.yml
 
   production:
