@@ -245,7 +245,7 @@ jobs:
 
       - name: Trigger EAS Workflow
         run: |
-          npx eas-cli@latest workflow:run .eas/workflows/android-e2e.yml \
+          npx eas-cli@latest workflow:run .github/workflows/android-e2e.yml \
             --non-interactive --wait
 
   production:
