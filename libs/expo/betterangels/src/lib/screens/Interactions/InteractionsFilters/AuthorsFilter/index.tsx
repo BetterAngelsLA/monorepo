@@ -7,7 +7,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { Ordering, SelahTeamEnum } from '../../../../apollo';
 import { useInfiniteScroll, useUser } from '../../../../hooks';
 import { Modal } from '../../../../ui-components';
