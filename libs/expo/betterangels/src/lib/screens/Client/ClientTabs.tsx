@@ -12,12 +12,12 @@ export enum ClientViewTabEnum {
 }
 
 interface IClientTabsProps {
-  tabName: ClientViewTabEnum;
+  selectedTab: ClientViewTabEnum;
   setTab: (tab: ClientViewTabEnum) => void;
 }
 
 export default function ClientTabs(props: IClientTabsProps) {
-  const { tabName, setTab } = props;
+  const { selectedTab, setTab } = props;
 
   const clientLocationHistoryFeatureOn = useFeatureFlagActive(
     FeatureFlags.LOCATION_HISTORY_FF
@@ -41,7 +41,7 @@ export default function ClientTabs(props: IClientTabsProps) {
             style={[
               styles.tab,
               {
-                borderBottomWidth: t === tabName ? 3 : 0,
+                borderBottomWidth: t === selectedTab ? 3 : 0,
               },
             ]}
             key={t}
@@ -49,7 +49,7 @@ export default function ClientTabs(props: IClientTabsProps) {
             <TextButton
               onPress={() => setTab(t)}
               style={styles.textBtn}
-              regular={t !== tabName}
+              regular={t !== selectedTab}
               title={t}
               accessibilityHint={`select ${t} tab`}
             />
