@@ -15,6 +15,7 @@ import { TPickerItem } from './types';
 type TProps = {
   visible?: boolean;
   items: TPickerItem[];
+  selectedValue?: string | null;
   onClose: () => void;
   onSelect: (newValue: string) => void;
   animationType?: ModalProps['animationType'];
@@ -26,6 +27,7 @@ type TProps = {
 export function PickerModal(props: TProps) {
   const {
     items,
+    selectedValue,
     visible,
     onSelect,
     onClose,
@@ -63,6 +65,7 @@ export function PickerModal(props: TProps) {
                   key={item.value}
                   value={item.value}
                   displayValue={item.displayValue}
+                  isSelected={item.value === selectedValue}
                   onPress={onSelect}
                 />
               ))}

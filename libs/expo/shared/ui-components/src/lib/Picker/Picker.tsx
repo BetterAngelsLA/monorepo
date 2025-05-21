@@ -54,10 +54,11 @@ export default function Picker(props: IPickerProps) {
       <PickerModal
         visible={isModalVisible}
         items={items}
-        onSelect={onSelect}
-        onClose={() => setIsModalVisible(false)}
+        selectedValue={selectedValue}
         allowSelectNone={allowSelectNone}
         selectNoneLabel={selectNoneLabel || placeholder}
+        onSelect={onSelect}
+        onClose={() => setIsModalVisible(false)}
       />
     </>
   );

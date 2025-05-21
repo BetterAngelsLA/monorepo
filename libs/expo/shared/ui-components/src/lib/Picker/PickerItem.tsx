@@ -5,11 +5,12 @@ import TextRegular from '../TextRegular';
 type TProps = {
   value: string;
   displayValue?: string;
+  isSelected?: boolean;
   onPress: (value: string) => void;
 };
 
 export function PickerItem(props: TProps) {
-  const { onPress, value, displayValue } = props;
+  const { onPress, value, displayValue, isSelected } = props;
 
   return (
     <Pressable
@@ -29,7 +30,9 @@ export function PickerItem(props: TProps) {
           ]}
         >
           <View style={styles.content}>
-            <TextRegular>{displayValue || value}</TextRegular>
+            <TextRegular style={{ fontWeight: isSelected ? 700 : undefined }}>
+              {displayValue || value}
+            </TextRegular>
           </View>
         </View>
       )}
