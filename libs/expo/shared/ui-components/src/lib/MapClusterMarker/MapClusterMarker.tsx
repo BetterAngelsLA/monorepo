@@ -81,6 +81,7 @@ export function MapClusterMarker(props: IMapClusterMarkerProps) {
               },
             ]}
           >
+            {/* TODO: We don't have the icon which is on FIGMA (AC said ignore the icon for now) */}
             <HouseSolidIcon
               color={Colors.NEUTRAL_EXTRA_DARK}
               size={SIZES[size].houseIcon}
