@@ -18,9 +18,8 @@ import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Input } from '../Input';
 import TextBold from '../TextBold';
-import { IPickerProps } from './Picker';
-
-const NONE_VALUE = '__none__';
+import { NONE_VALUE } from './constants';
+import { IPickerProps } from './types';
 
 export default function Picker(props: IPickerProps) {
   const {
