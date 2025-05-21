@@ -1,8 +1,8 @@
 import { getMarginStyles } from '@monorepo/expo/shared/static';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Keyboard } from 'react-native';
 import { PickerField } from './PickerField';
-import { PickerModal } from './PickerModal/PickerModal';
+import { PickerModal } from './PickerModal';
 import { NONE_VALUE } from './constants';
 import { IPickerProps } from './types';
 
@@ -19,12 +19,7 @@ export default function Picker(props: IPickerProps) {
     required,
     disabled,
   } = props;
-  const [localValue, setLocalValue] = useState<string | null>(null);
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-
-  useEffect(() => {
-    setLocalValue(selectedValue || null);
-  }, [selectedValue, setLocalValue]);
 
   function onSelect(newValue: string) {
     Keyboard.dismiss();

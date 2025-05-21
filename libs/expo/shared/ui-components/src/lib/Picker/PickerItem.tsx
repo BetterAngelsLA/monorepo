@@ -1,14 +1,14 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
-import TextRegular from '../../TextRegular';
+import TextRegular from '../TextRegular';
 
-type INavButton = {
+type TProps = {
   value: string;
   displayValue?: string;
   onPress: (value: string) => void;
 };
 
-export function PickerItem(props: INavButton) {
+export function PickerItem(props: TProps) {
   const { onPress, value, displayValue } = props;
 
   return (

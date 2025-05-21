@@ -8,9 +8,9 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import { NONE_VALUE } from '../constants';
-import { TPickerItem } from '../types';
 import { PickerItem } from './PickerItem';
+import { NONE_VALUE } from './constants';
+import { TPickerItem } from './types';
 
 type TProps = {
   visible?: boolean;
@@ -29,7 +29,7 @@ export function PickerModal(props: TProps) {
     visible,
     onSelect,
     onClose,
-    animationType = 'slide',
+    animationType = 'fade',
     allowSelectNone,
     selectNoneLabel = 'Select',
   } = props;
