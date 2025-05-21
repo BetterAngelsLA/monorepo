@@ -29,12 +29,6 @@ export function PickerField(props: TProps) {
     disabled,
     style,
   } = props;
-  // const [localValue, setLocalValue] = useState<string | null>(null);
-
-  // useEffect(() => {
-  //   setLocalValue(selectedValue || null);
-  // }, [selectedValue, setLocalValue]);
-
   const getDisplayValue = useCallback(
     (value?: string | null) => {
       const item = items.find((item) => item.value === value);
