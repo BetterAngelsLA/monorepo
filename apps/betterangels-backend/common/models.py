@@ -79,7 +79,8 @@ class Attachment(BaseModel):  # type: ignore[django-manager-missing]
         the original file name and categorizing the file for easier management.
         """
         if not self.pk:
-            self.original_filename = self.file.name
+            self.original_filename = self.original_filename or self.file.name
+            # self.original_filename = self.original_filename or self.file.name
 
             # Determine the MIME type of the file
             self.file.seek(0)

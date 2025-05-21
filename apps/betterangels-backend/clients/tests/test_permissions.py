@@ -203,10 +203,11 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         super().setUp()
         self._handle_user_login("org_1_case_manager_1")
         self.client_document = self._create_client_document_fixture(
-            self.client_profile_1["id"],
-            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"This is a test file",
-            "test.txt",
+            client_profile_id=self.client_profile_1["id"],
+            original_filename="test file",
+            namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+            file_content=b"This is a test file",
+            file_name="test.txt",
         )["data"]["createClientDocument"]
         self.graphql_client.logout()
 
@@ -223,10 +224,11 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
     def test_create_client_document_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         response = self._create_client_document_fixture(
-            self.client_profile_1["id"],
-            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"This is a test file",
-            "test.txt",
+            client_profile_id=self.client_profile_1["id"],
+            original_filename="test file",
+            namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+            file_content=b"This is a test file",
+            file_name="test.txt",
         )
         attachment_id = response.get("data", {}).get("createClientDocument", {}).get("id")
         if should_succeed:
@@ -248,6 +250,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login("org_1_case_manager_1")
         response = self._create_client_document_fixture(
             self.client_profile_1["id"],
+            "Test file content",
             ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
             b"Test file content",
         )

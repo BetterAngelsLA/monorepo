@@ -320,33 +320,38 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
 
     def _setup_client_documents(self) -> None:
         self.client_profile_1_document_1 = self._create_client_document_fixture(
-            self.client_profile_1["id"],
-            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-            b"Client 1 license front",
-            "client_profile_1_document_1.txt",
+            client_profile_id=self.client_profile_1["id"],
+            original_filename="client profile 1 document 1",
+            namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+            file_content=b"Client 1 license front",
+            file_name="client_profile_1_document_1.txt",
         )["data"]["createClientDocument"]
         self.client_profile_1_document_2 = self._create_client_document_fixture(
-            self.client_profile_1["id"],
-            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK.name,
-            b"Client 1 license back",
-            "client_profile_1_document_2.txt",
+            client_profile_id=self.client_profile_1["id"],
+            original_filename="client profile 1 document 2",
+            namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK.name,
+            file_content=b"Client 1 license back",
+            file_name="client_profile_1_document_2.txt",
         )["data"]["createClientDocument"]
         self.client_profile_1_document_3 = self._create_client_document_fixture(
-            self.client_profile_1["id"],
-            ClientDocumentNamespaceEnum.HMIS_FORM.name,
-            b"Client 1 hmis form",
-            "client_profile_1_document_3.txt",
+            client_profile_id=self.client_profile_1["id"],
+            original_filename="client profile 1 document 3",
+            namespace=ClientDocumentNamespaceEnum.HMIS_FORM.name,
+            file_content=b"Client 1 hmis form",
+            file_name="client_profile_1_document_3.txt",
         )["data"]["createClientDocument"]
         self.client_profile_1_document_4 = self._create_client_document_fixture(
-            self.client_profile_1["id"],
-            ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
-            b"Client 1 other doc",
-            "client_profile_1_document_4.txt",
+            client_profile_id=self.client_profile_1["id"],
+            original_filename="client profile 1 document 4",
+            namespace=ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT.name,
+            file_content=b"Client 1 other doc",
+            file_name="client_profile_1_document_4.txt",
         )["data"]["createClientDocument"]
 
     def _create_client_document_fixture(
         self,
         client_profile_id: str,
+        original_filename: str,
         namespace: str,
         file_content: bytes,
         file_name: str = "test_file.txt",
@@ -354,8 +359,8 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
         file = SimpleUploadedFile(name=file_name, content=file_content)
         response = self.execute_graphql(
             """
-            mutation CreateClientDocument($clientProfileId: ID!, $namespace: ClientDocumentNamespaceEnum!, $file: Upload!) {  # noqa: B950
-                createClientDocument(data: { clientProfile: $clientProfileId, namespace: $namespace, file: $file }) {
+            mutation CreateClientDocument($clientProfileId: ID!, $namespace: ClientDocumentNamespaceEnum!, $originalFilename: String!, $file: Upload!) {  # noqa: B950
+                createClientDocument(data: { clientProfile: $clientProfileId, namespace: $namespace, originalFilename: $originalFilename, file: $file }) {
                     ... on OperationInfo {
                         messages {
                             kind
@@ -379,6 +384,7 @@ class ClientProfileGraphQLBaseTestCase(ClientsBaseTestCase):
             variables={
                 "clientProfileId": client_profile_id,
                 "namespace": namespace,
+                "originalFilename": original_filename,
             },
             files={"file": file},
         )

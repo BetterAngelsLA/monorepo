@@ -50,6 +50,13 @@ class CreateClientDocumentInput:
     client_profile: ID
     file: Upload
     namespace: ClientDocumentNamespaceEnum
+    original_filename: auto
+
+
+@strawberry_django.input(Attachment)
+class UpdateClientDocumentInput:
+    id: ID
+    original_filename: auto
 
 
 @strawberry_django.ordering.order(ClientProfile)
@@ -371,10 +378,3 @@ class ImportClientProfileInput:
     source_name: auto
     raw_data: auto
     client_profile: CreateClientProfileInput
-
-
-# Input for updating a client document
-@strawberry_django.input(Attachment)
-class UpdateClientDocumentInput:
-    id: ID
-    original_filename: auto

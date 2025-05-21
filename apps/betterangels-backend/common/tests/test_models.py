@@ -1,9 +1,10 @@
 import json
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from common.models import Address, Location, PhoneNumber
+from common.models import Address, Attachment, Location, PhoneNumber
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from model_bakery import baker
 from unittest_parametrize import ParametrizedTestCase, parametrize
@@ -254,3 +255,20 @@ class PhoneNumberTestCase(TestCase):
         phone_number_1.refresh_from_db()
         self.assertFalse(phone_number_1.is_primary)
         self.assertTrue(phone_number_2.is_primary)
+
+
+class AttachmentTestCase(TestCase):
+    def test_save(self) -> None:
+        content_type = ContentType.objects.get_for_model(Address)
+        file_content = b"Test client document content"
+        file_name = "test_client_document.txt"
+        file = SimpleUploadedFile(name=file_name, content=file_content)
+        original_filename = "withname and I"
+
+        attachment_with_name = Attachment.objects.create(
+            content_type=content_type, object_id=1, file=file, original_filename=original_filename
+        )
+        attachment_without_name = Attachment.objects.create(content_type=content_type, object_id=1, file=file)
+
+        self.assertEqual(attachment_with_name.original_filename, original_filename)
+        self.assertEqual(attachment_without_name.original_filename, file_name)

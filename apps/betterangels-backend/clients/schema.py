@@ -566,6 +566,7 @@ class Mutation:
             content_type = ContentType.objects.get_for_model(ClientProfile)
             client_document = Attachment.objects.create(
                 file=data.file,
+                original_filename=data.original_filename,
                 namespace=data.namespace,
                 content_type=content_type,
                 object_id=client_profile.id,

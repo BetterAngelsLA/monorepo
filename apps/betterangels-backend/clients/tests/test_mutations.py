@@ -815,25 +815,27 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
     def test_create_client_document(self) -> None:
         file_content = b"Test client document content"
         file_name = "test_client_document.txt"
+        original_filename = "test client document"
 
         expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_client_document_fixture(
-                self.client_profile_1["id"],
-                ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
-                file_content,
-                file_name,
+                client_profile_id=self.client_profile_1["id"],
+                original_filename=original_filename,
+                namespace=ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+                file_content=file_content,
+                file_name=file_name,
             )
 
         client_document_id = response["data"]["createClientDocument"]["id"]
         self.assertEqual(
             response["data"]["createClientDocument"]["originalFilename"],
-            file_name,
+            original_filename,
         )
         self.assertIsNotNone(response["data"]["createClientDocument"]["file"]["name"])
-        self.assertTrue(
-            Attachment.objects.filter(id=client_document_id).exists(),
-            "The client document should have been created and persisted in the database.",
+        self.assertEqual(
+            Attachment.objects.get(id=client_document_id).original_filename,
+            original_filename,
         )
 
     def test_delete_client_document(self) -> None:
