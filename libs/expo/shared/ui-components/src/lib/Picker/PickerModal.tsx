@@ -46,7 +46,12 @@ export function PickerModal(props: TProps) {
       statusBarTranslucent={true}
     >
       <SafeAreaView style={styles.safeArea}>
-        <Pressable style={styles.backdrop} onPress={onClose}>
+        <Pressable
+          style={styles.backdrop}
+          onPress={onClose}
+          accessibilityHint="closes the modal"
+          accessibilityLabel="click to close the modal"
+        >
           <View style={styles.content}>
             <ScrollView
               contentContainerStyle={styles.scrollWrap}
