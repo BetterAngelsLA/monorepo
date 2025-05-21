@@ -44,24 +44,6 @@ export default function PrivateLayout() {
         }}
       />
       <Stack.Screen
-        name="form/index"
-        options={{
-          headerStyle: {
-            backgroundColor: Colors.BRAND_DARK_BLUE,
-          },
-          headerLeft: () => (
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="goes to previous screen"
-              title="Back"
-              onPress={router.back}
-            />
-          ),
-        }}
-      />
-      <Stack.Screen
         name="interactions"
         options={{
           title: 'Interactions',
@@ -145,46 +127,6 @@ export default function PrivateLayout() {
         name="profile"
         options={{
           title: 'Profile',
-          headerTitleAlign: 'center',
-          headerStyle: {
-            backgroundColor: Colors.BRAND_DARK_BLUE,
-          },
-          headerLeft: () => (
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="goes to previous screen"
-              title="Back"
-              onPress={router.back}
-            />
-          ),
-        }}
-      />
-      <Stack.Screen
-        name="add-client"
-        options={{
-          title: 'Add Client',
-          headerTitleAlign: 'center',
-          headerStyle: {
-            backgroundColor: Colors.BRAND_DARK_BLUE,
-          },
-          headerLeft: () => (
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="goes to previous screen"
-              title="Back"
-              onPress={router.back}
-            />
-          ),
-        }}
-      />
-      <Stack.Screen
-        name="edit-client/[id]"
-        options={{
-          title: 'Edit Client',
           headerTitleAlign: 'center',
           headerStyle: {
             backgroundColor: Colors.BRAND_DARK_BLUE,
