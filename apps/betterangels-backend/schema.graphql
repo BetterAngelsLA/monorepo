@@ -421,6 +421,7 @@ input CreateClientDocumentInput {
   clientProfile: ID!
   file: Upload!
   namespace: ClientDocumentNamespaceEnum!
+  originalFilename: String
 }
 
 union CreateClientDocumentPayload = ClientDocumentType | OperationInfo

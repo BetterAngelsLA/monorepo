@@ -450,6 +450,7 @@ export type CreateClientDocumentInput = {
   clientProfile: Scalars['ID']['input'];
   file: Scalars['Upload']['input'];
   namespace: ClientDocumentNamespaceEnum;
+  originalFilename?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateClientDocumentPayload = ClientDocumentType | OperationInfo;
