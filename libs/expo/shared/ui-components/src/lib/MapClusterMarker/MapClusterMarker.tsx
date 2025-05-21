@@ -1,4 +1,3 @@
-import { HouseSolidIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Shadow } from '@monorepo/expo/shared/static';
 import { StyleSheet, Text, View } from 'react-native';
 import { SIZES, variantStyleMap } from './constants';
@@ -22,7 +21,7 @@ export function MapClusterMarker(props: IMapClusterMarkerProps) {
     variant = 'primary',
     text,
     subscriptAfter,
-    hasHouse,
+    // hasHouse,
   } = props;
 
   const {
@@ -71,7 +70,7 @@ export function MapClusterMarker(props: IMapClusterMarkerProps) {
             )}
           </Text>
         </View>
-        {hasHouse && (
+        {/* {hasHouse && (
           <View
             style={[
               styles.house,
@@ -81,13 +80,12 @@ export function MapClusterMarker(props: IMapClusterMarkerProps) {
               },
             ]}
           >
-            {/* TODO: We don't have the icon which is on FIGMA (AC said ignore the icon for now) */}
             <HouseSolidIcon
               color={Colors.NEUTRAL_EXTRA_DARK}
               size={SIZES[size].houseIcon}
             />
           </View>
-        )}
+        )} */}
       </View>
     </View>
   );
