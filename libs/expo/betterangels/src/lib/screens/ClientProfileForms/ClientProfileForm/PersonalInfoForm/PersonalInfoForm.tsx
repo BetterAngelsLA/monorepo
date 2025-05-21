@@ -1,4 +1,11 @@
-import { Form, SingleSelect } from '@monorepo/expo/shared/ui-components';
+import { Regex } from '@monorepo/expo/shared/static';
+import {
+  ActionModal,
+  ControlledInput,
+  DatePicker,
+  Form,
+  SingleSelect,
+} from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { Keyboard } from 'react-native';
@@ -18,6 +25,7 @@ import {
   enumDisplayLivingSituation,
   enumDisplayVeteranStatus,
 } from '../../../../static';
+import { ProfilePhotoField } from './ProfilePhotoField/ProfilePhotoField';
 
 const languageOptions = Object.entries(enumDisplayLanguage).map(
   ([enumValue, displayValue]) => {
@@ -108,11 +116,11 @@ export function PersonalInfoForm() {
 
   return (
     <Form>
-      {/* <Form.Field>
+      <Form.Field>
         <ProfilePhotoField clientId={id} />
-      </Form.Field> */}
+      </Form.Field>
 
-      {/* <Form.Field title="CA ID#">
+      <Form.Field title="CA ID#">
         <ActionModal
           title="This client has the same CA ID as another client."
           subtitle="Would you like to see a list of clients with the same CA ID?"
@@ -156,9 +164,9 @@ export function PersonalInfoForm() {
             },
           }}
         />
-      </Form.Field> */}
+      </Form.Field>
 
-      {/* <Form.Field title="Date of Birth">
+      <Form.Field title="Date of Birth">
         <DatePicker
           maxDate={new Date()}
           mode="date"
@@ -168,7 +176,7 @@ export function PersonalInfoForm() {
           value={dateOfBirth}
           onChange={(date) => setValue('dateOfBirth', date)}
         />
-      </Form.Field> */}
+      </Form.Field>
 
       <Form.Field title="Living Situation">
         <SingleSelect

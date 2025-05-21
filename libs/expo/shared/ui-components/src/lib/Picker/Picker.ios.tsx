@@ -84,7 +84,7 @@ export default function Picker(props: IPickerProps) {
             borderTopLeftRadius: Radiuses.xs,
             borderTopRightRadius: Radiuses.xs,
             paddingBottom: bottomOffset,
-            backgroundColor: '#d1d3da',
+            backgroundColor: Colors.IOS_GRAY,
           }}
         >
           <View style={styles.doneContainer}>

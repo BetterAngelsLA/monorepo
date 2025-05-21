@@ -1,11 +1,9 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { View, ViewStyle } from 'react-native';
 import { Input } from '../Input';
 import { TPickerItem } from './types';
-
-const NONE_VALUE = '__none__';
 
 type TProps = {
   placeholder: string;
@@ -31,11 +29,11 @@ export function PickerField(props: TProps) {
     disabled,
     style,
   } = props;
-  const [localValue, setLocalValue] = useState<string | null>(null);
+  // const [localValue, setLocalValue] = useState<string | null>(null);
 
-  useEffect(() => {
-    setLocalValue(selectedValue || null);
-  }, [selectedValue, setLocalValue]);
+  // useEffect(() => {
+  //   setLocalValue(selectedValue || null);
+  // }, [selectedValue, setLocalValue]);
 
   const getDisplayValue = useCallback(
     (value?: string | null) => {
@@ -61,7 +59,7 @@ export function PickerField(props: TProps) {
           disabled={disabled}
           required={required}
           placeholder={placeholder}
-          value={getDisplayValue(localValue)}
+          value={getDisplayValue(selectedValue)}
           label={label}
           error={!!error}
           errorMessage={error}
