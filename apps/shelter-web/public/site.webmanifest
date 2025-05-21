@@ -2,7 +2,7 @@
   "name": "Shelter DB",
   "short_name": "Shelter",
   "description": "LA Homeless Shelter search.",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#1E3342",
   "theme_color": "#1E3342",
