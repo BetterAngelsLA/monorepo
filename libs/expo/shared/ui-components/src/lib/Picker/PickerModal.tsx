@@ -97,6 +97,6 @@ const styles = StyleSheet.create({
     width: '100%',
     maxHeight: '60%',
     backgroundColor: 'white',
-    borderRadius: Radiuses.sm,
+    borderRadius: Radiuses.xs,
   },
 });
