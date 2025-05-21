@@ -115,7 +115,7 @@ export default function Client({
       {tab !== ClientViewTabEnum.Locations && (
         <ClientHeader client={data?.clientProfile} />
       )}
-      <ClientTabs tabName={tab} setTab={setTab} />
+      <ClientTabs selectedTab={tab} setTab={setTab} />
       {getTabComponent(tab, data, openCard)}
     </MainContainer>
   );
