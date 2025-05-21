@@ -49,6 +49,7 @@ export {
 } from './Length';
 export { default as Loading } from './Loading';
 export { default as LoadingView } from './LoadingView';
+export { MapView } from './Map';
 export { default as MapClusterMarker } from './MapClusterMarker';
 export { default as MediaPickerModal } from './MediaPickerModal';
 export { BaseModal } from './Modal';
