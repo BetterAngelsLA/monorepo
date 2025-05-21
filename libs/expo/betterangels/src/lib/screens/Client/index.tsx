@@ -15,15 +15,16 @@ import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
 import { ClientNavMenu } from './ClientNavMenu/ClientNavMenu';
 import ClientProfileView from './ClientProfile';
-import ClientTabs from './ClientTabs';
+import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
 import {
   ClientProfileQuery,
   useClientProfileQuery,
 } from './__generated__/Client.generated';
+
 const getTabComponent = (
-  key: string,
+  key: ClientViewTabEnum,
   client: ClientProfileQuery | undefined,
   openCard?: ClientProfileSectionEnum
 ): ReactElement | null => {
@@ -34,7 +35,7 @@ const getTabComponent = (
     Interactions,
   };
 
-  if (key === 'Profile') {
+  if (key === ClientViewTabEnum.Profile) {
     return <ClientProfileView client={client} openCard={openCard} />;
   }
 
@@ -59,11 +60,11 @@ export default function Client({
   const { data, loading, error } = useClientProfileQuery({
     variables: { id: clientProfileId },
   });
-  const [tab, setTab] = useState('Profile');
+  const [tab, setTab] = useState(ClientViewTabEnum.Profile);
 
   const navigation = useNavigation();
   const router = useRouter();
-  const { newTab } = useLocalSearchParams<{ newTab?: string }>();
+  const { newTab } = useLocalSearchParams<{ newTab?: ClientViewTabEnum }>();
 
   useEffect(() => {
     if (newTab) {
@@ -109,8 +110,10 @@ export default function Client({
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      {tab !== 'Locations' && <ClientHeader client={data?.clientProfile} />}
-      <ClientTabs tab={tab} setTab={setTab} />
+      {tab !== ClientViewTabEnum.Locations && (
+        <ClientHeader client={data?.clientProfile} />
+      )}
+      <ClientTabs tabName={tab} setTab={setTab} />
       {getTabComponent(tab, data, openCard)}
     </MainContainer>
   );
