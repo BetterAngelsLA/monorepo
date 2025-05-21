@@ -107,14 +107,15 @@ export default function Client({
     );
   }
 
-  if (error)
+  if (error) {
     throw new Error(`Something went wrong. Please try again. ${error}`);
+  }
+
+  const showHeader = tab !== ClientViewTabEnum.Locations;
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      {tab !== ClientViewTabEnum.Locations && (
-        <ClientHeader client={data?.clientProfile} />
-      )}
+      {showHeader && <ClientHeader client={data?.clientProfile} />}
       <ClientTabs selectedTab={tab} setTab={setTab} />
       {getTabComponent(tab, data, openCard)}
     </MainContainer>
