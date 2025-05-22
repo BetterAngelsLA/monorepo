@@ -1,6 +1,6 @@
 import * as Location from 'expo-location';
-import { useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { ReactNode, useRef, useState } from 'react';
 import { Region } from 'react-native-maps';
 import LocateMeButton from '../LocateMeButton';
 import { defaultMapRegion } from './constants';
@@ -11,6 +11,7 @@ type TMapProps = {
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
   userLocation?: Location.LocationObject | null;
+  children?: ReactNode;
 };
 
 export function MapView(props: TMapProps) {
@@ -19,6 +20,7 @@ export function MapView(props: TMapProps) {
     initialRegion,
     style,
     userLocation,
+    children,
   } = props;
 
   const [_mapReady, setMapReady] = useState(false);
@@ -52,8 +54,9 @@ export function MapView(props: TMapProps) {
         initialRegion={initialRegion || defaultMapRegion}
         onMapReady={() => setMapReady(true)}
         style={[styles.map, style]}
-      />
-
+      >
+   {children}
+    </RNMapView>
       <LocateMeButton
         style={styles.locateMeButton}
         onPress={goToUserLocation}
