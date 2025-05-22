@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { ReactNode, useRef, useState } from 'react';
 import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { Region } from 'react-native-maps';
 import { defaultMapRegion } from './constants';
@@ -8,10 +8,16 @@ type TMapProps = {
   provider?: 'google';
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
+  children?: ReactNode;
 };
 
 export function MapView(props: TMapProps) {
-  const { provider: mapPovider = 'google', initialRegion, style } = props;
+  const {
+    provider: mapPovider = 'google',
+    initialRegion,
+    style,
+    children,
+  } = props;
 
   const mapRef = useRef<TRNMapView | null>(null);
   const [_mapReady, setMapReady] = useState(false);
@@ -28,7 +34,9 @@ export function MapView(props: TMapProps) {
       initialRegion={initialRegion || defaultMapRegion}
       onMapReady={() => setMapReady(true)}
       style={[styles.map, style]}
-    />
+    >
+      {children}
+    </RNMapView>
   );
 }
 
