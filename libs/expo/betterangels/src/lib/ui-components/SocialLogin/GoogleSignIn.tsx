@@ -12,8 +12,7 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { Linking, View } from 'react-native';
-import { useAppState } from '../../hooks';
+import { AppState, Linking, View } from 'react-native';
 import useSignIn from '../../hooks/user/useSignIn';
 
 export const GOOGLE_AUTH_MUTATION = gql`
@@ -73,7 +72,6 @@ export function GoogleSignIn({
 }: GoogleSignInProps) {
   const { signIn } = useSignIn(GOOGLE_AUTH_MUTATION);
   const discovery = AuthSession.useAutoDiscovery(discoveryUrl);
-  const { currentAppState } = useAppState();
   const [generatedState, setGeneratedState] = useState<string | undefined>(
     undefined
   );
@@ -157,7 +155,7 @@ export function GoogleSignIn({
       https://github.com/expo/expo/issues/12044#issuecomment-1431310529
     */
 
-    if (currentAppState === 'active') {
+    if (AppState.currentState === 'active') {
       const listener = (event: { url: string }) => {
         void handleDeepLinking(event.url);
       };
@@ -167,7 +165,7 @@ export function GoogleSignIn({
       };
     }
     return;
-  }, [currentAppState, handleDeepLinking]);
+  }, [handleDeepLinking]);
 
   useEffect(() => {
     void Linking.getInitialURL().then(async (url) => handleDeepLinking(url));
