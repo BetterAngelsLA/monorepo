@@ -1,4 +1,4 @@
-import { MapView, TextButton } from '@monorepo/expo/shared/ui-components';
+import { LocateMeButton, MapView } from '@monorepo/expo/shared/ui-components';
 import { useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TMapView } from '../../../maps';
@@ -29,17 +29,9 @@ export function Locations() {
         showsUserLocation={userLocation ? true : false}
         style={styles.map}
       />
-      {/* TODO: replacd with LocateMeButton */}
-      <TextButton
+      <LocateMeButton
+        style={styles.locateMeButton}
         onPress={goToUserLocation}
-        style={{
-          position: 'absolute',
-          right: 0,
-          bottom: 200,
-          backgroundColor: 'red',
-        }}
-        title={'PRESS'}
-        accessibilityHint={'PRESS'}
       />
     </View>
   );
@@ -52,5 +44,10 @@ const styles = StyleSheet.create({
   },
   map: {
     height: 650,
+  },
+  locateMeButton: {
+    position: 'absolute',
+    right: 16,
+    bottom: '25%',
   },
 });

@@ -1,18 +1,19 @@
 import { LocationArrowIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, ViewStyle } from 'react-native';
 import IconButton from '../IconButton';
 
 interface ILocateMeButtonProps {
   onPress: () => void;
+  style?: ViewStyle;
 }
 
 export function LocateMeButton(props: ILocateMeButtonProps) {
-  const { onPress } = props;
+  const { onPress, style } = props;
   return (
     <IconButton
+      style={[styles.button, style]}
       onPress={onPress}
-      style={styles.button}
       accessibilityLabel="userlocation button"
       variant="secondary"
       accessibilityHint="gets user location"
