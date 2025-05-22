@@ -171,7 +171,7 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
               size="md"
               title="Clear"
               variant="secondary"
-              accessibilityHint="apply selected created by filter"
+              accessibilityHint="clear all selected"
             />
 
             <Button
