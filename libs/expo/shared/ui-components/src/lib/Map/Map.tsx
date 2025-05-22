@@ -10,6 +10,7 @@ type TMapProps = {
   provider?: 'google';
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
+  mapStyle?: StyleProp<ViewStyle>;
   userLocation?: Location.LocationObject | null;
   children?: ReactNode;
 };
@@ -19,6 +20,7 @@ export function MapView(props: TMapProps) {
     provider: mapPovider = 'google',
     initialRegion,
     style,
+    mapStyle,
     userLocation,
     children,
   } = props;
@@ -41,7 +43,7 @@ export function MapView(props: TMapProps) {
   };
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, style]}>
       <RNMapView
         showsUserLocation={userLocation ? true : false}
         ref={mapRef}
@@ -53,10 +55,11 @@ export function MapView(props: TMapProps) {
         mapType="standard"
         initialRegion={initialRegion || defaultMapRegion}
         onMapReady={() => setMapReady(true)}
-        style={[styles.map, style]}
+        style={[styles.map, mapStyle]}
       >
         {children}
       </RNMapView>
+
       <LocateMeButton
         style={styles.locateMeButton}
         onPress={goToUserLocation}
@@ -67,7 +70,6 @@ export function MapView(props: TMapProps) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    flex: 1,
     position: 'relative',
   },
   map: {
