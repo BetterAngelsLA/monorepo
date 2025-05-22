@@ -1,9 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { NoteType } from '../../apollo';
-import { useClientProfilesQuery } from '../../screens/Home/__generated__/ActiveClients.generated';
 
 interface INoteCardClientProps {
   clientProfile?: NoteType['clientProfile'];
@@ -15,28 +13,6 @@ interface INoteCardClientProps {
 export default function NoteCardClient(props: INoteCardClientProps) {
   const { clientProfile, createdBy, isOnInteractionsPage, isSubmitted } = props;
   const displayDetails = isOnInteractionsPage ? clientProfile : createdBy;
-  const paginationLimit = 20;
-  const clientId = (displayDetails && isOnInteractionsPage)?clientProfile?.id:undefined;
-  const [clientPhoto, setClientPhoto] = useState<string>("");
-  const { data, loading } = useClientProfilesQuery({
-    variables: {
-      filters: { isActive: true },
-      pagination: { limit: paginationLimit },
-    },
-    fetchPolicy: 'cache-and-network',
-    nextFetchPolicy: 'cache-first',
-  });
-
-  useEffect(() => {
-    if (!data || !('clientProfiles' in data)) {
-      console.log("No data?");
-      return;
-    }
-    const { results, totalCount } = data.clientProfiles;
-    const fullClientProfile = results.find(item => item.id === clientId);
-    setClientPhoto(fullClientProfile?.profilePhoto?.url||"");
-
-  }, []);
 
   return (
     <View
@@ -59,7 +35,7 @@ export default function NoteCardClient(props: INoteCardClientProps) {
           accessibilityHint={
             `${displayDetails?.email} client's avatar` || `client's avatar`
           }
-          imageUrl={clientPhoto}
+          imageUrl={(displayDetails?.__typename === "ClientProfileType")?displayDetails.profilePhoto?.url:""}
         />
         <TextRegular size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
           {displayDetails?.firstName} {displayDetails?.lastName}
