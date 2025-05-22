@@ -8,16 +8,23 @@ type TMapProps = {
   provider?: 'google';
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
+  showsUserLocation?: boolean;
 };
 
 export function MapView(props: TMapProps) {
-  const { provider: mapPovider = 'google', initialRegion, style } = props;
+  const {
+    provider: mapPovider = 'google',
+    initialRegion,
+    style,
+    showsUserLocation,
+  } = props;
 
   const mapRef = useRef<TRNMapView | null>(null);
   const [_mapReady, setMapReady] = useState(false);
 
   return (
     <RNMapView
+      showsUserLocation={showsUserLocation}
       ref={mapRef}
       provider={mapPovider}
       showsMyLocationButton={false}
