@@ -9,6 +9,7 @@ type TMapProps = {
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
+  showsUserLocation?: boolean;
 };
 
 export function MapView(props: TMapProps) {
@@ -17,6 +18,7 @@ export function MapView(props: TMapProps) {
     initialRegion,
     style,
     children,
+    showsUserLocation,
   } = props;
 
   const mapRef = useRef<TRNMapView | null>(null);
@@ -24,6 +26,7 @@ export function MapView(props: TMapProps) {
 
   return (
     <RNMapView
+      showsUserLocation={showsUserLocation}
       ref={mapRef}
       provider={mapPovider}
       showsMyLocationButton={false}
