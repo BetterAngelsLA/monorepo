@@ -155,6 +155,7 @@ export function GoogleSignIn({
       https://github.com/expo/expo/issues/12044#issuecomment-1431310529
     */
 
+    // Not using useAppState hook because including it as a dependency breaks oauth on android. (See links above)
     if (AppState.currentState === 'active') {
       const listener = (event: { url: string }) => {
         void handleDeepLinking(event.url);
