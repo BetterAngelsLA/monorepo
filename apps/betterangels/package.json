@@ -74,7 +74,8 @@
     "@react-navigation/native-stack": "*",
     "expo-updates": "*",
     "react-native-walkthrough-tooltip": "*",
-    "newrelic-react-native-agent": "*"
+    "newrelic-react-native-agent": "*",
+    "react-fast-compare": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches",
