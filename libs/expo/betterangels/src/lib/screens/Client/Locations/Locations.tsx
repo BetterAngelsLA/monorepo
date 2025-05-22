@@ -14,15 +14,13 @@ export function Locations({
   if (!client?.clientProfile.id) {
     throw new Error('Something went wrong. Please try again.');
   }
-      const userLocation = useUserLocation();
+  const userLocation = useUserLocation();
   const interactionsLocation = useGetInteractionsLocation(
     client.clientProfile.id
   );
 
   return (
-    <MapView
-         showsUserLocation={userLocation ? true : false}
-        style={styles.map}>
+    <MapView showsUserLocation={userLocation ? true : false} style={styles.map}>
       {interactionsLocation?.map(({ longitude, latitude }, index) => (
         <Marker
           tracksViewChanges={false}
