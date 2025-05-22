@@ -21,6 +21,7 @@ export function Locations({
     <MapView style={styles.map}>
       {interactionsLocation?.map(({ longitude, latitude }, index) => (
         <Marker
+          tracksViewChanges={false}
           key={index}
           coordinate={{
             longitude,
