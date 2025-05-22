@@ -1,5 +1,6 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { MapView } from '@monorepo/expo/shared/ui-components';
+
 import { StyleSheet } from 'react-native';
 import { useUserLocation } from './useUserLocation';
 import { Marker } from '../../../maps';
@@ -20,7 +21,7 @@ export function Locations({
   );
 
   return (
-    <MapView showsUserLocation={userLocation ? true : false} style={styles.map}>
+    <MapView userLocation={userLocation} style={styles.map}>
       {interactionsLocation?.map(({ longitude, latitude }, index) => (
         <Marker
           tracksViewChanges={false}
