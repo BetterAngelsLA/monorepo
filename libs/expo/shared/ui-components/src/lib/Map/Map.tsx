@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { Region } from 'react-native-maps';
 import { defaultMapRegion } from './constants';
@@ -9,6 +9,7 @@ type TMapProps = {
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
   showsUserLocation?: boolean;
+  ref: React.Ref<TRNMapView>;
 };
 
 export function MapView(props: TMapProps) {
@@ -17,15 +18,15 @@ export function MapView(props: TMapProps) {
     initialRegion,
     style,
     showsUserLocation,
+    ref,
   } = props;
 
-  const mapRef = useRef<TRNMapView | null>(null);
   const [_mapReady, setMapReady] = useState(false);
 
   return (
     <RNMapView
       showsUserLocation={showsUserLocation}
-      ref={mapRef}
+      ref={ref}
       provider={mapPovider}
       showsMyLocationButton={false}
       zoomEnabled
