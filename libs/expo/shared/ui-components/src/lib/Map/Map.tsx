@@ -1,10 +1,10 @@
 import * as Location from 'expo-location';
-import { forwardRef, useState } from 'react';
+import { useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Region } from 'react-native-maps';
 import LocateMeButton from '../LocateMeButton';
 import { defaultMapRegion } from './constants';
-import { RNMapView, TRNMapView } from './mapLib';
+import { RNMapView } from './mapLib';
 
 type TMapProps = {
   provider?: 'google';
@@ -13,55 +13,54 @@ type TMapProps = {
   userLocation?: Location.LocationObject | null;
 };
 
-export const MapView = forwardRef<TRNMapView, TMapProps>(
-  (props: TMapProps, ref) => {
-    const {
-      provider: mapPovider = 'google',
-      initialRegion,
-      style,
-      userLocation,
-    } = props;
+export function MapView(props: TMapProps) {
+  const {
+    provider: mapPovider = 'google',
+    initialRegion,
+    style,
+    userLocation,
+  } = props;
 
-    const [_mapReady, setMapReady] = useState(false);
+  const [_mapReady, setMapReady] = useState(false);
+  const mapRef = useRef<TMapView>(null);
 
-    const goToUserLocation = () => {
-      if (userLocation && ref && 'current' in ref && ref.current) {
-        ref.current.animateToRegion(
-          {
-            latitude: userLocation.coords.latitude,
-            longitude: userLocation.coords.longitude,
-            latitudeDelta: 0.005,
-            longitudeDelta: 0.005,
-          },
-          500
-        );
-      }
-    };
+  const goToUserLocation = () => {
+    if (userLocation && mapRef.current) {
+      mapRef.current.animateToRegion(
+        {
+          latitude: userLocation.coords.latitude,
+          longitude: userLocation.coords.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        500
+      );
+    }
+  };
 
-    return (
-      <View style={styles.wrapper}>
-        <RNMapView
-          showsUserLocation={userLocation ? true : false}
-          ref={ref}
-          provider={mapPovider}
-          showsMyLocationButton={false}
-          zoomEnabled
-          scrollEnabled
-          zoomControlEnabled={false}
-          mapType="standard"
-          initialRegion={initialRegion || defaultMapRegion}
-          onMapReady={() => setMapReady(true)}
-          style={[styles.map, style]}
-        />
+  return (
+    <View style={styles.wrapper}>
+      <RNMapView
+        showsUserLocation={userLocation ? true : false}
+        ref={mapRef}
+        provider={mapPovider}
+        showsMyLocationButton={false}
+        zoomEnabled
+        scrollEnabled
+        zoomControlEnabled={false}
+        mapType="standard"
+        initialRegion={initialRegion || defaultMapRegion}
+        onMapReady={() => setMapReady(true)}
+        style={[styles.map, style]}
+      />
 
-        <LocateMeButton
-          style={styles.locateMeButton}
-          onPress={goToUserLocation}
-        />
-      </View>
-    );
-  }
-);
+      <LocateMeButton
+        style={styles.locateMeButton}
+        onPress={goToUserLocation}
+      />
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   wrapper: {
