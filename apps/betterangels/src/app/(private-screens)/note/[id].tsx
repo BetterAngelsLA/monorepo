@@ -22,14 +22,10 @@ export default function NoteScreen() {
       {/* Proof-of-Concept Modal Trigger */}
       <View style={{ padding: 16 }}>
         <Button
-          title="Open Services Modal (POC)"
-          onPress={() =>
-            router.push(
-              `/base-modal-screen?noteId=${id}&type=PROVIDED`
-            )
-          }
+          title="Open Demo Modal"
+          onPress={() => router.push('/modal-demo')}
           variant="primary"
-          accessibilityHint="Opens the new modal screen"
+          accessibilityHint="Opens the demo modal screen"
         />
       </View>
     </View>
