@@ -25,8 +25,9 @@ type TVariants = {
   };
 };
 
-const SIZES: Record<'sm' | 'full' | 'auto', DimensionValue> = {
+const SIZES: Record<'sm' | 'md' | 'full' | 'auto', DimensionValue> = {
   sm: 132,
+  md: 155,
   full: '100%',
   auto: 'auto',
 };
@@ -111,7 +112,7 @@ const VARIANTS: TVariants = {
   },
   secondary: {
     bg: Colors.WHITE,
-    color: Colors.PRIMARY_EXTRA_DARK,
+    color: Colors.PRIMARY_DARK,
     border: Colors.NEUTRAL_LIGHT,
   },
   negative: {
@@ -125,7 +126,7 @@ type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IButtonProps {
   title: string;
-  size?: 'sm' | 'full' | 'auto';
+  size?: 'sm' | 'md'| 'full' | 'auto';
   onPress?: () => void;
   variant:
     | 'primary'
