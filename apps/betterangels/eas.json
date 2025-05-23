@@ -1,5 +1,16 @@
 {
   "build": {
+    "e2e-test": {
+      "developmentClient": false,
+      "ios": {
+        "simulator": true,
+        "image": "latest"
+      },
+      "android": {
+        "buildType": "apk",
+        "image": "latest"
+      }
+    },
     "development-simulator": {
       "developmentClient": true,
       "distribution": "internal",
@@ -60,8 +71,5 @@
         "releaseStatus": "draft"
       }
     }
-  },
-  "cli": {
-    "version": ">= 5"
   }
 }
