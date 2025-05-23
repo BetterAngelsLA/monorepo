@@ -6,6 +6,8 @@ type TInteraction = NonNullable<
 >[number];
 
 export function useGetClientInteractionsWithLocation(id: string) {
+  const [interactions, setInteractions] = useState<TInteraction[]>();
+
   const { data, error, loading } = useNotesQuery({
     variables: {
       pagination: { limit: 1000, offset: 0 },
@@ -17,8 +19,6 @@ export function useGetClientInteractionsWithLocation(id: string) {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-
-  const [interactions, setInteractions] = useState<TInteraction[]>();
 
   useEffect(() => {
     const results = data?.notes.results;

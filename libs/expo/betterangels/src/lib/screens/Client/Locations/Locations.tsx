@@ -33,15 +33,21 @@ export function Locations(props: TProps) {
     <MapView enableUserLocation={true} style={styles.map}>
       {interactions.map((interaction) => {
         const { id, location } = interaction;
-        const { latitude, longitude } = location!.point;
+        const point = location?.point;
+
+        if (!point) {
+          return null;
+        }
+
+        const [longitude, latitude] = point;
 
         return (
           <Marker
             key={id}
             tracksViewChanges={false}
             coordinate={{
-              longitude,
               latitude,
+              longitude,
             }}
           >
             <LocationPinIcon size="2xl" />
