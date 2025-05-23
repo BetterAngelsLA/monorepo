@@ -1,10 +1,10 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
-import { MapView } from '@monorepo/expo/shared/ui-components';
+import { LoadingView, MapView } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet } from 'react-native';
+import { useGetClientInteractionsWithLocation } from '../../../hooks/interactions/useGetClientInteractionsWithLocation';
 import { Marker } from '../../../maps';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
-import { useGetInteractionsLocation } from './useGetInteractionsLocation';
-import { useUserLocation } from './useUserLocation';
+import { EmptyState } from './EmptyState';
 
 type TProps = {
   client: ClientProfileQuery | undefined;
@@ -17,25 +17,37 @@ export function Locations(props: TProps) {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  const userLocation = useUserLocation();
-  const interactionsLocation = useGetInteractionsLocation(
+  const { interactions, loading } = useGetClientInteractionsWithLocation(
     client.clientProfile.id
   );
 
+  if (loading) {
+    return <LoadingView />;
+  }
+
+  if (!interactions?.length) {
+    return <EmptyState />;
+  }
+
   return (
-    <MapView userLocation={userLocation} style={styles.map}>
-      {interactionsLocation?.map(({ longitude, latitude }, index) => (
-        <Marker
-          tracksViewChanges={false}
-          key={index}
-          coordinate={{
-            longitude,
-            latitude,
-          }}
-        >
-          <LocationPinIcon size="2xl" />
-        </Marker>
-      ))}
+    <MapView enableUserLocation={true} style={styles.map}>
+      {interactions.map((interaction) => {
+        const { id, location } = interaction;
+        const { latitude, longitude } = location!.point;
+
+        return (
+          <Marker
+            key={id}
+            tracksViewChanges={false}
+            coordinate={{
+              longitude,
+              latitude,
+            }}
+          >
+            <LocationPinIcon size="2xl" />
+          </Marker>
+        );
+      })}
     </MapView>
   );
 }

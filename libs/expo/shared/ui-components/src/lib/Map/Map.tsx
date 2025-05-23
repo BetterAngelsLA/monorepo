@@ -1,17 +1,16 @@
-import * as Location from 'expo-location';
 import { ReactNode, useRef, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Region } from 'react-native-maps';
-import LocateMeButton from '../LocateMeButton';
 import { defaultMapRegion } from './constants';
 import { RNMapView, TRNMapView } from './mapLib';
+import { MapLocateMeBtn } from './mapUi/MapLocateMeBtn';
 
 type TMapProps = {
   provider?: 'google';
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
   mapStyle?: StyleProp<ViewStyle>;
-  userLocation?: Location.LocationObject | null;
+  enableUserLocation?: boolean;
   children?: ReactNode;
 };
 
@@ -21,33 +20,19 @@ export function MapView(props: TMapProps) {
     initialRegion,
     style,
     mapStyle,
-    userLocation,
+    enableUserLocation,
     children,
   } = props;
 
   const [_mapReady, setMapReady] = useState(false);
   const mapRef = useRef<TRNMapView>(null);
 
-  const goToUserLocation = () => {
-    if (userLocation && mapRef.current) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: userLocation.coords.latitude,
-          longitude: userLocation.coords.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        },
-        500
-      );
-    }
-  };
-
   return (
     <View style={[styles.wrapper, style]}>
       <RNMapView
-        showsUserLocation={userLocation ? true : false}
         ref={mapRef}
         provider={mapPovider}
+        showsUserLocation={true}
         showsMyLocationButton={false}
         zoomEnabled
         scrollEnabled
@@ -60,10 +45,7 @@ export function MapView(props: TMapProps) {
         {children}
       </RNMapView>
 
-      <LocateMeButton
-        style={styles.locateMeButton}
-        onPress={goToUserLocation}
-      />
+      {!!enableUserLocation && <MapLocateMeBtn mapRef={mapRef} />}
     </View>
   );
 }
@@ -76,11 +58,5 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     position: 'relative',
-  },
-  locateMeButton: {
-    position: 'absolute',
-    right: 16,
-    bottom: '15%',
-    zIndex: 10,
   },
 });
