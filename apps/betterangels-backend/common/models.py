@@ -1,9 +1,10 @@
 import json
 from typing import Any, Dict, Optional
+from urllib.parse import unquote
 
 import magic
 from common.enums import AttachmentType
-from common.utils import get_unique_file_path
+from common.utils import get_filename_with_extension, get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
@@ -79,8 +80,6 @@ class Attachment(BaseModel):  # type: ignore[django-manager-missing]
         the original file name and categorizing the file for easier management.
         """
         if not self.pk:
-            self.original_filename = self.file.name
-
             # Determine the MIME type of the file
             self.file.seek(0)
             mime_type = self.file.file.content_type or magic.from_buffer(self.file.read(), mime=True)
@@ -95,6 +94,13 @@ class Attachment(BaseModel):  # type: ignore[django-manager-missing]
             else:
                 self.attachment_type = AttachmentType.DOCUMENT
             self.file.seek(0)
+
+        self.original_filename = self.original_filename or unquote(self.file.name)
+        self.original_filename = get_filename_with_extension(
+            self.mime_type,
+            self.original_filename,
+        )
+
         super().save(*args, **kwargs)
 
 

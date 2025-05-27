@@ -1,7 +1,26 @@
+import mimetypes
 import os
 import uuid
+from typing import TYPE_CHECKING
 
 from django.db.models import Model
+
+
+def get_filename_with_extension(mime_type: str, filename: str) -> str:
+    expected_extension = mimetypes.guess_extension(mime_type)
+    provided_extension = filename.split(".")[-1]
+
+    alt_extension_map = {"jpeg": ".jpg", "mpg": ".mpeg"}
+
+    if f".{provided_extension}" == expected_extension or (
+        expected_extension and expected_extension == alt_extension_map.get(provided_extension)
+    ):
+        return filename
+
+    if type(expected_extension) is str:
+        return f"{filename}{expected_extension}"
+
+    raise ValueError("Invalid file type")
 
 
 def get_unique_file_path(instance: Model, filename: str) -> str:
