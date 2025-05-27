@@ -30,6 +30,11 @@ export function Locations(props: TProps) {
     return <LoadingView />;
   }
 
+  // unless loading, render nothing until interactions are defined
+  if (!loading && interactions === undefined) {
+    return null;
+  }
+
   if (!interactions?.length) {
     return <EmptyState />;
   }
