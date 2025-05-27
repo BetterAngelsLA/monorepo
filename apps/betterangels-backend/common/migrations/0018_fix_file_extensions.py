@@ -17,12 +17,11 @@ def append_correct_extension(apps, schema_editor):
         cursor.execute(
             f"""
             UPDATE "{table}"
-               SET original_filename = original_filename || %s
-             WHERE mime_type = %s
-               AND original_filename IS NOT NULL
-               AND original_filename NOT ILIKE %s;
-            """,
-            [ext, mime_type, "%" + ext],
+            SET original_filename = original_filename || {ext}
+            WHERE mime_type = {mime_type}
+            AND original_filename IS NOT NULL
+            AND RIGHT(original_filename, CHAR_LENGTH({ext})) <> {ext};
+            """
         )
 
 
@@ -32,4 +31,4 @@ class Migration(migrations.Migration):
         ("common", "0017_remove_attachment_associated_with"),
     ]
 
-    operations = [migrations.RunPython(append_correct_extension)]
+    operations = [migrations.RunPython(append_correct_extension, migrations.RunPython.noop)]
