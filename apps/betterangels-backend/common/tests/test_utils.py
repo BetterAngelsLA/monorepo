@@ -9,8 +9,8 @@ class CommonUtilsTestCase(ParametrizedTestCase, TestCase):
         "mime_type, filename, expected_filename",
         [
             ("application/pdf", "doc", "doc.pdf"),
-            ("application/pdf", "doc.pdf", "doc.pdf"),
-            ("application/pdf", "doc.txt", "doc.txt.pdf"),
+            ("application/pdf", "doc.PDF", "doc.PDF"),
+            ("application/pdf", "doc.TXT", "doc.TXT.pdf"),
             ("application/pdf", "doc.foo", "doc.foo.pdf"),
             ("image/jpeg", "image.jpeg", "image.jpeg"),
             ("image/jpeg", "image.jpg", "image.jpg"),

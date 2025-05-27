@@ -7,7 +7,7 @@ from django.db.models import Model
 
 def get_filename_with_extension(mime_type: str, filename: str) -> str:
     expected_extension = mimetypes.guess_extension(mime_type)
-    provided_extension = filename.split(".")[-1]
+    provided_extension = filename.lower().split(".")[-1]
 
     alt_extension_map = {"jpeg": ".jpg", "mpg": ".mpeg"}
 
@@ -16,7 +16,7 @@ def get_filename_with_extension(mime_type: str, filename: str) -> str:
     ):
         return filename
 
-    if type(expected_extension) is str:
+    if isinstance(expected_extension, str):
         return f"{filename}{expected_extension}"
 
     raise ValueError("Invalid file type")
