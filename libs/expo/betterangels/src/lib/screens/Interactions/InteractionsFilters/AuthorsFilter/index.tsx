@@ -165,17 +165,15 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
             )}
           </ScrollView>
 
-          <View style={{'flexDirection': 'row', 'justifyContent': 'center', 'gap': 10}}>
+          <View
+            style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}
+          >
             <Button
               onPress={handleClearBoxes}
               size="md"
               title="Clear"
               variant="secondary"
-<<<<<<< HEAD
-              accessibilityHint="apply selected created by filter"
-=======
               accessibilityHint="clear all selected"
->>>>>>> DEV-1551-Clear-Button-Should-Be-In-Each-Filter
             />
 
             <Button
@@ -191,4 +189,3 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
     </View>
   );
 }
-
