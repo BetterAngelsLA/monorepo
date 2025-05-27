@@ -1,7 +1,21 @@
+import mimetypes
 import os
 import uuid
 
 from django.db.models import Model
+
+
+def get_filename_with_extension(mime_type: str, filename: str) -> str:
+    provided_type, _ = mimetypes.guess_type(filename)
+    expected_extension = mimetypes.guess_extension(mime_type)
+
+    if not expected_extension:
+        raise ValueError(f"Unsupported MIME type: {mime_type}")
+
+    if provided_type != mime_type:
+        filename = f"{os.path.splitext(filename)[0]}{expected_extension}"
+
+    return filename
 
 
 def get_unique_file_path(instance: Model, filename: str) -> str:
