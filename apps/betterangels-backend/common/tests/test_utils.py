@@ -10,8 +10,8 @@ class CommonUtilsTestCase(ParametrizedTestCase, TestCase):
         [
             ("application/pdf", "doc", "doc.pdf"),
             ("application/pdf", "doc.PDF", "doc.PDF"),
-            ("application/pdf", "doc.TXT", "doc.TXT.pdf"),
-            ("application/pdf", "doc.foo", "doc.foo.pdf"),
+            ("application/pdf", "doc.TXT", "doc.pdf"),
+            ("application/pdf", "doc.foo", "doc.pdf"),
             ("image/jpeg", "image.jpeg", "image.jpeg"),
             ("image/jpeg", "image.jpg", "image.jpg"),
             ("image/heic", "image", "image.heic"),

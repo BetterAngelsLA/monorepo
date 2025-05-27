@@ -6,20 +6,16 @@ from django.db.models import Model
 
 
 def get_filename_with_extension(mime_type: str, filename: str) -> str:
+    provided_type, _ = mimetypes.guess_type(filename)
     expected_extension = mimetypes.guess_extension(mime_type)
-    provided_extension = filename.lower().split(".")[-1]
 
-    alt_extension_map = {"jpeg": ".jpg", "mpg": ".mpeg"}
+    if not expected_extension:
+        raise ValueError(f"Unsupported MIME type: {mime_type}")
 
-    if f".{provided_extension}" == expected_extension or (
-        expected_extension and expected_extension == alt_extension_map.get(provided_extension)
-    ):
-        return filename
+    if provided_type != mime_type:
+        filename = f"{os.path.splitext(filename)[0]}{expected_extension}"
 
-    if isinstance(expected_extension, str):
-        return f"{filename}{expected_extension}"
-
-    raise ValueError("Invalid file type")
+    return filename
 
 
 def get_unique_file_path(instance: Model, filename: str) -> str:
