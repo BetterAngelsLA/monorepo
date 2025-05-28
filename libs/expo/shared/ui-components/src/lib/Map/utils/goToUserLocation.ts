@@ -2,18 +2,18 @@
 
 import { RefObject } from 'react';
 import { TRNMapView } from '../mapLib';
+import { TMapDeltaLatLng } from '../types';
 import { getUserLocation } from './getUserLocation';
 import { goToLocation } from './goToLocation';
 
 type TProps = {
   mapRef: RefObject<TRNMapView | null>;
-  latDelta?: number;
-  lngDelta?: number;
+  regionDelta?: TMapDeltaLatLng;
   duration?: number;
 };
 
 export async function goToUserLocation(props: TProps) {
-  const { mapRef } = props;
+  const { mapRef, regionDelta, duration } = props;
 
   if (!mapRef.current) {
     return;
@@ -26,7 +26,9 @@ export async function goToUserLocation(props: TProps) {
   }
 
   await goToLocation({
-    ...props,
+    mapRef,
     coordinates: userLocation,
+    regionDelta,
+    duration,
   });
 }

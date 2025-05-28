@@ -2,24 +2,22 @@ import { RefObject } from 'react';
 import { StyleSheet } from 'react-native';
 import LocateMeButton from '../../LocateMeButton';
 import { TRNMapView } from '../mapLib';
+import { TMapDeltaLatLng } from '../types';
 import { goToUserLocation } from '../utils/goToUserLocation';
 
 type TProps = {
   mapRef: RefObject<TRNMapView | null>;
-  latDelta?: number;
-  lngDelta?: number;
+  regionDelta?: TMapDeltaLatLng;
   duration?: number;
 };
 
 export function MapLocateMeBtn(props: TProps) {
+  const { mapRef, regionDelta, duration } = props;
+
   return (
     <LocateMeButton
       style={styles.locateMeButton}
-      onPress={() =>
-        goToUserLocation({
-          ...props,
-        })
-      }
+      onPress={() => goToUserLocation({ mapRef, regionDelta, duration })}
     />
   );
 }

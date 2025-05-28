@@ -32,7 +32,7 @@ export function MapView(props: TMapProps) {
       <RNMapView
         ref={mapRef}
         provider={provider}
-        showsUserLocation={true}
+        showsUserLocation={!!enableUserLocation}
         showsMyLocationButton={false}
         zoomEnabled
         scrollEnabled
