@@ -3,9 +3,9 @@ import {
   LoadingView,
   MapView,
   coordsToRegion,
+  regionDeltaMap,
 } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet } from 'react-native';
-import { Region } from 'react-native-maps';
 import { useGetClientInteractionsWithLocation } from '../../../hooks/interactions/useGetClientInteractionsWithLocation';
 import { Marker } from '../../../maps';
 import { EmptyState } from './EmptyState';
@@ -17,53 +17,51 @@ type TProps = {
 export function InteractionLocationsMap(props: TProps) {
   const { clientProfileId } = props;
 
-  const { interactions, loading } =
+  const { interactions: interactionsWithLocation, loading } =
     useGetClientInteractionsWithLocation(clientProfileId);
 
   if (loading) {
-    console.log('################################### map: loading');
     return <LoadingView />;
   }
 
   // unless loading, render nothing until interactions are defined
-  //   if (!loading && interactions === undefined) {
-  //     console.log('################################### map: RETURN NULL');
-  //     return null;
-  //   }
+  if (!loading && interactionsWithLocation === undefined) {
+    return null;
+  }
 
-  if (!interactions?.length) {
-    console.log('################################### map: empty');
+  if (!interactionsWithLocation?.length) {
     return <EmptyState />;
   }
 
-  const mostRecentInteraction = interactions.reduce((latest, current) =>
-    new Date(current.interactedAt) > new Date(latest.interactedAt)
-      ? current
-      : latest
+  const mostRecentInteraction = interactionsWithLocation.reduce(
+    (latest, current) =>
+      new Date(current.interactedAt) > new Date(latest.interactedAt)
+        ? current
+        : latest
   );
 
   const mostRecentPoint = mostRecentInteraction.location?.point;
 
-  console.log('*****************  mostRecentPoint:', !!mostRecentPoint);
-
-  let initialRegion: Region | undefined = undefined;
-
-  if (mostRecentPoint) {
-    const [longitude, latitude] = mostRecentPoint;
-
-    initialRegion = coordsToRegion({ latitude, longitude });
+  if (!mostRecentPoint) {
+    return <EmptyState />;
   }
 
-  console.log('###################### map: RENDER MAP: ', interactions.length);
+  const [longitude, latitude] = mostRecentPoint;
+
+  const mapRegion = coordsToRegion({
+    latitude,
+    longitude,
+    ...regionDeltaMap.M,
+  });
 
   return (
     <MapView
       enableUserLocation={true}
       style={styles.map}
-      //   provider="google"
-      initialRegion={initialRegion}
+      provider="google"
+      initialRegion={mapRegion}
     >
-      {interactions.map((interaction) => {
+      {interactionsWithLocation.map((interaction) => {
         const { id, location } = interaction;
         const point = location?.point;
 
@@ -93,7 +91,5 @@ export function InteractionLocationsMap(props: TProps) {
 const styles = StyleSheet.create({
   map: {
     height: 650,
-    borderWidth: 4,
-    borderColor: 'red',
   },
 });
