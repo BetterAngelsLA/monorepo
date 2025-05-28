@@ -1,5 +1,5 @@
 import { Region } from 'react-native-maps';
-import { defaultLatDelta, defaultLngDelta } from '../constants';
+import { defaultRegionDelta } from '../constants';
 
 type TProps = {
   latitude: number;
@@ -12,8 +12,8 @@ export function coordsToRegion(props: TProps): Region {
   const {
     latitude,
     longitude,
-    latitudeDelta = defaultLatDelta,
-    longitudeDelta = defaultLngDelta,
+    latitudeDelta = defaultRegionDelta.latitudeDelta,
+    longitudeDelta = defaultRegionDelta.longitudeDelta,
   } = props;
 
   return {
