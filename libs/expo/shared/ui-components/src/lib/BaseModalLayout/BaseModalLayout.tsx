@@ -1,7 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Button, TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import React from 'react';
-import { Platform, View, ViewStyle } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Keyboard, Platform, View, ViewStyle } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardToolbar } from 'react-native-keyboard-controller';
 
 interface BaseModalLayoutProps {
@@ -36,6 +36,16 @@ export default function BaseModalLayout({
   resetAccessibilityHint = 'reset form values',
 }: BaseModalLayoutProps) {
   const Wrapper = scrollable ? KeyboardAwareScrollView : View;
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', () => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   return (
     <>
@@ -111,8 +121,7 @@ export default function BaseModalLayout({
         </View>
       )}
 
-      <KeyboardToolbar content={<View />} showArrows={false} />
+      {keyboardVisible && <KeyboardToolbar content={<View />} showArrows={false} />}
     </>
   );
 }
-
