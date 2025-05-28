@@ -16,7 +16,7 @@ type TMapProps = {
 
 export function MapView(props: TMapProps) {
   const {
-    provider: mapPovider = 'google',
+    provider,
     initialRegion,
     style,
     mapStyle,
@@ -31,8 +31,8 @@ export function MapView(props: TMapProps) {
     <View style={[styles.wrapper, style]}>
       <RNMapView
         ref={mapRef}
-        provider={mapPovider}
-        showsUserLocation={true}
+        provider={provider}
+        // showsUserLocation={true}
         showsMyLocationButton={false}
         zoomEnabled
         scrollEnabled
