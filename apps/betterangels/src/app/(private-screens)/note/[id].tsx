@@ -23,7 +23,7 @@ export default function NoteScreen() {
       <View style={{ padding: 16 }}>
         <Button
           title="Open Demo Modal"
-          onPress={() => router.push('/modal-demo')}
+          onPress={() => router.push('/base-modal-screen?type=SERVICES')}
           variant="primary"
           accessibilityHint="Opens the demo modal screen"
         />
