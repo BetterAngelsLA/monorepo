@@ -63,13 +63,7 @@ export function InteractionLocationsMap(props: TProps) {
     >
       {interactionsWithLocation.map((interaction) => {
         const { id, location } = interaction;
-        const point = location?.point;
-
-        if (!point) {
-          return null;
-        }
-
-        const [longitude, latitude] = point;
+        const [longitude, latitude] = location!.point;
 
         return (
           <Marker

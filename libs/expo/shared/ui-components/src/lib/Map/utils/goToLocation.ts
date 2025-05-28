@@ -1,14 +1,14 @@
 import * as Location from 'expo-location';
 import { RefObject } from 'react';
 import { Region } from 'react-native-maps';
-import { defaultAnimationDuration } from '../constants';
+import { defaultAnimationDuration, defaultRegionDelta } from '../constants';
 import { TRNMapView } from '../mapLib';
+import { TMapDeltaLatLng } from '../types';
 
 type TProps = {
-  coordinates: Location.LocationObjectCoords;
   mapRef: RefObject<TRNMapView | null>;
-  latDelta?: number;
-  lngDelta?: number;
+  coordinates: Location.LocationObjectCoords;
+  regionDelta?: TMapDeltaLatLng;
   duration?: number;
 };
 
@@ -16,8 +16,7 @@ export async function goToLocation(props: TProps) {
   const {
     mapRef,
     coordinates,
-    latDelta = 0.05,
-    lngDelta = 0.05,
+    regionDelta = defaultRegionDelta,
     duration = defaultAnimationDuration,
   } = props;
 
@@ -28,8 +27,7 @@ export async function goToLocation(props: TProps) {
   const region: Region = {
     latitude: coordinates.latitude,
     longitude: coordinates.longitude,
-    latitudeDelta: latDelta,
-    longitudeDelta: lngDelta,
+    ...regionDelta,
   };
 
   mapRef.current.animateToRegion(region, duration);
