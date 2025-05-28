@@ -1,5 +1,3 @@
-// goToUserLocation.ts
-
 import { RefObject } from 'react';
 import { TRNMapView } from '../mapLib';
 import { TMapDeltaLatLng } from '../types';
