@@ -8,34 +8,31 @@ import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { useGetClientInteractionsWithLocation } from '../../../hooks/interactions/useGetClientInteractionsWithLocation';
 import { Marker } from '../../../maps';
-import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { EmptyState } from './EmptyState';
 
 type TProps = {
-  client: ClientProfileQuery | undefined;
+  clientProfileId: string;
 };
 
-export function Locations(props: TProps) {
-  const { client } = props;
+export function InteractionLocationsMap(props: TProps) {
+  const { clientProfileId } = props;
 
-  if (!client?.clientProfile.id) {
-    throw new Error('Something went wrong. Please try again.');
-  }
-
-  const { interactions, loading } = useGetClientInteractionsWithLocation(
-    client.clientProfile.id
-  );
+  const { interactions, loading } =
+    useGetClientInteractionsWithLocation(clientProfileId);
 
   if (loading) {
+    console.log('################################### map: loading');
     return <LoadingView />;
   }
 
   // unless loading, render nothing until interactions are defined
-  if (!loading && interactions === undefined) {
-    return null;
-  }
+  //   if (!loading && interactions === undefined) {
+  //     console.log('################################### map: RETURN NULL');
+  //     return null;
+  //   }
 
   if (!interactions?.length) {
+    console.log('################################### map: empty');
     return <EmptyState />;
   }
 
@@ -47,6 +44,8 @@ export function Locations(props: TProps) {
 
   const mostRecentPoint = mostRecentInteraction.location?.point;
 
+  console.log('*****************  mostRecentPoint:', !!mostRecentPoint);
+
   let initialRegion: Region | undefined = undefined;
 
   if (mostRecentPoint) {
@@ -55,10 +54,13 @@ export function Locations(props: TProps) {
     initialRegion = coordsToRegion({ latitude, longitude });
   }
 
+  console.log('###################### map: RENDER MAP: ', interactions.length);
+
   return (
     <MapView
       enableUserLocation={true}
       style={styles.map}
+      //   provider="google"
       initialRegion={initialRegion}
     >
       {interactions.map((interaction) => {
@@ -91,5 +93,7 @@ export function Locations(props: TProps) {
 const styles = StyleSheet.create({
   map: {
     height: 650,
+    borderWidth: 4,
+    borderColor: 'red',
   },
 });
