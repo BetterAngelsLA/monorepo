@@ -60,14 +60,6 @@ type AddressType {
   zipCode: String
 }
 
-type AllAuthUser {
-  id: ID!
-  display: String!
-  hasUsablePassword: Boolean!
-  email: String!
-  username: String!
-}
-
 interface AttachmentInterface {
   id: ID!
   file: DjangoFileType!
@@ -91,18 +83,6 @@ input AuthInput {
   code_verifier: String
   id_token: String
   redirect_uri: String
-}
-
-type AuthMeta {
-  isAuthenticated: Boolean!
-  sessionToken: String
-  accessToken: String
-}
-
-type AuthMethod {
-  method: String!
-  at: DateTime!
-  email: String
 }
 
 type AuthResponse {
@@ -429,25 +409,6 @@ input ClientSearchInput {
   middleName: String = null
 }
 
-input CodeConfirmInput {
-  code: String!
-}
-
-input CodeRequestInput {
-  email: String!
-}
-
-type ConfirmLoginCodeData {
-  user: AllAuthUser!
-  methods: [AuthMethod!]!
-}
-
-type ConfirmLoginCodeResponse {
-  status: Int!
-  data: ConfirmLoginCodeData!
-  meta: AuthMeta!
-}
-
 type ContactInfoType {
   id: ID!
   contactName: String!
@@ -698,12 +659,6 @@ type FlagType {
   name: String!
   isActive: Boolean
   lastModified: DateTime
-}
-
-type Flow {
-  id: String!
-  isPending: Boolean
-  providers: [String!]
 }
 
 enum FunderChoices {
@@ -973,8 +928,6 @@ type Mutation {
   login(input: LoginInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   appleAuth(input: AuthInput!): AuthResponse!
-  requestLoginCode(input: CodeRequestInput!): RequestLoginCodeResponse!
-  confirmLoginCode(input: CodeConfirmInput!): ConfirmLoginCodeResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
@@ -1284,16 +1237,6 @@ input RemoveNoteTaskInput {
 }
 
 union RemoveNoteTaskPayload = NoteType | OperationInfo
-
-type RequestLoginCodeData {
-  flows: [Flow!]!
-}
-
-type RequestLoginCodeResponse {
-  status: Int!
-  data: RequestLoginCodeData!
-  meta: AuthMeta!
-}
 
 input RevertNoteInput {
   id: ID!
