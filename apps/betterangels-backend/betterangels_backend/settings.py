@@ -63,6 +63,7 @@ env = environ.Env(
     SECURE_HSTS_INCLUDE_SUBDOMAINS=(bool, False),
     SECURE_HSTS_PRELOAD=(bool, False),
     SECURE_HSTS_SECONDS=(int, 0),
+    ACCOUNT_LOGIN_BY_CODE_ENABLED=(bool, False),
     SOCIALACCOUNT_APPLE_CLIENT_ID=(str, ""),
     SOCIALACCOUNT_APPLE_SECRET=(str, ""),
     SOCIALACCOUNT_APPLE_ID_PREFIX=(str, ""),
@@ -108,6 +109,7 @@ INSTALLED_APPS = [
     # 3rd Party
     "allauth",
     "allauth.account",
+    "allauth.headless",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.apple",
     "allauth.socialaccount.providers.google",
@@ -141,7 +143,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "django_structlog.middlewares.RequestMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -149,9 +150,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
+    "django_structlog.middlewares.RequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "allauth.account.middleware.AccountMiddleware",
     "pghistory.middleware.HistoryMiddleware",
     # Our Middleware
     "common.middleware.TimezoneMiddleware",
@@ -197,6 +199,8 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
 SOCIALACCOUNT_LOGIN_ON_GET = True
+ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
+ACCOUNT_LOGIN_BY_CODE_ENABLED = True
 
 ROOT_URLCONF = "betterangels_backend.urls"
 

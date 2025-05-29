@@ -3,46 +3,106 @@ import * as Types from '../../../apollo/graphql/__generated__/types';
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
-export type LoginFormMutationVariables = Types.Exact<{
-  username: Types.Scalars['String']['input'];
-  password: Types.Scalars['String']['input'];
+export type RequestLoginCodeMutationVariables = Types.Exact<{
+  email: Types.Scalars['String']['input'];
 }>;
 
 
-export type LoginFormMutation = { __typename?: 'Mutation', login: { __typename?: 'AuthResponse', status_code: string } };
+export type RequestLoginCodeMutation = { __typename?: 'Mutation', requestLoginCode: { __typename?: 'RequestLoginCodeResponse', status: number, data: { __typename?: 'RequestLoginCodeData', flows: Array<{ __typename?: 'Flow', id: string, isPending?: boolean | null }> }, meta: { __typename?: 'AuthMeta', isAuthenticated: boolean } } };
+
+export type ConfirmLoginCodeMutationVariables = Types.Exact<{
+  code: Types.Scalars['String']['input'];
+}>;
 
 
-export const LoginFormDocument = gql`
-    mutation LoginForm($username: String!, $password: String!) {
-  login(input: {username: $username, password: $password}) @rest(type: "AuthResponse", path: "/rest-auth/login/", method: "POST", bodyKey: "input") {
-    status_code
+export type ConfirmLoginCodeMutation = { __typename?: 'Mutation', confirmLoginCode: { __typename?: 'ConfirmLoginCodeResponse', status: number, data: { __typename?: 'ConfirmLoginCodeData', user: { __typename?: 'AllAuthUser', id: string, display: string, email: string, username: string } }, meta: { __typename?: 'AuthMeta', isAuthenticated: boolean, sessionToken?: string | null, accessToken?: string | null } } };
+
+
+export const RequestLoginCodeDocument = gql`
+    mutation RequestLoginCode($email: String!) {
+  requestLoginCode(input: {email: $email}) @rest(type: "RequestLoginCodeResponse", path: "/_allauth/browser/v1/auth/code/request", method: "POST", bodyKey: "input", statusCode: [200, 401]) {
+    status
+    data {
+      flows {
+        id
+        isPending
+      }
+    }
+    meta {
+      isAuthenticated
+    }
   }
 }
     `;
-export type LoginFormMutationFn = Apollo.MutationFunction<LoginFormMutation, LoginFormMutationVariables>;
+export type RequestLoginCodeMutationFn = Apollo.MutationFunction<RequestLoginCodeMutation, RequestLoginCodeMutationVariables>;
 
 /**
- * __useLoginFormMutation__
+ * __useRequestLoginCodeMutation__
  *
- * To run a mutation, you first call `useLoginFormMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useLoginFormMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useRequestLoginCodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRequestLoginCodeMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [loginFormMutation, { data, loading, error }] = useLoginFormMutation({
+ * const [requestLoginCodeMutation, { data, loading, error }] = useRequestLoginCodeMutation({
  *   variables: {
- *      username: // value for 'username'
- *      password: // value for 'password'
+ *      email: // value for 'email'
  *   },
  * });
  */
-export function useLoginFormMutation(baseOptions?: Apollo.MutationHookOptions<LoginFormMutation, LoginFormMutationVariables>) {
+export function useRequestLoginCodeMutation(baseOptions?: Apollo.MutationHookOptions<RequestLoginCodeMutation, RequestLoginCodeMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<LoginFormMutation, LoginFormMutationVariables>(LoginFormDocument, options);
+        return Apollo.useMutation<RequestLoginCodeMutation, RequestLoginCodeMutationVariables>(RequestLoginCodeDocument, options);
       }
-export type LoginFormMutationHookResult = ReturnType<typeof useLoginFormMutation>;
-export type LoginFormMutationResult = Apollo.MutationResult<LoginFormMutation>;
-export type LoginFormMutationOptions = Apollo.BaseMutationOptions<LoginFormMutation, LoginFormMutationVariables>;
+export type RequestLoginCodeMutationHookResult = ReturnType<typeof useRequestLoginCodeMutation>;
+export type RequestLoginCodeMutationResult = Apollo.MutationResult<RequestLoginCodeMutation>;
+export type RequestLoginCodeMutationOptions = Apollo.BaseMutationOptions<RequestLoginCodeMutation, RequestLoginCodeMutationVariables>;
+export const ConfirmLoginCodeDocument = gql`
+    mutation ConfirmLoginCode($code: String!) {
+  confirmLoginCode(input: {code: $code}) @rest(type: "ConfirmLoginCodeResponse", path: "/_allauth/browser/v1/auth/code/confirm", method: "POST", bodyKey: "input", statusCode: [200, 409]) {
+    status
+    data {
+      user {
+        id
+        display
+        email
+        username
+      }
+    }
+    meta {
+      isAuthenticated
+      sessionToken
+      accessToken
+    }
+  }
+}
+    `;
+export type ConfirmLoginCodeMutationFn = Apollo.MutationFunction<ConfirmLoginCodeMutation, ConfirmLoginCodeMutationVariables>;
+
+/**
+ * __useConfirmLoginCodeMutation__
+ *
+ * To run a mutation, you first call `useConfirmLoginCodeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useConfirmLoginCodeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [confirmLoginCodeMutation, { data, loading, error }] = useConfirmLoginCodeMutation({
+ *   variables: {
+ *      code: // value for 'code'
+ *   },
+ * });
+ */
+export function useConfirmLoginCodeMutation(baseOptions?: Apollo.MutationHookOptions<ConfirmLoginCodeMutation, ConfirmLoginCodeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ConfirmLoginCodeMutation, ConfirmLoginCodeMutationVariables>(ConfirmLoginCodeDocument, options);
+      }
+export type ConfirmLoginCodeMutationHookResult = ReturnType<typeof useConfirmLoginCodeMutation>;
+export type ConfirmLoginCodeMutationResult = Apollo.MutationResult<ConfirmLoginCodeMutation>;
+export type ConfirmLoginCodeMutationOptions = Apollo.BaseMutationOptions<ConfirmLoginCodeMutation, ConfirmLoginCodeMutationVariables>;

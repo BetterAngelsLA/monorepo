@@ -70,6 +70,15 @@ export type AddressType = {
   zipCode?: Maybe<Scalars['String']['output']>;
 };
 
+export type AllAuthUser = {
+  __typename?: 'AllAuthUser';
+  display: Scalars['String']['output'];
+  email: Scalars['String']['output'];
+  hasUsablePassword: Scalars['Boolean']['output'];
+  id: Scalars['ID']['output'];
+  username: Scalars['String']['output'];
+};
+
 export type AttachmentInterface = {
   attachmentType: AttachmentType;
   createdAt: Scalars['DateTime']['output'];
@@ -93,6 +102,20 @@ export type AuthInput = {
   code_verifier?: InputMaybe<Scalars['String']['input']>;
   id_token?: InputMaybe<Scalars['String']['input']>;
   redirect_uri?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AuthMeta = {
+  __typename?: 'AuthMeta';
+  accessToken?: Maybe<Scalars['String']['output']>;
+  isAuthenticated: Scalars['Boolean']['output'];
+  sessionToken?: Maybe<Scalars['String']['output']>;
+};
+
+export type AuthMethod = {
+  __typename?: 'AuthMethod';
+  at: Scalars['DateTime']['output'];
+  email?: Maybe<Scalars['String']['output']>;
+  method: Scalars['String']['output'];
 };
 
 export type AuthResponse = {
@@ -437,6 +460,27 @@ export type ClientSearchInput = {
   middleName?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CodeConfirmInput = {
+  code: Scalars['String']['input'];
+};
+
+export type CodeRequestInput = {
+  email: Scalars['String']['input'];
+};
+
+export type ConfirmLoginCodeData = {
+  __typename?: 'ConfirmLoginCodeData';
+  methods: Array<AuthMethod>;
+  user: AllAuthUser;
+};
+
+export type ConfirmLoginCodeResponse = {
+  __typename?: 'ConfirmLoginCodeResponse';
+  data: ConfirmLoginCodeData;
+  meta: AuthMeta;
+  status: Scalars['Int']['output'];
+};
+
 export type ContactInfoType = {
   __typename?: 'ContactInfoType';
   contactName: Scalars['String']['output'];
@@ -692,6 +736,13 @@ export type FlagType = {
   name: Scalars['String']['output'];
 };
 
+export type Flow = {
+  __typename?: 'Flow';
+  id: Scalars['String']['output'];
+  isPending?: Maybe<Scalars['Boolean']['output']>;
+  providers?: Maybe<Array<Scalars['String']['output']>>;
+};
+
 export enum FunderChoices {
   CityOfLosAngeles = 'CITY_OF_LOS_ANGELES',
   Dhs = 'DHS',
@@ -907,15 +958,6 @@ export type LoginInput = {
   username: Scalars['String']['input'];
 };
 
-export type MagicLinkInput = {
-  email: Scalars['String']['input'];
-};
-
-export type MagicLinkResponse = {
-  __typename?: 'MagicLinkResponse';
-  message: Scalars['String']['output'];
-};
-
 export type MapBoundsInput = {
   eastLng: Scalars['LongitudeScalar']['input'];
   northLat: Scalars['LatitudeScalar']['input'];
@@ -964,6 +1006,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
   appleAuth: AuthResponse;
+  confirmLoginCode: ConfirmLoginCodeResponse;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
@@ -989,7 +1032,6 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  generateMagicLink: MagicLinkResponse;
   googleAuth: AuthResponse;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
@@ -997,6 +1039,7 @@ export type Mutation = {
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   removeNoteTask: RemoveNoteTaskPayload;
+  requestLoginCode: RequestLoginCodeResponse;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -1021,6 +1064,11 @@ export type MutationAddNoteTaskArgs = {
 
 export type MutationAppleAuthArgs = {
   input: AuthInput;
+};
+
+
+export type MutationConfirmLoginCodeArgs = {
+  input: CodeConfirmInput;
 };
 
 
@@ -1144,11 +1192,6 @@ export type MutationDeleteTaskArgs = {
 };
 
 
-export type MutationGenerateMagicLinkArgs = {
-  data: MagicLinkInput;
-};
-
-
 export type MutationGoogleAuthArgs = {
   input: AuthInput;
 };
@@ -1176,6 +1219,11 @@ export type MutationRemoveNoteServiceRequestArgs = {
 
 export type MutationRemoveNoteTaskArgs = {
   data: RemoveNoteTaskInput;
+};
+
+
+export type MutationRequestLoginCodeArgs = {
+  input: CodeRequestInput;
 };
 
 
@@ -1643,6 +1691,18 @@ export type RemoveNoteTaskInput = {
 };
 
 export type RemoveNoteTaskPayload = NoteType | OperationInfo;
+
+export type RequestLoginCodeData = {
+  __typename?: 'RequestLoginCodeData';
+  flows: Array<Flow>;
+};
+
+export type RequestLoginCodeResponse = {
+  __typename?: 'RequestLoginCodeResponse';
+  data: RequestLoginCodeData;
+  meta: AuthMeta;
+  status: Scalars['Int']['output'];
+};
 
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];

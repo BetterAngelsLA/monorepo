@@ -26,7 +26,6 @@ import {
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
-  const [errorMessage, setErrorMessage] = useState('');
   const { switchEnvironment } = useApiConfig();
   const { refetchFeatureFlags } = useFeatureControls();
 
@@ -108,11 +107,7 @@ export default function SignIn() {
           }}
         />
       </View>
-      <LoginForm
-        errorMessage={errorMessage}
-        setErrorMessage={setErrorMessage}
-        setIsLoading={setIsLoading}
-      />
+      <LoginForm setIsLoading={setIsLoading} />
       <TextRegular textAlign="center" size="sm" color={Colors.BLACK} mt="xl">
         By continuing, you agree to our{' '}
         <Link

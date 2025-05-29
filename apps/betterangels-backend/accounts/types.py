@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional
 
 import strawberry
@@ -73,11 +74,81 @@ class UpdateUserInput(UserBaseType):
     has_accepted_privacy_policy: auto
 
 
-@strawberry.input
-class MagicLinkInput:
-    email: str
+# ────────────────────────────────────────────────────────────────────
+# Shared Types
+# ────────────────────────────────────────────────────────────────────
 
 
 @strawberry.type
-class MagicLinkResponse:
-    message: str
+class Flow:
+    id: str
+    is_pending: Optional[bool] = None
+    providers: Optional[List[str]] = None
+
+
+@strawberry.type
+class AuthMeta:
+    is_authenticated: bool
+    session_token: Optional[str] = None
+    access_token: Optional[str] = None
+
+
+# ────────────────────────────────────────────────────────────────────
+# Request Login Code Response
+# ────────────────────────────────────────────────────────────────────
+
+
+@strawberry.type
+class RequestLoginCodeData:
+    flows: List[Flow]
+
+
+@strawberry.type
+class RequestLoginCodeResponse:
+    status: int
+    data: RequestLoginCodeData
+    meta: AuthMeta
+
+
+# ────────────────────────────────────────────────────────────────────
+# Confirm Login Code Response
+# ────────────────────────────────────────────────────────────────────
+
+
+@strawberry.type
+class AllAuthUser:
+    id: strawberry.ID
+    display: str
+    has_usable_password: bool
+    email: str
+    username: str
+
+
+@strawberry.type
+class AuthMethod:
+    method: str
+    at: datetime
+    email: Optional[str] = None
+
+
+@strawberry.type
+class ConfirmLoginCodeData:
+    user: AllAuthUser
+    methods: List[AuthMethod]
+
+
+@strawberry.type
+class ConfirmLoginCodeResponse:
+    status: int
+    data: ConfirmLoginCodeData
+    meta: AuthMeta
+
+
+@strawberry.input
+class CodeRequestInput:
+    email: str
+
+
+@strawberry.input
+class CodeConfirmInput:
+    code: str
