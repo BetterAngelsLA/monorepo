@@ -15,7 +15,11 @@ def canonicalise_filename(mime_type: str, filename: str) -> str:
       - Collapsing duplicate known extensions (e.g., '.pdf.pdf' → '.pdf')
     """
     filename = unquote(filename).rstrip(" .")
-    desired_ext = mimetypes.guess_extension(mime_type) or ".bin"
+    desired_ext = mimetypes.guess_extension(mime_type)
+
+    if not desired_ext:
+        raise ValueError(f"Unsupported MIME type: {mime_type}")
+
     current_mime, _ = mimetypes.guess_type(filename)
 
     if current_mime == mime_type or filename.lower().endswith(desired_ext):

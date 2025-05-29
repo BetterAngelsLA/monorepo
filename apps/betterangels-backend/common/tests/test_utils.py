@@ -19,8 +19,12 @@ class CommonUtilsTestCase(ParametrizedTestCase, TestCase):
             ("video/mpeg", "video", "video.mpeg"),
             ("video/mpeg", "video.mpg", "video.mpg"),
             ("video/mpeg", "video.mpeg", "video.mpeg"),
-            ("invalid_mime_type", "image.jpg", "image.bin"),
+            ("invalid_mime_type", "image.jpg", None),
         ],
     )
-    def test_canonicalise_filename(self, mime_type: str, filename: str, expected_filename: str | None) -> None:
-        self.assertEqual(canonicalise_filename(mime_type, filename), expected_filename)
+    def test_get_filename_with_extension(self, mime_type: str, filename: str, expected_filename: str | None) -> None:
+        if expected_filename:
+            self.assertEqual(canonicalise_filename(mime_type, filename), expected_filename)
+        else:
+            with self.assertRaises(ValueError):
+                canonicalise_filename(mime_type, filename)
