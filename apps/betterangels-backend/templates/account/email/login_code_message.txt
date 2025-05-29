@@ -1,0 +1,9 @@
+{% extends "account/email/base_message.txt" %}
+{% load account %}
+{% load i18n %}
+
+{% block content %}{% autoescape off %}{% blocktranslate %}Your sign-in code is listed below. Please use it to continue your application login process.{% endblocktranslate %}{% endautoescape %}
+
+{{ code }}
+
+{% blocktranslate %}This mail can be safely ignored if you did not initiate this action.{% endblocktranslate %}{% endblock content %}
