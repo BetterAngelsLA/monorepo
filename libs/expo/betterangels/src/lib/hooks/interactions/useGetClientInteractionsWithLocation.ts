@@ -6,7 +6,9 @@ type TInteraction = NonNullable<
 >[number];
 
 export function useGetClientInteractionsWithLocation(id: string) {
-  const [interactions, setInteractions] = useState<TInteraction[]>();
+  const [interactions, setInteractions] = useState<TInteraction[] | undefined>(
+    undefined
+  );
 
   const { data, error, loading } = useNotesQuery({
     variables: {
@@ -21,13 +23,11 @@ export function useGetClientInteractionsWithLocation(id: string) {
   });
 
   useEffect(() => {
-    const results = data?.notes.results;
-
-    if (!data || !('notes' in data) || !results?.length) {
-      setInteractions([]);
-
+    if (!data || !('notes' in data)) {
       return;
     }
+
+    const results = data.notes.results;
 
     const withLocation = results.filter((note) => !!note.location?.point);
 
