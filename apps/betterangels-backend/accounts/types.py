@@ -71,13 +71,3 @@ class UpdateUserInput(UserBaseType):
     id: ID
     has_accepted_tos: auto
     has_accepted_privacy_policy: auto
-
-
-@strawberry.input
-class MagicLinkInput:
-    email: str
-
-
-@strawberry.type
-class MagicLinkResponse:
-    message: str
