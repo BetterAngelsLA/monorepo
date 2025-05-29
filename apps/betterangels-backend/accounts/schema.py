@@ -18,17 +18,13 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 
 from .types import (
-    AllAuthUser,
     AuthInput,
-    AuthMeta,
     AuthResponse,
     CodeConfirmInput,
     CodeRequestInput,
-    ConfirmLoginCodeData,
     ConfirmLoginCodeResponse,
     LoginInput,
     OrganizationType,
-    RequestLoginCodeData,
     RequestLoginCodeResponse,
     UpdateUserInput,
     UserType,
