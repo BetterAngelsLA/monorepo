@@ -1,19 +1,20 @@
 import { useApiConfig } from '@monorepo/expo/shared/clients';
-import { BasicInput, Button } from '@monorepo/expo/shared/ui-components';
+import {
+  BasicInput,
+  Button,
+  Loading,
+} from '@monorepo/expo/shared/ui-components';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { useUser } from '../../hooks';
+import { useUser } from '../..';
 
-export default function LoginForm({
-  setIsLoading,
-}: {
-  setIsLoading?: (loading: boolean) => void;
-}) {
+export default function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'initial' | 'otp'>('initial');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const { environment, switchEnvironment, fetchClient } = useApiConfig();
   const { refetchUser } = useUser();
@@ -31,80 +32,80 @@ export default function LoginForm({
     }
   }, [email, environment, targetEnv, switchEnvironment, isValidEmail]);
 
+  const handleError = (message: string) => {
+    setErrorMsg(message);
+    setLoading(false);
+  };
+
   const handleSendCode = useCallback(async () => {
-    setErrorMessage('');
+    setLoading(true);
+    setErrorMsg('');
 
     try {
       const res = await fetchClient('/_allauth/browser/v1/auth/code/request', {
         method: 'POST',
         body: JSON.stringify({ email: email.toLowerCase() }),
       });
-
-      if (res.status === 401) {
-        const data = await res.json();
-        if (
-          data?.data?.flows.some(
-            (flow: { id: string; is_pending: boolean }) =>
-              flow.id === 'login_by_code' && flow.is_pending
-          )
-        ) {
-          setStep('otp');
-        } else {
-          setErrorMessage('Unexpected response. Unable to send OTP.');
-        }
+      if (res.ok || res.status === 401) {
+        setStep('otp');
       } else {
-        setErrorMessage(`Failed to send OTP (status: ${res.status}).`);
+        handleError('Unable to send code. Please try again.');
       }
-    } catch {
-      setErrorMessage('Network or server error occurred.');
+    } catch (error) {
+      console.error('Send code error:', error);
+      handleError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
     }
   }, [email, fetchClient]);
 
   const handleConfirmCode = useCallback(async () => {
-    setErrorMessage('');
-    setIsLoading?.(true);
+    setLoading(true);
+    setErrorMsg('');
 
     try {
       const res = await fetchClient('/_allauth/browser/v1/auth/code/confirm', {
         method: 'POST',
-        body: JSON.stringify({ code: otp }),
+        body: JSON.stringify({ code: otp.trim() }),
       });
-
       const data = await res.json();
-      if (res.status === 200 && data.meta?.is_authenticated) {
+
+      if (res.ok && data?.meta?.is_authenticated) {
         await refetchUser();
       } else {
-        setErrorMessage(data.detail || 'Invalid OTP.');
+        handleError('Invalid code. Please try again.');
       }
-    } catch {
-      setErrorMessage('Network or server error occurred.');
+    } catch (error) {
+      console.error('Confirm code error:', error);
+      handleError('Network error. Please try again.');
     } finally {
-      setIsLoading?.(false);
+      setLoading(false);
     }
-  }, [otp, fetchClient, refetchUser, setIsLoading]);
+  }, [otp, fetchClient, refetchUser]);
 
   const handlePasswordLogin = useCallback(async () => {
-    setErrorMessage('');
-    setIsLoading?.(true);
+    setLoading(true);
+    setErrorMsg('');
 
     try {
-      const res = await fetchClient('/rest-auth/login/', {
+      const res = await fetchClient('/_allauth/browser/v1/auth/login', {
         method: 'POST',
         body: JSON.stringify({ username: email.toLowerCase(), password }),
       });
+      const data = await res.json();
 
-      if (res.status === 200 || res.status === 204) {
+      if (res.ok && data?.meta?.is_authenticated) {
         await refetchUser();
       } else {
-        const data = await res.json();
-        setErrorMessage(data.detail || 'Invalid email or password.');
+        handleError('Invalid email or password.');
       }
-    } catch {
-      setErrorMessage('Authentication failed.');
+    } catch (error) {
+      console.error('Login error:', error);
+      handleError('Network error. Please try again.');
     } finally {
-      setIsLoading?.(false);
+      setLoading(false);
     }
-  }, [email, password, fetchClient, refetchUser, setIsLoading]);
+  }, [email, password, fetchClient, refetchUser]);
 
   return (
     <View style={styles.container}>
@@ -121,6 +122,7 @@ export default function LoginForm({
             height={44}
             mb="xs"
           />
+
           {isPasswordLogin && (
             <BasicInput
               label="Password"
@@ -133,7 +135,9 @@ export default function LoginForm({
               placeholder="Password"
             />
           )}
-          {!!errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
+
+          {!!errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
+
           <Button
             mt="md"
             height="lg"
@@ -142,8 +146,11 @@ export default function LoginForm({
             variant="primary"
             accessibilityHint="Sign in to your account"
             title="Sign In"
+            icon={loading ? <Loading size="small" color="white" /> : undefined}
             onPress={isPasswordLogin ? handlePasswordLogin : handleSendCode}
-            disabled={!isValidEmail || (isPasswordLogin && !password)}
+            disabled={
+              loading || !isValidEmail || (isPasswordLogin && !password)
+            }
           />
         </>
       )}
@@ -160,7 +167,11 @@ export default function LoginForm({
             height={44}
             mb="xs"
           />
-          {!!errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
+
+          <Text style={styles.info}>Check your email for the access code.</Text>
+
+          {!!errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
+
           <Button
             mt="md"
             height="lg"
@@ -169,8 +180,9 @@ export default function LoginForm({
             variant="primary"
             accessibilityHint="Confirm OTP and sign in"
             title="Confirm OTP"
+            icon={loading ? <Loading size="small" color="white" /> : undefined}
             onPress={handleConfirmCode}
-            disabled={!otp}
+            disabled={loading || !otp.trim()}
           />
         </>
       )}
@@ -181,4 +193,5 @@ export default function LoginForm({
 const styles = StyleSheet.create({
   container: { width: '100%' },
   error: { color: 'red', marginTop: 10 },
+  info: { color: '#555', marginTop: 4, marginBottom: 10, textAlign: 'center' },
 });
