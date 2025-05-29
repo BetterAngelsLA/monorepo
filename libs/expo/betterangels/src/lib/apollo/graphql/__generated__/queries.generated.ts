@@ -10,7 +10,7 @@ export type NotesQueryVariables = Types.Exact<{
 }>;
 
 
-export type NotesQuery = { __typename?: 'Query', notes: { __typename?: 'NoteTypeOffsetPaginated', totalCount: number, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number }, results: Array<{ __typename?: 'NoteType', id: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, clientProfile?: { __typename?: 'ClientProfileType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, displayCaseManager: string, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null, user?: { __typename?: 'UserType', id: string, username: string } | null } | null, createdBy: { __typename?: 'UserType', id: string, email?: string | null, username: string, firstName?: string | null, lastName?: string | null } }> } };
+export type NotesQuery = { __typename?: 'Query', notes: { __typename?: 'NoteTypeOffsetPaginated', totalCount: number, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number }, results: Array<{ __typename?: 'NoteType', id: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum, serviceOther?: string | null }>, clientProfile?: { __typename?: 'ClientProfileType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, displayCaseManager: string, profilePhoto?: { __typename?: 'DjangoImageType', name: string, path: string, size: number, url: string, width: number, height: number } | null, user?: { __typename?: 'UserType', id: string, username: string } | null } | null, createdBy: { __typename?: 'UserType', id: string, email?: string | null, username: string, firstName?: string | null, lastName?: string | null } }> } };
 
 export type ViewNoteQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
@@ -67,7 +67,11 @@ export const NotesDocument = gql`
         displayCaseManager
         profilePhoto {
           name
+          path
+          size
           url
+          width
+          height
         }
         user {
           id

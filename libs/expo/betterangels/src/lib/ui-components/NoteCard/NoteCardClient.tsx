@@ -35,7 +35,11 @@ export default function NoteCardClient(props: INoteCardClientProps) {
           accessibilityHint={
             `${displayDetails?.email} client's avatar` || `client's avatar`
           }
-          imageUrl={(displayDetails?.__typename === "ClientProfileType")?displayDetails.profilePhoto?.url:""}
+          imageUrl={
+            displayDetails?.__typename === 'ClientProfileType'
+              ? displayDetails.profilePhoto?.url
+              : ''
+          }
         />
         <TextRegular size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
           {displayDetails?.firstName} {displayDetails?.lastName}

@@ -52,7 +52,11 @@ export const GET_NOTES = gql`
           displayCaseManager
           profilePhoto {
             name
+            path
+            size
             url
+            width
+            height
           }
           user {
             id
