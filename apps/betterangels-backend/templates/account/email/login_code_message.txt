@@ -8,6 +8,4 @@
 {{ code }}
 
 {% blocktranslate %}Please do not share this code with anyone.{% endblocktranslate %}
-
-{% blocktranslate %}This email can be safely ignored if you did not initiate this action.{% endblocktranslate %}
 {% endautoescape %}{% endblock content %}
