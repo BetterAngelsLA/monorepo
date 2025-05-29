@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import {
   OtherCategory,
   ServiceEnum,
@@ -19,10 +20,8 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import ServiceCheckbox from 'libs/expo/betterangels/src/lib/ui-components/RequestedProvidedServices/ServiceCheckbox';
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const FOOTER_HEIGHT = 80; // Adjust to match your footer's true height
 
 export default function ServicesModalScreen() {
     const router = useRouter();
@@ -48,6 +47,7 @@ export default function ServicesModalScreen() {
     const [createService] = useCreateNoteServiceRequestMutation();
 
     const insets = useSafeAreaInsets();
+    const EXTRA_BUTTON_SPACE = 24;
 
     const handleFilter = (text: string) => {
       setSearchText(text);
@@ -150,12 +150,30 @@ export default function ServicesModalScreen() {
 
     return (
       <View style={{ flex: 1, position: 'relative' }}>
+        <TouchableOpacity
+          onPress={router.back}
+          style={{
+            position: 'absolute',
+            top: insets.top - 30,
+            right: 16,
+            zIndex: 10,
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            borderRadius: 20,
+            padding: 4,
+          }}
+          accessibilityLabel="Close modal"
+          accessibilityRole="button"
+        >
+          <Ionicons name="close" size={28} color="#222" />
+        </TouchableOpacity>
+
         <BaseModalLayout
           title={type === 'REQUESTED' ? 'Requested Services' : 'Provided Services'}
           subtitle="Select the services to your client in this interaction."
           scrollable
           contentStyle={{
-            paddingBottom: FOOTER_HEIGHT + Spacings.md, // Ensures scroll content is not hidden behind the footer
+            paddingTop: 60,
+            paddingBottom: Spacings.md,
           }}
         >
           <BasicInput
@@ -210,13 +228,13 @@ export default function ServicesModalScreen() {
             position: 'absolute',
             left: 0,
             right: 0,
-            bottom: 20,
+            bottom: 0,
             backgroundColor: Colors.WHITE,
             flexDirection: 'row',
             alignItems: 'center',
             paddingHorizontal: Spacings.md,
             paddingTop: Spacings.sm,
-            paddingBottom: Spacings.sm + insets.bottom,
+            paddingBottom: Spacings.sm + insets.bottom + EXTRA_BUTTON_SPACE,
             shadowColor: Colors.BLACK,
             shadowOffset: { width: 0, height: -5 },
             shadowOpacity: 0.05,
@@ -233,6 +251,7 @@ export default function ServicesModalScreen() {
               accessibilityHint="resets all checkboxes"
             />
           </View>
+          <View style={{ width: 8 }} />
           <View style={{ flex: 1 }}>
             <Button
               disabled={isSubmitLoading}

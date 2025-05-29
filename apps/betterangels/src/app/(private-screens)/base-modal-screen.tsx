@@ -1,20 +1,19 @@
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 
-// Import your modal content components
+// import modal content components
 import ServicesComponent from './modals/ServicesComponent';
 
-// Create the registry/mapping object
+// registry/mapping object
 const modalRegistry: Record<string, React.ComponentType> = {
   PROVIDED: ServicesComponent,
   REQUESTED: ServicesComponent,
-  // Add more mappings as needed
 };
 
 export default function BaseModalScreen() {
   const { type } = useLocalSearchParams();
 
-  // Select the component from the registry, or use a fallback
+  // select component from registry, or use a fallback
   const ModalContent = modalRegistry[String(type)] || (() => <></>);
 
   return <ModalContent />;
