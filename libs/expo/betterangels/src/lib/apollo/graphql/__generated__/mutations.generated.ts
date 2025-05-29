@@ -3,11 +3,6 @@ import * as Types from './types';
 import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
-export type GenerateMagicLinkMutationVariables = Types.Exact<{ [key: string]: never; }>;
-
-
-export type GenerateMagicLinkMutation = { __typename?: 'Mutation', generateMagicLink: { __typename?: 'MagicLinkResponse', message: string } };
-
 export type DeleteCurrentUserMutationVariables = Types.Exact<{ [key: string]: never; }>;
 
 
@@ -84,38 +79,6 @@ export type UpdateNoteLocationMutationVariables = Types.Exact<{
 export type UpdateNoteLocationMutation = { __typename?: 'Mutation', updateNoteLocation: { __typename?: 'NoteType', id: string, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 
-export const GenerateMagicLinkDocument = gql`
-    mutation GenerateMagicLink {
-  generateMagicLink(data: {email: "paul+test@betterangels.la"}) {
-    message
-  }
-}
-    `;
-export type GenerateMagicLinkMutationFn = Apollo.MutationFunction<GenerateMagicLinkMutation, GenerateMagicLinkMutationVariables>;
-
-/**
- * __useGenerateMagicLinkMutation__
- *
- * To run a mutation, you first call `useGenerateMagicLinkMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useGenerateMagicLinkMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [generateMagicLinkMutation, { data, loading, error }] = useGenerateMagicLinkMutation({
- *   variables: {
- *   },
- * });
- */
-export function useGenerateMagicLinkMutation(baseOptions?: Apollo.MutationHookOptions<GenerateMagicLinkMutation, GenerateMagicLinkMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<GenerateMagicLinkMutation, GenerateMagicLinkMutationVariables>(GenerateMagicLinkDocument, options);
-      }
-export type GenerateMagicLinkMutationHookResult = ReturnType<typeof useGenerateMagicLinkMutation>;
-export type GenerateMagicLinkMutationResult = Apollo.MutationResult<GenerateMagicLinkMutation>;
-export type GenerateMagicLinkMutationOptions = Apollo.BaseMutationOptions<GenerateMagicLinkMutation, GenerateMagicLinkMutationVariables>;
 export const DeleteCurrentUserDocument = gql`
     mutation DeleteCurrentUser {
   deleteCurrentUser {
