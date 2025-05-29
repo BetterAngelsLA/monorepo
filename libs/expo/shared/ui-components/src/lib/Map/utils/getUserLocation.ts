@@ -9,7 +9,10 @@ export async function getUserLocation(): Promise<Location.LocationObjectCoords |
     }
 
     const userCurrentLocation = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
+      // Accuracy.Balanced is accurate to within one hundred meters.
+      // Accuracy.High (within 10 meters) can take over 10 seconds sometimes.
+      // To use High may need to fetch Location progressively (from lower accuracy to highter).
+      accuracy: Location.Accuracy.Balanced,
     });
 
     return userCurrentLocation.coords;
