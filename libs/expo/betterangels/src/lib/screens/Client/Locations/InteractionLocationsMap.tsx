@@ -3,9 +3,9 @@ import {
   LoadingView,
   MapView,
   coordsToRegion,
+  defaultMapRegion,
   regionDeltaMap,
 } from '@monorepo/expo/shared/ui-components';
-import { defaultMapRegion } from 'libs/expo/shared/ui-components/src/lib/Map/constants';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { NotesQuery } from '../../../apollo';
