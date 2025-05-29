@@ -907,15 +907,6 @@ export type LoginInput = {
   username: Scalars['String']['input'];
 };
 
-export type MagicLinkInput = {
-  email: Scalars['String']['input'];
-};
-
-export type MagicLinkResponse = {
-  __typename?: 'MagicLinkResponse';
-  message: Scalars['String']['output'];
-};
-
 export type MapBoundsInput = {
   eastLng: Scalars['LongitudeScalar']['input'];
   northLat: Scalars['LatitudeScalar']['input'];
@@ -989,7 +980,6 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  generateMagicLink: MagicLinkResponse;
   googleAuth: AuthResponse;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
@@ -1141,11 +1131,6 @@ export type MutationDeleteSocialMediaProfileArgs = {
 
 export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
-};
-
-
-export type MutationGenerateMagicLinkArgs = {
-  data: MagicLinkInput;
 };
 
 

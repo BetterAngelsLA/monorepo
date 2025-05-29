@@ -880,14 +880,6 @@ input LoginInput {
 
 scalar LongitudeScalar
 
-input MagicLinkInput {
-  email: String!
-}
-
-type MagicLinkResponse {
-  message: String!
-}
-
 input MapBoundsInput {
   westLng: LongitudeScalar!
   northLat: LatitudeScalar!
@@ -936,7 +928,6 @@ type Mutation {
   login(input: LoginInput!): AuthResponse!
   googleAuth(input: AuthInput!): AuthResponse!
   appleAuth(input: AuthInput!): AuthResponse!
-  generateMagicLink(data: MagicLinkInput!): MagicLinkResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)

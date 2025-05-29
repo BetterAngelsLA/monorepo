@@ -27,6 +27,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   const [updateNote, { error }] = useUpdateNoteMutation();
   const [autoNote, setAutoNote] = useState<string>('');
   const [publicNote, setPublicNote] = useState<string>('');
+  const [userChange, setUserChange] = useState(false);
 
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -56,12 +57,13 @@ export default function PublicNote({ noteId }: { noteId: string }) {
   ).current;
 
   const onChange = (value: string) => {
+    setUserChange(true);
     setPublicNote(value);
     updateNoteFunction(value);
   };
 
   useEffect(() => {
-    if (!data || !('note' in data)) return;
+    if (!data || !('note' in data) || userChange) return;
     const autoNote = generatePublicNote({
       purpose: data.note.purpose,
       moods: data.note.moods,
@@ -71,7 +73,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
 
     setAutoNote(autoNote);
     setPublicNote(data.note.publicDetails);
-  }, [data]);
+  }, [data, userChange]);
 
   if (isLoading) {
     return <LoadingView />;
@@ -132,7 +134,6 @@ export default function PublicNote({ noteId }: { noteId: string }) {
             onPress={() => {
               if (!publicNote) {
                 setPublicNote(autoNote);
-                onChange(autoNote);
               } else {
                 setPublicNote('');
                 onChange('');
