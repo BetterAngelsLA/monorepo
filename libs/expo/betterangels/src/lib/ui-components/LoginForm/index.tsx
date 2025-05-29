@@ -1,4 +1,5 @@
 import { useApiConfig } from '@monorepo/expo/shared/clients';
+import { Regex } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
@@ -24,12 +25,11 @@ export default function LoginForm() {
       ? 'demo'
       : 'production';
   const isPasswordLogin = email.endsWith('@example.com');
-  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isValidEmail = Regex.email.test(email);
 
   useEffect(() => {
-    if (isValidEmail && environment !== targetEnv) {
-      switchEnvironment(targetEnv);
-    }
+    if (!isValidEmail) return;
+    switchEnvironment(targetEnv);
   }, [email, environment, targetEnv, switchEnvironment, isValidEmail]);
 
   const handleError = (message: string) => {
