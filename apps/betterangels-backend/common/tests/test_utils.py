@@ -1,4 +1,4 @@
-from unittest import TestCase
+from django.test import TestCase
 
 from common.utils import canonicalise_filename
 from unittest_parametrize import ParametrizedTestCase, parametrize
