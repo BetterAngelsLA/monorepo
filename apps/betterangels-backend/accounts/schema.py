@@ -20,12 +20,8 @@ from strawberry_django.permissions import HasPerm
 from .types import (
     AuthInput,
     AuthResponse,
-    CodeConfirmInput,
-    CodeRequestInput,
-    ConfirmLoginCodeResponse,
     LoginInput,
     OrganizationType,
-    RequestLoginCodeResponse,
     UpdateUserInput,
     UserType,
 )
@@ -61,16 +57,6 @@ class Mutation:
     def apple_auth(self, input: AuthInput) -> AuthResponse:
         # The is a stub and logic is handled client-side by Apollo
         return AuthResponse(status_code="")
-
-    @strawberry.mutation
-    def request_login_code(self, input: CodeRequestInput) -> RequestLoginCodeResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return RequestLoginCodeResponse()  # type: ignore
-
-    @strawberry.mutation
-    def confirm_login_code(self, input: CodeConfirmInput) -> ConfirmLoginCodeResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return ConfirmLoginCodeResponse()  # type: ignore
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_current_user(self, info: Info, data: UpdateUserInput) -> UserType:
