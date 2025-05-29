@@ -1,11 +1,7 @@
 {% extends "account/email/base_message.txt" %}
-{% load account %}
-{% load i18n %}
+{% load account i18n %}
 
-{% block content %}{% autoescape off %}
-{% blocktranslate %}Your sign-in code is listed below. Please use it to continue the login process.{% endblocktranslate %}
+{% block content %}{% autoescape off %}{% blocktranslate trimmed %}Keep this code private. Never share it with anyone.{% endblocktranslate %}
+{% blocktranslate trimmed with timeout_minutes=timeout_minutes %}Enter the code below within {{ timeout_minutes }} minutes to complete your sign-in:{% endblocktranslate %}
 
-{{ code }}
-
-{% blocktranslate %}Please do not share this code with anyone.{% endblocktranslate %}
-{% endautoescape %}{% endblock content %}
+{{ code }}{% endautoescape %}{% endblock content %}
