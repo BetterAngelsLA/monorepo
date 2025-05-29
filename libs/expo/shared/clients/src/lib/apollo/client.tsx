@@ -1,10 +1,37 @@
 import { ApolloClient, InMemoryCache, from } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
+import CookieManager from '@react-native-cookies/cookies';
 import { RestLink } from 'apollo-link-rest';
 import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import { Platform } from 'react-native';
-import { CSRF_HEADER_NAME, getCSRFToken } from '../common';
+import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from './constants';
 import { isReactNativeFileInstance } from './ReactNativeFile';
+
+const getTokenFromWeb = (): string | null =>
+  document.cookie.match(new RegExp(`${CSRF_COOKIE_NAME}=([^;]+)`))?.[1] ?? null;
+
+const getTokenFromNative = async (apiUrl: string): Promise<string | null> =>
+  (await CookieManager.get(apiUrl))[CSRF_COOKIE_NAME]?.value ?? null;
+
+const getCSRFToken = async (
+  apiUrl: string,
+  csrfUrl: string
+): Promise<string | null> => {
+  const readToken = async () =>
+    Platform.OS === 'web'
+      ? getTokenFromWeb()
+      : await getTokenFromNative(apiUrl);
+
+  let token = await readToken();
+  if (!token) {
+    await fetch(csrfUrl, {
+      credentials: 'include',
+      headers: { Accept: 'text/html' },
+    });
+    token = await readToken();
+  }
+  return token;
+};
 
 export const createApolloClient = (
   apiUrl: string,

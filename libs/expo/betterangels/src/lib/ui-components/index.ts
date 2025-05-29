@@ -24,4 +24,5 @@ export { default as NavModal } from './NavModal';
 export { default as NoteCard } from './NoteCard';
 export { default as RequestedProvidedServices } from './RequestedProvidedServices';
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
+export { AppleSignIn, GoogleSignIn } from './SocialLogin';
 export { default as WebBrowserLink } from './WebBrowserLink';
