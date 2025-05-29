@@ -66,7 +66,7 @@ export default function RequestedProvidedServices(
       title={`${enumDisplayServiceType[type]} Services`}
       setExpanded={() => router.push(`/base-modal-screen?type=${type}`)}
     >
-      {/* You can leave this empty or add content as needed */}
+      
     </FieldCard>
   );
 }
