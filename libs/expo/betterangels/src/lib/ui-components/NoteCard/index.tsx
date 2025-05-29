@@ -3,6 +3,7 @@ import { usePathname, useRouter } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 import { NotesQuery } from '../../apollo';
 import NoteCardClient from './NoteCardClient';
+import NoteCardFooter from './NoteCardFooter';
 import NoteCardHeader from './NoteCardHeader';
 import NoteCardPills from './NoteCardPills';
 
@@ -33,12 +34,11 @@ export default function NoteCard(props: INoteCardProps) {
         },
       ]}
     >
-      <NoteCardHeader purpose={note.purpose} interactedAt={note.interactedAt} />
+      {note.purpose && <NoteCardHeader purpose={note.purpose} />}
       <NoteCardClient
         isOnInteractionsPage={isOnInteractionsPage}
         createdBy={note.createdBy}
         clientProfile={note.clientProfile}
-        isSubmitted={note.isSubmitted}
       />
       {!!note.providedServices.length && (
         <NoteCardPills type="success" services={note.providedServices} />
@@ -46,6 +46,10 @@ export default function NoteCard(props: INoteCardProps) {
       {!!note.requestedServices.length && (
         <NoteCardPills type="primary" services={note.requestedServices} />
       )}
+      <NoteCardFooter
+        interactedAt={note.interactedAt}
+        isSubmitted={note.isSubmitted}
+      />
     </Pressable>
   );
 }

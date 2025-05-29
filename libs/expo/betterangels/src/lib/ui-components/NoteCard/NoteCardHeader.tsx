@@ -1,16 +1,13 @@
-import { NoteIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
+import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 
 interface INoteCardHeaderProps {
   purpose: string | null | undefined;
-  interactedAt: string;
 }
 
 export default function NoteCardHeader(props: INoteCardHeaderProps) {
-  const { purpose, interactedAt } = props;
+  const { purpose } = props;
   return (
     <View
       style={{
@@ -26,20 +23,14 @@ export default function NoteCardHeader(props: INoteCardHeaderProps) {
           alignItems: 'center',
         }}
       >
-        <NoteIcon mr="xs" color={Colors.NEUTRAL_DARK} />
-        <TextRegular
+        <TextBold
           numberOfLines={2}
           ellipsizeMode="tail"
-          size="sm"
-          color={Colors.NEUTRAL_DARK}
+          size="md"
+          color={Colors.PRIMARY_EXTRA_DARK}
         >
           {purpose}
-        </TextRegular>
-      </View>
-      <View style={{ alignItems: 'flex-end', flex: 1 }}>
-        <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
-          {format(new Date(interactedAt), 'MM/dd/yyyy')}
-        </TextRegular>
+        </TextBold>
       </View>
     </View>
   );
