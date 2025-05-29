@@ -95,9 +95,8 @@ class Attachment(BaseModel):  # type: ignore[django-manager-missing]
                 self.attachment_type = AttachmentType.DOCUMENT
             self.file.seek(0)
 
-        # filename = self.original_filename or unquote(self.file.name)
-        self.original_filename = self.original_filename or unquote(self.file.name)
-        # self.original_filename = canonicalise_filename(self.mime_type, filename)
+        filename = self.original_filename or unquote(self.file.name)
+        self.original_filename = canonicalise_filename(self.mime_type, filename)
 
         super().save(*args, **kwargs)
 
