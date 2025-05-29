@@ -1,0 +1,11 @@
+{% extends "account/email/base_message.txt" %}
+{% load account %}
+{% load i18n %}
+
+{% block content %}{% autoescape off %}
+{% blocktranslate %}Your sign-in code is listed below. Please use it to continue the login process.{% endblocktranslate %}
+
+{{ code }}
+
+{% blocktranslate %}Please do not share this code with anyone.{% endblocktranslate %}
+{% endautoescape %}{% endblock content %}
