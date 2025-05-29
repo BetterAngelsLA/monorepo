@@ -23,19 +23,25 @@ export function useGetClientInteractionsWithLocation(id: string) {
   });
 
   useEffect(() => {
-    if (!data || !('notes' in data)) {
+    if (!data) {
       return;
     }
 
-    const results = data.notes.results;
+    try {
+      const withLocation = data.notes.results.filter(
+        (note) => !!note.location?.point
+      );
 
-    const withLocation = results.filter((note) => !!note.location?.point);
+      setInteractions(withLocation);
+    } catch (e) {
+      console.error(`useGetClientInteractionsWithLocation: ${e}`);
 
-    setInteractions(withLocation);
+      setInteractions([]);
+    }
   }, [data]);
 
   if (error) {
-    console.error('Error fetching interactions:', error);
+    console.error('useGetClientInteractionsWithLocation:', error);
 
     return {};
   }
