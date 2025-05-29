@@ -63,6 +63,7 @@ env = environ.Env(
     SECURE_HSTS_INCLUDE_SUBDOMAINS=(bool, False),
     SECURE_HSTS_PRELOAD=(bool, False),
     SECURE_HSTS_SECONDS=(int, 0),
+    ACCOUNT_LOGIN_BY_CODE_ENABLED=(bool, False),
     SOCIALACCOUNT_APPLE_CLIENT_ID=(str, ""),
     SOCIALACCOUNT_APPLE_SECRET=(str, ""),
     SOCIALACCOUNT_APPLE_ID_PREFIX=(str, ""),
@@ -108,6 +109,7 @@ INSTALLED_APPS = [
     # 3rd Party
     "allauth",
     "allauth.account",
+    "allauth.headless",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.apple",
     "allauth.socialaccount.providers.google",
@@ -197,6 +199,8 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
 SOCIALACCOUNT_LOGIN_ON_GET = True
+ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
+ACCOUNT_LOGIN_BY_CODE_ENABLED = env("ACCOUNT_LOGIN_BY_CODE_ENABLED")
 
 ROOT_URLCONF = "betterangels_backend.urls"
 
