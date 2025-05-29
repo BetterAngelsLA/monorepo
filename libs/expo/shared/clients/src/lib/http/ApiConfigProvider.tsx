@@ -1,11 +1,19 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CookieManager from '@react-native-cookies/cookies';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { CSRF_HEADER_NAME, getCSRFToken } from '../common';
 
 interface ApiConfigContextType {
   baseUrl: string;
   environment: 'production' | 'demo';
   switchEnvironment: (env: 'production' | 'demo') => Promise<void>;
+  fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
 }
 
 const ApiConfigContext = createContext<ApiConfigContextType | undefined>(
@@ -26,38 +34,40 @@ export const ApiConfigProvider = ({
   const [environment, setEnvironment] = useState<'production' | 'demo'>(
     'production'
   );
-
-  const apiUrls = {
-    production: productionUrl,
-    demo: demoUrl,
-  };
+  const baseUrl = environment === 'demo' ? demoUrl : productionUrl;
 
   useEffect(() => {
-    (async () => {
-      try {
-        const storedEnv = await AsyncStorage.getItem('currentEnvironment');
-        if (storedEnv === 'demo') setEnvironment('demo');
-      } catch (error) {
-        console.error('Error loading environment from AsyncStorage:', error);
-      }
-    })();
+    AsyncStorage.getItem('currentEnvironment').then((env) => {
+      if (env === 'demo') setEnvironment('demo');
+    });
   }, []);
 
   const switchEnvironment = async (env: 'production' | 'demo') => {
     if (environment === env) return;
 
-    try {
-      await CookieManager.clearAll();
-      await Promise.all([AsyncStorage.setItem('currentEnvironment', env)]);
-      setEnvironment(env);
-    } catch (error) {
-      console.error('Error switching environment:', error);
-    }
+    await CookieManager.clearAll();
+    await AsyncStorage.setItem('currentEnvironment', env);
+    setEnvironment(env);
   };
+
+  const fetchClient = useMemo(() => {
+    return async (path: string, options: RequestInit = {}) => {
+      const token = await getCSRFToken(baseUrl, `${baseUrl}/admin/login/`);
+      return fetch(`${baseUrl}${path}`, {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(options.headers || {}),
+          ...(token ? { [CSRF_HEADER_NAME]: token } : {}),
+        },
+        ...options,
+      });
+    };
+  }, [baseUrl]);
 
   return (
     <ApiConfigContext.Provider
-      value={{ baseUrl: apiUrls[environment], environment, switchEnvironment }}
+      value={{ baseUrl, environment, switchEnvironment, fetchClient }}
     >
       {children}
     </ApiConfigContext.Provider>
