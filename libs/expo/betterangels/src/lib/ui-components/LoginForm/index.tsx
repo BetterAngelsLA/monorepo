@@ -6,7 +6,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { useUser } from '../..';
+import useUser from '../../hooks/user/useUser';
 
 export default function LoginForm() {
   const [email, setEmail] = useState('');

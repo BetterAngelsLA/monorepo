@@ -7,6 +7,7 @@ import React, {
   useMemo,
   useState,
 } from 'react';
+import { Platform } from 'react-native';
 import { CSRF_HEADER_NAME, getCSRFToken } from '../common';
 
 interface ApiConfigContextType {
@@ -59,6 +60,7 @@ export const ApiConfigProvider = ({
           'Content-Type': 'application/json',
           ...(options.headers || {}),
           ...(token ? { [CSRF_HEADER_NAME]: token } : {}),
+          ...(Platform.OS !== 'web' ? { referer: baseUrl } : {}),
         },
         ...options,
       });
