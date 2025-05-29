@@ -2,6 +2,7 @@ export enum Colors {
   BLACK = '#000000',
   WHITE = '#ffffff',
   GRAY_PRESSED = '#E8ECF2',
+  ORANGE = '#F68224',
 
   BRAND_ANGEL_BLUE = '#F2FAFC',
   BRAND_SKY_BLUE = '#9CDCED',

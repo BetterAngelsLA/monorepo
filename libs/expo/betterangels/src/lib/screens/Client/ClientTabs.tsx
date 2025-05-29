@@ -1,83 +1,61 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFeatureFlagActive } from '../../hooks';
 import { FeatureFlags } from '../../providers';
 
-interface IClientTabsProps {
-  tab: string;
-  setTab: (tab: string) => void;
+export enum ClientViewTabEnum {
+  Profile = 'Profile',
+  Docs = 'Docs',
+  Interactions = 'Interactions',
+  Locations = 'Locations',
 }
 
-const TABS = [
-  'Profile',
-  'Docs',
-  'Interactions',
-  'Locations',
-  // 'Tasks',
-  // 'Services',
-  // 'Schedule',
-];
+interface IClientTabsProps {
+  selectedTab: ClientViewTabEnum;
+  setTab: (tab: ClientViewTabEnum) => void;
+}
 
 export default function ClientTabs(props: IClientTabsProps) {
-  const { tab, setTab } = props;
+  const { selectedTab, setTab } = props;
+
   const clientLocationHistoryFeatureOn = useFeatureFlagActive(
     FeatureFlags.LOCATION_HISTORY_FF
   );
+
+  let visibleTabs = Object.values(ClientViewTabEnum);
+
+  if (!clientLocationHistoryFeatureOn) {
+    visibleTabs = visibleTabs.filter((t) => t !== ClientViewTabEnum.Locations);
+  }
+
   return (
-    <View
-      style={{
-        backgroundColor: Colors.WHITE,
-        borderTopWidth: 1,
-        borderColor: Colors.NEUTRAL_LIGHT,
-      }}
-    >
+    <View style={styles.container}>
       <ScrollView
         contentContainerStyle={{ backgroundColor: Colors.WHITE }}
         showsHorizontalScrollIndicator={false}
         horizontal
       >
-        {(!clientLocationHistoryFeatureOn
-          ? TABS.filter((t) => t !== 'Locations')
-          : TABS
-        ).map((t) => (
+        {visibleTabs.map((t) => (
           <View
-            style={{
-              position: 'relative',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderBottomWidth: t === tab ? 3 : 0,
-              borderColor: Colors.PRIMARY,
-            }}
+            style={[
+              styles.tab,
+              {
+                borderBottomWidth: t === selectedTab ? 3 : 0,
+              },
+            ]}
             key={t}
           >
             <TextButton
               onPress={() => setTab(t)}
-              style={{
-                position: 'absolute',
-                zIndex: 100,
-                padding: Spacings.sm,
-              }}
-              regular={t !== tab}
+              style={styles.textBtn}
+              regular={t !== selectedTab}
               title={t}
               accessibilityHint={`select ${t} tab`}
             />
-            <Pressable
-              style={{
-                padding: Spacings.sm,
-                justifyContent: 'center',
-                opacity: 0,
-              }}
-              accessibilityRole="button"
-            >
+            <Pressable style={styles.pressable} accessibilityRole="button">
               <Text
-                style={{
-                  letterSpacing: 0.4,
-                  textAlign: 'center',
-                  fontFamily: 'Poppins-SemiBold',
-                  fontSize: FontSizes.md.fontSize,
-                  lineHeight: FontSizes.md.lineHeight,
-                }}
+                style={styles.tabText}
                 accessibilityHint={`select ${t} tab`}
               >
                 {t}
@@ -89,3 +67,34 @@ export default function ClientTabs(props: IClientTabsProps) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: Colors.WHITE,
+    borderTopWidth: 1,
+    borderColor: Colors.NEUTRAL_LIGHT,
+  },
+  tab: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderColor: Colors.PRIMARY,
+  },
+  textBtn: {
+    position: 'absolute',
+    zIndex: 100,
+    padding: Spacings.sm,
+  },
+  pressable: {
+    padding: Spacings.sm,
+    justifyContent: 'center',
+    opacity: 0,
+  },
+  tabText: {
+    letterSpacing: 0.4,
+    textAlign: 'center',
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: FontSizes.md.fontSize,
+    lineHeight: FontSizes.md.lineHeight,
+  },
+});

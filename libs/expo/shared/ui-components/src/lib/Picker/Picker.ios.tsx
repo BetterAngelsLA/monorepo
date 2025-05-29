@@ -1,4 +1,3 @@
-import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import {
   Colors,
   Radiuses,
@@ -6,7 +5,7 @@ import {
   getMarginStyles,
 } from '@monorepo/expo/shared/static';
 import { Picker as RNPicker } from '@react-native-picker/picker';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Keyboard,
   Pressable,
@@ -16,11 +15,10 @@ import {
 } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Input } from '../Input';
 import TextBold from '../TextBold';
-import { IPickerProps } from './Picker';
-
-const NONE_VALUE = '__none__';
+import { PickerField } from './PickerField';
+import { NONE_VALUE } from './constants';
+import { IPickerProps } from './types';
 
 export default function Picker(props: IPickerProps) {
   const {
@@ -55,49 +53,25 @@ export default function Picker(props: IPickerProps) {
     onChange(localValue || items[0].value);
   }
 
-  const getDisplayValue = useCallback(
-    (value?: string | null) => {
-      const item = items.find((item) => item.value === value);
-
-      return item?.displayValue ?? item?.value;
-    },
-    [items]
-  );
-
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
 
   return (
     <>
-      <View
-        style={[
-          {
-            borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
-            ...getMarginStyles(props),
-          },
-        ]}
-      >
-        <Input
-          asSelect
-          disabled={disabled}
-          required={required}
-          placeholder={placeholder}
-          value={getDisplayValue(localValue)}
-          label={label}
-          error={!!error}
-          errorMessage={error}
-          onFocus={() => {
-            Keyboard.dismiss();
-            setIsModalVisible(true);
-          }}
-          slotRight={{
-            focusableInput: true,
-            component: <ChevronLeftIcon size="sm" rotate={'-90deg'} />,
-            accessibilityLabel: `selector for ${label || 'field'}`,
-            accessibilityHint: `opens selector for ${label || 'field'}`,
-          }}
-        />
-      </View>
+      <PickerField
+        style={getMarginStyles(props)}
+        disabled={disabled}
+        required={required}
+        placeholder={placeholder}
+        selectedValue={selectedValue}
+        onFocus={() => {
+          Keyboard.dismiss();
+          setIsModalVisible(true);
+        }}
+        items={items}
+        label={label}
+        error={error}
+      />
       <Modal
         style={styles.modal}
         backdropOpacity={0.5}
@@ -110,7 +84,7 @@ export default function Picker(props: IPickerProps) {
             borderTopLeftRadius: Radiuses.xs,
             borderTopRightRadius: Radiuses.xs,
             paddingBottom: bottomOffset,
-            backgroundColor: '#d1d3da',
+            backgroundColor: Colors.IOS_GRAY,
           }}
         >
           <View style={styles.doneContainer}>
