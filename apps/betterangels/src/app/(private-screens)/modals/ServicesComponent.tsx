@@ -20,6 +20,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import ServiceCheckbox from 'libs/expo/betterangels/src/lib/ui-components/RequestedProvidedServices/ServiceCheckbox';
 import React, { useState } from 'react';
 import { View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const FOOTER_HEIGHT = 80; // Adjust to match your footer's true height
 
 export default function ServicesModalScreen() {
     const router = useRouter();
@@ -43,6 +46,8 @@ export default function ServicesModalScreen() {
 
     const [deleteService] = useDeleteServiceRequestMutation();
     const [createService] = useCreateNoteServiceRequestMutation();
+
+    const insets = useSafeAreaInsets();
 
     const handleFilter = (text: string) => {
       setSearchText(text);
@@ -149,6 +154,9 @@ export default function ServicesModalScreen() {
           title={type === 'REQUESTED' ? 'Requested Services' : 'Provided Services'}
           subtitle="Select the services to your client in this interaction."
           scrollable
+          contentStyle={{
+            paddingBottom: FOOTER_HEIGHT + Spacings.md, // Ensures scroll content is not hidden behind the footer
+          }}
         >
           <BasicInput
             value={searchText}
@@ -199,23 +207,21 @@ export default function ServicesModalScreen() {
 
         <View
           style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 20,
+            backgroundColor: Colors.WHITE,
             flexDirection: 'row',
-            gap: Spacings.xs,
-            width: '100%',
-            paddingTop: Spacings.sm,
-            paddingBottom: Spacings.sm,
             alignItems: 'center',
             paddingHorizontal: Spacings.md,
-            backgroundColor: Colors.WHITE,
+            paddingTop: Spacings.sm,
+            paddingBottom: Spacings.sm + insets.bottom,
             shadowColor: Colors.BLACK,
             shadowOffset: { width: 0, height: -5 },
             shadowOpacity: 0.05,
             shadowRadius: 3.84,
             elevation: 1,
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
           }}
         >
           <View style={{ flex: 1 }}>

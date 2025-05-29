@@ -1,4 +1,3 @@
-import { BaseModalLayout } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams } from 'expo-router';
 import React from 'react';
 
@@ -18,9 +17,5 @@ export default function BaseModalScreen() {
   // Select the component from the registry, or use a fallback
   const ModalContent = modalRegistry[String(type)] || (() => <></>);
 
-  return (
-    <BaseModalLayout>
-      <ModalContent />
-    </BaseModalLayout>
-  );
+  return <ModalContent />;
 }

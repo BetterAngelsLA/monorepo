@@ -34,9 +34,8 @@ export default function BaseModalLayout({
   return (
     <View style={{ flex: 1 }}>
       <Wrapper
-        style={{ flex: 1, backgroundColor: Colors.WHITE }}
+        style={{ backgroundColor: Colors.WHITE }}
         contentContainerStyle={{
-          flexGrow: 1,
           justifyContent: 'flex-start',
           paddingHorizontal: Spacings.md,
           ...(contentStyle || {}),
