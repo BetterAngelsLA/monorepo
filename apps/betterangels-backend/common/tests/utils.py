@@ -2,8 +2,9 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from accounts.groups import GroupTemplateNames
 from accounts.models import PermissionGroupTemplate, User
-from accounts.tests.baker_recipes import permission_group_recipe
+from accounts.tests.baker_recipes import organization_recipe, permission_group_recipe
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.test import TestCase
@@ -40,16 +41,13 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
         self.non_case_manager_user = self.user_map["non_case_manager_user"]
 
     def _setup_groups_and_permissions(self) -> None:
-        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")
-        perm_group = permission_group_recipe.make(template=caseworker_permission_group_template)
-        perm_group.organization.add_user(self.org_1_case_manager_1)
-        perm_group.organization.add_user(self.org_1_case_manager_2)
-        self.org_1 = perm_group.organization
-
-        # Create Another Org
-        perm_group_2 = permission_group_recipe.make()
-        perm_group_2.organization.add_user(self.org_2_case_manager_1)
-        self.org_2 = perm_group_2.organization
+        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name=GroupTemplateNames.CASEWORKER)
+        permission_group_recipe.make(template=caseworker_permission_group_template)
+        self.org_1 = organization_recipe.make(name="org_1")
+        self.org_2 = organization_recipe.make(name="org_2")
+        self.org_1.add_user(self.org_1_case_manager_1)
+        self.org_1.add_user(self.org_1_case_manager_2)
+        self.org_2.add_user(self.org_2_case_manager_1)
 
     def _get_address_inputs(
         self,
