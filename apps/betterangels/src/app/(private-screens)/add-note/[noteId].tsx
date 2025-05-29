@@ -228,7 +228,11 @@ export default function AddNote() {
         throw new Error(`Failed to update interaction: ${updateError}`);
       }
 
-      return router.replace(getClientProfileUrl(data?.note.clientProfile?.id));
+      // do not use `router.replace` as it will not reset the routing stack correctly
+      // which crashes the app on Android: see Bug Ticket DEV-1839
+      return router.dismissTo(
+        getClientProfileUrl(data?.note.clientProfile?.id)
+      );
     } catch (err) {
       console.error(err);
 
