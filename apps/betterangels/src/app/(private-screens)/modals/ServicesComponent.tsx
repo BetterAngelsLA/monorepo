@@ -1,19 +1,20 @@
 import {
-    OtherCategory,
-    ServiceEnum,
-    ServiceRequestTypeEnum,
-    ServicesByCategory,
-    useCreateNoteServiceRequestMutation,
-    useDeleteServiceRequestMutation,
-    useSnackbar
+  OtherCategory,
+  ServiceEnum,
+  ServiceRequestTypeEnum,
+  ServicesByCategory,
+  useCreateNoteServiceRequestMutation,
+  useDeleteServiceRequestMutation,
+  useSnackbar
 } from '@monorepo/expo/betterangels';
 import { FileSearchIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-    BaseModalLayout,
-    BasicInput,
-    TextBold,
-    TextRegular,
+  BaseModalLayout,
+  BasicInput,
+  Button,
+  TextBold,
+  TextRegular
 } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import ServiceCheckbox from 'libs/expo/betterangels/src/lib/ui-components/RequestedProvidedServices/ServiceCheckbox';
@@ -143,61 +144,101 @@ export default function ServicesModalScreen() {
     const hasResults = filteredServices.some((cat) => cat.items.length > 0);
 
     return (
-      <BaseModalLayout
-        title={type === 'REQUESTED' ? 'Requested Services' : 'Provided Services'}
-        subtitle="Select the services to your client in this interaction."
-        scrollable
-        onReset={reset}
-        onSubmit={submitServices}
-        isSubmitting={isSubmitLoading}
-        submitAccessibilityHint="Submit selected services and close modal"
-        resetAccessibilityHint="Mark all selected services for deletion"
-      >
-        <BasicInput
-          value={searchText}
-          onDelete={() => setSearchText('')}
-          onChangeText={handleFilter}
-          placeholder="Search a service"
-          icon={<SearchIcon color={Colors.NEUTRAL} />}
-        />
+      <View style={{ flex: 1, position: 'relative' }}>
+        <BaseModalLayout
+          title={type === 'REQUESTED' ? 'Requested Services' : 'Provided Services'}
+          subtitle="Select the services to your client in this interaction."
+          scrollable
+        >
+          <BasicInput
+            value={searchText}
+            onDelete={() => setSearchText('')}
+            onChangeText={handleFilter}
+            placeholder="Search a service"
+            icon={<SearchIcon color={Colors.NEUTRAL} />}
+          />
 
-        {hasResults ? (
-          filteredServices.map((service) => (
-            <View key={service.title}>
-              <TextBold mb="xs">{service.title}</TextBold>
-              {service.items.map((item, idx) => (
-                <ServiceCheckbox
-                  key={item}
-                  services={services}
-                  setServices={setServices}
-                  service={item}
-                  idx={idx}
-                />
-              ))}
+          {hasResults ? (
+            filteredServices.map((service) => (
+              <View key={service.title}>
+                <TextBold mb="xs">{service.title}</TextBold>
+                {service.items.map((item, idx) => (
+                  <ServiceCheckbox
+                    key={item}
+                    services={services}
+                    setServices={setServices}
+                    service={item}
+                    idx={idx}
+                  />
+                ))}
+              </View>
+            ))
+          ) : (
+            <View style={{ alignItems: 'center' }}>
+              <View
+                style={{
+                  height: 90,
+                  width: 90,
+                  backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
+                  borderRadius: 100,
+                  marginBottom: Spacings.md,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FileSearchIcon size="2xl" />
+              </View>
+              <TextBold mb="xs" size="sm">No Results</TextBold>
+              <TextRegular size="sm">Try searching for something else.</TextRegular>
             </View>
-          ))
-        ) : (
-          <View style={{ alignItems: 'center' }}>
-            <View
-              style={{
-                height: 90,
-                width: 90,
-                backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-                borderRadius: 100,
-                marginBottom: Spacings.md,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <FileSearchIcon size="2xl" />
-            </View>
-            <TextBold mb="xs" size="sm">No Results</TextBold>
-            <TextRegular size="sm">Try searching for something else.</TextRegular>
+          )}
+
+          <TextBold>Other</TextBold>
+          <OtherCategory setServices={setServiceOthers} services={serviceOthers} />
+        </BaseModalLayout>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            gap: Spacings.xs,
+            width: '100%',
+            paddingTop: Spacings.sm,
+            paddingBottom: Spacings.sm,
+            alignItems: 'center',
+            paddingHorizontal: Spacings.md,
+            backgroundColor: Colors.WHITE,
+            shadowColor: Colors.BLACK,
+            shadowOffset: { width: 0, height: -5 },
+            shadowOpacity: 0.05,
+            shadowRadius: 3.84,
+            elevation: 1,
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Button
+              onPress={reset}
+              size="full"
+              variant="secondary"
+              title="Reset"
+              accessibilityHint="resets all checkboxes"
+            />
           </View>
-        )}
-
-        <TextBold>Other</TextBold>
-        <OtherCategory setServices={setServiceOthers} services={serviceOthers} />
-      </BaseModalLayout>
+          <View style={{ flex: 1 }}>
+            <Button
+              disabled={isSubmitLoading}
+              loading={isSubmitLoading}
+              onPress={submitServices}
+              size="full"
+              variant="primary"
+              title="Done"
+              accessibilityHint="closes services modal"
+            />
+          </View>
+        </View>
+      </View>
     );
   }
