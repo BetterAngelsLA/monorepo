@@ -53,9 +53,6 @@ export const ApiConfigProvider = ({
   const fetchClient = useMemo(() => {
     return async (path: string, options: RequestInit = {}) => {
       const token = await getCSRFToken(baseUrl, `${baseUrl}/admin/login/`);
-      console.log('======== setting token ==== ');
-      console.log(baseUrl);
-      console.log(token);
       return fetch(`${baseUrl}${path}`, {
         credentials: 'include',
         headers: {
