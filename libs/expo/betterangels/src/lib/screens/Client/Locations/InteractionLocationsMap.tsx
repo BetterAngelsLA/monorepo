@@ -9,6 +9,7 @@ import {
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { NotesQuery } from '../../../apollo';
+import { useSnackbar } from '../../../hooks';
 import { useGetClientInteractionsWithLocation } from '../../../hooks/interactions/useGetClientInteractionsWithLocation';
 import { Marker } from '../../../maps';
 import { EmptyState } from './EmptyState';
@@ -20,8 +21,21 @@ type TProps = {
 export function InteractionLocationsMap(props: TProps) {
   const { clientProfileId } = props;
 
-  const { interactions: interactionsWithLocation, loading } =
-    useGetClientInteractionsWithLocation(clientProfileId);
+  const { showSnackbar } = useSnackbar();
+  const {
+    interactions: interactionsWithLocation,
+    loading,
+    error,
+  } = useGetClientInteractionsWithLocation(clientProfileId);
+
+  if (error) {
+    showSnackbar({
+      message: 'Sorry, we could not load the interactions. Please try again.',
+      type: 'error',
+    });
+
+    return null;
+  }
 
   if (loading) {
     return <LoadingView />;
