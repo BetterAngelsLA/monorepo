@@ -50,6 +50,14 @@ export const GET_NOTES = gql`
           lastName
           # TODO: displayCaseManager and user required for typecheck. remove in clean up
           displayCaseManager
+          profilePhoto {
+            name
+            path
+            size
+            url
+            width
+            height
+          }
           user {
             id
             username
