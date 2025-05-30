@@ -1,9 +1,23 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
+from allauth.account.adapter import DefaultAccountAdapter
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.socialaccount.models import SocialLogin
+from django.conf import settings
 from django.http import HttpRequest
+
+
+class AccountAdapter(DefaultAccountAdapter):
+    def send_mail(
+        self,
+        template_prefix: str,
+        email: str,
+        context: Dict[str, Any],
+    ) -> None:
+        timeout_seconds = getattr(settings, "ACCOUNT_LOGIN_BY_CODE_TIMEOUT", 300)
+        context["timeout_minutes"] = timeout_seconds // 60
+        super().send_mail(template_prefix, email, context)
 
 
 # https://github.com/pennersr/django-allauth/issues/418#issuecomment-137259550
