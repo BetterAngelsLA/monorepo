@@ -1,5 +1,9 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
+import {
+  Avatar,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { NoteType } from '../../apollo';
 import { enumDisplaySelahTeam } from '../../static/enumDisplayMapping';
@@ -36,12 +40,17 @@ export default function NoteCardByline(props: INoteCardBylineProps) {
           marginRight: Spacings.md,
         }}
       >
-        <TextRegular size="md" color={Colors.PRIMARY_EXTRA_DARK}>
+        <TextBold size="xsm" color={Colors.PRIMARY_EXTRA_DARK}>
           {createdBy.firstName} {createdBy.lastName}
-        </TextRegular>
-        <TextRegular size="md" color={Colors.PRIMARY_EXTRA_DARK}>
-          {organization.name}{' '}
-          {team && <TextRegular>({enumDisplaySelahTeam[team]})</TextRegular>}
+        </TextBold>
+        <TextRegular size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
+          {organization.name}
+          {team && (
+            <TextRegular size="xs">
+              {' - '}
+              {enumDisplaySelahTeam[team]}
+            </TextRegular>
+          )}
         </TextRegular>
       </View>
     </View>

@@ -19,7 +19,7 @@ export default function NoteCardFooter(props: INoteCardFooterProps) {
       }}
     >
       <View style={{ flex: 1 }}>
-        <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
+        <TextRegular size="xsm" color={Colors.NEUTRAL_DARK}>
           {format(new Date(interactedAt), 'MM/dd/yyyy')}
         </TextRegular>
       </View>
@@ -31,7 +31,7 @@ export default function NoteCardFooter(props: INoteCardFooterProps) {
             borderRadius: 20,
           }}
         >
-          <TextRegular size="sm" color={Colors.NEUTRAL_EXTRA_DARK}>
+          <TextRegular size="xs" color={Colors.NEUTRAL_EXTRA_DARK}>
             Draft
           </TextRegular>
         </View>

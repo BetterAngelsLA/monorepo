@@ -48,6 +48,7 @@ export default function NoteCardPills({
         flexDirection: 'row',
         alignItems: 'center',
         flexWrap: 'nowrap',
+        marginBottom: Spacings.xs,
       }}
       onLayout={(e) => {
         setContainerWidth(e.nativeEvent.layout.width);
