@@ -195,6 +195,7 @@ class NoteFilter:
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
 class NoteType:
     id: ID
+    organization: auto
     purpose: auto
     team: Optional[SelahTeamEnum]
     location: Optional[LocationType]

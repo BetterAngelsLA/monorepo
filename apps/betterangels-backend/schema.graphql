@@ -1016,6 +1016,7 @@ input NoteOrder {
 
 type NoteType {
   id: ID!
+  organization: DjangoModelType!
   purpose: String
   team: SelahTeamEnum
   location: LocationType
