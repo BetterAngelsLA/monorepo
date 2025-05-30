@@ -10,14 +10,13 @@ import NoteCardServices from './NoteCardServices';
 
 interface INoteCardProps {
   note: NotesQuery['notes']['results'][0];
+  variant: 'interactions' | 'clientProfile';
 }
 
 export default function NoteCard(props: INoteCardProps) {
-  const { note } = props;
+  const { note, variant } = props;
   const pathname = usePathname();
   const router = useRouter();
-
-  const isOnInteractionsPage = pathname === '/interactions';
 
   return (
     <Pressable
@@ -36,7 +35,7 @@ export default function NoteCard(props: INoteCardProps) {
       ]}
     >
       {!!note.purpose && <NoteCardHeader purpose={note.purpose} />}
-      {isOnInteractionsPage && (
+      {variant === 'interactions' && (
         <NoteCardClient clientProfile={note.clientProfile} />
       )}
       <NoteCardByline
