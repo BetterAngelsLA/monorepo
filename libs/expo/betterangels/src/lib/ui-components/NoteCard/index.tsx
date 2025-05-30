@@ -41,10 +41,10 @@ export default function NoteCard(props: INoteCardProps) {
         isSubmitted={note.isSubmitted}
       />
       {!!note.providedServices.length && (
-        <NoteCardPills type="success" services={note.providedServices} />
+        <NoteCardPills type="warning" services={note.providedServices} />
       )}
       {!!note.requestedServices.length && (
-        <NoteCardPills type="primary" services={note.requestedServices} />
+        <NoteCardPills type="success" services={note.requestedServices} />
       )}
     </Pressable>
   );

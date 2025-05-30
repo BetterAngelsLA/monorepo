@@ -44,7 +44,7 @@ export default function RequestedProvidedServices(
           >
             {initialServices.map((item, index) => (
               <Pill
-                type={
+                variant={
                   type === ServiceRequestTypeEnum.Provided
                     ? 'success'
                     : 'primary'
