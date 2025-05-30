@@ -1,43 +1,49 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
+import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { NoteType } from '../../apollo';
+import { enumDisplaySelahTeam } from '../../static/enumDisplayMapping';
 
 interface INoteCardBylineProps {
   createdBy: NoteType['createdBy'];
-  organization: NoteType['organization']['name'];
+  organization: NoteType['organization'];
   team: NoteType['team'];
 }
 
 export default function NoteCardByline(props: INoteCardBylineProps) {
-  const { isSubmitted, interactedAt } = props;
+  const { createdBy, organization, team } = props;
   return (
     <View
       style={{
-        justifyContent: 'space-between',
         flexDirection: 'row',
-        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: Spacings.xs,
       }}
     >
-      <View style={{ flex: 1 }}>
-        <TextRegular size="sm" color={Colors.NEUTRAL_DARK}>
-          {format(new Date(interactedAt), 'MM/dd/yyyy')}
+      <Avatar
+        mr="xs"
+        size="sm"
+        accessibilityLabel={createdBy?.email || 'unknown user'}
+        accessibilityHint={
+          `${createdBy.email} user's avatar` || `user's avatar`
+        }
+      />
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'space-between',
+          marginBottom: Spacings.xs,
+          marginRight: Spacings.md,
+        }}
+      >
+        <TextRegular size="md" color={Colors.PRIMARY_EXTRA_DARK}>
+          {createdBy.firstName} {createdBy.lastName}
+        </TextRegular>
+        <TextRegular size="md" color={Colors.PRIMARY_EXTRA_DARK}>
+          {organization.name}{' '}
+          {team && <TextRegular>({enumDisplaySelahTeam[team]})</TextRegular>}
         </TextRegular>
       </View>
-      {!isSubmitted && (
-        <View
-          style={{
-            backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-            paddingHorizontal: Spacings.xxs,
-            borderRadius: 20,
-          }}
-        >
-          <TextRegular size="sm" color={Colors.NEUTRAL_EXTRA_DARK}>
-            Draft
-          </TextRegular>
-        </View>
-      )}
     </View>
   );
 }

@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.types import UserType
+from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.graphql.types import LocationInput, LocationType
 from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
@@ -195,7 +195,7 @@ class NoteFilter:
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
 class NoteType:
     id: ID
-    organization: auto
+    organization: OrganizationType
     purpose: auto
     team: Optional[SelahTeamEnum]
     location: Optional[LocationType]

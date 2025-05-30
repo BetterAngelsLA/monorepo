@@ -2,6 +2,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { usePathname, useRouter } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
 import { NotesQuery } from '../../apollo';
+import NoteCardByline from './NoteCardByline';
 import NoteCardClient from './NoteCardClient';
 import NoteCardFooter from './NoteCardFooter';
 import NoteCardHeader from './NoteCardHeader';
@@ -38,6 +39,11 @@ export default function NoteCard(props: INoteCardProps) {
       {isOnInteractionsPage && (
         <NoteCardClient clientProfile={note.clientProfile} />
       )}
+      <NoteCardByline
+        createdBy={note.createdBy}
+        organization={note.organization}
+        team={note.team}
+      />
       {!!note.providedServices.length && (
         <NoteCardPills type="success" services={note.providedServices} />
       )}

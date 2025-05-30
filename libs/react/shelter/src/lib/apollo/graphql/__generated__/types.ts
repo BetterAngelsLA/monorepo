@@ -1284,7 +1284,7 @@ export type NoteType = {
   location?: Maybe<LocationType>;
   moods: Array<MoodType>;
   nextSteps: Array<TaskType>;
-  organization: DjangoModelType;
+  organization: OrganizationType;
   privateDetails?: Maybe<Scalars['String']['output']>;
   providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];

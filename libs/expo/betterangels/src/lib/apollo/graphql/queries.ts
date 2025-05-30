@@ -63,6 +63,10 @@ export const GET_NOTES = gql`
           lastName
         }
         interactedAt
+        organization {
+          id
+          name
+        }
       }
     }
   }
