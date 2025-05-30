@@ -1,1 +1,1 @@
-export { Locations as default } from './Locations';
+export { InteractionLocations } from './InteractionLocations';
