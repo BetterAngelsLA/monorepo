@@ -24,7 +24,7 @@ interface ITextRegularProps extends TextProps {
    * size:
    * - xxs: 10 xs: 12 sm: 14 md: 16 lg: 20 xl: 24 2xl: 36
    */
-  size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+  size?: 'xxs' | 'xs' | 'xsm' | 'sm' | 'md' | 'ms' | 'lg' | 'xl' | '2xl';
   style?: TextStyle;
   textAlign?: 'auto' | 'left' | 'right' | 'center' | 'justify';
 }

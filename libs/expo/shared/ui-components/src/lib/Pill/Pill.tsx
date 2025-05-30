@@ -12,7 +12,7 @@ export function Pill(props: IPillProps) {
 
   return (
     <View style={[styles.pill, styles[type]]}>
-      <TextRegular>{label}</TextRegular>
+      <TextRegular size="xsm">{label}</TextRegular>
     </View>
   );
 }

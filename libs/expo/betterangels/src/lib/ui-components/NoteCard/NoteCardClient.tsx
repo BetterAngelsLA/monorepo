@@ -4,15 +4,11 @@ import { View } from 'react-native';
 import { NoteType } from '../../apollo';
 
 interface INoteCardClientProps {
-  clientProfile?: NoteType['clientProfile'];
-  createdBy: NoteType['createdBy'];
-  isOnInteractionsPage: boolean;
-  isSubmitted: boolean;
+  clientProfile: NoteType['clientProfile'];
 }
 
 export default function NoteCardClient(props: INoteCardClientProps) {
-  const { clientProfile, createdBy, isOnInteractionsPage, isSubmitted } = props;
-  const displayDetails = isOnInteractionsPage ? clientProfile : createdBy;
+  const { clientProfile } = props;
 
   return (
     <View
@@ -20,39 +16,20 @@ export default function NoteCardClient(props: INoteCardClientProps) {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
+        marginRight: Spacings.lg,
       }}
     >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-        }}
-      >
-        <Avatar
-          mr="xs"
-          size="sm"
-          accessibilityLabel={displayDetails?.email || 'unknown user'}
-          accessibilityHint={
-            `${displayDetails?.email} client's avatar` || `client's avatar`
-          }
-        />
-        <TextRegular size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-          {displayDetails?.firstName} {displayDetails?.lastName}
-        </TextRegular>
-      </View>
-      {!isSubmitted && (
-        <View
-          style={{
-            backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-            paddingHorizontal: Spacings.xxs,
-            borderRadius: 20,
-          }}
-        >
-          <TextRegular size="sm" color={Colors.NEUTRAL_EXTRA_DARK}>
-            Draft
-          </TextRegular>
-        </View>
-      )}
+      <Avatar
+        mr="xs"
+        size="sm"
+        accessibilityLabel={clientProfile?.email || 'unknown user'}
+        accessibilityHint={
+          `${clientProfile?.email} client's avatar` || `client's avatar`
+        }
+      />
+      <TextRegular size="md" color={Colors.PRIMARY_EXTRA_DARK}>
+        {clientProfile?.firstName} {clientProfile?.lastName}
+      </TextRegular>
     </View>
   );
 }
