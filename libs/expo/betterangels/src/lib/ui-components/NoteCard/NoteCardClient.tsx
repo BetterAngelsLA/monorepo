@@ -4,14 +4,11 @@ import { View } from 'react-native';
 import { NoteType } from '../../apollo';
 
 interface INoteCardClientProps {
-  clientProfile?: NoteType['clientProfile'];
-  createdBy: NoteType['createdBy'];
-  isOnInteractionsPage: boolean;
+  clientProfile: NoteType['clientProfile'];
 }
 
 export default function NoteCardClient(props: INoteCardClientProps) {
-  const { clientProfile, createdBy, isOnInteractionsPage } = props;
-  const displayDetails = isOnInteractionsPage ? clientProfile : createdBy;
+  const { clientProfile } = props;
 
   return (
     <View
@@ -30,13 +27,13 @@ export default function NoteCardClient(props: INoteCardClientProps) {
         <Avatar
           mr="xs"
           size="sm"
-          accessibilityLabel={displayDetails?.email || 'unknown user'}
+          accessibilityLabel={clientProfile?.email || 'unknown user'}
           accessibilityHint={
-            `${displayDetails?.email} client's avatar` || `client's avatar`
+            `${clientProfile?.email} client's avatar` || `client's avatar`
           }
         />
-        <TextRegular size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
-          {displayDetails?.firstName} {displayDetails?.lastName}
+        <TextRegular size="md" color={Colors.PRIMARY_EXTRA_DARK}>
+          {clientProfile?.firstName} {clientProfile?.lastName}
         </TextRegular>
       </View>
     </View>

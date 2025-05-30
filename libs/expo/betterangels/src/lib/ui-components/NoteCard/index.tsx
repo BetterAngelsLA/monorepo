@@ -34,12 +34,10 @@ export default function NoteCard(props: INoteCardProps) {
         },
       ]}
     >
-      {note.purpose && <NoteCardHeader purpose={note.purpose} />}
-      <NoteCardClient
-        isOnInteractionsPage={isOnInteractionsPage}
-        createdBy={note.createdBy}
-        clientProfile={note.clientProfile}
-      />
+      {!!note.purpose && <NoteCardHeader purpose={note.purpose} />}
+      {isOnInteractionsPage && (
+        <NoteCardClient clientProfile={note.clientProfile} />
+      )}
       {!!note.providedServices.length && (
         <NoteCardPills type="success" services={note.providedServices} />
       )}

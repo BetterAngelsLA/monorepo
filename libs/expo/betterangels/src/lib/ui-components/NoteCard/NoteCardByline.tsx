@@ -2,13 +2,15 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { View } from 'react-native';
+import { NoteType } from '../../apollo';
 
-interface INoteCardFooterProps {
-  isSubmitted: boolean;
-  interactedAt: string;
+interface INoteCardBylineProps {
+  createdBy: NoteType['createdBy'];
+  organization: NoteType['organization']['name'];
+  team: NoteType['team'];
 }
 
-export default function NoteCardFooter(props: INoteCardFooterProps) {
+export default function NoteCardByline(props: INoteCardBylineProps) {
   const { isSubmitted, interactedAt } = props;
   return (
     <View
