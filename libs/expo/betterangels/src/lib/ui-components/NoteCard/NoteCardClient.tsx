@@ -36,8 +36,8 @@ export default function NoteCardClient(props: INoteCardClientProps) {
             `${displayDetails?.email} client's avatar` || `client's avatar`
           }
           imageUrl={
-            displayDetails?.__typename === 'ClientProfileType'
-              ? displayDetails.profilePhoto?.url
+            clientProfile && isOnInteractionsPage
+              ? clientProfile.profilePhoto?.url
               : ''
           }
         />
