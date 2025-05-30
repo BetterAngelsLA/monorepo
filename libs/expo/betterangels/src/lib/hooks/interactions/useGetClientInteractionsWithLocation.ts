@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
 
 type TInteraction = NonNullable<
@@ -6,10 +5,6 @@ type TInteraction = NonNullable<
 >[number];
 
 export function useGetClientInteractionsWithLocation(id: string) {
-  const [interactions, setInteractions] = useState<TInteraction[] | undefined>(
-    undefined
-  );
-
   const { data, error, loading } = useNotesQuery({
     variables: {
       pagination: { limit: 1000, offset: 0 },
@@ -22,29 +17,16 @@ export function useGetClientInteractionsWithLocation(id: string) {
     nextFetchPolicy: 'cache-first',
   });
 
-  useEffect(() => {
-    if (!data) {
-      return;
-    }
+  let interactions: TInteraction[] | undefined = undefined;
 
-    try {
-      const withLocation = data.notes.results.filter(
-        (note) => !!note.location?.point
-      );
-
-      setInteractions(withLocation);
-    } catch (e) {
-      console.error(`useGetClientInteractionsWithLocation: ${e}`);
-
-      setInteractions([]);
-    }
-  }, [data]);
+  if (data) {
+    interactions =
+      data.notes.results.filter((n) => Boolean(n.location?.point)) ?? [];
+  }
 
   if (error) {
     console.error('useGetClientInteractionsWithLocation:', error);
-
-    return {};
   }
 
-  return { interactions, loading };
+  return { interactions, loading, error };
 }
