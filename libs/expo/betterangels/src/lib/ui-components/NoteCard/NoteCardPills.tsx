@@ -47,8 +47,7 @@ export default function NoteCardPills({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        flexWrap: 'nowrap', // we handle overflow via slicing
-        paddingRight: Spacings.md,
+        flexWrap: 'nowrap',
       }}
       onLayout={(e) => {
         setContainerWidth(e.nativeEvent.layout.width);

@@ -6,7 +6,7 @@ import NoteCardByline from './NoteCardByline';
 import NoteCardClient from './NoteCardClient';
 import NoteCardFooter from './NoteCardFooter';
 import NoteCardHeader from './NoteCardHeader';
-import NoteCardPills from './NoteCardPills';
+import NoteCardServices from './NoteCardServices';
 
 interface INoteCardProps {
   note: NotesQuery['notes']['results'][0];
@@ -44,11 +44,8 @@ export default function NoteCard(props: INoteCardProps) {
         organization={note.organization}
         team={note.team}
       />
-      {!!note.providedServices.length && (
-        <NoteCardPills type="success" services={note.providedServices} />
-      )}
-      {!!note.requestedServices.length && (
-        <NoteCardPills type="primary" services={note.requestedServices} />
+      {(!!note.providedServices.length || !!note.requestedServices.length) && (
+        <NoteCardServices note={note} />
       )}
       <NoteCardFooter
         interactedAt={note.interactedAt}
