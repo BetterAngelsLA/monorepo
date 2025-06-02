@@ -1,14 +1,29 @@
-import { NotesQuery, Ordering, useNotesQuery } from '../../apollo';
+import { NoteOrder, NotesQuery, Ordering, useNotesQuery } from '../../apollo';
 
 type TInteraction = NonNullable<
   NonNullable<NotesQuery['notes']>['results']
 >[number];
 
-export function useGetClientInteractionsWithLocation(id: string) {
+const defaultSortOrder: NoteOrder = {
+  interactedAt: Ordering.Desc,
+  id: Ordering.Desc,
+};
+
+type TProps = {
+  id: string;
+  idSort?: Ordering;
+  dateSort?: Ordering;
+};
+
+export function useGetClientInteractionsWithLocation(props: TProps) {
+  const { id, idSort, dateSort } = props;
+
+  const sortOrder = { ...defaultSortOrder, id: idSort, interactedAt: dateSort };
+
   const { data, error, loading } = useNotesQuery({
     variables: {
       pagination: { limit: 1000, offset: 0 },
-      order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
+      order: sortOrder,
       filters: {
         clientProfile: id,
       },

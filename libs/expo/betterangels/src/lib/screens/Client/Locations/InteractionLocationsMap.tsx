@@ -8,7 +8,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
-import { NotesQuery } from '../../../apollo';
+import { NotesQuery, Ordering } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import { useGetClientInteractionsWithLocation } from '../../../hooks/interactions/useGetClientInteractionsWithLocation';
 import { Marker } from '../../../maps';
@@ -26,7 +26,10 @@ export function InteractionLocationsMap(props: TProps) {
     interactions: interactionsWithLocation,
     loading,
     error,
-  } = useGetClientInteractionsWithLocation(clientProfileId);
+  } = useGetClientInteractionsWithLocation({
+    id: clientProfileId,
+    dateSort: Ordering.Desc,
+  });
 
   if (error) {
     showSnackbar({
@@ -50,7 +53,7 @@ export function InteractionLocationsMap(props: TProps) {
     return <EmptyState />;
   }
 
-  const mapRegion = getMapRegion(interactionsWithLocation);
+  const mapRegion = getMapRegion(interactionsWithLocation[0]);
 
   return (
     <MapView
@@ -90,15 +93,8 @@ type TInteraction = NonNullable<
   NonNullable<NotesQuery['notes']>['results']
 >[number];
 
-function getMapRegion(interactionsWithLocation: TInteraction[]): Region | null {
-  const mostRecentInteraction = interactionsWithLocation.reduce(
-    (latest, current) =>
-      new Date(current.interactedAt) > new Date(latest.interactedAt)
-        ? current
-        : latest
-  );
-
-  const point = mostRecentInteraction.location?.point;
+function getMapRegion(interaction: TInteraction): Region | null {
+  const point = interaction.location?.point;
 
   if (!point) {
     return null;
