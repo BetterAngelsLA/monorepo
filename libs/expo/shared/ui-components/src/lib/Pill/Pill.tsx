@@ -42,7 +42,7 @@ export function Pill(props: IPillProps) {
         },
       ]}
     >
-      <TextRegular>{label}</TextRegular>
+      <TextRegular size="xs">{label}</TextRegular>
     </View>
   );
 }
