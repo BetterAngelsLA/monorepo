@@ -80,11 +80,11 @@ export default function Note({
           team={data?.note.team}
         />
         {data?.note.location?.point && <NoteLocation note={data?.note} />}
-        {!!data?.note.providedServices.length && (
-          <NoteServices type="providedServices" data={data} />
-        )}
         {!!data?.note.requestedServices.length && (
           <NoteServices type="requestedServices" data={data} />
+        )}
+        {!!data?.note.providedServices.length && (
+          <NoteServices type="providedServices" data={data} />
         )}
         {data?.note.publicDetails && <NotePublicNote note={data.note} />}
       </View>
