@@ -22,6 +22,7 @@ export default function ShelterDetail({
     <Card title="Shelter Details">
       <div className="flex flex-col">
         <div className="flex items-center gap-2">
+          <strong>Accessibility:</strong>
           {shelter.accessibility
             .filter(
               (
@@ -37,6 +38,7 @@ export default function ShelterDetail({
         </div>
 
         <div className="flex items-center gap-2">
+          <strong>Storage:</strong>
           {shelter.storage
             .filter(
               (storage): storage is { name: StorageChoices } => !!storage.name
@@ -45,12 +47,14 @@ export default function ShelterDetail({
             .join(', ')}
         </div>
         <div className="flex items-center gap-2">
+          <strong>Pets:</strong>
           {shelter.pets
             .filter((pet): pet is { name: PetChoices } => !!pet.name)
             .map((pet) => enumDisplayPetChoices[pet.name])
             .join(', ')}
         </div>
         <div className="flex items-center gap-2">
+          <strong>Parking:</strong>
           {shelter.parking
             .filter(
               (parking): parking is { name: ParkingChoices } => !!parking.name

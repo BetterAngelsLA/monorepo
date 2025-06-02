@@ -21,21 +21,21 @@ export default function EntryRequirements({
         {shelter.entryInfo && (
           <div
             dangerouslySetInnerHTML={{
-              __html: 'Entry Info: ' + shelter?.entryInfo,
+              __html: `<strong>Entry Info:</strong> ${shelter?.entryInfo}`,
             }}
           />
         )}
         {shelter.bedFees && (
           <div
             dangerouslySetInnerHTML={{
-              __html: 'Bed Fees: ' + shelter?.bedFees,
+              __html: `<strong>Bed Fees:</strong> ${shelter?.bedFees}`,
             }}
           />
         )}
         {shelter.programFees && (
           <div
             dangerouslySetInnerHTML={{
-              __html: 'Program Fees: ' + shelter?.programFees,
+              __html: `<strong>Program Fees:</strong> ${shelter?.programFees}`,
             }}
           />
         )}
