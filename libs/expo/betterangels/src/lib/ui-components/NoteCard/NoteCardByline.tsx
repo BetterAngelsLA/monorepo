@@ -1,7 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Avatar,
-  TextBold,
+  TextMedium,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
@@ -40,9 +40,9 @@ export default function NoteCardByline(props: INoteCardBylineProps) {
           marginRight: Spacings.md,
         }}
       >
-        <TextBold size="xsm" color={Colors.PRIMARY_EXTRA_DARK}>
+        <TextMedium size="xsm" color={Colors.PRIMARY_EXTRA_DARK}>
           {createdBy.firstName} {createdBy.lastName}
-        </TextBold>
+        </TextMedium>
         <TextRegular size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
           {organization.name}
           {team && (

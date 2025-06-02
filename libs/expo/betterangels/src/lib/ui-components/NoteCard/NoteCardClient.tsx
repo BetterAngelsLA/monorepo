@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Avatar, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { NoteType } from '../../apollo';
 
@@ -27,9 +27,9 @@ export default function NoteCardClient(props: INoteCardClientProps) {
           `${clientProfile?.email} client's avatar` || `client's avatar`
         }
       />
-      <TextRegular size="md" color={Colors.PRIMARY_EXTRA_DARK}>
+      <TextMedium size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
         {clientProfile?.firstName} {clientProfile?.lastName}
-      </TextRegular>
+      </TextMedium>
     </View>
   );
 }
