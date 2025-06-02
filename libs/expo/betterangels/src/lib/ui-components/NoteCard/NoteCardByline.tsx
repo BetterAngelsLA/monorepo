@@ -20,7 +20,6 @@ export default function NoteCardByline(props: INoteCardBylineProps) {
     <View
       style={{
         flexDirection: 'row',
-        justifyContent: 'space-between',
         marginBottom: Spacings.xs,
       }}
     >

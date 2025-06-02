@@ -15,7 +15,6 @@ export default function NoteCardClient(props: INoteCardClientProps) {
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
         marginRight: Spacings.lg,
       }}
     >
