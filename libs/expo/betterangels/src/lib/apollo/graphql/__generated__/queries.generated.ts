@@ -73,6 +73,10 @@ export const NotesDocument = gql`
           width
           height
         }
+        profilePhoto {
+          name
+          url
+        }
         user {
           id
           username
