@@ -21,6 +21,14 @@ export function ImageCarousel(props: TProps) {
       return;
     }
 
+    emblaApi.reInit();
+  }, [emblaApi, imageUrls]);
+
+  useEffect(() => {
+    if (!emblaApi) {
+      return;
+    }
+
     const onSelect = () => {
       setCurrentSlideIndex(emblaApi.selectedScrollSnap());
     };
