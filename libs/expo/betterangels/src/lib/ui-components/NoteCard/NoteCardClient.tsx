@@ -1,10 +1,10 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { NoteType } from '../../apollo';
+import { NotesQuery, NoteType } from '../../apollo';
 
 interface INoteCardClientProps {
-  clientProfile?: NoteType['clientProfile'];
+  clientProfile?: NotesQuery['notes']['results'][0]['clientProfile'];
   createdBy: NoteType['createdBy'];
   isOnInteractionsPage: boolean;
   isSubmitted: boolean;
