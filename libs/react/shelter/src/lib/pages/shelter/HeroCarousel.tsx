@@ -10,15 +10,12 @@ type TProps = {
 export function HeroCarousel(props: TProps) {
   const { shelter, className } = props;
 
-  const images: string[] = [];
+  const images = [
+    ...(shelter.exteriorPhotos || []),
+    ...(shelter.interiorPhotos || []),
+  ];
 
-  shelter.exteriorPhotos.forEach((i) => {
-    images.push(i.file.url);
-  });
-
-  shelter.interiorPhotos.forEach((i) => {
-    images.push(i.file.url);
-  });
+  const imageUrls = images.map((i) => i.file.url);
 
   const parentCss = ['bg-white', className];
   const placeholderCss = ['h-[250px]', className];
@@ -27,5 +24,7 @@ export function HeroCarousel(props: TProps) {
     return <ImagePlaceholder className={mergeCss(placeholderCss)} />;
   }
 
-  return <ImageCarousel imageUrls={images} className={mergeCss(parentCss)} />;
+  return (
+    <ImageCarousel imageUrls={imageUrls} className={mergeCss(parentCss)} />
+  );
 }
