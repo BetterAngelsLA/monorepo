@@ -16,7 +16,7 @@ export default function NoteTitle({
           {note?.purpose}
         </TextBold>
       )}
-      <TextRegular size="sm">
+      <TextRegular mb="sm" size="sm">
         {format(new Date(note?.interactedAt), 'MM/dd/yyyy')}
         {' @ '}
         {format(new Date(note?.interactedAt), 'hh:mm a')}
