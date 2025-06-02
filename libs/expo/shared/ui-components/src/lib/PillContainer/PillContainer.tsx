@@ -7,11 +7,11 @@ import TextBold from '../TextBold';
 
 export function PillContainer({
   data,
-  type,
+  variant,
   maxVisible,
 }: {
   data: string[];
-  type: 'primary' | 'success' | 'warning';
+  variant: 'primary' | 'success' | 'warning';
   maxVisible: number;
 }) {
   const [showAll, setShowAll] = useState(false);
@@ -21,7 +21,7 @@ export function PillContainer({
     <View>
       <View style={styles.pillContainer}>
         {servicesToDisplay.map((item, idx) => (
-          <Pill variant={type} label={item} key={idx} />
+          <Pill variant={variant} label={item} key={idx} />
         ))}
       </View>
 

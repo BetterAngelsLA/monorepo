@@ -25,7 +25,7 @@ const VARIANTS: TVariants = {
 };
 
 interface IPillProps {
-  variant: 'primary' | 'success' | 'warning';
+  variant?: 'primary' | 'success' | 'warning';
   label: string;
 }
 
