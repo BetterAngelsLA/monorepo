@@ -1,4 +1,5 @@
 import { ImageCarousel, mergeCss } from '@monorepo/react/components';
+import { ImagePlaceholder } from '../../components';
 import { ViewShelterQuery } from './__generated__/shelter.generated';
 
 type TProps = {
@@ -20,6 +21,11 @@ export function HeroCarousel(props: TProps) {
   });
 
   const parentCss = ['bg-white', className];
+  const placeholderCss = ['h-[250px]', className];
+
+  if (!images.length) {
+    return <ImagePlaceholder className={mergeCss(placeholderCss)} />;
+  }
 
   return <ImageCarousel imageUrls={images} className={mergeCss(parentCss)} />;
 }
