@@ -14,7 +14,7 @@ export default function NoteCardPills({
     service: ServiceEnum;
     serviceOther?: string | null;
   }[];
-  type: 'success' | 'primary';
+  type: 'success' | 'primary' | 'warning';
 }) {
   const [containerWidth, setContainerWidth] = useState(0);
   const [pillWidths, setPillWidths] = useState<number[]>(
@@ -68,7 +68,7 @@ export default function NoteCardPills({
           }}
         >
           <Pill
-            type={type}
+            variant={type}
             label={
               item.service === ServiceEnum.Other
                 ? item.serviceOther || ''

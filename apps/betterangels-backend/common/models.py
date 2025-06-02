@@ -4,7 +4,7 @@ from urllib.parse import unquote
 
 import magic
 from common.enums import AttachmentType
-from common.utils import get_filename_with_extension, get_unique_file_path
+from common.utils import canonicalise_filename, get_unique_file_path
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
@@ -96,7 +96,7 @@ class Attachment(BaseModel):  # type: ignore[django-manager-missing]
             self.file.seek(0)
 
         filename = self.original_filename or unquote(self.file.name)
-        self.original_filename = get_filename_with_extension(self.mime_type, filename)
+        self.original_filename = canonicalise_filename(self.mime_type, filename)
 
         super().save(*args, **kwargs)
 
