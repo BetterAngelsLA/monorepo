@@ -1,12 +1,17 @@
-Hello!
+Subject: Welcome to Better Angels!
 
-Congratulations on receiving the invite from your organization to use the Better Angels app!
+Congratulations on joining Better Angels!
 
-Create your account by clicking the Sign Up button below.
+To get started:
 
-We look forward to working with you to make solving homelessness in LA easier!
+1. Download the Better Angels app:
+   - Google Play Store: https://play.google.com/store/apps/details?id=la.betterangels.app&hl=en
+   - Apple App Store: https://apps.apple.com/us/app/betterangels/id6468135540
 
-Sign Up to Better Angels App with this link: http://{{ domain.domain }}{% url "invitations_register" user.pk token %}
+2. Log in using the email address this invitation was sent to..
+3. You'll receive a One-Time Passcode via email to finish logging in.
+
+We're excited to work together to make solving homelessness in LA easier!
 
 Best,
 Better Angels Team
