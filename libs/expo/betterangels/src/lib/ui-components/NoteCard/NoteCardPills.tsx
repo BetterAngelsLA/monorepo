@@ -13,7 +13,7 @@ export default function NoteCardPills({
     service: ServiceEnum;
     serviceOther?: string | null;
   }[];
-  type: 'success' | 'primary';
+  type: 'success' | 'primary' | 'warning';
 }) {
   return (
     <View
@@ -27,7 +27,7 @@ export default function NoteCardPills({
       {services.slice(0, 3).map((item, idx) => (
         <Pill
           key={idx}
-          type={type}
+          variant={type}
           label={
             item.service === ServiceEnum.Other
               ? item.serviceOther || ''
