@@ -3,11 +3,17 @@ import { mergeCss } from '../../utils';
 type TProps = {
   imageSrc: string;
   className?: string;
+  altText?: string;
   imgClassName?: string;
 };
 
 export function ImageSlide(props: TProps) {
-  const { imageSrc, className, imgClassName } = props;
+  const {
+    imageSrc,
+    className,
+    imgClassName,
+    altText = 'carousel image',
+  } = props;
 
   const parentCss = ['flex-none', 'w-full', className];
 
@@ -25,7 +31,7 @@ export function ImageSlide(props: TProps) {
         src={imageSrc}
         className={mergeCss(imageCss)}
         loading="lazy"
-        alt=""
+        alt={altText}
       />
     </div>
   );
