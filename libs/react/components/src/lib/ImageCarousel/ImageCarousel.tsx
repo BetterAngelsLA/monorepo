@@ -46,7 +46,11 @@ export function ImageCarousel(props: TProps) {
   const slideContainerCss = ['flex', 'touch-pan-x', '[touch-action:pan-x]'];
 
   return (
-    <div ref={emblaRef} className={mergeCss(parentCss)}>
+    <div
+      ref={emblaRef}
+      className={mergeCss(parentCss)}
+      aria-roledescription="carousel"
+    >
       <div className={mergeCss(slideContainerCss)}>
         {imageUrls.map((src, i) => (
           <ImageSlide key={i} imageSrc={src} imgClassName={imageClassName} />
