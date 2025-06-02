@@ -23,7 +23,7 @@ export default function EcosystemInfo({
       <div className="flex flex-col gap-2">
         {!!shelter.cities.length && (
           <div className="flex items-center gap-2">
-            City:{' '}
+            <strong>City:</strong>{' '}
             {shelter.cities
               .filter((city): city is { name: CityChoices } => !!city.name)
               .map((city) => enumDisplayCityChoices[city.name])
@@ -32,7 +32,7 @@ export default function EcosystemInfo({
         )}
         {!!shelter.spa.length && (
           <div className="flex items-center gap-2">
-            SPA:{' '}
+            <strong>SPA:</strong>{' '}
             {shelter.spa
               .filter((spa): spa is { name: SpaChoices } => !!spa.name)
               .map((spa) => enumDisplaySpaChoices[spa.name])
@@ -41,17 +41,17 @@ export default function EcosystemInfo({
         )}
         {!!shelter.cityCouncilDistrict && (
           <div className="flex items-center gap-2">
-            LACD: {shelter.cityCouncilDistrict}
+            <strong>LACD:</strong> {shelter.cityCouncilDistrict}
           </div>
         )}
         {!!shelter.supervisorialDistrict && (
           <div className="flex items-center gap-2">
-            SD: {shelter.supervisorialDistrict}
+            <strong>SD:</strong> {shelter.supervisorialDistrict}
           </div>
         )}
         {!!shelter.shelterPrograms.length && (
           <div className="flex items-center gap-2">
-            Program:{' '}
+            <strong>Program:</strong>{' '}
             {shelter.shelterPrograms
               .filter(
                 (program): program is { name: ShelterProgramChoices } =>
@@ -63,7 +63,7 @@ export default function EcosystemInfo({
         )}
         {!!shelter.funders.length && (
           <div className="flex items-center gap-2">
-            Program:{' '}
+            <strong>Program:</strong>{' '}
             {shelter.funders
               .filter(
                 (funder): funder is { name: FunderChoices } => !!funder.name
