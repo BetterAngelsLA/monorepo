@@ -42,7 +42,7 @@ export function Pill(props: IPillProps) {
         },
       ]}
     >
-      <TextRegular>{label}</TextRegular>
+      <TextRegular size="xs">{label}</TextRegular>
     </View>
   );
 }
@@ -55,12 +55,5 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingVertical: Spacings.xxs - 1,
     paddingHorizontal: Spacings.sm - 1,
-  },
-  success: {
-    backgroundColor: Colors.SUCCESS_EXTRA_LIGHT,
-  },
-  primary: {
-    backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-    borderColor: Colors.PRIMARY_DARK,
   },
 });

@@ -11,11 +11,11 @@ export default function NoteCardServices(props: INoteCardServicesProps) {
   const { note } = props;
   return (
     <View style={{ marginBottom: Spacings.xs }}>
+      {!!note.requestedServices.length && (
+        <NoteCardPills type="warning" services={note.requestedServices} />
+      )}
       {!!note.providedServices.length && (
         <NoteCardPills type="success" services={note.providedServices} />
-      )}
-      {!!note.requestedServices.length && (
-        <NoteCardPills type="primary" services={note.requestedServices} />
       )}
     </View>
   );

@@ -80,7 +80,7 @@ export default function NoteCardPills({
 
       {visibleCount < services.length && (
         <View style={{ marginLeft: Spacings.xs }}>
-          <TextRegular size="md">
+          <TextRegular size="sm">
             + {services.length - visibleCount}
           </TextRegular>
         </View>
