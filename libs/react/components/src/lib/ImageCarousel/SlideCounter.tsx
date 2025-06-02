@@ -11,7 +11,7 @@ export function SlideCounter(props: TProps) {
 
   const parentCss = [
     'absolute',
-    'z-99',
+    'z-[99]',
     'right-4',
     'bottom-4',
     'px-2',
