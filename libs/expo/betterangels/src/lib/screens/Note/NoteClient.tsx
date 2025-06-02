@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { Avatar, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
@@ -28,9 +28,9 @@ export default function NoteClient(props: INoteClientProps) {
         }
       />
       <View style={{ paddingRight: Spacings.lg }}>
-        <TextRegular size="md" color={Colors.PRIMARY_EXTRA_DARK}>
+        <TextMedium size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
           {clientProfile.firstName} {clientProfile.lastName}
-        </TextRegular>
+        </TextMedium>
       </View>
     </View>
   );
