@@ -1,3 +1,4 @@
+import { Spacings } from '@monorepo/expo/shared/static';
 import { PillContainer, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { ServiceEnum } from '../../apollo';
@@ -12,7 +13,7 @@ export default function NoteServices({
   return (
     <View>
       {!!note.requestedServices.length && (
-        <>
+        <View style={{ marginBottom: Spacings.sm }}>
           <TextBold mb="xs" size="sm">
             Requested Services
           </TextBold>
@@ -26,10 +27,14 @@ export default function NoteServices({
             )}
             variant={'expandable'}
           />
-        </>
+        </View>
       )}
       {!!note.providedServices.length && (
-        <>
+        <View
+          style={
+            note.requestedServices.length ? {} : { marginBottom: Spacings.sm }
+          }
+        >
           <TextBold mb="xs" size="sm">
             Provided Services
           </TextBold>
@@ -43,7 +48,7 @@ export default function NoteServices({
             )}
             variant={'expandable'}
           />
-        </>
+        </View>
       )}
     </View>
   );
