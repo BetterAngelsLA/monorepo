@@ -13,7 +13,11 @@ export default function NoteServices({
   return (
     <View>
       {!!note.requestedServices.length && (
-        <View style={{ marginBottom: Spacings.sm }}>
+        <View
+          style={
+            note.providedServices.length ? { marginBottom: Spacings.sm } : {}
+          }
+        >
           <TextBold mb="xs" size="sm">
             Requested Services
           </TextBold>
@@ -30,11 +34,7 @@ export default function NoteServices({
         </View>
       )}
       {!!note.providedServices.length && (
-        <View
-          style={
-            note.requestedServices.length ? {} : { marginBottom: Spacings.sm }
-          }
-        >
+        <View>
           <TextBold mb="xs" size="sm">
             Provided Services
           </TextBold>
