@@ -3,6 +3,7 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Pill from '../Pill';
+import { IPillProps } from '../Pill/Pill';
 import TextBold from '../TextBold';
 
 export function ExpandablePillRow({
@@ -12,7 +13,7 @@ export function ExpandablePillRow({
 }: {
   maxVisible?: number;
   pills: string[];
-  pillVariant: 'primary' | 'success' | 'warning';
+  pillVariant: IPillProps['variant'];
 }) {
   const [showAll, setShowAll] = useState(false);
   const pillsToDisplay = showAll ? pills : pills.slice(0, maxVisible);

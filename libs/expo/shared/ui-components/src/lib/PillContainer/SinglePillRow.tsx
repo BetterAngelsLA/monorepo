@@ -2,6 +2,7 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import Pill from '../Pill';
+import { IPillProps } from '../Pill/Pill';
 import TextRegular from '../TextRegular';
 
 export function SinglePillRow({
@@ -10,7 +11,7 @@ export function SinglePillRow({
 }: {
   maxVisible?: number;
   pills: string[];
-  pillVariant: 'primary' | 'success' | 'warning';
+  pillVariant: IPillProps['variant'];
 }) {
   const [containerWidth, setContainerWidth] = useState(0);
   const [pillWidths, setPillWidths] = useState<number[]>(
