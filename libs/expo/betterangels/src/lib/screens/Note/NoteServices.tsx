@@ -5,27 +5,46 @@ import { enumDisplayServices } from '../../static';
 import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
 export default function NoteServices({
-  data,
-  type,
+  note,
 }: {
-  type: 'providedServices' | 'requestedServices';
-  data: NoteSummaryQuery;
+  note: NoteSummaryQuery['note'];
 }) {
   return (
     <View>
-      <TextBold mb="xs" size="sm">
-        {type === 'providedServices' ? 'Provided' : 'Requested'} Services
-      </TextBold>
-      <PillContainer
-        maxVisible={5}
-        pillVariant={type === 'providedServices' ? 'success' : 'warning'}
-        pills={data?.note[type].map((item) =>
-          item.service === ServiceEnum.Other
-            ? item.serviceOther || ''
-            : enumDisplayServices[item.service]
-        )}
-        variant={'expandable'}
-      />
+      {!!note.requestedServices.length && (
+        <>
+          <TextBold mb="xs" size="sm">
+            Requested Services
+          </TextBold>
+          <PillContainer
+            maxVisible={5}
+            pillVariant={'warning'}
+            pills={note['requestedServices'].map((item) =>
+              item.service === ServiceEnum.Other
+                ? item.serviceOther || ''
+                : enumDisplayServices[item.service]
+            )}
+            variant={'expandable'}
+          />
+        </>
+      )}
+      {!!note.providedServices.length && (
+        <>
+          <TextBold mb="xs" size="sm">
+            Provided Services
+          </TextBold>
+          <PillContainer
+            maxVisible={5}
+            pillVariant={'success'}
+            pills={note['providedServices'].map((item) =>
+              item.service === ServiceEnum.Other
+                ? item.serviceOther || ''
+                : enumDisplayServices[item.service]
+            )}
+            variant={'expandable'}
+          />
+        </>
+      )}
     </View>
   );
 }

@@ -10,7 +10,7 @@ interface INoteClientProps {
 export default function NoteClient(props: INoteClientProps) {
   const { clientProfile } = props;
   if (!clientProfile) {
-    return;
+    return null;
   }
   return (
     <View
