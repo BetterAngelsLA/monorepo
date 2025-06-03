@@ -59,7 +59,7 @@ export function SinglePillRow({
       {pills.slice(0, visibleCount).map((item, idx) => (
         <View
           key={idx}
-          style={{ marginLeft: idx === 0 ? 0 : Spacings.xs }}
+          style={{ marginLeft: idx === 0 ? 0 : Spacings.xxs }}
           onLayout={(e) => {
             const w = e.nativeEvent.layout.width;
             setPillWidths((prev) => {

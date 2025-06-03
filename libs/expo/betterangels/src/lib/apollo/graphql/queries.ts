@@ -58,6 +58,9 @@ export const GET_NOTES = gql`
             id
             username
           }
+          profilePhoto {
+            url
+          }
         }
         createdBy {
           id
@@ -114,6 +117,9 @@ export const GET_NOTE = gql`
         email
         firstName
         lastName
+        profilePhoto {
+          url
+        }
       }
       createdBy {
         id

@@ -5,21 +5,22 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { NoteType } from '../../apollo';
 import { enumDisplaySelahTeam } from '../../static/enumDisplayMapping';
+import { NoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
-interface INoteCardBylineProps {
-  createdBy: NoteType['createdBy'];
-  organization: NoteType['organization'];
-  team: NoteType['team'];
+interface INoteBylineProps {
+  createdBy: NoteSummaryQuery['note']['createdBy'];
+  organization: NoteSummaryQuery['note']['organization'];
+  team?: NoteSummaryQuery['note']['team'];
 }
 
-export default function NoteCardByline(props: INoteCardBylineProps) {
+export default function NoteByline(props: INoteBylineProps) {
   const { createdBy, organization, team } = props;
   return (
     <View
       style={{
         flexDirection: 'row',
+        justifyContent: 'space-between',
         marginBottom: Spacings.xs,
       }}
     >
