@@ -7,29 +7,28 @@ import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
 export function PillContainer({
-  services,
-  serviceType,
+  maxVisible = 5,
+  pills,
+  pillVariant,
   variant,
 }: {
-  services: string[];
-  serviceType: 'providedServices' | 'requestedServices';
+  maxVisible?: number;
+  pills: string[];
+  pillVariant: 'primary' | 'success' | 'warning';
   variant: 'singleRow' | 'expandable';
 }) {
-  const maxVisiblePills = 5;
   const [showAll, setShowAll] = useState(false);
-  const servicesToDisplay = showAll
-    ? services
-    : services.slice(0, maxVisiblePills);
+  const pillsToDisplay = showAll ? pills : pills.slice(0, maxVisible);
   const [containerWidth, setContainerWidth] = useState(0);
   const [pillWidths, setPillWidths] = useState<number[]>(
-    Array(services.length).fill(0)
+    Array(pills.length).fill(0)
   );
-  const [visibleCount, setVisibleCount] = useState(services.length);
+  const [visibleCount, setVisibleCount] = useState(pills.length);
 
   useEffect(() => {
-    setPillWidths(Array(services.length).fill(0));
-    setVisibleCount(services.length);
-  }, [services]);
+    setPillWidths(Array(pills.length).fill(0));
+    setVisibleCount(pills.length);
+  }, [pills]);
 
   useEffect(() => {
     if (containerWidth > 0 && pillWidths.every((w) => w > 0)) {
@@ -37,7 +36,7 @@ export function PillContainer({
       let count = 0;
       const gap = Spacings.md;
 
-      for (let i = 0; i < services.length; i++) {
+      for (let i = 0; i < pills.length; i++) {
         const w = pillWidths[i] + (i > 0 ? gap : 0);
         if (sum + w <= containerWidth) {
           sum += w;
@@ -49,7 +48,7 @@ export function PillContainer({
 
       setVisibleCount(count);
     }
-  }, [containerWidth, pillWidths, services.length]);
+  }, [containerWidth, pillWidths, pills.length]);
 
   if (variant === 'singleRow') {
     return (
@@ -64,7 +63,7 @@ export function PillContainer({
           setContainerWidth(e.nativeEvent.layout.width);
         }}
       >
-        {services.slice(0, visibleCount).map((item, idx) => (
+        {pills.slice(0, visibleCount).map((item, idx) => (
           <View
             key={idx}
             style={{ marginLeft: idx === 0 ? 0 : Spacings.xs }}
@@ -78,20 +77,13 @@ export function PillContainer({
               });
             }}
           >
-            <Pill
-              variant={
-                serviceType === 'requestedServices' ? 'warning' : 'success'
-              }
-              label={item}
-            />
+            <Pill variant={pillVariant} label={item} />
           </View>
         ))}
 
-        {visibleCount < services.length && (
+        {visibleCount < pills.length && (
           <View style={{ marginLeft: Spacings.xs }}>
-            <TextRegular size="sm">
-              + {services.length - visibleCount}
-            </TextRegular>
+            <TextRegular size="sm">+ {pills.length - visibleCount}</TextRegular>
           </View>
         )}
       </View>
@@ -100,30 +92,24 @@ export function PillContainer({
     return (
       <View>
         <View style={styles.pillContainer}>
-          {servicesToDisplay.map((item, idx) => (
-            <Pill
-              variant={
-                serviceType === 'requestedServices' ? 'warning' : 'success'
-              }
-              label={item}
-              key={idx}
-            />
+          {pillsToDisplay.map((item, idx) => (
+            <Pill variant={pillVariant} label={item} key={idx} />
           ))}
         </View>
 
-        {services.length > maxVisiblePills && (
+        {pills.length > maxVisible && (
           <Pressable
             accessibilityRole="button"
             style={styles.button}
             accessibilityHint={
-              showAll ? 'Collapse list' : 'Expand list to show all services'
+              showAll ? 'Collapse list' : 'Expand list to show all pills'
             }
             onPress={() => setShowAll(!showAll)}
           >
             <TextBold mr="xs" size="xs">
               {showAll
                 ? `Show Less`
-                : `View All (+${services.length - maxVisiblePills})`}
+                : `View All (+${pills.length - maxVisible})`}
             </TextBold>
             <ChevronLeftIcon rotate={showAll ? '90deg' : '-90deg'} />
           </Pressable>
