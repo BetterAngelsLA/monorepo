@@ -5,26 +5,21 @@ export function PillContainer({
   maxVisible = 5,
   pills,
   pillVariant,
-  variant = 'singleRow',
+  variant,
 }: {
   maxVisible?: number;
   pills: string[];
   pillVariant: 'primary' | 'success' | 'warning';
   variant: 'singleRow' | 'expandable';
 }) {
-  if (variant === 'expandable') {
-    return (
-      <ExpandablePillRow
-        pills={pills}
-        pillVariant={pillVariant}
-        maxVisible={maxVisible}
-      />
-    );
-  } else {
+  if (variant === 'singleRow') {
     return <SinglePillRow pills={pills} pillVariant={pillVariant} />;
   }
+  return (
+    <ExpandablePillRow
+      pills={pills}
+      pillVariant={pillVariant}
+      maxVisible={maxVisible}
+    />
+  );
 }
-
-PillContainer.defaultProps = {
-  variant: 'singleRow',
-};
