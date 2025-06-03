@@ -27,10 +27,8 @@ export default function NoteByline(props: INoteBylineProps) {
       <Avatar
         mr="xs"
         size="sm"
-        accessibilityLabel={createdBy.email || 'unknown user'}
-        accessibilityHint={
-          `${createdBy.email} user's avatar` || `user's avatar`
-        }
+        accessibilityLabel={`interaction author's photo`}
+        accessibilityHint={`interaction author's photo`}
       />
       <View
         style={{

@@ -21,8 +21,8 @@ export default function NoteCardClient(props: INoteCardClientProps) {
       <Avatar
         mr="xs"
         size="sm"
-        accessibilityLabel={`client's avatar`}
-        accessibilityHint={`client's avatar`}
+        accessibilityLabel={`client's profile photo`}
+        accessibilityHint={`client's profile photo`}
       />
       <TextMedium size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
         {clientProfile?.firstName} {clientProfile?.lastName}

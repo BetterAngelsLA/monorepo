@@ -23,10 +23,8 @@ export default function NoteClient(props: INoteClientProps) {
         mr="xs"
         size="sm"
         imageUrl={clientProfile?.profilePhoto?.url}
-        accessibilityLabel={clientProfile.email || 'unknown user'}
-        accessibilityHint={
-          `${clientProfile.email} client's avatar` || `client's avatar`
-        }
+        accessibilityLabel={`client's profile photo`}
+        accessibilityHint={`client's profile photo`}
       />
       <View style={{ paddingRight: Spacings.lg }}>
         <TextMedium size="sm" color={Colors.PRIMARY_EXTRA_DARK}>

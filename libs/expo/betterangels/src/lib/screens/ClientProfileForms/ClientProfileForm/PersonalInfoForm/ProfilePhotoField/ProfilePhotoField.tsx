@@ -79,8 +79,8 @@ export function ProfilePhotoField(props: TProps) {
           loading={loading}
           size="xl"
           imageUrl={profilePhoto?.url}
-          accessibilityLabel={`client's avatar`}
-          accessibilityHint={`client's avatar`}
+          accessibilityLabel={`client's profile photo`}
+          accessibilityHint={`client's profile photo`}
         />
       </Pressable>
       <MediaPickerModal
