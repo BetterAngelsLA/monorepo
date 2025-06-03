@@ -20,10 +20,7 @@ interface ITextRegularProps extends TextProps {
     | 'underline line-through'
     | undefined;
   color?: string;
-  /**
-   * size:
-   * - xxs: 10 xs: 12 sm: 14 md: 16 lg: 20 xl: 24 2xl: 36
-   */
+  // libs/expo/shared/static/src/lib/fontSizes.ts
   size?: 'xxs' | 'xs' | 'xsm' | 'sm' | 'md' | 'ms' | 'lg' | 'xl' | '2xl';
   style?: TextStyle;
   textAlign?: 'auto' | 'left' | 'right' | 'center' | 'justify';

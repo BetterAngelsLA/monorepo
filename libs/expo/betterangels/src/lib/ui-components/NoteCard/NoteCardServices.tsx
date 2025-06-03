@@ -1,7 +1,8 @@
 import { Spacings } from '@monorepo/expo/shared/static';
+import { PillContainer } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { NotesQuery } from '../../apollo';
-import NoteCardPills from './NoteCardPills';
+import { NotesQuery, ServiceEnum } from '../../apollo';
+import { enumDisplayServices } from '../../static/enumDisplayMapping';
 
 interface INoteCardServicesProps {
   note: NotesQuery['notes']['results'][0];
@@ -12,10 +13,28 @@ export default function NoteCardServices(props: INoteCardServicesProps) {
   return (
     <View style={{ marginBottom: Spacings.xs }}>
       {!!note.requestedServices.length && (
-        <NoteCardPills type="warning" services={note.requestedServices} />
+        <PillContainer
+          maxVisible={5}
+          pillVariant={'warning'}
+          pills={note['requestedServices'].map((item) =>
+            item.service === ServiceEnum.Other
+              ? item.serviceOther || ''
+              : enumDisplayServices[item.service]
+          )}
+          variant={'singleRow'}
+        />
       )}
       {!!note.providedServices.length && (
-        <NoteCardPills type="success" services={note.providedServices} />
+        <PillContainer
+          maxVisible={5}
+          pillVariant={'success'}
+          pills={note['providedServices'].map((item) =>
+            item.service === ServiceEnum.Other
+              ? item.serviceOther || ''
+              : enumDisplayServices[item.service]
+          )}
+          variant={'singleRow'}
+        />
       )}
     </View>
   );

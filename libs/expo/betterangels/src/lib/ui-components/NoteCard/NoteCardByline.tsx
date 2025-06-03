@@ -26,10 +26,8 @@ export default function NoteCardByline(props: INoteCardBylineProps) {
       <Avatar
         mr="xs"
         size="sm"
-        accessibilityLabel={createdBy?.email || 'unknown user'}
-        accessibilityHint={
-          `${createdBy.email} user's avatar` || `user's avatar`
-        }
+        accessibilityLabel={'interaction author photo'}
+        accessibilityHint={'interaction author photo'}
       />
       <View
         style={{
