@@ -1,7 +1,7 @@
 import { ArrowLeftIcon, UsersIcon } from '@monorepo/react/icons';
 import { Link } from 'react-router-dom';
 import { enumDisplayDemographics } from '../../static';
-import HeroImage from './HeroImage';
+import { HeroCarousel } from './HeroCarousel';
 import { ViewShelterQuery } from './__generated__/shelter.generated';
 
 export default function Header({
@@ -17,14 +17,12 @@ export default function Header({
         </Link>
         <h2 className="font-semibold text-white">{shelter.name}</h2>
       </div>
-      <HeroImage
-        className="-mx-4 mb-4"
-        shelterName={shelter.name}
-        imgUrl={shelter.heroImage}
-      />
-      <div className='mb-4'>
+      <HeroCarousel className="-mx-4 mb-4" shelter={shelter} />
+      <div className="mb-4">
         <h1 className="font-medium text-xl">{shelter.name}</h1>
-        {shelter.organization && <p className="text-sm">{"By " + shelter.organization.name}</p>}
+        {shelter.organization && (
+          <p className="text-sm">{'By ' + shelter.organization.name}</p>
+        )}
       </div>
       <div className="flex gap-2 items-center">
         <UsersIcon className="w-6 h-6 fill-primary-20" />
