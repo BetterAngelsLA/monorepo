@@ -9,48 +9,46 @@ export function SinglePillRow({
   pills,
   pillVariant,
 }: {
-  maxVisible?: number;
   pills: string[];
   pillVariant: IPillProps['variant'];
 }) {
-  const lastVisibleCount = useRef<number | null>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
-  const [pillWidths, setPillWidths] = useState<number[]>(
-    Array(pills.length).fill(0)
-  );
+  const containerWidth = useRef(0);
   const [visibleCount, setVisibleCount] = useState(pills.length);
+  const pillWidthCache = useRef<Record<string, number>>({});
+  const [measured, setMeasured] = useState(false);
 
-  const recalculateVisibleCount = useCallback(() => {
-    if (containerWidth === 0 || pillWidths.some((w) => w === 0)) return;
+  const measurePills = useCallback(() => {
+    if (
+      containerWidth.current === 0 ||
+      Object.keys(pillWidthCache.current).length < pills.length
+    ) {
+      return;
+    }
 
     let sum = 0;
-    let count = 0;
     const gap = Spacings.md;
+    let count = 0;
 
     for (let i = 0; i < pills.length; i++) {
-      const w = pillWidths[i] + (i > 0 ? gap : 0);
-      if (sum + w <= containerWidth) {
-        sum += w;
+      const width = pillWidthCache.current[pills[i]] + (i > 0 ? gap : 0);
+      if (sum + width <= containerWidth.current) {
+        sum += width;
         count++;
       } else {
         break;
       }
     }
 
-    if (lastVisibleCount.current !== count) {
-      lastVisibleCount.current = count;
-      setVisibleCount(count);
-    }
-  }, [containerWidth, pillWidths, pills.length]);
+    setVisibleCount(count);
+  }, [pills]);
 
   useEffect(() => {
-    recalculateVisibleCount();
-  }, [recalculateVisibleCount]);
+    measurePills();
+  }, [measurePills, measured]);
 
   useEffect(() => {
-    setPillWidths(Array(pills.length).fill(0));
     setVisibleCount(pills.length);
-    lastVisibleCount.current = null;
+    setMeasured(false);
   }, [pills.join('|')]);
 
   return (
@@ -62,21 +60,20 @@ export function SinglePillRow({
         marginBottom: Spacings.xs,
       }}
       onLayout={(e) => {
-        setContainerWidth(e.nativeEvent.layout.width);
+        containerWidth.current = e.nativeEvent.layout.width;
+        measurePills();
       }}
     >
       {pills.slice(0, visibleCount).map((item, idx) => (
         <View
-          key={idx}
+          key={item}
           style={{ marginLeft: idx === 0 ? 0 : Spacings.xxs }}
           onLayout={(e) => {
-            const w = e.nativeEvent.layout.width;
-            setPillWidths((prev) => {
-              if (prev[idx] === w) return prev;
-              const next = [...prev];
-              next[idx] = w;
-              return next;
-            });
+            const width = e.nativeEvent.layout.width;
+            if (pillWidthCache.current[item] !== width) {
+              pillWidthCache.current[item] = width;
+              setMeasured((prev) => !prev);
+            }
           }}
         >
           <Pill variant={pillVariant} label={item} />
