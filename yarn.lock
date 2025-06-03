@@ -4928,6 +4928,7 @@ __metadata:
     expo-font: "npm:~13.3.1"
     expo-image-manipulator: "npm:~13.1.3"
     expo-image-picker: "npm:~16.1.2"
+    expo-linear-gradient: "npm:~14.1.4"
     expo-linking: "npm:~7.1.2"
     expo-location: "npm:~18.1.2"
     expo-router: "npm:~5.0.7"
@@ -4966,6 +4967,7 @@ __metadata:
     react-native-blob-util: "npm:^0.21.2"
     react-native-gesture-handler: "npm:~2.24.0"
     react-native-keyboard-controller: "npm:^1.13.0"
+    react-native-linear-gradient: "npm:^2.8.3"
     react-native-maps: "npm:1.20.1"
     react-native-modal: "npm:^14.0.0-rc.1"
     react-native-open-maps: "npm:^0.4.3"
@@ -14170,6 +14172,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-linear-gradient@npm:~14.1.4":
+  version: 14.1.4
+  resolution: "expo-linear-gradient@npm:14.1.4"
+  peerDependencies:
+    expo: "*"
+    react: "*"
+    react-native: "*"
+  checksum: 10/a76c479d3ecbe00d653e6128d3e9ab0eb9688e213354299b3748a13fa3383eae8fd8ccaa85bf8232309bb64c9a24700c6a3451775f4c8a39e22b29c5b38a378b
+  languageName: node
+  linkType: hard
+
 "expo-linking@npm:~7.1.2, expo-linking@npm:~7.1.4":
   version: 7.1.5
   resolution: "expo-linking@npm:7.1.5"
@@ -21792,6 +21805,16 @@ __metadata:
     react-native: "*"
     react-native-reanimated: ">=3.0.0"
   checksum: 10/ece228051c9bbe98f9a3d649edf420141c4f5bf0f828b975462ab950abb4a1441e59c4b04257c0c48a7dc62c300dd7dd45ac4346bb8794f441e95c64d062758d
+  languageName: node
+  linkType: hard
+
+"react-native-linear-gradient@npm:^2.8.3":
+  version: 2.8.3
+  resolution: "react-native-linear-gradient@npm:2.8.3"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10/db18c7ae4b68afe8b6f12c67defeeccda7a3cff4ee14a0b2d92ff2581d53bd2e65bf29837cf2828abb3d8d1f3cef3f808e8cc1c5d4c8da5dd6f1d09e2b9c2c55
   languageName: node
   linkType: hard
 

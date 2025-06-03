@@ -13,7 +13,9 @@ export function PillContainer({
   variant: 'singleRow' | 'expandable';
 }) {
   if (variant === 'singleRow') {
-    return <SinglePillRow pills={pills} pillVariant={pillVariant} />;
+    return (
+      <SinglePillRow pills={pills} pillVariant={pillVariant} pillGap={6} />
+    );
   }
   return (
     <ExpandablePillRow

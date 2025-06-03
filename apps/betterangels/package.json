@@ -75,7 +75,9 @@
     "expo-updates": "*",
     "react-native-walkthrough-tooltip": "*",
     "newrelic-react-native-agent": "*",
-    "react-fast-compare": "*"
+    "react-fast-compare": "*",
+    "react-native-linear-gradient": "*",
+    "expo-linear-gradient": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches",
