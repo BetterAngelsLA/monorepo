@@ -23,6 +23,10 @@ export default function NoteCardPills({
   const [visibleCount, setVisibleCount] = useState(services.length);
 
   useEffect(() => {
+    setPillWidths(Array(services.length).fill(0));
+  }, [services]);
+
+  useEffect(() => {
     if (containerWidth > 0 && pillWidths.every((w) => w > 0)) {
       let sum = 0;
       let count = 0;
@@ -61,6 +65,7 @@ export default function NoteCardPills({
           onLayout={(e) => {
             const w = e.nativeEvent.layout.width;
             setPillWidths((prev) => {
+              if (prev[idx] === w) return prev;
               const next = [...prev];
               next[idx] = w;
               return next;

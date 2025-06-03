@@ -17,9 +17,9 @@ export default function NoteServices({
         {type === 'providedServices' ? 'Provided' : 'Requested'} Services
       </TextBold>
       <PillContainer
-        maxVisible={5}
-        variant={type === 'providedServices' ? 'warning' : 'success'}
-        data={data?.note[type].map((item) =>
+        variant={'expandable'}
+        serviceType={type}
+        services={data?.note[type].map((item) =>
           item.service === ServiceEnum.Other
             ? item.serviceOther || ''
             : enumDisplayServices[item.service]
