@@ -1,6 +1,7 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
+import { PillContainer } from './PillContainer';
 
 type TVariants = {
   [key in 'primary' | 'success' | 'warning']: {
@@ -29,7 +30,7 @@ interface IPillProps {
   label: string;
 }
 
-export function Pill(props: IPillProps) {
+function Pill(props: IPillProps) {
   const { label, variant = 'success' } = props;
 
   return (
@@ -57,3 +58,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacings.sm - 1,
   },
 });
+
+Pill.Container = PillContainer;
+
+export { Pill };

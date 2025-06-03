@@ -1,4 +1,4 @@
-import { PillContainer, TextBold } from '@monorepo/expo/shared/ui-components';
+import { Pill, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { ServiceEnum } from '../../apollo';
 import { enumDisplayServices } from '../../static';
@@ -16,7 +16,7 @@ export default function NoteServices({
       <TextBold mb="xs" size="sm">
         {type === 'providedServices' ? 'Provided' : 'Requested'} Services
       </TextBold>
-      <PillContainer
+      <Pill.Container
         maxVisible={5}
         variant={type === 'providedServices' ? 'warning' : 'success'}
         data={data?.note[type].map((item) =>
