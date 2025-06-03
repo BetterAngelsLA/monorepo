@@ -22,6 +22,7 @@ export default function NoteClient(props: INoteClientProps) {
       <Avatar
         mr="xs"
         size="sm"
+        imageUrl={clientProfile?.profilePhoto?.url}
         accessibilityLabel={clientProfile.email || 'unknown user'}
         accessibilityHint={
           `${clientProfile.email} client's avatar` || `client's avatar`
