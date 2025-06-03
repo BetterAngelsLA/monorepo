@@ -18,12 +18,13 @@ export default function NoteServices({
       </TextBold>
       <PillContainer
         maxVisible={5}
-        variant={type === 'providedServices' ? 'warning' : 'success'}
-        data={data?.note[type].map((item) =>
+        pillVariant={type === 'providedServices' ? 'success' : 'warning'}
+        pills={data?.note[type].map((item) =>
           item.service === ServiceEnum.Other
             ? item.serviceOther || ''
             : enumDisplayServices[item.service]
         )}
+        variant={'expandable'}
       />
     </View>
   );
