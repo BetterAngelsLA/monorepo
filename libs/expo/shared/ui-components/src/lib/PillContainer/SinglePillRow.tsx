@@ -1,5 +1,5 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import Pill from '../Pill';
 import { IPillProps } from '../Pill/Pill';
@@ -13,36 +13,45 @@ export function SinglePillRow({
   pills: string[];
   pillVariant: IPillProps['variant'];
 }) {
+  const lastVisibleCount = useRef<number | null>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [pillWidths, setPillWidths] = useState<number[]>(
     Array(pills.length).fill(0)
   );
   const [visibleCount, setVisibleCount] = useState(pills.length);
 
-  useEffect(() => {
-    setPillWidths(Array(pills.length).fill(0));
-    setVisibleCount(pills.length);
-  }, [pills]);
+  const recalculateVisibleCount = useCallback(() => {
+    if (containerWidth === 0 || pillWidths.some((w) => w === 0)) return;
 
-  useEffect(() => {
-    if (containerWidth > 0 && pillWidths.every((w) => w > 0)) {
-      let sum = 0;
-      let count = 0;
-      const gap = Spacings.md;
+    let sum = 0;
+    let count = 0;
+    const gap = Spacings.md;
 
-      for (let i = 0; i < pills.length; i++) {
-        const w = pillWidths[i] + (i > 0 ? gap : 0);
-        if (sum + w <= containerWidth) {
-          sum += w;
-          count++;
-        } else {
-          break;
-        }
+    for (let i = 0; i < pills.length; i++) {
+      const w = pillWidths[i] + (i > 0 ? gap : 0);
+      if (sum + w <= containerWidth) {
+        sum += w;
+        count++;
+      } else {
+        break;
       }
+    }
 
+    if (lastVisibleCount.current !== count) {
+      lastVisibleCount.current = count;
       setVisibleCount(count);
     }
   }, [containerWidth, pillWidths, pills.length]);
+
+  useEffect(() => {
+    recalculateVisibleCount();
+  }, [recalculateVisibleCount]);
+
+  useEffect(() => {
+    setPillWidths(Array(pills.length).fill(0));
+    setVisibleCount(pills.length);
+    lastVisibleCount.current = null;
+  }, [pills.join('|')]);
 
   return (
     <View
@@ -59,7 +68,7 @@ export function SinglePillRow({
       {pills.slice(0, visibleCount).map((item, idx) => (
         <View
           key={idx}
-          style={{ marginLeft: idx === 0 ? 0 : Spacings.xs }}
+          style={{ marginLeft: idx === 0 ? 0 : Spacings.xxs }}
           onLayout={(e) => {
             const w = e.nativeEvent.layout.width;
             setPillWidths((prev) => {
