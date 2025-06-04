@@ -9,6 +9,8 @@ from django.test import TestCase
 class CloudFrontSigningCryptographyTest(TestCase):
     """
     Regression test validating CloudFront URL signing logic using dynamically generated keys.
+    This does not test AWS's acceptance of keys (requires a real CloudFront setup),
+    but ensures cryptographic signing operations remain correct.
     """
 
     def test_generate_signed_url_with_dynamic_key(self) -> None:
