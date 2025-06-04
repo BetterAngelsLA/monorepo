@@ -29,7 +29,10 @@ export default function RequestedProvidedServices(
   const { showScreenModal } = useScreenModal();
 
   const openServicesModal = () => {
-    showScreenModal({ route: '/base-modal-screen', params: { type: 'PROVIDED' } });
+    showScreenModal({
+      route: '/base-modal-screen',
+      params: { type: type === ServiceRequestTypeEnum.Provided ? 'PROVIDED' : 'REQUESTED' }
+    });
   };
 
   if (!initialServices) {
