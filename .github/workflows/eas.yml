@@ -138,6 +138,11 @@ jobs:
           platforms: ios
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
+      - name: 🧪 Run iOS E2E Tests (Maestro)
+        run: |
+          eas workflow:run .eas/workflows/e2e-test.yml --non-interactive
+        working-directory: apps/${{ matrix.project }}
+
       - name: 🚀 Perform EAS Update
         id: expo-update
         uses: ./.github/actions/expo-update
