@@ -52,6 +52,7 @@ django-import-export = "^4.3.7"
 django-admin-rangefilter = "^0.13.2"
 django-allauth = "^65.9.0"
 djangorestframework = "^3.16.0"
+cryptography = "^45.0.3"
 
 [build-system]
 requires = ["poetry-core"]
