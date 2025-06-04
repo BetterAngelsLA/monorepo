@@ -1,8 +1,8 @@
-import { Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
 import { useScreenModal } from 'apps/betterangels/src/providers/ScreenModalProvider';
 import { useRouter } from 'expo-router';
 import { RefObject } from 'react';
+import { Spacings } from '@monorepo/expo/shared/static';
 import { ScrollView, View } from 'react-native';
 import {
   ServiceEnum,
