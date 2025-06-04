@@ -1,5 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
+import { useScreenModal } from 'apps/betterangels/src/providers/ScreenModalProvider';
 import { useRouter } from 'expo-router';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -25,6 +26,11 @@ export default function RequestedProvidedServices(
 ) {
   const { noteId, services: initialServices, scrollRef, refetch, type } = props;
   const router = useRouter();
+  const { showScreenModal } = useScreenModal();
+
+  const openServicesModal = () => {
+    showScreenModal({ route: '/base-modal-screen', params: { type: 'PROVIDED' } });
+  };
 
   if (!initialServices) {
     return null;
@@ -64,9 +70,9 @@ export default function RequestedProvidedServices(
       }
       mb="xs"
       title={`${enumDisplayServiceType[type]} Services`}
-      setExpanded={() => router.push(`/base-modal-screen?type=${type}`)}
+      setExpanded={openServicesModal}
     >
-      
+    <></>
     </FieldCard>
   );
 }

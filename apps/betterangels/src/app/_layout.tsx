@@ -24,6 +24,7 @@ import { View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
+import { ScreenModalProvider } from '../providers/ScreenModalProvider';
 import { type ErrorBoundaryProps } from 'expo-router';
 
 export const unstable_settings = {
@@ -43,79 +44,81 @@ export default function RootLayout() {
   return (
     <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
       <ApolloClientProvider>
-        <FeatureControlProvider>
-          <KeyboardProvider>
-            <KeyboardToolbarProvider>
-              <UserProvider>
-                <SnackbarProvider>
-                  <StatusBar style="light" />
-                  <FeatureFlagControlled
-                    flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
-                  >
-                    <AppUpdatePrompt />
-                  </FeatureFlagControlled>
-                  <Stack>
-                    <Stack.Screen
-                      name="(tabs)"
-                      options={{ headerShown: false, gestureEnabled: false }}
-                    />
-                    <Stack.Screen
-                      name="(private-screens)"
-                      options={{ headerShown: false, gestureEnabled: false }}
-                    />
-                    <Stack.Screen
-                      name="team"
-                      options={{
-                        title: '',
-                        presentation: 'modal',
-                        headerLeft: () => (
-                          <Link href="/teams">
-                            <View
-                              style={{
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                              }}
+        <SnackbarProvider>
+          <ScreenModalProvider>
+            <FeatureControlProvider>
+              <KeyboardProvider>
+                <KeyboardToolbarProvider>
+                  <UserProvider>
+                    <StatusBar style="light" />
+                    <FeatureFlagControlled
+                      flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
+                    >
+                      <AppUpdatePrompt />
+                    </FeatureFlagControlled>
+                    <Stack>
+                      <Stack.Screen
+                        name="(tabs)"
+                        options={{ headerShown: false, gestureEnabled: false }}
+                      />
+                      <Stack.Screen
+                        name="(private-screens)"
+                        options={{ headerShown: false, gestureEnabled: false }}
+                      />
+                      <Stack.Screen
+                        name="team"
+                        options={{
+                          title: '',
+                          presentation: 'modal',
+                          headerLeft: () => (
+                            <Link href="/teams">
+                              <View
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
+                                <TextRegular color={Colors.PRIMARY_LIGHT}>
+                                  Teams
+                                </TextRegular>
+                              </View>
+                            </Link>
+                          ),
+                        }}
+                      />
+                      <Stack.Screen
+                        name="modal"
+                        options={{ presentation: 'modal' }}
+                      />
+                      <Stack.Screen
+                        name="sign-in"
+                        options={{
+                          headerLeft: () => (
+                            <IconButton
+                              onPress={() => router.back()}
+                              variant="transparent"
+                              accessibilityLabel="goes to get started screen"
+                              accessibilityHint="goes to get started screen"
                             >
-                              <ChevronLeftIcon color={Colors.PRIMARY_LIGHT} />
-                              <TextRegular color={Colors.PRIMARY_LIGHT}>
-                                Teams
-                              </TextRegular>
-                            </View>
-                          </Link>
-                        ),
-                      }}
-                    />
-                    <Stack.Screen
-                      name="modal"
-                      options={{ presentation: 'modal' }}
-                    />
-                    <Stack.Screen
-                      name="sign-in"
-                      options={{
-                        headerLeft: () => (
-                          <IconButton
-                            onPress={() => router.back()}
-                            variant="transparent"
-                            accessibilityLabel="goes to get started screen"
-                            accessibilityHint="goes to get started screen"
-                          >
-                            <ArrowLeftIcon />
-                          </IconButton>
-                        ),
-                        headerShadowVisible: false,
-                        title: '',
-                      }}
-                    />
-                    <Stack.Screen
-                      name="auth"
-                      options={{ headerShown: false }}
-                    />
-                  </Stack>
-                </SnackbarProvider>
-              </UserProvider>
-            </KeyboardToolbarProvider>
-          </KeyboardProvider>
-        </FeatureControlProvider>
+                              <ArrowLeftIcon />
+                            </IconButton>
+                          ),
+                          headerShadowVisible: false,
+                          title: '',
+                        }}
+                      />
+                      <Stack.Screen
+                        name="auth"
+                        options={{ headerShown: false }}
+                      />
+                    </Stack>
+                  </UserProvider>
+                </KeyboardToolbarProvider>
+              </KeyboardProvider>
+            </FeatureControlProvider>
+          </ScreenModalProvider>
+        </SnackbarProvider>
       </ApolloClientProvider>
     </ApiConfigProvider>
   );
