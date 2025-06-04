@@ -1,0 +1,33 @@
+name: Run E2E iOS Tests
+
+on:
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  run_e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.14.0'
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Auth
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          echo "Logging into Expo …"
+          eas login --token $EXPO_TOKEN
+
+      - name: Run iOS E2E Workflow
+        run: |
+          eas workflow:run .eas/workflows/e2e-test.yml \
+            --non-interactive
