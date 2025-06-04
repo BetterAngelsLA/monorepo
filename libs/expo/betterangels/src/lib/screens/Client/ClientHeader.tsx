@@ -42,8 +42,8 @@ export default function ClientHeader(props: IClientHeaderProps) {
           mr="xs"
           size="xl"
           imageUrl={client?.profilePhoto?.url}
-          accessibilityLabel={`client's avatar`}
-          accessibilityHint={`client's avatar`}
+          accessibilityLabel={`client's profile photo`}
+          accessibilityHint={`client's profile photo`}
         />
         <TextMedium size="lg">
           {client?.firstName} {client?.lastName}{' '}
