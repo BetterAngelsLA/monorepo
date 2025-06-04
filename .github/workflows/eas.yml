@@ -138,6 +138,10 @@ jobs:
           platforms: ios
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
+      - name: 🧪 Run iOS E2E Tests (Maestro)
+        run: |
+          eas workflow:run .eas/workflows/e2e-test.yml --non-interactive
+
       - name: 🚀 Perform EAS Update
         id: expo-update
         uses: ./.github/actions/expo-update
@@ -303,32 +307,3 @@ jobs:
         run: |
           rm -f .env
         working-directory: apps/${{ matrix.project }}
-
-  maestro-tests:
-    name: 🎭 Maestro E2E Tests
-    runs-on: ubuntu-latest
-    needs: preview
-    strategy:
-      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
-    steps:
-      - name: 🏗 Checkout repo
-        uses: actions/checkout@v4
-
-      - name: 📥 Download APK
-        run: |
-          curl -L "${{ needs.preview.outputs.android-build-link }}" -o app.apk
-
-      - name: 🚀 Install Maestro CLI
-        run: |
-          curl -Ls "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
-
-      - name: 🔧 Run Android Emulator
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 33
-          arch: x86_64
-          profile: pixel
-          script: |
-            adb install app.apk
-            maestro test .maestro/
