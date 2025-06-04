@@ -1,84 +1,84 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
 import Pill from '../Pill';
 import { IPillProps } from '../Pill/Pill';
 import TextRegular from '../TextRegular';
 
-export function SinglePillRow({
-  pills,
-  pillVariant,
-}: {
-  maxVisible?: number;
+interface SinglePillRowProps {
   pills: string[];
   pillVariant: IPillProps['variant'];
-}) {
-  const [containerWidth, setContainerWidth] = useState(0);
-  const [pillWidths, setPillWidths] = useState<number[]>(
-    Array(pills.length).fill(0)
-  );
-  const [visibleCount, setVisibleCount] = useState(pills.length);
+}
 
-  useEffect(() => {
-    setPillWidths(Array(pills.length).fill(0));
-    setVisibleCount(pills.length);
-  }, [pills]);
+export const SinglePillRow: React.FC<SinglePillRowProps> = React.memo(
+  ({ pills, pillVariant }) => {
+    const containerWidth = useRef(0);
+    const pillWidths = useRef<Record<string, number>>({});
+    const [visibleCount, setVisibleCount] = useState(pills.length);
 
-  useEffect(() => {
-    if (containerWidth > 0 && pillWidths.every((w) => w > 0)) {
+    const joinedPills = pills.join('|');
+
+    const recalculateVisibility = useCallback(() => {
+      if (containerWidth.current === 0) return;
+
+      const widths = pills
+        .map((label) => pillWidths.current[label])
+        .filter((w): w is number => w !== undefined);
+      if (widths.length !== pills.length) return;
+
       let sum = 0;
       let count = 0;
       const gap = Spacings.md;
 
-      for (let i = 0; i < pills.length; i++) {
-        const w = pillWidths[i] + (i > 0 ? gap : 0);
-        if (sum + w <= containerWidth) {
-          sum += w;
-          count++;
-        } else {
-          break;
-        }
+      for (const width of widths) {
+        const additionalWidth = count > 0 ? gap : 0;
+        if (sum + width + additionalWidth > containerWidth.current) break;
+        sum += width + additionalWidth;
+        count++;
       }
 
-      setVisibleCount(count);
-    }
-  }, [containerWidth, pillWidths, pills.length]);
+      setVisibleCount((prev) => (prev !== count ? count : prev));
+    }, [pills, containerWidth]);
 
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        flexWrap: 'nowrap',
-        marginBottom: Spacings.xs,
-      }}
-      onLayout={(e) => {
-        setContainerWidth(e.nativeEvent.layout.width);
-      }}
-    >
-      {pills.slice(0, visibleCount).map((item, idx) => (
-        <View
-          key={idx}
-          style={{ marginLeft: idx === 0 ? 0 : Spacings.xxs }}
-          onLayout={(e) => {
-            const w = e.nativeEvent.layout.width;
-            setPillWidths((prev) => {
-              if (prev[idx] === w) return prev;
-              const next = [...prev];
-              next[idx] = w;
-              return next;
-            });
-          }}
-        >
-          <Pill variant={pillVariant} label={item} />
-        </View>
-      ))}
+    useEffect(() => {
+      setVisibleCount(pills.length);
+      pillWidths.current = {};
+    }, [joinedPills, pills.length]);
 
-      {visibleCount < pills.length && (
-        <View style={{ marginLeft: Spacings.xs }}>
-          <TextRegular size="sm">+ {pills.length - visibleCount}</TextRegular>
-        </View>
-      )}
-    </View>
-  );
-}
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: Spacings.xs,
+        }}
+        onLayout={(e) => {
+          containerWidth.current = e.nativeEvent.layout.width;
+          requestAnimationFrame(recalculateVisibility);
+        }}
+      >
+        {pills.slice(0, visibleCount).map((label, idx) => (
+          <View
+            key={label}
+            style={{ marginLeft: idx === 0 ? 0 : Spacings.xxs }}
+            onLayout={(e) => {
+              const measuredWidth = e.nativeEvent.layout.width;
+              if (pillWidths.current[label] !== measuredWidth) {
+                pillWidths.current[label] = measuredWidth;
+                requestAnimationFrame(recalculateVisibility);
+              }
+            }}
+          >
+            <Pill variant={pillVariant} label={label} />
+          </View>
+        ))}
+
+        {visibleCount < pills.length && (
+          <View style={{ marginLeft: Spacings.xs }}>
+            <TextRegular size="sm">+ {pills.length - visibleCount}</TextRegular>
+          </View>
+        )}
+      </View>
+    );
+  }
+);
