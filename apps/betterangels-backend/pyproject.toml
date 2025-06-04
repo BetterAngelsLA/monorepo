@@ -23,7 +23,6 @@ django = "^5.1.7"
 django-environ = "^0.12.0"
 gunicorn = { extras = ["gevent"], version = "^23.0.0" }
 django-extensions = "^3.2.3"
-dj-rest-auth = { extras = ["with-social"], version = "^7.0.1" }
 django-cors-headers = "^4.7.0"
 whitenoise = "^6.9.0"
 django-post-office = "^3.9.1"
@@ -51,6 +50,8 @@ django-admin-interface = "^0.29.4"
 django-select2 = "^8.3.0"
 django-import-export = "^4.3.7"
 django-admin-rangefilter = "^0.13.2"
+django-allauth = "^65.9.0"
+djangorestframework = "^3.16.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -64,12 +64,6 @@ env = environ.Env(
     SECURE_HSTS_PRELOAD=(bool, False),
     SECURE_HSTS_SECONDS=(int, 0),
     ACCOUNT_LOGIN_BY_CODE_ENABLED=(bool, False),
-    SOCIALACCOUNT_APPLE_CLIENT_ID=(str, ""),
-    SOCIALACCOUNT_APPLE_SECRET=(str, ""),
-    SOCIALACCOUNT_APPLE_ID_PREFIX=(str, ""),
-    SOCIALACCOUNT_APPLE_CERTIFICATE_KEY=(str, ""),
-    SOCIALACCOUNT_GOOGLE_CLIENT_ID=(str, ""),
-    SOCIALACCOUNT_GOOGLE_SECRET=(str, ""),
     USE_IAM_AUTH=(bool, False),
     SESAME_TOKEN_NAME=(str, "token"),
     SESAME_MAX_AGE=(int, 3600),  # set to 1 hr
@@ -110,13 +104,8 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.headless",
-    "allauth.socialaccount",
-    "allauth.socialaccount.providers.apple",
-    "allauth.socialaccount.providers.google",
     "corsheaders",
     "django_ckeditor_5",
-    "dj_rest_auth",
-    "dj_rest_auth.registration",
     "django_structlog",
     "guardian",
     "places",
@@ -159,46 +148,6 @@ MIDDLEWARE = [
     "common.middleware.TimezoneMiddleware",
 ]
 
-
-# Provider specific settings
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "SCOPE": ["profile", "email"],
-        "EMAIL_AUTHENTICATION": True,
-        # For each OAuth based provider, either add a ``SocialApp``
-        # (``socialaccount`` app) containing the required client
-        # credentials, or list them here:
-        "APP": {
-            "client_id": env("SOCIALACCOUNT_GOOGLE_CLIENT_ID"),
-            "secret": env("SOCIALACCOUNT_GOOGLE_SECRET"),
-            "key": "",
-        },
-        "AUTH_PARAMS": {
-            "access_type": "online",
-        },
-        "OAUTH_PKCE_ENABLED": True,
-    },
-    "apple": {
-        "APPS": [
-            {
-                # Your service identifier.
-                "client_id": env("SOCIALACCOUNT_APPLE_CLIENT_ID"),
-                # The Key ID (visible in the "View Key Details" page).
-                "secret": env("SOCIALACCOUNT_APPLE_SECRET"),
-                # Member ID/App ID Prefix -- you can find it below your name
-                # at the top right corner of the page, or it’s your App ID
-                # Prefix in your App ID.
-                "key": env("SOCIALACCOUNT_APPLE_ID_PREFIX"),
-                "settings": {
-                    # The certificate you downloaded when generating the key.
-                    "certificate_key": env("SOCIALACCOUNT_APPLE_CERTIFICATE_KEY")
-                },
-            }
-        ]
-    },
-}
-SOCIALACCOUNT_ADAPTER = "accounts.adapters.SocialAccountAdapter"
-SOCIALACCOUNT_LOGIN_ON_GET = True
 ACCOUNT_ADAPTER = "accounts.adapters.AccountAdapter"
 ACCOUNT_EMAIL_UNKNOWN_ACCOUNTS = False
 ACCOUNT_LOGIN_BY_CODE_ENABLED = env("ACCOUNT_LOGIN_BY_CODE_ENABLED")
