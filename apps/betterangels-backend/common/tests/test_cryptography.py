@@ -14,9 +14,9 @@ class CloudFrontSigningCryptographyTest(TestCase):
     """
 
     def test_generate_signed_url_with_dynamic_key(self) -> None:
-        key_id: str = "DUMMY_TEST_KEY_ID"
-        url: str = "https://example.cloudfront.net/test-file.jpg"
-        expire_date: datetime.datetime = datetime.datetime.utcnow() + datetime.timedelta(minutes=30)
+        key_id = "DUMMY_TEST_KEY_ID"
+        url = "https://example.cloudfront.net/test-file.jpg"
+        expire_date = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=30)
 
         private_key = rsa.generate_private_key(
             public_exponent=65537,
@@ -30,8 +30,8 @@ class CloudFrontSigningCryptographyTest(TestCase):
                 hashes.SHA1(),
             )
 
-        signer: CloudFrontSigner = CloudFrontSigner(key_id, rsa_signer)
-        signed_url: str = signer.generate_presigned_url(url, date_less_than=expire_date)
+        signer = CloudFrontSigner(key_id, rsa_signer)
+        signed_url = signer.generate_presigned_url(url, date_less_than=expire_date)
 
         self.assertIn("Expires", signed_url)
         self.assertIn("Signature", signed_url)
