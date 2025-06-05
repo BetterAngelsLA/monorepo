@@ -17,15 +17,11 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  async function createNoteFunction(
-    id: string,
-    firstName: string | undefined | null
-  ) {
+  async function createNoteFunction(id: string) {
     try {
       const { data } = await createNote({
         variables: {
           data: {
-            purpose: `Session with ${firstName || 'Client'}`,
             clientProfile: id,
           },
         },
@@ -51,7 +47,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
       route: `/add-interaction/${clientProfile.id}`,
       onPress: () => {
         if (clientProfile) {
-          createNoteFunction(clientProfile.id, clientProfile.firstName);
+          createNoteFunction(clientProfile.id);
         }
       },
     },

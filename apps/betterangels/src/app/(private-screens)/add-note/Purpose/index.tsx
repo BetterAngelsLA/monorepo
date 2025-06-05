@@ -55,8 +55,8 @@ export default function Purpose(props: IPurposeProps) {
   const isPurpose = expanded === 'Purpose';
 
   const updateNoteFunction = useRef(
-    debounce(async (value: string) => {
-      if (!noteId || !value) return;
+    debounce(async (value: string | null | undefined) => {
+      if (!noteId) return;
 
       try {
         await updateNote({
@@ -73,22 +73,20 @@ export default function Purpose(props: IPurposeProps) {
     }, 500)
   ).current;
 
-  const onChange = (value: string) => {
-    if (!value) {
+  const onChange = (value: string | null | undefined) => {
+    try {
+      setValue(value);
+      updateNoteFunction(value);
+    } catch (err) {
+      console.error(err);
       setErrors({ ...errors, purpose: true });
     }
-    if (value) {
-      setErrors({ ...errors, purpose: false });
-    }
-    setValue(value);
-    updateNoteFunction(value);
   };
 
   return (
     <FieldCard
       scrollRef={scrollRef}
       expanded={expanded}
-      required
       mb="xs"
       setExpanded={() => setExpanded(isPurpose ? null : 'Purpose')}
       title="Purpose"
@@ -107,12 +105,9 @@ export default function Purpose(props: IPurposeProps) {
         <BasicInput
           placeholder="Enter purpose"
           maxLength={100}
-          onDelete={() => {
-            setValue('');
-            setErrors({ ...errors, purpose: true });
-          }}
+          onDelete={() => onChange('')}
           error={!!errors.purpose}
-          errorMessage={errors.purpose ? 'Purpose is required' : ''}
+          errorMessage={errors.purpose ? 'Error in Purpose field' : ''}
           value={value || undefined}
           onChangeText={(e) => onChange(e)}
         />
