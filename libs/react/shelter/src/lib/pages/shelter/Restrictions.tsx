@@ -10,22 +10,29 @@ export default function Restrictions({
     <Card title="Restrictions">
       <div className="flex flex-col gap-2">
         {shelter.maxStay && (
-          <div className="flex gap-1">Max Stay: {shelter.maxStay} days</div>
+          <div className="flex gap-1">
+            <strong>Max Stay:</strong>
+            {shelter.maxStay} days
+          </div>
         )}
         {shelter.curfew && (
-          <div className="flex gap-1">Curfew: {shelter.curfew}</div>
+          <div className="flex gap-1">
+            <strong>Curfew:</strong>
+            {shelter.curfew}
+          </div>
         )}
 
         {shelter.onSiteSecurity != null && (
           <div className="flex gap-1">
-            On-site Security: {shelter.onSiteSecurity ? 'Yes' : 'No'}
+            <strong>On-site Security:</strong>
+            {shelter.onSiteSecurity ? 'Yes' : 'No'}
           </div>
         )}
 
         {shelter.otherRules && (
           <div
             dangerouslySetInnerHTML={{
-              __html: 'Other rules: ' + shelter?.otherRules,
+              __html: `<strong>Other rules:</strong> ${shelter?.otherRules}`,
             }}
           />
         )}

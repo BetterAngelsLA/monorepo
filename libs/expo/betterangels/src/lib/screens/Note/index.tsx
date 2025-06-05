@@ -5,11 +5,13 @@ import { StyleSheet, View } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { MainScrollContainer } from '../../ui-components';
+import { useNoteSummaryQuery } from './__generated__/NoteSummary.generated';
+import NoteByline from './NoteByline';
+import NoteClient from './NoteClient';
 import NoteLocation from './NoteLocation';
 import NotePublicNote from './NotePublicNote';
 import NoteServices from './NoteServices';
 import NoteTitle from './NoteTitle';
-import { useNoteSummaryQuery } from './__generated__/NoteSummary.generated';
 
 export default function Note({
   id,
@@ -63,19 +65,26 @@ export default function Note({
       </View>
     );
   }
-
   if (error) throw new Error('Something went wrong. Please try again.');
+
+  if (!data?.note) {
+    return null;
+  }
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View style={styles.container}>
         <NoteTitle note={data?.note} />
+        <NoteClient clientProfile={data?.note.clientProfile} />
+        <NoteByline
+          createdBy={data?.note.createdBy}
+          organization={data?.note.organization}
+          team={data?.note.team}
+        />
         {data?.note.location?.point && <NoteLocation note={data?.note} />}
-        {!!data?.note.providedServices.length && (
-          <NoteServices type="providedServices" data={data} />
-        )}
-        {!!data?.note.requestedServices.length && (
-          <NoteServices type="requestedServices" data={data} />
+        {(!!data.note.providedServices.length ||
+          !!data.note.requestedServices.length) && (
+          <NoteServices note={data.note} />
         )}
         {data?.note.publicDetails && <NotePublicNote note={data.note} />}
       </View>

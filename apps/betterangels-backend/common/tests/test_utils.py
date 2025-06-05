@@ -1,6 +1,5 @@
-from unittest import TestCase
-
-from common.utils import get_filename_with_extension
+from common.utils import canonicalise_filename
+from django.test import TestCase
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
 
@@ -11,7 +10,8 @@ class CommonUtilsTestCase(ParametrizedTestCase, TestCase):
             ("application/pdf", "doc", "doc.pdf"),
             ("application/pdf", "doc.PDF", "doc.PDF"),
             ("application/pdf", "doc.TXT", "doc.pdf"),
-            ("application/pdf", "doc.foo", "doc.pdf"),
+            ("application/pdf", "doc.foo", "doc.foo.pdf"),
+            ("image/jpeg", "what%E2%80%99s%20this", "what’s this.jpg"),
             ("image/jpeg", "image.jpeg", "image.jpeg"),
             ("image/jpeg", "image.jpg", "image.jpg"),
             ("image/heic", "image", "image.heic"),
@@ -23,7 +23,7 @@ class CommonUtilsTestCase(ParametrizedTestCase, TestCase):
     )
     def test_get_filename_with_extension(self, mime_type: str, filename: str, expected_filename: str | None) -> None:
         if expected_filename:
-            self.assertEqual(get_filename_with_extension(mime_type, filename), expected_filename)
+            self.assertEqual(canonicalise_filename(mime_type, filename), expected_filename)
         else:
             with self.assertRaises(ValueError):
-                get_filename_with_extension(mime_type, filename)
+                canonicalise_filename(mime_type, filename)

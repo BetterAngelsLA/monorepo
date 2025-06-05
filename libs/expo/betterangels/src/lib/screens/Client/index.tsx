@@ -18,7 +18,7 @@ import ClientProfileView from './ClientProfile';
 import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
-import Locations from './Locations';
+import { InteractionLocations as Locations } from './Locations';
 import {
   ClientProfileQuery,
   useClientProfileQuery,
