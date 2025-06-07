@@ -16,14 +16,19 @@ export function InlineList(props: TProps) {
     return null;
   }
 
-  const parentCss = ['flex', 'flex-row', 'gap-2', className];
+  const parentCss = [className];
 
-  const titleCss = ['font-semibold', titleClassName];
+  const titleCss = [
+    'mr-2',
+    'font-semibold',
+    'whitespace-nowrap',
+    titleClassName,
+  ];
 
   return (
     <div className={mergeCss(parentCss)}>
-      {!!title && <div className={mergeCss(titleCss)}>{title}</div>}
-      <div>{visibleItems.join(', ')}</div>
+      {!!title && <span className={mergeCss(titleCss)}>{title}</span>}
+      <span>{visibleItems.join(', ')}</span>
     </div>
   );
 }
