@@ -13,6 +13,7 @@ import ShelterDetail from './ShelterDetail';
 import ShelterTypes from './ShelterTypes';
 import SpecialRestrictions from './SpecialRestrictions';
 import { useViewShelterQuery } from './__generated__/shelter.generated';
+import { WysiwygSection } from './shared/WysiwygSection';
 
 export default function ShelterPage({ id }: { id: string }) {
   const { loading, data } = useViewShelterQuery({
@@ -89,7 +90,7 @@ export default function ShelterPage({ id }: { id: string }) {
         {hasGeneralInfo && <GeneralInfo shelter={shelter} />}
         {hasDescription && (
           <Card title="Description">
-            <div dangerouslySetInnerHTML={{ __html: shelter.description }} />
+            <WysiwygSection content={shelter.description} />
           </Card>
         )}
         {hasEntryRequirements && <EntryRequirements shelter={shelter} />}

@@ -1,0 +1,44 @@
+.wysiwyg h2,
+.wysiwyg h3,
+.wysiwyg h4 {
+  font-weight: bold;
+  line-height: 1.5;
+}
+
+.wysiwyg h2 {
+  font-size: 1.5rem;
+}
+
+.wysiwyg h3 {
+  font-size: 1.25rem;
+}
+
+.wysiwyg h4 {
+  font-size: 1.15rem;
+}
+
+.wysiwyg p {
+  line-height: 1.5;
+}
+
+.wysiwyg a {
+  text-decoration: underline;
+}
+
+.wysiwyg ul,
+.wysiwyg ol {
+  list-style: outside;
+}
+
+.wysiwyg ul {
+  padding-left: 1.5rem;
+}
+
+.wysiwyg ol {
+  padding-left: 2rem;
+}
+
+.wysiwyg ul li,
+.wysiwyg ol li {
+  line-height: 1.5;
+}
