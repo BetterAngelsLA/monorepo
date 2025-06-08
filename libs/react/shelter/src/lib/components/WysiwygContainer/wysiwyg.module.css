@@ -5,14 +5,17 @@
   line-height: 1.5;
 }
 
+/* Headging 1 in Django CKE Editor */
 .wysiwyg h2 {
   font-size: 1.5rem;
 }
 
+/* Headging 2 in Django CKE Editor */
 .wysiwyg h3 {
   font-size: 1.25rem;
 }
 
+/* Headging 3 in Django CKE Editor */
 .wysiwyg h4 {
   font-size: 1.15rem;
 }
