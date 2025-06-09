@@ -80,34 +80,34 @@ develop = true
 celery = {version = "^5.5.3", extras = ["redis"]}
 celery-redbeat = "^2.3.2"
 cryptography = "^45.0.3"
-deepdiff = "^8.3.0"
+deepdiff = "^8.5.0"
 dj-places = "^5.2.1"
 django = "^5.2.2"
 django-admin-async-upload = {git = "https://github.com/BetterAngelsLA/django-admin-async-upload", rev = "cfa824d7d390c9b500ea735ecfd5aa546c8165cd"}
-django-admin-interface = "^0.29.4"
+django-admin-interface = "^0.30.0"
 django-admin-rangefilter = "^0.13.2"
 django-allauth = "^65.9.0"
 django-choices-field = "^2.3.0"
-django-ckeditor-5 = "^0.2.17"
+django-ckeditor-5 = "^0.2.18"
 django-cors-headers = "^4.7.0"
 django-environ = "^0.12.0"
 django-extensions = "^4.1"
-django-guardian = "^2.4.0"
+django-guardian = "^3.0.0"
 django-import-export = "^4.3.7"
 django-organizations = "^2.5.0"
-django-pghistory = "^3.5.3"
-django-phonenumber-field = {version = "^8.0.0", extras = ["phonenumbers"]}
+django-pghistory = "^3.7.0"
+django-phonenumber-field = {version = "^8.1.0", extras = ["phonenumbers"]}
 django-post-office = "^3.9.1"
-django-select2 = "^8.3.0"
+django-select2 = "^8.4.1"
 django-ses = "^4.4.0"
-django-sesame = "^3.2.2"
-django-storages = {version = "^1.14.5", extras = ["s3"]}
-django-structlog = "^9.0.1"
+django-sesame = "^3.2.3"
+django-storages = {version = "^1.14.6", extras = ["s3"]}
+django-structlog = "^9.1.1"
 django-waffle = "^4.2.0"
 djangorestframework = "^3.16.0"
 gunicorn = {version = "^23.0.0", extras = ["gevent"]}
-hiredis = "^3.1.0"
-newrelic = "^10.7.0"
+hiredis = "^3.2.1"
+newrelic = "^10.12.0"
 psycopg = "^3.2.9"
 python-magic = "^0.4.27"
 strawberry-graphql-django = "^0.61.0"
@@ -1237,14 +1237,14 @@ resolved_reference = "cfa824d7d390c9b500ea735ecfd5aa546c8165cd"
 
 [[package]]
 name = "django-admin-interface"
-version = "0.29.4"
+version = "0.30.0"
 description = "django's default admin interface with superpowers - customizable themes, popup windows replaced by modals and many other features."
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "django_admin_interface-0.29.4-py3-none-any.whl", hash = "sha256:4635a28ece1cdf05f6b43152c8d8daa4d4c5a1ffd87e94f5a4cefc77a07cea4e"},
-    {file = "django_admin_interface-0.29.4.tar.gz", hash = "sha256:b4f1f00bd287e312a8371c902840cad6bc74809589e6aaf1a3346b70582b5b84"},
+    {file = "django_admin_interface-0.30.0-py3-none-any.whl", hash = "sha256:be448fee0db45267d525d45646e716c68e55ce58b610bc6937604e989f0c63ed"},
+    {file = "django_admin_interface-0.30.0.tar.gz", hash = "sha256:bf6a634f1211a852887a0f07847817b6b7e84ba7f39ba33c5f98909050338628"},
 ]
 
 [package.dependencies]
@@ -1401,18 +1401,18 @@ django = ">=4.2"
 
 [[package]]
 name = "django-guardian"
-version = "2.4.0"
-description = "Implementation of per object permissions for Django."
+version = "3.0.0"
+description = "Per object permissions for Django"
 optional = false
-python-versions = ">=3.5"
+python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "django-guardian-2.4.0.tar.gz", hash = "sha256:c58a68ae76922d33e6bdc0e69af1892097838de56e93e78a8361090bcd9f89a0"},
-    {file = "django_guardian-2.4.0-py3-none-any.whl", hash = "sha256:440ca61358427e575323648b25f8384739e54c38b3d655c81d75e0cd0d61b697"},
+    {file = "django_guardian-3.0.0-py3-none-any.whl", hash = "sha256:f3ebe3cc7f486e267041b780c3429ad5db72c909df40c2f74adb1b059582a3cd"},
+    {file = "django_guardian-3.0.0.tar.gz", hash = "sha256:0c79d55c4af2cfc14fbd19539846a1ebfed2a38198b7697e0f5177b7f654e1cd"},
 ]
 
 [package.dependencies]
-Django = ">=2.2"
+django = ">=3.2"
 
 [[package]]
 name = "django-import-export"
@@ -1658,26 +1658,26 @@ commands = ["django-extensions (>=1.4.9)"]
 
 [[package]]
 name = "django-stubs"
-version = "5.1.3"
+version = "5.2.0"
 description = "Mypy stubs for Django"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "django_stubs-5.1.3-py3-none-any.whl", hash = "sha256:716758ced158b439213062e52de6df3cff7c586f9f9ad7ab59210efbea5dfe78"},
-    {file = "django_stubs-5.1.3.tar.gz", hash = "sha256:8c230bc5bebee6da282ba8a27ad1503c84a0c4cd2f46e63d149e76d2a63e639a"},
+    {file = "django_stubs-5.2.0-py3-none-any.whl", hash = "sha256:cd52da033489afc1357d6245f49e3cc57bf49015877253fb8efc6722ea3d2d2b"},
+    {file = "django_stubs-5.2.0.tar.gz", hash = "sha256:07e25c2d3cbff5be540227ff37719cc89f215dfaaaa5eb038a75b01bbfbb2722"},
 ]
 
 [package.dependencies]
 asgiref = "*"
 django = "*"
-django-stubs-ext = ">=5.1.3"
-mypy = {version = ">=1.12,<1.16", optional = true, markers = "extra == \"compatible-mypy\""}
+django-stubs-ext = ">=5.2.0"
+mypy = {version = ">=1.13,<1.16", optional = true, markers = "extra == \"compatible-mypy\""}
 types-PyYAML = "*"
 typing-extensions = ">=4.11.0"
 
 [package.extras]
-compatible-mypy = ["mypy (>=1.12,<1.16)"]
+compatible-mypy = ["mypy (>=1.13,<1.16)"]
 oracle = ["oracledb"]
 redis = ["redis"]
 
@@ -1729,29 +1729,29 @@ django = ">=4.2"
 
 [[package]]
 name = "djangorestframework-stubs"
-version = "3.15.3"
+version = "3.16.0"
 description = "PEP-484 stubs for django-rest-framework"
 optional = false
-python-versions = ">=3.9"
+python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "djangorestframework_stubs-3.15.3-py3-none-any.whl", hash = "sha256:3add29ac343292ffc926a3f3984af42de237cca214c69ca0489d124315a803bc"},
-    {file = "djangorestframework_stubs-3.15.3.tar.gz", hash = "sha256:e7bdec722d98b8a8049bad9f8bb5ead0931f4f64010ffb3c4538c9ae0f35ef2a"},
+    {file = "djangorestframework_stubs-3.16.0-py3-none-any.whl", hash = "sha256:2085a6e023de65843d4d53fe5abc73fbbc3ef380a59919ad9801182f6bb435de"},
+    {file = "djangorestframework_stubs-3.16.0.tar.gz", hash = "sha256:8c5ccdfe9271b1a37946a3564dc3714d521cd3f2f8695e528808e0c700538243"},
 ]
 
 [package.dependencies]
 django-stubs = [
-    {version = ">=5.1.3"},
+    {version = ">=5.2.0"},
     {version = "*", extras = ["compatible-mypy"], optional = true, markers = "extra == \"compatible-mypy\""},
 ]
-mypy = {version = ">=1.12,<1.16", optional = true, markers = "extra == \"compatible-mypy\""}
-requests = ">=2.0.0"
-types-PyYAML = ">=5.4.3"
-types-requests = ">=0.1.12"
-typing-extensions = ">=3.10.0"
+mypy = {version = ">=1.13,<1.16", optional = true, markers = "extra == \"compatible-mypy\""}
+requests = ">=2.0"
+types-PyYAML = "*"
+types-requests = "*"
+typing-extensions = ">=4.0"
 
 [package.extras]
-compatible-mypy = ["django-stubs[compatible-mypy]", "mypy (>=1.12,<1.16)"]
+compatible-mypy = ["django-stubs[compatible-mypy]", "mypy (>=1.13,<1.16)"]
 coreapi = ["coreapi (>=2.0.0)"]
 markdown = ["types-Markdown (>=0.1.5)"]
 
@@ -3780,14 +3780,14 @@ files = [
 
 [[package]]
 name = "types-gevent"
-version = "24.11.0.20250401"
+version = "25.4.0.20250516"
 description = "Typing stubs for gevent"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "types_gevent-24.11.0.20250401-py3-none-any.whl", hash = "sha256:6764faf861ea99250c38179c58076392c44019ac3393029f71b06c4a15e8c1d1"},
-    {file = "types_gevent-24.11.0.20250401.tar.gz", hash = "sha256:1443f796a442062698e67d818fca50aa88067dee4021d457a7c0c6bedd6f46ca"},
+    {file = "types_gevent-25.4.0.20250516-py3-none-any.whl", hash = "sha256:7326e6d3f0f40e238bf42b7b30717c55cc294777e0bb2a9ada9e7645413b21c2"},
+    {file = "types_gevent-25.4.0.20250516.tar.gz", hash = "sha256:d21a623ea00223758980f2aea6c209e4aa6114bebb9434206dec1c4f3cb684d5"},
 ]
 
 [package.dependencies]
@@ -4333,4 +4333,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "3.13.3"
-content-hash = "790ac7d29d9c831574e26e48c4b87b5c29e6163c6499e252e662b5dc4700e9ca"
+content-hash = "3f980e3994e31b3de97831145e758ff28cbf96fecc400e376c5a40ca0403a366"
