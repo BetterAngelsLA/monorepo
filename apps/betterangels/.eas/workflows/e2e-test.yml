@@ -6,6 +6,7 @@ on:
 
 jobs:
   build_ios_for_e2e:
+    projectRoot: 'apps/betterangels'
     type: build
     params:
       platform: ios
