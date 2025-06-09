@@ -1,9 +1,11 @@
 import uuid
-from typing import Any, Optional, cast
+from typing import Any, Optional
 
 from django.contrib.auth.models import AbstractBaseUser
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from django.http import Http404
+from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 from organizations.backends.defaults import InvitationBackend
 from organizations.models import Organization, OrganizationInvitation
@@ -15,7 +17,8 @@ from .models import ExtendedOrganizationInvitation, User
 
 class CustomInvitations(InvitationBackend):
     form_class = UserCreationForm
-    invitation_body = "account/email/email_invite_organization.html"
+    invitation_body_html = "account/email/email_invite_organization.html"
+    invitation_body_txt = "account/messages/email_invite_organization.txt"
     user_model = User
 
     def invite_by_email(
@@ -34,9 +37,17 @@ class CustomInvitations(InvitationBackend):
         return user
 
     def send_invitation(self, user: AbstractBaseUser, sender: Optional[AbstractBaseUser] = None, **kwargs: Any) -> int:
-        return cast(
-            int, self.email_message(user, self.invitation_subject, self.invitation_body, sender, **kwargs).send()
+        msg = self.email_message(
+            user,
+            self.invitation_subject,
+            self.invitation_body_txt,
+            sender,
+            message_class=EmailMultiAlternatives,
+            **kwargs
         )
+        html_body = render_to_string(self.invitation_body_html, kwargs)
+        msg.attach_alternative(html_body, "text/html")
+        return int(msg.send())
 
     def create_organization_invite(
         self, organization: Organization, invited_by_user: User, invitee_user: User
