@@ -11,6 +11,7 @@ from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.db.models import Q, QuerySet
 from django.http import HttpRequest
+from django.utils.encoding import force_str
 from import_export import fields, resources
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
@@ -147,7 +148,7 @@ class ClientProfileResource(resources.ModelResource):
             .order_by("pgh_created_at")
             .first()
         ):
-            return LivingSituationEnum(first_living_situation_record.pgh_data["living_situation"]).label
+            return force_str(LivingSituationEnum(first_living_situation_record.pgh_data["living_situation"]).label)
 
         return None
 
@@ -345,7 +346,7 @@ class ClientDocumentResource(resources.ModelResource):
         return obj.updated_at.date().isoformat()
 
     def dehydrate_namespace(self, obj: Attachment) -> str | None:
-        return ClientDocumentNamespaceEnum(obj.namespace).label if obj.namespace else None
+        return force_str(ClientDocumentNamespaceEnum(obj.namespace).label if obj.namespace else None)
 
     def dehydrate_file_name(self, obj: Attachment) -> str | None:
         return obj.original_filename
