@@ -1453,6 +1453,8 @@ type ShelterType {
   id: ID!
   accessibility: [AccessibilityType!]!
   additionalContacts: [ContactInfoType!]!
+  addNotesSleepingDetails: String
+  addNotesShelterDetails: String
   bedFees: String
   cities: [CityType!]!
   cityCouncilDistrict: Int

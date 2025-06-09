@@ -1837,6 +1837,8 @@ export type ShelterType = {
   ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   InteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
+  addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
+  addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
   cities: Array<CityType>;
