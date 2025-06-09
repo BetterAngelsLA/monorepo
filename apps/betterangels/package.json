@@ -78,7 +78,7 @@
     "react-fast-compare": "*"
   },
   "scripts": {
-    "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches",
+    "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",
     "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/betterangels",
     "android": "expo run:android",
     "ios": "expo run:ios"
