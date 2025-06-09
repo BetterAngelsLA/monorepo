@@ -37,7 +37,7 @@ class CustomInvitations(InvitationBackend):
         return user
 
     def send_invitation(self, user: User, sender: Optional[AbstractBaseUser] = None, **kwargs: Any) -> int:
-        context = {"invitee_email": user.email, **kwargs}  # eg. invitee_email
+        context = {"invitee_email": user.email, **kwargs}
         msg = self.email_message(
             user,
             self.invitation_subject,
