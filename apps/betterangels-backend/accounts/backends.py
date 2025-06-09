@@ -43,9 +43,8 @@ class CustomInvitations(InvitationBackend):
             self.invitation_body_txt,
             sender,
             message_class=EmailMultiAlternatives,
-            **kwargs
         )
-        html_body = render_to_string(self.invitation_body_html, kwargs)
+        html_body = render_to_string(self.invitation_body_html, {"user": user, **kwargs})
         msg.attach_alternative(html_body, "text/html")
         return int(msg.send())
 

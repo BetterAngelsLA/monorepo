@@ -8,7 +8,7 @@ To get started:
    - Google Play Store: https://play.google.com/store/apps/details?id=la.betterangels.app&hl=en
    - Apple App Store: https://apps.apple.com/us/app/betterangels/id6468135540
 
-2. Log in using the email address this invitation was sent to.
+2. Log in using {{ user.email }}.
 3. Enter the one-time passcode you'll receive via email.
 
 Together, we can solve homelessness.
