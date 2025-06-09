@@ -2366,14 +2366,14 @@ files = [
 
 [[package]]
 name = "model-bakery"
-version = "1.20.4"
+version = "1.20.5"
 description = "Smart object creation facility for Django."
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "model_bakery-1.20.4-py3-none-any.whl", hash = "sha256:30ad372604f326a1ba9f949bad9d0f85e6a510db4ef6a0b07be2d6bd7485008b"},
-    {file = "model_bakery-1.20.4.tar.gz", hash = "sha256:a0c97e8a27329ecad78136f9d8f573ae392e4282326ea5c5f6daed1173013c4e"},
+    {file = "model_bakery-1.20.5-py3-none-any.whl", hash = "sha256:796e0b7fa6bf2acc09feaadce40c6bcc13e5b55c5bdff9f76e87ceb64f736070"},
+    {file = "model_bakery-1.20.5.tar.gz", hash = "sha256:107b3efb8889baac83cae0e2d81465903b69a70eeb99ecfd0929d959a653ab90"},
 ]
 
 [package.dependencies]
@@ -4331,4 +4331,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "3.13.3"
-content-hash = "1e21a6ff3970af8523c229609221104592fd062da3d6c62bdc3d05ecfcce0441"
+content-hash = "fcb2bfc55de7aba6896a9c49e803632fab44c0cd298b3b1198170d3fed8e4903"
