@@ -139,9 +139,9 @@ jobs:
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
       - name: 🧪 Run iOS E2E Tests (Maestro)
+        working-directory: apps/${{ matrix.project }}
         run: |
-          npx eas-cli workflow:run apps/${{ matrix.project }}/.eas/workflows/e2e-test.yml \
-            --non-interactive
+          npx eas-cli workflow:run .eas/workflows/e2e-test.yml --non-interactive
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
