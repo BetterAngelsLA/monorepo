@@ -16,6 +16,10 @@ export const GET_NOTES = gql`
         id
         purpose
         team
+        organization {
+          id
+          name
+        }
         location {
           address {
             id
@@ -58,6 +62,9 @@ export const GET_NOTES = gql`
             id
             username
           }
+          profilePhoto {
+            url
+          }
         }
         createdBy {
           id
@@ -78,6 +85,10 @@ export const GET_NOTE = gql`
       id
       purpose
       team
+      organization {
+        id
+        name
+      }
       location {
         address {
           id
@@ -110,6 +121,9 @@ export const GET_NOTE = gql`
         email
         firstName
         lastName
+        profilePhoto {
+          url
+        }
       }
       createdBy {
         id

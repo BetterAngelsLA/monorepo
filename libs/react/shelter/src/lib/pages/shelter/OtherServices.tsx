@@ -1,4 +1,5 @@
 import { Card } from '@monorepo/react/components';
+import { WysiwygContainer } from '../../components';
 import { ViewShelterQuery } from './__generated__/shelter.generated';
 
 export default function OtherServices({
@@ -10,11 +11,7 @@ export default function OtherServices({
 
   return (
     <Card title="Other Services">
-      <div
-        dangerouslySetInnerHTML={{
-          __html: shelter?.otherServices,
-        }}
-      />
+      <WysiwygContainer content={shelter.otherServices} />
     </Card>
   );
 }

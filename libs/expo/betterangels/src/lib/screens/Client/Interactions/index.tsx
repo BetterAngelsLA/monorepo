@@ -122,7 +122,9 @@ export default function Interactions({
         }
         ItemSeparatorComponent={() => <View style={{ height: Spacings.xs }} />}
         data={notes}
-        renderItem={({ item: note }) => <NoteCard note={note} />}
+        renderItem={({ item: note }) => (
+          <NoteCard note={note} variant="clientProfile" />
+        )}
         keyExtractor={(note) => note.id}
         ListFooterComponent={() =>
           loading ? (

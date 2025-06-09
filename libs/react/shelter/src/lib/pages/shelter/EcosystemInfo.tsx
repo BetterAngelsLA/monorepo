@@ -12,6 +12,7 @@ import {
   enumDisplaySpaChoices,
 } from '../../static';
 import { ViewShelterQuery } from './__generated__/shelter.generated';
+import { InlineList } from './shared/InlineList';
 
 export default function EcosystemInfo({
   shelter,
@@ -21,57 +22,46 @@ export default function EcosystemInfo({
   return (
     <Card title="Ecosystem Information">
       <div className="flex flex-col gap-2">
-        {!!shelter.cities.length && (
-          <div className="flex items-center gap-2">
-            City:{' '}
-            {shelter.cities
-              .filter((city): city is { name: CityChoices } => !!city.name)
-              .map((city) => enumDisplayCityChoices[city.name])
-              .join(', ')}
-          </div>
-        )}
-        {!!shelter.spa.length && (
-          <div className="flex items-center gap-2">
-            SPA:{' '}
-            {shelter.spa
-              .filter((spa): spa is { name: SpaChoices } => !!spa.name)
-              .map((spa) => enumDisplaySpaChoices[spa.name])
-              .join(', ')}
-          </div>
-        )}
+        <InlineList
+          title="City:"
+          items={shelter?.cities.map(
+            (i) => enumDisplayCityChoices[i.name as CityChoices]
+          )}
+        />
+
+        <InlineList
+          title="SPA:"
+          items={shelter?.spa.map(
+            (i) => enumDisplaySpaChoices[i.name as SpaChoices]
+          )}
+        />
+
         {!!shelter.cityCouncilDistrict && (
           <div className="flex items-center gap-2">
-            LACD: {shelter.cityCouncilDistrict}
+            <strong>LACD:</strong> {shelter.cityCouncilDistrict}
           </div>
         )}
+
         {!!shelter.supervisorialDistrict && (
           <div className="flex items-center gap-2">
-            SD: {shelter.supervisorialDistrict}
+            <strong>SD:</strong> {shelter.supervisorialDistrict}
           </div>
         )}
-        {!!shelter.shelterPrograms.length && (
-          <div className="flex items-center gap-2">
-            Program:{' '}
-            {shelter.shelterPrograms
-              .filter(
-                (program): program is { name: ShelterProgramChoices } =>
-                  !!program.name
-              )
-              .map((program) => enumDisplayShelterProgramChoices[program.name])
-              .join(', ')}
-          </div>
-        )}
-        {!!shelter.funders.length && (
-          <div className="flex items-center gap-2">
-            Program:{' '}
-            {shelter.funders
-              .filter(
-                (funder): funder is { name: FunderChoices } => !!funder.name
-              )
-              .map((funder) => enumDisplayFunderChoices[funder.name])
-              .join(', ')}
-          </div>
-        )}
+
+        <InlineList
+          title="Program:"
+          items={shelter?.shelterPrograms.map(
+            (i) =>
+              enumDisplayShelterProgramChoices[i.name as ShelterProgramChoices]
+          )}
+        />
+
+        <InlineList
+          title="Funders:"
+          items={shelter?.funders.map(
+            (i) => enumDisplayFunderChoices[i.name as FunderChoices]
+          )}
+        />
       </div>
     </Card>
   );

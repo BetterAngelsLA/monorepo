@@ -13,9 +13,15 @@ query NoteSummary($id: ID!) {
         email
         firstName
         lastName
+        profilePhoto {
+          url
+        }
       }
       createdBy {
         id
+        firstName
+        lastName
+        email
       }
       location {
         address {
@@ -41,6 +47,10 @@ query NoteSummary($id: ID!) {
         id
         service
         serviceOther
+      }
+      organization {
+        id
+        name
       }
     }
   }

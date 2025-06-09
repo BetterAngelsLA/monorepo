@@ -1,6 +1,5 @@
 import { Button, Card } from '@monorepo/react/components';
 import { useNavigate } from 'react-router-dom';
-import { useViewShelterQuery } from './__generated__/shelter.generated';
 import Actions from './Actions';
 import EcosystemInfo from './EcosystemInfo';
 import EntryRequirements from './EntryRequirements';
@@ -13,6 +12,8 @@ import RoomStyles from './RoomStyles';
 import ShelterDetail from './ShelterDetail';
 import ShelterTypes from './ShelterTypes';
 import SpecialRestrictions from './SpecialRestrictions';
+import { useViewShelterQuery } from './__generated__/shelter.generated';
+import { WysiwygSection } from './shared/WysiwygSection';
 
 export default function ShelterPage({ id }: { id: string }) {
   const { loading, data } = useViewShelterQuery({
@@ -71,6 +72,7 @@ export default function ShelterPage({ id }: { id: string }) {
     !!shelter.supervisorialDistrict ||
     !!shelter.shelterPrograms?.length ||
     !!shelter.funders?.length;
+
   return (
     <div className="w-full">
       <Header shelter={shelter} />
@@ -88,7 +90,7 @@ export default function ShelterPage({ id }: { id: string }) {
         {hasGeneralInfo && <GeneralInfo shelter={shelter} />}
         {hasDescription && (
           <Card title="Description">
-            <div dangerouslySetInnerHTML={{ __html: shelter.description }} />
+            <WysiwygSection content={shelter.description} />
           </Card>
         )}
         {hasEntryRequirements && <EntryRequirements shelter={shelter} />}

@@ -11,11 +11,15 @@ export default function NoteTitle({
 }) {
   return (
     <View>
-      <TextBold size="lg" mb="xs">
-        {note?.purpose}
-      </TextBold>
-      <TextRegular size="sm" mb="sm">
+      {note?.purpose && (
+        <TextBold size="lg" mb="xs">
+          {note?.purpose}
+        </TextBold>
+      )}
+      <TextRegular mb="sm" size="sm">
         {format(new Date(note?.interactedAt), 'MM/dd/yyyy')}
+        {' @ '}
+        {format(new Date(note?.interactedAt), 'hh:mm a')}
       </TextRegular>
       {!!note?.team && (
         <>

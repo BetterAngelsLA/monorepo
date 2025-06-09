@@ -4,11 +4,7 @@ import { Link } from 'react-router-dom';
 import { useViewShelterQuery } from '../shelter/__generated__/shelter.generated';
 
 export default function GalleryPage({ id }: { id: string }) {
-  const { loading, data } = useViewShelterQuery({
-    variables: {
-      id,
-    },
-  });
+  const { loading, data } = useViewShelterQuery({ variables: { id } });
   const [selectedImage, setSelectedImage] = useState<{
     name: string;
     url: string;
