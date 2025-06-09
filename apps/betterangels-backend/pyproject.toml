@@ -18,16 +18,16 @@ include = "betterangels_backend"
 
 [tool.poetry.dependencies]
 python = "3.13.3"
-psycopg = "^3.2.5"
-django = "^5.1.7"
+psycopg = "^3.2.9"
+django = "^5.2.2"
 django-environ = "^0.12.0"
 gunicorn = { extras = ["gevent"], version = "^23.0.0" }
-django-extensions = "^3.2.3"
+django-extensions = "^4.1"
 django-cors-headers = "^4.7.0"
 whitenoise = "^6.9.0"
 django-post-office = "^3.9.1"
 celery-redbeat = "^2.3.2"
-celery = { extras = ["redis"], version = "^5.4.0" }
+celery = { extras = ["redis"], version = "^5.5.3" }
 django-ses = "^4.4.0"
 hiredis = "^3.1.0"
 django-organizations = "^2.5.0"
