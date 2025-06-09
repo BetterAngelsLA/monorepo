@@ -47,7 +47,7 @@ class CustomInvitations(InvitationBackend):
         )
         html_body = render_to_string(self.invitation_body_html, kwargs)
         msg.attach_alternative(html_body, "text/html")
-        return bool(msg.send())
+        return int(msg.send())
 
     def create_organization_invite(
         self, organization: Organization, invited_by_user: User, invitee_user: User
