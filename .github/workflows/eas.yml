@@ -140,8 +140,10 @@ jobs:
 
       - name: 🧪 Run iOS E2E Tests (Maestro)
         run: |
-          eas workflow:run .eas/workflows/e2e-test.yml --non-interactive
-        working-directory: apps/${{ matrix.project }}
+          npx eas-cli workflow:run apps/${{ matrix.project }}/.eas/workflows/e2e-test.yml \
+            --non-interactive
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
       - name: 🚀 Perform EAS Update
         id: expo-update
