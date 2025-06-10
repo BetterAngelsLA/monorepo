@@ -36,16 +36,17 @@ class CustomInvitations(InvitationBackend):
         self.send_invitation(user, sender, **kwargs)
         return user
 
-    def send_invitation(self, user: AbstractBaseUser, sender: Optional[AbstractBaseUser] = None, **kwargs: Any) -> int:
+    def send_invitation(self, user: User, sender: Optional[AbstractBaseUser] = None, **kwargs: Any) -> int:
+        context = {"invitee_email": user.email, **kwargs}
         msg = self.email_message(
             user,
             self.invitation_subject,
             self.invitation_body_txt,
             sender,
             message_class=EmailMultiAlternatives,
-            **kwargs
+            **context
         )
-        html_body = render_to_string(self.invitation_body_html, kwargs)
+        html_body = render_to_string(self.invitation_body_html, context)
         msg.attach_alternative(html_body, "text/html")
         return int(msg.send())
 
