@@ -1,8 +1,5 @@
-import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode, isValidElement } from 'react';
 import {
-  Linking,
-  Pressable,
   StyleProp,
   StyleSheet,
   Text,
@@ -11,6 +8,8 @@ import {
 } from 'react-native';
 import { isMobilePhone } from 'validator';
 import isEmail from 'validator/lib/isEmail';
+import EmailBtn from '../EmailBtn';
+import PhoneNumberBtn from '../PhoneNumberBtn';
 
 type TTextOrNode = {
   children: string | ReactNode;
@@ -31,60 +30,14 @@ export function TextOrNode(props: TTextOrNode) {
   const content = isStringOrNumber ? String(children) : '';
 
   if (isStringOrNumber && isEmail(content)) {
-    return (
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => Linking.openURL(`mailto:${content}`)}
-        android_ripple={null}
-      >
-        {({ pressed }) => (
-          <Text
-            numberOfLines={numberOfLines}
-            style={[
-              StyleSheet.flatten(textStyle),
-              {
-                textDecorationLine: 'underline',
-                color: pressed
-                  ? Colors.PRIMARY_LIGHT
-                  : Colors.PRIMARY_EXTRA_DARK,
-              },
-            ]}
-          >
-            {content}
-          </Text>
-        )}
-      </Pressable>
-    );
+    return <EmailBtn text={content} />;
   }
 
   if (
     isStringOrNumber &&
     isMobilePhone(content, 'any', { strictMode: false })
   ) {
-    return (
-      <Pressable
-        accessibilityRole="button"
-        onPress={() => Linking.openURL(`tel:${content}`)}
-        android_ripple={null}
-      >
-        {({ pressed }) => (
-          <Text
-            numberOfLines={numberOfLines}
-            style={[
-              StyleSheet.flatten(textStyle),
-              {
-                textDecorationLine: 'underline',
-                color: pressed
-                  ? Colors.PRIMARY_LIGHT
-                  : Colors.PRIMARY_EXTRA_DARK,
-              },
-            ]}
-          >
-            {content}
-          </Text>
-        )}
-      </Pressable>
-    );
+    return <PhoneNumberBtn text={content} />;
   }
 
   return (
