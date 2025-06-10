@@ -24,8 +24,7 @@ export default function Actions({ location }: TProps) {
           window.open(
             `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
               `${location?.latitude},${location?.longitude}`
-            )}`,
-            '_blank'
+            )}`
           );
         }}
         className={`flex flex-col items-center ${!location && 'opacity-50'}`}
