@@ -1,6 +1,8 @@
+import { Colors } from '@monorepo/expo/shared/static';
 import { ReactNode, isValidElement } from 'react';
 import {
   Linking,
+  Pressable,
   StyleProp,
   StyleSheet,
   Text,
@@ -30,13 +32,28 @@ export function TextOrNode(props: TTextOrNode) {
 
   if (isStringOrNumber && isEmail(content)) {
     return (
-      <Text
-        numberOfLines={numberOfLines}
-        style={StyleSheet.flatten(textStyle)}
+      <Pressable
+        accessibilityRole="button"
         onPress={() => Linking.openURL(`mailto:${content}`)}
+        android_ripple={null}
       >
-        {content}
-      </Text>
+        {({ pressed }) => (
+          <Text
+            numberOfLines={numberOfLines}
+            style={[
+              StyleSheet.flatten(textStyle),
+              {
+                textDecorationLine: 'underline',
+                color: pressed
+                  ? Colors.PRIMARY_LIGHT
+                  : Colors.PRIMARY_EXTRA_DARK,
+              },
+            ]}
+          >
+            {content}
+          </Text>
+        )}
+      </Pressable>
     );
   }
 
@@ -45,13 +62,28 @@ export function TextOrNode(props: TTextOrNode) {
     isMobilePhone(content, 'any', { strictMode: false })
   ) {
     return (
-      <Text
-        numberOfLines={numberOfLines}
-        style={StyleSheet.flatten(textStyle)}
+      <Pressable
+        accessibilityRole="button"
         onPress={() => Linking.openURL(`tel:${content}`)}
+        android_ripple={null}
       >
-        {content}
-      </Text>
+        {({ pressed }) => (
+          <Text
+            numberOfLines={numberOfLines}
+            style={[
+              StyleSheet.flatten(textStyle),
+              {
+                textDecorationLine: 'underline',
+                color: pressed
+                  ? Colors.PRIMARY_LIGHT
+                  : Colors.PRIMARY_EXTRA_DARK,
+              },
+            ]}
+          >
+            {content}
+          </Text>
+        )}
+      </Pressable>
     );
   }
 

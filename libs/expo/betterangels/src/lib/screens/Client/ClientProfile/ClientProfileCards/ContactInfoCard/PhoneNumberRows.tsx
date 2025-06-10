@@ -3,7 +3,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { ReactElement } from 'react';
-import { Linking, View } from 'react-native';
+import { Linking, Pressable, View } from 'react-native';
 
 type TPhoneNumber = {
   number?: string;
@@ -65,12 +65,22 @@ function PhoneNumberRow(props: TPhoneNumber) {
         alignItems: 'center',
       }}
     >
-      <TextBold
+      <Pressable
+        accessibilityRole="button"
         onPress={() => Linking.openURL(`tel:${formattedNumber}`)}
-        size="sm"
+        android_ripple={null}
       >
-        {formattedNumber}
-      </TextBold>
+        {({ pressed }) => (
+          <TextBold
+            textDecorationLine="underline"
+            color={pressed ? Colors.PRIMARY_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+            size="sm"
+          >
+            {formattedNumber}
+          </TextBold>
+        )}
+      </Pressable>
+
       {isPrimary && <StarIcon color={Colors.WARNING} size="md" />}
     </View>
   );
