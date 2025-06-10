@@ -79,9 +79,13 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_current_user(self, info: Info) -> DeletedObjectType:
+        user = get_current_user(info)
+        if user.pk is None:
+            raise RuntimeError("Cannot delete user.")
+
+        user_id = user.pk
+
         with transaction.atomic():
-            user = get_current_user(info)
-            user_id = user.pk
             user.delete()
 
-            return DeletedObjectType(id=user_id)
+        return DeletedObjectType(id=user_id)

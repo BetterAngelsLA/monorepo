@@ -250,6 +250,8 @@ class ShelterType:
     id: ID
     accessibility: List[AccessibilityType]
     additional_contacts: List[ContactInfoType]
+    add_notes_sleeping_details: Optional[str]
+    add_notes_shelter_details: Optional[str]
     bed_fees: Optional[str]
     cities: List[CityType]
     city_council_district: auto
