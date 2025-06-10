@@ -12,9 +12,7 @@ export default function Actions({ phone }: ActionsProps) {
   return (
     <div className="flex items-center py-4 justify-between text-xs px-11 border-neutral-90 border-t border-b mt-4 -mx-4">
       <a href={phone ? `tel:${phone}` : undefined}>
-        <div
-          className={`flex flex-col items-center ${phone ? 'opacity-50' : ''}`}
-        >
+        <div className={`flex flex-col items-center ${phone && 'opacity-50'}`}>
           <CallRegularIcon className="w-6 h-6 fill-primary-20" />
           <span>Call</span>
         </div>
