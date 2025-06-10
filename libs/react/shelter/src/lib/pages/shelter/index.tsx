@@ -1,4 +1,5 @@
 import { Button, Card } from '@monorepo/react/components';
+import parsePhoneNumber from 'libphonenumber-js';
 import { useNavigate } from 'react-router-dom';
 import Actions from './Actions';
 import EcosystemInfo from './EcosystemInfo';
@@ -88,6 +89,7 @@ export default function ShelterPage({ id }: { id: string }) {
       <Actions
         location={shelter.location ? shelter.location : null}
         shelterName={shelter.name}
+        phone={parsePhoneNumber(shelter.phone ?? '', 'US')?.formatNational()}
       />
       <div className="bg-neutral-99 py-2 px-4 -mx-4 flex flex-col gap-2">
         {hasGeneralInfo && <GeneralInfo shelter={shelter} />}

@@ -1,4 +1,8 @@
-import { CallIcon, LocationIcon, ShareIcon } from '@monorepo/react/icons';
+import {
+  CallRegularIcon,
+  LocationIcon,
+  ShareIcon,
+} from '@monorepo/react/icons';
 
 type TShelterLocation = {
   place: string;
@@ -8,6 +12,7 @@ type TShelterLocation = {
 
 type TProps = {
   location?: TShelterLocation | null;
+  phone?: string | null;
   shelterName: string;
 };
 
@@ -37,13 +42,15 @@ function openInMaps(lat?: number, lng?: number, label = '') {
   window.location.href = url;
 }
 
-export default function Actions({ location, shelterName }: TProps) {
+export default function Actions({ location, phone, shelterName }: TProps) {
   return (
     <div className="flex items-center py-4 justify-between text-xs px-11 border-neutral-90 border-t border-b mt-4 -mx-4">
-      <div className="flex flex-col items-center">
-        <CallIcon className="w-6 h-6 fill-primary-20" />
-        <span>Call</span>
-      </div>
+      <a href={phone ? `tel:${phone}` : undefined}>
+        <div className={`flex flex-col items-center ${!phone && 'opacity-50'}`}>
+          <CallRegularIcon className="w-6 h-6 fill-primary-20" />
+          <span>Call</span>
+        </div>
+      </a>
 
       <button
         disabled={!location}
