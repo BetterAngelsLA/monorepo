@@ -31,7 +31,11 @@ function renderLabel(
   }
 
   if (key === 'phone') {
-    return <a href={`tel:${label}`}>{label}</a>;
+    return (
+      <a className="underline" href={`tel:${label}`}>
+        {label}
+      </a>
+    );
   }
 
   if (isValidURL(label)) {
