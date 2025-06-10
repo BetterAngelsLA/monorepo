@@ -21,33 +21,20 @@ const ua = navigator.userAgent;
 const isAndroid = /Android/i.test(ua);
 const isIOS = /iPad|iPhone|iPod/i.test(ua);
 
-function openDirections(lat?: number, lng?: number, label = '') {
+function openDirections(lat?: number, lng?: number) {
   if (lat == null || lng == null) {
     return;
   }
 
   const coords = `${lat},${lng}`;
-  const labelEscaped = label ? encodeURIComponent(label) : '';
   let url: string;
 
   if (isIOS) {
-    const choice = window.prompt(
-      'Open in:\n1. Apple Maps\n2. Google Maps',
-      '1'
-    );
-    if (choice === '2') {
-      url = `comgooglemaps://?daddr=${coords}&q=${labelEscaped}`;
-    } else {
-      url = `maps://?q=${coords}${labelEscaped ? ` (${labelEscaped})` : ''}`;
-    }
+    url = `maps://?q=${coords}`;
   } else if (isAndroid) {
-    url = `google.navigation:q=${coords}${
-      labelEscaped ? `+(${labelEscaped})` : ''
-    }`;
+    url = `google.navigation:q=${coords}`;
   } else {
-    const destination = encodeURIComponent(
-      coords + (label ? ` (${label})` : '')
-    );
+    const destination = encodeURIComponent(coords);
     url = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
   }
 
@@ -91,9 +78,7 @@ export default function Actions({ location, phone, shelterName }: TProps) {
 
       <button
         disabled={!location}
-        onClick={() =>
-          openDirections(location?.latitude, location?.longitude, shelterName)
-        }
+        onClick={() => openDirections(location?.latitude, location?.longitude)}
         className={`flex flex-col items-center ${!location && 'opacity-50'}`}
       >
         <LocationIcon className="w-6 h-6 fill-primary-20" />
