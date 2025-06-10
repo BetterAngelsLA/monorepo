@@ -21,22 +21,34 @@ const ua = navigator.userAgent;
 const isAndroid = /Android/i.test(ua);
 const isIOS = /iPad|iPhone|iPod/i.test(ua);
 
-function openInMaps(lat?: number, lng?: number, label = '') {
-  if (!lat || !lng) {
+function openDirections(lat?: number, lng?: number, label = '') {
+  if (lat == null || lng == null) {
     return;
   }
 
-  const q = encodeURIComponent(`${lat},${lng}${label ? ` (${label})` : ''}`);
-  let url;
+  const coords = `${lat},${lng}`;
+  const labelEscaped = label ? encodeURIComponent(label) : '';
+  let url: string;
 
   if (isIOS) {
-    url = `maps://?q=${q}`;
+    const choice = window.prompt(
+      'Open in:\n1. Apple Maps\n2. Google Maps',
+      '1'
+    );
+    if (choice === '2') {
+      url = `comgooglemaps://?daddr=${coords}&q=${labelEscaped}`;
+    } else {
+      url = `maps://?q=${coords}${labelEscaped ? ` (${labelEscaped})` : ''}`;
+    }
   } else if (isAndroid) {
-    url = `geo:${lat},${lng}?q=${q}`;
+    url = `google.navigation:q=${coords}${
+      labelEscaped ? `+(${labelEscaped})` : ''
+    }`;
   } else {
-    url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-      `${lat},${lng}`
-    )}`;
+    const destination = encodeURIComponent(
+      coords + (label ? ` (${label})` : '')
+    );
+    url = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
   }
 
   window.location.href = url;
@@ -55,15 +67,8 @@ export default function Actions({ location, phone, shelterName }: TProps) {
       <button
         disabled={!location}
         onClick={() =>
-          openInMaps(location?.latitude, location?.longitude, shelterName)
+          openDirections(location?.latitude, location?.longitude, shelterName)
         }
-        // onClick={() => {
-        //   window.open(
-        //     `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-        //       `${location?.latitude},${location?.longitude}`
-        //     )}`
-        //   );
-        // }}
         className={`flex flex-col items-center ${!location && 'opacity-50'}`}
       >
         <LocationIcon className="w-6 h-6 fill-primary-20" />
