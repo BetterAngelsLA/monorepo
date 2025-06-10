@@ -12,6 +12,7 @@ import {
   enumDisplayStorageChoices,
 } from '../../static';
 import { ViewShelterQuery } from './__generated__/shelter.generated';
+import { InlineList } from './shared/InlineList';
 
 export default function ShelterDetail({
   shelter,
@@ -20,48 +21,35 @@ export default function ShelterDetail({
 }) {
   return (
     <Card title="Shelter Details">
-      <div className="flex flex-col">
-        <div className="flex items-center gap-2">
-          <strong>Accessibility:</strong>
-          {shelter.accessibility
-            .filter(
-              (
-                accessibility
-              ): accessibility is { name: AccessibilityChoices } =>
-                !!accessibility.name
-            )
-            .map(
-              (accessibility) =>
-                enumDisplayAccessibilityChoices[accessibility.name]
-            )
-            .join(', ')}
-        </div>
+      <div className="flex flex-col gap-2">
+        <InlineList
+          title="Accessibility:"
+          items={shelter?.accessibility.map(
+            (i) =>
+              enumDisplayAccessibilityChoices[i.name as AccessibilityChoices]
+          )}
+        />
 
-        <div className="flex items-center gap-2">
-          <strong>Storage:</strong>
-          {shelter.storage
-            .filter(
-              (storage): storage is { name: StorageChoices } => !!storage.name
-            )
-            .map((storage) => enumDisplayStorageChoices[storage.name])
-            .join(', ')}
-        </div>
-        <div className="flex items-center gap-2">
-          <strong>Pets:</strong>
-          {shelter.pets
-            .filter((pet): pet is { name: PetChoices } => !!pet.name)
-            .map((pet) => enumDisplayPetChoices[pet.name])
-            .join(', ')}
-        </div>
-        <div className="flex items-center gap-2">
-          <strong>Parking:</strong>
-          {shelter.parking
-            .filter(
-              (parking): parking is { name: ParkingChoices } => !!parking.name
-            )
-            .map((parking) => enumDisplayParkingChoices[parking.name])
-            .join(', ')}
-        </div>
+        <InlineList
+          title="Storage:"
+          items={shelter?.storage.map(
+            (i) => enumDisplayStorageChoices[i.name as StorageChoices]
+          )}
+        />
+
+        <InlineList
+          title="Pets:"
+          items={shelter?.pets.map(
+            (i) => enumDisplayPetChoices[i.name as PetChoices]
+          )}
+        />
+
+        <InlineList
+          title="Parking:"
+          items={shelter?.parking.map(
+            (i) => enumDisplayParkingChoices[i.name as ParkingChoices]
+          )}
+        />
       </div>
     </Card>
   );

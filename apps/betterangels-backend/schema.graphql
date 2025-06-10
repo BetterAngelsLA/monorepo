@@ -384,9 +384,9 @@ type ClientProfileType {
   socialMediaProfiles: [SocialMediaProfileType!]
   displayGender: String
   displayPronouns: String
-  docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
+  docReadyDocuments: [ClientDocumentType!]
+  consentFormDocuments: [ClientDocumentType!]
+  otherDocuments: [ClientDocumentType!]
   user: UserType
   displayCaseManager: String!
 }
@@ -1453,6 +1453,8 @@ type ShelterType {
   id: ID!
   accessibility: [AccessibilityType!]!
   additionalContacts: [ContactInfoType!]!
+  addNotesSleepingDetails: String
+  addNotesShelterDetails: String
   bedFees: String
   cities: [CityType!]!
   cityCouncilDistrict: Int

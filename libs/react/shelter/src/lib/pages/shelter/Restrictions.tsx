@@ -1,5 +1,6 @@
 import { Card } from '@monorepo/react/components';
 import { ViewShelterQuery } from './__generated__/shelter.generated';
+import { WysiwygSection } from './shared/WysiwygSection';
 
 export default function Restrictions({
   shelter,
@@ -29,13 +30,7 @@ export default function Restrictions({
           </div>
         )}
 
-        {shelter.otherRules && (
-          <div
-            dangerouslySetInnerHTML={{
-              __html: `<strong>Other rules:</strong> ${shelter?.otherRules}`,
-            }}
-          />
-        )}
+        <WysiwygSection title="Other rules:" content={shelter.otherRules} />
       </div>
     </Card>
   );
