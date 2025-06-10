@@ -112,6 +112,11 @@ export default function DocumentModal(props: IDocumentModalProps) {
       route: `/file/${document?.id}`,
     },
     {
+      title: `Edit filename`,
+      Icon: ViewIcon,
+      route: `/file/${document?.id}?editing=true`,
+    },
+    {
       title: `Download this ${fileTypeText}`,
       Icon: DownloadIcon,
       onPress: downloadFile,

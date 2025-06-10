@@ -29,10 +29,11 @@ type TFileView = {
 
 type TFileScreenComponent = {
   id: string;
+  editing: boolean;
 };
 
 export default function FileScreenComponent(props: TFileScreenComponent) {
-  const { id } = props;
+  const { id, editing = false } = props;
 
   const navigation = useNavigation();
   const [fileView, setFileView] = useState<TFileView | null>(null);
@@ -110,13 +111,19 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
               thumbnailSize={fileDisplaySizeMap[namespace]}
             />
           )}
-
           <TextBold mt="sm" size="sm">
             File Name
           </TextBold>
-          <TextRegular size="sm" style={{ width: '100%' }}>
-            {originalFilename}
-          </TextRegular>
+
+          {editing ? (
+            <TextRegular size="sm" style={{ width: '100%' }}>
+              zug zug
+            </TextRegular>
+          ) : (
+            <TextRegular size="sm" style={{ width: '100%' }}>
+              {originalFilename}
+            </TextRegular>
+          )}
         </View>
         <TextRegular textAlign="right" size="sm">
           Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')}
