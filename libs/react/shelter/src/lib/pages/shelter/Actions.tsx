@@ -7,8 +7,8 @@ type TProps = {
 export default function Actions({ shelterName }: TProps) {
   const handleShare = async () => {
     const shareData = {
-      // title: shelterName,
-      // text: `${shelterName} `,
+      title: shelterName,
+      text: `${shelterName} `,
       url: window.location.href,
     };
 
