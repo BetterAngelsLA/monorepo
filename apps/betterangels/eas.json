@@ -3,10 +3,12 @@
     "e2e-test": {
       "withoutCredentials": true,
       "ios": {
-        "simulator": true
+        "simulator": true,
+        "image": "latest"
       },
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "image": "latest"
       }
     },
     "development-simulator": {

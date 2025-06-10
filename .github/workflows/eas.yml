@@ -129,17 +129,9 @@ jobs:
           project: ${{ matrix.project }}
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
-      - name: 🧪 Build & Run iOS E2E (Maestro)
-        uses: expo/expo-github-action@v8
-        with:
-          project-dir: apps/${{ matrix.project }}
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-          profile: development-simulator
-          platform: ios
-          runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
-          command: |
-            workflow:run .eas/workflows/e2e-test.yml --non-interactive
+      - name: 🧪 Build Simulator & Run E2E Tests
+        run: |
+          npx eas-cli workflow:run .eas/workflows/e2e-test.yml --non-interactive
 
       - name: 🚀 Perform EAS Update
         id: expo-update
