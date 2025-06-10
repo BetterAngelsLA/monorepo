@@ -66,7 +66,7 @@ function PhoneNumberRow(props: TPhoneNumber) {
       }}
     >
       <TextBold
-        onPress={() => Linking.openURL(`tel:${formatPhoneNumber}`)}
+        onPress={() => Linking.openURL(`tel:${formattedNumber}`)}
         size="sm"
       >
         {formattedNumber}
