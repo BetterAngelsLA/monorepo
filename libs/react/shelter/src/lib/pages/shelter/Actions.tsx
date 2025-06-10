@@ -19,8 +19,8 @@ type TProps = {
 const ua = navigator.userAgent;
 const isIOS = /iPad|iPhone|iPod/i.test(ua);
 
-function openDirections(lat?: number, lng?: number, place?: string) {
-  if (lat == null || lng == null || place == null) {
+function openDirections(place?: string) {
+  if (place == null) {
     return;
   }
 
@@ -75,13 +75,7 @@ export default function Actions({ location, phone, shelterName }: TProps) {
 
       <button
         disabled={!location}
-        onClick={() =>
-          openDirections(
-            location?.latitude,
-            location?.longitude,
-            location?.place
-          )
-        }
+        onClick={() => openDirections(location?.place)}
         className={`flex flex-col items-center ${!location && 'opacity-50'}`}
       >
         <LocationIcon className="w-6 h-6 fill-primary-20" />
