@@ -85,10 +85,7 @@ export default function ShelterPage({ id }: { id: string }) {
       >
         See all photos
       </Button>
-      <Actions
-        location={shelter.location ? shelter.location : null}
-        shelterName={shelter.name}
-      />
+      <Actions location={shelter.location ? shelter.location : null} />
       <div className="bg-neutral-99 py-2 px-4 -mx-4 flex flex-col gap-2">
         {hasGeneralInfo && <GeneralInfo shelter={shelter} />}
         {hasDescription && (
