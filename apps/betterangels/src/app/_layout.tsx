@@ -7,6 +7,7 @@ import {
   FeatureFlagControlled,
   FeatureFlags,
   KeyboardToolbarProvider,
+  ServicesModalProvider,
   SnackbarProvider,
   useNewRelic,
   UserProvider,
@@ -24,7 +25,6 @@ import { View } from 'react-native';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
-import { ScreenModalProvider } from '../providers/ScreenModalProvider';
 import { type ErrorBoundaryProps } from 'expo-router';
 
 export const unstable_settings = {
@@ -44,12 +44,12 @@ export default function RootLayout() {
   return (
     <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
       <ApolloClientProvider>
-        <SnackbarProvider>
-          <ScreenModalProvider>
-            <FeatureControlProvider>
-              <KeyboardProvider>
-                <KeyboardToolbarProvider>
-                  <UserProvider>
+        <FeatureControlProvider>
+          <KeyboardProvider>
+            <KeyboardToolbarProvider>
+              <UserProvider>
+                <SnackbarProvider>
+                  <ServicesModalProvider>
                     <StatusBar style="light" />
                     <FeatureFlagControlled
                       flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
@@ -113,12 +113,12 @@ export default function RootLayout() {
                         options={{ headerShown: false }}
                       />
                     </Stack>
-                  </UserProvider>
-                </KeyboardToolbarProvider>
-              </KeyboardProvider>
-            </FeatureControlProvider>
-          </ScreenModalProvider>
-        </SnackbarProvider>
+                  </ServicesModalProvider>
+                </SnackbarProvider>
+              </UserProvider>
+            </KeyboardToolbarProvider>
+          </KeyboardProvider>
+        </FeatureControlProvider>
       </ApolloClientProvider>
     </ApiConfigProvider>
   );

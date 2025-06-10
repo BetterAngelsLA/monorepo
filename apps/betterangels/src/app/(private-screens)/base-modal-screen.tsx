@@ -1,20 +1,24 @@
-import { useLocalSearchParams } from 'expo-router';
-import React from 'react';
-
-// import modal content components
-import ServicesComponent from './modals/ServicesComponent';
-
-// registry/mapping object
-const modalRegistry: Record<string, React.ComponentType> = {
-  PROVIDED: ServicesComponent,
-  REQUESTED: ServicesComponent,
-};
+import { KeyboardToolbarProvider, ServicesModal, useServicesModal } from '@monorepo/expo/betterangels';
+import { useRouter } from 'expo-router';
 
 export default function BaseModalScreen() {
-  const { type } = useLocalSearchParams();
+  const { modalContent } = useServicesModal();
+  const router = useRouter();
 
-  // select component from registry, or use a fallback
-  const ModalContent = modalRegistry[String(type)] || (() => <></>);
+  if (!modalContent) return null;
 
-  return <ModalContent />;
+  return (
+    <KeyboardToolbarProvider>
+      <ServicesModal
+        isModalVisible={true}
+        setIsModalVisible={(visible) => {
+          if (!visible) router.back();
+        }}
+        noteId={modalContent.noteId}
+        type={modalContent.type}
+        initialServices={modalContent.initialServices}
+        refetch={modalContent.refetch}
+      />
+    </KeyboardToolbarProvider>
+  );
 }

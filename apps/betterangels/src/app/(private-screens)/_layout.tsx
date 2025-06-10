@@ -258,7 +258,7 @@ export default function PrivateLayout() {
         name="base-modal-screen"
         options={{
           presentation: 'modal',
-          headerShown: false,
+          headerLeft: () => null,
         }}
       />
     </Stack>

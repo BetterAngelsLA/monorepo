@@ -7,7 +7,7 @@ export { default as ClientCardModal } from './ClientCardModal';
 export {
   ClientProfileCard,
   ClientProfileCardContainer,
-  TClientProfileCardItem,
+  TClientProfileCardItem
 } from './ClientProfileCard';
 export { default as ConsentModal } from './ConsentModal';
 export { default as DateOfBirthPicker } from './DateOfBirthPicker';
@@ -31,7 +31,8 @@ export { default as NoteCard } from './NoteCard';
 export { default as PreferredCommunicationPicker } from './PreferredCommunicationPicker';
 export { default as PronounPicker } from './PronounPicker';
 export { default as RacePicker } from './RacePicker';
-export { default as RequestedProvidedServices } from './RequestedProvidedServices';
+export { default as RequestedProvidedServices, ServicesModal } from './RequestedProvidedServices';
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
+export * from './RequestedProvidedServices/ServicesModalContext';
 export { AppleSignIn, GoogleSignIn } from './SocialLogin';
 export { default as WebBrowserLink } from './WebBrowserLink';

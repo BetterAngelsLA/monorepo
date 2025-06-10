@@ -1,8 +1,7 @@
+import { Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
-import { useScreenModal } from 'apps/betterangels/src/providers/ScreenModalProvider';
 import { useRouter } from 'expo-router';
 import { RefObject } from 'react';
-import { Spacings } from '@monorepo/expo/shared/static';
 import { ScrollView, View } from 'react-native';
 import {
   ServiceEnum,
@@ -10,6 +9,7 @@ import {
   ViewNoteQuery,
 } from '../../apollo';
 import { enumDisplayServices, enumDisplayServiceType } from '../../static';
+import { useServicesModal } from './ServicesModalContext';
 
 interface IRequestedServicesProps {
   noteId: string;
@@ -25,14 +25,17 @@ export default function RequestedProvidedServices(
   props: IRequestedServicesProps
 ) {
   const { noteId, services: initialServices, scrollRef, refetch, type } = props;
+  const { setModalContent } = useServicesModal();
   const router = useRouter();
-  const { showScreenModal } = useScreenModal();
 
   const openServicesModal = () => {
-    showScreenModal({
-      route: '/base-modal-screen',
-      params: { type: type === ServiceRequestTypeEnum.Provided ? 'PROVIDED' : 'REQUESTED' }
+    setModalContent({
+      noteId,
+      type,
+      initialServices,
+      refetch
     });
+    router.push('/base-modal-screen');
   };
 
   if (!initialServices) {
@@ -75,7 +78,9 @@ export default function RequestedProvidedServices(
       title={`${enumDisplayServiceType[type]} Services`}
       setExpanded={openServicesModal}
     >
-    <></>
+      <></>
     </FieldCard>
   );
 }
+
+export { default as ServicesModal } from './ServicesModal';

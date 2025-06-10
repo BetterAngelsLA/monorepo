@@ -73,8 +73,7 @@
     "expo-application": "*",
     "@react-navigation/native-stack": "*",
     "expo-updates": "*",
-    "newrelic-react-native-agent": "*",
-    "@expo/vector-icons": "*"
+    "newrelic-react-native-agent": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",
