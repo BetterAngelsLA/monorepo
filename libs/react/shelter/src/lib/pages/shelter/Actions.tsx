@@ -19,6 +19,7 @@ export default function Actions({ location }: TProps) {
       </div>
 
       <button
+        disabled={!location}
         onClick={() => {
           window.open(
             `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
@@ -27,7 +28,7 @@ export default function Actions({ location }: TProps) {
             '_blank'
           );
         }}
-        className="flex flex-col items-center"
+        className={`flex flex-col items-center ${!location && 'opacity-50'}`}
       >
         <LocationIcon className="w-6 h-6 fill-primary-20" />
         <span>Directions</span>
