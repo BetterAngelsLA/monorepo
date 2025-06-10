@@ -17,24 +17,21 @@ type TProps = {
 };
 
 const ua = navigator.userAgent;
-
-const isAndroid = /Android/i.test(ua);
 const isIOS = /iPad|iPhone|iPod/i.test(ua);
 
-function openDirections(lat?: number, lng?: number) {
-  if (lat == null || lng == null) {
+function openDirections(lat?: number, lng?: number, place?: string) {
+  if (lat == null || lng == null || place == null) {
     return;
   }
 
-  const coords = `${lat},${lng}`;
   let url: string;
+  let destination: string;
 
   if (isIOS) {
-    url = `maps://?q=${coords}`;
-  } else if (isAndroid) {
-    url = `google.navigation:q=${coords}`;
+    destination = encodeURIComponent(place);
+    url = `maps://?q=${destination}`;
   } else {
-    const destination = encodeURIComponent(coords);
+    destination = encodeURIComponent(place);
     url = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
   }
 
@@ -78,7 +75,13 @@ export default function Actions({ location, phone, shelterName }: TProps) {
 
       <button
         disabled={!location}
-        onClick={() => openDirections(location?.latitude, location?.longitude)}
+        onClick={() =>
+          openDirections(
+            location?.latitude,
+            location?.longitude,
+            location?.place
+          )
+        }
         className={`flex flex-col items-center ${!location && 'opacity-50'}`}
       >
         <LocationIcon className="w-6 h-6 fill-primary-20" />
