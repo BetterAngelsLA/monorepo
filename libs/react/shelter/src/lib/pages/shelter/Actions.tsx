@@ -8,9 +8,36 @@ type TShelterLocation = {
 
 type TProps = {
   location?: TShelterLocation | null;
+  shelterName: string;
 };
 
-export default function Actions({ location }: TProps) {
+const ua = navigator.userAgent;
+
+const isAndroid = /Android/i.test(ua);
+const isIOS = /iPad|iPhone|iPod/i.test(ua);
+
+function openInMaps(lat?: number, lng?: number, label = '') {
+  if (!lat || !lng) {
+    return;
+  }
+
+  const q = encodeURIComponent(`${lat},${lng}${label ? ` (${label})` : ''}`);
+  let url;
+
+  if (isIOS) {
+    url = `maps://?q=${q}`;
+  } else if (isAndroid) {
+    url = `geo:${lat},${lng}?q=${q}`;
+  } else {
+    url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+      `${lat},${lng}`
+    )}`;
+  }
+
+  window.location.href = url;
+}
+
+export default function Actions({ location, shelterName }: TProps) {
   return (
     <div className="flex items-center py-4 justify-between text-xs px-11 border-neutral-90 border-t border-b mt-4 -mx-4">
       <div className="flex flex-col items-center">
@@ -20,13 +47,16 @@ export default function Actions({ location }: TProps) {
 
       <button
         disabled={!location}
-        onClick={() => {
-          window.open(
-            `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-              `${location?.latitude},${location?.longitude}`
-            )}`
-          );
-        }}
+        onClick={() =>
+          openInMaps(location?.latitude, location?.longitude, shelterName)
+        }
+        // onClick={() => {
+        //   window.open(
+        //     `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+        //       `${location?.latitude},${location?.longitude}`
+        //     )}`
+        //   );
+        // }}
         className={`flex flex-col items-center ${!location && 'opacity-50'}`}
       >
         <LocationIcon className="w-6 h-6 fill-primary-20" />
