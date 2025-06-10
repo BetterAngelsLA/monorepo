@@ -87,7 +87,7 @@ export default function ShelterPage({ id }: { id: string }) {
         See all photos
       </Button>
       <Actions
-        location={shelter.location ? shelter.location : null}
+        location={shelter.location}
         shelterName={shelter.name}
         phone={parsePhoneNumber(shelter.phone ?? '', 'US')?.formatNational()}
       />
