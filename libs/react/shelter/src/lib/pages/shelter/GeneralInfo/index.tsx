@@ -16,7 +16,10 @@ import parsePhoneNumber from 'libphonenumber-js';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
 import GeneralServices from './GeneralServices';
 
-function renderLabel(label?: string | null): React.ReactNode {
+function renderLabel(
+  label?: string | null,
+  key?: string | null
+): React.ReactNode {
   if (!label) return 'Not Available';
 
   if (isEmail(label)) {
@@ -25,6 +28,10 @@ function renderLabel(label?: string | null): React.ReactNode {
         {label}
       </a>
     );
+  }
+
+  if (key === 'phone') {
+    return <a href={`tel:${label}`}>{label}</a>;
   }
 
   if (isValidURL(label)) {
@@ -93,7 +100,7 @@ export default function GeneralInfo({
           key={info.key}
           className="border-t border-neutral-90 flex items-center justify-between px-6 py-4 gap-1"
         >
-          {renderLabel(info.label)}
+          {renderLabel(info.label, info.key)}
           {info.icon}
         </div>
       ))}
