@@ -6,10 +6,6 @@ import {
   TextStyle,
   ViewStyle,
 } from 'react-native';
-import { isMobilePhone } from 'validator';
-import isEmail from 'validator/lib/isEmail';
-import EmailBtn from '../EmailBtn';
-import PhoneNumberBtn from '../PhoneNumberBtn';
 
 type TTextOrNode = {
   children: string | ReactNode;
@@ -23,21 +19,6 @@ export function TextOrNode(props: TTextOrNode) {
 
   if (isValidElement(children)) {
     return children;
-  }
-
-  const isStringOrNumber =
-    typeof children === 'string' || typeof children === 'number';
-  const content = isStringOrNumber ? String(children) : '';
-
-  if (isStringOrNumber && isEmail(content)) {
-    return <EmailBtn text={content} />;
-  }
-
-  if (
-    isStringOrNumber &&
-    isMobilePhone(content, 'any', { strictMode: false })
-  ) {
-    return <PhoneNumberBtn text={content} />;
   }
 
   return (

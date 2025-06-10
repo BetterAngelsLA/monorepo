@@ -7,6 +7,7 @@ interface IEmailBtnProps {
 
 export function EmailBtn(props: IEmailBtnProps) {
   const { text } = props;
+
   return (
     <Pressable
       accessibilityRole="button"
