@@ -10,8 +10,6 @@ jobs:
     params:
       platform: ios
       profile: e2e-test
-      project: ${{ matrix.project }}
-      runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
   maestro_test:
     needs: [build_ios_for_e2e]
