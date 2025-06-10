@@ -20,30 +20,10 @@ interface IPurposeProps {
   scrollRef: RefObject<ScrollView | null>;
   purpose: string | null | undefined;
   noteId: string | undefined;
-  errors: {
-    purpose: boolean;
-    location: boolean;
-    date: boolean;
-    time: boolean;
-  };
-  setErrors: (errors: {
-    purpose: boolean;
-    location: boolean;
-    date: boolean;
-    time: boolean;
-  }) => void;
 }
 
 export default function Purpose(props: IPurposeProps) {
-  const {
-    expanded,
-    setExpanded,
-    scrollRef,
-    purpose,
-    noteId,
-    setErrors,
-    errors,
-  } = props;
+  const { expanded, setExpanded, scrollRef, purpose, noteId } = props;
 
   const [updateNote] = useMutation<
     UpdateNoteMutation,
@@ -74,13 +54,8 @@ export default function Purpose(props: IPurposeProps) {
   ).current;
 
   const onChange = (value: string | null | undefined) => {
-    try {
-      setValue(value);
-      updateNoteFunction(value);
-    } catch (err) {
-      console.error(err);
-      setErrors({ ...errors, purpose: true });
-    }
+    setValue(value);
+    updateNoteFunction(value);
   };
 
   return (
@@ -105,9 +80,7 @@ export default function Purpose(props: IPurposeProps) {
         <BasicInput
           placeholder="Enter purpose"
           maxLength={100}
-          onDelete={() => onChange('')}
-          error={!!errors.purpose}
-          errorMessage={errors.purpose ? 'Error in Purpose field' : ''}
+          onDelete={() => onChange(null)}
           value={value || undefined}
           onChangeText={(e) => onChange(e)}
         />

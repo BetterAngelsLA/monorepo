@@ -1692,7 +1692,7 @@ union UpdateHmisProfilePayload = HmisProfileType | OperationInfo
 
 input UpdateNoteInput {
   id: ID!
-  purpose: String
+  purpose: NonBlankString
   team: SelahTeamEnum
   location: ID
   publicDetails: String

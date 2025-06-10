@@ -2096,7 +2096,7 @@ export type UpdateNoteInput = {
   location?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
-  purpose?: InputMaybe<Scalars['String']['input']>;
+  purpose?: InputMaybe<Scalars['NonBlankString']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
 };
 
