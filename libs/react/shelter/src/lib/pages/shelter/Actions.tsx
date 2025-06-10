@@ -7,10 +7,11 @@ type TShelterLocation = {
 };
 
 type TProps = {
+  shelterName: string;
   location?: TShelterLocation | null;
 };
 
-export default function Actions({ location }: TProps) {
+export default function Actions({ location, shelterName }: TProps) {
   return (
     <div className="flex items-center py-4 justify-between text-xs px-11 border-neutral-90 border-t border-b mt-4 -mx-4">
       <div className="flex flex-col items-center">
@@ -22,7 +23,7 @@ export default function Actions({ location }: TProps) {
         onClick={() => {
           window.open(
             `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
-              `${location?.latitude},${location?.longitude}`
+              `${shelterName}+@${location?.latitude},${location?.longitude}`
             )}`,
             '_blank'
           );
