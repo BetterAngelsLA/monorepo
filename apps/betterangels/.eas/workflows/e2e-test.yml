@@ -1,13 +1,15 @@
-version: 0.1
+name: e2e-test-ios
+
+on:
+  pull_request:
+    branches: ['*']
 
 jobs:
   build_ios_for_e2e:
-    projectRoot: 'apps/betterangels'
-
     type: build
     params:
       platform: ios
-      profile: development-simulator
+      profile: e2e-test
 
   maestro_test:
     needs: [build_ios_for_e2e]
