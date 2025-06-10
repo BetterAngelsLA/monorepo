@@ -1,10 +1,14 @@
 import { CallIcon, LocationIcon, ShareIcon } from '@monorepo/react/icons';
 
-export default function Actions() {
+type TProps = {
+  shelterName: string;
+};
+
+export default function Actions({ shelterName }: TProps) {
   const handleShare = async () => {
     const shareData = {
-      title: document.title,
-      text: 'Shelter:',
+      title: shelterName,
+      text: `${shelterName}: `,
       url: window.location.href,
     };
 
