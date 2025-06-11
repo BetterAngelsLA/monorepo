@@ -1,5 +1,6 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { Linking, Pressable, Text } from 'react-native';
+import { Linking, Pressable } from 'react-native';
+import TextBold from '../TextBold';
 
 interface IEmailBtnProps {
   text: string;
@@ -17,14 +18,13 @@ export function EmailBtn(props: IEmailBtnProps) {
       android_ripple={null}
     >
       {({ pressed }) => (
-        <Text
-          style={{
-            textDecorationLine: 'underline',
-            color: pressed ? Colors.PRIMARY_LIGHT : Colors.PRIMARY_EXTRA_DARK,
-          }}
+        <TextBold
+          textDecorationLine="underline"
+          color={pressed ? Colors.PRIMARY_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+          size="sm"
         >
           {text}
-        </Text>
+        </TextBold>
       )}
     </Pressable>
   );
