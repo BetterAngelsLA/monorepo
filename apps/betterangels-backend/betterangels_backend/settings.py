@@ -65,10 +65,6 @@ env = environ.Env(
     SECURE_HSTS_SECONDS=(int, 0),
     ACCOUNT_LOGIN_BY_CODE_ENABLED=(bool, False),
     USE_IAM_AUTH=(bool, False),
-    SESAME_TOKEN_NAME=(str, "token"),
-    SESAME_MAX_AGE=(int, 3600),  # set to 1 hr
-    SESAME_ONE_TIME=(bool, True),
-    SESAME_SALT=(str, "sesame"),
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -178,7 +174,6 @@ AUTHENTICATION_BACKENDS = [
     "guardian.backends.ObjectPermissionBackend",
     # `allauth` specific authentication methods, such as login by email
     "allauth.account.auth_backends.AuthenticationBackend",
-    "sesame.backends.ModelBackend",
 ]
 
 REST_FRAMEWORK = {
@@ -449,12 +444,6 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = env("SECURE_HSTS_INCLUDE_SUBDOMAINS")
 SECURE_HSTS_PRELOAD = env("SECURE_HSTS_PRELOAD")
 SECURE_HSTS_SECONDS = env("SECURE_HSTS_SECONDS")
 X_FRAME_OPTIONS = "SAMEORIGIN"
-
-# Django Sesame settings
-SESAME_TOKEN_NAME = env("SESAME_TOKEN_NAME")
-SESAME_MAX_AGE = env("SESAME_MAX_AGE")
-SESAME_ONE_TIME = env("SESAME_ONE_TIME")
-SESAME_SALT = env("SESAME_SALT")
 
 RUNSCRIPT_LOG_TO_STDOUT = True
 
