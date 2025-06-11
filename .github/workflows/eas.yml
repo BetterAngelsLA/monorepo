@@ -129,6 +129,15 @@ jobs:
           project: ${{ matrix.project }}
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
+      - name: 📱 Simulator Build
+        id: simulator-build
+        uses: ./.github/actions/expo-build
+        with:
+          profile: development-simulator
+          project: ${{ matrix.project }}
+          platforms: ios
+          runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
+
       - name: 🧪 Run E2E Tests
         working-directory: apps/${{ matrix.project }}
         env:

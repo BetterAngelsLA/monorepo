@@ -1,16 +1,5 @@
 {
   "build": {
-    "e2e-test": {
-      "withoutCredentials": true,
-      "ios": {
-        "simulator": true,
-        "image": "latest"
-      },
-      "android": {
-        "buildType": "apk",
-        "image": "latest"
-      }
-    },
     "development-simulator": {
       "developmentClient": true,
       "distribution": "internal",
