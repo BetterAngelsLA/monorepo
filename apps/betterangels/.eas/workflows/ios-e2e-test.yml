@@ -1,9 +1,5 @@
 name: e2e-test-ios
 
-on:
-  pull_request:
-    branches: ['*']
-
 jobs:
   wait:
     type: get-build
