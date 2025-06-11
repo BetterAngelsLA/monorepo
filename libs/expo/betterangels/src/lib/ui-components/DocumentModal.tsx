@@ -114,7 +114,7 @@ export default function DocumentModal(props: IDocumentModalProps) {
     {
       title: `Edit filename`,
       Icon: ViewIcon,
-      route: `/file/${document?.id}?editing=true`,
+      route: `/file/${document?.id}?editing=true&clientId=${clientId}`,
     },
     {
       title: `Download this ${fileTypeText}`,

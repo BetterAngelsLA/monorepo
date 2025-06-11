@@ -6,19 +6,27 @@ import {
 } from '@monorepo/expo/shared/static';
 import {
   BaseModal,
+  BasicInput,
+  BottomActions,
   ImageViewer,
   Loading,
   PdfViewer,
   TextBold,
+  TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
-import { useNavigation } from 'expo-router';
-import { ReactNode, useLayoutEffect, useState } from 'react';
+import { router, useNavigation } from 'expo-router';
+import { ReactNode, useEffect, useLayoutEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { AttachmentType } from '../../apollo';
+import useSnackbar from '../../hooks/snackbar/useSnackbar';
 import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
 import { FileThumbnail, MainContainer } from '../../ui-components';
+import {
+  ClientProfileDocument,
+  useUpdateClientDocumentMutation,
+} from '../Client/__generated__/Client.generated';
 import { useClientDocumentQuery } from './__generated__/Document.generated';
 import { fileDisplaySizeMap } from './fileDisplaySizeMap';
 
@@ -29,15 +37,48 @@ type TFileView = {
 
 type TFileScreenComponent = {
   id: string;
+  clientId: string;
   editing: boolean;
 };
 
 export default function FileScreenComponent(props: TFileScreenComponent) {
-  const { id, editing = false } = props;
+  const { id, clientId, editing = false } = props;
 
   const navigation = useNavigation();
+  const { showSnackbar } = useSnackbar();
   const [fileView, setFileView] = useState<TFileView | null>(null);
   const { data } = useClientDocumentQuery({ variables: { id } });
+  const [filename, setFilename] = useState('');
+  const [updateClientDocument, { loading }] = useUpdateClientDocumentMutation({
+    refetchQueries: [
+      {
+        query: ClientProfileDocument,
+        variables: {
+          id: clientId,
+        },
+      },
+    ],
+  });
+
+  async function handleUpdateClientDocument() {
+    try {
+      await updateClientDocument({
+        variables: {
+          data: {
+            id: id,
+            originalFilename: file.name,
+          },
+        },
+      });
+    } catch (err) {
+      console.error(`error updating file: `, err);
+
+      showSnackbar({
+        message: `Sorry, there was an error with the file update.`,
+        type: 'error',
+      });
+    }
+  }
 
   useLayoutEffect(() => {
     if (!data) return;
@@ -45,6 +86,13 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
       title: enumDisplayDocumentType[data.clientDocument.namespace],
     });
   }, [data, navigation]);
+
+  useEffect(() => {
+    if (!data?.clientDocument.originalFilename) {
+      return;
+    }
+    setFilename(data?.clientDocument.originalFilename);
+  }, [data]);
 
   if (!data) {
     return (
@@ -111,24 +159,49 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
               thumbnailSize={fileDisplaySizeMap[namespace]}
             />
           )}
-          <TextBold mt="sm" size="sm">
-            File Name
-          </TextBold>
 
           {editing ? (
-            <TextRegular size="sm" style={{ width: '100%' }}>
-              zug zug
-            </TextRegular>
+            <BasicInput
+              label="File Name"
+              placeholder={'Enter a file name'}
+              value={filename}
+              required
+              mt="sm"
+              errorMessage={
+                !filename.trim() ? 'file name is required' : undefined
+              }
+              onDelete={() => setFilename('')}
+              onChangeText={(val) => setFilename(val)}
+            />
           ) : (
-            <TextRegular size="sm" style={{ width: '100%' }}>
-              {originalFilename}
-            </TextRegular>
+            <>
+              <TextBold mt="sm" size="sm">
+                File Name
+              </TextBold>
+              <TextRegular size="sm" style={{ width: '100%' }}>
+                {originalFilename}
+              </TextRegular>
+            </>
           )}
         </View>
         <TextRegular textAlign="right" size="sm">
           Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')}
         </TextRegular>
       </MainContainer>
+      {editing && (
+        <BottomActions
+          isLoading={loading}
+          disabled={false}
+          cancel={
+            <TextButton
+              title="Cancel"
+              onPress={router.back}
+              accessibilityHint="Cancel upload"
+            />
+          }
+          onSubmit={handleUpdateClientDocument}
+        />
+      )}
 
       {!!fileView?.content && (
         <BaseModal
