@@ -1,3 +1,4 @@
+import { EmailBtn } from '@monorepo/expo/shared/ui-components';
 import {
   ClientProfileCard,
   ClientProfileCardContainer,
@@ -39,7 +40,7 @@ export default function ContactInfoCard(props: TProps) {
     },
     {
       header: ['Email Address'],
-      rows: [[email]],
+      rows: [[email ? <EmailBtn text={email} /> : null]],
     },
     {
       header: ['Social Media'],
