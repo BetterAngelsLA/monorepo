@@ -132,7 +132,7 @@ jobs:
       - name: 🧪 Run Android E2E Tests
         working-directory: apps/${{ matrix.project }}
         env:
-          BUILD_ID: ${{ steps.preview-build.outputs.android-build-id }}
+          BUILD_ID: ${{ steps.preview-build.outputs.android-build-link }}
         run: |
           npx eas-cli workflow:run .eas/workflows/android-e2e-test.yml --non-interactive
 
@@ -148,7 +148,7 @@ jobs:
       - name: 🧪 Run iOS E2E Tests
         working-directory: apps/${{ matrix.project }}
         env:
-          BUILD_ID: ${{ steps.simulator-build.outputs.ios-build-id }}
+          BUILD_ID: ${{ steps.simulator-build.outputs.ios-build-link }}
         run: |
           npx eas-cli workflow:run .eas/workflows/ios-e2e-test.yml --non-interactive
 
