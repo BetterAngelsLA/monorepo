@@ -138,12 +138,19 @@ jobs:
           platforms: ios
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
-      - name: 🧪 Run E2E Tests
+      - name: 🧪 Run iOS E2E Tests
         working-directory: apps/${{ matrix.project }}
         env:
-          IOS_BUILD_LINK: ${{ steps.simulator-build.outputs.ios-build-id }}
+          BUILD_ID: ${{ steps.simulator-build.outputs.ios-build-id }}
         run: |
-          npx eas-cli workflow:run .eas/workflows/e2e-test.yml --non-interactive
+          npx eas-cli workflow:run .eas/workflows/ios-e2e-test.yml --non-interactive
+
+      - name: 🧪 Run Android E2E Tests
+        working-directory: apps/${{ matrix.project }}
+        env:
+          BUILD_ID: ${{ steps.preview-build.outputs.android-build-id }}
+        run: |
+          npx eas-cli workflow:run .eas/workflows/android-e2e-test.yml --non-interactive
 
       - name: 🚀 Perform EAS Update
         id: expo-update

@@ -1,4 +1,4 @@
-name: e2e-test-ios
+name: e2e-test-android
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ jobs:
   wait:
     type: get-build
     params:
-      build_id: ${{ env.IOS_BUILD_ID }}
+      build_id: ${{ env.BUILD_ID }}
 
   maestro_test:
     needs: [wait]
