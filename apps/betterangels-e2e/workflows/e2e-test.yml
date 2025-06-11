@@ -5,15 +5,14 @@ on:
     branches: ['*']
 
 jobs:
-  build_ios_for_e2e:
-    type: build
+  wait:
+    type: get-build
     params:
-      platform: ios
-      profile: e2e-test
+      build_id: ${{ env.IOS_BUILD_ID }}
 
   maestro_test:
-    needs: [build_ios_for_e2e]
+    needs: [wait]
     type: maestro
     params:
-      build_id: ${{ needs.build_ios_for_e2e.outputs.build_id }}
+      build_id: ${{ needs.wait.outputs.build_id }}
       flow_path: ['.maestro/landing.yml']
