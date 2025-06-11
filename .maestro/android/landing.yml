@@ -1,0 +1,19 @@
+appId: la.betterangels.dev.app
+platform: android
+---
+- launchApp
+- openLink: la.betterangels.dev.app://expo-development-client/?url=http://localhost:8081
+- runFlow:
+    when:
+      visible: 'Open'
+    commands:
+      - tapOn: 'Open'
+- runFlow:
+    when:
+      visible: 'Continue'
+    commands:
+      - tapOn:
+          point: 50%,10%
+- assertVisible: 'Get Started'
+- tapOn: 'Get Started'
+- assertVisible: 'Welcome!'
