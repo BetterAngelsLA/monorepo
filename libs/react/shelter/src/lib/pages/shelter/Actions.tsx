@@ -20,18 +20,16 @@ const ua = navigator.userAgent;
 const isIOS = /iPad|iPhone|iPod/i.test(ua);
 
 function openDirections(place?: string) {
-  if (place == null) {
+  if (place === null || place === undefined) {
     return;
   }
 
   let url: string;
-  let destination: string;
+  const destination = encodeURIComponent(place);
 
   if (isIOS) {
-    destination = encodeURIComponent(place);
     url = `maps://?q=${destination}`;
   } else {
-    destination = encodeURIComponent(place);
     url = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
   }
 
