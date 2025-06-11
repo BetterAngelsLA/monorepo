@@ -43,6 +43,7 @@ type TFileScreenComponent = {
 
 export default function FileScreenComponent(props: TFileScreenComponent) {
   const { id, clientId, editing } = props;
+  const isEditing = editing === 'true';
 
   const navigation = useNavigation();
   const { showSnackbar } = useSnackbar();
@@ -162,7 +163,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
             />
           )}
 
-          {editing === 'true' ? (
+          {isEditing ? (
             <BasicInput
               label="File Name"
               placeholder={'Enter a file name'}
@@ -190,7 +191,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
           Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')}
         </TextRegular>
       </MainContainer>
-      {editing === 'true' && (
+      {isEditing && (
         <BottomActions
           isLoading={loading}
           disabled={false}
