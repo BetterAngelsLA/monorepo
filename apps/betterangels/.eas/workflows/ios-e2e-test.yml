@@ -11,4 +11,4 @@ jobs:
     type: maestro
     params:
       build_id: ${{ needs.wait.outputs.build_id }}
-      flow_path: ['.maestro/landing.yml']
+      flow_path: ['.maestro/ios/landing.yml']
