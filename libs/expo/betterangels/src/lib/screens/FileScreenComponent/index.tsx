@@ -22,7 +22,7 @@ import { StyleSheet, View } from 'react-native';
 import { AttachmentType } from '../../apollo';
 import useSnackbar from '../../hooks/snackbar/useSnackbar';
 import { enumDisplayDocumentType } from '../../static/enumDisplayMapping';
-import { FileThumbnail, MainContainer } from '../../ui-components';
+import { FileThumbnail, MainScrollContainer } from '../../ui-components';
 import {
   ClientProfileDocument,
   useUpdateClientDocumentMutation,
@@ -120,7 +120,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
 
   return (
     <>
-      <MainContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+      <MainScrollContainer keyboardAware={true} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
         <TextBold mb="xs" size="lg">
           {enumDisplayDocumentType[namespace]}
         </TextBold>
@@ -190,7 +190,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
         <TextRegular textAlign="right" size="sm">
           Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')}
         </TextRegular>
-      </MainContainer>
+      </MainScrollContainer>
       {isEditing && (
         <BottomActions
           isLoading={loading}
