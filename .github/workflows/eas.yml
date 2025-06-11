@@ -141,7 +141,7 @@ jobs:
       - name: 🧪 Run E2E Tests
         working-directory: apps/${{ matrix.project }}
         env:
-          IOS_BUILD_ID: ${{ steps.preview-build.outputs.ios-build-id }}
+          IOS_BUILD_LINK: ${{ steps.simulator-build.outputs.ios-build-id }}
         run: |
           npx eas-cli workflow:run .eas/workflows/e2e-test.yml --non-interactive
 
