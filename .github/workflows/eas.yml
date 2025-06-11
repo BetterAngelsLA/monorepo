@@ -130,6 +130,7 @@ jobs:
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
       - name: 🧪 Run E2E Tests
+        working-directory: apps/${{ matrix.project }}
         env:
           IOS_BUILD_ID: ${{ steps.preview-build.outputs.ios-build-id }}
         run: |
