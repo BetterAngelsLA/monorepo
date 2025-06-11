@@ -85,7 +85,7 @@ export function InteractionLocationsMap(props: TProps) {
 
 const styles = StyleSheet.create({
   map: {
-    height: 650,
+    flex: 1,
   },
 });
 
