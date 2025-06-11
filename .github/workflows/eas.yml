@@ -132,7 +132,7 @@ jobs:
       - name: 🧪 Run E2E Tests
         env:
           IOS_BUILD_ID: ${{ steps.preview-build.outputs.ios-build-id }}
-        working-directory: apps/betterangels
+        working-directory: apps/betterangels-e2e
         run: |
           npx eas-cli workflow:run .eas/workflows/e2e-test.yml --non-interactive
 
