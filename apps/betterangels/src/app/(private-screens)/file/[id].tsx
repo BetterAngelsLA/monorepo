@@ -5,7 +5,7 @@ export default function FileScreen() {
   const { id, clientId, editing } = useLocalSearchParams<{
     id: string;
     clientId: string;
-    editing: boolean;
+    editing: string;
   }>();
 
   if (!id) {

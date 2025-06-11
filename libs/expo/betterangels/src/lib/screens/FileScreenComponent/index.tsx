@@ -38,11 +38,11 @@ type TFileView = {
 type TFileScreenComponent = {
   id: string;
   clientId: string;
-  editing: boolean;
+  editing: string;
 };
 
 export default function FileScreenComponent(props: TFileScreenComponent) {
-  const { id, clientId, editing = false } = props;
+  const { id, clientId, editing } = props;
 
   const navigation = useNavigation();
   const { showSnackbar } = useSnackbar();
@@ -66,10 +66,12 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
         variables: {
           data: {
             id: id,
-            originalFilename: file.name,
+            originalFilename: filename,
           },
         },
       });
+
+      router.back();
     } catch (err) {
       console.error(`error updating file: `, err);
 
@@ -160,7 +162,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
             />
           )}
 
-          {editing ? (
+          {editing === 'true' ? (
             <BasicInput
               label="File Name"
               placeholder={'Enter a file name'}
@@ -188,7 +190,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
           Uploaded on {format(new Date(createdAt), 'MM/dd/yyyy')}
         </TextRegular>
       </MainContainer>
-      {editing && (
+      {editing === 'true' && (
         <BottomActions
           isLoading={loading}
           disabled={false}
