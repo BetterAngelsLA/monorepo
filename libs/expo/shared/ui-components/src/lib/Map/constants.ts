@@ -27,6 +27,18 @@ export const regionDeltaMap: Record<RegionDeltaSize, TMapDeltaLatLng> = {
     latitudeDelta: 0.05,
     longitudeDelta: 0.05,
   },
+  '2XL': {
+    latitudeDelta: 0.075,
+    longitudeDelta: 0.075,
+  },
+  '3XL': {
+    latitudeDelta: 0.1,
+    longitudeDelta: 0.1,
+  },
+  '4XL': {
+    latitudeDelta: 0.5,
+    longitudeDelta: 0.5,
+  },
 } as const;
 
 export const defaultRegionDelta = regionDeltaMap.M;
