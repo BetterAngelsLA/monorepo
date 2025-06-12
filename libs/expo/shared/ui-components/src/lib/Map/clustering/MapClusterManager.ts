@@ -1,4 +1,3 @@
-import { TMapView } from '@monorepo/expo/betterangels';
 import { GeoJsonProperties } from 'geojson';
 import { RefObject } from 'react';
 import Supercluster, {
@@ -7,6 +6,7 @@ import Supercluster, {
   Options,
   PointFeature,
 } from 'supercluster';
+import { TRNMapView } from '../mapLib';
 import { TPointProperties } from '../types';
 
 export class MapClusterManager<P extends GeoJsonProperties = TPointProperties> {
@@ -82,7 +82,7 @@ export class MapClusterManager<P extends GeoJsonProperties = TPointProperties> {
 
   zoomToCluster(
     clusterId: number,
-    mapRef: RefObject<TMapView | null>,
+    mapRef: RefObject<TRNMapView | null>,
     options?: {
       paddingMultiplier?: number;
       fallbackDelta?: number;

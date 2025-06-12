@@ -1,13 +1,12 @@
-import { TMapView } from '@monorepo/expo/betterangels';
 import { ReactNode, RefObject, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Details, Region } from 'react-native-maps';
 import { defaultMapRegion } from './constants';
-import { RNMapView } from './mapLib';
+import { RNMapView, TRNMapView } from './mapLib';
 import { MapLocateMeBtn } from './mapUi/MapLocateMeBtn';
 
 type TMapProps = {
-  mapRef: RefObject<TMapView | null>;
+  mapRef: RefObject<TRNMapView | null>;
   provider?: 'google';
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
