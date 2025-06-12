@@ -130,11 +130,13 @@ jobs:
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
       - name: 🧪 Run Android E2E Tests
+        env:
+          WORKFLOW_DISPATCH_INPUTS: > {"build_id": "${{ steps.simulator-build.outputs.android-build-id }}"}
         working-directory: apps/${{ matrix.project }}
         run: |
           npx eas-cli workflow:run .eas/workflows/android-e2e-test.yml \
             --non-interactive \
-            --inputs build_id=${{ steps.simulator-build.outputs.android-build-id }}
+
 
       - name: 📱 Simulator Build
         id: simulator-build
@@ -146,11 +148,13 @@ jobs:
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
       - name: 🧪 Run iOS E2E Tests
+        env:
+          WORKFLOW_DISPATCH_INPUTS: > {"build_id": "${{ steps.simulator-build.outputs.ios-build-id }}"}
         working-directory: apps/${{ matrix.project }}
         run: |
           npx eas-cli workflow:run .eas/workflows/ios-e2e-test.yml \
             --non-interactive \
-            --inputs build_id=${{ steps.simulator-build.outputs.ios-build-id }}
+
 
       - name: 🚀 Perform EAS Update
         id: expo-update
