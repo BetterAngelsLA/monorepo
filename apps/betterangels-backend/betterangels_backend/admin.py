@@ -15,10 +15,6 @@ class CustomAdminSite(admin.AdminSite):
         is_local_dev = getattr(settings, "IS_LOCAL_DEV", False)
         context["is_local_dev"] = is_local_dev
 
-        if request.method == "POST" and "email" in request.POST:
-            # Keep login form instead of trying to validate empty fields
-            request.method = "GET"
-
         if not is_local_dev:
             # In production, render the login page directly (disable username/password auth)
             return render(request, "admin/login.html", context)
