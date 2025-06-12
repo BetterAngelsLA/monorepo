@@ -1,14 +1,14 @@
 name: e2e-test-android
 
-jobs:
-  wait:
-    type: get-build
-    params:
-      build_id: ${{ env.BUILD_ID }}
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        required: true
 
+jobs:
   maestro_test:
-    needs: [wait]
     type: maestro
     params:
-      build_id: ${{ needs.wait.outputs.build_id }}
+      build_id: ${{ fromJSON(env.WORKFLOW_DISPATCH_INPUTS).build_id }}
       flow_path: ['.maestro/android/landing.yml']
