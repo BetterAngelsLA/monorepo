@@ -2,87 +2,70 @@
 {% block extrahead %}
   {{ block.super }}
   <style>
+    /* Container & sections */
     #custom-login-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 20px;
-      margin: 0 auto;
       max-width: 450px;
+      margin: 0 auto;
     }
-
+    .login-section,
+    .login-divider { width: 100%; }
     .login-section {
-      width: 100%;
       padding: 20px;
       border: 1px solid var(--hairline-color);
       border-radius: 4px;
-      background-color: var(--body-bg);
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      background: var(--body-bg);
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-
     .login-section h2 {
-      margin-top: 0;
-      margin-bottom: 15px;
+      margin: 0 0 15px;
       font-size: 1.2em;
       text-align: center;
       color: var(--body-quiet-color);
     }
-
+    /* OR divider */
     .login-divider {
       display: flex;
       align-items: center;
-      width: 100%;
     }
-
     .login-divider hr {
-      flex-grow: 1;
-      border: none;
+      flex: 1;
+      border: 0;
       border-top: 1px solid var(--hairline-color);
       margin: 0;
     }
-
     .login-divider span {
       margin: 0 10px;
       font-weight: bold;
       color: var(--body-quiet-color);
       white-space: nowrap;
     }
-
-    .login-section .form-row {
-      margin-bottom: 15px;
-    }
-
-    .login-section .form-row input[type="email"],
-    .login-section .form-row input[type="text"] {
+    /* Form rows */
+    .form-row { margin-bottom: 15px; }
+    .form-row input {
       width: 100%;
       box-sizing: border-box;
       padding: 8px;
       border: 1px solid var(--border-color);
     }
-
-    .login-section .submit-row {
-      text-align: center;
-    }
-
+    /* Submit & messages */
+    .submit-row { text-align: center; }
+    .help-text, .errornote { margin-bottom: 15px; }
+    .help-text { color: var(--body-quiet-color); font-size: 0.9em; }
     .errornote {
       color: var(--error-fg);
       background: var(--error-bg);
       border: 1px solid var(--error-border);
       padding: 10px;
-      margin-bottom: 15px;
-    }
-
-    .help-text {
-      color: var(--body-quiet-color);
-      font-size: 0.9em;
-      margin-top: 10px;
     }
   </style>
 {% endblock extrahead %}
 {% block content %}
   <div id="custom-login-container">
     {% if is_local_dev %}
-      <!-- 1) Password Login -->
       <div class="login-section">
         <h2>Password Login</h2>
         {{ block.super }}
@@ -93,27 +76,15 @@
         <hr>
       </div>
     {% endif %}
-    <!-- 2) OTP Login -->
     <div class="login-section">
       <h2>OTP Login</h2>
       <form id="otp-form" novalidate>
         {% csrf_token %}
         <div class="form-row" id="email-step">
           <label for="otp-email" class="required">Email:</label>
-          <input type="email"
-                 name="email"
-                 id="otp-email"
-                 required
-                 class="admin-text-input">
+          <input type="email" id="otp-email" required class="admin-text-input">
         </div>
-        <div class="form-row" id="code-step" hidden>
-          <label for="otp-code" class="required">Code:</label>
-          <input type="text"
-                 id="otp-code"
-                 placeholder="Enter code"
-                 required
-                 class="admin-text-input">
-        </div>
+        <div class="form-row" id="code-step" hidden></div>
         <div class="submit-row">
           <input type="submit" id="otp-submit" class="admin-button" value="Send Code">
         </div>
@@ -123,101 +94,129 @@
     </div>
   </div>
   <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const form      = document.getElementById('otp-form');
-  const emailStep = document.getElementById('email-step');
-  const codeStep  = document.getElementById('code-step');
-  const emailIn   = document.getElementById('otp-email');
-  const codeIn    = document.getElementById('otp-code');
-  const btn       = document.getElementById('otp-submit');
-  const status    = document.getElementById('otp-status');
-  const errorNote = document.getElementById('otp-error');
+  document.addEventListener('DOMContentLoaded', initOTPForm);
 
-  let pending = false;
+  function initOTPForm() {
+    const form      = document.getElementById('otp-form');
+    const emailStep = form.querySelector('#email-step');
+    const codeStep  = form.querySelector('#code-step');
+    const emailIn   = form.querySelector('#otp-email');
+    const submitBtn = form.querySelector('#otp-submit');
+    const status    = form.querySelector('#otp-status');
+    const errorNote = form.querySelector('#otp-error');
 
-  const URLs = {
-    logout:  '{% url "headless:browser:account:current_session" %}',
-    request: '{% url "headless:browser:account:request_login_code" %}',
-    confirm: '{% url "headless:browser:account:confirm_login_code" %}'
-  };
+    // Inline URLs
+    const logoutUrl  = '{% url "headless:browser:account:current_session" %}';
+    const requestUrl = '{% url "headless:browser:account:request_login_code" %}';
+    const confirmUrl = '{% url "headless:browser:account:confirm_login_code" %}';
 
-  function getCSRF() {
-    return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
-  }
+    let awaitingCode = false;
+    let codeFieldId  = '';  // will hold our random id
 
-  async function postJSON(url, data) {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCSRF()
-      },
-      credentials: 'same-origin',
-      body: JSON.stringify(data)
-    });
-    let json = {};
-    try { json = await res.json(); } catch {}
-    return { res, json };
-  }
+    form.addEventListener('submit', async evt => {
+      evt.preventDefault();
+      clearMessages();
+      submitBtn.disabled = true;
 
-  async function logoutAndRefreshCSRF() {
-    await fetch(URLs.logout, {
-      method: 'DELETE',
-      credentials: 'same-origin',
-      headers: { 'X-CSRFToken': getCSRF() }
-    });
-    await fetch(window.location.href, { credentials: 'same-origin' });
-  }
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    btn.disabled = true;
-    status.hidden = true;
-    errorNote.hidden = true;
-
-    try {
-      if (!pending) {
-        await logoutAndRefreshCSRF();
-        const { res, json } = await postJSON(URLs.request, { email: emailIn.value });
-        if (res.status === 200 || res.status === 401) {
-          pending = true;
-          emailStep.hidden = true;
-          codeStep.hidden  = false;
-          codeIn.focus();
-          btn.value = 'Verify Code';
-          status.textContent = 'Code sent! Check your email.';
-          status.hidden = false;
+      try {
+        if (!awaitingCode) {
+          await handleRequestCode();
         } else {
-          throw new Error(json.detail || 'Error requesting code.');
+          await handleConfirmCode();
         }
-      } else {
-        const { res, json } = await postJSON(URLs.confirm, {
-          email: emailIn.value,
-          code:  codeIn.value
-        });
-        if (!res.ok) throw new Error(json.detail || 'Invalid code.');
-        // Reload current page; admin login view will redirect authenticated users
-        window.location.reload();
+      } catch (err) {
+        showError(err.message);
+        resetToEmailStep();
+      } finally {
+        submitBtn.disabled = false;
       }
-    } catch (err) {
-      errorNote.textContent = err.message;
-      errorNote.hidden = false;
-      if (pending && err.message.toLowerCase().includes('code')) {
+    });
+
+    async function handleRequestCode() {
+      // generate unique id/name so browser can't autofill old values
+      codeFieldId = 'otp_code_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      codeStep.innerHTML = `
+        <label for="${codeFieldId}" class="required">Code:</label>
+        <input type="text" id="${codeFieldId}" name="${codeFieldId}" placeholder="Enter code" required autocomplete="one-time-code" inputmode="numeric" pattern="\\d*" class="admin-text-input">`;
+      codeStep.hidden = false;
+
+      // clear session for CSRF refresh
+      await fetch(logoutUrl, {
+        method: 'DELETE',
+        credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCSRF() }
+      });
+      await fetch(window.location.href, { credentials: 'same-origin' });
+
+      // request the OTP
+      const { res, json } = await postJSON(requestUrl, { email: emailIn.value });
+      if (res.ok || res.status === 401) {
+        awaitingCode = true;
         emailStep.hidden = true;
-        codeStep.hidden  = false;
-        btn.value        = 'Verify Code';
-        codeIn.focus();
+        submitBtn.value  = 'Verify Code';
+        showStatus('Code sent! Check your email.');
+        document.getElementById(codeFieldId).focus();
       } else {
-        pending = false;
-        emailStep.hidden = false;
-        codeStep.hidden  = true;
-        btn.value        = 'Send Code';
-        emailIn.focus();
+        throw new Error(json.detail || 'Error requesting code.');
       }
-    } finally {
-      btn.disabled = false;
     }
-  });
-});
+
+    async function handleConfirmCode() {
+      const codeIn = document.getElementById(codeFieldId);
+      const { res, json } = await postJSON(confirmUrl, {
+        email: emailIn.value,
+        code:  codeIn.value
+      });
+      if (!res.ok) {
+        throw new Error(json.detail || 'Invalid code.');
+      }
+      window.location.reload();
+    }
+
+    function resetToEmailStep() {
+      awaitingCode = false;
+      codeStep.hidden = true;
+      codeStep.innerHTML = '';
+      emailStep.hidden = false;
+      submitBtn.value  = 'Send Code';
+      emailIn.focus();
+    }
+
+    function clearMessages() {
+      status.hidden    = true;
+      errorNote.hidden = true;
+      status.textContent    = '';
+      errorNote.textContent = '';
+    }
+
+    function showStatus(msg) {
+      status.textContent = msg;
+      status.hidden      = false;
+    }
+
+    function showError(msg) {
+      errorNote.textContent = msg;
+      errorNote.hidden      = false;
+    }
+
+    function getCSRF() {
+      return document.cookie.split('csrftoken=')[1]?.split(';')[0] || '';
+    }
+
+    async function postJSON(url, data) {
+      const res = await fetch(url, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'X-CSRFToken': getCSRF(),
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      let json = {};
+      try { json = await res.json(); } catch {}
+      return { res, json };
+    }
+  }
   </script>
 {% endblock content %}
