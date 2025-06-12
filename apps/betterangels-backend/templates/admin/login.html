@@ -61,6 +61,12 @@
       border: 1px solid var(--error-border);
       padding: 10px;
     }
+
+    .help-text {
+      color: var(--body-quiet-color);
+      font-size: 0.9em;
+      margin-top: 10px;
+    }
   </style>
 {% endblock extrahead %}
 {% block content %}
@@ -76,6 +82,7 @@
         <hr>
       </div>
     {% endif %}
+    <!-- 2) OTP Login -->
     <div class="login-section">
       <h2>OTP Login</h2>
       <form id="otp-form" novalidate>
