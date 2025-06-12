@@ -1,15 +1,3 @@
-// type TShelterLocation = {
-//   place: string;
-//   latitude: number;
-//   longitude: number;
-// };
-
-// type TProps = {
-//   location?: TShelterLocation | null;
-//   phone?: string | null;
-//   shelterName: string;
-// };
-
 const ua = navigator.userAgent;
 const isIOS = /iPad|iPhone|iPod/i.test(ua);
 

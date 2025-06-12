@@ -16,26 +16,6 @@ type TProps = {
   shelterName: string;
 };
 
-// const ua = navigator.userAgent;
-// const isIOS = /iPad|iPhone|iPod/i.test(ua);
-
-// function openDirections(place?: string) {
-//   if (place === null || place === undefined) {
-//     return;
-//   }
-
-//   let url: string;
-//   const destination = encodeURIComponent(place);
-
-//   if (isIOS) {
-//     url = `maps://?q=${destination}`;
-//   } else {
-//     url = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
-//   }
-
-//   window.location.href = url;
-// }
-
 export default function Actions({ location, phone, shelterName }: TProps) {
   const handleShare = async () => {
     const shareData = {
@@ -73,8 +53,9 @@ export default function Actions({ location, phone, shelterName }: TProps) {
 
       <button
         disabled={!location}
-        // onClick={() => openDirections(location?.place)}
-        onClick={() => openInMaps(location?.place)}
+        onClick={() =>
+          openInMaps(location?.latitude, location?.longitude, location?.place)
+        }
         className={`flex flex-col items-center ${!location && 'opacity-50'}`}
       >
         <LocationIcon className="w-6 h-6 fill-primary-20" />
