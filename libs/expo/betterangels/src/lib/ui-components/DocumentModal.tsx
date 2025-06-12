@@ -2,6 +2,7 @@ import {
   DeleteIcon,
   DownloadIcon,
   ViewIcon,
+  WFEdit,
 } from '@monorepo/expo/shared/icons';
 import { DeleteModal } from '@monorepo/expo/shared/ui-components';
 import * as FileSystem from 'expo-file-system';
@@ -107,17 +108,22 @@ export default function DocumentModal(props: IDocumentModalProps) {
 
   const ACTIONS = [
     {
-      title: `View this ${fileTypeText}`,
+      title: `View ${fileTypeText}`,
       Icon: ViewIcon,
       route: `/file/${document?.id}`,
     },
     {
-      title: `Download this ${fileTypeText}`,
+      title: `Edit ${fileTypeText} name`,
+      Icon: WFEdit,
+      route: `/file/${document?.id}?editing=true&clientId=${clientId}`,
+    },
+    {
+      title: `Download ${fileTypeText}`,
       Icon: DownloadIcon,
       onPress: downloadFile,
     },
     {
-      title: `Delete this ${fileTypeText}`,
+      title: `Delete ${fileTypeText}`,
       Icon: DeleteIcon,
       onPress: onClickDeleteFile,
     },
