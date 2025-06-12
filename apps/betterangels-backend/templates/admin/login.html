@@ -52,15 +52,16 @@
       margin-bottom: 15px;
     }
 
-    .login-section .submit-row {
-      text-align: center;
-    }
-
-    .login-section .form-row input[type="email"] {
+    .login-section .form-row input[type="email"],
+    .login-section .form-row input[type="text"] {
       width: 100%;
       box-sizing: border-box;
       padding: 8px;
       border: 1px solid var(--border-color);
+    }
+
+    .login-section .submit-row {
+      text-align: center;
     }
 
     .errornote {
@@ -70,53 +71,153 @@
       padding: 10px;
       margin-bottom: 15px;
     }
+
+    .help-text {
+      color: var(--body-quiet-color);
+      font-size: 0.9em;
+      margin-top: 10px;
+    }
   </style>
 {% endblock extrahead %}
 {% block content %}
   <div id="custom-login-container">
     {% if is_local_dev %}
-      <!--
-       1) Password login form rendered by Django admin.
-    -->
+      <!-- 1) Password Login -->
       <div class="login-section">
         <h2>Password Login</h2>
         {{ block.super }}
       </div>
-      <!-- Divider -->
       <div class="login-divider">
         <hr>
         <span>OR</span>
         <hr>
       </div>
-      <!--
-       2) Magic link form
-         - If email_sent is true, show a success message.
-         - Otherwise, keep the form visible so the user can resend.
-    -->
     {% endif %}
+    <!-- 2) OTP Login -->
     <div class="login-section">
-      <h2>Magic Link Login</h2>
-      {% if error %}<p class="errornote">{{ error }}</p>{% endif %}
-      {% if email_sent %}
-        <p>
-          We’ve sent a login link to <strong>{{ sent_email_address }}</strong>.
-          Check your inbox to log in. Need another link? Just request again:
-        </p>
-      {% endif %}
-      <form method="POST">
+      <h2>OTP Login</h2>
+      <form id="otp-form" novalidate>
         {% csrf_token %}
-        <div class="form-row">
-          <label for="id_magic_email" class="required">Email:</label>
+        <div class="form-row" id="email-step">
+          <label for="otp-email" class="required">Email:</label>
           <input type="email"
                  name="email"
-                 id="id_magic_email"
+                 id="otp-email"
+                 required
+                 class="admin-text-input">
+        </div>
+        <div class="form-row" id="code-step" hidden>
+          <label for="otp-code" class="required">Code:</label>
+          <input type="text"
+                 id="otp-code"
+                 placeholder="Enter code"
                  required
                  class="admin-text-input">
         </div>
         <div class="submit-row">
-          <input type="submit" value="Send Magic Link" class="admin-button">
+          <input type="submit" id="otp-submit" class="admin-button" value="Send Code">
         </div>
+        <p id="otp-status" class="help-text" hidden></p>
+        <p id="otp-error" class="errornote" hidden></p>
       </form>
     </div>
   </div>
+  <script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form      = document.getElementById('otp-form');
+  const emailStep = document.getElementById('email-step');
+  const codeStep  = document.getElementById('code-step');
+  const emailIn   = document.getElementById('otp-email');
+  const codeIn    = document.getElementById('otp-code');
+  const btn       = document.getElementById('otp-submit');
+  const status    = document.getElementById('otp-status');
+  const errorNote = document.getElementById('otp-error');
+
+  let pending = false;
+
+  const URLs = {
+    logout:  '{% url "headless:browser:account:current_session" %}',
+    request: '{% url "headless:browser:account:request_login_code" %}',
+    confirm: '{% url "headless:browser:account:confirm_login_code" %}'
+  };
+
+  function getCSRF() {
+    return document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+  }
+
+  async function postJSON(url, data) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCSRF()
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify(data)
+    });
+    let json = {};
+    try { json = await res.json(); } catch {}
+    return { res, json };
+  }
+
+  async function logoutAndRefreshCSRF() {
+    await fetch(URLs.logout, {
+      method: 'DELETE',
+      credentials: 'same-origin',
+      headers: { 'X-CSRFToken': getCSRF() }
+    });
+    await fetch(window.location.href, { credentials: 'same-origin' });
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    btn.disabled = true;
+    status.hidden = true;
+    errorNote.hidden = true;
+
+    try {
+      if (!pending) {
+        await logoutAndRefreshCSRF();
+        const { res, json } = await postJSON(URLs.request, { email: emailIn.value });
+        if (res.status === 200 || res.status === 401) {
+          pending = true;
+          emailStep.hidden = true;
+          codeStep.hidden  = false;
+          codeIn.focus();
+          btn.value = 'Verify Code';
+          status.textContent = 'Code sent! Check your email.';
+          status.hidden = false;
+        } else {
+          throw new Error(json.detail || 'Error requesting code.');
+        }
+      } else {
+        const { res, json } = await postJSON(URLs.confirm, {
+          email: emailIn.value,
+          code:  codeIn.value
+        });
+        if (!res.ok) throw new Error(json.detail || 'Invalid code.');
+        // Reload current page; admin login view will redirect authenticated users
+        window.location.reload();
+      }
+    } catch (err) {
+      errorNote.textContent = err.message;
+      errorNote.hidden = false;
+      if (pending && err.message.toLowerCase().includes('code')) {
+        emailStep.hidden = true;
+        codeStep.hidden  = false;
+        btn.value        = 'Verify Code';
+        codeIn.focus();
+      } else {
+        pending = false;
+        emailStep.hidden = false;
+        codeStep.hidden  = true;
+        btn.value        = 'Send Code';
+        emailIn.focus();
+      }
+    } finally {
+      btn.disabled = false;
+    }
+  });
+});
+  </script>
 {% endblock content %}
