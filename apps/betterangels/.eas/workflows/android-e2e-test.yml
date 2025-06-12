@@ -1,0 +1,8 @@
+name: e2e-test-android
+
+jobs:
+  maestro_test:
+    type: maestro
+    params:
+      build_id: ${{ env.BUILD_ID }}
+      flow_path: ['.maestro/android/landing.yml']

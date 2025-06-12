@@ -1,0 +1,8 @@
+name: e2e-test-ios
+
+jobs:
+  maestro_test:
+    type: maestro
+    params:
+      build_id: ${{ env.BUILD_ID }}
+      flow_path: ['.maestro/ios/landing.yml']
