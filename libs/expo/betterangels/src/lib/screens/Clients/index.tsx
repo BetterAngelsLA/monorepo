@@ -58,15 +58,11 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       setOffset((prevOffset) => prevOffset + paginationLimit);
     }
   }
-  async function createNoteFunction(
-    id: string,
-    firstName: string | undefined | null
-  ) {
+  async function createNoteFunction(id: string) {
     try {
       const { data } = await createNote({
         variables: {
           data: {
-            purpose: `Session with ${firstName || 'Client'}`,
             clientProfile: id,
           },
         },
@@ -217,10 +213,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                   select={select as string}
                   onPress={() => {
                     if (select === 'true') {
-                      createNoteFunction(
-                        clientProfile.id,
-                        clientProfile.firstName
-                      );
+                      createNoteFunction(clientProfile.id);
                     } else {
                       setCurrentClient(clientProfile);
                       setModalIsOpen(true);
