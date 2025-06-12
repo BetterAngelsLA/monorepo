@@ -31,7 +31,6 @@ celery = { extras = ["redis"], version = "^5.5.3" }
 django-ses = "^4.4.0"
 hiredis = "^3.2.1"
 django-organizations = "^2.5.0"
-django-sesame = "^3.2.3"
 strawberry-graphql-django = "^0.61.0"
 django-guardian = "^3.0.0"
 django-choices-field = "^2.3.0"

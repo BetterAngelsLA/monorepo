@@ -6,7 +6,7 @@ import strawberry_django
 from accounts.models import User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
-from common.graphql.types import LocationInput, LocationType
+from common.graphql.types import LocationInput, LocationType, NonBlankString
 from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
 from notes.enums import (
     DueByGroupEnum,
@@ -246,7 +246,7 @@ class CreateNoteInput:
 @strawberry_django.input(models.Note, partial=True)
 class UpdateNoteInput:
     id: ID
-    purpose: auto
+    purpose: Optional[NonBlankString]
     team: Optional[SelahTeamEnum]
     location: Optional[ID]
     public_details: auto
