@@ -131,7 +131,7 @@ jobs:
 
       - name: 🧪 Run Android E2E Tests
         env:
-          BUILD_ID: ${{ steps.simulator-build.outputs.android-build-id }}
+          BUILD_ID: ${{ steps.preview-build.outputs.android-build-id }}
         working-directory: apps/${{ matrix.project }}
         run: |
           npx eas-cli workflow:run .eas/workflows/android-e2e-test.yml \
