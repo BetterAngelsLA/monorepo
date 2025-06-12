@@ -1,6 +1,6 @@
 import { StarIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold } from '@monorepo/expo/shared/ui-components';
+import { PhoneNumberBtn } from '@monorepo/expo/shared/ui-components';
 import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { ReactElement } from 'react';
 import { View } from 'react-native';
@@ -65,7 +65,8 @@ function PhoneNumberRow(props: TPhoneNumber) {
         alignItems: 'center',
       }}
     >
-      <TextBold size="sm">{formattedNumber}</TextBold>
+      <PhoneNumberBtn phoneNumber={formattedNumber} />
+
       {isPrimary && <StarIcon color={Colors.WARNING} size="md" />}
     </View>
   );

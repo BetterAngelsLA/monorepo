@@ -1,3 +1,4 @@
+import { EmailBtn, PhoneNumberBtn } from '@monorepo/expo/shared/ui-components';
 import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { View, ViewStyle } from 'react-native';
 import { clientRelevantContactEnumDisplay } from '../../../../../static';
@@ -30,11 +31,17 @@ export function RelevantContactCard(props: TProps) {
     },
     {
       header: ['Email'],
-      rows: [[email]],
+      rows: [[email ? <EmailBtn text={email} /> : null]],
     },
     {
       header: ['Phone number'],
-      rows: [[phoneNumber && formatPhoneNumber(phoneNumber)]],
+      rows: [
+        [
+          phoneNumber && (
+            <PhoneNumberBtn phoneNumber={formatPhoneNumber(phoneNumber)} />
+          ),
+        ],
+      ],
     },
     {
       header: ['Mailing Address'],
