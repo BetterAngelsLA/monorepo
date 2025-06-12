@@ -14,7 +14,7 @@ export class MapClusterManager<P extends GeoJsonProperties = TPointProperties> {
 
   constructor(options?: Options<P, AnyProps>) {
     this.clusterIndex = new Supercluster<P, AnyProps>({
-      radius: 40,
+      radius: 50,
       maxZoom: 20,
       ...options,
     });

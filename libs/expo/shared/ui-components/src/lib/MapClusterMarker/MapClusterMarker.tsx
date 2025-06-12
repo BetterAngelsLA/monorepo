@@ -1,6 +1,7 @@
 import { Colors, Shadow } from '@monorepo/expo/shared/static';
 import { StyleSheet, Text, View } from 'react-native';
 import { SIZES, variantStyleMap } from './constants';
+import { getContentAndSize } from './getContentAndSize';
 
 export type TMapClusterMarkerSize = 'S' | 'M' | 'L';
 export type TMapClusterMarkerVariant = 'primary';
@@ -10,6 +11,7 @@ interface IMapClusterMarkerProps {
   size?: TMapClusterMarkerSize;
   variant?: TMapClusterMarkerVariant;
   text?: string;
+  itemCount?: number;
   subscriptAfter?: boolean;
   hasHouse?: boolean;
 }
@@ -17,9 +19,10 @@ interface IMapClusterMarkerProps {
 export function MapClusterMarker(props: IMapClusterMarkerProps) {
   const {
     textColor,
-    size = 'S',
+    size,
     variant = 'primary',
     text,
+    itemCount,
     subscriptAfter,
     // hasHouse,
   } = props;
@@ -30,17 +33,22 @@ export function MapClusterMarker(props: IMapClusterMarkerProps) {
     textColor: variantTextColor,
   } = variantStyleMap[variant];
 
+  const { content, markerSize } = getContentAndSize({
+    text,
+    itemCount,
+    size,
+  });
+
   return (
     <View style={[styles.shadowContainer]}>
       <View
         style={[
           styles.outerCircle,
-
           {
             backgroundColor: variantFillColor,
-            padding: SIZES[size].outerPadding,
-            height: SIZES[size].size,
-            width: SIZES[size].size,
+            padding: SIZES[markerSize].outerPadding,
+            height: SIZES[markerSize].size,
+            width: SIZES[markerSize].size,
           },
         ]}
       >
@@ -57,14 +65,14 @@ export function MapClusterMarker(props: IMapClusterMarkerProps) {
             style={[
               styles.text,
               {
-                fontSize: SIZES[size].fontSize,
+                fontSize: SIZES[markerSize].fontSize,
                 color: textColor || variantTextColor,
               },
             ]}
           >
-            {text}
+            {content}
             {subscriptAfter && (
-              <Text style={{ fontSize: SIZES[size].subscriptAfterSize }}>
+              <Text style={{ fontSize: SIZES[markerSize].subscriptAfterSize }}>
                 +
               </Text>
             )}

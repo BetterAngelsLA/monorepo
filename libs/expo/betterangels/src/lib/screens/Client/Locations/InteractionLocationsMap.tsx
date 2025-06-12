@@ -142,7 +142,7 @@ export function InteractionLocationsMap(props: TProps) {
                 clusterManager.zoomToCluster(cluster_id, mapRef);
               }}
             >
-              <MapClusterMarker text={point_count} />
+              <MapClusterMarker itemCount={point_count} />
             </Marker>
           );
         } else {
