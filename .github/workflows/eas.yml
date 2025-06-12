@@ -136,7 +136,6 @@ jobs:
         run: |
           npx eas-cli workflow:run .eas/workflows/android-e2e-test.yml \
             --non-interactive \
-            --build-id "$BUILD_ID"
 
       - name: 📱 Simulator Build
         id: simulator-build
@@ -154,7 +153,6 @@ jobs:
         run: |
           npx eas-cli workflow:run .eas/workflows/ios-e2e-test.yml \
             --non-interactive \
-            --build-id "$BUILD_ID"
 
       - name: 🚀 Perform EAS Update
         id: expo-update
