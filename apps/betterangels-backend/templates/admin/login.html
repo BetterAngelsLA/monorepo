@@ -82,16 +82,23 @@
 {% block content %}
   <div id="custom-login-container">
     {% if is_local_dev %}
+      <!--
+       1) Password login form rendered by Django admin.
+      -->
       <div class="login-section">
         <h2>Password Login</h2>
         {{ block.super }}
       </div>
+      <!-- Divider -->
       <div class="login-divider">
         <hr>
         <span>OR</span>
         <hr>
       </div>
     {% endif %}
+    <!--
+       2) OTP Login
+    -->
     <div class="login-section">
       <h2>OTP Login</h2>
       <form id="otp-form" novalidate>
