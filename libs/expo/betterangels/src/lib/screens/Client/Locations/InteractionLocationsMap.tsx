@@ -1,4 +1,4 @@
-import { LocationPinIcon } from '@monorepo/expo/shared/icons';
+import { MapPinIcon } from '@monorepo/expo/shared/icons';
 import {
   ClusterMap,
   ClusterOrPoint,
@@ -9,10 +9,10 @@ import {
   regionToBbox,
   regionToZoom,
 } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
-import type { PointFeature } from 'supercluster';
+import { PointFeature } from 'supercluster';
 import { Ordering, TNotesQueryInteraction } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import { useGetClientInteractionsWithLocation } from '../../../hooks/interactions/useGetClientInteractionsWithLocation';
@@ -21,13 +21,11 @@ import { EmptyState } from './EmptyState';
 import { InteractionClusters } from './InteractionClusters';
 import { getInteractionsMapRegion } from './utils/getInteractionsMapRegion';
 
-const MAP_DELTA_SIZE: RegionDeltaSize = '2XL';
+const MAP_DELTA_SIZE: RegionDeltaSize = 'XL';
 
 type TProps = {
   clientProfileId: string;
 };
-
-// TNotesQueryInteraction
 
 export function InteractionLocationsMap(props: TProps) {
   const { clientProfileId } = props;
@@ -35,13 +33,10 @@ export function InteractionLocationsMap(props: TProps) {
   const mapRef = useRef<TMapView | null>(null);
   const { showSnackbar } = useSnackbar();
   const [clusters, setClusters] = useState<
-    undefined | ClusterOrPoint<TNotesQueryInteraction>[]
-  >(undefined);
-  const [mapRegion, setMapRegion] = useState<Region | null | undefined>(
-    undefined
-  );
+    ClusterOrPoint<TNotesQueryInteraction>[]
+  >([]);
 
-  // 1. Fetch interactions…
+  // 1. Fetch interactions
   const {
     interactions: interactionsWithLocation,
     loading,
@@ -50,28 +45,6 @@ export function InteractionLocationsMap(props: TProps) {
     id: clientProfileId,
     dateSort: Ordering.Desc,
   });
-
-  // set mapRegion
-  useEffect(() => {
-    // undefined mapRegion: component is mounting
-    if (interactionsWithLocation === undefined) {
-      return;
-    }
-
-    // null mapRegion: no interactions exist
-    if (!interactionsWithLocation.length) {
-      setMapRegion(null);
-
-      return;
-    }
-
-    const newRegion = getInteractionsMapRegion({
-      interaction: interactionsWithLocation[0],
-      deltaSize: MAP_DELTA_SIZE,
-    });
-
-    setMapRegion(newRegion);
-  }, [interactionsWithLocation]);
 
   // 2) Build pointFeatures carrying the *full* interaction payload
   const pointFeatures = useMemo<PointFeature<TNotesQueryInteraction>[]>(() => {
@@ -86,12 +59,11 @@ export function InteractionLocationsMap(props: TProps) {
     }));
   }, [interactionsWithLocation]);
 
-  // 3. Create & load your cluster manager once
   const clusterManager = useMemo(() => {
-    const mgr = new MapClusterManager<TNotesQueryInteraction>();
-    mgr.load(pointFeatures);
+    const cm = new MapClusterManager<TNotesQueryInteraction>();
+    cm.load(pointFeatures);
 
-    return mgr;
+    return cm;
   }, [pointFeatures]);
 
   const onRegionChangeComplete = useCallback(
@@ -104,12 +76,6 @@ export function InteractionLocationsMap(props: TProps) {
     },
     [clusterManager, regionToBbox, regionToZoom]
   );
-
-  useEffect(() => {
-    if (mapRegion) {
-      onRegionChangeComplete(mapRegion);
-    }
-  }, [mapRegion, onRegionChangeComplete]);
 
   if (loading) {
     return <LoadingView />;
@@ -125,29 +91,33 @@ export function InteractionLocationsMap(props: TProps) {
   }
 
   // unless loading, render nothing until interactions are defined
-  if (mapRegion === undefined) {
+  if (interactionsWithLocation === undefined) {
     return null;
   }
 
-  if (!mapRegion) {
+  if (!interactionsWithLocation?.length) {
     return <EmptyState />;
   }
 
-  if (!clusters?.length) {
+  const mapRegion = getInteractionsMapRegion({
+    interaction: interactionsWithLocation[0],
+    deltaSize: MAP_DELTA_SIZE,
+  });
+
+  if (!mapRegion) {
     return null;
   }
 
   return (
     <ClusterMap
       mapRef={mapRef}
-      // enableUserLocation={true}
+      enableUserLocation={true}
       style={styles.map}
       provider="google"
       initialRegion={mapRegion}
       onRegionChangeComplete={onRegionChangeComplete}
     >
       <InteractionClusters
-        clusterManager={clusterManager}
         mapRef={mapRef}
         clusters={clusters}
         clusterRenderer={(cluster) => {
@@ -155,44 +125,13 @@ export function InteractionLocationsMap(props: TProps) {
             <MapClusterMarker itemCount={cluster.properties.point_count} />
           );
         }}
+        onClusterPress={(cluster) =>
+          clusterManager.zoomToCluster(cluster.properties.cluster_id, mapRef)
+        }
         pointRenderer={() => {
-          return <LocationPinIcon size="2xl" />;
+          return <MapPinIcon size="M" variant="primary" />;
         }}
       />
-      {/* <InteractionClusters /> */}
-
-      {/* {clusters.map((feat) => {
-        if (feat.properties.cluster) {
-          const { cluster_id, point_count } = feat.properties;
-          const [longitude, latitude] = feat.geometry.coordinates;
-
-          return (
-            <Marker
-              key={`cluster-${cluster_id}`}
-              tracksViewChanges={false}
-              coordinate={{ latitude, longitude }}
-              onPress={() => {
-                clusterManager.zoomToCluster(cluster_id, mapRef);
-              }}
-            >
-              <MapClusterMarker itemCount={point_count} />
-            </Marker>
-          );
-        } else {
-          const { id } = feat.properties;
-
-          const [longitude, latitude] = feat.geometry.coordinates;
-          return (
-            <Marker
-              key={`point-${id}`}
-              coordinate={{ latitude, longitude }}
-              tracksViewChanges={false}
-            >
-              <LocationPinIcon size="2xl" />
-            </Marker>
-          );
-        }
-      })} */}
     </ClusterMap>
   );
 }

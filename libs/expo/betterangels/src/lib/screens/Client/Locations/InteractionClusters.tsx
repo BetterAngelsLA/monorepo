@@ -1,7 +1,6 @@
 import {
   ClusterOrPoint,
   IClusterGeoJson,
-  MapClusterManager,
   TClusterLeafPoint,
   TClusterPoint,
 } from '@monorepo/expo/shared/ui-components';
@@ -9,7 +8,6 @@ import { RefObject } from 'react';
 import { Marker, TMapView } from '../../../maps';
 
 type TProps<P extends IClusterGeoJson = IClusterGeoJson> = {
-  clusterManager: MapClusterManager<P>;
   mapRef: RefObject<TMapView | null>;
   clusters: ClusterOrPoint<P>[];
   clusterRenderer: (cluster: TClusterPoint) => React.ReactNode;
@@ -27,15 +25,7 @@ export function InteractionClusters<P extends IClusterGeoJson>(
     pointRenderer,
     onClusterPress,
     onPointPress,
-    // map‐specific:
-    clusterManager,
-    mapRef,
   } = props;
-
-  if (!mapRef) {
-    return null;
-  }
-
   const clusterItems = clusters.filter(
     (i) => !!i.properties.cluster
   ) as TClusterPoint[];
@@ -63,8 +53,9 @@ export function InteractionClusters<P extends IClusterGeoJson>(
       })}
 
       {leafItems.map((point) => {
-        const { id, geometry } = point;
+        const { geometry, properties } = point;
         const [longitude, latitude] = geometry.coordinates;
+        const { id } = properties;
 
         return (
           <Marker
