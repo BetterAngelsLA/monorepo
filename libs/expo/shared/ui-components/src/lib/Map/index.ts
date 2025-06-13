@@ -1,6 +1,6 @@
 export { ClusterMap } from './ClusterMap';
 export { MapView } from './Map';
-export { MapClusterManager } from './clustering/MapClusterManager';
+export * from './clustering';
 export { defaultMapRegion, regionDeltaMap } from './constants';
 export * from './mapLib';
 export * from './types';

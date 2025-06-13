@@ -3,19 +3,35 @@ import { RefObject } from 'react';
 import Supercluster, {
   AnyProps,
   ClusterFeature,
-  Options,
   PointFeature,
 } from 'supercluster';
 import { TRNMapView } from '../mapLib';
 
-export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
-  private clusterIndex: Supercluster<P>;
+export interface IMapClusterManager {
+  // px around each point to merge into a cluster
+  radius?: number;
+  // Maximum zoom level at which clusters are generated.
+  maxZoom?: number;
+  // Tile extent. Radius is calculated relative to this value.
+  extent?: number;
+  // Size of the KD-tree leaf node. Affects performance.
+  nodeSize?: number;
+}
 
-  constructor(options?: Options<P, AnyProps>) {
+export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
+  private readonly clusterIndex: Supercluster<P, AnyProps>;
+
+  constructor(opts: IMapClusterManager = {}) {
+    console.log('');
+    console.log('################################### NEW CLUSTER MANAGER');
+    console.log('');
+    const { radius = 50, maxZoom = 20, extent = 512, nodeSize = 64 } = opts;
+
     this.clusterIndex = new Supercluster<P, AnyProps>({
-      radius: 50,
-      maxZoom: 20,
-      ...options,
+      radius,
+      maxZoom,
+      extent,
+      nodeSize,
     });
   }
 

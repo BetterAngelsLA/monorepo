@@ -1,5 +1,5 @@
 import { Region } from 'react-native-maps';
-import { TBbox } from '../types';
+import { TBbox } from '../clustering';
 
 export function regionToBbox(region: Region): TBbox {
   return [

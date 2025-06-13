@@ -3,13 +3,13 @@ import {
   ClusterMap,
   ClusterOrPoint,
   LoadingView,
-  MapClusterManager,
   MapClusterMarker,
   RegionDeltaSize,
   regionToBbox,
   regionToZoom,
+  useMapClusterManager,
 } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { PointFeature } from 'supercluster';
@@ -47,10 +47,22 @@ export function InteractionLocationsMap(props: TProps) {
   });
 
   // 2) Build pointFeatures carrying the *full* interaction payload
+  // 5 · Trim the payload stored in properties
+  // Right now each point’s properties equals the full interaction object
+  // (~10-15 keys). Supercluster only needs id and maybe a couple of display
+  // fields. Smaller objects ⇒ less JSON cloning and less memory churn:
+  //   If you still need the full interaction later, stash a lookup map outside the
+  // cluster manager (interactionById[id] = interaction).
   const pointFeatures = useMemo<PointFeature<TNotesQueryInteraction>[]>(() => {
     if (!interactionsWithLocation) {
       return [];
     }
+
+    // console.log(
+    //   '| -------------  interactionsWithLocation[0]  ------------- |'
+    // );
+    // console.log(interactionsWithLocation[0]);
+    // console.log();
 
     return interactionsWithLocation.map((i) => ({
       type: 'Feature',
@@ -59,15 +71,28 @@ export function InteractionLocationsMap(props: TProps) {
     }));
   }, [interactionsWithLocation]);
 
-  const clusterManager = useMemo(() => {
-    const cm = new MapClusterManager<TNotesQueryInteraction>();
-    cm.load(pointFeatures);
+  // const clusterManager = useMemo(
+  //   () => new MapClusterManager<TNotesQueryInteraction>(),
+  //   []
+  // );
 
-    return cm;
-  }, [pointFeatures]);
+  const clusterManager = useMapClusterManager<TNotesQueryInteraction>();
+
+  useEffect(() => {
+    if (!pointFeatures) {
+      return;
+    }
+
+    console.log('############## LOAD POINT FEATURES');
+    clusterManager.load(pointFeatures);
+  }, [interactionsWithLocation]);
+  // }, [pointFeatures]);
+  // }, [clusterManager, pointFeatures]);
+  // interactionsWithLocation
 
   const onRegionChangeComplete = useCallback(
     (region: Region) => {
+      console.log('################## onRegionChangeComplete');
       const bbox = regionToBbox(region);
       const zoom = regionToZoom(region);
       const next = clusterManager.getClusters(bbox, zoom);
@@ -76,6 +101,28 @@ export function InteractionLocationsMap(props: TProps) {
     },
     [clusterManager, regionToBbox, regionToZoom]
   );
+
+  // 2 Throttle onRegionChangeComplete
+  // 3 · Skip setClusters when nothing really changed
+  // Even throttled, you can avoid needless re-renders by checking identity:
+  // inside the throttled fn
+  // if (!arraysEqual(clustersRef.current, next)) {
+  //   clustersRef.current = next;
+  //   setClusters(next);
+  // }
+  //   Keep clustersRef with useRef so you can compare without triggering
+  // renders.
+
+  // const onRegionChangeComplete = useCallback(
+  //   throttle((region: Region) => {
+  //     const bbox  = regionToBbox(region);
+  //     const zoom  = regionToZoom(region);
+  //     const next  = clusterManager.getClusters(bbox, zoom);
+
+  //     setClusters(next);
+  //   }, 120),
+  //   [clusterManager]           // helpers are imported ⇒ stable
+  // );
 
   // const onRegionChangeComplete = (newRegion: Region) => {
   //   setZoom(getZoomFromRegion(newRegion))
@@ -146,3 +193,52 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+// const hello = {
+//   __typename: 'NoteType',
+//   clientProfile: {
+//     __typename: 'ClientProfileType',
+//     displayCaseManager: 'Not Assigned',
+//     email: 'tom@betterangels.la',
+//     firstName: 'Dupe',
+//     id: '2',
+//     lastName: 'Cal ID',
+//     profilePhoto: null,
+//     user: {
+//       __typename: 'UserType',
+//       id: '6',
+//       username: '9d2e12a6-76c4-44a6-971f-ffe88f344c69',
+//     },
+//   },
+//   createdBy: {
+//     __typename: 'UserType',
+//     email: 'admin@example.com',
+//     firstName: null,
+//     id: '1',
+//     lastName: null,
+//     username: 'admin',
+//   },
+//   id: '151',
+//   interactedAt: '2025-06-13T05:42:14.164557+00:00',
+//   isSubmitted: true,
+//   location: {
+//     __typename: 'LocationType',
+//     address: {
+//       __typename: 'AddressType',
+//       city: 'Los Angeles',
+//       id: '33',
+//       state: 'CA',
+//       street: '700 West 7th Street',
+//       zipCode: '90017',
+//     },
+//     point: [-11825900316238403, 34.047596933230366],
+//     pointOfInterest: null,
+//   },
+//   moods: [],
+//   organization: { __typename: 'OrganizationType', id: '1', name: 'test_org' },
+//   providedServices: [],
+//   publicDetails: '',
+//   purpose: null,
+//   requestedServices: [],
+//   team: null,
+// };
