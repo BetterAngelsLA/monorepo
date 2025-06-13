@@ -1,3 +1,5 @@
+from typing import Any
+
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
 from common.tests.utils import GraphQLBaseTestCase
@@ -137,7 +139,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
 
 
-class OrganizationQueryTestCase(GraphQLBaseTestCase):
+class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
     def test_caseworker_organizations_query(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
@@ -149,7 +151,7 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase):
 
         query = """
 
-            query CaseworkerOrganizations($pagination: OffsetPaginationInput) {
+            query ($pagination: OffsetPaginationInput) {
                 caseworkerOrganizations(pagination: $pagination) {
                     totalCount
                     results {
@@ -176,3 +178,38 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase):
 
         self.assertEqual(expected_caseworker_org_ids, actual_caseworker_org_ids)
         self.assertNotIn(non_cw_org.pk, actual_caseworker_org_ids)
+
+    @parametrize(
+        "search_term, expected_orgs",
+        [
+            (None, ["org_1", "org_2", "test_org"]),
+            ("org_", ["org_1", "org_2"]),
+            ("org_1", ["org_1"]),
+            ("org 2", ["org_2"]),
+        ],
+    )
+    def test_caseworker_organizations_query_filter(self, search_term: str | None, expected_orgs: list[str]) -> None:
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        query = """
+            query ($pagination: OffsetPaginationInput, $filters: OrganizationFilter) {
+                caseworkerOrganizations(pagination: $pagination, filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                        name
+                    }
+                    pageInfo {
+                        offset
+                        limit
+                    }
+                }
+            }
+        """
+
+        filters: dict[str, Any] = {"search": search_term}
+
+        response = self.execute_graphql(query, variables={"filters": filters})
+
+        actual_orgs = [org["name"] for org in response["data"]["caseworkerOrganizations"]["results"]]
+        self.assertCountEqual(actual_orgs, expected_orgs)

@@ -1356,6 +1356,14 @@ export enum Ordering {
   DescNullsLast = 'DESC_NULLS_LAST'
 }
 
+export type OrganizationFilter = {
+  AND?: InputMaybe<OrganizationFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<OrganizationFilter>;
+  OR?: InputMaybe<OrganizationFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type OrganizationOrder = {
   id?: InputMaybe<Ordering>;
   name?: InputMaybe<Ordering>;
@@ -1475,6 +1483,7 @@ export type QueryBulkClientProfileImportRecordsArgs = {
 
 
 export type QueryCaseworkerOrganizationsArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2151,6 +2160,7 @@ export type UserType = {
 
 
 export type UserTypeOrganizationsOrganizationArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
 };
 

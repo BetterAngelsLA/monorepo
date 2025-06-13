@@ -2,9 +2,8 @@ import json
 import uuid
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from accounts.groups import GroupTemplateNames
-from accounts.models import PermissionGroupTemplate, User
-from accounts.tests.baker_recipes import organization_recipe, permission_group_recipe
+from accounts.models import User
+from accounts.tests.baker_recipes import organization_recipe
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.test import TestCase
