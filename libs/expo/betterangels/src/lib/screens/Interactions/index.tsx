@@ -24,8 +24,9 @@ import InteractionsSorting from './InteractionsSorting';
 const paginationLimit = 10;
 
 type TFilters = {
-  teams: { id: SelahTeamEnum; label: string }[];
   authors: { id: string; label: string }[];
+  organizations: { id: string; label: string }[];
+  teams: { id: SelahTeamEnum; label: string }[];
 };
 
 export default function Interactions() {
@@ -34,8 +35,9 @@ export default function Interactions() {
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState('');
   const [filters, setFilters] = useState<TFilters>({
-    teams: [],
     authors: user ? [{ id: user.id, label: 'Me' }] : [],
+    organizations: [],
+    teams: [],
   });
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -47,10 +49,13 @@ export default function Interactions() {
         authors: filters.authors.length
           ? filters.authors.map((item) => item.id)
           : null,
-        search: filterSearch,
+        organizations: filters.organizations.length
+          ? filters.organizations.map((item) => item.id)
+          : null,
         teams: filters.teams.length
           ? filters.teams.map((item) => item.id)
           : null,
+        search: filterSearch,
       },
     },
     fetchPolicy: 'cache-and-network',
@@ -79,7 +84,7 @@ export default function Interactions() {
   );
 
   const onFiltersReset = () => {
-    setFilters({ teams: [], authors: [] });
+    setFilters({ authors: [], organizations: [], teams: [] });
     setSearch('');
     setFilterSearch('');
   };

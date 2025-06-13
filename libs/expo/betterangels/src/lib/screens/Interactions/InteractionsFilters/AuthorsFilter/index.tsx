@@ -14,8 +14,9 @@ import { Modal } from '../../../../ui-components';
 import { useInteractionAuthorsQuery } from './__generated__/AuthorsFilter.generated';
 
 type TFilters = {
-  teams: { id: SelahTeamEnum; label: string }[];
   authors: { id: string; label: string }[];
+  organizations: { id: string; label: string }[];
+  teams: { id: SelahTeamEnum; label: string }[];
 };
 
 interface IAuthorsFilterProps {

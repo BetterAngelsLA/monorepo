@@ -11,21 +11,22 @@ import { ScrollView, View } from 'react-native';
 import { Ordering, SelahTeamEnum } from '../../../../apollo';
 import { useInfiniteScroll, useUser } from '../../../../hooks';
 import { Modal } from '../../../../ui-components';
-import { useInteractionAuthorsQuery } from './__generated__/AuthorsFilter.generated';
+import { useCaseworkerOrganizationsQuery } from './__generated__/OrganizationFilter.generated';
 
 type TFilters = {
-  teams: { id: SelahTeamEnum; label: string }[];
   authors: { id: string; label: string }[];
+  organizations: { id: string; label: string }[];
+  teams: { id: SelahTeamEnum; label: string }[];
 };
 
-interface IAuthorsFilterProps {
+interface IOrganizationFilterProps {
   setFilters: (filters: TFilters) => void;
   filters: TFilters;
 }
 
 const paginationLimit = 25;
 
-export default function AuthorsFilter(props: IAuthorsFilterProps) {
+export default function OrganizationFilter(props: IOrganizationFilterProps) {
   const { setFilters, filters } = props;
   const { user } = useUser();
   const [search, setSearch] = useState<string>('');
@@ -33,18 +34,17 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
   const [selected, setSelected] = useState<
     Array<{ id: string; label: string }>
   >([]);
-  const [authorsState, setAuthorsState] = useState<
+  const [organizationsState, setOrganizationsState] = useState<
     { id: string; label: string }[]
   >([]);
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const { data, loading, error } = useInteractionAuthorsQuery({
+  const { data, loading, error } = useCaseworkerOrganizationsQuery({
     variables: {
       filters: { search: filterSearch },
       order: {
-        firstName: Ordering.AscNullsFirst,
-        lastName: Ordering.AscNullsFirst,
+        name: Ordering.AscNullsLast,
         id: Ordering.Desc,
       },
       pagination: { limit: paginationLimit, offset: offset },
@@ -64,7 +64,7 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
   });
 
   const handleOnDone = () => {
-    setFilters({ ...filters, authors: selected });
+    setFilters({ ...filters, organizations: selected });
     setIsModalVisible(false);
   };
 
@@ -74,12 +74,12 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
   };
 
   const handleCloseModal = () => {
-    setSelected(filters.authors);
+    setSelected(filters.organizations);
     setIsModalVisible(false);
   };
 
   const handleSelectButtonPress = () => {
-    setSelected(filters.authors);
+    setSelected(filters.organizations);
     setIsModalVisible(true);
   };
 
@@ -98,21 +98,22 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
   };
 
   useEffect(() => {
-    if (!data?.interactionAuthors) return;
+    if (!data?.caseworkerOrganizations) return;
 
-    const { totalCount, results } = data.interactionAuthors;
+    const { totalCount, results } = data.caseworkerOrganizations;
 
-    const filteredAuthors = results
-      .filter((item) => item.id !== user?.id && item.firstName)
-      .map((item) => ({
-        id: item.id,
-        label: `${item.firstName} ${item.lastName}`,
-      }));
+    const filteredOrganizations = results.map((item) => ({
+      id: item.id,
+      label: `${item.name}`,
+    }));
 
     if (offset === 0) {
-      setAuthorsState(filteredAuthors);
+      setOrganizationsState(filteredOrganizations);
     } else {
-      setAuthorsState((prevAuthors) => [...prevAuthors, ...filteredAuthors]);
+      setOrganizationsState((prevOrganizations) => [
+        ...prevOrganizations,
+        ...filteredOrganizations,
+      ]);
     }
 
     setHasMore(offset + paginationLimit < totalCount);
@@ -123,8 +124,8 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
   return (
     <View>
       <SelectButton
-        defaultLabel="All Authors"
-        selected={filters.authors?.map((item) => item.label)}
+        defaultLabel="All Organizations"
+        selected={filters.organizations?.map((item) => item.label)}
         onPress={handleSelectButtonPress}
       />
 
@@ -145,15 +146,11 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
             <MultiSelect
               filterPlaceholder="Search"
               withFilter
-              title="Filter - Authors"
+              title="Filter - Organizations"
               search={search}
               onSearch={onSearch}
               onChange={(e: { id: string; label: string }[]) => setSelected(e)}
-              options={
-                search === ''
-                  ? [{ id: user.id, label: 'Me' }, ...authorsState]
-                  : [...authorsState]
-              }
+              options={[...organizationsState]}
               selected={selected}
               valueKey="id"
               labelKey="label"
