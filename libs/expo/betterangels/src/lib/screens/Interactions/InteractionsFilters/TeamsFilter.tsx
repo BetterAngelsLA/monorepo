@@ -11,8 +11,9 @@ import { enumDisplaySelahTeam } from '../../../static';
 import { Modal } from '../../../ui-components';
 
 type TFilters = {
-  teams: { id: SelahTeamEnum; label: string }[];
   authors: { id: string; label: string }[];
+  organizations: { id: string; label: string }[];
+  teams: { id: SelahTeamEnum; label: string }[];
 };
 
 interface ITeamFilterProps {
