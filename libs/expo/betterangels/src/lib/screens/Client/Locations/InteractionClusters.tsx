@@ -34,6 +34,23 @@ export function InteractionClusters<P extends IClusterGeoJson>(
     (i) => !i.properties.cluster
   ) as TClusterLeafPoint<P>[];
 
+  // const generateMarkers = useCallback((lat: number, long: number) => {
+  //   const markersArray = []
+
+  //   for (let i = 0; i < 50; i++) {
+  //     markersArray.push({
+  //       id: i,
+  //       latitude: getRandomLatitude(lat - 0.05, lat + 0.05),
+  //       longitude: getRandomLongitude(long - 0.05, long + 0.05),
+  //     })
+  //   }
+  //   setMarkers(markersArray)
+  // }, [])
+
+  // useEffect(() => {
+  //   generateMarkers(region.latitude, region.longitude);
+  // }, []);
+
   return (
     <>
       {clusterItems.map((cluster) => {

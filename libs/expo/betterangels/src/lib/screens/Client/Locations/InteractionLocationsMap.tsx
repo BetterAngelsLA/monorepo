@@ -77,6 +77,11 @@ export function InteractionLocationsMap(props: TProps) {
     [clusterManager, regionToBbox, regionToZoom]
   );
 
+  // const onRegionChangeComplete = (newRegion: Region) => {
+  //   setZoom(getZoomFromRegion(newRegion))
+  //   setRegion(newRegion)
+  // }
+
   if (loading) {
     return <LoadingView />;
   }
