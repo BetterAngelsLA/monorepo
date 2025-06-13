@@ -201,7 +201,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(returned_author["middleName"], "J.")
 
     @parametrize(
-        ("case_manager_labels, client_label, org_label, is_submitted, expected_results_count, returned_note_labels"),
+        ("case_manager_labels, client_label, org_labels, is_submitted, expected_results_count, returned_note_labels"),
         [
             # Filter by:
             # created by, client_label, and/or is_submitted
@@ -217,15 +217,23 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
             (["org_1_case_manager_2"], None, None, False, 1, ["note_2"]),  # CM 2 has one unsubmitted note
             (["org_1_case_manager_1"], "client_profile_2", None, None, 0, []),  # CM 1 has no notes for client 2
             # CM 1 has one unsubmitted note for client 1
-            (["org_1_case_manager_1"], "client_profile_1", None, False, 1, ["note"]),
-            (None, None, "org_2", True, 1, ["note_3"]),  # There is one submitted note from org 2
+            (["org_1_case_manager_1"], "client_profile_1", [], False, 1, ["note"]),
+            ([], None, ["org_2"], True, 1, ["note_3"]),  # There is one submitted note from org 2
+            (
+                None,
+                None,
+                ["org_1", "org_2"],
+                None,
+                3,
+                ["note", "note_2", "note_3"],
+            ),  # Orgs 1 and 2 have authored three notes
         ],
     )
     def test_notes_query_filter(
         self,
         case_manager_labels: Optional[list[str]],
         client_label: Optional[str],
-        org_label: Optional[str],
+        org_labels: Optional[str],
         is_submitted: Optional[bool],
         expected_results_count: int,
         returned_note_labels: list[str],
@@ -266,8 +274,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         if client_label:
             filters["clientProfile"] = getattr(self, client_label).pk
 
-        if org_label:
-            filters["organization"] = getattr(self, org_label).pk
+        if org_labels:
+            filters["organizations"] = [getattr(self, org_label).pk for org_label in org_labels]
 
         if isinstance(is_submitted, bool):
             filters["isSubmitted"] = is_submitted

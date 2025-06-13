@@ -988,11 +988,11 @@ input NoteFilter {
   clientProfile: ID
   createdBy: ID
   isSubmitted: Boolean
-  organization: ID
   AND: NoteFilter
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
+  organizations: [ID!]
   authors: [ID!]
   search: String
   teams: [SelahTeamEnum!]

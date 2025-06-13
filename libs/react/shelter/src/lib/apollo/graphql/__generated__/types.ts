@@ -1236,7 +1236,7 @@ export type NoteFilter = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
-  organization?: InputMaybe<Scalars['ID']['input']>;
+  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
