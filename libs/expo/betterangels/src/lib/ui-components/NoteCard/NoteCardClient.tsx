@@ -23,6 +23,7 @@ export default function NoteCardClient(props: INoteCardClientProps) {
         size="sm"
         accessibilityLabel={`client's profile photo`}
         accessibilityHint={`client's profile photo`}
+        imageUrl={clientProfile?.profilePhoto?.url}
       />
       <TextMedium size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
         {clientProfile?.firstName} {clientProfile?.lastName}
