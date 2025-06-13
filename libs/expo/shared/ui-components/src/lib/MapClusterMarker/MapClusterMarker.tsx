@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { Colors } from '@monorepo/expo/shared/static';
+import { StyleSheet, Text, View } from 'react-native';
 import { SIZES, variantStyleMap } from './constants';
 import { getContentAndSize } from './getContentAndSize';
 
@@ -95,3 +96,35 @@ export function MapClusterMarker(props: IMapClusterMarkerProps) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  outerCircle: {
+    borderRadius: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  innerCircle: {
+    borderRadius: 100,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  text: {
+    fontFamily: 'Poppins-SemiBold',
+    letterSpacing: -2,
+  },
+  house: {
+    position: 'absolute',
+    top: -5,
+    right: -10,
+    backgroundColor: Colors.WHITE,
+    borderRadius: 100,
+    borderWidth: 2,
+    borderColor: Colors.NEUTRAL_EXTRA_DARK,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

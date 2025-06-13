@@ -4,18 +4,14 @@ import {
   regionDeltaMap,
 } from '@monorepo/expo/shared/ui-components';
 import { Region } from 'react-native-maps';
-import { NotesQuery } from '../../../../apollo';
-
-type TInteraction = NonNullable<
-  NonNullable<NotesQuery['notes']>['results']
->[number];
+import { TNotesQueryInteraction } from '../../../../apollo';
 
 type TProps = {
-  interaction: TInteraction;
+  interaction: TNotesQueryInteraction;
   deltaSize?: RegionDeltaSize;
 };
 
-export function getMapRegion(props: TProps): Region | null {
+export function getInteractionsMapRegion(props: TProps): Region | null {
   const { interaction, deltaSize = 'XL' } = props;
 
   const point = interaction.location?.point;

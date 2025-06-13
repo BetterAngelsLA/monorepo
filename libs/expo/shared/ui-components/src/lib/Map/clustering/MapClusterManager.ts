@@ -7,9 +7,8 @@ import Supercluster, {
   PointFeature,
 } from 'supercluster';
 import { TRNMapView } from '../mapLib';
-import { TPointProperties } from '../types';
 
-export class MapClusterManager<P extends GeoJsonProperties = TPointProperties> {
+export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
   private clusterIndex: Supercluster<P>;
 
   constructor(options?: Options<P, AnyProps>) {

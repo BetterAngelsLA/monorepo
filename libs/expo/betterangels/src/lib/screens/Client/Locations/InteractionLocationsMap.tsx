@@ -1,23 +1,25 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import {
   ClusterMap,
+  ClusterOrPoint,
   LoadingView,
   MapClusterManager,
   MapClusterMarker,
   RegionDeltaSize,
-  defaultMapRegion,
-  regionDeltaMap,
+  regionToBbox,
+  regionToZoom,
 } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import type { PointFeature } from 'supercluster';
-import { Ordering } from '../../../apollo';
+import { Ordering, TNotesQueryInteraction } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import { useGetClientInteractionsWithLocation } from '../../../hooks/interactions/useGetClientInteractionsWithLocation';
-import { Marker, TMapView } from '../../../maps';
+import { TMapView } from '../../../maps';
 import { EmptyState } from './EmptyState';
-import { getMapRegion } from './utils/getMapRegion';
+import { InteractionClusters } from './InteractionClusters';
+import { getInteractionsMapRegion } from './utils/getInteractionsMapRegion';
 
 const MAP_DELTA_SIZE: RegionDeltaSize = '2XL';
 
@@ -25,12 +27,19 @@ type TProps = {
   clientProfileId: string;
 };
 
+// TNotesQueryInteraction
+
 export function InteractionLocationsMap(props: TProps) {
   const { clientProfileId } = props;
 
   const mapRef = useRef<TMapView | null>(null);
   const { showSnackbar } = useSnackbar();
-  const [clusters, setClusters] = useState<Array<any>>([]);
+  const [clusters, setClusters] = useState<
+    undefined | ClusterOrPoint<TNotesQueryInteraction>[]
+  >(undefined);
+  const [mapRegion, setMapRegion] = useState<Region | null | undefined>(
+    undefined
+  );
 
   // 1. Fetch interactions…
   const {
@@ -42,8 +51,30 @@ export function InteractionLocationsMap(props: TProps) {
     dateSort: Ordering.Desc,
   });
 
-  // 2. Turn them into GeoJSON Features
-  const pointFeatures = useMemo<PointFeature<{ id: string }>[]>(() => {
+  // set mapRegion
+  useEffect(() => {
+    // undefined mapRegion: component is mounting
+    if (interactionsWithLocation === undefined) {
+      return;
+    }
+
+    // null mapRegion: no interactions exist
+    if (!interactionsWithLocation.length) {
+      setMapRegion(null);
+
+      return;
+    }
+
+    const newRegion = getInteractionsMapRegion({
+      interaction: interactionsWithLocation[0],
+      deltaSize: MAP_DELTA_SIZE,
+    });
+
+    setMapRegion(newRegion);
+  }, [interactionsWithLocation]);
+
+  // 2) Build pointFeatures carrying the *full* interaction payload
+  const pointFeatures = useMemo<PointFeature<TNotesQueryInteraction>[]>(() => {
     if (!interactionsWithLocation) {
       return [];
     }
@@ -51,41 +82,34 @@ export function InteractionLocationsMap(props: TProps) {
     return interactionsWithLocation.map((i) => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: i.location!.point },
-      properties: { id: i.id },
+      properties: i,
     }));
   }, [interactionsWithLocation]);
 
   // 3. Create & load your cluster manager once
   const clusterManager = useMemo(() => {
-    const mgr = new MapClusterManager<{ id: string }>();
+    const mgr = new MapClusterManager<TNotesQueryInteraction>();
     mgr.load(pointFeatures);
 
     return mgr;
   }, [pointFeatures]);
 
-  // Utility to convert Region → bbox
-  const regionToBbox = (r: Region): [number, number, number, number] => [
-    r.longitude - r.longitudeDelta / 2,
-    r.latitude - r.latitudeDelta / 2,
-    r.longitude + r.longitudeDelta / 2,
-    r.latitude + r.latitudeDelta / 2,
-  ];
-
-  // Rough conversion of latitudeDelta → zoom
-  // (supercluster zoom ~ worldWidth / lonDelta = 2^zoom)
-  const regionToZoom = (r: Region) =>
-    Math.round(Math.log2(360 / r.longitudeDelta));
-
   const onRegionChangeComplete = useCallback(
-    (r: Region) => {
-      const bbox = regionToBbox(r);
-      const zoom = regionToZoom(r);
+    (region: Region) => {
+      const bbox = regionToBbox(region);
+      const zoom = regionToZoom(region);
       const next = clusterManager.getClusters(bbox, zoom);
 
       setClusters(next);
     },
-    [clusterManager]
+    [clusterManager, regionToBbox, regionToZoom]
   );
+
+  useEffect(() => {
+    if (mapRegion) {
+      onRegionChangeComplete(mapRegion);
+    }
+  }, [mapRegion, onRegionChangeComplete]);
 
   if (loading) {
     return <LoadingView />;
@@ -101,23 +125,17 @@ export function InteractionLocationsMap(props: TProps) {
   }
 
   // unless loading, render nothing until interactions are defined
-  if (interactionsWithLocation === undefined) {
+  if (mapRegion === undefined) {
     return null;
   }
 
-  if (!interactionsWithLocation?.length) {
+  if (!mapRegion) {
     return <EmptyState />;
   }
 
-  const mapRegion = getMapRegion({
-    interaction: interactionsWithLocation[0],
-    deltaSize: MAP_DELTA_SIZE,
-  });
-
-  const initialRegion = mapRegion || {
-    ...defaultMapRegion,
-    ...regionDeltaMap[MAP_DELTA_SIZE],
-  };
+  if (!clusters?.length) {
+    return null;
+  }
 
   return (
     <ClusterMap
@@ -125,10 +143,25 @@ export function InteractionLocationsMap(props: TProps) {
       // enableUserLocation={true}
       style={styles.map}
       provider="google"
-      initialRegion={initialRegion}
+      initialRegion={mapRegion}
       onRegionChangeComplete={onRegionChangeComplete}
     >
-      {clusters.map((feat) => {
+      <InteractionClusters
+        clusterManager={clusterManager}
+        mapRef={mapRef}
+        clusters={clusters}
+        clusterRenderer={(cluster) => {
+          return (
+            <MapClusterMarker itemCount={cluster.properties.point_count} />
+          );
+        }}
+        pointRenderer={() => {
+          return <LocationPinIcon size="2xl" />;
+        }}
+      />
+      {/* <InteractionClusters /> */}
+
+      {/* {clusters.map((feat) => {
         if (feat.properties.cluster) {
           const { cluster_id, point_count } = feat.properties;
           const [longitude, latitude] = feat.geometry.coordinates;
@@ -159,7 +192,7 @@ export function InteractionLocationsMap(props: TProps) {
             </Marker>
           );
         }
-      })}
+      })} */}
     </ClusterMap>
   );
 }
