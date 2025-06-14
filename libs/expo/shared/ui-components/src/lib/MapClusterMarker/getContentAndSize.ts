@@ -1,8 +1,7 @@
 import { TMapClusterMarkerSize } from './MapClusterMarker';
 
 const DEFAULT_SIZE: TMapClusterMarkerSize = 'S';
-// const BREAKPOINT_S = 10;
-const BREAKPOINT_S = 5;
+const BREAKPOINT_S = 10;
 const BREAKPOINT_M = 30;
 const BREAKPOINT_PLUS = 100;
 

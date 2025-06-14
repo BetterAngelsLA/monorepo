@@ -1,4 +1,5 @@
 import { Colors } from '@monorepo/expo/shared/static';
+import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SIZES, variantStyleMap } from './constants';
 import { getContentAndSize } from './getContentAndSize';
@@ -16,10 +17,10 @@ interface IMapClusterMarkerProps {
   hasHouse?: boolean;
 }
 
-export function MapClusterMarker(props: IMapClusterMarkerProps) {
+function baseMapClusterMarker(props: IMapClusterMarkerProps) {
   const {
     textColor,
-    size,
+    size, // no default here; if undefined, getContentAndSize() will know what to do.
     variant = 'primary',
     text,
     itemCount,
@@ -33,11 +34,15 @@ export function MapClusterMarker(props: IMapClusterMarkerProps) {
     textColor: variantTextColor,
   } = variantStyleMap[variant];
 
-  const { content, markerSize } = getContentAndSize({
-    text,
-    itemCount,
-    size,
-  });
+  const { content, markerSize } = useMemo(
+    () =>
+      getContentAndSize({
+        text,
+        itemCount,
+        size,
+      }),
+    [text, itemCount, size]
+  );
 
   return (
     <View
@@ -128,3 +133,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+export const MapClusterMarker = memo(baseMapClusterMarker);
