@@ -6,6 +6,7 @@ import {
   LoadingView,
   MapClusterMarker,
   RegionDeltaSize,
+  TClusterPoint,
   regionToBbox,
   regionToZoom,
   useMapClusterManager,
@@ -91,11 +92,26 @@ export function InteractionLocationsMap(props: TProps) {
       const zoom = regionToZoom(region);
       const next = clusterManager.getClusters(bbox, zoom);
 
-      console.log('################## onRegionChangeComplete NEXT');
-
       setClusters(next);
     },
     [clusterManager, regionToBbox, regionToZoom]
+  );
+
+  const renderClusterIconFn = useMemo(
+    () => (cluster: TClusterPoint) =>
+      <MapClusterMarker itemCount={cluster.properties.point_count} />,
+    []
+  );
+
+  const renderPointIconFn = useMemo(
+    () => () => <MapPinIcon size="M" variant="primary" />,
+    []
+  );
+
+  const handleClusterPressCb = useCallback(
+    (cluster: TClusterPoint) =>
+      clusterManager.zoomToCluster(cluster.properties.cluster_id, mapRef),
+    [clusterManager, mapRef]
   );
 
   if (loading) {
@@ -141,17 +157,9 @@ export function InteractionLocationsMap(props: TProps) {
       <InteractionClusters
         mapRef={mapRef}
         clusters={clusters}
-        clusterRenderer={(cluster) => {
-          return (
-            <MapClusterMarker itemCount={cluster.properties.point_count} />
-          );
-        }}
-        onClusterPress={(cluster) =>
-          clusterManager.zoomToCluster(cluster.properties.cluster_id, mapRef)
-        }
-        pointRenderer={() => {
-          return <MapPinIcon size="M" variant="primary" />;
-        }}
+        clusterRenderer={renderClusterIconFn}
+        pointRenderer={renderPointIconFn}
+        onClusterPress={handleClusterPressCb}
       />
     </ClusterMap>
   );
