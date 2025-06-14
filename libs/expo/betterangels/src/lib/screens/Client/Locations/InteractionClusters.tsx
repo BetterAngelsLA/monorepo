@@ -34,48 +34,6 @@ export function InteractionClusters<P extends IClusterGeoJson>(
     (i) => !i.properties.cluster
   ) as TClusterLeafPoint<P>[];
 
-  // const generateMarkers = useCallback((lat: number, long: number) => {
-  //   const markersArray = []
-
-  //   for (let i = 0; i < 50; i++) {
-  //     markersArray.push({
-  //       id: i,
-  //       latitude: getRandomLatitude(lat - 0.05, lat + 0.05),
-  //       longitude: getRandomLongitude(long - 0.05, long + 0.05),
-  //     })
-  //   }
-  //   setMarkers(markersArray)
-  // }, [])
-
-  // useEffect(() => {
-  //   generateMarkers(region.latitude, region.longitude);
-  // }, []);
-
-  // 4 · Memoise InteractionClusters and pure marker icons
-  // const clusterIcon = useMemo(
-  //   () => (c: TClusterPoint) =>
-  //     <MapClusterMarker itemCount={c.properties.point_count} />,
-  //   []
-  // );
-  // const pointIcon = useMemo(
-  //   () => () => <MapPinIcon size="M" variant="primary" />,
-  //   []
-  // );
-
-  // and wrap the list component:
-
-  // const MemoClusters = React.memo(InteractionClusters);
-  // …
-  // <MemoClusters
-  //   mapRef={mapRef}
-  //   clusters={clusters}
-  //   clusterRenderer={clusterIcon}
-  //   pointRenderer={pointIcon}
-  //   onClusterPress={(c) =>
-  //     clusterManager.zoomToCluster(c.properties.cluster_id, mapRef)
-  //   }
-  // />
-
   return (
     <>
       {clusterItems.map((cluster) => {
