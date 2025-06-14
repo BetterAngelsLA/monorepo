@@ -1,4 +1,4 @@
-import Maps from './map';
+import Maps from './maps';
 
 import RNMapView from 'react-native-maps';
 

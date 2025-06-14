@@ -1,5 +1,4 @@
 import {
-  TMapView,
   TPlaceLatLng,
   TPlacesPrediction,
   getPlaceAutocomplete,
@@ -14,6 +13,7 @@ import {
   IconButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { TMapView } from '@monorepo/maps';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';

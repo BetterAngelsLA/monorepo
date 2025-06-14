@@ -1,18 +1,33 @@
-import { LocationPinIcon } from '@monorepo/expo/shared/icons';
+import { MapPinIcon } from '@monorepo/expo/shared/icons';
 import {
+  ClusterMap,
+  ClusterOrPoint,
+  IClusterGeoJson,
   LoadingView,
-  MapView,
-  coordsToRegion,
-  defaultMapRegion,
-  regionDeltaMap,
+  MapClusterMarker,
+  RegionDeltaSize,
+  TClusterPoint,
+  regionToBbox,
+  regionToZoom,
+  useMapClusterManager,
 } from '@monorepo/expo/shared/ui-components';
+import { TMapView } from '@monorepo/maps';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
-import { NotesQuery, Ordering } from '../../../apollo';
+import { PointFeature } from 'supercluster';
+import { Ordering } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import { useGetClientInteractionsWithLocation } from '../../../hooks/interactions/useGetClientInteractionsWithLocation';
-import { Marker } from '../../../maps';
 import { EmptyState } from './EmptyState';
+import { InteractionClusters } from './InteractionClusters';
+import { getInteractionsMapRegion } from './utils/getInteractionsMapRegion';
+
+const MAP_DELTA_SIZE: RegionDeltaSize = 'XL';
+
+interface TClusterInteraction extends IClusterGeoJson {
+  interactedAt: Date;
+}
 
 type TProps = {
   clientProfileId: string;
@@ -21,7 +36,12 @@ type TProps = {
 export function InteractionLocationsMap(props: TProps) {
   const { clientProfileId } = props;
 
+  const mapRef = useRef<TMapView | null>(null);
   const { showSnackbar } = useSnackbar();
+  const [clusters, setClusters] = useState<
+    ClusterOrPoint<TClusterInteraction>[]
+  >([]);
+
   const {
     interactions: interactionsWithLocation,
     loading,
@@ -31,6 +51,73 @@ export function InteractionLocationsMap(props: TProps) {
     dateSort: Ordering.Desc,
   });
 
+  const pointFeatures = useMemo<PointFeature<TClusterInteraction>[]>(() => {
+    if (!interactionsWithLocation) {
+      return [];
+    }
+
+    return interactionsWithLocation.map((i) => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: i.location!.point },
+      properties: {
+        id: i.id,
+        interactedAt: new Date(i.interactedAt),
+      },
+    }));
+  }, [interactionsWithLocation]);
+
+  // Hash pointFeature Interaction IDs to only run
+  // clusterManager.load(pointFeatures) when pointFeatures change
+  const pointFeaturesHash = useMemo(
+    () =>
+      pointFeatures
+        .map((f) => f.properties.id)
+        .sort()
+        .join('|'),
+    [pointFeatures]
+  );
+
+  const clusterManager = useMapClusterManager<TClusterInteraction>();
+
+  useEffect(() => {
+    if (pointFeatures.length === 0) return;
+
+    console.log('############## LOAD POINT FEATURES: ', Date.now());
+    clusterManager.load(pointFeatures);
+  }, [pointFeaturesHash]);
+
+  const onRegionChangeComplete = useCallback(
+    (region: Region) => {
+      const bbox = regionToBbox(region);
+      const zoom = regionToZoom(region);
+      const next = clusterManager.getClusters(bbox, zoom);
+
+      setClusters(next);
+    },
+    [clusterManager, regionToBbox, regionToZoom]
+  );
+
+  const renderClusterIconFn = useMemo(
+    () => (cluster: TClusterPoint) =>
+      <MapClusterMarker itemCount={cluster.properties.point_count} />,
+    []
+  );
+
+  const renderPointIconFn = useMemo(
+    () => () => <MapPinIcon size="M" variant="primary" />,
+    []
+  );
+
+  const handleClusterPressCb = useCallback(
+    (cluster: TClusterPoint) =>
+      clusterManager.zoomToCluster(cluster.properties.cluster_id, mapRef),
+    [clusterManager, mapRef]
+  );
+
+  if (loading) {
+    return <LoadingView />;
+  }
+
   if (error) {
     showSnackbar({
       message: 'Sorry, we could not load the interactions. Please try again.',
@@ -38,10 +125,6 @@ export function InteractionLocationsMap(props: TProps) {
     });
 
     return null;
-  }
-
-  if (loading) {
-    return <LoadingView />;
   }
 
   // unless loading, render nothing until interactions are defined
@@ -53,33 +136,32 @@ export function InteractionLocationsMap(props: TProps) {
     return <EmptyState />;
   }
 
-  const mapRegion = getMapRegion(interactionsWithLocation[0]);
+  const mapRegion = getInteractionsMapRegion({
+    interaction: interactionsWithLocation[0],
+    deltaSize: MAP_DELTA_SIZE,
+  });
+
+  if (!mapRegion) {
+    return null;
+  }
 
   return (
-    <MapView
+    <ClusterMap
+      mapRef={mapRef}
       enableUserLocation={true}
       style={styles.map}
       provider="google"
-      initialRegion={mapRegion || defaultMapRegion}
+      initialRegion={mapRegion}
+      onRegionChangeComplete={onRegionChangeComplete}
     >
-      {interactionsWithLocation.map((interaction) => {
-        const { id, location } = interaction;
-        const [longitude, latitude] = location!.point;
-
-        return (
-          <Marker
-            key={id}
-            tracksViewChanges={false}
-            coordinate={{
-              latitude,
-              longitude,
-            }}
-          >
-            <LocationPinIcon size="2xl" />
-          </Marker>
-        );
-      })}
-    </MapView>
+      <InteractionClusters
+        mapRef={mapRef}
+        clusters={clusters}
+        clusterRenderer={renderClusterIconFn}
+        pointRenderer={renderPointIconFn}
+        onClusterPress={handleClusterPressCb}
+      />
+    </ClusterMap>
   );
 }
 
@@ -88,23 +170,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-
-type TInteraction = NonNullable<
-  NonNullable<NotesQuery['notes']>['results']
->[number];
-
-function getMapRegion(interaction: TInteraction): Region | null {
-  const point = interaction.location?.point;
-
-  if (!point) {
-    return null;
-  }
-
-  const [longitude, latitude] = point;
-
-  return coordsToRegion({
-    latitude,
-    longitude,
-    ...regionDeltaMap.L,
-  });
-}

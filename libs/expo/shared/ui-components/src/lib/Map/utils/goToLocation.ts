@@ -1,12 +1,12 @@
+import { TMapView } from '@monorepo/maps';
 import * as Location from 'expo-location';
 import { RefObject } from 'react';
 import { Region } from 'react-native-maps';
 import { defaultAnimationDuration, defaultRegionDelta } from '../constants';
-import { TRNMapView } from '../mapLib';
 import { TMapDeltaLatLng } from '../types';
 
 type TProps = {
-  mapRef: RefObject<TRNMapView | null>;
+  mapRef: RefObject<TMapView | null>;
   coordinates: Location.LocationObjectCoords;
   regionDelta?: TMapDeltaLatLng;
   duration?: number;

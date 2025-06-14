@@ -1,23 +1,27 @@
 import { MapView, TMapView } from '@monorepo/maps';
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode, RefObject, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { Region } from 'react-native-maps';
+import { Details, Region } from 'react-native-maps';
 import { defaultMapRegion } from './constants';
 import { MapLocateMeBtn } from './mapUi/MapLocateMeBtn';
 
 type TMapProps = {
+  mapRef: RefObject<TMapView | null>;
   provider?: 'google';
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
   mapStyle?: StyleProp<ViewStyle>;
   enableUserLocation?: boolean;
   children?: ReactNode;
+  onRegionChangeComplete?: (region: Region, details: Details) => void;
 };
 
-export function Map(props: TMapProps) {
+export function ClusterMap(props: TMapProps) {
   const {
+    mapRef,
     provider,
     initialRegion,
+    onRegionChangeComplete,
     style,
     mapStyle,
     enableUserLocation,
@@ -25,7 +29,10 @@ export function Map(props: TMapProps) {
   } = props;
 
   const [_mapReady, setMapReady] = useState(false);
-  const mapRef = useRef<TMapView>(null);
+
+  if (!mapRef) {
+    return null;
+  }
 
   return (
     <View style={[styles.wrapper, style]}>
@@ -40,6 +47,7 @@ export function Map(props: TMapProps) {
         mapType="standard"
         initialRegion={initialRegion || defaultMapRegion}
         onMapReady={() => setMapReady(true)}
+        onRegionChangeComplete={onRegionChangeComplete}
         style={[styles.map, mapStyle]}
       >
         {children}

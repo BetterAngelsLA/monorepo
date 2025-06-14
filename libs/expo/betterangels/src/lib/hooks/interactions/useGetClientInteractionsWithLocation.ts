@@ -1,8 +1,9 @@
-import { NoteOrder, NotesQuery, Ordering, useNotesQuery } from '../../apollo';
-
-type TInteraction = NonNullable<
-  NonNullable<NotesQuery['notes']>['results']
->[number];
+import {
+  NoteOrder,
+  Ordering,
+  TNotesQueryInteraction,
+  useNotesQuery,
+} from '../../apollo';
 
 const defaultSortOrder: NoteOrder = {
   interactedAt: Ordering.Desc,
@@ -32,7 +33,7 @@ export function useGetClientInteractionsWithLocation(props: TProps) {
     nextFetchPolicy: 'cache-first',
   });
 
-  let interactions: TInteraction[] | undefined = undefined;
+  let interactions: TNotesQueryInteraction[] | undefined = undefined;
 
   if (data) {
     interactions =
