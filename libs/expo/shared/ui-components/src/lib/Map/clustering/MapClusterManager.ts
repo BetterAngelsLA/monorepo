@@ -1,3 +1,4 @@
+import { TMapView } from '@monorepo/maps';
 import { GeoJsonProperties } from 'geojson';
 import { RefObject } from 'react';
 import Supercluster, {
@@ -5,7 +6,6 @@ import Supercluster, {
   ClusterFeature,
   PointFeature,
 } from 'supercluster';
-import { TRNMapView } from '../mapLib';
 
 export interface IMapClusterManager {
   // px around each point to merge into a cluster
@@ -97,7 +97,7 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
 
   zoomToCluster(
     clusterId: number,
-    mapRef: RefObject<TRNMapView | null>,
+    mapRef: RefObject<TMapView | null>,
     options?: {
       paddingMultiplier?: number;
       fallbackDelta?: number;

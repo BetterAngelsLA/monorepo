@@ -4,8 +4,8 @@ import {
   TClusterLeafPoint,
   TClusterPoint,
 } from '@monorepo/expo/shared/ui-components';
+import { Marker, TMapView } from '@monorepo/maps';
 import { RefObject } from 'react';
-import { Marker, TMapView } from '../../../maps';
 
 type TProps<P extends IClusterGeoJson = IClusterGeoJson> = {
   mapRef: RefObject<TMapView | null>;

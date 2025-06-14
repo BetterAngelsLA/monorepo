@@ -1,9 +1,9 @@
-import { TRNMapView } from '@monorepo/expo/shared/ui-components';
+import { TMapView } from '@monorepo/maps';
 import { Region } from 'react-native-maps';
 import Supercluster from 'supercluster';
 
 export function zoomToCluster(
-  mapRef: React.RefObject<TRNMapView | null>,
+  mapRef: React.RefObject<TMapView | null>,
   supercluster: Supercluster<any>,
   clusterId: number,
   options?: {

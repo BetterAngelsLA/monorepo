@@ -1,12 +1,12 @@
+import { MapView, TMapView } from '@monorepo/maps';
 import { ReactNode, RefObject, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Details, Region } from 'react-native-maps';
 import { defaultMapRegion } from './constants';
-import { RNMapView, TRNMapView } from './mapLib';
 import { MapLocateMeBtn } from './mapUi/MapLocateMeBtn';
 
 type TMapProps = {
-  mapRef: RefObject<TRNMapView | null>;
+  mapRef: RefObject<TMapView | null>;
   provider?: 'google';
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
@@ -36,7 +36,7 @@ export function ClusterMap(props: TMapProps) {
 
   return (
     <View style={[styles.wrapper, style]}>
-      <RNMapView
+      <MapView
         ref={mapRef}
         provider={provider}
         showsUserLocation={!!enableUserLocation}
@@ -51,7 +51,7 @@ export function ClusterMap(props: TMapProps) {
         style={[styles.map, mapStyle]}
       >
         {children}
-      </RNMapView>
+      </MapView>
 
       {!!enableUserLocation && <MapLocateMeBtn mapRef={mapRef} />}
     </View>

@@ -1,11 +1,11 @@
+import { TMapView } from '@monorepo/maps';
 import { RefObject } from 'react';
-import { TRNMapView } from '../mapLib';
 import { TMapDeltaLatLng } from '../types';
 import { getUserLocation } from './getUserLocation';
 import { goToLocation } from './goToLocation';
 
 type TProps = {
-  mapRef: RefObject<TRNMapView | null>;
+  mapRef: RefObject<TMapView | null>;
   regionDelta?: TMapDeltaLatLng;
   duration?: number;
 };

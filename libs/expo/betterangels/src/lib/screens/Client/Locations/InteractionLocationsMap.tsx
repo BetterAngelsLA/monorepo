@@ -11,6 +11,7 @@ import {
   regionToZoom,
   useMapClusterManager,
 } from '@monorepo/expo/shared/ui-components';
+import { TMapView } from '@monorepo/maps';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
@@ -18,7 +19,6 @@ import { PointFeature } from 'supercluster';
 import { Ordering } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import { useGetClientInteractionsWithLocation } from '../../../hooks/interactions/useGetClientInteractionsWithLocation';
-import { TMapView } from '../../../maps';
 import { EmptyState } from './EmptyState';
 import { InteractionClusters } from './InteractionClusters';
 import { getInteractionsMapRegion } from './utils/getInteractionsMapRegion';

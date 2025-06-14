@@ -24,10 +24,12 @@
       ],
       "@monorepo/expo/shared/icons": ["libs/expo/shared/icons/src/index.ts"],
       "@monorepo/expo/shared/static": ["libs/expo/shared/static/src/index.ts"],
+
       "@monorepo/expo/shared/ui-components": [
         "libs/expo/shared/ui-components/src/index.ts"
       ],
       "@monorepo/expo/shared/utils": ["libs/expo/shared/utils/src/index.ts"],
+      "@monorepo/maps": ["libs/expo/maps/src/index.ts"],
       "@monorepo/react/components": ["libs/react/components/src/index.ts"],
       "@monorepo/react/icons": ["libs/react/icons/src/index.ts"],
       "@monorepo/react/shelter": ["libs/react/shelter/src/index.ts"]
