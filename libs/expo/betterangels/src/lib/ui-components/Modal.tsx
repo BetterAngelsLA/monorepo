@@ -15,6 +15,7 @@ interface IModalProps {
   height?: DimensionValue;
   children: ReactNode;
   mt?: number;
+  propogateSwipe?: boolean;
 }
 
 export default function Modal(props: IModalProps) {
@@ -28,6 +29,7 @@ export default function Modal(props: IModalProps) {
     ml = 0,
     height = 'auto',
     mt,
+    propogateSwipe = false,
   } = props;
 
   const insets = useSafeAreaInsets();
@@ -46,11 +48,13 @@ export default function Modal(props: IModalProps) {
       backdropOpacity={opacity}
       isVisible={isModalVisible}
       onBackdropPress={closeModal}
+      onSwipeComplete={closeModal}
       useNativeDriverForBackdrop={true}
+      swipeDirection={vertical ? ['down'] : ['right']}
+      propagateSwipe={propogateSwipe}
     >
       <View
         style={{
-          flex: 1,
           borderTopLeftRadius: Radiuses.xs,
           borderTopRightRadius: Radiuses.xs,
           paddingBottom: 35 + bottomOffset,
@@ -60,6 +64,20 @@ export default function Modal(props: IModalProps) {
           marginTop: mt,
         }}
       >
+        {propogateSwipe && (
+          <View
+            style={{
+              position: 'absolute',
+              left: '50%',
+              transform: [{ translateX: -27 }],
+              top: Spacings.xs,
+              width: 54,
+              height: 5,
+              borderRadius: 4,
+              backgroundColor: Colors.NEUTRAL_LIGHT,
+            }}
+          />
+        )}
         {closeButton && (
           <Pressable
             style={{ marginLeft: 'auto', marginRight: Spacings.md }}
