@@ -1,12 +1,11 @@
 import { RefObject } from 'react';
 import { StyleSheet } from 'react-native';
 import LocateMeButton from '../../LocateMeButton';
-import { TRNMapView } from '../mapLib';
-import { TMapDeltaLatLng } from '../types';
+import { TMapDeltaLatLng, TMapView } from '../types';
 import { goToUserLocation } from '../utils/goToUserLocation';
 
 type TProps = {
-  mapRef: RefObject<TRNMapView | null>;
+  mapRef: RefObject<TMapView | null>;
   regionDelta?: TMapDeltaLatLng;
   duration?: number;
 };

@@ -1,7 +1,7 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import {
   LoadingView,
-  MapView,
+  MapViewport,
   coordsToRegion,
   defaultMapRegion,
   regionDeltaMap,
@@ -56,7 +56,7 @@ export function InteractionLocationsMap(props: TProps) {
   const mapRegion = getMapRegion(interactionsWithLocation[0]);
 
   return (
-    <MapView
+    <MapViewport
       enableUserLocation={true}
       style={styles.map}
       provider="google"
@@ -79,7 +79,7 @@ export function InteractionLocationsMap(props: TProps) {
           </Marker>
         );
       })}
-    </MapView>
+    </MapViewport>
   );
 }
 

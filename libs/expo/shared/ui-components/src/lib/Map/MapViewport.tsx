@@ -1,9 +1,9 @@
 import { ReactNode, useRef, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { Region } from 'react-native-maps';
+import MapView, { Region } from 'react-native-maps';
 import { defaultMapRegion } from './constants';
-import { RNMapView, TRNMapView } from './mapLib';
 import { MapLocateMeBtn } from './mapUi/MapLocateMeBtn';
+import { TMapView } from './types';
 
 type TMapProps = {
   provider?: 'google';
@@ -14,7 +14,8 @@ type TMapProps = {
   children?: ReactNode;
 };
 
-export function MapView(props: TMapProps) {
+// Not named `Map` as it clashes with JS Map constructor
+export function MapViewport(props: TMapProps) {
   const {
     provider,
     initialRegion,
@@ -25,11 +26,11 @@ export function MapView(props: TMapProps) {
   } = props;
 
   const [_mapReady, setMapReady] = useState(false);
-  const mapRef = useRef<TRNMapView>(null);
+  const mapRef = useRef<TMapView>(null);
 
   return (
     <View style={[styles.wrapper, style]}>
-      <RNMapView
+      <MapView
         ref={mapRef}
         provider={provider}
         showsUserLocation={!!enableUserLocation}
@@ -43,7 +44,7 @@ export function MapView(props: TMapProps) {
         style={[styles.map, mapStyle]}
       >
         {children}
-      </RNMapView>
+      </MapView>
 
       {!!enableUserLocation && <MapLocateMeBtn mapRef={mapRef} />}
     </View>
