@@ -1,4 +1,3 @@
-# notes/decorators.py
 from typing import Dict, cast
 
 import pghistory
