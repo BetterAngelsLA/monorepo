@@ -1,3 +1,4 @@
+# notes/decorators.py
 from typing import Dict, cast
 
 import pghistory
@@ -122,8 +123,17 @@ class Mutation:
     @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[NotePermissions.CHANGE])])
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
         with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
+            user = get_current_user(info)
             note_data = asdict(data)
-            note = Note.objects.get(id=data.id)
+            try:
+                note = filter_for_user(
+                    Note.objects.all(),
+                    user,
+                    [NotePermissions.CHANGE],
+                ).get(id=data.id)
+            except Note.DoesNotExist:
+                raise PermissionError("You don't have permission to modify this note.")
+
             note = resolvers.update(
                 info,
                 note,

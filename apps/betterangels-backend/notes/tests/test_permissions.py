@@ -92,8 +92,14 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     def test_update_note_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
+        note_id = self.note["id"]
+        original = Note.objects.get(pk=note_id)
+        orig_purpose = original.purpose
+        orig_public = original.public_details
+        orig_submitted = original.is_submitted
+
         variables = {
-            "id": self.note["id"],
+            "id": note_id,
             "purpose": "Updated Note",
             "publicDetails": "Updated content",
             "isSubmitted": False,
@@ -102,15 +108,18 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateNote"]["id"])
+            # On success, confirm DB was updated
+            updated = Note.objects.get(pk=note_id)
+            self.assertEqual(updated.purpose, "Updated Note")
+            self.assertEqual(updated.public_details, "Updated content")
+            self.assertFalse(updated.is_submitted)
         else:
-            self.assertEqual(
-                response["data"]["updateNote"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "updateNote",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
+            self.assertEqual(response["errors"][0]["message"], "You don't have permission to modify this note.")
+            # Confirm the DB object was NOT changed
+            still = Note.objects.get(pk=note_id)
+            self.assertEqual(still.purpose, orig_purpose)
+            self.assertEqual(still.public_details, orig_public)
+            self.assertEqual(still.is_submitted, orig_submitted)
 
     @parametrize(
         "has_note_permissions, has_task_permissions, should_succeed",
