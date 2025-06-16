@@ -7,7 +7,7 @@ import {
   FeatureFlagControlled,
   FeatureFlags,
   KeyboardToolbarProvider,
-  ServicesModalProvider,
+  ModalScreenProvider,
   SnackbarProvider,
   useNewRelic,
   UserProvider,
@@ -49,7 +49,7 @@ export default function RootLayout() {
             <KeyboardToolbarProvider>
               <UserProvider>
                 <SnackbarProvider>
-                  <ServicesModalProvider>
+                  <ModalScreenProvider>
                     <StatusBar style="light" />
                     <FeatureFlagControlled
                       flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
@@ -113,7 +113,7 @@ export default function RootLayout() {
                         options={{ headerShown: false }}
                       />
                     </Stack>
-                  </ServicesModalProvider>
+                  </ModalScreenProvider>
                 </SnackbarProvider>
               </UserProvider>
             </KeyboardToolbarProvider>

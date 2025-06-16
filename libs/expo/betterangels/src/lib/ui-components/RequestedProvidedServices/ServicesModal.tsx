@@ -242,7 +242,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         marginTop: 0,
       }}
     >
-      <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, marginBottom: 8 }}>
+      {/* <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, marginBottom: 8 }}>
         <Pressable
           accessible
           accessibilityHint="closes the modal"
@@ -252,7 +252,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         >
           <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
         </Pressable>
-      </View>
+      </View> */}
       <KeyboardAwareScrollView
         style={{
           flex: 1,
