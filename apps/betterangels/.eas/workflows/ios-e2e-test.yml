@@ -1,8 +1,15 @@
 name: e2e-test-ios
 
 jobs:
+  wait:
+    type: get-build
+    params:
+      runtime_version: ${{ env.RUNTIME_VERSION }}
+      platform: ios
+
   maestro_test:
+    needs: [wait]
     type: maestro
     params:
-      build_id: ${{ env.BUILD_ID }}
+      build_id: ${{ needs.wait.outputs.build_id }}
       flow_path: ['.maestro/ios/landing.yml']

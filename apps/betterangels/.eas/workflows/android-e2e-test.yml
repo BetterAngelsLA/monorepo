@@ -1,8 +1,16 @@
 name: e2e-test-android
 
 jobs:
+  wait:
+    type: get-build
+    params:
+      runtime_version: ${{ env.RUNTIME_VERSION }}
+      platform: android
+      channel: production
+
   maestro_test:
+    needs: [wait]
     type: maestro
     params:
-      build_id: ${{ env.BUILD_ID }}
+      build_id: ${{ needs.wait.outputs.build_id }}
       flow_path: ['.maestro/android/landing.yml']
