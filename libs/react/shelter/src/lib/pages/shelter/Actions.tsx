@@ -1,15 +1,22 @@
+import { openInMaps } from '@monorepo/react/components';
 import {
   CallRegularIcon,
   LocationIcon,
   ShareIcon,
 } from '@monorepo/react/icons';
-
-type TProps = {
-  shelterName: string;
-  phone?: string | null;
+type TShelterLocation = {
+  place: string;
+  latitude: number;
+  longitude: number;
 };
 
-export default function Actions({ phone, shelterName }: TProps) {
+type TProps = {
+  location?: TShelterLocation | null;
+  phone?: string | null;
+  shelterName: string;
+};
+
+export default function Actions({ location, phone, shelterName }: TProps) {
   const handleShare = async () => {
     const shareData = {
       title: shelterName,
@@ -43,10 +50,18 @@ export default function Actions({ phone, shelterName }: TProps) {
           <span>Call</span>
         </div>
       </a>
-      <div className="flex flex-col items-center">
+
+      <button
+        disabled={!location}
+        onClick={() =>
+          openInMaps(location?.latitude, location?.longitude, location?.place)
+        }
+        className={`flex flex-col items-center ${!location && 'opacity-50'}`}
+      >
         <LocationIcon className="w-6 h-6 fill-primary-20" />
         <span>Directions</span>
-      </div>
+      </button>
+
       <button onClick={handleShare} className="flex flex-col items-center">
         <ShareIcon className="w-6 h-6 fill-primary-20" />
         <span>Share</span>
