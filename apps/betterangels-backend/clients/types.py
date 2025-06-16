@@ -97,7 +97,7 @@ class ClientProfileFilter:
         if value is None:
             return queryset, Q()
 
-        search_terms = value.split(" ")
+        search_terms = value.split()
 
         searchable_fields = [
             "california_id",

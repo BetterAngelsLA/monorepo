@@ -173,7 +173,7 @@ class NoteFilter:
         if value is None:
             return queryset, Q()
 
-        search_terms = value.split(" ")
+        search_terms = value.split()
         query = Q()
 
         for term in search_terms:
@@ -288,7 +288,7 @@ class InteractionAuthorFilter:
         if value is None:
             return queryset, Q()
 
-        search_terms = value.split(" ")
+        search_terms = value.split()
         query = Q()
 
         for term in search_terms:
