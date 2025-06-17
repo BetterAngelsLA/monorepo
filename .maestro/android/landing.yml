@@ -1,8 +1,9 @@
 appId: la.betterangels.dev.app
 platform: android
 ---
-- launchApp
-- openLink: la.betterangels.dev.app://expo-development-client/?url=http://localhost:8081
+- runScript:
+    script: |
+      adb shell am start -a android.intent.action.VIEW -d "exp+betterangels://expo-development-client/?url=https://u.expo.dev/$MAESTRO_ENV_PROJECT_ID/group/$MAESTRO_ENV_GROUP_ID?platform=android&dev=true&minify=false&disableOnboarding=1"
 - runFlow:
     when:
       visible: 'Open'

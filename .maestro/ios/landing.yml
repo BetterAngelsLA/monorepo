@@ -3,8 +3,7 @@ platform: ios
 ---
 - runScript:
     script: |
-      echo "exp+betterangels://expo-development-client/?url=https://u.expo.dev/$MAESTRO_ENV_project_id/group/$MAESTRO_ENV_group_id?platform=ios&dev=true&minify=false&disableOnboarding=1" > deeplink.txt
-- openLink: $(cat deeplink.txt)
+      xcrun simctl openurl booted "exp+betterangels://expo-development-client/?url=https://u.expo.dev/$MAESTRO_ENV_PROJECT_ID/group/$MAESTRO_ENV_GROUP_ID?platform=ios&dev=true&minify=false&disableOnboarding=1"
 - runFlow:
     when:
       visible: 'Open'
