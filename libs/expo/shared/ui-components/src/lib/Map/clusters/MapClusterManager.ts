@@ -120,4 +120,26 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
       options?.animateDuration ?? defaultAnimationDuration
     );
   }
+
+  // alternative to animateToCluster (animateToRegion)
+  // animates to fit selected cluster leaves on map
+  fitToCluster(clusterId: number, mapRef: RefObject<TMapView | null>) {
+    const map = mapRef.current;
+
+    if (!map) {
+      return;
+    }
+
+    const leaves = this.getLeaves(clusterId);
+
+    const coordinates = leaves.map(({ geometry }) => ({
+      latitude: geometry.coordinates[1],
+      longitude: geometry.coordinates[0],
+    }));
+
+    map.fitToCoordinates(coordinates, {
+      edgePadding: { top: 70, right: 50, bottom: 70, left: 50 },
+      animated: true,
+    });
+  }
 }
