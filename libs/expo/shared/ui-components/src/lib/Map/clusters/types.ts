@@ -28,7 +28,7 @@ export type TBbox = [number, number, number, number];
 
 export type IClusterGeoJson = GeoJsonProperties & { id: string };
 
-// requrie unique ID
+// require unique ID
 export type TClusterLeafPoint<P extends IClusterGeoJson> = PointFeature<P> & {
   properties: P & { cluster?: false };
 };

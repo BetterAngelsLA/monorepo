@@ -34,8 +34,6 @@ function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
     textColor: variantTextColor,
   } = variantStyleMap[variant];
 
-  // /Users/tomek/Repos/betterangels/monorepo/libs/expo/shared/ui-components/src/lib/MapClusterMarker/MapClusterMarker.tsx
-  //   37:35  error  React Hook "useMemo" is called in function "baseMapClusterMarker" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"
   const { content, markerSize } = useMemo(
     () =>
       getContentAndSize({

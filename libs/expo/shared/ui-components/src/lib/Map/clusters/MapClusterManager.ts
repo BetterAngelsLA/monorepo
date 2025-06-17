@@ -22,9 +22,6 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
   private readonly clusterIndex: Supercluster<P, AnyProps>;
 
   constructor(opts: IMapClusterManager = {}) {
-    console.log('');
-    console.log('################################### NEW CLUSTER MANAGER');
-    console.log('');
     const { radius = 50, maxZoom = 20, extent = 512, nodeSize = 64 } = opts;
 
     this.clusterIndex = new Supercluster<P, AnyProps>({
@@ -37,6 +34,10 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
 
   load(points: PointFeature<P>[]) {
     this.clusterIndex.load(points);
+  }
+
+  clear() {
+    this.clusterIndex.load([]);
   }
 
   getClusters(

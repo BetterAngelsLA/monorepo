@@ -1,35 +1,20 @@
 import { MapPinIcon } from '@monorepo/expo/shared/icons';
 import {
-  ClusterOrPoint,
-  IClusterGeoJson,
   LoadingView,
   MapClusterMarker,
+  MapClusters,
   MapViewport,
-  RegionDeltaSize,
   TClusterPoint,
   TMapView,
-  regionToBbox,
-  regionToZoom,
-  useMapClusterManager,
+  useClusters,
 } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
-import { Region } from 'react-native-maps';
-import { PointFeature } from 'supercluster';
-import { Ordering } from '../../../../apollo';
-import {
-  useGetClientInteractionsWithLocation,
-  useSnackbar,
-} from '../../../../hooks';
+import { useSnackbar } from '../../../../hooks';
 import { EmptyState } from '../EmptyState';
-import { getInteractionsMapRegion } from '../utils/getInteractionsMapRegion';
-import { InteractionClusters } from './InteractionClusters';
-
-const MAP_DELTA_SIZE: RegionDeltaSize = 'XL';
-
-interface TClusterInteraction extends IClusterGeoJson {
-  interactedAt: Date;
-}
+import { getInteractionsMapRegion } from './getInteractionsMapRegion';
+import { TClusterInteraction } from './types';
+import { useInteractionPointFeatures } from './useInteractionPointFeatures';
 
 type TProps = {
   clientProfileId: string;
@@ -40,64 +25,19 @@ export function InteractionLocationsMap(props: TProps) {
 
   const mapRef = useRef<TMapView | null>(null);
   const { showSnackbar } = useSnackbar();
-  const [clusters, setClusters] = useState<
-    ClusterOrPoint<TClusterInteraction>[]
-  >([]);
 
-  const {
-    interactions: interactionsWithLocation,
-    loading,
-    error,
-  } = useGetClientInteractionsWithLocation({
-    id: clientProfileId,
-    dateSort: Ordering.Desc,
-  });
+  // 1. Pull data
+  const { pointFeatures, loading, error, interactions } =
+    useInteractionPointFeatures(clientProfileId);
 
-  const pointFeatures = useMemo<PointFeature<TClusterInteraction>[]>(() => {
-    if (!interactionsWithLocation) {
-      return [];
-    }
-
-    return interactionsWithLocation.map((i) => ({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: i.location!.point },
-      properties: {
-        id: i.id,
-        interactedAt: new Date(i.interactedAt),
+  // 2. Derive clusters
+  const { clusters, onRegionChangeComplete, zoomToCluster } =
+    useClusters<TClusterInteraction>({
+      pointFeatures,
+      opts: {
+        radius: 80,
       },
-    }));
-  }, [interactionsWithLocation]);
-
-  // Hash pointFeature Interaction IDs to only run
-  // clusterManager.load(pointFeatures) when pointFeatures change
-  const pointFeaturesHash = useMemo(
-    () =>
-      pointFeatures
-        .map((f) => f.properties.id)
-        .sort()
-        .join('|'),
-    [pointFeatures]
-  );
-
-  const clusterManager = useMapClusterManager<TClusterInteraction>();
-
-  useEffect(() => {
-    if (pointFeatures.length === 0) return;
-
-    console.log('############## LOAD POINT FEATURES: ', Date.now());
-    clusterManager.load(pointFeatures);
-  }, [pointFeaturesHash]);
-
-  const onRegionChangeComplete = useCallback(
-    (region: Region) => {
-      const bbox = regionToBbox(region);
-      const zoom = regionToZoom(region);
-      const next = clusterManager.getClusters(bbox, zoom);
-
-      setClusters(next);
-    },
-    [clusterManager, regionToBbox, regionToZoom]
-  );
+    });
 
   const renderClusterIconFn = useMemo(
     () => (cluster: TClusterPoint) =>
@@ -108,12 +48,6 @@ export function InteractionLocationsMap(props: TProps) {
   const renderPointIconFn = useMemo(
     () => () => <MapPinIcon size="M" variant="primary" />,
     []
-  );
-
-  const handleClusterPressCb = useCallback(
-    (cluster: TClusterPoint) =>
-      clusterManager.zoomToCluster(cluster.properties.cluster_id, mapRef),
-    [clusterManager, mapRef]
   );
 
   if (loading) {
@@ -130,17 +64,17 @@ export function InteractionLocationsMap(props: TProps) {
   }
 
   // unless loading, render nothing until interactions are defined
-  if (interactionsWithLocation === undefined) {
+  if (interactions === undefined) {
     return null;
   }
 
-  if (!interactionsWithLocation?.length) {
+  if (!interactions?.length) {
     return <EmptyState />;
   }
 
   const mapRegion = getInteractionsMapRegion({
-    interaction: interactionsWithLocation[0],
-    deltaSize: MAP_DELTA_SIZE,
+    interaction: interactions[0],
+    deltaSize: 'M',
   });
 
   if (!mapRegion) {
@@ -156,12 +90,13 @@ export function InteractionLocationsMap(props: TProps) {
       initialRegion={mapRegion}
       onRegionChangeComplete={onRegionChangeComplete}
     >
-      <InteractionClusters
+      <MapClusters
         mapRef={mapRef}
         clusters={clusters}
         clusterRenderer={renderClusterIconFn}
         pointRenderer={renderPointIconFn}
-        onClusterPress={handleClusterPressCb}
+        onClusterPress={(c) => zoomToCluster(c, mapRef)}
+        onPointPress={(p) => console.log(p)}
       />
     </MapViewport>
   );

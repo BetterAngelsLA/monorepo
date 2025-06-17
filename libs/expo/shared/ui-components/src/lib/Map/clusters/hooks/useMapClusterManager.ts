@@ -1,6 +1,6 @@
 import { GeoJsonProperties } from 'geojson';
 import { useMemo } from 'react';
-import { IMapClusterManager, MapClusterManager } from './MapClusterManager';
+import { IMapClusterManager, MapClusterManager } from '../MapClusterManager';
 
 type IdentifiableGeo = GeoJsonProperties & { id: string };
 
@@ -13,7 +13,7 @@ export function useMapClusterManager<P extends IdentifiableGeo>(
   const { radius, maxZoom, extent, nodeSize } = options;
 
   return useMemo(
-    () => new MapClusterManager<P>(options),
+    () => new MapClusterManager<P>({ radius, maxZoom, extent, nodeSize }),
     [radius, maxZoom, extent, nodeSize]
   );
 }

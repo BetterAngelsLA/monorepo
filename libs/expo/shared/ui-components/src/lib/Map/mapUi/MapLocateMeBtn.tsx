@@ -2,7 +2,7 @@ import { RefObject } from 'react';
 import { StyleSheet } from 'react-native';
 import LocateMeButton from '../../LocateMeButton';
 import { TMapDeltaLatLng, TMapView } from '../types';
-import { goToUserLocation } from '../utils/goToUserLocation';
+import { goToUserLocation } from '../utils';
 
 type TProps = {
   mapRef: RefObject<TMapView | null>;

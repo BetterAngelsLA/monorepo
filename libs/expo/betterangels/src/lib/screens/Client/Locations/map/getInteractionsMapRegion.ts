@@ -12,7 +12,7 @@ type TProps = {
 };
 
 export function getInteractionsMapRegion(props: TProps): Region | null {
-  const { interaction, deltaSize = 'XL' } = props;
+  const { interaction, deltaSize = 'M' } = props;
 
   const point = interaction.location?.point;
 
