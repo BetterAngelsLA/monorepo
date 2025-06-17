@@ -6,7 +6,6 @@ jobs:
     params:
       runtime_version: ${{ env.RUNTIME_VERSION }}
       platform: android
-      channel: production
 
   maestro_test:
     needs: [wait]
