@@ -59,19 +59,6 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
     [clusterManager, pointFeatures.length]
   );
 
-  // const zoomToCluster = useCallback(
-  //   (
-  //     c: TClusterPoint,
-  //     mapRef: RefObject<TMapView | null>,
-  //     opts?: {
-  //       paddingMultiplier?: number;
-  //       fallbackDelta?: number;
-  //       animateDuration?: number;
-  //     }
-  //   ) => clusterManager.animateToCluster(c.properties.cluster_id, mapRef, opts),
-  //   [clusterManager]
-  // );
-
   const zoomToCluster = useCallback(
     (c: TClusterPoint, mapRef: RefObject<TMapView | null>) =>
       clusterManager.fitToCluster(c.properties.cluster_id, mapRef),

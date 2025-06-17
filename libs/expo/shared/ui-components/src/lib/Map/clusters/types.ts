@@ -44,13 +44,3 @@ export type TClusterPoint = ClusterFeature<AnyProps> & {
 export type ClusterOrPoint<P extends IClusterGeoJson> =
   | TClusterLeafPoint<P>
   | TClusterPoint;
-
-// export interface TClusteredMarkersProps<
-//   P extends IClusterGeoJson = IClusterGeoJson
-// > {
-//   clusters: ClusterOrPoint<P>[];
-//   onClusterPress?: (cluster: TClusterPoint) => void;
-//   onPointPress?: (point: TClusterLeafPoint<P>) => void;
-//   clusterRenderer: (cluster: TClusterPoint) => React.ReactNode;
-//   pointRenderer: (point: TClusterLeafPoint<P>) => React.ReactNode;
-// }
