@@ -10,6 +10,9 @@ jobs:
   maestro_test:
     needs: [wait]
     type: maestro
+    env:
+      PROJECT_ID: ${{ env.PROJECT_ID }}
+      GROUP_ID: ${{ env.GROUP_ID }}
     params:
       build_id: ${{ needs.wait.outputs.build_id }}
       flow_path: ['.maestro/android/landing.yml']
