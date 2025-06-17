@@ -175,6 +175,6 @@ runs:
       id: set-project-id
       run: |
         project_id="${{ steps.check-builds.outputs.project-id }}"
-        echo "PROJECT_ID=$project_id" >> .env
+        echo "MAESTRO_PROJECT_ID=$project_id" >> .env
       shell: bash
       working-directory: apps/${{ inputs.project }}

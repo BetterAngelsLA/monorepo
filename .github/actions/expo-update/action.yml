@@ -95,7 +95,7 @@ runs:
       id: set-group-id
       run: |
         group_id="${{ steps.check-builds.outputs.group-id }}"
-        echo "GROUP_ID=$group_id" >> .env
+        echo "MAESTRO_GROUP_ID=$group_id" >> .env
         echo "group-id=$group_id" >> $GITHUB_OUTPUT
       shell: bash
       working-directory: apps/${{ inputs.group }}
