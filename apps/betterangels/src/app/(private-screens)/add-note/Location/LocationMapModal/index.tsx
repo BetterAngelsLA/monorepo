@@ -334,9 +334,9 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     // >
       <View
         style={{
-          borderTopEndRadius: 10,
-          borderTopLeftRadius: 10,
-          marginTop: Platform.OS === 'ios' ? '15%' : '5%',
+          // borderTopEndRadius: 10,
+          // borderTopLeftRadius: 10,
+          // marginTop: Platform.OS === 'ios' ? '15%' : '5%',
           overflow: 'hidden',
           flex: 1,
         }}

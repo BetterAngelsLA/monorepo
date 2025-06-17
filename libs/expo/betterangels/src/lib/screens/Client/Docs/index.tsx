@@ -1,3 +1,4 @@
+import { useModalScreen } from '@monorepo/expo/betterangels';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
@@ -8,13 +9,15 @@ import { ClientProfileQuery } from '../__generated__/Client.generated';
 import Documents from './Documents';
 import UploadModal from './UploadModal';
 
+
 export default function Docs({
   client,
 }: {
   client: ClientProfileQuery | undefined;
 }) {
-  const [isModalVisible, setModalVisible] = useState(false);
+  // const [isModalVisible, setModalVisible] = useState(false);
   const [expanded, setExpanded] = useState<undefined | string | null>();
+  const { showModalScreen } = useModalScreen();
 
   const props = {
     expanded,
@@ -35,7 +38,7 @@ export default function Docs({
       >
         <TextMedium size="lg">Doc Library</TextMedium>
         <IconButton
-          onPress={() => setModalVisible(true)}
+          onPress={() => showModalScreen(<UploadModal client={client} />)}
           variant="secondary"
           borderColor={Colors.WHITE}
           accessibilityLabel={'add document'}
@@ -44,11 +47,11 @@ export default function Docs({
           <PlusIcon />
         </IconButton>
       </View>
-      <UploadModal
+      {/* <UploadModal
         client={client}
         isModalVisible={isModalVisible}
         closeModal={() => setModalVisible(false)}
-      />
+      /> */}
       <View style={{ gap: Spacings.xs, marginTop: Spacings.sm }}>
         {client?.clientProfile.docReadyDocuments &&
           client?.clientProfile.docReadyDocuments?.length > 0 && (

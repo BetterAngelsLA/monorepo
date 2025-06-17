@@ -1,11 +1,10 @@
-import React, { createContext, useContext, useState } from 'react';
 import { useRouter } from 'expo-router';
+import React, { createContext, useContext, useState } from 'react';
 
 interface ModalScreenContextType {
-  setModalContent: (content: React.ReactNode) => void;
+  showModalScreen: (component: React.ReactNode) => void;
   modalContent: React.ReactNode | null;
-  clearModalContent: () => void;
-  showModalScreen: (content: React.ReactNode) => void;
+  clearModalScreen: () => void;
 }
 
 const ModalScreenContext = createContext<ModalScreenContextType | undefined>(undefined);
@@ -14,15 +13,15 @@ export const ModalScreenProvider = ({ children }: { children: React.ReactNode })
   const [modalContent, setModalContent] = useState<React.ReactNode | null>(null);
   const router = useRouter();
 
-  const clearModalContent = () => setModalContent(null);
-
-  const showModalScreen = (content: React.ReactNode) => {
-    setModalContent(content);
+  const showModalScreen = (component: React.ReactNode) => {
+    setModalContent(component);
     router.push('/base-modal-screen');
-  }
+  };
+
+  const clearModalScreen = () => setModalContent(null);
 
   return (
-    <ModalScreenContext.Provider value={{ setModalContent, modalContent, clearModalContent, showModalScreen }}>
+    <ModalScreenContext.Provider value={{ showModalScreen, modalContent, clearModalScreen }}>
       {children}
     </ModalScreenContext.Provider>
   );
@@ -30,8 +29,6 @@ export const ModalScreenProvider = ({ children }: { children: React.ReactNode })
 
 export const useModalScreen = () => {
   const context = useContext(ModalScreenContext);
-  if (!context) {
-    throw new Error('useModalScreen must be used within ModalScreenProvider');
-  }
+  if (!context) throw new Error('useModalScreen must be used within ModalScreenProvider');
   return context;
 };

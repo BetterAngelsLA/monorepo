@@ -7,10 +7,10 @@ import {
   thumbnailSizes,
 } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { useEffect } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ClientDocumentNamespaceEnum } from '../../../../apollo';
 import FileUploadTab from './FileUploadTab';
@@ -19,7 +19,7 @@ import SingleDocUploads from './SingleDocUploads';
 import { Docs, ITab, IUploadModalProps } from './types';
 
 export default function UploadModal(props: IUploadModalProps) {
-  const { isModalVisible, closeModal, opacity = 0, client } = props;
+  const { opacity = 0, client } = props;
   const [tab, setTab] = React.useState<undefined | ITab>();
   const [docs, setDocs] = React.useState<Docs>({
     DriversLicenseFront: undefined,
@@ -45,7 +45,7 @@ export default function UploadModal(props: IUploadModalProps) {
       <SingleDocUploads
         thumbnailSize={thumbnailSizes.PhotoId}
         docType="DriversLicenseFront"
-        title="Upload CA ID or CA Driver’s License - Front"
+        title="Upload CA ID or CA Driver's License - Front"
         {...docProps}
       />
     ),
@@ -53,7 +53,7 @@ export default function UploadModal(props: IUploadModalProps) {
       <SingleDocUploads
         thumbnailSize={thumbnailSizes.PhotoId}
         docType="DriversLicenseBack"
-        title="Upload CA ID or CA Driver’s License - Back"
+        title="Upload CA ID or CA Driver's License - Back"
         {...docProps}
       />
     ),
@@ -148,20 +148,23 @@ export default function UploadModal(props: IUploadModalProps) {
     });
   }, [client]);
 
+  const router = useRouter();
+  const closeModal = () => router.back();
+
   return (
-    <Modal
-      style={{
-        margin: 0,
-        flex: 1,
-        justifyContent: 'flex-end',
-      }}
-      animationIn="slideInUp"
-      animationOut="slideOutDown"
-      backdropOpacity={opacity}
-      isVisible={isModalVisible}
-      onBackdropPress={closeModal}
-      useNativeDriverForBackdrop={true}
-    >
+    // <Modal
+    //   style={{
+    //     margin: 0,
+    //     flex: 1,
+    //     justifyContent: 'flex-end',
+    //   }}
+    //   animationIn="slideInUp"
+    //   animationOut="slideOutDown"
+    //   backdropOpacity={opacity}
+    //   isVisible={isModalVisible}
+    //   onBackdropPress={closeModal}
+    //   useNativeDriverForBackdrop={true}
+    // >
       <View
         style={{
           borderTopLeftRadius: Radiuses.xs,
@@ -272,6 +275,6 @@ export default function UploadModal(props: IUploadModalProps) {
           </ScrollView>
         )}
       </View>
-    </Modal>
+    // {/* </Modal> */}
   );
 }
