@@ -129,14 +129,6 @@ jobs:
           project: ${{ matrix.project }}
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
-      - name: 🧪 Run Android E2E Tests
-        env:
-          BUILD_ID: ${{ steps.preview-build.outputs.android-build-id }}
-        working-directory: apps/${{ matrix.project }}
-        run: |
-          npx eas-cli workflow:run .eas/workflows/android-e2e-test.yml \
-            --non-interactive \
-
       - name: 📱 Simulator Build
         id: simulator-build
         uses: ./.github/actions/expo-build
@@ -146,16 +138,6 @@ jobs:
           platforms: ios
           runtime-version: ${{ steps.setup-secrets.outputs.runtime-version }}
 
-      - name: 🧪 Run iOS E2E Tests
-        env:
-          BUILD_ID: ${{ steps.simulator-build.outputs.ios-build-id }}
-          PROJECT_ID: ${{ steps.preview-build.outputs.project-id }}
-          GROUP_ID: ${{ steps.perform-eas-update.outputs.ios-group-id }}
-        working-directory: apps/${{ matrix.project }}
-        run: |
-          npx eas-cli workflow:run .eas/workflows/ios-e2e-test.yml \
-            --non-interactive \
-
       - name: 🚀 Perform EAS Update
         id: expo-update
         uses: ./.github/actions/expo-update
@@ -164,6 +146,26 @@ jobs:
           branch: ${{ github.head_ref || github.ref_name }}
           slug: ${{ steps.preview-build.outputs.slug }}
           project-id: ${{ steps.preview-build.outputs.project-id }}
+
+      - name: 🧪 Run Android E2E Tests
+        env:
+          RUNTIME_VERSION: ${{ steps.perform-eas-update.outputs.android-runtime-version }}
+          PROJECT_ID: ${{ steps.preview-build.outputs.project-id }}
+          GROUP_ID: ${{ steps.perform-eas-update.outputs.ios-group-id }}
+        working-directory: apps/${{ matrix.project }}
+        run: |
+          npx eas-cli workflow:run .eas/workflows/android-e2e-test.yml \
+            --non-interactive \
+
+      - name: 🧪 Run iOS E2E Tests
+        env:
+          RUNTIME_VERSION: ${{ steps.perform-eas-update.outputs.ios-runtime-version }}
+          PROJECT_ID: ${{ steps.preview-build.outputs.project-id }}
+          GROUP_ID: ${{ steps.perform-eas-update.outputs.ios-group-id }}
+        working-directory: apps/${{ matrix.project }}
+        run: |
+          npx eas-cli workflow:run .eas/workflows/ios-e2e-test.yml \
+            --non-interactive \
 
       - name: 📝 Comment on PR
         if: github.event_name == 'pull_request'
