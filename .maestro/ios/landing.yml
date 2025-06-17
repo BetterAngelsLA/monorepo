@@ -1,9 +1,7 @@
 appId: la.betterangels.dev.app
-platform: ios
+platform: android
 ---
-- runScript:
-    script: |
-      xcrun simctl openurl booted "exp+betterangels://expo-development-client/?url=https://u.expo.dev/$MAESTRO_ENV_PROJECT_ID/group/$MAESTRO_ENV_GROUP_ID?platform=ios&dev=true&minify=false&disableOnboarding=1"
+- openLink: 'exp+betterangels://expo-development-client/?url=https://u.expo.dev/$MAESTRO_ENV_PROJECT_ID/group/$MAESTRO_ENV_GROUP_ID?platform=ios&dev=true&minify=false&disableOnboarding=1'
 - runFlow:
     when:
       visible: 'Open'
