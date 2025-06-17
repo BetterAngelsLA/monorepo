@@ -19,6 +19,7 @@ import { useSnackbar } from '../../hooks';
 import { ServicesByCategory } from '../../static';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
+import { useRouter } from 'expo-router';
 
 interface IServicesModalProps {
   setIsModalVisible: (isModalVisible: boolean) => void;
@@ -194,6 +195,8 @@ export default function ServicesModal(props: IServicesModalProps) {
     }
   };
 
+  const router = useRouter();
+
   const closeModal = () => {
     const newInitialServices = initialServices
       .filter((item) => item.service !== ServiceEnum.Other)
@@ -207,6 +210,7 @@ export default function ServicesModal(props: IServicesModalProps) {
     setIsModalVisible(false);
     setServiceOthers(initialServiceOthers);
     setServices(newInitialServices);
+    router.back()
   };
 
   useEffect(() => {
@@ -242,7 +246,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         marginTop: 0,
       }}
     >
-      {/* <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, marginBottom: 8 }}>
+      <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, marginBottom: 8 }}>
         <Pressable
           accessible
           accessibilityHint="closes the modal"
@@ -252,7 +256,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         >
           <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
         </Pressable>
-      </View> */}
+      </View>
       <KeyboardAwareScrollView
         style={{
           flex: 1,

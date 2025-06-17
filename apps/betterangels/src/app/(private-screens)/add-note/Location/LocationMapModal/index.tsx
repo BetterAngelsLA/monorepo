@@ -29,6 +29,7 @@ import Directions from './Directions';
 import Header from './Header';
 import Map from './Map';
 import Selected from './Selected';
+import { useRouter } from 'expo-router';
 
 const INITIAL_LOCATION = {
   longitude: -118.258815,
@@ -51,8 +52,8 @@ type TLocation =
   | undefined;
 
 interface ILocationMapModalProps {
-  isModalVisible: boolean;
-  toggleModal: (e: boolean) => void;
+  // isModalVisible: boolean;
+  // toggleModal: (e: boolean) => void;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string;
   setLocation: (location: TLocation) => void;
@@ -62,8 +63,8 @@ interface ILocationMapModalProps {
 
 export default function LocationMapModal(props: ILocationMapModalProps) {
   const {
-    isModalVisible,
-    toggleModal,
+    // isModalVisible,
+    // toggleModal,
     setExpanded,
     noteId,
     location,
@@ -97,13 +98,16 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
 
+  const router = useRouter();
+
   const closeModal = (hasLocation: boolean) => {
     if (!location?.address && !hasLocation) {
       setError(true);
     } else {
       setError(false);
     }
-    toggleModal(false);
+    // toggleModal(false);
+    router.back()
     setExpanded(undefined);
   };
 
@@ -321,13 +325,13 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   };
 
   return (
-    <Modal
-      style={{ flex: 1 }}
-      animationType="slide"
-      transparent={true}
-      visible={isModalVisible}
-      onRequestClose={() => closeModal(false)}
-    >
+    // <Modal
+    //   style={{ flex: 1 }}
+    //   animationType="slide"
+    //   transparent={true}
+    //   visible={isModalVisible}
+    //   onRequestClose={() => closeModal(false)}
+    // >
       <View
         style={{
           borderTopEndRadius: 10,
@@ -477,6 +481,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
           />
         </View>
       </View>
-    </Modal>
+    // </Modal>
   );
 }
