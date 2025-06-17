@@ -13,6 +13,9 @@ jobs:
   maestro_test:
     needs: [wait]
     type: maestro
+    env:
+      MAESTRO_PROJECT_ID: 53171ba4-60ca-40cb-b3e6-b0c2393677b8
+      MAESTRO_GROUP_ID: 4eae1320-1f13-418b-9da2-cc1464dceee2
     params:
       build_id: ${{ needs.wait.outputs.build_id }}
       flow_path: ['.maestro/ios/landing.yml']
