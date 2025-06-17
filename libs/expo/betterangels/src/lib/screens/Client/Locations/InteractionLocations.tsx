@@ -1,5 +1,5 @@
 import { ClientProfileQuery } from '../__generated__/Client.generated';
-import { InteractionLocationsMap } from './map/InteractionLocationsMap';
+import { InteractionsMap } from './map/InteractionsMap';
 
 type TProps = {
   client: ClientProfileQuery | undefined;
@@ -12,5 +12,5 @@ export function InteractionLocations(props: TProps) {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  return <InteractionLocationsMap clientProfileId={client.clientProfile.id} />;
+  return <InteractionsMap clientProfileId={client.clientProfile.id} />;
 }

@@ -20,7 +20,7 @@ type TProps = {
   clientProfileId: string;
 };
 
-export function InteractionLocationsMap(props: TProps) {
+export function InteractionsMap(props: TProps) {
   const { clientProfileId } = props;
 
   const mapRef = useRef<TMapView | null>(null);
@@ -89,6 +89,10 @@ export function InteractionLocationsMap(props: TProps) {
       provider="google"
       initialRegion={mapRegion}
       onRegionChangeComplete={onRegionChangeComplete}
+      onAppleMapReady={() => {
+        // need to run onReady for initial render on Apple Maps
+        onRegionChangeComplete(mapRegion);
+      }}
     >
       <MapClusters
         mapRef={mapRef}

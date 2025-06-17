@@ -28,7 +28,21 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
     [pointFeatures]
   );
 
-  // Load once per hash
+  const setClustersForRegion = useCallback(
+    (region: Region) => {
+      if (!pointFeatures.length) {
+        setClusters([]);
+        return;
+      }
+      const bbox = regionToBbox(region);
+      const zoom = regionToZoom(region);
+
+      setClusters(clusterManager.getClusters(bbox, zoom));
+    },
+    [clusterManager, pointFeatures.length]
+  );
+
+  // Load once per hash change
   useEffect(() => {
     clusterManager.load(pointFeatures);
 
@@ -40,15 +54,7 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
   // When map moves/zooms
   const onRegionChangeComplete = useCallback(
     (region: Region) => {
-      if (!pointFeatures.length) {
-        setClusters([]);
-
-        return;
-      }
-
-      const bbox = regionToBbox(region);
-      const zoom = regionToZoom(region);
-      setClusters(clusterManager.getClusters(bbox, zoom));
+      setClustersForRegion(region);
     },
     [clusterManager, pointFeatures.length]
   );
@@ -69,5 +75,10 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
   // cleanup
   useEffect(() => () => clusterManager.clear(), [clusterManager]);
 
-  return { clusters, onRegionChangeComplete, zoomToCluster, clusterManager };
+  return {
+    clusters,
+    clusterManager,
+    onRegionChangeComplete,
+    zoomToCluster,
+  };
 }

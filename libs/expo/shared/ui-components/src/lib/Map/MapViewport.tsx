@@ -14,6 +14,9 @@ type TMapProps = {
   enableUserLocation?: boolean;
   children?: ReactNode;
   onRegionChangeComplete?: (region: Region, details: Details) => void;
+  onMapReady?: () => void;
+  onAppleMapReady?: () => void;
+  onGoogleMapReady?: () => void;
 };
 
 export function MapViewport(props: TMapProps) {
@@ -22,6 +25,9 @@ export function MapViewport(props: TMapProps) {
     provider,
     initialRegion,
     onRegionChangeComplete,
+    onMapReady,
+    onAppleMapReady,
+    onGoogleMapReady,
     style,
     mapStyle,
     enableUserLocation,
@@ -29,6 +35,13 @@ export function MapViewport(props: TMapProps) {
   } = props;
 
   const [_mapReady, setMapReady] = useState(false);
+
+  function onMapIsReady() {
+    setMapReady(true);
+
+    onMapReady?.();
+    provider === 'google' ? onGoogleMapReady?.() : onAppleMapReady?.();
+  }
 
   if (!mapRef) {
     return null;
@@ -46,7 +59,7 @@ export function MapViewport(props: TMapProps) {
         zoomControlEnabled={false}
         mapType="standard"
         initialRegion={initialRegion || defaultMapRegion}
-        onMapReady={() => setMapReady(true)}
+        onMapReady={onMapIsReady}
         onRegionChangeComplete={onRegionChangeComplete}
         style={[styles.map, mapStyle]}
       >
