@@ -1,12 +1,14 @@
 import { GeoJsonProperties } from 'geojson';
 import { RefObject } from 'react';
+import { EdgePadding } from 'react-native-maps';
 import Supercluster, {
   AnyProps,
   ClusterFeature,
   PointFeature,
 } from 'supercluster';
-import { defaultAnimationDuration } from '../constants';
+import { defaultAnimationDuration, defaultEdgePadding } from '../constants';
 import { TMapView } from '../types';
+import { TEdgePaddingBreakpoint } from './types';
 
 export interface IMapClusterManager {
   // px around each point to merge into a cluster
@@ -17,13 +19,24 @@ export interface IMapClusterManager {
   extent?: number;
   // Size of the KD-tree leaf node. Affects performance.
   nodeSize?: number;
+  // padding to use with map.fitToCoordinates()
+  edgePadding?: EdgePadding | TEdgePaddingBreakpoint[];
 }
 
 export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
   private readonly clusterIndex: Supercluster<P, AnyProps>;
+  public edgePadding?: EdgePadding | TEdgePaddingBreakpoint[];
 
   constructor(opts: IMapClusterManager = {}) {
-    const { radius = 50, maxZoom = 20, extent = 256, nodeSize = 40 } = opts;
+    const {
+      radius = 50,
+      maxZoom = 20,
+      extent = 256,
+      nodeSize = 40,
+      edgePadding,
+    } = opts;
+
+    this.edgePadding = edgePadding;
 
     this.clusterIndex = new Supercluster<P, AnyProps>({
       radius,
@@ -121,6 +134,24 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
     );
   }
 
+  resolveEdgePadding(leavesCount: number): EdgePadding | undefined {
+    const edgePadding = this.edgePadding;
+
+    if (!Array.isArray(edgePadding)) {
+      return edgePadding;
+    }
+
+    // is Array
+    if (!edgePadding.length) {
+      return undefined;
+    }
+
+    const sorted = [...edgePadding].sort((a, b) => a.max - b.max);
+    const maxPadding = sorted[sorted.length - 1].padding;
+
+    return sorted.find((b) => leavesCount <= b.max)?.padding ?? maxPadding;
+  }
+
   // alternative to animateToCluster (animateToRegion)
   // animates to fit selected cluster leaves on map
   fitToCluster(clusterId: number, mapRef: RefObject<TMapView | null>) {
@@ -137,8 +168,10 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
       longitude: geometry.coordinates[0],
     }));
 
+    const padding = this.resolveEdgePadding(leaves.length);
+
     map.fitToCoordinates(coordinates, {
-      edgePadding: { top: 70, right: 50, bottom: 70, left: 50 },
+      edgePadding: padding || defaultEdgePadding,
       animated: true,
     });
   }

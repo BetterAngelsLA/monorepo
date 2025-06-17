@@ -36,6 +36,13 @@ export function InteractionsMap(props: TProps) {
       pointFeatures,
       opts: {
         radius: 50,
+        edgePadding: [
+          { max: 4, padding: { top: 80, bottom: 80, left: 100, right: 100 } },
+          {
+            max: Infinity,
+            padding: { top: 50, bottom: 50, left: 50, right: 50 },
+          },
+        ],
       },
     });
 

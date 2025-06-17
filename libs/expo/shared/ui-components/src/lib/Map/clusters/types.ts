@@ -1,4 +1,5 @@
 import type { GeoJsonProperties } from 'geojson';
+import { EdgePadding } from 'react-native-maps';
 import type { AnyProps, ClusterFeature, PointFeature } from 'supercluster';
 
 export type TCoordinates = {
@@ -44,3 +45,8 @@ export type TClusterPoint = ClusterFeature<AnyProps> & {
 export type ClusterOrPoint<P extends IClusterGeoJson> =
   | TClusterLeafPoint<P>
   | TClusterPoint;
+
+export type TEdgePaddingBreakpoint = {
+  max: number;
+  padding: EdgePadding;
+};

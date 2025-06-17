@@ -10,10 +10,22 @@ export function useMapClusterManager<P extends IdentifiableGeo>(
   // Unpack primitive fields so the dependency list tracks individual values
   // and not the `options` object reference. So the manager is rebuilt only when
   // one of these four numbers actually changes.
-  const { radius, maxZoom, extent, nodeSize } = options;
+  const { radius, maxZoom, extent, nodeSize, edgePadding } = options;
+
+  const memoizedEdgePadding = useMemo(
+    () => edgePadding,
+    [edgePadding ? JSON.stringify(edgePadding) : undefined]
+  );
 
   return useMemo(
-    () => new MapClusterManager<P>({ radius, maxZoom, extent, nodeSize }),
-    [radius, maxZoom, extent, nodeSize]
+    () =>
+      new MapClusterManager<P>({
+        radius,
+        maxZoom,
+        extent,
+        nodeSize,
+        edgePadding: memoizedEdgePadding,
+      }),
+    [radius, maxZoom, extent, nodeSize, memoizedEdgePadding]
   );
 }
