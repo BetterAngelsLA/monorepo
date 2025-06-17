@@ -1,6 +1,9 @@
 name: e2e-test-ios
 
 jobs:
+  env:
+    MAESTRO_GROUP_ID: ${{ env.MAESTRO_GROUP_ID }}
+    MAESTRO_PROJECT_ID: ${{ env.MAESTRO_PROJECT_ID }}
   wait:
     type: get-build
     params:
