@@ -17,7 +17,7 @@ class AtomicHasRetvalPerm(HasRetvalPerm):
         *,
         message: Optional[str] = None,
         use_directives: bool = True,
-        fail_silently: bool = False,  # ← default flipped
+        fail_silently: bool = False,
         target: Optional[PermTarget] = None,
         any_perm: bool = True,
         perm_checker: Optional[Callable[[Info, UserType], Callable[[PermDefinition], bool]]] = None,
