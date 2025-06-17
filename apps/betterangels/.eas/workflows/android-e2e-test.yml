@@ -11,8 +11,8 @@ jobs:
     needs: [wait]
     type: maestro
     env:
-      MAESTRO_PROJECT_ID: ${{ env.PROJECT_ID }}
-      MAESTRO_GROUP_ID: ${{ env.GROUP_ID }}
+      MAESTRO_PROJECT_ID: ${{ env.MAESTRO_PROJECT_ID }}
+      MAESTRO_GROUP_ID: ${{ env.MAESTRO_GROUP_ID }}
     params:
       build_id: ${{ needs.wait.outputs.build_id }}
       flow_path: ['.maestro/android/landing.yml']
