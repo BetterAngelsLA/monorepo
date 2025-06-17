@@ -2,7 +2,7 @@ import { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import { Region } from 'react-native-maps';
 import { PointFeature } from 'supercluster';
 import { TMapView } from '../../types';
-import { mapCameraZoom, regionToBbox, regionToZoom } from '../../utils';
+import { regionToBbox, regionToZoom, zoomCamera } from '../../utils';
 import { IMapClusterManager } from '../MapClusterManager';
 import { ClusterOrPoint, IClusterGeoJson, TClusterPoint } from '../types';
 import { useMapClusterManager } from './useMapClusterManager';
@@ -75,11 +75,17 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
       const ceilCurrent = currentZoom ? Math.ceil(currentZoom) : null;
       const ceilTarget = Math.ceil(nextZoom);
 
+      // manually increment zoom level if same, as getClusterExpansionZoom
+      // returns floats and sometimes may even return same zoom as current
       if (ceilCurrent !== null && ceilTarget === ceilCurrent) {
         nextZoom = ceilTarget + 1;
       }
 
-      mapCameraZoom({
+      // zoomCamera uses animateCamera instead of animateToRegion (as with animateToCluster)
+      // and should have smoother transition. The nextZoom manual adjustment
+      // (nextZoom = ceilTarget + 1) also  helps with edge cases
+      // where camera fails to zoom for whatever reason.
+      zoomCamera({
         mapRef,
         zoom: nextZoom,
         latitude: lat,

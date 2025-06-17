@@ -10,7 +10,7 @@ type TProps = {
   duration?: number;
 };
 
-export function mapCameraZoom(props: TProps) {
+export function zoomCamera(props: TProps) {
   const {
     mapRef,
     zoom,

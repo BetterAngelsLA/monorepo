@@ -97,7 +97,10 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
     };
   }
 
-  zoomToCluster(
+  // seems like zoomCamera (using animateCamera) may work better, as seeing
+  // various issues where animateToCluster fails to zoom even with 20+ points
+  // in a cluster. Perhaps adjusting options could help.
+  animateToCluster(
     clusterId: number,
     mapRef: RefObject<TMapView | null>,
     options?: {
