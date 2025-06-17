@@ -89,8 +89,7 @@ export function InteractionsMap(props: TProps) {
       provider="google"
       initialRegion={mapRegion}
       onRegionChangeComplete={onRegionChangeComplete}
-      onAppleMapReady={() => {
-        // need to run onReady for initial render on Apple Maps
+      onMapReady={() => {
         onRegionChangeComplete(mapRegion);
       }}
     >
