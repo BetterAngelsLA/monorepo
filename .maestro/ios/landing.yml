@@ -1,7 +1,7 @@
 appId: la.betterangels.dev.app
 platform: android
 ---
-- openLink: 'exp+betterangels://expo-development-client/?url=https://u.expo.dev/$APP_ID/group/$GROUP_ID?platform=ios&dev=true&minify=false&disableOnboarding=1'
+- openLink: exp+betterangels://expo-development-client/?url=https://u.expo.dev/$PROJECT_ID/group/$GROUP_ID?platform=ios&dev=true&minify=false&disableOnboarding=1
 - runFlow:
     when:
       visible: 'Open'
