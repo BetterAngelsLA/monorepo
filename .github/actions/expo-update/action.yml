@@ -94,8 +94,8 @@ runs:
     - name: Set Group ID
       id: set-group-id
       run: |
-        group_id=$(echo '${{ steps.perform-eas-update.outputs.ios-group }}' | jq -r '.hash')
+        group_id="${{ steps.check-builds.outputs.group-id }}"
         echo "GROUP_ID=$group_id" >> .env
         echo "group-id=$group_id" >> $GITHUB_OUTPUT
       shell: bash
-      working-directory: apps/${{ inputs.project }}
+      working-directory: apps/${{ inputs.group }}
