@@ -12,7 +12,4 @@ jobs:
     type: maestro
     params:
       build_id: ${{ needs.wait.outputs.build_id }}
-      flow_path:
-        [
-          '.maestro/ios/landing.yml -e MAESTRO_GROUP_ID=4eae1320-1f13-418b-9da2-cc1464dceee2',
-        ]
+      flow_path: ['.maestro/ios/landing.yml']
