@@ -170,3 +170,12 @@ runs:
         echo "commit-message=${commit_message}" >> $GITHUB_OUTPUT
         echo "slug=${unique_slugs[0]}" >> $GITHUB_OUTPUT
         echo "project-id=${unique_project_ids[0]}" >> $GITHUB_OUTPUT
+
+    - name: Set Project ID
+      id: set-project-id
+      run: |
+        project_id=$(echo '${{ steps.check-builds.outputs.project-id }}' | jq -r '.hash')
+        echo "PROJECT_ID=$project_id" >> .env
+        echo "project-id=$project_id" >> $GITHUB_OUTPUT
+      shell: bash
+      working-directory: apps/${{ inputs.project }}
