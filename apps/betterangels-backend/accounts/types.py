@@ -1,10 +1,11 @@
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
 from common.graphql.types import NonBlankString
+from django.db.models import Q, QuerySet
 from organizations.models import Organization
-from strawberry import ID, auto
+from strawberry import ID, Info, auto
 
 from .models import User
 
@@ -34,7 +35,27 @@ class OrganizationOrder:
     id: auto
 
 
-@strawberry_django.type(Organization, order=OrganizationOrder)  # type: ignore[literal-required]
+@strawberry_django.filters.filter(Organization)
+class OrganizationFilter:
+    @strawberry_django.filter_field
+    def search(
+        self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str
+    ) -> Tuple[QuerySet[Organization], Q]:
+        if value is None:
+            return queryset, Q()
+
+        search_terms = value.split()
+        query = Q()
+
+        for term in search_terms:
+            q_search = Q(name__icontains=term)
+
+            query &= q_search
+
+        return (queryset.filter(query), Q())
+
+
+@strawberry_django.type(Organization, order=OrganizationOrder, filters=OrganizationFilter)  # type: ignore[literal-required]
 class OrganizationType:
     id: ID
     name: auto
