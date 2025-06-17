@@ -1,5 +1,10 @@
 name: e2e-test-android
 
+env:
+  MAESTRO_PROJECT_ID: $MAESTRO_PROJECT_ID
+  MAESTRO_GROUP_ID: $MAESTRO_GROUP_ID
+  RUNTIME_VERSION: $RUNTIME_VERSION
+
 jobs:
   wait:
     type: get-build
