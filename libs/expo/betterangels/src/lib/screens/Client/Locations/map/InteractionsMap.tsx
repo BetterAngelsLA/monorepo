@@ -1,4 +1,4 @@
-import { MapPinIcon } from '@monorepo/expo/shared/icons';
+import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import {
   LoadingView,
   MapClusterMarker,
@@ -46,7 +46,7 @@ export function InteractionsMap(props: TProps) {
   );
 
   const renderPointIconFn = useMemo(
-    () => () => <MapPinIcon size="M" variant="primary" />,
+    () => () => <LocationPinIcon width={25} height={36} />,
     []
   );
 
