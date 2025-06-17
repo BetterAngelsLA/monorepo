@@ -6,6 +6,7 @@ import strawberry_django
 from accounts.models import User
 from accounts.utils import get_outreach_authorized_users, get_user_permission_group
 from clients.models import ClientProfileImportRecord
+from common.graphql.extensions import AtomicHasRetvalPerm
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Location
 from common.permissions.utils import IsAuthenticated
@@ -119,20 +120,11 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[NotePermissions.CHANGE])])
+    @strawberry_django.mutation(extensions=[AtomicHasRetvalPerm(perms=[NotePermissions.CHANGE])])
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
-        with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
-            user = get_current_user(info)
+        with pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
             note_data = asdict(data)
-            try:
-                note = filter_for_user(
-                    Note.objects.all(),
-                    user,
-                    [NotePermissions.CHANGE],
-                ).get(id=data.id)
-            except Note.DoesNotExist:
-                raise PermissionError("You don't have permission to modify this note.")
-
+            note = Note.objects.get(id=data.id)
             note = resolvers.update(
                 info,
                 note,

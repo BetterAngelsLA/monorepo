@@ -211,6 +211,11 @@ class NoteType:
     created_by: UserType
     interacted_at: auto
 
+    @strawberry_django.field()
+    def can_edit(self, root: models.Note) -> Optional[str]:
+
+        return info.context.request.user.has_perm
+
     @strawberry_django.field(
         annotate={
             "_private_details": lambda info: Case(
