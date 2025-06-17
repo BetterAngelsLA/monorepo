@@ -149,8 +149,8 @@ jobs:
 
       - name: 🧪 Run Android E2E Tests
         env:
-          GROUP_ID: ${{ steps.perform-eas-update.outputs.android-group-id }}
-          PROJECT_ID: ${{ steps.preview-build.outputs.project-id }}
+          MAESTRO_GROUP_ID: ${{ steps.perform-eas-update.outputs.android-group-id }}
+          MAESTRO_PROJECT_ID: ${{ steps.preview-build.outputs.project-id }}
           RUNTIME_VERSION: ${{ steps.perform-eas-update.outputs.android-runtime-version }}
         working-directory: apps/${{ matrix.project }}
         run: |
@@ -159,8 +159,8 @@ jobs:
 
       - name: 🧪 Run iOS E2E Tests
         env:
-          GROUP_ID: ${{ steps.perform-eas-update.outputs.ios-group-id }}
-          PROJECT_ID: ${{ steps.preview-build.outputs.project-id }}
+          MAESTRO_GROUP_ID: ${{ steps.perform-eas-update.outputs.ios-group-id }}
+          MAESTRO_PROJECT_ID: ${{ steps.preview-build.outputs.project-id }}
           RUNTIME_VERSION: ${{ steps.perform-eas-update.outputs.ios-runtime-version }}
         working-directory: apps/${{ matrix.project }}
         run: |
