@@ -5,6 +5,7 @@ import Supercluster, {
   ClusterFeature,
   PointFeature,
 } from 'supercluster';
+import { defaultAnimationDuration } from '../constants';
 import { TMapView } from '../types';
 
 export interface IMapClusterManager {
@@ -22,7 +23,7 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
   private readonly clusterIndex: Supercluster<P, AnyProps>;
 
   constructor(opts: IMapClusterManager = {}) {
-    const { radius = 50, maxZoom = 20, extent = 512, nodeSize = 64 } = opts;
+    const { radius = 50, maxZoom = 20, extent = 256, nodeSize = 40 } = opts;
 
     this.clusterIndex = new Supercluster<P, AnyProps>({
       radius,
@@ -114,6 +115,9 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
       fallbackDelta: options?.fallbackDelta,
     });
 
-    mapRef.current.animateToRegion(region, options?.animateDuration ?? 200);
+    mapRef.current.animateToRegion(
+      region,
+      options?.animateDuration ?? defaultAnimationDuration
+    );
   }
 }

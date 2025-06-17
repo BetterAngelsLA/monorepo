@@ -35,7 +35,7 @@ export function InteractionsMap(props: TProps) {
     useClusters<TClusterInteraction>({
       pointFeatures,
       opts: {
-        radius: 80,
+        radius: 50,
       },
     });
 
