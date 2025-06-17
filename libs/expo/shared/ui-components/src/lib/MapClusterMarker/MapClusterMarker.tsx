@@ -34,7 +34,7 @@ function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
     textColor: variantTextColor,
   } = variantStyleMap[variant];
 
-  const { content, markerSize } = useMemo(
+  const { content, markerSize, showSubscript } = useMemo(
     () =>
       getContentAndSize({
         text,
@@ -75,7 +75,7 @@ function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
           ]}
         >
           {content}
-          {subscriptAfter && (
+          {(subscriptAfter || showSubscript) && (
             <Text style={{ fontSize: SIZES[markerSize].subscriptAfterSize }}>
               +
             </Text>

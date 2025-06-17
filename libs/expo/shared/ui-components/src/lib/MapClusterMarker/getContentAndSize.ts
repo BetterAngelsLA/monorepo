@@ -8,6 +8,7 @@ const BREAKPOINT_PLUS = 100;
 type TResult = {
   content: string;
   markerSize: TMapClusterMarkerSize;
+  showSubscript?: boolean;
 };
 
 type TProps = {
@@ -30,6 +31,7 @@ export function getContentAndSize(props: TProps): TResult {
     return {
       content: getTextPerCount(itemCount),
       markerSize: getSizePerCount(itemCount),
+      showSubscript: itemCount >= BREAKPOINT_PLUS,
     };
   }
 
@@ -56,5 +58,5 @@ function getTextPerCount(itemCount: number): string {
     return String(itemCount);
   }
 
-  return `${BREAKPOINT_PLUS - 1}+`;
+  return `${BREAKPOINT_PLUS - 1}`;
 }
