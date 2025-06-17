@@ -149,6 +149,8 @@ jobs:
       - name: 🧪 Run iOS E2E Tests
         env:
           BUILD_ID: ${{ steps.simulator-build.outputs.ios-build-id }}
+          PROJECT_ID: ${{ steps.preview-build.outputs.project-id }}
+          GROUP_ID: ${{ steps.perform-eas-update.outputs.ios-group-id }}
         working-directory: apps/${{ matrix.project }}
         run: |
           npx eas-cli workflow:run .eas/workflows/ios-e2e-test.yml \

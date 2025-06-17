@@ -1,7 +1,10 @@
 appId: la.betterangels.dev.app
 platform: ios
 ---
-- openLink: exp+betterangels://expo-development-client/?url=https://u.expo.dev/53171ba4-60ca-40cb-b3e6-b0c2393677b8/group/4eae1320-1f13-418b-9da2-cc1464dceee2?platform=ios&dev=true&minify=false&disableOnboarding=1
+- runScript:
+    script: |
+      echo "exp+betterangels://expo-development-client/?url=https://u.expo.dev/$MAESTRO_ENV_project_id/group/$MAESTRO_ENV_group_id?platform=ios&dev=true&minify=false&disableOnboarding=1" > deeplink.txt
+- openLink: $(cat deeplink.txt)
 - runFlow:
     when:
       visible: 'Open'
