@@ -1,6 +1,8 @@
-import { Colors, Shadow } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
+import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SIZES, variantStyleMap } from './constants';
+import { getContentAndSize } from './getContentAndSize';
 
 export type TMapClusterMarkerSize = 'S' | 'M' | 'L';
 export type TMapClusterMarkerVariant = 'primary';
@@ -10,16 +12,18 @@ interface IMapClusterMarkerProps {
   size?: TMapClusterMarkerSize;
   variant?: TMapClusterMarkerVariant;
   text?: string;
+  itemCount?: number;
   subscriptAfter?: boolean;
   hasHouse?: boolean;
 }
 
-export function MapClusterMarker(props: IMapClusterMarkerProps) {
+function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
   const {
     textColor,
-    size = 'S',
+    size, // no default here; if undefined, getContentAndSize() will know what to do.
     variant = 'primary',
     text,
+    itemCount,
     subscriptAfter,
     // hasHouse,
   } = props;
@@ -30,47 +34,57 @@ export function MapClusterMarker(props: IMapClusterMarkerProps) {
     textColor: variantTextColor,
   } = variantStyleMap[variant];
 
+  // /Users/tomek/Repos/betterangels/monorepo/libs/expo/shared/ui-components/src/lib/MapClusterMarker/MapClusterMarker.tsx
+  //   37:35  error  React Hook "useMemo" is called in function "baseMapClusterMarker" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use"
+  const { content, markerSize } = useMemo(
+    () =>
+      getContentAndSize({
+        text,
+        itemCount,
+        size,
+      }),
+    [text, itemCount, size]
+  );
+
   return (
-    <View style={[styles.shadowContainer]}>
+    <View
+      style={[
+        styles.outerCircle,
+        {
+          backgroundColor: variantFillColor,
+          padding: SIZES[markerSize].outerPadding,
+          height: SIZES[markerSize].size,
+          width: SIZES[markerSize].size,
+        },
+      ]}
+    >
       <View
         style={[
-          styles.outerCircle,
-
+          styles.innerCircle,
           {
             backgroundColor: variantFillColor,
-            padding: SIZES[size].outerPadding,
-            height: SIZES[size].size,
-            width: SIZES[size].size,
+            borderColor: variantBorderColor,
           },
         ]}
       >
-        <View
+        <Text
           style={[
-            styles.innerCircle,
+            styles.text,
             {
-              backgroundColor: variantFillColor,
-              borderColor: variantBorderColor,
+              fontSize: SIZES[markerSize].fontSize,
+              color: textColor || variantTextColor,
             },
           ]}
         >
-          <Text
-            style={[
-              styles.text,
-              {
-                fontSize: SIZES[size].fontSize,
-                color: textColor || variantTextColor,
-              },
-            ]}
-          >
-            {text}
-            {subscriptAfter && (
-              <Text style={{ fontSize: SIZES[size].subscriptAfterSize }}>
-                +
-              </Text>
-            )}
-          </Text>
-        </View>
-        {/* {hasHouse && (
+          {content}
+          {subscriptAfter && (
+            <Text style={{ fontSize: SIZES[markerSize].subscriptAfterSize }}>
+              +
+            </Text>
+          )}
+        </Text>
+      </View>
+      {/* {hasHouse && (
           <View
             style={[
               styles.house,
@@ -86,15 +100,11 @@ export function MapClusterMarker(props: IMapClusterMarkerProps) {
             />
           </View>
         )} */}
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  shadowContainer: {
-    ...Shadow,
-  },
   outerCircle: {
     borderRadius: 100,
     justifyContent: 'center',
@@ -125,3 +135,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+export const MapClusterMarker = memo(BaseMapClusterMarker);

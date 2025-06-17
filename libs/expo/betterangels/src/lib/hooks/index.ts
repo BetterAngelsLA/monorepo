@@ -2,6 +2,7 @@ export { default as useAppState } from './appState/useAppState';
 export { default as useCaliforniaIdUniqueCheck } from './californiaIdUniqueCheck/useCaliforniaIdUniqueCheck';
 export { default as useAppVersion } from './expoUpdates/useAppVersion';
 export { default as useFeatureFlagActive } from './featureFlag/useFeatureFlagActive';
+export { useGetClientInteractionsWithLocation } from './interactions/useGetClientInteractionsWithLocation';
 export { default as useKeyboardToolbar } from './keyboardToolbar/useKeyboardToolbar';
 export { default as useNewRelic } from './newRelic/useNewRelic';
 export { default as useInfiniteScroll } from './scroll/useInfiniteScroll';

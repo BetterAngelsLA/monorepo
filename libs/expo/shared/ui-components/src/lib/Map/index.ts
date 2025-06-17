@@ -1,7 +1,8 @@
 import RNMapView from 'react-native-maps';
 
 export { MapViewport } from './MapViewport';
+export * from './clusters';
 export { defaultMapRegion, regionDeltaMap } from './constants';
 export * from './types';
-export { coordsToRegion } from './utils/coordsToRegion';
+export * from './utils';
 export { RNMapView as MapView };

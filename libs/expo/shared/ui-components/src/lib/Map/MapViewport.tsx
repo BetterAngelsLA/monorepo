@@ -1,24 +1,27 @@
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode, RefObject, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import MapView, { Region } from 'react-native-maps';
+import MapView, { Details, Region } from 'react-native-maps';
 import { defaultMapRegion } from './constants';
 import { MapLocateMeBtn } from './mapUi/MapLocateMeBtn';
 import { TMapView } from './types';
 
 type TMapProps = {
+  mapRef: RefObject<TMapView | null>;
   provider?: 'google';
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
   mapStyle?: StyleProp<ViewStyle>;
   enableUserLocation?: boolean;
   children?: ReactNode;
+  onRegionChangeComplete?: (region: Region, details: Details) => void;
 };
 
-// Not named `Map` as it clashes with JS Map constructor
 export function MapViewport(props: TMapProps) {
   const {
+    mapRef,
     provider,
     initialRegion,
+    onRegionChangeComplete,
     style,
     mapStyle,
     enableUserLocation,
@@ -26,7 +29,10 @@ export function MapViewport(props: TMapProps) {
   } = props;
 
   const [_mapReady, setMapReady] = useState(false);
-  const mapRef = useRef<TMapView>(null);
+
+  if (!mapRef) {
+    return null;
+  }
 
   return (
     <View style={[styles.wrapper, style]}>
@@ -41,6 +47,7 @@ export function MapViewport(props: TMapProps) {
         mapType="standard"
         initialRegion={initialRegion || defaultMapRegion}
         onMapReady={() => setMapReady(true)}
+        onRegionChangeComplete={onRegionChangeComplete}
         style={[styles.map, mapStyle]}
       >
         {children}

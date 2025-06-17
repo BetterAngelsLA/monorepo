@@ -1,5 +1,5 @@
 import { ClientProfileQuery } from '../__generated__/Client.generated';
-import { InteractionLocationsMap } from './InteractionLocationsMap';
+import { InteractionLocationsMap } from './map/InteractionLocationsMap';
 
 type TProps = {
   client: ClientProfileQuery | undefined;
