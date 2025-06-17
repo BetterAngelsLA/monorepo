@@ -2,7 +2,7 @@ import { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import { Region } from 'react-native-maps';
 import { PointFeature } from 'supercluster';
 import { TMapView } from '../../types';
-import { regionToBbox, regionToZoom } from '../../utils';
+import { mapCameraZoom, regionToBbox, regionToZoom } from '../../utils';
 import { IMapClusterManager } from '../MapClusterManager';
 import { ClusterOrPoint, IClusterGeoJson, TClusterPoint } from '../types';
 import { useMapClusterManager } from './useMapClusterManager';
@@ -60,15 +60,32 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
   );
 
   const zoomToCluster = useCallback(
-    (
-      c: TClusterPoint,
-      mapRef: RefObject<TMapView | null>,
-      opts?: {
-        paddingMultiplier?: number;
-        fallbackDelta?: number;
-        animateDuration?: number;
+    async (cluster: TClusterPoint, mapRef: RefObject<TMapView | null>) => {
+      if (!mapRef.current) {
+        return;
       }
-    ) => clusterManager.zoomToCluster(c.properties.cluster_id, mapRef, opts),
+
+      const [lng, lat] = cluster.geometry.coordinates;
+      let nextZoom = clusterManager.getClusterExpansionZoom(
+        cluster.properties.cluster_id
+      );
+
+      const currentCamera = await mapRef.current?.getCamera?.();
+      const currentZoom = currentCamera?.zoom;
+      const ceilCurrent = currentZoom ? Math.ceil(currentZoom) : null;
+      const ceilTarget = Math.ceil(nextZoom);
+
+      if (ceilCurrent !== null && ceilTarget === ceilCurrent) {
+        nextZoom = ceilTarget + 1;
+      }
+
+      mapCameraZoom({
+        mapRef,
+        zoom: nextZoom,
+        latitude: lat,
+        longitude: lng,
+      });
+    },
     [clusterManager]
   );
 
