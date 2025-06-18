@@ -19,7 +19,6 @@ export default function ShelterDetail({
 }: {
   shelter: ViewShelterQuery['shelter'];
 }) {
-  const asdf = shelter?.accessibility;
   return (
     <Card title="Shelter Details">
       <div className="flex flex-col gap-2">

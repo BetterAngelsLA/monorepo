@@ -405,21 +405,6 @@ export type ClientProfileType = {
   veteranStatus?: Maybe<VeteranStatusEnum>;
 };
 
-
-export type ClientProfileTypeConsentFormDocumentsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type ClientProfileTypeDocReadyDocumentsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type ClientProfileTypeOtherDocumentsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
 export type ClientProfileTypeOffsetPaginated = {
   __typename?: 'ClientProfileTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
@@ -1852,6 +1837,8 @@ export type ShelterType = {
   ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   InteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
+  addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
+  addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
   cities: Array<CityType>;
@@ -2096,7 +2083,7 @@ export type UpdateNoteInput = {
   location?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
-  purpose?: InputMaybe<Scalars['String']['input']>;
+  purpose?: InputMaybe<Scalars['NonBlankString']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
 };
 
