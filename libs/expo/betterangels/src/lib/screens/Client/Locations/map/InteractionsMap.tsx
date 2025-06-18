@@ -6,6 +6,7 @@ import {
   MapViewport,
   TClusterPoint,
   TMapView,
+  regionDeltaMap,
   useClusters,
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo, useRef } from 'react';
@@ -61,14 +62,29 @@ export function InteractionsMap(props: TProps) {
     []
   );
 
-  function onMarkerPress(interactionId: string) {
+  async function onMarkerPress(interactionId: string) {
     const interaction = interactions?.find((i) => i.id === interactionId);
     if (interaction && setSelectedLocation) {
       setSelectedLocation(interaction);
-      const region = getInteractionsMapRegion({ interaction });
-      if (region && mapRef.current) {
-        mapRef.current.animateToRegion(region, 500);
+
+      const point = interaction.location?.point;
+
+      if (!point || !mapRef.current) {
+        return;
       }
+
+      const currentCamera = await mapRef.current.getCamera();
+
+      mapRef.current.animateCamera(
+        {
+          ...currentCamera,
+          center: {
+            latitude: point[1],
+            longitude: point[0],
+          },
+        },
+        { duration: 500 }
+      );
     }
   }
 
@@ -96,7 +112,7 @@ export function InteractionsMap(props: TProps) {
 
   const mapRegion = getInteractionsMapRegion({
     interaction: interactions[0],
-    deltaSize: 'M',
+    delta: regionDeltaMap.M,
   });
 
   if (!mapRegion) {

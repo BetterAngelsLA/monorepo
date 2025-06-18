@@ -1,18 +1,18 @@
 import {
-  RegionDeltaSize,
+  TMapDeltaLatLng,
   coordsToRegion,
-  regionDeltaMap,
 } from '@monorepo/expo/shared/ui-components';
+import { defaultRegionDelta } from 'libs/expo/shared/ui-components/src/lib/Map/constants';
 import { Region } from 'react-native-maps';
 import { TNotesQueryInteraction } from '../../../../apollo';
 
 type TProps = {
   interaction: TNotesQueryInteraction;
-  deltaSize?: RegionDeltaSize;
+  delta?: TMapDeltaLatLng;
 };
 
 export function getInteractionsMapRegion(props: TProps): Region | null {
-  const { interaction, deltaSize = 'M' } = props;
+  const { interaction, delta } = props;
 
   const point = interaction.location?.point;
 
@@ -20,11 +20,13 @@ export function getInteractionsMapRegion(props: TProps): Region | null {
     return null;
   }
 
+  const latLngDeltas = delta || defaultRegionDelta;
+
   const [longitude, latitude] = point;
 
   return coordsToRegion({
     latitude,
     longitude,
-    ...regionDeltaMap[deltaSize],
+    ...latLngDeltas,
   });
 }
