@@ -1,9 +1,6 @@
 import inspect
-from typing import Any, Callable, Optional, Type, TypeVar, Union
+from typing import Any, Callable, Optional, Type, Union
 
-from django.apps import apps
-from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
 from django.db.models import Model, QuerySet
 from strawberry.types.info import Info
 from strawberry_django.auth.utils import get_current_user
@@ -14,8 +11,6 @@ from strawberry_django.permissions import (
     UserType,
 )
 from strawberry_django.utils.query import filter_for_user
-
-_M = TypeVar("_M", bound=Model)
 
 
 class PermissionedQuerySet(HasRetvalPerm):

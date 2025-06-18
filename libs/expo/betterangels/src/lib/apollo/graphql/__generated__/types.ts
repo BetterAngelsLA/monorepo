@@ -1260,7 +1260,6 @@ export type NoteOrder = {
 
 export type NoteType = {
   __typename?: 'NoteType';
-  canEdit: Scalars['Boolean']['output'];
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
@@ -1278,6 +1277,7 @@ export type NoteType = {
   purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
   team?: Maybe<SelahTeamEnum>;
+  userCanEdit: Scalars['Boolean']['output'];
 };
 
 
