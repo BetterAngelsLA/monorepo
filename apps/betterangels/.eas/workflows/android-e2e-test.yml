@@ -9,7 +9,7 @@ jobs:
           ls -al /home/expo/workingdir/
           echo "/home/expo/workingdir/temporary-custom-build"
           ls -al /home/expo/workingdir/temporary-custom-build
-          cat /home/expo/workingdir/temporary-custom-build/.env
+          cat /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env
         #         MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)
         #         MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' .env | cut -d '=' -f2-)
         #         RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' .env | cut -d '=' -f2-)

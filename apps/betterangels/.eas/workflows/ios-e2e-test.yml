@@ -9,7 +9,7 @@ jobs:
           ls -al /home/expo/workingdir/
           echo "/home/expo/workingdir/temporary-custom-build"
           ls -al /home/expo/workingdir/temporary-custom-build
-          cat /home/expo/workingdir/temporary-custom-build/.env
+          cat /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env
         # run: |
         #   pwd
         #   ls -al
