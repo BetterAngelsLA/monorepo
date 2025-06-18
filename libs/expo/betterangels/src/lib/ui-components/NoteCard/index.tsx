@@ -11,26 +11,33 @@ import NoteCardServices from './NoteCardServices';
 interface INoteCardProps {
   note: NotesQuery['notes']['results'][0];
   variant: 'interactions' | 'clientProfile';
+  hasBorder?: boolean;
+  onPress?: () => void;
 }
 
 export default function NoteCard(props: INoteCardProps) {
-  const { note, variant } = props;
+  const { note, variant, hasBorder, onPress } = props;
   const pathname = usePathname();
   const router = useRouter();
 
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() =>
+      onPress={() => {
+        if (onPress) {
+          onPress();
+        }
         router.navigate({
           pathname: `/note/${note.id}`,
           params: { arrivedFrom: pathname },
-        })
-      }
+        });
+      }}
       style={({ pressed }) => [
         styles.container,
         {
           backgroundColor: pressed ? Colors.GRAY_PRESSED : Colors.WHITE,
+          borderColor: Colors.NEUTRAL_LIGHT,
+          borderWidth: hasBorder ? 1 : 0,
         },
       ]}
     >

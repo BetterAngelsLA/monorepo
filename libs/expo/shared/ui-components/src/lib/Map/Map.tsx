@@ -1,4 +1,4 @@
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode, RefObject, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Region } from 'react-native-maps';
 import { defaultMapRegion } from './constants';
@@ -12,6 +12,7 @@ type TMapProps = {
   mapStyle?: StyleProp<ViewStyle>;
   enableUserLocation?: boolean;
   children?: ReactNode;
+  ref: RefObject<TRNMapView | null>;
 };
 
 export function MapView(props: TMapProps) {
@@ -22,15 +23,15 @@ export function MapView(props: TMapProps) {
     mapStyle,
     enableUserLocation,
     children,
+    ref,
   } = props;
 
   const [_mapReady, setMapReady] = useState(false);
-  const mapRef = useRef<TRNMapView>(null);
 
   return (
     <View style={[styles.wrapper, style]}>
       <RNMapView
-        ref={mapRef}
+        ref={ref}
         provider={provider}
         showsUserLocation={!!enableUserLocation}
         showsMyLocationButton={false}
@@ -45,7 +46,7 @@ export function MapView(props: TMapProps) {
         {children}
       </RNMapView>
 
-      {!!enableUserLocation && <MapLocateMeBtn mapRef={mapRef} />}
+      {!!enableUserLocation && <MapLocateMeBtn mapRef={ref} />}
     </View>
   );
 }

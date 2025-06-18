@@ -1,25 +1,29 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import {
-  LoadingView,
-  MapView,
   coordsToRegion,
   defaultMapRegion,
+  LoadingView,
+  MapView,
   regionDeltaMap,
 } from '@monorepo/expo/shared/ui-components';
+import { useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { NotesQuery, Ordering } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
 import { useGetClientInteractionsWithLocation } from '../../../hooks/interactions/useGetClientInteractionsWithLocation';
-import { Marker } from '../../../maps';
+import { Marker, TMapView } from '../../../maps';
 import { EmptyState } from './EmptyState';
 
 type TProps = {
   clientProfileId: string;
+  setSelectedLocation?: (
+    interaction: NotesQuery['notes']['results'][number]
+  ) => void;
 };
 
 export function InteractionLocationsMap(props: TProps) {
-  const { clientProfileId } = props;
+  const { clientProfileId, setSelectedLocation } = props;
 
   const { showSnackbar } = useSnackbar();
   const {
@@ -30,6 +34,8 @@ export function InteractionLocationsMap(props: TProps) {
     id: clientProfileId,
     dateSort: Ordering.Desc,
   });
+
+  const mapRef = useRef<TMapView>(null);
 
   if (error) {
     showSnackbar({
@@ -55,8 +61,19 @@ export function InteractionLocationsMap(props: TProps) {
 
   const mapRegion = getMapRegion(interactionsWithLocation[0]);
 
+  function onMarkerPress(interaction: NotesQuery['notes']['results'][number]) {
+    if (interaction && setSelectedLocation) {
+      setSelectedLocation(interaction);
+      const region = getMapRegion(interaction);
+      if (region && mapRef.current) {
+        mapRef.current.animateToRegion(region, 500);
+      }
+    }
+  }
+
   return (
     <MapView
+      ref={mapRef}
       enableUserLocation={true}
       style={styles.map}
       provider="google"
@@ -68,6 +85,7 @@ export function InteractionLocationsMap(props: TProps) {
 
         return (
           <Marker
+            onPress={() => onMarkerPress(interaction)}
             key={id}
             tracksViewChanges={false}
             coordinate={{
