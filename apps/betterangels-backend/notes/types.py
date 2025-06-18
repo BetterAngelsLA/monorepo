@@ -239,7 +239,7 @@ class NoteType:
             ),
         }
     )
-    def can_edit(self, root: models.Note) -> bool:
+    def user_can_edit(self, root: models.Note) -> bool:
         return bool(getattr(root, "_can_edit", False))
 
     @strawberry_django.field(

@@ -1043,7 +1043,7 @@ type NoteType {
   createdAt: DateTime!
   createdBy: UserType!
   interactedAt: DateTime!
-  canEdit: Boolean!
+  userCanEdit: Boolean!
   privateDetails: String
 }
 
