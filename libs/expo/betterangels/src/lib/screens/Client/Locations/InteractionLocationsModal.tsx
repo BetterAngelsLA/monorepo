@@ -22,6 +22,7 @@ export function InteractionLocationsModal(
 
   return (
     <Modal
+      fullWidth={false}
       propogateSwipe
       vertical
       isModalVisible={!!selectedLocation}
