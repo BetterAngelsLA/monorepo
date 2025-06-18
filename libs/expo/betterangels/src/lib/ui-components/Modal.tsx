@@ -17,6 +17,7 @@ interface IModalProps {
   mt?: number;
   propogateSwipe?: boolean;
   onLayout?: () => void;
+  fullWidth?: boolean;
 }
 
 export default function Modal(props: IModalProps) {
@@ -32,6 +33,7 @@ export default function Modal(props: IModalProps) {
     mt,
     propogateSwipe = false,
     onLayout,
+    fullWidth = true,
   } = props;
 
   const insets = useSafeAreaInsets();
@@ -58,11 +60,12 @@ export default function Modal(props: IModalProps) {
     >
       <View
         style={{
+          flex: fullWidth ? 1 : undefined,
           borderTopLeftRadius: Radiuses.xs,
           borderTopRightRadius: Radiuses.xs,
           paddingBottom: 35 + bottomOffset,
-          paddingTop: Spacings.xs,
-          marginTop: mt || topOffset,
+          paddingTop: fullWidth ? topOffset + Spacings.xs : Spacings.xs,
+          marginTop: mt,
           backgroundColor: Colors.WHITE,
           height,
         }}
