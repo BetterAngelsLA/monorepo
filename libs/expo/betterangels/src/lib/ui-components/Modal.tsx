@@ -64,7 +64,7 @@ export default function Modal(props: IModalProps) {
           borderTopLeftRadius: Radiuses.xs,
           borderTopRightRadius: Radiuses.xs,
           paddingBottom: 35 + bottomOffset,
-          paddingTop: Spacings.xs,
+          paddingTop: fullWidth ? topOffset + Spacings.xs : Spacings.xs,
           marginTop: mt || topOffset,
           backgroundColor: Colors.WHITE,
           height,
