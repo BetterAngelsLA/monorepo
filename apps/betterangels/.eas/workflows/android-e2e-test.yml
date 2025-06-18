@@ -4,15 +4,19 @@ jobs:
   extract-vars:
     type: generic
     steps:
-      - run: |
+      - id: extract
+        run: |
           MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)
           MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' .env | cut -d '=' -f2-)
           RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' .env | cut -d '=' -f2-)
 
+          echo "MAESTRO_GROUP_ID=$MAESTRO_GROUP_ID" >> $EAS_ENV
+          echo "MAESTRO_PROJECT_ID=$MAESTRO_PROJECT_ID" >> $EAS_ENV
+          echo "RUNTIME_VERSION=$RUNTIME_VERSION" >> $EAS_ENV
     outputs:
-      MAESTRO_GROUP_ID: ${{ steps.run.outputs.MAESTRO_GROUP_ID }}
-      MAESTRO_PROJECT_ID: ${{ steps.run.outputs.MAESTRO_PROJECT_ID }}
-      RUNTIME_VERSION: ${{ steps.run.outputs.RUNTIME_VERSION }}
+      MAESTRO_GROUP_ID: ${{ steps.extract.outputs.MAESTRO_GROUP_ID }}
+      MAESTRO_PROJECT_ID: ${{ steps.extract.outputs.MAESTRO_PROJECT_ID }}
+      RUNTIME_VERSION: ${{ steps.extract.outputs.RUNTIME_VERSION }}
 
   wait:
     type: get-build

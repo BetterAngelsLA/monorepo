@@ -4,27 +4,32 @@ jobs:
   extract-vars:
     type: generic
     steps:
-      - run: |
-          export MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)
-          export MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' .env | cut -d '=' -f2-)
-          export RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' .env | cut -d '=' -f2-)
+      - id: extract
+        run: |
+          echo "MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)" >> $EAS_ENV
+          echo "MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' .env | cut -d '=' -f2-)" >> $EAS_ENV
+          echo "RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' .env | cut -d '=' -f2-)" >> $EAS_ENV
 
-          echo "MAESTRO_GROUP_ID=$MAESTRO_GROUP_ID" >> $EAS_ENV
-          echo "MAESTRO_PROJECT_ID=$MAESTRO_PROJECT_ID" >> $EAS_ENV
-          echo "RUNTIME_VERSION=$RUNTIME_VERSION" >> $EAS_ENV
+          echo "MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)" >> $GITHUB_OUTPUT
+          echo "MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' .env | cut -d '=' -f2-)" >> $GITHUB_OUTPUT
+          echo "RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' .env | cut -d '=' -f2-)" >> $GITHUB_OUTPUT
+    outputs:
+      MAESTRO_GROUP_ID: ${{ steps.extract.outputs.MAESTRO_GROUP_ID }}
+      MAESTRO_PROJECT_ID: ${{ steps.extract.outputs.MAESTRO_PROJECT_ID }}
+      RUNTIME_VERSION: ${{ steps.extract.outputs.RUNTIME_VERSION }}
 
   wait:
     type: get-build
     params:
-      runtime_version: ${{ env.RUNTIME_VERSION }}
+      runtime_version: ${{ jobs.extract-vars.outputs.RUNTIME_VERSION }}
       platform: ios
 
   maestro_test:
-    needs: [wait]
+    needs: [wait, extract-vars]
     type: maestro
     env:
-      MAESTRO_GROUP_ID: ${{ env.MAESTRO_GROUP_ID }}
-      MAESTRO_PROJECT_ID: ${{ env.MAESTRO_PROJECT_ID }}
+      MAESTRO_GROUP_ID: ${{ jobs.extract-vars.outputs.MAESTRO_GROUP_ID }}
+      MAESTRO_PROJECT_ID: ${{ jobs.extract-vars.outputs.MAESTRO_PROJECT_ID }}
     params:
       build_id: ${{ needs.wait.outputs.build_id }}
       flow_path: ['.maestro/ios/landing.yml']
