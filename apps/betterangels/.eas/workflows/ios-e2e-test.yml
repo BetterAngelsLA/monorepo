@@ -4,12 +4,15 @@ jobs:
   extract-vars:
     steps:
       - id: extract
-        # run: |
-        #   ls -al /home/expo/workingdir/temporary-custom-build
-        #   cat /home/expo/workingdir/temporary-custom-build/.env
         run: |
-          pwd
-          ls -al
+          echo "/home/expo/workingdir/"
+          ls -al /home/expo/workingdir/
+          echo "/home/expo/workingdir/temporary-custom-build"
+          ls -al /home/expo/workingdir/temporary-custom-build
+          cat /home/expo/workingdir/temporary-custom-build/.env
+        # run: |
+        #   pwd
+        #   ls -al
   #         echo "MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)" >> $EAS_ENV
   #         echo "MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' .env | cut -d '=' -f2-)" >> $EAS_ENV
   #         echo "RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' .env | cut -d '=' -f2-)" >> $EAS_ENV
