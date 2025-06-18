@@ -1,8 +1,8 @@
 import {
   TMapDeltaLatLng,
   coordsToRegion,
+  defaultRegionDelta,
 } from '@monorepo/expo/shared/ui-components';
-import { defaultRegionDelta } from 'libs/expo/shared/ui-components/src/lib/Map/constants';
 import { Region } from 'react-native-maps';
 import { TNotesQueryInteraction } from '../../../../apollo';
 
