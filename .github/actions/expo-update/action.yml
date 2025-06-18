@@ -92,3 +92,14 @@ runs:
           echo "MAESTRO_GROUP_ID=$group_id" >> .env
         done
       shell: bash
+
+    - name: Set Group ID
+      id: set-group-id
+      run: |
+        eas_update_raw=$(yarn nx run ${{ inputs.project }}:eas-update --branch "${{ inputs.branch }}" --auto --json --interactive false 2>&1)
+        eas_update_output=$(echo "$eas_update_raw" | sed ':a;N;$!ba;s/.*\(\[[^]]*\]\).*/\1/')
+        update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
+        group_id=$(echo "$update_info" | jq -r '.group')
+        echo "MAESTRO_GROUP_ID=$group_id" >> .env
+      shell: bash
+      working-directory: apps/${{ inputs.project }}
