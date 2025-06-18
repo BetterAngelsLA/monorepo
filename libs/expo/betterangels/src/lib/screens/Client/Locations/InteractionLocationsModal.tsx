@@ -40,7 +40,8 @@ export function InteractionLocationsModal(
       </View>
       <View
         style={{
-          padding: Spacings.sm,
+          paddingHorizontal: Spacings.sm,
+          gap: Spacings.sm,
         }}
       >
         <NoteCard

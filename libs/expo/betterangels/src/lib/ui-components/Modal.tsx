@@ -16,6 +16,7 @@ interface IModalProps {
   children: ReactNode;
   mt?: number;
   propogateSwipe?: boolean;
+  onLayout?: () => void;
 }
 
 export default function Modal(props: IModalProps) {
@@ -30,6 +31,7 @@ export default function Modal(props: IModalProps) {
     height = 'auto',
     mt,
     propogateSwipe = false,
+    onLayout,
   } = props;
 
   const insets = useSafeAreaInsets();
@@ -37,6 +39,7 @@ export default function Modal(props: IModalProps) {
   const topOffset = insets.top;
   return (
     <RnModal
+      onLayout={onLayout}
       style={{
         margin: 0,
         marginLeft: ml,
@@ -58,23 +61,21 @@ export default function Modal(props: IModalProps) {
           borderTopLeftRadius: Radiuses.xs,
           borderTopRightRadius: Radiuses.xs,
           paddingBottom: 35 + bottomOffset,
-          paddingTop: topOffset + Spacings.xs,
+          paddingTop: Spacings.xs,
+          marginTop: mt || topOffset,
           backgroundColor: Colors.WHITE,
           height,
-          marginTop: mt,
         }}
       >
         {propogateSwipe && (
           <View
             style={{
-              position: 'absolute',
-              left: '50%',
-              transform: [{ translateX: -27 }],
-              top: Spacings.xs,
+              marginHorizontal: 'auto',
               width: 54,
               height: 5,
               borderRadius: 4,
               backgroundColor: Colors.NEUTRAL_LIGHT,
+              marginBottom: Spacings.sm,
             }}
           />
         )}
