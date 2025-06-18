@@ -154,10 +154,6 @@ jobs:
             --non-interactive \
 
       - name: 🧪 Run iOS E2E Tests
-        env:
-          MAESTRO_GROUP_ID: ${{ steps.perform-eas-update.outputs.ios-group-id }}
-          MAESTRO_PROJECT_ID: ${{ steps.preview-build.outputs.project-id }}
-          RUNTIME_VERSION: ${{ steps.perform-eas-update.outputs.ios-runtime-version }}
         working-directory: apps/${{ matrix.project }}
         run: |
           npx eas-cli workflow:run .eas/workflows/ios-e2e-test.yml \

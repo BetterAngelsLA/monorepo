@@ -1,11 +1,18 @@
 name: e2e-test-ios
 
-env:
-  MAESTRO_PROJECT_ID: $MAESTRO_PROJECT_ID
-  MAESTRO_GROUP_ID: $MAESTRO_GROUP_ID
-  RUNTIME_VERSION: $RUNTIME_VERSION
-
 jobs:
+  extract-vars:
+    type: generic
+    steps:
+      - run: |
+          export MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)
+          export MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' .env | cut -d '=' -f2-)
+          export RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' .env | cut -d '=' -f2-)
+
+          echo "MAESTRO_GROUP_ID=$MAESTRO_GROUP_ID" >> $EAS_ENV
+          echo "MAESTRO_PROJECT_ID=$MAESTRO_PROJECT_ID" >> $EAS_ENV
+          echo "RUNTIME_VERSION=$RUNTIME_VERSION" >> $EAS_ENV
+
   wait:
     type: get-build
     params:
@@ -15,6 +22,9 @@ jobs:
   maestro_test:
     needs: [wait]
     type: maestro
+    env:
+      MAESTRO_GROUP_ID: ${{ env.MAESTRO_GROUP_ID }}
+      MAESTRO_PROJECT_ID: ${{ env.MAESTRO_PROJECT_ID }}
     params:
       build_id: ${{ needs.wait.outputs.build_id }}
       flow_path: ['.maestro/ios/landing.yml']

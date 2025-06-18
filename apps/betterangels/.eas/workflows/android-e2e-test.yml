@@ -1,23 +1,31 @@
 name: e2e-test-android
 
-env:
-  MAESTRO_PROJECT_ID: $MAESTRO_PROJECT_ID
-  MAESTRO_GROUP_ID: $MAESTRO_GROUP_ID
-  RUNTIME_VERSION: $RUNTIME_VERSION
-
 jobs:
+  extract-vars:
+    type: generic
+    steps:
+      - run: |
+          MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)
+          MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' .env | cut -d '=' -f2-)
+          RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' .env | cut -d '=' -f2-)
+
+    outputs:
+      MAESTRO_GROUP_ID: ${{ steps.run.outputs.MAESTRO_GROUP_ID }}
+      MAESTRO_PROJECT_ID: ${{ steps.run.outputs.MAESTRO_PROJECT_ID }}
+      RUNTIME_VERSION: ${{ steps.run.outputs.RUNTIME_VERSION }}
+
   wait:
     type: get-build
     params:
-      runtime_version: ${{ env.RUNTIME_VERSION }}
+      runtime_version: ${{ jobs.extract-vars.outputs.RUNTIME_VERSION }}
       platform: android
 
   maestro_test:
     needs: [wait]
     type: maestro
     env:
-      MAESTRO_PROJECT_ID: ${{ env.MAESTRO_PROJECT_ID }}
-      MAESTRO_GROUP_ID: ${{ env.MAESTRO_GROUP_ID }}
+      MAESTRO_GROUP_ID: ${{ jobs.extract-vars.outputs.MAESTRO_GROUP_ID }}
+      MAESTRO_PROJECT_ID: ${{ jobs.extract-vars.outputs.MAESTRO_PROJECT_ID }}
     params:
       build_id: ${{ needs.wait.outputs.build_id }}
       flow_path: ['.maestro/android/landing.yml']
