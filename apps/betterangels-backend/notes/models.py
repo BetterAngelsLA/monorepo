@@ -183,6 +183,9 @@ class Note(BaseModel):  # type: ignore[django-manager-missing]
 
     events: models.QuerySet["Events"]
 
+    # Type hints for permission annotations
+    _private_details: Optional[str]
+
     def __str__(self) -> str:
         return self.purpose or str(self.id)
 
