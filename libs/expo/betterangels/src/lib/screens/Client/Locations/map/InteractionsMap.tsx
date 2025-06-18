@@ -10,6 +10,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
+import { NotesQuery } from '../../../../apollo';
 import { useSnackbar } from '../../../../hooks';
 import { EmptyState } from '../EmptyState';
 import { getInteractionsMapRegion } from './getInteractionsMapRegion';
@@ -18,10 +19,13 @@ import { useInteractionPointFeatures } from './useInteractionPointFeatures';
 
 type TProps = {
   clientProfileId: string;
+  setSelectedLocation?: (
+    interaction: NotesQuery['notes']['results'][number]
+  ) => void;
 };
 
 export function InteractionsMap(props: TProps) {
-  const { clientProfileId } = props;
+  const { clientProfileId, setSelectedLocation } = props;
 
   const mapRef = useRef<TMapView | null>(null);
   const { showSnackbar } = useSnackbar();
@@ -57,6 +61,17 @@ export function InteractionsMap(props: TProps) {
     []
   );
 
+  function onMarkerPress(interactionId: string) {
+    const interaction = interactions?.find((i) => i.id === interactionId);
+    if (interaction && setSelectedLocation) {
+      setSelectedLocation(interaction);
+      const region = getInteractionsMapRegion({ interaction });
+      if (region && mapRef.current) {
+        mapRef.current.animateToRegion(region, 500);
+      }
+    }
+  }
+
   if (loading) {
     return <LoadingView />;
   }
@@ -90,7 +105,7 @@ export function InteractionsMap(props: TProps) {
 
   return (
     <MapViewport
-      mapRef={mapRef}
+      ref={mapRef}
       enableUserLocation={true}
       style={styles.map}
       provider="google"
@@ -106,7 +121,7 @@ export function InteractionsMap(props: TProps) {
         clusterRenderer={renderClusterIconFn}
         pointRenderer={renderPointIconFn}
         onClusterPress={(c) => zoomToCluster(c, mapRef)}
-        onPointPress={(p) => console.log(p)}
+        onPointPress={(p) => onMarkerPress(p.properties.id)}
       />
     </MapViewport>
   );

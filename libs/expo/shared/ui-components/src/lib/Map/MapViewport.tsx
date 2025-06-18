@@ -6,7 +6,7 @@ import { MapLocateMeBtn } from './mapUi/MapLocateMeBtn';
 import { TMapView } from './types';
 
 type TMapProps = {
-  mapRef: RefObject<TMapView | null>;
+  ref: RefObject<TMapView | null>;
   provider?: 'google';
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
@@ -21,7 +21,7 @@ type TMapProps = {
 
 export function MapViewport(props: TMapProps) {
   const {
-    mapRef,
+    ref,
     provider,
     initialRegion,
     onRegionChangeComplete,
@@ -43,14 +43,14 @@ export function MapViewport(props: TMapProps) {
     provider === 'google' ? onGoogleMapReady?.() : onAppleMapReady?.();
   }
 
-  if (!mapRef) {
+  if (!ref) {
     return null;
   }
 
   return (
     <View style={[styles.wrapper, style]}>
       <MapView
-        ref={mapRef}
+        ref={ref}
         provider={provider}
         showsUserLocation={!!enableUserLocation}
         showsMyLocationButton={false}
@@ -66,7 +66,7 @@ export function MapViewport(props: TMapProps) {
         {children}
       </MapView>
 
-      {!!enableUserLocation && <MapLocateMeBtn mapRef={mapRef} />}
+      {!!enableUserLocation && <MapLocateMeBtn mapRef={ref} />}
     </View>
   );
 }
