@@ -6,7 +6,7 @@ import strawberry_django
 from accounts.models import User
 from accounts.utils import get_outreach_authorized_users, get_user_permission_group
 from clients.models import ClientProfileImportRecord
-from common.graphql.extensions import AtomicHasRetvalPerm
+from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.models import Location
 from common.permissions.utils import IsAuthenticated
@@ -120,24 +120,16 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry_django.mutation(extensions=[AtomicHasRetvalPerm(perms=[NotePermissions.CHANGE])])
+    @strawberry.django.mutation(extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])])
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
-        with pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
-            note_data = asdict(data)
-            note = Note.objects.get(id=data.id)
-            note = resolvers.update(
-                info,
-                note,
-                {
-                    **note_data,
-                },
-            )
+        qs: QuerySet[Note] = info.context.qs
 
-            # Annotated Fields for Permission Checks. This is a workaround since
-            # annotations are not applied during mutations.
+        with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
+            note = qs.get(pk=data.id)
+            note = resolvers.update(info, note, asdict(data))
             note._private_details = note.private_details
 
-            return cast(NoteType, note)
+        return cast(NoteType, note)
 
     @strawberry_django.mutation(
         extensions=[
@@ -168,9 +160,10 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry_django.mutation(extensions=[HasRetvalPerm(NotePermissions.CHANGE)])
+    @strawberry_django.mutation(extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])])
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
-        note = Note.objects.get(id=data.id)
+        qs: QuerySet[Note] = info.context.qs
+        note = qs.get(id=data.id)
 
         try:
             NoteReverter(note_id=data.id).revert_to_revert_before_timestamp(
