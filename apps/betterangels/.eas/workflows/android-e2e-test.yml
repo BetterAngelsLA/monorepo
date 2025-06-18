@@ -2,7 +2,6 @@ name: e2e-test-android
 
 jobs:
   extract-vars:
-    type: build
     steps:
       - id: extract
         run: |
@@ -13,23 +12,25 @@ jobs:
           echo "MAESTRO_GROUP_ID=$MAESTRO_GROUP_ID" >> $EAS_ENV
           echo "MAESTRO_PROJECT_ID=$MAESTRO_PROJECT_ID" >> $EAS_ENV
           echo "RUNTIME_VERSION=$RUNTIME_VERSION" >> $EAS_ENV
+        working-directory: apps/betterangels
     outputs:
       MAESTRO_GROUP_ID: ${{ steps.extract.outputs.MAESTRO_GROUP_ID }}
       MAESTRO_PROJECT_ID: ${{ steps.extract.outputs.MAESTRO_PROJECT_ID }}
       RUNTIME_VERSION: ${{ steps.extract.outputs.RUNTIME_VERSION }}
 
   wait:
+    needs: [extract-vars]
     type: get-build
     params:
-      runtime_version: ${{ jobs.extract-vars.outputs.RUNTIME_VERSION }}
+      runtime_version: ${{ needs.extract-vars.outputs.RUNTIME_VERSION }}
       platform: android
 
   maestro_test:
-    needs: [wait]
+    needs: [wait, extract-vars]
     type: maestro
     env:
-      MAESTRO_GROUP_ID: ${{ jobs.extract-vars.outputs.MAESTRO_GROUP_ID }}
-      MAESTRO_PROJECT_ID: ${{ jobs.extract-vars.outputs.MAESTRO_PROJECT_ID }}
+      MAESTRO_GROUP_ID: ${{ needs.extract-vars.outputs.MAESTRO_GROUP_ID }}
+      MAESTRO_PROJECT_ID: ${{ needs.extract-vars.outputs.MAESTRO_PROJECT_ID }}
     params:
       build_id: ${{ needs.wait.outputs.build_id }}
       flow_path: ['.maestro/android/landing.yml']
