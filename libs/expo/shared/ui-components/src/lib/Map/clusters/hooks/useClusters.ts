@@ -28,7 +28,7 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
     [pointFeatures]
   );
 
-  const setClustersForRegion = useCallback(
+  const updateClustersForRegion = useCallback(
     (region: Region) => {
       if (!pointFeatures.length) {
         setClusters([]);
@@ -52,9 +52,10 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
   }, [pointFeaturesHash, clusterManager]);
 
   // When map moves/zooms
-  const onRegionChangeComplete = useCallback(
+  // const onRegionChangeComplete = useCallback(
+  const onRegionChange = useCallback(
     (region: Region) => {
-      setClustersForRegion(region);
+      updateClustersForRegion(region);
     },
     [clusterManager, pointFeatures.length]
   );
@@ -71,7 +72,7 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
   return {
     clusters,
     clusterManager,
-    onRegionChangeComplete,
+    updateClustersForRegion,
     zoomToCluster,
   };
 }

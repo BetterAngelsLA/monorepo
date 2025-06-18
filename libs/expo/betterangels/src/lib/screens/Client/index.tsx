@@ -15,7 +15,7 @@ import { MainContainer } from '../../ui-components';
 import ClientHeader from './ClientHeader';
 import { ClientNavMenu } from './ClientNavMenu/ClientNavMenu';
 import ClientProfileView from './ClientProfile';
-import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
+import { ClientTabs, ClientViewTabEnum } from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
 import { InteractionLocations as Locations } from './Locations';

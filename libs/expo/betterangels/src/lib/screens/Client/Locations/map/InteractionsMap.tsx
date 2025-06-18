@@ -6,17 +6,19 @@ import {
   MapViewport,
   TClusterPoint,
   TMapView,
-  regionDeltaMap,
   useClusters,
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo, useRef } from 'react';
+import isEqual from 'react-fast-compare';
 import { StyleSheet } from 'react-native';
+import { Region } from 'react-native-maps';
 import { NotesQuery } from '../../../../apollo';
 import { useSnackbar } from '../../../../hooks';
+import { useClientMapState } from '../../ClientTabs';
 import { EmptyState } from '../EmptyState';
-import { getInteractionsMapRegion } from './getInteractionsMapRegion';
 import { TClusterInteraction } from './types';
 import { useInteractionPointFeatures } from './useInteractionPointFeatures';
+import { useInteractionsMapRegion } from './useInteractionsMapRegion';
 
 type TProps = {
   clientProfileId: string;
@@ -29,6 +31,8 @@ export function InteractionsMap(props: TProps) {
   const { clientProfileId, setSelectedLocation } = props;
 
   const mapRef = useRef<TMapView | null>(null);
+  const { mapState, setMapState } = useClientMapState(clientProfileId);
+
   const { showSnackbar } = useSnackbar();
 
   // 1. Pull data
@@ -36,7 +40,7 @@ export function InteractionsMap(props: TProps) {
     useInteractionPointFeatures(clientProfileId);
 
   // 2. Derive clusters
-  const { clusters, onRegionChangeComplete, zoomToCluster } =
+  const { clusters, updateClustersForRegion, zoomToCluster } =
     useClusters<TClusterInteraction>({
       pointFeatures,
       opts: {
@@ -50,6 +54,42 @@ export function InteractionsMap(props: TProps) {
         ],
       },
     });
+
+  const mapRegion = useInteractionsMapRegion({
+    clientProfileId,
+    interaction: interactions?.[0],
+    deltaSize: 'M',
+  });
+
+  // from 'react-fast-compare';
+  console.log();
+  console.log('| -------------  COMPARE  ------------- |');
+  console.log('*****************  mapRegion:', mapRegion);
+  console.log();
+  console.log('*****************  mapState?.region:', mapState?.region);
+  console.log();
+  const same = isEqual(mapRegion, mapState?.region);
+
+  console.log('*****************  isEqual:', same);
+
+  function onRegionChangeComplete(region: Region) {
+    const now = new Date();
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const milliseconds = String(now.getMilliseconds()).padStart(3, '0');
+
+    const hello = `${minutes}:${seconds}:${milliseconds}`;
+
+    console.log('');
+    console.log('------------------------------------------------------------');
+    console.log(`--------------------------------------------------  ${hello}`);
+    console.log('------------------------------------------------------------');
+    console.log('');
+    console.log('*****************  onRegionChangeComplete:', region);
+    updateClustersForRegion(region);
+
+    setMapState((prev) => ({ ...prev, region }));
+  }
 
   const renderClusterIconFn = useMemo(
     () => (cluster: TClusterPoint) =>
@@ -110,11 +150,6 @@ export function InteractionsMap(props: TProps) {
     return <EmptyState />;
   }
 
-  const mapRegion = getInteractionsMapRegion({
-    interaction: interactions[0],
-    delta: regionDeltaMap.M,
-  });
-
   if (!mapRegion) {
     return null;
   }
@@ -128,7 +163,7 @@ export function InteractionsMap(props: TProps) {
       initialRegion={mapRegion}
       onRegionChangeComplete={onRegionChangeComplete}
       onMapReady={() => {
-        onRegionChangeComplete(mapRegion);
+        updateClustersForRegion(mapRegion);
       }}
     >
       <MapClusters

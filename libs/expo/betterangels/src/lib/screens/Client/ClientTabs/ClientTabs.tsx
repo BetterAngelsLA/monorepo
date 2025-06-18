@@ -1,22 +1,16 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useFeatureFlagActive } from '../../hooks';
-import { FeatureFlags } from '../../providers';
-
-export enum ClientViewTabEnum {
-  Profile = 'Profile',
-  Docs = 'Docs',
-  Interactions = 'Interactions',
-  Locations = 'Locations',
-}
+import { useFeatureFlagActive } from '../../../hooks';
+import { FeatureFlags } from '../../../providers';
+import { ClientViewTabEnum } from './constants';
 
 interface IClientTabsProps {
   selectedTab: ClientViewTabEnum;
   setTab: (tab: ClientViewTabEnum) => void;
 }
 
-export default function ClientTabs(props: IClientTabsProps) {
+export function ClientTabs(props: IClientTabsProps) {
   const { selectedTab, setTab } = props;
 
   const clientLocationHistoryFeatureOn = useFeatureFlagActive(
