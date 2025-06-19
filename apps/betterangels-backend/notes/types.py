@@ -260,7 +260,7 @@ class NoteType:
         }
     )
     def private_details(self, root: models.Note) -> Optional[str]:
-        return getattr(root, "_private_details", None)
+        return root._private_details
 
 
 @strawberry_django.input(models.Note)

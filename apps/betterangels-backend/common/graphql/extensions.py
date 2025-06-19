@@ -15,8 +15,7 @@ from strawberry_django.utils.query import filter_for_user
 
 class PermissionedQuerySet(HasRetvalPerm):
     """
-    Wraps HasRetvalPerm in a DB transaction and injects a permission-filtered QuerySet into context,
-    inferring the model from the permission definition if not explicitly provided.
+    Wraps HasRetvalPerm injects a permission-filtered QuerySet into context.
     """
 
     def __init__(
@@ -60,7 +59,6 @@ class PermissionedQuerySet(HasRetvalPerm):
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        # Inject filtered QuerySet into context
         info.context.qs = self._prepare_qs(info)
         return super().resolve(next_, source, info, *args, **kwargs)
 

@@ -116,25 +116,21 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     def test_update_note_permission_denied(self, user_label: str) -> None:
         self._handle_user_login(user_label)
 
-        note_id = self.note["id"]
-        original = Note.objects.get(pk=note_id)
-        orig_purpose = original.purpose
-        orig_public = original.public_details
-        orig_submitted = original.is_submitted
+        pre_update = Note.objects.get(pk=self.note["id"])
 
         variables = {
-            "id": note_id,
+            "id": pre_update.id,
             "purpose": "Updated Note",
             "publicDetails": "Updated content",
             "isSubmitted": False,
         }
         self._update_note_fixture(variables)
 
-        # Confirm the DB object was NOT changed
-        still = Note.objects.get(pk=note_id)
-        self.assertEqual(still.purpose, orig_purpose)
-        self.assertEqual(still.public_details, orig_public)
-        self.assertEqual(still.is_submitted, orig_submitted)
+        post_update = Note.objects.get(pk=pre_update.id)
+
+        self.assertEqual(post_update.purpose, pre_update.purpose)
+        self.assertEqual(post_update.public_details, pre_update.public_details)
+        self.assertEqual(post_update.is_submitted, pre_update.is_submitted)
 
     @parametrize(
         "has_note_permissions, has_task_permissions, should_succeed",
