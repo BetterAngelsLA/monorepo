@@ -75,6 +75,7 @@ runs:
           branch=$(echo "$update_info" | jq -r '.branch')
           update_id=$(echo "$update_info" | jq -r '.id')
           group_id=$(echo "$update_info" | jq -r '.group')
+          echo $group_id
           update_commit=$(echo "$update_info" | jq -r '.gitCommitHash')
           runtime_version=$(echo "$update_info" | jq -r '.runtimeVersion')
           update_permalink="https://expo.dev/projects/${{ inputs.project-id }}/updates/${update_id}"
@@ -89,17 +90,7 @@ runs:
           echo "${platform}-runtime-version=$runtime_version" >> $GITHUB_OUTPUT
           echo "${platform}-group-id=$group_id" >> $GITHUB_OUTPUT
 
+          echo $group_id
           echo "MAESTRO_GROUP_ID=$group_id" >> .env
         done
       shell: bash
-
-    - name: Set Group ID
-      id: set-group-id
-      run: |
-        eas_update_raw=$(yarn nx run ${{ inputs.project }}:eas-update --branch "${{ inputs.branch }}" --auto --json --interactive false 2>&1)
-        eas_update_output=$(echo "$eas_update_raw" | sed ':a;N;$!ba;s/.*\(\[[^]]*\]\).*/\1/')
-        update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
-        group_id=$(echo "$update_info" | jq -r '.group')
-        echo "MAESTRO_GROUP_ID=$group_id" >> .env
-      shell: bash
-      working-directory: apps/${{ inputs.project }}
