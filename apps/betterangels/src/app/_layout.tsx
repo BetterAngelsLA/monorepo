@@ -23,6 +23,8 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
 import { type ErrorBoundaryProps } from 'expo-router';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -39,60 +41,68 @@ export default function RootLayout() {
   useNewRelic();
 
   return (
-    <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-      <ApolloClientProvider>
-        <FeatureControlProvider>
-          <KeyboardProvider>
-            <KeyboardToolbarProvider>
-              <UserProvider>
-                <SnackbarProvider>
-                  <StatusBar style="light" />
-                  <FeatureFlagControlled
-                    flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
-                  >
-                    <AppUpdatePrompt />
-                  </FeatureFlagControlled>
-                  <Stack>
-                    <Stack.Screen
-                      name="(tabs)"
-                      options={{ headerShown: false, gestureEnabled: false }}
-                    />
-                    <Stack.Screen
-                      name="(private-screens)"
-                      options={{ headerShown: false, gestureEnabled: false }}
-                    />
-                    <Stack.Screen
-                      name="modal"
-                      options={{ presentation: 'modal' }}
-                    />
-                    <Stack.Screen
-                      name="sign-in"
-                      options={{
-                        headerLeft: () => (
-                          <IconButton
-                            onPress={() => router.back()}
-                            variant="transparent"
-                            accessibilityLabel="goes to get started screen"
-                            accessibilityHint="goes to get started screen"
-                          >
-                            <ArrowLeftIcon />
-                          </IconButton>
-                        ),
-                        headerShadowVisible: false,
-                        title: '',
-                      }}
-                    />
-                    <Stack.Screen
-                      name="auth"
-                      options={{ headerShown: false }}
-                    />
-                  </Stack>
-                </SnackbarProvider>
-              </UserProvider>
-            </KeyboardToolbarProvider>
-          </KeyboardProvider>
-        </FeatureControlProvider>
-      </ApolloClientProvider>
-    </ApiConfigProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
+        <ApolloClientProvider>
+          <FeatureControlProvider>
+            <KeyboardProvider>
+              <KeyboardToolbarProvider>
+                <UserProvider>
+                  <SnackbarProvider>
+                    <StatusBar style="light" />
+                    <FeatureFlagControlled
+                      flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
+                    >
+                      <AppUpdatePrompt />
+                    </FeatureFlagControlled>
+                    <Stack>
+                      <Stack.Screen
+                        name="(tabs)"
+                        options={{ headerShown: false, gestureEnabled: false }}
+                      />
+                      <Stack.Screen
+                        name="(private-screens)"
+                        options={{ headerShown: false, gestureEnabled: false }}
+                      />
+                      <Stack.Screen
+                        name="modal"
+                        options={{ presentation: 'modal' }}
+                      />
+                      <Stack.Screen
+                        name="sign-in"
+                        options={{
+                          headerLeft: () => (
+                            <IconButton
+                              onPress={() => router.back()}
+                              variant="transparent"
+                              accessibilityLabel="goes to get started screen"
+                              accessibilityHint="goes to get started screen"
+                            >
+                              <ArrowLeftIcon />
+                            </IconButton>
+                          ),
+                          headerShadowVisible: false,
+                          title: '',
+                        }}
+                      />
+                      <Stack.Screen
+                        name="auth"
+                        options={{ headerShown: false }}
+                      />
+                    </Stack>
+                  </SnackbarProvider>
+                </UserProvider>
+              </KeyboardToolbarProvider>
+            </KeyboardProvider>
+          </FeatureControlProvider>
+        </ApolloClientProvider>
+      </ApiConfigProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});
