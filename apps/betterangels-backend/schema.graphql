@@ -11,6 +11,18 @@ When the condition fails, the following can be returned (following this priority
 directive @hasRetvalPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
 """
+Will check if the user has any/all permissions for the resolved value of this field before returning it.
+
+When the condition fails, the following can be returned (following this priority):
+1) `OperationInfo`/`OperationMessage` if those types are allowed at the return type
+2) `null` in case the field is not mandatory (e.g. `String` or `[String]`)
+3) An empty list in case the field is a list (e.g. `[String]!`)
+4) An empty `Connection` in case the return type is a relay connection
+2) Otherwise, an error will be raised
+"""
+directive @permissionedQuerySet(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
+
+"""
 Will check if the user has any/all permissions to resolve this.
 
 When the condition fails, the following can be returned (following this priority):
@@ -953,9 +965,9 @@ type Mutation {
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  updateNote(data: UpdateNoteInput!): UpdateNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  revertNote(data: RevertNoteInput!): RevertNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
+  revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload!
   removeNoteTask(data: RemoveNoteTaskInput!): RemoveNoteTaskPayload!
   createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload!
@@ -1031,6 +1043,7 @@ type NoteType {
   createdAt: DateTime!
   createdBy: UserType!
   interactedAt: DateTime!
+  userCanEdit: Boolean!
   privateDetails: String
 }
 

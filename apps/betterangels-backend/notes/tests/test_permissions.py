@@ -81,36 +81,56 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertEqual(note_count, Note.objects.count())
 
     @parametrize(
-        "user_label, should_succeed",
+        "user_label",
         [
-            ("org_1_case_manager_1", True),  # Owner should succeed
-            ("org_1_case_manager_2", True),  # Other CM in owner's org should succeed
-            ("org_2_case_manager_1", False),  # Other user should not succeed
-            (None, False),  # Anonymous user should not succeed
+            ("org_1_case_manager_1",),  # Owner
+            ("org_1_case_manager_2",),  # Same org
         ],
     )
-    def test_update_note_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_update_note_permission_success(self, user_label: str) -> None:
         self._handle_user_login(user_label)
 
+        note_id = self.note["id"]
+
         variables = {
-            "id": self.note["id"],
+            "id": note_id,
             "purpose": "Updated Note",
             "publicDetails": "Updated content",
             "isSubmitted": False,
         }
         response = self._update_note_fixture(variables)
 
-        if should_succeed:
-            self.assertIsNotNone(response["data"]["updateNote"]["id"])
-        else:
-            self.assertEqual(
-                response["data"]["updateNote"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "updateNote",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
+        self.assertIsNotNone(response["data"]["updateNote"]["id"])
+        updated = Note.objects.get(pk=note_id)
+        self.assertEqual(updated.purpose, "Updated Note")
+        self.assertEqual(updated.public_details, "Updated content")
+        self.assertFalse(updated.is_submitted)
+
+    @parametrize(
+        "user_label",
+        [
+            ("org_2_case_manager_1",),  # Other org
+            (None,),  # Anonymous
+        ],
+    )
+    def test_update_note_permission_denied(self, user_label: str) -> None:
+        self._handle_user_login(user_label)
+
+        pre_update = Note.objects.get(pk=self.note["id"])
+
+        variables = {
+            "id": pre_update.id,
+            "purpose": "Updated Note",
+            "publicDetails": "Updated content",
+            "isSubmitted": False,
+        }
+        self._update_note_fixture(variables)
+
+        post_update = Note.objects.get(pk=pre_update.id)
+
+        self.assertEqual(post_update.purpose, pre_update.purpose)
+        self.assertEqual(post_update.public_details, pre_update.public_details)
+        self.assertEqual(post_update.is_submitted, pre_update.is_submitted)
 
     @parametrize(
         "has_note_permissions, has_task_permissions, should_succeed",

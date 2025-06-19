@@ -1277,6 +1277,7 @@ export type NoteType = {
   purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
   team?: Maybe<SelahTeamEnum>;
+  userCanEdit: Scalars['Boolean']['output'];
 };
 
 
