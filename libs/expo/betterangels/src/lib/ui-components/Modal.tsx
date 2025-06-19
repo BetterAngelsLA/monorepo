@@ -55,7 +55,9 @@ export default function Modal(props: IModalProps) {
       onBackdropPress={closeModal}
       onSwipeComplete={closeModal}
       useNativeDriverForBackdrop={true}
-      swipeDirection={vertical ? ['down'] : ['right']}
+      swipeDirection={
+        propogateSwipe ? (vertical ? 'down' : 'right') : undefined
+      }
       propagateSwipe={propogateSwipe}
     >
       <View
