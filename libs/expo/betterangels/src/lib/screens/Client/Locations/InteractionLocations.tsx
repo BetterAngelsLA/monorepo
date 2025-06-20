@@ -1,6 +1,3 @@
-import { useState } from 'react';
-import { NotesQuery } from '../../../apollo';
-
 import { View } from 'react-native';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { InteractionLocationsModal } from './InteractionLocationsModal';
@@ -12,9 +9,6 @@ type TProps = {
 
 export function InteractionLocations(props: TProps) {
   const { client } = props;
-  const [selectedLocation, setSelectedLocation] = useState<
-    NotesQuery['notes']['results'][number] | null
-  >(null);
 
   if (!client?.clientProfile.id) {
     throw new Error('Something went wrong. Please try again.');
@@ -22,14 +16,8 @@ export function InteractionLocations(props: TProps) {
 
   return (
     <View style={{ flex: 1 }}>
-      <InteractionsMap
-        setSelectedLocation={setSelectedLocation}
-        clientProfileId={client.clientProfile.id}
-      />
-      <InteractionLocationsModal
-        selectedLocation={selectedLocation}
-        setSelectedLocation={setSelectedLocation}
-      />
+      <InteractionsMap clientProfileId={client.clientProfile.id} />
+      <InteractionLocationsModal />
     </View>
   );
 }

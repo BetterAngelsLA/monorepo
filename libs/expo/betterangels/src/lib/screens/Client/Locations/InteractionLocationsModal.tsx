@@ -1,22 +1,35 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
+import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { NotesQuery } from '../../../apollo';
+import { TNotesQueryInteraction } from '../../../apollo';
 import { Modal, NoteCard } from '../../../ui-components';
+import { useInteractionsMapState } from './map/hooks';
 
-interface InteractionLocationsModalProps {
-  selectedLocation: NotesQuery['notes']['results'][number] | null;
-  setSelectedLocation: (
-    location: NotesQuery['notes']['results'][number] | null
-  ) => void;
-}
+export function InteractionLocationsModal() {
+  const { mapState } = useInteractionsMapState();
+  const [selectedInteraction, setSelectedInteraction] =
+    useState<TNotesQueryInteraction | null>(null);
 
-export function InteractionLocationsModal(
-  props: InteractionLocationsModalProps
-) {
-  const { selectedLocation, setSelectedLocation } = props;
+  const { selectedInteractions } = mapState;
 
-  if (!selectedLocation) {
+  useEffect(() => {
+    if (!selectedInteractions.length) {
+      setSelectedInteraction(null);
+
+      return;
+    }
+
+    const currentInteraction = selectedInteractions[0];
+
+    if (currentInteraction.id === selectedInteraction?.id) {
+      return;
+    }
+
+    setSelectedInteraction(currentInteraction);
+  }, [selectedInteractions]);
+
+  if (!selectedInteraction) {
     return null;
   }
 
@@ -25,8 +38,8 @@ export function InteractionLocationsModal(
       fullWidth={false}
       propogateSwipe
       vertical
-      isModalVisible={!!selectedLocation}
-      closeModal={() => setSelectedLocation(null)}
+      isModalVisible={!!selectedInteraction}
+      closeModal={() => setSelectedInteraction(null)}
     >
       <View
         style={{
@@ -37,7 +50,7 @@ export function InteractionLocationsModal(
           paddingHorizontal: Spacings.sm,
         }}
       >
-        <TextBold>{selectedLocation.location?.address.street}</TextBold>
+        <TextBold>{selectedInteraction.location?.address.street}</TextBold>
       </View>
       <View
         style={{
@@ -46,8 +59,8 @@ export function InteractionLocationsModal(
         }}
       >
         <NoteCard
-          onPress={() => setSelectedLocation(null)}
-          note={selectedLocation}
+          // onPress={() => setSelectedLocation(null)}
+          note={selectedInteraction}
           variant={'clientProfile'}
           hasBorder
         />
