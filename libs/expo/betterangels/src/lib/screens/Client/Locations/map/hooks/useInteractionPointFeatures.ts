@@ -1,6 +1,6 @@
-import { Ordering } from 'libs/expo/betterangels/src/lib/apollo/graphql';
 import { useMemo } from 'react';
 import { PointFeature } from 'supercluster';
+import { Ordering } from '../../../../../apollo';
 import { useGetClientInteractionsWithLocation } from '../../../../../hooks';
 import { TClusterInteraction } from '../types';
 
