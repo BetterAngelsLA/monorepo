@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@apollo/client": "^3.11.1",
+    "@config-plugins/detox": "^11.0.0",
     "@config-plugins/react-native-blob-util": "^9.0.0",
     "@config-plugins/react-native-pdf": "^9.0.0",
     "@expo/metro-config": "~0.20.0",

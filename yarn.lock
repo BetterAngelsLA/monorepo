@@ -1847,6 +1847,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@config-plugins/detox@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "@config-plugins/detox@npm:11.0.0"
+  dependencies:
+    expo-build-properties: "npm:^0.13.1"
+  peerDependencies:
+    expo: ^53
+  checksum: 10/bbdb0fe5cbe5f7742bcdc926eefdc7402e717bde976af40042f4192ed95ede4c610fca3d48380dbd5148e0a1e3bc7ad67294059a8321a3fa58b1c9825c23714f
+  languageName: node
+  linkType: hard
+
 "@config-plugins/react-native-blob-util@npm:^9.0.0":
   version: 9.0.0
   resolution: "@config-plugins/react-native-blob-util@npm:9.0.0"
@@ -4865,6 +4876,7 @@ __metadata:
     "@babel/preset-env": "npm:^7.26.0"
     "@babel/preset-react": "npm:^7.26.3"
     "@chromatic-com/storybook": "npm:^3"
+    "@config-plugins/detox": "npm:^11.0.0"
     "@config-plugins/react-native-blob-util": "npm:^9.0.0"
     "@config-plugins/react-native-pdf": "npm:^9.0.0"
     "@expo/metro-config": "npm:~0.20.0"
@@ -14143,6 +14155,18 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10/105f2f384362d025e8808f8db384df18a0738d4ddc2f51becb69cdde896c421f773d008f9737997be9a18bc883f4dc5a54f14f0f7e9363383246620cc2e5c37a
+  languageName: node
+  linkType: hard
+
+"expo-build-properties@npm:^0.13.1":
+  version: 0.13.3
+  resolution: "expo-build-properties@npm:0.13.3"
+  dependencies:
+    ajv: "npm:^8.11.0"
+    semver: "npm:^7.6.0"
+  peerDependencies:
+    expo: "*"
+  checksum: 10/c452af66ec2f7b9e31099652451f9caca48812ec1932b2c7c48f5ae57f11b6bee957cbca25e5dd4e08a5dc157ebf4ed1ea36fd298090a7792ae769e3e65f63e5
   languageName: node
   linkType: hard
 

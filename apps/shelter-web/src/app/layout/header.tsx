@@ -24,6 +24,7 @@ export function Header(props: IParams): ReactElement {
         <div className="text-white flex ml-2 text-sm">
           <div className="font-normal">Shelter</div>
           <div className="font-semibold">LA</div>
+          <button style={{color: 'purple'}} onClick={() => console.log('hello!')}>Click me!!</button>
         </div>
       </div>
     </header>
