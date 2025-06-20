@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { View } from 'react-native';
 import { NotesQuery } from '../../../apollo';
 
+import { View } from 'react-native';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
-import { InteractionLocationsMap } from './InteractionLocationsMap';
 import { InteractionLocationsModal } from './InteractionLocationsModal';
+import { InteractionsMap } from './map/InteractionsMap';
 
 type TProps = {
   client: ClientProfileQuery | undefined;
@@ -22,7 +22,7 @@ export function InteractionLocations(props: TProps) {
 
   return (
     <View style={{ flex: 1 }}>
-      <InteractionLocationsMap
+      <InteractionsMap
         setSelectedLocation={setSelectedLocation}
         clientProfileId={client.clientProfile.id}
       />

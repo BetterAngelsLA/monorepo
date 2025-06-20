@@ -1,4 +1,4 @@
-import { Region } from 'react-native-maps';
+import { EdgePadding, Region } from 'react-native-maps';
 import { RegionDeltaSize, TMapDeltaLatLng, TMapLatLng } from './types';
 
 // geocode for approx center of LA COUNTY
@@ -42,4 +42,11 @@ export const defaultMapRegion: Region = {
   latitude: LA_COUNTY_CENTER.lat,
   longitude: LA_COUNTY_CENTER.lng,
   ...defaultRegionDelta,
+};
+
+export const defaultEdgePadding: EdgePadding = {
+  top: 50,
+  right: 50,
+  bottom: 50,
+  left: 50,
 };
