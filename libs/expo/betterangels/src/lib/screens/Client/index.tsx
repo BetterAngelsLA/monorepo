@@ -94,7 +94,6 @@ export default function Client({
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      title: `Client  ${clientProfileId}`,
       headerLeft: () => (
         <Pressable
           accessibilityRole="button"

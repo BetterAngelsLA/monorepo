@@ -101,13 +101,11 @@ export function InteractionsMap(props: TProps) {
   async function onMarkerPress(interactionId: string) {
     const interaction = interactions?.find((i) => i.id === interactionId);
 
-    if (!interaction) {
-      return;
-    }
+    const selected = interaction ? [interaction] : [];
 
     setMapState((prev) => ({
       ...prev,
-      selectedInteractions: [interaction],
+      selectedInteractions: selected,
     }));
   }
 
