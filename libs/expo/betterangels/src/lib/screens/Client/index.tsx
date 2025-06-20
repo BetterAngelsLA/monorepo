@@ -1,10 +1,16 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { Loading, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
+import {
+  useFocusEffect,
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from 'expo-router';
 import {
   ComponentType,
   ForwardRefExoticComponent,
   ReactElement,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useState,
@@ -19,6 +25,7 @@ import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
 import { InteractionLocations as Locations } from './Locations';
+import { useInteractionsMapState } from './Locations/map/hooks/useInteractionsMapState';
 import {
   ClientProfileQuery,
   useClientProfileQuery,
@@ -67,6 +74,7 @@ export default function Client({
   const navigation = useNavigation();
   const router = useRouter();
   const { newTab } = useLocalSearchParams<{ newTab?: ClientViewTabEnum }>();
+  const { resetMapState } = useInteractionsMapState();
 
   useEffect(() => {
     if (newTab) {
@@ -74,8 +82,19 @@ export default function Client({
     }
   }, [newTab]);
 
+  // reset tab and mapState when navigating away from clientProfileId
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        resetMapState();
+        setTab(ClientViewTabEnum.Profile);
+      };
+    }, [clientProfileId])
+  );
+
   useLayoutEffect(() => {
     navigation.setOptions({
+      title: `Client  ${clientProfileId}`,
       headerLeft: () => (
         <Pressable
           accessibilityRole="button"

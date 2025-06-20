@@ -1,8 +1,8 @@
+import { Ordering } from 'libs/expo/betterangels/src/lib/apollo/graphql';
 import { useMemo } from 'react';
 import { PointFeature } from 'supercluster';
-import { Ordering } from '../../../../apollo';
-import { useGetClientInteractionsWithLocation } from '../../../../hooks';
-import { TClusterInteraction } from './types';
+import { useGetClientInteractionsWithLocation } from '../../../../../hooks';
+import { TClusterInteraction } from '../types';
 
 export function useInteractionPointFeatures(clientProfileId: string) {
   const { interactions, loading, error } = useGetClientInteractionsWithLocation(
