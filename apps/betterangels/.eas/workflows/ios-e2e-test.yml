@@ -5,12 +5,7 @@ jobs:
     steps:
       - id: extract
         run: |
-          echo "MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)" >> $EAS_ENV
-          echo "MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)" >> $EAS_ENV
-          echo "RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)" >> $EAS_ENV
-          echo "MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)" >> $EAS_ENV
-          echo "MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)" >> $EAS_ENV
-          echo "RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)" >> $EAS_ENV
+          cat /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env_2
 
   #   outputs:
   #     MAESTRO_GROUP_ID: ${{ steps.extract.outputs.MAESTRO_GROUP_ID }}
