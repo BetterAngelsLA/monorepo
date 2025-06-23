@@ -89,8 +89,9 @@ runs:
           echo "${platform}-runtime-version=$runtime_version" >> $GITHUB_OUTPUT
           echo "${platform}-group-id=$group_id" >> $GITHUB_OUTPUT
 
-          echo "MAESTRO_GROUP_ID=$group_id" >> .env
-          mgi=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)
-          echo mgi $mgi
         done
+
+        echo "MAESTRO_GROUP_ID=$group_id" >> .env
+        mgi=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)
+        echo mgi $mgi
       shell: bash

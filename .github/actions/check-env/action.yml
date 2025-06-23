@@ -1,0 +1,30 @@
+name: 'Check env'
+description: 'Verify .env contents'
+
+inputs:
+  project:
+    required: true
+    type: string
+  branch:
+    required: true
+    type: string
+  slug:
+    required: true
+    type: string
+  project-id:
+    required: true
+    type: string
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Perform env check
+      id: perform-env-check
+      run: |
+        MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)
+        echo MAESTRO_GROUP_ID $MAESTRO_GROUP_ID
+        MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' .env | cut -d '=' -f2-)
+        echo MAESTRO_PROJECT_ID $MAESTRO_PROJECT_ID
+        RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' .env | cut -d '=' -f2-)
+        echo RUNTIME_VERSION $RUNTIME_VERSION
+      shell: bash
