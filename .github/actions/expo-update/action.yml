@@ -99,5 +99,6 @@ runs:
       run: |
         group_id="${{ steps.perform-eas-update.outputs.group-id }}"
         echo "MAESTRO_GROUP_ID=$group_id" >> .env
+        echo "MAESTRO_GROUP_ID=$group_id" >> .env_2
       shell: bash
       working-directory: apps/${{ inputs.group }}
