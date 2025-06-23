@@ -5,6 +5,7 @@ import strawberry
 import strawberry_django
 from common.models import Address, Attachment, Location, PhoneNumber
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
+from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
 from strawberry import ID, auto
 
 
@@ -34,10 +35,18 @@ LongitudeScalar = strawberry.scalar(
     parse_value=lambda v: _parse_longitude(v),
 )
 
+
+def _format_phone_number(v: DjangoPhoneNumber) -> str:
+    if v.extension:
+        return f"{v.national_number}x{v.extension}"
+
+    return str(v.national_number)
+
+
 PhoneNumberScalar: DjangoPhoneNumber | str = strawberry.scalar(
     DjangoPhoneNumber,
-    serialize=lambda v: str(v.national_number),
-    parse_value=lambda v: str(v.strip()) if v.strip() else None,
+    parse_value=lambda v: DjangoPhoneNumberUtil.from_string(v),
+    serialize=lambda v: _format_phone_number(v),
 )
 
 NonBlankString = strawberry.scalar(

@@ -501,7 +501,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
             "email": "client_contact_3@example.com",
             "mailingAddress": "333 Main Street",
             "name": "Sam Smith",
-            "phoneNumber": "2125553232",
+            "phoneNumber": "2125553232x555",
             "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
             "relationshipToClientOther": None,
         }
@@ -526,7 +526,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
             "email": "client_contact_1_update@example.com",
             "mailingAddress": "111 Main Street Update",
             "name": "Jane Smith Update",
-            "phoneNumber": "2125552121",
+            "phoneNumber": "2125552121x555",
             "relationshipToClient": RelationshipTypeEnum.PAST_CASE_MANAGER.name,
             "relationshipToClientOther": None,
         }
