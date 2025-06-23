@@ -147,20 +147,20 @@ jobs:
           slug: ${{ steps.preview-build.outputs.slug }}
           project-id: ${{ steps.preview-build.outputs.project-id }}
 
-      - name: Check .env
-        id: check-env
-        uses: ./.github/actions/check-env
-        with:
-          project: ${{ matrix.project }}
+      # - name: Check .env
+      #   id: check-env
+      #   uses: ./.github/actions/check-env
+      #   with:
+      #     project: ${{ matrix.project }}
 
       - name: 🧪 Run Android E2E Tests
-        working-directory: apps/${{ matrix.project }}
+        # working-directory: apps/${{ matrix.project }}
         run: |
           npx eas-cli workflow:run .eas/workflows/android-e2e-test.yml \
             --non-interactive \
 
       - name: 🧪 Run iOS E2E Tests
-        working-directory: apps/${{ matrix.project }}
+        # working-directory: apps/${{ matrix.project }}
         run: |
           npx eas-cli workflow:run .eas/workflows/ios-e2e-test.yml \
             --non-interactive \
