@@ -28,4 +28,4 @@ runs:
         RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' .env | cut -d '=' -f2-)
         echo RUNTIME_VERSION $RUNTIME_VERSION
       shell: bash
-      working_directory: apps/${{ inputs.project }}
+      working-directory: apps/${{ inputs.project }}

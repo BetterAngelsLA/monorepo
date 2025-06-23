@@ -95,4 +95,4 @@ runs:
         mgi=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)
         echo mgi $mgi
       shell: bash
-      working_directory: apps/${{ inputs.project }}
+      working-directory: apps/${{ inputs.project }}
