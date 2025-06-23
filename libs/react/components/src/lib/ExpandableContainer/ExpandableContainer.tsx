@@ -11,6 +11,8 @@ import { mergeCss } from '../../utils/mergeCss';
 
 interface IProps extends PropsWithChildren {
   className?: string;
+  iconClassName?: string;
+  headerClassName?: string;
   header?: ReactNode | string;
   disabled?: boolean;
   open?: boolean;
@@ -22,6 +24,8 @@ export function ExpandableContainer(props: IProps) {
     header,
     disabled,
     className,
+    iconClassName,
+    headerClassName,
     open = false,
     children,
     onClick,
@@ -55,12 +59,14 @@ export function ExpandableContainer(props: IProps) {
     'justify-between',
     'items-center',
     disabled ? '' : 'cursor-pointer',
+    headerClassName,
   ];
 
   const iconCss = [
     'w-3',
     isOpen ? 'rotate-90' : '-rotate-90',
     'text-primary-20',
+    iconClassName,
   ];
 
   const contentCss = ['mt-6'];

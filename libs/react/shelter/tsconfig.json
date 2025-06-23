@@ -12,7 +12,7 @@
     "noFallthroughCasesInSwitch": true
   },
   "files": [],
-  "include": ["src/**/*.tsx", "src/**/*.ts"],
+  "include": ["src/**/*.css", "src/**/*.tsx", "src/**/*.ts"],
   "references": [
     {
       "path": "./tsconfig.lib.json"

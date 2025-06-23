@@ -11,6 +11,8 @@ const createSvgIcon = (
 ) => {
   const IconComponent: React.FC<IIconProps> = ({
     size = 'md',
+    width,
+    height,
     color = Colors.PRIMARY_EXTRA_DARK,
     rotate = '0deg',
     mb,
@@ -20,15 +22,16 @@ const createSvgIcon = (
     my,
     mx,
   }) => {
-    let w, h;
+    let w = width;
+    let h = height;
 
     if (typeof size === 'number') {
       w = size;
       h = size;
     } else {
       const extractedSize = extractSize(size);
-      w = extractedSize.w;
-      h = extractedSize.h;
+      w = w || extractedSize.w;
+      h = h || extractedSize.h;
     }
 
     return (

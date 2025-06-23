@@ -39,6 +39,11 @@ export default function TeamsFilter(props: ITeamFilterProps) {
     setIsModalVisible(false);
   };
 
+  const handleClearBoxes = () => {
+    setSelected([]);
+    setIsModalVisible(true);
+  };
+
   const handleCloseModal = () => {
     setSelected(filters.teams);
     setIsModalVisible(false);
@@ -82,13 +87,26 @@ export default function TeamsFilter(props: ITeamFilterProps) {
               labelKey="label"
             />
           </ScrollView>
-          <Button
-            onPress={handleOnDone}
-            size="full"
-            title="Done"
-            variant="primary"
-            accessibilityHint="apply selected teams filter"
-          />
+
+          <View
+            style={{ flexDirection: 'row', justifyContent: 'center', gap: 10 }}
+          >
+            <Button
+              onPress={handleClearBoxes}
+              size="md"
+              title="Clear"
+              variant="secondary"
+              accessibilityHint="clear all selected"
+            />
+
+            <Button
+              onPress={handleOnDone}
+              size="md"
+              title="Done"
+              variant="primary"
+              accessibilityHint="apply selected teams filter"
+            />
+          </View>
         </View>
       </Modal>
     </View>

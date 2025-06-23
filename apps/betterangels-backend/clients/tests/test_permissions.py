@@ -334,14 +334,14 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login(user_label)
         variables = {
             "id": self.client_document["id"],
-            "originalFilename": "Updated name",
+            "originalFilename": "Updated name.txt",
         }
         response = self._update_client_document_fixture(variables)
 
         if should_succeed:
             document = Attachment.objects.get(id=self.client_document["id"])
             self.assertIsNotNone(response["data"]["updateClientDocument"]["id"])
-            self.assertEqual(document.original_filename, "Updated name")
+            self.assertEqual(document.original_filename, "Updated name.txt")
         else:
             self.assertEqual(len(response["data"]["updateClientDocument"]["messages"]), 1)
             self.assertEqual(

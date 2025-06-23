@@ -96,8 +96,8 @@ export default function ClientCard(props: IClientCardProps) {
       ]}
     >
       <Avatar
-        accessibilityHint={`shows avatar of ${client.firstName} ${client.lastName} if available`}
-        accessibilityLabel={`Avatar of ${client.firstName} ${client.lastName} client`}
+        accessibilityLabel={`client's profile photo`}
+        accessibilityHint={`client's profile photo`}
         imageUrl={client.profilePhoto?.url}
         size="xl"
         mr="xs"

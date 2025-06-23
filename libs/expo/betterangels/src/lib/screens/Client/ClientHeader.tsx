@@ -16,7 +16,7 @@ import { ClientProfileQuery } from './__generated__/Client.generated';
 
 interface IClientHeaderProps {
   client: ClientProfileQuery['clientProfile'] | undefined;
-  onCaseManagerPress: () => void;
+  onCaseManagerPress?: () => void;
 }
 
 export default function ClientHeader(props: IClientHeaderProps) {
@@ -42,8 +42,8 @@ export default function ClientHeader(props: IClientHeaderProps) {
           mr="xs"
           size="xl"
           imageUrl={client?.profilePhoto?.url}
-          accessibilityLabel={`${client?.firstName} ${client?.lastName} avatar`}
-          accessibilityHint={'clients avatar'}
+          accessibilityLabel={`client's profile photo`}
+          accessibilityHint={`client's profile photo`}
         />
         <TextMedium size="lg">
           {client?.firstName} {client?.lastName}{' '}
@@ -91,7 +91,8 @@ export default function ClientHeader(props: IClientHeaderProps) {
         <PersonIcon color={Colors.PRIMARY_EXTRA_DARK} />
         <TextRegular>
           Current Case Manager:{' '}
-          {client?.displayCaseManager !== 'Not Assigned' ? (
+          {client?.displayCaseManager !== 'Not Assigned' &&
+          onCaseManagerPress ? (
             <TextRegular
               onPress={onCaseManagerPress}
               textDecorationLine="underline"

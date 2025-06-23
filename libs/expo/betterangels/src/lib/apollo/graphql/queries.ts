@@ -16,6 +16,10 @@ export const GET_NOTES = gql`
         id
         purpose
         team
+        organization {
+          id
+          name
+        }
         location {
           address {
             id
@@ -50,9 +54,16 @@ export const GET_NOTES = gql`
           lastName
           # TODO: displayCaseManager and user required for typecheck. remove in clean up
           displayCaseManager
+          profilePhoto {
+            name
+            url
+          }
           user {
             id
             username
+          }
+          profilePhoto {
+            url
           }
         }
         createdBy {
@@ -74,6 +85,10 @@ export const GET_NOTE = gql`
       id
       purpose
       team
+      organization {
+        id
+        name
+      }
       location {
         address {
           id
@@ -106,6 +121,9 @@ export const GET_NOTE = gql`
         email
         firstName
         lastName
+        profilePhoto {
+          url
+        }
       }
       createdBy {
         id

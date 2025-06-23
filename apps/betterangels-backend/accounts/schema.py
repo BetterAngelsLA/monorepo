@@ -4,7 +4,6 @@ import strawberry
 import strawberry_django
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
-from accounts.services import send_magic_link
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
@@ -17,14 +16,11 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
-from strawberry_django.utils.requests import get_request
 
 from .types import (
     AuthInput,
     AuthResponse,
     LoginInput,
-    MagicLinkInput,
-    MagicLinkResponse,
     OrganizationType,
     UpdateUserInput,
     UserType,
@@ -62,12 +58,6 @@ class Mutation:
         # The is a stub and logic is handled client-side by Apollo
         return AuthResponse(status_code="")
 
-    @strawberry.mutation
-    def generate_magic_link(self, info: Info, data: MagicLinkInput) -> MagicLinkResponse:
-        request = get_request(info)
-        send_magic_link(data.email, request)
-        return MagicLinkResponse(message="Email link sent.")
-
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_current_user(self, info: Info, data: UpdateUserInput) -> UserType:
         user = cast(User, get_current_user(info))
@@ -89,9 +79,13 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_current_user(self, info: Info) -> DeletedObjectType:
+        user = get_current_user(info)
+        if user.pk is None:
+            raise RuntimeError("Cannot delete user.")
+
+        user_id = user.pk
+
         with transaction.atomic():
-            user = get_current_user(info)
-            user_id = user.pk
             user.delete()
 
-            return DeletedObjectType(id=user_id)
+        return DeletedObjectType(id=user_id)

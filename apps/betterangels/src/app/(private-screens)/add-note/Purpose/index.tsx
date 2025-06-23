@@ -20,30 +20,10 @@ interface IPurposeProps {
   scrollRef: RefObject<ScrollView | null>;
   purpose: string | null | undefined;
   noteId: string | undefined;
-  errors: {
-    purpose: boolean;
-    location: boolean;
-    date: boolean;
-    time: boolean;
-  };
-  setErrors: (errors: {
-    purpose: boolean;
-    location: boolean;
-    date: boolean;
-    time: boolean;
-  }) => void;
 }
 
 export default function Purpose(props: IPurposeProps) {
-  const {
-    expanded,
-    setExpanded,
-    scrollRef,
-    purpose,
-    noteId,
-    setErrors,
-    errors,
-  } = props;
+  const { expanded, setExpanded, scrollRef, purpose, noteId } = props;
 
   const [updateNote] = useMutation<
     UpdateNoteMutation,
@@ -55,8 +35,8 @@ export default function Purpose(props: IPurposeProps) {
   const isPurpose = expanded === 'Purpose';
 
   const updateNoteFunction = useRef(
-    debounce(async (value: string) => {
-      if (!noteId || !value) return;
+    debounce(async (value: string | null | undefined) => {
+      if (!noteId) return;
 
       try {
         await updateNote({
@@ -73,13 +53,7 @@ export default function Purpose(props: IPurposeProps) {
     }, 500)
   ).current;
 
-  const onChange = (value: string) => {
-    if (!value) {
-      setErrors({ ...errors, purpose: true });
-    }
-    if (value) {
-      setErrors({ ...errors, purpose: false });
-    }
+  const onChange = (value: string | null | undefined) => {
     setValue(value);
     updateNoteFunction(value);
   };
@@ -88,7 +62,6 @@ export default function Purpose(props: IPurposeProps) {
     <FieldCard
       scrollRef={scrollRef}
       expanded={expanded}
-      required
       mb="xs"
       setExpanded={() => setExpanded(isPurpose ? null : 'Purpose')}
       title="Purpose"
@@ -107,12 +80,7 @@ export default function Purpose(props: IPurposeProps) {
         <BasicInput
           placeholder="Enter purpose"
           maxLength={100}
-          onDelete={() => {
-            setValue('');
-            setErrors({ ...errors, purpose: true });
-          }}
-          error={!!errors.purpose}
-          errorMessage={errors.purpose ? 'Purpose is required' : ''}
+          onDelete={() => onChange(null)}
           value={value || undefined}
           onChangeText={(e) => onChange(e)}
         />

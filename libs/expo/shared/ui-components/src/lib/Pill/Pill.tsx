@@ -2,17 +2,47 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { StyleSheet, View } from 'react-native';
 import TextRegular from '../TextRegular';
 
-interface IPillProps {
-  type?: 'primary' | 'success';
+type TVariants = {
+  [key in 'primary' | 'success' | 'warning']: {
+    bg: string;
+    border: string;
+  };
+};
+
+const VARIANTS: TVariants = {
+  primary: {
+    bg: Colors.PRIMARY_EXTRA_LIGHT,
+    border: Colors.PRIMARY_DARK,
+  },
+  success: {
+    bg: Colors.SUCCESS_EXTRA_LIGHT,
+    border: Colors.SUCCESS,
+  },
+  warning: {
+    bg: Colors.WARNING_EXTRA_LIGHT,
+    border: Colors.WARNING,
+  },
+};
+
+export interface IPillProps {
+  variant?: 'primary' | 'success' | 'warning';
   label: string;
 }
 
 export function Pill(props: IPillProps) {
-  const { label, type = 'success' } = props;
+  const { label, variant = 'success' } = props;
 
   return (
-    <View style={[styles.pill, styles[type]]}>
-      <TextRegular>{label}</TextRegular>
+    <View
+      style={[
+        styles.pill,
+        {
+          backgroundColor: VARIANTS[variant].bg,
+          borderColor: VARIANTS[variant].border,
+        },
+      ]}
+    >
+      <TextRegular size="xs">{label}</TextRegular>
     </View>
   );
 }
@@ -22,15 +52,6 @@ const styles = StyleSheet.create({
     borderRadius: Radiuses.md,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  success: {
-    backgroundColor: Colors.SUCCESS_EXTRA_LIGHT,
-    paddingHorizontal: Spacings.sm,
-    paddingVertical: Spacings.xxs,
-  },
-  primary: {
-    backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-    borderColor: Colors.PRIMARY_DARK,
     borderWidth: 1,
     paddingVertical: Spacings.xxs - 1,
     paddingHorizontal: Spacings.sm - 1,

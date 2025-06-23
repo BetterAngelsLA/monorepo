@@ -398,25 +398,11 @@ export type ClientProfileType = {
   pronounsOther?: Maybe<Scalars['String']['output']>;
   race?: Maybe<RaceEnum>;
   residenceAddress?: Maybe<Scalars['String']['output']>;
+  residenceGeolocation?: Maybe<Scalars['Point']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
   user?: Maybe<UserType>;
   veteranStatus?: Maybe<VeteranStatusEnum>;
-};
-
-
-export type ClientProfileTypeConsentFormDocumentsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type ClientProfileTypeDocReadyDocumentsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
-};
-
-
-export type ClientProfileTypeOtherDocumentsArgs = {
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type ClientProfileTypeOffsetPaginated = {
@@ -491,6 +477,7 @@ export type CreateClientProfileInput = {
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
+  residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
@@ -905,15 +892,6 @@ export type LoginInput = {
   username: Scalars['String']['input'];
 };
 
-export type MagicLinkInput = {
-  email: Scalars['String']['input'];
-};
-
-export type MagicLinkResponse = {
-  __typename?: 'MagicLinkResponse';
-  message: Scalars['String']['output'];
-};
-
 export type MapBoundsInput = {
   eastLng: Scalars['LongitudeScalar']['input'];
   northLat: Scalars['LatitudeScalar']['input'];
@@ -987,7 +965,6 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  generateMagicLink: MagicLinkResponse;
   googleAuth: AuthResponse;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
@@ -1142,11 +1119,6 @@ export type MutationDeleteTaskArgs = {
 };
 
 
-export type MutationGenerateMagicLinkArgs = {
-  data: MagicLinkInput;
-};
-
-
 export type MutationGoogleAuthArgs = {
   input: AuthInput;
 };
@@ -1264,7 +1236,7 @@ export type NoteFilter = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
-  organization?: InputMaybe<Scalars['ID']['input']>;
+  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
@@ -1297,6 +1269,7 @@ export type NoteType = {
   location?: Maybe<LocationType>;
   moods: Array<MoodType>;
   nextSteps: Array<TaskType>;
+  organization: OrganizationType;
   privateDetails?: Maybe<Scalars['String']['output']>;
   providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];
@@ -1304,6 +1277,7 @@ export type NoteType = {
   purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
   team?: Maybe<SelahTeamEnum>;
+  userCanEdit: Scalars['Boolean']['output'];
 };
 
 
@@ -1382,6 +1356,14 @@ export enum Ordering {
   DescNullsFirst = 'DESC_NULLS_FIRST',
   DescNullsLast = 'DESC_NULLS_LAST'
 }
+
+export type OrganizationFilter = {
+  AND?: InputMaybe<OrganizationFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<OrganizationFilter>;
+  OR?: InputMaybe<OrganizationFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type OrganizationOrder = {
   id?: InputMaybe<Ordering>;
@@ -1502,6 +1484,7 @@ export type QueryBulkClientProfileImportRecordsArgs = {
 
 
 export type QueryCaseworkerOrganizationsArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -1864,6 +1847,8 @@ export type ShelterType = {
   ExteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   InteriorPhotos?: Maybe<Array<ShelterPhotoType>>;
   accessibility: Array<AccessibilityType>;
+  addNotesShelterDetails?: Maybe<Scalars['String']['output']>;
+  addNotesSleepingDetails?: Maybe<Scalars['String']['output']>;
   additionalContacts: Array<ContactInfoType>;
   bedFees?: Maybe<Scalars['String']['output']>;
   cities: Array<CityType>;
@@ -2087,6 +2072,7 @@ export type UpdateClientProfileInput = {
   pronounsOther?: InputMaybe<Scalars['String']['input']>;
   race?: InputMaybe<RaceEnum>;
   residenceAddress?: InputMaybe<Scalars['String']['input']>;
+  residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
   socialMediaProfiles?: InputMaybe<Array<SocialMediaProfileInput>>;
   spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
   veteranStatus?: InputMaybe<VeteranStatusEnum>;
@@ -2107,7 +2093,7 @@ export type UpdateNoteInput = {
   location?: InputMaybe<Scalars['ID']['input']>;
   privateDetails?: InputMaybe<Scalars['String']['input']>;
   publicDetails?: InputMaybe<Scalars['String']['input']>;
-  purpose?: InputMaybe<Scalars['String']['input']>;
+  purpose?: InputMaybe<Scalars['NonBlankString']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
 };
 
@@ -2175,6 +2161,7 @@ export type UserType = {
 
 
 export type UserTypeOrganizationsOrganizationArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
 };
 

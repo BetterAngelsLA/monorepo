@@ -1,7 +1,7 @@
-export { default as AddEditClient } from './AddEditClient';
 export * from './AppSettings';
 export { default as Client } from './Client';
-export * from './ClientProfileForms-V2';
+export { InteractionsMapStateProvider } from './Client/Locations/map/InteractionsMapStateProvider';
+export * from './ClientProfileForms';
 export { default as Clients } from './Clients';
 export { default as CreateClientProfile } from './CreateClientProfile';
 export { default as FileScreenComponent } from './FileScreenComponent';

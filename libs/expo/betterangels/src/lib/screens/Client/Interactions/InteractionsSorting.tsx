@@ -37,15 +37,11 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
     return;
   }
 
-  async function createNoteFunction(
-    id: string,
-    firstName: string | undefined | null
-  ) {
+  async function createNoteFunction(id: string) {
     try {
       const { data } = await createNote({
         variables: {
           data: {
-            purpose: `Session with ${firstName || 'Client'}`,
             clientProfile: id,
           },
         },
@@ -76,12 +72,7 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
         Displaying {notes?.length} of {totalCount} interactions
       </TextMedium>
       <IconButton
-        onPress={() =>
-          createNoteFunction(
-            client.clientProfile.id,
-            client.clientProfile.firstName
-          )
-        }
+        onPress={() => createNoteFunction(client.clientProfile.id)}
         variant="secondary"
         borderColor={Colors.WHITE}
         accessibilityLabel={'add interaction'}

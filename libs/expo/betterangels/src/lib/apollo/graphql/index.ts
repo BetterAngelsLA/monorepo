@@ -4,3 +4,4 @@ export * from './__generated__/types';
 export * from './mutations';
 export * from './queries';
 export * from './response';
+export * from './types';

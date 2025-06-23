@@ -17,6 +17,13 @@ export type CreateClientDocumentMutationVariables = Types.Exact<{
 
 export type CreateClientDocumentMutation = { __typename?: 'Mutation', createClientDocument: { __typename?: 'ClientDocumentType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
+export type UpdateClientDocumentMutationVariables = Types.Exact<{
+  data: Types.UpdateClientDocumentInput;
+}>;
+
+
+export type UpdateClientDocumentMutation = { __typename?: 'Mutation', updateClientDocument: { __typename?: 'ClientDocumentType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+
 export type DeleteClientDocumentMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
@@ -219,6 +226,48 @@ export function useCreateClientDocumentMutation(baseOptions?: Apollo.MutationHoo
 export type CreateClientDocumentMutationHookResult = ReturnType<typeof useCreateClientDocumentMutation>;
 export type CreateClientDocumentMutationResult = Apollo.MutationResult<CreateClientDocumentMutation>;
 export type CreateClientDocumentMutationOptions = Apollo.BaseMutationOptions<CreateClientDocumentMutation, CreateClientDocumentMutationVariables>;
+export const UpdateClientDocumentDocument = gql`
+    mutation UpdateClientDocument($data: UpdateClientDocumentInput!) {
+  updateClientDocument(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on ClientDocumentType {
+      id
+    }
+  }
+}
+    `;
+export type UpdateClientDocumentMutationFn = Apollo.MutationFunction<UpdateClientDocumentMutation, UpdateClientDocumentMutationVariables>;
+
+/**
+ * __useUpdateClientDocumentMutation__
+ *
+ * To run a mutation, you first call `useUpdateClientDocumentMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateClientDocumentMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateClientDocumentMutation, { data, loading, error }] = useUpdateClientDocumentMutation({
+ *   variables: {
+ *      data: // value for 'data'
+ *   },
+ * });
+ */
+export function useUpdateClientDocumentMutation(baseOptions?: Apollo.MutationHookOptions<UpdateClientDocumentMutation, UpdateClientDocumentMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateClientDocumentMutation, UpdateClientDocumentMutationVariables>(UpdateClientDocumentDocument, options);
+      }
+export type UpdateClientDocumentMutationHookResult = ReturnType<typeof useUpdateClientDocumentMutation>;
+export type UpdateClientDocumentMutationResult = Apollo.MutationResult<UpdateClientDocumentMutation>;
+export type UpdateClientDocumentMutationOptions = Apollo.BaseMutationOptions<UpdateClientDocumentMutation, UpdateClientDocumentMutationVariables>;
 export const DeleteClientDocumentDocument = gql`
     mutation DeleteClientDocument($id: ID!) {
   deleteClientDocument(data: {id: $id}) {

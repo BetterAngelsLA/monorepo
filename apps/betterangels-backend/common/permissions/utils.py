@@ -1,12 +1,13 @@
-from typing import Any, Tuple, Type
+from typing import Any, Sequence, Tuple, Type
 
 import strawberry
 from django.db.models import TextChoices
+from django.utils.encoding import force_str
 from strawberry_django.auth.utils import get_current_user
 
 
 def permission_enums_to_django_meta_permissions(
-    permission_enums: list[Type[TextChoices]],
+    permission_enums: Sequence[Type[TextChoices]],
 ) -> Tuple[Tuple[str, str], ...]:
     """
     Converts a list of TextChoices permissions mappings to the format required for Django's Meta
@@ -22,7 +23,7 @@ def permission_enums_to_django_meta_permissions(
     """
     permissions: list[Tuple[str, str]] = []
     for permission_enum in permission_enums:
-        permissions.extend((perm.value.split(".")[-1], perm.label) for perm in permission_enum)
+        permissions.extend((str(perm).rsplit(".", 1)[-1], force_str(perm.label)) for perm in permission_enum)
     return tuple(permissions)
 
 

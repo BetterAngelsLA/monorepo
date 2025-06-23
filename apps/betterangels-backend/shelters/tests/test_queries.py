@@ -65,6 +65,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         self.shelter_fields = """
             id
+            addNotesSleepingDetails
+            addNotesShelterDetails
             bedFees
             cityCouncilDistrict
             curfew
@@ -128,6 +130,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         shelter_organization = organization_recipe.make()
 
         new_shelter = shelter_recipe.make(
+            add_notes_sleeping_details="sleeping details notes",
+            add_notes_shelter_details="shelter details notes",
             bed_fees="bed fees",
             city_council_district=1,
             curfew=datetime.time(22, 00),
@@ -221,6 +225,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         response_shelter = response["data"]["shelter"]
         expected_shelter = {
             "id": str(shelter.pk),
+            "addNotesSleepingDetails": "sleeping details notes",
+            "addNotesShelterDetails": "shelter details notes",
             "bedFees": "bed fees",
             "cityCouncilDistrict": 1,
             "curfew": "22:00:00",

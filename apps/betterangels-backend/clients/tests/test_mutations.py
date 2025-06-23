@@ -105,6 +105,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "pronounsOther": None,
             "race": RaceEnum.ASIAN.name,
             "residenceAddress": "1234 Residence Street",
+            "residenceGeolocation": self.residence_geolocation,
             "socialMediaProfiles": social_media_profile,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": VeteranStatusEnum.YES.name,
@@ -118,7 +119,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         expected_phone_numbers = [{"id": ANY, **phone_number}]
         expected_social_media_profiles = [{"id": ANY, **social_media_profile}]
         expected_client_profile = {
-            **variables,  # Needs to be first because we're overwriting some fields
+            **variables,
             "id": ANY,
             "age": self.EXPECTED_CLIENT_AGE,
             "contacts": expected_contacts,
@@ -224,6 +225,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             "pronounsOther": "she/her/theirs",
             "race": RaceEnum.BLACK_AFRICAN_AMERICAN.name,
             "residenceAddress": "1234 Residence St",
+            "residenceGeolocation": [-118, 34],
             "socialMediaProfiles": social_media_profiles,
             "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
             "veteranStatus": VeteranStatusEnum.YES.name,
@@ -238,7 +240,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         variables["householdMembers"] = expected_household_members
 
         expected_client_profile = {
-            **variables,  # Needs to be first because we're overwriting dob
+            **variables,
             "age": self.EXPECTED_CLIENT_AGE,
             "dateOfBirth": self.date_of_birth.strftime("%Y-%m-%d"),
             "displayCaseManager": "Not Assigned",
@@ -811,8 +813,8 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
         self._setup_client_documents()
 
     def test_create_client_document(self) -> None:
-        file_content = b"Test client document content"
-        file_name = "test_client_document.txt"
+        file_content = b"Test file content"
+        file_name = "test file name.txt"
 
         expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -829,9 +831,9 @@ class ClientDocumentMutationTestCase(ClientProfileGraphQLBaseTestCase):
             file_name,
         )
         self.assertIsNotNone(response["data"]["createClientDocument"]["file"]["name"])
-        self.assertTrue(
-            Attachment.objects.filter(id=client_document_id).exists(),
-            "The client document should have been created and persisted in the database.",
+        self.assertEqual(
+            Attachment.objects.get(id=client_document_id).original_filename,
+            file_name,
         )
 
     def test_delete_client_document(self) -> None:

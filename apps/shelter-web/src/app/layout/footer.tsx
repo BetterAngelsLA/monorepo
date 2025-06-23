@@ -23,7 +23,7 @@ export function Footer(props: IParams): ReactElement {
       <div className="flex items-center">
         <BaShelterLogoIcon className="h-8" />
         <div className="text-white flex ml-3 text-2xl">
-          <div className="font-normal">Shelters</div>
+          <div className="font-normal">Shelter</div>
           <div className="font-semibold">LA</div>
         </div>
       </div>

@@ -1,94 +1,65 @@
-import {
-  Colors,
-  Radiuses,
-  Spacings,
-  TSpacing,
-} from '@monorepo/expo/shared/static';
-import { Picker as RNPicker } from '@react-native-picker/picker';
-import { StyleSheet, View } from 'react-native';
-import TextRegular from '../TextRegular';
-
-export interface IPickerProps {
-  setSelectedValue: (value: string | null | undefined) => void;
-  error?: string;
-  displayValue?: string | null;
-  value?: string | null;
-  placeholder: string;
-  items: { label: string; value?: string }[];
-  label?: string;
-  mb?: TSpacing;
-  mt?: TSpacing;
-  my?: TSpacing;
-  mx?: TSpacing;
-  ml?: TSpacing;
-  mr?: TSpacing;
-}
+import { getMarginStyles } from '@monorepo/expo/shared/static';
+import { useState } from 'react';
+import { Keyboard } from 'react-native';
+import { PickerField } from './PickerField';
+import { PickerModal } from './PickerModal';
+import { NONE_VALUE } from './constants';
+import { IPickerProps } from './types';
 
 export default function Picker(props: IPickerProps) {
   const {
-    setSelectedValue,
+    onChange,
     error,
-    displayValue,
+    selectedValue,
     placeholder,
+    allowSelectNone,
+    selectNoneLabel,
     items,
     label,
-    mb,
-    mt,
-    my,
-    mx,
-    ml,
-    mr,
+    required,
+    disabled,
   } = props;
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+
+  function onSelect(newValue: string) {
+    Keyboard.dismiss();
+    setIsModalVisible(false);
+
+    if (newValue === NONE_VALUE) {
+      onChange(null);
+
+      return;
+    }
+
+    onChange(newValue);
+  }
 
   return (
-    <View
-      style={[
-        styles.pickerContainer,
-
-        {
-          borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
-        },
-      ]}
-    >
-      {label && <TextRegular ml="xs">{label}</TextRegular>}
-      <RNPicker
-        style={styles.picker}
+    <>
+      <PickerField
+        style={getMarginStyles(props)}
+        disabled={disabled}
+        required={required}
         placeholder={placeholder}
-        selectedValue={displayValue || ''}
-        onValueChange={setSelectedValue}
-      >
-        {items.map((item) => (
-          <RNPicker.Item
-            style={styles.itemStyle}
-            key={item.value}
-            label={item.label}
-            value={item.value}
-          />
-        ))}
-      </RNPicker>
-    </View>
+        selectedValue={selectedValue}
+        onFocus={() => {
+          Keyboard.dismiss();
+          setIsModalVisible(true);
+        }}
+        items={items}
+        label={label}
+        error={error}
+      />
+
+      <PickerModal
+        visible={isModalVisible}
+        items={items}
+        selectedValue={selectedValue}
+        allowSelectNone={allowSelectNone}
+        selectNoneLabel={selectNoneLabel || placeholder}
+        onSelect={onSelect}
+        onClose={() => setIsModalVisible(false)}
+      />
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  pickerContainer: {
-    borderWidth: 1,
-    backgroundColor: Colors.WHITE,
-    borderRadius: Radiuses.xs,
-    borderColor: Colors.NEUTRAL_LIGHT,
-  },
-  picker: {
-    height: 56,
-    paddingHorizontal: Spacings.sm,
-    color: Colors.PRIMARY_EXTRA_DARK,
-  },
-  itemStyle: {
-    color: Colors.PRIMARY_EXTRA_DARK,
-  },
-});

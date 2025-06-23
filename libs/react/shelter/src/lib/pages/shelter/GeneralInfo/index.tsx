@@ -1,5 +1,6 @@
 import {
   Card,
+  ExpandableContainer,
   isEmail,
   isValidURL,
   toValidWebURL,
@@ -13,15 +14,28 @@ import {
   LocationIcon,
 } from '@monorepo/react/icons';
 import parsePhoneNumber from 'libphonenumber-js';
+import { WysiwygContainer } from '../../../components';
 import { ViewShelterQuery } from '../__generated__/shelter.generated';
+import { hasWysiwygContent } from '../shared/hasWysiwygContent';
 import GeneralServices from './GeneralServices';
 
-function renderLabel(label?: string | null): React.ReactNode {
+function renderLabel(
+  label?: string | null,
+  key?: string | null
+): React.ReactNode {
   if (!label) return 'Not Available';
 
   if (isEmail(label)) {
     return (
       <a href={`mailto:${label}`} className="underline">
+        {label}
+      </a>
+    );
+  }
+
+  if (key === 'phone') {
+    return (
+      <a className="underline" href={`tel:${label}`}>
         {label}
       </a>
     );
@@ -76,6 +90,9 @@ export default function GeneralInfo({
       icon: <LocationIcon className="h-6 w-6 fill-primary-20" />,
     },
   ];
+
+  const hasNotesContent = hasWysiwygContent(shelter.otherServices);
+
   return (
     <Card px="px-0" pb="pb-0">
       <div className="gap-2 flex flex-col px-6">
@@ -93,10 +110,23 @@ export default function GeneralInfo({
           key={info.key}
           className="border-t border-neutral-90 flex items-center justify-between px-6 py-4 gap-1"
         >
-          {renderLabel(info.label)}
+          {renderLabel(info.label, info.key)}
           {info.icon}
         </div>
       ))}
+
+      {hasNotesContent && (
+        <div className="border-t border-neutral-90 flex items-center justify-between px-6 py-4">
+          <ExpandableContainer
+            header="Additional Notes"
+            className="w-full"
+            iconClassName="w-[8px]"
+            headerClassName="min-h-6"
+          >
+            <WysiwygContainer content={shelter.otherServices} className="" />
+          </ExpandableContainer>
+        </div>
+      )}
     </Card>
   );
 }

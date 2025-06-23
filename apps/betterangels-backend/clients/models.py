@@ -26,12 +26,14 @@ from common.constants import CALIFORNIA_ID_REGEX
 from common.models import Attachment, BaseModel, PhoneNumber
 from dateutil.relativedelta import relativedelta
 from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.gis.db.models import PointField
 from django.contrib.postgres.fields import ArrayField
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Model
 from django.db.models.functions import Lower
 from django.utils import timezone
+from django.utils.encoding import force_str
 from django_choices_field import TextChoicesField
 from phonenumber_field.modelfields import PhoneNumberField
 from strawberry_django.descriptors import model_property
@@ -140,6 +142,7 @@ class ClientProfile(BaseModel):
     pronouns_other = models.CharField(max_length=100, null=True, blank=True)
     race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
     residence_address = models.TextField(blank=True, null=True)
+    residence_geolocation = PointField(srid=4326, geography=True, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
     veteran_status = TextChoicesField(choices_enum=VeteranStatusEnum, blank=True, null=True)
 
@@ -173,7 +176,7 @@ class ClientProfile(BaseModel):
         if self.pronouns == PronounEnum.OTHER:
             return self.pronouns_other
 
-        return self.pronouns.label
+        return force_str(self.pronouns.label)
 
     @model_property
     def display_gender(self) -> Optional[str]:
@@ -183,7 +186,7 @@ class ClientProfile(BaseModel):
         if self.gender == GenderEnum.OTHER:
             return self.gender_other
 
-        return self.gender.label
+        return force_str(self.gender.label)
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.california_id:
@@ -267,7 +270,7 @@ class ClientHouseholdMember(BaseModel):
         if self.gender == GenderEnum.OTHER:
             return self.gender_other
 
-        return self.gender.label
+        return force_str(self.gender.label)
 
 
 # Data Import #

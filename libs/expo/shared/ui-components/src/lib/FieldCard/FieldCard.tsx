@@ -118,7 +118,6 @@ export function FieldCard(props: IFieldCardProps) {
         </TextRegular>
       )}
       <View
-        onStartShouldSetResponder={() => true}
         style={{
           height: childHeight,
           overflow,

@@ -1,6 +1,10 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
-import { StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
+import {
+  StyleSheet,
+  TouchableOpacity,
+  TouchableOpacityProps,
+} from 'react-native';
 
 type TVariants = {
   [key in
@@ -57,7 +61,7 @@ const Width = {
   full: '100%',
 } as const;
 
-interface IIconButtonProps {
+interface IIconButtonProps extends TouchableOpacityProps {
   onPress?: () => void;
   variant:
     | 'primary'
@@ -67,7 +71,6 @@ interface IIconButtonProps {
     | 'dark'
     | 'transparent';
   disabled?: boolean;
-  style?: ViewStyle;
   children: ReactNode;
   mb?: TSpacing;
   mt?: TSpacing;

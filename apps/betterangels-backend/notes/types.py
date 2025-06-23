@@ -4,17 +4,27 @@ from typing import List, Optional, Tuple
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.types import UserType
+from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
-from common.graphql.types import LocationInput, LocationType
-from django.db.models import Case, Exists, F, Q, QuerySet, Value, When
+from common.graphql.types import LocationInput, LocationType, NonBlankString
+from django.db.models import (
+    BooleanField,
+    Case,
+    Exists,
+    F,
+    OuterRef,
+    Q,
+    QuerySet,
+    Value,
+    When,
+)
 from notes.enums import (
     DueByGroupEnum,
     SelahTeamEnum,
     ServiceRequestTypeEnum,
     TaskTypeEnum,
 )
-from notes.permissions import PrivateDetailsPermissions
+from notes.permissions import NotePermissions, PrivateDetailsPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.utils.query import filter_for_user
 
@@ -147,7 +157,15 @@ class NoteFilter:
     client_profile: ID | None
     created_by: ID | None
     is_submitted: auto
-    organization: ID | None
+
+    @strawberry_django.filter_field
+    def organizations(
+        self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str
+    ) -> Tuple[QuerySet[models.Note], Q]:
+        if not value:
+            return queryset, Q()
+
+        return queryset.filter(organization__in=value), Q()
 
     @strawberry_django.filter_field
     def authors(
@@ -195,6 +213,7 @@ class NoteFilter:
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
 class NoteType:
     id: ID
+    organization: OrganizationType
     purpose: auto
     team: Optional[SelahTeamEnum]
     location: Optional[LocationType]
@@ -209,6 +228,27 @@ class NoteType:
     created_at: auto
     created_by: UserType
     interacted_at: auto
+
+    @strawberry_django.field(
+        annotate={
+            "_can_edit": lambda info: Case(
+                When(
+                    Exists(
+                        filter_for_user(
+                            models.Note.objects.all(),
+                            info.context.request.user,
+                            [NotePermissions.CHANGE],
+                        ).filter(pk=OuterRef("pk"))
+                    ),
+                    then=Value(True),
+                ),
+                default=Value(False),
+                output_field=BooleanField(),
+            ),
+        }
+    )
+    def user_can_edit(self, root: models.Note) -> bool:
+        return bool(getattr(root, "_can_edit", False))
 
     @strawberry_django.field(
         annotate={
@@ -245,7 +285,7 @@ class CreateNoteInput:
 @strawberry_django.input(models.Note, partial=True)
 class UpdateNoteInput:
     id: ID
-    purpose: auto
+    purpose: Optional[NonBlankString]
     team: Optional[SelahTeamEnum]
     location: Optional[ID]
     public_details: auto

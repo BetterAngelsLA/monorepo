@@ -2,6 +2,8 @@ import { ICON_SIZE } from './constant';
 
 export interface IIconProps {
   size?: TIconSize | number;
+  width?: number;
+  height?: number;
   color?: string;
   rotate?: string;
   mb?: TSpacing;
