@@ -147,12 +147,6 @@ jobs:
           slug: ${{ steps.preview-build.outputs.slug }}
           project-id: ${{ steps.preview-build.outputs.project-id }}
 
-      - name: Check .env
-        id: check-env
-        uses: ./.github/actions/check-env
-        with:
-          project: ${{ matrix.project }}
-
       - name: 🧪 Run Android E2E Tests
         working-directory: apps/${{ matrix.project }}
         run: |
