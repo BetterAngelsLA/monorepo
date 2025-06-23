@@ -3,20 +3,13 @@ name: e2e-test-android
 jobs:
   extract-vars:
     steps:
-      - id: extract
-        run: |
-          RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)
-          MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)
-          MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)
-
-          echo "MAESTRO_GROUP_ID=$MAESTRO_GROUP_ID" >> $EAS_ENV
-          echo "MAESTRO_PROJECT_ID=$MAESTRO_PROJECT_ID" >> $EAS_ENV
-          echo "RUNTIME_VERSION=$RUNTIME_VERSION" >> $EAS_ENV
-
-    outputs:
-      MAESTRO_GROUP_ID: ${{ steps.extract.outputs.MAESTRO_GROUP_ID }}
-      MAESTRO_PROJECT_ID: ${{ steps.extract.outputs.MAESTRO_PROJECT_ID }}
-      RUNTIME_VERSION: ${{ steps.extract.outputs.RUNTIME_VERSION }}
+      - run: |
+          grep '^RUNTIME_VERSION=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2- > runtime_version.txt
+          grep '^MAESTRO_PROJECT_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2- > maestro_project_id.txt
+          grep '^MAESTRO_GROUP_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2- > maestro_group_id.txt
+          echo "RUNTIME_VERSION=$(cat runtime_version.txt)" >> $EAS_OUTPUTS
+          echo "MAESTRO_PROJECT_ID=$(cat maestro_project_id.txt)" >> $EAS_OUTPUTS
+          echo "MAESTRO_GROUP_ID=$(cat maestro_group_id.txt)" >> $EAS_OUTPUTS
 
   wait:
     needs: [extract-vars]
