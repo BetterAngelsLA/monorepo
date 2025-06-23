@@ -52,6 +52,9 @@ outputs:
   ios-runtime-version:
     description: 'Runtime version for iOS update.'
     value: ${{ steps.perform-eas-update.outputs.ios-runtime-version }}
+  group-id:
+    description: 'EAS Update Group ID'
+    value: ${{ steps.perform-eas-update.outputs.group-id }}
 
 runs:
   using: 'composite'
@@ -87,12 +90,14 @@ runs:
           echo "${platform}-update-qr-url=$update_qr_url" >> $GITHUB_OUTPUT
           echo "${platform}-update-commit=$update_commit" >> $GITHUB_OUTPUT
           echo "${platform}-runtime-version=$runtime_version" >> $GITHUB_OUTPUT
-          echo "${platform}-group-id=$group_id" >> $GITHUB_OUTPUT
-
+          echo "group-id=$group_id" >> $GITHUB_OUTPUT
         done
-
-        echo "MAESTRO_GROUP_ID=$group_id" >> .env
-        mgi=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)
-        echo mgi $mgi
       shell: bash
-      working-directory: apps/${{ inputs.project }}
+
+    - name: Set Group ID
+      id: set-group-id
+      run: |
+        group_id="${{ steps.perform-eas-update.outputs.group-id }}"
+        echo "MAESTRO_GROUP_ID=$group_id" >> .env
+      shell: bash
+      working-directory: apps/${{ inputs.group }}
