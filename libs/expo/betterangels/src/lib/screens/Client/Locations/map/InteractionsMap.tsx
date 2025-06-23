@@ -6,29 +6,29 @@ import {
   MapViewport,
   TClusterPoint,
   TMapView,
+  panMap,
   regionDeltaMap,
   useClusters,
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
-import { NotesQuery } from '../../../../apollo';
+import { Region } from 'react-native-maps';
 import { useSnackbar } from '../../../../hooks';
 import { EmptyState } from '../EmptyState';
-import { getInteractionsMapRegion } from './getInteractionsMapRegion';
+import { useInteractionPointFeatures } from './hooks/useInteractionPointFeatures';
+import { useInteractionsMapRegion } from './hooks/useInteractionsMapRegion';
+import { useInteractionsMapState } from './hooks/useInteractionsMapState';
 import { TClusterInteraction } from './types';
-import { useInteractionPointFeatures } from './useInteractionPointFeatures';
 
 type TProps = {
   clientProfileId: string;
-  setSelectedLocation?: (
-    interaction: NotesQuery['notes']['results'][number]
-  ) => void;
 };
 
 export function InteractionsMap(props: TProps) {
-  const { clientProfileId, setSelectedLocation } = props;
+  const { clientProfileId } = props;
 
   const mapRef = useRef<TMapView | null>(null);
+  const { setMapState } = useInteractionsMapState();
   const { showSnackbar } = useSnackbar();
 
   // 1. Pull data
@@ -36,7 +36,7 @@ export function InteractionsMap(props: TProps) {
     useInteractionPointFeatures(clientProfileId);
 
   // 2. Derive clusters
-  const { clusters, onRegionChangeComplete, zoomToCluster } =
+  const { clusters, updateClustersForRegion, zoomToCluster } =
     useClusters<TClusterInteraction>({
       pointFeatures,
       opts: {
@@ -51,6 +51,17 @@ export function InteractionsMap(props: TProps) {
       },
     });
 
+  const mapRegion = useInteractionsMapRegion({
+    interaction: interactions?.[0],
+    delta: regionDeltaMap.M,
+  });
+
+  function onRegionChangeComplete(region: Region) {
+    updateClustersForRegion(region);
+
+    setMapState((prev) => ({ ...prev, region }));
+  }
+
   const renderClusterIconFn = useMemo(
     () => (cluster: TClusterPoint) =>
       <MapClusterMarker itemCount={cluster.properties.point_count} />,
@@ -61,32 +72,6 @@ export function InteractionsMap(props: TProps) {
     () => () => <LocationPinIcon width={25} height={36} />,
     []
   );
-
-  async function onMarkerPress(interactionId: string) {
-    const interaction = interactions?.find((i) => i.id === interactionId);
-    if (interaction && setSelectedLocation) {
-      setSelectedLocation(interaction);
-
-      const point = interaction.location?.point;
-
-      if (!point || !mapRef.current) {
-        return;
-      }
-
-      const currentCamera = await mapRef.current.getCamera();
-
-      mapRef.current.animateCamera(
-        {
-          ...currentCamera,
-          center: {
-            latitude: point[1],
-            longitude: point[0],
-          },
-        },
-        { duration: 500 }
-      );
-    }
-  }
 
   if (loading) {
     return <LoadingView />;
@@ -110,13 +95,34 @@ export function InteractionsMap(props: TProps) {
     return <EmptyState />;
   }
 
-  const mapRegion = getInteractionsMapRegion({
-    interaction: interactions[0],
-    delta: regionDeltaMap.M,
-  });
-
   if (!mapRegion) {
     return null;
+  }
+
+  async function onMarkerPress(interactionId: string) {
+    const interaction = interactions?.find((i) => i.id === interactionId);
+
+    // use array to allow rendering multiple cards
+    const selected = interaction ? [interaction] : [];
+
+    setMapState((prev) => ({
+      ...prev,
+      selectedInteractions: selected,
+    }));
+
+    const centerPoint = selected[0].location?.point;
+
+    if (!centerPoint) {
+      return;
+    }
+
+    panMap({
+      mapRef,
+      center: {
+        longitude: centerPoint[0],
+        latitude: centerPoint[1],
+      },
+    });
   }
 
   return (
@@ -128,7 +134,7 @@ export function InteractionsMap(props: TProps) {
       initialRegion={mapRegion}
       onRegionChangeComplete={onRegionChangeComplete}
       onMapReady={() => {
-        onRegionChangeComplete(mapRegion);
+        updateClustersForRegion(mapRegion);
       }}
     >
       <MapClusters
