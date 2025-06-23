@@ -73,19 +73,23 @@ export default function ShelterPage({ id }: { id: string }) {
     !!shelter.supervisorialDistrict ||
     !!shelter.shelterPrograms?.length ||
     !!shelter.funders?.length;
+  const hasPhotos =
+    !!shelter.interiorPhotos?.length || !!shelter.exteriorPhotos?.length;
 
   return (
     <div className="w-full">
       <Header shelter={shelter} />
       <OperationHours />
-      <Button
-        onClick={() => navigate(`/shelter/${id}/gallery`)}
-        variant="secondary"
-        size="sm"
-        className="w-full"
-      >
-        See all photos
-      </Button>
+      {hasPhotos && (
+        <Button
+          onClick={() => navigate(`/shelter/${id}/gallery`)}
+          variant="secondary"
+          size="sm"
+          className="w-full"
+        >
+          See all photos
+        </Button>
+      )}
       <Actions
         location={shelter.location}
         phone={parsePhoneNumber(shelter.phone ?? '', 'US')?.formatNational()}

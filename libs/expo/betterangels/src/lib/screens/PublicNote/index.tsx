@@ -133,9 +133,8 @@ export default function PublicNote({ noteId }: { noteId: string }) {
           <Button
             onPress={() => {
               if (!publicNote) {
-                setPublicNote(autoNote);
+                onChange(autoNote);
               } else {
-                setPublicNote('');
                 onChange('');
               }
             }}
