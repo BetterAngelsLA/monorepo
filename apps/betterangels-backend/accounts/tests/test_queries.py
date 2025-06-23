@@ -186,6 +186,7 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
             ("org_", ["org_1", "org_2"]),
             ("org_1", ["org_1"]),
             ("org 2", ["org_2"]),
+            ("nonexistent org", []),
         ],
     )
     def test_caseworker_organizations_query_filter(self, search_term: str | None, expected_orgs: list[str]) -> None:
