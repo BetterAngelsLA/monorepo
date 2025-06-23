@@ -5,15 +5,6 @@ inputs:
   project:
     required: true
     type: string
-  branch:
-    required: true
-    type: string
-  slug:
-    required: true
-    type: string
-  project-id:
-    required: true
-    type: string
 
 runs:
   using: 'composite'
@@ -21,6 +12,10 @@ runs:
     - name: Perform env check
       id: perform-env-check
       run: |
+        echo pwd $pwd
+        echo ls
+        ls -al
+
         MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' .env | cut -d '=' -f2-)
         echo MAESTRO_GROUP_ID $MAESTRO_GROUP_ID
         MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' .env | cut -d '=' -f2-)
