@@ -106,7 +106,8 @@ runs:
     - name: Set Group ID
       id: set-group-id
       run: |
-        group_id="${{ steps.perform-eas-update.outputs.group-id }}"
+        group_id="${{ steps.perform-eas-update.outputs.group-id }}"]
+        echo group_id $group_id
         echo "MAESTRO_GROUP_ID=$group_id" >> .env
         echo "MAESTRO_GROUP_ID=$group_id" >> .env_2
       shell: bash
