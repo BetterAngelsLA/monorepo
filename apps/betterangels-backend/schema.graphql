@@ -399,7 +399,6 @@ type ClientProfileType {
   docReadyDocuments: [ClientDocumentType!]
   consentFormDocuments: [ClientDocumentType!]
   otherDocuments: [ClientDocumentType!]
-  user: UserType
   displayCaseManager: String!
 }
 
