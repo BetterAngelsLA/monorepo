@@ -14,7 +14,6 @@ export default function Docs({
 }: {
   client: ClientProfileQuery | undefined;
 }) {
-  // const [isModalVisible, setModalVisible] = useState(false);
   const [expanded, setExpanded] = useState<undefined | string | null>();
   const { showModalScreen } = useModalScreen();
 
@@ -37,7 +36,13 @@ export default function Docs({
       >
         <TextMedium size="lg">Doc Library</TextMedium>
         <IconButton
-          onPress={() => showModalScreen(<UploadModal client={client} />)}
+          onPress={() =>
+            showModalScreen({
+              presentation: 'modal',
+              hideHeader: true,
+              content: <UploadModal client={client} />,
+            })
+          }
           variant="secondary"
           borderColor={Colors.WHITE}
           accessibilityLabel={'add document'}
@@ -46,11 +51,6 @@ export default function Docs({
           <PlusIcon />
         </IconButton>
       </View>
-      {/* <UploadModal
-        client={client}
-        isModalVisible={isModalVisible}
-        closeModal={() => setModalVisible(false)}
-      /> */}
       <View style={{ gap: Spacings.xs, marginTop: Spacings.sm }}>
         {client?.clientProfile.docReadyDocuments &&
           client?.clientProfile.docReadyDocuments?.length > 0 && (

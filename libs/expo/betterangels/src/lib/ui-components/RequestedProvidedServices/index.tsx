@@ -66,16 +66,18 @@ export default function RequestedProvidedServices(
       mb="xs"
       title={`${enumDisplayServiceType[type]} Services`}
       setExpanded={() =>
-        showModalScreen(
-          <ServicesModal
-            noteId={noteId}
-            type={type}
-            initialServices={initialServices}
-            refetch={refetch}
-          />,
-          // 'card'
-          'modal'
-        )
+        showModalScreen({
+          presentation: 'modal',
+          hideHeader: true,
+          content: (
+            <ServicesModal
+              noteId={noteId}
+              type={type}
+              initialServices={initialServices}
+              refetch={refetch}
+            />
+          ),
+        })
       }
     >
       <></>

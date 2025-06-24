@@ -10,7 +10,6 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -21,6 +20,7 @@ import {
   useDeleteServiceRequestMutation,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
+import { useModalScreen } from '../../providers';
 import { ServicesByCategory } from '../../static';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
@@ -39,6 +39,7 @@ interface IServicesModalProps {
 export default function ServicesModal(props: IServicesModalProps) {
   const { initialServices, noteId, refetch, type } = props;
 
+  const { closeModalScreen } = useModalScreen();
   const [services, setServices] = useState<
     Array<{
       id: string | undefined;
@@ -185,16 +186,11 @@ export default function ServicesModal(props: IServicesModalProps) {
         type: 'error',
       });
     } finally {
-      console.log('########################### setIsSubmitLoading - DONE');
       setIsSubmitLoading(false);
     }
   };
 
-  const router = useRouter();
-
   const closeModal = () => {
-    console.log('');
-    console.log('################################### closeModal');
     const newInitialServices = initialServices
       .filter((item) => item.service !== ServiceEnum.Other)
       .map((service) => ({ id: service.id, enum: service.service }));
@@ -207,8 +203,7 @@ export default function ServicesModal(props: IServicesModalProps) {
     setServiceOthers(initialServiceOthers);
     setServices(newInitialServices);
 
-    // close modal screen
-    router.back();
+    closeModalScreen();
   };
 
   useEffect(() => {

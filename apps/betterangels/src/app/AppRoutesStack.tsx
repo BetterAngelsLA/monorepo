@@ -1,11 +1,18 @@
-import { useModalScreen } from '@monorepo/expo/betterangels';
+import {
+  getDefaultStackModalOptions,
+  useModalScreen,
+} from '@monorepo/expo/betterangels';
 import { ArrowLeftIcon } from '@monorepo/expo/shared/icons';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { Stack, useRouter } from 'expo-router';
 
-export function AppRoutesStack() {
+export default function AppRoutesStack() {
   const router = useRouter();
-  const { presentation } = useModalScreen();
+  const {
+    presentation,
+    title: modalScreenTitle,
+    hideHeader: hideModalHeader,
+  } = useModalScreen();
 
   return (
     <Stack>
@@ -18,9 +25,14 @@ export function AppRoutesStack() {
         options={{ headerShown: false, gestureEnabled: false }}
       />
       <Stack.Screen
-        name="base-modal-screen"
+        name="modal-screen"
         key={presentation} // force a re‐mount when presentation changes
-        options={{ headerShown: false, presentation }}
+        options={getDefaultStackModalOptions({
+          presentation,
+          title: modalScreenTitle,
+          hideHeader: hideModalHeader,
+          onClose: () => router.back(),
+        })}
       />
       <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       <Stack.Screen

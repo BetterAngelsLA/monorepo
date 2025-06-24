@@ -6,12 +6,19 @@ import { Pressable, ViewStyle } from 'react-native';
 interface IProps {
   onClose: () => void;
   accessibilityHint?: string;
+  color?: Colors;
   style?: ViewStyle;
   children?: ReactNode;
 }
 
 export function CloseButton(props: IProps) {
-  const { accessibilityHint, onClose, style, children } = props;
+  const {
+    accessibilityHint,
+    onClose,
+    color = Colors.BLACK,
+    style,
+    children,
+  } = props;
 
   return (
     <Pressable
@@ -29,7 +36,7 @@ export function CloseButton(props: IProps) {
       accessibilityHint={accessibilityHint || 'close'}
       accessibilityRole="button"
     >
-      {children || <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />}
+      {children || <PlusIcon size="md" color={color} rotate="45deg" />}
     </Pressable>
   );
 }

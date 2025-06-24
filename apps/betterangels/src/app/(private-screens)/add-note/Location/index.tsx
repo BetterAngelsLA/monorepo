@@ -1,4 +1,9 @@
-import { MapView, Marker, PROVIDER_GOOGLE, useModalScreen } from '@monorepo/expo/betterangels';
+import {
+  MapView,
+  Marker,
+  PROVIDER_GOOGLE,
+  useModalScreen,
+} from '@monorepo/expo/betterangels';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
@@ -80,20 +85,24 @@ export default function LocationComponent(props: ILocationProps) {
           setExpanded(undefined);
         } else {
           setExpanded('Location');
-          showModalScreen(
-            <LocationMapModal
-              setError={(err) =>
-                setErrors({
-                  ...errors,
-                  location: err,
-                })
-              }
-              setLocation={setLocation}
-              location={location}
-              noteId={noteId}
-              setExpanded={setExpanded}
-            />
-          );
+          showModalScreen({
+            presentation: 'modal',
+            hideHeader: true,
+            content: (
+              <LocationMapModal
+                setError={(err) =>
+                  setErrors({
+                    ...errors,
+                    location: err,
+                  })
+                }
+                setLocation={setLocation}
+                location={location}
+                noteId={noteId}
+                setExpanded={setExpanded}
+              />
+            ),
+          });
         }
       }}
       title="Location "

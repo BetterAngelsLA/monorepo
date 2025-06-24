@@ -21,7 +21,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
 import { type ErrorBoundaryProps } from 'expo-router';
-import { AppRoutesStack } from './AppRoutesStack';
+import AppRoutesStack from './AppRoutesStack';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -51,7 +51,7 @@ export default function RootLayout() {
                     >
                       <AppUpdatePrompt />
                     </FeatureFlagControlled>
-                    {/* AppRoutesStack: App level Stack.Screens */}
+                    {/* All Stack.Screens in AppRoutesStack */}
                     <AppRoutesStack />
                   </ModalScreenProvider>
                 </SnackbarProvider>

@@ -16,8 +16,8 @@ export default function Header(props: IHeaderProps) {
         justifyContent: 'space-between',
         backgroundColor: Colors.WHITE,
         paddingHorizontal: Spacings.sm,
-        // paddingTop: Spacings.sm,
-        paddingBottom: Spacings.xs,
+        paddingTop: Spacings.sm,
+        paddingBottom: Spacings.sm,
         borderBottomWidth: 0.5,
         borderBottomColor: Colors.NEUTRAL_LIGHT,
       }}
