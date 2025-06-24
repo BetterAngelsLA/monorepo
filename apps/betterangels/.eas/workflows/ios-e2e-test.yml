@@ -9,9 +9,10 @@ jobs:
     steps:
       - id: set_vars
         run: |
-          RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)
-          MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)
-          MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)
+          WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
+          RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' ${WORK_DIR}/.env | cut -d '=' -f2-)
+          MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
+          MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
           set-output runtime_version "$RUNTIME_VERSION"
           set-output maestro_group_id "$MAESTRO_GROUP_ID"
           set-output maestro_project_id "$MAESTRO_PROJECT_ID"
