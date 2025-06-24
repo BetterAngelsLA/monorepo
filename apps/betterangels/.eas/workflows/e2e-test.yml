@@ -29,7 +29,7 @@ jobs:
     type: get-build
     params:
       runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
-      platform: ios
+      platform: android
 
   maestro_ios_test:
     needs: [get_vars, get_ios_build]
