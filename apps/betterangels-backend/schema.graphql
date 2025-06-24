@@ -1000,11 +1000,11 @@ input NoteFilter {
   clientProfile: ID
   createdBy: ID
   isSubmitted: Boolean
-  organization: ID
   AND: NoteFilter
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
+  organizations: [ID!]
   authors: [ID!]
   search: String
   teams: [SelahTeamEnum!]
@@ -1105,6 +1105,14 @@ enum Ordering {
   DESC_NULLS_LAST
 }
 
+input OrganizationFilter {
+  AND: OrganizationFilter
+  OR: OrganizationFilter
+  NOT: OrganizationFilter
+  DISTINCT: Boolean
+  search: String
+}
+
 input OrganizationOrder {
   name: Ordering
   id: Ordering
@@ -1187,7 +1195,7 @@ enum PronounEnum {
 
 type Query {
   currentUser: UserType!
-  caseworkerOrganizations(order: OrganizationOrder, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  caseworkerOrganizations(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocuments(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
@@ -1775,7 +1783,7 @@ type UserType {
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
-  organizationsOrganization(order: OrganizationOrder): [OrganizationType!]
+  organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder): [OrganizationType!]
   username: String!
 }
 

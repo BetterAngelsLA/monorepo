@@ -157,7 +157,15 @@ class NoteFilter:
     client_profile: ID | None
     created_by: ID | None
     is_submitted: auto
-    organization: ID | None
+
+    @strawberry_django.filter_field
+    def organizations(
+        self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str
+    ) -> Tuple[QuerySet[models.Note], Q]:
+        if not value:
+            return queryset, Q()
+
+        return queryset.filter(organization__in=value), Q()
 
     @strawberry_django.filter_field
     def authors(
@@ -175,7 +183,7 @@ class NoteFilter:
         if value is None:
             return queryset, Q()
 
-        search_terms = value.split(" ")
+        search_terms = value.split()
         query = Q()
 
         for term in search_terms:
@@ -311,7 +319,7 @@ class InteractionAuthorFilter:
         if value is None:
             return queryset, Q()
 
-        search_terms = value.split(" ")
+        search_terms = value.split()
         query = Q()
 
         for term in search_terms:
