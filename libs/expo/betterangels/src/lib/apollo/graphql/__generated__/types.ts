@@ -401,7 +401,6 @@ export type ClientProfileType = {
   residenceGeolocation?: Maybe<Scalars['Point']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
-  user?: Maybe<UserType>;
   veteranStatus?: Maybe<VeteranStatusEnum>;
 };
 
