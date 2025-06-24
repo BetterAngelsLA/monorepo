@@ -5,7 +5,6 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.types import UserType
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
