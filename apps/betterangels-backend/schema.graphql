@@ -396,9 +396,9 @@ type ClientProfileType {
   socialMediaProfiles: [SocialMediaProfileType!]
   displayGender: String
   displayPronouns: String
-  docReadyDocuments: [ClientDocumentType!]
-  consentFormDocuments: [ClientDocumentType!]
-  otherDocuments: [ClientDocumentType!]
+  docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
+  consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
+  otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
   user: UserType
   displayCaseManager: String!
 }

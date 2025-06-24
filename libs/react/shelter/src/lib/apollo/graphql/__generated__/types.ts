@@ -405,6 +405,21 @@ export type ClientProfileType = {
   veteranStatus?: Maybe<VeteranStatusEnum>;
 };
 
+
+export type ClientProfileTypeConsentFormDocumentsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type ClientProfileTypeDocReadyDocumentsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type ClientProfileTypeOtherDocumentsArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
 export type ClientProfileTypeOffsetPaginated = {
   __typename?: 'ClientProfileTypeOffsetPaginated';
   pageInfo: OffsetPaginationInfo;
