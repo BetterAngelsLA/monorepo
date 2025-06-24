@@ -3,7 +3,6 @@ import uuid
 from typing import Any, List, Optional
 
 import pghistory
-from accounts.models import User
 from betterangels_backend import settings
 from clients.enums import (
     AdaAccommodationEnum,
