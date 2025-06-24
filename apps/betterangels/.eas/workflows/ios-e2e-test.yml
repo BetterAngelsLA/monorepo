@@ -1,39 +1,34 @@
 name: e2e-test-ios
 
 jobs:
-  extract-vars:
+  get_vars:
+    outputs:
+      runtime_version: ${{ steps.set_vars.outputs.runtime_version }}
+      maestro_group_id: ${{ steps.set_vars.outputs.maestro_group_id }}
+      maestro_project_id: ${{ steps.set_vars.outputs.maestro_project_id }}
     steps:
-      - run: |
-          grep '^RUNTIME_VERSION=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env >> extracted.env
-          grep '^MAESTRO_PROJECT_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env >> extracted.env
-          grep '^MAESTRO_GROUP_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env >> extracted.env
+      - id: set_vars
+        run: |
+          RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)
+          MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)
+          MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' /home/expo/workingdir/temporary-custom-build/apps/betterangels/.env | cut -d '=' -f2-)
+          set-output runtime_version "$RUNTIME_VERSION"
+          set-output maestro_group_id "$MAESTRO_GROUP_ID"
+          set-output maestro_project_id "$MAESTRO_PROJECT_ID"
 
-  wait:
-    needs: [extract-vars]
+  get_build:
+    needs: [get_vars]
     type: get-build
-    steps:
-      - run: |
-          set -a
-          source extracted.env
-          set +a
-      - run: echo "RUNTIME_VERSION=$RUNTIME_VERSION"
     params:
-      runtime_version: $RUNTIME_VERSION
+      runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
       platform: ios
 
   maestro_test:
-    needs: [wait, extract-vars]
+    needs: [get_vars, get_build]
     type: maestro
-    steps:
-      - run: |
-          set -a
-          source extracted.env
-          set +a
-      - run: echo "MAESTRO_PROJECT_ID=$MAESTRO_PROJECT_ID"
-      - run: echo "MAESTRO_GROUP_ID=$MAESTRO_GROUP_ID"
     env:
-      MAESTRO_PROJECT_ID: $MAESTRO_PROJECT_ID
-      MAESTRO_GROUP_ID: $MAESTRO_GROUP_ID
+      MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.maestro_group_id }}
+      MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.maestro_project_id }}
     params:
-      build_id: ${{ needs.wait.outputs.build_id }}
+      build_id: ${{ needs.get_build.outputs.build_id }}
       flow_path: ['.maestro/ios/landing.yml']
