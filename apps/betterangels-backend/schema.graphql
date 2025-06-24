@@ -1779,7 +1779,6 @@ type UserType {
   middleName: NonBlankString
   email: NonBlankString
   id: ID!
-  clientProfile: DjangoModelType
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean

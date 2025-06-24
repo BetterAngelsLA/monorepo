@@ -2146,7 +2146,6 @@ export type UpdateUserInput = {
 
 export type UserType = {
   __typename?: 'UserType';
-  clientProfile?: Maybe<DjangoModelType>;
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;

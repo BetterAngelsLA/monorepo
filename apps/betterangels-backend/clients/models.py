@@ -3,7 +3,6 @@ import uuid
 from typing import Any, List, Optional
 
 import pghistory
-from accounts.models import User
 from betterangels_backend import settings
 from clients.enums import (
     AdaAccommodationEnum,
@@ -99,7 +98,6 @@ class HmisProfile(BaseModel):
     pghistory.DeleteEvent("client_profile.remove"),
 )
 class ClientProfile(BaseModel):
-    user = models.OneToOneField(User, on_delete=models.SET_NULL, blank=True, null=True, related_name="client_profile")
     ada_accommodation = ArrayField(
         base_field=TextChoicesField(choices_enum=AdaAccommodationEnum), blank=True, null=True
     )
