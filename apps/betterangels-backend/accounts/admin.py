@@ -87,17 +87,5 @@ class UserAdmin(BaseUserAdmin):
     )
     # Not convinced this is the right type; we cast our custom User as a DefaultUser.
     model = cast(Type[DefaultUser], User)
-    list_display = ["id", "full_name", "email", "is_client", "client_id"]
+    list_display = ["id", "full_name", "email"]
     list_filter = ["organizations_organization", "is_active", "is_staff", "is_superuser"]
-
-    def is_client(self, obj: User) -> bool:
-        return hasattr(obj, "client_profile")
-
-    def client_id(self, obj: User) -> Optional[str]:
-        return (
-            format_html(
-                f'<a href="{reverse("admin:clients_clientprofile_change", args=(obj.client_profile.id,))}">{obj.client_profile.id}</a>'
-            )
-            if hasattr(obj, "client_profile")
-            else None
-        )

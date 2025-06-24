@@ -73,7 +73,6 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-m
                 self.first_name,
                 self.last_name,
                 self.middle_name,
-                (getattr(self, "client_profile", None) and self.client_profile.nickname),
             )
         )
 
