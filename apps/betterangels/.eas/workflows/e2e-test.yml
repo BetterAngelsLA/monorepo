@@ -17,19 +17,19 @@ jobs:
           set-output project_id "$PROJECT_ID"
           set-output runtime_version "$RUNTIME_VERSION"
 
-  get_ios_build:
-    needs: [get_vars]
-    type: get-build
-    params:
-      runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
-      platform: ios
-
   get_android_build:
     needs: [get_vars]
     type: get-build
     params:
       runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
       platform: android
+
+  get_ios_build:
+    needs: [get_vars]
+    type: get-build
+    params:
+      runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
+      platform: ios
 
   maestro_ios_test:
     needs: [get_vars, get_ios_build]
