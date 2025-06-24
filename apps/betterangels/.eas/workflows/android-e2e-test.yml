@@ -10,12 +10,12 @@ jobs:
       - id: set_vars
         run: |
           WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
-          RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' ${WORK_DIR}/.env | cut -d '=' -f2-)
           GROUP_ID=$(grep '^GROUP_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
           PROJECT_ID=$(grep '^PROJECT_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
-          set-output runtime_version "$RUNTIME_VERSION"
+          RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' ${WORK_DIR}/.env | cut -d '=' -f2-)
           set-output group_id "$GROUP_ID"
           set-output project_id "$PROJECT_ID"
+          set-output runtime_version "$RUNTIME_VERSION"
 
   get_build:
     needs: [get_vars]
