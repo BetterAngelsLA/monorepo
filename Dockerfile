@@ -115,7 +115,6 @@ USER betterangels
 # Add session manager to allow Fargate sshing
 FROM base AS development
 USER root
-
 RUN if [ "$(uname -m)" = "x86_64" ]; then \
       curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"; \
     elif [ "$(uname -m)" = "aarch64" ]; then \
@@ -128,22 +127,8 @@ RUN if [ "$(uname -m)" = "x86_64" ]; then \
     && rm session-manager-plugin.deb \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-RUN --mount=type=cache,target=/var/lib/apt/lists --mount=target=/var/cache/apt,type=cache \
-    apt-get update && apt-get install -y --no-install-recommends \
-    openjdk-17-jre-headless \
-    android-tools-adb
-
-ENV MAESTRO_VERSION 1.40.3
-RUN mkdir -p /opt/maestro && \
-    wget -q -O /tmp/${MAESTRO_VERSION} "https://github.com/mobile-dev-inc/maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip" && \
-    unzip -q /tmp/${MAESTRO_VERSION} -d /opt/ && \
-    rm /tmp/${MAESTRO_VERSION}
-ENV PATH=/opt/maestro/bin:${PATH}
-
 USER betterangels
 RUN git config --global --add safe.directory "*"
-
 
 FROM base AS poetry
 # Need to create bare Python Packages otherwise poetry will explode (sadpanda)

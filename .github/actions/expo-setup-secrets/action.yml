@@ -53,7 +53,6 @@ runs:
       run: |
         runtime_version=$(echo '${{ steps.fingerprint.outputs.current-fingerprint }}' | jq -r '.hash')
         echo "RUNTIME_VERSION=$runtime_version" >> .env
-        echo "RUNTIME_VERSION=$runtime_version" >> .env_2
         echo "runtime-version=$runtime_version" >> $GITHUB_OUTPUT
       shell: bash
       working-directory: apps/${{ inputs.project }}
