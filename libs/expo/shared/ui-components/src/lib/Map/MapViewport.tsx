@@ -1,23 +1,33 @@
-import { ReactNode, useRef, useState } from 'react';
+import { ReactNode, RefObject, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { Region } from 'react-native-maps';
+import MapView, { Details, Region } from 'react-native-maps';
 import { defaultMapRegion } from './constants';
-import { RNMapView, TRNMapView } from './mapLib';
 import { MapLocateMeBtn } from './mapUi/MapLocateMeBtn';
+import { TMapView } from './types';
 
 type TMapProps = {
+  ref: RefObject<TMapView | null>;
   provider?: 'google';
   initialRegion?: Region;
   style?: StyleProp<ViewStyle>;
   mapStyle?: StyleProp<ViewStyle>;
   enableUserLocation?: boolean;
   children?: ReactNode;
+  onRegionChangeComplete?: (region: Region, details: Details) => void;
+  onMapReady?: () => void;
+  onAppleMapReady?: () => void;
+  onGoogleMapReady?: () => void;
 };
 
-export function MapView(props: TMapProps) {
+export function MapViewport(props: TMapProps) {
   const {
+    ref,
     provider,
     initialRegion,
+    onRegionChangeComplete,
+    onMapReady,
+    onAppleMapReady,
+    onGoogleMapReady,
     style,
     mapStyle,
     enableUserLocation,
@@ -25,12 +35,22 @@ export function MapView(props: TMapProps) {
   } = props;
 
   const [_mapReady, setMapReady] = useState(false);
-  const mapRef = useRef<TRNMapView>(null);
+
+  function onMapIsReady() {
+    setMapReady(true);
+
+    onMapReady?.();
+    provider === 'google' ? onGoogleMapReady?.() : onAppleMapReady?.();
+  }
+
+  if (!ref) {
+    return null;
+  }
 
   return (
     <View style={[styles.wrapper, style]}>
-      <RNMapView
-        ref={mapRef}
+      <MapView
+        ref={ref}
         provider={provider}
         showsUserLocation={!!enableUserLocation}
         showsMyLocationButton={false}
@@ -39,13 +59,14 @@ export function MapView(props: TMapProps) {
         zoomControlEnabled={false}
         mapType="standard"
         initialRegion={initialRegion || defaultMapRegion}
-        onMapReady={() => setMapReady(true)}
+        onMapReady={onMapIsReady}
+        onRegionChangeComplete={onRegionChangeComplete}
         style={[styles.map, mapStyle]}
       >
         {children}
-      </RNMapView>
+      </MapView>
 
-      {!!enableUserLocation && <MapLocateMeBtn mapRef={mapRef} />}
+      {!!enableUserLocation && <MapLocateMeBtn mapRef={ref} />}
     </View>
   );
 }

@@ -125,6 +125,22 @@ mutation CreateClientDocument($data: CreateClientDocumentInput!) {
   }
 }
 
+mutation UpdateClientDocument($data: UpdateClientDocumentInput!) {
+  updateClientDocument(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on ClientDocumentType {
+      id
+    }
+  }
+}
+
 mutation DeleteClientDocument($id: ID!) {
   deleteClientDocument(data: { id: $id }) {
     ... on OperationInfo {

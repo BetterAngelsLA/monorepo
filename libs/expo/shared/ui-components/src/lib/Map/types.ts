@@ -1,3 +1,7 @@
+import RNMapView from 'react-native-maps';
+
+export { RNMapView as TMapView };
+
 export type TMapLatLng = {
   lat: number;
   lng: number;
