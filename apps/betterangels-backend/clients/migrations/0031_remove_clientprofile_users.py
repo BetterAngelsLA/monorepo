@@ -11,6 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("clients", "0030_remove_clientprofile_client_profile_add_insert_and_more"),
+        ("notes", "0016_note_client_profile_data"),
     ]
 
     operations = [
