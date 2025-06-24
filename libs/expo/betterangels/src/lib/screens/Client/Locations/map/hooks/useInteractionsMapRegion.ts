@@ -5,7 +5,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo } from 'react';
 import { TNotesQueryInteraction } from '../../../../../apollo';
-import { useInteractionsMapState } from './useInteractionsMapState';
+import { useInteractionsMapState } from '../InteractionsMapStateContext';
 
 type TProps = {
   interaction?: TNotesQueryInteraction;
@@ -13,7 +13,7 @@ type TProps = {
 };
 
 export function useInteractionsMapRegion({ interaction, delta }: TProps) {
-  const { mapState } = useInteractionsMapState();
+  const { state: mapState } = useInteractionsMapState();
 
   const { latitude, longitude, latitudeDelta, longitudeDelta } =
     mapState?.region || {};

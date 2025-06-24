@@ -25,7 +25,7 @@ import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
 import { InteractionLocations as Locations } from './Locations';
-import { useInteractionsMapState } from './Locations/map/hooks/useInteractionsMapState';
+import { useInteractionsMapState } from './Locations/map/InteractionsMapStateContext';
 import {
   ClientProfileQuery,
   useClientProfileQuery,
@@ -74,7 +74,7 @@ export default function Client({
   const navigation = useNavigation();
   const router = useRouter();
   const { newTab } = useLocalSearchParams<{ newTab?: ClientViewTabEnum }>();
-  const { resetMapState } = useInteractionsMapState();
+  const { reset: resetMapState } = useInteractionsMapState();
 
   useEffect(() => {
     if (newTab) {

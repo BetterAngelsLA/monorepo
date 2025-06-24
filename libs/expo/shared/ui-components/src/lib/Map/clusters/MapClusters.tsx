@@ -31,8 +31,13 @@ export function MapClusters<P extends IClusterGeoJson>(props: TProps<P>) {
         if (item.properties.cluster) {
           const clusterItem = item as TClusterPoint;
 
-          const { cluster_id } = clusterItem.properties;
+          const { cluster_id, maxZoomLeaves } = clusterItem.properties;
           const [longitude, latitude] = clusterItem.geometry.coordinates;
+
+          console.log();
+          console.log('| -------------  maxZoomLeaves  ------------- |');
+          console.log(maxZoomLeaves);
+          console.log();
 
           return (
             <Marker

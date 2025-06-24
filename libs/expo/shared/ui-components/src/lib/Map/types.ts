@@ -13,3 +13,8 @@ export type TMapDeltaLatLng = {
 };
 
 export type RegionDeltaSize = 'XS' | 'S' | 'M' | 'L' | 'XL';
+
+export type TMapDims = {
+  width: number;
+  height: number;
+};

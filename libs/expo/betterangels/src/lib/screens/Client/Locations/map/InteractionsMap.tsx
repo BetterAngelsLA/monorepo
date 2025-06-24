@@ -8,16 +8,17 @@ import {
   TMapView,
   panMap,
   regionDeltaMap,
+  regionToZoom,
   useClusters,
 } from '@monorepo/expo/shared/ui-components';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { useSnackbar } from '../../../../hooks';
 import { EmptyState } from '../EmptyState';
+import { useInteractionsMapState } from './InteractionsMapStateContext';
 import { useInteractionPointFeatures } from './hooks/useInteractionPointFeatures';
 import { useInteractionsMapRegion } from './hooks/useInteractionsMapRegion';
-import { useInteractionsMapState } from './hooks/useInteractionsMapState';
 import { TClusterInteraction } from './types';
 
 type TProps = {
@@ -28,8 +29,26 @@ export function InteractionsMap(props: TProps) {
   const { clientProfileId } = props;
 
   const mapRef = useRef<TMapView | null>(null);
-  const { setMapState } = useInteractionsMapState();
+  const {
+    state: mapState,
+    setState: setMapState,
+    setMapDimensions,
+  } = useInteractionsMapState();
   const { showSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    const { region, dimensions } = mapState;
+
+    if (!region || !dimensions) {
+      return;
+    }
+
+    const zoom = regionToZoom(region, dimensions.width);
+
+    const zoom2 = Math.round(zoom * 100) / 100;
+
+    console.log('*****************  NEW zoom:', zoom2);
+  }, [mapState]);
 
   // 1. Pull data
   const { pointFeatures, loading, error, interactions } =
@@ -125,6 +144,26 @@ export function InteractionsMap(props: TProps) {
     });
   }
 
+  function onClusterPress(cluster: TClusterPoint) {
+    const { maxZoomLeaves } = cluster.properties;
+
+    if (maxZoomLeaves?.length) {
+      const selectedIntIds: string[] = maxZoomLeaves.map((l: any) =>
+        String(l.properties.id)
+      );
+
+      const selectedInteractions =
+        interactions?.filter((i) => selectedIntIds.includes(i.id)) || [];
+
+      setMapState((prev) => ({
+        ...prev,
+        selectedInteractions,
+      }));
+    }
+
+    zoomToCluster(cluster, mapRef);
+  }
+
   return (
     <MapViewport
       ref={mapRef}
@@ -136,13 +175,14 @@ export function InteractionsMap(props: TProps) {
       onMapReady={() => {
         updateClustersForRegion(mapRegion);
       }}
+      onMeasured={setMapDimensions}
     >
       <MapClusters
         mapRef={mapRef}
         clusters={clusters}
         clusterRenderer={renderClusterIconFn}
         pointRenderer={renderPointIconFn}
-        onClusterPress={(c) => zoomToCluster(c, mapRef)}
+        onClusterPress={onClusterPress}
         onPointPress={(p) => onMarkerPress(p.properties.id)}
       />
     </MapViewport>

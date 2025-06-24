@@ -4,6 +4,7 @@ export { MapViewport } from './MapViewport';
 export * from './clusters';
 export * from './constants';
 export { defaultMapRegion, regionDeltaMap } from './constants';
+export * from './mapStateContext';
 export * from './types';
 export * from './utils';
 export { RNMapView as MapView };

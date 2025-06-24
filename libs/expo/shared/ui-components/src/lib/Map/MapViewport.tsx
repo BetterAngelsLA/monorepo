@@ -1,9 +1,15 @@
-import { ReactNode, RefObject, useState } from 'react';
-import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { ReactNode, RefObject, useCallback } from 'react';
+import {
+  LayoutChangeEvent,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
 import MapView, { Details, Region } from 'react-native-maps';
 import { defaultMapRegion } from './constants';
 import { MapLocateMeBtn } from './mapUi/MapLocateMeBtn';
-import { TMapView } from './types';
+import { TMapDims, TMapView } from './types';
 
 type TMapProps = {
   ref: RefObject<TMapView | null>;
@@ -15,8 +21,7 @@ type TMapProps = {
   children?: ReactNode;
   onRegionChangeComplete?: (region: Region, details: Details) => void;
   onMapReady?: () => void;
-  onAppleMapReady?: () => void;
-  onGoogleMapReady?: () => void;
+  onMeasured?: (dims: TMapDims) => void;
 };
 
 export function MapViewport(props: TMapProps) {
@@ -26,21 +31,23 @@ export function MapViewport(props: TMapProps) {
     initialRegion,
     onRegionChangeComplete,
     onMapReady,
-    onAppleMapReady,
-    onGoogleMapReady,
+    onMeasured,
     style,
     mapStyle,
     enableUserLocation,
     children,
   } = props;
+  const handleLayout = useCallback((e: LayoutChangeEvent) => {
+    const { width, height } = e.nativeEvent.layout;
 
-  const [_mapReady, setMapReady] = useState(false);
+    onMeasured?.({
+      width: Math.round(width * 100) / 100,
+      height: Math.round(height * 100) / 100,
+    });
+  }, []);
 
   function onMapIsReady() {
-    setMapReady(true);
-
     onMapReady?.();
-    provider === 'google' ? onGoogleMapReady?.() : onAppleMapReady?.();
   }
 
   if (!ref) {
@@ -51,6 +58,7 @@ export function MapViewport(props: TMapProps) {
     <View style={[styles.wrapper, style]}>
       <MapView
         ref={ref}
+        onLayout={handleLayout}
         provider={provider}
         showsUserLocation={!!enableUserLocation}
         showsMyLocationButton={false}

@@ -26,7 +26,7 @@ export default function ClientScreen() {
   }
 
   return (
-    <InteractionsMapStateProvider>
+    <InteractionsMapStateProvider initial={{ selectedInteractions: [] }}>
       <Client id={id} arrivedFrom={arrivedFrom} openCard={openCardName} />
     </InteractionsMapStateProvider>
   );

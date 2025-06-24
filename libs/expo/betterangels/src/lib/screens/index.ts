@@ -1,6 +1,6 @@
 export * from './AppSettings';
 export { default as Client } from './Client';
-export { InteractionsMapStateProvider } from './Client/Locations/map/InteractionsMapStateProvider';
+export { InteractionsMapStateProvider } from './Client/Locations/map/InteractionsMapStateContext';
 export * from './ClientProfileForms';
 export { default as Clients } from './Clients';
 export { default as CreateClientProfile } from './CreateClientProfile';

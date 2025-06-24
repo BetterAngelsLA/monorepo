@@ -2,7 +2,7 @@ import { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import { Region } from 'react-native-maps';
 import { PointFeature } from 'supercluster';
 import { TMapView } from '../../types';
-import { regionToBbox, regionToZoom } from '../../utils';
+import { regionToApproxZoom, regionToBbox } from '../../utils';
 import { IMapClusterManager } from '../MapClusterManager';
 import { ClusterOrPoint, IClusterGeoJson, TClusterPoint } from '../types';
 import { useMapClusterManager } from './useMapClusterManager';
@@ -35,7 +35,7 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
         return;
       }
       const bbox = regionToBbox(region);
-      const zoom = regionToZoom(region);
+      const zoom = regionToApproxZoom(region);
 
       setClusters(clusterManager.getClusters(bbox, zoom));
     },
@@ -64,5 +64,6 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
     clusters,
     updateClustersForRegion,
     zoomToCluster,
+    clusterManager,
   };
 }
