@@ -1,4 +1,8 @@
-import { FileSearchIcon, PlusIcon, SearchIcon } from '@monorepo/expo/shared/icons';
+import {
+  FileSearchIcon,
+  PlusIcon,
+  SearchIcon,
+} from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -6,6 +10,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -19,11 +24,8 @@ import { useSnackbar } from '../../hooks';
 import { ServicesByCategory } from '../../static';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
-import { useRouter } from 'expo-router';
 
 interface IServicesModalProps {
-  setIsModalVisible: (isModalVisible: boolean) => void;
-  isModalVisible: boolean;
   noteId: string;
   initialServices: {
     id: string;
@@ -35,14 +37,7 @@ interface IServicesModalProps {
 }
 
 export default function ServicesModal(props: IServicesModalProps) {
-  const {
-    setIsModalVisible,
-    isModalVisible,
-    initialServices,
-    noteId,
-    refetch,
-    type,
-  } = props;
+  const { initialServices, noteId, refetch, type } = props;
 
   const [services, setServices] = useState<
     Array<{
@@ -183,7 +178,6 @@ export default function ServicesModal(props: IServicesModalProps) {
       }
 
       refetch();
-      setIsModalVisible(false);
     } catch (e) {
       console.error('Error during service submission:', e);
       showSnackbar({
@@ -191,6 +185,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         type: 'error',
       });
     } finally {
+      console.log('########################### setIsSubmitLoading - DONE');
       setIsSubmitLoading(false);
     }
   };
@@ -198,6 +193,8 @@ export default function ServicesModal(props: IServicesModalProps) {
   const router = useRouter();
 
   const closeModal = () => {
+    console.log('');
+    console.log('################################### closeModal');
     const newInitialServices = initialServices
       .filter((item) => item.service !== ServiceEnum.Other)
       .map((service) => ({ id: service.id, enum: service.service }));
@@ -207,10 +204,11 @@ export default function ServicesModal(props: IServicesModalProps) {
         id: service.id,
         title: service.serviceOther || null,
       }));
-    setIsModalVisible(false);
     setServiceOthers(initialServiceOthers);
     setServices(newInitialServices);
-    router.back()
+
+    // close modal screen
+    router.back();
   };
 
   useEffect(() => {
@@ -246,7 +244,13 @@ export default function ServicesModal(props: IServicesModalProps) {
         marginTop: 0,
       }}
     >
-      <View style={{ alignItems: 'flex-end', paddingHorizontal: 16, marginBottom: 8 }}>
+      <View
+        style={{
+          alignItems: 'flex-end',
+          paddingHorizontal: 16,
+          marginBottom: 8,
+        }}
+      >
         <Pressable
           accessible
           accessibilityHint="closes the modal"

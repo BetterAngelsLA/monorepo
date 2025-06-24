@@ -19,7 +19,7 @@ import SingleDocUploads from './SingleDocUploads';
 import { Docs, ITab, IUploadModalProps } from './types';
 
 export default function UploadModal(props: IUploadModalProps) {
-  const { opacity = 0, client } = props;
+  const { client } = props;
   const [tab, setTab] = React.useState<undefined | ITab>();
   const [docs, setDocs] = React.useState<Docs>({
     DriversLicenseFront: undefined,
@@ -165,116 +165,116 @@ export default function UploadModal(props: IUploadModalProps) {
     //   onBackdropPress={closeModal}
     //   useNativeDriverForBackdrop={true}
     // >
-      <View
-        style={{
-          borderTopLeftRadius: Radiuses.xs,
-          borderTopRightRadius: Radiuses.xs,
-          paddingTop: topOffset + Spacings.xs,
+    <View
+      style={{
+        borderTopLeftRadius: Radiuses.xs,
+        borderTopRightRadius: Radiuses.xs,
+        paddingTop: topOffset + Spacings.xs,
 
-          backgroundColor: Colors.WHITE,
-          flex: 1,
-        }}
-      >
-        {tab ? (
-          TABS[tab]
-        ) : (
-          <ScrollView
+        backgroundColor: Colors.WHITE,
+        flex: 1,
+      }}
+    >
+      {tab ? (
+        TABS[tab]
+      ) : (
+        <ScrollView
+          style={{
+            paddingHorizontal: Spacings.sm,
+            paddingBottom: 35 + bottomOffset,
+          }}
+        >
+          <View
             style={{
-              paddingHorizontal: Spacings.sm,
-              paddingBottom: 35 + bottomOffset,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: Spacings.sm,
             }}
           >
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: Spacings.sm,
-              }}
+            <TextBold size="lg">Upload Files</TextBold>
+            <Pressable
+              accessible
+              accessibilityHint="closes the Upload modal"
+              accessibilityRole="button"
+              accessibilityLabel="close"
+              onPress={closeModal}
             >
-              <TextBold size="lg">Upload Files</TextBold>
-              <Pressable
-                accessible
-                accessibilityHint="closes the Upload modal"
-                accessibilityRole="button"
-                accessibilityLabel="close"
-                onPress={closeModal}
-              >
-                <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
-              </Pressable>
-            </View>
-            <TextRegular size="sm" mb="md">
-              Select the right file type and you can rename it when it's done
-              (optional).
-            </TextRegular>
-            <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
-              <TextBold>Doc-Ready</TextBold>
-              <FileUploadTab
-                docs={docs}
-                setTab={setTab}
-                tabKey="DriversLicenseFront"
-                title="CA ID or CA Driver’s License - Front"
-              />
-              <FileUploadTab
-                docs={docs}
-                setTab={setTab}
-                tabKey="DriversLicenseBack"
-                title="CA ID or CA Driver’s License - Back"
-              />
-              <FileUploadTab
-                docs={docs}
-                setTab={setTab}
-                tabKey="PhotoId"
-                title="Other Photo ID (e.g., out of state)"
-              />
-              <FileUploadTab
-                docs={docs}
-                setTab={setTab}
-                tabKey="BirthCertificate"
-                title="Birth Certificate"
-              />
-              <FileUploadTab
-                docs={docs}
-                setTab={setTab}
-                tabKey="SocialSecurityCard"
-                title="Social Security Card"
-              />
-            </View>
+              <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
+            </Pressable>
+          </View>
+          <TextRegular size="sm" mb="md">
+            Select the right file type and you can rename it when it's done
+            (optional).
+          </TextRegular>
+          <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
+            <TextBold>Doc-Ready</TextBold>
+            <FileUploadTab
+              docs={docs}
+              setTab={setTab}
+              tabKey="DriversLicenseFront"
+              title="CA ID or CA Driver’s License - Front"
+            />
+            <FileUploadTab
+              docs={docs}
+              setTab={setTab}
+              tabKey="DriversLicenseBack"
+              title="CA ID or CA Driver’s License - Back"
+            />
+            <FileUploadTab
+              docs={docs}
+              setTab={setTab}
+              tabKey="PhotoId"
+              title="Other Photo ID (e.g., out of state)"
+            />
+            <FileUploadTab
+              docs={docs}
+              setTab={setTab}
+              tabKey="BirthCertificate"
+              title="Birth Certificate"
+            />
+            <FileUploadTab
+              docs={docs}
+              setTab={setTab}
+              tabKey="SocialSecurityCard"
+              title="Social Security Card"
+            />
+          </View>
 
-            <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
-              <TextBold>Forms</TextBold>
-              <FileUploadTab
-                docs={docs}
-                setTab={setTab}
-                tabKey="ConsentForm"
-                title="Consent Forms"
-              />
-              <FileUploadTab
-                docs={docs}
-                setTab={setTab}
-                tabKey="HmisForm"
-                title="HMIS Forms"
-              />
-              <FileUploadTab
-                docs={docs}
-                setTab={setTab}
-                tabKey="IncomeForm"
-                title="Income Forms (pay stubs)"
-              />
-            </View>
+          <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
+            <TextBold>Forms</TextBold>
+            <FileUploadTab
+              docs={docs}
+              setTab={setTab}
+              tabKey="ConsentForm"
+              title="Consent Forms"
+            />
+            <FileUploadTab
+              docs={docs}
+              setTab={setTab}
+              tabKey="HmisForm"
+              title="HMIS Forms"
+            />
+            <FileUploadTab
+              docs={docs}
+              setTab={setTab}
+              tabKey="IncomeForm"
+              title="Income Forms (pay stubs)"
+            />
+          </View>
 
-            <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
-              <TextBold>Other</TextBold>
-              <FileUploadTab
-                docs={docs}
-                setTab={setTab}
-                tabKey="OtherClientDocument"
-                title="Other Documents"
-              />
-            </View>
-          </ScrollView>
-        )}
-      </View>
+          <View style={{ gap: Spacings.xs, marginBottom: Spacings.lg }}>
+            <TextBold>Other</TextBold>
+            <FileUploadTab
+              docs={docs}
+              setTab={setTab}
+              tabKey="OtherClientDocument"
+              title="Other Documents"
+            />
+          </View>
+        </ScrollView>
+      )}
+    </View>
     // {/* </Modal> */}
   );
 }

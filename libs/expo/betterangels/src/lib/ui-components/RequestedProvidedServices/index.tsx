@@ -7,8 +7,8 @@ import {
   ServiceRequestTypeEnum,
   ViewNoteQuery,
 } from '../../apollo';
-import { enumDisplayServices, enumDisplayServiceType } from '../../static';
-import { useModalScreen } from '../ModalScreenContext';
+import { useModalScreen } from '../../providers';
+import { enumDisplayServiceType, enumDisplayServices } from '../../static';
 import ServicesModal from './ServicesModal';
 
 interface IRequestedServicesProps {
@@ -26,7 +26,6 @@ export default function RequestedProvidedServices(
 ) {
   const { noteId, services: initialServices, scrollRef, refetch, type } = props;
   const { showModalScreen } = useModalScreen();
-
 
   if (!initialServices) {
     return null;
@@ -69,13 +68,13 @@ export default function RequestedProvidedServices(
       setExpanded={() =>
         showModalScreen(
           <ServicesModal
-            isModalVisible={true}
-            setIsModalVisible={() => {}}
             noteId={noteId}
             type={type}
             initialServices={initialServices}
             refetch={refetch}
-          />
+          />,
+          // 'card'
+          'modal'
         )
       }
     >

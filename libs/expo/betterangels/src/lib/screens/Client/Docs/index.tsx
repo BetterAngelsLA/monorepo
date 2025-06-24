@@ -1,14 +1,13 @@
-import { useModalScreen } from '@monorepo/expo/betterangels';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { ClientDocumentType } from '../../../apollo';
+import { useModalScreen } from '../../../providers';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import Documents from './Documents';
 import UploadModal from './UploadModal';
-
 
 export default function Docs({
   client,

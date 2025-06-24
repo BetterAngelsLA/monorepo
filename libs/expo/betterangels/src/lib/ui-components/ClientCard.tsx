@@ -15,6 +15,7 @@ import {
 import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
 import { HmisProfileType, Maybe } from '../apollo';
+import { useModalScreen } from '../providers';
 import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -47,6 +48,7 @@ export default function ClientCard(props: IClientCardProps) {
   } = props;
 
   const router = useRouter();
+  const { showModalScreen } = useModalScreen();
 
   if (!client) {
     return;
@@ -68,20 +70,34 @@ export default function ClientCard(props: IClientCardProps) {
   const lahsaHmisId = client.hmisProfiles
     ? getLahsaHmisId(client.hmisProfiles)
     : null;
+
+  function onCardPress() {
+    const content = (
+      <View>
+        <TextRegular size="xl">HELLO TEXT</TextRegular>
+      </View>
+    );
+
+    showModalScreen(content);
+    // showModalScreen(content, 'card');
+    // showModalScreen(content, 'modal');
+  }
+
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={
-        select === 'true'
-          ? onPress
-          : () =>
-              router.navigate({
-                pathname: `/client/${client.id}`,
-                params: {
-                  arrivedFrom,
-                },
-              })
-      }
+      onPress={onCardPress}
+      // onPress={
+      //   select === 'true'
+      //     ? onPress
+      //     : () =>
+      //         router.navigate({
+      //           pathname: `/client/${client.id}`,
+      //           params: {
+      //             arrivedFrom,
+      //           },
+      //         })
+      // }
       style={({ pressed }) => [
         styles.container,
         {
