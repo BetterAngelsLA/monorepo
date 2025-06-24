@@ -6,6 +6,7 @@ from accounts.utils import (
     remove_org_group_permissions_from_user,
     remove_organization_permission_group,
 )
+from clients.models import ClientProfile
 from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import post_delete, post_migrate, post_save, pre_delete
@@ -25,13 +26,8 @@ def create_superuser(sender: Any, **kwargs: Any) -> None:
 
 @receiver(post_migrate)
 def create_test_client(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV and not User.objects.filter(username="client").exists():
-        User.objects.create_user(
-            username="client",
-            email="client@example.com",
-            password="password",
-            first_name="Jose",
-        )
+    if settings.IS_LOCAL_DEV and not ClientProfile.objects.filter(email="jose@example.com").exists():
+        ClientProfile.objects.create(first_name="Jose", last_name="Test", email="jose@example.com")
 
 
 @receiver(post_migrate)
