@@ -1,4 +1,4 @@
-name: e2e-test-android
+name: e2e-test
 
 jobs:
   get_vars:
@@ -17,19 +17,38 @@ jobs:
           set-output project_id "$PROJECT_ID"
           set-output runtime_version "$RUNTIME_VERSION"
 
-  get_build:
+  get_ios_build:
     needs: [get_vars]
     type: get-build
     params:
       runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
-      platform: android
+      platform: ios
 
-  maestro_test:
-    needs: [get_vars, get_build]
+  get_android_build:
+    needs: [get_vars]
+    type: get-build
+    params:
+      runtime_version: ${{ needs.get_vars.outputs.runtime_version }}
+      platform: ios
+
+  maestro_ios_test:
+    needs: [get_vars, get_ios_build]
     type: maestro
     env:
+      MAESTRO_PLATFORM: ios
       MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.group_id }}
       MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.project_id }}
     params:
-      build_id: ${{ needs.get_build.outputs.build_id }}
-      flow_path: ['.maestro/android/landing.yml']
+      build_id: ${{ needs.get_ios_build.outputs.build_id }}
+      flow_path: ['.maestro/landing.yml']
+
+  maestro_android_test:
+    needs: [get_vars, get_android_build]
+    type: maestro
+    env:
+      MAESTRO_PLATFORM: android
+      MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.group_id }}
+      MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.project_id }}
+    params:
+      build_id: ${{ needs.get_android_build.outputs.build_id }}
+      flow_path: ['.maestro/landing.yml']

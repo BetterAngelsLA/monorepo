@@ -1,7 +1,7 @@
 appId: la.betterangels.dev.app
-platform: android
+platform: ${MAESTRO_PLATFORM}
 ---
-- openLink: exp+betterangels://expo-development-client/?url=https://u.expo.dev/${MAESTRO_PROJECT_ID}/group/${MAESTRO_GROUP_ID}?platform=android&dev=true&minify=false&disableOnboarding=1
+- openLink: exp+betterangels://expo-development-client/?url=https://u.expo.dev/${MAESTRO_PROJECT_ID}/group/${MAESTRO_GROUP_ID}?platform=${MAESTRO_PLATFORM}&dev=true&minify=false&disableOnboarding=1
 - runFlow:
     when:
       visible: 'Open'
