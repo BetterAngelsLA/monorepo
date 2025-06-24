@@ -3,6 +3,26 @@ import { ReactNode, useEffect, useState } from 'react';
 import { ModalScreenContext } from './ModalScreenContext';
 import { TModalPresentationType, TShowModalScreenProps } from './types';
 
+/**
+ * ModalScreenProvider
+ *
+ * Wrap the app with this provider to enable showing and closing
+ * a global modal screen via context.
+ *
+ * @example
+ * <ModalScreenProvider>
+ *   // your app components and <Stack> navigator here
+ * </ModalScreenProvider>
+ *
+ * showModalScreen({
+ *  presentation: 'modal',
+ *  hideHeader: true,
+ *  content: (
+ *     <MyComponent />
+ *   ),
+ * })
+ */
+
 const DEFAULT_PRESENTATION: TModalPresentationType = 'modal';
 const SCREEN_PATH_NAME = '/modal-screen';
 
@@ -32,6 +52,19 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
     router.push(SCREEN_PATH_NAME);
   };
 
+  // Auto modal close detection:
+  // Effect listens for route changes and detects when the modal route is exited.
+  // When exiting, it invokes the onClose handler (if any) and resets modal state.
+  useEffect(() => {
+    if (modalContent !== null && pathname !== SCREEN_PATH_NAME) {
+      onCloseHandler?.();
+
+      setModalContent(null);
+      setOnCloseHandler(null);
+    }
+  }, [pathname]);
+
+  // Manual modal close method
   const closeModalScreen = () => {
     if (pathname !== SCREEN_PATH_NAME) {
       console.warn(
@@ -43,15 +76,6 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
 
     router.back();
   };
-
-  useEffect(() => {
-    if (modalContent !== null && pathname !== SCREEN_PATH_NAME) {
-      onCloseHandler?.();
-
-      setModalContent(null);
-      setOnCloseHandler(null);
-    }
-  }, [pathname]);
 
   return (
     <ModalScreenContext.Provider
