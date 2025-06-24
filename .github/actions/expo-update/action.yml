@@ -98,7 +98,7 @@ runs:
       id: set-project-id
       run: |
         project_id="${{ inputs.project-id }}"
-        echo "MAESTRO_PROJECT_ID=$project_id" >> .env
+        echo "PROJECT_ID=$project_id" >> .env
       shell: bash
       working-directory: apps/${{ inputs.project }}
 
@@ -106,6 +106,6 @@ runs:
       id: set-group-id
       run: |
         group_id="${{ steps.perform-eas-update.outputs.group-id }}"
-        echo "MAESTRO_GROUP_ID=$group_id" >> .env
+        echo "GROUP_ID=$group_id" >> .env
       shell: bash
       working-directory: apps/${{ inputs.project }}

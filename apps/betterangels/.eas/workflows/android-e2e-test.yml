@@ -4,18 +4,18 @@ jobs:
   get_vars:
     outputs:
       runtime_version: ${{ steps.set_vars.outputs.runtime_version }}
-      maestro_group_id: ${{ steps.set_vars.outputs.maestro_group_id }}
-      maestro_project_id: ${{ steps.set_vars.outputs.maestro_project_id }}
+      group_id: ${{ steps.set_vars.outputs.group_id }}
+      project_id: ${{ steps.set_vars.outputs.project_id }}
     steps:
       - id: set_vars
         run: |
           WORK_DIR="/home/expo/workingdir/temporary-custom-build/apps/betterangels"
           RUNTIME_VERSION=$(grep '^RUNTIME_VERSION=' ${WORK_DIR}/.env | cut -d '=' -f2-)
-          MAESTRO_GROUP_ID=$(grep '^MAESTRO_GROUP_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
-          MAESTRO_PROJECT_ID=$(grep '^MAESTRO_PROJECT_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
+          GROUP_ID=$(grep '^GROUP_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
+          PROJECT_ID=$(grep '^PROJECT_ID=' ${WORK_DIR}/.env | cut -d '=' -f2-)
           set-output runtime_version "$RUNTIME_VERSION"
-          set-output maestro_group_id "$MAESTRO_GROUP_ID"
-          set-output maestro_project_id "$MAESTRO_PROJECT_ID"
+          set-output group_id "$GROUP_ID"
+          set-output project_id "$PROJECT_ID"
 
   get_build:
     needs: [get_vars]
@@ -28,8 +28,8 @@ jobs:
     needs: [get_vars, get_build]
     type: maestro
     env:
-      MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.maestro_group_id }}
-      MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.maestro_project_id }}
+      MAESTRO_GROUP_ID: ${{ needs.get_vars.outputs.group_id }}
+      MAESTRO_PROJECT_ID: ${{ needs.get_vars.outputs.project_id }}
     params:
       build_id: ${{ needs.get_build.outputs.build_id }}
       flow_path: ['.maestro/android/landing.yml']
