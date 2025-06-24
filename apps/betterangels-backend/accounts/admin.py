@@ -1,11 +1,9 @@
-from typing import Optional, Type, cast
+from typing import Type, cast
 
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User as DefaultUser
-from django.urls import reverse
-from django.utils.html import format_html
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 
 from .admin_request_mixin import AdminRequestMixin
