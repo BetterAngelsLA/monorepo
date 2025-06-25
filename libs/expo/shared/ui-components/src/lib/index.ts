@@ -26,6 +26,7 @@ export {
 } from './Date';
 export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
+export { default as DirectionsPopup } from './DirectionsPopup';
 export { default as Divider } from './Divider';
 export { default as EditButton } from './EditButton';
 export { default as EmailBtn } from './EmailBtn';
