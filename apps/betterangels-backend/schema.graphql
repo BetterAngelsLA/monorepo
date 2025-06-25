@@ -396,10 +396,9 @@ type ClientProfileType {
   socialMediaProfiles: [SocialMediaProfileType!]
   displayGender: String
   displayPronouns: String
-  docReadyDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  consentFormDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  otherDocuments(pagination: OffsetPaginationInput): [ClientDocumentType!]
-  user: UserType
+  docReadyDocuments: [ClientDocumentType!]
+  consentFormDocuments: [ClientDocumentType!]
+  otherDocuments: [ClientDocumentType!]
   displayCaseManager: String!
 }
 
@@ -1779,7 +1778,6 @@ type UserType {
   middleName: NonBlankString
   email: NonBlankString
   id: ID!
-  clientProfile: DjangoModelType
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean

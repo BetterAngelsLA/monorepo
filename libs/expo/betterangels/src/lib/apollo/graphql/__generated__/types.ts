@@ -401,7 +401,6 @@ export type ClientProfileType = {
   residenceGeolocation?: Maybe<Scalars['Point']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
-  user?: Maybe<UserType>;
   veteranStatus?: Maybe<VeteranStatusEnum>;
 };
 
@@ -2161,7 +2160,6 @@ export type UpdateUserInput = {
 
 export type UserType = {
   __typename?: 'UserType';
-  clientProfile?: Maybe<DjangoModelType>;
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;

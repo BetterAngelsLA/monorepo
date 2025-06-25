@@ -99,9 +99,7 @@ export default function Client({
           accessibilityRole="button"
           accessible
           accessibilityHint="goes to previous screen"
-          onPress={() =>
-            arrivedFrom ? router.navigate(arrivedFrom) : router.navigate('/')
-          }
+          onPress={() => router.dismissTo(arrivedFrom || '/')}
         >
           <TextRegular color={Colors.WHITE}>Back</TextRegular>
         </Pressable>
