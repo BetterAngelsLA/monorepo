@@ -1,5 +1,5 @@
 import { RefObject } from 'react';
-import { StyleSheet } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import LocateMeButton from '../../LocateMeButton';
 import { TMapDeltaLatLng, TMapView } from '../types';
 import { goToUserLocation } from '../utils';
@@ -13,10 +13,28 @@ type TProps = {
 export function MapLocateMeBtn(props: TProps) {
   const { mapRef, regionDelta, duration } = props;
 
+  function onPermissionDenied() {
+    console.log('################################### onPermissionDenied');
+
+    const alertTitle = 'Allow Better Angels to use your location?';
+    const alertMsg = 'Go to Settings to change your Location Permission.';
+
+    Alert.alert(alertTitle, alertMsg, [
+      {
+        text: 'Cancel',
+        onPress: () => console.log('Cancel Pressed'),
+        style: 'cancel',
+      },
+      { text: 'Settings', onPress: () => console.log('Settings Pressed') },
+    ]);
+  }
+
   return (
     <LocateMeButton
       style={styles.locateMeButton}
-      onPress={() => goToUserLocation({ mapRef, regionDelta, duration })}
+      onPress={() =>
+        goToUserLocation({ mapRef, regionDelta, duration, onPermissionDenied })
+      }
     />
   );
 }
