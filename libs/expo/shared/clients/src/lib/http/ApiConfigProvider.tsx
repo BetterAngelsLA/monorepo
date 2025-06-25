@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CookieManager from '@react-native-cookies/cookies';
-import React, {
+import {
   createContext,
+  ReactNode,
   useContext,
   useEffect,
   useMemo,
@@ -10,62 +11,65 @@ import React, {
 import { Platform } from 'react-native';
 import { CSRF_HEADER_NAME, getCSRFToken } from '../common';
 
+type Env = 'production' | 'demo';
+
 interface ApiConfigContextType {
   baseUrl: string;
-  environment: 'production' | 'demo';
-  switchEnvironment: (env: 'production' | 'demo') => Promise<void>;
+  environment: Env;
+  switchEnvironment: (env: Env) => Promise<void>;
   fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
 }
 
-const ApiConfigContext = createContext<ApiConfigContextType | undefined>(
-  undefined
-);
-
-interface ApiConfigProviderProps {
-  children: React.ReactNode;
-  productionUrl: string;
-  demoUrl: string;
-}
+const ApiConfigContext = createContext<ApiConfigContextType | null>(null);
 
 export const ApiConfigProvider = ({
   children,
   productionUrl,
   demoUrl,
-}: ApiConfigProviderProps) => {
-  const [environment, setEnvironment] = useState<'production' | 'demo'>(
-    'production'
-  );
+}: {
+  children: ReactNode;
+  productionUrl: string;
+  demoUrl: string;
+}) => {
+  const [environment, setEnvironment] = useState<Env>('production');
+  const [loaded, setLoaded] = useState(false);
   const baseUrl = environment === 'demo' ? demoUrl : productionUrl;
 
   useEffect(() => {
-    AsyncStorage.getItem('currentEnvironment').then((env) => {
-      if (env === 'demo') setEnvironment('demo');
-    });
+    (async () => {
+      const saved = await AsyncStorage.getItem('currentEnvironment');
+      if (saved === 'demo') setEnvironment('demo');
+      setLoaded(true);
+    })();
   }, []);
 
-  const switchEnvironment = async (env: 'production' | 'demo') => {
-    if (environment === env) return;
+  const fetchClient = useMemo(() => {
+    return async (path: string, options: RequestInit = {}) => {
+      const token = await getCSRFToken(baseUrl, `${baseUrl}/admin/login/`);
+      const { headers: userHeaders = {}, ...rest } = options;
+      const headers = new Headers(userHeaders);
+      headers.set('Content-Type', 'application/json');
+      if (token) headers.set(CSRF_HEADER_NAME, token);
+      if (Platform.OS !== 'web') headers.set('Referer', baseUrl);
 
+      return fetch(`${baseUrl}${path}`, {
+        credentials: 'include',
+        headers,
+        ...rest,
+      });
+    };
+  }, [baseUrl]);
+
+  const switchEnvironment = async (env: Env) => {
+    if (env === environment) return;
     await CookieManager.clearAll();
     await AsyncStorage.setItem('currentEnvironment', env);
     setEnvironment(env);
   };
 
-  const fetchClient = useMemo(() => {
-    return async (path: string, options: RequestInit = {}) => {
-      const token = await getCSRFToken(baseUrl, `${baseUrl}/admin/login/`);
-      return fetch(`${baseUrl}${path}`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(options.headers || {}),
-          ...(token ? { [CSRF_HEADER_NAME]: token } : {}),
-          ...(Platform.OS !== 'web' ? { referer: baseUrl } : {}),
-        },
-        ...options,
-      });
-    };
-  }, [baseUrl]);
+  if (!loaded) {
+    return null;
+  }
 
   return (
     <ApiConfigContext.Provider
@@ -77,9 +81,7 @@ export const ApiConfigProvider = ({
 };
 
 export const useApiConfig = () => {
-  const context = useContext(ApiConfigContext);
-  if (!context) {
-    throw new Error('useApiConfig must be used within an ApiConfigProvider');
-  }
-  return context;
+  const ctx = useContext(ApiConfigContext);
+  if (!ctx) throw new Error('useApiConfig must be inside ApiConfigProvider');
+  return ctx;
 };

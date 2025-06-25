@@ -26,7 +26,6 @@ export default function LoginForm() {
       : 'production';
   const isPasswordLogin = email.endsWith('@example.com');
   const isValidEmail = Regex.email.test(email);
-
   useEffect(() => {
     if (!isValidEmail) return;
     switchEnvironment(targetEnv);

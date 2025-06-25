@@ -30,7 +30,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   const [totalCount, setTotalCount] = useState<number>(0);
 
   const [clients, setClients] = useState<TClientProfile>([]);
-  const { data, loading } = useClientProfilesQuery({
+  const { data, loading, error } = useClientProfilesQuery({
     variables: {
       filters: { isActive: true },
       pagination: { limit: paginationLimit, offset: offset },
@@ -45,6 +45,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
     }
   }
 
+  console.log(error);
   const renderFooter = () => {
     return loading ? (
       <View style={{ marginTop: 10, alignItems: 'center' }}>
