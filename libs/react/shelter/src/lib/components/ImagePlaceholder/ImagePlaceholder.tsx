@@ -18,13 +18,9 @@ export function ImagePlaceholder(props: TProps) {
     className,
   ];
 
-  const iconWrapperCss = ['bg-white', 'p-6', 'rounded-full'];
-
   return (
     <div className={mergeCss(parentCss)}>
-      <div className={mergeCss(iconWrapperCss)}>
-        <ImageIcon className="text-steel-blue h-11" />
-      </div>
+      <ImageIcon className="text-steel-blue h-11" />
     </div>
   );
 }
