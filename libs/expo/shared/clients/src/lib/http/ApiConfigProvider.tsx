@@ -43,6 +43,13 @@ export const ApiConfigProvider = ({
     })();
   }, []);
 
+  const switchEnvironment = async (env: Env) => {
+    if (env === environment) return;
+    await CookieManager.clearAll();
+    await AsyncStorage.setItem('currentEnvironment', env);
+    setEnvironment(env);
+  };
+
   const fetchClient = useMemo(() => {
     return async (path: string, options: RequestInit = {}) => {
       const token = await getCSRFToken(baseUrl, `${baseUrl}/admin/login/`);
@@ -59,13 +66,6 @@ export const ApiConfigProvider = ({
       });
     };
   }, [baseUrl]);
-
-  const switchEnvironment = async (env: Env) => {
-    if (env === environment) return;
-    await CookieManager.clearAll();
-    await AsyncStorage.setItem('currentEnvironment', env);
-    setEnvironment(env);
-  };
 
   if (!loaded) {
     return null;
