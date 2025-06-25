@@ -31,14 +31,15 @@ export const ApiConfigProvider = ({
   productionUrl: string;
   demoUrl: string;
 }) => {
-  const [environment, setEnvironment] = useState<Env>('production');
-  const [loaded, setLoaded] = useState(false);
+  const [environment, setEnvironment] = useState<Env | null>(null);
   const baseUrl = environment === 'demo' ? demoUrl : productionUrl;
 
   useEffect(() => {
-    AsyncStorage.getItem('currentEnvironment')
-      .then((saved) => setEnvironment(saved === 'demo' ? 'demo' : 'production'))
-      .finally(() => setLoaded(true));
+    const loadEnvironment = async () => {
+      const saved = await AsyncStorage.getItem('currentEnvironment');
+      setEnvironment(saved === 'demo' ? 'demo' : 'production');
+    };
+    loadEnvironment();
   }, []);
 
   const switchEnvironment = async (env: Env) => {
@@ -52,7 +53,7 @@ export const ApiConfigProvider = ({
     return async (path: string, options: RequestInit = {}) => {
       const token = await getCSRFToken(baseUrl, `${baseUrl}/admin/login/`);
       const { headers: userHeaders = {}, ...otherOptions } = options;
-      const headers = new Headers(userHeaders);
+      const headers = new Headers(userHeaders as HeadersInit);
       headers.set('Content-Type', 'application/json');
       if (token) headers.set(CSRF_HEADER_NAME, token);
       if (Platform.OS !== 'web') headers.set('Referer', baseUrl);
@@ -65,7 +66,7 @@ export const ApiConfigProvider = ({
     };
   }, [baseUrl]);
 
-  if (!loaded) {
+  if (environment === null) {
     return null;
   }
 
