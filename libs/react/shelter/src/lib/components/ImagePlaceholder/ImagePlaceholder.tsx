@@ -25,8 +25,6 @@ export function ImagePlaceholder(props: TProps) {
       <div className={mergeCss(iconWrapperCss)}>
         <ImageIcon className="text-steel-blue h-11" />
       </div>
-
-      <div className="text-sm mt-2">No Image Available</div>
     </div>
   );
 }
