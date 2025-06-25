@@ -30,15 +30,11 @@ function parseNumber(phoneNumber: string): IParsed {
   let coreNumber = phoneNumber;
 
   if (extMatch) {
-    extension = ` ext. ${extMatch[1]}`;
+    extension = `ext. ${extMatch[1]}`;
     coreNumber = coreNumber.slice(0, extMatch.index).trim();
   }
 
-  let cleaned = coreNumber.replace(/\D/g, '');
-
-  if (cleaned.length === 11 && cleaned.startsWith('1')) {
-    cleaned = cleaned.slice(1);
-  }
+  const cleaned = coreNumber.replace(/\D/g, '');
 
   if (cleaned.length !== 10) {
     throw new Error('invalid number');

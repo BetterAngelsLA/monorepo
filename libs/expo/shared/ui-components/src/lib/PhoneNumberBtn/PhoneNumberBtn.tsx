@@ -27,12 +27,15 @@ export function PhoneNumberBtn(props: IPhoneNumberBtnProps) {
           >
             {label || phoneNumber}
           </TextBold>
-          <TextBold
-            color={pressed ? Colors.PRIMARY_LIGHT : Colors.PRIMARY_EXTRA_DARK}
-            size="sm"
-          >
-            {label || extension}
-          </TextBold>
+          {extension && (
+            <TextBold
+              color={pressed ? Colors.PRIMARY_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+              size="sm"
+            >
+              {' '}
+              {extension}
+            </TextBold>
+          )}
         </View>
       )}
     </Pressable>
