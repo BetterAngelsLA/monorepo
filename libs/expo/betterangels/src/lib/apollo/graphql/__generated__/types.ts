@@ -209,7 +209,6 @@ export type ClientContactInput = {
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
   relationshipToClient?: InputMaybe<RelationshipTypeEnum>;
   relationshipToClientOther?: InputMaybe<Scalars['String']['input']>;
-  updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
 export type ClientContactType = {

@@ -209,7 +209,6 @@ class ClientContactBaseType:
     mailing_address: auto
     relationship_to_client: auto
     relationship_to_client_other: auto
-    updated_at: auto
 
 
 @strawberry_django.type(ClientContact)
@@ -217,6 +216,7 @@ class ClientContactType(ClientContactBaseType):
     id: ID
     client_profile: auto
     phone_number: PhoneNumberScalar | None  # type: ignore
+    updated_at: auto
 
 
 @strawberry_django.input(ClientContact, partial=True)

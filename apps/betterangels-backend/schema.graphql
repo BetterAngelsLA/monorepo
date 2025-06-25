@@ -206,7 +206,6 @@ input ClientContactInput {
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
-  updatedAt: DateTime
   id: ID
   clientProfile: ID
   phoneNumber: PhoneNumber
@@ -218,10 +217,10 @@ type ClientContactType {
   mailingAddress: String
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
-  updatedAt: DateTime!
   id: ID!
   clientProfile: DjangoModelType!
   phoneNumber: PhoneNumber
+  updatedAt: DateTime!
 }
 
 type ClientContactTypeOffsetPaginated {
