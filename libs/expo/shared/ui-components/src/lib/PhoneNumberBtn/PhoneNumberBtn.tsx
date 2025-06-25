@@ -3,19 +3,19 @@ import { Linking, Pressable, View } from 'react-native';
 import TextBold from '../TextBold';
 
 interface IPhoneNumberBtnProps {
-  phoneNumber: string | Array<string | undefined>;
+  number: Array<string | undefined>;
   label?: string;
 }
 
 export function PhoneNumberBtn(props: IPhoneNumberBtnProps) {
-  const { phoneNumber: number, label } = props;
+  const { number, label } = props;
   const [phoneNumber, extension] = number;
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityHint="Opens your phone dialer to call the number"
       accessibilityLabel={`Call ${phoneNumber}`}
-      onPress={() => Linking.openURL(`tel:${phoneNumber}`)}
+      onPress={() => Linking.openURL(`tel:${phoneNumber},${extension}`)}
       android_ripple={null}
     >
       {({ pressed }) => (
@@ -32,7 +32,7 @@ export function PhoneNumberBtn(props: IPhoneNumberBtnProps) {
               color={pressed ? Colors.PRIMARY_LIGHT : Colors.PRIMARY_EXTRA_DARK}
               size="sm"
             >
-              {' '}
+              {' ext.'}
               {extension}
             </TextBold>
           )}

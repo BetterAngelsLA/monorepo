@@ -5,10 +5,10 @@ export function formatPhoneNumber(originalNumber: string) {
     return formatNumber(parsed);
   } catch (e) {
     if (typeof originalNumber === 'string') {
-      return originalNumber.replace(/\D/g, '');
+      return [originalNumber.replace(/\D/g, '')];
     }
 
-    return '';
+    return [''];
   }
 }
 
@@ -30,7 +30,7 @@ function parseNumber(phoneNumber: string): IParsed {
   let coreNumber = phoneNumber;
 
   if (extMatch) {
-    extension = `ext. ${extMatch[1]}`;
+    extension = extMatch[1];
     coreNumber = coreNumber.slice(0, extMatch.index).trim();
   }
 
