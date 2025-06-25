@@ -20,11 +20,16 @@ interface IDirectionsPopupProps {
 export function DirectionsPopup(props: IDirectionsPopupProps) {
   const { address, onCancel } = props;
 
-  const getFullAddress = () => {
-    if (!address?.street) return '';
-    const { street, city, state, zipCode } = address;
-    return `${street}, ${city}, ${state} ${zipCode}`;
-  };
+  const fullAddress = [
+    address?.street,
+    address?.city,
+    address?.state,
+    address?.zipCode,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
+  const isDisabled = !address?.street;
 
   return (
     <Modal
@@ -62,9 +67,10 @@ export function DirectionsPopup(props: IDirectionsPopupProps) {
             }}
           >
             <Pressable
+              disabled={isDisabled}
               onPress={() =>
                 openMap({
-                  query: getFullAddress(),
+                  query: fullAddress,
                   provider: 'apple',
                   travelType: 'drive',
                 })
@@ -81,9 +87,10 @@ export function DirectionsPopup(props: IDirectionsPopupProps) {
               <TextRegular color={Colors.PRIMARY}>Apple Maps</TextRegular>
             </Pressable>
             <Pressable
+              disabled={isDisabled}
               onPress={() => {
                 openMap({
-                  query: getFullAddress(),
+                  query: fullAddress,
                   provider: 'google',
                   travelType: 'drive',
                 });
