@@ -58,10 +58,6 @@ export const GET_NOTES = gql`
             name
             url
           }
-          user {
-            id
-            username
-          }
           profilePhoto {
             url
           }

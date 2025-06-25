@@ -24,17 +24,6 @@ def create_superuser(sender: Any, **kwargs: Any) -> None:
 
 
 @receiver(post_migrate)
-def create_test_client(sender: Any, **kwargs: Any) -> None:
-    if settings.IS_LOCAL_DEV and not User.objects.filter(username="client").exists():
-        User.objects.create_user(
-            username="client",
-            email="client@example.com",
-            password="password",
-            first_name="Jose",
-        )
-
-
-@receiver(post_migrate)
 def create_test_agent(sender: Any, **kwargs: Any) -> None:
     if settings.IS_LOCAL_DEV and not User.objects.filter(username="agent").exists():
         User.objects.create_user(

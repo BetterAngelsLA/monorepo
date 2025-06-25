@@ -1,6 +1,7 @@
 import {
   Client,
   ClientProfileSectionEnum,
+  InteractionsMapStateProvider,
   isValidClientProfileSectionEnum,
 } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
@@ -24,5 +25,9 @@ export default function ClientScreen() {
     openCardName = openCard as ClientProfileSectionEnum;
   }
 
-  return <Client id={id} arrivedFrom={arrivedFrom} openCard={openCardName} />;
+  return (
+    <InteractionsMapStateProvider>
+      <Client id={id} arrivedFrom={arrivedFrom} openCard={openCardName} />
+    </InteractionsMapStateProvider>
+  );
 }

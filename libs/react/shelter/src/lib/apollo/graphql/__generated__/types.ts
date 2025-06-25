@@ -401,7 +401,6 @@ export type ClientProfileType = {
   residenceGeolocation?: Maybe<Scalars['Point']['output']>;
   socialMediaProfiles?: Maybe<Array<SocialMediaProfileType>>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
-  user?: Maybe<UserType>;
   veteranStatus?: Maybe<VeteranStatusEnum>;
 };
 
@@ -1236,7 +1235,7 @@ export type NoteFilter = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   isSubmitted?: InputMaybe<Scalars['Boolean']['input']>;
-  organization?: InputMaybe<Scalars['ID']['input']>;
+  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
@@ -1277,6 +1276,7 @@ export type NoteType = {
   purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
   team?: Maybe<SelahTeamEnum>;
+  userCanEdit: Scalars['Boolean']['output'];
 };
 
 
@@ -1355,6 +1355,14 @@ export enum Ordering {
   DescNullsFirst = 'DESC_NULLS_FIRST',
   DescNullsLast = 'DESC_NULLS_LAST'
 }
+
+export type OrganizationFilter = {
+  AND?: InputMaybe<OrganizationFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<OrganizationFilter>;
+  OR?: InputMaybe<OrganizationFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
 
 export type OrganizationOrder = {
   id?: InputMaybe<Ordering>;
@@ -1475,6 +1483,7 @@ export type QueryBulkClientProfileImportRecordsArgs = {
 
 
 export type QueryCaseworkerOrganizationsArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2136,7 +2145,6 @@ export type UpdateUserInput = {
 
 export type UserType = {
   __typename?: 'UserType';
-  clientProfile?: Maybe<DjangoModelType>;
   email?: Maybe<Scalars['NonBlankString']['output']>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
   hasAcceptedPrivacyPolicy?: Maybe<Scalars['Boolean']['output']>;
@@ -2151,6 +2159,7 @@ export type UserType = {
 
 
 export type UserTypeOrganizationsOrganizationArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
 };
 
