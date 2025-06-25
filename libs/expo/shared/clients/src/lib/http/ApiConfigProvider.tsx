@@ -81,7 +81,9 @@ export const ApiConfigProvider = ({
 };
 
 export const useApiConfig = () => {
-  const ctx = useContext(ApiConfigContext);
-  if (!ctx) throw new Error('useApiConfig must be inside ApiConfigProvider');
-  return ctx;
+  const context = useContext(ApiConfigContext);
+  if (!context) {
+    throw new Error('useApiConfig must be used within an ApiConfigProvider');
+  }
+  return context;
 };
