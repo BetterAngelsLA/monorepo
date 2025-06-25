@@ -209,6 +209,7 @@ export type ClientContactInput = {
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
   relationshipToClient?: InputMaybe<RelationshipTypeEnum>;
   relationshipToClientOther?: InputMaybe<Scalars['String']['input']>;
+  updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
 export type ClientContactType = {
@@ -221,6 +222,7 @@ export type ClientContactType = {
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
   relationshipToClient?: Maybe<RelationshipTypeEnum>;
   relationshipToClientOther?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type ClientContactTypeOffsetPaginated = {

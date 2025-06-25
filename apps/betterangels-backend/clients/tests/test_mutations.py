@@ -113,7 +113,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         response = self._create_client_profile_fixture(variables)
         client_profile = response["data"]["createClientProfile"]
 
-        expected_contacts = [{"id": ANY, **contact}]
+        expected_contacts = [{"id": ANY, "updatedAt": ANY, **contact}]
         expected_hmis_profiles = [{"id": ANY, **hmis_profile}]
         expected_household_members = [{"id": ANY, "displayGender": "Female", **household_member}]
         expected_phone_numbers = [{"id": ANY, **phone_number}]
@@ -510,7 +510,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             client_contact = self._create_client_contact_fixture(variables)["data"]["createClientContact"]
 
-        expected_client_contact = {"id": ANY, **variables}
+        expected_client_contact = {"id": ANY, "updatedAt": ANY, **variables}
         expected_client_contact.pop("clientProfile")
 
         self.assertEqual(client_contact, expected_client_contact)
@@ -535,7 +535,9 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             client_contact = self._update_client_contact_fixture(variables)["data"]["updateClientContact"]
 
-        self.assertEqual(variables, client_contact)
+        expected_client_contact = {"updatedAt": ANY, **variables}
+
+        self.assertEqual(expected_client_contact, client_contact)
 
     def test_delete_client_contact_mutation(self) -> None:
         variables = {"object": "ClientContact", "object_id": self.client_contact_1["id"]}

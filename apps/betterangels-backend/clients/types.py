@@ -209,6 +209,7 @@ class ClientContactBaseType:
     mailing_address: auto
     relationship_to_client: auto
     relationship_to_client_other: auto
+    updated_at: auto
 
 
 @strawberry_django.type(ClientContact)
