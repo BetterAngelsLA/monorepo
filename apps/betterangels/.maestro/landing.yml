@@ -1,7 +1,6 @@
-appId: la.betterangels.dev.app
 platform: ${MAESTRO_PLATFORM}
 ---
-- openLink: betterangels-dev://expo-development-client/?url=https://u.expo.dev/${MAESTRO_PROJECT_ID}/group/${MAESTRO_GROUP_ID}?platform=${MAESTRO_PLATFORM}
+- openLink: exp+betterangels://expo-development-client/?url=https://u.expo.dev/${MAESTRO_PROJECT_ID}/group/${MAESTRO_GROUP_ID}?platform=${MAESTRO_PLATFORM}
 
 - runFlow:
     when:
@@ -20,5 +19,4 @@ platform: ${MAESTRO_PLATFORM}
 - assertVisible: 'Get Started'
 - tapOn:
     id: 'get-started-button'
-
 - assertVisible: 'Welcome!'
