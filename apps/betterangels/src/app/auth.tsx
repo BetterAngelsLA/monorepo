@@ -18,6 +18,7 @@ export default function Auth() {
               pathname: '/sign-in',
             })
           }
+          testID="get-started-button"
           title="Get Started"
           size="full"
           variant="primaryDark"
