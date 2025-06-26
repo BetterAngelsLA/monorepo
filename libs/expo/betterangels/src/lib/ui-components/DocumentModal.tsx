@@ -24,8 +24,6 @@ interface IDocumentModalProps {
   clientId: string;
 }
 
-const MIME_TYPE = 'application/octet-stream';
-
 export default function DocumentModal(props: IDocumentModalProps) {
   const { isModalVisible, closeModal, document, clientId } = props;
   const { showSnackbar } = useSnackbar();
@@ -71,6 +69,7 @@ export default function DocumentModal(props: IDocumentModalProps) {
 
     const remoteUrl = document.file.url;
     const filename = document.originalFilename;
+    const mimeType = document.mimeType;
     if (!filename) {
       console.error('Missing originalFilename');
       Alert.alert('Download Error', 'Filename is missing.');
@@ -96,9 +95,7 @@ export default function DocumentModal(props: IDocumentModalProps) {
         // 2A. Request directory permissions (SAF)
         const permResult =
           await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-        const granted = permResult.granted;
-        const directoryUri = (permResult as any).directoryUri;
-        if (!granted || !directoryUri) {
+        if (!permResult.granted) {
           Alert.alert(
             'Permission Required',
             'Permission to access storage is required to save the file.'
@@ -108,9 +105,9 @@ export default function DocumentModal(props: IDocumentModalProps) {
 
         // 2B. Create and write file in chosen directory
         const newUri = await FileSystem.StorageAccessFramework.createFileAsync(
-          directoryUri,
+          permResult.directoryUri,
           filename,
-          MIME_TYPE
+          mimeType
         );
         const base64 = await FileSystem.readAsStringAsync(downloadedUri, {
           encoding: FileSystem.EncodingType.Base64,
@@ -135,7 +132,7 @@ export default function DocumentModal(props: IDocumentModalProps) {
 
         await Sharing.shareAsync(downloadedUri, {
           dialogTitle: 'Save or share file',
-          mimeType: MIME_TYPE,
+          mimeType,
         });
       }
 
