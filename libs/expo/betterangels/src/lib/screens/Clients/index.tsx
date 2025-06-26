@@ -210,15 +210,19 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
                 <ClientCard
                   client={clientProfile}
                   arrivedFrom="/clients"
-                  select={select as string}
-                  onPress={() => {
-                    if (select === 'true') {
-                      createNoteFunction(clientProfile.id);
-                    } else {
-                      setCurrentClient(clientProfile);
-                      setModalIsOpen(true);
-                    }
-                  }}
+                  onPress={
+                    select === 'true'
+                      ? () => createNoteFunction(clientProfile.id)
+                      : undefined
+                  }
+                  onMenuPress={
+                    select === 'true'
+                      ? undefined
+                      : () => {
+                          setCurrentClient(clientProfile);
+                          setModalIsOpen(true);
+                        }
+                  }
                   mb="sm"
                 />
               ) : null
