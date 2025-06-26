@@ -216,6 +216,7 @@ class ClientContactType(ClientContactBaseType):
     id: ID
     client_profile: auto
     phone_number: PhoneNumberScalar | None  # type: ignore
+    updated_at: auto
 
 
 @strawberry_django.input(ClientContact, partial=True)

@@ -1,7 +1,6 @@
 import {
   GlobeIcon,
   LocationDotIcon,
-  PersonIcon,
   UserIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -11,16 +10,16 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { enumDisplayLanguage } from '../../static/enumDisplayMapping';
-import { ClientProfileQuery } from './__generated__/Client.generated';
+import { enumDisplayLanguage } from '../../../static/enumDisplayMapping';
+import { ClientProfileQuery } from '../__generated__/Client.generated';
+import { ClientCaseManager } from './ClientCaseManager';
 
 interface IClientHeaderProps {
   client: ClientProfileQuery['clientProfile'] | undefined;
-  onCaseManagerPress?: () => void;
 }
 
-export default function ClientHeader(props: IClientHeaderProps) {
-  const { client, onCaseManagerPress } = props;
+export function ClientHeader(props: IClientHeaderProps) {
+  const { client } = props;
 
   return (
     <View
@@ -81,29 +80,7 @@ export default function ClientHeader(props: IClientHeaderProps) {
           </View>
         )}
       </View>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: Spacings.xxs,
-        }}
-      >
-        <PersonIcon color={Colors.PRIMARY_EXTRA_DARK} />
-        <TextRegular>
-          Current Case Manager:{' '}
-          {client?.displayCaseManager !== 'Not Assigned' &&
-          onCaseManagerPress ? (
-            <TextRegular
-              onPress={onCaseManagerPress}
-              textDecorationLine="underline"
-            >
-              {client?.displayCaseManager}
-            </TextRegular>
-          ) : (
-            <TextRegular>{client?.displayCaseManager}</TextRegular>
-          )}
-        </TextRegular>
-      </View>
+      <ClientCaseManager client={client} />
       {client?.residenceAddress && (
         <View
           style={{

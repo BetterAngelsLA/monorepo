@@ -8,6 +8,7 @@ export { default as BasicModal } from './BasicModal';
 export { default as BasicRadio } from './BasicRadio';
 export { default as BasicTextarea } from './BasicTextarea';
 export { default as BottomActions } from './BottomActions';
+export { default as BottomSheetModal } from './BottomSheetModal';
 export { default as Button } from './Button';
 export { default as Camera } from './Camera';
 export { default as CardWrapper } from './CardWrapper';
@@ -26,6 +27,7 @@ export {
 } from './Date';
 export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
+export { default as DirectionsPopup } from './DirectionsPopup';
 export { default as Divider } from './Divider';
 export { default as EditButton } from './EditButton';
 export { default as EmailBtn } from './EmailBtn';
