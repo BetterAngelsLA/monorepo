@@ -5,42 +5,27 @@ import {
   Shadow,
   Spacings,
 } from '@monorepo/expo/shared/static';
-import { ReactNode, useMemo, useRef, useState } from 'react';
+import { ReactNode, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import BottomSheetModalContent from './Content';
 
 interface IBottmomSheetModalProps extends BottomSheetProps {
-  title?: string | null;
   children: ReactNode;
 }
 
 export function BottomSheetModal(props: IBottmomSheetModalProps) {
-  const { title, children, snapPoints: externalSnapPoints, ...rest } = props;
-  const [titleHeight, setTitleHeight] = useState<number>(1);
+  const { children, ...rest } = props;
 
   const bottomSheetRef = useRef<BottomSheet>(null);
 
-  const snapPoints = useMemo(() => [titleHeight], [titleHeight]);
-
   return (
     <BottomSheet
-      {...rest}
-      index={0}
-      handleIndicatorStyle={{
-        backgroundColor: Colors.NEUTRAL_LIGHT,
-        width: 54,
-        height: 5,
-        borderRadius: Radiuses.xxs,
-      }}
-      snapPoints={snapPoints}
-      enablePanDownToClose={false}
+      handleIndicatorStyle={styles.indicatorStyle}
       ref={bottomSheetRef}
-      enableDynamicSizing
       style={styles.shadow}
+      {...rest}
     >
-      <BottomSheetModalContent title={title} setTitleHeight={setTitleHeight}>
-        {children}
-      </BottomSheetModalContent>
+      <BottomSheetModalContent>{children}</BottomSheetModalContent>
     </BottomSheet>
   );
 }
@@ -53,5 +38,11 @@ const styles = StyleSheet.create({
   shadow: {
     backgroundColor: Colors.WHITE,
     ...Shadow,
+  },
+  indicatorStyle: {
+    backgroundColor: Colors.NEUTRAL_LIGHT,
+    width: 54,
+    height: 5,
+    borderRadius: Radiuses.xxs,
   },
 });
