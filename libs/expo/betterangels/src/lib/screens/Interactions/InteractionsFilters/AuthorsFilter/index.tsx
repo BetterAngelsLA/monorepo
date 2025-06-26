@@ -107,7 +107,7 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
       .filter((item) => item.id !== user?.id && item.firstName)
       .map((item) => ({
         id: item.id,
-        label: `${item.firstName} ${item.lastName}`,
+        label: `${item.firstName} ${item.lastName || ''}`,
       }));
 
     if (offset === 0) {

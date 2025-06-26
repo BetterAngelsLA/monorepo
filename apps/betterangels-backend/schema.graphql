@@ -220,6 +220,7 @@ type ClientContactType {
   id: ID!
   clientProfile: DjangoModelType!
   phoneNumber: PhoneNumber
+  updatedAt: DateTime!
 }
 
 type ClientContactTypeOffsetPaginated {
