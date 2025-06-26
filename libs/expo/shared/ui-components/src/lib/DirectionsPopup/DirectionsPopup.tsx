@@ -32,7 +32,7 @@ export function DirectionsPopup(props: IDirectionsPopupProps) {
 
   const isDisabled = !address?.street;
 
-  if (!address || !address.street) {
+  if (!address || isDisabled) {
     return null;
   }
 
