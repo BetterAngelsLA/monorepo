@@ -5,15 +5,17 @@ import IconButton from '../IconButton';
 
 interface ILocateMeButtonProps {
   onPress: () => void;
+  disabled?: boolean;
   style?: ViewStyle;
 }
 
 export function LocateMeButton(props: ILocateMeButtonProps) {
-  const { onPress, style } = props;
+  const { onPress, disabled, style } = props;
   return (
     <IconButton
       style={[styles.button, style]}
       onPress={onPress}
+      disabled={disabled}
       accessibilityLabel="userlocation button"
       variant="secondary"
       accessibilityHint="gets user location"
