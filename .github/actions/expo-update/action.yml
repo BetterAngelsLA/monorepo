@@ -94,18 +94,11 @@ runs:
         done
       shell: bash
 
-    - name: Set Project ID
-      id: set-project-id
+    - name: Set Project and Group ID
       run: |
         project_id="${{ inputs.project-id }}"
-        echo "PROJECT_ID=$project_id" >> .env
-      shell: bash
-      working-directory: apps/${{ inputs.project }}
-
-    - name: Set Group ID
-      id: set-group-id
-      run: |
         group_id="${{ steps.perform-eas-update.outputs.group-id }}"
+        echo "PROJECT_ID=$project_id" >> .env
         echo "GROUP_ID=$group_id" >> .env
       shell: bash
       working-directory: apps/${{ inputs.project }}
