@@ -1,5 +1,6 @@
-import { RefObject } from 'react';
-import { Alert, StyleSheet } from 'react-native';
+import { showOpenSettingsAlert } from '@monorepo/expo/shared/utils';
+import { RefObject, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import LocateMeButton from '../../LocateMeButton';
 import { TMapDeltaLatLng, TMapView } from '../types';
 import { goToUserLocation } from '../utils';
@@ -13,28 +14,39 @@ type TProps = {
 export function MapLocateMeBtn(props: TProps) {
   const { mapRef, regionDelta, duration } = props;
 
+  const [disabled, setDisabled] = useState(false);
+
   function onPermissionDenied() {
-    console.log('################################### onPermissionDenied');
+    showOpenSettingsAlert({
+      title: 'Allow Better Angels to use your location?',
+      message: 'Go to Settings to change your Location Permission.',
+    });
+  }
 
-    const alertTitle = 'Allow Better Angels to use your location?';
-    const alertMsg = 'Go to Settings to change your Location Permission.';
+  async function onPress() {
+    setDisabled(true);
 
-    Alert.alert(alertTitle, alertMsg, [
-      {
-        text: 'Cancel',
-        onPress: () => console.log('Cancel Pressed'),
-        style: 'cancel',
-      },
-      { text: 'Settings', onPress: () => console.log('Settings Pressed') },
-    ]);
+    try {
+      await goToUserLocation({
+        mapRef,
+        regionDelta,
+        duration,
+        onPermissionDenied,
+      });
+
+      setDisabled(false);
+    } catch (e) {
+      console.error(`MapLocateMeBtn onPress error: ${e}`);
+
+      setDisabled(false);
+    }
   }
 
   return (
     <LocateMeButton
       style={styles.locateMeButton}
-      onPress={() =>
-        goToUserLocation({ mapRef, regionDelta, duration, onPermissionDenied })
-      }
+      disabled={disabled}
+      onPress={onPress}
     />
   );
 }

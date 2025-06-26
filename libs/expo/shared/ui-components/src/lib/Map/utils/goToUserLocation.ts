@@ -1,4 +1,3 @@
-import { PermissionStatus } from 'expo-location';
 import { RefObject } from 'react';
 import { TMapDeltaLatLng, TMapView } from '../types';
 import { getUserLocation } from './getUserLocation';
@@ -18,9 +17,15 @@ export async function goToUserLocation(props: TProps) {
     return;
   }
 
-  const { location, permissionStatus } = await getUserLocation();
+  const userLocation = await getUserLocation();
 
-  if (permissionStatus !== PermissionStatus.GRANTED) {
+  if (!userLocation) {
+    return;
+  }
+
+  const { location, requireSettingsUpdate } = userLocation;
+
+  if (requireSettingsUpdate) {
     onPermissionDenied?.();
 
     return;
@@ -30,7 +35,7 @@ export async function goToUserLocation(props: TProps) {
     return;
   }
 
-  await goToLocation({
+  return await goToLocation({
     mapRef,
     coordinates: location.coords,
     regionDelta,
