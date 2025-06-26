@@ -84,7 +84,7 @@ export default {
       '@config-plugins/react-native-pdf',
       'expo-build-properties',
       [
-        'expo-dev-launcher',
+        'expo-dev-client',
         {
           launchMode: 'launcher',
         },
