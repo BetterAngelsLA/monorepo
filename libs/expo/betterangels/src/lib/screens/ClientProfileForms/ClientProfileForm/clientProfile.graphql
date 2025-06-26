@@ -73,6 +73,7 @@ query GetClientProfile($id: ID!) {
         phoneNumber
         relationshipToClient
         relationshipToClientOther
+        updatedAt
       }
       hmisProfiles {
         agency
