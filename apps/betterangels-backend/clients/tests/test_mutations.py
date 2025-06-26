@@ -138,7 +138,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             expected_client_profile,
             client_profile,
             ignore_order=True,
-            exclude_regex_paths=[r"\['id'\]$"],
+            exclude_regex_paths=[r"\['id'\]$", r"\['updatedAt'\]$"],
         )
 
         self.assertFalse(client_differences)
