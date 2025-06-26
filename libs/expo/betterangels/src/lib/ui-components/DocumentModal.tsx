@@ -6,7 +6,7 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { DeleteModal } from '@monorepo/expo/shared/ui-components';
 import * as FileSystem from 'expo-file-system';
-import * as Sharing from 'expo-sharing';
+import * as MediaLibrary from 'expo-media-library';
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import { ClientDocumentType } from '../apollo';
@@ -23,8 +23,6 @@ interface IDocumentModalProps {
   document: ClientDocumentType;
   clientId: string;
 }
-
-const MIME_TYPE = 'application/octet-stream';
 
 export default function DocumentModal(props: IDocumentModalProps) {
   const { isModalVisible, closeModal, document, clientId } = props;
@@ -67,40 +65,38 @@ export default function DocumentModal(props: IDocumentModalProps) {
   };
 
   const downloadFile = async () => {
-    if (!document?.file?.url) {
-      return;
-    }
+    if (!document?.file?.url) return;
 
     try {
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Cannot access media library.');
+        return;
+      }
+
       const fileUri = document.file.url;
-      const downloadLocation = `${FileSystem.documentDirectory}${document.originalFilename}`;
+      const localUri = `${FileSystem.cacheDirectory}${document.originalFilename}`;
 
       const downloadResumable = FileSystem.createDownloadResumable(
         fileUri,
-        downloadLocation
+        localUri
       );
-
       const data = await downloadResumable.downloadAsync();
 
-      if ((await Sharing.isAvailableAsync()) && data?.uri) {
-        await Sharing.shareAsync(data?.uri, {
-          mimeType: MIME_TYPE,
-          dialogTitle: 'Save file to Files',
-        });
-      } else {
-        Alert.alert(
-          'Sharing not available',
-          'Sharing is not supported on this device.'
-        );
-      }
+      if (!data?.uri) throw new Error('Download failed');
+
+      const asset = await MediaLibrary.createAssetAsync(data.uri);
+      await MediaLibrary.createAlbumAsync('Download', asset, false);
+
+      showSnackbar({
+        message: 'File saved to Downloads',
+        type: 'success',
+      });
 
       closeModal();
     } catch (error) {
       console.error('Error downloading the file:', error);
-      Alert.alert(
-        'Download Error',
-        'An error occurred while downloading the file.'
-      );
+      Alert.alert('Download Error', 'An error occurred while saving the file.');
     }
   };
 
