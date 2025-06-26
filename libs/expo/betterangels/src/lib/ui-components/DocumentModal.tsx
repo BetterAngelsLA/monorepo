@@ -126,7 +126,10 @@ export default function DocumentModal(props: IDocumentModalProps) {
         // iOS: share dialog (iCloud, Files, AirDrop)
         const canShare = await Sharing.isAvailableAsync();
         if (!canShare) {
-          Alert.alert('Sharing unavailable', 'Cannot share this file.');
+          Alert.alert(
+            'Sharing not available',
+            'Sharing is not supported on this device.'
+          );
           return;
         }
 
@@ -139,7 +142,10 @@ export default function DocumentModal(props: IDocumentModalProps) {
       closeModal();
     } catch (error) {
       console.error('Error handling download/save:', error);
-      Alert.alert('Error', 'An error occurred while saving the file.');
+      Alert.alert(
+        'Download Error',
+        'An error occurred while downloading the file.'
+      );
     }
   };
 
@@ -192,5 +198,9 @@ export default function DocumentModal(props: IDocumentModalProps) {
 }
 
 function getFileTypeText(mimeType?: string): string {
-  return mimeType?.startsWith('image') ? 'image' : 'file';
+  if (mimeType?.startsWith('image')) {
+    return 'image';
+  }
+
+  return 'file';
 }
