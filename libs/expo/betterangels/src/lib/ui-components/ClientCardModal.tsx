@@ -44,7 +44,6 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
     {
       title: 'Add Interaction',
       Icon: FilePlusIcon,
-      route: `/add-interaction/${clientProfile.id}`,
       onPress: () => {
         if (clientProfile) {
           createNoteFunction(clientProfile.id);

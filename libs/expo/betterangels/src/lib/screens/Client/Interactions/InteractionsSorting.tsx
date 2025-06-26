@@ -10,6 +10,7 @@ import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { NotesQuery } from '../../../apollo';
 import { useSnackbar } from '../../../hooks';
+import { CreateClientInteractionBtn } from '../../../ui-components';
 import {
   ClientProfileQuery,
   useCreateNoteMutation,
@@ -46,6 +47,7 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
           },
         },
       });
+
       if (data?.createNote && 'id' in data.createNote) {
         router.navigate(`/add-note/${data.createNote.id}`);
       }
@@ -71,6 +73,7 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
       <TextMedium size="md">
         Displaying {notes?.length} of {totalCount} interactions
       </TextMedium>
+      <CreateClientInteractionBtn clientProfileId={client.clientProfile.id} />
       <IconButton
         onPress={() => createNoteFunction(client.clientProfile.id)}
         variant="secondary"

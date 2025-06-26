@@ -105,19 +105,17 @@ export default function Home({ Logo }: { Logo: ElementType }) {
           paddingHorizontal: Spacings.sm,
         }}
         data={clients}
-        renderItem={({ item: clientProfile }) =>
-          clients ? (
-            <ClientCard
-              arrivedFrom="/"
-              onPress={() => {
-                setCurrentClient(clientProfile);
-                setModalIsOpen(true);
-              }}
-              mb="sm"
-              client={clientProfile}
-            />
-          ) : null
-        }
+        renderItem={({ item: clientProfile }) => (
+          <ClientCard
+            arrivedFrom="/"
+            onMenuPress={() => {
+              setCurrentClient(clientProfile);
+              setModalIsOpen(true);
+            }}
+            mb="sm"
+            client={clientProfile}
+          />
+        )}
         keyExtractor={(clientProfile) => clientProfile.id}
         onEndReached={loadMoreClients}
         onEndReachedThreshold={0.05}

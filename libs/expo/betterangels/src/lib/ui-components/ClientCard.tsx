@@ -28,23 +28,13 @@ interface IClientCardProps {
   ml?: TSpacing;
   mr?: TSpacing;
   onPress?: () => void;
-  select?: string;
+  onMenuPress?: () => void;
   arrivedFrom?: string;
 }
 
 export default function ClientCard(props: IClientCardProps) {
-  const {
-    client,
-    mb,
-    mt,
-    mr,
-    ml,
-    my,
-    mx,
-    onPress,
-    select = 'false',
-    arrivedFrom,
-  } = props;
+  const { client, mb, mt, mr, ml, my, mx, onPress, onMenuPress, arrivedFrom } =
+    props;
 
   const router = useRouter();
 
@@ -68,20 +58,23 @@ export default function ClientCard(props: IClientCardProps) {
   const lahsaHmisId = client.hmisProfiles
     ? getLahsaHmisId(client.hmisProfiles)
     : null;
+
+  function onCardPress(clientProfileId: string) {
+    if (onPress) {
+      return onPress();
+    }
+
+    router.navigate({
+      pathname: `/client/${clientProfileId}`,
+      params: {
+        arrivedFrom,
+      },
+    });
+  }
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={
-        select === 'true'
-          ? onPress
-          : () =>
-              router.navigate({
-                pathname: `/client/${client.id}`,
-                params: {
-                  arrivedFrom,
-                },
-              })
-      }
+      onPress={() => onCardPress(client.id)}
       style={({ pressed }) => [
         styles.container,
         {
@@ -142,18 +135,18 @@ export default function ClientCard(props: IClientCardProps) {
           </View>
         )}
       </View>
-      <View style={{ justifyContent: 'center', position: 'relative' }}>
-        {select === 'false' && (
+      {!!onMenuPress && (
+        <View style={{ justifyContent: 'center', position: 'relative' }}>
           <IconButton
-            onPress={onPress}
+            onPress={onMenuPress}
             variant="transparent"
             accessibilityLabel={'open client details modal'}
             accessibilityHint={'open client details modal'}
           >
             <ThreeDotIcon />
           </IconButton>
-        )}
-      </View>
+        </View>
+      )}
     </Pressable>
   );
 }

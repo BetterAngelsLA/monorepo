@@ -9,6 +9,7 @@ export {
   TClientProfileCardItem,
 } from './ClientProfileCard';
 export { default as ConsentModal } from './ConsentModal';
+export * from './CreateClientInteraction';
 export { default as DocumentModal } from './DocumentModal';
 export { default as ErrorCrashView } from './ErrorCrashView/ErrorCrashView';
 export { default as FeatureFlagControlled } from './FeatureFlagControlled/FeatureFlagControlled';
