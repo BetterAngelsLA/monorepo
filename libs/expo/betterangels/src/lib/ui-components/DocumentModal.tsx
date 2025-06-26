@@ -35,21 +35,31 @@ export default function DocumentModal(props: IDocumentModalProps) {
     refetchQueries: [
       {
         query: ClientProfileDocument,
-        variables: { id: clientId },
+        variables: {
+          id: clientId,
+        },
       },
     ],
   });
 
-  const onClickDeleteFile = () => setDeleteModalVisible(true);
+  const onClickDeleteFile = async () => {
+    setDeleteModalVisible(true);
+  };
 
   const deleteFile = async () => {
     closeModal();
     try {
-      await deleteDocument({ variables: { id: document.id } });
-      showSnackbar({ message: 'Document deleted', type: 'success' });
+      await deleteDocument({
+        variables: {
+          id: document.id,
+        },
+      });
     } catch (err) {
       console.error('[DocumentModal] Error deleting document', err);
-      showSnackbar({ message: 'Error deleting document', type: 'error' });
+      showSnackbar({
+        message: 'An error occurred while deleting the document',
+        type: 'error',
+      });
     }
   };
 
