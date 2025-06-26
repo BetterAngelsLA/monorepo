@@ -1,8 +1,10 @@
+import re
 from datetime import datetime
 from typing import NewType, Optional
 
 import strawberry
 import strawberry_django
+from common.constants import PHONE_NUMBER_REGEX
 from common.models import Address, Attachment, Location, PhoneNumber
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
@@ -36,8 +38,15 @@ LongitudeScalar = strawberry.scalar(
 )
 
 
-def _format_phone_number(v: DjangoPhoneNumber) -> str:
-    if v.extension:
+def _parse_phone_number(v: str) -> DjangoPhoneNumber:
+    if re.match(PHONE_NUMBER_REGEX, v):
+        return DjangoPhoneNumberUtil.from_string(v)
+
+    return v
+
+
+def _serialize_phone_number(v: DjangoPhoneNumber) -> str:
+    if v.extension is not None:
         return f"{v.national_number}x{v.extension}"
 
     return str(v.national_number)
@@ -45,8 +54,8 @@ def _format_phone_number(v: DjangoPhoneNumber) -> str:
 
 PhoneNumberScalar: DjangoPhoneNumber | str = strawberry.scalar(
     DjangoPhoneNumber,
-    parse_value=lambda v: DjangoPhoneNumberUtil.from_string(v),
-    serialize=lambda v: _format_phone_number(v),
+    parse_value=lambda v: _parse_phone_number(v.strip()),
+    serialize=lambda v: _serialize_phone_number(v),
 )
 
 NonBlankString = strawberry.scalar(
