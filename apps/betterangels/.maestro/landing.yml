@@ -9,13 +9,13 @@ platform: ${MAESTRO_PLATFORM}
       visible: 'Open'
     commands:
       - tapOn: 'Open'
-# - runFlow:
-#     when:
-#       platform: ios
-#       visible: 'Continue'
-#     commands:
-#       - tapOn:
-#           point: 50%,10%
+- runFlow:
+    when:
+      platform: ios
+      visible: 'Continue'
+    commands:
+      - tapOn:
+          point: 50%,10%
 
 - assertVisible: 'Get Started'
 - tapOn: 'Get Started'
