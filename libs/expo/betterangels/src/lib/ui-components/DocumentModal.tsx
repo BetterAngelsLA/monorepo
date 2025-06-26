@@ -24,36 +24,27 @@ interface IDocumentModalProps {
   clientId: string;
 }
 
-export default function DocumentModal(props: IDocumentModalProps) {
-  const { isModalVisible, closeModal, document, clientId } = props;
+export default function DocumentModal({
+  isModalVisible,
+  closeModal,
+  document,
+  clientId,
+}: IDocumentModalProps) {
   const { showSnackbar } = useSnackbar();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const [deleteDocument] = useDeleteClientDocumentMutation({
     refetchQueries: [
-      {
-        query: ClientProfileDocument,
-        variables: {
-          id: clientId,
-        },
-      },
+      { query: ClientProfileDocument, variables: { id: clientId } },
     ],
   });
-
-  const onClickDeleteFile = async () => {
-    setDeleteModalVisible(true);
-  };
 
   const deleteFile = async () => {
     closeModal();
     try {
-      await deleteDocument({
-        variables: {
-          id: document.id,
-        },
-      });
+      await deleteDocument({ variables: { id: document.id } });
     } catch (err) {
-      console.error('[DocumentModal] Error deleting document', err);
+      console.error('Error deleting document', err);
       showSnackbar({
         message: 'An error occurred while deleting the document',
         type: 'error',
@@ -62,54 +53,35 @@ export default function DocumentModal(props: IDocumentModalProps) {
   };
 
   const downloadFile = async () => {
-    if (!document?.file?.url) {
-      console.warn('No file URL to download');
-      return;
-    }
+    const { url } = document.file || {};
+    const { originalFilename, mimeType } = document;
 
-    const remoteUrl = document.file.url;
-    const filename = document.originalFilename;
-    const mimeType = document.mimeType;
-    if (!filename) {
-      console.error('Missing originalFilename');
-      Alert.alert('Download Error', 'Filename is missing.');
-      return;
-    }
-
-    const cacheDir = FileSystem.cacheDirectory;
-    if (!cacheDir) {
-      console.error('Cache directory unavailable');
-      Alert.alert('Download Error', 'Unable to access cache directory.');
+    if (!url || !originalFilename) {
+      Alert.alert('Download Error', 'Missing file URL or filename.');
       return;
     }
 
     try {
-      // 1. Download to cache
-      const localUri = `${cacheDir}${filename}`;
-      const { uri: downloadedUri } = await FileSystem.downloadAsync(
-        remoteUrl,
-        localUri
-      );
+      const cacheUri = `${FileSystem.cacheDirectory}${originalFilename}`;
+      const { uri: localUri } = await FileSystem.downloadAsync(url, cacheUri);
 
       if (Platform.OS === 'android') {
-        // 2A. Request directory permissions (SAF)
-        const permResult =
+        const perm =
           await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-        if (!permResult.granted) {
+        if (!perm.granted) {
           Alert.alert(
             'Permission Required',
-            'Permission to access storage is required to save the file.'
+            'Storage access is required to save the file.'
           );
           return;
         }
 
-        // 2B. Create and write file in chosen directory
         const newUri = await FileSystem.StorageAccessFramework.createFileAsync(
-          permResult.directoryUri,
-          filename,
+          perm.directoryUri,
+          originalFilename,
           mimeType
         );
-        const base64 = await FileSystem.readAsStringAsync(downloadedUri, {
+        const base64 = await FileSystem.readAsStringAsync(localUri, {
           encoding: FileSystem.EncodingType.Base64,
         });
         await FileSystem.StorageAccessFramework.writeAsStringAsync(
@@ -120,25 +92,19 @@ export default function DocumentModal(props: IDocumentModalProps) {
           }
         );
       } else {
-        // iOS: share dialog (iCloud, Files, AirDrop)
-        const canShare = await Sharing.isAvailableAsync();
-        if (!canShare) {
-          Alert.alert(
-            'Sharing not available',
-            'Sharing is not supported on this device.'
-          );
+        if (!(await Sharing.isAvailableAsync())) {
+          Alert.alert('Sharing Error', 'Sharing not supported on this device.');
           return;
         }
-
-        await Sharing.shareAsync(downloadedUri, {
+        await Sharing.shareAsync(localUri, {
           dialogTitle: 'Save or share file',
           mimeType,
         });
       }
 
       closeModal();
-    } catch (error) {
-      console.error('Error downloading the file:', error);
+    } catch (err) {
+      console.error('Download failed', err);
       Alert.alert(
         'Download Error',
         'An error occurred while downloading the file.'
@@ -167,37 +133,31 @@ export default function DocumentModal(props: IDocumentModalProps) {
     {
       title: `Delete ${fileTypeText}`,
       Icon: DeleteIcon,
-      onPress: onClickDeleteFile,
+      onPress: () => setDeleteModalVisible(true),
     },
   ];
 
-  return (
-    <>
-      <MainModal
-        closeButton
-        vertical
-        actions={ACTIONS}
-        isModalVisible={isModalVisible}
-        closeModal={closeModal}
-        opacity={0.5}
-      />
-
-      <DeleteModal
-        body={`All data associated with this ${fileTypeText} will be deleted.`}
-        title={`Delete ${fileTypeText}?`}
-        onDelete={deleteFile}
-        onCancel={() => setDeleteModalVisible(false)}
-        isVisible={deleteModalVisible}
-        deleteableItemName={fileTypeText}
-      />
-    </>
+  return deleteModalVisible ? (
+    <DeleteModal
+      body={`All data associated with this ${fileTypeText} will be deleted.`}
+      title={`Delete ${fileTypeText}?`}
+      onDelete={deleteFile}
+      onCancel={() => setDeleteModalVisible(false)}
+      isVisible
+      deleteableItemName={fileTypeText}
+    />
+  ) : (
+    <MainModal
+      closeButton
+      vertical
+      actions={ACTIONS}
+      isModalVisible={isModalVisible}
+      closeModal={closeModal}
+      opacity={0.5}
+    />
   );
 }
 
 function getFileTypeText(mimeType?: string): string {
-  if (mimeType?.startsWith('image')) {
-    return 'image';
-  }
-
-  return 'file';
+  return mimeType?.startsWith('image') ? 'image' : 'file';
 }
