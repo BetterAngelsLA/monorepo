@@ -3,19 +3,19 @@ platform: ${MAESTRO_PLATFORM}
 ---
 - openLink: exp+betterangels://expo-development-client/?url=https://u.expo.dev/${MAESTRO_PROJECT_ID}/group/${MAESTRO_GROUP_ID}?platform=${MAESTRO_PLATFORM}&disableOnboarding=1
 
-- runFlow:
-    when:
-      platform: ios
-      visible: 'Open'
-    commands:
-      - tapOn: 'Open'
-- runFlow:
-    when:
-      platform: ios
-      visible: 'Continue'
-    commands:
-      - tapOn:
-          point: 50%,10%
+# - runFlow:
+#     when:
+#       platform: ios
+#       visible: 'Open'
+#     commands:
+#       - tapOn: 'Open'
+# - runFlow:
+#     when:
+#       platform: ios
+#       visible: 'Continue'
+#     commands:
+#       - tapOn:
+#           point: 50%,10%
 
 - assertVisible: 'Get Started'
 - tapOn:
