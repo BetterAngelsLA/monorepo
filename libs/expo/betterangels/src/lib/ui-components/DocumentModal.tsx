@@ -141,7 +141,7 @@ export default function DocumentModal(props: IDocumentModalProps) {
 
       closeModal();
     } catch (error) {
-      console.error('Error handling download/save:', error);
+      console.error('Error downloading the file:', error);
       Alert.alert(
         'Download Error',
         'An error occurred while downloading the file.'
