@@ -449,4 +449,6 @@ RUNSCRIPT_LOG_TO_STDOUT = True
 
 # Phonenumber Field
 PHONENUMBER_DEFAULT_REGION = "US"
+# NOTE: Changing or removing this can result in loss of phone extension data
+# https://django-phonenumber-field.readthedocs.io/en/latest/reference.html#phone-number-format-choices
 PHONENUMBER_DB_FORMAT = "INTERNATIONAL"
