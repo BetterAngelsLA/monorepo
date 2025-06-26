@@ -6,9 +6,9 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { DeleteModal } from '@monorepo/expo/shared/ui-components';
 import * as FileSystem from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
+import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { ClientDocumentType } from '../apollo';
 import { useSnackbar } from '../hooks';
 import {
@@ -24,9 +24,10 @@ interface IDocumentModalProps {
   clientId: string;
 }
 
+const MIME_TYPE = 'application/octet-stream';
+
 export default function DocumentModal(props: IDocumentModalProps) {
   const { isModalVisible, closeModal, document, clientId } = props;
-
   const { showSnackbar } = useSnackbar();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
@@ -34,84 +35,116 @@ export default function DocumentModal(props: IDocumentModalProps) {
     refetchQueries: [
       {
         query: ClientProfileDocument,
-        variables: {
-          id: clientId,
-        },
+        variables: { id: clientId },
       },
     ],
   });
 
-  const onClickDeleteFile = async () => {
-    setDeleteModalVisible(true);
-  };
+  const onClickDeleteFile = () => setDeleteModalVisible(true);
 
   const deleteFile = async () => {
     closeModal();
-
     try {
-      await deleteDocument({
-        variables: {
-          id: document.id,
-        },
-      });
+      await deleteDocument({ variables: { id: document.id } });
+      showSnackbar({ message: 'Document deleted', type: 'success' });
     } catch (err) {
       console.error('[DocumentModal] Error deleting document', err);
-
-      showSnackbar({
-        message: 'An error occurred while deleting the document',
-        type: 'error',
-      });
+      showSnackbar({ message: 'Error deleting document', type: 'error' });
     }
   };
 
   const downloadFile = async () => {
-    if (!document?.file?.url) return;
+    if (!document?.file?.url) {
+      console.warn('No file URL to download');
+      return;
+    }
+
+    const remoteUrl = document.file.url;
+    const filename = document.originalFilename;
+    if (!filename) {
+      console.error('Missing originalFilename');
+      Alert.alert('Download Error', 'Filename is missing.');
+      return;
+    }
+
+    const cacheDir = FileSystem.cacheDirectory;
+    if (!cacheDir) {
+      console.error('Cache directory unavailable');
+      Alert.alert('Download Error', 'Unable to access cache directory.');
+      return;
+    }
 
     try {
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Cannot access media library.');
-        return;
-      }
-
-      const fileUri = document.file.url;
-      const localUri = `${FileSystem.cacheDirectory}${document.originalFilename}`;
-
-      const downloadResumable = FileSystem.createDownloadResumable(
-        fileUri,
+      // 1. Download to cache
+      const localUri = `${cacheDir}${filename}`;
+      const { uri: downloadedUri } = await FileSystem.downloadAsync(
+        remoteUrl,
         localUri
       );
-      const data = await downloadResumable.downloadAsync();
 
-      if (!data?.uri) throw new Error('Download failed');
+      if (Platform.OS === 'android') {
+        // 2A. Request directory permissions (SAF)
+        const permResult =
+          await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+        const granted = permResult.granted;
+        const directoryUri = (permResult as any).directoryUri;
+        if (!granted || !directoryUri) {
+          Alert.alert(
+            'Permission Required',
+            'Permission to access storage is required to save the file.'
+          );
+          return;
+        }
 
-      const asset = await MediaLibrary.createAssetAsync(data.uri);
-      await MediaLibrary.createAlbumAsync('Download', asset, false);
+        // 2B. Create and write file in chosen directory
+        const newUri = await FileSystem.StorageAccessFramework.createFileAsync(
+          directoryUri,
+          filename,
+          MIME_TYPE
+        );
+        const base64 = await FileSystem.readAsStringAsync(downloadedUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        await FileSystem.StorageAccessFramework.writeAsStringAsync(
+          newUri,
+          base64,
+          {
+            encoding: FileSystem.EncodingType.Base64,
+          }
+        );
+      } else {
+        // iOS: share dialog (iCloud, Files, AirDrop)
+        const canShare = await Sharing.isAvailableAsync();
+        if (!canShare) {
+          Alert.alert('Sharing unavailable', 'Cannot share this file.');
+          return;
+        }
 
-      showSnackbar({
-        message: 'File saved to Downloads',
-        type: 'success',
-      });
+        await Sharing.shareAsync(downloadedUri, {
+          dialogTitle: 'Save or share file',
+          mimeType: MIME_TYPE,
+        });
+      }
 
       closeModal();
     } catch (error) {
-      console.error('Error downloading the file:', error);
-      Alert.alert('Download Error', 'An error occurred while saving the file.');
+      console.error('Error handling download/save:', error);
+      Alert.alert('Error', 'An error occurred while saving the file.');
     }
   };
 
-  const fileTypeText = getFileFileTypeText(document.mimeType);
+  const fileTypeText = getFileTypeText(document.mimeType);
 
   const ACTIONS = [
     {
       title: `View ${fileTypeText}`,
       Icon: ViewIcon,
-      route: `/file/${document?.id}`,
+      route: `/file/${document.id}`,
     },
     {
       title: `Edit ${fileTypeText} name`,
       Icon: WFEdit,
-      route: `/file/${document?.id}?editing=true&clientId=${clientId}`,
+      route: `/file/${document.id}?editing=true&clientId=${clientId}`,
     },
     {
       title: `Download ${fileTypeText}`,
@@ -148,10 +181,6 @@ export default function DocumentModal(props: IDocumentModalProps) {
   );
 }
 
-function getFileFileTypeText(mimeType?: string): string {
-  if (mimeType?.startsWith('image')) {
-    return 'image';
-  }
-
-  return 'file';
+function getFileTypeText(mimeType?: string): string {
+  return mimeType?.startsWith('image') ? 'image' : 'file';
 }
