@@ -1,4 +1,9 @@
-import { MapView, Marker, PROVIDER_GOOGLE } from '@monorepo/expo/betterangels';
+import {
+  MapView,
+  Marker,
+  PROVIDER_GOOGLE,
+  useModalScreen,
+} from '@monorepo/expo/betterangels';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
@@ -65,9 +70,8 @@ export default function LocationComponent(props: ILocationProps) {
     name: address && address.street ? address.street : null,
   });
 
-  const [isModalVisible, toggleModal] = useState(false);
-
   const isLocation = expanded === 'Location';
+  const { showModalScreen } = useModalScreen();
 
   return (
     <FieldCard
@@ -80,10 +84,25 @@ export default function LocationComponent(props: ILocationProps) {
         if (isLocation) {
           setExpanded(undefined);
         } else {
-          setExpanded(isLocation ? undefined : 'Location');
-
-          toggleModal(true);
           setExpanded('Location');
+          showModalScreen({
+            presentation: 'modal',
+            hideHeader: true,
+            content: (
+              <LocationMapModal
+                setError={(err) =>
+                  setErrors({
+                    ...errors,
+                    location: err,
+                  })
+                }
+                setLocation={setLocation}
+                location={location}
+                noteId={noteId}
+                setExpanded={setExpanded}
+              />
+            ),
+          });
         }
       }}
       title="Location "
@@ -126,20 +145,6 @@ export default function LocationComponent(props: ILocationProps) {
           </MapView>
         </View>
       )}
-      <LocationMapModal
-        setError={(err) =>
-          setErrors({
-            ...errors,
-            location: err,
-          })
-        }
-        setLocation={setLocation}
-        location={location}
-        noteId={noteId}
-        toggleModal={toggleModal}
-        setExpanded={setExpanded}
-        isModalVisible={isModalVisible}
-      />
     </FieldCard>
   );
 }

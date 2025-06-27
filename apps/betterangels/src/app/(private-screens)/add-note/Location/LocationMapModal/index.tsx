@@ -16,14 +16,9 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import {
-  FlatList,
-  Modal,
-  Platform,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { FlatList, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Directions from './Directions';
 import Header from './Header';
@@ -51,8 +46,6 @@ type TLocation =
   | undefined;
 
 interface ILocationMapModalProps {
-  isModalVisible: boolean;
-  toggleModal: (e: boolean) => void;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string;
   setLocation: (location: TLocation) => void;
@@ -61,15 +54,7 @@ interface ILocationMapModalProps {
 }
 
 export default function LocationMapModal(props: ILocationMapModalProps) {
-  const {
-    isModalVisible,
-    toggleModal,
-    setExpanded,
-    noteId,
-    location,
-    setLocation,
-    setError,
-  } = props;
+  const { setExpanded, noteId, location, setLocation, setError } = props;
   const { baseUrl } = useApiConfig();
   const mapRef = useRef<TMapView>(null);
   const [minizeModal, setMinimizeModal] = useState(false);
@@ -97,13 +82,15 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
 
+  const router = useRouter();
+
   const closeModal = (hasLocation: boolean) => {
     if (!location?.address && !hasLocation) {
       setError(true);
     } else {
       setError(false);
     }
-    toggleModal(false);
+    router.back();
     setExpanded(undefined);
   };
 
@@ -321,162 +308,151 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   };
 
   return (
-    <Modal
-      style={{ flex: 1 }}
-      animationType="slide"
-      transparent={true}
-      visible={isModalVisible}
-      onRequestClose={() => closeModal(false)}
+    <View
+      style={{
+        overflow: 'hidden',
+        flex: 1,
+      }}
     >
+      <Header closeModal={closeModal} />
       <View
         style={{
-          borderTopEndRadius: 10,
-          borderTopLeftRadius: 10,
-          marginTop: Platform.OS === 'ios' ? '15%' : '5%',
-          overflow: 'hidden',
+          position: 'relative',
           flex: 1,
+          zIndex: 1,
         }}
       >
-        <Header closeModal={closeModal} />
+        {chooseDirections && (
+          <Directions
+            setChooseDirections={setChooseDirections}
+            setSelected={setSelected}
+            address={address}
+            currentLocation={currentLocation}
+          />
+        )}
         <View
           style={{
-            position: 'relative',
+            position: 'absolute',
+            zIndex: 1000,
+            paddingHorizontal: Spacings.sm,
+            backgroundColor: isSearch ? Colors.WHITE : 'transparent',
+            width: '100%',
+            height: isSearch ? '100%' : 'auto',
             flex: 1,
-            zIndex: 1,
           }}
         >
-          {chooseDirections && (
-            <Directions
-              setChooseDirections={setChooseDirections}
-              setSelected={setSelected}
-              address={address}
-              currentLocation={currentLocation}
-            />
-          )}
-          <View
+          <BasicInput
+            onKeyPress={({ nativeEvent }) => {
+              nativeEvent.key === 'Backspace' && onDelete();
+            }}
+            onFocus={() => {
+              if (chooseDirections) {
+                setChooseDirections(false);
+                setMinimizeModal(false);
+                setSelected(true);
+              }
+            }}
+            onDelete={onSearchDelete}
+            mt="sm"
+            placeholder="Type location"
+            icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
+            value={address?.short}
+            onChangeText={onSearchChange}
+          />
+          <FlatList
             style={{
-              position: 'absolute',
-              zIndex: 1000,
-              paddingHorizontal: Spacings.sm,
-              backgroundColor: isSearch ? Colors.WHITE : 'transparent',
-              width: '100%',
-              height: isSearch ? '100%' : 'auto',
+              backgroundColor: Colors.WHITE,
               flex: 1,
             }}
-          >
-            <BasicInput
-              onKeyPress={({ nativeEvent }) => {
-                nativeEvent.key === 'Backspace' && onDelete();
-              }}
-              onFocus={() => {
-                if (chooseDirections) {
-                  setChooseDirections(false);
-                  setMinimizeModal(false);
-                  setSelected(true);
-                }
-              }}
-              onDelete={onSearchDelete}
-              mt="sm"
-              placeholder="Type location"
-              icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
-              value={address?.short}
-              onChangeText={onSearchChange}
-            />
-            <FlatList
-              style={{
-                backgroundColor: Colors.WHITE,
-                flex: 1,
-              }}
-              data={suggestions}
-              keyExtractor={(item) => item.place_id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={{
-                    borderBottomWidth: 1,
-                    borderBottomColor: Colors.NEUTRAL_LIGHT,
-                    paddingVertical: Spacings.sm,
-                  }}
-                  accessibilityRole="button"
-                  onPress={() => onSuggestionsSelect(item)}
-                >
-                  <TextRegular>{item.description.split(', ')[0]}</TextRegular>
-                  <TextRegular color={Colors.NEUTRAL_DARK} size="xxs">
-                    {item.description.split(', ')[1]},{' '}
-                    {item.description.split(', ')[2]}
-                  </TextRegular>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              width: '100%',
-              left: 0,
-              zIndex: 100,
-            }}
-          >
-            {userLocation && (
-              <View
+            data={suggestions}
+            keyExtractor={(item) => item.place_id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
                 style={{
-                  alignSelf: 'flex-end',
-                  paddingRight: Spacings.sm,
-                  marginBottom: Spacings.md,
+                  borderBottomWidth: 1,
+                  borderBottomColor: Colors.NEUTRAL_LIGHT,
+                  paddingVertical: Spacings.sm,
                 }}
+                accessibilityRole="button"
+                onPress={() => onSuggestionsSelect(item)}
               >
-                <IconButton
-                  onPress={goToUserLocation}
-                  style={{
-                    elevation: 5,
-                    shadowColor: Colors.NEUTRAL_DARK,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.84,
-                  }}
-                  accessibilityLabel="user location"
-                  variant="secondary"
-                  accessibilityHint="get user location"
-                >
-                  <LocationArrowIcon color={Colors.PRIMARY} />
-                </IconButton>
-              </View>
+                <TextRegular>{item.description.split(', ')[0]}</TextRegular>
+                <TextRegular color={Colors.NEUTRAL_DARK} size="xxs">
+                  {item.description.split(', ')[1]},{' '}
+                  {item.description.split(', ')[2]}
+                </TextRegular>
+              </TouchableOpacity>
             )}
-            {selected && currentLocation && (
-              <Selected
-                noteId={noteId}
-                minimizeModal={minizeModal}
-                setLocation={setLocation}
-                currentLocation={currentLocation}
-                address={address}
-                setChooseDirections={setChooseDirections}
-                setSelected={setSelected}
-                closeModal={closeModal}
-              />
-            )}
-
-            <View
-              style={{
-                height: bottomOffset,
-                backgroundColor: currentLocation ? Colors.WHITE : 'transparent',
-              }}
-            />
-          </View>
-          <Map
-            userLocation={userLocation}
-            ref={mapRef}
-            chooseDirections={chooseDirections}
-            setChooseDirections={setChooseDirections}
-            currentLocation={currentLocation}
-            setCurrentLocation={setCurrentLocation}
-            setMinimizeModal={setMinimizeModal}
-            setInitialLocation={setInitialLocation}
-            initialLocation={initialLocation}
-            setSelected={setSelected}
-            setAddress={setAddress}
           />
         </View>
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            width: '100%',
+            left: 0,
+            zIndex: 100,
+          }}
+        >
+          {userLocation && (
+            <View
+              style={{
+                alignSelf: 'flex-end',
+                paddingRight: Spacings.sm,
+                marginBottom: Spacings.md,
+              }}
+            >
+              <IconButton
+                onPress={goToUserLocation}
+                style={{
+                  elevation: 5,
+                  shadowColor: Colors.NEUTRAL_DARK,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 3.84,
+                }}
+                accessibilityLabel="user location"
+                variant="secondary"
+                accessibilityHint="get user location"
+              >
+                <LocationArrowIcon color={Colors.PRIMARY} />
+              </IconButton>
+            </View>
+          )}
+          {selected && currentLocation && (
+            <Selected
+              noteId={noteId}
+              minimizeModal={minizeModal}
+              setLocation={setLocation}
+              currentLocation={currentLocation}
+              address={address}
+              setChooseDirections={setChooseDirections}
+              setSelected={setSelected}
+              closeModal={closeModal}
+            />
+          )}
+
+          <View
+            style={{
+              height: bottomOffset,
+              backgroundColor: currentLocation ? Colors.WHITE : 'transparent',
+            }}
+          />
+        </View>
+        <Map
+          userLocation={userLocation}
+          ref={mapRef}
+          chooseDirections={chooseDirections}
+          setChooseDirections={setChooseDirections}
+          currentLocation={currentLocation}
+          setCurrentLocation={setCurrentLocation}
+          setMinimizeModal={setMinimizeModal}
+          setInitialLocation={setInitialLocation}
+          initialLocation={initialLocation}
+          setSelected={setSelected}
+          setAddress={setAddress}
+        />
       </View>
-    </Modal>
+    </View>
   );
 }

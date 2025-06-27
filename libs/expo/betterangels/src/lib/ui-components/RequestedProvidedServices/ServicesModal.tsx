@@ -1,8 +1,4 @@
-import {
-  FileSearchIcon,
-  PlusIcon,
-  SearchIcon,
-} from '@monorepo/expo/shared/icons';
+import { FileSearchIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -11,7 +7,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import {
   ServiceEnum,
@@ -20,12 +16,14 @@ import {
   useDeleteServiceRequestMutation,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
-import { useModalScreen } from '../../providers';
 import { ServicesByCategory } from '../../static';
+import Modal from '../Modal';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
 
 interface IServicesModalProps {
+  setIsModalVisible: (isModalVisible: boolean) => void;
+  isModalVisible: boolean;
   noteId: string;
   initialServices: {
     id: string;
@@ -37,9 +35,15 @@ interface IServicesModalProps {
 }
 
 export default function ServicesModal(props: IServicesModalProps) {
-  const { initialServices, noteId, refetch, type } = props;
+  const {
+    setIsModalVisible,
+    isModalVisible,
+    initialServices,
+    noteId,
+    refetch,
+    type,
+  } = props;
 
-  const { closeModalScreen } = useModalScreen();
   const [services, setServices] = useState<
     Array<{
       id: string | undefined;
@@ -179,6 +183,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       }
 
       refetch();
+      setIsModalVisible(false);
     } catch (e) {
       console.error('Error during service submission:', e);
       showSnackbar({
@@ -200,10 +205,9 @@ export default function ServicesModal(props: IServicesModalProps) {
         id: service.id,
         title: service.serviceOther || null,
       }));
+    setIsModalVisible(false);
     setServiceOthers(initialServiceOthers);
     setServices(newInitialServices);
-
-    closeModalScreen();
   };
 
   useEffect(() => {
@@ -228,41 +232,19 @@ export default function ServicesModal(props: IServicesModalProps) {
     (category) => category.items.length > 0
   );
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: Colors.WHITE,
-        borderTopLeftRadius: 12,
-        borderTopRightRadius: 12,
-        paddingBottom: 35,
-        paddingTop: 10,
-        marginTop: 0,
-      }}
+    <Modal
+      mt={Spacings.sm}
+      vertical
+      closeButton
+      closeModal={closeModal}
+      isModalVisible={isModalVisible}
     >
-      <View
-        style={{
-          alignItems: 'flex-end',
-          paddingHorizontal: 16,
-          marginBottom: 8,
-        }}
-      >
-        <Pressable
-          accessible
-          accessibilityHint="closes the modal"
-          accessibilityRole="button"
-          accessibilityLabel="close"
-          onPress={closeModal}
-        >
-          <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
-        </Pressable>
-      </View>
       <KeyboardAwareScrollView
         style={{
           flex: 1,
           backgroundColor: Colors.WHITE,
         }}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingTop: 0 }}
       >
         <ScrollView
           contentContainerStyle={{
@@ -380,6 +362,6 @@ export default function ServicesModal(props: IServicesModalProps) {
           />
         </View>
       </View>
-    </View>
+    </Modal>
   );
 }
