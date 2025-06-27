@@ -46,7 +46,7 @@ def _parse_phone_number(v: str) -> DjangoPhoneNumber:
 
 
 def _serialize_phone_number(v: DjangoPhoneNumber) -> str:
-    if v.extension is not None:
+    if v.extension:
         return f"{v.national_number}x{v.extension}"
 
     return str(v.national_number)
