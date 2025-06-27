@@ -9,13 +9,26 @@ import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import { Platform, Switch, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../../../apollo';
 
+type TPhoneNumberInput = {
+  number: string;
+  extension?: string;
+  isPrimary?: boolean;
+};
+
+type TUpdateClientContactInfoInput = Omit<
+  UpdateClientProfileInput,
+  'phoneNumbers'
+> & {
+  phoneNumbers: TPhoneNumberInput[];
+};
+
 export function PhoneNumber() {
   const {
     control,
     setValue,
     formState: { errors },
     clearErrors,
-  } = useFormContext<UpdateClientProfileInput>();
+  } = useFormContext<TUpdateClientContactInfoInput>();
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'phoneNumbers',
@@ -140,6 +153,7 @@ export function PhoneNumber() {
             append({
               isPrimary: false,
               number: '',
+              extension: '',
             })
           }
           title="Add another phone number"

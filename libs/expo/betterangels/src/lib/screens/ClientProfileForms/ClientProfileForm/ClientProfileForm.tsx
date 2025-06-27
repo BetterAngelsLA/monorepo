@@ -169,6 +169,7 @@ function toUpdateClienProfileInputs(
       .split('T')[0] as unknown as Date;
   }
 
+  //
   if ('phoneNumbers' in values) {
     values.phoneNumbers = (values.phoneNumbers ?? []).map(
       ({ number, extension, ...rest }) => ({
