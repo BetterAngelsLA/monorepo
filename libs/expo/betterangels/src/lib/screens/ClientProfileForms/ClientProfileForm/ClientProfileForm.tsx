@@ -169,6 +169,15 @@ function toUpdateClienProfileInputs(
       .split('T')[0] as unknown as Date;
   }
 
+  if ('phoneNumbers' in values) {
+    values.phoneNumbers = (values.phoneNumbers ?? []).map(
+      ({ number, extension, ...rest }) => ({
+        ...rest,
+        number: extension ? `${number}x${extension}` : number,
+      })
+    );
+  }
+
   // profilePhoto is updated directly within component
   if ('profilePhoto' in values) {
     delete values.profilePhoto;

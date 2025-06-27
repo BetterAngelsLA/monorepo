@@ -7,6 +7,7 @@ import { View } from 'react-native';
 
 type TPhoneNumber = {
   number?: string;
+  extension?: string;
   isPrimary?: boolean | null;
 };
 

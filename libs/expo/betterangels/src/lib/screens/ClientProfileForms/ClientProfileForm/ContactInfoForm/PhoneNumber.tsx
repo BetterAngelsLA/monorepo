@@ -14,6 +14,7 @@ export function PhoneNumber() {
     control,
     setValue,
     formState: { errors },
+    clearErrors,
   } = useFormContext<UpdateClientProfileInput>();
   const { fields, append, remove } = useFieldArray({
     control,
@@ -24,35 +25,65 @@ export function PhoneNumber() {
       <View style={{ gap: Spacings.sm }}>
         {fields.map((field, index) => (
           <View style={{ gap: Spacings.sm }} key={field.id}>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: Spacings.xs,
-              }}
-            >
-              <View style={{ flex: 1 }}>
+            <View style={{ gap: Spacings.xs }}>
+              <View style={{ flexDirection: 'row' }}>
                 <ControlledInput
-                  placeholder="Enter phone number"
-                  key={field.id}
+                  style={{ flex: 2, marginRight: Spacings.xs }}
                   name={`phoneNumbers.${index}.number`}
                   control={control}
+                  label={'Phone Number'}
+                  placeholder="Enter phone number"
                   keyboardType="number-pad"
-                  onDelete={() => setValue(`phoneNumbers.${index}.number`, '')}
+                  onDelete={() => {
+                    setValue(`phoneNumbers.${index}.number`, '');
+                    clearErrors(`phoneNumbers.${index}.number`);
+                  }}
                   error={!!errors.phoneNumbers?.[index]?.number}
-                  errorMessage={
-                    (errors.phoneNumbers?.[index]?.number?.message as string) ||
-                    undefined
-                  }
                   rules={{
                     validate: (value: string) => {
                       if (value && !Regex.phoneNumber.test(value)) {
                         return 'Enter a 10-digit phone number without space or special characters';
                       }
+
                       return true;
                     },
                   }}
                 />
+                <ControlledInput
+                  style={{ flex: 1 }}
+                  name={`phoneNumbers.${index}.extension`}
+                  control={control}
+                  label={' '}
+                  placeholder="ext"
+                  keyboardType="number-pad"
+                  onDelete={() => {
+                    setValue(`phoneNumbers.${index}.extension`, '');
+                    clearErrors(`phoneNumbers.${index}.extension`);
+                  }}
+                  error={!!errors.phoneNumbers?.[index]?.extension}
+                  rules={{
+                    validate: (value: string) => {
+                      if (value && !Regex.number.test(value)) {
+                        return 'Extension must be a number';
+                      }
+
+                      return true;
+                    },
+                  }}
+                />
+              </View>
+              <View style={{ marginTop: -Spacings.xs }}>
+                {errors.phoneNumbers?.[index]?.number && (
+                  <TextRegular size={'sm'} color={Colors.ERROR}>
+                    Enter a 10-digit phone number without space or special
+                    characters
+                  </TextRegular>
+                )}
+                {errors.phoneNumbers?.[index]?.extension && (
+                  <TextRegular size={'sm'} color={Colors.ERROR}>
+                    Extension must be a number
+                  </TextRegular>
+                )}
               </View>
               {index !== 0 && (
                 <TextButton
