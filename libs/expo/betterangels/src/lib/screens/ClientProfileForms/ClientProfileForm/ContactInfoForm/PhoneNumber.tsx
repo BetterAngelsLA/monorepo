@@ -8,18 +8,13 @@ import {
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import { Platform, Switch, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../../../apollo';
-
-type TPhoneNumberInput = {
-  number: string;
-  extension?: string;
-  isPrimary?: boolean;
-};
+import { TPhoneNumber } from '../types';
 
 type TUpdateClientContactInfoInput = Omit<
   UpdateClientProfileInput,
   'phoneNumbers'
 > & {
-  phoneNumbers: TPhoneNumberInput[];
+  phoneNumbers: TPhoneNumber[];
 };
 
 export function PhoneNumber() {
