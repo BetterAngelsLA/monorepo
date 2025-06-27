@@ -15,10 +15,16 @@ export function RelevantContactsCard(props: TProps) {
 
   const clientContacts = contacts || [];
 
-  const caseManagers = clientContacts.filter(
-    (contact) =>
-      contact.relationshipToClient === RelationshipTypeEnum.CurrentCaseManager
-  );
+  const caseManagers = clientContacts
+    .filter(
+      (contact) =>
+        contact.relationshipToClient === RelationshipTypeEnum.CurrentCaseManager
+    )
+    .sort((a, b) => {
+      const dateA = new Date(a.updatedAt ?? 0).getTime();
+      const dateB = new Date(b.updatedAt ?? 0).getTime();
+      return dateB - dateA;
+    });
 
   const otherContacts = clientContacts.filter((contact) => {
     const { relationshipToClient } = contact;
