@@ -33,6 +33,7 @@ export type ContactInfoState = {
 export type TPhoneNumber = {
   id?: string;
   number?: string | null;
+  extension?: string | null;
   isPrimary?: boolean | null;
 };
 
