@@ -1,17 +1,22 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import {
+  BottomSheetModal,
+  TextBold,
+} from '@monorepo/expo/shared/ui-components';
+import { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { TNotesQueryInteraction } from '../../../apollo';
-import { Modal, NoteCard } from '../../../ui-components';
+import { NoteCard } from '../../../ui-components';
 import { useInteractionsMapState } from './map/hooks';
 
 export function InteractionLocationsModal() {
   const { mapState } = useInteractionsMapState();
   const [selectedInteraction, setSelectedInteraction] =
     useState<TNotesQueryInteraction | null>(null);
+  const [titleHeight, setTitleHeight] = useState<number>(1);
 
   const { selectedInteractions } = mapState;
+  const snapPoints = useMemo(() => [titleHeight], [titleHeight]);
 
   useEffect(() => {
     if (!selectedInteractions.length) {
@@ -33,25 +38,32 @@ export function InteractionLocationsModal() {
     return null;
   }
 
+  const title = selectedInteraction.location?.address.street;
+
   return (
-    <Modal
-      fullWidth={false}
-      propogateSwipe
-      vertical
-      isModalVisible={!!selectedInteraction}
-      closeModal={() => setSelectedInteraction(null)}
+    <BottomSheetModal
+      index={0}
+      enableDynamicSizing
+      enablePanDownToClose={false}
+      snapPoints={snapPoints}
     >
-      <View
-        style={{
-          borderBottomWidth: 1,
-          borderColor: Colors.NEUTRAL_LIGHT,
-          marginBottom: Spacings.sm,
-          paddingBottom: Spacings.xs,
-          paddingHorizontal: Spacings.sm,
-        }}
-      >
-        <TextBold>{selectedInteraction.location?.address.street}</TextBold>
-      </View>
+      {title && (
+        <View
+          onLayout={(e) => {
+            const height = e.nativeEvent.layout.height;
+            setTitleHeight(height + 40);
+          }}
+          style={{
+            borderBottomWidth: 1,
+            borderColor: Colors.NEUTRAL_LIGHT,
+            marginBottom: Spacings.sm,
+            paddingBottom: Spacings.md,
+            paddingHorizontal: Spacings.sm,
+          }}
+        >
+          <TextBold>{title}</TextBold>
+        </View>
+      )}
       <View
         style={{
           paddingHorizontal: Spacings.sm,
@@ -59,12 +71,11 @@ export function InteractionLocationsModal() {
         }}
       >
         <NoteCard
-          // onPress={() => setSelectedLocation(null)}
           note={selectedInteraction}
           variant={'clientProfile'}
           hasBorder
         />
       </View>
-    </Modal>
+    </BottomSheetModal>
   );
 }

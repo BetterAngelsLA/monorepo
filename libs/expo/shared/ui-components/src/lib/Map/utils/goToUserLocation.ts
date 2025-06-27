@@ -7,10 +7,11 @@ type TProps = {
   mapRef: RefObject<TMapView | null>;
   regionDelta?: TMapDeltaLatLng;
   duration?: number;
+  onPermissionDenied?: () => void;
 };
 
 export async function goToUserLocation(props: TProps) {
-  const { mapRef, regionDelta, duration } = props;
+  const { mapRef, regionDelta, duration, onPermissionDenied } = props;
 
   if (!mapRef.current) {
     return;
@@ -22,9 +23,21 @@ export async function goToUserLocation(props: TProps) {
     return;
   }
 
-  await goToLocation({
+  const { location, requireSettingsUpdate } = userLocation;
+
+  if (requireSettingsUpdate) {
+    onPermissionDenied?.();
+
+    return;
+  }
+
+  if (!location?.coords) {
+    return;
+  }
+
+  return await goToLocation({
     mapRef,
-    coordinates: userLocation,
+    coordinates: location.coords,
     regionDelta,
     duration,
   });

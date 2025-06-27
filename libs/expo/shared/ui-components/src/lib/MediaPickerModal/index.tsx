@@ -88,7 +88,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: false,
         allowsMultipleSelection: allowMultiple,
       });
