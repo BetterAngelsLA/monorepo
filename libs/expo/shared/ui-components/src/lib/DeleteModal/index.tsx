@@ -18,15 +18,17 @@ type TProps = {
   deleteableItemName?: string;
 };
 
-export default function DeleteModal({
-  title,
-  body,
-  onCancel,
-  onDelete,
-  button,
-  isVisible = false,
-  deleteableItemName,
-}: TProps) {
+export default function DeleteModal(props: TProps) {
+  const {
+    title,
+    body,
+    onCancel,
+    onDelete,
+    button,
+    deleteableItemName,
+    isVisible = false,
+  } = props;
+
   const [visible, setVisible] = useState(isVisible);
 
   useEffect(() => {
