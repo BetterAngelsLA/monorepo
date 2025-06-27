@@ -1,38 +1,40 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactElement, cloneElement, useEffect, useState } from 'react';
-import { ButtonProps, View } from 'react-native';
+import type { ButtonProps } from 'react-native';
+import { View } from 'react-native';
 import BasicModal from '../BasicModal';
 import Button from '../Button';
 import TextBold from '../TextBold';
 import TextButton from '../TextButton';
 import TextRegular from '../TextRegular';
 
-type TProps = {
+export type DeleteModalProps = {
   title: string;
   body?: string;
   onDelete: () => void;
   onCancel?: () => void;
   button?: ReactElement<ButtonProps>;
   isVisible?: boolean;
-  deleteableItemName?: string;
 };
 
-export default function DeleteModal(props: TProps) {
-  const {
-    isVisible,
-    title,
-    body,
-    onCancel,
-    onDelete,
-    button,
-    deleteableItemName,
-  } = props;
-
-  const [visible, setVisible] = useState(false);
+export default function DeleteModal({
+  title,
+  body,
+  onCancel,
+  onDelete,
+  button,
+  isVisible = false,
+}: DeleteModalProps) {
+  const [visible, setVisible] = useState(isVisible);
 
   useEffect(() => {
-    setVisible(!!isVisible);
+    setVisible(isVisible);
   }, [isVisible]);
+
+  const handleClose = () => {
+    setVisible(false);
+    onCancel?.();
+  };
 
   const clonedButton =
     button &&
@@ -46,10 +48,10 @@ export default function DeleteModal(props: TProps) {
   return (
     <>
       {clonedButton}
-      <BasicModal visible={visible} onClose={() => setVisible(false)}>
+      <BasicModal visible={visible} onClose={handleClose}>
         <TextBold size="lg">{title}</TextBold>
         {body && (
-          <TextRegular size="sm" mt="sm">
+          <TextRegular size="sm" style={{ marginTop: Spacings.sm }}>
             {body}
           </TextRegular>
         )}
@@ -65,29 +67,27 @@ export default function DeleteModal(props: TProps) {
             style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
           >
             <TextButton
+              title="Cancel"
+              accessibilityHint="Cancel deletion"
+              color={Colors.PRIMARY}
               fontSize="sm"
-              onPress={async () => {
-                onCancel && onCancel();
+              onPress={() => {
+                onCancel?.();
                 setVisible(false);
               }}
-              color={Colors.PRIMARY}
-              accessibilityHint="cancel the delete action"
-              title="Cancel"
             />
           </View>
           <View style={{ flex: 1, marginLeft: Spacings.xs }}>
             <Button
-              fontSize="sm"
+              title="Delete"
+              accessibilityHint="Confirm deletion"
+              variant="primary"
               size="full"
-              accessibilityHint={
-                deleteableItemName ? `delete ${deleteableItemName}` : 'delete'
-              }
-              onPress={async () => {
+              fontSize="sm"
+              onPress={() => {
                 onDelete();
                 setVisible(false);
               }}
-              variant="primary"
-              title="Delete"
             />
           </View>
         </View>
