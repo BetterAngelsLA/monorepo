@@ -204,22 +204,22 @@ input ClientContactInput {
   name: String
   email: String
   mailingAddress: String
+  phoneNumber: PhoneNumber
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID
   clientProfile: ID
-  phoneNumber: PhoneNumber
 }
 
 type ClientContactType {
   name: String
   email: String
   mailingAddress: String
+  phoneNumber: PhoneNumber
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID!
   clientProfile: DjangoModelType!
-  phoneNumber: PhoneNumber
   updatedAt: DateTime!
 }
 
