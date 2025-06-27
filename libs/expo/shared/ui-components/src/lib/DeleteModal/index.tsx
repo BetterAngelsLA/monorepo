@@ -8,13 +8,14 @@ import TextBold from '../TextBold';
 import TextButton from '../TextButton';
 import TextRegular from '../TextRegular';
 
-export type DeleteModalProps = {
+type TProps = {
   title: string;
   body?: string;
   onDelete: () => void;
   onCancel?: () => void;
   button?: ReactElement<ButtonProps>;
   isVisible?: boolean;
+  deleteableItemName?: string;
 };
 
 export default function DeleteModal({
@@ -24,7 +25,8 @@ export default function DeleteModal({
   onDelete,
   button,
   isVisible = false,
-}: DeleteModalProps) {
+  deleteableItemName,
+}: TProps) {
   const [visible, setVisible] = useState(isVisible);
 
   useEffect(() => {
@@ -68,7 +70,7 @@ export default function DeleteModal({
           >
             <TextButton
               title="Cancel"
-              accessibilityHint="Cancel deletion"
+              accessibilityHint="cancel the delete action"
               color={Colors.PRIMARY}
               fontSize="sm"
               onPress={() => {
@@ -80,7 +82,9 @@ export default function DeleteModal({
           <View style={{ flex: 1, marginLeft: Spacings.xs }}>
             <Button
               title="Delete"
-              accessibilityHint="Confirm deletion"
+              accessibilityHint={
+                deleteableItemName ? `delete ${deleteableItemName}` : 'delete'
+              }
               variant="primary"
               size="full"
               fontSize="sm"
