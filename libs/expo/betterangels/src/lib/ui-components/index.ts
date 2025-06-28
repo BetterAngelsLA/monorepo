@@ -8,6 +8,7 @@ export {
   ClientProfileCardContainer,
   TClientProfileCardItem,
 } from './ClientProfileCard';
+export * from './ClientProfileList';
 export { default as ConsentModal } from './ConsentModal';
 export * from './CreateClientInteraction';
 export { default as DocumentModal } from './DocumentModal';
@@ -25,4 +26,5 @@ export { default as NavModal } from './NavModal';
 export { default as NoteCard } from './NoteCard';
 export { default as RequestedProvidedServices } from './RequestedProvidedServices';
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
+export * from './SearchBar';
 export { default as WebBrowserLink } from './WebBrowserLink';

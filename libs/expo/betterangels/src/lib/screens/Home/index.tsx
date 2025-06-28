@@ -1,18 +1,11 @@
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import {
-  Loading,
-  TextBold,
-  TextButton,
-  TextMedium,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { Colors } from '@monorepo/expo/shared/static';
+import { Loading } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { ElementType, useEffect, useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { View } from 'react-native';
 import { uniqueBy } from 'remeda';
 
-import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
-import { ClientCard, ClientCardModal, Header } from '../../ui-components';
+import { ClientCardModal, Header } from '../../ui-components';
 import {
   ClientProfilesQuery,
   useClientProfilesQuery,
@@ -74,7 +67,24 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   return (
     <View style={{ flex: 1, backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT }}>
       <Header title="Home" Logo={Logo} />
-      <View
+      {/* <ClientProfileList
+        filters={{ isActive: true }}
+        renderItem={(client) => (
+          <ClientCard
+            client={client}
+            arrivedFrom="/"
+            onPress={(clientProfileId) => {
+              console.log(
+                '[ClientProfileList HOME] on PRESS clientProfileId: ',
+                clientProfileId
+              );
+            }}
+            onMenuPress={() => {}}
+          />
+        )}
+      /> */}
+
+      {/* <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -152,7 +162,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
           ) : null
         }
         ListFooterComponent={renderFooter}
-      />
+      /> */}
       {currentClient && (
         <ClientCardModal
           isModalVisible={modalIsOpen}

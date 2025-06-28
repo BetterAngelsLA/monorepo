@@ -64,6 +64,12 @@ export default function PrivateLayout() {
         }}
       />
       <Stack.Screen
+        name="interactions/create"
+        options={getDefaultStackNavOptions({
+          title: 'Create Client Profile',
+        })}
+      />
+      <Stack.Screen
         name="note/[id]"
         options={{
           title: 'Interaction',
