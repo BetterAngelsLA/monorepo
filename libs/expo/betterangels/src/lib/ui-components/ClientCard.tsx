@@ -27,7 +27,7 @@ interface IClientCardProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  onPress?: () => void;
+  onPress?: (clientProfileId: string) => void;
   onMenuPress?: () => void;
   arrivedFrom?: string;
 }
@@ -61,7 +61,7 @@ export default function ClientCard(props: IClientCardProps) {
 
   function onCardPress(clientProfileId: string) {
     if (onPress) {
-      return onPress();
+      return onPress(clientProfileId);
     }
 
     router.navigate({
