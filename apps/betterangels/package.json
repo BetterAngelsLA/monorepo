@@ -74,6 +74,7 @@
     "react-native-open-maps": "*",
     "expo-dev-client": "*",
     "validator": "*",
+    "@gorhom/bottom-sheet": "*",
     "supercluster": "*"
   },
   "scripts": {

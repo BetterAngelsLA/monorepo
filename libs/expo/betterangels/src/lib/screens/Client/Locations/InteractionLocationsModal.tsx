@@ -1,44 +1,69 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold } from '@monorepo/expo/shared/ui-components';
+import {
+  BottomSheetModal,
+  TextBold,
+} from '@monorepo/expo/shared/ui-components';
+import { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
-import { NotesQuery } from '../../../apollo';
-import { Modal, NoteCard } from '../../../ui-components';
+import { TNotesQueryInteraction } from '../../../apollo';
+import { NoteCard } from '../../../ui-components';
+import { useInteractionsMapState } from './map/hooks';
 
-interface InteractionLocationsModalProps {
-  selectedLocation: NotesQuery['notes']['results'][number] | null;
-  setSelectedLocation: (
-    location: NotesQuery['notes']['results'][number] | null
-  ) => void;
-}
+export function InteractionLocationsModal() {
+  const { mapState } = useInteractionsMapState();
+  const [selectedInteraction, setSelectedInteraction] =
+    useState<TNotesQueryInteraction | null>(null);
+  const [titleHeight, setTitleHeight] = useState<number>(1);
 
-export function InteractionLocationsModal(
-  props: InteractionLocationsModalProps
-) {
-  const { selectedLocation, setSelectedLocation } = props;
+  const { selectedInteractions } = mapState;
+  const snapPoints = useMemo(() => [titleHeight], [titleHeight]);
 
-  if (!selectedLocation) {
+  useEffect(() => {
+    if (!selectedInteractions.length) {
+      setSelectedInteraction(null);
+
+      return;
+    }
+
+    const currentInteraction = selectedInteractions[0];
+
+    if (currentInteraction.id === selectedInteraction?.id) {
+      return;
+    }
+
+    setSelectedInteraction(currentInteraction);
+  }, [selectedInteractions]);
+
+  if (!selectedInteraction) {
     return null;
   }
 
+  const title = selectedInteraction.location?.address.street;
+
   return (
-    <Modal
-      fullWidth={false}
-      propogateSwipe
-      vertical
-      isModalVisible={!!selectedLocation}
-      closeModal={() => setSelectedLocation(null)}
+    <BottomSheetModal
+      index={0}
+      enableDynamicSizing
+      enablePanDownToClose={false}
+      snapPoints={snapPoints}
     >
-      <View
-        style={{
-          borderBottomWidth: 1,
-          borderColor: Colors.NEUTRAL_LIGHT,
-          marginBottom: Spacings.sm,
-          paddingBottom: Spacings.xs,
-          paddingHorizontal: Spacings.sm,
-        }}
-      >
-        <TextBold>{selectedLocation.location?.address.street}</TextBold>
-      </View>
+      {title && (
+        <View
+          onLayout={(e) => {
+            const height = e.nativeEvent.layout.height;
+            setTitleHeight(height + 40);
+          }}
+          style={{
+            borderBottomWidth: 1,
+            borderColor: Colors.NEUTRAL_LIGHT,
+            marginBottom: Spacings.sm,
+            paddingBottom: Spacings.md,
+            paddingHorizontal: Spacings.sm,
+          }}
+        >
+          <TextBold>{title}</TextBold>
+        </View>
+      )}
       <View
         style={{
           paddingHorizontal: Spacings.sm,
@@ -46,12 +71,11 @@ export function InteractionLocationsModal(
         }}
       >
         <NoteCard
-          onPress={() => setSelectedLocation(null)}
-          note={selectedLocation}
+          note={selectedInteraction}
           variant={'clientProfile'}
           hasBorder
         />
       </View>
-    </Modal>
+    </BottomSheetModal>
   );
 }

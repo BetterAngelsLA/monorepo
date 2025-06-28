@@ -5,7 +5,6 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.types import UserType
 from clients.enums import (
     AdaAccommodationEnum,
     ClientDocumentNamespaceEnum,
@@ -97,7 +96,7 @@ class ClientProfileFilter:
         if value is None:
             return queryset, Q()
 
-        search_terms = value.split(" ")
+        search_terms = value.split()
 
         searchable_fields = [
             "california_id",
@@ -217,6 +216,7 @@ class ClientContactType(ClientContactBaseType):
     id: ID
     client_profile: auto
     phone_number: PhoneNumberScalar | None  # type: ignore
+    updated_at: auto
 
 
 @strawberry_django.input(ClientContact, partial=True)
@@ -300,8 +300,6 @@ class ClientProfileType(ClientProfileBaseType):
     doc_ready_documents: Optional[List[ClientDocumentType]]
     consent_form_documents: Optional[List[ClientDocumentType]]
     other_documents: Optional[List[ClientDocumentType]]
-
-    user: UserType | None
 
     @strawberry.field
     def display_case_manager(self, info: Info) -> str:

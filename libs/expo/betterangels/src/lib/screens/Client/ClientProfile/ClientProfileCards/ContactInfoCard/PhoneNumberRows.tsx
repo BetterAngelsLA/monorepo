@@ -65,7 +65,7 @@ function PhoneNumberRow(props: TPhoneNumber) {
         alignItems: 'center',
       }}
     >
-      <PhoneNumberBtn phoneNumber={formattedNumber} />
+      <PhoneNumberBtn number={formattedNumber} />
 
       {isPrimary && <StarIcon color={Colors.WARNING} size="md" />}
     </View>
