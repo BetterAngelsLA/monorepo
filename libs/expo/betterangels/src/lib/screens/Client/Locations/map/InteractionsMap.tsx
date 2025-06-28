@@ -125,6 +125,31 @@ export function InteractionsMap(props: TProps) {
     });
   }
 
+  function onClusterPress(cluster: TClusterPoint) {
+    const { maxZoomLeaves } = cluster.properties;
+
+    // zoom in
+    zoomToCluster(cluster, mapRef);
+
+    if (!maxZoomLeaves?.length) {
+      return;
+    }
+
+    // cannot break down cluster any further
+    // so set mapState maxZoomLeaves as selectedInteractions
+    const selectedIntIds: string[] = maxZoomLeaves.map((leaf) =>
+      String(leaf.properties.id)
+    );
+
+    const selectedInteractions =
+      interactions?.filter((i) => selectedIntIds.includes(i.id)) || [];
+
+    setMapState((prev) => ({
+      ...prev,
+      selectedInteractions,
+    }));
+  }
+
   return (
     <MapViewport
       ref={mapRef}
@@ -142,7 +167,7 @@ export function InteractionsMap(props: TProps) {
         clusters={clusters}
         clusterRenderer={renderClusterIconFn}
         pointRenderer={renderPointIconFn}
-        onClusterPress={(c) => zoomToCluster(c, mapRef)}
+        onClusterPress={onClusterPress}
         onPointPress={(p) => onMarkerPress(p.properties.id)}
       />
     </MapViewport>
