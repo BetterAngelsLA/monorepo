@@ -147,7 +147,7 @@ SUPERVISORIAL_DISTRICT_CHOICES = [(i, str(i)) for i in range(1, 6)]
 
 
 @strawberry.enum
-class DayOfTheWeekChoices(models.TextChoices):
+class DayOfWeekChoices(models.TextChoices):
     MONDAY = "monday", _("Monday")
     TUESDAY = "tuesday", _("Tuesday")
     WEDNESDAY = "wednesday", _("Wednesday")

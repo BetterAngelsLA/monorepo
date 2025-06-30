@@ -20,7 +20,7 @@ from .enums import (
     SUPERVISORIAL_DISTRICT_CHOICES,
     AccessibilityChoices,
     CityChoices,
-    DayOfTheWeekChoices,
+    DayOfWeekChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -307,7 +307,7 @@ class Shelter(BaseModel):
 )
 class OperatingHour(models.Model):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="operating_hours")
-    day_of_week = models.CharField(max_length=9, choices=DayOfTheWeekChoices)
+    day_of_week = models.CharField(max_length=9, choices=DayOfWeekChoices)
     opens_at = models.TimeField()
     closes_at = models.TimeField()
 
