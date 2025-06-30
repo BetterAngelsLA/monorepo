@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Optional
+from unittest.mock import ANY
 
 import time_machine
 from accounts.tests.baker_recipes import organization_recipe
@@ -407,6 +408,7 @@ class ClientContactQueryTestCase(ClientContactBaseTestCase):
             "phoneNumber": "2125551212",
             "relationshipToClient": RelationshipTypeEnum.CURRENT_CASE_MANAGER.name,
             "relationshipToClientOther": None,
+            "updatedAt": ANY,
         }
 
         self.assertEqual(response["data"]["clientContact"], expected_client_contact)

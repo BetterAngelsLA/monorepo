@@ -1,0 +1,16 @@
+appId: la.betterangels.dev.app
+platform: ${MAESTRO_PLATFORM}
+---
+- openLink: betterangels-dev://expo-development-client/?url=https://u.expo.dev/${MAESTRO_PROJECT_ID}/group/${MAESTRO_GROUP_ID}?platform=${MAESTRO_PLATFORM}%26disableOnboarding%3D1
+
+- runFlow:
+    when:
+      platform: ios
+      visible: 'Open'
+    commands:
+      - tapOn: 'Open'
+
+- assertVisible: 'Get Started'
+- tapOn:
+    id: 'get-started-button'
+- assertVisible: 'Welcome!'
