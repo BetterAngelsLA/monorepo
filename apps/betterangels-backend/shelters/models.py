@@ -20,6 +20,7 @@ from .enums import (
     SUPERVISORIAL_DISTRICT_CHOICES,
     AccessibilityChoices,
     CityChoices,
+    DayOfTheWeekChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -297,6 +298,21 @@ class Shelter(BaseModel):
             self.geolocation = None
 
         super().save(*args, **kwargs)
+
+
+@pghistory.track(
+    pghistory.InsertEvent("shelter.operating_hour.add"),
+    pghistory.UpdateEvent("shelter.operating_hour.update"),
+    pghistory.DeleteEvent("shelter.operating_hour.remove"),
+)
+class OperatingHour(models.Model):
+    shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="operating_hours")
+    day_of_week = models.CharField(max_length=9, choices=DayOfTheWeekChoices)
+    opens_at = models.TimeField()
+    closes_at = models.TimeField()
+
+    def __str__(self) -> str:
+        return f"{self.day_of_week}: {self.opens_at} - {self.closes_at}"
 
 
 @pghistory.track(
