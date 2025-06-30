@@ -43,6 +43,7 @@ from shelters.models import (
     HealthService,
     ImmediateNeed,
     InteriorPhoto,
+    OperatingHour,
     Parking,
     Pet,
     RoomStyle,
@@ -50,11 +51,7 @@ from shelters.models import (
     ShelterProgram,
 )
 from shelters.models import ShelterType as ShelterKind
-from shelters.models import (
-    SpecialSituationRestriction,
-    Storage,
-    TrainingService,
-)
+from shelters.models import SpecialSituationRestriction, Storage, TrainingService
 from strawberry import ID, asdict, auto
 
 
@@ -152,6 +149,13 @@ class CityType:
 @strawberry_django.type(SPA)
 class SPAType:
     name: Optional[SPAChoices]
+
+
+@strawberry_django.type(OperatingHour)
+class OperatingHourType:
+    day_of_week: auto
+    opens_at: auto
+    closes_at: auto
 
 
 @strawberry_django.type(ShelterProgram)
@@ -273,6 +277,7 @@ class ShelterType:
     max_stay: auto
     name: auto
     on_site_security: auto
+    operating_hours: List[OperatingHourType]
     organization: Optional[OrganizationType]
     other_rules: Optional[str]
     other_services: Optional[str]

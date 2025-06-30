@@ -1322,6 +1322,13 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
+export type OperatingHourType = {
+  __typename?: 'OperatingHourType';
+  closesAt: Scalars['Time']['output'];
+  dayOfWeek: Scalars['String']['output'];
+  opensAt: Scalars['Time']['output'];
+};
+
 export type OperationInfo = {
   __typename?: 'OperationInfo';
   /** List of messages returned by the operation. */
@@ -1874,6 +1881,7 @@ export type ShelterType = {
   maxStay?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
+  operatingHours: Array<OperatingHourType>;
   organization?: Maybe<OrganizationType>;
   otherRules?: Maybe<Scalars['String']['output']>;
   otherServices?: Maybe<Scalars['String']['output']>;
