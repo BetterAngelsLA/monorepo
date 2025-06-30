@@ -683,7 +683,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "email",
                     "phone",
                     "website",
-                    "operating_hours",
+                    "operating_hours_old",
                 ),
             },
         ),
