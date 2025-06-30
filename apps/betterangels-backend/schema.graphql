@@ -1524,6 +1524,7 @@ type ShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  operatingHours: [TimeRange]
 }
 
 type ShelterTypeOffsetPaginated {
@@ -1640,6 +1641,11 @@ enum TaskTypeEnum {
 
 """Time (isoformat)"""
 scalar Time
+
+type TimeRange {
+  start: DateTime
+  end: DateTime
+}
 
 enum TrainingServiceChoices {
   JOB_TRAINING
