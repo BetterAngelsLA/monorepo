@@ -64,6 +64,7 @@ from .models import (
     HealthService,
     ImmediateNeed,
     InteriorPhoto,
+    OperatingHour,
     Parking,
     Pet,
     RoomStyle,
@@ -79,6 +80,13 @@ from .models import (
 T = TypeVar("T", bound=models.Model)
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+
+class OperatingHourInline(admin.TabularInline):
+    model = OperatingHour
+    extra = 1
+    min_num = 0
+    ordering = ("day_of_week", "opens_at", "closes_at")
 
 
 class ShelterForm(forms.ModelForm):
@@ -671,7 +679,7 @@ class ShelterResource(resources.ModelResource):
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
 
-    inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
+    inlines = [ContactInfoInline, OperatingHourInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
         (
             "Basic Information",
