@@ -6,8 +6,11 @@ export default function OperationHours({
 }: {
   operatingHours?: ShelterType['operatingHours'];
 }) {
+  const filteredHours = (operatingHours || []).filter(
+    (hour) => hour?.start || hour?.end
+  );
   const notAvailable = !operatingHours?.length;
-  const formatTime = (t: string) => t.slice(0, 5);
+  const formatTime = (t?: string | null) => (t ? t.slice(0, 5) : '--:--');
 
   return (
     <div className="text-sm my-6">
@@ -19,7 +22,7 @@ export default function OperationHours({
         <p>Not Available. Contact the institution.</p>
       ) : (
         <div className="flex flex-col mx-8 gap-2">
-          {operatingHours.map((hour, index) => (
+          {filteredHours.map((hour, index) => (
             <p className="text-sm" key={index}>
               {formatTime(hour?.start)} - {formatTime(hour?.end)}
             </p>
