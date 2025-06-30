@@ -59,16 +59,16 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
   getClusters(
     bbox: [number, number, number, number],
     zoom: number
-    // ): Array<PointFeature<P> | ClusterFeature<AnyProps>> {
-    //   return this.clusterIndex.getClusters(bbox, zoom);
   ): Array<ClusterOrPoint<P>> {
     const raw = this.clusterIndex.getClusters(bbox, zoom);
 
     return raw.map((feat) => {
+      // if not a cluster, return feat
       if (!feat.properties.cluster) {
         return feat;
       }
 
+      // is a cluster
       const cluster = feat as TClusterPoint<P>;
 
       const expansion = this.clusterIndex.getClusterExpansionZoom(
@@ -79,6 +79,8 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
         return cluster;
       }
 
+      // expands past max zoom, so will not be broken up
+      // augment cluster with leaves it contains
       const leaves = this.getLeaves(cluster.properties.cluster_id);
 
       return {

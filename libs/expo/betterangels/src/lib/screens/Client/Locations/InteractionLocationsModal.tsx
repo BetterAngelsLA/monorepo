@@ -2,6 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BottomSheetModal,
   TextBold,
+  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo, useState } from 'react';
 import { View } from 'react-native';
@@ -19,10 +20,18 @@ export function InteractionLocationsModal() {
     return null;
   }
 
+  // Assumes we display multiple interactions only if they are
+  // in same location (cannot be broken up by clustering)
   const primaryInteraction = selectedInteractions[0];
 
   const sheetTitle =
     primaryInteraction.location?.address.street || 'Interaction';
+
+  let sheetSubTitle: string | undefined = undefined;
+
+  if (selectedInteractions.length > 1) {
+    sheetSubTitle = `Total ${selectedInteractions.length} interactions`;
+  }
 
   return (
     <BottomSheetModal
@@ -30,6 +39,7 @@ export function InteractionLocationsModal() {
       enableDynamicSizing
       enablePanDownToClose={false}
       snapPoints={snapPoints}
+      maxDynamicContentSize={600}
     >
       <View
         onLayout={(e) => {
@@ -45,6 +55,12 @@ export function InteractionLocationsModal() {
         }}
       >
         <TextBold>{sheetTitle}</TextBold>
+
+        {!!sheetSubTitle && (
+          <TextRegular size="xs" mt="xxs">
+            {sheetSubTitle}
+          </TextRegular>
+        )}
       </View>
       <View
         style={{

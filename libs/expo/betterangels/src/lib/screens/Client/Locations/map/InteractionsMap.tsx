@@ -135,7 +135,7 @@ export function InteractionsMap(props: TProps) {
       return;
     }
 
-    // cannot break down cluster any further
+    // maxZoomLeaves means we cannot break down cluster any further
     // so set mapState maxZoomLeaves as selectedInteractions
     const selectedIntIds: string[] = maxZoomLeaves.map((leaf) =>
       String(leaf.properties.id)
