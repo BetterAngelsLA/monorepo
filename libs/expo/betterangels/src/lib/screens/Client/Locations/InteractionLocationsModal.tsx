@@ -5,7 +5,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { NoteCard } from '../../../ui-components';
 import { useInteractionsMapState } from './map/hooks';
 
@@ -24,14 +24,10 @@ export function InteractionLocationsModal() {
   // in same location (cannot be broken up by clustering)
   const primaryInteraction = selectedInteractions[0];
 
-  const sheetTitle =
-    primaryInteraction.location?.address.street || 'Interaction';
-
-  let sheetSubTitle: string | undefined = undefined;
-
-  if (selectedInteractions.length > 1) {
-    sheetSubTitle = `Total ${selectedInteractions.length} interactions`;
-  }
+  const sheetTitle = primaryInteraction.location?.address.street;
+  const sheetSubTitle =
+    selectedInteractions.length > 1 &&
+    `Total ${selectedInteractions.length} interactions`;
 
   return (
     <BottomSheetModal
@@ -46,15 +42,9 @@ export function InteractionLocationsModal() {
           const height = e.nativeEvent.layout.height;
           setTitleHeight(height + 40);
         }}
-        style={{
-          borderBottomWidth: 1,
-          borderColor: Colors.NEUTRAL_LIGHT,
-          marginBottom: Spacings.sm,
-          paddingBottom: Spacings.md,
-          paddingHorizontal: Spacings.sm,
-        }}
+        style={styles.header}
       >
-        <TextBold>{sheetTitle}</TextBold>
+        {!!sheetTitle && <TextBold>{sheetTitle}</TextBold>}
 
         {!!sheetSubTitle && (
           <TextRegular size="xs" mt="xxs">
@@ -82,3 +72,13 @@ export function InteractionLocationsModal() {
     </BottomSheetModal>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    borderBottomWidth: 1,
+    borderColor: Colors.NEUTRAL_LIGHT,
+    marginBottom: Spacings.sm,
+    paddingBottom: Spacings.md,
+    paddingHorizontal: Spacings.sm,
+  },
+});
