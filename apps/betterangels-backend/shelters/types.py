@@ -245,6 +245,12 @@ class ShelterOrder:
     name: auto
 
 
+@strawberry.type
+class TimeRange:
+    start: Optional[datetime]
+    end: Optional[datetime]
+
+
 @strawberry_django.type(Shelter, filters=ShelterFilter, order=ShelterOrder)  # type: ignore
 class ShelterType:
     id: ID
@@ -330,3 +336,14 @@ class ShelterType:
             return float(distance.mi)
 
         return None
+
+    @strawberry_django.field
+    def operating_hours(self, root: Shelter) -> Optional[List[Optional[TimeRange]]]:
+        ranges: List[Optional[TimeRange]] = []
+        if root.operating_hours:
+            for start, end in root.operating_hours:
+                if start is not None or end is not None:
+                    ranges.append(TimeRange(start=start, end=end))
+                else:
+                    ranges.append(None)
+        return ranges if ranges else None

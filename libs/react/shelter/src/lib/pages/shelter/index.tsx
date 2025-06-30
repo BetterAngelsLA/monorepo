@@ -79,7 +79,7 @@ export default function ShelterPage({ id }: { id: string }) {
   return (
     <div className="w-full">
       <Header shelter={shelter} />
-      <OperationHours />
+      <OperationHours operatingHours={shelter.operatingHours} />
       {hasPhotos && (
         <Button
           onClick={() => navigate(`/shelter/${id}/gallery`)}
