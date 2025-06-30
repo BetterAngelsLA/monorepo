@@ -75,7 +75,9 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
         cluster.properties.cluster_id
       );
 
-      if (expansion < this.maxZoom) {
+      const clusterCanZoomMore = expansion < this.maxZoom;
+
+      if (clusterCanZoomMore) {
         return cluster;
       }
 
