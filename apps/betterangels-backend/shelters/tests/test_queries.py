@@ -145,10 +145,10 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             name="name",
             on_site_security=True,
             operating_hours=[
-                {
+                (
                     datetime.datetime(2025, 7, 1, 6, 00, 00).time(),
                     datetime.datetime(2025, 7, 1, 22, 00, 00).time(),
-                }
+                )
             ],
             organization=shelter_organization,
             other_rules="other rules",
@@ -342,7 +342,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             response = self.execute_graphql(query, variables)
 
         shelters = response["data"]["shelters"]["results"]
-
         self.assertEqual(len(shelters), shelter_count)
         self.assertEqual(shelters[0]["heroImage"], exterior_photo_0.file.url)
         self.assertEqual(shelters[1]["heroImage"], interior_photo_1.file.url)
