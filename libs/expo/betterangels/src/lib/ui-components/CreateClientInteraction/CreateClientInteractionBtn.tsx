@@ -79,7 +79,7 @@ export function CreateClientInteractionBtn(props: TProps) {
     }
   }
 
-  if (!!children) {
+  if (children) {
     return (
       <Pressable
         accessibilityRole="button"
