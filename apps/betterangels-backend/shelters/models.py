@@ -205,7 +205,7 @@ class Shelter(BaseModel):
     email = models.EmailField(max_length=254, blank=True, null=True)
     phone = PhoneNumberField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
-    operating_hours_old = TimeRangeField(null=True, blank=True)
+    operating_hours_old = TimeRangeField(null=True, blank=True, verbose_name="Operating Hours")
 
     # Summary Information
     description = CKEditor5Field()

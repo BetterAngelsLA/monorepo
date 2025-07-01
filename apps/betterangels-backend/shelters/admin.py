@@ -678,7 +678,7 @@ class ShelterResource(resources.ModelResource):
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
 
-    inlines = [ContactInfoInline, OperatingHourInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
+    inlines = [OperatingHourInline, ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
         (
             "Basic Information",
