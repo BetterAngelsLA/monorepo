@@ -17,8 +17,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] = useState<TClientProfile | null>(
     null
   );
-  const [filterSearch, setFilterSearch] = useState<string>('');
-  const [search, setSearch] = useState<string>('');
+  const [search, setSearch] = useState('');
 
   return (
     <View style={styles.container}>
@@ -30,18 +29,16 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           placeholder="Search by name"
           onChange={(text) => {
             setSearch(text);
-            setFilterSearch(text);
           }}
           onClear={() => {
             setSearch('');
-            setFilterSearch('');
           }}
           style={{ marginBottom: Spacings.xs }}
         />
 
         <ClientProfileList
           filters={{
-            search: filterSearch,
+            search,
           }}
           renderItem={(client) => (
             <ClientCard

@@ -34,9 +34,9 @@ export function CreateClientInteractionBtn(props: TProps) {
 
   const [createNote] = useCreateNoteMutation();
 
-  console.log('');
-  console.log('#######');
-  console.log('############## CreateClientInteractionBtn - NEW');
+  // console.log('');
+  // console.log('#######');
+  // console.log('############## CreateClientInteractionBtn - NEW');
 
   const router = useRouter();
 

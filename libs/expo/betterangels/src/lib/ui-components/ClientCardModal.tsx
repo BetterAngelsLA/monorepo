@@ -42,7 +42,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
 
   const ACTIONS = [
     {
-      title: 'Add Interaction',
+      title: 'Add Interaction x',
       Icon: FilePlusIcon,
       onPress: () => {
         if (clientProfile) {
