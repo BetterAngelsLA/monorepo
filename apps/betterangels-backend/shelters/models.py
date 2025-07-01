@@ -8,7 +8,7 @@ from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.core.files.storage import default_storage
 from django.db import models
-from django.db.models import Case, IntegerField, Manager, QuerySet, When
+from django.db.models import Case, IntegerField, Manager, When
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
 from organizations.models import Organization

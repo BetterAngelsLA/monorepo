@@ -31,7 +31,6 @@ from shelters.permissions import ShelterFieldPermissions
 from .enums import (
     AccessibilityChoices,
     CityChoices,
-    DayOfWeekChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,

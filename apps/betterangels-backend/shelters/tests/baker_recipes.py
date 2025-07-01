@@ -1,6 +1,5 @@
 import datetime
 import random
-from calendar import Day
 from typing import Any
 
 from accounts.tests.baker_recipes import organization_recipe
