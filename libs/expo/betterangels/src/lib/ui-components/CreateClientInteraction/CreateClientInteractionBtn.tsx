@@ -59,7 +59,7 @@ export function CreateClientInteractionBtn(props: TProps) {
         return onCreated();
       }
 
-      router.navigate(`/add-note/${data?.createNote.id}`);
+      router.navigate(`/add-note/${data.createNote.id}`);
     } catch (err) {
       console.error(`error creating note for profileId [${profileId}]: ${err}`);
 

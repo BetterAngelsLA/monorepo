@@ -27,7 +27,7 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
         },
       });
       if (data?.createNote && 'id' in data.createNote) {
-        router.navigate(`/add-note/${data?.createNote.id}`);
+        router.navigate(`/add-note/${data.createNote.id}`);
         closeModal();
       }
     } catch (err) {
