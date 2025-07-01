@@ -307,7 +307,7 @@ class Shelter(BaseModel):
 )
 class OperatingHour(models.Model):
     shelter = models.ForeignKey(Shelter, on_delete=models.CASCADE, related_name="operating_hours")
-    day_of_week = TextChoicesField(choices_enum=DayOfWeekChoices, blank=True, null=True)
+    day_of_week = TextChoicesField(choices_enum=DayOfWeekChoices)
     opens_at = models.TimeField()
     closes_at = models.TimeField()
 
