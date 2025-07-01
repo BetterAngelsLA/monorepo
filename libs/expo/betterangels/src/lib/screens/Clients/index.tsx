@@ -12,17 +12,19 @@ import {
   SearchBar,
 } from '../../ui-components';
 import { ClientProfilesQuery } from './__generated__/Clients.generated';
-type TClientProfile = ClientProfilesQuery['clientProfiles']['results'];
+
+type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
 
 const paginationLimit = 20;
 
 export default function Clients({ Logo }: { Logo: ElementType }) {
-  const [currentClient, setCurrentClient] = useState<TClientProfile[number]>();
-  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
+  const [currentClient, setCurrentClient] = useState<TClientProfile | null>(
+    null
+  );
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [totalCount, setTotalCount] = useState<number>(0);
-  const [clients, setClients] = useState<TClientProfile>([]);
+  const [clients, setClients] = useState<TClientProfile[]>([]);
   const [filterSearch, setFilterSearch] = useState<string>('');
   const { title, select } = useLocalSearchParams();
   const [search, setSearch] = useState<string>('');
@@ -79,8 +81,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
       {currentClient && (
         <ClientCardModal
-          isModalVisible={modalIsOpen}
-          closeModal={() => setModalIsOpen(false)}
+          isModalVisible={!!currentClient}
+          closeModal={() => setCurrentClient(null)}
           clientProfile={currentClient}
         />
       )}

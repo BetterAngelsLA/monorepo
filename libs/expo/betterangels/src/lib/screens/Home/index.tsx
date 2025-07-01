@@ -16,7 +16,6 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] = useState<TClientProfile | null>(
     null
   );
-  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT }}>
@@ -31,7 +30,6 @@ export default function Home({ Logo }: { Logo: ElementType }) {
               arrivedFrom="/"
               onMenuPress={(client) => {
                 setCurrentClient(client);
-                setModalIsOpen(true);
               }}
             />
           )}
@@ -42,14 +40,13 @@ export default function Home({ Logo }: { Logo: ElementType }) {
         />
       </View>
 
-      {currentClient && (
+      {!!currentClient && (
         <ClientCardModal
-          isModalVisible={modalIsOpen}
+          isModalVisible={!!currentClient}
+          clientProfile={currentClient}
           closeModal={() => {
-            setModalIsOpen(false);
             setCurrentClient(null);
           }}
-          clientProfile={currentClient}
         />
       )}
     </View>
