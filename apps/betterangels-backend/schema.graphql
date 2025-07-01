@@ -561,6 +561,16 @@ scalar Date
 """Date with time (isoformat)"""
 scalar DateTime
 
+enum DayOfWeekChoices {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
 union DeleteClientContactPayload = ClientContactType | OperationInfo
 
 union DeleteClientDocumentPayload = ClientDocumentType | OperationInfo
@@ -1068,7 +1078,7 @@ input OffsetPaginationInput {
 }
 
 type OperatingHourType {
-  dayOfWeek: String!
+  dayOfWeek: DayOfWeekChoices!
   opensAt: Time!
   closesAt: Time!
 }

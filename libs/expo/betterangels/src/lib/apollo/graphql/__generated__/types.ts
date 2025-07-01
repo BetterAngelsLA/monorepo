@@ -557,6 +557,16 @@ export type CreateTaskInput = {
 
 export type CreateTaskPayload = OperationInfo | TaskType;
 
+export enum DayOfWeekChoices {
+  Friday = 'FRIDAY',
+  Monday = 'MONDAY',
+  Saturday = 'SATURDAY',
+  Sunday = 'SUNDAY',
+  Thursday = 'THURSDAY',
+  Tuesday = 'TUESDAY',
+  Wednesday = 'WEDNESDAY'
+}
+
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
 export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
@@ -1325,7 +1335,7 @@ export type OffsetPaginationInput = {
 export type OperatingHourType = {
   __typename?: 'OperatingHourType';
   closesAt: Scalars['Time']['output'];
-  dayOfWeek: Scalars['String']['output'];
+  dayOfWeek: DayOfWeekChoices;
   opensAt: Scalars['Time']['output'];
 };
 
