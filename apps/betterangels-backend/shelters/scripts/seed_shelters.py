@@ -39,7 +39,11 @@ Note:
 
 def main() -> None:
     from shelters.models import ExteriorPhoto
-    from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
+    from shelters.tests.baker_recipes import (
+        operating_hour_recipe,
+        shelter_contact_recipe,
+        shelter_recipe,
+    )
 
     if len(sys.argv) != 2:
         print("Usage: python seed_shelters.py <number_of_shelters>")
@@ -59,6 +63,7 @@ def main() -> None:
             django_file = File(image_file)
 
             for shelter in shelters:
+                operating_hour_recipe.make(shelter=shelter, _quantity=random.randint(1, 3))
                 ExteriorPhoto.objects.create(file=django_file, shelter=shelter)
 
         # add contacts

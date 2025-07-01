@@ -121,7 +121,7 @@ shelter_contact_recipe = Recipe(
 )
 
 operating_hour_recipe = Recipe(
-    "OperatingHour",
+    OperatingHour,
     day_of_week=lambda: random.choice(list(DayOfWeekChoices)),
     opens_at=lambda: datetime.time(random.randint(0, 11), random.randint(0, 59)),
     closes_at=lambda: datetime.time(random.randint(12, 23), random.randint(0, 59)),
@@ -145,7 +145,6 @@ shelter_recipe = Recipe(
     name=seq("shelter "),  # type: ignore
     organization=foreign_key(organization_recipe),
     on_site_security=random.choice([True, False, None]),
-    operating_hours=foreign_key(operating_hour_recipe),
     operating_hours_old=get_random_hour_ranges,
     other_rules=seq("other rules "),  # type: ignore
     other_services=seq("other services "),  # type: ignore

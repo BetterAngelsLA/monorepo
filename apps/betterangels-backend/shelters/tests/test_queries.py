@@ -1,4 +1,5 @@
 import datetime
+import random
 from typing import Any
 from unittest.mock import ANY
 
@@ -49,7 +50,11 @@ from shelters.models import (
     Storage,
     TrainingService,
 )
-from shelters.tests.baker_recipes import shelter_contact_recipe, shelter_recipe
+from shelters.tests.baker_recipes import (
+    operating_hour_recipe,
+    shelter_contact_recipe,
+    shelter_recipe,
+)
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase, parametrize
 
@@ -79,6 +84,11 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             maxStay
             name
             onSiteSecurity
+            operatingHours {
+                dayOfWeek
+                opensAt
+                closesAt
+            }
             otherRules
             otherServices
             overallRating
@@ -190,6 +200,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         )
         shelter.additional_contacts.set(shelter_contacts)
 
+        operating_hours = operating_hour_recipe.make(shelter=new_shelter, _quantity=2)
         exterior_photo = ExteriorPhoto.objects.create(shelter=shelter, file=self.file)
         interior_photo = InteriorPhoto.objects.create(shelter=shelter, file=self.file)
 
@@ -217,7 +228,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 21
+        expected_query_count = 22
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -239,6 +250,18 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "maxStay": 7,
             "name": "name",
             "onSiteSecurity": True,
+            "operatingHours": [
+                {
+                    "dayOfWeek": operating_hours[0].day_of_week.name,
+                    "opensAt": operating_hours[0].opens_at.strftime("%H:%M:%S"),
+                    "closesAt": operating_hours[0].closes_at.strftime("%H:%M:%S"),
+                },
+                {
+                    "dayOfWeek": operating_hours[1].day_of_week.name,
+                    "opensAt": operating_hours[1].opens_at.strftime("%H:%M:%S"),
+                    "closesAt": operating_hours[1].closes_at.strftime("%H:%M:%S"),
+                },
+            ],
             "otherRules": "other rules",
             "otherServices": "other services",
             "overallRating": 3,
@@ -326,7 +349,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
 
-        expected_query_count = 22
+        expected_query_count = 23
 
         variables = {"order": {"name": "ASC"}}
 
