@@ -20,7 +20,7 @@ export function MainModalActionBtnBody(props: TProps) {
         <Icon color={Colors.PRIMARY_EXTRA_DARK} />
       </View>
 
-      <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>{title} zz</TextRegular>
+      <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>{title}</TextRegular>
     </View>
   );
 }
