@@ -3,6 +3,7 @@ export { default as Client } from './Client';
 export { InteractionsMapStateProvider } from './Client/Locations/map/InteractionsMapStateProvider';
 export * from './ClientProfileForms';
 export { default as Clients } from './Clients';
+export { ClientsAddInteraction } from './ClientsAddInteraction';
 export { default as CreateClientProfile } from './CreateClientProfile';
 export { default as FileScreenComponent } from './FileScreenComponent';
 export { default as Home } from './Home';

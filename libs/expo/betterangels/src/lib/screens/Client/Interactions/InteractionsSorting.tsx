@@ -1,11 +1,10 @@
 import {
   ListIcon,
   LocationDotSolidIcon,
-  PlusIcon,
   SortSolidIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
+import { TextMedium } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { NotesQuery } from '../../../apollo';
@@ -74,15 +73,6 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
         Displaying {notes?.length} of {totalCount} interactions
       </TextMedium>
       <CreateClientInteractionBtn clientProfileId={client.clientProfile.id} />
-      <IconButton
-        onPress={() => createNoteFunction(client.clientProfile.id)}
-        variant="secondary"
-        borderColor={Colors.WHITE}
-        accessibilityLabel={'add interaction'}
-        accessibilityHint={'add a new interaction'}
-      >
-        <PlusIcon />
-      </IconButton>
       {displayInteractionsSorting && (
         <View style={{ flexDirection: 'row', gap: Spacings.xs }}>
           <Pressable

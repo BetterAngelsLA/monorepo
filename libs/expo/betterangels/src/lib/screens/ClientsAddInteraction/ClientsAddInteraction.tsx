@@ -1,19 +1,20 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { router } from 'expo-router';
+import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { ElementType, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   ClientCard,
   ClientCardModal,
   ClientProfileList,
+  CreateClientInteractionBtn,
   Header,
   SearchBar,
 } from '../../ui-components';
-import { ClientProfilesQuery } from './__generated__/Clients.generated';
+import { ClientProfilesQuery } from '../Clients/__generated__/Clients.generated';
 
 type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
 
-export default function Clients({ Logo }: { Logo: ElementType }) {
+export function ClientsAddInteraction({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] = useState<TClientProfile | null>(
     null
   );
@@ -25,6 +26,10 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       <Header title="Clients" Logo={Logo} />
 
       <View style={styles.content}>
+        <TextBold mb="sm" size="lg">
+          Who is this interaction for?
+        </TextBold>
+
         <SearchBar
           value={search}
           placeholder="Search by name"
@@ -44,18 +49,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
             search: filterSearch,
           }}
           renderItem={(client) => (
-            <ClientCard
-              client={client}
-              onMenuPress={setCurrentClient}
-              onPress={(client) => {
-                router.navigate({
-                  pathname: `/client/${client.id}`,
-                  params: {
-                    arrivedFrom: '/clients',
-                  },
-                });
-              }}
-            />
+            <CreateClientInteractionBtn clientProfileId={client.id}>
+              <ClientCard client={client} />
+            </CreateClientInteractionBtn>
           )}
         />
       </View>

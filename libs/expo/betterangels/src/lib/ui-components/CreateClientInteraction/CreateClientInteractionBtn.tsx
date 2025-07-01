@@ -1,11 +1,10 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
+import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { ReactNode, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 import { useCreateNoteMutation } from './__generated__/CreateInteraction.generated';
-// type TClientProfile = ClientProfilesQuery['clientProfiles']['results'];
 
 export const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -15,10 +14,21 @@ type TProps = {
   children?: ReactNode;
   onCreated?: () => void;
   onError?: () => void;
+  style?: ViewStyle;
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 };
 
 export function CreateClientInteractionBtn(props: TProps) {
-  const { clientProfileId, children, onCreated, onError } = props;
+  const {
+    clientProfileId,
+    children,
+    onCreated,
+    onError,
+    style,
+    accessibilityLabel = 'create an interaction',
+    accessibilityHint = 'create new interaction',
+  } = props;
 
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -69,20 +79,35 @@ export function CreateClientInteractionBtn(props: TProps) {
     }
   }
 
-  return (
-    <View>
-      <IconButton
+  if (!!children) {
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        accessibilityHint={accessibilityHint}
         onPress={() => createNoteFunction(clientProfileId)}
-        variant="secondary"
-        borderColor={Colors.WHITE}
-        accessibilityLabel={'add interaction'}
-        accessibilityHint={'add a new interaction'}
+        style={({ pressed }) => [pressed && styles.buttonPressed, style]}
       >
-        <>
-          {children || <PlusIcon />}
-          <TextMedium>new</TextMedium>
-        </>
-      </IconButton>
-    </View>
+        {children}
+      </Pressable>
+    );
+  }
+
+  return (
+    <IconButton
+      onPress={() => createNoteFunction(clientProfileId)}
+      variant="secondary"
+      borderColor={Colors.WHITE}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
+    >
+      <PlusIcon />
+    </IconButton>
   );
 }
+
+const styles = StyleSheet.create({
+  buttonPressed: {
+    backgroundColor: Colors.GRAY_PRESSED,
+  },
+});

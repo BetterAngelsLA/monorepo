@@ -1,5 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { useEffect, useState } from 'react';
+import { ReactElement, useEffect, useState } from 'react';
 import { FlatList, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { uniqueBy } from 'remeda';
@@ -23,7 +23,7 @@ export type ListHeaderProps = {
 };
 
 type TProps = {
-  renderItem: (clientProfile: TClientProfile) => React.ReactElement | null;
+  renderItem: (clientProfile: TClientProfile) => ReactElement | null;
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<ClientProfileFilter>;

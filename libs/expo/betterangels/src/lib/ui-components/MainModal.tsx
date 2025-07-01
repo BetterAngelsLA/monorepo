@@ -15,8 +15,7 @@ interface IMainModalProps {
     route?: string;
     Icon: React.ElementType;
     params?: {
-      title: string;
-      select: string;
+      [key: string]: string;
     };
     onPress?: () => void;
   }[];
