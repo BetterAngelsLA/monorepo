@@ -4,6 +4,7 @@ import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { ReactNode, useState } from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
+import { useSnackbar } from '../../hooks';
 import { useCreateNoteMutation } from './__generated__/CreateInteraction.generated';
 
 export const sleep = (ms: number): Promise<void> =>
@@ -12,7 +13,7 @@ export const sleep = (ms: number): Promise<void> =>
 type TProps = {
   clientProfileId: string;
   children?: ReactNode;
-  onCreated?: () => void;
+  onCreated?: (newNoteId: string) => void;
   onError?: () => void;
   style?: ViewStyle;
   accessibilityLabel?: string;
@@ -30,26 +31,20 @@ export function CreateClientInteractionBtn(props: TProps) {
     accessibilityHint = 'create new interaction',
   } = props;
 
-  const [isProcessing, setIsProcessing] = useState(false);
-
+  const [disabled, setDisabled] = useState(false);
   const [createNote] = useCreateNoteMutation();
-
-  // console.log('');
-  // console.log('#######');
-  // console.log('############## CreateClientInteractionBtn - NEW');
+  const { showSnackbar } = useSnackbar();
 
   const router = useRouter();
 
   async function createNoteFunction(profileId: string) {
-    if (isProcessing) {
+    if (disabled) {
       return;
     }
 
-    setIsProcessing(true);
+    setDisabled(true);
 
     try {
-      await sleep(200);
-
       const { data } = await createNote({
         variables: {
           data: {
@@ -62,26 +57,31 @@ export function CreateClientInteractionBtn(props: TProps) {
         throw new Error('invalid mutation result');
       }
 
-      console.log('');
-      console.log('____########### createNoteFunction  NEW: ', Date.now());
-
       if (onCreated) {
-        return onCreated();
+        return onCreated(data.createNote.id);
       }
 
       router.navigate(`/add-note/${data.createNote.id}`);
     } catch (err) {
       console.error(`error creating note for profileId [${profileId}]: ${err}`);
 
-      onError?.();
+      if (onError) {
+        return onError();
+      }
+
+      showSnackbar({
+        message: `Sorry, there was an error creating a new interaction.`,
+        type: 'error',
+      });
     } finally {
-      setIsProcessing(false);
+      setDisabled(false);
     }
   }
 
   if (children) {
     return (
       <Pressable
+        disabled={disabled}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
@@ -95,6 +95,7 @@ export function CreateClientInteractionBtn(props: TProps) {
 
   return (
     <IconButton
+      disabled={disabled}
       onPress={() => createNoteFunction(clientProfileId)}
       variant="secondary"
       borderColor={Colors.WHITE}

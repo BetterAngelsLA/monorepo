@@ -5,8 +5,7 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
-
-import MainModal from './MainModal';
+import { MainModal } from './MainModal';
 
 interface IMainPlusModalProps {
   closeModal: () => void;
