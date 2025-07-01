@@ -245,7 +245,7 @@ class ShelterOrder:
     name: auto
 
 
-@strawberry_django.type
+@strawberry.type
 class TimeRange:
     start: Optional[datetime]
     end: Optional[datetime]
