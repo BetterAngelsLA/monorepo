@@ -4,7 +4,12 @@ import {
   ThreeDotIcon,
   UserOutlineIcon,
 } from '@monorepo/expo/shared/icons';
-import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  Radiuses,
+  Spacings,
+  TSpacing,
+} from '@monorepo/expo/shared/static';
 import {
   Avatar,
   IconButton,
@@ -12,12 +17,9 @@ import {
   TextRegular,
   formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
-import { useRouter } from 'expo-router';
 import { DimensionValue, Pressable, StyleSheet, View } from 'react-native';
-import { HmisProfileType, Maybe } from '../apollo';
-import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
-
-type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+import { HmisProfileType, Maybe } from '../../apollo';
+import { ClientProfilesQuery } from '../../screens/Clients/__generated__/Clients.generated';
 
 type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
 
@@ -32,14 +34,10 @@ interface IClientCardProps {
   mr?: TSpacing;
   onPress?: (client: TClientProfile) => void;
   onMenuPress?: (client: TClientProfile) => void;
-  arrivedFrom?: string;
 }
 
-export default function ClientCard(props: IClientCardProps) {
-  const { client, mb, mt, mr, ml, my, mx, onPress, onMenuPress, arrivedFrom } =
-    props;
-
-  const router = useRouter();
+export function ClientCard(props: IClientCardProps) {
+  const { client, mb, mt, mr, ml, my, mx, onPress, onMenuPress } = props;
 
   if (!client) {
     return;
@@ -62,22 +60,10 @@ export default function ClientCard(props: IClientCardProps) {
     ? getLahsaHmisId(client.hmisProfiles)
     : null;
 
-  function onCardPress(client: TClientProfile) {
-    if (onPress) {
-      return onPress(client);
-    }
-
-    router.navigate({
-      pathname: `/client/${client.id}`,
-      params: {
-        arrivedFrom,
-      },
-    });
-  }
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => onCardPress(client)}
+      onPress={() => onPress?.(client)}
       style={({ pressed }) => [
         styles.container,
         {

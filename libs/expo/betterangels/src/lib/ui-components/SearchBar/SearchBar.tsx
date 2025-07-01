@@ -22,7 +22,7 @@ type TProps = TextInputPassThrough & {
 export function SearchBar(props: TProps) {
   const {
     value,
-    debounceMs = 0,
+    debounceMs = 300,
     placeholder = 'Search',
     onChange,
     onClear,

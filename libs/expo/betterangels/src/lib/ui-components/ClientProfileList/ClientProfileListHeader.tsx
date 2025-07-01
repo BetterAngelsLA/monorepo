@@ -1,11 +1,12 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextButton, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { TextButton, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 type TProps = {
   visibleClients: number;
   totalClients: number;
+  style?: StyleProp<ViewStyle>;
   showAllClientsLink?: boolean;
   renderHeaderText?: (params: {
     totalClients: number;
@@ -14,19 +15,24 @@ type TProps = {
 };
 
 export function ClientProfileListHeader(props: TProps) {
-  const { visibleClients, totalClients, renderHeaderText, showAllClientsLink } =
-    props;
+  const {
+    visibleClients,
+    totalClients,
+    renderHeaderText,
+    showAllClientsLink,
+    style,
+  } = props;
 
   const router = useRouter();
 
   const headerText =
     typeof renderHeaderText === 'function'
       ? renderHeaderText({ totalClients, visibleClients })
-      : `Showing ${visibleClients} of ${totalClients} clients`;
+      : `Displaying ${visibleClients} of ${totalClients} clients`;
 
   return (
-    <View style={styles.container}>
-      <TextRegular>{headerText}</TextRegular>
+    <View style={[styles.container, style]}>
+      <TextMedium size="sm">{headerText}</TextMedium>
 
       {showAllClientsLink && (
         <TextButton
@@ -47,6 +53,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
   },
 });

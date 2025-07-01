@@ -1,4 +1,4 @@
-import { UserAddOutlineIcon } from '@monorepo/expo/shared/icons';
+import { UserSearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View, ViewStyle } from 'react-native';
@@ -23,14 +23,12 @@ export function ListEmptyState(props: TProps) {
           marginBottom: Spacings.md,
         }}
       >
-        <UserAddOutlineIcon size="2xl" color={Colors.PRIMARY} />
+        <UserSearchIcon size="2xl" color={Colors.PRIMARY} />
       </View>
       <TextBold mb="xs" size="sm">
-        No Active Clients
+        No results
       </TextBold>
-      <TextRegular size="sm">
-        Try adding a client or an interaction.
-      </TextRegular>
+      <TextRegular size="sm">Try searching for something else.</TextRegular>
     </View>
   );
 }

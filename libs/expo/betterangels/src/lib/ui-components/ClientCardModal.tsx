@@ -17,10 +17,6 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  console.log();
-  console.log('| -------------  ClientCardModal  ------------- |');
-  console.log();
-
   async function createNoteFunction(id: string) {
     try {
       const { data } = await createNote({

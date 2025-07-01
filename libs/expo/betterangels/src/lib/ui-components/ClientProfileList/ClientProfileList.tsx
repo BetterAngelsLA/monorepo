@@ -1,8 +1,8 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View, ViewStyle } from 'react-native';
-import { uniqueBy } from 'remeda';
+import { FlatList, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
+import { uniqueBy } from 'remeda';
 import { ClientProfileFilter, InputMaybe } from '../../apollo';
 import { ClientProfileListHeader } from './ClientProfileListHeader';
 import { ListEmptyState } from './ListEmptyState';
@@ -24,6 +24,7 @@ export type ListHeaderProps = {
 
 type TProps = {
   renderItem: (clientProfile: TClientProfile) => React.ReactElement | null;
+  style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<ClientProfileFilter>;
   paginationLimit?: number;
@@ -36,6 +37,7 @@ export function ClientProfileList(props: TProps) {
   const {
     filters,
     renderItem,
+    style,
     itemGap = DEFAULT_ITEM_GAP,
     paginationLimit = DEFAULT_PAGINATION_LIMIT,
     renderHeaderText,
@@ -94,39 +96,44 @@ export function ClientProfileList(props: TProps) {
   }
 
   return (
-    <FlatList<TClientProfile>
-      style={styles.list}
-      data={clients}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item }) => renderItem(item)}
-      ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
-      onEndReached={loadMoreClients}
-      onEndReachedThreshold={0.05}
-      // header, footer, styles etc...
-      contentContainerStyle={!clients.length && styles.emptyContent}
-      ListHeaderComponentStyle={[styles.header, headerStyle]}
-      ListHeaderComponent={
-        <ClientProfileListHeader
-          totalClients={totalCount}
-          visibleClients={clients.length}
-          showAllClientsLink={showAllClientsLink}
-          renderHeaderText={renderHeaderText}
-        />
-      }
-      ListEmptyComponent={<ListEmptyState />}
-    />
+    <View style={[styles.container, style]}>
+      <ClientProfileListHeader
+        style={[styles.header, headerStyle]}
+        totalClients={totalCount}
+        visibleClients={clients.length}
+        showAllClientsLink={showAllClientsLink}
+        renderHeaderText={renderHeaderText}
+      />
+
+      <FlatList<TClientProfile>
+        data={clients}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => renderItem(item)}
+        onEndReached={loadMoreClients}
+        onEndReachedThreshold={0.05}
+        ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
+        ListEmptyComponent={<ListEmptyState />}
+        contentContainerStyle={[
+          !clients.length && styles.emptyContent,
+          styles.listContent,
+        ]}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  list: {
+  container: {
     flex: 1,
     backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-    paddingBottom: 80,
-    marginTop: Spacings.xs,
   },
   header: {
     marginBottom: Spacings.xs,
+  },
+  listContent: {
+    paddingBottom: 80,
+    // borderWidth: 1,
+    // borderColor: 'red',
   },
   emptyContent: {
     flexGrow: 1,

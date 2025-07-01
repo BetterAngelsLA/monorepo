@@ -1,9 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold } from '@monorepo/expo/shared/ui-components';
-import { useLocalSearchParams } from 'expo-router';
+import { router } from 'expo-router';
 import { ElementType, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useSnackbar } from '../../hooks';
 import {
   ClientCard,
   ClientCardModal,
@@ -15,35 +13,27 @@ import { ClientProfilesQuery } from './__generated__/Clients.generated';
 
 type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
 
-const paginationLimit = 20;
-
 export default function Clients({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] = useState<TClientProfile | null>(
     null
   );
-  const [offset, setOffset] = useState<number>(0);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [clients, setClients] = useState<TClientProfile[]>([]);
   const [filterSearch, setFilterSearch] = useState<string>('');
-  const { title, select } = useLocalSearchParams();
   const [search, setSearch] = useState<string>('');
-  const { showSnackbar } = useSnackbar();
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <Header title="Clients" Logo={Logo} />
+
       <View style={styles.content}>
         {/* Who is this interaction for? */}
-        {title && (
+        {/* {title && (
           <TextBold mb="sm" size="lg">
             {title}
           </TextBold>
-        )}
+        )} */}
 
         <SearchBar
           value={search}
-          debounceMs={300}
           placeholder="Search by name"
           onChange={(text) => {
             setSearch(text);
@@ -63,19 +53,17 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           renderItem={(client) => (
             <ClientCard
               client={client}
-              arrivedFrom="/"
-              onPress={(clientProfileId) => {
-                console.log(
-                  '[ClientProfileList CLIENTS] on PRESS clientProfileId: ',
-                  clientProfileId
-                );
+              onMenuPress={setCurrentClient}
+              onPress={(client) => {
+                router.navigate({
+                  pathname: `/client/${client.id}`,
+                  params: {
+                    arrivedFrom: '/clients',
+                  },
+                });
               }}
-              onMenuPress={() => {}}
             />
           )}
-          renderHeaderText={({ totalClients, visibleClients }) => {
-            return `Displaying ${visibleClients} of ${totalClients} Clients page`;
-          }}
         />
       </View>
 
@@ -91,10 +79,13 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 }
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
     flex: 1,
     backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: Spacings.sm,
-    paddingTop: Spacings.sm,
+    marginTop: Spacings.sm,
   },
 });

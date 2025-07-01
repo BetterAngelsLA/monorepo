@@ -1,7 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { router } from 'expo-router';
 import { ElementType, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-
 import {
   ClientCard,
   ClientCardModal,
@@ -18,7 +18,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT }}>
+    <View style={styles.container}>
       <Header title="Home" Logo={Logo} />
 
       <View style={styles.content}>
@@ -27,9 +27,14 @@ export default function Home({ Logo }: { Logo: ElementType }) {
           renderItem={(client) => (
             <ClientCard
               client={client}
-              arrivedFrom="/"
-              onMenuPress={(client) => {
-                setCurrentClient(client);
+              onMenuPress={setCurrentClient}
+              onPress={(client) => {
+                router.navigate({
+                  pathname: `/client/${client.id}`,
+                  params: {
+                    arrivedFrom: '/',
+                  },
+                });
               }}
             />
           )}
@@ -54,10 +59,13 @@ export default function Home({ Logo }: { Logo: ElementType }) {
 }
 
 const styles = StyleSheet.create({
-  content: {
+  container: {
     flex: 1,
     backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+  },
+  content: {
+    flex: 1,
     paddingHorizontal: Spacings.sm,
-    paddingTop: Spacings.sm,
+    marginTop: Spacings.sm,
   },
 });
