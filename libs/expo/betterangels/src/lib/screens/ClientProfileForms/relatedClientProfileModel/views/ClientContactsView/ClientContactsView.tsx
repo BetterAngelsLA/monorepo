@@ -1,6 +1,7 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View, ViewStyle } from 'react-native';
+import { RelationshipTypeEnum } from '../../../../../apollo';
 import {
   ClientProfileSectionEnum,
   getRelatedModelAddRoute,
@@ -32,9 +33,43 @@ export function ClientContactsView(props: TProps) {
     section: ClientProfileSectionEnum.RelevantContacts,
   });
 
+  const caseManagers = contacts
+    ?.filter(
+      (contact) =>
+        contact.relationshipToClient === RelationshipTypeEnum.CurrentCaseManager
+    )
+    .sort((a, b) => {
+      const dateA = new Date(a.updatedAt ?? 0).getTime();
+      const dateB = new Date(b.updatedAt ?? 0).getTime();
+      return dateB - dateA;
+    });
+
+  const otherContacts = contacts?.filter((contact) => {
+    const { relationshipToClient } = contact;
+
+    return relationshipToClient !== RelationshipTypeEnum.CurrentCaseManager;
+  });
+
   return (
     <View style={style}>
-      {(contacts || []).map((contact) => {
+      {(caseManagers || []).map((contact) => {
+        const editRoute = getRelatedModelEditRoute({
+          profileId,
+          relatedlId: contact.id,
+          section: ClientProfileSectionEnum.RelevantContacts,
+        });
+
+        return (
+          <ViewItemContainer
+            key={contact.id}
+            onClickEdit={() => router.navigate(editRoute)}
+          >
+            <RelevantContactCard contact={contact} showAllFields={true} />
+          </ViewItemContainer>
+        );
+      })}
+
+      {(otherContacts || []).map((contact) => {
         const editRoute = getRelatedModelEditRoute({
           profileId,
           relatedlId: contact.id,
