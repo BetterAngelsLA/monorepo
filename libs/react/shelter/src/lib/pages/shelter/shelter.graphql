@@ -12,6 +12,11 @@ query ViewShelter($id: ID!) {
     maxStay
     name
     onSiteSecurity
+    operatingHours {
+      dayOfWeek
+      opensAt
+      closesAt
+    }
     fundersOther
     otherRules
     otherServices
