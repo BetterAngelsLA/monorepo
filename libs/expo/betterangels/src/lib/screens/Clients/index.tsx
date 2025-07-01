@@ -2,7 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams } from 'expo-router';
 import { ElementType, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSnackbar } from '../../hooks';
 import {
   ClientCard,
@@ -31,14 +31,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   return (
     <View style={{ flex: 1 }}>
       <Header title="Clients" Logo={Logo} />
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-          paddingHorizontal: Spacings.sm,
-          paddingTop: Spacings.sm,
-        }}
-      >
+      <View style={styles.content}>
+        {/* Who is this interaction for? */}
         {title && (
           <TextBold mb="sm" size="lg">
             {title}
@@ -77,8 +71,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
               onMenuPress={() => {}}
             />
           )}
-          renderHeader={({ totalClients, visibleClients }) => {
-            return `Displaying ${visibleClients} of ${totalClients} Clients`;
+          renderHeaderText={({ totalClients, visibleClients }) => {
+            return `Displaying ${visibleClients} of ${totalClients} Clients page`;
           }}
         />
       </View>
@@ -93,3 +87,12 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+    paddingHorizontal: Spacings.sm,
+    paddingTop: Spacings.sm,
+  },
+});

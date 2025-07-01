@@ -1,175 +1,66 @@
-import { Colors } from '@monorepo/expo/shared/static';
-import { Loading } from '@monorepo/expo/shared/ui-components';
-import { useRouter } from 'expo-router';
-import { ElementType, useEffect, useState } from 'react';
-import { View } from 'react-native';
-import { uniqueBy } from 'remeda';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { ElementType, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import { ClientCardModal, Header } from '../../ui-components';
 import {
-  ClientProfilesQuery,
-  useClientProfilesQuery,
-} from './__generated__/ActiveClients.generated';
+  ClientCard,
+  ClientCardModal,
+  ClientProfileList,
+  Header,
+} from '../../ui-components';
+import { ClientProfilesQuery } from './__generated__/ActiveClients.generated';
 
-const paginationLimit = 20;
-type TClientProfile = ClientProfilesQuery['clientProfiles']['results'];
+type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
 
 export default function Home({ Logo }: { Logo: ElementType }) {
-  const router = useRouter();
-  const [currentClient, setCurrentClient] = useState<TClientProfile[number]>();
+  const [currentClient, setCurrentClient] = useState<TClientProfile | null>(
+    null
+  );
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
-  const [offset, setOffset] = useState<number>(0);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const [totalCount, setTotalCount] = useState<number>(0);
-
-  const [clients, setClients] = useState<TClientProfile>([]);
-  const { data, loading } = useClientProfilesQuery({
-    variables: {
-      filters: { isActive: true },
-      pagination: { limit: paginationLimit, offset: offset },
-    },
-    fetchPolicy: 'cache-and-network',
-    nextFetchPolicy: 'cache-first',
-  });
-
-  async function loadMoreClients() {
-    if (hasMore && !loading) {
-      setOffset((prevOffset) => prevOffset + paginationLimit);
-    }
-  }
-
-  const renderFooter = () => {
-    return loading ? (
-      <View style={{ marginTop: 10, alignItems: 'center' }}>
-        <Loading size="large" color={Colors.NEUTRAL_DARK} />
-      </View>
-    ) : null;
-  };
-
-  useEffect(() => {
-    if (!data || !('clientProfiles' in data)) {
-      return;
-    }
-    const { results, totalCount } = data.clientProfiles;
-    setTotalCount(totalCount);
-
-    if (offset === 0) {
-      setClients(results);
-    } else {
-      setClients((prevClients) =>
-        uniqueBy([...prevClients, ...results], (client) => client.id)
-      );
-    }
-
-    setHasMore(offset + paginationLimit < totalCount);
-  }, [data, offset]);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT }}>
       <Header title="Home" Logo={Logo} />
-      {/* <ClientProfileList
-        filters={{ isActive: true }}
-        renderItem={(client) => (
-          <ClientCard
-            client={client}
-            arrivedFrom="/"
-            onPress={(clientProfileId) => {
-              console.log(
-                '[ClientProfileList HOME] on PRESS clientProfileId: ',
-                clientProfileId
-              );
-            }}
-            onMenuPress={() => {}}
-          />
-        )}
-      /> */}
 
-      {/* <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginTop: Spacings.xs,
-          paddingHorizontal: Spacings.sm,
-          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-        }}
-      >
-        <TextMedium size="sm">
-          Displaying {clients.length} of {totalCount} Active Clients
-        </TextMedium>
-        <TextButton
-          accessibilityHint="goes to all clients list"
-          color={Colors.PRIMARY}
-          fontSize="sm"
-          regular={true}
-          title="All Clients"
-          onPress={() => router.navigate('/clients')}
+      <View style={styles.content}>
+        <ClientProfileList
+          filters={{ isActive: true }}
+          renderItem={(client) => (
+            <ClientCard
+              client={client}
+              arrivedFrom="/"
+              onMenuPress={(client) => {
+                setCurrentClient(client);
+                setModalIsOpen(true);
+              }}
+            />
+          )}
+          renderHeaderText={({ totalClients, visibleClients }) =>
+            `Displaying ${visibleClients} of ${totalClients} Active Clients`
+          }
+          showAllClientsLink={true}
         />
       </View>
-      <FlatList
-        style={{
-          flex: 1,
-          backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
-          paddingBottom: 80,
-          marginTop: Spacings.xs,
-          paddingHorizontal: Spacings.sm,
-        }}
-        data={clients}
-        renderItem={({ item: clientProfile }) => (
-          <ClientCard
-            arrivedFrom="/"
-            onMenuPress={() => {
-              setCurrentClient(clientProfile);
-              setModalIsOpen(true);
-            }}
-            mb="sm"
-            client={clientProfile}
-          />
-        )}
-        keyExtractor={(clientProfile) => clientProfile.id}
-        onEndReached={loadMoreClients}
-        onEndReachedThreshold={0.05}
-        ListHeaderComponent={
-          !loading && clients.length < 1 ? (
-            <View
-              style={{
-                flexGrow: 1,
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingVertical: Spacings.xl,
-              }}
-            >
-              <View
-                style={{
-                  height: 90,
-                  width: 90,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: Radiuses.xxxl,
-                  backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-                  marginBottom: Spacings.md,
-                }}
-              >
-                <UserAddOutlineIcon size="2xl" color={Colors.PRIMARY} />
-              </View>
-              <TextBold mb="xs" size="sm">
-                No Active Clients
-              </TextBold>
-              <TextRegular size="sm">
-                Try adding a client or an interaction.
-              </TextRegular>
-            </View>
-          ) : null
-        }
-        ListFooterComponent={renderFooter}
-      /> */}
+
       {currentClient && (
         <ClientCardModal
           isModalVisible={modalIsOpen}
-          closeModal={() => setModalIsOpen(false)}
+          closeModal={() => {
+            setModalIsOpen(false);
+            setCurrentClient(null);
+          }}
           clientProfile={currentClient}
         />
       )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    flex: 1,
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+    paddingHorizontal: Spacings.sm,
+    paddingTop: Spacings.sm,
+  },
+});

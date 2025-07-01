@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, View, ViewStyle } from 'react-native';
 import { uniqueBy } from 'remeda';
 
 import { ClientProfileFilter, InputMaybe } from '../../apollo';
@@ -17,19 +17,19 @@ const DEFAULT_ITEM_GAP = 16;
 
 type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
 
+export type ListHeaderProps = {
+  totalClients: number;
+  visibleClients: number;
+};
+
 type TProps = {
   renderItem: (clientProfile: TClientProfile) => React.ReactElement | null;
   itemGap?: number;
   filters?: InputMaybe<ClientProfileFilter>;
   paginationLimit?: number;
   showAllClientsLink?: boolean;
-  renderHeader?: ({
-    totalClients,
-    visibleClients,
-  }: {
-    totalClients: number;
-    visibleClients: number;
-  }) => string;
+  renderHeaderText?: (props: ListHeaderProps) => string;
+  headerStyle?: ViewStyle;
 };
 
 export function ClientProfileList(props: TProps) {
@@ -38,14 +38,10 @@ export function ClientProfileList(props: TProps) {
     renderItem,
     itemGap = DEFAULT_ITEM_GAP,
     paginationLimit = DEFAULT_PAGINATION_LIMIT,
-    renderHeader,
+    renderHeaderText,
+    headerStyle,
     showAllClientsLink,
   } = props;
-
-  console.log();
-  console.log('| -------------  filters  ------------- |');
-  console.log(filters);
-  console.log();
 
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
@@ -106,16 +102,15 @@ export function ClientProfileList(props: TProps) {
       ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
       onEndReached={loadMoreClients}
       onEndReachedThreshold={0.05}
-      // header, footer etc...
+      // header, footer, styles etc...
       contentContainerStyle={!clients.length && styles.emptyContent}
-      ListHeaderComponentStyle={{ borderWidth: 4, borderColor: 'blue' }}
+      ListHeaderComponentStyle={[styles.header, headerStyle]}
       ListHeaderComponent={
         <ClientProfileListHeader
           totalClients={totalCount}
           visibleClients={clients.length}
           showAllClientsLink={showAllClientsLink}
-          renderHeader={renderHeader}
-          mb="xs"
+          renderHeaderText={renderHeaderText}
         />
       }
       ListEmptyComponent={<ListEmptyState />}
@@ -129,6 +124,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
     paddingBottom: 80,
     marginTop: Spacings.xs,
+  },
+  header: {
+    marginBottom: Spacings.xs,
   },
   emptyContent: {
     flexGrow: 1,

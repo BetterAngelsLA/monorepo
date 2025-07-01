@@ -18,8 +18,11 @@ import { HmisProfileType, Maybe } from '../apollo';
 import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
+
 interface IClientCardProps {
-  client: ClientProfilesQuery['clientProfiles']['results'][number] | undefined;
+  client: TClientProfile | undefined;
   progress?: DimensionValue;
   mb?: TSpacing;
   mt?: TSpacing;
@@ -27,8 +30,8 @@ interface IClientCardProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  onPress?: (clientProfileId: string) => void;
-  onMenuPress?: () => void;
+  onPress?: (client: TClientProfile) => void;
+  onMenuPress?: (client: TClientProfile) => void;
   arrivedFrom?: string;
 }
 
@@ -59,13 +62,13 @@ export default function ClientCard(props: IClientCardProps) {
     ? getLahsaHmisId(client.hmisProfiles)
     : null;
 
-  function onCardPress(clientProfileId: string) {
+  function onCardPress(client: TClientProfile) {
     if (onPress) {
-      return onPress(clientProfileId);
+      return onPress(client);
     }
 
     router.navigate({
-      pathname: `/client/${clientProfileId}`,
+      pathname: `/client/${client.id}`,
       params: {
         arrivedFrom,
       },
@@ -74,7 +77,7 @@ export default function ClientCard(props: IClientCardProps) {
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => onCardPress(client.id)}
+      onPress={() => onCardPress(client)}
       style={({ pressed }) => [
         styles.container,
         {
@@ -138,7 +141,7 @@ export default function ClientCard(props: IClientCardProps) {
       {!!onMenuPress && (
         <View style={{ justifyContent: 'center', position: 'relative' }}>
           <IconButton
-            onPress={onMenuPress}
+            onPress={() => onMenuPress(client)}
             variant="transparent"
             accessibilityLabel={'open client details modal'}
             accessibilityHint={'open client details modal'}

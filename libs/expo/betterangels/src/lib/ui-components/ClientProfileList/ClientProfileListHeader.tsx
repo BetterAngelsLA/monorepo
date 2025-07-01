@@ -1,40 +1,32 @@
-import {
-  Colors,
-  TMarginProps,
-  getMarginStyles,
-} from '@monorepo/expo/shared/static';
-import { TextButton, TextMedium } from '@monorepo/expo/shared/ui-components';
+import { Colors } from '@monorepo/expo/shared/static';
+import { TextButton, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-interface IProps extends TMarginProps {
+type TProps = {
   visibleClients: number;
   totalClients: number;
   showAllClientsLink?: boolean;
-  renderHeader?: ({
-    totalClients,
-    visibleClients,
-  }: {
+  renderHeaderText?: (params: {
     totalClients: number;
     visibleClients: number;
   }) => string;
-}
+};
 
-export function ClientProfileListHeader(props: IProps) {
-  const { visibleClients, totalClients, renderHeader, showAllClientsLink } =
+export function ClientProfileListHeader(props: TProps) {
+  const { visibleClients, totalClients, renderHeaderText, showAllClientsLink } =
     props;
 
   const router = useRouter();
 
+  const headerText =
+    typeof renderHeaderText === 'function'
+      ? renderHeaderText({ totalClients, visibleClients })
+      : `Showing ${visibleClients} of ${totalClients} clients`;
+
   return (
-    <View style={[styles.container, { ...getMarginStyles(props) }]}>
-      {renderHeader && (
-        <TextMedium size="sm">
-          {/* display dynamic text here */}
-          Displaying {visibleClients} of {totalClients} Active Clients
-          {/* {renderHeader} */}
-        </TextMedium>
-      )}
+    <View style={styles.container}>
+      <TextRegular>{headerText}</TextRegular>
 
       {showAllClientsLink && (
         <TextButton
