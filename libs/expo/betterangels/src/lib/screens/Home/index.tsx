@@ -1,6 +1,7 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   Loading,
+  PhoneNumberInput,
   TextBold,
   TextButton,
   TextMedium,
@@ -71,9 +72,20 @@ export default function Home({ Logo }: { Logo: ElementType }) {
     setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
 
+  function onPhoneNumberChange(value) {
+    console.log('~~~~~~~~home value');
+    console.log(value);
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT }}>
       <Header title="Home" Logo={Logo} />
+      <PhoneNumberInput
+        value="2125551212x123"
+        onChange={onPhoneNumberChange}
+        // onChange={(value) => setValue('phoneNumber', value)}
+        // errors={errors.phoneNumber}
+      />
       <View
         style={{
           flexDirection: 'row',

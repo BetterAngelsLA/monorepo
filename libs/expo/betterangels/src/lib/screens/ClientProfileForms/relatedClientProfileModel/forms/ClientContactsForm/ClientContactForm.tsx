@@ -2,6 +2,7 @@ import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   ControlledInput,
   Form,
+  PhoneNumberInput,
   SingleSelect,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -84,7 +85,15 @@ export function ClientContactForm(props: TProps) {
                 />
               )}
             />
-
+            <PhoneNumberInput
+              value="2125551212x123"
+              // onChange={(value) => setValue('phoneNumber', value)}
+              onClear={() => {
+                setValue('phoneNumber', '');
+                clearErrors('phoneNumber');
+              }}
+              // errors={errors.phoneNumber}
+            />
             <ControlledInput
               name={'name'}
               control={control}
