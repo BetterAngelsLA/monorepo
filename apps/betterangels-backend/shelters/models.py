@@ -8,6 +8,7 @@ from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.core.files.storage import default_storage
 from django.db import models
+from django.db.models import Case, IntegerField, Manager, QuerySet, When
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
 from organizations.models import Organization
@@ -300,6 +301,32 @@ class Shelter(BaseModel):
         super().save(*args, **kwargs)
 
 
+DAYS_ORDER = [
+    DayOfWeekChoices.MONDAY,
+    DayOfWeekChoices.TUESDAY,
+    DayOfWeekChoices.WEDNESDAY,
+    DayOfWeekChoices.THURSDAY,
+    DayOfWeekChoices.FRIDAY,
+    DayOfWeekChoices.SATURDAY,
+    DayOfWeekChoices.SUNDAY,
+]
+
+
+class OperatingHourQuerySet(models.QuerySet["OperatingHour"]):
+    def by_weekday(self) -> "OperatingHourQuerySet":
+        return self.annotate(
+            day_order=Case(
+                *[When(day_of_week=day, then=pos) for pos, day in enumerate(DAYS_ORDER)],
+                output_field=IntegerField(),
+            )
+        ).order_by("day_order", "opens_at")
+
+
+class OperatingHourManager(Manager["OperatingHour"]):
+    def get_queryset(self) -> OperatingHourQuerySet:
+        return OperatingHourQuerySet(self.model, using=self._db).by_weekday()
+
+
 @pghistory.track(
     pghistory.InsertEvent("shelter.operating_hour.add"),
     pghistory.UpdateEvent("shelter.operating_hour.update"),
@@ -310,6 +337,8 @@ class OperatingHour(models.Model):
     day_of_week = TextChoicesField(choices_enum=DayOfWeekChoices)
     opens_at = models.TimeField()
     closes_at = models.TimeField()
+
+    objects: OperatingHourManager = OperatingHourManager()
 
     def __str__(self) -> str:
         return f"{self.day_of_week}: {self.opens_at} - {self.closes_at}"

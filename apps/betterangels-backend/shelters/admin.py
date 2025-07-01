@@ -13,7 +13,6 @@ from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Case, IntegerField, When
 from django.forms import TimeInput
 from django.http import HttpRequest
 from django.urls import reverse
@@ -32,6 +31,7 @@ from shelters.permissions import ShelterFieldPermissions
 from .enums import (
     AccessibilityChoices,
     CityChoices,
+    DayOfWeekChoices,
     DemographicChoices,
     EntryRequirementChoices,
     ExitPolicyChoices,
@@ -83,30 +83,10 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
-DAY_ORDER = [
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-    "sunday",
-]
-
-
 class OperatingHourInline(admin.TabularInline):
     model = OperatingHour
     extra = 1
     min_num = 0
-
-    def get_queryset(self, request: HttpRequest) -> models.QuerySet[OperatingHour]:
-        qs: models.QuerySet[OperatingHour] = super().get_queryset(request)
-        cases = [When(day_of_week=day, then=pos) for pos, day in enumerate(DAY_ORDER)]
-
-        return qs.annotate(day_order=Case(*cases, output_field=IntegerField())).order_by(
-            "day_order",
-            "opens_at",
-        )
 
 
 class ShelterForm(forms.ModelForm):
