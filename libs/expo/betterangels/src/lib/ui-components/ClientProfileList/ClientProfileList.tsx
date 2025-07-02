@@ -86,9 +86,15 @@ export function ClientProfileList(props: TProps) {
     setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
 
-  if (loading) {
-    return <ListLoadingView />;
-  }
+  const renderFooter = () => {
+    if (!loading) {
+      return null;
+    }
+
+    const marginTop = !!clients?.length ? 10 : 45;
+
+    return <ListLoadingView style={{ marginTop }} />;
+  };
 
   // initial query hasn't run yet (clients undefined)
   if (!clients) {
@@ -113,6 +119,7 @@ export function ClientProfileList(props: TProps) {
         onEndReachedThreshold={0.05}
         ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
         ListEmptyComponent={<ListEmptyState />}
+        ListFooterComponent={renderFooter}
         contentContainerStyle={[
           !clients.length && styles.emptyContent,
           styles.listContent,
@@ -132,8 +139,6 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 80,
-    // borderWidth: 1,
-    // borderColor: 'red',
   },
   emptyContent: {
     flexGrow: 1,

@@ -18,8 +18,7 @@ export function ListLoadingView(props: TProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
+    marginTop: 10,
     alignItems: 'center',
-    justifyContent: 'center',
   },
 });
