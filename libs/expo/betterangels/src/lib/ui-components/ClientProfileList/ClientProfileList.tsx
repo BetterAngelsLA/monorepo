@@ -1,5 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactElement, useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { ReactElement, useCallback, useEffect, useState } from 'react';
 import { FlatList, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { uniqueBy } from 'remeda';
 import {
@@ -59,12 +60,6 @@ export function ClientProfileList(props: TProps) {
     undefined
   );
 
-  useEffect(() => {
-    setOffset(0);
-    // reset clients state to `undefined` to signify new query has not run yet
-    setClients(undefined);
-  }, [filters]);
-
   const { data, loading } = useClientProfilesQuery({
     variables: {
       filters,
@@ -75,11 +70,11 @@ export function ClientProfileList(props: TProps) {
     nextFetchPolicy: 'cache-first',
   });
 
-  async function loadMoreClients() {
-    if (hasMore && !loading) {
-      setOffset((prevOffset) => prevOffset + paginationLimit);
-    }
-  }
+  useFocusEffect(
+    useCallback(() => {
+      setOffset(0);
+    }, [filters])
+  );
 
   useEffect(() => {
     if (!data || !('clientProfiles' in data)) {
@@ -100,6 +95,12 @@ export function ClientProfileList(props: TProps) {
 
     setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
+
+  async function loadMoreClients() {
+    if (hasMore && !loading) {
+      setOffset((prevOffset) => prevOffset + paginationLimit);
+    }
+  }
 
   const renderFooter = () => {
     if (!loading) {
