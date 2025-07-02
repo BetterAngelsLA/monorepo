@@ -16,10 +16,6 @@ export interface IPhoneNumberInputProps {
   placeholderExt?: string;
   disabled?: boolean;
   errors?: string;
-  // errors?: {
-  //   phoneNumber?: string;
-  //   // extension?: string;
-  // };
   label?: string;
   style?: ViewStyle;
   name?: string;

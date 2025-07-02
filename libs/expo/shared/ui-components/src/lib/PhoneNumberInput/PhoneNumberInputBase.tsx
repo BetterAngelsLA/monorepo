@@ -37,7 +37,7 @@ export function PhoneNumberInputBase(props: IPhoneNumberInputProps) {
   const [extension, setExtension] = useState('');
 
   useEffect(() => {
-    const [phoneNumber, extension] = parseNumber(value);
+    const [phoneNumber, extension] = parseNumber(value || '');
     setPhoneNumber(phoneNumber);
     setExtension(extension || '');
   }, [value]);
@@ -45,7 +45,7 @@ export function PhoneNumberInputBase(props: IPhoneNumberInputProps) {
   useEffect(() => {
     const formattedPhoneNumber = formatValues(phoneNumber, extension);
 
-    onChange(formattedPhoneNumber);
+    onChange?.(formattedPhoneNumber);
 
     if (!formattedPhoneNumber) {
       onClear?.();
