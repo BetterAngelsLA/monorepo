@@ -1,6 +1,5 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { useFocusEffect } from 'expo-router';
-import { ReactElement, useCallback, useEffect, useState } from 'react';
+import { ReactElement, useEffect, useState } from 'react';
 import { FlatList, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { uniqueBy } from 'remeda';
 import {
@@ -70,11 +69,11 @@ export function ClientProfileList(props: TProps) {
     nextFetchPolicy: 'cache-first',
   });
 
-  useFocusEffect(
-    useCallback(() => {
-      setOffset(0);
-    }, [filters])
-  );
+  // reset offset when filters change
+  // so that new query starts from the beginning of the list
+  useEffect(() => {
+    setOffset(0);
+  }, [filters]);
 
   useEffect(() => {
     if (!data || !('clientProfiles' in data)) {
