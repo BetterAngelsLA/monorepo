@@ -1,13 +1,14 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
-import FormFieldError from '../FormFieldError';
 import { Input } from '../Input';
 
 interface IPhoneNumberInputProps {
   value: string;
   onChange: (value: string) => void;
   onClear?: () => void;
+  parseNumber?: (value: string) => [string, string | undefined];
+  formatValues?: (number: string, extension?: string) => string;
   placeholderNumber?: string;
   placeholderExt?: string;
   disabled?: boolean;
@@ -19,8 +20,17 @@ interface IPhoneNumberInputProps {
   style?: ViewStyle;
 }
 
-function parsePhoneNumber(value: string) {
+function defaultParseNumber(value: string) {
   return value.split('x');
+}
+
+function defaultFormatValues(phoneNumber: string, extension?: string) {
+  let formattedPhoneNumber = phoneNumber;
+  if (extension) {
+    formattedPhoneNumber = `${formattedPhoneNumber}x${extension}`;
+  }
+
+  return formattedPhoneNumber;
 }
 
 export function PhoneNumberInput(props: IPhoneNumberInputProps) {
@@ -30,6 +40,8 @@ export function PhoneNumberInput(props: IPhoneNumberInputProps) {
     label,
     onChange,
     onClear,
+    parseNumber = defaultParseNumber,
+    formatValues = defaultFormatValues,
     placeholderExt = 'ext',
     placeholderNumber = 'Enter phone number',
     style,
@@ -40,17 +52,13 @@ export function PhoneNumberInput(props: IPhoneNumberInputProps) {
   const [extension, setExtension] = useState('');
 
   useEffect(() => {
-    const [phoneNumber, extension] = parsePhoneNumber(value);
+    const [phoneNumber, extension] = parseNumber(value);
     setPhoneNumber(phoneNumber);
     setExtension(extension || '');
   }, [value]);
 
   useEffect(() => {
-    let formattedPhoneNumber = phoneNumber;
-    if (extension) {
-      formattedPhoneNumber = `${formattedPhoneNumber}x${extension}`;
-    }
-    onChange(formattedPhoneNumber);
+    const formattedPhoneNumber = formatValues(phoneNumber, extension);
 
     if (!formattedPhoneNumber) {
       onClear?.();
@@ -88,12 +96,7 @@ export function PhoneNumberInput(props: IPhoneNumberInputProps) {
           onDelete={() => setExtension('')}
           placeholder={placeholderExt}
           value={extension}
-          // onBlur={}
         />
-      </View>
-      <View>
-        <FormFieldError message="Enter a 10-digit phone number without space or special characters" />
-        <FormFieldError message="Extension must be a number" />
       </View>
     </View>
   );
