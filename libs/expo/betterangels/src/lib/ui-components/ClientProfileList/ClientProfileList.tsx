@@ -1,23 +1,34 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactElement, useEffect, useState } from 'react';
 import { FlatList, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-
 import { uniqueBy } from 'remeda';
-import { ClientProfileFilter, InputMaybe } from '../../apollo';
+import {
+  ClientProfileFilter,
+  ClientProfileOrder,
+  InputMaybe,
+} from '../../apollo';
 import { ClientProfileListHeader } from './ClientProfileListHeader';
 import { ListEmptyState } from './ListEmptyState';
 import { ListLoadingView } from './ListLoadingView';
-import { useClientProfilesQuery } from './__generated__/ClientProfiles.generated';
-import { ListHeaderProps, TClientProfile } from './types';
+import {
+  ClientProfilesQuery,
+  useClientProfilesQuery,
+} from './__generated__/ClientProfiles.generated';
+import {
+  DEFAULT_ITEM_GAP,
+  DEFAULT_PAGINATION_LIMIT,
+  DEFAULT_QUERY_ORDER,
+} from './constants';
+import { ListHeaderProps } from './types';
 
-const DEFAULT_PAGINATION_LIMIT = 20;
-const DEFAULT_ITEM_GAP = 16;
+type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
 
 type TProps = {
   renderItem: (clientProfile: TClientProfile) => ReactElement | null;
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<ClientProfileFilter>;
+  order?: ClientProfileOrder | null;
   paginationLimit?: number;
   showAllClientsLink?: boolean;
   renderHeaderText?: (props: ListHeaderProps) => string;
@@ -27,13 +38,14 @@ type TProps = {
 export function ClientProfileList(props: TProps) {
   const {
     filters,
-    renderItem,
-    style,
+    order = DEFAULT_QUERY_ORDER,
     itemGap = DEFAULT_ITEM_GAP,
     paginationLimit = DEFAULT_PAGINATION_LIMIT,
+    renderItem,
     renderHeaderText,
     headerStyle,
     showAllClientsLink,
+    style,
   } = props;
 
   const [offset, setOffset] = useState<number>(0);
@@ -42,20 +54,22 @@ export function ClientProfileList(props: TProps) {
   const [clients, setClients] = useState<TClientProfile[] | undefined>(
     undefined
   );
+
   const { data, loading } = useClientProfilesQuery({
     variables: {
       filters,
+      order,
       pagination: { limit: paginationLimit, offset: offset },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
 
-  async function loadMoreClients() {
-    if (hasMore && !loading) {
-      setOffset((prevOffset) => prevOffset + paginationLimit);
-    }
-  }
+  // reset offset when filters change
+  // so that new query starts from the beginning of the list
+  useEffect(() => {
+    setOffset(0);
+  }, [filters]);
 
   useEffect(() => {
     if (!data || !('clientProfiles' in data)) {
@@ -77,13 +91,25 @@ export function ClientProfileList(props: TProps) {
     setHasMore(offset + paginationLimit < totalCount);
   }, [data, offset]);
 
-  if (loading) {
-    return <ListLoadingView />;
+  async function loadMoreClients() {
+    if (hasMore && !loading) {
+      setOffset((prevOffset) => prevOffset + paginationLimit);
+    }
   }
+
+  const renderFooter = () => {
+    if (!loading) {
+      return null;
+    }
+
+    const marginTop = clients?.length ? 10 : 45;
+
+    return <ListLoadingView style={{ marginTop }} />;
+  };
 
   // initial query hasn't run yet (clients undefined)
   if (!clients) {
-    return;
+    return null;
   }
 
   return (
@@ -104,6 +130,7 @@ export function ClientProfileList(props: TProps) {
         onEndReachedThreshold={0.05}
         ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
         ListEmptyComponent={<ListEmptyState />}
+        ListFooterComponent={renderFooter}
         contentContainerStyle={[
           !clients.length && styles.emptyContent,
           styles.listContent,
@@ -122,7 +149,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacings.xs,
   },
   listContent: {
-    paddingBottom: 80,
+    paddingBottom: 60,
   },
   emptyContent: {
     flexGrow: 1,
