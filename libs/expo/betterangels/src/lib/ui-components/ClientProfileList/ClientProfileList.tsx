@@ -91,7 +91,7 @@ export function ClientProfileList(props: TProps) {
       return null;
     }
 
-    const marginTop = !!clients?.length ? 10 : 45;
+    const marginTop = clients?.length ? 10 : 45;
 
     return <ListLoadingView style={{ marginTop }} />;
   };
