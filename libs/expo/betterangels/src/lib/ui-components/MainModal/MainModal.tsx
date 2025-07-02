@@ -80,10 +80,12 @@ export function MainModal(props: IMainModalProps) {
           {topSection}
 
           {actions.map((action, idx: number) => {
+            // if action is a ReactNode, return (render)
             if (isValidElement(action)) {
               return cloneElement(action, { key: idx });
             }
 
+            // is not ReactNode, so treat as `TMainModalAction` type
             const { title, route, params, Icon, onPress } =
               action as TMainModalAction;
 
