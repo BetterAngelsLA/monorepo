@@ -19,12 +19,12 @@ export default function Header({
       </div>
       <HeroCarousel className="-mx-4 mb-4" shelter={shelter} />
       <div className="mb-4">
-        <h1 className="font-medium text-xl">{shelter.name}</h1>
+        <h1 className="font-medium text-xl mb-2">{shelter.name}</h1>
         {shelter.organization && (
-          <p className="text-sm">{'By ' + shelter.organization.name}</p>
+          <p className="text-sm mb-4">{'By ' + shelter.organization.name}</p>
         )}
       </div>
-      <div className="flex gap-2 items-center">
+      <div className="flex gap-2 items-center mb-6">
         <UsersIcon className="w-6 h-6 fill-primary-20" />
         <p className="text-sm">
           {shelter.demographics
