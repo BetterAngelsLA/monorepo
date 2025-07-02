@@ -7,18 +7,19 @@ type TRules = Omit<
 >;
 
 export interface IPhoneNumberInputProps {
-  value: string;
-  onChange: (value: string) => void;
+  value?: string;
+  onChange?: (value: string) => void;
   onClear?: () => void;
   parseNumber?: (value: string) => [string, string | undefined];
   formatValues?: (number: string, extension?: string) => string;
   placeholderNumber?: string;
   placeholderExt?: string;
   disabled?: boolean;
-  errors?: {
-    phoneNumber?: string;
-    extension?: string;
-  };
+  errors?: string;
+  // errors?: {
+  //   phoneNumber?: string;
+  //   // extension?: string;
+  // };
   label?: string;
   style?: ViewStyle;
   name?: string;

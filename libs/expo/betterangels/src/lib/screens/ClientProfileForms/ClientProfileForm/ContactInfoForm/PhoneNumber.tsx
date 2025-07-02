@@ -1,7 +1,7 @@
-import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  ControlledInput,
   Form,
+  PhoneNumberInput,
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -28,13 +28,27 @@ export function PhoneNumber() {
     control,
     name: 'phoneNumbers',
   });
+  // function onPhoneNumberChange(value) {
+  //   console.log('~~~~~~~~home value');
+  //   console.log(value);
+  // }
   return (
     <Form.Field title="Phone Number(s)">
       <View style={{ gap: Spacings.sm }}>
         {fields.map((field, index) => (
           <View style={{ gap: Spacings.sm }} key={field.id}>
             <View style={{ gap: Spacings.xs }}>
-              <View style={{ flexDirection: 'row' }}>
+              <PhoneNumberInput
+                // onChange={onPhoneNumberChange}
+                // onChange={onPhoneNumberChange}
+                label={'Phone Number'}
+                name={`phoneNumbers.${index}.number`}
+                control={control}
+                // errors={errors.phoneNumber}
+                // onChange={(value) => setValue('phoneNumber', value)}
+                // errors={errors.phoneNumber}
+              />
+              {/* <View style={{ flexDirection: 'row' }}>
                 <ControlledInput
                   style={{ flex: 2, marginRight: Spacings.xs }}
                   name={`phoneNumbers.${index}.number`}
@@ -92,7 +106,7 @@ export function PhoneNumber() {
                     Extension must be a number
                   </TextRegular>
                 )}
-              </View>
+              </View> */}
               {index !== 0 && (
                 <TextButton
                   color={Colors.PRIMARY}

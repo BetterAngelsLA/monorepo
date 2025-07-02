@@ -1,4 +1,4 @@
-import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
+import { Colors, Regex } from '@monorepo/expo/shared/static';
 import {
   ControlledInput,
   Form,
@@ -49,6 +49,10 @@ export function ClientContactForm(props: TProps) {
     return null;
   }
 
+  function onPhoneNumberChange(value) {
+    console.log('~~~~~~~~home value');
+    console.log(value);
+  }
   return (
     <Form.Page
       scrollViewRef={scrollRef}
@@ -130,7 +134,16 @@ export function ClientContactForm(props: TProps) {
                 },
               }}
             />
-            <View style={{ flexDirection: 'row' }}>
+            <PhoneNumberInput
+              value="2125551212x123"
+              onChange={onPhoneNumberChange}
+              label={'Phone Number'}
+              name={'phoneNumber'}
+              control={control}
+              // onChange={(value) => setValue('phoneNumber', value)}
+              // errors={errors.phoneNumber}
+            />
+            {/* <View style={{ flexDirection: 'row' }}>
               <ControlledInput
                 style={{ flex: 2, marginRight: Spacings.xs }}
                 name={'phoneNumber'}
@@ -177,8 +190,8 @@ export function ClientContactForm(props: TProps) {
                   },
                 }}
               />
-            </View>
-            <View style={{ marginTop: -Spacings.xs }}>
+            </View> */}
+            {/* <View style={{ marginTop: -Spacings.xs }}>
               {errors.phoneNumber && (
                 <TextRegular size={'sm'} color={Colors.ERROR}>
                   {errors.phoneNumber?.message}
@@ -189,7 +202,7 @@ export function ClientContactForm(props: TProps) {
                   {errors.extension?.message}
                 </TextRegular>
               )}
-            </View>
+            </View> */}
 
             <AddressAutocomplete
               control={control}

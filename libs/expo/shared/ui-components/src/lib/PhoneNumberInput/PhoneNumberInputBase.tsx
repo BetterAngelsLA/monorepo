@@ -85,7 +85,7 @@ export function PhoneNumberInputBase(props: IPhoneNumberInputProps) {
           value={extension}
         />
       </View>
-      {errors && <FormFieldError message="don't call me" />}
+      {errors && <FormFieldError message={errors} />}
     </View>
   );
 }
