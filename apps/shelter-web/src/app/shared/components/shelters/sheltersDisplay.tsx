@@ -118,7 +118,7 @@ export function SheltersDisplay(props: TProps) {
   return (
     <div className={className}>
       <div>
-        <div className="font-semibold">{shelters.length} locations</div>
+        <div className="text-xl font-semibold">{shelters.length} locations</div>
         <SearchSource coordinatesSource={coordinatesSource} />
       </div>
 
