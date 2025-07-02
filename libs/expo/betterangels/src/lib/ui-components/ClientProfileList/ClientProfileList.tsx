@@ -76,9 +76,9 @@ export function ClientProfileList(props: TProps) {
       return;
     }
 
-    const { results, totalCount } = data.clientProfiles;
+    const { results, totalCount: newTotalCount } = data.clientProfiles;
 
-    setTotalCount(totalCount);
+    setTotalCount(newTotalCount);
 
     setClients((prevClients) => {
       if (offset === 0 || prevClients === undefined) {
@@ -88,10 +88,10 @@ export function ClientProfileList(props: TProps) {
       return uniqueBy([...prevClients, ...results], (client) => client.id);
     });
 
-    setHasMore(offset + paginationLimit < totalCount);
+    setHasMore(offset + paginationLimit < newTotalCount);
   }, [data, offset]);
 
-  async function loadMoreClients() {
+  function loadMoreClients() {
     if (hasMore && !loading) {
       setOffset((prevOffset) => prevOffset + paginationLimit);
     }
@@ -102,9 +102,7 @@ export function ClientProfileList(props: TProps) {
       return null;
     }
 
-    const marginTop = clients?.length ? 10 : 45;
-
-    return <ListLoadingView style={{ marginTop }} />;
+    return <ListLoadingView />;
   };
 
   // initial query hasn't run yet (clients undefined)
