@@ -1,6 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
-import { ElementType, ReactNode, cloneElement, isValidElement } from 'react';
+import { ElementType, Fragment, ReactNode, isValidElement } from 'react';
 import { DimensionValue, StyleSheet, View } from 'react-native';
 import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -82,7 +82,7 @@ export function MainModal(props: IMainModalProps) {
           {actions.map((action, idx: number) => {
             // if action is a ReactNode, return (render)
             if (isValidElement(action)) {
-              return cloneElement(action, { key: idx });
+              return <Fragment key={idx}>{action}</Fragment>;
             }
 
             // is not ReactNode, so treat as `TMainModalAction` type
