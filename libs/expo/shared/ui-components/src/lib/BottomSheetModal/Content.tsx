@@ -1,6 +1,7 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
+import { StyleSheet } from 'react-native';
 
 export default function BottomSheetModalContent({
   children,
@@ -8,13 +9,14 @@ export default function BottomSheetModalContent({
   children: ReactNode;
 }) {
   return (
-    <BottomSheetView
-      style={{
-        flex: 1,
-        paddingBottom: Spacings.md,
-      }}
-    >
+    <BottomSheetScrollView contentContainerStyle={styles.container}>
       {children}
-    </BottomSheetView>
+    </BottomSheetScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    paddingBottom: Spacings.lg,
+  },
+});
