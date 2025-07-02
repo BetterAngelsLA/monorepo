@@ -83,6 +83,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
       <PhoneNumberInput
         value="2125551212x123"
         onChange={onPhoneNumberChange}
+        label={'Phone Number'}
         // onChange={(value) => setValue('phoneNumber', value)}
         // errors={errors.phoneNumber}
       />

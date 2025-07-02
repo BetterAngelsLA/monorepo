@@ -1,6 +1,7 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View, ViewStyle } from 'react-native';
+import FormFieldError from '../FormFieldError';
 import { Input } from '../Input';
 
 interface IPhoneNumberInputProps {
@@ -14,6 +15,8 @@ interface IPhoneNumberInputProps {
     phoneNumber?: string;
     extension?: string;
   };
+  label?: string;
+  style?: ViewStyle;
 }
 
 function parsePhoneNumber(value: string) {
@@ -22,13 +25,15 @@ function parsePhoneNumber(value: string) {
 
 export function PhoneNumberInput(props: IPhoneNumberInputProps) {
   const {
-    value,
+    disabled,
+    errors,
+    label,
     onChange,
     onClear,
-    errors,
-    placeholderNumber = 'Enter phone number',
     placeholderExt = 'ext',
-    disabled,
+    placeholderNumber = 'Enter phone number',
+    style,
+    value,
   } = props;
 
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -52,30 +57,55 @@ export function PhoneNumberInput(props: IPhoneNumberInputProps) {
     }
   }, [phoneNumber, extension]);
 
+  function makeNumeric(value: string) {
+    return value.replace(/[^0-9]/g, '');
+  }
+
   return (
-    <View style={{ flexDirection: 'row' }}>
-      <Input
-        disabled={disabled}
-        error={!!errors?.phoneNumber}
-        keyboardType="number-pad"
-        label={'Phone Number'}
-        onChangeText={(value) => setPhoneNumber(value)}
-        onDelete={() => setPhoneNumber('')}
-        placeholder={placeholderNumber}
-        style={{ flex: 2, marginRight: Spacings.xs }}
-        value={phoneNumber}
-      />
-      <Input
-        disabled={disabled}
-        error={!!errors?.extension}
-        keyboardType="number-pad"
-        label={'ext'}
-        onChangeText={(value) => setExtension(value)}
-        onDelete={() => setExtension('')}
-        placeholder={placeholderExt}
-        style={{ flex: 1 }}
-        value={extension}
-      />
+    <View style={[styles.container, style]}>
+      <View style={[styles.inputRow]}>
+        <Input
+          style={styles.number}
+          disabled={disabled}
+          keyboardType="number-pad"
+          label={label}
+          onChangeText={(value) => {
+            setPhoneNumber(makeNumeric(value));
+          }}
+          onDelete={() => setPhoneNumber('')}
+          placeholder={placeholderNumber}
+          value={phoneNumber}
+          textContentType="telephoneNumber"
+          maxLength={10}
+        />
+        <Input
+          style={styles.extension}
+          disabled={disabled}
+          keyboardType="number-pad"
+          onChangeText={(value) => {
+            setExtension(makeNumeric(value));
+          }}
+          onDelete={() => setExtension('')}
+          placeholder={placeholderExt}
+          value={extension}
+          // onBlur={}
+        />
+      </View>
+      <View>
+        <FormFieldError message="Enter a 10-digit phone number without space or special characters" />
+        <FormFieldError message="Extension must be a number" />
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {},
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  errors: {},
+  number: { flex: 2, marginRight: Spacings.xs },
+  extension: { flex: 1 },
+});
