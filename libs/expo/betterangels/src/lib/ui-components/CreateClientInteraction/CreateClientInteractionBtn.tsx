@@ -51,20 +51,24 @@ export function CreateClientInteractionBtn(props: TProps) {
 
       const createdNoteId = data.createNote.id;
 
+      // custom callback: invoke and return
       if (onCreated) {
         return onCreated(createdNoteId);
       }
 
+      // default behavior
       router.navigate(`/add-note/${createdNoteId}`);
     } catch (err) {
       console.error(
         `error creating note for profileId [${clientProfileId}]: ${err}`
       );
 
+      // custom callback: invoke and return
       if (onError) {
         return onError();
       }
 
+      // default behavior
       showSnackbar({
         message: `Sorry, there was an error creating a new interaction.`,
         type: 'error',
