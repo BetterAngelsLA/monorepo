@@ -1,9 +1,12 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactElement, useEffect, useState } from 'react';
 import { FlatList, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-
 import { uniqueBy } from 'remeda';
-import { ClientProfileFilter, InputMaybe } from '../../apollo';
+import {
+  ClientProfileFilter,
+  ClientProfileOrder,
+  InputMaybe,
+} from '../../apollo';
 import { ClientProfileListHeader } from './ClientProfileListHeader';
 import { ListEmptyState } from './ListEmptyState';
 import { ListLoadingView } from './ListLoadingView';
@@ -11,9 +14,11 @@ import {
   ClientProfilesQuery,
   useClientProfilesQuery,
 } from './__generated__/ClientProfiles.generated';
-
-const DEFAULT_PAGINATION_LIMIT = 20;
-const DEFAULT_ITEM_GAP = 16;
+import {
+  DEFAULT_ITEM_GAP,
+  DEFAULT_PAGINATION_LIMIT,
+  DEFAULT_QUERY_ORDER,
+} from './constants';
 
 type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
 
@@ -27,6 +32,7 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<ClientProfileFilter>;
+  order?: ClientProfileOrder | null;
   paginationLimit?: number;
   showAllClientsLink?: boolean;
   renderHeaderText?: (props: ListHeaderProps) => string;
@@ -36,13 +42,14 @@ type TProps = {
 export function ClientProfileList(props: TProps) {
   const {
     filters,
-    renderItem,
-    style,
+    order = DEFAULT_QUERY_ORDER,
     itemGap = DEFAULT_ITEM_GAP,
     paginationLimit = DEFAULT_PAGINATION_LIMIT,
+    renderItem,
     renderHeaderText,
     headerStyle,
     showAllClientsLink,
+    style,
   } = props;
 
   const [offset, setOffset] = useState<number>(0);
@@ -51,9 +58,17 @@ export function ClientProfileList(props: TProps) {
   const [clients, setClients] = useState<TClientProfile[] | undefined>(
     undefined
   );
+
+  useEffect(() => {
+    setOffset(0);
+    // reset clients state to `undefined` to signify new query has not run yet
+    setClients(undefined);
+  }, [filters]);
+
   const { data, loading } = useClientProfilesQuery({
     variables: {
       filters,
+      order,
       pagination: { limit: paginationLimit, offset: offset },
     },
     fetchPolicy: 'cache-and-network',
@@ -98,7 +113,7 @@ export function ClientProfileList(props: TProps) {
 
   // initial query hasn't run yet (clients undefined)
   if (!clients) {
-    return;
+    return null;
   }
 
   return (
