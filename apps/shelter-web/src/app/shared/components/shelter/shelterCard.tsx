@@ -43,25 +43,11 @@ export function ShelterCard(props: TShelterCard) {
 
   const formattedAddress = location?.place.replace(/, USA$/, '');
 
-  const parentCss = [
-    'flex',
-    'flex-col',
-    'cursor-pointer',
-    className,
-  ];
+  const parentCss = ['flex', 'flex-col', 'cursor-pointer', className];
 
-  const bodyCss = [
-    'flex',
-    'flex-col',
-    'md:flex-row',
-    'cursor-pointer',
-  ];
+  const bodyCss = ['flex', 'flex-col', 'md:flex-row', 'cursor-pointer'];
 
-  const footerCss = [
-    'mt-4',
-    'md:mt-10',
-    footerClassName,
-  ]
+  const footerCss = ['mt-4', 'md:mt-10', footerClassName];
 
   const contentCss = ['mt-4'];
 
@@ -87,12 +73,12 @@ export function ShelterCard(props: TShelterCard) {
         />
 
         <div className={mergeCss(contentCss)}>
-          <div className="font-semibold text-sm md:text-lg leading-[1.125rem] tracking-[.03125rem]">
+          <div className="font-medium md:text-lg leading-[1.125rem] tracking-[.03125rem]">
             {name}
           </div>
 
           {formattedAddress && (
-            <div className="text-xs md:text-sm mt-1.5 flex items-start">
+            <div className="text-sm md:text-sm mt-2 flex items-start">
               <LocationIcon className="h-4 mr-2" />
 
               <div className="flex-inline flex-wrap">
@@ -110,11 +96,7 @@ export function ShelterCard(props: TShelterCard) {
           )}
         </div>
       </div>
-      {footer && (
-        <div className={mergeCss(footerCss)}>
-          {footer}
-        </div>
-      )}
+      {footer && <div className={mergeCss(footerCss)}>{footer}</div>}
     </div>
   );
 }
