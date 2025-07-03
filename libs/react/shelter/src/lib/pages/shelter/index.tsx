@@ -6,7 +6,7 @@ import EcosystemInfo from './EcosystemInfo';
 import EntryRequirements from './EntryRequirements';
 import GeneralInfo from './GeneralInfo';
 import Header from './Header';
-import OperationHours from './OperationHours';
+import OperatingHours from './OperatingHours';
 import OtherServices from './OtherServices';
 import Restrictions from './Restrictions';
 import RoomStyles from './RoomStyles';
@@ -79,7 +79,7 @@ export default function ShelterPage({ id }: { id: string }) {
   return (
     <div className="w-full">
       <Header shelter={shelter} />
-      <OperationHours />
+      <OperatingHours operatingHours={shelter.operatingHours} />
       {hasPhotos && (
         <Button
           onClick={() => navigate(`/shelter/${id}/gallery`)}
