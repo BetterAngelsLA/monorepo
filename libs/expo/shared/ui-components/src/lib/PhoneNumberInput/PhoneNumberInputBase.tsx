@@ -11,11 +11,12 @@ export function PhoneNumberInputBase(props: TPhoneNumberInputBaseProps) {
     phoneNumber = '',
     extension = '',
     onChangeParts,
-    onBlur,
     noExtension,
+    numberMaxLen = 10,
+    extensionMaxLen,
     disabled,
     label,
-    errors,
+    error,
     style,
   } = props;
 
@@ -34,14 +35,13 @@ export function PhoneNumberInputBase(props: TPhoneNumberInputBaseProps) {
           style={styles.number}
           disabled={disabled}
           keyboardType="number-pad"
+          textContentType="telephoneNumber"
           label={label}
           onChangeText={(text: string) => {
             setLocalPhone(toNumericString(text));
           }}
           onDelete={() => setLocalPhone('')}
-          textContentType="telephoneNumber"
-          onBlur={onBlur}
-          maxLength={10}
+          maxLength={numberMaxLen}
         />
 
         {!noExtension && (
@@ -54,11 +54,11 @@ export function PhoneNumberInputBase(props: TPhoneNumberInputBaseProps) {
               setLocalExt(toNumericString(value));
             }}
             onDelete={() => setLocalExt('')}
-            onBlur={onBlur}
+            maxLength={extensionMaxLen}
           />
         )}
       </View>
-      {errors && <FormFieldError message={errors} />}
+      {error && <FormFieldError message={error} />}
     </View>
   );
 }
