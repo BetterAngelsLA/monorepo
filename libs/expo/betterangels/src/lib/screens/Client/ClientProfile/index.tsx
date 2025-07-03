@@ -21,7 +21,8 @@ interface ProfileProps {
   openCard?: ClientProfileSectionEnum | null;
 }
 
-const DEFAULT_OPEN_CARD = ClientProfileSectionEnum.FullName;
+// const DEFAULT_OPEN_CARD = ClientProfileSectionEnum.FullName;
+const DEFAULT_OPEN_CARD = ClientProfileSectionEnum.ContactInfo;
 
 export default function ClientProfileView(props: ProfileProps) {
   const { client, openCard } = props;
