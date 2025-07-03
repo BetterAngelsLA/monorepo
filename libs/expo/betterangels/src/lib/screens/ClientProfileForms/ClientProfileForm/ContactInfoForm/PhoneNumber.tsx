@@ -59,6 +59,11 @@ export function PhoneNumber() {
                   control={control}
                   rules={{
                     validate: (value: string) => {
+                      // no value ok unless required
+                      if (!value) {
+                        return true;
+                      }
+
                       if (!Regex.phoneNumberWithExtensionUS.test(value)) {
                         return 'Enter a 10-digit phone number with optional extension number';
                       }

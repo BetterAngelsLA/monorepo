@@ -3,87 +3,60 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import FormFieldError from '../FormFieldError';
 import { Input } from '../Input';
-import { IPhoneNumberInputProps } from './types';
+import { TPhoneNumberInputBaseProps } from './types';
+import { toNumericString } from './utils/toNumericString';
 
-function defaultParseNumber(value: string) {
-  return value.split('x');
-}
-
-function defaultFormatValues(phoneNumber: string, extension?: string) {
-  let formattedPhoneNumber = phoneNumber;
-  if (extension) {
-    formattedPhoneNumber = `${formattedPhoneNumber}x${extension}`;
-  }
-
-  return formattedPhoneNumber;
-}
-
-export function PhoneNumberInputBase(props: IPhoneNumberInputProps) {
+export function PhoneNumberInputBase(props: TPhoneNumberInputBaseProps) {
   const {
+    phoneNumber = '',
+    extension = '',
+    onChangeParts,
+    onBlur,
+    noExtension,
     disabled,
-    errors,
     label,
-    onChange,
-    onClear,
-    parseNumber = defaultParseNumber,
-    formatValues = defaultFormatValues,
-    placeholderExt = 'ext',
-    placeholderNumber = 'Enter phone number',
+    errors,
     style,
-    value,
   } = props;
 
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [extension, setExtension] = useState('');
+  const [localPhone, setLocalPhone] = useState(phoneNumber);
+  const [localExt, setLocalExt] = useState(extension);
 
   useEffect(() => {
-    const [phoneNumber, extension] = parseNumber(value || '');
-    setPhoneNumber(phoneNumber);
-    setExtension(extension || '');
-  }, [value]);
-
-  useEffect(() => {
-    const formattedPhoneNumber = formatValues(phoneNumber, extension);
-
-    onChange?.(formattedPhoneNumber);
-
-    if (!formattedPhoneNumber) {
-      onClear?.();
-    }
-  }, [phoneNumber, extension]);
-
-  function makeNumeric(value: string) {
-    return value.replace(/[^0-9]/g, '');
-  }
+    onChangeParts?.(localPhone, localExt);
+  }, [localPhone, localExt]);
 
   return (
     <View style={[styles.container, style]}>
       <View style={[styles.inputRow]}>
         <Input
+          value={localPhone}
           style={styles.number}
           disabled={disabled}
           keyboardType="number-pad"
           label={label}
-          onChangeText={(value) => {
-            setPhoneNumber(makeNumeric(value));
+          onChangeText={(text: string) => {
+            setLocalPhone(toNumericString(text));
           }}
-          onDelete={() => setPhoneNumber('')}
-          placeholder={placeholderNumber}
-          value={phoneNumber}
+          onDelete={() => setLocalPhone('')}
           textContentType="telephoneNumber"
+          onBlur={onBlur}
           maxLength={10}
         />
-        <Input
-          style={styles.extension}
-          disabled={disabled}
-          keyboardType="number-pad"
-          onChangeText={(value) => {
-            setExtension(makeNumeric(value));
-          }}
-          onDelete={() => setExtension('')}
-          placeholder={placeholderExt}
-          value={extension}
-        />
+
+        {!noExtension && (
+          <Input
+            value={localExt}
+            style={styles.extension}
+            disabled={disabled}
+            keyboardType="number-pad"
+            onChangeText={(value: string) => {
+              setLocalExt(toNumericString(value));
+            }}
+            onDelete={() => setLocalExt('')}
+            onBlur={onBlur}
+          />
+        )}
       </View>
       {errors && <FormFieldError message={errors} />}
     </View>
