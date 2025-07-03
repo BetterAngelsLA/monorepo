@@ -1,10 +1,15 @@
-import { Controller } from 'react-hook-form';
-import { PhoneNumberUncontrolled } from './PhoneNumberUncontrolled';
-import { IPhoneNumberInputProps } from './types';
+import { Controller, FieldValues } from 'react-hook-form';
+import { renderPhoneNumberBase } from './renderPhoneNumberBase';
+import { TPhoneNumberInputProps } from './types';
 import { defaultFormatValues } from './utils/defaultFormatValues';
 import { defaultParseNumber } from './utils/defaultParseNumber';
 
-export function PhoneNumberInput(props: IPhoneNumberInputProps) {
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const noop = () => {};
+
+export function PhoneNumberInput<
+  TFieldValues extends FieldValues = FieldValues
+>(props: TPhoneNumberInputProps<TFieldValues>) {
   const {
     control,
     name,
@@ -16,48 +21,35 @@ export function PhoneNumberInput(props: IPhoneNumberInputProps) {
     ...rest
   } = props;
 
-  function renderBase(
-    currentValue: string,
-    onChangeCb: (v: string) => void,
-    errorMessage?: string,
-    onBlur?: () => void
-  ) {
-    const [number, ext] = parseNumber(currentValue);
-
-    return (
-      <PhoneNumberUncontrolled
-        phoneNumber={number}
-        extension={ext}
-        onBlur={onBlur}
-        onChangeParts={(num, ext) => {
-          const formatted = formatValues(num, ext);
-
-          onChangeCb(formatted);
-        }}
-        errors={errorMessage}
-        {...rest}
-      />
-    );
-  }
-
   if (control && name) {
-    // console.log('################################### PHONE INPUT - CONTROLLED');
     return (
       <Controller
         name={name}
         control={control}
         rules={rules}
         render={({ field, fieldState }) => {
-          const { value = '', onChange, onBlur } = field;
+          const { value, onChange, onBlur } = field;
           const { error } = fieldState;
 
-          return renderBase(value, onChange, error?.message, onBlur);
+          return renderPhoneNumberBase({
+            value: value ?? '',
+            onChange: onChange,
+            onBlur: onBlur,
+            error: error?.message,
+            parseNumber,
+            formatValues,
+            rest,
+          });
         }}
       />
     );
   }
 
-  //   console.log('################################### PHONE INPUT - BASE');
-
-  return renderBase(value || '', onChange || (() => {}));
+  return renderPhoneNumberBase({
+    value: value ?? '',
+    onChange: onChange ?? noop,
+    parseNumber,
+    formatValues,
+    rest,
+  });
 }
