@@ -32,7 +32,6 @@ export function PhoneNumber() {
               <View style={{ flex: 1 }}>
                 <PhoneNumberInput
                   label={'Phone Number'}
-                  noExtension
                   name={`phoneNumbers.${index}.number`}
                   control={control}
                   rules={{
