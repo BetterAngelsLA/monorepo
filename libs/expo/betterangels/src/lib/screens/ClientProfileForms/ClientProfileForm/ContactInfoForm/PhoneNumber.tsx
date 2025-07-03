@@ -1,11 +1,16 @@
 import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
-  ControlledInput,
   Form,
+  PhoneNumberInput,
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
+import {
+  Controller,
+  useFieldArray,
+  useFormContext,
+  useWatch,
+} from 'react-hook-form';
 import { Platform, Switch, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../../../apollo';
 
@@ -15,10 +20,26 @@ export function PhoneNumber() {
     setValue,
     formState: { errors },
   } = useFormContext<UpdateClientProfileInput>();
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'phoneNumbers',
   });
+
+  console.log('########## CLIENT contact-info form PhoneNumber');
+
+  const phoneNumbers = useWatch({
+    control,
+    name: 'phoneNumbers',
+  });
+
+  // useEffect(() => {
+  //   console.log();
+  //   console.log('| -------------  WATCH phoneNumbers  ------------- |');
+  //   console.log(phoneNumbers);
+  //   console.log();
+  // }, [phoneNumbers]);
+
   return (
     <Form.Field title="Phone Number(s)">
       <View style={{ gap: Spacings.sm }}>
@@ -32,7 +53,56 @@ export function PhoneNumber() {
               }}
             >
               <View style={{ flex: 1 }}>
-                <ControlledInput
+                <PhoneNumberInput
+                  label={'Phone Number '}
+                  name={`phoneNumbers.${index}.number`}
+                  control={control}
+                  rules={{
+                    validate: (value: string) => {
+                      if (!Regex.phoneNumberWithExtensionUS.test(value)) {
+                        return 'Enter a 10-digit phone number with optional extension number';
+                      }
+
+                      return true;
+                    },
+                  }}
+                />
+
+                {/* <PhoneNumberUncontrolled
+                  // onChange={onPhoneNumberChange}
+                  // onChange={onPhoneNumberChange}
+                  label={'Phone Number'}
+                  onChangeParts={(phone, ext) => {
+                    console.log(`CHANGED PARTS: [${phone}]  [${ext}]`);
+                  }}
+                  // name={`phoneNumbers.${index}.number`}
+                  // control={control}
+                  // errors={errors.phoneNumber}
+                  // onChange={(value) => setValue('phoneNumber', value)}
+                  // errors={errors.phoneNumber}
+                /> */}
+
+                {/* <PhoneNumberInput
+                  // onChange={onPhoneNumberChange}
+                  // onChange={onPhoneNumberChange}
+                  label={'Phone Number'}
+                  name={`phoneNumbers.${index}.number`}
+                  control={control}
+                  // errors={errors.phoneNumber}
+                  // onChange={(value) => setValue('phoneNumber', value)}
+                  // errors={errors.phoneNumber}
+                /> */}
+
+                {/* onChangeParts={(phone, ext) => {
+                    console.log(`CHANGED PARTS: [${phone}]  [${ext}]`);
+                  }}
+                  name={`phoneNumbers.${index}.number`}
+                  control={control}
+                  errors={errors.phoneNumber}
+                  onChange={(value) => setValue('phoneNumber', value)}
+                  errors={errors.phoneNumber} */}
+
+                {/* <ControlledInput
                   placeholder="Enter phone number"
                   key={field.id}
                   name={`phoneNumbers.${index}.number`}
@@ -52,7 +122,7 @@ export function PhoneNumber() {
                       return true;
                     },
                   }}
-                />
+                /> */}
               </View>
               {index !== 0 && (
                 <TextButton
