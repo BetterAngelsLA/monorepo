@@ -42,22 +42,29 @@ export type TPhoneNumberInputSharedProps = {
   parseNumber?: (value: string) => TPhoneWithExtension;
   formatValues?: (number: string, extension?: string) => string;
   noExtension?: boolean;
+  numberMaxLen?: number;
+  extensionMaxLen?: number;
   placeholderNumber?: string;
   placeholderExt?: string;
   disabled?: boolean;
-  errors?: string;
+  error?: string;
   style?: ViewStyle;
 };
 
 // internal
 export type TPhoneNumberInputBaseProps = Pick<
   TPhoneNumberInputSharedProps,
-  'disabled' | 'label' | 'style' | 'errors' | 'noExtension'
+  | 'disabled'
+  | 'label'
+  | 'style'
+  | 'error'
+  | 'noExtension'
+  | 'numberMaxLen'
+  | 'extensionMaxLen'
 > & {
   phoneNumber?: string;
   extension?: string;
   onChangeParts?: (phone: string, extension: string) => void;
-  onBlur?: () => void;
 };
 
 // <PhoneNumberInput /> UI component

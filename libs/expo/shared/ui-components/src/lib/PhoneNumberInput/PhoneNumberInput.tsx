@@ -1,5 +1,5 @@
 import { Controller, FieldValues } from 'react-hook-form';
-import { renderPhoneNumberBase } from './renderPhoneNumberBase';
+import { PhoneNumberInputBase } from './PhoneNumberInputBase';
 import { TPhoneNumberInputProps } from './types';
 import { defaultFormatValues } from './utils/defaultFormatValues';
 import { defaultParseNumber } from './utils/defaultParseNumber';
@@ -18,6 +18,7 @@ export function PhoneNumberInput<
     onChange,
     parseNumber = defaultParseNumber,
     formatValues = defaultFormatValues,
+    error,
     ...rest
   } = props;
 
@@ -28,28 +29,34 @@ export function PhoneNumberInput<
         control={control}
         rules={rules}
         render={({ field, fieldState }) => {
-          const { value, onChange, onBlur } = field;
+          const { value, onChange } = field;
           const { error } = fieldState;
 
-          return renderPhoneNumberBase({
-            value: value ?? '',
-            onChange: onChange,
-            onBlur: onBlur,
-            error: error?.message,
-            parseNumber,
-            formatValues,
-            rest,
-          });
+          const [number, extension] = parseNumber(value);
+
+          return (
+            <PhoneNumberInputBase
+              phoneNumber={number}
+              extension={extension}
+              onChangeParts={(num, ext) => onChange(formatValues(num, ext))}
+              error={error?.message}
+              {...rest}
+            />
+          );
         }}
       />
     );
   }
 
-  return renderPhoneNumberBase({
-    value: value ?? '',
-    onChange: onChange ?? noop,
-    parseNumber,
-    formatValues,
-    rest,
-  });
+  const [number, extension] = parseNumber(value || '');
+
+  return (
+    <PhoneNumberInputBase
+      phoneNumber={number}
+      extension={extension}
+      onChangeParts={(num, ext) => onChange?.(formatValues(num, ext))}
+      error={error}
+      {...rest}
+    />
+  );
 }
