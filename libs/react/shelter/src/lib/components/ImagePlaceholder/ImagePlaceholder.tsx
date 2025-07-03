@@ -20,7 +20,7 @@ export function ImagePlaceholder(props: TProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <ImageIcon className="text-primary-60 h-11" />
+      <ImageIcon className="text-primary-60 h-20" />
     </div>
   );
 }
