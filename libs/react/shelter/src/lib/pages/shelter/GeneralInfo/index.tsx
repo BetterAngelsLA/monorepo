@@ -97,10 +97,13 @@ export default function GeneralInfo({
     <Card px="px-0" pb="pb-0">
       <div className="gap-2 flex flex-col px-6">
         {shelter.totalBeds && (
-          <div className="flex items-center justify-between gap-1">
-            <p>{shelter.totalBeds} beds available</p>
-            <BedIcon className="h-6 w-6 fill-primary-20" />
-          </div>
+          <>
+            <h3 className="text-base font-semibold">Bed Availability</h3>
+            <div className="flex items-center justify-between gap-1">
+              <p>{shelter.totalBeds} beds available</p>
+              <BedIcon className="h-6 w-6 fill-primary-20" />
+            </div>
+          </>
         )}
 
         <GeneralServices shelter={shelter} />
