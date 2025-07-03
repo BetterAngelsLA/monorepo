@@ -10,11 +10,7 @@ import { Platform, Switch, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../../../apollo';
 
 export function PhoneNumber() {
-  const {
-    control,
-    setValue,
-    // formState: { errors },
-  } = useFormContext<UpdateClientProfileInput>();
+  const { control, setValue } = useFormContext<UpdateClientProfileInput>();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -34,17 +30,11 @@ export function PhoneNumber() {
               }}
             >
               <View style={{ flex: 1 }}>
-                {/* <PhoneNumberInput
-                  label={'Phone Number'}
-                  onChange={(v) => console.log(`uncontroled: CHANGED val: ${v}`)}
-                /> */}
-
                 <PhoneNumberInput
                   label={'Phone Number'}
                   noExtension
                   name={`phoneNumbers.${index}.number`}
                   control={control}
-                  // errors="TODO"
                   rules={{
                     validate: (value: string) => {
                       // no value ok unless required
@@ -60,28 +50,6 @@ export function PhoneNumber() {
                     },
                   }}
                 />
-
-                {/* <ControlledInput
-                  placeholder="Enter phone number"
-                  key={field.id}
-                  name={`phoneNumbers.${index}.number`}
-                  control={control}
-                  keyboardType="number-pad"
-                  onDelete={() => setValue(`phoneNumbers.${index}.number`, '')}
-                  error={!!errors.phoneNumbers?.[index]?.number}
-                  errorMessage={
-                    (errors.phoneNumbers?.[index]?.number?.message as string) ||
-                    undefined
-                  }
-                  rules={{
-                    validate: (value: string) => {
-                      if (value && !Regex.phoneNumber.test(value)) {
-                        return 'Enter a 10-digit phone number without space or special characters';
-                      }
-                      return true;
-                    },
-                  }}
-                /> */}
               </View>
               {index !== 0 && (
                 <TextButton

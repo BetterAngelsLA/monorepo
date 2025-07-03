@@ -4,9 +4,6 @@ import { TPhoneNumberInputProps } from './types';
 import { defaultFormatValues } from './utils/defaultFormatValues';
 import { defaultParseNumber } from './utils/defaultParseNumber';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-const noop = () => {};
-
 export function PhoneNumberInput<
   TFieldValues extends FieldValues = FieldValues
 >(props: TPhoneNumberInputProps<TFieldValues>) {
