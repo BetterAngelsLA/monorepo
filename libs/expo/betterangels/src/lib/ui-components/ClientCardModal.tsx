@@ -1,5 +1,6 @@
 import { FilePlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
 import { useRouter } from 'expo-router';
+import { useMemo } from 'react';
 import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
 import { CreateClientInteractionBtn } from './CreateClientInteraction';
 import { MainModal, MainModalActionBtnBody } from './MainModal';
@@ -14,33 +15,37 @@ export default function ClientCardModal(props: IMainPlusModalProps) {
   const { isModalVisible, closeModal, clientProfile } = props;
   const router = useRouter();
 
-  const CreateInteractionBtn = (
-    <CreateClientInteractionBtn
-      clientProfileId={clientProfile.id}
-      onCreated={(noteId) => {
-        closeModal();
-        router.navigate(`/add-note/${noteId}`);
-      }}
-      style={{ width: '100%' }}
-    >
-      <MainModalActionBtnBody title="Add Interaction" Icon={FilePlusIcon} />
-    </CreateClientInteractionBtn>
-  );
+  const actions = useMemo(() => {
+    function renderCreateInteractionBtn() {
+      return (
+        <CreateClientInteractionBtn
+          clientProfileId={clientProfile.id}
+          onCreated={(noteId) => {
+            closeModal();
+            router.navigate(`/add-note/${noteId}`);
+          }}
+          style={{ width: '100%' }}
+        >
+          <MainModalActionBtnBody title="Add Interaction" Icon={FilePlusIcon} />
+        </CreateClientInteractionBtn>
+      );
+    }
 
-  const ACTIONS = [
-    CreateInteractionBtn,
-    {
-      title: 'Upload Documents',
-      Icon: UploadIcon,
-      route: `/client/${clientProfile.id}?newTab=Docs`,
-    },
-  ];
+    return [
+      renderCreateInteractionBtn(),
+      {
+        title: 'Upload Documents',
+        Icon: UploadIcon,
+        route: `/client/${clientProfile.id}?newTab=Docs`,
+      },
+    ];
+  }, [clientProfile.id, closeModal, router]);
 
   return (
     <MainModal
       closeButton
       vertical
-      actions={ACTIONS}
+      actions={actions}
       isModalVisible={isModalVisible}
       closeModal={closeModal}
       opacity={0.5}
