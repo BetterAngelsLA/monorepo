@@ -2,6 +2,7 @@ import { Colors, Regex } from '@monorepo/expo/shared/static';
 import {
   ControlledInput,
   Form,
+  PhoneNumberInput,
   SingleSelect,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -122,23 +123,24 @@ export function ClientContactForm(props: TProps) {
               }}
             />
 
-            <ControlledInput
-              name={'phoneNumber'}
+            <PhoneNumberInput
+              label="Phone Number"
               control={control}
+              name="phoneNumber"
+              placeholderNumber="Enter phone number"
+              placeholderExt="ext"
               disabled={isLoading}
-              label={'Phone Number'}
-              placeholder="Enter phone number"
-              keyboardType="number-pad"
-              onDelete={() => {
-                setValue('phoneNumber', '');
-                clearErrors('phoneNumber');
-              }}
-              error={!!errors.phoneNumber}
-              errorMessage={errors.phoneNumber?.message}
+              // error={!!errors.phoneNumber} // TODO
+              // errorMessage={errors.phoneNumber?.message} // TODO
               rules={{
-                validate: (value: string) => {
-                  if (value && !Regex.phoneNumber.test(value)) {
-                    return 'Enter a 10-digit phone number without space or special characters';
+                validate: (value?: string) => {
+                  // no value ok unless required
+                  if (!value) {
+                    return true;
+                  }
+
+                  if (!Regex.phoneNumberWithExtensionUS.test(value)) {
+                    return 'Enter a valid 10-digit phone number with optional extension number';
                   }
 
                   return true;
