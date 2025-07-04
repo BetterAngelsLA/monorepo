@@ -1,19 +1,14 @@
 import {
   ListIcon,
   LocationDotSolidIcon,
-  PlusIcon,
   SortSolidIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
-import { router } from 'expo-router';
+import { TextMedium } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { NotesQuery } from '../../../apollo';
-import { useSnackbar } from '../../../hooks';
-import {
-  ClientProfileQuery,
-  useCreateNoteMutation,
-} from '../__generated__/Client.generated';
+import { CreateClientInteractionBtn } from '../../../ui-components';
+import { ClientProfileQuery } from '../__generated__/Client.generated';
 // TODO: Remove this flag when sorting is implemented
 const displayInteractionsSorting = false;
 
@@ -27,36 +22,12 @@ interface IInteractionsSortingProps {
 
 export default function InteractionsSorting(props: IInteractionsSortingProps) {
   const { notes, sort, setSort, client, totalCount } = props;
-  const [createNote] = useCreateNoteMutation();
-  const { showSnackbar } = useSnackbar();
   function onSort(sorting: 'list' | 'location' | 'sort') {
     setSort(sorting);
   }
 
   if (!client) {
     return;
-  }
-
-  async function createNoteFunction(id: string) {
-    try {
-      const { data } = await createNote({
-        variables: {
-          data: {
-            clientProfile: id,
-          },
-        },
-      });
-      if (data?.createNote && 'id' in data.createNote) {
-        router.navigate(`/add-note/${data.createNote.id}`);
-      }
-    } catch (err) {
-      console.error(err);
-
-      showSnackbar({
-        message: `Sorry, there was an error creating a new interaction.`,
-        type: 'error',
-      });
-    }
   }
 
   return (
@@ -71,15 +42,9 @@ export default function InteractionsSorting(props: IInteractionsSortingProps) {
       <TextMedium size="md">
         Displaying {notes?.length} of {totalCount} interactions
       </TextMedium>
-      <IconButton
-        onPress={() => createNoteFunction(client.clientProfile.id)}
-        variant="secondary"
-        borderColor={Colors.WHITE}
-        accessibilityLabel={'add interaction'}
-        accessibilityHint={'add a new interaction'}
-      >
-        <PlusIcon />
-      </IconButton>
+
+      <CreateClientInteractionBtn clientProfileId={client.clientProfile.id} />
+
       {displayInteractionsSorting && (
         <View style={{ flexDirection: 'row', gap: Spacings.xs }}>
           <Pressable

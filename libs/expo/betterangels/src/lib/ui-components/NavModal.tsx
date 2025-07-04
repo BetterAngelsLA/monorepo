@@ -12,7 +12,7 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSignOut } from '../hooks';
-import MainModal from './MainModal';
+import { MainModal } from './MainModal';
 
 const ACTIONS = [
   {

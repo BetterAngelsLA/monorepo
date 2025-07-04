@@ -2,6 +2,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { ReactElement, useEffect, useState } from 'react';
 import { FlatList, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { uniqueBy } from 'remeda';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
   ClientProfileFilter,
   ClientProfileOrder,
@@ -65,10 +66,10 @@ export function ClientProfileList(props: TProps) {
     nextFetchPolicy: 'cache-first',
   });
 
-  // reset offset when filters change
-  // so that new query starts from the beginning of the list
-  useEffect(() => {
+  // reset on actual filter value changes
+  useDeepCompareEffect(() => {
     setOffset(0);
+    setClients(undefined);
   }, [filters]);
 
   useEffect(() => {
