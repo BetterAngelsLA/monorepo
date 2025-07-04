@@ -2,6 +2,7 @@ import { Colors, Regex } from '@monorepo/expo/shared/static';
 import {
   ControlledInput,
   Form,
+  PhoneNumberInput,
   SingleSelect,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -48,6 +49,10 @@ export function ClientContactForm(props: TProps) {
     return null;
   }
 
+  function onPhoneNumberChange(value) {
+    console.log('~~~~~~~~home value');
+    console.log(value);
+  }
   return (
     <Form.Page
       scrollViewRef={scrollRef}
@@ -84,7 +89,15 @@ export function ClientContactForm(props: TProps) {
                 />
               )}
             />
-
+            <PhoneNumberInput
+              value="2125551212x123"
+              // onChange={(value) => setValue('phoneNumber', value)}
+              onClear={() => {
+                setValue('phoneNumber', '');
+                clearErrors('phoneNumber');
+              }}
+              // errors={errors.phoneNumber}
+            />
             <ControlledInput
               name={'name'}
               control={control}
@@ -121,30 +134,75 @@ export function ClientContactForm(props: TProps) {
                 },
               }}
             />
-
-            <ControlledInput
+            <PhoneNumberInput
+              value="2125551212x123"
+              onChange={onPhoneNumberChange}
+              label={'Phone Number'}
               name={'phoneNumber'}
               control={control}
-              disabled={isLoading}
-              label={'Phone Number'}
-              placeholder="Enter phone number"
-              keyboardType="number-pad"
-              onDelete={() => {
-                setValue('phoneNumber', '');
-                clearErrors('phoneNumber');
-              }}
-              error={!!errors.phoneNumber}
-              errorMessage={errors.phoneNumber?.message}
-              rules={{
-                validate: (value: string) => {
-                  if (value && !Regex.phoneNumber.test(value)) {
-                    return 'Enter a 10-digit phone number without space or special characters';
-                  }
-
-                  return true;
-                },
-              }}
+              // onChange={(value) => setValue('phoneNumber', value)}
+              // errors={errors.phoneNumber}
             />
+            {/* <View style={{ flexDirection: 'row' }}>
+              <ControlledInput
+                style={{ flex: 2, marginRight: Spacings.xs }}
+                name={'phoneNumber'}
+                control={control}
+                disabled={isLoading}
+                label={'Phone Number'}
+                placeholder="Enter phone number"
+                keyboardType="number-pad"
+                onDelete={() => {
+                  setValue('phoneNumber', '');
+                  clearErrors('phoneNumber');
+                }}
+                error={!!errors.phoneNumber}
+                rules={{
+                  validate: (value: string) => {
+                    if (value && !Regex.phoneNumber.test(value)) {
+                      return 'Enter a 10-digit phone number without space or special characters';
+                    }
+
+                    return true;
+                  },
+                }}
+              />
+              <ControlledInput
+                style={{ flex: 1 }}
+                name={'extension'}
+                control={control}
+                disabled={isLoading}
+                label={' '}
+                placeholder="ext"
+                keyboardType="number-pad"
+                onDelete={() => {
+                  setValue('extension', '');
+                  clearErrors('extension');
+                }}
+                error={!!errors.extension}
+                rules={{
+                  validate: (value: string) => {
+                    if (value && !Regex.number.test(value)) {
+                      return 'Extension must be a number';
+                    }
+
+                    return true;
+                  },
+                }}
+              />
+            </View> */}
+            {/* <View style={{ marginTop: -Spacings.xs }}>
+              {errors.phoneNumber && (
+                <TextRegular size={'sm'} color={Colors.ERROR}>
+                  {errors.phoneNumber?.message}
+                </TextRegular>
+              )}
+              {errors.extension && (
+                <TextRegular size={'sm'} color={Colors.ERROR}>
+                  {errors.extension?.message}
+                </TextRegular>
+              )}
+            </View> */}
 
             <AddressAutocomplete
               control={control}

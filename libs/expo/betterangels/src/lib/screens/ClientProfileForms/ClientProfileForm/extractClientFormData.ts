@@ -87,14 +87,19 @@ export const extractClientFormData = (
       } = clientProfile;
 
       let updatedPhoneNumbers: TPhoneNumber[] = [
-        { number: '', isPrimary: false },
+        { number: '', extension: '', isPrimary: false },
       ];
 
       if (phoneNumbers?.length) {
         updatedPhoneNumbers = phoneNumbers.map((item) => {
           const { __typename, ...rest } = item;
 
-          return rest;
+          const parsedPhoneNumbers = {
+            ...rest,
+            number: rest['number'].slice(0, 10),
+            extension: rest['number'].slice(11),
+          };
+          return parsedPhoneNumbers;
         });
       }
 

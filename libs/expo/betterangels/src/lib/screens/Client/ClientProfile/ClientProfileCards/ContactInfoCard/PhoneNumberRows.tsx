@@ -4,11 +4,7 @@ import { PhoneNumberBtn } from '@monorepo/expo/shared/ui-components';
 import { formatPhoneNumber } from '@monorepo/expo/shared/utils';
 import { ReactElement } from 'react';
 import { View } from 'react-native';
-
-type TPhoneNumber = {
-  number?: string;
-  isPrimary?: boolean | null;
-};
+import { TPhoneNumber } from '../../../../ClientProfileForms/ClientProfileForm/types';
 
 type TPhoneNumbers = {
   numbers?: TPhoneNumber[] | null;

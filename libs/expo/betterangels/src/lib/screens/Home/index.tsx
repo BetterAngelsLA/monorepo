@@ -1,6 +1,7 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   Loading,
+  PhoneNumberInput,
   TextBold,
   TextButton,
   TextMedium,
@@ -74,6 +75,7 @@ export default function Home({ Logo }: { Logo: ElementType }) {
   return (
     <View style={{ flex: 1, backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT }}>
       <Header title="Home" Logo={Logo} />
+
       <View
         style={{
           flexDirection: 'row',

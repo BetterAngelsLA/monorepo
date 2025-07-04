@@ -51,15 +51,23 @@ export function useClientContactForm(props: TProps) {
 
     setValue('name', name);
     setValue('email', email);
-    setValue('phoneNumber', phoneNumber);
+    setValue('phoneNumber', phoneNumber?.slice(0, 10));
+    setValue('extension', phoneNumber?.slice(11));
     setValue('mailingAddress', mailingAddress);
     setValue('relationshipToClient', relationshipToClient);
   }, [clientProfile, relationId, setValue, toFormState]);
 
-  const [email, phoneNumber, mailingAddress, relationshipToClient] = useWatch({
-    control,
-    name: ['email', 'phoneNumber', 'mailingAddress', 'relationshipToClient'],
-  });
+  const [email, phoneNumber, extension, mailingAddress, relationshipToClient] =
+    useWatch({
+      control,
+      name: [
+        'email',
+        'phoneNumber',
+        'extension',
+        'mailingAddress',
+        'relationshipToClient',
+      ],
+    });
 
   const oneOfMissingError = !email && !phoneNumber && !mailingAddress;
   const isError = oneOfMissingError || !relationshipToClient;
@@ -84,6 +92,14 @@ export function useClientContactForm(props: TProps) {
       const mutationKey = relationId
         ? 'updateClientContact'
         : 'createClientContact';
+
+      delete formData.extension;
+
+      if (phoneNumber && extension) {
+        formData['phoneNumber'] = extension
+          ? `${phoneNumber}x${extension}`
+          : phoneNumber;
+      }
 
       const response = await mutationFn({
         variables: {
@@ -201,6 +217,7 @@ function applyValidationErrors(
     'name',
     'email',
     'phoneNumber',
+    'extension',
     'mailingAddress',
     'relationshipToClient',
   ];

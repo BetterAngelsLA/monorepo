@@ -5,6 +5,7 @@ export type TClientContactFormState = {
   name?: string;
   email?: string;
   phoneNumber?: string;
+  extension?: string;
   mailingAddress?: string;
 };
 
