@@ -20,6 +20,13 @@ export function PhoneNumberInput<
   } = props;
 
   if (control && name) {
+    // When formState is not ready then no formState.values yet exist,
+    // and PhoneNumberInputBase will initialize with undefined values
+    // which will not update.
+    if (!control._formState.isReady) {
+      return null;
+    }
+
     return (
       <Controller
         name={name}
