@@ -15,7 +15,7 @@ import {
   ClientProfileDocument,
   useDeleteClientDocumentMutation,
 } from '../screens/Client/__generated__/Client.generated';
-import MainModal from './MainModal';
+import { MainModal } from './MainModal';
 
 interface IDocumentModalProps {
   closeModal: () => void;
