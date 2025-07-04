@@ -34,40 +34,35 @@ type TUncontrolledProps = {
 };
 
 // internal
-export type TPhoneNumberInputSharedProps = {
-  value?: string;
-  label?: string;
-  onChange?: (value: string) => void;
+type TPhoneNumberInputDisplayProps = {
   onClear?: () => void;
-  parseNumber?: (value: string) => TPhoneWithExtension;
-  formatValues?: (number: string, extension?: string) => string;
+  disabled?: boolean;
+  label?: string;
+  style?: ViewStyle;
+  error?: string;
   noExtension?: boolean;
   numberMaxLen?: number;
   extensionMaxLen?: number;
   placeholderNumber?: string;
   placeholderExt?: string;
-  disabled?: boolean;
-  error?: string;
-  style?: ViewStyle;
 };
 
-// internal
-export type TPhoneNumberInputBaseProps = Pick<
-  TPhoneNumberInputSharedProps,
-  | 'disabled'
-  | 'label'
-  | 'style'
-  | 'error'
-  | 'noExtension'
-  | 'numberMaxLen'
-  | 'extensionMaxLen'
-> & {
+type TPhoneNumberInputValueProps = {
+  value?: string;
+  onChange?: (value: string) => void;
+  parseNumber?: (value: string) => TPhoneWithExtension;
+  formatValues?: (number: string, extension?: string) => string;
+};
+
+export type TPhoneNumberInputBaseProps = TPhoneNumberInputDisplayProps & {
   phoneNumber?: string;
   extension?: string;
   onChangeParts?: (phone: string, extension: string) => void;
 };
 
-// <PhoneNumberInput /> UI component
+type TPhoneNumberInputSharedProps = TPhoneNumberInputDisplayProps &
+  TPhoneNumberInputValueProps;
+
 export type TPhoneNumberInputProps<
   TFieldValues extends FieldValues = FieldValues
 > =

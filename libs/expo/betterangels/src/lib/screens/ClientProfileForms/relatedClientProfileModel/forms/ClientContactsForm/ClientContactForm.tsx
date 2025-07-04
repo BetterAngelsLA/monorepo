@@ -130,11 +130,6 @@ export function ClientContactForm(props: TProps) {
               placeholderNumber="Enter phone number"
               placeholderExt="ext"
               disabled={isLoading}
-              onClear={() => {
-                console.log('################################### ON CLEAR');
-                // setValue('phoneNumber', '');
-                // clearErrors('phoneNumber');
-              }}
               // error={!!errors.phoneNumber}
               // errorMessage={errors.phoneNumber?.message}
               rules={{

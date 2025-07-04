@@ -1,5 +1,5 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import FormFieldError from '../FormFieldError';
 import { Input } from '../Input';
@@ -8,9 +8,12 @@ import { toNumericString } from './utils/toNumericString';
 
 export function PhoneNumberInputBase(props: TPhoneNumberInputBaseProps) {
   const {
-    phoneNumber = '',
-    extension = '',
+    phoneNumber,
+    extension,
+    placeholderNumber,
+    placeholderExt,
     onChangeParts,
+    onClear,
     noExtension,
     numberMaxLen = 10,
     extensionMaxLen,
@@ -20,11 +23,22 @@ export function PhoneNumberInputBase(props: TPhoneNumberInputBaseProps) {
     style,
   } = props;
 
-  const [localPhone, setLocalPhone] = useState(phoneNumber);
-  const [localExt, setLocalExt] = useState(extension);
+  const [localPhone, setLocalPhone] = useState(phoneNumber ?? '');
+  const [localExt, setLocalExt] = useState(extension ?? '');
+
+  const existingHasValueRef = useRef(false);
 
   useEffect(() => {
     onChangeParts?.(localPhone, localExt);
+
+    const prevHasValue = existingHasValueRef.current;
+    const newHasValue = localPhone || localExt;
+
+    existingHasValueRef.current = !!newHasValue;
+
+    if (prevHasValue && !newHasValue) {
+      onClear?.();
+    }
   }, [localPhone, localExt]);
 
   return (
@@ -33,13 +47,14 @@ export function PhoneNumberInputBase(props: TPhoneNumberInputBaseProps) {
         <Input
           value={localPhone}
           style={styles.number}
+          placeholder={placeholderNumber}
           disabled={disabled}
           keyboardType="number-pad"
           textContentType="telephoneNumber"
           label={label}
-          onChangeText={(text: string) => {
-            setLocalPhone(toNumericString(text));
-          }}
+          onChangeText={(value: string) =>
+            setLocalPhone(toNumericString(value))
+          }
           onDelete={() => setLocalPhone('')}
           maxLength={numberMaxLen}
         />
@@ -47,12 +62,13 @@ export function PhoneNumberInputBase(props: TPhoneNumberInputBaseProps) {
         {!noExtension && (
           <Input
             value={localExt}
+            placeholder={placeholderExt}
             style={styles.extension}
             disabled={disabled}
             keyboardType="number-pad"
-            onChangeText={(value: string) => {
-              setLocalExt(toNumericString(value));
-            }}
+            onChangeText={(value: string) =>
+              setLocalExt(toNumericString(value))
+            }
             onDelete={() => setLocalExt('')}
             maxLength={extensionMaxLen}
           />
