@@ -124,14 +124,14 @@ export function ClientContactForm(props: TProps) {
             />
 
             <PhoneNumberInput
-              label="Phone Number XX"
+              label="Phone Number"
               control={control}
               name="phoneNumber"
               placeholderNumber="Enter phone number"
               placeholderExt="ext"
               disabled={isLoading}
-              // error={!!errors.phoneNumber}
-              // errorMessage={errors.phoneNumber?.message}
+              // error={!!errors.phoneNumber} // TODO
+              // errorMessage={errors.phoneNumber?.message} // TODO
               rules={{
                 validate: (value?: string) => {
                   // no value ok unless required
