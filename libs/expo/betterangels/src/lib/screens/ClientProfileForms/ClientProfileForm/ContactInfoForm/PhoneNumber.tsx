@@ -36,7 +36,7 @@ export function PhoneNumber() {
                   control={control}
                   rules={{
                     validate: (value: string) => {
-                      // no value ok unless required
+                      // empty value is valid as it'll delete entry
                       if (!value) {
                         return true;
                       }
