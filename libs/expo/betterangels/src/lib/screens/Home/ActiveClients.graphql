@@ -1,33 +1,3 @@
-mutation CreateNote($data: CreateNoteInput!) {
-  createNote(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-
-    ... on NoteType {
-      id
-      purpose
-      publicDetails
-      clientProfile {
-        id
-        firstName
-        lastName
-        email
-      }
-      createdAt
-      createdBy {
-        id
-        username
-        email
-      }
-    }
-  }
-}
-
 query ClientProfiles(
   $filters: ClientProfileFilter
   $pagination: OffsetPaginationInput
