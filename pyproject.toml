@@ -24,7 +24,7 @@ profile = "black"
 skip_glob = ["*/migrations/*"]
 
 [tool.poetry.dependencies]
-python = "3.13.3"
+python = "3.13.5"
 
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"
