@@ -12,7 +12,7 @@ export default function GeneralServices({
     <>
       <div className="flex items-center gap-2">
         <ListIcon className="w-6 h-6 fill-primary-20" />
-        <p>Available General Services</p>
+        <p className="text-base font-semibold">Available General Services</p>
       </div>
       <div className="pb-6">
         <PillContainer
