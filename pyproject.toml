@@ -44,7 +44,7 @@ vcrpy = "^7.0.0"
 djangorestframework-stubs = { extras = [
     "compatible-mypy",
 ], version = "^3.16.0" }
-ipython = "^9.3.0"
+ipython = "^9.4.0"
 pytest-django = "^4.11.1"
 boto3-stubs = { extras = ["essential"], version = "^1.38.33" }
 model-bakery = "^1.20.5"
