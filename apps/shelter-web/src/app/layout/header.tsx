@@ -1,5 +1,6 @@
 import { BaShelterLogoIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
+import { MenuIcon } from '@monorepo/react/icons';
 
 type IParams = {
   className?: string;
@@ -13,6 +14,7 @@ export function Header(props: IParams): ReactElement {
     'w-full',
     'flex',
     'items-center',
+    'justify-between',
     'h-[42px]',
     'text-white',
   ].join(' ');
@@ -24,8 +26,12 @@ export function Header(props: IParams): ReactElement {
         <div className="text-white flex ml-2 text-sm">
           <div className="font-normal">Shelter</div>
           <div className="font-semibold">LA</div>
-          <button style={{color: 'purple'}} onClick={() => console.log('hello!')}>Click me!!</button>
         </div>
+      </div>
+      <MenuIcon className="h-4 block lg:hidden" fill="white" />
+      <div className="hidden lg:flex space-x-10 text-sm">
+        <div>HOME</div>
+        <div>ABOUT US</div>
       </div>
     </header>
   );
