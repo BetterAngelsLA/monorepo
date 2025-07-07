@@ -44,7 +44,6 @@ def _parse_phone_number(v: str) -> DjangoPhoneNumber:
 
     return v
 
-
 def _serialize_phone_number(v: DjangoPhoneNumber) -> str:
     if v.extension:
         return f"{v.national_number}x{v.extension}"
@@ -55,7 +54,7 @@ def _serialize_phone_number(v: DjangoPhoneNumber) -> str:
 PhoneNumberScalar: DjangoPhoneNumber | str = strawberry.scalar(
     DjangoPhoneNumber,
     parse_value=lambda v: _parse_phone_number(v.strip()) if v.strip() else None,
-    serialize=lambda v: _serialize_phone_number(v),
+    serialize=lambda v: _serialize_phone_number(v) if isinstance(v, DjangoPhoneNumber) else '',
 )
 
 NonBlankString = strawberry.scalar(
