@@ -1,5 +1,5 @@
 from django.contrib.admin.apps import AdminConfig
 
 
-class MagicLinkAdminConfig(AdminConfig):
+class CustomAdminConfig(AdminConfig):
     default_site = "betterangels_backend.admin.CustomAdminSite"
