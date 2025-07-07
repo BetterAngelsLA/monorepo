@@ -28,7 +28,6 @@ class CustomPostOfficeEmailBackend(PostOfficeBackend):
         """
         for msg in email_messages:
             for field in ("to", "cc", "bcc"):
-                addrs = getattr(msg, field)
-                if addrs:
+                if addrs := getattr(msg, field):
                     setattr(msg, field, [_strip_demo(a) for a in addrs])
         return cast(int, super().send_messages(email_messages))
