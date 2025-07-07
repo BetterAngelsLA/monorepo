@@ -86,7 +86,7 @@ INSTALLED_APPS = [
     "admin_async_upload",
     "admin_interface",
     "colorfield",
-    "betterangels_backend.apps.MagicLinkAdminConfig",
+    "betterangels_backend.apps.CustomAdminConfig",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.gis",
@@ -335,7 +335,7 @@ AWS_SES_REGION_NAME = env("AWS_SES_REGION_NAME") or env("AWS_REGION")
 AWS_SES_REGION_ENDPOINT = env("AWS_SES_REGION_ENDPOINT")
 USE_SES_V2 = True
 
-EMAIL_BACKEND = "post_office.EmailBackend"
+EMAIL_BACKEND = "common.backends.email.CustomPostOfficeEmailBackend"
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 POST_OFFICE = {
     "BACKENDS": {
