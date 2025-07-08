@@ -4,6 +4,7 @@ import { IconButton, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { ClientDocumentType } from '../../../apollo';
+import { useModalScreen } from '../../../providers';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import Documents from './Documents';
 import UploadModal from './UploadModal';
@@ -13,8 +14,8 @@ export default function Docs({
 }: {
   client: ClientProfileQuery | undefined;
 }) {
-  const [isModalVisible, setModalVisible] = useState(false);
   const [expanded, setExpanded] = useState<undefined | string | null>();
+  const { showModalScreen } = useModalScreen();
 
   const props = {
     expanded,
@@ -35,7 +36,13 @@ export default function Docs({
       >
         <TextMedium size="lg">Doc Library</TextMedium>
         <IconButton
-          onPress={() => setModalVisible(true)}
+          onPress={() =>
+            showModalScreen({
+              presentation: 'modal',
+              hideHeader: true,
+              content: <UploadModal client={client} />,
+            })
+          }
           variant="secondary"
           borderColor={Colors.WHITE}
           accessibilityLabel={'add document'}
@@ -44,11 +51,6 @@ export default function Docs({
           <PlusIcon />
         </IconButton>
       </View>
-      <UploadModal
-        client={client}
-        isModalVisible={isModalVisible}
-        closeModal={() => setModalVisible(false)}
-      />
       <View style={{ gap: Spacings.xs, marginTop: Spacings.sm }}>
         {client?.clientProfile.docReadyDocuments &&
           client?.clientProfile.docReadyDocuments?.length > 0 && (
