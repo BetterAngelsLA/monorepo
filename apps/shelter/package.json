@@ -58,7 +58,11 @@
     "@react-native-picker/picker": "*",
     "react-native-safe-area-context": "*",
     "react-native-select-dropdown": "*",
-    "react-native-keyboard-controller": "*"
+    "react-native-keyboard-controller": "*",
+    "react-fast-compare": "*",
+    "react-native-maps": "*",
+    "@teovilla/react-native-web-maps": "*",
+    "expo-location": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",
