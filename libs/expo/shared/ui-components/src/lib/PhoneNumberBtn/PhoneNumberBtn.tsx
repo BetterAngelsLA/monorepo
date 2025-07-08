@@ -15,7 +15,9 @@ export function PhoneNumberBtn(props: IPhoneNumberBtnProps) {
       accessibilityRole="button"
       accessibilityHint="Opens your phone dialer to call the number"
       accessibilityLabel={`Call ${phoneNumber}`}
-      onPress={() => Linking.openURL(`tel:${phoneNumber},${extension}`)}
+      onPress={() =>
+        Linking.openURL(`tel:${phoneNumber}${extension ? `,${extension}` : ''}`)
+      }
       android_ripple={null}
     >
       {({ pressed }) => (
