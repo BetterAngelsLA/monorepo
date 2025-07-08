@@ -12,7 +12,7 @@ services:
     ports:
       - '8000:8000'
   db:
-    image: nickblah/postgis:15-bullseye-postgis-3.4
+    image: nickblah/postgis:17.5-bullseye-postgis-3.5
     ports:
       - '5432:5432'
     environment:

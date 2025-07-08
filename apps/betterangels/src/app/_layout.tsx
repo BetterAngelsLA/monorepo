@@ -22,6 +22,8 @@ import { apiUrl, demoApiUrl } from '../../config';
 
 import { type ErrorBoundaryProps } from 'expo-router';
 import AppRoutesStack from './AppRoutesStack';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -37,6 +39,8 @@ export default function RootLayout() {
   useNewRelic();
 
   return (
+
+<GestureHandlerRootView style={styles.root}>
     <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
       <ApolloClientProvider>
         <FeatureControlProvider>
@@ -61,5 +65,12 @@ export default function RootLayout() {
         </FeatureControlProvider>
       </ApolloClientProvider>
     </ApiConfigProvider>
+</GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});

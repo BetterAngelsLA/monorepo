@@ -8,7 +8,7 @@ import Supercluster, {
 } from 'supercluster';
 import { defaultAnimationDuration, defaultEdgePadding } from '../constants';
 import { TMapView } from '../types';
-import { TEdgePaddingBreakpoint } from './types';
+import { ClusterOrPoint, TClusterPoint, TEdgePaddingBreakpoint } from './types';
 
 export interface IMapClusterManager {
   // px around each point to merge into a cluster
@@ -25,6 +25,7 @@ export interface IMapClusterManager {
 
 export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
   private readonly clusterIndex: Supercluster<P, AnyProps>;
+  public readonly maxZoom: number;
   public edgePadding?: EdgePadding | TEdgePaddingBreakpoint[];
 
   constructor(opts: IMapClusterManager = {}) {
@@ -36,6 +37,7 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
       edgePadding,
     } = opts;
 
+    this.maxZoom = maxZoom;
     this.edgePadding = edgePadding;
 
     this.clusterIndex = new Supercluster<P, AnyProps>({
@@ -57,8 +59,40 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
   getClusters(
     bbox: [number, number, number, number],
     zoom: number
-  ): Array<PointFeature<P> | ClusterFeature<AnyProps>> {
-    return this.clusterIndex.getClusters(bbox, zoom);
+  ): Array<ClusterOrPoint<P>> {
+    const raw = this.clusterIndex.getClusters(bbox, zoom);
+
+    return raw.map((feat) => {
+      // if not a cluster, return feat
+      if (!feat.properties.cluster) {
+        return feat;
+      }
+
+      // is a cluster
+      const cluster = feat as TClusterPoint<P>;
+
+      const expansion = this.clusterIndex.getClusterExpansionZoom(
+        cluster.properties.cluster_id
+      );
+
+      const clusterCanZoomMore = expansion < this.maxZoom;
+
+      if (clusterCanZoomMore) {
+        return cluster;
+      }
+
+      // expands past max zoom, so will not be broken up
+      // augment cluster with leaves it contains
+      const leaves = this.getLeaves(cluster.properties.cluster_id);
+
+      return {
+        ...cluster,
+        properties: {
+          ...cluster.properties,
+          maxZoomLeaves: leaves,
+        },
+      };
+    });
   }
 
   getLeaves(clusterId: number, limit = 100, offset = 0): PointFeature<P>[] {

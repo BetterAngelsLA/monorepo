@@ -18,7 +18,7 @@ import {
 import { Pressable, View } from 'react-native';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
-import ClientHeader from './ClientHeader';
+import { ClientHeader } from './ClientHeader';
 import { ClientNavMenu } from './ClientNavMenu/ClientNavMenu';
 import ClientProfileView from './ClientProfile';
 import ClientTabs, { ClientViewTabEnum } from './ClientTabs';

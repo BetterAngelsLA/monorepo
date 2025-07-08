@@ -113,7 +113,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
         response = self._create_client_profile_fixture(variables)
         client_profile = response["data"]["createClientProfile"]
 
-        expected_contacts = [{"id": ANY, **contact}]
+        expected_contacts = [{"id": ANY, "updatedAt": ANY, **contact}]
         expected_hmis_profiles = [{"id": ANY, **hmis_profile}]
         expected_household_members = [{"id": ANY, "displayGender": "Female", **household_member}]
         expected_phone_numbers = [{"id": ANY, **phone_number}]
@@ -138,7 +138,7 @@ class ClientProfileMutationTestCase(ClientProfileGraphQLBaseTestCase):
             expected_client_profile,
             client_profile,
             ignore_order=True,
-            exclude_regex_paths=[r"\['id'\]$"],
+            exclude_regex_paths=[r"\['id'\]$", r"\['updatedAt'\]$"],
         )
 
         self.assertFalse(client_differences)
@@ -501,7 +501,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
             "email": "client_contact_3@example.com",
             "mailingAddress": "333 Main Street",
             "name": "Sam Smith",
-            "phoneNumber": "2125553232",
+            "phoneNumber": "2125553232x123",
             "relationshipToClient": RelationshipTypeEnum.FRIEND.name,
             "relationshipToClientOther": None,
         }
@@ -510,7 +510,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             client_contact = self._create_client_contact_fixture(variables)["data"]["createClientContact"]
 
-        expected_client_contact = {"id": ANY, **variables}
+        expected_client_contact = {"id": ANY, "updatedAt": ANY, **variables}
         expected_client_contact.pop("clientProfile")
 
         self.assertEqual(client_contact, expected_client_contact)
@@ -526,7 +526,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
             "email": "client_contact_1_update@example.com",
             "mailingAddress": "111 Main Street Update",
             "name": "Jane Smith Update",
-            "phoneNumber": "2125552121",
+            "phoneNumber": "2125552121x321",
             "relationshipToClient": RelationshipTypeEnum.PAST_CASE_MANAGER.name,
             "relationshipToClientOther": None,
         }
@@ -535,7 +535,9 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             client_contact = self._update_client_contact_fixture(variables)["data"]["updateClientContact"]
 
-        self.assertEqual(variables, client_contact)
+        expected_client_contact = {"updatedAt": ANY, **variables}
+
+        self.assertEqual(expected_client_contact, client_contact)
 
     def test_delete_client_contact_mutation(self) -> None:
         variables = {"object": "ClientContact", "object_id": self.client_contact_1["id"]}
@@ -551,6 +553,7 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
         ("phone_number", "should_succeed", "expected_phone_number"),
         [
             (None, True, None),
+            ("", True, None),
             (" ", True, None),
             ("a", False, None),
             ("212555121", False, None),
@@ -569,13 +572,13 @@ class ClientContactMutationTestCase(ClientContactBaseTestCase):
             "id": self.client_contact_1["id"],
             "phoneNumber": phone_number,
         }
-
         response = self._update_client_contact_fixture(variables)
 
         updated_phone_number = ClientContact.objects.get(id=self.client_contact_1["id"]).phone_number
 
         if should_succeed:
             self.assertEqual(response["data"]["updateClientContact"]["phoneNumber"], expected_phone_number)
+            self.assertEqual(expected_phone_number, updated_phone_number)
         else:
             self.assertEqual(len(response["data"]["updateClientContact"]["messages"]), 1)
             self.assertEqual(

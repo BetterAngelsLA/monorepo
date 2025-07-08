@@ -1,56 +1,56 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
-import { View } from 'react-native';
-import { TNotesQueryInteraction } from '../../../apollo';
-import { Modal, NoteCard } from '../../../ui-components';
+import {
+  BottomSheetModal,
+  TextBold,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
+import { useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { NoteCard } from '../../../ui-components';
 import { useInteractionsMapState } from './map/hooks';
 
 export function InteractionLocationsModal() {
   const { mapState } = useInteractionsMapState();
-  const [selectedInteraction, setSelectedInteraction] =
-    useState<TNotesQueryInteraction | null>(null);
+  const [titleHeight, setTitleHeight] = useState<number>(1);
 
   const { selectedInteractions } = mapState;
+  const snapPoints = useMemo(() => [titleHeight], [titleHeight]);
 
-  useEffect(() => {
-    if (!selectedInteractions.length) {
-      setSelectedInteraction(null);
-
-      return;
-    }
-
-    const currentInteraction = selectedInteractions[0];
-
-    if (currentInteraction.id === selectedInteraction?.id) {
-      return;
-    }
-
-    setSelectedInteraction(currentInteraction);
-  }, [selectedInteractions]);
-
-  if (!selectedInteraction) {
+  if (!selectedInteractions.length) {
     return null;
   }
 
+  // Assumes we display multiple interactions only if they are
+  // in same location (cannot be broken up by clustering)
+  const primaryInteraction = selectedInteractions[0];
+
+  const sheetTitle = primaryInteraction.location?.address.street;
+  const sheetSubTitle =
+    selectedInteractions.length > 1 &&
+    `Total ${selectedInteractions.length} interactions`;
+
   return (
-    <Modal
-      fullWidth={false}
-      propogateSwipe
-      vertical
-      isModalVisible={!!selectedInteraction}
-      closeModal={() => setSelectedInteraction(null)}
+    <BottomSheetModal
+      index={0}
+      enableDynamicSizing
+      enablePanDownToClose={false}
+      snapPoints={snapPoints}
+      maxDynamicContentSize={600}
     >
       <View
-        style={{
-          borderBottomWidth: 1,
-          borderColor: Colors.NEUTRAL_LIGHT,
-          marginBottom: Spacings.sm,
-          paddingBottom: Spacings.xs,
-          paddingHorizontal: Spacings.sm,
+        onLayout={(e) => {
+          const height = e.nativeEvent.layout.height;
+          setTitleHeight(height + 40);
         }}
+        style={styles.header}
       >
-        <TextBold>{selectedInteraction.location?.address.street}</TextBold>
+        {!!sheetTitle && <TextBold>{sheetTitle}</TextBold>}
+
+        {!!sheetSubTitle && (
+          <TextRegular size="xs" mt="xxs">
+            {sheetSubTitle}
+          </TextRegular>
+        )}
       </View>
       <View
         style={{
@@ -58,13 +58,27 @@ export function InteractionLocationsModal() {
           gap: Spacings.sm,
         }}
       >
-        <NoteCard
-          // onPress={() => setSelectedLocation(null)}
-          note={selectedInteraction}
-          variant={'clientProfile'}
-          hasBorder
-        />
+        {selectedInteractions.map((interaction) => {
+          return (
+            <NoteCard
+              key={interaction.id}
+              note={interaction}
+              variant={'clientProfile'}
+              hasBorder
+            />
+          );
+        })}
       </View>
-    </Modal>
+    </BottomSheetModal>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    borderBottomWidth: 1,
+    borderColor: Colors.NEUTRAL_LIGHT,
+    marginBottom: Spacings.sm,
+    paddingBottom: Spacings.md,
+    paddingHorizontal: Spacings.sm,
+  },
+});
