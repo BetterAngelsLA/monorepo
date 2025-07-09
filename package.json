@@ -89,6 +89,7 @@
     "supercluster": "^8.0.1",
     "tailwind-merge": "^2.5.5",
     "tslib": "^2.3.0",
+    "use-deep-compare-effect": "^1.8.1",
     "validator": "^13.15.0"
   },
   "devDependencies": {
