@@ -10,12 +10,17 @@ interface IPhoneNumberBtnProps {
 export function PhoneNumberBtn(props: IPhoneNumberBtnProps) {
   const { number, label } = props;
   const [phoneNumber, extension] = number;
+
+  const phoneNumberUrl = extension
+    ? `${phoneNumber},${extension}`
+    : phoneNumber;
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityHint="Opens your phone dialer to call the number"
-      accessibilityLabel={`Call ${phoneNumber}`}
-      onPress={() => Linking.openURL(`tel:${phoneNumber},${extension}`)}
+      accessibilityLabel={`Call ${phoneNumberUrl}`}
+      onPress={() => Linking.openURL(`tel:${phoneNumberUrl}`)}
       android_ripple={null}
     >
       {({ pressed }) => (

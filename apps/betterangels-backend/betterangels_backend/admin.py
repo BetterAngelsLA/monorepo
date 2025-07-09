@@ -14,6 +14,3 @@ class CustomAdminSite(admin.AdminSite):
         is_local_dev = getattr(settings, "IS_LOCAL_DEV", False)
         context["is_local_dev"] = is_local_dev
         return super().login(request, context)
-
-
-magic_link_admin_site = CustomAdminSite(name="admin")
