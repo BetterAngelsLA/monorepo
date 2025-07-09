@@ -7,6 +7,7 @@ import {
   FeatureFlagControlled,
   FeatureFlags,
   KeyboardToolbarProvider,
+  NativePaperProvider,
   SnackbarProvider,
   useNewRelic,
   UserProvider,
@@ -22,17 +23,9 @@ import { StatusBar } from 'expo-status-bar';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
-import { Colors } from '@monorepo/expo/shared/static';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import {
-  MD3LightTheme as DefaultTheme,
-  PaperProvider,
-} from 'react-native-paper';
-import { en, registerTranslation } from 'react-native-paper-dates';
-
-registerTranslation('en', en);
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
@@ -44,25 +37,13 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorCrashView {...props} />;
 }
 
-const customTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: Colors.PRIMARY_DARK,
-    surface: Colors.WHITE,
-    onSurface: Colors.PRIMARY_EXTRA_DARK,
-    background: Colors.WHITE,
-    borderRadius: 50,
-  },
-};
-
 export default function RootLayout() {
   const router = useRouter();
   useNewRelic();
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <PaperProvider theme={customTheme}>
+      <NativePaperProvider>
         <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
           <ApolloClientProvider>
             <FeatureControlProvider>
@@ -124,7 +105,7 @@ export default function RootLayout() {
             </FeatureControlProvider>
           </ApolloClientProvider>
         </ApiConfigProvider>
-      </PaperProvider>
+      </NativePaperProvider>
     </GestureHandlerRootView>
   );
 }
