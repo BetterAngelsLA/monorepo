@@ -157,7 +157,6 @@ When adding a new static site to this monorepo, you **must** provision the neces
 **For more details, refer to:**
 
 - [`shelter-web` config example](https://github.com/BetterAngelsLA/infrastructure/blob/main/environments/production/us-west-2/static-sites/shelter-web/terragrunt.hcl)
-- [static website module README](https://github.com/BetterAngelsLA/infrastructure/tree/main/modules/services/static-website) in the infrastructure repository
 
 ---
 
