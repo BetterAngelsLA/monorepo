@@ -22,7 +22,10 @@ export default function AppRoutesStack() {
       />
       <Stack.Screen
         name="modal-screen"
-        options={getDefaultStackModalOptions(modalScreenProps)}
+        options={getDefaultStackModalOptions({
+          ...modalScreenProps,
+          onClose: () => router.back(),
+        })}
       />
       <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       <Stack.Screen

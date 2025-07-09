@@ -1,7 +1,7 @@
 import { usePathname, useRouter } from 'expo-router';
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { ModalScreenContext } from './ModalScreenContext';
-import { TModalPresentationType, TShowModalScreenProps } from './types';
+import { TModalPresentationType, TShowModalScreenProps, noOpFn } from './types';
 
 /**
  * ModalScreenProvider
@@ -27,18 +27,19 @@ const DEFAULT_PRESENTATION: TModalPresentationType = 'modal';
 const SCREEN_PATH_NAME = '/modal-screen';
 
 export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const onCloseCallbackRef = useRef<noOpFn | null>(null);
+  const prevPathRef = useRef(pathname);
+
   const [presentation, setPresentation] =
     useState<TModalPresentationType>(DEFAULT_PRESENTATION);
   const [modalContent, setModalContent] = useState<React.ReactNode | null>(
     null
   );
-  const [onCloseHandler, setOnCloseHandler] = useState<(() => void) | null>(
-    null
-  );
   const [title, setTitle] = useState<string>('');
   const [noHeader, setNoHeader] = useState<boolean>(false);
-  const router = useRouter();
-  const pathname = usePathname();
 
   const showModalScreen = (props: TShowModalScreenProps) => {
     const { content, presentation, title, hideHeader, onClose } = props;
@@ -47,7 +48,7 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
     setPresentation(presentation || DEFAULT_PRESENTATION);
     setTitle(title || '');
     setNoHeader(!!hideHeader);
-    setOnCloseHandler(() => onClose ?? null);
+    onCloseCallbackRef.current = onClose ?? null;
 
     router.push(SCREEN_PATH_NAME);
   };
@@ -56,12 +57,21 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
   // Effect listens for route changes and detects when the modal route is exited.
   // When exiting, it invokes the onClose handler (if any) and resets modal state.
   useEffect(() => {
-    if (modalContent !== null && pathname !== SCREEN_PATH_NAME) {
-      onCloseHandler?.();
+    const modalWasOpen = prevPathRef.current === SCREEN_PATH_NAME;
+    const changedToClosed = modalWasOpen && pathname !== SCREEN_PATH_NAME;
 
+    if (changedToClosed) {
+      try {
+        onCloseCallbackRef.current?.();
+      } catch (e) {
+        console.error('[ModalScreenProvider] onClose handler error:', e);
+      }
+
+      onCloseCallbackRef.current = null;
       setModalContent(null);
-      setOnCloseHandler(null);
     }
+
+    prevPathRef.current = pathname;
   }, [pathname]);
 
   // Manual modal close method
@@ -74,7 +84,7 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    onCloseHandler ? onCloseHandler() : router.back();
+    router.back();
   };
 
   return (
