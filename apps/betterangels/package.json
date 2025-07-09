@@ -75,7 +75,8 @@
     "expo-dev-client": "*",
     "validator": "*",
     "@gorhom/bottom-sheet": "*",
-    "supercluster": "*"
+    "supercluster": "*",
+    "use-deep-compare-effect": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",
