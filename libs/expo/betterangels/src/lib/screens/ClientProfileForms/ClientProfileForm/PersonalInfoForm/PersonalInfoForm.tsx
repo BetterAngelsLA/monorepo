@@ -2,7 +2,7 @@ import { Regex } from '@monorepo/expo/shared/static';
 import {
   ActionModal,
   ControlledInput,
-  DatePicker,
+  DatePickerV2,
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
@@ -167,12 +167,11 @@ export function PersonalInfoForm() {
       </Form.Field>
 
       <Form.Field title="Date of Birth">
-        <DatePicker
-          maxDate={new Date()}
-          mode="date"
-          format="MM/dd/yyyy"
-          placeholder="Enter Date of Birth"
-          minDate={new Date('1900-01-01')}
+        <DatePickerV2
+          validRange={{
+            endDate: new Date(),
+            startDate: new Date('1900-01-01'),
+          }}
           value={dateOfBirth}
           onChange={(date) => setValue('dateOfBirth', date)}
         />

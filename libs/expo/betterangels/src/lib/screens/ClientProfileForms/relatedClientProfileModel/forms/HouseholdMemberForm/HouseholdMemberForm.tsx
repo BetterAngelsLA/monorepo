@@ -1,6 +1,6 @@
 import {
   ControlledInput,
-  DatePicker,
+  DatePickerV2,
   Form,
   SingleSelect,
   TextRegular,
@@ -183,22 +183,20 @@ export function HouseholdMemberForm(props: TProps) {
               />
             )}
           />
-
           <Controller
             name="dateOfBirth"
             control={control}
             render={({ field: { value, onChange } }) => (
-              <DatePicker
+              <DatePickerV2
                 label="Date of Birth"
                 disabled={isLoading}
-                maxDate={new Date()}
-                mode="date"
-                format="MM/dd/yyyy"
-                placeholder="Enter date of birth"
-                minDate={new Date('1900-01-01')}
-                value={value}
+                validRange={{
+                  endDate: new Date(),
+                  startDate: new Date('1900-01-01'),
+                }}
+                value={value || undefined}
                 onChange={onChange}
-                error={errors.dateOfBirth?.message}
+                error={!!errors.dateOfBirth?.message}
               />
             )}
           />
