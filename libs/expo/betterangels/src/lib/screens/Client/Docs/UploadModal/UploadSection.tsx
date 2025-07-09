@@ -1,5 +1,4 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
-import { Spacings } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
   IconButton,
@@ -7,25 +6,17 @@ import {
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View } from 'react-native';
+import { MainScrollContainer } from '../../../../ui-components';
 import { IUploadSectionProps } from './types';
 
-export default function UploadSection(props: IUploadSectionProps) {
+export function UploadSection(props: IUploadSectionProps) {
   const { onCancel, title, subtitle, onSubmit, children, loading, disabled } =
     props;
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
-    >
-      <ScrollView
-        style={{
-          paddingHorizontal: Spacings.sm,
-          flex: 1,
-        }}
-        contentContainerStyle={{ paddingBottom: Spacings.xl }}
-      >
+    <View style={{ flex: 1 }}>
+      <MainScrollContainer keyboardAware>
         <IconButton
           onPress={onCancel}
           mb="sm"
@@ -42,7 +33,8 @@ export default function UploadSection(props: IUploadSectionProps) {
           {subtitle}
         </TextRegular>
         {children}
-      </ScrollView>
+      </MainScrollContainer>
+
       <BottomActions
         isLoading={loading}
         disabled={disabled}
@@ -55,6 +47,6 @@ export default function UploadSection(props: IUploadSectionProps) {
         }
         onSubmit={onSubmit}
       />
-    </KeyboardAvoidingView>
+    </View>
   );
 }

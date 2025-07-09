@@ -74,7 +74,7 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    router.back();
+    onCloseHandler ? onCloseHandler() : router.back();
   };
 
   return (

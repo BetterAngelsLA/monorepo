@@ -1,11 +1,6 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
-import {
-  Colors,
-  Radiuses,
-  Spacings,
-  thumbnailSizes,
-} from '@monorepo/expo/shared/static';
+import { Colors, Spacings, thumbnailSizes } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
@@ -152,32 +147,16 @@ export default function UploadModal(props: IUploadModalProps) {
   const closeModal = () => router.back();
 
   return (
-    // <Modal
-    //   style={{
-    //     margin: 0,
-    //     flex: 1,
-    //     justifyContent: 'flex-end',
-    //   }}
-    //   animationIn="slideInUp"
-    //   animationOut="slideOutDown"
-    //   backdropOpacity={opacity}
-    //   isVisible={isModalVisible}
-    //   onBackdropPress={closeModal}
-    //   useNativeDriverForBackdrop={true}
-    // >
     <View
       style={{
-        borderTopLeftRadius: Radiuses.xs,
-        borderTopRightRadius: Radiuses.xs,
         paddingTop: topOffset + Spacings.xs,
-
         backgroundColor: Colors.WHITE,
         flex: 1,
       }}
     >
-      {tab ? (
-        TABS[tab]
-      ) : (
+      {!!tab && TABS[tab]}
+
+      {!tab && (
         <ScrollView
           style={{
             paddingHorizontal: Spacings.sm,
@@ -189,6 +168,7 @@ export default function UploadModal(props: IUploadModalProps) {
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'space-between',
+              marginTop: Spacings.md,
               marginBottom: Spacings.sm,
             }}
           >
@@ -275,6 +255,5 @@ export default function UploadModal(props: IUploadModalProps) {
         </ScrollView>
       )}
     </View>
-    // {/* </Modal> */}
   );
 }
