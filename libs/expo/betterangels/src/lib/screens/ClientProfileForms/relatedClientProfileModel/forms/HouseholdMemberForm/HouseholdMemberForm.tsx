@@ -1,6 +1,6 @@
 import {
   ControlledInput,
-  DatePickerV2,
+  DatePicker,
   Form,
   SingleSelect,
   TextRegular,
@@ -187,7 +187,8 @@ export function HouseholdMemberForm(props: TProps) {
             name="dateOfBirth"
             control={control}
             render={({ field: { value, onChange } }) => (
-              <DatePickerV2
+              <DatePicker
+                type="numeric"
                 label="Date of Birth"
                 disabled={isLoading}
                 validRange={{

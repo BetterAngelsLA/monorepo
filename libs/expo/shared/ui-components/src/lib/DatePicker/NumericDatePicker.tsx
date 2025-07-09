@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { DatePickerInput } from 'react-native-paper-dates';
 import FormFieldLabel from '../FormFieldLabel';
 
-type IDatePickerProps = Omit<
+export type INumericDatePickerProps = Omit<
   ComponentProps<typeof DatePickerInput>,
   | 'locale'
   | 'inputMode'
@@ -16,7 +16,7 @@ type IDatePickerProps = Omit<
   | 'withDateFormatInLabel'
 >;
 
-export function DatePicker(props: IDatePickerProps) {
+export function NumericDatePicker(props: INumericDatePickerProps) {
   const { label, ...rest } = props;
 
   return (

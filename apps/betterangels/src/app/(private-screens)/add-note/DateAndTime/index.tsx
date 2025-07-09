@@ -6,7 +6,6 @@ import {
 } from '@monorepo/expo/betterangels';
 import {
   DatePicker,
-  DatePickerV2,
   FieldCard,
   TextMedium,
 } from '@monorepo/expo/shared/ui-components';
@@ -111,7 +110,8 @@ export default function DateAndTime(props: IDateAndTimeProps) {
           overflow: 'hidden',
         }}
       >
-        <DatePickerV2
+        <DatePicker
+          type="numeric"
           validRange={{
             endDate: endOfDay,
             startDate: new Date('1900-01-01'),
@@ -120,6 +120,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
           onChange={(date) => onChange('date', date)}
         />
         <DatePicker
+          type="wheel"
           required
           maxDate={endOfDay}
           mode="time"
