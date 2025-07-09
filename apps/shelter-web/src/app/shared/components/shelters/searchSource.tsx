@@ -15,7 +15,7 @@ export function SearchSource(props: TProps) {
   }
 
   if (coordinatesSource === 'currentLocation') {
-    locationSource = 'current location';
+    locationSource = 'search area';
   }
 
   return <div className={className}>(based on your {locationSource})</div>;
