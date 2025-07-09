@@ -6,7 +6,7 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 
 export default defineConfig(() => ({
   root: __dirname,
-  cacheDir: '../node_modules/.vite/betterangels-admin',
+  cacheDir: '../../node_modules/.vite/betterangels-admin',
   server: {
     port: 4200,
     host: 'localhost',
@@ -21,7 +21,7 @@ export default defineConfig(() => ({
   //  plugins: [ nxViteTsPaths() ],
   // },
   build: {
-    outDir: '../dist/betterangels-admin',
+    outDir: '../../dist/betterangels-admin',
     emptyOutDir: true,
     reportCompressedSize: true,
     commonjsOptions: {
