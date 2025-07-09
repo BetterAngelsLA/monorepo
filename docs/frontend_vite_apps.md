@@ -71,8 +71,6 @@ When adding a new static site to this monorepo, you **must** provision the neces
 
 > **Reference the [Terraform module README](https://github.com/BetterAngelsLA/infrastructure/tree/main/modules/services/static-website/README.md) for the authoritative source on how to configure static sites.**
 
----
-
 ## 6. Resources
 
 - [Nx Documentation](https://nx.dev/)
