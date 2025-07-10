@@ -52,55 +52,55 @@ export default function RootLayout() {
                 <KeyboardToolbarProvider>
                   <UserProvider>
                     <BlockingScreenProvider>
-                    <SnackbarProvider>
-                      <StatusBar style="light" />
-                      <FeatureFlagControlled
-                        flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
-                      >
-                        <AppUpdatePrompt />
-                      </FeatureFlagControlled>
-                      <Stack>
-                        <Stack.Screen
-                          name="(tabs)"
-                          options={{
-                            headerShown: false,
-                            gestureEnabled: false,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="(private-screens)"
-                          options={{
-                            headerShown: false,
-                            gestureEnabled: false,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="modal"
-                          options={{ presentation: 'modal' }}
-                        />
-                        <Stack.Screen
-                          name="sign-in"
-                          options={{
-                            headerLeft: () => (
-                              <IconButton
-                                onPress={() => router.back()}
-                                variant="transparent"
-                                accessibilityLabel="goes to get started screen"
-                                accessibilityHint="goes to get started screen"
-                              >
-                                <ArrowLeftIcon />
-                              </IconButton>
-                            ),
-                            headerShadowVisible: false,
-                            title: '',
-                          }}
-                        />
-                        <Stack.Screen
-                          name="auth"
-                          options={{ headerShown: false }}
-                        />
-                      </Stack>
-                    </SnackbarProvider>
+                      <SnackbarProvider>
+                        <StatusBar style="light" />
+                        <FeatureFlagControlled
+                          flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
+                        >
+                          <AppUpdatePrompt />
+                        </FeatureFlagControlled>
+                        <Stack>
+                          <Stack.Screen
+                            name="(tabs)"
+                            options={{
+                              headerShown: false,
+                              gestureEnabled: false,
+                            }}
+                          />
+                          <Stack.Screen
+                            name="(private-screens)"
+                            options={{
+                              headerShown: false,
+                              gestureEnabled: false,
+                            }}
+                          />
+                          <Stack.Screen
+                            name="modal"
+                            options={{ presentation: 'modal' }}
+                          />
+                          <Stack.Screen
+                            name="sign-in"
+                            options={{
+                              headerLeft: () => (
+                                <IconButton
+                                  onPress={() => router.back()}
+                                  variant="transparent"
+                                  accessibilityLabel="goes to get started screen"
+                                  accessibilityHint="goes to get started screen"
+                                >
+                                  <ArrowLeftIcon />
+                                </IconButton>
+                              ),
+                              headerShadowVisible: false,
+                              title: '',
+                            }}
+                          />
+                          <Stack.Screen
+                            name="auth"
+                            options={{ headerShown: false }}
+                          />
+                        </Stack>
+                      </SnackbarProvider>
                     </BlockingScreenProvider>
                   </UserProvider>
                 </KeyboardToolbarProvider>
