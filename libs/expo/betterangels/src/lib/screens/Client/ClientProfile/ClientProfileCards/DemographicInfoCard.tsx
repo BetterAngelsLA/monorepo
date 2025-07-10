@@ -3,6 +3,7 @@ import {
   enumDisplayAdaAccommodationEnum,
   enumDisplayEyeColor,
   enumDisplayHairColor,
+  enumDisplayMaritalStatus,
   enumDisplayRace,
 } from '../../../../static';
 import {
@@ -29,6 +30,7 @@ export function DemographicInfoCard(props: TProps) {
     race,
     physicalDescription,
     adaAccommodation,
+    maritalStatus,
   } = clientProfile || {};
 
   const formattedHeight = getFormattedLength({
@@ -71,6 +73,10 @@ export function DemographicInfoCard(props: TProps) {
     {
       header: ['Hair Color'],
       rows: [[hairColor && enumDisplayHairColor[hairColor]]],
+    },
+    {
+      header: ['Marital Status'],
+      rows: [[maritalStatus && enumDisplayMaritalStatus[maritalStatus]]],
     },
     {
       header: ['Physical Description'],
