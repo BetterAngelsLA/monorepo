@@ -5014,7 +5014,7 @@ __metadata:
     jest-environment-node: "npm:^29.4.1"
     jest-expo: "npm:~53.0.7"
     jiti: "npm:2.4.2"
-    jotai: "npm:^2.10.3"
+    jotai: "npm:^2.12.5"
     jsdom: "npm:~22.1.0"
     libphonenumber-js: "npm:^1.12.6"
     metro: "npm:^0.82.0"
@@ -18005,7 +18005,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jotai@npm:^2.10.3":
+"jotai@npm:^2.12.5":
   version: 2.12.5
   resolution: "jotai@npm:2.12.5"
   peerDependencies:
