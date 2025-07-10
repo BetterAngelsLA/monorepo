@@ -5038,6 +5038,7 @@ __metadata:
     react-native-modal: "npm:^14.0.0-rc.1"
     react-native-open-maps: "npm:^0.4.3"
     react-native-paper: "npm:^5.12.5"
+    react-native-paper-dates: "npm:^0.22.47"
     react-native-pdf: "npm:^6.7.7"
     react-native-reanimated: "npm:~3.17.5"
     react-native-safe-area-context: "npm:5.4.0"
@@ -22215,6 +22216,20 @@ __metadata:
   dependencies:
     query-string: "npm:^7.1.0"
   checksum: 10/968539bfa9b027332e4c62a297eb8966ad0e46feb7e1d4fc32a4e040a6940b023ab827ff5a038821edef5802d1bf8e372736a558c8aabf11330c2a703fe2688d
+  languageName: node
+  linkType: hard
+
+"react-native-paper-dates@npm:^0.22.47":
+  version: 0.22.47
+  resolution: "react-native-paper-dates@npm:0.22.47"
+  dependencies:
+    color: "npm:^4.2.3"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-paper: "*"
+    react-native-safe-area-context: "*"
+  checksum: 10/40778f2c51047c6e5fa495c49a2c5d1a271026685dd0a857875e907d7030feaca9822963f711f0ae6f0f1ebf12e216409fb8dd6dd7824c70099584f2ef57f14a
   languageName: node
   linkType: hard
 

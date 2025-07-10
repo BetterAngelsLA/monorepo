@@ -76,6 +76,7 @@
     "validator": "*",
     "@gorhom/bottom-sheet": "*",
     "supercluster": "*",
+    "react-native-paper-dates": "*",
     "use-deep-compare-effect": "*"
   },
   "scripts": {
