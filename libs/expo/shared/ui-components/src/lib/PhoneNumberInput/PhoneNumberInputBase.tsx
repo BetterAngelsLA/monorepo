@@ -84,7 +84,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
   },
-  errors: {},
   number: { flex: 2, marginRight: Spacings.xs },
   extension: { flex: 1 },
 });
