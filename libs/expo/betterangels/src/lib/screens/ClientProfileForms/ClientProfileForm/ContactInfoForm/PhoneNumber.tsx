@@ -1,3 +1,4 @@
+import { TrashCanOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
   Form,
@@ -6,7 +7,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
-import { Platform, Switch, View } from 'react-native';
+import { Platform, Pressable, Switch, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../../../apollo';
 
 export function PhoneNumber() {
@@ -51,12 +52,22 @@ export function PhoneNumber() {
                 />
               </View>
               {index !== 0 && (
-                <TextButton
-                  color={Colors.PRIMARY}
-                  title="Remove"
-                  accessibilityHint="Removes phone number"
+                <Pressable
+                  style={{
+                    marginTop: Spacings.md,
+                    marginHorizontal: Spacings.xxs,
+                  }}
+                  accessible
+                  accessibilityHint="closes the modal"
+                  accessibilityRole="button"
+                  accessibilityLabel="close"
                   onPress={() => remove(index)}
-                />
+                >
+                  <TrashCanOutlineIcon
+                    size="md"
+                    color={Colors.PRIMARY_EXTRA_DARK}
+                  />
+                </Pressable>
               )}
             </View>
             <View
