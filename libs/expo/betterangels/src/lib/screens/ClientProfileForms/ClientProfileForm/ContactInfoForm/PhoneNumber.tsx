@@ -32,9 +32,10 @@ export function PhoneNumber() {
             >
               <View style={{ flex: 1 }}>
                 <PhoneNumberInput
-                  label={'Phone Number'}
                   name={`phoneNumbers.${index}.number`}
                   control={control}
+                  placeholderNumber="Enter phone number"
+                  placeholderExt="ext"
                   rules={{
                     validate: (value: string) => {
                       // empty value is valid as it'll delete entry
@@ -54,8 +55,8 @@ export function PhoneNumber() {
               {index !== 0 && (
                 <Pressable
                   style={{
-                    marginTop: Spacings.md,
-                    marginHorizontal: Spacings.xxs,
+                    marginLeft: Spacings.xxs,
+                    marginRight: Spacings.sm,
                   }}
                   accessible
                   accessibilityHint="closes the modal"
