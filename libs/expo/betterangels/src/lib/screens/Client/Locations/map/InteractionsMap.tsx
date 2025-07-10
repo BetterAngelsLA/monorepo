@@ -14,10 +14,13 @@ import { useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { useSnackbar } from '../../../../hooks';
+import {
+  useSetClientInteractionsMapStateRegion,
+  useSetClientInteractionsMapStateSelectedInteractions,
+} from '../../../../state';
 import { EmptyState } from '../EmptyState';
 import { useInteractionPointFeatures } from './hooks/useInteractionPointFeatures';
 import { useInteractionsMapRegion } from './hooks/useInteractionsMapRegion';
-import { useInteractionsMapState } from './hooks/useInteractionsMapState';
 import { TClusterInteraction } from './types';
 
 type TProps = {
@@ -28,8 +31,10 @@ export function InteractionsMap(props: TProps) {
   const { clientProfileId } = props;
 
   const mapRef = useRef<TMapView | null>(null);
-  const { setMapState } = useInteractionsMapState();
   const { showSnackbar } = useSnackbar();
+  const setMapRegion = useSetClientInteractionsMapStateRegion();
+  const setSelectedInteractions =
+    useSetClientInteractionsMapStateSelectedInteractions();
 
   // 1. Pull data
   const { pointFeatures, loading, error, interactions } =
@@ -59,7 +64,7 @@ export function InteractionsMap(props: TProps) {
   function onRegionChangeComplete(region: Region) {
     updateClustersForRegion(region);
 
-    setMapState((prev) => ({ ...prev, region }));
+    setMapRegion(region);
   }
 
   const renderClusterIconFn = useMemo(
@@ -105,10 +110,7 @@ export function InteractionsMap(props: TProps) {
     // use array to allow rendering multiple cards
     const selected = interaction ? [interaction] : [];
 
-    setMapState((prev) => ({
-      ...prev,
-      selectedInteractions: selected,
-    }));
+    setSelectedInteractions(selected);
 
     const centerPoint = selected[0].location?.point;
 
@@ -144,10 +146,7 @@ export function InteractionsMap(props: TProps) {
     const selectedInteractions =
       interactions?.filter((i) => selectedIntIds.includes(i.id)) || [];
 
-    setMapState((prev) => ({
-      ...prev,
-      selectedInteractions,
-    }));
+    setSelectedInteractions(selectedInteractions);
   }
 
   return (

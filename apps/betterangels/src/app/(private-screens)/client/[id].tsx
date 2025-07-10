@@ -1,8 +1,8 @@
 import {
   Client,
   ClientProfileSectionEnum,
-  InteractionsMapStateProvider,
   isValidClientProfileSectionEnum,
+  useResetClientInteractionsMapState,
 } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
@@ -15,6 +15,8 @@ type TSearchParams = {
 export default function ClientScreen() {
   const { id, arrivedFrom, openCard } = useLocalSearchParams<TSearchParams>();
 
+  const updateInteractionsMapState = useResetClientInteractionsMapState();
+
   if (!id) {
     throw new Error('Something went wrong. Please try again.');
   }
@@ -25,9 +27,7 @@ export default function ClientScreen() {
     openCardName = openCard as ClientProfileSectionEnum;
   }
 
-  return (
-    <InteractionsMapStateProvider>
-      <Client id={id} arrivedFrom={arrivedFrom} openCard={openCardName} />
-    </InteractionsMapStateProvider>
-  );
+  updateInteractionsMapState(id);
+
+  return <Client id={id} arrivedFrom={arrivedFrom} openCard={openCardName} />;
 }
