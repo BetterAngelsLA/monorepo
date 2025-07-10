@@ -2,14 +2,16 @@ import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
-import { ReactNode, useCallback, useState } from 'react';
+import { ReactNode, useCallback, useRef } from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 import { useSnackbar } from '../../hooks';
+import { useBlockingScreen } from '../../providers';
 import { useCreateNoteMutation } from './__generated__/CreateInteraction.generated';
 
 type TProps = {
   clientProfileId: string;
   children?: ReactNode;
+  disabled?: boolean;
   onCreated?: (newNoteId: string) => void;
   onError?: () => void;
   style?: ViewStyle;
@@ -21,6 +23,7 @@ export function CreateClientInteractionBtn(props: TProps) {
   const {
     clientProfileId,
     children,
+    disabled,
     onCreated,
     onError,
     style,
@@ -28,13 +31,22 @@ export function CreateClientInteractionBtn(props: TProps) {
     accessibilityHint = 'create new interaction',
   } = props;
 
-  const [disabled, setDisabled] = useState(false);
+  // store in a ref as it's synchronous and safest to prevent double click
+  const isProcessing = useRef(false);
+
+  const router = useRouter();
   const [createNote] = useCreateNoteMutation();
   const { showSnackbar } = useSnackbar();
-  const router = useRouter();
+  const { blockScreenUntilNextNavigation, unblockScreen } = useBlockingScreen();
 
   const handleCreateNote = useCallback(async () => {
-    setDisabled(true);
+    if (isProcessing.current) {
+      return;
+    }
+
+    isProcessing.current = true;
+
+    blockScreenUntilNextNavigation();
 
     try {
       const { data } = await createNote({
@@ -63,6 +75,8 @@ export function CreateClientInteractionBtn(props: TProps) {
         `error creating note for profileId [${clientProfileId}]: ${err}`
       );
 
+      unblockScreen();
+
       // custom callback: invoke and return
       if (onError) {
         return onError();
@@ -74,21 +88,25 @@ export function CreateClientInteractionBtn(props: TProps) {
         type: 'error',
       });
     } finally {
-      setDisabled(false);
+      isProcessing.current = false;
     }
   }, [clientProfileId, onCreated, onError, createNote]);
 
   const handlePress = () => {
-    if (!disabled) {
-      handleCreateNote();
+    if (isProcessing.current) {
+      return;
     }
+
+    handleCreateNote();
   };
+
+  const isDisabled = disabled || isProcessing.current;
 
   if (children) {
     return (
       <Pressable
-        style={({ pressed }) => [pressed && styles.buttonPressed, style]}
-        disabled={disabled}
+        style={[style, isDisabled && styles.buttonDisabled]}
+        disabled={isDisabled}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
@@ -101,7 +119,7 @@ export function CreateClientInteractionBtn(props: TProps) {
 
   return (
     <IconButton
-      disabled={disabled}
+      disabled={isDisabled}
       variant="secondary"
       borderColor={Colors.WHITE}
       accessibilityLabel={accessibilityLabel}
@@ -114,7 +132,7 @@ export function CreateClientInteractionBtn(props: TProps) {
 }
 
 const styles = StyleSheet.create({
-  buttonPressed: {
-    backgroundColor: Colors.GRAY_PRESSED,
+  buttonDisabled: {
+    opacity: 0.6,
   },
 });
