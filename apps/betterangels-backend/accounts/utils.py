@@ -1,5 +1,6 @@
-from typing import Union
+from typing import Optional, Union
 
+from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
 from django.db.models import Exists, OuterRef, QuerySet
@@ -60,3 +61,56 @@ def get_outreach_authorized_users() -> QuerySet[User]:
 
     # Use Exists to avoid duplicate users without `distinct()`
     return User.objects.filter(Exists(permission_group_exists))
+
+
+class OrgPermissionManager:
+    """Manage org-specific user permissions."""
+
+    def __init__(self, organization: Organization) -> None:
+        self.organization: Organization = organization
+        self._admin_template, _ = PermissionGroupTemplate.objects.get_or_create(
+            name=GroupTemplateNames.ORG_ADMIN,
+        )
+        self._superuser_template, _ = PermissionGroupTemplate.objects.get_or_create(
+            name=GroupTemplateNames.ORG_SUPERUSER
+        )
+        self._org_admin_group, _ = PermissionGroup.objects.get_or_create(
+            organization=self.organization, template=self._admin_template
+        )
+        self._org_superuser_group, _ = PermissionGroup.objects.get_or_create(
+            organization=self.organization, template=self._superuser_template
+        )
+
+    def set_role(self, user: User, role: OrgRoleEnum) -> None:
+        user.groups.remove
+
+    def set_admin(self, user: User) -> None:
+        """
+        Grants admin permissions to the user.
+        Removes superuser perms if present.
+        """
+        user.groups.remove(self._org_superuser_group.group)
+        user.groups.add(self._org_admin_group.group)
+
+    def set_superuser(self, user: User) -> None:
+        """
+        Grants superuser permissions to the user.
+        Removes admin perms if present.
+        """
+        user.groups.remove(self._org_admin_group.group)
+        user.groups.add(self._org_superuser_group.group)
+
+    def clear_permissions(self, user: User) -> None:
+        """Remove both admin and superuser perms."""
+        user.groups.remove(self._org_admin_group.group)
+        user.groups.remove(self._org_superuser_group.group)
+
+    def get_user_role(self, user: User) -> Optional[str]:
+        """Return user's role in the organization: member, admin, or superuser."""
+        if self._org_superuser_group.group in user.groups.all():
+            return "superuser"
+
+        if self._org_admin_group.group in user.groups.all():
+            return "admin"
+
+        return "member"

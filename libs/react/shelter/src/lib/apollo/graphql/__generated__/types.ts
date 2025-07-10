@@ -1372,6 +1372,10 @@ export type OrganizationOrder = {
 
 export type OrganizationType = {
   __typename?: 'OrganizationType';
+  canAddMember: Scalars['Boolean']['output'];
+  canChangeMemberRole: Scalars['Boolean']['output'];
+  canRemoveMember: Scalars['Boolean']['output'];
+  canSeePortal: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
 };

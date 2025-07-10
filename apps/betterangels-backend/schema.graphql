@@ -1121,6 +1121,10 @@ input OrganizationOrder {
 type OrganizationType {
   id: ID!
   name: String!
+  canSeePortal: Boolean!
+  canAddMember: Boolean!
+  canRemoveMember: Boolean!
+  canChangeMemberRole: Boolean!
 }
 
 type OrganizationTypeOffsetPaginated {

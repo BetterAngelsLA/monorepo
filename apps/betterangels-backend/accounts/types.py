@@ -1,13 +1,17 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
+from accounts.enums import OrgRoleEnum
+from accounts.groups import GroupTemplateNames
+from accounts.permissions import OrganizationPortalPermissions
 from common.graphql.types import NonBlankString
 from django.db.models import Q, QuerySet
 from organizations.models import Organization
 from strawberry import ID, Info, auto
+from strawberry_django.auth.utils import get_current_user
 
-from .models import User
+from .models import PermissionGroup, User
 
 
 @strawberry.input
@@ -60,6 +64,54 @@ class OrganizationType:
     id: ID
     name: auto
 
+    @strawberry_django.field
+    def can_see_portal(self, info: Info) -> bool:
+        user = cast(User, get_current_user(info))
+        if not user:
+            return False
+
+        return PermissionGroup.objects.filter(
+            organization=self,
+            group__user=user,
+            group__permissions__codename=OrganizationPortalPermissions.ACCESS_ORG_PORTAL.value.split(".")[1],
+        ).exists()
+
+    @strawberry_django.field
+    def can_add_member(self, info: Info) -> bool:
+        user = cast(User, get_current_user(info))
+        if not user:
+            return False
+
+        return PermissionGroup.objects.filter(
+            organization=self,
+            group__user=user,
+            group__permissions__codename=OrganizationPortalPermissions.ADD_ORG_MEMBER.value.split(".")[1],
+        ).exists()
+
+    @strawberry_django.field
+    def can_remove_member(self, info: Info) -> bool:
+        user = cast(User, get_current_user(info))
+        if not user:
+            return False
+
+        return PermissionGroup.objects.filter(
+            organization=self,
+            group__user=user,
+            group__permissions__codename=OrganizationPortalPermissions.REMOVE_ORG_MEMBER.value.split(".")[1],
+        ).exists()
+
+    @strawberry_django.field
+    def can_change_member_role(self, info: Info) -> bool:
+        user = cast(User, get_current_user(info))
+        if not user:
+            return False
+
+        return PermissionGroup.objects.filter(
+            organization=self,
+            group__permissions__codename=OrganizationPortalPermissions.CHANGE_ORG_MEMBER_ROLE.value.split(".")[1],
+            group__user=user,
+        ).exists()
+
 
 @strawberry_django.type(User)
 class UserBaseType:
@@ -91,3 +143,16 @@ class UpdateUserInput(UserBaseType):
     id: ID
     has_accepted_tos: auto
     has_accepted_privacy_policy: auto
+
+
+@strawberry.input
+class OrgInvitationInput:
+    first_name: str
+    last_name: str
+    email: str
+
+
+@strawberry.input
+class OrgMemberInput:
+    id: List[ID]
+    role: OrgRoleEnum

@@ -88,17 +88,6 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-m
             organization__in=user_organizations, template__name__in=authorized_permission_groups
         ).exists()
 
-    @model_property
-    def is_org_portal_authorized(self: "User", organization: Organization) -> bool:
-        user_organizations = self.organizations_organization.all()
-
-        if not user_organizations:
-            return False
-
-        authorized_permission_groups = [pg.value for pg in ORG_PORTAL_AUTHORIZED_PERMISSION_GROUPS]
-
-        return True
-
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.email:
             self.email = self.email.lower()
