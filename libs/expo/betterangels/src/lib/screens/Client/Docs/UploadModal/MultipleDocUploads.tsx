@@ -13,7 +13,7 @@ import {
   ClientProfileDocument,
   useCreateClientDocumentMutation,
 } from '../../__generated__/Client.generated';
-import Section from './UploadSection';
+import { UploadSection } from './UploadSection';
 import UploadsPreview from './UploadsPreview';
 import { IMultipleDocUploadsProps } from './types';
 
@@ -95,7 +95,7 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
 
   return (
     <>
-      <Section
+      <UploadSection
         loading={loading}
         disabled={!docsToUpload.length || !allDocsValid}
         title={title}
@@ -154,7 +154,7 @@ export default function MultipleDocUploads(props: IMultipleDocUploadsProps) {
             documentType={ClientDocumentNamespaceEnum[docType]}
           />
         )}
-      </Section>
+      </UploadSection>
       <MediaPickerModal
         onCapture={(file) => {
           setDocs({
