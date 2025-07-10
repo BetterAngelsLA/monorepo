@@ -1,0 +1,16 @@
+{
+  "name": "betterangels-admin",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/betterangels-admin/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/betterangels-admin/jest.config.ts"
+      }
+    }
+  }
+}

@@ -2,6 +2,7 @@ import 'expo-dev-client';
 
 import {
   AppUpdatePrompt,
+  BlockingScreenProvider,
   ErrorCrashView,
   FeatureControlProvider,
   FeatureFlagControlled,
@@ -50,6 +51,7 @@ export default function RootLayout() {
               <KeyboardProvider>
                 <KeyboardToolbarProvider>
                   <UserProvider>
+                    <BlockingScreenProvider>
                     <SnackbarProvider>
                       <StatusBar style="light" />
                       <FeatureFlagControlled
@@ -99,6 +101,7 @@ export default function RootLayout() {
                         />
                       </Stack>
                     </SnackbarProvider>
+                    </BlockingScreenProvider>
                   </UserProvider>
                 </KeyboardToolbarProvider>
               </KeyboardProvider>

@@ -76,7 +76,8 @@
     "validator": "*",
     "@gorhom/bottom-sheet": "*",
     "supercluster": "*",
-    "react-native-paper-dates": "*"
+    "react-native-paper-dates": "*",
+    "use-deep-compare-effect": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

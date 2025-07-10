@@ -1,9 +1,9 @@
 import { FilePlusIcon, UploadIcon } from '@monorepo/expo/shared/icons';
 import { useRouter } from 'expo-router';
-import { useSnackbar } from '../hooks';
+import { useMemo } from 'react';
 import { ClientProfilesQuery } from '../screens/Clients/__generated__/Clients.generated';
-import { useCreateNoteMutation } from '../screens/Home/__generated__/ActiveClients.generated';
-import MainModal from './MainModal';
+import { CreateClientInteractionBtn } from './CreateClientInteraction';
+import { MainModal, MainModalActionBtnBody } from './MainModal';
 
 interface IMainPlusModalProps {
   closeModal: () => void;
@@ -13,55 +13,39 @@ interface IMainPlusModalProps {
 
 export default function ClientCardModal(props: IMainPlusModalProps) {
   const { isModalVisible, closeModal, clientProfile } = props;
-  const [createNote] = useCreateNoteMutation();
   const router = useRouter();
-  const { showSnackbar } = useSnackbar();
 
-  async function createNoteFunction(id: string) {
-    try {
-      const { data } = await createNote({
-        variables: {
-          data: {
-            clientProfile: id,
-          },
-        },
-      });
-      if (data?.createNote && 'id' in data.createNote) {
-        router.navigate(`/add-note/${data?.createNote.id}`);
-        closeModal();
-      }
-    } catch (err) {
-      console.error(err);
-
-      showSnackbar({
-        message: `Sorry, there was an error creating a new interaction.`,
-        type: 'error',
-      });
+  const actions = useMemo(() => {
+    function renderCreateInteractionBtn() {
+      return (
+        <CreateClientInteractionBtn
+          clientProfileId={clientProfile.id}
+          onCreated={(noteId) => {
+            closeModal();
+            router.navigate(`/add-note/${noteId}`);
+          }}
+          style={{ width: '100%' }}
+        >
+          <MainModalActionBtnBody title="Add Interaction" Icon={FilePlusIcon} />
+        </CreateClientInteractionBtn>
+      );
     }
-  }
 
-  const ACTIONS = [
-    {
-      title: 'Add Interaction',
-      Icon: FilePlusIcon,
-      route: `/add-interaction/${clientProfile.id}`,
-      onPress: () => {
-        if (clientProfile) {
-          createNoteFunction(clientProfile.id);
-        }
+    return [
+      renderCreateInteractionBtn(),
+      {
+        title: 'Upload Documents',
+        Icon: UploadIcon,
+        route: `/client/${clientProfile.id}?newTab=Docs`,
       },
-    },
-    {
-      title: 'Upload Documents',
-      Icon: UploadIcon,
-      route: `/client/${clientProfile.id}?newTab=Docs`,
-    },
-  ];
+    ];
+  }, [clientProfile.id, closeModal, router]);
+
   return (
     <MainModal
       closeButton
       vertical
-      actions={ACTIONS}
+      actions={actions}
       isModalVisible={isModalVisible}
       closeModal={closeModal}
       opacity={0.5}
