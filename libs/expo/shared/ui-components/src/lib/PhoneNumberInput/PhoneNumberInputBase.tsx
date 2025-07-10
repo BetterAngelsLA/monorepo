@@ -42,7 +42,7 @@ export function PhoneNumberInputBase(props: TPhoneNumberInputBaseProps) {
   }, [localPhone, localExt]);
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={[style]}>
       <View style={[styles.inputRow]}>
         <Input
           value={localPhone}
@@ -80,7 +80,6 @@ export function PhoneNumberInputBase(props: TPhoneNumberInputBaseProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {},
   inputRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
