@@ -5,7 +5,7 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
 
-const SERVER_PORT = 8083;
+const SERVER_PORT = 8084;
 
 const MEDIA_PATH = path.resolve(__dirname, '../betterangels-backend/media');
 const devServerProxy: Record<string, string | ProxyOptions> = {
@@ -38,7 +38,7 @@ export default defineConfig(({ mode }) => {
     }),
 
     preview: {
-      port: 8183,
+      port: 8184,
       host: 'localhost',
     },
 
