@@ -1,4 +1,11 @@
-import { RefObject, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Region } from 'react-native-maps';
 import { PointFeature } from 'supercluster';
 import { TMapView } from '../../types';
@@ -17,9 +24,18 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
   const { pointFeatures, opts } = props;
 
   const [clusters, setClusters] = useState<ClusterOrPoint<P>[]>([]);
+
   const clusterManager = useMapClusterManager<P>(opts);
 
   const lastRegionRef = useRef<Region | null>(null);
+
+  // Hash pointFeature _identityHashes to detect value change
+  const pointFeaturesHash = useMemo(() => {
+    return pointFeatures
+      .map((f) => f.properties._identityHash)
+      .sort()
+      .join('|');
+  }, [pointFeatures]);
 
   const updateClusters = useCallback(() => {
     // no map yet, nothing to cluster
@@ -58,7 +74,7 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
     [updateClusters]
   );
 
-  // Load features whenever they change
+  // Load features whenever pointFeaturesHash changes
   useEffect(() => {
     if (!pointFeatures.length) {
       return;
@@ -68,7 +84,7 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
 
     // refresh clusters on map
     updateClusters();
-  }, [pointFeatures, clusterManager, updateClusters]);
+  }, [pointFeaturesHash, clusterManager, updateClusters]);
 
   const zoomToCluster = useCallback(
     (c: TClusterPoint, mapRef: RefObject<TMapView | null>) =>
