@@ -1,4 +1,3 @@
-import { GeoJsonProperties } from 'geojson';
 import { RefObject } from 'react';
 import { EdgePadding } from 'react-native-maps';
 import Supercluster, {
@@ -8,7 +7,13 @@ import Supercluster, {
 } from 'supercluster';
 import { defaultAnimationDuration, defaultEdgePadding } from '../constants';
 import { TMapView } from '../types';
-import { ClusterOrPoint, TClusterPoint, TEdgePaddingBreakpoint } from './types';
+import {
+  ClusterOrPoint,
+  IClusterGeoJson,
+  TClusterPoint,
+  TEdgePaddingBreakpoint,
+} from './types';
+import { generateClusterHash } from './utils/generateClusterHash';
 
 export interface IMapClusterManager {
   // px around each point to merge into a cluster
@@ -23,7 +28,7 @@ export interface IMapClusterManager {
   edgePadding?: EdgePadding | TEdgePaddingBreakpoint[];
 }
 
-export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
+export class MapClusterManager<P extends IClusterGeoJson> {
   private readonly clusterIndex: Supercluster<P, AnyProps>;
   public readonly maxZoom: number;
   public edgePadding?: EdgePadding | TEdgePaddingBreakpoint[];
@@ -77,8 +82,16 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
 
       const clusterCanZoomMore = expansion < this.maxZoom;
 
+      const baseCluster: TClusterPoint<P> = {
+        ...cluster,
+        properties: {
+          ...cluster.properties,
+          _identityHash: generateClusterHash(cluster),
+        },
+      };
+
       if (clusterCanZoomMore) {
-        return cluster;
+        return baseCluster;
       }
 
       // expands past max zoom, so will not be broken up
@@ -86,9 +99,9 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
       const leaves = this.getLeaves(cluster.properties.cluster_id);
 
       return {
-        ...cluster,
+        ...baseCluster,
         properties: {
-          ...cluster.properties,
+          ...baseCluster.properties,
           maxZoomLeaves: leaves,
         },
       };
