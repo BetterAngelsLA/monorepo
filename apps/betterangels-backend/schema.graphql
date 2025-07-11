@@ -1118,13 +1118,17 @@ input OrganizationOrder {
   id: Ordering
 }
 
+enum OrganizationPortalPermissions {
+  ACCESS_ORG_PORTAL
+  ADD_ORG_MEMBER
+  REMOVE_ORG_MEMBER
+  CHANGE_ORG_MEMBER_ROLE
+}
+
 type OrganizationType {
   id: ID!
   name: String!
-  canSeePortal: Boolean!
-  canAddMember: Boolean!
-  canRemoveMember: Boolean!
-  canChangeMemberRole: Boolean!
+  userPortalPermissions: [OrganizationPortalPermissions!]!
 }
 
 type OrganizationTypeOffsetPaginated {

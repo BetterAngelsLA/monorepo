@@ -82,35 +82,15 @@ class OrgPermissionManager:
         )
 
     def set_role(self, user: User, role: OrgRoleEnum) -> None:
-        user.groups.remove
+        self.clear_permissions(user)
 
-    def set_admin(self, user: User) -> None:
-        """
-        Grants admin permissions to the user.
-        Removes superuser perms if present.
-        """
-        user.groups.remove(self._org_superuser_group.group)
-        user.groups.add(self._org_admin_group.group)
+        if role == OrgRoleEnum.ADMIN:
+            user.groups.add(self._org_admin_group.group)
 
-    def set_superuser(self, user: User) -> None:
-        """
-        Grants superuser permissions to the user.
-        Removes admin perms if present.
-        """
-        user.groups.remove(self._org_admin_group.group)
-        user.groups.add(self._org_superuser_group.group)
+        if role == OrgRoleEnum.SUPERUSER:
+            user.groups.add(self._org_superuser_group.group)
 
     def clear_permissions(self, user: User) -> None:
         """Remove both admin and superuser perms."""
         user.groups.remove(self._org_admin_group.group)
         user.groups.remove(self._org_superuser_group.group)
-
-    def get_user_role(self, user: User) -> Optional[str]:
-        """Return user's role in the organization: member, admin, or superuser."""
-        if self._org_superuser_group.group in user.groups.all():
-            return "superuser"
-
-        if self._org_admin_group.group in user.groups.all():
-            return "admin"
-
-        return "member"

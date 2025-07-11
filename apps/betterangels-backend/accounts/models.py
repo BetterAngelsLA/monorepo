@@ -17,7 +17,6 @@ from organizations.models import Organization, OrganizationInvitation, Organizat
 from strawberry_django.descriptors import model_property
 
 OUTREACH_AUTHORIZED_PERMISSION_GROUPS = [GroupTemplateNames.CASEWORKER]
-ORG_PORTAL_AUTHORIZED_PERMISSION_GROUPS = [GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER]
 
 
 @pghistory.track(
