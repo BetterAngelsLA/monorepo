@@ -45,23 +45,23 @@ export function useClusters<P extends IClusterGeoJson>(props: TProps<P>) {
 
     // no data, reset state
     if (!pointFeatures.length) {
-      setClusters((prev) => (prev.length ? [] : prev));
+      setClusters([]);
 
       return;
     }
 
     const bbox = regionToBbox(lastRegionRef.current);
     const zoom = regionToZoom(lastRegionRef.current);
-    const next = clusterManager.getClusters(bbox, zoom);
+    const newClusters = clusterManager.getClusters(bbox, zoom);
 
     setClusters((prev) => {
-      const noChange = areClustersEqual(prev, next);
+      const noChange = areClustersEqual(prev, newClusters);
 
       if (noChange) {
         return prev;
       }
 
-      return next;
+      return newClusters;
     });
   }, [clusterManager, pointFeatures.length]);
 
