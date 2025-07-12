@@ -6,7 +6,7 @@ import {
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import MainModal from './MainModal';
+import { MainModal } from './MainModal';
 
 interface IMainPlusModalProps {
   closeModal: () => void;
@@ -22,8 +22,7 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
       Icon: FilePlusIcon,
       route: '/clients',
       params: {
-        title: 'Who is this interaction for?',
-        select: 'true',
+        createInteraction: 'true',
       },
     },
     {

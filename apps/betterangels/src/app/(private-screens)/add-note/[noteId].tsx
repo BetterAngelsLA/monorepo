@@ -81,6 +81,7 @@ export default function AddNote() {
   if (!noteId) {
     throw new Error('Something went wrong. Please try again.');
   }
+
   const {
     data,
     loading: isLoading,

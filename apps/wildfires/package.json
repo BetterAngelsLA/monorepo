@@ -28,7 +28,9 @@
     "@nx/react": "*",
     "@nx/vite": "*",
     "@vitejs/plugin-react": "*",
-    "vite": "*"
+    "vite": "*",
+    "react-fast-compare": "*",
+    "react-native": "*"
   },
   "devDependencies": {}
 }
