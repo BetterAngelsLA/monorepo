@@ -12,6 +12,7 @@
     "ms-python.isort",
     "wix.vscode-import-cost",
     "batisteo.vscode-django",
-    "monosans.djlint"
+    "monosans.djlint",
+    "ms-playwright.playwright"
   ]
 }

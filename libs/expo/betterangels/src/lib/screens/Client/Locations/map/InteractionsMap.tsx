@@ -14,10 +14,10 @@ import { useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { useSnackbar } from '../../../../hooks';
+import { useClientInteractionsMapState } from '../../../../state';
 import { EmptyState } from '../EmptyState';
 import { useInteractionPointFeatures } from './hooks/useInteractionPointFeatures';
 import { useInteractionsMapRegion } from './hooks/useInteractionsMapRegion';
-import { useInteractionsMapState } from './hooks/useInteractionsMapState';
 import { TClusterInteraction } from './types';
 
 type TProps = {
@@ -28,8 +28,8 @@ export function InteractionsMap(props: TProps) {
   const { clientProfileId } = props;
 
   const mapRef = useRef<TMapView | null>(null);
-  const { setMapState } = useInteractionsMapState();
   const { showSnackbar } = useSnackbar();
+  const [_mapState, setMapState] = useClientInteractionsMapState();
 
   // 1. Pull data
   const { pointFeatures, loading, error, interactions } =
