@@ -1,6 +1,6 @@
 import { BaShelterLogoIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
-import { MenuIcon } from '@monorepo/react/icons';
+import { MenuBtnMobile } from '../shared/components/navBar/MenuBtnMobile';
 
 type IParams = {
   className?: string;
@@ -28,11 +28,7 @@ export function Header(props: IParams): ReactElement {
           <div className="font-semibold">LA</div>
         </div>
       </div>
-      <MenuIcon className="h-4 block lg:hidden" fill="white" />
-      <div className="hidden lg:flex space-x-10 text-sm">
-        <div>HOME</div>
-        <div>ABOUT US</div>
-      </div>
+      <MenuBtnMobile />
     </header>
   );
 }
