@@ -224,7 +224,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 22
+        expected_query_count = 23
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -319,7 +319,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         interior_photo_1 = InteriorPhoto.objects.create(shelter=shelters[1], file=self.file)
 
         query = f"""
-            query ViewShelters($offset: Int, $limit: Int, $order: ShelterOrder) {{
+            query ($offset: Int, $limit: Int, $order: ShelterOrder) {{
                 shelters(pagination: {{offset: $offset, limit: $limit}}, order: $order) {{
                     totalCount
                     pageInfo {{
@@ -334,7 +334,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
 
-        expected_query_count = 24
+        expected_query_count = 25
 
         variables = {"order": {"name": "ASC"}}
 

@@ -75,7 +75,7 @@ class OrganizationType:
         info: Info,
     ) -> QuerySet[Organization]:
         user = get_current_user(info)
-        if not user:
+        if not user.pk:
             return queryset
 
         qs: QuerySet[Organization] = queryset.annotate(
