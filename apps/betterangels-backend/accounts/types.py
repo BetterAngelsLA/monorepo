@@ -4,9 +4,11 @@ import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
-from accounts.permissions import OrganizationPortalPermissions
+from accounts.permissions import UserOrganizationPermissions
 from common.graphql.types import NonBlankString
-from django.db.models import Q, QuerySet
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import CharField, F, Q, QuerySet, Value
+from django.db.models.functions import Concat
 from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
@@ -66,28 +68,41 @@ class OrganizationType:
     id: ID
     name: auto
 
-    @strawberry_django.field
-    def user_portal_permissions(self, info: Info) -> List[OrganizationPortalPermissions]:
-        user = cast(User, get_current_user(info))
+    @classmethod
+    def get_queryset(
+        cls,
+        queryset: QuerySet[Organization],
+        info: Info,
+    ) -> QuerySet[Organization]:
+        user = get_current_user(info)
         if not user:
-            return []
+            return queryset
 
-        try:
-            pg = PermissionGroup.objects.get(
-                organization=self,
-                group__user=user,
-                name__in=ADMIN_PORTAL_PERMISSION_GROUPS,
+        qs: QuerySet[Organization] = queryset.annotate(
+            user_permissions=ArrayAgg(
+                Concat(
+                    F("permission_groups__group__permissions__content_type__app_label"),
+                    Value("."),
+                    F("permission_groups__group__permissions__codename"),
+                    output_field=CharField(),
+                ),
+                filter=Q(
+                    permission_groups__group__user=user,
+                    permission_groups__template__name__in=ADMIN_PORTAL_PERMISSION_GROUPS,
+                ),
+                distinct=True,
             )
-        except PermissionGroup.DoesNotExist:
-            return []
+        )
 
-        perms = pg.group.permissions.all()
+        return qs
 
-        return [
-            OrganizationPortalPermissions(f"{p.content_type.app_label}.{p.codename}")
-            for p in perms
-            if f"{p.content_type.app_label}.{p.codename}" in OrganizationPortalPermissions.values
-        ]
+    def resolve_user_permissions(self, info: Info) -> List[UserOrganizationPermissions]:
+        perms: List[str] = getattr(self, "user_permissions", []) or []
+        return [UserOrganizationPermissions(perm) for perm in perms if perm in UserOrganizationPermissions.values]
+
+    user_permissions: Optional[List[UserOrganizationPermissions]] = strawberry_django.field(
+        resolver=resolve_user_permissions
+    )
 
 
 @strawberry_django.type(User)

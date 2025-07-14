@@ -1370,18 +1370,11 @@ export type OrganizationOrder = {
   name?: InputMaybe<Ordering>;
 };
 
-export enum OrganizationPortalPermissions {
-  AccessOrgPortal = 'ACCESS_ORG_PORTAL',
-  AddOrgMember = 'ADD_ORG_MEMBER',
-  ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
-  RemoveOrgMember = 'REMOVE_ORG_MEMBER'
-}
-
 export type OrganizationType = {
   __typename?: 'OrganizationType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  userPortalPermissions: Array<OrganizationPortalPermissions>;
+  userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
 };
 
 export type OrganizationTypeOffsetPaginated = {
@@ -2158,6 +2151,13 @@ export type UpdateUserInput = {
   lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
   middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
 };
+
+export enum UserOrganizationPermissions {
+  AccessOrgPortal = 'ACCESS_ORG_PORTAL',
+  AddOrgMember = 'ADD_ORG_MEMBER',
+  ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
+  RemoveOrgMember = 'REMOVE_ORG_MEMBER'
+}
 
 export type UserType = {
   __typename?: 'UserType';

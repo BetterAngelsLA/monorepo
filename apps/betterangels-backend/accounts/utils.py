@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Union
 
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames

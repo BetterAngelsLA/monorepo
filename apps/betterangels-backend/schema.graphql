@@ -1118,17 +1118,10 @@ input OrganizationOrder {
   id: Ordering
 }
 
-enum OrganizationPortalPermissions {
-  ACCESS_ORG_PORTAL
-  ADD_ORG_MEMBER
-  REMOVE_ORG_MEMBER
-  CHANGE_ORG_MEMBER_ROLE
-}
-
 type OrganizationType {
   id: ID!
   name: String!
-  userPortalPermissions: [OrganizationPortalPermissions!]!
+  userPermissions: [UserOrganizationPermissions!]
 }
 
 type OrganizationTypeOffsetPaginated {
@@ -1786,6 +1779,13 @@ input UpdateUserInput {
 }
 
 scalar Upload
+
+enum UserOrganizationPermissions {
+  ACCESS_ORG_PORTAL
+  ADD_ORG_MEMBER
+  REMOVE_ORG_MEMBER
+  CHANGE_ORG_MEMBER_ROLE
+}
 
 type UserType {
   firstName: NonBlankString
