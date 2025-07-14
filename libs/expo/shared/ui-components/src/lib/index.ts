@@ -60,6 +60,7 @@ export { BaseModal } from './Modal';
 export { default as MultiSelect } from './MultiSelect';
 export { default as PdfViewer } from './PdfViewer';
 export { default as PhoneNumberBtn } from './PhoneNumberBtn';
+export * from './PhoneNumberInput';
 export { default as Picker } from './Picker';
 export { default as Pill } from './Pill';
 export { default as PillContainer } from './PillContainer';

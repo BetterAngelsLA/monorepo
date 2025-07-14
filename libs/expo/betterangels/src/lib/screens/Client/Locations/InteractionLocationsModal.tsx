@@ -6,14 +6,16 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useClientInteractionsMapState } from '../../../state';
 import { NoteCard } from '../../../ui-components';
-import { useInteractionsMapState } from './map/hooks';
 
 export function InteractionLocationsModal() {
-  const { mapState } = useInteractionsMapState();
   const [titleHeight, setTitleHeight] = useState<number>(1);
 
+  const [mapState] = useClientInteractionsMapState();
+
   const { selectedInteractions } = mapState;
+
   const snapPoints = useMemo(() => [titleHeight], [titleHeight]);
 
   if (!selectedInteractions.length) {
