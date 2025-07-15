@@ -18,7 +18,7 @@
     "paths": {
       "@betterangels/*": ["apps/betterangels/*"],
       "@monorepo/assets": ["libs/assets/src/index.ts"],
-      "@monorepo/ba-admin": ["libs/react/ba-admin/src/index.ts"],
+
       "@monorepo/expo/betterangels": ["libs/expo/betterangels/src/index.ts"],
       "@monorepo/expo/shared/clients": [
         "libs/expo/shared/clients/src/index.ts"
@@ -29,6 +29,9 @@
         "libs/expo/shared/ui-components/src/index.ts"
       ],
       "@monorepo/expo/shared/utils": ["libs/expo/shared/utils/src/index.ts"],
+      "@monorepo/react/betterangels-admin": [
+        "libs/react/betterangels-admin/src/index.ts"
+      ],
       "@monorepo/react/components": ["libs/react/components/src/index.ts"],
       "@monorepo/react/icons": ["libs/react/icons/src/index.ts"],
       "@monorepo/react/shelter": ["libs/react/shelter/src/index.ts"]
