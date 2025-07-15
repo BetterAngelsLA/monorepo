@@ -1,6 +1,5 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
-import { useRouter } from 'expo-router';
 import { TModalPresentationType } from '../../providers';
 import { HeaderLeftButton } from '../HeaderLeftButton';
 import { defaultModalNavOpts } from './config';
@@ -16,14 +15,8 @@ type TProps = {
 export function getDefaultStackModalOptions(
   props?: TProps
 ): NativeStackNavigationOptions {
-  const router = useRouter();
 
-  const {
-    presentation,
-    hideHeader,
-    title,
-    onClose = () => router.back(),
-  } = props || {};
+    const { presentation, hideHeader, title, onClose } = props || {};
 
   if (hideHeader) {
     return {
