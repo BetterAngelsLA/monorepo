@@ -12,7 +12,6 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import {
   ServiceEnum,
   ServiceRequestTypeEnum,
@@ -22,6 +21,7 @@ import {
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
 import { ServicesByCategory } from '../../static';
+import { MainScrollContainer } from '../../ui-components';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
 
@@ -232,11 +232,6 @@ export default function ServicesModal(props: IServicesModalProps) {
       style={{
         flex: 1,
         backgroundColor: Colors.WHITE,
-        borderTopLeftRadius: 12,
-        borderTopRightRadius: 12,
-        paddingBottom: 35,
-        paddingTop: 10,
-        marginTop: 0,
       }}
     >
       <View
@@ -256,14 +251,7 @@ export default function ServicesModal(props: IServicesModalProps) {
           <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
         </Pressable>
       </View>
-      <KeyboardAwareScrollView
-        style={{
-          flex: 1,
-          backgroundColor: Colors.WHITE,
-        }}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingTop: 0 }}
-      >
+      <MainScrollContainer keyboardAware>
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
@@ -338,7 +326,7 @@ export default function ServicesModal(props: IServicesModalProps) {
             />
           </View>
         </ScrollView>
-      </KeyboardAwareScrollView>
+      </MainScrollContainer>
 
       <View
         style={{
