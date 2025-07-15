@@ -1796,8 +1796,8 @@ type UserType {
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
-  organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder): [OrganizationType!]
   username: String!
+  organizationsOrganization: [OrganizationType!]
 }
 
 enum VeteranStatusEnum {

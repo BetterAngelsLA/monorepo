@@ -67,34 +67,6 @@ class OrganizationType:
     id: ID
     name: auto
 
-    @classmethod
-    def get_queryset(
-        cls,
-        queryset: QuerySet[Organization],
-        info: Info,
-    ) -> QuerySet[Organization]:
-        user = get_current_user(info)
-        if not user.pk:
-            return queryset
-
-        qs: QuerySet[Organization] = queryset.annotate(
-            user_permissions=ArrayAgg(
-                Concat(
-                    F("permission_groups__group__permissions__content_type__app_label"),
-                    Value("."),
-                    F("permission_groups__group__permissions__codename"),
-                    output_field=CharField(),
-                ),
-                filter=Q(
-                    permission_groups__group__user=user,
-                    permission_groups__template__name__in=ADMIN_PORTAL_PERMISSION_GROUPS,
-                ),
-                distinct=True,
-            )
-        )
-
-        return qs
-
     def resolve_user_permissions(self, info: Info) -> List[UserOrganizationPermissions]:
         perms: List[str] = getattr(self, "user_permissions", []) or []
         return [UserOrganizationPermissions(perm) for perm in perms if perm in UserOrganizationPermissions.values]
@@ -120,8 +92,30 @@ class UserType(UserBaseType):
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]
-    organizations_organization: Optional[List[OrganizationType]]
+    # organizations_organization: Optional[List[OrganizationType]]
     username: auto
+
+    @strawberry_django.field
+    def organizations_organization(self, info: Info) -> Optional[List[OrganizationType]]:
+        user = get_current_user(info)
+
+        qs: List[OrganizationType] = Organization.objects.filter(users=user).annotate(
+            user_permissions=ArrayAgg(
+                Concat(
+                    F("permission_groups__group__permissions__content_type__app_label"),
+                    Value("."),
+                    F("permission_groups__group__permissions__codename"),
+                    output_field=CharField(),
+                ),
+                filter=Q(
+                    permission_groups__group__user=user,
+                    permission_groups__template__name__in=ADMIN_PORTAL_PERMISSION_GROUPS,
+                ),
+                distinct=True,
+            )
+        )
+
+        return qs
 
 
 @strawberry_django.input(User, partial=True)
