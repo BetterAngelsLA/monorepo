@@ -94,7 +94,7 @@ class UserType(UserBaseType):
     is_outreach_authorized: Optional[bool]
     username: auto
 
-    @strawberry_django.field
+    @strawberry_django.field(filters=OrganizationFilter, order=OrganizationOrder)
     def organizations_organization(self, info: Info) -> Optional[List[OrganizationType]]:
         user = get_current_user(info)
 
