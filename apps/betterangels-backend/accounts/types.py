@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 import strawberry
 import strawberry_django
@@ -11,6 +11,8 @@ from django.db.models.functions import Concat
 from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
+from strawberry_django.filters import apply as apply_filters
+from strawberry_django.ordering import apply as apply_ordering
 
 from .models import User
 
@@ -94,11 +96,16 @@ class UserType(UserBaseType):
     is_outreach_authorized: Optional[bool]
     username: auto
 
-    @strawberry_django.field(filters=OrganizationFilter, order=OrganizationOrder)
-    def organizations_organization(self, info: Info) -> Optional[List[OrganizationType]]:
+    @strawberry_django.field
+    def organizations_organization(
+        self,
+        info: Info,
+        filters: Optional[OrganizationFilter] = None,
+        order: Optional[OrganizationOrder] = None,
+    ) -> Optional[List[OrganizationType]]:
         user = get_current_user(info)
 
-        qs: List[OrganizationType] = Organization.objects.filter(users=user).annotate(
+        qs = Organization.objects.filter(users=user).annotate(
             user_permissions=ArrayAgg(
                 Concat(
                     F("permission_groups__group__permissions__content_type__app_label"),
@@ -114,7 +121,13 @@ class UserType(UserBaseType):
             )
         )
 
-        return qs
+        if filters:
+            qs = apply_filters(filters, qs, info)
+
+        if order:
+            qs = apply_ordering(order, qs, info)
+
+        return cast(List[OrganizationType], qs)
 
 
 @strawberry_django.input(User, partial=True)

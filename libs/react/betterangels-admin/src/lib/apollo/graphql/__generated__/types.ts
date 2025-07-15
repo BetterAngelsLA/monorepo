@@ -2173,6 +2173,12 @@ export type UserType = {
   username: Scalars['String']['output'];
 };
 
+
+export type UserTypeOrganizationsOrganizationArgs = {
+  filters?: InputMaybe<OrganizationFilter>;
+  order?: InputMaybe<OrganizationOrder>;
+};
+
 export enum VeteranStatusEnum {
   No = 'NO',
   OtherThanHonorable = 'OTHER_THAN_HONORABLE',

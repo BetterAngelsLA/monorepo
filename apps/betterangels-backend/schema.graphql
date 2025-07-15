@@ -1797,7 +1797,7 @@ type UserType {
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
   username: String!
-  organizationsOrganization: [OrganizationType!]
+  organizationsOrganization(filters: OrganizationFilter = null, order: OrganizationOrder = null): [OrganizationType!]
 }
 
 enum VeteranStatusEnum {
