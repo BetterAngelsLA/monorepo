@@ -2,7 +2,6 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
 from common.graphql.types import NonBlankString
