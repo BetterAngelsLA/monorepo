@@ -14,11 +14,11 @@
     "generate-graphql-types": {
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "libs/react/shelter",
+        "cwd": "libs/react/ba-admin",
         "command": "graphql-codegen --config codegen.ts"
       },
       "outputs": [
-        "{workspaceRoot}/libs/react/shelter/src/lib/**/__generated__/"
+        "{workspaceRoot}/libs/react/ba-admin/src/lib/**/__generated__/"
       ]
     }
   }
