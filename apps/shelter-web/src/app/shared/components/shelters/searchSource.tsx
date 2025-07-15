@@ -8,14 +8,17 @@ type TProps = {
 export function SearchSource(props: TProps) {
   const { coordinatesSource, className = '' } = props;
 
-  let locationSource = 'selections';
+  // Keep this logic in case we need to use it later
+  // let locationSource = 'selections';
+
+  let locationSource = 'search area';
 
   if (coordinatesSource === 'address') {
-    locationSource = 'provided address';
+    locationSource = 'search area';
   }
 
   if (coordinatesSource === 'currentLocation') {
-    locationSource = 'current location';
+    locationSource = 'search area';
   }
 
   return <div className={className}>(based on your {locationSource})</div>;
