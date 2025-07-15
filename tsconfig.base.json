@@ -18,6 +18,7 @@
     "paths": {
       "@betterangels/*": ["apps/betterangels/*"],
       "@monorepo/assets": ["libs/assets/src/index.ts"],
+      "@monorepo/ba-admin": ["libs/react/ba-admin/src/index.ts"],
       "@monorepo/expo/betterangels": ["libs/expo/betterangels/src/index.ts"],
       "@monorepo/expo/shared/clients": [
         "libs/expo/shared/clients/src/index.ts"

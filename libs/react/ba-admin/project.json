@@ -1,0 +1,25 @@
+{
+  "name": "ba-admin",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/react/ba-admin/src",
+  "projectType": "library",
+  "tags": [],
+  "namedInputs": {
+    "default": [
+      "{projectRoot}/**/*",
+      "{workspaceRoot}/apps/betterangels-backend/schema.graphql"
+    ]
+  },
+  "targets": {
+    "generate-graphql-types": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/react/shelter",
+        "command": "graphql-codegen --config codegen.ts"
+      },
+      "outputs": [
+        "{workspaceRoot}/libs/react/shelter/src/lib/**/__generated__/"
+      ]
+    }
+  }
+}
