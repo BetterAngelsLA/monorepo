@@ -8,10 +8,17 @@ interface IProps {
   accessibilityHint?: string;
   style?: ViewStyle;
   children?: ReactNode;
+  iconColor?: Colors;
 }
 
 export function CloseButton(props: IProps) {
-  const { accessibilityHint, onClose, style, children } = props;
+  const {
+    accessibilityHint,
+    onClose,
+    style,
+    iconColor = Colors.BLACK,
+    children,
+  } = props;
 
   return (
     <Pressable
@@ -29,7 +36,7 @@ export function CloseButton(props: IProps) {
       accessibilityHint={accessibilityHint || 'close'}
       accessibilityRole="button"
     >
-      {children || <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />}
+      {children || <PlusIcon size="md" color={iconColor} rotate="45deg" />}
     </Pressable>
   );
 }
