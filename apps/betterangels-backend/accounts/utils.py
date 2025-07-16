@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import Union
 
 from accounts.enums import OrgRoleEnum
@@ -68,18 +69,36 @@ class OrgPermissionManager:
 
     def __init__(self, organization: Organization) -> None:
         self.organization: Organization = organization
-        self._admin_template, _ = PermissionGroupTemplate.objects.get_or_create(
-            name=GroupTemplateNames.ORG_ADMIN,
+
+    @cached_property
+    def _admin_template(self) -> PermissionGroupTemplate:
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=GroupTemplateNames.ORG_ADMIN)
+
+        return template
+
+    @cached_property
+    def _superuser_template(self) -> PermissionGroupTemplate:
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=GroupTemplateNames.ORG_SUPERUSER)
+
+        return template
+
+    @cached_property
+    def _org_admin_group(self) -> PermissionGroup:
+        group, _ = PermissionGroup.objects.get_or_create(
+            organization=self.organization,
+            template=self._admin_template,
         )
-        self._superuser_template, _ = PermissionGroupTemplate.objects.get_or_create(
-            name=GroupTemplateNames.ORG_SUPERUSER
+
+        return group
+
+    @cached_property
+    def _org_superuser_group(self) -> PermissionGroup:
+        group, _ = PermissionGroup.objects.get_or_create(
+            organization=self.organization,
+            template=self._superuser_template,
         )
-        self._org_admin_group, _ = PermissionGroup.objects.get_or_create(
-            organization=self.organization, template=self._admin_template
-        )
-        self._org_superuser_group, _ = PermissionGroup.objects.get_or_create(
-            organization=self.organization, template=self._superuser_template
-        )
+
+        return group
 
     def set_role(self, user: User, role: OrgRoleEnum) -> None:
         self.clear_permissions(user)

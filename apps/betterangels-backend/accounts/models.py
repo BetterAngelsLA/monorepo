@@ -16,8 +16,6 @@ from guardian.models import GroupObjectPermissionAbstract, UserObjectPermissionA
 from organizations.models import Organization, OrganizationInvitation, OrganizationUser
 from strawberry_django.descriptors import model_property
 
-OUTREACH_AUTHORIZED_PERMISSION_GROUPS = [GroupTemplateNames.CASEWORKER]
-
 
 @pghistory.track(
     pghistory.InsertEvent("user.add"),
@@ -80,7 +78,9 @@ class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-m
         if not user_organizations:
             return False
 
-        authorized_permission_groups = [pg.value for pg in OUTREACH_AUTHORIZED_PERMISSION_GROUPS]
+        # TODO: This is a temporary approach while we have just one permission group.
+        # Once this list grows, we'll need to create an actual list of authorized groups.
+        authorized_permission_groups = [template.value for template in GroupTemplateNames]
 
         # TODO: we can actually make this a permission check vs having to check if they are in a permission group.
         return PermissionGroup.objects.filter(
