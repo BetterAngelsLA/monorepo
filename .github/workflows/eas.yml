@@ -150,7 +150,7 @@ jobs:
       - name: 🧪 Run E2E Tests
         working-directory: apps/${{ matrix.project }}
         run: |
-          eas workflow:run .eas/workflows/e2e-test.yml --non-interactive
+          eas workflow:run .eas/workflows/e2e-test.yml --non-interactive --wait
 
       - name: 📝 Comment on PR
         if: github.event_name == 'pull_request'
