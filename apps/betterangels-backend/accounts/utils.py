@@ -4,6 +4,7 @@ from typing import Union
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
+from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 
@@ -100,6 +101,7 @@ class OrgPermissionManager:
 
         return group
 
+    @transaction.atomic
     def set_role(self, user: User, role: OrgRoleEnum) -> None:
         self.clear_permissions(user)
 
