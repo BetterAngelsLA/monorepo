@@ -72,7 +72,7 @@ jobs:
     env:
       BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     runs-on: ubuntu-latest
-    # if: needs.prepare.outputs.is_matrix_empty == 'false'
+    if: needs.prepare.outputs.is_matrix_empty == 'false'
     strategy:
       matrix: ${{fromJson(needs.prepare.outputs.matrix)}}
     permissions:
