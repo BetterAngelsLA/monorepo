@@ -1113,6 +1113,12 @@ input OrganizationFilter {
   search: String
 }
 
+type OrganizationForUserType {
+  id: ID!
+  name: String!
+  userPermissions: [UserOrganizationPermissions!]
+}
+
 input OrganizationOrder {
   name: Ordering
   id: Ordering
@@ -1121,7 +1127,6 @@ input OrganizationOrder {
 type OrganizationType {
   id: ID!
   name: String!
-  userPermissions: [UserOrganizationPermissions!]
 }
 
 type OrganizationTypeOffsetPaginated {
@@ -1796,8 +1801,8 @@ type UserType {
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
+  organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): [OrganizationForUserType!]
   username: String!
-  organizationsOrganization(filters: OrganizationFilter = null, order: OrganizationOrder = null): [OrganizationType!]
 }
 
 enum VeteranStatusEnum {

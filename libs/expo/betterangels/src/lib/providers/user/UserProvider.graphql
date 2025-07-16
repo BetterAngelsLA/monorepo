@@ -8,6 +8,7 @@ query currentUser {
     organizations: organizationsOrganization {
       id
       name
+      userPermissions
     }
     isOutreachAuthorized
     hasAcceptedTos

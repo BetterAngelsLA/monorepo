@@ -1365,6 +1365,13 @@ export type OrganizationFilter = {
   search?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type OrganizationForUserType = {
+  __typename?: 'OrganizationForUserType';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
+};
+
 export type OrganizationOrder = {
   id?: InputMaybe<Ordering>;
   name?: InputMaybe<Ordering>;
@@ -1374,7 +1381,6 @@ export type OrganizationType = {
   __typename?: 'OrganizationType';
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
-  userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
 };
 
 export type OrganizationTypeOffsetPaginated = {
@@ -2169,7 +2175,7 @@ export type UserType = {
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
-  organizationsOrganization?: Maybe<Array<OrganizationType>>;
+  organizationsOrganization?: Maybe<Array<OrganizationForUserType>>;
   username: Scalars['String']['output'];
 };
 
@@ -2177,6 +2183,7 @@ export type UserType = {
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export enum VeteranStatusEnum {

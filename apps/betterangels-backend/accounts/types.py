@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, cast
+from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
@@ -11,8 +11,6 @@ from django.db.models.functions import Concat
 from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
-from strawberry_django.filters import apply as apply_filters
-from strawberry_django.ordering import apply as apply_ordering
 
 from .models import User
 
@@ -69,6 +67,37 @@ class OrganizationType:
     id: ID
     name: auto
 
+
+@strawberry_django.type(Organization, order=OrganizationOrder, filters=OrganizationFilter, pagination=True)  # type: ignore[literal-required]
+class OrganizationForUserType(OrganizationType):
+    @classmethod
+    def get_queryset(
+        cls,
+        queryset: QuerySet[Organization],
+        info: Info,
+    ) -> QuerySet[Organization]:
+        user = get_current_user(info)
+        if not user or not getattr(user, "pk", None):
+            return queryset
+
+        qs: QuerySet[Organization] = queryset.filter(users=user).annotate(
+            user_permissions=ArrayAgg(
+                Concat(
+                    F("permission_groups__group__permissions__content_type__app_label"),
+                    Value("."),
+                    F("permission_groups__group__permissions__codename"),
+                    output_field=CharField(),
+                ),
+                filter=Q(
+                    permission_groups__group__user=user,
+                    permission_groups__template__name__in=ADMIN_PORTAL_PERMISSION_GROUPS,
+                ),
+                distinct=True,
+            )
+        )
+
+        return qs
+
     def resolve_user_permissions(self, info: Info) -> List[UserOrganizationPermissions]:
         perms: List[str] = getattr(self, "user_permissions", []) or []
         return [UserOrganizationPermissions(perm) for perm in perms if perm in UserOrganizationPermissions.values]
@@ -94,40 +123,8 @@ class UserType(UserBaseType):
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]
+    organizations_organization: Optional[List[OrganizationForUserType]]
     username: auto
-
-    @strawberry_django.field
-    def organizations_organization(
-        self,
-        info: Info,
-        filters: Optional[OrganizationFilter] = None,
-        order: Optional[OrganizationOrder] = None,
-    ) -> Optional[List[OrganizationType]]:
-        user = get_current_user(info)
-
-        qs = Organization.objects.filter(users=user).annotate(
-            user_permissions=ArrayAgg(
-                Concat(
-                    F("permission_groups__group__permissions__content_type__app_label"),
-                    Value("."),
-                    F("permission_groups__group__permissions__codename"),
-                    output_field=CharField(),
-                ),
-                filter=Q(
-                    permission_groups__group__user=user,
-                    permission_groups__template__name__in=ADMIN_PORTAL_PERMISSION_GROUPS,
-                ),
-                distinct=True,
-            )
-        )
-
-        if filters:
-            qs = apply_filters(filters, qs, info)
-
-        if order:
-            qs = apply_ordering(order, qs, info)
-
-        return cast(List[OrganizationType], qs)
 
 
 @strawberry_django.input(User, partial=True)
