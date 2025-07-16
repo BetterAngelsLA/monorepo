@@ -221,6 +221,7 @@ export type ClientContactType = {
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
   relationshipToClient?: Maybe<RelationshipTypeEnum>;
   relationshipToClientOther?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type ClientContactTypeOffsetPaginated = {
@@ -1873,6 +1874,7 @@ export type ShelterType = {
   maxStay?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
+  operatingHours?: Maybe<Array<Maybe<TimeRange>>>;
   organization?: Maybe<OrganizationType>;
   otherRules?: Maybe<Scalars['String']['output']>;
   otherServices?: Maybe<Scalars['String']['output']>;
@@ -2013,6 +2015,12 @@ export enum TaskTypeEnum {
   NextStep = 'NEXT_STEP',
   Purpose = 'PURPOSE'
 }
+
+export type TimeRange = {
+  __typename?: 'TimeRange';
+  end?: Maybe<Scalars['DateTime']['output']>;
+  start?: Maybe<Scalars['DateTime']['output']>;
+};
 
 export enum TrainingServiceChoices {
   JobTraining = 'JOB_TRAINING',

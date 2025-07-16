@@ -58,7 +58,13 @@
     "@react-native-picker/picker": "*",
     "react-native-safe-area-context": "*",
     "react-native-select-dropdown": "*",
-    "react-native-keyboard-controller": "*"
+    "react-native-keyboard-controller": "*",
+    "react-fast-compare": "*",
+    "@gorhom/bottom-sheet": "*",
+    "react-native-open-maps": "*",
+    "react-native-maps": "*",
+    "supercluster": "*",
+    "expo-location": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable",

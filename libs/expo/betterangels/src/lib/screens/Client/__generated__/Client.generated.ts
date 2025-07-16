@@ -8,7 +8,7 @@ export type ClientProfileQueryVariables = Types.Exact<{
 }>;
 
 
-export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, adaAccommodation?: Array<Types.AdaAccommodationEnum> | null, address?: string | null, age?: number | null, californiaId?: string | null, dateOfBirth?: any | null, email?: string | null, eyeColor?: Types.EyeColorEnum | null, firstName?: string | null, gender?: Types.GenderEnum | null, genderOther?: string | null, hairColor?: Types.HairColorEnum | null, heightInInches?: number | null, importantNotes?: string | null, lastName?: string | null, livingSituation?: Types.LivingSituationEnum | null, mailingAddress?: string | null, maritalStatus?: Types.MaritalStatusEnum | null, middleName?: string | null, nickname?: string | null, phoneNumber?: any | null, physicalDescription?: string | null, placeOfBirth?: string | null, preferredCommunication?: Array<Types.PreferredCommunicationEnum> | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, pronounsOther?: string | null, race?: Types.RaceEnum | null, residenceAddress?: string | null, veteranStatus?: Types.VeteranStatusEnum | null, displayCaseManager: string, displayGender?: string | null, displayPronouns?: string | null, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: any | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null }> | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId?: string | null, id: string }> | null, householdMembers?: Array<{ __typename?: 'ClientHouseholdMemberType', dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, displayGender?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, phoneNumbers?: Array<{ __typename?: 'PhoneNumberType', id: string, number?: any | null, isPrimary?: boolean | null }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null, socialMediaProfiles?: Array<{ __typename?: 'SocialMediaProfileType', id?: string | null, platform: Types.SocialMediaEnum, platformUserId: string }> | null, docReadyDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, consentFormDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, otherDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null } };
+export type ClientProfileQuery = { __typename?: 'Query', clientProfile: { __typename?: 'ClientProfileType', id: string, adaAccommodation?: Array<Types.AdaAccommodationEnum> | null, address?: string | null, age?: number | null, californiaId?: string | null, dateOfBirth?: any | null, email?: string | null, eyeColor?: Types.EyeColorEnum | null, firstName?: string | null, gender?: Types.GenderEnum | null, genderOther?: string | null, hairColor?: Types.HairColorEnum | null, heightInInches?: number | null, importantNotes?: string | null, lastName?: string | null, livingSituation?: Types.LivingSituationEnum | null, mailingAddress?: string | null, maritalStatus?: Types.MaritalStatusEnum | null, middleName?: string | null, nickname?: string | null, phoneNumber?: any | null, physicalDescription?: string | null, placeOfBirth?: string | null, preferredCommunication?: Array<Types.PreferredCommunicationEnum> | null, preferredLanguage?: Types.LanguageEnum | null, pronouns?: Types.PronounEnum | null, pronounsOther?: string | null, race?: Types.RaceEnum | null, residenceAddress?: string | null, veteranStatus?: Types.VeteranStatusEnum | null, displayCaseManager: string, displayGender?: string | null, displayPronouns?: string | null, contacts?: Array<{ __typename?: 'ClientContactType', id: string, email?: string | null, mailingAddress?: string | null, name?: string | null, phoneNumber?: any | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, updatedAt: any }> | null, hmisProfiles?: Array<{ __typename?: 'HmisProfileType', agency: Types.HmisAgencyEnum, hmisId?: string | null, id: string }> | null, householdMembers?: Array<{ __typename?: 'ClientHouseholdMemberType', dateOfBirth?: any | null, gender?: Types.GenderEnum | null, genderOther?: string | null, displayGender?: string | null, name?: string | null, relationshipToClient?: Types.RelationshipTypeEnum | null, relationshipToClientOther?: string | null, id: string }> | null, phoneNumbers?: Array<{ __typename?: 'PhoneNumberType', id: string, number?: any | null, isPrimary?: boolean | null }> | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null, socialMediaProfiles?: Array<{ __typename?: 'SocialMediaProfileType', id?: string | null, platform: Types.SocialMediaEnum, platformUserId: string }> | null, docReadyDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, consentFormDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null, otherDocuments?: Array<{ __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } }> | null } };
 
 export type CreateClientDocumentMutationVariables = Types.Exact<{
   data: Types.CreateClientDocumentInput;
@@ -30,13 +30,6 @@ export type DeleteClientDocumentMutationVariables = Types.Exact<{
 
 
 export type DeleteClientDocumentMutation = { __typename?: 'Mutation', deleteClientDocument: { __typename?: 'ClientDocumentType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
-
-export type CreateNoteMutationVariables = Types.Exact<{
-  data: Types.CreateNoteInput;
-}>;
-
-
-export type CreateNoteMutation = { __typename?: 'Mutation', createNote: { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, createdAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email?: string | null } } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 
 export const ClientProfileDocument = gql`
@@ -84,6 +77,7 @@ export const ClientProfileDocument = gql`
         phoneNumber
         relationshipToClient
         relationshipToClientOther
+        updatedAt
       }
       hmisProfiles {
         agency
@@ -310,59 +304,3 @@ export function useDeleteClientDocumentMutation(baseOptions?: Apollo.MutationHoo
 export type DeleteClientDocumentMutationHookResult = ReturnType<typeof useDeleteClientDocumentMutation>;
 export type DeleteClientDocumentMutationResult = Apollo.MutationResult<DeleteClientDocumentMutation>;
 export type DeleteClientDocumentMutationOptions = Apollo.BaseMutationOptions<DeleteClientDocumentMutation, DeleteClientDocumentMutationVariables>;
-export const CreateNoteDocument = gql`
-    mutation CreateNote($data: CreateNoteInput!) {
-  createNote(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-    ... on NoteType {
-      id
-      purpose
-      publicDetails
-      clientProfile {
-        id
-        firstName
-        lastName
-        email
-      }
-      createdAt
-      createdBy {
-        id
-        username
-        email
-      }
-    }
-  }
-}
-    `;
-export type CreateNoteMutationFn = Apollo.MutationFunction<CreateNoteMutation, CreateNoteMutationVariables>;
-
-/**
- * __useCreateNoteMutation__
- *
- * To run a mutation, you first call `useCreateNoteMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateNoteMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createNoteMutation, { data, loading, error }] = useCreateNoteMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useCreateNoteMutation(baseOptions?: Apollo.MutationHookOptions<CreateNoteMutation, CreateNoteMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateNoteMutation, CreateNoteMutationVariables>(CreateNoteDocument, options);
-      }
-export type CreateNoteMutationHookResult = ReturnType<typeof useCreateNoteMutation>;
-export type CreateNoteMutationResult = Apollo.MutationResult<CreateNoteMutation>;
-export type CreateNoteMutationOptions = Apollo.BaseMutationOptions<CreateNoteMutation, CreateNoteMutationVariables>;

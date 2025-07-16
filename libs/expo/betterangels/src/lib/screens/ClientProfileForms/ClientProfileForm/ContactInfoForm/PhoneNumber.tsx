@@ -1,24 +1,23 @@
+import { TrashCanOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Regex, Spacings } from '@monorepo/expo/shared/static';
 import {
-  ControlledInput,
   Form,
+  PhoneNumberInput,
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
-import { Platform, Switch, View } from 'react-native';
+import { Platform, Pressable, Switch, View } from 'react-native';
 import { UpdateClientProfileInput } from '../../../../apollo';
 
 export function PhoneNumber() {
-  const {
-    control,
-    setValue,
-    formState: { errors },
-  } = useFormContext<UpdateClientProfileInput>();
+  const { control, setValue } = useFormContext<UpdateClientProfileInput>();
+
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'phoneNumbers',
   });
+
   return (
     <Form.Field title="Phone Number(s)">
       <View style={{ gap: Spacings.sm }}>
@@ -32,35 +31,44 @@ export function PhoneNumber() {
               }}
             >
               <View style={{ flex: 1 }}>
-                <ControlledInput
-                  placeholder="Enter phone number"
-                  key={field.id}
+                <PhoneNumberInput
                   name={`phoneNumbers.${index}.number`}
                   control={control}
-                  keyboardType="number-pad"
-                  onDelete={() => setValue(`phoneNumbers.${index}.number`, '')}
-                  error={!!errors.phoneNumbers?.[index]?.number}
-                  errorMessage={
-                    (errors.phoneNumbers?.[index]?.number?.message as string) ||
-                    undefined
-                  }
+                  placeholderNumber="Enter phone number"
+                  placeholderExt="ext"
                   rules={{
                     validate: (value: string) => {
-                      if (value && !Regex.phoneNumber.test(value)) {
-                        return 'Enter a 10-digit phone number without space or special characters';
+                      // empty value is valid as it'll delete entry
+                      if (!value) {
+                        return true;
                       }
+
+                      if (!Regex.phoneNumberWithExtensionUS.test(value)) {
+                        return 'Enter a valid 10-digit phone number with optional extension number';
+                      }
+
                       return true;
                     },
                   }}
                 />
               </View>
               {index !== 0 && (
-                <TextButton
-                  color={Colors.PRIMARY}
-                  title="Remove"
-                  accessibilityHint="Removes phone number"
+                <Pressable
+                  style={{
+                    marginLeft: Spacings.xxs,
+                    marginRight: Spacings.sm,
+                  }}
+                  accessible
+                  accessibilityHint="closes the modal"
+                  accessibilityRole="button"
+                  accessibilityLabel="close"
                   onPress={() => remove(index)}
-                />
+                >
+                  <TrashCanOutlineIcon
+                    size="md"
+                    color={Colors.PRIMARY_EXTRA_DARK}
+                  />
+                </Pressable>
               )}
             </View>
             <View

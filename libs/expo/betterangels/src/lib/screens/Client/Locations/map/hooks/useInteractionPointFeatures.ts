@@ -1,3 +1,4 @@
+import { toPointFeature } from '@monorepo/expo/shared/ui-components';
 import { useMemo } from 'react';
 import { PointFeature } from 'supercluster';
 import { Ordering } from '../../../../../apollo';
@@ -17,14 +18,14 @@ export function useInteractionPointFeatures(clientProfileId: string) {
       return [];
     }
 
-    return interactions.map((i) => ({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: i.location!.point },
-      properties: {
-        id: i.id,
+    return interactions.map((i) =>
+      toPointFeature({
+        id: String(i.id),
+        latitude: i.location!.point[1],
+        longitude: i.location!.point[0],
         interactedAt: new Date(i.interactedAt),
-      },
-    }));
+      })
+    );
   }, [interactions]);
 
   return { pointFeatures, loading, error, interactions };

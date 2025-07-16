@@ -5,10 +5,10 @@ export function formatPhoneNumber(originalNumber: string) {
     return formatNumber(parsed);
   } catch (e) {
     if (typeof originalNumber === 'string') {
-      return originalNumber.replace(/\D/g, '');
+      return [originalNumber.replace(/\D/g, '')];
     }
 
-    return '';
+    return [''];
   }
 }
 
@@ -16,14 +16,25 @@ type IParsed = {
   areaCode: string;
   firstPart: string;
   secondPart: string;
+  extension?: string;
 };
 
-function parseNumber(phoneNumber: string) {
+function parseNumber(phoneNumber: string): IParsed {
   if (typeof phoneNumber !== 'string') {
     throw new Error('invalid number');
   }
 
-  const cleaned = phoneNumber.replace(/\D/g, '');
+  const extMatch = phoneNumber.match(/(?:ext\.?|x|extension)[\s.:,-]*(\d+)/i);
+
+  let extension;
+  let coreNumber = phoneNumber;
+
+  if (extMatch) {
+    extension = extMatch[1];
+    coreNumber = coreNumber.slice(0, extMatch.index).trim();
+  }
+
+  const cleaned = coreNumber.replace(/\D/g, '');
 
   if (cleaned.length !== 10) {
     throw new Error('invalid number');
@@ -37,11 +48,13 @@ function parseNumber(phoneNumber: string) {
     areaCode,
     firstPart,
     secondPart,
+    extension,
   };
 }
 
 function formatNumber(phoneNumber: IParsed) {
-  const { areaCode, firstPart, secondPart } = phoneNumber;
+  const { areaCode, firstPart, secondPart, extension } = phoneNumber;
+  const formatted = `(${areaCode}) ${firstPart}-${secondPart}`;
 
-  return `(${areaCode}) ${firstPart}-${secondPart}`;
+  return [formatted, extension];
 }

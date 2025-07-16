@@ -16,7 +16,7 @@ export function getDefaultStackModalOptions(
   props?: TProps
 ): NativeStackNavigationOptions {
 
-    const { presentation, hideHeader, title, onClose } = props || {};
+  const { presentation, hideHeader, title, onClose } = props || {};
 
   if (hideHeader) {
     return {
@@ -27,30 +27,30 @@ export function getDefaultStackModalOptions(
 
   if (presentation === 'modal') {
     return {
-        ...defaultModalNavOpts.modal,
-        presentation,
-        title: title || '',
-        headerRight: onClose
-          ? () => getModalCloseBtn({ onClose, iconColor: Colors.WHITE })
-          : undefined,
-      };
-    }
-
-    if (presentation === 'fullScreenModal') {
-      return {
-        ...defaultModalNavOpts.fullScreenModal,
-        presentation,
-        title: title || '',
-        headerRight: onClose
-          ? () => getModalCloseBtn({ onClose, iconColor: Colors.ERROR })
-          : undefined,
-      };
-    }
-
-    return {
-      ...defaultModalNavOpts.card,
+      ...defaultModalNavOpts.modal,
       presentation,
       title: title || '',
-      headerLeft: () => <HeaderLeftButton title="Close" color={Colors.WHITE} />,
+      headerRight: onClose
+        ? () => getModalCloseBtn({ onClose, iconColor: Colors.WHITE })
+        : undefined,
     };
   }
+
+  if (presentation === 'fullScreenModal') {
+    return {
+      ...defaultModalNavOpts.fullScreenModal,
+      presentation,
+      title: title || '',
+      headerRight: onClose
+        ? () => getModalCloseBtn({ onClose, iconColor: Colors.ERROR })
+        : undefined,
+    };
+  }
+
+  return {
+    ...defaultModalNavOpts.card,
+    presentation,
+    title: title || '',
+    headerLeft: () => <HeaderLeftButton title="Close" color={Colors.WHITE} />,
+  };
+}
