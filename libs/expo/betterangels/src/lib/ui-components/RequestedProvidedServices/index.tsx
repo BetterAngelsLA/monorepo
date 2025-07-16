@@ -1,13 +1,14 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
-import { RefObject, useState } from 'react';
+import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
 import {
   ServiceEnum,
   ServiceRequestTypeEnum,
   ViewNoteQuery,
 } from '../../apollo';
-import { enumDisplayServices, enumDisplayServiceType } from '../../static';
+import { useModalScreen } from '../../providers';
+import { enumDisplayServiceType, enumDisplayServices } from '../../static';
 import ServicesModal from './ServicesModal';
 
 interface IRequestedServicesProps {
@@ -24,7 +25,7 @@ export default function RequestedProvidedServices(
   props: IRequestedServicesProps
 ) {
   const { noteId, services: initialServices, scrollRef, refetch, type } = props;
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const { showModalScreen } = useModalScreen();
 
   if (!initialServices) {
     return null;
@@ -64,16 +65,24 @@ export default function RequestedProvidedServices(
       }
       mb="xs"
       title={`${enumDisplayServiceType[type]} Services`}
-      setExpanded={() => setIsModalVisible(true)}
+      setExpanded={() =>
+        showModalScreen({
+          presentation: 'fullScreenModal',
+          hideHeader: true,
+          content: (
+            <ServicesModal
+              noteId={noteId}
+              type={type}
+              initialServices={initialServices}
+              refetch={refetch}
+            />
+          ),
+        })
+      }
     >
-      <ServicesModal
-        type={type}
-        refetch={refetch}
-        initialServices={initialServices}
-        setIsModalVisible={setIsModalVisible}
-        noteId={noteId}
-        isModalVisible={isModalVisible}
-      />
+      <></>
     </FieldCard>
   );
 }
+
+export { default as ServicesModal } from './ServicesModal';
