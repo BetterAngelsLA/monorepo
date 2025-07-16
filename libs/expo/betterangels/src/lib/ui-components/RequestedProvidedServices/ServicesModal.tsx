@@ -12,6 +12,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ServiceEnum,
   ServiceRequestTypeEnum,
@@ -40,6 +41,7 @@ export default function ServicesModal(props: IServicesModalProps) {
   const { initialServices, noteId, refetch, type } = props;
 
   const { closeModalScreen } = useModalScreen();
+  const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
   const [services, setServices] = useState<
     Array<{
       id: string | undefined;
@@ -232,6 +234,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       style={{
         flex: 1,
         backgroundColor: Colors.WHITE,
+        paddingTop: topInset,
       }}
     >
       <View
@@ -334,6 +337,7 @@ export default function ServicesModal(props: IServicesModalProps) {
           gap: Spacings.xs,
           width: '100%',
           paddingTop: Spacings.sm,
+          paddingBottom: bottomInset,
           alignItems: 'center',
           paddingHorizontal: Spacings.md,
           backgroundColor: Colors.WHITE,
