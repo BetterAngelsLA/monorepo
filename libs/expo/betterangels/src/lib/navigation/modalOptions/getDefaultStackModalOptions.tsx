@@ -15,7 +15,6 @@ type TProps = {
 export function getDefaultStackModalOptions(
   props?: TProps
 ): NativeStackNavigationOptions {
-
   const { presentation, hideHeader, title, onClose } = props || {};
 
   if (hideHeader) {
