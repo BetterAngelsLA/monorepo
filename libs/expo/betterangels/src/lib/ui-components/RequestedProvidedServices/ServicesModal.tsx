@@ -181,6 +181,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       }
 
       refetch();
+      closeModalScreen();
     } catch (e) {
       console.error('Error during service submission:', e);
       showSnackbar({
