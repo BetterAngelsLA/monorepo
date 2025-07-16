@@ -60,10 +60,8 @@
     "react-native-select-dropdown": "*",
     "react-native-keyboard-controller": "*",
     "react-fast-compare": "*",
-    "@gorhom/bottom-sheet": "*",
-    "react-native-open-maps": "*",
     "react-native-maps": "*",
-    "supercluster": "*",
+    "@teovilla/react-native-web-maps": "*",
     "expo-location": "*"
   },
   "scripts": {

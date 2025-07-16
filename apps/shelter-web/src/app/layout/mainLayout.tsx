@@ -1,6 +1,7 @@
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
 import { ModalContainer } from '../shared/modal/modalContainer';
+import { FlyoutContainer } from '../shared/flyout/FlyoutContainer';
 import { mergeCss } from '../shared/utils/styles/mergeCss';
 import { Footer } from './footer';
 import { Header } from './header';
@@ -36,6 +37,7 @@ export function MainLayout(props: IParams): ReactElement {
         <Footer />
       </HorizontalLayout>
       <ModalContainer />
+      <FlyoutContainer />
     </div>
   );
 }
