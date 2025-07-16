@@ -8,14 +8,14 @@ import { DeleteModal } from '@monorepo/expo/shared/ui-components';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { ClientDocumentType } from '../apollo';
 import { useSnackbar } from '../hooks';
 import {
   ClientProfileDocument,
   useDeleteClientDocumentMutation,
 } from '../screens/Client/__generated__/Client.generated';
-import MainModal from './MainModal';
+import { MainModal } from './MainModal';
 
 interface IDocumentModalProps {
   closeModal: () => void;
@@ -24,41 +24,27 @@ interface IDocumentModalProps {
   clientId: string;
 }
 
-const MIME_TYPE = 'application/octet-stream';
-
-export default function DocumentModal(props: IDocumentModalProps) {
-  const { isModalVisible, closeModal, document, clientId } = props;
-
+export default function DocumentModal({
+  isModalVisible,
+  closeModal,
+  document,
+  clientId,
+}: IDocumentModalProps) {
   const { showSnackbar } = useSnackbar();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const [deleteDocument] = useDeleteClientDocumentMutation({
     refetchQueries: [
-      {
-        query: ClientProfileDocument,
-        variables: {
-          id: clientId,
-        },
-      },
+      { query: ClientProfileDocument, variables: { id: clientId } },
     ],
   });
 
-  const onClickDeleteFile = async () => {
-    setDeleteModalVisible(true);
-  };
-
   const deleteFile = async () => {
     closeModal();
-
     try {
-      await deleteDocument({
-        variables: {
-          id: document.id,
-        },
-      });
+      await deleteDocument({ variables: { id: document.id } });
     } catch (err) {
-      console.error('[DocumentModal] Error deleting document', err);
-
+      console.error('Error deleting document', err);
       showSnackbar({
         message: 'An error occurred while deleting the document',
         type: 'error',
@@ -67,36 +53,58 @@ export default function DocumentModal(props: IDocumentModalProps) {
   };
 
   const downloadFile = async () => {
-    if (!document?.file?.url) {
+    const { url } = document.file || {};
+    const { originalFilename, mimeType } = document;
+
+    if (!url || !originalFilename) {
+      Alert.alert('Download Error', 'Missing file URL or filename.');
       return;
     }
 
     try {
-      const fileUri = document.file.url;
-      const downloadLocation = `${FileSystem.documentDirectory}${document.originalFilename}`;
+      const cacheUri = `${FileSystem.cacheDirectory}${originalFilename}`;
+      const { uri: localUri } = await FileSystem.downloadAsync(url, cacheUri);
 
-      const downloadResumable = FileSystem.createDownloadResumable(
-        fileUri,
-        downloadLocation
-      );
+      if (Platform.OS === 'android') {
+        const perm =
+          await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+        if (!perm.granted) {
+          Alert.alert(
+            'Permission Required',
+            'Storage access is required to save the file.'
+          );
+          return;
+        }
 
-      const data = await downloadResumable.downloadAsync();
-
-      if ((await Sharing.isAvailableAsync()) && data?.uri) {
-        await Sharing.shareAsync(data?.uri, {
-          mimeType: MIME_TYPE,
-          dialogTitle: 'Save file to Files',
-        });
-      } else {
-        Alert.alert(
-          'Sharing not available',
-          'Sharing is not supported on this device.'
+        const newUri = await FileSystem.StorageAccessFramework.createFileAsync(
+          perm.directoryUri,
+          originalFilename,
+          mimeType
         );
+        const base64 = await FileSystem.readAsStringAsync(localUri, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+        await FileSystem.StorageAccessFramework.writeAsStringAsync(
+          newUri,
+          base64,
+          {
+            encoding: FileSystem.EncodingType.Base64,
+          }
+        );
+      } else {
+        if (!(await Sharing.isAvailableAsync())) {
+          Alert.alert('Sharing Error', 'Sharing not supported on this device.');
+          return;
+        }
+        await Sharing.shareAsync(localUri, {
+          dialogTitle: 'Save or share file',
+          mimeType,
+        });
       }
 
       closeModal();
-    } catch (error) {
-      console.error('Error downloading the file:', error);
+    } catch (err) {
+      console.error('Download failed', err);
       Alert.alert(
         'Download Error',
         'An error occurred while downloading the file.'
@@ -104,18 +112,18 @@ export default function DocumentModal(props: IDocumentModalProps) {
     }
   };
 
-  const fileTypeText = getFileFileTypeText(document.mimeType);
+  const fileTypeText = getFileTypeText(document.mimeType);
 
   const ACTIONS = [
     {
       title: `View ${fileTypeText}`,
       Icon: ViewIcon,
-      route: `/file/${document?.id}`,
+      route: `/file/${document.id}`,
     },
     {
       title: `Edit ${fileTypeText} name`,
       Icon: WFEdit,
-      route: `/file/${document?.id}?editing=true&clientId=${clientId}`,
+      route: `/file/${document.id}?editing=true&clientId=${clientId}`,
     },
     {
       title: `Download ${fileTypeText}`,
@@ -125,37 +133,31 @@ export default function DocumentModal(props: IDocumentModalProps) {
     {
       title: `Delete ${fileTypeText}`,
       Icon: DeleteIcon,
-      onPress: onClickDeleteFile,
+      onPress: () => setDeleteModalVisible(true),
     },
   ];
 
-  return (
-    <>
-      <MainModal
-        closeButton
-        vertical
-        actions={ACTIONS}
-        isModalVisible={isModalVisible}
-        closeModal={closeModal}
-        opacity={0.5}
-      />
-
-      <DeleteModal
-        body={`All data associated with this ${fileTypeText} will be deleted.`}
-        title={`Delete ${fileTypeText}?`}
-        onDelete={deleteFile}
-        onCancel={() => setDeleteModalVisible(false)}
-        isVisible={deleteModalVisible}
-        deleteableItemName={fileTypeText}
-      />
-    </>
+  return deleteModalVisible ? (
+    <DeleteModal
+      body={`All data associated with this ${fileTypeText} will be deleted.`}
+      title={`Delete ${fileTypeText}?`}
+      onDelete={deleteFile}
+      onCancel={() => setDeleteModalVisible(false)}
+      isVisible
+      deleteableItemName={fileTypeText}
+    />
+  ) : (
+    <MainModal
+      closeButton
+      vertical
+      actions={ACTIONS}
+      isModalVisible={isModalVisible}
+      closeModal={closeModal}
+      opacity={0.5}
+    />
   );
 }
 
-function getFileFileTypeText(mimeType?: string): string {
-  if (mimeType?.startsWith('image')) {
-    return 'image';
-  }
-
-  return 'file';
+function getFileTypeText(mimeType?: string): string {
+  return mimeType?.startsWith('image') ? 'image' : 'file';
 }

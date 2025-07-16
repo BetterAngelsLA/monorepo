@@ -38,7 +38,7 @@ export function RelevantContactCard(props: TProps) {
       rows: [
         [
           phoneNumber && (
-            <PhoneNumberBtn phoneNumber={formatPhoneNumber(phoneNumber)} />
+            <PhoneNumberBtn number={formatPhoneNumber(phoneNumber)} />
           ),
         ],
       ],

@@ -46,7 +46,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
   const isDateAndTime = expanded === 'Date and Time';
 
   const updateNoteFunction = useRef(
-    debounce(async (key: 'time' | 'date', value: string | Date) => {
+    debounce(async (key: 'time' | 'date', value: string | Date | undefined) => {
       if (!noteId || !value) return;
       const currentNote = noteRef.current;
       const dateValue = key === 'date' ? value : new Date(currentNote.date);
@@ -81,7 +81,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
     }, 500)
   ).current;
 
-  const onChange = (key: 'date' | 'time', value: Date) => {
+  const onChange = (key: 'date' | 'time', value: Date | undefined) => {
     setDateTime({ ...dateTime, [key]: value });
     updateNoteFunction(key, value);
   };
@@ -111,15 +111,16 @@ export default function DateAndTime(props: IDateAndTimeProps) {
         }}
       >
         <DatePicker
-          required
-          maxDate={endOfDay}
-          mode="date"
-          format="MM/dd/yyyy"
-          placeholder="MM/DD/YYYY"
+          type="numeric"
+          validRange={{
+            endDate: endOfDay,
+            startDate: new Date('1900-01-01'),
+          }}
           value={new Date(dateTime.date) || new Date()}
           onChange={(date) => onChange('date', date)}
         />
         <DatePicker
+          type="wheel"
           required
           maxDate={endOfDay}
           mode="time"

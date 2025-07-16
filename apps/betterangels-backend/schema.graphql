@@ -204,22 +204,23 @@ input ClientContactInput {
   name: String
   email: String
   mailingAddress: String
+  phoneNumber: PhoneNumber
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID
   clientProfile: ID
-  phoneNumber: PhoneNumber
 }
 
 type ClientContactType {
   name: String
   email: String
   mailingAddress: String
+  phoneNumber: PhoneNumber
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID!
   clientProfile: DjangoModelType!
-  phoneNumber: PhoneNumber
+  updatedAt: DateTime!
 }
 
 type ClientContactTypeOffsetPaginated {
@@ -1523,6 +1524,7 @@ type ShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  operatingHours: [TimeRange]
 }
 
 type ShelterTypeOffsetPaginated {
@@ -1639,6 +1641,11 @@ enum TaskTypeEnum {
 
 """Time (isoformat)"""
 scalar Time
+
+type TimeRange {
+  start: DateTime
+  end: DateTime
+}
 
 enum TrainingServiceChoices {
   JOB_TRAINING
