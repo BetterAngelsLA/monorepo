@@ -22,7 +22,7 @@ import {
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
 import { ServicesByCategory } from '../../static';
-import { MainScrollContainer } from '../../ui-components';
+import MainScrollContainer from '../MainScrollContainer';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
 
