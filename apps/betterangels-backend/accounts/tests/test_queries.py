@@ -1,7 +1,11 @@
 from typing import Any
+from unittest.mock import ANY
 
+from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
+from accounts.permissions import UserOrganizationPermissions
+from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
 from model_bakery import baker
@@ -67,7 +71,9 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             organization = organization_recipe.make()
             baker.make(OrganizationUser, user=user, organization=organization)
             permission_group_recipe.make(organization=organization)
-            expected_organizations.append({"id": str(organization.pk), "name": organization.name})
+            expected_organizations.append(
+                {"id": str(organization.pk), "name": organization.name, "userPermissions": ANY}
+            )
 
         query = """
         query {
@@ -83,6 +89,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                 organizations: organizationsOrganization {
                     id
                     name
+                    userPermissions
                 }
             }
         }
@@ -138,6 +145,65 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         )
         self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
 
+    @parametrize(
+        ("user_role, expected_permissions"),
+        [
+            (OrgRoleEnum.MEMBER, []),
+            (
+                OrgRoleEnum.ADMIN,
+                [
+                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
+                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
+                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
+                ],
+            ),
+            (
+                OrgRoleEnum.SUPERUSER,
+                [
+                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
+                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
+                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
+                    UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
+                ],
+            ),
+        ],
+    )
+    def test_logged_in_user_org_permissions_query(
+        self, user_role: OrgRoleEnum, expected_permissions: list[str]
+    ) -> None:
+        user = baker.make(User)
+        org_1 = organization_recipe.make(name="o1")
+        org_2 = organization_recipe.make(name="o2")
+        org_1.add_user(user)
+        org_2.add_user(user)
+
+        omb = OrgPermissionManager(org_1)
+
+        self.graphql_client.force_login(user)
+
+        query = """
+            query {
+                currentUser {
+                    firstName
+                    organizations: organizationsOrganization {
+                        name
+                        userPermissions
+                    }
+                }
+            }
+        """
+
+        expected_query_count = 2
+
+        omb.set_role(user, user_role)
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query)
+
+        user_perms = {o["name"]: o["userPermissions"] for o in response["data"]["currentUser"]["organizations"]}
+        self.assertCountEqual(user_perms["o1"], expected_permissions)
+        self.assertEqual(user_perms["o2"], [])
+
 
 class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
     def test_caseworker_organizations_query(self) -> None:
@@ -150,7 +216,6 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
         non_cw_org = organization_recipe.make()
 
         query = """
-
             query ($pagination: OffsetPaginationInput) {
                 caseworkerOrganizations(pagination: $pagination) {
                     totalCount
@@ -176,7 +241,7 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
         )
         actual_caseworker_org_ids = [int(org["id"]) for org in caseworker_orgs]
 
-        self.assertEqual(expected_caseworker_org_ids, actual_caseworker_org_ids)
+        self.assertCountEqual(expected_caseworker_org_ids, actual_caseworker_org_ids)
         self.assertNotIn(non_cw_org.pk, actual_caseworker_org_ids)
 
     @parametrize(

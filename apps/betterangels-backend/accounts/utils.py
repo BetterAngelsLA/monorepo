@@ -1,7 +1,10 @@
+from functools import cached_property
 from typing import Union
 
+from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
+from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
 from organizations.models import Organization
 
@@ -60,3 +63,55 @@ def get_outreach_authorized_users() -> QuerySet[User]:
 
     # Use Exists to avoid duplicate users without `distinct()`
     return User.objects.filter(Exists(permission_group_exists))
+
+
+class OrgPermissionManager:
+    """Manage org-specific user permissions."""
+
+    def __init__(self, organization: Organization) -> None:
+        self.organization: Organization = organization
+
+    @cached_property
+    def _admin_template(self) -> PermissionGroupTemplate:
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=GroupTemplateNames.ORG_ADMIN)
+
+        return template
+
+    @cached_property
+    def _superuser_template(self) -> PermissionGroupTemplate:
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=GroupTemplateNames.ORG_SUPERUSER)
+
+        return template
+
+    @cached_property
+    def _org_admin_group(self) -> PermissionGroup:
+        group, _ = PermissionGroup.objects.get_or_create(
+            organization=self.organization,
+            template=self._admin_template,
+        )
+
+        return group
+
+    @cached_property
+    def _org_superuser_group(self) -> PermissionGroup:
+        group, _ = PermissionGroup.objects.get_or_create(
+            organization=self.organization,
+            template=self._superuser_template,
+        )
+
+        return group
+
+    @transaction.atomic
+    def set_role(self, user: User, role: OrgRoleEnum) -> None:
+        self.clear_permissions(user)
+
+        if role == OrgRoleEnum.ADMIN:
+            user.groups.add(self._org_admin_group.group)
+
+        if role == OrgRoleEnum.SUPERUSER:
+            user.groups.add(self._org_superuser_group.group)
+
+    def clear_permissions(self, user: User) -> None:
+        """Remove both admin and superuser perms."""
+        user.groups.remove(self._org_admin_group.group)
+        user.groups.remove(self._org_superuser_group.group)
