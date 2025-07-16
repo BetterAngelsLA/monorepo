@@ -4,6 +4,7 @@ from unittest.mock import ANY
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
+from accounts.permissions import UserOrganizationPermissions
 from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
@@ -150,11 +151,20 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             (OrgRoleEnum.MEMBER, []),
             (
                 OrgRoleEnum.ADMIN,
-                ["ACCESS_ORG_PORTAL", "ADD_ORG_MEMBER", "REMOVE_ORG_MEMBER"],
+                [
+                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
+                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
+                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
+                ],
             ),
             (
                 OrgRoleEnum.SUPERUSER,
-                ["ACCESS_ORG_PORTAL", "ADD_ORG_MEMBER", "REMOVE_ORG_MEMBER", "CHANGE_ORG_MEMBER_ROLE"],
+                [
+                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
+                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
+                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
+                    UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
+                ],
             ),
         ],
     )
