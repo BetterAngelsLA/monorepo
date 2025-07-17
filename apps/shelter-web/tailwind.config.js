@@ -45,10 +45,15 @@ module.exports = {
         '0%': { transform: 'scale(.85, .5)' },
         '100%': { transform: 'scale(1, 1)' },
       },
+      slideInRightToLeft: {
+        '0%': { transform: 'translateX(100%)' },
+        '100%': { transform: 'translateX(0)' },
+      },
     },
     animation: {
       slideInUp: 'slideInUp 250ms ease-in-out 0ms',
       expandInOut: 'expandInOut 200ms ease-in-out 0ms',
+      slideRightToLeft: 'slideInRightToLeft 0.3s ease-out forwards',
     },
   },
   plugins: [],
