@@ -20,5 +20,5 @@ export function Flyoutcontainer(props: IProps): ReactElement | null {
 
     if (!flyout?.content) return null;
 
-    return <Flyout className={className}>{flyout?.content}</Flyout>
+    return <Flyout className={className} {...flyout}>{flyout?.content}</Flyout>
 }

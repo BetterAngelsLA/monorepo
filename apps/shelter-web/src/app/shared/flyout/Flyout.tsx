@@ -1,7 +1,33 @@
+import { useAtom } from 'jotai';
+import { PropsWithChildren, ReactElement, ReactNode } from 'react';
+import { flyoutAtom } from '../atoms/flyoutAtom';
 import { mergeCss } from '../utils/styles/mergeCss';
+import { FlyoutMask } from './Flyoutmask';
 
-export function Flyout(props: any) {
-  const { children } = props;
+export enum FlyoutAnimationEnum {
+  FLYOUT_LEFT = 'animate-slideRightToLeft',
+}
+
+export interface IFlyout extends PropsWithChildren {
+  className?: string;
+  header?: string | ReactNode;
+  animation?: FlyoutAnimationEnum | null;
+  closeOnClick?: boolean;
+}
+
+export function Flyout(props: IFlyout): ReactElement | null {
+  const {
+    className = '',
+    animation = FlyoutAnimationEnum.FLYOUT_LEFT,
+    closeOnClick,
+    children,
+  } = props;
+
+  const [_flyout, setFlyout] = useAtom(flyoutAtom);
+
+  function handleMaskClick(): void {
+    if(closeOnClick) setFlyout(null);
+  }
 
   const flyoutCss = [
     'fixed',
@@ -9,12 +35,19 @@ export function Flyout(props: any) {
     'right-0',
     'h-full',
     'w-[96vw]',
-    'bg-white',
+    'bg-[#1E3342]',
     'shadow-lg',
     'z-[1000]',
-    'animate-slideRightToLeft',
-    'rounded-l-2xl'
+    'rounded-l-2xl',
+    animation,
+    className,
   ];
 
-  return <div className={mergeCss(flyoutCss)}>{children}</div>;
+  return (
+    <FlyoutMask onClickOutside={handleMaskClick}>
+      <div className={mergeCss(flyoutCss)} onClick={(e) => e.stopPropagation()}>
+        {children}
+      </div>
+    </FlyoutMask>
+  );
 }
