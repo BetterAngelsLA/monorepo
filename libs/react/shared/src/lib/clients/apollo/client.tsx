@@ -11,13 +11,15 @@ import { csrfLink } from './csrf';
 
 type IApolloClient = {
   apiUrl: string;
+  csrfCookieName: string;
+  csrfHeaderName: string;
 };
 
-export const createApolloClient = (
-  props: IApolloClient
-): ApolloClient<NormalizedCacheObject> => {
-  const { apiUrl } = props;
-
+export const createApolloClient = ({
+  apiUrl,
+  csrfCookieName,
+  csrfHeaderName,
+}: IApolloClient): ApolloClient<NormalizedCacheObject> => {
   const uploadLink = createUploadLink({
     uri: `${apiUrl}/graphql`,
     credentials: 'include',
@@ -29,7 +31,15 @@ export const createApolloClient = (
   });
 
   return new ApolloClient({
-    link: from([csrfLink(`${apiUrl}/admin/login/`), restLink, uploadLink]),
+    link: from([
+      csrfLink({
+        apiUrl: `${apiUrl}/admin/login/`,
+        cookieName: csrfCookieName,
+        headerName: csrfHeaderName,
+      }),
+      restLink,
+      uploadLink,
+    ]),
     cache: new InMemoryCache(),
   });
 };

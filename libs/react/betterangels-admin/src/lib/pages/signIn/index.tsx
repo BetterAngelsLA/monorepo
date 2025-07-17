@@ -1,17 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Regex } from '@monorepo/react/shared';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../hooks';
 import { useApiConfig } from '../../providers';
-
-export const Regex = {
-  empty: /^\s*\S.*$/,
-  date: /^(0[1-9]|1[0-2])\/(0[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/,
-  time: /^(?:[01]\d|2[0-3]):[0-5]\d$/,
-  email: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-  phoneNumber: /^[2-9]\d{2}[2-9]\d{6}$/,
-  phoneNumberWithExtensionUS: /^[2-9]\d{2}[2-9]\d{6}(x\d+)?$/,
-  californiaId: /^[A-Z]\d{7}$/,
-} as const;
 
 export default function SignIn() {
   const [email, setEmail] = useState('');
@@ -21,21 +12,12 @@ export default function SignIn() {
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { environment, switchEnvironment, fetchClient } = useApiConfig();
+  const { fetchClient } = useApiConfig();
   const { refetchUser } = useUser();
   const navigate = useNavigate();
 
-  const targetEnv =
-    email.includes('+demo') || email.endsWith('@example.com')
-      ? 'demo'
-      : 'production';
   const isPasswordLogin = email.endsWith('@example.com');
   const isValidEmail = Regex.email.test(email);
-
-  useEffect(() => {
-    if (!isValidEmail) return;
-    switchEnvironment(targetEnv);
-  }, [email, environment, targetEnv, switchEnvironment, isValidEmail]);
 
   const handleError = (message: string) => {
     setErrorMsg(message);
@@ -52,7 +34,6 @@ export default function SignIn() {
         body: JSON.stringify({ email: email.toLowerCase() }),
       });
 
-      console.log('Send code response:', res);
       if (res.ok || res.status === 401) {
         setStep('otp');
       } else {
@@ -103,6 +84,7 @@ export default function SignIn() {
 
       if (res.ok && data?.meta?.is_authenticated) {
         await refetchUser();
+        navigate('/');
       } else {
         handleError('Invalid email or password.');
       }
