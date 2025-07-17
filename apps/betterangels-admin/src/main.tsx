@@ -14,7 +14,7 @@ import { createApolloClient } from './app/clients/apollo/client';
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 
 const apolloClient = createApolloClient({
-  apiUrl: import.meta.env.VITE_SHELTER_API_URL,
+  apiUrl: import.meta.env.VITE_BETTERANGELS_ADMIN_API_URL,
 });
 
 const root = ReactDOM.createRoot(

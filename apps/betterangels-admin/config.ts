@@ -1,7 +1,9 @@
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = import.meta.env.BETTERANGELS_ADMIN_URL;
 
 if (!apiUrl) {
-  throw new Error('VITE_API_URL is not defined in your environment variables.');
+  throw new Error(
+    'VITE_BETTERANGELS_ADMIN_API_URL is not defined in your environment variables.'
+  );
 }
 
 export { apiUrl };
