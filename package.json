@@ -10,7 +10,8 @@
     "ba": "nx start betterangels",
     "ba:build-dev": "nx build betterangels --profile development",
     "shelter": "nx serve shelter-web --port 8083",
-    "fires": "nx serve wildfires --port 8200"
+    "fires": "nx serve wildfires --port 8200",
+    "admin": "nx serve betterangels-admin --port 8083"
   },
   "dependencies": {
     "@apollo/client": "^3.11.1",
