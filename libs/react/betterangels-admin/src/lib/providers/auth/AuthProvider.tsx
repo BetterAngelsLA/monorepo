@@ -13,18 +13,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     if (isLoading || hasRedirected.current) return;
 
     const access = getRouteAccess(location.pathname);
-    console.log('Current pathname:', location.pathname);
 
-    console.log(access);
-
-    console.log(
-      'Checking access for:',
-      location.pathname,
-      'Access type:',
-      access
-    );
     if (access === 'safe' && !user) {
-      console.log('Redirecting to sign-in for safe route');
       hasRedirected.current = true;
       navigate('/sign-in', {
         state: { from: location.pathname },
