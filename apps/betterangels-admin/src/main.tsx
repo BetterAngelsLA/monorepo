@@ -1,7 +1,17 @@
+import { ApolloProvider } from '@apollo/client';
+import {
+  ApiConfigProvider,
+  AuthProvider,
+  createApolloClient,
+  UserProvider,
+} from '@monorepo/react/betterangels-admin';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { apiUrl, demoApiUrl } from '../config';
 import App from './app/app';
+
+const apolloClient = createApolloClient(import.meta.env.VITE_SHELTER_API_URL);
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 
@@ -11,8 +21,16 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <BrowserRouter basename={basename}>
-      <App />
-    </BrowserRouter>
+    <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
+      <ApolloProvider client={apolloClient}>
+        <BrowserRouter basename={basename}>
+          <UserProvider>
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </UserProvider>
+        </BrowserRouter>
+      </ApolloProvider>
+    </ApiConfigProvider>
   </StrictMode>
 );
