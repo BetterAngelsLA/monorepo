@@ -1,3 +1,6 @@
+import { useUser } from '@monorepo/react/betterangels-admin';
+
 export default function Home() {
-  return <div>Welcome to Home</div>;
+  const { user } = useUser();
+  return <div>Welcome to Home, {user?.email}! </div>;
 }

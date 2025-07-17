@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUser } from '../../hooks';
 import { useApiConfig } from '../../providers';
 
@@ -22,6 +23,7 @@ export default function SignIn() {
 
   const { environment, switchEnvironment, fetchClient } = useApiConfig();
   const { refetchUser } = useUser();
+  const navigate = useNavigate();
 
   const targetEnv =
     email.includes('+demo') || email.endsWith('@example.com')
@@ -49,6 +51,8 @@ export default function SignIn() {
         method: 'POST',
         body: JSON.stringify({ email: email.toLowerCase() }),
       });
+
+      console.log('Send code response:', res);
       if (res.ok || res.status === 401) {
         setStep('otp');
       } else {
@@ -65,7 +69,6 @@ export default function SignIn() {
   const handleConfirmCode = useCallback(async () => {
     setLoading(true);
     setErrorMsg('');
-
     try {
       const res = await fetchClient('/_allauth/browser/v1/auth/code/confirm', {
         method: 'POST',
@@ -75,6 +78,7 @@ export default function SignIn() {
 
       if (res.ok && data?.meta?.is_authenticated) {
         await refetchUser();
+        navigate('/');
       } else {
         handleError('Invalid code. Please try again.');
       }

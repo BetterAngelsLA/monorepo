@@ -31,6 +31,7 @@ type UserResponse = {
 
 export default function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<TUser | undefined>();
+  const [isLoading, setIsLoading] = useState(true);
 
   const { data, loading, error, refetch } = useCurrentUserQuery({
     fetchPolicy: 'network-only',
@@ -48,13 +49,16 @@ export default function UserProvider({ children }: UserProviderProps) {
   useEffect(() => {
     if (!loading) {
       updateUser({ data, errors: error ? [error] : undefined });
+      setIsLoading(false);
     }
   }, [loading, data, error, updateUser]);
 
   const refetchUser = useCallback(async () => {
+    setIsLoading(true);
     try {
       const res = await refetch();
       updateUser(res);
+      setIsLoading(false);
     } catch (err) {
       console.error('Error refetching user data:', err);
       setUser(undefined);
@@ -62,8 +66,8 @@ export default function UserProvider({ children }: UserProviderProps) {
   }, [refetch, updateUser]);
 
   const contextValue = useMemo(
-    () => ({ user, setUser, isLoading: loading, refetchUser }),
-    [user, loading, refetchUser]
+    () => ({ user, setUser, isLoading, refetchUser }),
+    [user, isLoading, refetchUser]
   );
 
   return (
