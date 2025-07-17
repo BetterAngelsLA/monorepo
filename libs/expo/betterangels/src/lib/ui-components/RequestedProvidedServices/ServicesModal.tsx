@@ -242,7 +242,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         style={{
           alignItems: 'flex-end',
           paddingHorizontal: 24,
-          marginBottom: 8,
+          marginBottom: 4,
         }}
       >
         <Pressable
@@ -338,7 +338,7 @@ export default function ServicesModal(props: IServicesModalProps) {
           gap: Spacings.xs,
           width: '100%',
           paddingTop: Spacings.sm,
-          paddingBottom: bottomInset + Spacings.md,
+          paddingBottom: bottomInset + Spacings.lg,
           alignItems: 'center',
           paddingHorizontal: Spacings.md,
           backgroundColor: Colors.WHITE,
