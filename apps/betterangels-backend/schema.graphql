@@ -1588,6 +1588,7 @@ enum SpecialSituationRestrictionChoices {
   HUMAN_TRAFFICKING
   JUSTICE_SYSTEMS
   VETERANS
+  HARM_REDUCTION
 }
 
 type SpecialSituationRestrictionType {
