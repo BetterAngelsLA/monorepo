@@ -7,7 +7,7 @@ import {
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { apiUrl, demoApiUrl } from '../config';
+import { apiUrl } from '../config';
 import App from './app/app';
 import { createApolloClient } from './app/clients/apollo/client';
 
@@ -23,7 +23,7 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
+    <ApiConfigProvider apiUrl={apiUrl}>
       <ApolloProvider client={apolloClient}>
         <BrowserRouter basename={basename}>
           <UserProvider>

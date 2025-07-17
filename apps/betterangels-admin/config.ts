@@ -1,14 +1,7 @@
-function loadConfig() {
-  const apiUrl = import.meta.env.VITE_SHELTER_API_URL;
-  const demoApiUrl = import.meta.env.VITE_DEMO_API_URL;
+const apiUrl = import.meta.env.VITE_API_URL;
 
-  if (!apiUrl || !demoApiUrl) {
-    throw new Error('One or more environment variables are undefined.');
-  }
-
-  return { apiUrl, demoApiUrl };
+if (!apiUrl) {
+  throw new Error('VITE_API_URL is not defined in your environment variables.');
 }
 
-const { apiUrl, demoApiUrl } = loadConfig();
-
-export { apiUrl, demoApiUrl };
+export { apiUrl };
