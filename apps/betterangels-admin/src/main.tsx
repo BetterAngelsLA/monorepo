@@ -1,6 +1,7 @@
 import { ApolloProvider } from '@apollo/client';
 import {
   ApiConfigProvider,
+  AuthProvider,
   UserProvider,
 } from '@monorepo/react/betterangels-admin';
 import { StrictMode } from 'react';
@@ -26,7 +27,9 @@ root.render(
       <ApolloProvider client={apolloClient}>
         <BrowserRouter basename={basename}>
           <UserProvider>
-            <App />
+            <AuthProvider>
+              <App />
+            </AuthProvider>
           </UserProvider>
         </BrowserRouter>
       </ApolloProvider>
