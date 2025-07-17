@@ -1957,6 +1957,7 @@ export type SocialMediaProfileTypeOffsetPaginated = {
 
 export enum SpecialSituationRestrictionChoices {
   DomesticViolence = 'DOMESTIC_VIOLENCE',
+  HarmReduction = 'HARM_REDUCTION',
   HivAids = 'HIV_AIDS',
   HumanTrafficking = 'HUMAN_TRAFFICKING',
   JusticeSystems = 'JUSTICE_SYSTEMS',
