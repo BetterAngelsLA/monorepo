@@ -26,6 +26,7 @@ class SpecialSituationRestrictionChoices(models.TextChoices):
     HUMAN_TRAFFICKING = "human_trafficking", _("Human Trafficking")
     JUSTICE_SYSTEMS = "justice_systems", _("Persons Exiting Justice Systems")
     VETERANS = "veterans", _("Veterans")
+    HARM_REDUCTION = "harm_reduction", _("Harm Reduction")
 
 
 @strawberry.enum
