@@ -1,2 +1,2 @@
-export const shelterHomePath = 'https://www.betterangels.la/pillars/shelter';
+export const shelterHomePath = '/';
 export const aboutUsPath = 'https://www.betterangels.la/about/our-mission';
