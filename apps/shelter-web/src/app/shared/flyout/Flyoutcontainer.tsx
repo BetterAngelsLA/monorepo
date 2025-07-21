@@ -8,7 +8,7 @@ type IProps = {
     className?: string;
 }
 
-export function Flyoutcontainer(props: IProps): ReactElement | null {
+export function FlyoutContainer(props: IProps): ReactElement | null {
     const {className = ''} = props;
 
     const location = useLocation();

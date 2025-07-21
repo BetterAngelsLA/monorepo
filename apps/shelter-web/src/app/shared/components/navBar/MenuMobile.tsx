@@ -23,8 +23,8 @@ export function MenuMobile() {
   ];
 
   const hoverBtnCss = [
-    'w-[313px]',
-    'h-[71px]',
+    'w-full',
+    'h-[54px]',
     'hover:bg-[#375C76]',
     'rounded-md',
     'transition',
@@ -34,7 +34,7 @@ export function MenuMobile() {
   ];
 
   const closeBtnContainerCss = ['flex', 'justify-start', 'p-4'];
-  const borderCss = ['border-b', 'border-[#375c76]'];
+  const borderCss = ['w-full', 'border-b', 'border-[#375c76]'];
   const closeBtnCss = ['text-white'];
 
   return (
