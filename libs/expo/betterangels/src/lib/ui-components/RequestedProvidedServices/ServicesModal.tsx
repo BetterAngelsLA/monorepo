@@ -241,8 +241,8 @@ export default function ServicesModal(props: IServicesModalProps) {
       <View
         style={{
           alignItems: 'flex-end',
-          paddingHorizontal: 16,
-          marginBottom: 8,
+          paddingHorizontal: 24,
+          marginBottom: 4,
         }}
       >
         <Pressable
@@ -262,7 +262,7 @@ export default function ServicesModal(props: IServicesModalProps) {
             gap: Spacings.sm,
             paddingBottom: Spacings.md,
           }}
-          style={{ paddingHorizontal: Spacings.md }}
+          style={{ paddingHorizontal: Spacings.xs }} // Reduced from Spacings.md
         >
           <View>
             <TextBold size="lg">
@@ -338,7 +338,7 @@ export default function ServicesModal(props: IServicesModalProps) {
           gap: Spacings.xs,
           width: '100%',
           paddingTop: Spacings.sm,
-          paddingBottom: bottomInset,
+          paddingBottom: bottomInset + Spacings.lg,
           alignItems: 'center',
           paddingHorizontal: Spacings.md,
           backgroundColor: Colors.WHITE,
