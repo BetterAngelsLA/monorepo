@@ -1,4 +1,8 @@
-import { FileSearchIcon, SearchIcon } from '@monorepo/expo/shared/icons';
+import {
+  FileSearchIcon,
+  PlusIcon,
+  SearchIcon,
+} from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -7,8 +11,8 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { Pressable, ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ServiceEnum,
   ServiceRequestTypeEnum,
@@ -16,14 +20,13 @@ import {
   useDeleteServiceRequestMutation,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
+import { useModalScreen } from '../../providers';
 import { ServicesByCategory } from '../../static';
-import Modal from '../Modal';
+import MainScrollContainer from '../MainScrollContainer';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
 
 interface IServicesModalProps {
-  setIsModalVisible: (isModalVisible: boolean) => void;
-  isModalVisible: boolean;
   noteId: string;
   initialServices: {
     id: string;
@@ -35,15 +38,10 @@ interface IServicesModalProps {
 }
 
 export default function ServicesModal(props: IServicesModalProps) {
-  const {
-    setIsModalVisible,
-    isModalVisible,
-    initialServices,
-    noteId,
-    refetch,
-    type,
-  } = props;
+  const { initialServices, noteId, refetch, type } = props;
 
+  const { closeModalScreen } = useModalScreen();
+  const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
   const [services, setServices] = useState<
     Array<{
       id: string | undefined;
@@ -183,7 +181,7 @@ export default function ServicesModal(props: IServicesModalProps) {
       }
 
       refetch();
-      setIsModalVisible(false);
+      closeModalScreen();
     } catch (e) {
       console.error('Error during service submission:', e);
       showSnackbar({
@@ -205,9 +203,10 @@ export default function ServicesModal(props: IServicesModalProps) {
         id: service.id,
         title: service.serviceOther || null,
       }));
-    setIsModalVisible(false);
     setServiceOthers(initialServiceOthers);
     setServices(newInitialServices);
+
+    closeModalScreen();
   };
 
   useEffect(() => {
@@ -232,27 +231,38 @@ export default function ServicesModal(props: IServicesModalProps) {
     (category) => category.items.length > 0
   );
   return (
-    <Modal
-      mt={Spacings.sm}
-      vertical
-      closeButton
-      closeModal={closeModal}
-      isModalVisible={isModalVisible}
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: Colors.WHITE,
+        paddingTop: topInset,
+      }}
     >
-      <KeyboardAwareScrollView
+      <View
         style={{
-          flex: 1,
-          backgroundColor: Colors.WHITE,
+          alignItems: 'flex-end',
+          paddingHorizontal: 24,
+          marginBottom: 4,
         }}
-        keyboardShouldPersistTaps="handled"
       >
+        <Pressable
+          accessible
+          accessibilityHint="closes the modal"
+          accessibilityRole="button"
+          accessibilityLabel="close"
+          onPress={closeModal}
+        >
+          <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
+        </Pressable>
+      </View>
+      <MainScrollContainer keyboardAware>
         <ScrollView
           contentContainerStyle={{
             flexGrow: 1,
             gap: Spacings.sm,
             paddingBottom: Spacings.md,
           }}
-          style={{ paddingHorizontal: Spacings.md }}
+          style={{ paddingHorizontal: Spacings.xs }} // Reduced from Spacings.md
         >
           <View>
             <TextBold size="lg">
@@ -320,7 +330,7 @@ export default function ServicesModal(props: IServicesModalProps) {
             />
           </View>
         </ScrollView>
-      </KeyboardAwareScrollView>
+      </MainScrollContainer>
 
       <View
         style={{
@@ -328,6 +338,7 @@ export default function ServicesModal(props: IServicesModalProps) {
           gap: Spacings.xs,
           width: '100%',
           paddingTop: Spacings.sm,
+          paddingBottom: bottomInset + Spacings.lg,
           alignItems: 'center',
           paddingHorizontal: Spacings.md,
           backgroundColor: Colors.WHITE,
@@ -362,6 +373,6 @@ export default function ServicesModal(props: IServicesModalProps) {
           />
         </View>
       </View>
-    </Modal>
+    </View>
   );
 }
