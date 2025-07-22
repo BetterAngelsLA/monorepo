@@ -5,6 +5,7 @@ import {
   TMarginProps,
   getMarginStyles,
 } from '@monorepo/expo/shared/static';
+import { memo } from 'react';
 import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
 import { ClientProfilesQuery } from '../../screens/Clients/__generated__/Clients.generated';
 import { ClientCardBase } from './ClientCardBase';
@@ -24,6 +25,8 @@ export function ClientCard(props: IClientCardProps) {
   if (!client) {
     return null;
   }
+
+  // console.log('Rendering ClientCard', client?.id);
 
   const wrapperStyle = [styles.container, style, getMarginStyles(props)];
 
@@ -50,6 +53,18 @@ export function ClientCard(props: IClientCardProps) {
     </Pressable>
   );
 }
+
+export const ClientCardMemo = memo(ClientCard, (prev, next) => {
+  // console.log('Rendering ClientCard', next.client?.id);
+
+  return (
+    prev.client?.id === next.client?.id
+    // &&
+    // prev.onPress === next.onPress &&
+    // prev.onMenuPress === next.onMenuPress
+    // &&  prev.style === next.style
+  );
+});
 
 const styles = StyleSheet.create({
   container: {

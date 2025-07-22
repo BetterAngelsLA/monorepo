@@ -1,1 +1,1 @@
-export { ClientCard } from './ClientCard';
+export { ClientCard, ClientCardMemo } from './ClientCard';

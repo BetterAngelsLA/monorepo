@@ -1,10 +1,10 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
-import { ElementType, useState } from 'react';
+import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
-  ClientCard,
+  ClientCardMemo,
   ClientCardModal,
   ClientProfileList,
   Header,
@@ -18,6 +18,24 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     null
   );
   const [search, setSearch] = useState('');
+
+  const handleClientPress = useCallback((client: TClientProfile) => {
+    router.navigate({
+      pathname: `/client/${client.id}`,
+      params: { arrivedFrom: '/clients' },
+    });
+  }, []);
+
+  const renderClientItem = useCallback(
+    (client: TClientProfile) => (
+      <ClientCardMemo
+        client={client}
+        onMenuPress={setCurrentClient}
+        onPress={handleClientPress}
+      />
+    ),
+    [setCurrentClient, handleClientPress]
+  );
 
   return (
     <View style={styles.container}>
@@ -36,20 +54,21 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           filters={{
             search,
           }}
-          renderItem={(client) => (
-            <ClientCard
-              client={client}
-              onMenuPress={setCurrentClient}
-              onPress={(client) => {
-                router.navigate({
-                  pathname: `/client/${client.id}`,
-                  params: {
-                    arrivedFrom: '/clients',
-                  },
-                });
-              }}
-            />
-          )}
+          renderItem={renderClientItem}
+          // renderItem={(client) => (
+          //   <ClientCard
+          //     client={client}
+          //     onMenuPress={setCurrentClient}
+          //     onPress={(client) => {
+          //       router.navigate({
+          //         pathname: `/client/${client.id}`,
+          //         params: {
+          //           arrivedFrom: '/clients',
+          //         },
+          //       });
+          //     }}
+          //   />
+          // )}
         />
       </View>
 

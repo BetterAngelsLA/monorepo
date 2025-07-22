@@ -1,6 +1,7 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { FlashList } from '@shopify/flash-list';
 import { ReactElement, useEffect, useState } from 'react';
-import { FlatList, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { uniqueBy } from 'remeda';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
@@ -121,7 +122,14 @@ export function ClientProfileList(props: TProps) {
         renderHeaderText={renderHeaderText}
       />
 
-      <FlatList<TClientProfile>
+      {/* <FlatList<TClientProfile> */}
+      <FlashList<TClientProfile>
+        ///
+        // initialNumToRender={8}
+        // maxToRenderPerBatch={8}
+        // windowSize={5}
+        // removeClippedSubviews={Platform.OS === 'android'}
+        ///
         data={clients}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => renderItem(item)}
@@ -130,10 +138,18 @@ export function ClientProfileList(props: TProps) {
         ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
         ListEmptyComponent={<ListEmptyState />}
         ListFooterComponent={renderFooter}
-        contentContainerStyle={[
-          !clients.length && styles.emptyContent,
-          styles.listContent,
-        ]}
+        // contentContainerStyle={[
+        //   !clients.length && styles.emptyContent,
+        //   styles.listContent,
+        // ]}
+        // style={[
+        //   clients.length ? undefined : styles.emptyContent,
+        //   styles.listContent,
+        // ]}
+        contentContainerStyle={{
+          // !clients.length && styles.emptyContent,
+          paddingBottom: 60,
+        }}
       />
     </View>
   );
