@@ -66,6 +66,7 @@ export const enumDisplaySpecialSituationRestrictionChoices: {
   [key in SpecialSituationRestrictionChoices]: string;
 } = {
   [SpecialSituationRestrictionChoices.DomesticViolence]: 'Domestic Violence',
+  [SpecialSituationRestrictionChoices.HarmReduction]: 'Harm Reduction',
   [SpecialSituationRestrictionChoices.HivAids]: 'HIV/AIDS',
   [SpecialSituationRestrictionChoices.HumanTrafficking]: 'Human Trafficking',
   [SpecialSituationRestrictionChoices.JusticeSystems]: 'Justice Systems',

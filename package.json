@@ -58,7 +58,7 @@
     "graphql": "^16.9.0",
     "haversine-distance": "^1.2.3",
     "i": "^0.3.7",
-    "jotai": "^2.10.3",
+    "jotai": "^2.12.5",
     "libphonenumber-js": "^1.12.6",
     "newrelic-react-native-agent": "^1.5.3",
     "react": "19.0.0",

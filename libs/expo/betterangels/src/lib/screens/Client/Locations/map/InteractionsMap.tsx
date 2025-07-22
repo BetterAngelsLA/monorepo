@@ -1,5 +1,6 @@
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import {
+  IMapClusterManager,
   LoadingView,
   MapClusterMarker,
   MapClusters,
@@ -14,11 +15,22 @@ import { useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { useSnackbar } from '../../../../hooks';
+import { useClientInteractionsMapState } from '../../../../state';
 import { EmptyState } from '../EmptyState';
 import { useInteractionPointFeatures } from './hooks/useInteractionPointFeatures';
 import { useInteractionsMapRegion } from './hooks/useInteractionsMapRegion';
-import { useInteractionsMapState } from './hooks/useInteractionsMapState';
 import { TClusterInteraction } from './types';
+
+const interactionsClusterOptions: IMapClusterManager = {
+  radius: 50,
+  edgePadding: [
+    { max: 4, padding: { top: 80, bottom: 80, left: 100, right: 100 } },
+    {
+      max: Infinity,
+      padding: { top: 50, bottom: 50, left: 50, right: 50 },
+    },
+  ],
+};
 
 type TProps = {
   clientProfileId: string;
@@ -28,8 +40,8 @@ export function InteractionsMap(props: TProps) {
   const { clientProfileId } = props;
 
   const mapRef = useRef<TMapView | null>(null);
-  const { setMapState } = useInteractionsMapState();
   const { showSnackbar } = useSnackbar();
+  const [_mapState, setMapState] = useClientInteractionsMapState();
 
   // 1. Pull data
   const { pointFeatures, loading, error, interactions } =
@@ -39,16 +51,7 @@ export function InteractionsMap(props: TProps) {
   const { clusters, updateClustersForRegion, zoomToCluster } =
     useClusters<TClusterInteraction>({
       pointFeatures,
-      opts: {
-        radius: 50,
-        edgePadding: [
-          { max: 4, padding: { top: 80, bottom: 80, left: 100, right: 100 } },
-          {
-            max: Infinity,
-            padding: { top: 50, bottom: 50, left: 50, right: 50 },
-          },
-        ],
-      },
+      opts: interactionsClusterOptions,
     });
 
   const mapRegion = useInteractionsMapRegion({
@@ -132,6 +135,12 @@ export function InteractionsMap(props: TProps) {
     zoomToCluster(cluster, mapRef);
 
     if (!maxZoomLeaves?.length) {
+      // clicked on cluster that will zoom in, so reset selected Interaction
+      setMapState((prev) => ({
+        ...prev,
+        selectedInteractions: [],
+      }));
+
       return;
     }
 

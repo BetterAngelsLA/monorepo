@@ -13,7 +13,7 @@ import {
   ClientProfileDocument,
   useCreateClientDocumentMutation,
 } from '../../__generated__/Client.generated';
-import Section from './UploadSection';
+import { UploadSection } from './UploadSection';
 import UploadsPreview from './UploadsPreview';
 import { ISingleDocUploadsProps } from './types';
 
@@ -93,8 +93,8 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
     !!documentToUpload.uri;
 
   return (
-    <>
-      <Section
+    <View style={{ flex: 1 }}>
+      <UploadSection
         loading={loading}
         disabled={!documentValid}
         title={title}
@@ -153,7 +153,8 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
             documentType={ClientDocumentNamespaceEnum[docType]}
           />
         )}
-      </Section>
+      </UploadSection>
+
       <MediaPickerModal
         onCapture={(file) => {
           setDocs({
@@ -171,6 +172,6 @@ export default function SingleDocUploads(props: ISingleDocUploadsProps) {
           });
         }}
       />
-    </>
+    </View>
   );
 }
