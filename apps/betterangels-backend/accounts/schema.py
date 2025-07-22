@@ -1,3 +1,4 @@
+import uuid
 from typing import cast
 
 import strawberry
@@ -7,10 +8,13 @@ from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
+from django.conf import settings
+from django.contrib.sites.models import Site
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from notes.permissions import NotePermissions
-from organizations.models import Organization
+from organizations.backends import invitation_backend
+from organizations.models import Organization, OrganizationUser
 from strawberry.types import Info
 from strawberry_django import auth
 from strawberry_django.auth.utils import get_current_user
@@ -24,8 +28,8 @@ from .types import (
     AuthInput,
     AuthResponse,
     LoginInput,
-    OrganizationMemberType,
     OrganizationType,
+    OrgInvitationInput,
     UpdateUserInput,
     UserType,
 )
@@ -67,7 +71,7 @@ class Query:
         return queryset
 
     @strawberry_django.field(extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)])
-    def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
+    def organization_member(self, info: Info, organization_id: str, user_id: str) -> UserType:
         user = cast(User, get_current_user(info))
         try:
             organization = filter_for_user(
@@ -84,10 +88,10 @@ class Query:
         if not member:
             raise PermissionError("You do not have permission to view this member.")
 
-        return cast(OrganizationMemberType, member)
+        return cast(UserType, member)
 
     @strawberry_django.offset_paginated(
-        OffsetPaginated[OrganizationMemberType],
+        OffsetPaginated[UserType],
         extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
     def organization_members(self, info: Info, organization_id: str) -> QuerySet[User]:
@@ -156,3 +160,44 @@ class Mutation:
             user.delete()
 
         return DeletedObjectType(id=user_id)
+
+    @strawberry_django.mutation(extensions=[HasPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)])
+    def add_organization_member(self, info: Info, data: OrgInvitationInput) -> UserType:
+        user = get_current_user(info)
+        invitation_data: dict = strawberry.asdict(data)
+
+        try:
+            organization = filter_for_user(
+                Organization.objects.all(),
+                user,
+                [UserOrganizationPermissions.ADD_ORG_MEMBER],
+            ).get(id=invitation_data["organization_id"])
+        except Organization.DoesNotExist:
+            raise PermissionError("You do not have permission to invite users.")
+
+        with transaction.atomic():
+            member, created = User.objects.get_or_create(
+                email=invitation_data["email"],
+                defaults={"username": str(uuid.uuid4()), "is_active": True},
+            )
+            if created:
+                member.first_name = invitation_data["first_name"]
+                member.last_name = invitation_data["last_name"]
+                member.set_unusable_password()
+                member.save()
+
+            OrganizationUser.objects.create(user=member, organization=organization)
+
+            invitation_backend().create_organization_invite(
+                organization=organization, invited_by_user=user, invitee_user=member
+            )
+
+        site = Site.objects.get(pk=settings.SITE_ID)
+        invitation_backend().send_invitation(
+            user=member,
+            sender=user,
+            organization=organization,
+            domain=site,
+        )
+
+        return cast(UserType, member)
