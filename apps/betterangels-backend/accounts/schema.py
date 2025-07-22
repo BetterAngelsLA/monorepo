@@ -78,7 +78,7 @@ class Query:
         except Organization.DoesNotExist:
             raise PermissionError("You do not have permission to view this organization's members.")
 
-        member: QuerySet[User] = (
+        member: User = (
             organization.users.filter(id=user_id).annotate(_member_role=annotate_member_role(organization_id)).first()
         )
         if not member:
