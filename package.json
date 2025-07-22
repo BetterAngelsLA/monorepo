@@ -192,7 +192,7 @@
     "metro-config": ">=0.82.0",
     "micromatch": ">=4.0.8",
     "ws": ">=8.17.1",
-    "@expo/config-plugins": ">=10.0.0"
+    "@expo/config-plugins": ">=10.1.1"
   },
   "engines": {
     "node": "22.14.0"
