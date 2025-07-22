@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
-  ClientCardMemo,
+  ClientCard,
   ClientCardModal,
   ClientProfileList,
   Header,
@@ -28,7 +28,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
   const renderClientItem = useCallback(
     (client: TClientProfile) => (
-      <ClientCardMemo
+      <ClientCard
         client={client}
         onMenuPress={setCurrentClient}
         onPress={handleClientPress}
@@ -50,26 +50,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           style={{ marginBottom: Spacings.xs }}
         />
 
-        <ClientProfileList
-          filters={{
-            search,
-          }}
-          renderItem={renderClientItem}
-          // renderItem={(client) => (
-          //   <ClientCard
-          //     client={client}
-          //     onMenuPress={setCurrentClient}
-          //     onPress={(client) => {
-          //       router.navigate({
-          //         pathname: `/client/${client.id}`,
-          //         params: {
-          //           arrivedFrom: '/clients',
-          //         },
-          //       });
-          //     }}
-          //   />
-          // )}
-        />
+        <ClientProfileList filters={{ search }} renderItem={renderClientItem} />
       </View>
 
       {currentClient && (

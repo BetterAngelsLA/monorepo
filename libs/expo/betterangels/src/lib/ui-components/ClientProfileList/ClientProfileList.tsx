@@ -1,6 +1,6 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FlashList } from '@shopify/flash-list';
-import { ReactElement, useEffect, useState } from 'react';
+import { ReactElement, useCallback, useEffect, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { uniqueBy } from 'remeda';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -99,6 +99,11 @@ export function ClientProfileList(props: TProps) {
     }
   }
 
+  const renderItemFn = useCallback(
+    ({ item }: { item: TClientProfile }) => renderItem(item),
+    [renderItem]
+  );
+
   const renderFooter = () => {
     if (!loading) {
       return null;
@@ -122,34 +127,23 @@ export function ClientProfileList(props: TProps) {
         renderHeaderText={renderHeaderText}
       />
 
-      {/* <FlatList<TClientProfile> */}
       <FlashList<TClientProfile>
-        ///
-        // initialNumToRender={8}
-        // maxToRenderPerBatch={8}
-        // windowSize={5}
-        // removeClippedSubviews={Platform.OS === 'android'}
-        ///
+        estimatedItemSize={95}
         data={clients}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => renderItem(item)}
+        renderItem={renderItemFn}
         onEndReached={loadMoreClients}
         onEndReachedThreshold={0.05}
         ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
         ListEmptyComponent={<ListEmptyState />}
         ListFooterComponent={renderFooter}
+        contentContainerStyle={{
+          paddingBottom: 60,
+        }}
         // contentContainerStyle={[
         //   !clients.length && styles.emptyContent,
         //   styles.listContent,
         // ]}
-        // style={[
-        //   clients.length ? undefined : styles.emptyContent,
-        //   styles.listContent,
-        // ]}
-        contentContainerStyle={{
-          // !clients.length && styles.emptyContent,
-          paddingBottom: 60,
-        }}
       />
     </View>
   );
