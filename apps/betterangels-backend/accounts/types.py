@@ -6,27 +6,14 @@ from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
 from common.graphql.types import NonBlankString
-from django.contrib.auth.models import Group
 from django.contrib.postgres.aggregates import ArrayAgg
-from django.core.exceptions import ValidationError
-from django.db.models import (
-    BooleanField,
-    Case,
-    CharField,
-    Exists,
-    F,
-    OuterRef,
-    Q,
-    QuerySet,
-    Value,
-    When,
-)
+from django.db.models import CharField, F, Q, QuerySet, Value
 from django.db.models.functions import Concat
 from organizations.models import Organization
 from strawberry import ID, Info, auto
 from strawberry_django.auth.utils import get_current_user
 
-from .models import PermissionGroup, PermissionGroupTemplate, User
+from .models import User
 
 ADMIN_PORTAL_PERMISSION_GROUPS = [GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER]
 
@@ -141,48 +128,12 @@ class UserType(UserBaseType):
     username: auto
 
 
-def annotate_member_role(info: Info) -> Case:
-    org_id = info.variable_values.get("organizationId")
-
-    if not org_id:
-        raise ValidationError("No Organization ID provided")
-
-    admin_template = PermissionGroupTemplate.objects.get(name=GroupTemplateNames.ORG_ADMIN)
-    superuser_template = PermissionGroupTemplate.objects.get(name=GroupTemplateNames.ORG_SUPERUSER)
-
-    is_superuser = Exists(
-        PermissionGroup.objects.filter(
-            organization_id=org_id,
-            template=superuser_template,
-            group__user=OuterRef("pk"),
-        )
-    )
-    is_admin = Exists(
-        PermissionGroup.objects.filter(
-            organization_id=org_id,
-            template=admin_template,
-            group__user=OuterRef("pk"),
-        )
-    )
-
-    return Case(
-        When(is_superuser, then=Value(OrgRoleEnum.SUPERUSER)),
-        When(is_admin, then=Value(OrgRoleEnum.ADMIN)),
-        default=Value(OrgRoleEnum.MEMBER),
-        output_field=CharField(),
-    )
-
-
 @strawberry_django.type(User)
 class OrganizationMemberType(UserBaseType):
     id: ID
     last_login: auto
 
-    @strawberry_django.field(
-        annotate={
-            "_member_role": lambda info: annotate_member_role(info),
-        }
-    )
+    @strawberry_django.field
     def member_role(self, info: Info) -> OrgRoleEnum:
         return OrgRoleEnum(getattr(self, "_member_role", "member"))
 

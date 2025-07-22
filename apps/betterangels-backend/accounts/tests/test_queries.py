@@ -357,7 +357,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
 
         variables = {"organizationId": str(self.org.pk)}
 
-        with self.assertNumQueriesWithoutCache(9):
+        with self.assertNumQueriesWithoutCache(7):
             response = self.execute_graphql(query, variables)
 
         expected_members = zip(

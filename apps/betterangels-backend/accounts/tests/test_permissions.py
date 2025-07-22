@@ -16,7 +16,7 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
 
         self.org_1 = organization_recipe.make(name="org 1")
         self.org_2 = organization_recipe.make(name="org 2")
-        self.org_member = baker.make(User, first_name="org 1 member")
+        self.org_member = baker.make(User, first_name="org member")
         self.org_1_admin = baker.make(User, first_name="org 1 admin")
         self.org_2_admin = baker.make(User, first_name="org 2 admin")
 
@@ -67,11 +67,11 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
     @parametrize(
         "user, org, expected_member_count, expected_members",
         [
-            ("org_1_member", "org_1", 0, []),
-            ("org_1_admin", "org_1", 2, ["org 1 member", "org 1 admin"]),
+            ("org_member", "org_1", 0, []),
+            ("org_1_admin", "org_1", 2, ["org member", "org 1 admin"]),
             ("org_1_admin", "org_2", None, []),
             ("org_2_admin", "org_1", None, []),
-            ("org_2_admin", "org_2", 1, ["org 2 admin"]),
+            ("org_2_admin", "org_2", 2, ["org member", "org 2 admin"]),
         ],
     )
     def test_view_organization_members_permission(
