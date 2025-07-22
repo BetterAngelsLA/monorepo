@@ -135,7 +135,7 @@ class OrganizationMemberType(UserBaseType):
 
     @strawberry_django.field
     def member_role(self, info: Info) -> OrgRoleEnum:
-        return OrgRoleEnum(getattr(self, "_member_role", "member"))
+        return OrgRoleEnum(getattr(self, "_member_role", OrgRoleEnum.MEMBER.value))
 
 
 @strawberry_django.input(User, partial=True)

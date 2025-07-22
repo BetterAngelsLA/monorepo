@@ -70,30 +70,18 @@ def handle_organization_user_removed(sender: Any, instance: OrganizationUser, **
 
 @receiver(post_migrate)
 def update_group_permissions(sender: Any, **kwargs: Any) -> None:
+    template_names = [
+        GroupTemplateNames.CASEWORKER,
+        GroupTemplateNames.ORG_ADMIN,
+        GroupTemplateNames.ORG_SUPERUSER,
+    ]
+
     with transaction.atomic():
-        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(
-            name=GroupTemplateNames.CASEWORKER,
+        templates = PermissionGroupTemplate.objects.filter(name__in=template_names).prefetch_related(
+            "permissions", "permissiongroup_set__group"
         )
-        caseworker_permissions = caseworker_permission_group_template.permissions.all()
-        caseworker_permission_groups = caseworker_permission_group_template.permissiongroup_set.all()
 
-        for permission_group in caseworker_permission_groups:
-            permission_group.group.permissions.set(caseworker_permissions)
-
-        org_admin_permission_group_template = PermissionGroupTemplate.objects.get(
-            name=GroupTemplateNames.ORG_ADMIN,
-        )
-        org_admin_permissions = org_admin_permission_group_template.permissions.all()
-        org_admin_permission_groups = org_admin_permission_group_template.permissiongroup_set.all()
-
-        for permission_group in org_admin_permission_groups:
-            permission_group.group.permissions.set(org_admin_permissions)
-
-        org_superuser_permission_group_template = PermissionGroupTemplate.objects.get(
-            name=GroupTemplateNames.ORG_SUPERUSER
-        )
-        org_superuser_permissions = org_superuser_permission_group_template.permissions.all()
-        org_superuser_permission_groups = org_superuser_permission_group_template.permissiongroup_set.all()
-
-        for permission_group in org_superuser_permission_groups:
-            permission_group.group.permissions.set(org_superuser_permissions)
+        for template in templates:
+            perms = list(template.permissions.all())
+            for pgt in template.permissiongroup_set.all():
+                pgt.group.permissions.set(perms)
