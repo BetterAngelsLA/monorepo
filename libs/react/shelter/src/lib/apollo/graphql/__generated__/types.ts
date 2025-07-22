@@ -1357,6 +1357,12 @@ export enum Ordering {
   DescNullsLast = 'DESC_NULLS_LAST'
 }
 
+export enum OrgRoleEnum {
+  Admin = 'ADMIN',
+  Member = 'MEMBER',
+  Superuser = 'SUPERUSER'
+}
+
 export type OrganizationFilter = {
   AND?: InputMaybe<OrganizationFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1379,6 +1385,7 @@ export type OrganizationMemberType = {
   id: Scalars['ID']['output'];
   lastLogin?: Maybe<Scalars['DateTime']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
+  memberRole: OrgRoleEnum;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
 };
 

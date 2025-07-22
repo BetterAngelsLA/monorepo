@@ -291,12 +291,15 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
         self.org = organization_recipe.make(name="org")
         self.org_member = baker.make(User, first_name="mem", last_name="ber", email="mem@org.co")
         self.org_admin = baker.make(User, first_name="admin")
+        self.org_superuser = baker.make(User, first_name="superuser")
 
         self.org.add_user(self.org_member)
         self.org.add_user(self.org_admin)
+        self.org.add_user(self.org_superuser)
 
         omb = OrgPermissionManager(self.org)
         omb.set_role(self.org_admin, OrgRoleEnum.ADMIN)
+        omb.set_role(self.org_superuser, OrgRoleEnum.SUPERUSER)
 
         another_org = organization_recipe.make(name="another_org")
         another_org.add_user(baker.make(User))
@@ -346,6 +349,7 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
                     totalCount
                     results {
                         id
+                        memberRole
                     }
                 }
             }
@@ -353,10 +357,15 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
 
         variables = {"organizationId": str(self.org.pk)}
 
-        with self.assertNumQueriesWithoutCache(7):
+        with self.assertNumQueriesWithoutCache(9):
             response = self.execute_graphql(query, variables)
 
-        self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 2)
-
-        member_ids = [m["id"] for m in response["data"]["organizationMembers"]["results"]]
-        self.assertCountEqual(member_ids, [str(self.org_member.pk), str(self.org_admin.pk)])
+        expected_members = zip(
+            [str(self.org_member.pk), str(self.org_admin.pk), str(self.org_superuser.pk)],
+            [OrgRoleEnum.MEMBER.name, OrgRoleEnum.ADMIN.name, OrgRoleEnum.SUPERUSER.name],
+        )
+        actual_members = zip(
+            [m["id"] for m in response["data"]["organizationMembers"]["results"]],
+            [m["memberRole"] for m in response["data"]["organizationMembers"]["results"]],
+        )
+        self.assertCountEqual(expected_members, actual_members)

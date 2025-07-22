@@ -1105,6 +1105,12 @@ enum Ordering {
   DESC_NULLS_LAST
 }
 
+enum OrgRoleEnum {
+  MEMBER
+  ADMIN
+  SUPERUSER
+}
+
 input OrganizationFilter {
   AND: OrganizationFilter
   OR: OrganizationFilter
@@ -1126,6 +1132,7 @@ type OrganizationMemberType {
   email: NonBlankString
   id: ID!
   lastLogin: DateTime
+  memberRole: OrgRoleEnum!
 }
 
 type OrganizationMemberTypeOffsetPaginated {
