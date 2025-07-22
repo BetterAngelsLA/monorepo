@@ -65,8 +65,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython.noop,
-        # migrations.RunPython(create_permissions_if_not_exist),
-        # migrations.RunPython(update_org_admin_permission_template),
-        # migrations.RunPython(update_org_superuser_permission_template),
+        migrations.RunPython(create_permissions_if_not_exist),
+        migrations.RunPython(update_org_admin_permission_template),
+        migrations.RunPython(update_org_superuser_permission_template),
     ]

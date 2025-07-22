@@ -1,6 +1,7 @@
 from typing import Any
 from unittest.mock import ANY
 
+import time_machine
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
@@ -155,6 +156,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
                     UserOrganizationPermissions.ADD_ORG_MEMBER.name,
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
+                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
                 ],
             ),
             (
@@ -163,6 +165,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                     UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
                     UserOrganizationPermissions.ADD_ORG_MEMBER.name,
                     UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
+                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
                     UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
                 ],
             ),
@@ -279,3 +282,81 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
 
         actual_orgs = [org["name"] for org in response["data"]["caseworkerOrganizations"]["results"]]
         self.assertCountEqual(actual_orgs, expected_orgs)
+
+
+class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.org = organization_recipe.make(name="org")
+        self.org_member = baker.make(User, first_name="mem", last_name="ber", email="mem@org.co")
+        self.org_admin = baker.make(User, first_name="admin")
+
+        self.org.add_user(self.org_member)
+        self.org.add_user(self.org_admin)
+
+        omb = OrgPermissionManager(self.org)
+        omb.set_role(self.org_admin, OrgRoleEnum.ADMIN)
+
+        another_org = organization_recipe.make(name="another_org")
+        another_org.add_user(baker.make(User))
+
+    @time_machine.travel("07-22-2025 10:00:00", tick=False)
+    def test_organization_member_query(self) -> None:
+        self.graphql_client.force_login(self.org_member)
+        self.graphql_client.logout()
+        self.graphql_client.force_login(self.org_admin)
+
+        query = """
+            query ($organizationId: String!, $userId: String!) {
+                organizationMember(organizationId: $organizationId, userId: $userId) {
+                    id
+                    email
+                    firstName
+                    lastName
+                    lastLogin
+                }
+            }
+        """
+
+        variables = {
+            "organizationId": str(self.org.pk),
+            "userId": str(self.org_member.pk),
+        }
+
+        with self.assertNumQueriesWithoutCache(6):
+            response = self.execute_graphql(query, variables)
+
+        expected_member = {
+            "id": str(self.org_member.pk),
+            "email": "mem@org.co",
+            "firstName": "mem",
+            "lastName": "ber",
+            "lastLogin": "2025-07-22T10:00:00+00:00",
+        }
+
+        self.assertEqual(response["data"]["organizationMember"], expected_member)
+
+    def test_organization_members_query(self) -> None:
+        self.graphql_client.force_login(self.org_admin)
+
+        query = """
+            query ($organizationId: String!) {
+                organizationMembers(organizationId: $organizationId) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        variables = {"organizationId": str(self.org.pk)}
+
+        with self.assertNumQueriesWithoutCache(7):
+            response = self.execute_graphql(query, variables)
+
+        self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 2)
+
+        member_ids = [m["id"] for m in response["data"]["organizationMembers"]["results"]]
+        self.assertCountEqual(member_ids, [str(self.org_member.pk), str(self.org_admin.pk)])

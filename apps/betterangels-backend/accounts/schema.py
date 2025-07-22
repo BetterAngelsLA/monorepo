@@ -4,6 +4,7 @@ import strawberry
 import strawberry_django
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
+from accounts.permissions import UserOrganizationPermissions
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
@@ -16,11 +17,13 @@ from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
+from strawberry_django.utils.query import filter_for_user
 
 from .types import (
     AuthInput,
     AuthResponse,
     LoginInput,
+    OrganizationMemberType,
     OrganizationType,
     UpdateUserInput,
     UserType,
@@ -36,6 +39,43 @@ class Query:
         queryset: QuerySet[Organization] = Organization.objects.filter(
             permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
         )
+        return queryset
+
+    @strawberry_django.field(extensions=[HasPerm(perms=[UserOrganizationPermissions.VIEW_ORG_MEMBERS])])
+    def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
+        user = cast(User, get_current_user(info))
+        try:
+            organization = filter_for_user(
+                Organization.objects.filter(users=user),
+                user,
+                [UserOrganizationPermissions.VIEW_ORG_MEMBERS],
+            ).get(id=organization_id)
+        except Organization.DoesNotExist:
+            raise PermissionError("You do not have permission to view this organization's members.")
+
+        try:
+            member: User = organization.users.get(id=user_id)
+        except User.DoesNotExist:
+            raise PermissionError("You do not have permission to view this member.")
+
+        return cast(OrganizationMemberType, member)
+
+    @strawberry_django.offset_paginated(
+        OffsetPaginated[OrganizationMemberType], extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)]
+    )
+    def organization_members(self, info: Info, organization_id: str) -> QuerySet[User]:
+        user = cast(User, get_current_user(info))
+        try:
+            organization = filter_for_user(
+                Organization.objects.filter(users=user),
+                user,
+                [UserOrganizationPermissions.VIEW_ORG_MEMBERS],
+            ).get(id=organization_id)
+        except Organization.DoesNotExist:
+            raise PermissionError("You do not have permission to view this organization's members.")
+
+        queryset: QuerySet[User] = organization.users.all()
+
         return queryset
 
 

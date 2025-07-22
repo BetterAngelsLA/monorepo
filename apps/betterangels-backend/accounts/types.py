@@ -127,6 +127,12 @@ class UserType(UserBaseType):
     username: auto
 
 
+@strawberry_django.type(User)
+class OrganizationMemberType(UserBaseType):
+    id: ID
+    last_login: auto
+
+
 @strawberry_django.input(User, partial=True)
 class CreateUserInput(UserBaseType):
     "See parent"

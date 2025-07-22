@@ -1372,6 +1372,25 @@ export type OrganizationForUserType = {
   userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
 };
 
+export type OrganizationMemberType = {
+  __typename?: 'OrganizationMemberType';
+  email?: Maybe<Scalars['NonBlankString']['output']>;
+  firstName?: Maybe<Scalars['NonBlankString']['output']>;
+  id: Scalars['ID']['output'];
+  lastLogin?: Maybe<Scalars['DateTime']['output']>;
+  lastName?: Maybe<Scalars['NonBlankString']['output']>;
+  middleName?: Maybe<Scalars['NonBlankString']['output']>;
+};
+
+export type OrganizationMemberTypeOffsetPaginated = {
+  __typename?: 'OrganizationMemberTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<OrganizationMemberType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type OrganizationOrder = {
   id?: InputMaybe<Ordering>;
   name?: InputMaybe<Ordering>;
@@ -1477,6 +1496,8 @@ export type Query = {
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
+  organizationMember: OrganizationMemberType;
+  organizationMembers: OrganizationMemberTypeOffsetPaginated;
   shelter: ShelterType;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
@@ -1564,6 +1585,18 @@ export type QueryNoteArgs = {
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   order?: InputMaybe<NoteOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryOrganizationMemberArgs = {
+  organizationId: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
+};
+
+
+export type QueryOrganizationMembersArgs = {
+  organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2163,7 +2196,8 @@ export enum UserOrganizationPermissions {
   AccessOrgPortal = 'ACCESS_ORG_PORTAL',
   AddOrgMember = 'ADD_ORG_MEMBER',
   ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
-  RemoveOrgMember = 'REMOVE_ORG_MEMBER'
+  RemoveOrgMember = 'REMOVE_ORG_MEMBER',
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
 }
 
 export type UserType = {
