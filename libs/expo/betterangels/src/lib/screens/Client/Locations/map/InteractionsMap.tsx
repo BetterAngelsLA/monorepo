@@ -62,6 +62,23 @@ export function InteractionsMap(props: TProps) {
   function onRegionChangeComplete(region: Region) {
     updateClustersForRegion(region);
 
+    // New Architecture Upgrade Notes:
+
+    // expo SDK 53 is bundled with react-native-maps 1.20.1 which is from 11/24
+    //  and missing a lot of enhancements that are probably necessary.
+
+    // with new architecture (Fabric) there are couple issues:
+    // 1. Maps do not render on Android
+    // 2. Fabric and TurboModules Compatibility:
+    // 2.1 Recent React Native updates, particularly those introducing Fabric and TurboModules,
+    //  have caused compatibility issues with react-native-maps. These changes can affect how
+    //  native modules, including the map view, are linked and initialized, potentially leading
+    //  to initialRegion being ignored or behaving inconsistently across platforms
+    //  (e.g., working on iOS but not Android, or vice-versa).
+    // 2.2 using state, like below may require switching to a controlled map and
+    //  using the `region` prop instead of `initialRegion`.
+    // 2.3 Alternative is to wait and see what the new Expo lib offers, whenever that comes out.
+
     //setMapState((prev) => ({ ...prev, region }));
   }
 
