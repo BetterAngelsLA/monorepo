@@ -66,7 +66,7 @@ class Query:
         )
         return queryset
 
-    @strawberry_django.field(extensions=[HasPerm(perms=[UserOrganizationPermissions.VIEW_ORG_MEMBERS])])
+    @strawberry_django.field(extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)])
     def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
         user = cast(User, get_current_user(info))
         try:
@@ -78,9 +78,10 @@ class Query:
         except Organization.DoesNotExist:
             raise PermissionError("You do not have permission to view this organization's members.")
 
-        try:
-            member: User = organization.users.get(id=user_id)
-        except User.DoesNotExist:
+        member: QuerySet[User] = (
+            organization.users.filter(id=user_id).annotate(_member_role=annotate_member_role(organization_id)).first()
+        )
+        if not member:
             raise PermissionError("You do not have permission to view this member.")
 
         return cast(OrganizationMemberType, member)

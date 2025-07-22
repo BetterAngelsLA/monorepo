@@ -289,8 +289,8 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
         super().setUp()
 
         self.org = organization_recipe.make(name="org")
-        self.org_member = baker.make(User, first_name="mem", last_name="ber", email="mem@org.co")
-        self.org_admin = baker.make(User, first_name="admin")
+        self.org_member = baker.make(User, first_name="member")
+        self.org_admin = baker.make(User, first_name="ad", last_name="min", email="ad@org.co")
         self.org_superuser = baker.make(User, first_name="superuser")
 
         self.org.add_user(self.org_member)
@@ -318,24 +318,26 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
                     firstName
                     lastName
                     lastLogin
+                    memberRole
                 }
             }
         """
 
         variables = {
             "organizationId": str(self.org.pk),
-            "userId": str(self.org_member.pk),
+            "userId": str(self.org_admin.pk),
         }
 
         with self.assertNumQueriesWithoutCache(6):
             response = self.execute_graphql(query, variables)
 
         expected_member = {
-            "id": str(self.org_member.pk),
-            "email": "mem@org.co",
-            "firstName": "mem",
-            "lastName": "ber",
+            "id": str(self.org_admin.pk),
+            "email": "ad@org.co",
+            "firstName": "ad",
+            "lastName": "min",
             "lastLogin": "2025-07-22T10:00:00+00:00",
+            "memberRole": OrgRoleEnum.ADMIN.name,
         }
 
         self.assertEqual(response["data"]["organizationMember"], expected_member)
@@ -368,4 +370,5 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
             [m["id"] for m in response["data"]["organizationMembers"]["results"]],
             [m["memberRole"] for m in response["data"]["organizationMembers"]["results"]],
         )
+        self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 3)
         self.assertCountEqual(expected_members, actual_members)
