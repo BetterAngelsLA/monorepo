@@ -62,7 +62,7 @@ export function InteractionsMap(props: TProps) {
   function onRegionChangeComplete(region: Region) {
     updateClustersForRegion(region);
 
-    setMapState((prev) => ({ ...prev, region }));
+    //setMapState((prev) => ({ ...prev, region }));
   }
 
   const renderClusterIconFn = useMemo(
