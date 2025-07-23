@@ -124,12 +124,17 @@ class UserType(UserBaseType):
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]
-    last_login: auto
     organizations_organization: Optional[List[OrganizationForUserType]]
     username: auto
 
+
+@strawberry_django.type(User)
+class OrganizationMemberType(UserBaseType):
+    id: ID
+    last_login: auto
+
     @strawberry_django.field
-    def member_role(self, info: Info) -> Optional[OrgRoleEnum]:
+    def member_role(self, info: Info) -> OrgRoleEnum:
         return OrgRoleEnum(getattr(self, "_member_role", OrgRoleEnum.MEMBER.value))
 
 
