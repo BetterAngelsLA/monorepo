@@ -120,6 +120,8 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: 'Poppins-SemiBold',
     letterSpacing: -2,
+    includeFontPadding: false, // Android only
+    textAlignVertical: 'center', // Android only
   },
   house: {
     position: 'absolute',
