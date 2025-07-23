@@ -88,6 +88,7 @@
     "react-native-web": "^0.20.0",
     "react-router-dom": "6.29.0",
     "remeda": "^2.20.0",
+    "stylus": "github:stylus/stylus#0.54.4",
     "supercluster": "^8.0.1",
     "tailwind-merge": "^2.5.5",
     "tslib": "^2.3.0",
