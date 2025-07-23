@@ -1111,6 +1111,7 @@ enum Ordering {
 input OrgInvitationInput {
   email: String!
   firstName: String!
+  middleName: String = null
   lastName: String!
   organizationId: ID!
 }

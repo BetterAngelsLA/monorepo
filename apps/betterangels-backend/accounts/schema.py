@@ -165,25 +165,25 @@ class Mutation:
     @strawberry_django.mutation(extensions=[HasPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)])
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
-        invitation_data: dict = strawberry.asdict(data)
 
         try:
             organization = filter_for_user(
-                Organization.objects.all(),
+                Organization.objects.filter(users=current_user),
                 current_user,
                 [UserOrganizationPermissions.ADD_ORG_MEMBER],
-            ).get(id=invitation_data["organization_id"])
+            ).get(id=data.organization_id)
         except Organization.DoesNotExist:
             raise PermissionError("You do not have permission to invite users.")
 
         with transaction.atomic():
             user, created = User.objects.get_or_create(
-                email=invitation_data["email"],
+                email=data.email,
                 defaults={"username": str(uuid.uuid4()), "is_active": True},
             )
             if created:
-                user.first_name = invitation_data["first_name"]
-                user.last_name = invitation_data["last_name"]
+                user.first_name = data.first_name
+                user.last_name = data.last_name
+                user.middle_name = data.middle_name
                 user.set_unusable_password()
                 user.save()
 

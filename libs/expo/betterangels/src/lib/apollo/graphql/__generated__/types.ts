@@ -1369,6 +1369,7 @@ export type OrgInvitationInput = {
   email: Scalars['String']['input'];
   firstName: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
+  middleName?: InputMaybe<Scalars['String']['input']>;
   organizationId: Scalars['ID']['input'];
 };
 

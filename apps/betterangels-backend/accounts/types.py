@@ -154,5 +154,6 @@ class UpdateUserInput(UserBaseType):
 class OrgInvitationInput:
     email: str
     first_name: str
+    middle_name: Optional[str] = None
     last_name: str
     organization_id: ID
