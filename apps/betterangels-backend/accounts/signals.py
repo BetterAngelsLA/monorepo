@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 
+from accounts.groups import GroupTemplateNames
 from accounts.utils import (
     add_default_org_permissions_to_user,
     remove_org_group_permissions_from_user,
@@ -69,10 +70,18 @@ def handle_organization_user_removed(sender: Any, instance: OrganizationUser, **
 
 @receiver(post_migrate)
 def update_group_permissions(sender: Any, **kwargs: Any) -> None:
-    with transaction.atomic():
-        caseworker_permission_group_template = PermissionGroupTemplate.objects.get(name="Caseworker")
-        permissions = caseworker_permission_group_template.permissions.all()
-        permission_groups = caseworker_permission_group_template.permissiongroup_set.all()
+    template_names = [
+        GroupTemplateNames.CASEWORKER,
+        GroupTemplateNames.ORG_ADMIN,
+        GroupTemplateNames.ORG_SUPERUSER,
+    ]
 
-        for permission_group in permission_groups:
-            permission_group.group.permissions.set(permissions)
+    with transaction.atomic():
+        templates = PermissionGroupTemplate.objects.filter(name__in=template_names).prefetch_related(
+            "permissions", "permissiongroup_set__group"
+        )
+
+        for template in templates:
+            perms = list(template.permissions.all())
+            for pgt in template.permissiongroup_set.all():
+                pgt.group.permissions.set(perms)
