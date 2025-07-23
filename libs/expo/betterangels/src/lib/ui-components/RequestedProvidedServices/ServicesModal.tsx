@@ -37,7 +37,7 @@ export default function ServicesModal(props: IServicesModalProps) {
   const { initialServices, noteId, refetch, type } = props;
 
   const { closeModalScreen } = useModalScreen();
-  const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
+  const { bottom: bottomInset } = useSafeAreaInsets();
   const [services, setServices] = useState<
     Array<{
       id: string | undefined;
@@ -189,21 +189,29 @@ export default function ServicesModal(props: IServicesModalProps) {
     }
   };
 
-  const closeModal = () => {
+  // TODO: this looks broken (maybe)
+  const onModalClose = () => {
     const newInitialServices = initialServices
       .filter((item) => item.service !== ServiceEnum.Other)
       .map((service) => ({ id: service.id, enum: service.service }));
+
     const initialServiceOthers = initialServices
       .filter((item) => item.service === ServiceEnum.Other)
       .map((service) => ({
         id: service.id,
         title: service.serviceOther || null,
       }));
+
     setServiceOthers(initialServiceOthers);
     setServices(newInitialServices);
-
-    closeModalScreen();
   };
+
+  // Run when modal is unmounted
+  useEffect(() => {
+    return () => {
+      onModalClose();
+    };
+  }, []);
 
   useEffect(() => {
     const newInitialServices = initialServices
