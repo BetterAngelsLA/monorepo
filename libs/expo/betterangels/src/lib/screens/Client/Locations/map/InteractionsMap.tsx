@@ -78,8 +78,6 @@ export function InteractionsMap(props: TProps) {
     // 2.2 using state, like below may require switching to a controlled map and
     //  using the `region` prop instead of `initialRegion`.
     // 2.3 Alternative is to wait and see what the new Expo lib offers, whenever that comes out.
-
-    //setMapState((prev) => ({ ...prev, region }));
   }
 
   const renderClusterIconFn = useMemo(
