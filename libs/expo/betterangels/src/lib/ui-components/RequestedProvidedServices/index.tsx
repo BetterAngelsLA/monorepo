@@ -67,8 +67,11 @@ export default function RequestedProvidedServices(
       title={`${enumDisplayServiceType[type]} Services`}
       setExpanded={() =>
         showModalScreen({
-          presentation: 'fullScreenModal',
-          hideHeader: true,
+          presentation: 'modal',
+          title:
+            type === ServiceRequestTypeEnum.Provided
+              ? 'Provided Services'
+              : 'Requested Services',
           content: (
             <ServicesModal
               noteId={noteId}

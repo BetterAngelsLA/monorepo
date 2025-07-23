@@ -1,8 +1,4 @@
-import {
-  FileSearchIcon,
-  PlusIcon,
-  SearchIcon,
-} from '@monorepo/expo/shared/icons';
+import { FileSearchIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -11,7 +7,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ServiceEnum,
@@ -235,26 +231,8 @@ export default function ServicesModal(props: IServicesModalProps) {
       style={{
         flex: 1,
         backgroundColor: Colors.WHITE,
-        paddingTop: topInset,
       }}
     >
-      <View
-        style={{
-          alignItems: 'flex-end',
-          paddingHorizontal: 24,
-          marginBottom: 4,
-        }}
-      >
-        <Pressable
-          accessible
-          accessibilityHint="closes the modal"
-          accessibilityRole="button"
-          accessibilityLabel="close"
-          onPress={closeModal}
-        >
-          <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
-        </Pressable>
-      </View>
       <MainScrollContainer keyboardAware>
         <ScrollView
           contentContainerStyle={{
@@ -265,9 +243,6 @@ export default function ServicesModal(props: IServicesModalProps) {
           style={{ paddingHorizontal: Spacings.xs }} // Reduced from Spacings.md
         >
           <View>
-            <TextBold size="lg">
-              {type === 'PROVIDED' ? 'Provided Services' : 'Requested Services'}
-            </TextBold>
             <TextRegular mt="xxs" mb="sm">
               Select the services to your client in this interaction.
             </TextRegular>
