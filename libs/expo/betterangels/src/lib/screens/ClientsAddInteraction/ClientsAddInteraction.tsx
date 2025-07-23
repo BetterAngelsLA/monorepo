@@ -7,6 +7,7 @@ import {
   ClientProfileList,
   CreateClientInteractionBtn,
   Header,
+  HorizontalContainer,
 } from '../../ui-components';
 
 export function ClientsAddInteraction({ Logo }: { Logo: ElementType }) {
@@ -17,21 +18,23 @@ export function ClientsAddInteraction({ Logo }: { Logo: ElementType }) {
       <Header title="Clients" Logo={Logo} />
 
       <View style={styles.content}>
-        <TextBold mb="sm" size="lg">
-          Who is this interaction for?
-        </TextBold>
+        <HorizontalContainer>
+          <TextBold mb="sm" size="lg">
+            Who is this interaction for?
+          </TextBold>
 
-        <SearchBar
-          value={search}
-          placeholder="Search by name"
-          onChange={(text) => {
-            setSearch(text);
-          }}
-          onClear={() => {
-            setSearch('');
-          }}
-          style={{ marginBottom: Spacings.xs }}
-        />
+          <SearchBar
+            value={search}
+            placeholder="Search by name"
+            onChange={(text) => {
+              setSearch(text);
+            }}
+            onClear={() => {
+              setSearch('');
+            }}
+            style={{ marginBottom: Spacings.xs }}
+          />
+        </HorizontalContainer>
 
         <ClientProfileList
           filters={{
@@ -55,7 +58,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: Spacings.sm,
     marginTop: Spacings.sm,
   },
 });

@@ -8,6 +8,7 @@ import {
   ClientCardModal,
   ClientProfileList,
   Header,
+  HorizontalContainer,
 } from '../../ui-components';
 import { ClientProfilesQuery } from './__generated__/Clients.generated';
 
@@ -42,13 +43,15 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       <Header title="Clients" Logo={Logo} />
 
       <View style={styles.content}>
-        <SearchBar
-          value={search}
-          placeholder="Search by name"
-          onChange={(text) => setSearch(text)}
-          onClear={() => setSearch('')}
-          style={{ marginBottom: Spacings.xs }}
-        />
+        <HorizontalContainer>
+          <SearchBar
+            value={search}
+            placeholder="Search by name clients"
+            onChange={(text) => setSearch(text)}
+            onClear={() => setSearch('')}
+            style={{ marginBottom: Spacings.xs }}
+          />
+        </HorizontalContainer>
 
         <ClientProfileList filters={{ search }} renderItem={renderClientItem} />
       </View>
@@ -71,7 +74,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: Spacings.sm,
     marginTop: Spacings.sm,
   },
 });
