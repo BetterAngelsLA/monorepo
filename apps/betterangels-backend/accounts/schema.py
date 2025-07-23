@@ -73,34 +73,34 @@ class Query:
 
     @strawberry_django.field(extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)])
     def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
-        user = cast(User, get_current_user(info))
+        current_user = cast(User, get_current_user(info))
         try:
             organization = filter_for_user(
-                Organization.objects.filter(users=user),
-                user,
+                Organization.objects.filter(users=current_user),
+                current_user,
                 [UserOrganizationPermissions.VIEW_ORG_MEMBERS],
             ).get(id=organization_id)
         except Organization.DoesNotExist:
             raise PermissionError("You do not have permission to view this organization's members.")
 
-        member: User = (
+        user: User = (
             organization.users.filter(id=user_id).annotate(_member_role=annotate_member_role(organization_id)).first()
         )
-        if not member:
+        if not user:
             raise PermissionError("You do not have permission to view this member.")
 
-        return cast(OrganizationMemberType, member)
+        return cast(OrganizationMemberType, user)
 
     @strawberry_django.offset_paginated(
         OffsetPaginated[OrganizationMemberType],
         extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
     def organization_members(self, info: Info, organization_id: str) -> QuerySet[User]:
-        user = cast(User, get_current_user(info))
+        current_user = cast(User, get_current_user(info))
         try:
             organization = filter_for_user(
-                Organization.objects.filter(users=user),
-                user,
+                Organization.objects.filter(users=current_user),
+                current_user,
                 [UserOrganizationPermissions.VIEW_ORG_MEMBERS],
             ).get(id=organization_id)
         except Organization.DoesNotExist:
