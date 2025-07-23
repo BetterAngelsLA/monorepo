@@ -58,10 +58,11 @@ export default function UserProvider({ children }: UserProviderProps) {
     try {
       const res = await refetch();
       updateUser(res);
-      setIsLoading(false);
     } catch (err) {
       console.error('Error refetching user data:', err);
       setUser(undefined);
+    } finally {
+      setIsLoading(false);
     }
   }, [refetch, updateUser]);
 
