@@ -2,6 +2,7 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
+from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
 from common.graphql.types import NonBlankString
@@ -125,6 +126,16 @@ class UserType(UserBaseType):
     is_outreach_authorized: Optional[bool]
     organizations_organization: Optional[List[OrganizationForUserType]]
     username: auto
+
+
+@strawberry_django.type(User)
+class OrganizationMemberType(UserBaseType):
+    id: ID
+    last_login: auto
+
+    @strawberry_django.field
+    def member_role(self, info: Info) -> OrgRoleEnum:
+        return OrgRoleEnum(getattr(self, "_member_role", OrgRoleEnum.MEMBER.value))
 
 
 @strawberry_django.input(User, partial=True)
