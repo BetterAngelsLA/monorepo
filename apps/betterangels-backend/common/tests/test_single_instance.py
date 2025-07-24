@@ -23,7 +23,7 @@ class SingleInstanceDecoratorTests(SimpleTestCase):
 
     class FakeTask(Task):
         name = "test.task"
-        apply_async: MagicMock  # type: ignore[override]
+        apply_async: MagicMock
 
         def __init__(self) -> None:
             super().__init__()
