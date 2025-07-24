@@ -16,6 +16,7 @@ export { default as ErrorCrashView } from './ErrorCrashView/ErrorCrashView';
 export { default as FeatureFlagControlled } from './FeatureFlagControlled/FeatureFlagControlled';
 export { FileThumbnail } from './FileThumbnail/FileThumbnail';
 export { default as Header } from './Header';
+export * from './Layout';
 export { default as LoginForm } from './LoginForm';
 export { default as MainContainer } from './MainContainer';
 export * from './MainModal';
