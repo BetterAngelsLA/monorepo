@@ -29,6 +29,7 @@ export function getDefaultStackModalOptions(
       ...defaultModalNavOpts.modal,
       presentation,
       title: title || '',
+      animation: 'fade_from_bottom',
       headerRight: onClose
         ? () => getModalCloseBtn({ onClose, iconColor: Colors.WHITE })
         : undefined,
@@ -41,7 +42,7 @@ export function getDefaultStackModalOptions(
       presentation,
       title: title || '',
       headerRight: onClose
-        ? () => getModalCloseBtn({ onClose, iconColor: Colors.ERROR })
+        ? () => getModalCloseBtn({ onClose, iconColor: Colors.WHITE })
         : undefined,
     };
   }
