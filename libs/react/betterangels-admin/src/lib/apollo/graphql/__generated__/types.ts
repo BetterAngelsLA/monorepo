@@ -56,8 +56,6 @@ export type AddNoteTaskInput = {
 
 export type AddNoteTaskPayload = NoteType | OperationInfo;
 
-export type AddOrganizationMemberPayload = OperationInfo | OrganizationMemberType;
-
 export type AddressInput = {
   addressComponents?: InputMaybe<Scalars['JSON']['input']>;
   formattedAddress?: InputMaybe<Scalars['String']['input']>;
@@ -941,7 +939,7 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
-  addOrganizationMember: AddOrganizationMemberPayload;
+  addOrganizationMember: OrganizationMemberTypeOperationInfo;
   appleAuth: AuthResponse;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
@@ -1413,6 +1411,8 @@ export type OrganizationMemberTypeOffsetPaginated = {
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
 };
+
+export type OrganizationMemberTypeOperationInfo = OperationInfo | OrganizationMemberType;
 
 export type OrganizationOrder = {
   id?: InputMaybe<Ordering>;

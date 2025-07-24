@@ -59,8 +59,6 @@ input AddNoteTaskInput {
 
 union AddNoteTaskPayload = NoteType | OperationInfo
 
-union AddOrganizationMemberPayload = OrganizationMemberType | OperationInfo
-
 input AddressInput {
   addressComponents: JSON
   formattedAddress: String
@@ -944,7 +942,7 @@ type Mutation {
   appleAuth(input: AuthInput!): AuthResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
-  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
+  addOrganizationMember(data: OrgInvitationInput!): OrganizationMemberTypeOperationInfo! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
   deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
@@ -1155,6 +1153,8 @@ type OrganizationMemberTypeOffsetPaginated {
   """List of paginated results."""
   results: [OrganizationMemberType!]!
 }
+
+union OrganizationMemberTypeOperationInfo = OrganizationMemberType | OperationInfo
 
 input OrganizationOrder {
   name: Ordering

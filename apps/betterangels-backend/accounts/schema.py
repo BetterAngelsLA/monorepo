@@ -10,6 +10,7 @@ from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from notes.permissions import NotePermissions
@@ -173,7 +174,7 @@ class Mutation:
                 [UserOrganizationPermissions.ADD_ORG_MEMBER],
             ).get(id=data.organization_id)
         except Organization.DoesNotExist:
-            raise PermissionError("You do not have permission to invite users.")
+            raise PermissionDenied("You do not have permission to add members.")
 
         with transaction.atomic():
             user, created = User.objects.get_or_create(
