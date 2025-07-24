@@ -30,12 +30,11 @@ else:
 
     @shared_task(
         bind=True,
-        name="post_office.tasks.send_queued_mail",
         ignore_result=True,
     )
     @single_instance(
         cache_alias="default",
-        lock_key="celery-lock:post_office.tasks.send_queued_mail",
+        lock_key="celery-lock:accounts.tasks.send_queued_mail",
         lock_ttl=15,
         retry_delay=5,
     )
@@ -48,11 +47,10 @@ else:
         Celery task override for post_office.tasks.send_queued_mail.
         Processes the queue in batches until empty, under a single-instance lock.
         """
-
         while True:
             try:
                 send_queued(processes=processes, log_level=log_level)
-            except Exception:
+            except Exception as e:
                 logger.exception(e, extra={"status_code": 500})
                 raise
 

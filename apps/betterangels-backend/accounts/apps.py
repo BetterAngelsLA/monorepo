@@ -6,11 +6,12 @@ class AccountsConfig(AppConfig):
     name = "accounts"
 
     def ready(self) -> None:
+        from post_office.settings import get_celery_enabled
         from post_office.signals import email_queued
-        from post_office.tasks import queued_mail_handler
 
         from . import signals  # noqa: F401
-        from .tasks import queued_mail_handler as custom_queued_mail_handler
+        from .tasks import queued_mail_handler
 
-        email_queued.disconnect(queued_mail_handler)
-        email_queued.connect(custom_queued_mail_handler)
+        if get_celery_enabled():
+            email_queued.receivers.clear()
+            email_queued.connect(queued_mail_handler)
