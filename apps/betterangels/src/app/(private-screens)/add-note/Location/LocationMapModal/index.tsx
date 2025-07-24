@@ -17,7 +17,7 @@ import {
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Directions from './Directions';
@@ -28,6 +28,13 @@ import Selected from './Selected';
 const INITIAL_LOCATION = {
   longitude: -118.258815,
   latitude: 34.048655,
+};
+
+const DEFAULT_LOCATION = {
+  longitude: -122.406417,
+  latitude: 37.785834,
+  name: '200 Geary St',
+  address: '200 Geary St, San Francisco, CA 94102',
 };
 
 type locationLongLat = {
@@ -95,23 +102,26 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setExpanded(undefined);
   };
 
-  const searchPlacesInCalifornia = async (query: string) => {
-    if (query.length < 3) return;
+  const searchPlacesInCalifornia = useCallback(
+    async (query: string) => {
+      if (query.length < 3) return;
 
-    try {
-      const predictions = await getPlaceAutocomplete({
-        baseUrl,
-        query,
-      });
+      try {
+        const predictions = await getPlaceAutocomplete({
+          baseUrl,
+          query,
+        });
 
-      setIsSearch(true);
+        setIsSearch(true);
 
-      setSuggestions(predictions);
-    } catch (err) {
-      console.error('Error fetching place data:', err);
-      return [];
-    }
-  };
+        setSuggestions(predictions);
+      } catch (err) {
+        console.error('Error fetching place data:', err);
+        return [];
+      }
+    },
+    [baseUrl]
+  );
   const onSuggestionsSelect = async (place: TPlacesPrediction) => {
     try {
       if (chooseDirections) {
@@ -205,34 +215,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     }
   };
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (searchQuery) {
-        searchPlacesInCalifornia(searchQuery);
-      }
-    }, 500);
-
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    getLocation();
-  }, []);
-
-  useEffect(() => {
-    if (location && location.address) {
-      setAddress({
-        short: location.name || location.address.split(',')[0] || '',
-        full: location.address,
-        addressComponents: [],
-      });
-      setHasUserCleared(false);
-    } else {
-      setAddress(undefined);
-    }
-  }, [location]);
-
-  const getLocation = async () => {
+  const getLocation = useCallback(async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       return;
@@ -308,7 +291,65 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [
+    baseUrl,
+    location,
+    updateNoteLocation,
+    setUserLocation,
+    setLocation,
+    setCurrentLocation,
+    setInitialLocation,
+    setAddress,
+    setMinimizeModal,
+    setSelected,
+    setHasUserCleared,
+    noteId,
+    updateError,
+  ]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchQuery) {
+        searchPlacesInCalifornia(searchQuery);
+      }
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery, searchPlacesInCalifornia]);
+
+  useEffect(() => {
+    getLocation();
+  }, [getLocation]);
+
+  useEffect(() => {
+    if (location && location.address) {
+      setAddress({
+        short: location.name || location.address.split(',')[0] || '',
+        full: location.address,
+        addressComponents: [],
+      });
+      setCurrentLocation({
+        longitude: location.longitude ?? DEFAULT_LOCATION.longitude,
+        latitude: location.latitude ?? DEFAULT_LOCATION.latitude,
+        name: location.name ?? DEFAULT_LOCATION.name,
+      });
+      setSelected(true);
+      setHasUserCleared(false);
+    } else {
+      setAddress({
+        short: DEFAULT_LOCATION.name,
+        full: DEFAULT_LOCATION.address,
+        addressComponents: [],
+      });
+      setCurrentLocation({
+        longitude: DEFAULT_LOCATION.longitude,
+        latitude: DEFAULT_LOCATION.latitude,
+        name: DEFAULT_LOCATION.name,
+      });
+      setSelected(true); // <-- This triggers the Selected overlay for the default
+      setHasUserCleared(false);
+    }
+  }, [location]);
 
   const onDelete = () => {
     setHasUserCleared(true);
@@ -324,14 +365,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     if (chooseDirections) {
       setChooseDirections(false);
     }
-  };
-
-  const DEFAULT_LOCATION_LABEL = 'Default Location'; // or your actual default address
-
-  const getLocationLabel = () => {
-    if (address?.short) return address.short;
-    // If you have a default name, use it here
-    return 'Downtown LA'; // or whatever your default should be
   };
 
   return (
