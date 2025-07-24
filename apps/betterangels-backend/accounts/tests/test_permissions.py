@@ -116,3 +116,68 @@ class OrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTest
                 response["errors"][0]["message"],
                 "You do not have permission to view this organization's members.",
             )
+
+
+class AddOrganizationMemberPermissionTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.org_1 = organization_recipe.make(name="org 1")
+        self.org_2 = organization_recipe.make(name="org 2")
+        self.org_member = baker.make(User, first_name="org member")
+        self.org_1_admin = baker.make(User, first_name="org 1 admin")
+        self.org_2_admin = baker.make(User, first_name="org 2 admin")
+
+        self.org_1.add_user(self.org_member)
+        self.org_1.add_user(self.org_1_admin)
+        self.org_2.add_user(self.org_2_admin)
+
+        self.omb_1 = OrgPermissionManager(self.org_1)
+        self.omb_1.set_role(self.org_1_admin, OrgRoleEnum.ADMIN)
+        self.omb_2 = OrgPermissionManager(self.org_2)
+        self.omb_2.set_role(self.org_2_admin, OrgRoleEnum.ADMIN)
+
+    @parametrize(
+        "user, expected_error",
+        [
+            ("org_member", "You don't have permission to access this app."),
+            ("org_1_admin", None),
+            ("org_2_admin", "You do not have permission to add members."),
+        ],
+    )
+    def test_add_organization_member_permission(self, user: str, expected_error: Optional[str]) -> None:
+        self.graphql_client.force_login(getattr(self, f"{user}"))
+
+        mutation = """
+            mutation ($data: OrgInvitationInput!) {
+                addOrganizationMember(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on OrganizationMemberType {
+                        email
+                    }
+                }
+            }
+        """
+
+        variables = {
+            "email": "new+perm@example.com",
+            "firstName": "new",
+            "lastName": "guy",
+            "organizationId": self.org_1.pk,
+        }
+
+        response = self.execute_graphql(mutation, {"data": variables})
+
+        if expected_error:
+            self.assertEqual(len(response["data"]["addOrganizationMember"]["messages"]), 1)
+            self.assertEqual(response["data"]["addOrganizationMember"]["messages"][0]["message"], expected_error)
+            with self.assertRaises(User.DoesNotExist):
+                User.objects.get(email=variables["email"])
+        else:
+            self.assertEqual(response["data"]["addOrganizationMember"]["email"], "new+perm@example.com")

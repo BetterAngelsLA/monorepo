@@ -59,6 +59,8 @@ input AddNoteTaskInput {
 
 union AddNoteTaskPayload = NoteType | OperationInfo
 
+union AddOrganizationMemberPayload = OrganizationMemberType | OperationInfo
+
 input AddressInput {
   addressComponents: JSON
   formattedAddress: String
@@ -942,6 +944,7 @@ type Mutation {
   appleAuth(input: AuthInput!): AuthResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
+  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
   deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
@@ -1103,6 +1106,14 @@ enum Ordering {
   DESC
   DESC_NULLS_FIRST
   DESC_NULLS_LAST
+}
+
+input OrgInvitationInput {
+  email: String!
+  firstName: String!
+  middleName: String = null
+  lastName: String!
+  organizationId: ID!
 }
 
 enum OrgRoleEnum {
