@@ -16,14 +16,9 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
 import * as Location from 'expo-location';
-import { useEffect, useRef, useState } from 'react';
-import {
-  FlatList,
-  Modal,
-  Platform,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { FlatList, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Directions from './Directions';
 import Header from './Header';
@@ -33,6 +28,13 @@ import Selected from './Selected';
 const INITIAL_LOCATION = {
   longitude: -118.258815,
   latitude: 34.048655,
+};
+
+const DEFAULT_LOCATION = {
+  longitude: -122.406417,
+  latitude: 37.785834,
+  name: '200 Geary St',
+  address: '200 Geary St, San Francisco, CA 94102',
 };
 
 type locationLongLat = {
@@ -51,8 +53,6 @@ type TLocation =
   | undefined;
 
 interface ILocationMapModalProps {
-  isModalVisible: boolean;
-  toggleModal: (e: boolean) => void;
   setExpanded: (expanded: string | undefined | null) => void;
   noteId: string;
   setLocation: (location: TLocation) => void;
@@ -61,15 +61,7 @@ interface ILocationMapModalProps {
 }
 
 export default function LocationMapModal(props: ILocationMapModalProps) {
-  const {
-    isModalVisible,
-    toggleModal,
-    setExpanded,
-    noteId,
-    location,
-    setLocation,
-    setError,
-  } = props;
+  const { setExpanded, noteId, location, setLocation, setError } = props;
   const { baseUrl } = useApiConfig();
   const mapRef = useRef<TMapView>(null);
   const [minizeModal, setMinimizeModal] = useState(false);
@@ -82,7 +74,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [userLocation, setUserLocation] =
     useState<Location.LocationObject | null>(null);
   const [address, setAddress] = useState<
-    { short: string; full: string; addressComponents: any[] } | undefined
+    { short: string; full: string; addressComponents: unknown[] } | undefined
   >({
     short: '',
     full: '',
@@ -93,9 +85,12 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   >(undefined);
   const [updateNoteLocation, { error: updateError }] =
     useUpdateNoteLocationMutation();
+  const [hasUserCleared, setHasUserCleared] = useState(false);
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
+
+  const router = useRouter();
 
   const closeModal = (hasLocation: boolean) => {
     if (!location?.address && !hasLocation) {
@@ -103,27 +98,30 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     } else {
       setError(false);
     }
-    toggleModal(false);
+    router.back();
     setExpanded(undefined);
   };
 
-  const searchPlacesInCalifornia = async (query: string) => {
-    if (query.length < 3) return;
+  const searchPlacesInCalifornia = useCallback(
+    async (query: string) => {
+      if (query.length < 3) return;
 
-    try {
-      const predictions = await getPlaceAutocomplete({
-        baseUrl,
-        query,
-      });
+      try {
+        const predictions = await getPlaceAutocomplete({
+          baseUrl,
+          query,
+        });
 
-      setIsSearch(true);
+        setIsSearch(true);
 
-      setSuggestions(predictions);
-    } catch (err) {
-      console.error('Error fetching place data:', err);
-      return [];
-    }
-  };
+        setSuggestions(predictions);
+      } catch (err) {
+        console.error('Error fetching place data:', err);
+        return [];
+      }
+    },
+    [baseUrl]
+  );
   const onSuggestionsSelect = async (place: TPlacesPrediction) => {
     try {
       if (chooseDirections) {
@@ -172,12 +170,14 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       });
       setMinimizeModal(false);
       setSelected(true);
+      setHasUserCleared(false);
     } catch (err) {
       console.error(err);
     }
   };
 
   const onSearchChange = (query: string) => {
+    setHasUserCleared(false);
     setAddress({
       full: query,
       short: query,
@@ -201,6 +201,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   };
 
   const onSearchDelete = () => {
+    setHasUserCleared(true);
     setAddress(undefined);
     setCurrentLocation(undefined);
     setLocation(undefined);
@@ -214,21 +215,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     }
   };
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (searchQuery) {
-        searchPlacesInCalifornia(searchQuery);
-      }
-    }, 500);
-
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    getLocation();
-  }, []);
-
-  const getLocation = async () => {
+  const getLocation = useCallback(async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       return;
@@ -280,6 +267,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       });
       setMinimizeModal(false);
       setSelected(true);
+      setHasUserCleared(false);
 
       const { data: locationData } = await updateNoteLocation({
         variables: {
@@ -303,9 +291,68 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [
+    baseUrl,
+    location,
+    updateNoteLocation,
+    setUserLocation,
+    setLocation,
+    setCurrentLocation,
+    setInitialLocation,
+    setAddress,
+    setMinimizeModal,
+    setSelected,
+    setHasUserCleared,
+    noteId,
+    updateError,
+  ]);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchQuery) {
+        searchPlacesInCalifornia(searchQuery);
+      }
+    }, 500);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery, searchPlacesInCalifornia]);
+
+  useEffect(() => {
+    getLocation();
+  }, [getLocation]);
+
+  useEffect(() => {
+    if (location && location.address) {
+      setAddress({
+        short: location.name || location.address.split(',')[0] || '',
+        full: location.address,
+        addressComponents: [],
+      });
+      setCurrentLocation({
+        longitude: location.longitude ?? DEFAULT_LOCATION.longitude,
+        latitude: location.latitude ?? DEFAULT_LOCATION.latitude,
+        name: location.name ?? DEFAULT_LOCATION.name,
+      });
+      setSelected(true);
+      setHasUserCleared(false);
+    } else {
+      setAddress({
+        short: DEFAULT_LOCATION.name,
+        full: DEFAULT_LOCATION.address,
+        addressComponents: [],
+      });
+      setCurrentLocation({
+        longitude: DEFAULT_LOCATION.longitude,
+        latitude: DEFAULT_LOCATION.latitude,
+        name: DEFAULT_LOCATION.name,
+      });
+      setSelected(true); // <-- This triggers the Selected overlay for the default
+      setHasUserCleared(false);
+    }
+  }, [location]);
 
   const onDelete = () => {
+    setHasUserCleared(true);
     if (!selected) return;
     setAddress(undefined);
     setCurrentLocation(undefined);
@@ -321,162 +368,151 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   };
 
   return (
-    <Modal
-      style={{ flex: 1 }}
-      animationType="slide"
-      transparent={true}
-      visible={isModalVisible}
-      onRequestClose={() => closeModal(false)}
+    <View
+      style={{
+        overflow: 'hidden',
+        flex: 1,
+      }}
     >
+      <Header closeModal={closeModal} />
       <View
         style={{
-          borderTopEndRadius: 10,
-          borderTopLeftRadius: 10,
-          marginTop: Platform.OS === 'ios' ? '15%' : '5%',
-          overflow: 'hidden',
+          position: 'relative',
           flex: 1,
+          zIndex: 1,
         }}
       >
-        <Header closeModal={closeModal} />
+        {chooseDirections && (
+          <Directions
+            setChooseDirections={setChooseDirections}
+            setSelected={setSelected}
+            address={address}
+            currentLocation={currentLocation}
+          />
+        )}
         <View
           style={{
-            position: 'relative',
+            position: 'absolute',
+            zIndex: 1000,
+            paddingHorizontal: Spacings.sm,
+            backgroundColor: isSearch ? Colors.WHITE : 'transparent',
+            width: '100%',
+            height: isSearch ? '100%' : 'auto',
             flex: 1,
-            zIndex: 1,
           }}
         >
-          {chooseDirections && (
-            <Directions
-              setChooseDirections={setChooseDirections}
-              setSelected={setSelected}
-              address={address}
-              currentLocation={currentLocation}
-            />
-          )}
-          <View
+          <BasicInput
+            onKeyPress={({ nativeEvent }) => {
+              nativeEvent.key === 'Backspace' && onDelete();
+            }}
+            onFocus={() => {
+              if (chooseDirections) {
+                setChooseDirections(false);
+                setMinimizeModal(false);
+                setSelected(true);
+              }
+            }}
+            onDelete={onSearchDelete}
+            mt="sm"
+            placeholder="Type location"
+            icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
+            value={hasUserCleared ? '' : address?.short || '200 Geary St'}
+            onChangeText={onSearchChange}
+          />
+          <FlatList
             style={{
-              position: 'absolute',
-              zIndex: 1000,
-              paddingHorizontal: Spacings.sm,
-              backgroundColor: isSearch ? Colors.WHITE : 'transparent',
-              width: '100%',
-              height: isSearch ? '100%' : 'auto',
+              backgroundColor: Colors.WHITE,
               flex: 1,
             }}
-          >
-            <BasicInput
-              onKeyPress={({ nativeEvent }) => {
-                nativeEvent.key === 'Backspace' && onDelete();
-              }}
-              onFocus={() => {
-                if (chooseDirections) {
-                  setChooseDirections(false);
-                  setMinimizeModal(false);
-                  setSelected(true);
-                }
-              }}
-              onDelete={onSearchDelete}
-              mt="sm"
-              placeholder="Type location"
-              icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
-              value={address?.short}
-              onChangeText={onSearchChange}
-            />
-            <FlatList
-              style={{
-                backgroundColor: Colors.WHITE,
-                flex: 1,
-              }}
-              data={suggestions}
-              keyExtractor={(item) => item.place_id}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={{
-                    borderBottomWidth: 1,
-                    borderBottomColor: Colors.NEUTRAL_LIGHT,
-                    paddingVertical: Spacings.sm,
-                  }}
-                  accessibilityRole="button"
-                  onPress={() => onSuggestionsSelect(item)}
-                >
-                  <TextRegular>{item.description.split(', ')[0]}</TextRegular>
-                  <TextRegular color={Colors.NEUTRAL_DARK} size="xxs">
-                    {item.description.split(', ')[1]},{' '}
-                    {item.description.split(', ')[2]}
-                  </TextRegular>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              width: '100%',
-              left: 0,
-              zIndex: 100,
-            }}
-          >
-            {userLocation && (
-              <View
+            data={suggestions}
+            keyExtractor={(item) => item.place_id}
+            renderItem={({ item }) => (
+              <TouchableOpacity
                 style={{
-                  alignSelf: 'flex-end',
-                  paddingRight: Spacings.sm,
-                  marginBottom: Spacings.md,
+                  borderBottomWidth: 1,
+                  borderBottomColor: Colors.NEUTRAL_LIGHT,
+                  paddingVertical: Spacings.sm,
                 }}
+                accessibilityRole="button"
+                onPress={() => onSuggestionsSelect(item)}
               >
-                <IconButton
-                  onPress={goToUserLocation}
-                  style={{
-                    elevation: 5,
-                    shadowColor: Colors.NEUTRAL_DARK,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.84,
-                  }}
-                  accessibilityLabel="user location"
-                  variant="secondary"
-                  accessibilityHint="get user location"
-                >
-                  <LocationArrowIcon color={Colors.PRIMARY} />
-                </IconButton>
-              </View>
+                <TextRegular>{item.description.split(', ')[0]}</TextRegular>
+                <TextRegular color={Colors.NEUTRAL_DARK} size="xxs">
+                  {item.description.split(', ')[1]},{' '}
+                  {item.description.split(', ')[2]}
+                </TextRegular>
+              </TouchableOpacity>
             )}
-            {selected && currentLocation && (
-              <Selected
-                noteId={noteId}
-                minimizeModal={minizeModal}
-                setLocation={setLocation}
-                currentLocation={currentLocation}
-                address={address}
-                setChooseDirections={setChooseDirections}
-                setSelected={setSelected}
-                closeModal={closeModal}
-              />
-            )}
-
-            <View
-              style={{
-                height: bottomOffset,
-                backgroundColor: currentLocation ? Colors.WHITE : 'transparent',
-              }}
-            />
-          </View>
-          <Map
-            userLocation={userLocation}
-            ref={mapRef}
-            chooseDirections={chooseDirections}
-            setChooseDirections={setChooseDirections}
-            currentLocation={currentLocation}
-            setCurrentLocation={setCurrentLocation}
-            setMinimizeModal={setMinimizeModal}
-            setInitialLocation={setInitialLocation}
-            initialLocation={initialLocation}
-            setSelected={setSelected}
-            setAddress={setAddress}
           />
         </View>
+        <View
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            width: '100%',
+            left: 0,
+            zIndex: 100,
+          }}
+        >
+          {userLocation && (
+            <View
+              style={{
+                alignSelf: 'flex-end',
+                paddingRight: Spacings.sm,
+                marginBottom: Spacings.md,
+              }}
+            >
+              <IconButton
+                onPress={goToUserLocation}
+                style={{
+                  elevation: 5,
+                  shadowColor: Colors.NEUTRAL_DARK,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 3.84,
+                }}
+                accessibilityLabel="user location"
+                variant="secondary"
+                accessibilityHint="get user location"
+              >
+                <LocationArrowIcon color={Colors.PRIMARY} />
+              </IconButton>
+            </View>
+          )}
+          {selected && currentLocation && (
+            <Selected
+              noteId={noteId}
+              minimizeModal={minizeModal}
+              setLocation={setLocation}
+              currentLocation={currentLocation}
+              address={address}
+              setChooseDirections={setChooseDirections}
+              setSelected={setSelected}
+              closeModal={closeModal}
+            />
+          )}
+
+          <View
+            style={{
+              height: bottomOffset,
+              backgroundColor: currentLocation ? Colors.WHITE : 'transparent',
+            }}
+          />
+        </View>
+        <Map
+          userLocation={userLocation}
+          ref={mapRef}
+          chooseDirections={chooseDirections}
+          setChooseDirections={setChooseDirections}
+          currentLocation={currentLocation}
+          setCurrentLocation={setCurrentLocation}
+          setMinimizeModal={setMinimizeModal}
+          setInitialLocation={setInitialLocation}
+          initialLocation={initialLocation}
+          setSelected={setSelected}
+          setAddress={setAddress}
+        />
       </View>
-    </Modal>
+    </View>
   );
 }
