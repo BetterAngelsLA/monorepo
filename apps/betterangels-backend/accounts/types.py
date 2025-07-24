@@ -2,12 +2,20 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
+from accounts.enums import OrgRoleEnum
+from accounts.groups import GroupTemplateNames
+from accounts.permissions import UserOrganizationPermissions
 from common.graphql.types import NonBlankString
-from django.db.models import Q, QuerySet
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db.models import CharField, F, Q, QuerySet, Value
+from django.db.models.functions import Concat
 from organizations.models import Organization
 from strawberry import ID, Info, auto
+from strawberry_django.auth.utils import get_current_user
 
 from .models import User
+
+ADMIN_PORTAL_PERMISSION_GROUPS = [GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER]
 
 
 @strawberry.input
@@ -61,6 +69,45 @@ class OrganizationType:
     name: auto
 
 
+@strawberry_django.type(Organization, order=OrganizationOrder, filters=OrganizationFilter, pagination=True)  # type: ignore[literal-required]
+class OrganizationForUserType(OrganizationType):
+    @classmethod
+    def get_queryset(
+        cls,
+        queryset: QuerySet[Organization],
+        info: Info,
+    ) -> QuerySet[Organization]:
+        user = get_current_user(info)
+        if not user or not getattr(user, "pk", None):
+            return queryset
+
+        qs: QuerySet[Organization] = queryset.filter(users=user).annotate(
+            user_permissions=ArrayAgg(
+                Concat(
+                    F("permission_groups__group__permissions__content_type__app_label"),
+                    Value("."),
+                    F("permission_groups__group__permissions__codename"),
+                    output_field=CharField(),
+                ),
+                filter=Q(
+                    permission_groups__group__user=user,
+                    permission_groups__template__name__in=ADMIN_PORTAL_PERMISSION_GROUPS,
+                ),
+                distinct=True,
+            )
+        )
+
+        return qs
+
+    def resolve_user_permissions(self, info: Info) -> List[UserOrganizationPermissions]:
+        perms: List[str] = getattr(self, "user_permissions", []) or []
+        return [UserOrganizationPermissions(perm) for perm in perms if perm in UserOrganizationPermissions.values]
+
+    user_permissions: Optional[List[UserOrganizationPermissions]] = strawberry_django.field(
+        resolver=resolve_user_permissions
+    )
+
+
 @strawberry_django.type(User)
 class UserBaseType:
     first_name: Optional[NonBlankString]
@@ -77,8 +124,18 @@ class UserType(UserBaseType):
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]
-    organizations_organization: Optional[List[OrganizationType]]
+    organizations_organization: Optional[List[OrganizationForUserType]]
     username: auto
+
+
+@strawberry_django.type(User)
+class OrganizationMemberType(UserBaseType):
+    id: ID
+    last_login: auto
+
+    @strawberry_django.field
+    def member_role(self, info: Info) -> OrgRoleEnum:
+        return OrgRoleEnum(getattr(self, "_member_role", OrgRoleEnum.MEMBER.value))
 
 
 @strawberry_django.input(User, partial=True)
@@ -91,3 +148,12 @@ class UpdateUserInput(UserBaseType):
     id: ID
     has_accepted_tos: auto
     has_accepted_privacy_policy: auto
+
+
+@strawberry.input
+class OrgInvitationInput:
+    email: str
+    first_name: str
+    middle_name: Optional[str] = None
+    last_name: str
+    organization_id: ID

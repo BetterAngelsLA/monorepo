@@ -1,30 +1,64 @@
+import uuid
 from typing import cast
 
 import strawberry
 import strawberry_django
+from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
-from accounts.models import User
+from accounts.permissions import UserOrganizationPermissions
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
+from django.conf import settings
+from django.contrib.sites.models import Site
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import QuerySet
+from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from notes.permissions import NotePermissions
-from organizations.models import Organization
+from organizations.backends import invitation_backend
+from organizations.models import Organization, OrganizationUser
 from strawberry.types import Info
 from strawberry_django import auth
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
+from strawberry_django.utils.query import filter_for_user
 
+from .models import PermissionGroup, User
 from .types import (
     AuthInput,
     AuthResponse,
     LoginInput,
+    OrganizationMemberType,
     OrganizationType,
+    OrgInvitationInput,
     UpdateUserInput,
     UserType,
 )
+
+
+def annotate_member_role(org_id: str) -> Case:
+    is_superuser = Exists(
+        PermissionGroup.objects.filter(
+            organization_id=org_id,
+            template__name=GroupTemplateNames.ORG_SUPERUSER,
+            group__user=OuterRef("pk"),
+        )
+    )
+    is_admin = Exists(
+        PermissionGroup.objects.filter(
+            organization_id=org_id,
+            template__name=GroupTemplateNames.ORG_ADMIN,
+            group__user=OuterRef("pk"),
+        )
+    )
+
+    return Case(
+        When(is_superuser, then=Value(OrgRoleEnum.SUPERUSER)),
+        When(is_admin, then=Value(OrgRoleEnum.ADMIN)),
+        default=Value(OrgRoleEnum.MEMBER),
+        output_field=CharField(),
+    )
 
 
 @strawberry.type
@@ -37,6 +71,45 @@ class Query:
             permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
         )
         return queryset
+
+    @strawberry_django.field(extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)])
+    def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
+        current_user = cast(User, get_current_user(info))
+        try:
+            organization = filter_for_user(
+                Organization.objects.filter(users=current_user),
+                current_user,
+                [UserOrganizationPermissions.VIEW_ORG_MEMBERS],
+            ).get(id=organization_id)
+        except Organization.DoesNotExist:
+            raise PermissionError("You do not have permission to view this organization's members.")
+
+        user: User = (
+            organization.users.filter(id=user_id).annotate(_member_role=annotate_member_role(organization_id)).first()
+        )
+        if not user:
+            raise PermissionError("You do not have permission to view this member.")
+
+        return cast(OrganizationMemberType, user)
+
+    @strawberry_django.offset_paginated(
+        OffsetPaginated[OrganizationMemberType],
+        extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
+    )
+    def organization_members(self, info: Info, organization_id: str) -> QuerySet[User]:
+        current_user = cast(User, get_current_user(info))
+        try:
+            organization = filter_for_user(
+                Organization.objects.filter(users=current_user),
+                current_user,
+                [UserOrganizationPermissions.VIEW_ORG_MEMBERS],
+            ).get(id=organization_id)
+        except Organization.DoesNotExist:
+            raise PermissionError("You do not have permission to view this organization's members.")
+
+        queryset: QuerySet[User] = organization.users.all()
+
+        return queryset.annotate(_member_role=annotate_member_role(organization_id))
 
 
 @strawberry.type
@@ -89,3 +162,47 @@ class Mutation:
             user.delete()
 
         return DeletedObjectType(id=user_id)
+
+    @strawberry_django.mutation(extensions=[HasPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)])
+    def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
+        current_user = get_current_user(info)
+
+        try:
+            organization = filter_for_user(
+                Organization.objects.filter(users=current_user),
+                current_user,
+                [UserOrganizationPermissions.ADD_ORG_MEMBER],
+            ).get(id=data.organization_id)
+        except Organization.DoesNotExist:
+            raise PermissionDenied("You do not have permission to add members.")
+
+        with transaction.atomic():
+            user, created = User.objects.get_or_create(
+                email=data.email,
+                defaults={"username": str(uuid.uuid4()), "is_active": True},
+            )
+            if created:
+                user.first_name = data.first_name
+                user.last_name = data.last_name
+                user.middle_name = data.middle_name
+                user.set_unusable_password()
+                user.save()
+
+            try:
+                OrganizationUser.objects.create(user=user, organization=organization)
+            except Exception:
+                raise ValidationError(f"{data.first_name} {data.last_name} is already a member of {organization.name}.")
+
+            invitation_backend().create_organization_invite(
+                organization=organization, invited_by_user=current_user, invitee_user=user
+            )
+
+        site = Site.objects.get(pk=settings.SITE_ID)
+        invitation_backend().send_invitation(
+            user=user,
+            sender=current_user,
+            organization=organization,
+            domain=site,
+        )
+
+        return cast(OrganizationMemberType, user)

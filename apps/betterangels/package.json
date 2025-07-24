@@ -74,7 +74,12 @@
     "react-native-open-maps": "*",
     "expo-dev-client": "*",
     "validator": "*",
-    "supercluster": "*"
+    "@gorhom/bottom-sheet": "*",
+    "supercluster": "*",
+    "react-native-paper-dates": "*",
+    "use-deep-compare-effect": "*",
+    "jotai": "*",
+    "@shopify/flash-list": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

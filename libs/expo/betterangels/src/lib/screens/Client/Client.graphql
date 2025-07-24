@@ -42,6 +42,7 @@ query ClientProfile($id: ID!) {
         phoneNumber
         relationshipToClient
         relationshipToClientOther
+        updatedAt
       }
       hmisProfiles {
         agency
@@ -152,36 +153,6 @@ mutation DeleteClientDocument($id: ID!) {
     }
     ... on ClientDocumentType {
       id
-    }
-  }
-}
-
-mutation CreateNote($data: CreateNoteInput!) {
-  createNote(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-
-    ... on NoteType {
-      id
-      purpose
-      publicDetails
-      clientProfile {
-        id
-        firstName
-        lastName
-        email
-      }
-      createdAt
-      createdBy {
-        id
-        username
-        email
-      }
     }
   }
 }

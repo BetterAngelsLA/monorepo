@@ -1,7 +1,12 @@
 from typing import Any
+from unittest.mock import ANY
 
+import time_machine
+from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.models import User
+from accounts.permissions import UserOrganizationPermissions
+from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
 from model_bakery import baker
@@ -67,7 +72,9 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             organization = organization_recipe.make()
             baker.make(OrganizationUser, user=user, organization=organization)
             permission_group_recipe.make(organization=organization)
-            expected_organizations.append({"id": str(organization.pk), "name": organization.name})
+            expected_organizations.append(
+                {"id": str(organization.pk), "name": organization.name, "userPermissions": ANY}
+            )
 
         query = """
         query {
@@ -83,6 +90,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
                 organizations: organizationsOrganization {
                     id
                     name
+                    userPermissions
                 }
             }
         }
@@ -138,6 +146,67 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         )
         self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
 
+    @parametrize(
+        ("user_role, expected_permissions"),
+        [
+            (OrgRoleEnum.MEMBER, []),
+            (
+                OrgRoleEnum.ADMIN,
+                [
+                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
+                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
+                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
+                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
+                ],
+            ),
+            (
+                OrgRoleEnum.SUPERUSER,
+                [
+                    UserOrganizationPermissions.ACCESS_ORG_PORTAL.name,
+                    UserOrganizationPermissions.ADD_ORG_MEMBER.name,
+                    UserOrganizationPermissions.REMOVE_ORG_MEMBER.name,
+                    UserOrganizationPermissions.VIEW_ORG_MEMBERS.name,
+                    UserOrganizationPermissions.CHANGE_ORG_MEMBER_ROLE.name,
+                ],
+            ),
+        ],
+    )
+    def test_logged_in_user_org_permissions_query(
+        self, user_role: OrgRoleEnum, expected_permissions: list[str]
+    ) -> None:
+        user = baker.make(User)
+        org_1 = organization_recipe.make(name="o1")
+        org_2 = organization_recipe.make(name="o2")
+        org_1.add_user(user)
+        org_2.add_user(user)
+
+        omb = OrgPermissionManager(org_1)
+
+        self.graphql_client.force_login(user)
+
+        query = """
+            query {
+                currentUser {
+                    firstName
+                    organizations: organizationsOrganization {
+                        name
+                        userPermissions
+                    }
+                }
+            }
+        """
+
+        expected_query_count = 2
+
+        omb.set_role(user, user_role)
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query)
+
+        user_perms = {o["name"]: o["userPermissions"] for o in response["data"]["currentUser"]["organizations"]}
+        self.assertCountEqual(user_perms["o1"], expected_permissions)
+        self.assertEqual(user_perms["o2"], [])
+
 
 class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
     def test_caseworker_organizations_query(self) -> None:
@@ -150,7 +219,6 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
         non_cw_org = organization_recipe.make()
 
         query = """
-
             query ($pagination: OffsetPaginationInput) {
                 caseworkerOrganizations(pagination: $pagination) {
                     totalCount
@@ -176,7 +244,7 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
         )
         actual_caseworker_org_ids = [int(org["id"]) for org in caseworker_orgs]
 
-        self.assertEqual(expected_caseworker_org_ids, actual_caseworker_org_ids)
+        self.assertCountEqual(expected_caseworker_org_ids, actual_caseworker_org_ids)
         self.assertNotIn(non_cw_org.pk, actual_caseworker_org_ids)
 
     @parametrize(
@@ -214,3 +282,93 @@ class OrganizationQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
 
         actual_orgs = [org["name"] for org in response["data"]["caseworkerOrganizations"]["results"]]
         self.assertCountEqual(actual_orgs, expected_orgs)
+
+
+class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.org = organization_recipe.make(name="org")
+        self.org_member = baker.make(User, first_name="member")
+        self.org_admin = baker.make(User, first_name="ad", last_name="min", email="ad@org.co")
+        self.org_superuser = baker.make(User, first_name="superuser")
+
+        self.org.add_user(self.org_member)
+        self.org.add_user(self.org_admin)
+        self.org.add_user(self.org_superuser)
+
+        omb = OrgPermissionManager(self.org)
+        omb.set_role(self.org_admin, OrgRoleEnum.ADMIN)
+        omb.set_role(self.org_superuser, OrgRoleEnum.SUPERUSER)
+
+        another_org = organization_recipe.make(name="another_org")
+        another_org.add_user(baker.make(User))
+
+    @time_machine.travel("07-22-2025 10:00:00", tick=False)
+    def test_organization_member_query(self) -> None:
+        self.graphql_client.force_login(self.org_member)
+        self.graphql_client.logout()
+        self.graphql_client.force_login(self.org_admin)
+
+        query = """
+            query ($organizationId: String!, $userId: String!) {
+                organizationMember(organizationId: $organizationId, userId: $userId) {
+                    id
+                    email
+                    firstName
+                    lastName
+                    lastLogin
+                    memberRole
+                }
+            }
+        """
+
+        variables = {
+            "organizationId": str(self.org.pk),
+            "userId": str(self.org_admin.pk),
+        }
+
+        with self.assertNumQueriesWithoutCache(6):
+            response = self.execute_graphql(query, variables)
+
+        expected_member = {
+            "id": str(self.org_admin.pk),
+            "email": "ad@org.co",
+            "firstName": "ad",
+            "lastName": "min",
+            "lastLogin": "2025-07-22T10:00:00+00:00",
+            "memberRole": OrgRoleEnum.ADMIN.name,
+        }
+
+        self.assertEqual(response["data"]["organizationMember"], expected_member)
+
+    def test_organization_members_query(self) -> None:
+        self.graphql_client.force_login(self.org_admin)
+
+        query = """
+            query ($organizationId: String!) {
+                organizationMembers(organizationId: $organizationId) {
+                    totalCount
+                    results {
+                        id
+                        memberRole
+                    }
+                }
+            }
+        """
+
+        variables = {"organizationId": str(self.org.pk)}
+
+        with self.assertNumQueriesWithoutCache(7):
+            response = self.execute_graphql(query, variables)
+
+        expected_members = zip(
+            [str(self.org_member.pk), str(self.org_admin.pk), str(self.org_superuser.pk)],
+            [OrgRoleEnum.MEMBER.name, OrgRoleEnum.ADMIN.name, OrgRoleEnum.SUPERUSER.name],
+        )
+        actual_members = zip(
+            [m["id"] for m in response["data"]["organizationMembers"]["results"]],
+            [m["memberRole"] for m in response["data"]["organizationMembers"]["results"]],
+        )
+        self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 3)
+        self.assertCountEqual(expected_members, actual_members)

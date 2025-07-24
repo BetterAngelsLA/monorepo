@@ -1,4 +1,3 @@
-import { GeoJsonProperties } from 'geojson';
 import { RefObject } from 'react';
 import { EdgePadding } from 'react-native-maps';
 import Supercluster, {
@@ -8,7 +7,13 @@ import Supercluster, {
 } from 'supercluster';
 import { defaultAnimationDuration, defaultEdgePadding } from '../constants';
 import { TMapView } from '../types';
-import { TEdgePaddingBreakpoint } from './types';
+import {
+  ClusterOrPoint,
+  IClusterGeoJson,
+  TClusterPoint,
+  TEdgePaddingBreakpoint,
+} from './types';
+import { generateClusterHash } from './utils/generateClusterHash';
 
 export interface IMapClusterManager {
   // px around each point to merge into a cluster
@@ -23,8 +28,9 @@ export interface IMapClusterManager {
   edgePadding?: EdgePadding | TEdgePaddingBreakpoint[];
 }
 
-export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
+export class MapClusterManager<P extends IClusterGeoJson> {
   private readonly clusterIndex: Supercluster<P, AnyProps>;
+  public readonly maxZoom: number;
   public edgePadding?: EdgePadding | TEdgePaddingBreakpoint[];
 
   constructor(opts: IMapClusterManager = {}) {
@@ -36,6 +42,7 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
       edgePadding,
     } = opts;
 
+    this.maxZoom = maxZoom;
     this.edgePadding = edgePadding;
 
     this.clusterIndex = new Supercluster<P, AnyProps>({
@@ -57,8 +64,48 @@ export class MapClusterManager<P extends GeoJsonProperties & { id: string }> {
   getClusters(
     bbox: [number, number, number, number],
     zoom: number
-  ): Array<PointFeature<P> | ClusterFeature<AnyProps>> {
-    return this.clusterIndex.getClusters(bbox, zoom);
+  ): Array<ClusterOrPoint<P>> {
+    const raw = this.clusterIndex.getClusters(bbox, zoom);
+
+    return raw.map((feat) => {
+      // if not a cluster, return feat
+      if (!feat.properties.cluster) {
+        return feat;
+      }
+
+      // is a cluster
+      const cluster = feat as TClusterPoint<P>;
+
+      const expansion = this.clusterIndex.getClusterExpansionZoom(
+        cluster.properties.cluster_id
+      );
+
+      const clusterCanZoomMore = expansion < this.maxZoom;
+
+      const baseCluster: TClusterPoint<P> = {
+        ...cluster,
+        properties: {
+          ...cluster.properties,
+          _identityHash: generateClusterHash(cluster),
+        },
+      };
+
+      if (clusterCanZoomMore) {
+        return baseCluster;
+      }
+
+      // expands past max zoom, so will not be broken up
+      // augment cluster with leaves it contains
+      const leaves = this.getLeaves(cluster.properties.cluster_id);
+
+      return {
+        ...baseCluster,
+        properties: {
+          ...baseCluster.properties,
+          maxZoomLeaves: leaves,
+        },
+      };
+    });
   }
 
   getLeaves(clusterId: number, limit = 100, offset = 0): PointFeature<P>[] {

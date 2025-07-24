@@ -73,6 +73,7 @@ class ClientsBaseTestCase(GraphQLBaseTestCase):
                 mailingAddress
                 relationshipToClient
                 relationshipToClientOther
+                updatedAt
             }
             hmisProfiles {
                 id
@@ -479,6 +480,7 @@ class ClientContactBaseTestCase(ClientsBaseTestCase):
             phoneNumber
             relationshipToClient
             relationshipToClientOther
+            updatedAt
         """
 
         self.graphql_client.force_login(self.org_1_case_manager_1)

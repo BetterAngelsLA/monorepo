@@ -59,6 +59,8 @@ input AddNoteTaskInput {
 
 union AddNoteTaskPayload = NoteType | OperationInfo
 
+union AddOrganizationMemberPayload = OrganizationMemberType | OperationInfo
+
 input AddressInput {
   addressComponents: JSON
   formattedAddress: String
@@ -204,22 +206,23 @@ input ClientContactInput {
   name: String
   email: String
   mailingAddress: String
+  phoneNumber: PhoneNumber
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID
   clientProfile: ID
-  phoneNumber: PhoneNumber
 }
 
 type ClientContactType {
   name: String
   email: String
   mailingAddress: String
+  phoneNumber: PhoneNumber
   relationshipToClient: RelationshipTypeEnum
   relationshipToClientOther: String
   id: ID!
   clientProfile: DjangoModelType!
-  phoneNumber: PhoneNumber
+  updatedAt: DateTime!
 }
 
 type ClientContactTypeOffsetPaginated {
@@ -941,6 +944,7 @@ type Mutation {
   appleAuth(input: AuthInput!): AuthResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
+  addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
   createClientContact(data: ClientContactInput!): CreateClientContactPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientcontact"}], any: true)
   updateClientContact(data: ClientContactInput!): UpdateClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientcontact"}], any: true)
   deleteClientContact(data: DeleteDjangoObjectInput!): DeleteClientContactPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "delete_clientcontact"}], any: true)
@@ -1104,12 +1108,52 @@ enum Ordering {
   DESC_NULLS_LAST
 }
 
+input OrgInvitationInput {
+  email: String!
+  firstName: String!
+  middleName: String = null
+  lastName: String!
+  organizationId: ID!
+}
+
+enum OrgRoleEnum {
+  MEMBER
+  ADMIN
+  SUPERUSER
+}
+
 input OrganizationFilter {
   AND: OrganizationFilter
   OR: OrganizationFilter
   NOT: OrganizationFilter
   DISTINCT: Boolean
   search: String
+}
+
+type OrganizationForUserType {
+  id: ID!
+  name: String!
+  userPermissions: [UserOrganizationPermissions!]
+}
+
+type OrganizationMemberType {
+  firstName: NonBlankString
+  lastName: NonBlankString
+  middleName: NonBlankString
+  email: NonBlankString
+  id: ID!
+  lastLogin: DateTime
+  memberRole: OrgRoleEnum!
+}
+
+type OrganizationMemberTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [OrganizationMemberType!]!
 }
 
 input OrganizationOrder {
@@ -1195,6 +1239,8 @@ enum PronounEnum {
 type Query {
   currentUser: UserType!
   caseworkerOrganizations(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
+  organizationMembers(organizationId: String!, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientDocuments(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
@@ -1523,6 +1569,7 @@ type ShelterType {
   InteriorPhotos: [ShelterPhotoType!]
   heroImage: String
   distanceInMiles: Float
+  operatingHours: [TimeRange]
 }
 
 type ShelterTypeOffsetPaginated {
@@ -1580,6 +1627,7 @@ enum SpecialSituationRestrictionChoices {
   HUMAN_TRAFFICKING
   JUSTICE_SYSTEMS
   VETERANS
+  HARM_REDUCTION
 }
 
 type SpecialSituationRestrictionType {
@@ -1639,6 +1687,11 @@ enum TaskTypeEnum {
 
 """Time (isoformat)"""
 scalar Time
+
+type TimeRange {
+  start: DateTime
+  end: DateTime
+}
 
 enum TrainingServiceChoices {
   JOB_TRAINING
@@ -1772,6 +1825,14 @@ input UpdateUserInput {
 
 scalar Upload
 
+enum UserOrganizationPermissions {
+  ACCESS_ORG_PORTAL
+  ADD_ORG_MEMBER
+  CHANGE_ORG_MEMBER_ROLE
+  REMOVE_ORG_MEMBER
+  VIEW_ORG_MEMBERS
+}
+
 type UserType {
   firstName: NonBlankString
   lastName: NonBlankString
@@ -1781,7 +1842,7 @@ type UserType {
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
-  organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder): [OrganizationType!]
+  organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): [OrganizationForUserType!]
   username: String!
 }
 

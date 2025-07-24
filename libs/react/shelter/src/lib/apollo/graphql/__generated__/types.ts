@@ -56,6 +56,8 @@ export type AddNoteTaskInput = {
 
 export type AddNoteTaskPayload = NoteType | OperationInfo;
 
+export type AddOrganizationMemberPayload = OperationInfo | OrganizationMemberType;
+
 export type AddressInput = {
   addressComponents?: InputMaybe<Scalars['JSON']['input']>;
   formattedAddress?: InputMaybe<Scalars['String']['input']>;
@@ -221,6 +223,7 @@ export type ClientContactType = {
   phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
   relationshipToClient?: Maybe<RelationshipTypeEnum>;
   relationshipToClientOther?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type ClientContactTypeOffsetPaginated = {
@@ -938,6 +941,7 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
+  addOrganizationMember: AddOrganizationMemberPayload;
   appleAuth: AuthResponse;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
@@ -990,6 +994,11 @@ export type Mutation = {
 
 export type MutationAddNoteTaskArgs = {
   data: AddNoteTaskInput;
+};
+
+
+export type MutationAddOrganizationMemberArgs = {
+  data: OrgInvitationInput;
 };
 
 
@@ -1356,12 +1365,53 @@ export enum Ordering {
   DescNullsLast = 'DESC_NULLS_LAST'
 }
 
+export type OrgInvitationInput = {
+  email: Scalars['String']['input'];
+  firstName: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
+  middleName?: InputMaybe<Scalars['String']['input']>;
+  organizationId: Scalars['ID']['input'];
+};
+
+export enum OrgRoleEnum {
+  Admin = 'ADMIN',
+  Member = 'MEMBER',
+  Superuser = 'SUPERUSER'
+}
+
 export type OrganizationFilter = {
   AND?: InputMaybe<OrganizationFilter>;
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<OrganizationFilter>;
   OR?: InputMaybe<OrganizationFilter>;
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type OrganizationForUserType = {
+  __typename?: 'OrganizationForUserType';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
+};
+
+export type OrganizationMemberType = {
+  __typename?: 'OrganizationMemberType';
+  email?: Maybe<Scalars['NonBlankString']['output']>;
+  firstName?: Maybe<Scalars['NonBlankString']['output']>;
+  id: Scalars['ID']['output'];
+  lastLogin?: Maybe<Scalars['DateTime']['output']>;
+  lastName?: Maybe<Scalars['NonBlankString']['output']>;
+  memberRole: OrgRoleEnum;
+  middleName?: Maybe<Scalars['NonBlankString']['output']>;
+};
+
+export type OrganizationMemberTypeOffsetPaginated = {
+  __typename?: 'OrganizationMemberTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<OrganizationMemberType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
 };
 
 export type OrganizationOrder = {
@@ -1469,6 +1519,8 @@ export type Query = {
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
   note: NoteType;
   notes: NoteTypeOffsetPaginated;
+  organizationMember: OrganizationMemberType;
+  organizationMembers: OrganizationMemberTypeOffsetPaginated;
   shelter: ShelterType;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
@@ -1556,6 +1608,18 @@ export type QueryNoteArgs = {
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   order?: InputMaybe<NoteOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryOrganizationMemberArgs = {
+  organizationId: Scalars['String']['input'];
+  userId: Scalars['String']['input'];
+};
+
+
+export type QueryOrganizationMembersArgs = {
+  organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1873,6 +1937,7 @@ export type ShelterType = {
   maxStay?: Maybe<Scalars['Int']['output']>;
   name: Scalars['String']['output'];
   onSiteSecurity?: Maybe<Scalars['Boolean']['output']>;
+  operatingHours?: Maybe<Array<Maybe<TimeRange>>>;
   organization?: Maybe<OrganizationType>;
   otherRules?: Maybe<Scalars['String']['output']>;
   otherServices?: Maybe<Scalars['String']['output']>;
@@ -1948,6 +2013,7 @@ export type SocialMediaProfileTypeOffsetPaginated = {
 
 export enum SpecialSituationRestrictionChoices {
   DomesticViolence = 'DOMESTIC_VIOLENCE',
+  HarmReduction = 'HARM_REDUCTION',
   HivAids = 'HIV_AIDS',
   HumanTrafficking = 'HUMAN_TRAFFICKING',
   JusticeSystems = 'JUSTICE_SYSTEMS',
@@ -2013,6 +2079,12 @@ export enum TaskTypeEnum {
   NextStep = 'NEXT_STEP',
   Purpose = 'PURPOSE'
 }
+
+export type TimeRange = {
+  __typename?: 'TimeRange';
+  end?: Maybe<Scalars['DateTime']['output']>;
+  start?: Maybe<Scalars['DateTime']['output']>;
+};
 
 export enum TrainingServiceChoices {
   JobTraining = 'JOB_TRAINING',
@@ -2143,6 +2215,14 @@ export type UpdateUserInput = {
   middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
 };
 
+export enum UserOrganizationPermissions {
+  AccessOrgPortal = 'ACCESS_ORG_PORTAL',
+  AddOrgMember = 'ADD_ORG_MEMBER',
+  ChangeOrgMemberRole = 'CHANGE_ORG_MEMBER_ROLE',
+  RemoveOrgMember = 'REMOVE_ORG_MEMBER',
+  ViewOrgMembers = 'VIEW_ORG_MEMBERS'
+}
+
 export type UserType = {
   __typename?: 'UserType';
   email?: Maybe<Scalars['NonBlankString']['output']>;
@@ -2153,7 +2233,7 @@ export type UserType = {
   isOutreachAuthorized?: Maybe<Scalars['Boolean']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
-  organizationsOrganization?: Maybe<Array<OrganizationType>>;
+  organizationsOrganization?: Maybe<Array<OrganizationForUserType>>;
   username: Scalars['String']['output'];
 };
 
@@ -2161,6 +2241,7 @@ export type UserType = {
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export enum VeteranStatusEnum {

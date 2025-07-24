@@ -1,21 +1,25 @@
 export { default as AddressField } from './AddressField';
 export { AppUpdatePrompt } from './AppUpdatePrompt';
 export { default as AuthContainer } from './AuthContainer';
-export { default as ClientCard } from './ClientCard';
+export * from './ClientCard';
 export { default as ClientCardModal } from './ClientCardModal';
 export {
   ClientProfileCard,
   ClientProfileCardContainer,
   TClientProfileCardItem,
 } from './ClientProfileCard';
+export * from './ClientProfileList';
 export { default as ConsentModal } from './ConsentModal';
+export * from './CreateClientInteraction';
 export { default as DocumentModal } from './DocumentModal';
 export { default as ErrorCrashView } from './ErrorCrashView/ErrorCrashView';
 export { default as FeatureFlagControlled } from './FeatureFlagControlled/FeatureFlagControlled';
 export { FileThumbnail } from './FileThumbnail/FileThumbnail';
 export { default as Header } from './Header';
+export * from './Layout';
 export { default as LoginForm } from './LoginForm';
 export { default as MainContainer } from './MainContainer';
+export * from './MainModal';
 export { default as MainPlusModal } from './MainPlusModal';
 export { default as MainScrollContainer } from './MainScrollContainer';
 export { default as Modal } from './Modal';

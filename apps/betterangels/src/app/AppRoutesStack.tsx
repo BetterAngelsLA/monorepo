@@ -8,11 +8,7 @@ import { Stack, useRouter } from 'expo-router';
 
 export default function AppRoutesStack() {
   const router = useRouter();
-  const {
-    presentation,
-    title: modalScreenTitle,
-    hideHeader: hideModalHeader,
-  } = useModalScreen();
+  const modalScreenProps = useModalScreen();
 
   return (
     <Stack>
@@ -26,11 +22,8 @@ export default function AppRoutesStack() {
       />
       <Stack.Screen
         name="modal-screen"
-        key={presentation} // force a re‐mount when presentation changes
         options={getDefaultStackModalOptions({
-          presentation,
-          title: modalScreenTitle,
-          hideHeader: hideModalHeader,
+          ...modalScreenProps,
           onClose: () => router.back(),
         })}
       />

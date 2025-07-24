@@ -1,13 +1,15 @@
 import { ReactNode } from 'react';
 
-export type TModalPresentationType = 'modal' | 'card';
+export type noOpFn = () => void;
+
+export type TModalPresentationType = 'modal' | 'card' | 'fullScreenModal';
 
 export type TShowModalScreenProps = {
   content: ReactNode;
   presentation?: TModalPresentationType;
   title?: string;
   hideHeader?: boolean;
-  onClose?: () => void;
+  onClose?: null | noOpFn;
 };
 export interface IModalScreenContext {
   showModalScreen: (props: TShowModalScreenProps) => void;

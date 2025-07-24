@@ -147,6 +147,11 @@ jobs:
           slug: ${{ steps.preview-build.outputs.slug }}
           project-id: ${{ steps.preview-build.outputs.project-id }}
 
+      - name: 🧪 Run E2E Tests
+        working-directory: apps/${{ matrix.project }}
+        run: |
+          eas workflow:run .eas/workflows/e2e-test.yml --non-interactive
+
       - name: 📝 Comment on PR
         if: github.event_name == 'pull_request'
         uses: edumserrano/find-create-or-update-comment@v3

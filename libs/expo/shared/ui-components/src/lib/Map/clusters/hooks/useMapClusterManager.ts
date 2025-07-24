@@ -1,10 +1,8 @@
-import { GeoJsonProperties } from 'geojson';
 import { useMemo } from 'react';
 import { IMapClusterManager, MapClusterManager } from '../MapClusterManager';
+import { IClusterGeoJson } from '../types';
 
-type IdentifiableGeo = GeoJsonProperties & { id: string };
-
-export function useMapClusterManager<P extends IdentifiableGeo>(
+export function useMapClusterManager<P extends IClusterGeoJson>(
   options: IMapClusterManager = {}
 ) {
   // Unpack primitive fields so the dependency list tracks individual values

@@ -2,12 +2,14 @@ import 'expo-dev-client';
 
 import {
   AppUpdatePrompt,
+  BlockingScreenProvider,
   ErrorCrashView,
   FeatureControlProvider,
   FeatureFlagControlled,
   FeatureFlags,
   KeyboardToolbarProvider,
   ModalScreenProvider,
+  NativePaperProvider,
   SnackbarProvider,
   useNewRelic,
   UserProvider,
@@ -21,6 +23,8 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
 import { type ErrorBoundaryProps } from 'expo-router';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppRoutesStack from './AppRoutesStack';
 
 export const unstable_settings = {
@@ -37,29 +41,41 @@ export default function RootLayout() {
   useNewRelic();
 
   return (
-    <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-      <ApolloClientProvider>
-        <FeatureControlProvider>
-          <KeyboardProvider>
-            <KeyboardToolbarProvider>
-              <UserProvider>
-                <SnackbarProvider>
-                  <ModalScreenProvider>
-                    <StatusBar style="light" />
-                    <FeatureFlagControlled
-                      flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
-                    >
-                      <AppUpdatePrompt />
-                    </FeatureFlagControlled>
-                    {/* All Stack.Screens in AppRoutesStack */}
-                    <AppRoutesStack />
-                  </ModalScreenProvider>
-                </SnackbarProvider>
-              </UserProvider>
-            </KeyboardToolbarProvider>
-          </KeyboardProvider>
-        </FeatureControlProvider>
-      </ApolloClientProvider>
-    </ApiConfigProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <NativePaperProvider>
+        <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
+          <ApolloClientProvider>
+            <FeatureControlProvider>
+              <KeyboardProvider>
+                <KeyboardToolbarProvider>
+                  <UserProvider>
+                    <BlockingScreenProvider>
+                      <SnackbarProvider>
+                        <ModalScreenProvider>
+                          <StatusBar style="light" />
+                          <FeatureFlagControlled
+                            flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
+                          >
+                            <AppUpdatePrompt />
+                          </FeatureFlagControlled>
+                          {/* All Stack.Screens in AppRoutesStack */}
+                          <AppRoutesStack />
+                        </ModalScreenProvider>
+                      </SnackbarProvider>
+                    </BlockingScreenProvider>
+                  </UserProvider>
+                </KeyboardToolbarProvider>
+              </KeyboardProvider>
+            </FeatureControlProvider>
+          </ApolloClientProvider>
+        </ApiConfigProvider>
+      </NativePaperProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});

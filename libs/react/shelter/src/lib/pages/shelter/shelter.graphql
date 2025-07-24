@@ -73,6 +73,10 @@ query ViewShelter($id: ID!) {
       longitude
       place
     }
+    operatingHours {
+      start
+      end
+    }
     organization {
       name
     }

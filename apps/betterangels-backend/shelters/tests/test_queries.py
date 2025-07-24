@@ -79,6 +79,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             maxStay
             name
             onSiteSecurity
+            operatingHours { start end}
             otherRules
             otherServices
             overallRating
@@ -143,6 +144,12 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             max_stay=7,
             name="name",
             on_site_security=True,
+            operating_hours=[
+                (
+                    datetime.datetime(2025, 7, 1, 6, 00, 00).time(),
+                    datetime.datetime(2025, 7, 1, 22, 00, 00).time(),
+                )
+            ],
             organization=shelter_organization,
             other_rules="other rules",
             other_services="other services",
@@ -217,7 +224,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
         variables = {"id": shelter.pk}
-        expected_query_count = 21
+        expected_query_count = 22
 
         with self.assertNumQueries(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -239,6 +246,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             "maxStay": 7,
             "name": "name",
             "onSiteSecurity": True,
+            "operatingHours": [{"start": "06:00:00", "end": "22:00:00"}],
             "otherRules": "other rules",
             "otherServices": "other services",
             "overallRating": 3,
@@ -311,7 +319,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         interior_photo_1 = InteriorPhoto.objects.create(shelter=shelters[1], file=self.file)
 
         query = f"""
-            query ViewShelters($offset: Int, $limit: Int, $order: ShelterOrder) {{
+            query ($offset: Int, $limit: Int, $order: ShelterOrder) {{
                 shelters(pagination: {{offset: $offset, limit: $limit}}, order: $order) {{
                     totalCount
                     pageInfo {{
@@ -326,7 +334,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
 
-        expected_query_count = 22
+        expected_query_count = 24
 
         variables = {"order": {"name": "ASC"}}
 
@@ -334,7 +342,6 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             response = self.execute_graphql(query, variables)
 
         shelters = response["data"]["shelters"]["results"]
-
         self.assertEqual(len(shelters), shelter_count)
         self.assertEqual(shelters[0]["heroImage"], exterior_photo_0.file.url)
         self.assertEqual(shelters[1]["heroImage"], interior_photo_1.file.url)
