@@ -1,4 +1,3 @@
-# common/tests/test_single_instance.py
 from unittest.mock import MagicMock
 
 from celery import Task
