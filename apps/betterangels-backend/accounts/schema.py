@@ -10,7 +10,7 @@ from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import Case, CharField, Exists, OuterRef, QuerySet, Value, When
 from notes.permissions import NotePermissions
@@ -188,7 +188,10 @@ class Mutation:
                 user.set_unusable_password()
                 user.save()
 
-            OrganizationUser.objects.create(user=user, organization=organization)
+            try:
+                OrganizationUser.objects.create(user=user, organization=organization)
+            except Exception:
+                raise ValidationError(f"{data.first_name} {data.last_name} is already a member of {organization.name}.")
 
             invitation_backend().create_organization_invite(
                 organization=organization, invited_by_user=current_user, invitee_user=user
