@@ -10,7 +10,6 @@ import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { apiUrl } from '../config';
 import App from './app/app';
-import './styles.css';
 
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 const csrfCookieName =
