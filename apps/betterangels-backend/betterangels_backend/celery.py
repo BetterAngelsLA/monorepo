@@ -20,7 +20,7 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     # In case of a temporary delivery failure, we retry.
     "send-queued-mail": {
-        "task": "post_office.tasks.send_queued_mail",
+        "task": "accounts.tasks.send_queued_mail",
         "schedule": 600.0,  # 5 Minutes
     },
     # Cleanup old mail
