@@ -65,23 +65,35 @@ export default function RequestedProvidedServices(
       }
       mb="xs"
       title={`${enumDisplayServiceType[type]} Services`}
-      setExpanded={() =>
-        showModalScreen({
-          presentation: 'modal',
-          title:
-            type === ServiceRequestTypeEnum.Provided
-              ? 'Provided Services'
-              : 'Requested Services',
-          content: (
-            <ServicesModal
-              noteId={noteId}
-              type={type}
-              initialServices={initialServices}
-              refetch={refetch}
-            />
-          ),
-        })
-      }
+      setExpanded={() => {
+        if (type === ServiceRequestTypeEnum.Provided) {
+          showModalScreen({
+            presentation: 'modal',
+            title: 'Provided Services',
+            content: (
+              <ServicesModal
+                noteId={noteId}
+                type={type}
+                initialServices={initialServices}
+                refetch={refetch}
+              />
+            ),
+          });
+        } else {
+          showModalScreen({
+            presentation: 'card',
+            title: 'Requested Services',
+            content: (
+              <ServicesModal
+                noteId={noteId}
+                type={type}
+                initialServices={initialServices}
+                refetch={refetch}
+              />
+            ),
+          });
+        }
+      }}
     >
       <></>
     </FieldCard>
