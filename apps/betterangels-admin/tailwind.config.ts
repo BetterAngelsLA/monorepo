@@ -1,5 +1,5 @@
 import { createGlobPatternsForDependencies } from '@nx/react/tailwind';
-// @ts-ignore
+// @ts-expect-error silence warn for missing types declarations
 import daisyui from 'daisyui';
 import { join } from 'path';
 import type { Config } from 'tailwindcss';
