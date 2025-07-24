@@ -78,6 +78,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   >(undefined);
   const [updateNoteLocation, { error: updateError }] =
     useUpdateNoteLocationMutation();
+  const [hasUserCleared, setHasUserCleared] = useState(false);
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
@@ -159,12 +160,14 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       });
       setMinimizeModal(false);
       setSelected(true);
+      setHasUserCleared(false);
     } catch (err) {
       console.error(err);
     }
   };
 
   const onSearchChange = (query: string) => {
+    setHasUserCleared(false);
     setAddress({
       full: query,
       short: query,
@@ -188,6 +191,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   };
 
   const onSearchDelete = () => {
+    setHasUserCleared(true);
     setAddress(undefined);
     setCurrentLocation(undefined);
     setLocation(undefined);
@@ -267,6 +271,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       });
       setMinimizeModal(false);
       setSelected(true);
+      setHasUserCleared(false);
 
       const { data: locationData } = await updateNoteLocation({
         variables: {
@@ -293,6 +298,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   };
 
   const onDelete = () => {
+    setHasUserCleared(true);
     if (!selected) return;
     setAddress(undefined);
     setCurrentLocation(undefined);
@@ -305,6 +311,14 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     if (chooseDirections) {
       setChooseDirections(false);
     }
+  };
+
+  const DEFAULT_LOCATION_LABEL = 'Default Location'; // or your actual default address
+
+  const getLocationLabel = () => {
+    if (address?.short) return address.short;
+    // If you have a default name, use it here
+    return 'Downtown LA'; // or whatever your default should be
   };
 
   return (
@@ -356,7 +370,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             mt="sm"
             placeholder="Type location"
             icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
-            value={address?.short}
+            value={hasUserCleared ? '' : address?.short || '200 Geary St'}
             onChangeText={onSearchChange}
           />
           <FlatList
