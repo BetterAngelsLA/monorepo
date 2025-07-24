@@ -28,9 +28,9 @@ from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import ForeignKey, Prefetch
+from django.db.models import ForeignKey, Prefetch, QuerySet
 from graphql import GraphQLError
 from guardian.shortcuts import assign_perm
 from phonenumber_field.validators import validate_international_phonenumber
@@ -42,8 +42,9 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
-from .enums import RelationshipTypeEnum
+from .enums import ClientDocumentGroupEnum, RelationshipTypeEnum
 from .types import (
+    CLIENT_DOCUMENT_NAMESPACE_GROUPS,
     ClientContactInput,
     ClientContactType,
     ClientDocumentType,
@@ -341,9 +342,27 @@ class Query:
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
-    client_documents: OffsetPaginated[ClientDocumentType] = strawberry_django.offset_paginated(
-        extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
-    )
+    @strawberry_django.offset_paginated(extensions=[HasPerm(AttachmentPermissions.VIEW)])
+    def client_documents(
+        self, info: Info, client_id: str, document_group: ClientDocumentGroupEnum
+    ) -> OffsetPaginated[ClientDocumentType]:
+        current_user = cast(User, get_current_user(info))
+
+        content_type = ContentType.objects.get_for_model(ClientProfile)
+
+        namespaces = CLIENT_DOCUMENT_NAMESPACE_GROUPS[document_group.name]
+
+        documents: OffsetPaginated[ClientDocumentType] = filter_for_user(
+            Attachment.objects.all(),
+            current_user,
+            [AttachmentPermissions.VIEW],
+        ).filter(
+            content_type=content_type,
+            object_id=client_id,
+            namespace__in=[ns.value for ns in namespaces],
+        )
+
+        return documents
 
     client_contact: ClientContactType = strawberry_django.field(
         extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
@@ -659,6 +678,10 @@ class Mutation:
             )
         return cast(ClientProfileImportRecordType, record)
 
+    update_client_document: ClientDocumentType = mutations.update(
+        UpdateClientDocumentInput,
+        extensions=[HasRetvalPerm(perms=AttachmentPermissions.CHANGE)],
+    )
     update_client_document: ClientDocumentType = mutations.update(
         UpdateClientDocumentInput,
         extensions=[HasRetvalPerm(perms=AttachmentPermissions.CHANGE)],

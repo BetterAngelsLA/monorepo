@@ -24,6 +24,7 @@ class AdaAccommodationEnum(models.TextChoices):
 
 @strawberry.enum
 class ClientDocumentNamespaceEnum(models.TextChoices):
+
     DRIVERS_LICENSE_FRONT = "drivers_license_front", "Driver's License Front"
     DRIVERS_LICENSE_BACK = "drivers_license_back", "Driver's License Back"
     PHOTO_ID = "photo_id", "Photo ID"
@@ -37,6 +38,13 @@ class ClientDocumentNamespaceEnum(models.TextChoices):
     OTHER_FORM = "other_form", "Other Form"
 
     OTHER_CLIENT_DOCUMENT = "other_client_document", "Other Client Document"
+
+
+@strawberry.enum
+class ClientDocumentGroupEnum(models.TextChoices):
+    DOC_READY = "doc_ready", "Doc Ready"
+    FORMS = "forms", "Forms"
+    OTHER = "other", "Other"
 
 
 class EyeColorEnum(models.TextChoices):

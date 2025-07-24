@@ -607,7 +607,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def test_client_document_query(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
         query = """
-            query ViewClientDocument($id: ID!) {
+            query ($id: ID!) {
                 clientDocument(pk: $id) {
                     id
                     file {
@@ -631,7 +631,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def test_client_documents_query(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_1)
         query = """
-            query ViewClientDocuments {
+            query {
                 clientDocuments {
                     totalCount
                     results {
