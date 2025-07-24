@@ -10,37 +10,28 @@ import {
   TextRegular,
   formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
+import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { HmisProfileType, Maybe } from '../../apollo';
 import { CardMenuBtn } from './CardMenuBtn';
 import { IClientCardProps } from './ClientCard';
+import { formatHeight } from './utils/formatHeight';
+import { getLahsaHmisId } from './utils/getLahsaHmisId';
 
 export function ClientCardBase(props: IClientCardProps) {
   const { client, onMenuPress } = props;
+
+  const handleMenuPress = useCallback(() => {
+    if (client) {
+      onMenuPress?.(client);
+    }
+  }, [onMenuPress, client]);
 
   if (!client) {
     return null;
   }
 
-  const formatHeight = (inches: number) => {
-    const feet = Math.floor(inches / 12);
-    const remainingInches = inches % 12;
-    return `${feet}' ${remainingInches}"`;
-  };
-
-  const getLahsaHmisId = (
-    hmisProfiles: Maybe<HmisProfileType[] | undefined>
-  ) => {
-    return hmisProfiles?.find((profile) => profile?.agency === 'LAHSA')?.hmisId;
-  };
-
-  const formattedHeight = client.heightInInches
-    ? formatHeight(client.heightInInches)
-    : null;
-
-  const lahsaHmisId = client.hmisProfiles
-    ? getLahsaHmisId(client.hmisProfiles)
-    : null;
+  const formattedHeight = formatHeight(client.heightInInches ?? 0);
+  const lahsaHmisId = getLahsaHmisId(client.hmisProfiles);
 
   return (
     <>
@@ -56,6 +47,7 @@ export function ClientCardBase(props: IClientCardProps) {
           {client.firstName} {client.lastName}{' '}
           {client.nickname && `(${client.nickname})`}
         </TextBold>
+
         {(client.dateOfBirth || formattedHeight) && (
           <View style={styles.row}>
             <UserOutlineIcon mr="xxs" size="sm" color={Colors.NEUTRAL_DARK} />
@@ -77,12 +69,14 @@ export function ClientCardBase(props: IClientCardProps) {
             )}
           </View>
         )}
+
         {!!client.residenceAddress && (
           <View style={styles.row}>
             <LocationDotIcon size="sm" mr="xxs" color={Colors.NEUTRAL_DARK} />
             <TextRegular size="xs">{client.residenceAddress}</TextRegular>
           </View>
         )}
+
         {!!lahsaHmisId && (
           <View style={styles.row}>
             <IdCardOutlineIcon size="sm" mr="xxs" color={Colors.NEUTRAL_DARK} />
@@ -90,7 +84,8 @@ export function ClientCardBase(props: IClientCardProps) {
           </View>
         )}
       </View>
-      {!!onMenuPress && <CardMenuBtn onPress={() => onMenuPress(client)} />}
+
+      {!!onMenuPress && <CardMenuBtn onPress={handleMenuPress} />}
     </>
   );
 }
