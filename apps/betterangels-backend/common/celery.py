@@ -1,7 +1,6 @@
 import functools
 from typing import Any, Callable, TypeVar, cast
 
-from celery import Task
 from celery.exceptions import Ignore
 from django.core.cache import caches
 
