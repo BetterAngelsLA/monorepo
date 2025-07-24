@@ -23,7 +23,7 @@ class SingleInstanceDecoratorTests(SimpleTestCase):
 
     class FakeTask(Task):
         name = "test.task"
-        apply_async: MagicMock
+        apply_async: MagicMock  # type: ignore[override]
 
         def __init__(self) -> None:
             super().__init__()
@@ -50,14 +50,48 @@ class SingleInstanceDecoratorTests(SimpleTestCase):
             calls.append(x)
 
         t = self.FakeTask()
+        key = "celery-lock:test.task"
+
         # simulate a held lock
-        self.cache.add("celery-lock:test.task", "1", timeout=60)
+        self.cache.add(key, "1", timeout=60)
 
         with self.assertRaises(Ignore):
             my_task(t, 42)
 
-        t.apply_async.assert_called_once_with(args=(42,), kwargs={}, countdown=5)
+        t.apply_async.assert_called_once_with(
+            args=[
+                42,
+            ],
+            kwargs={},
+            countdown=5,
+        )
         self.assertEqual(calls, [])
+        # lock must still be held after skip
+        self.assertIsNotNone(self.cache.get(key))
+
+    def test_retry_after_lock_released(self) -> None:
+        calls: list[int] = []
+
+        @single_instance(lock_ttl=60, retry_delay=5)
+        def my_task(self: Task) -> None:
+            calls.append(1)
+
+        t = self.FakeTask()
+        key = "celery-lock:test.task"
+
+        # first call is skipped
+        self.cache.add(key, "1", timeout=60)
+        with self.assertRaises(Ignore):
+            my_task(t)
+
+        # simulate TTL expiry by deleting the lock
+        self.cache.delete(key)
+
+        # now the task should run
+        my_task(t)
+        self.assertEqual(calls, [1])
+        # and the lock is released after run
+        self.assertIsNone(self.cache.get(key))
 
     def test_lock_released_on_success(self) -> None:
         key = "celery-lock:test.task"
@@ -69,7 +103,6 @@ class SingleInstanceDecoratorTests(SimpleTestCase):
         t = self.FakeTask()
         result = my_task(t)
 
-        # key should be gone
         self.assertIsNone(self.cache.get(key))
         self.assertEqual(result, "done")
 
@@ -81,8 +114,8 @@ class SingleInstanceDecoratorTests(SimpleTestCase):
             raise RuntimeError("boom")
 
         t = self.FakeTask()
+
         with self.assertRaises(RuntimeError):
             my_task(t)
 
-        self.assertIsNone(self.cache.get(key))
         self.assertIsNone(self.cache.get(key))

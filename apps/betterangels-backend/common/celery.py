@@ -1,12 +1,11 @@
 import functools
-from typing import Callable, Concatenate, ParamSpec, TypeVar
+from typing import Any, Callable, TypeVar, cast
 
 from celery import Task
 from celery.exceptions import Ignore
 from django.core.cache import caches
 
-P = ParamSpec("P")
-R = TypeVar("R")
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 def single_instance(
@@ -15,27 +14,24 @@ def single_instance(
     lock_key: str | None = None,
     lock_ttl: int = 3600,
     retry_delay: int = 60,
-) -> Callable[[Callable[Concatenate[Task, P], R]], Callable[Concatenate[Task, P], R]]:
-    """Decorator that guarantees only one running instance of a Celery task."""
-
+) -> Callable[[F], F]:
     cache = caches[cache_alias]
 
-    def decorator(func: Callable[Concatenate[Task, P], R]) -> Callable[Concatenate[Task, P], R]:
+    def decorator(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(self: Task, *args: P.args, **kwargs: P.kwargs) -> R:  # <- R only
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            # assume first arg is always the Task instance
+            self, *rest = args
             key = lock_key or f"celery-lock:{self.name}"
-            acquired = bool(cache.add(key, "1", timeout=lock_ttl))
-
-            if not acquired:
-                # Another instance is running — re‑queue and skip
-                self.apply_async(args=args, kwargs=kwargs, countdown=retry_delay)
-                raise Ignore()  # raises → never returns
+            if not cache.add(key, "1", timeout=lock_ttl):
+                self.apply_async(args=rest, kwargs=kwargs, countdown=retry_delay)
+                raise Ignore()
 
             try:
-                return func(self, *args, **kwargs)
+                return func(*args, **kwargs)
             finally:
                 cache.delete(key)
 
-        return wrapper
+        return cast(F, wrapper)
 
     return decorator
