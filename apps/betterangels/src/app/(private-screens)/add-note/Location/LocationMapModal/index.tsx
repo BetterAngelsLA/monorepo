@@ -67,7 +67,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [userLocation, setUserLocation] =
     useState<Location.LocationObject | null>(null);
   const [address, setAddress] = useState<
-    { short: string; full: string; addressComponents: any[] } | undefined
+    { short: string; full: string; addressComponents: unknown[] } | undefined
   >({
     short: '',
     full: '',
@@ -218,6 +218,19 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   useEffect(() => {
     getLocation();
   }, []);
+
+  useEffect(() => {
+    if (location && location.address) {
+      setAddress({
+        short: location.name || location.address.split(',')[0] || '',
+        full: location.address,
+        addressComponents: [],
+      });
+      setHasUserCleared(false);
+    } else {
+      setAddress(undefined);
+    }
+  }, [location]);
 
   const getLocation = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
