@@ -4,4 +4,10 @@
 
 :root {
   --color-neutral-99: #f4f6fd;
+  --color-primary-20: #052b73;
+}
+
+html,
+body {
+  color: var(--color-primary-20);
 }

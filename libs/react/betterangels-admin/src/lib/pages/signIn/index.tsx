@@ -109,6 +109,7 @@ export default function SignIn() {
         {step === 'initial' && (
           <>
             <Input
+              className="mb-4"
               label="Email  Address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
