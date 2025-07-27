@@ -56,6 +56,8 @@ export type AddNoteTaskInput = {
 
 export type AddNoteTaskPayload = NoteType | OperationInfo;
 
+export type AddOrganizationMemberPayload = OperationInfo | OrganizationMemberType;
+
 export type AddressInput = {
   addressComponents?: InputMaybe<Scalars['JSON']['input']>;
   formattedAddress?: InputMaybe<Scalars['String']['input']>;
@@ -939,6 +941,7 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addNoteTask: AddNoteTaskPayload;
+  addOrganizationMember: AddOrganizationMemberPayload;
   appleAuth: AuthResponse;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
@@ -991,6 +994,11 @@ export type Mutation = {
 
 export type MutationAddNoteTaskArgs = {
   data: AddNoteTaskInput;
+};
+
+
+export type MutationAddOrganizationMemberArgs = {
+  data: OrgInvitationInput;
 };
 
 
@@ -1356,6 +1364,14 @@ export enum Ordering {
   DescNullsFirst = 'DESC_NULLS_FIRST',
   DescNullsLast = 'DESC_NULLS_LAST'
 }
+
+export type OrgInvitationInput = {
+  email: Scalars['String']['input'];
+  firstName: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
+  middleName?: InputMaybe<Scalars['String']['input']>;
+  organizationId: Scalars['ID']['input'];
+};
 
 export enum OrgRoleEnum {
   Admin = 'ADMIN',

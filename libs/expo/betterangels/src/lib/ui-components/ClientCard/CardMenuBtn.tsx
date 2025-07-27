@@ -1,18 +1,18 @@
 import { ThreeDotIcon } from '@monorepo/expo/shared/icons';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
-import { StyleSheet, ViewStyle } from 'react-native';
+import { memo } from 'react';
+import { StyleSheet } from 'react-native';
 
 type TCardMenu = {
   onPress: () => void;
-  style?: ViewStyle;
 };
 
-export function CardMenuBtn(props: TCardMenu) {
-  const { onPress, style } = props;
+function CardMenuBtnRaw(props: TCardMenu) {
+  const { onPress } = props;
 
   return (
     <IconButton
-      style={[styles.container, style]}
+      style={styles.container}
       onPress={onPress}
       variant="transparent"
       accessibilityLabel={'open client options menu'}
@@ -22,6 +22,8 @@ export function CardMenuBtn(props: TCardMenu) {
     </IconButton>
   );
 }
+
+export const CardMenuBtn = memo(CardMenuBtnRaw);
 
 const styles = StyleSheet.create({
   container: {

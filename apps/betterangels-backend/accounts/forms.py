@@ -47,7 +47,6 @@ class OrganizationUserForm(forms.ModelForm):
 
     class Meta:
         exclude = ("user", "is_admin")
-        model = User
 
     def __init__(self, *args: Any, **kwargs: Any):
         self.request = kwargs.pop("request", None)

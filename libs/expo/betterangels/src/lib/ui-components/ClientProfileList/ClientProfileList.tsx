@@ -1,6 +1,7 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { ReactElement, useEffect, useState } from 'react';
-import { FlatList, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { Spacings } from '@monorepo/expo/shared/static';
+import { FlashList } from '@shopify/flash-list';
+import { ReactElement, useCallback, useEffect, useState } from 'react';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { uniqueBy } from 'remeda';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
@@ -8,6 +9,7 @@ import {
   ClientProfileOrder,
   InputMaybe,
 } from '../../apollo';
+import { pagePaddingHorizontal } from '../../static';
 import { ClientProfileListHeader } from './ClientProfileListHeader';
 import { ListEmptyState } from './ListEmptyState';
 import { ListLoadingView } from './ListLoadingView';
@@ -34,6 +36,7 @@ type TProps = {
   showAllClientsLink?: boolean;
   renderHeaderText?: (props: ListHeaderProps) => string;
   headerStyle?: ViewStyle;
+  horizontalPadding?: number;
 };
 
 export function ClientProfileList(props: TProps) {
@@ -47,6 +50,7 @@ export function ClientProfileList(props: TProps) {
     headerStyle,
     showAllClientsLink,
     style,
+    horizontalPadding = pagePaddingHorizontal,
   } = props;
 
   const [offset, setOffset] = useState<number>(0);
@@ -98,15 +102,24 @@ export function ClientProfileList(props: TProps) {
     }
   }
 
+  const renderItemFn = useCallback(
+    ({ item }: { item: TClientProfile }) => renderItem(item),
+    [renderItem]
+  );
+
   const renderFooter = () => {
     if (!loading) {
       return null;
     }
 
-    return <ListLoadingView />;
+    return <ListLoadingView style={{ paddingVertical: 40 }} />;
   };
 
-  // initial query hasn't run yet (clients undefined)
+  // initial query hasn't run yet
+  if (clients === undefined && loading) {
+    return <ListLoadingView fullScreen={true} />;
+  }
+
   if (!clients) {
     return null;
   }
@@ -114,26 +127,35 @@ export function ClientProfileList(props: TProps) {
   return (
     <View style={[styles.container, style]}>
       <ClientProfileListHeader
-        style={[styles.header, headerStyle]}
+        style={[
+          styles.header,
+          { paddingHorizontal: horizontalPadding },
+          headerStyle,
+        ]}
         totalClients={totalCount}
         visibleClients={clients.length}
         showAllClientsLink={showAllClientsLink}
         renderHeaderText={renderHeaderText}
       />
 
-      <FlatList<TClientProfile>
+      <FlashList<TClientProfile>
+        estimatedItemSize={95}
         data={clients}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => renderItem(item)}
+        renderItem={renderItemFn}
         onEndReached={loadMoreClients}
         onEndReachedThreshold={0.05}
+        // ItemSeparatorComponent renders only between items in a batch
         ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
+        // set extraData to force re-render when data is appended, else
+        // newly loaded batch won't be separated by ItemSeparatorComponent
+        extraData={clients.length}
         ListEmptyComponent={<ListEmptyState />}
         ListFooterComponent={renderFooter}
-        contentContainerStyle={[
-          !clients.length && styles.emptyContent,
-          styles.listContent,
-        ]}
+        contentContainerStyle={{
+          paddingBottom: 60,
+          paddingHorizontal: horizontalPadding,
+        }}
       />
     </View>
   );
@@ -142,15 +164,11 @@ export function ClientProfileList(props: TProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
   },
   header: {
     marginBottom: Spacings.xs,
   },
   listContent: {
     paddingBottom: 60,
-  },
-  emptyContent: {
-    flexGrow: 1,
   },
 });
