@@ -1,4 +1,8 @@
-import { useSignOut, useUser } from '@monorepo/react/betterangels-admin';
+import {
+  Navbar,
+  useSignOut,
+  useUser,
+} from '@monorepo/react/betterangels-admin';
 
 export default function Home() {
   const { user } = useUser();
@@ -6,6 +10,7 @@ export default function Home() {
 
   return (
     <div>
+      <Navbar />
       <div>Welcome to Home, {user?.email}!</div>
       <button onClick={signOut}>Sign Out</button>
     </div>
