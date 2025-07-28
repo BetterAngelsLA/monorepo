@@ -6,7 +6,7 @@ import { Input } from '../../components';
 import { useUser } from '../../hooks';
 import { useApiConfig } from '../../providers';
 
-export default function SignIn() {
+export default function SignIn({ apiUrl }: { apiUrl: string }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
@@ -110,7 +110,8 @@ export default function SignIn() {
           <>
             <Input
               className="mb-4"
-              label="Email  Address"
+              inputClassname="input-xl"
+              label="Email Address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoCapitalize="none"
@@ -129,7 +130,7 @@ export default function SignIn() {
             {!!errorMsg && <div>{errorMsg}</div>}
 
             <button
-              className="btn btn-primary"
+              className="btn btn-primary btn-xl"
               onClick={isPasswordLogin ? handlePasswordLogin : handleSendCode}
               disabled={
                 loading || !isValidEmail || (isPasswordLogin && !password)
@@ -142,10 +143,13 @@ export default function SignIn() {
 
         {step === 'otp' && (
           <>
-            <input
+            <Input
+              className="mb-4"
+              inputClassname="input-xl"
+              label="OTP Code"
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
-              autoCapitalize="characters"
+              autoCapitalize="none"
               placeholder="Enter OTP"
             />
 
@@ -154,7 +158,7 @@ export default function SignIn() {
             {!!errorMsg && <p>{errorMsg}</p>}
 
             <button
-              className="btn btn-neutral"
+              className="btn btn-primary btn-xl"
               onClick={handleConfirmCode}
               disabled={loading || !otp.trim()}
             >
@@ -162,6 +166,17 @@ export default function SignIn() {
             </button>
           </>
         )}
+        <p className="mt-10">
+          By continuing, you agree to our{' '}
+          <a href={`${apiUrl}/legal/privacy-policy`} className="underline">
+            Terms of Services
+          </a>{' '}
+          and{' '}
+          <a href={`${apiUrl}/legal/terms-of-service`} className="underline">
+            Privacy Policy
+          </a>
+          .
+        </p>
       </div>
     </div>
   );

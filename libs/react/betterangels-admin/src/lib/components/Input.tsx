@@ -13,12 +13,14 @@ export default function Input(props: IInputProps) {
   return (
     <div className={`flex flex-col ${className || ''}`}>
       {label && (
-        <label htmlFor={id} className="text-sm ml-1 mb-1">
+        <label htmlFor={id} className="text-sm ml-1 mb-2">
           {label}
         </label>
       )}
       <input
-        className={`bg-neutral-99 px-4 py-4 rounded-lg ${inputClassname || ''}`}
+        className={`bg-neutral-99 rounded-lg  focus:outline-none px-4 py-4 ${
+          inputClassname || ''
+        }`}
         id={id}
         {...rest}
       />

@@ -30,3 +30,30 @@
   margin: 0;
   -webkit-tap-highlight-color: transparent;
 }
+
+html,
+body {
+  color: var(--color-primary-20);
+  appearance: none;
+}
+.btn-xl {
+  height: 68px;
+  font-size: 18px;
+  border-radius: 8px;
+}
+
+.btn:is(:disabled, [disabled], .btn-disabled):not(.btn-link, .btn-ghost) {
+  background-color: var(--color-neutral-90);
+  box-shadow: none;
+  color: var(--color-neutral-70);
+}
+
+.input-xl {
+  height: 68px;
+  font-size: 16px;
+}
+
+.btn-primary {
+  background-color: var(--color-primary-60);
+  --btn-color: var(--color-primary-60);
+}
