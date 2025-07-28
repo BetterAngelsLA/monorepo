@@ -35,8 +35,3 @@ html,
 body {
   color: var(--color-primary-20);
 }
-
-.menu {
-  --menu-active-bg: var(--color-neutral-98);
-  --menu-active-fg: var(--color-primary-20);
-}

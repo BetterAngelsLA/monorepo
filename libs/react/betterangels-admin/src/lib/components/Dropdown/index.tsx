@@ -1,4 +1,5 @@
 import { ReactElement } from 'react';
+import './index.css';
 
 export default function Dropdown({
   options,
@@ -24,7 +25,10 @@ export default function Dropdown({
       >
         {options.map((option) => (
           <li key={option}>
-            <button className={`text-sm`} onClick={() => onSelect(option)}>
+            <button
+              className={`text-sm text-primary-20`}
+              onClick={() => onSelect(option)}
+            >
               {option}
             </button>
           </li>
