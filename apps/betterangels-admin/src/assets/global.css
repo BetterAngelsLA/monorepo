@@ -30,3 +30,8 @@
   margin: 0;
   -webkit-tap-highlight-color: transparent;
 }
+
+html,
+body {
+  color: var(--color-primary-20);
+}

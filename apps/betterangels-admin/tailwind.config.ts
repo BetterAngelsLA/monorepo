@@ -17,6 +17,10 @@ const config: Config = {
       fontFamily: {
         primary: 'var(--font-primary)',
       },
+      colors: {
+        'neutral-98': 'var(--color-neutral-98)',
+        'primary-20': 'var(--color-primary-20)',
+      },
     },
   },
   plugins: [daisyui],
