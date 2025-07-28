@@ -30,3 +30,14 @@
   margin: 0;
   -webkit-tap-highlight-color: transparent;
 }
+
+html,
+body {
+  color: var(--color-primary-20);
+  appearance: none;
+}
+
+.menu {
+  --menu-active-bg: var(--color-neutral-98);
+  --menu-active-fg: var(--color-primary-20);
+}
