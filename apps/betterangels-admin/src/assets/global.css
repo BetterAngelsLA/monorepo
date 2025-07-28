@@ -34,7 +34,6 @@
 html,
 body {
   color: var(--color-primary-20);
-  appearance: none;
 }
 .btn-xl {
   height: 68px;
