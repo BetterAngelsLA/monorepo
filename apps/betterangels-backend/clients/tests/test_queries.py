@@ -637,29 +637,31 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         )
 
     @parametrize(
-        ("doc_group, expected_namespaces"),
+        ("doc_groups, expected_namespaces"),
         [
             (
-                None,
+                [],
                 [ns.value for ns in ClientDocumentNamespaceEnum],
             ),
             (
-                ClientDocumentGroupEnum.DOC_READY.name,
-                [ns.value for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.DOC_READY.name]],
+                [ClientDocumentGroupEnum.DOC_READY.name],
+                [ns.value for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.DOC_READY]],
             ),
             (
-                ClientDocumentGroupEnum.FORMS.name,
-                [ns.value for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.FORMS.name]],
-            ),
-            (
-                ClientDocumentGroupEnum.OTHER.name,
-                [ns.value for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.OTHER.name]],
+                [ClientDocumentGroupEnum.FORMS.name, ClientDocumentGroupEnum.OTHER.name],
+                [
+                    ns.value
+                    for ns in [
+                        *CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.FORMS],
+                        *CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.OTHER],
+                    ]
+                ],
             ),
         ],
     )
     def test_client_documents_query(
         self,
-        doc_group: Optional[ClientDocumentGroupEnum],
+        doc_groups: list[ClientDocumentGroupEnum],
         expected_namespaces: list[ClientDocumentNamespaceEnum],
     ) -> None:
         file_content = b"Test file content"
@@ -680,8 +682,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         self.graphql_client.force_login(self.org_1_case_manager_1)
         query = """
-            query ($clientId: String!, $documentGroup: ClientDocumentGroupEnum){
-                clientDocuments(clientId: $clientId, documentGroup: $documentGroup) {
+            query ($clientId: String!, $documentGroups: [ClientDocumentGroupEnum!]!){
+                clientDocuments(clientId: $clientId, documentGroups: $documentGroups) {
                     totalCount
                     results {
                         id
@@ -692,7 +694,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
 
         expected_doc_ids = [str(doc.pk) for doc in client_docs if doc.namespace in expected_namespaces]
 
-        variables = {"clientId": str(client_profile.pk), "documentGroup": doc_group}
+        variables = {"clientId": str(client_profile.pk), "documentGroups": doc_groups}
         response = self.execute_graphql(query, variables)
 
         actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]

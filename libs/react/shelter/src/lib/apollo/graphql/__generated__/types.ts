@@ -1564,7 +1564,7 @@ export type QueryClientDocumentArgs = {
 
 export type QueryClientDocumentsArgs = {
   clientId: Scalars['String']['input'];
-  documentGroup?: InputMaybe<ClientDocumentGroupEnum>;
+  documentGroups: Array<ClientDocumentGroupEnum>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

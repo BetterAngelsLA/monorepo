@@ -7,6 +7,7 @@ import strawberry
 import strawberry_django
 from clients.enums import (
     AdaAccommodationEnum,
+    ClientDocumentGroupEnum,
     ClientDocumentNamespaceEnum,
     LanguageEnum,
     LivingSituationEnum,
@@ -38,7 +39,7 @@ from .models import (
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
 CLIENT_DOCUMENT_NAMESPACE_GROUPS = {
-    "DOC_READY": [
+    ClientDocumentGroupEnum.DOC_READY: [
         ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT,
         ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK,
         ClientDocumentNamespaceEnum.PHOTO_ID,
@@ -46,13 +47,13 @@ CLIENT_DOCUMENT_NAMESPACE_GROUPS = {
         ClientDocumentNamespaceEnum.SOCIAL_SECURITY_CARD,
         ClientDocumentNamespaceEnum.OTHER_DOC_READY,
     ],
-    "FORMS": [
+    ClientDocumentGroupEnum.FORMS: [
         ClientDocumentNamespaceEnum.CONSENT_FORM,
         ClientDocumentNamespaceEnum.HMIS_FORM,
         ClientDocumentNamespaceEnum.INCOME_FORM,
         ClientDocumentNamespaceEnum.OTHER_FORM,
     ],
-    "OTHER": [
+    ClientDocumentGroupEnum.OTHER: [
         ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT,
     ],
 }

@@ -344,15 +344,21 @@ class Query:
 
     @strawberry_django.offset_paginated(extensions=[HasPerm(AttachmentPermissions.VIEW)])
     def client_documents(
-        self, info: Info, client_id: str, document_group: Optional[ClientDocumentGroupEnum] = None
+        self, info: Info, client_id: str, document_groups: list[ClientDocumentGroupEnum]
     ) -> OffsetPaginated[ClientDocumentType]:
         current_user = cast(User, get_current_user(info))
 
         content_type = ContentType.objects.get_for_model(ClientProfile)
 
         namespace_args = (
-            {"namespace__in": [ns.value for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[document_group.name]]}
-            if document_group
+            {
+                "namespace__in": [
+                    namespace.value
+                    for group in document_groups
+                    for namespace in CLIENT_DOCUMENT_NAMESPACE_GROUPS[group]
+                ]
+            }
+            if document_groups
             else {}
         )
 
