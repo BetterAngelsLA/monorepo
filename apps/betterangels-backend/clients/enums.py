@@ -39,6 +39,13 @@ class ClientDocumentNamespaceEnum(models.TextChoices):
     OTHER_CLIENT_DOCUMENT = "other_client_document", "Other Client Document"
 
 
+@strawberry.enum
+class ClientDocumentGroupEnum(models.TextChoices):
+    DOC_READY = "doc_ready", "Doc Ready"
+    FORMS = "forms", "Forms"
+    OTHER = "other", "Other"
+
+
 class EyeColorEnum(models.TextChoices):
     BLUE = "blue", _("Blue")
     BROWN = "brown", _("Brown")

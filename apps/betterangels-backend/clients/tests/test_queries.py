@@ -6,6 +6,8 @@ import time_machine
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
     AdaAccommodationEnum,
+    ClientDocumentGroupEnum,
+    ClientDocumentNamespaceEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -28,7 +30,11 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
     SocialMediaProfileBaseTestCase,
 )
-from clients.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
+from clients.types import (
+    CLIENT_DOCUMENT_NAMESPACE_GROUPS,
+    MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS,
+)
+from django.contrib.contenttypes.models import ContentType
 from django.test import override_settings
 from model_bakery import baker
 from notes.models import Note
@@ -604,10 +610,23 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-    def test_client_document_query(self) -> None:
+        self.file_name = "test%20file%20name"
+        self.file_content = b"Test file content"
+        self.client_profile = baker.make(ClientProfile)
+        self.content_type = ContentType.objects.get_for_model(ClientProfile)
+
         self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_client_document_query(self) -> None:
+        client_doc = self._create_client_document_fixture(
+            str(self.client_profile.pk),
+            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+            self.file_content,
+            self.file_name,
+        )["data"]["createClientDocument"]
+
         query = """
-            query ViewClientDocument($id: ID!) {
+            query ($id: ID!) {
                 clientDocument(pk: $id) {
                     id
                     file {
@@ -620,42 +639,130 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }
             }
         """
-        variables = {"id": self.client_profile_1_document_1["id"]}
-        response = self.execute_graphql(query, variables)
+        variables = {"id": client_doc["id"]}
 
-        self.assertEqual(
-            response["data"]["clientDocument"],
-            self.client_profile_1_document_1,
-        )
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        self.assertEqual(response["data"]["clientDocument"], client_doc)
 
     def test_client_documents_query(self) -> None:
-        self.graphql_client.force_login(self.org_1_case_manager_1)
+        expected_doc_ids = [
+            self._create_client_document_fixture(
+                client_profile_id=str(self.client_profile.pk),
+                namespace=namespace.name,
+                file_content=self.file_content,
+                file_name=self.file_name,
+            )["data"]["createClientDocument"]["id"]
+            for namespace in ClientDocumentNamespaceEnum
+        ]
+
         query = """
-            query ViewClientDocuments {
-                clientDocuments {
+            query ($clientId: String!){
+                clientDocuments(clientId: $clientId) {
                     totalCount
                     results {
                         id
-                        file {
-                            name
-                        }
-                        attachmentType
-                        mimeType
-                        originalFilename
-                        namespace
                     }
                 }
             }
         """
-        response = self.execute_graphql(query)
+        variables = {"clientId": str(self.client_profile.pk)}
 
-        self.assertEqual(response["data"]["clientDocuments"]["totalCount"], 4)
-        self.assertEqual(
-            response["data"]["clientDocuments"]["results"],
-            [
-                self.client_profile_1_document_1,
-                self.client_profile_1_document_2,
-                self.client_profile_1_document_3,
-                self.client_profile_1_document_4,
-            ],
-        )
+        expected_query_count = 5
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]
+        self.assertEqual(expected_doc_ids, actual_doc_ids)
+
+    @parametrize(
+        ("doc_groups, expected_namespaces"),
+        [
+            (
+                None,
+                [ns.name for ns in ClientDocumentNamespaceEnum],
+            ),
+            (
+                [],
+                [ns.name for ns in ClientDocumentNamespaceEnum],
+            ),
+            (
+                [ClientDocumentGroupEnum.DOC_READY.name],
+                [ns.name for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.DOC_READY]],
+            ),
+            (
+                [ClientDocumentGroupEnum.FORMS.name, ClientDocumentGroupEnum.OTHER.name],
+                [
+                    ns.name
+                    for ns in [
+                        *CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.FORMS],
+                        *CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.OTHER],
+                    ]
+                ],
+            ),
+        ],
+    )
+    def test_client_documents_query_filters(
+        self,
+        doc_groups: list[ClientDocumentGroupEnum],
+        expected_namespaces: list[ClientDocumentNamespaceEnum],
+    ) -> None:
+        client_docs = [
+            self._create_client_document_fixture(
+                client_profile_id=str(self.client_profile.pk),
+                namespace=namespace.name,
+                file_content=self.file_content,
+                file_name=self.file_name,
+            )["data"]["createClientDocument"]
+            for namespace in ClientDocumentNamespaceEnum
+        ]
+
+        query = """
+            query ($clientId: String!, $filters: ClientDocumentFilter){
+                clientDocuments(clientId: $clientId, filters: $filters) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+        filters = {"documentGroups": doc_groups}
+        variables = {"clientId": str(self.client_profile.pk), "filters": filters}
+
+        expected_query_count = 5
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        expected_doc_ids = [doc["id"] for doc in client_docs if doc["namespace"] in expected_namespaces]
+        actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]
+        self.assertEqual(expected_doc_ids, actual_doc_ids)
+
+    def test_client_documents_query_bad_client_id(self) -> None:
+        self._create_client_document_fixture(
+            client_profile_id=str(self.client_profile.pk),
+            namespace=ClientDocumentNamespaceEnum.BIRTH_CERTIFICATE.name,
+            file_content=self.file_content,
+            file_name=self.file_name,
+        )["data"]["createClientDocument"]
+
+        query = """
+            query ($clientId: String!){
+                clientDocuments(clientId: $clientId) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"clientId": "999999"}
+
+        expected_query_count = 5
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]
+        self.assertEqual([], actual_doc_ids)
