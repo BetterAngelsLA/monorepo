@@ -38,6 +38,7 @@ export function Sidebar(props: TProps) {
     'ease-in-out',
     'border',
     'border-neutral-90',
+    'bg-neutral-99',
     'relative',
     className,
   ];
