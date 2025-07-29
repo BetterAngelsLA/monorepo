@@ -51,4 +51,5 @@ body {
 .btn-primary {
   background-color: var(--color-primary-60);
   --btn-color: var(--color-primary-60);
+  color: #fff;
 }
