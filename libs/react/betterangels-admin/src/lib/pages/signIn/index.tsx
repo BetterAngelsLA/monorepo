@@ -5,7 +5,7 @@ import { Input } from '../../components';
 import { useUser } from '../../hooks';
 import { useApiConfig } from '../../providers';
 
-export default function SignIn({ apiUrl }: { apiUrl: string }) {
+export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
@@ -13,7 +13,7 @@ export default function SignIn({ apiUrl }: { apiUrl: string }) {
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { fetchClient } = useApiConfig();
+  const { fetchClient, apiUrl } = useApiConfig();
   const { refetchUser } = useUser();
   const navigate = useNavigate();
 
