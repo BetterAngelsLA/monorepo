@@ -648,6 +648,10 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         ("doc_groups, expected_namespaces"),
         [
             (
+                None,
+                [ns.name for ns in ClientDocumentNamespaceEnum],
+            ),
+            (
                 [],
                 [ns.name for ns in ClientDocumentNamespaceEnum],
             ),
@@ -683,7 +687,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         ]
 
         query = """
-            query ($clientId: String!, $documentGroups: [ClientDocumentGroupEnum!]!){
+            query ($clientId: String!, $documentGroups: [ClientDocumentGroupEnum!]){
                 clientDocuments(clientId: $clientId, documentGroups: $documentGroups) {
                     totalCount
                     results {
