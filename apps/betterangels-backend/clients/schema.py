@@ -350,23 +350,19 @@ class Query:
 
         content_type = ContentType.objects.get_for_model(ClientProfile)
 
-        namespace_args = (
-            {
-                "namespace__in": [
-                    namespace.value
-                    for group in document_groups
-                    for namespace in CLIENT_DOCUMENT_NAMESPACE_GROUPS[group]
-                ]
-            }
-            if document_groups
-            else {}
-        )
+        namespaces = []
+        if document_groups:
+            namespaces = [ns.value for group in document_groups for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[group]]
 
         documents: OffsetPaginated[ClientDocumentType] = filter_for_user(
             Attachment.objects.all(),
             current_user,
             [AttachmentPermissions.VIEW],
-        ).filter(content_type=content_type, object_id=client_id, **namespace_args)
+        ).filter(
+            content_type=content_type,
+            object_id=client_id,
+            **{"namespace__in": namespaces} if namespaces else {},
+        )
 
         return documents
 
