@@ -377,6 +377,10 @@ class ShelterForm(forms.ModelForm):
                     f"This field is required when 'Other' is selected in {multi_field}.",
                 )
 
+        # Restrict hero image
+        if self.hero_image and self.hero_image.shelter != self:
+            raise ValidationError("Hero image must belong to this shelter.")
+
         return cleaned_data
 
     def _clean_choices(self, field_name: str, model_class: Type[T]) -> list[T]:
