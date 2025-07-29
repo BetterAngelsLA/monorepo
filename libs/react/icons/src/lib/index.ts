@@ -18,6 +18,8 @@ export { default as EmailOutlinedIcon } from './components/emailOutlinedIcon';
 export { default as FilterIcon } from './components/filterIcon';
 export { default as FindMeIcon } from './components/findMeIcon';
 export { default as GlobeIcon } from './components/globeIcon';
+export { default as GroupsIcon } from './components/groupsIcon';
+export { default as HandHeartOutlineIcon } from './components/handHeartOutlineIcon';
 export { default as ImageIcon } from './components/imageIcon';
 export { default as InfoIcon } from './components/infoIcon';
 export { default as InstagramIcon } from './components/instagramIcon';
