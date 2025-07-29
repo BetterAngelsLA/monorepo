@@ -1,7 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react';
 import { SelectButton } from './SelectButton';
 
-const meta: Meta<typeof SelectButton> = {
+export default {
   title: 'SelectButton',
   component: SelectButton,
   args: {
@@ -11,30 +10,26 @@ const meta: Meta<typeof SelectButton> = {
   },
 };
 
-export default meta;
-
-type SelectButtonStory = StoryObj<typeof SelectButton>;
-
-export const Default: SelectButtonStory = {
+export const Default = {
   args: {
     defaultLabel: 'All',
     selected: [],
   },
 };
 
-export const SingleSelected: SelectButtonStory = {
+export const SingleSelected = {
   args: {
     selected: ['Team A'],
   },
 };
 
-export const MultipleSelected: SelectButtonStory = {
+export const MultipleSelected = {
   args: {
     selected: ['Team A', 'Team B', 'Team C'],
   },
 };
 
-export const AllSelected: SelectButtonStory = {
+export const AllSelected = {
   args: {
     selected: ['All'],
   },

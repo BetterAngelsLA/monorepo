@@ -1,7 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react';
 import { PillContainer } from './PillContainer';
 
-const meta: Meta<typeof PillContainer> = {
+export default {
   title: 'PillContainer',
   component: PillContainer,
   args: {
@@ -20,12 +19,5 @@ const meta: Meta<typeof PillContainer> = {
   },
 };
 
-export default meta;
-
-type PillContainerStory = StoryObj<typeof PillContainer>;
-
-export const Basic: PillContainerStory = {
-  args: {
-    type: 'success',
-  },
-};
+// Basic story inherits all of the above args
+export const Basic = {};
