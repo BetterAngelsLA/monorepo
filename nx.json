@@ -109,7 +109,8 @@
       "options": {
         "targetName": "e2e"
       }
-    }
+    },
+    "@nx/storybook"
   ],
   "generators": {
     "@nx/react": {
@@ -124,8 +125,12 @@
       },
       "library": {
         "style": "tailwind",
-        "linter": "eslint"
+        "linter": "eslint",
+        "unitTestRunner": "none"
       }
     }
+  },
+  "tui": {
+    "enabled": false
   }
 }

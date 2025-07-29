@@ -1,7 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react';
 import { Pill } from './Pill';
 
-const meta: Meta<typeof Pill> = {
+export default {
   title: 'Pill',
   component: Pill,
   args: {
@@ -9,12 +8,4 @@ const meta: Meta<typeof Pill> = {
   },
 };
 
-export default meta;
-
-type PillStory = StoryObj<typeof Pill>;
-
-export const Basic: PillStory = {
-  args: {
-    type: 'success',
-  },
-};
+export const Basic = {};

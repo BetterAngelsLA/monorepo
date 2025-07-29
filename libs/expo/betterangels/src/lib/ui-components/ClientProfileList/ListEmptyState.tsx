@@ -35,9 +35,8 @@ export function ListEmptyState(props: TProps) {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacings.xl,
+    marginTop: 100,
   },
 });

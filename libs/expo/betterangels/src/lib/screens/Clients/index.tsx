@@ -1,13 +1,14 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
-import { ElementType, useState } from 'react';
+import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
   ClientCard,
   ClientCardModal,
   ClientProfileList,
   Header,
+  HorizontalContainer,
 } from '../../ui-components';
 import { ClientProfilesQuery } from './__generated__/Clients.generated';
 
@@ -19,38 +20,40 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   );
   const [search, setSearch] = useState('');
 
+  const handleClientPress = useCallback((client: TClientProfile) => {
+    router.navigate({
+      pathname: `/client/${client.id}`,
+      params: { arrivedFrom: '/clients' },
+    });
+  }, []);
+
+  const renderClientItem = useCallback(
+    (client: TClientProfile) => (
+      <ClientCard
+        client={client}
+        onMenuPress={setCurrentClient}
+        onPress={handleClientPress}
+      />
+    ),
+    [setCurrentClient, handleClientPress]
+  );
+
   return (
     <View style={styles.container}>
       <Header title="Clients" Logo={Logo} />
 
       <View style={styles.content}>
-        <SearchBar
-          value={search}
-          placeholder="Search by name"
-          onChange={(text) => setSearch(text)}
-          onClear={() => setSearch('')}
-          style={{ marginBottom: Spacings.xs }}
-        />
+        <HorizontalContainer>
+          <SearchBar
+            value={search}
+            placeholder="Search by name clients"
+            onChange={(text) => setSearch(text)}
+            onClear={() => setSearch('')}
+            style={{ marginBottom: Spacings.xs }}
+          />
+        </HorizontalContainer>
 
-        <ClientProfileList
-          filters={{
-            search,
-          }}
-          renderItem={(client) => (
-            <ClientCard
-              client={client}
-              onMenuPress={setCurrentClient}
-              onPress={(client) => {
-                router.navigate({
-                  pathname: `/client/${client.id}`,
-                  params: {
-                    arrivedFrom: '/clients',
-                  },
-                });
-              }}
-            />
-          )}
-        />
+        <ClientProfileList filters={{ search }} renderItem={renderClientItem} />
       </View>
 
       {currentClient && (
@@ -71,7 +74,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: Spacings.sm,
     marginTop: Spacings.sm,
   },
 });

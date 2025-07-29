@@ -148,3 +148,12 @@ class UpdateUserInput(UserBaseType):
     id: ID
     has_accepted_tos: auto
     has_accepted_privacy_policy: auto
+
+
+@strawberry.input
+class OrgInvitationInput:
+    email: str
+    first_name: str
+    middle_name: Optional[str] = None
+    last_name: str
+    organization_id: ID
