@@ -257,4 +257,8 @@ class ClientDocumentNamespaceGroupTestCase(TestCase):
         grouped_docs = {doc for docs in CLIENT_DOCUMENT_NAMESPACE_GROUPS.values() for doc in docs}
         all_docs = set(ClientDocumentNamespaceEnum)
 
-        self.assertEqual(grouped_docs, all_docs, f"Docs not included in a group: {all_docs - grouped_docs}")
+        self.assertEqual(
+            grouped_docs,
+            all_docs,
+            f"Docs not included in a group: {all_docs - grouped_docs}. Update `CLIENT_DOCUMENT_NAMESPACE_GROUPS`",
+        )
