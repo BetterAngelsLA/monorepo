@@ -34,4 +34,5 @@
 html,
 body {
   color: var(--color-primary-20);
+  font-family: var(--font-primary);
 }

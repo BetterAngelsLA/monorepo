@@ -1,0 +1,72 @@
+import { mergeCss } from '@monorepo/react/components';
+import { ReactNode, useEffect, useState } from 'react';
+import { SidebarContent } from './SidebarContent';
+import { SidebarHeader } from './SidebarHeader';
+import { SidebarLink } from './SidebarLink';
+import { SidebarToggleBtn } from './SidebarToggleBtn';
+
+type TProps = {
+  children?: ReactNode;
+  className?: string;
+  openClassName?: string;
+  closedClassName?: string;
+  onOpenChange?: (isOpen: boolean) => void;
+};
+
+export function Sidebar(props: TProps) {
+  const { className, openClassName, closedClassName, children, onOpenChange } =
+    props;
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  function toggleOpen() {
+    setIsOpen((prev) => !prev);
+  }
+
+  useEffect(() => {
+    onOpenChange?.(isOpen);
+  }, [isOpen]);
+
+  const openCss = ['w-80', openClassName];
+  const closedCss = ['w-[105px]', closedClassName];
+
+  const parentCss = [
+    'h-screen',
+    isOpen ? openCss : closedCss,
+    'transition-[width]',
+    'duration-300',
+    'ease-in-out',
+    'border',
+    'border-neutral-90',
+    'relative',
+    className,
+  ];
+
+  const contentCss = [
+    'flex',
+    'flex-col',
+    'w-full',
+    'h-full',
+    'overflow-y-auto',
+    'pt-8',
+    'pl-6',
+    'pr-8',
+  ];
+
+  return (
+    <div className={mergeCss(parentCss)}>
+      <SidebarToggleBtn
+        open={isOpen}
+        className="absolute top-8 right-0 -mr-4"
+        onClick={toggleOpen}
+      />
+      <div className={mergeCss(contentCss)}>
+        <div className="pb-8">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+Sidebar.Header = SidebarHeader;
+Sidebar.Content = SidebarContent;
+Sidebar.Link = SidebarLink;
