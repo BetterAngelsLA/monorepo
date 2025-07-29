@@ -47,6 +47,7 @@ from .types import (
     CLIENT_DOCUMENT_NAMESPACE_GROUPS,
     ClientContactInput,
     ClientContactType,
+    ClientDocumentFilter,
     ClientDocumentType,
     ClientHouseholdMemberInput,
     ClientHouseholdMemberType,
@@ -342,29 +343,13 @@ class Query:
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
-    @strawberry_django.offset_paginated(extensions=[HasPerm(AttachmentPermissions.VIEW)])
-    def client_documents(
-        self, info: Info, client_id: str, document_groups: Optional[list[ClientDocumentGroupEnum]] = None
-    ) -> OffsetPaginated[ClientDocumentType]:
-        current_user = cast(User, get_current_user(info))
-
+    @strawberry_django.offset_paginated(extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)])
+    def client_documents(self, info: Info, client_id: str) -> OffsetPaginated[ClientDocumentType]:
         content_type = ContentType.objects.get_for_model(ClientProfile)
 
-        namespaces = []
-        if document_groups:
-            namespaces = [ns.value for group in document_groups for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[group]]
+        documents = Attachment.objects.filter(content_type=content_type, object_id=client_id)
 
-        documents: OffsetPaginated[ClientDocumentType] = filter_for_user(
-            Attachment.objects.all(),
-            current_user,
-            [AttachmentPermissions.VIEW],
-        ).filter(
-            content_type=content_type,
-            object_id=client_id,
-            **{"namespace__in": namespaces} if namespaces else {},
-        )
-
-        return documents
+        return cast(OffsetPaginated[ClientDocumentType], documents)
 
     client_contact: ClientContactType = strawberry_django.field(
         extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],

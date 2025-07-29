@@ -59,7 +59,25 @@ CLIENT_DOCUMENT_NAMESPACE_GROUPS = {
 }
 
 
-@strawberry_django.type(Attachment, pagination=True)
+@filter(Attachment)
+class ClientDocumentFilter:
+    @strawberry_django.filter_field
+    def document_groups(
+        self,
+        queryset: QuerySet[Attachment],
+        info: Info,
+        value: Optional[List[ClientDocumentGroupEnum]],
+        prefix: str,
+    ) -> Tuple[QuerySet[Attachment], Q]:
+        if not value:
+            return queryset, Q()
+
+        namespaces = [ns.value for group in value for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[group]]
+
+        return queryset.filter(namespace__in=namespaces), Q()
+
+
+@strawberry_django.type(Attachment, pagination=True, filters=ClientDocumentFilter)
 class ClientDocumentType(AttachmentInterface):
     namespace: ClientDocumentNamespaceEnum
 

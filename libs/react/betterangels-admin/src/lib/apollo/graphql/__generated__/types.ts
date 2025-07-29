@@ -235,6 +235,14 @@ export type ClientContactTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type ClientDocumentFilter = {
+  AND?: InputMaybe<ClientDocumentFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ClientDocumentFilter>;
+  OR?: InputMaybe<ClientDocumentFilter>;
+  documentGroups?: InputMaybe<Array<ClientDocumentGroupEnum>>;
+};
+
 export enum ClientDocumentGroupEnum {
   DocReady = 'DOC_READY',
   Forms = 'FORMS',
@@ -1564,7 +1572,7 @@ export type QueryClientDocumentArgs = {
 
 export type QueryClientDocumentsArgs = {
   clientId: Scalars['String']['input'];
-  documentGroups?: InputMaybe<Array<ClientDocumentGroupEnum>>;
+  filters?: InputMaybe<ClientDocumentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
