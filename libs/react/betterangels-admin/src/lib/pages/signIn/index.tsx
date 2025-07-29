@@ -167,11 +167,11 @@ export default function SignIn() {
         )}
         <p className="mt-10">
           By continuing, you agree to our{' '}
-          <a href={`${apiUrl}/legal/privacy-policy`} className="underline">
-            Terms of Services
+          <a href={`${apiUrl}/legal/terms-of-service`} className="underline">
+            Terms of Service
           </a>{' '}
           and{' '}
-          <a href={`${apiUrl}/legal/terms-of-service`} className="underline">
+          <a href={`${apiUrl}/legal/privacy-policy`} className="underline">
             Privacy Policy
           </a>
           .
