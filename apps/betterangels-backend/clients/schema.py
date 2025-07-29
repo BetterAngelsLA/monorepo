@@ -344,7 +344,7 @@ class Query:
 
     @strawberry_django.offset_paginated(extensions=[HasPerm(AttachmentPermissions.VIEW)])
     def client_documents(
-        self, info: Info, client_id: str, document_groups: list[ClientDocumentGroupEnum]
+        self, info: Info, client_id: str, document_groups: Optional[list[ClientDocumentGroupEnum]] = None
     ) -> OffsetPaginated[ClientDocumentType]:
         current_user = cast(User, get_current_user(info))
 

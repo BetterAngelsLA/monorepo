@@ -298,22 +298,21 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             ("org_1_case_manager_2", 5),  # Other CM in the same org should succeed
             ("org_2_case_manager_1", 5),  # CM in a different org should succeed
             ("non_case_manager_user", 0),  # Non-CM user should not succeed
-            # NOTE: Anon user raising an error may be caused by a strawberry bug.
-            # This test may fail and need updating when the bug is fixed.
-            (None, None),  # Anonymous user should return error
+            (None, 0),  # Non-CM user should not succeed
         ],
     )
     def test_view_client_documents_permission(self, user_label: str, expected_document_count: Optional[int]) -> None:
         self._handle_user_login(user_label)
 
         query = """
-            query {
-                clientDocuments {
+            query ($clientId: String!){
+                clientDocuments(clientId: $clientId) {
                     totalCount
                 }
             }
         """
-        response = self.execute_graphql(query)
+        variables = {"clientId": str(self.client_profile_1["id"])}
+        response = self.execute_graphql(query, variables)
 
         if expected_document_count is not None:
             self.assertEqual(response["data"]["clientDocuments"]["totalCount"], expected_document_count)
