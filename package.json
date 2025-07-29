@@ -123,7 +123,7 @@
     "@nx/vite": "21.3.8",
     "@nx/web": "21.3.8",
     "@nx/workspace": "21.3.8",
-    "@nxlv/python": "21.0.0",
+    "@nxlv/python": "21.0.4",
     "@playwright/test": "^1.36.0",
     "@storybook/addon-docs": "9.0.18",
     "@storybook/addon-react-native-web": "^0.0.29",
