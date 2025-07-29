@@ -640,9 +640,42 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }
         """
         variables = {"id": client_doc["id"]}
-        response = self.execute_graphql(query, variables)
+
+        expected_query_count = 3
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
 
         self.assertEqual(response["data"]["clientDocument"], client_doc)
+
+    def test_client_documents_query(self) -> None:
+        expected_doc_ids = [
+            self._create_client_document_fixture(
+                client_profile_id=str(self.client_profile.pk),
+                namespace=namespace.name,
+                file_content=self.file_content,
+                file_name=self.file_name,
+            )["data"]["createClientDocument"]["id"]
+            for namespace in ClientDocumentNamespaceEnum
+        ]
+
+        query = """
+            query ($clientId: String!){
+                clientDocuments(clientId: $clientId) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+        variables = {"clientId": str(self.client_profile.pk)}
+
+        expected_query_count = 5
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]
+        self.assertEqual(expected_doc_ids, actual_doc_ids)
 
     @parametrize(
         ("doc_groups, expected_namespaces"),
@@ -671,7 +704,7 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             ),
         ],
     )
-    def test_client_documents_query(
+    def test_client_documents_query_filters(
         self,
         doc_groups: list[ClientDocumentGroupEnum],
         expected_namespaces: list[ClientDocumentNamespaceEnum],
@@ -687,8 +720,8 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         ]
 
         query = """
-            query ($clientId: String!, $documentGroups: [ClientDocumentGroupEnum!]){
-                clientDocuments(clientId: $clientId, documentGroups: $documentGroups) {
+            query ($clientId: String!, $filters: ClientDocumentFilter){
+                clientDocuments(clientId: $clientId, filters: $filters) {
                     totalCount
                     results {
                         id
@@ -696,14 +729,15 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }
             }
         """
+        filters = {"documentGroups": doc_groups}
+        variables = {"clientId": str(self.client_profile.pk), "filters": filters}
+
+        expected_query_count = 5
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
 
         expected_doc_ids = [doc["id"] for doc in client_docs if doc["namespace"] in expected_namespaces]
-
-        variables = {"clientId": str(self.client_profile.pk), "documentGroups": doc_groups}
-        response = self.execute_graphql(query, variables)
-
         actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]
-
         self.assertEqual(expected_doc_ids, actual_doc_ids)
 
     def test_client_documents_query_bad_client_id(self) -> None:
@@ -724,9 +758,11 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }
             }
         """
-
         variables = {"clientId": "999999"}
-        response = self.execute_graphql(query, variables)
+
+        expected_query_count = 5
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
 
         actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]
         self.assertEqual([], actual_doc_ids)
