@@ -28,9 +28,9 @@ from common.permissions.enums import AttachmentPermissions
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.fields import GenericRel
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import ForeignKey, Prefetch, QuerySet
+from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
 from guardian.shortcuts import assign_perm
 from phonenumber_field.validators import validate_international_phonenumber
@@ -344,23 +344,23 @@ class Query:
 
     @strawberry_django.offset_paginated(extensions=[HasPerm(AttachmentPermissions.VIEW)])
     def client_documents(
-        self, info: Info, client_id: str, document_group: ClientDocumentGroupEnum
+        self, info: Info, client_id: str, document_group: Optional[ClientDocumentGroupEnum] = None
     ) -> OffsetPaginated[ClientDocumentType]:
         current_user = cast(User, get_current_user(info))
 
         content_type = ContentType.objects.get_for_model(ClientProfile)
 
-        namespaces = CLIENT_DOCUMENT_NAMESPACE_GROUPS[document_group.name]
+        namespace_args = (
+            {"namespace__in": [ns.value for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[document_group.name]]}
+            if document_group
+            else {}
+        )
 
         documents: OffsetPaginated[ClientDocumentType] = filter_for_user(
             Attachment.objects.all(),
             current_user,
             [AttachmentPermissions.VIEW],
-        ).filter(
-            content_type=content_type,
-            object_id=client_id,
-            namespace__in=[ns.value for ns in namespaces],
-        )
+        ).filter(content_type=content_type, object_id=client_id, **namespace_args)
 
         return documents
 
@@ -678,10 +678,6 @@ class Mutation:
             )
         return cast(ClientProfileImportRecordType, record)
 
-    update_client_document: ClientDocumentType = mutations.update(
-        UpdateClientDocumentInput,
-        extensions=[HasRetvalPerm(perms=AttachmentPermissions.CHANGE)],
-    )
     update_client_document: ClientDocumentType = mutations.update(
         UpdateClientDocumentInput,
         extensions=[HasRetvalPerm(perms=AttachmentPermissions.CHANGE)],

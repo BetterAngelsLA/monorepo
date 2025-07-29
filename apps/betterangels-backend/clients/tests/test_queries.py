@@ -6,6 +6,8 @@ import time_machine
 from accounts.tests.baker_recipes import organization_recipe
 from clients.enums import (
     AdaAccommodationEnum,
+    ClientDocumentGroupEnum,
+    ClientDocumentNamespaceEnum,
     EyeColorEnum,
     GenderEnum,
     HairColorEnum,
@@ -28,7 +30,13 @@ from clients.tests.utils import (
     HmisProfileBaseTestCase,
     SocialMediaProfileBaseTestCase,
 )
-from clients.types import MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS
+from clients.types import (
+    CLIENT_DOCUMENT_NAMESPACE_GROUPS,
+    MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS,
+)
+from common.models import Attachment
+from django.contrib.contenttypes.models import ContentType
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from model_bakery import baker
 from notes.models import Note
@@ -628,34 +636,65 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             self.client_profile_1_document_1,
         )
 
-    def test_client_documents_query(self) -> None:
+    @parametrize(
+        ("doc_group, expected_namespaces"),
+        [
+            (
+                None,
+                [ns.value for ns in ClientDocumentNamespaceEnum],
+            ),
+            (
+                ClientDocumentGroupEnum.DOC_READY.name,
+                [ns.value for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.DOC_READY.name]],
+            ),
+            (
+                ClientDocumentGroupEnum.FORMS.name,
+                [ns.value for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.FORMS.name]],
+            ),
+            (
+                ClientDocumentGroupEnum.OTHER.name,
+                [ns.value for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.OTHER.name]],
+            ),
+        ],
+    )
+    def test_client_documents_query(
+        self,
+        doc_group: Optional[ClientDocumentGroupEnum],
+        expected_namespaces: list[ClientDocumentNamespaceEnum],
+    ) -> None:
+        file_content = b"Test file content"
+        file_name = "test%20file%20name"
+        file = SimpleUploadedFile(name=file_name, content=file_content)
+        client_profile = baker.make(ClientProfile)
+        content_type = ContentType.objects.get_for_model(ClientProfile)
+
+        client_docs = [
+            Attachment.objects.create(
+                content_type=content_type,
+                object_id=client_profile.pk,
+                file=file,
+                namespace=namespace,
+            )
+            for namespace in ClientDocumentNamespaceEnum.values
+        ]
+
         self.graphql_client.force_login(self.org_1_case_manager_1)
         query = """
-            query {
-                clientDocuments {
+            query ($clientId: String!, $documentGroup: ClientDocumentGroupEnum){
+                clientDocuments(clientId: $clientId, documentGroup: $documentGroup) {
                     totalCount
                     results {
                         id
-                        file {
-                            name
-                        }
-                        attachmentType
-                        mimeType
-                        originalFilename
-                        namespace
                     }
                 }
             }
         """
-        response = self.execute_graphql(query)
 
-        self.assertEqual(response["data"]["clientDocuments"]["totalCount"], 4)
-        self.assertEqual(
-            response["data"]["clientDocuments"]["results"],
-            [
-                self.client_profile_1_document_1,
-                self.client_profile_1_document_2,
-                self.client_profile_1_document_3,
-                self.client_profile_1_document_4,
-            ],
-        )
+        expected_doc_ids = [str(doc.pk) for doc in client_docs if doc.namespace in expected_namespaces]
+
+        variables = {"clientId": str(client_profile.pk), "documentGroup": doc_group}
+        response = self.execute_graphql(query, variables)
+
+        actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]
+
+        self.assertEqual(expected_doc_ids, actual_doc_ids)

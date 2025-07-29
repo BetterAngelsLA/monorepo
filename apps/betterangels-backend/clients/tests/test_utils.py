@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
 import strawberry
-from clients.enums import ErrorCodeEnum, HmisAgencyEnum
+from clients.enums import ClientDocumentNamespaceEnum, ErrorCodeEnum, HmisAgencyEnum
 from clients.schema import (
     validate_california_id,
     validate_contacts,
@@ -12,6 +12,8 @@ from clients.schema import (
     value_exists,
 )
 from clients.tests.utils import ClientProfileGraphQLBaseTestCase
+from clients.types import CLIENT_DOCUMENT_NAMESPACE_GROUPS
+from django.test import TestCase
 from unittest_parametrize import parametrize
 
 
@@ -248,3 +250,11 @@ class ClientProfileUtilsTestCase(ClientProfileGraphQLBaseTestCase):
                 self.assertEqual(error["field"], "contacts")
                 self.assertEqual(error["location"], location)
                 self.assertEqual(error["errorCode"], ErrorCodeEnum.PHONE_NUMBER_INVALID.name)
+
+
+class ClientDocumentNamespaceGroupTestCase(TestCase):
+    def test_all_docs_are_grouped(self) -> None:
+        grouped_docs = {doc for docs in CLIENT_DOCUMENT_NAMESPACE_GROUPS.values() for doc in docs}
+        all_docs = set(ClientDocumentNamespaceEnum)
+
+        self.assertEqual(grouped_docs, all_docs, f"Docs not included in a group: {all_docs - grouped_docs}")
