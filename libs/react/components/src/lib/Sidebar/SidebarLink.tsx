@@ -21,15 +21,20 @@ export function SidebarLink(props: TProps) {
     : 'var(--color-primary-20)';
 
   const parentCss = [
+    'relative',
     'flex',
     'flex-shrink-0',
     'text-sm/21',
     'h-[40px]',
+    collapsed ? 'w-[40px]' : 'w-full',
+    'transition-[width]',
+    'duration-300',
+    'ease-in-out',
     'items-center',
     'overflow-hidden',
-    'w-full',
     'rounded-lg',
     'hover:bg-neutral-98',
+    isActive ? 'bg-neutral-98' : undefined,
     className,
   ];
 
@@ -37,16 +42,6 @@ export function SidebarLink(props: TProps) {
     'px-2',
     'truncate',
     isActive ? 'font-semibold text-primary-60' : 'font-normal text-primary-20',
-  ];
-
-  const selectedMarkerCss = [
-    'ml-auto',
-    'flex-shrink-0',
-    isActive ? 'bg-primary-60' : 'transparent',
-    'w-[5px]',
-    'h-[28px]',
-    'rounded-l-[20px]',
-    'rounded-r-[2px]',
   ];
 
   const iconWrapperCss = [
@@ -58,11 +53,25 @@ export function SidebarLink(props: TProps) {
     'justify-center',
   ];
 
+  const selectedMarkerCss = [
+    'absolute',
+    'right-0',
+    'transform',
+    'top-1/2',
+    '-translate-y-1/2',
+    'w-[5px]',
+    'h-[70%]',
+    'rounded-l-[20px]',
+    'rounded-r-[2px]',
+    isActive ? 'bg-primary-60' : 'transparent',
+  ];
+
   return (
     <Link to={to} className={mergeCss(parentCss)}>
       {icon && (
         <div className={mergeCss(iconWrapperCss)}>{icon(linkColor)}</div>
       )}
+
       {!collapsed && <div className={mergeCss(bodyCss)}>{children}</div>}
 
       <div className={mergeCss(selectedMarkerCss)}></div>

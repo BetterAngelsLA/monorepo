@@ -26,7 +26,7 @@ export function AppSidebar(props: IProps) {
   return (
     <Sidebar className={mergeCss(className)} onOpenChange={setIsOpen}>
       <Sidebar.Header>
-        <BetterAngelsLogoBadge className="mr-2 flex-shrink-0" />
+        <BetterAngelsLogoBadge className="ml-1 mr-2 flex-shrink-0" />
 
         {userOrganization?.name && isOpen && (
           <h2 className="text-2xl truncate">{userOrganization.name}</h2>

@@ -27,19 +27,13 @@ export function Sidebar(props: TProps) {
     onOpenChange?.(isOpen);
   }, [isOpen]);
 
-  const openCss = ['w-80', openClassName];
-  const closedCss = ['w-[105px]', closedClassName];
-
   const parentCss = [
     'h-screen',
-    isOpen ? openCss : closedCss,
-    'transition-[width]',
-    'duration-300',
-    'ease-in-out',
-    'border',
+    'border-r',
     'border-neutral-90',
     'bg-neutral-99',
     'relative',
+    isOpen ? openClassName : closedClassName,
     className,
   ];
 
@@ -54,6 +48,14 @@ export function Sidebar(props: TProps) {
     'pr-8',
   ];
 
+  const childrenCss = [
+    isOpen ? 'w-[260px]' : 'w-[40px]',
+    'transition-[width]',
+    'duration-300',
+    'ease-in-out',
+    'pb-8',
+  ];
+
   return (
     <div className={mergeCss(parentCss)}>
       <SidebarToggleBtn
@@ -62,7 +64,7 @@ export function Sidebar(props: TProps) {
         onClick={toggleOpen}
       />
       <div className={mergeCss(contentCss)}>
-        <div className="pb-8">{children}</div>
+        <div className={mergeCss(childrenCss)}>{children}</div>
       </div>
     </div>
   );
