@@ -20,6 +20,4 @@ alias ynx-validate-schema="yarn nx run-many -t validate-graphql-schema"
 
 alias ynx-precommit="ynx-lint && ynx-typecheck && ynx-validate-schema && ynx-check-migrations"
 
-alias pydest="pytest --reuse-db"
-
 alias rebash="source .bash_aliases"

@@ -42,12 +42,10 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
-from .enums import ClientDocumentGroupEnum, RelationshipTypeEnum
+from .enums import RelationshipTypeEnum
 from .types import (
-    CLIENT_DOCUMENT_NAMESPACE_GROUPS,
     ClientContactInput,
     ClientContactType,
-    ClientDocumentFilter,
     ClientDocumentType,
     ClientHouseholdMemberInput,
     ClientHouseholdMemberType,
