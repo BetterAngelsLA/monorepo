@@ -425,7 +425,7 @@ class ExteriorPhotoInline(admin.TabularInline):
     max_num = 0
 
 
-class InterPhotoInline(admin.TabularInline):
+class InteriorPhotoInline(admin.TabularInline):
     model = InteriorPhoto
     max_num = 0
 
@@ -675,7 +675,7 @@ class ShelterResource(resources.ModelResource):
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
 
-    inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
+    inlines = [ContactInfoInline, ExteriorPhotoInline, InteriorPhotoInline, VideoInline]
     fieldsets = (
         (
             "Basic Information",
