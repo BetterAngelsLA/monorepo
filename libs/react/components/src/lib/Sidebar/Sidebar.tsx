@@ -8,16 +8,27 @@ import { SidebarToggleBtn } from './SidebarToggleBtn';
 type TProps = {
   children?: ReactNode;
   className?: string;
+  defaultOpen?: boolean;
+  placement?: 'left' | 'right';
   openClassName?: string;
   closedClassName?: string;
+  hideCloseBtn?: boolean;
   onOpenChange?: (isOpen: boolean) => void;
 };
 
 export function Sidebar(props: TProps) {
-  const { className, openClassName, closedClassName, children, onOpenChange } =
-    props;
+  const {
+    className,
+    openClassName,
+    closedClassName,
+    placement = 'left',
+    defaultOpen = false,
+    hideCloseBtn = false,
+    children,
+    onOpenChange,
+  } = props;
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   function toggleOpen() {
     setIsOpen((prev) => !prev);
@@ -33,6 +44,7 @@ export function Sidebar(props: TProps) {
   const parentCss = [
     'h-screen',
     isOpen ? openCss : closedCss,
+    placement === 'left' ? 'mr-auto' : 'ml-auto',
     'transition-[width]',
     'duration-300',
     'ease-in-out',
@@ -55,12 +67,17 @@ export function Sidebar(props: TProps) {
   ];
 
   return (
-    <div className={mergeCss(parentCss)}>
-      <SidebarToggleBtn
-        open={isOpen}
-        className="absolute top-8 right-0 -mr-4"
-        onClick={toggleOpen}
-      />
+    <div
+      className={mergeCss(parentCss)}
+      onClick={(e) => e && e.stopPropagation()}
+    >
+      {!hideCloseBtn && (
+        <SidebarToggleBtn
+          open={isOpen}
+          className="absolute top-8 right-0 -mr-4"
+          onClick={toggleOpen}
+        />
+      )}
       <div className={mergeCss(contentCss)}>
         <div className="pb-8">{children}</div>
       </div>

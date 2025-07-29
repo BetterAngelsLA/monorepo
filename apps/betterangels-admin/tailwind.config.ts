@@ -38,6 +38,30 @@ const config: Config = {
         'success-90': 'var(--color-success-90)',
       },
     },
+    keyframes: {
+      fadeIn: {
+        '0%': { opacity: '0' },
+        '100%': { opacity: '1' },
+      },
+      fadeOut: {
+        '0%': { opacity: '1' },
+        '100%': { opacity: '0' },
+      },
+      slideInLeft: {
+        '0%': { transform: 'translate3d(100%, 0, 0)' },
+        '100%': { transform: 'translate3d(0, 0, 0)' },
+      },
+      slideOutRight: {
+        '0%': { transform: 'translate3d(0, 0, 0)' },
+        '100%': { transform: 'translate3d(100%, 0, 0)' },
+      },
+    },
+    animation: {
+      fadeIn300: 'fadeIn 300ms ease-out forwards',
+      fadeOut300: 'fadeOut 300ms ease-in forwards',
+      slideInLeft300: 'slideInLeft 300ms ease-in-out forwards',
+      slideOutRight300: 'slideOutRight 300ms ease-in-out forwards',
+    },
   },
   plugins: [daisyui],
   daisyui: {

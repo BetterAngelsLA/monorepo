@@ -1,3 +1,4 @@
+import { AppDrawerContainer } from '@monorepo/react/betterangels-admin';
 import { mergeCss } from '@monorepo/react/components';
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
@@ -16,6 +17,7 @@ export function AppLayout(props: IProps): ReactElement {
     <div className={mergeCss(parentCss)}>
       <AppSidebar />
       <Outlet />
+      <AppDrawerContainer />
     </div>
   );
 }
