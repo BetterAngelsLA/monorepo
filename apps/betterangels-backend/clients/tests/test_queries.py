@@ -34,9 +34,7 @@ from clients.types import (
     CLIENT_DOCUMENT_NAMESPACE_GROUPS,
     MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS,
 )
-from common.models import Attachment
 from django.contrib.contenttypes.models import ContentType
-from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from model_bakery import baker
 from notes.models import Note
@@ -612,8 +610,21 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
-    def test_client_document_query(self) -> None:
+        self.file_name = "test%20file%20name"
+        self.file_content = b"Test file content"
+        self.client_profile = baker.make(ClientProfile)
+        self.content_type = ContentType.objects.get_for_model(ClientProfile)
+
         self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_client_document_query(self) -> None:
+        client_doc = self._create_client_document_fixture(
+            str(self.client_profile.pk),
+            ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT.name,
+            self.file_content,
+            self.file_name,
+        )["data"]["createClientDocument"]
+
         query = """
             query ($id: ID!) {
                 clientDocument(pk: $id) {
@@ -628,29 +639,26 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
                 }
             }
         """
-        variables = {"id": self.client_profile_1_document_1["id"]}
+        variables = {"id": client_doc["id"]}
         response = self.execute_graphql(query, variables)
 
-        self.assertEqual(
-            response["data"]["clientDocument"],
-            self.client_profile_1_document_1,
-        )
+        self.assertEqual(response["data"]["clientDocument"], client_doc)
 
     @parametrize(
         ("doc_groups, expected_namespaces"),
         [
             (
                 [],
-                [ns.value for ns in ClientDocumentNamespaceEnum],
+                [ns.name for ns in ClientDocumentNamespaceEnum],
             ),
             (
                 [ClientDocumentGroupEnum.DOC_READY.name],
-                [ns.value for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.DOC_READY]],
+                [ns.name for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.DOC_READY]],
             ),
             (
                 [ClientDocumentGroupEnum.FORMS.name, ClientDocumentGroupEnum.OTHER.name],
                 [
-                    ns.value
+                    ns.name
                     for ns in [
                         *CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.FORMS],
                         *CLIENT_DOCUMENT_NAMESPACE_GROUPS[ClientDocumentGroupEnum.OTHER],
@@ -664,23 +672,16 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
         doc_groups: list[ClientDocumentGroupEnum],
         expected_namespaces: list[ClientDocumentNamespaceEnum],
     ) -> None:
-        file_content = b"Test file content"
-        file_name = "test%20file%20name"
-        file = SimpleUploadedFile(name=file_name, content=file_content)
-        client_profile = baker.make(ClientProfile)
-        content_type = ContentType.objects.get_for_model(ClientProfile)
-
         client_docs = [
-            Attachment.objects.create(
-                content_type=content_type,
-                object_id=client_profile.pk,
-                file=file,
-                namespace=namespace,
-            )
-            for namespace in ClientDocumentNamespaceEnum.values
+            self._create_client_document_fixture(
+                client_profile_id=str(self.client_profile.pk),
+                namespace=namespace.name,
+                file_content=self.file_content,
+                file_name=self.file_name,
+            )["data"]["createClientDocument"]
+            for namespace in ClientDocumentNamespaceEnum
         ]
 
-        self.graphql_client.force_login(self.org_1_case_manager_1)
         query = """
             query ($clientId: String!, $documentGroups: [ClientDocumentGroupEnum!]!){
                 clientDocuments(clientId: $clientId, documentGroups: $documentGroups) {
@@ -692,11 +693,36 @@ class ClientDocumentQueryTestCase(ClientProfileGraphQLBaseTestCase):
             }
         """
 
-        expected_doc_ids = [str(doc.pk) for doc in client_docs if doc.namespace in expected_namespaces]
+        expected_doc_ids = [doc["id"] for doc in client_docs if doc["namespace"] in expected_namespaces]
 
-        variables = {"clientId": str(client_profile.pk), "documentGroups": doc_groups}
+        variables = {"clientId": str(self.client_profile.pk), "documentGroups": doc_groups}
         response = self.execute_graphql(query, variables)
 
         actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]
 
         self.assertEqual(expected_doc_ids, actual_doc_ids)
+
+    def test_client_documents_query_bad_client_id(self) -> None:
+        self._create_client_document_fixture(
+            client_profile_id=str(self.client_profile.pk),
+            namespace=ClientDocumentNamespaceEnum.BIRTH_CERTIFICATE.name,
+            file_content=self.file_content,
+            file_name=self.file_name,
+        )["data"]["createClientDocument"]
+
+        query = """
+            query ($clientId: String!){
+                clientDocuments(clientId: $clientId) {
+                    totalCount
+                    results {
+                        id
+                    }
+                }
+            }
+        """
+
+        variables = {"clientId": "999999"}
+        response = self.execute_graphql(query, variables)
+
+        actual_doc_ids = [d["id"] for d in response["data"]["clientDocuments"]["results"]]
+        self.assertEqual([], actual_doc_ids)
