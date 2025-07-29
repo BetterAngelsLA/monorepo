@@ -109,7 +109,8 @@
       "options": {
         "targetName": "e2e"
       }
-    }
+    },
+    "@nx/storybook"
   ],
   "generators": {
     "@nx/react": {
@@ -128,5 +129,8 @@
         "unitTestRunner": "none"
       }
     }
+  },
+  "tui": {
+    "enabled": false
   }
 }
