@@ -1,6 +1,7 @@
 import { Regex } from '@monorepo/react/shared';
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Input } from '../../components';
 import { useUser } from '../../hooks';
 import { useApiConfig } from '../../providers';
 
@@ -12,7 +13,7 @@ export default function SignIn() {
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const { fetchClient } = useApiConfig();
+  const { fetchClient, apiUrl } = useApiConfig();
   const { refetchUser } = useUser();
   const navigate = useNavigate();
 
@@ -97,56 +98,85 @@ export default function SignIn() {
   }, [email, password, fetchClient, refetchUser]);
 
   return (
-    <div>
-      {step === 'initial' && (
-        <>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoCapitalize="none"
-            placeholder="you@example.com"
-          />
-
-          {isPasswordLogin && (
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              type="password"
-              placeholder="Password"
+    <div className="bg-neutral-99 flex min-h-screen items-center justify-center">
+      <div className="rounded-3xl p-10 flex flex-col bg-white shadow-md w-[460px]">
+        <h1 className="font-bold text-2xl mb-2">Sign In</h1>
+        <p className="mb-10">
+          Welcome! Sign in for Better Angels and start making a difference in
+          the LA Community.
+        </p>
+        {step === 'initial' && (
+          <>
+            <Input
+              className="mb-4"
+              inputClassname="input-xl"
+              label="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoCapitalize="none"
+              placeholder="you@example.com"
             />
-          )}
 
-          {!!errorMsg && <div>{errorMsg}</div>}
+            {isPasswordLogin && (
+              <input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                placeholder="Password"
+              />
+            )}
 
-          <button
-            onClick={isPasswordLogin ? handlePasswordLogin : handleSendCode}
-            disabled={
-              loading || !isValidEmail || (isPasswordLogin && !password)
-            }
-          >
-            Sign In
-          </button>
-        </>
-      )}
+            {!!errorMsg && <div>{errorMsg}</div>}
 
-      {step === 'otp' && (
-        <>
-          <input
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            autoCapitalize="characters"
-            placeholder="Enter OTP"
-          />
+            <button
+              className="btn btn-primary btn-xl"
+              onClick={isPasswordLogin ? handlePasswordLogin : handleSendCode}
+              disabled={
+                loading || !isValidEmail || (isPasswordLogin && !password)
+              }
+            >
+              Sign In
+            </button>
+          </>
+        )}
 
-          <p>Check your email for the access code.</p>
+        {step === 'otp' && (
+          <>
+            <Input
+              className="mb-4"
+              inputClassname="input-xl"
+              label="OTP Code"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              autoCapitalize="none"
+              placeholder="Enter OTP"
+            />
 
-          {!!errorMsg && <p>{errorMsg}</p>}
+            <p>Check your email for the access code.</p>
 
-          <button onClick={handleConfirmCode} disabled={loading || !otp.trim()}>
-            Confirm OTP
-          </button>
-        </>
-      )}
+            {!!errorMsg && <p>{errorMsg}</p>}
+
+            <button
+              className="btn btn-primary btn-xl"
+              onClick={handleConfirmCode}
+              disabled={loading || !otp.trim()}
+            >
+              Confirm OTP
+            </button>
+          </>
+        )}
+        <p className="mt-10">
+          By continuing, you agree to our{' '}
+          <a href={`${apiUrl}/legal/terms-of-service`} className="underline">
+            Terms of Service
+          </a>{' '}
+          and{' '}
+          <a href={`${apiUrl}/legal/privacy-policy`} className="underline">
+            Privacy Policy
+          </a>
+          .
+        </p>
+      </div>
     </div>
   );
 }

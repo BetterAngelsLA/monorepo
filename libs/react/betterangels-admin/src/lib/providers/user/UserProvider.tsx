@@ -71,6 +71,10 @@ export default function UserProvider({ children }: UserProviderProps) {
     [user, isLoading, refetchUser]
   );
 
+  if (isLoading) {
+    return null;
+  }
+
   return (
     <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>
   );
