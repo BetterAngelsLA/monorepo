@@ -37,6 +37,40 @@ const config: Config = {
         'success-30': 'var(--color-success-30)',
         'success-90': 'var(--color-success-90)',
       },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        fadeOut: {
+          '0%': { opacity: '1' },
+          '100%': { opacity: '0' },
+        },
+        slideInFromLeft: {
+          '0%': { transform: 'translate3d(-100%, 0, 0)' },
+          '100%': { transform: 'translate3d(0, 0, 0)' },
+        },
+        slideInFromRight: {
+          '0%': { transform: 'translate3d(100%, 0, 0)' },
+          '100%': { transform: 'translate3d(0, 0, 0)' },
+        },
+        slideOutToLeft: {
+          '0%': { transform: 'translate3d(0, 0, 0)' },
+          '100%': { transform: 'translate3d(-100%, 0, 0)' },
+        },
+        slideOutToRight: {
+          '0%': { transform: 'translate3d(0, 0, 0)' },
+          '100%': { transform: 'translate3d(100%, 0, 0)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fadeIn 300ms ease-out forwards',
+        'fade-out': 'fadeOut 300ms ease-in forwards',
+        'slide-in-from-left': 'slideInFromLeft 300ms ease-in-out forwards',
+        'slide-in-from-right': 'slideInFromRight 300ms ease-in-out forwards',
+        'slide-out-to-left': 'slideOutToLeft 300ms ease-in-out forwards',
+        'slide-out-to-right': 'slideOutToRight 300ms ease-in-out forwards',
+      },
     },
   },
   plugins: [daisyui],

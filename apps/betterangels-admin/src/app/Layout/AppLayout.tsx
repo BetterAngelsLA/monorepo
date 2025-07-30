@@ -1,4 +1,4 @@
-import { mergeCss } from '@monorepo/react/components';
+import { AppDrawer, mergeCss } from '@monorepo/react/components';
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
@@ -16,6 +16,7 @@ export function AppLayout(props: IProps): ReactElement {
     <div className={mergeCss(parentCss)}>
       <AppSidebar />
       <Outlet />
+      <AppDrawer />
     </div>
   );
 }
