@@ -1,3 +1,4 @@
+import { Navbar } from '@monorepo/react/betterangels-admin';
 import { mergeCss } from '@monorepo/react/components';
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
@@ -14,8 +15,11 @@ export function AppLayout(props: IProps): ReactElement {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <AppSidebar />
-      <Outlet />
+      <AppSidebar className="relative z-10" />
+      <Navbar />
+      <div className="bg-neutral-99 h-full w-full">
+        <Outlet />
+      </div>
     </div>
   );
 }
