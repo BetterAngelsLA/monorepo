@@ -7,9 +7,17 @@ import django_choices_field.fields
 import notes.enums
 from notes.permissions import NotePermissions, TaskPermissions, ServiceRequestPermissions, PrivateDetailsPermissions
 import pgtrigger.compiler
+from django.utils.translation import gettext_lazy as _
 import pgtrigger.migrations
 from django.conf import settings
 from django.db import migrations, models
+
+
+class TaskPermissions(models.TextChoices):
+    VIEW = "notes.view_task", _("Can view task")
+    CHANGE = "notes.change_task", _("Can change task")
+    DELETE = "notes.delete_task", _("Can delete task")
+    ADD = "notes.add_task", _("Can add task")
 
 
 def create_permissions_if_not_exist(apps, schema_editor):
