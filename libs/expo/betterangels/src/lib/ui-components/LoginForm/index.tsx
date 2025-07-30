@@ -5,13 +5,12 @@ import {
   Button,
   Loading,
 } from '@monorepo/expo/shared/ui-components';
-import { useAsyncStorageState } from '@monorepo/expo/shared/utils';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import useUser from '../../hooks/user/useUser';
 
 export default function LoginForm() {
-  const [email, setEmail] = useAsyncStorageState('userEmail', '');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'initial' | 'otp'>('initial');
@@ -28,6 +27,7 @@ export default function LoginForm() {
   const isPasswordLogin = email.endsWith('@example.com');
   const isValidEmail = Regex.email.test(email);
 
+  // switch API environment when a valid email is entered
   useEffect(() => {
     if (!isValidEmail) return;
     switchEnvironment(targetEnv);
@@ -161,6 +161,24 @@ export default function LoginForm() {
       {step === 'otp' && (
         <>
           <BasicInput
+            label="Email"
+            value={email}
+            onChangeText={(text) => {
+              setEmail(text);
+              setOtp('');
+              setStep('initial');
+            }}
+            autoCapitalize="none"
+            autoCorrect={false}
+            spellCheck={false}
+            keyboardType="email-address"
+            placeholder="you@example.com"
+            borderRadius={50}
+            height={44}
+            mb="sm"
+          />
+
+          <BasicInput
             label="OTP Code"
             value={otp}
             onChangeText={setOtp}
@@ -175,10 +193,23 @@ export default function LoginForm() {
 
           <Text style={styles.info}>
             Please check your inbox for the access code. If it doesn’t arrive
-            soon, hit back and request another code.
+            soon, verify you’ve typed your email address correctly and request
+            another code.
           </Text>
 
           {!!errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
+
+          <Button
+            mt="md"
+            height="lg"
+            borderRadius={50}
+            size="full"
+            variant="secondary"
+            accessibilityHint="Request Another Code"
+            title="Request Another Code"
+            mb="xs"
+            onPress={handleSendCode}
+          />
 
           <Button
             mt="md"
@@ -201,5 +232,10 @@ export default function LoginForm() {
 const styles = StyleSheet.create({
   container: { width: '100%' },
   error: { color: 'red', marginTop: 10 },
-  info: { color: '#555', marginTop: 4, marginBottom: 10, textAlign: 'center' },
+  info: {
+    color: '#555',
+    marginTop: 4,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
 });
