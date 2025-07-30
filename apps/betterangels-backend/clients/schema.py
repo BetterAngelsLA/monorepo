@@ -341,9 +341,13 @@ class Query:
         extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
     )
 
-    client_documents: OffsetPaginated[ClientDocumentType] = strawberry_django.offset_paginated(
-        extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)],
-    )
+    @strawberry_django.offset_paginated(extensions=[HasRetvalPerm(AttachmentPermissions.VIEW)])
+    def client_documents(self, info: Info, client_id: str) -> OffsetPaginated[ClientDocumentType]:
+        content_type = ContentType.objects.get_for_model(ClientProfile)
+
+        documents = Attachment.objects.filter(content_type=content_type, object_id=client_id)
+
+        return cast(OffsetPaginated[ClientDocumentType], documents)
 
     client_contact: ClientContactType = strawberry_django.field(
         extensions=[HasRetvalPerm(ClientContactPermissions.VIEW)],
