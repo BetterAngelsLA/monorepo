@@ -65,9 +65,7 @@ function modalOptions(props?: TProps): NativeStackNavigationOptions {
   };
 
   if (onClose) {
-    baseOpts.headerRight = () => (
-      <CloseButton onClose={onClose} color={Colors.BRAND_DARK_BLUE} />
-    );
+    baseOpts.headerRight = () => <CloseButton onClose={onClose} />;
   }
 
   return baseOpts;

@@ -62,12 +62,12 @@ export default function LocationComponent(props: ILocationProps) {
     setErrors,
   } = props;
   const [location, setLocation] = useState<TLocation>({
-    latitude: point ? point[1] : 37.785834, // Default to 200 Geary St, San Francisco if no point
-    longitude: point ? point[0] : -122.406417, // Default to 200 Geary St, San Francisco if no point
+    latitude: point ? point[1] : 34.04499,
+    longitude: point ? point[0] : -118.251601,
     address: address
       ? `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
-      : '200 Geary St, San Francisco, CA 94102', // Default address
-    name: address && address.street ? address.street : '200 Geary St', // Default name
+      : 'L.A. County',
+    name: address && address.street ? address.street : 'L.A. County',
   });
 
   const isLocation = expanded === 'Location';
