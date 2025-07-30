@@ -11,12 +11,14 @@ from django import forms
 from django.contrib import admin
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.forms import TimeInput
+from django.forms import BaseFormSet, TimeInput
 from django.http import HttpRequest
 from django.urls import reverse
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 from django_choices_field import TextChoicesField
 from django_select2.forms import Select2MultipleWidget
 from import_export import resources
@@ -83,6 +85,12 @@ User = get_user_model()
 
 class ShelterForm(forms.ModelForm):
     template_name = "admin/shelters/change_form.html"  # Specify your custom template path
+
+    clear_hero_image = forms.BooleanField(
+        required=False,
+        label="Clear hero image",
+        help_text="Check to remove the current hero image.",
+    )
 
     # Summary Info
     demographics = forms.MultipleChoiceField(
@@ -377,10 +385,6 @@ class ShelterForm(forms.ModelForm):
                     f"This field is required when 'Other' is selected in {multi_field}.",
                 )
 
-        # Restrict hero image
-        if self.hero_image and self.hero_image.shelter != self:
-            raise ValidationError("Hero image must belong to this shelter.")
-
         return cleaned_data
 
     def _clean_choices(self, field_name: str, model_class: Type[T]) -> list[T]:
@@ -420,13 +424,31 @@ class ContactInfoInline(admin.TabularInline):
     verbose_name_plural = "Additional Contacts"
 
 
+class ExteriorPhotoForm(forms.ModelForm):
+    make_hero_image = forms.BooleanField(required=False, label="Make Hero Image")
+
+    class Meta:
+        model = ExteriorPhoto
+        fields = "__all__"
+
+
+class InteriorPhotoForm(forms.ModelForm):
+    make_hero_image = forms.BooleanField(required=False, label="Make Hero Image")
+
+    class Meta:
+        model = InteriorPhoto
+        fields = "__all__"
+
+
 class ExteriorPhotoInline(admin.TabularInline):
     model = ExteriorPhoto
+    form = ExteriorPhotoForm
     max_num = 0
 
 
-class InteriorPhotoInline(admin.TabularInline):
+class InterPhotoInline(admin.TabularInline):
     model = InteriorPhoto
+    form = InteriorPhotoForm
     max_num = 0
 
 
@@ -675,8 +697,60 @@ class ShelterResource(resources.ModelResource):
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
 
-    inlines = [ContactInfoInline, ExteriorPhotoInline, InteriorPhotoInline, VideoInline]
+    def save_related(
+        self,
+        request: HttpRequest,
+        form: ShelterForm,
+        formsets: list[BaseFormSet],
+        change: bool,
+    ) -> None:
+        if form.errors:
+            return
+
+        super().save_related(request, form, formsets, change)
+
+        if form.cleaned_data.get("clear_hero_image"):
+            form.instance.hero_image_content_type = None
+            form.instance.hero_image_object_id = None
+            form.instance.save()
+
+            return
+
+        hero_image_selected = None
+        for formset in formsets:
+            for form_obj in formset.forms:
+                if (
+                    form_obj.cleaned_data
+                    and not form_obj.cleaned_data.get("DELETE", False)
+                    and form_obj.cleaned_data.get("make_hero_image")
+                ):
+                    hero_image_selected = form_obj.instance
+
+        if hero_image_selected:
+            content_type = ContentType.objects.get_for_model(hero_image_selected.__class__)
+            form.instance.hero_image_content_type = content_type
+            form.instance.hero_image_object_id = hero_image_selected.pk
+            form.instance.save()
+
+    @admin.display(description="Current Hero Image")
+    def display_hero_image(self, obj: Shelter) -> str:
+        if obj.hero_image and hasattr(obj.hero_image, "file") and obj.hero_image.file:
+            return mark_safe(f'<img src="{obj.hero_image.file.url}" style="max-height: 200px;" />')
+
+        return "No hero image selected"
+
+    inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
+        (
+            "Hero Image",
+            {
+                "fields": ("display_hero_image", "clear_hero_image"),
+                "description": (
+                    "This will appear as the main preview image for the shelter. "
+                    "You can select a different hero image in the photo section, below."
+                ),
+            },
+        ),
         (
             "Basic Information",
             {
@@ -875,7 +949,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         self, request: HttpRequest, obj: Optional[Shelter] = None
     ) -> Union[list[str], Tuple[str, ...]]:
         readonly_fields = super().get_readonly_fields(request, obj)
-        readonly_fields = (*readonly_fields, "updated_at", "updated_by")
+        readonly_fields = (*readonly_fields, "updated_at", "updated_by", "display_hero_image")
         if not request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
             readonly_fields = (*readonly_fields, "is_reviewed")
 
