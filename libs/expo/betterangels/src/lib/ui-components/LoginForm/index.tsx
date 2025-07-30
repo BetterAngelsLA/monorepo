@@ -173,7 +173,10 @@ export default function LoginForm() {
             mb="xs"
           />
 
-          <Text style={styles.info}>Check your email for the access code.</Text>
+          <Text style={styles.info}>
+            Please check your inbox for the access code. If it doesn’t arrive
+            soon, hit back and request another code.
+          </Text>
 
           {!!errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
 
