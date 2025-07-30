@@ -235,6 +235,20 @@ type ClientContactTypeOffsetPaginated {
   results: [ClientContactType!]!
 }
 
+input ClientDocumentFilter {
+  AND: ClientDocumentFilter
+  OR: ClientDocumentFilter
+  NOT: ClientDocumentFilter
+  DISTINCT: Boolean
+  documentGroups: [ClientDocumentGroupEnum!]
+}
+
+enum ClientDocumentGroupEnum {
+  DOC_READY
+  FORMS
+  OTHER
+}
+
 enum ClientDocumentNamespaceEnum {
   DRIVERS_LICENSE_FRONT
   DRIVERS_LICENSE_BACK
@@ -1243,7 +1257,6 @@ type Query {
   organizationMembers(organizationId: String!, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  clientDocuments(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
   clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
   clientHouseholdMember(pk: ID!): ClientHouseholdMemberType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clienthouseholdmember"}], any: true)
@@ -1253,6 +1266,7 @@ type Query {
   socialMediaProfile(pk: ID!): SocialMediaProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
   socialMediaProfiles(pagination: OffsetPaginationInput): SocialMediaProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
+  clientDocuments(clientId: String!, filters: ClientDocumentFilter, pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)

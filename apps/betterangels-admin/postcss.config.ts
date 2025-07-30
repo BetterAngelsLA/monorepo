@@ -3,9 +3,13 @@
 //
 // See: https://nx.dev/guides/using-tailwind-css-in-react#step-4:-applying-configuration-to-libraries
 
+import { join } from 'path';
+
 module.exports = {
   plugins: {
-    tailwindcss: {},
+    tailwindcss: {
+      config: join(__dirname, 'tailwind.config.ts'),
+    },
     autoprefixer: {},
   },
 };

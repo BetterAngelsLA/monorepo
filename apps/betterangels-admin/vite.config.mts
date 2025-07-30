@@ -4,6 +4,7 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { ProxyOptions, defineConfig } from 'vite';
+import { rawSvgPlugin } from './vite/plugins/rawSvgPlugin';
 
 const SERVER_PORT = 8084;
 
@@ -42,7 +43,12 @@ export default defineConfig(({ mode }) => {
       host: 'localhost',
     },
 
-    plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
+    plugins: [
+      react(),
+      rawSvgPlugin(),
+      nxViteTsPaths(),
+      nxCopyAssetsPlugin(['*.md']),
+    ],
 
     resolve: {},
 
