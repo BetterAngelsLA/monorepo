@@ -10,14 +10,8 @@ export function useAppDrawer() {
   }, [setDrawer]);
 
   const showDrawer = useCallback(
-    (props: TAppDrawerAtomProps) => {
-      const { content, placement, onClose } = props;
-
-      setDrawer({
-        content,
-        placement,
-        onClose,
-      });
+    (drawerProps: TAppDrawerAtomProps) => {
+      setDrawer(drawerProps);
     },
     [setDrawer]
   );

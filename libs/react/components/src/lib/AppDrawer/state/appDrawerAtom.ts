@@ -5,6 +5,9 @@ export type TDrawerPlacement = 'left' | 'right';
 
 export type TAppDrawerAtomProps = {
   content: ReactNode | null;
+  contentClassName?: string | null;
+  header?: ReactNode | null;
+  footer?: ReactNode | null;
   placement?: TDrawerPlacement;
   onClose?: () => void;
 };

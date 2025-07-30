@@ -11,11 +11,15 @@ export default function Input(props: IInputProps) {
   const generatedId = useId();
   const id = propId ?? generatedId;
 
+  const isRequired = props.required;
+
   return (
     <div className={`flex flex-col ${className || ''}`}>
       {label && (
-        <label htmlFor={id} className="text-sm ml-1 mb-2">
+        <label htmlFor={id} className="text-sm ml-1 mb-2 flex flex-row">
           {label}
+
+          {isRequired && <div className="ml-1 text-alert-60">*</div>}
         </label>
       )}
       <input

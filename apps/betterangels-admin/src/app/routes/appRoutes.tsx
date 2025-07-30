@@ -3,7 +3,7 @@ import Home from '../pages/home';
 import { ServicesPage } from '../pages/services';
 import SignIn from '../pages/sign-in';
 import { TeamsPage } from '../pages/teams';
-import { UsersPage } from '../pages/users';
+import { UsersPage } from '../pages/usersPage';
 
 export const routeChildren: RouteObject[] = [
   {

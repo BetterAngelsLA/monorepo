@@ -8,6 +8,8 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { mergeCss } from '../../utils';
+import { AppDrawerFooter } from './AppDrawerFooter';
+import { AppDrawerHeader } from './AppDrawerHeader';
 import { AppDrawerMask } from './AppDrawerMask';
 import { ANIMATION_TIMING, DRAWER_TRANSITION } from './constants';
 import { appDrawerAtom } from './state/appDrawerAtom';
@@ -69,20 +71,23 @@ export function AppDrawer(props: IProps): ReactElement | null {
     setVisible(false);
   }
 
+  const { content, header, footer, contentClassName } = drawer || {};
+
   const transitions = DRAWER_TRANSITION[placement];
 
-  const contentCss = [
-    'p-24',
+  const parentCss = [
+    'flex',
+    'flex-col',
     'h-full',
-    'border-4',
-    'border-red-500',
+    'w-[500px]',
     'bg-white',
     visible ? transitions.IN : transitions.OUT,
     placement === 'left' ? 'mr-auto' : 'ml-auto',
+    'shadow-xl',
     className,
   ];
 
-  const { content } = drawer || {};
+  const contentCss = ['h-full', 'p-6', 'overflow-y-auto', contentClassName];
 
   return (
     <AppDrawerMask
@@ -90,12 +95,18 @@ export function AppDrawer(props: IProps): ReactElement | null {
       onClick={handleMaskClick}
       className={maskCss}
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className={mergeCss(contentCss)}
-      >
-        {content}
+      <div onClick={(e) => e.stopPropagation()} className={mergeCss(parentCss)}>
+        {header && (
+          <AppDrawerHeader onClick={() => setVisible(false)}>
+            {header}
+          </AppDrawerHeader>
+        )}
+        <div className={mergeCss(contentCss)}>{content}</div>
+
+        {footer && <AppDrawerFooter>{footer}</AppDrawerFooter>}
       </div>
     </AppDrawerMask>
   );
 }
+
+AppDrawer.Header = AppDrawerHeader;
