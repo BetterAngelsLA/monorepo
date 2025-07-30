@@ -27,7 +27,6 @@ export default function LoginForm() {
   const isPasswordLogin = email.endsWith('@example.com');
   const isValidEmail = Regex.email.test(email);
 
-  // switch API environment when a valid email is entered
   useEffect(() => {
     if (!isValidEmail) return;
     switchEnvironment(targetEnv);
