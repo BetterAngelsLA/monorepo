@@ -18,12 +18,7 @@ from django.db.models import (
     Value,
     When,
 )
-from notes.enums import (
-    DueByGroupEnum,
-    SelahTeamEnum,
-    ServiceRequestTypeEnum,
-    TaskTypeEnum,
-)
+from notes.enums import SelahTeamEnum, ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.utils.query import filter_for_user
@@ -68,69 +63,19 @@ class UpdateServiceRequestInput:
     due_by: auto
 
 
-@strawberry_django.ordering.order(models.Task)
-class TaskOrder:
-    due_by: auto
-    id: auto
-
-
-@strawberry_django.type(models.Task, pagination=True, order=TaskOrder)  # type: ignore[literal-required]
-class TaskType:
-    id: ID
-    title: auto
-    location: Optional[LocationType]
-    status: auto
-    due_by: auto
-    due_by_group: DueByGroupEnum
-    client_profile: ClientProfileType | None
-    created_at: auto
-    created_by: UserType
-
-
-@strawberry_django.input(models.Task)
-class CreateTaskInput:
-    title: auto
-    status: auto
-    due_by: auto
-    client_profile: ID | None
-
-
-@strawberry_django.input(models.Task)
-class CreateNoteTaskInput:
-    title: auto
-    status: auto
-    due_by: auto
-    note_id: ID
-    task_type: TaskTypeEnum
-
-
-@strawberry_django.input(models.Task, partial=True)
-class UpdateTaskInput:
-    id: ID
-    title: auto
-    location: Optional[ID]
-    status: auto
-    due_by: auto
+# @strawberry_django.input(models.Task)
+# class CreateNoteTaskInput:
+#     title: auto
+#     status: auto
+#     due_by: auto
+#     note_id: ID
+#     task_type: TaskTypeEnum
 
 
 @strawberry_django.type(models.Mood)
 class MoodType:
     id: ID
     descriptor: auto
-
-
-@strawberry.input
-class AddNoteTaskInput:
-    task_id: ID
-    note_id: ID
-    task_type: TaskTypeEnum
-
-
-@strawberry.input
-class RemoveNoteTaskInput:
-    task_id: ID
-    note_id: ID
-    task_type: TaskTypeEnum
 
 
 @strawberry.input
@@ -218,8 +163,6 @@ class NoteType:
     team: Optional[SelahTeamEnum]
     location: Optional[LocationType]
     moods: List[MoodType]
-    purposes: List[TaskType]
-    next_steps: List[TaskType]
     provided_services: List[ServiceRequestType]
     requested_services: List[ServiceRequestType]
     public_details: auto
@@ -296,12 +239,6 @@ class UpdateNoteInput:
 
 @strawberry_django.input(models.Note)
 class UpdateNoteLocationInput:
-    id: ID
-    location: LocationInput
-
-
-@strawberry_django.input(models.Task)
-class UpdateTaskLocationInput:
     id: ID
     location: LocationInput
 
