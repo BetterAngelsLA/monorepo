@@ -15,6 +15,9 @@ export default function LoginForm() {
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'initial' | 'otp'>('initial');
   const [errorMsg, setErrorMsg] = useState('');
+
+  const [sendingCode, setSendingCode] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { environment, switchEnvironment, fetchClient } = useApiConfig();
@@ -35,10 +38,12 @@ export default function LoginForm() {
   const handleError = (message: string) => {
     setErrorMsg(message);
     setLoading(false);
+    setSendingCode(false);
+    setConfirming(false);
   };
 
   const handleSendCode = useCallback(async () => {
-    setLoading(true);
+    setSendingCode(true);
     setErrorMsg('');
 
     try {
@@ -55,12 +60,12 @@ export default function LoginForm() {
       console.error('Send code error:', error);
       handleError('Network error. Please try again.');
     } finally {
-      setLoading(false);
+      setSendingCode(false);
     }
   }, [email, fetchClient]);
 
   const handleConfirmCode = useCallback(async () => {
-    setLoading(true);
+    setConfirming(true);
     setErrorMsg('');
 
     try {
@@ -79,7 +84,7 @@ export default function LoginForm() {
       console.error('Confirm code error:', error);
       handleError('Network error. Please try again.');
     } finally {
-      setLoading(false);
+      setConfirming(false);
     }
   }, [otp, fetchClient, refetchUser]);
 
@@ -109,22 +114,26 @@ export default function LoginForm() {
 
   return (
     <View style={styles.container}>
+      <BasicInput
+        label="Email"
+        value={email}
+        onChangeText={(text) => {
+          setEmail(text);
+          setOtp('');
+          setStep('initial');
+        }}
+        autoCapitalize="none"
+        autoCorrect={false}
+        spellCheck={false}
+        keyboardType="email-address"
+        placeholder="you@example.com"
+        borderRadius={50}
+        height={44}
+        mb="sm"
+      />
+
       {step === 'initial' && (
         <>
-          <BasicInput
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            autoCorrect={false}
-            spellCheck={false}
-            keyboardType="email-address"
-            placeholder="you@example.com"
-            borderRadius={50}
-            height={44}
-            mb="xs"
-          />
-
           {isPasswordLogin && (
             <BasicInput
               label="Password"
@@ -151,7 +160,9 @@ export default function LoginForm() {
             icon={loading ? <Loading size="small" color="white" /> : undefined}
             onPress={isPasswordLogin ? handlePasswordLogin : handleSendCode}
             disabled={
-              loading || !isValidEmail || (isPasswordLogin && !password)
+              (isPasswordLogin ? loading : sendingCode) ||
+              !isValidEmail ||
+              (isPasswordLogin && !password)
             }
           />
         </>
@@ -159,24 +170,6 @@ export default function LoginForm() {
 
       {step === 'otp' && (
         <>
-          <BasicInput
-            label="Email"
-            value={email}
-            onChangeText={(text) => {
-              setEmail(text);
-              setOtp('');
-              setStep('initial');
-            }}
-            autoCapitalize="none"
-            autoCorrect={false}
-            spellCheck={false}
-            keyboardType="email-address"
-            placeholder="you@example.com"
-            borderRadius={50}
-            height={44}
-            mb="sm"
-          />
-
           <BasicInput
             label="OTP Code"
             value={otp}
@@ -200,14 +193,18 @@ export default function LoginForm() {
 
           <Button
             mt="md"
+            mb="xs"
             height="lg"
             borderRadius={50}
             size="full"
             variant="secondary"
             accessibilityHint="Request Another Code"
             title="Request Another Code"
-            mb="xs"
+            icon={
+              sendingCode ? <Loading size="small" color="white" /> : undefined
+            }
             onPress={handleSendCode}
+            disabled={sendingCode}
           />
 
           <Button
@@ -218,9 +215,11 @@ export default function LoginForm() {
             variant="primary"
             accessibilityHint="Confirm OTP and sign in"
             title="Confirm OTP"
-            icon={loading ? <Loading size="small" color="white" /> : undefined}
+            icon={
+              confirming ? <Loading size="small" color="white" /> : undefined
+            }
             onPress={handleConfirmCode}
-            disabled={loading || !otp.trim()}
+            disabled={confirming || !otp.trim()}
           />
         </>
       )}
