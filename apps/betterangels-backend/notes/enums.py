@@ -85,36 +85,15 @@ class ServiceEnum(models.TextChoices):
     WATER = "water", _("Water")
 
 
-class TaskStatusEnum(models.TextChoices):
-    COMPLETED = "completed", _("Completed")
-    TO_DO = "to_do", _("To Do")
-
-
 class ServiceRequestStatusEnum(models.TextChoices):
     COMPLETED = "completed", _("Completed")
     TO_DO = "to_do", _("To Do")
 
 
 @strawberry.enum
-class TaskTypeEnum(models.TextChoices):
-    PURPOSE = "purpose", "Purpose"
-    NEXT_STEP = "next_step", "Next Step"
-
-
-@strawberry.enum
 class ServiceRequestTypeEnum(models.TextChoices):
     PROVIDED = "provided", "Provided"
     REQUESTED = "requested", "Requested"
-
-
-@strawberry.enum
-class DueByGroupEnum(models.TextChoices):
-    OVERDUE = "overdue", _("Overdue")
-    TODAY = "today", _("Today")
-    TOMORROW = "tomorrow", _("Tomorrow")
-    IN_THE_NEXT_WEEK = "in_the_next_week", _("In the next week")
-    FUTURE_TASKS = "future_tasks", _("Future tasks")
-    NO_DUE_DATE = "no_due_date", _("No due date")
 
 
 @strawberry.enum
