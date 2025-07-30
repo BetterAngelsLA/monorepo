@@ -5,12 +5,13 @@ import {
   Button,
   Loading,
 } from '@monorepo/expo/shared/ui-components';
+import { useAsyncStorageState } from '@monorepo/expo/shared/utils';
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import useUser from '../../hooks/user/useUser';
 
 export default function LoginForm() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useAsyncStorageState('user_email', '');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'initial' | 'otp'>('initial');
@@ -116,6 +117,8 @@ export default function LoginForm() {
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
+            autoCorrect={false}
+            spellCheck={false}
             keyboardType="email-address"
             placeholder="you@example.com"
             borderRadius={50}
@@ -162,6 +165,8 @@ export default function LoginForm() {
             value={otp}
             onChangeText={setOtp}
             autoCapitalize="characters"
+            autoCorrect={false}
+            spellCheck={false}
             placeholder="Enter OTP"
             borderRadius={50}
             height={44}
