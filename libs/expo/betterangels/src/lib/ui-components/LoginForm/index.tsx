@@ -11,7 +11,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import useUser from '../../hooks/user/useUser';
 
 export default function LoginForm() {
-  const [email, setEmail] = useAsyncStorageState('user_email', '');
+  const [email, setEmail] = useAsyncStorageState('userEmail', '');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'initial' | 'otp'>('initial');
