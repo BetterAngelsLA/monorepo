@@ -39,7 +39,6 @@ export function Drawer(props: IModal): ReactElement | null {
   }, [drawer]);
 
   // Unmount and clean up atom cleanup after hide animation completes
-  // ANIMATION_TIMING should match timing defined in tailwind.config.ts
   useEffect(() => {
     if (!visible && shouldRender) {
       const timeout = setTimeout(() => {

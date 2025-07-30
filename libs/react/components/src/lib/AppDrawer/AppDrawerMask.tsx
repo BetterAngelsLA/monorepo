@@ -1,6 +1,7 @@
 import { MouseEvent, PropsWithChildren } from 'react';
 
 import { mergeCss } from '@monorepo/react/components';
+import { ANIMATION_FADE } from './constants';
 
 interface IProps extends PropsWithChildren {
   visible: boolean;
@@ -20,7 +21,7 @@ export function AppDrawerMask(props: IProps) {
     'fixed',
     'flex',
     'bg-black/60',
-    visible ? 'animate-fade-in' : 'animate-fade-out',
+    visible ? ANIMATION_FADE.IN : ANIMATION_FADE.OUT,
     className,
   ];
 

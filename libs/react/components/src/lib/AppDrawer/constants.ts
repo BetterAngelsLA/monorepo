@@ -3,8 +3,8 @@ import { TDrawerPlacement } from './state/appDrawerAtom';
 export const ANIMATION_TIMING = 300;
 
 type TTransitionByPlacement = {
-  IN: 'animate-slide-in-from-left' | 'animate-slide-in-from-right';
-  OUT: 'animate-slide-out-to-left' | 'animate-slide-out-to-right';
+  IN: string;
+  OUT: string;
 };
 
 export const DRAWER_TRANSITION: Record<
@@ -12,11 +12,16 @@ export const DRAWER_TRANSITION: Record<
   TTransitionByPlacement
 > = {
   left: {
-    IN: 'animate-slide-in-from-left',
-    OUT: 'animate-slide-out-to-left',
+    IN: `animate-[slideInFromLeft_300ms_forwards]`,
+    OUT: `animate-[slideOutToLeft_300ms_forwards]`,
   },
   right: {
-    IN: 'animate-slide-in-from-right',
-    OUT: 'animate-slide-out-to-right',
+    IN: `animate-[slideInFromRight_300ms_forwards]`,
+    OUT: `animate-[slideOutToRight_300ms_forwards]`,
   },
+};
+
+export const ANIMATION_FADE = {
+  IN: `animate-[fadeIn_300ms_forwards]`,
+  OUT: `animate-[fadeOut_300ms_forwards]`,
 };

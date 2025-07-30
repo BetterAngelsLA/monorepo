@@ -64,12 +64,16 @@ const config: Config = {
         },
       },
       animation: {
-        'fade-in': 'fadeIn 300ms ease-out forwards',
-        'fade-out': 'fadeOut 300ms ease-in forwards',
-        'slide-in-from-left': 'slideInFromLeft 300ms ease-in-out forwards',
-        'slide-in-from-right': 'slideInFromRight 300ms ease-in-out forwards',
-        'slide-out-to-left': 'slideOutToLeft 300ms ease-in-out forwards',
-        'slide-out-to-right': 'slideOutToRight 300ms ease-in-out forwards',
+        'fade-in': 'fadeIn var(--animation-duration) ease-out forwards',
+        'fade-out': 'fadeOut var(--animation-duration) ease-in forwards',
+        'slide-in-from-left':
+          'slideInFromLeft var(--animation-duration) ease-in-out forwards',
+        'slide-in-from-right':
+          'slideInFromRight var(--animation-duration) ease-in-out forwards',
+        'slide-out-to-left':
+          'slideOutToLeft var(--animation-duration) ease-in-out forwards',
+        'slide-out-to-right':
+          'slideOutToRight var(--animation-duration) ease-in-out forwards',
       },
     },
   },
