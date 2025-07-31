@@ -21,7 +21,7 @@ export function AppSidebar(props: IProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useUser();
 
-  const userOrganization = user?.organizations?.[0];
+  const userOrganization = user?.organization;
 
   return (
     <Sidebar className={mergeCss(className)} onOpenChange={setIsOpen}>

@@ -9,20 +9,36 @@ interface UserProviderProps {
   children: ReactNode;
 }
 
-const parseUser = (user?: CurrentUserQuery['currentUser']): TUser | undefined =>
-  user
-    ? {
-        id: user.id,
-        username: user.username,
-        firstName: user.firstName ?? undefined,
-        lastName: user.lastName ?? undefined,
-        email: user.email,
-        organizations: user.organizations ?? null,
-        isOutreachAuthorized: user.isOutreachAuthorized ?? false,
-        hasAcceptedTos: user.hasAcceptedTos ?? false,
-        hasAcceptedPrivacyPolicy: user.hasAcceptedPrivacyPolicy ?? false,
-      }
-    : undefined;
+const parseUser = (
+  user?: CurrentUserQuery['currentUser']
+): TUser | undefined => {
+  if (!user) {
+    return undefined;
+  }
+
+  const userOrganization = user.organizations?.[0];
+
+  if (!userOrganization) {
+    throw new Error('[UserProvider] missing userOrganization.');
+  }
+
+  if (!user.email) {
+    throw new Error('[UserProvider] missing user email.');
+  }
+
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    organization: userOrganization,
+    firstName: user.firstName ?? undefined,
+    lastName: user.lastName ?? undefined,
+    organizations: user.organizations ?? null,
+    isOutreachAuthorized: user.isOutreachAuthorized ?? false,
+    hasAcceptedTos: user.hasAcceptedTos ?? false,
+    hasAcceptedPrivacyPolicy: user.hasAcceptedPrivacyPolicy ?? false,
+  };
+};
 
 type UserResponse = {
   data?: CurrentUserQuery;
