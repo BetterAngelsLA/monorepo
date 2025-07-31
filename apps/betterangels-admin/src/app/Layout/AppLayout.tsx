@@ -1,4 +1,4 @@
-import { AppDrawer, mergeCss } from '@monorepo/react/components';
+import { Alert, AppDrawer, mergeCss } from '@monorepo/react/components';
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
@@ -17,6 +17,7 @@ export function AppLayout(props: IProps): ReactElement {
       <AppSidebar />
       <Outlet />
       <AppDrawer />
+      <Alert />
     </div>
   );
 }

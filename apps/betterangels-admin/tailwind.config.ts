@@ -52,17 +52,29 @@ const config: Config = {
           '0%': { transform: 'translate3d(-100%, 0, 0)' },
           '100%': { transform: 'translate3d(0, 0, 0)' },
         },
-        slideInFromRight: {
-          '0%': { transform: 'translate3d(100%, 0, 0)' },
-          '100%': { transform: 'translate3d(0, 0, 0)' },
-        },
         slideOutToLeft: {
           '0%': { transform: 'translate3d(0, 0, 0)' },
           '100%': { transform: 'translate3d(-100%, 0, 0)' },
         },
+        slideInFromRight: {
+          '0%': { transform: 'translate3d(100%, 0, 0)' },
+          '100%': { transform: 'translate3d(0, 0, 0)' },
+        },
         slideOutToRight: {
           '0%': { transform: 'translate3d(0, 0, 0)' },
           '100%': { transform: 'translate3d(100%, 0, 0)' },
+        },
+        slideInFromTop: {
+          '0%': { transform: 'translate3d(0, -100%, 0)' },
+          '100%': { transform: 'translate3d(0, 0, 0)' },
+        },
+        slideOutToTop: {
+          '0%': { transform: 'translate3d(0, 0, 0)' },
+          '100%': { transform: 'translate3d(0, -100%, 0)' },
+        },
+        fadeOutScaleOut: {
+          '0%': { opacity: '1', transform: 'scale(1)' },
+          '100%': { opacity: '0', transform: 'scale(0.95)' },
         },
       },
       animation: {
@@ -76,6 +88,11 @@ const config: Config = {
           'slideOutToLeft var(--animation-duration) ease-in-out forwards',
         'slide-out-to-right':
           'slideOutToRight var(--animation-duration) ease-in-out forwards',
+        'slide-in-from-top':
+          'slideInFromTop var(--animation-duration) ease-in-out forwards',
+        'slide-out-to-top':
+          'slideOutToTop var(--animation-duration) ease-in-out forwards',
+        'fade-collapse': 'fadeOutScaleOut 200ms ease-in-out forwards',
       },
     },
   },

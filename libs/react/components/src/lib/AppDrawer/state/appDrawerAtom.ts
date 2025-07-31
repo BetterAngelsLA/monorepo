@@ -19,13 +19,13 @@ const defaultDrawerProps: Partial<TAppDrawerAtomProps> = {
 
 const appDrawerAtomBase = atom<TAppDrawerAtomProps | null>(null);
 
+type drawerSetterFn = (
+  prev: TAppDrawerAtomProps | null
+) => TAppDrawerAtomProps | null;
+
 export const appDrawerAtom: WritableAtom<
-  TAppDrawerAtomProps | null, // Return value (read)
-  [
-    | TAppDrawerAtomProps
-    | null
-    | ((prev: TAppDrawerAtomProps | null) => TAppDrawerAtomProps | null)
-  ], // Write argument (tuple)
+  TAppDrawerAtomProps | null, // Return read value
+  [TAppDrawerAtomProps | null | drawerSetterFn], // Write argument (tuple)
   void // Return type of write function
 > = atom(
   (get) => {

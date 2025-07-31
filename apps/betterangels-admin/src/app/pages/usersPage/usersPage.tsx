@@ -1,12 +1,18 @@
-import { Button, useAppDrawer } from '@monorepo/react/components';
+import { Button, useAlert, useAppDrawer } from '@monorepo/react/components';
 import { PlusIcon } from '@monorepo/react/icons';
 import { addUserFormConfig } from './addUserFormConfig';
 
 export function UsersPage() {
   const { showDrawer } = useAppDrawer();
+  const { showAlert, closeAlert } = useAlert();
 
   function onShowDrawer() {
     showDrawer(addUserFormConfig);
+    showAlert({
+      content:
+        'hello alert hello alert hello alert hello alert hello alert hello alert hello alert hello alert hello alert',
+      type: 'error',
+    });
   }
 
   return (
@@ -23,6 +29,10 @@ export function UsersPage() {
           <PlusIcon className="w-4" />
         </div>
         Add User
+      </Button>
+
+      <Button size="xl" variant="accent" onClick={closeAlert} className="mx-4">
+        Hide
       </Button>
     </div>
   );

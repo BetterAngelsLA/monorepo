@@ -1,6 +1,9 @@
+import { appZIndex } from '@monorepo/react/shared';
 import { TDrawerPlacement } from './state/appDrawerAtom';
 
 export const ANIMATION_TIMING = 300;
+
+export const zIndex = appZIndex.p2;
 
 type TTransitionByPlacement = {
   IN: string;
