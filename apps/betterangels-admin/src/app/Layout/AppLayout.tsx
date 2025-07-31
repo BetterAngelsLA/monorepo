@@ -19,7 +19,7 @@ export function AppLayout(props: IProps): ReactElement {
       <div className="flex flex-col flex-1">
         <Navbar />
 
-        <div className="flex-1 bg-neutral-99 overflow-auto">
+        <div className="flex-1 bg-white overflow-auto px-20 py-[5.375rem]">
           <Outlet />
         </div>
       </div>

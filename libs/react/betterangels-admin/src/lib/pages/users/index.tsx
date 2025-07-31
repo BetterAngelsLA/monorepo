@@ -48,7 +48,7 @@ const users = [
 export default function Users() {
   return (
     <div>
-      <h1 className="mb-3">User Management</h1>
+      <h1 className="mb-3 text-2xl font-bold">User Management</h1>
       <p className="mb-16">
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
         tempor incididunt ut labore et dolore magna aliqua. Lorem ipsum dolor
