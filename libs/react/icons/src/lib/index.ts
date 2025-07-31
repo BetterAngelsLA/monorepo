@@ -13,6 +13,7 @@ export { default as ClockIcon } from './components/clockIcon';
 export { default as CloseIcon } from './components/closeIcon';
 export { default as DeoIcon } from './components/deoIcon';
 export { default as EddIcon } from './components/eddIcon';
+export { default as EllipseIcon } from './components/ellipseIcon';
 export { default as EmailIcon } from './components/emailIcon';
 export { default as EmailOutlinedIcon } from './components/emailOutlinedIcon';
 export { default as FilterIcon } from './components/filterIcon';
