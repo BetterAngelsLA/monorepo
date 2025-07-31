@@ -1,4 +1,5 @@
 import uuid
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pghistory
@@ -14,6 +15,7 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
+from strawberry_django.descriptors import model_property
 
 from .enums import MoodEnum, SelahTeamEnum, ServiceEnum, ServiceRequestStatusEnum
 
@@ -77,6 +79,39 @@ class ServiceRequest(BaseModel):  # type: ignore[django-manager-missing]
 
 
 @pghistory.track(
+    pghistory.InsertEvent("task.add"),
+    pghistory.UpdateEvent("task.update"),
+    pghistory.DeleteEvent("task.remove"),
+)
+class Task(BaseModel):  # type: ignore[django-manager-missing]
+    title = models.CharField(max_length=100, blank=False)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks")
+    due_by = models.DateTimeField(blank=True, null=True)
+    client_profile = models.ForeignKey(
+        "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_tasks"
+    )
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False, related_name="tasks")
+
+    def __str__(self) -> str:
+        return self.title
+
+    def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
+        match action:
+            case "add":
+                self.delete()
+            case "update":
+                for field, changes in diff.items():
+                    setattr(self, field, changes[0])
+
+                self.save()
+            case _:
+                raise Exception(f"Action {action} is not revertable")
+
+    class Meta:
+        ordering = ["-created_at"]
+
+
+@pghistory.track(
     pghistory.InsertEvent("note.add"),
     pghistory.UpdateEvent("note.update"),
     pghistory.DeleteEvent("note.remove"),
@@ -92,10 +127,12 @@ class Note(BaseModel):  # type: ignore[django-manager-missing]
     interacted_at = models.DateTimeField(default=timezone.now, db_index=True)
     is_submitted = models.BooleanField(default=False)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
+    next_steps = models.ManyToManyField(Task, blank=True, related_name="next_step_notes")
     private_details = models.TextField(blank=True)
     provided_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="provided_notes")
     public_details = models.TextField(blank=True)
     purpose = models.CharField(max_length=100, null=True, blank=True)
+    purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
     team = TextChoicesField(SelahTeamEnum, null=True, blank=True)
 
@@ -124,27 +161,6 @@ class Note(BaseModel):  # type: ignore[django-manager-missing]
     class Meta:
         permissions = permission_enums_to_django_meta_permissions([PrivateDetailsPermissions])
         ordering = ["-interacted_at"]
-
-
-# @pghistory.track(
-#     pghistory.InsertEvent("note_next_steps.add"),
-#     pghistory.DeleteEvent("note_next_steps.remove"),
-#     obj_field=None,
-# )
-# class NoteNextSteps(Note.next_steps.through):  # type: ignore[name-defined]
-#     class Meta:
-#         proxy = True
-
-#     @staticmethod
-#     def revert_action(action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any) -> None:
-#         note = Note.objects.get(id=note_id)
-#         task = Task.objects.get(id=task_id)
-
-#         if action == "add":
-#             note.next_steps.remove(task)
-
-#         elif action == "remove":
-#             note.next_steps.add(task)
 
 
 @pghistory.track(
@@ -210,14 +226,6 @@ class NoteUserObjectPermission(UserObjectPermissionBase):
 
 class NoteGroupObjectPermission(GroupObjectPermissionBase):
     content_object: models.ForeignKey = models.ForeignKey(Note, on_delete=models.CASCADE)
-
-
-# class TaskUserObjectPermission(UserObjectPermissionBase):
-#     content_object: models.ForeignKey = models.ForeignKey(Task, on_delete=models.CASCADE)
-
-
-# class TaskGroupObjectPermission(GroupObjectPermissionBase):
-#     content_object: models.ForeignKey = models.ForeignKey(Task, on_delete=models.CASCADE)
 
 
 class ServiceRequestUserObjectPermission(UserObjectPermissionBase):
