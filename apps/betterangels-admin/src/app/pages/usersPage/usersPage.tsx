@@ -1,6 +1,7 @@
 import { AddUserFormDrawer } from '@monorepo/react/betterangels-admin';
 import { Button, useAppDrawer } from '@monorepo/react/components';
 import { PlusIcon } from '@monorepo/react/icons';
+import PageLayout from '../PageLayout';
 
 export function UsersPage() {
   const { showDrawer } = useAppDrawer();
@@ -13,7 +14,7 @@ export function UsersPage() {
   }
 
   return (
-    <div className="flex w-full p-8">
+    <PageLayout>
       <div>Users Page</div>
 
       <Button
@@ -27,6 +28,6 @@ export function UsersPage() {
         </div>
         Add User
       </Button>
-    </div>
+    </PageLayout>
   );
 }
