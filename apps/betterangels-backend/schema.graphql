@@ -51,14 +51,6 @@ enum AdaAccommodationEnum {
   OTHER
 }
 
-input AddNoteTaskInput {
-  taskId: ID!
-  noteId: ID!
-  taskType: TaskTypeEnum!
-}
-
-union AddNoteTaskPayload = NoteType | OperationInfo
-
 union AddOrganizationMemberPayload = OrganizationMemberType | OperationInfo
 
 input AddressInput {
@@ -536,16 +528,6 @@ input CreateNoteServiceRequestInput {
 
 union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
 
-input CreateNoteTaskInput {
-  title: String!
-  status: TaskStatusEnum!
-  dueBy: DateTime
-  noteId: ID!
-  taskType: TaskTypeEnum!
-}
-
-union CreateNoteTaskPayload = TaskType | OperationInfo
-
 input CreateProfileDataImportInput {
   sourceFile: String!
   notes: String
@@ -561,15 +543,6 @@ input CreateServiceRequestInput {
 union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
-
-input CreateTaskInput {
-  title: String!
-  status: TaskStatusEnum!
-  dueBy: DateTime
-  clientProfile: ID
-}
-
-union CreateTaskPayload = TaskType | OperationInfo
 
 """Date (isoformat)"""
 scalar Date
@@ -600,8 +573,6 @@ union DeleteNotePayload = NoteType | OperationInfo
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
 
 union DeleteSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
-
-union DeleteTaskPayload = DeletedObjectType | OperationInfo
 
 type DeletedObjectType {
   id: Int!
@@ -642,15 +613,6 @@ type DjangoImageType {
 
 type DjangoModelType {
   pk: ID!
-}
-
-enum DueByGroupEnum {
-  OVERDUE
-  TODAY
-  TOMORROW
-  IN_THE_NEXT_WEEK
-  FUTURE_TASKS
-  NO_DUE_DATE
 }
 
 enum EntryRequirementChoices {
@@ -985,8 +947,6 @@ type Mutation {
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload!
-  removeNoteTask(data: RemoveNoteTaskInput!): RemoveNoteTaskPayload!
   createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload!
   deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload!
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
@@ -994,11 +954,6 @@ type Mutation {
   updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_servicerequest"}], any: true)
   removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload!
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload!
-  createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
-  createNoteTask(data: CreateNoteTaskInput!): CreateNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
-  updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
-  updateTaskLocation(data: UpdateTaskLocationInput!): UpdateTaskLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
-  deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
 }
@@ -1050,8 +1005,6 @@ type NoteType {
   team: SelahTeamEnum
   location: LocationType
   moods: [MoodType!]!
-  purposes(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
-  nextSteps(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
   providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
   publicDetails: String!
@@ -1310,14 +1263,6 @@ input RemoveNoteServiceRequestInput {
 }
 
 union RemoveNoteServiceRequestPayload = NoteType | OperationInfo
-
-input RemoveNoteTaskInput {
-  taskId: ID!
-  noteId: ID!
-  taskType: TaskTypeEnum!
-}
-
-union RemoveNoteTaskPayload = NoteType | OperationInfo
 
 input RevertNoteInput {
   id: ID!
@@ -1673,33 +1618,6 @@ type SwitchType {
   lastModified: DateTime
 }
 
-input TaskOrder {
-  dueBy: Ordering
-  id: Ordering
-}
-
-enum TaskStatusEnum {
-  COMPLETED
-  TO_DO
-}
-
-type TaskType {
-  id: ID!
-  title: String!
-  location: LocationType
-  status: TaskStatusEnum!
-  dueBy: DateTime
-  dueByGroup: DueByGroupEnum!
-  clientProfile: ClientProfileType
-  createdAt: DateTime!
-  createdBy: UserType!
-}
-
-enum TaskTypeEnum {
-  PURPOSE
-  NEXT_STEP
-}
-
 """Time (isoformat)"""
 scalar Time
 
@@ -1810,23 +1728,6 @@ input UpdateServiceRequestInput {
 union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
-
-input UpdateTaskInput {
-  id: ID!
-  title: String
-  location: ID
-  status: TaskStatusEnum
-  dueBy: DateTime
-}
-
-input UpdateTaskLocationInput {
-  id: ID!
-  location: LocationInput!
-}
-
-union UpdateTaskLocationPayload = TaskType | OperationInfo
-
-union UpdateTaskPayload = TaskType | OperationInfo
 
 input UpdateUserInput {
   firstName: NonBlankString
