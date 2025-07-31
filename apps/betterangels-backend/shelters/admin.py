@@ -759,6 +759,7 @@ class ShelterAdmin(ImportExportModelAdmin):
                     "email",
                     "phone",
                     "website",
+                    "instagram",
                     "operating_hours",
                 ),
             },

@@ -205,6 +205,7 @@ class Shelter(BaseModel):
     email = models.EmailField(max_length=254, blank=True, null=True)
     phone = PhoneNumberField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
+    instagram = models.URLField(blank=True, null=True)
     operating_hours = TimeRangeField(null=True, blank=True)
 
     # Hero Image
