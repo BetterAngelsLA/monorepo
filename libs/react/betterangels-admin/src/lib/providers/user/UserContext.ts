@@ -7,8 +7,8 @@ export type TOrganization = {
 
 export type TUser = {
   id: string;
-  email: string;
-  organization: TOrganization;
+  email?: string;
+  organization?: TOrganization;
   username?: string;
   firstName?: string;
   lastName?: string;

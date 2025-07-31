@@ -18,14 +18,6 @@ const parseUser = (
 
   const userOrganization = user.organizations?.[0];
 
-  if (!userOrganization) {
-    throw new Error('[UserProvider] missing userOrganization.');
-  }
-
-  if (!user.email) {
-    throw new Error('[UserProvider] missing user email.');
-  }
-
   return {
     id: user.id,
     username: user.username,

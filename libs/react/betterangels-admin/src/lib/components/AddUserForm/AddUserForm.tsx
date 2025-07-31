@@ -1,6 +1,6 @@
 import { Button, mergeCss } from '@monorepo/react/components';
 import { useState } from 'react';
-import { useRequiredUser } from '../../hooks';
+import { useUser } from '../../hooks';
 import Input from '../Input';
 import { useAddOrganizationMemberMutation } from './__generated__/addOrganizationMember.generated';
 
@@ -13,14 +13,14 @@ type TProps = {
 export function AddUserForm(props: TProps) {
   const { className, onComplete, onCancel } = props;
 
-  const user = useRequiredUser();
+  const { user } = useUser();
   // const { closeDrawer } = useAppDrawer();
   const [disabled, setDisabled] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
 
-  const orgId = user.organization.id;
+  const orgId = user?.organization.id;
 
   const [addOrganizationMember, { data, loading, error }] =
     useAddOrganizationMemberMutation();
