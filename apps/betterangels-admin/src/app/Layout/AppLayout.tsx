@@ -1,5 +1,5 @@
 import { Navbar } from '@monorepo/react/betterangels-admin';
-import { mergeCss } from '@monorepo/react/components';
+import { Alert, AppDrawer, mergeCss } from '@monorepo/react/components';
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
 import { AppSidebar } from './AppSidebar';
@@ -23,6 +23,8 @@ export function AppLayout(props: IProps): ReactElement {
           <Outlet />
         </div>
       </div>
+      <AppDrawer />
+      <Alert />
     </div>
   );
 }

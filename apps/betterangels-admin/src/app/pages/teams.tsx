@@ -1,3 +1,9 @@
+import PageLayout from '../Layout/PageLayout';
+
 export function TeamsPage() {
-  return <div>Teams Page</div>;
+  return (
+    <PageLayout>
+      <div>Teams Page</div>
+    </PageLayout>
+  );
 }
