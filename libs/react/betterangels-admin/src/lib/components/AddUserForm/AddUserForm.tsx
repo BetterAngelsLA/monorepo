@@ -89,69 +89,67 @@ export function AddUserForm(props: TProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <form>
-        <div className="p-6">
-          <Input
-            {...register('firstName')}
-            disabled={disabled}
-            required
-            type="text"
-            className="mb-4"
-            inputClassname="input-md w-96"
-            label="First Name"
-            placeholder="Enter first name"
-            autoCapitalize="none"
-            error={errors?.firstName?.message}
-          />
+      <div className="p-6">
+        <Input
+          {...register('firstName')}
+          disabled={disabled}
+          required
+          type="text"
+          className="mb-4"
+          inputClassname="input-md w-96"
+          label="First Name"
+          placeholder="Enter first name"
+          autoCapitalize="none"
+          error={errors?.firstName?.message}
+        />
 
-          <Input
-            {...register('lastName')}
-            disabled={disabled}
-            required
-            type="text"
-            className="mb-4"
-            inputClassname="input-md w-96"
-            label="Last Name"
-            placeholder="Enter last name"
-            autoCapitalize="none"
-            error={errors?.lastName?.message}
-          />
+        <Input
+          {...register('lastName')}
+          disabled={disabled}
+          required
+          type="text"
+          className="mb-4"
+          inputClassname="input-md w-96"
+          label="Last Name"
+          placeholder="Enter last name"
+          autoCapitalize="none"
+          error={errors?.lastName?.message}
+        />
 
-          <Input
-            {...register('email')}
-            disabled={disabled}
-            required
-            type="email"
-            className="mb-4"
-            inputClassname="input-md w-96"
-            label="Email Address"
-            placeholder="Enter email address"
-            autoCapitalize="none"
-            autoCorrect="off"
-            error={errors?.email?.message}
-          />
-        </div>
+        <Input
+          {...register('email')}
+          disabled={disabled}
+          required
+          type="email"
+          className="mb-4"
+          inputClassname="input-md w-96"
+          label="Email Address"
+          placeholder="Enter email address"
+          autoCapitalize="none"
+          autoCorrect="off"
+          error={errors?.email?.message}
+        />
+      </div>
 
-        <div className="mt-auto border-t border-neutral-90 p-6 flex justify-end items-center">
-          <button
-            type="button"
-            className="mr-12 text-primary-20 text-base font-semibold"
-            onClick={handleOnCancel}
-            disabled={disabled}
-          >
-            Cancel
-          </button>
+      <div className="mt-auto border-t border-neutral-90 p-6 flex justify-end items-center">
+        <button
+          type="button"
+          className="mr-12 text-primary-20 text-base font-semibold"
+          onClick={handleOnCancel}
+          disabled={disabled}
+        >
+          Cancel
+        </button>
 
-          <Button
-            size="2xl"
-            variant="accent"
-            onClick={handleSubmit(onSubmit)}
-            disabled={disabled}
-          >
-            Add User
-          </Button>
-        </div>
-      </form>
+        <Button
+          size="2xl"
+          variant="accent"
+          onClick={handleSubmit(onSubmit)}
+          disabled={disabled}
+        >
+          Add User
+        </Button>
+      </div>
     </div>
   );
 }
