@@ -514,56 +514,6 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _delete_task_fixture(self, task_id: int) -> Dict[str, Any]:
-        mutation: str = """
-            mutation DeleteTask($id: ID!) {
-                deleteTask(data: { id: $id }) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on DeletedObjectType {
-                        id
-                    }
-                }
-            }
-        """
-
-        return self.execute_graphql(mutation, {"id": task_id})
-
-    def _update_task_location_fixture(self, variables: Dict) -> Dict[str, Any]:
-        mutation: str = """
-            mutation UpdateTaskLocation($data: UpdateTaskLocationInput!) {
-                updateTaskLocation(data: $data) {
-                    ... on OperationInfo {
-                        messages {
-                            kind
-                            field
-                            message
-                        }
-                    }
-                    ... on TaskType {
-                        id
-                        location {
-                            id
-                            address {
-                                street
-                                city
-                                state
-                                zipCode
-                            }
-                            point
-                            pointOfInterest
-                        }
-                    }
-                }
-            }
-        """
-        return self.execute_graphql(mutation, {"data": variables})
-
 
 class TaskGraphQLBaseTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def setUp(self) -> None:

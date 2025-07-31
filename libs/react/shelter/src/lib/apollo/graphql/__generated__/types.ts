@@ -1598,6 +1598,7 @@ export type QueryTaskArgs = {
 
 
 export type QueryTasksArgs = {
+  filters?: InputMaybe<TaskFilter>;
   order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2000,6 +2001,20 @@ export type SwitchType = {
   isActive: Scalars['Boolean']['output'];
   lastModified?: Maybe<Scalars['DateTime']['output']>;
   name: Scalars['String']['output'];
+};
+
+export type TaskFilter = {
+  AND?: InputMaybe<TaskFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<TaskFilter>;
+  OR?: InputMaybe<TaskFilter>;
+  authors?: InputMaybe<Array<Scalars['ID']['input']>>;
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
+  createdBy?: InputMaybe<Scalars['ID']['input']>;
+  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Array<TaskStatusEnum>>;
+  teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
 export type TaskInput = {

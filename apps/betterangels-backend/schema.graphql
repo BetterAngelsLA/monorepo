@@ -1235,7 +1235,7 @@ type Query {
   notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   interactionAuthors(filters: InteractionAuthorFilter, order: InteractionAuthorOrder, pagination: OffsetPaginationInput): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
-  tasks(pagination: OffsetPaginationInput, order: TaskOrder): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+  tasks(pagination: OffsetPaginationInput, filters: TaskFilter, order: TaskOrder): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
 }
@@ -1627,6 +1627,20 @@ type SwitchType {
   name: String!
   isActive: Boolean!
   lastModified: DateTime
+}
+
+input TaskFilter {
+  clientProfile: ID
+  createdBy: ID
+  AND: TaskFilter
+  OR: TaskFilter
+  NOT: TaskFilter
+  DISTINCT: Boolean
+  status: [TaskStatusEnum!]
+  organizations: [ID!]
+  authors: [ID!]
+  search: String
+  teams: [SelahTeamEnum!]
 }
 
 input TaskInput {
