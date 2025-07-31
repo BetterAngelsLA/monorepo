@@ -1,9 +1,11 @@
-/** Global alert component
+/** Global Alert component
  *
  * #### Usage ####
  *
  * 1. include <Alert /> in App layout
  * 2. Use `showAlert` from `useAlert` hook:
+ *
+ *   const { showAlert } = useAlert();
  *
  *   showAlert({
  *      content: 'Hello message',
