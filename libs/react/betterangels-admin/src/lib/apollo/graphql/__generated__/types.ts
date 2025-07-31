@@ -546,6 +546,8 @@ export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
+export type CreateTaskPayload = OperationInfo | TaskType;
+
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
 
 export type DeleteClientDocumentPayload = ClientDocumentType | OperationInfo;
@@ -569,6 +571,8 @@ export type DeleteNotePayload = NoteType | OperationInfo;
 export type DeleteServiceRequestPayload = DeletedObjectType | OperationInfo;
 
 export type DeleteSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
+
+export type DeleteTaskPayload = DeletedObjectType | OperationInfo;
 
 export type DeletedObjectType = {
   __typename?: 'DeletedObjectType';
@@ -930,6 +934,7 @@ export type Mutation = {
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
+  createTask: CreateTaskPayload;
   deleteClientContact: DeleteClientContactPayload;
   deleteClientDocument: DeleteClientDocumentPayload;
   deleteClientHouseholdMember: DeleteClientHouseholdMemberPayload;
@@ -940,6 +945,7 @@ export type Mutation = {
   deleteNote: DeleteNotePayload;
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
+  deleteTask: DeleteTaskPayload;
   googleAuth: AuthResponse;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
@@ -958,6 +964,7 @@ export type Mutation = {
   updateNoteLocation: UpdateNoteLocationPayload;
   updateServiceRequest: UpdateServiceRequestPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
+  updateTask: UpdateTaskPayload;
 };
 
 
@@ -1031,6 +1038,11 @@ export type MutationCreateSocialMediaProfileArgs = {
 };
 
 
+export type MutationCreateTaskArgs = {
+  data: TaskInput;
+};
+
+
 export type MutationDeleteClientContactArgs = {
   data: DeleteDjangoObjectInput;
 };
@@ -1072,6 +1084,11 @@ export type MutationDeleteServiceRequestArgs = {
 
 
 export type MutationDeleteSocialMediaProfileArgs = {
+  data: DeleteDjangoObjectInput;
+};
+
+
+export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
 };
 
@@ -1158,6 +1175,11 @@ export type MutationUpdateServiceRequestArgs = {
 
 export type MutationUpdateSocialMediaProfileArgs = {
   data: SocialMediaProfileInput;
+};
+
+
+export type MutationUpdateTaskArgs = {
+  data: TaskInput;
 };
 
 export type NoteDataImportType = {
@@ -1445,6 +1467,8 @@ export type Query = {
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
+  task: TaskType;
+  tasks: TaskTypeOffsetPaginated;
 };
 
 
@@ -1564,6 +1588,17 @@ export type QuerySocialMediaProfileArgs = {
 
 
 export type QuerySocialMediaProfilesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryTaskArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryTasksArgs = {
+  order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1967,6 +2002,48 @@ export type SwitchType = {
   name: Scalars['String']['output'];
 };
 
+export type TaskInput = {
+  clientProfile: Scalars['ID']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  id?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<TaskStatusEnum>;
+  summary?: InputMaybe<Scalars['String']['input']>;
+  team?: InputMaybe<SelahTeamEnum>;
+};
+
+export type TaskOrder =
+  { id: Ordering; updatedAt?: never; }
+  |  { id?: never; updatedAt: Ordering; };
+
+export enum TaskStatusEnum {
+  Completed = 'COMPLETED',
+  InProgress = 'IN_PROGRESS',
+  ToDo = 'TO_DO'
+}
+
+export type TaskType = {
+  __typename?: 'TaskType';
+  clientProfile?: Maybe<ClientProfileType>;
+  createdAt: Scalars['DateTime']['output'];
+  createdBy: UserType;
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  organization?: Maybe<OrganizationType>;
+  status?: Maybe<TaskStatusEnum>;
+  summary: Scalars['String']['output'];
+  team?: Maybe<SelahTeamEnum>;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type TaskTypeOffsetPaginated = {
+  __typename?: 'TaskTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<TaskType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type TimeRange = {
   __typename?: 'TimeRange';
   end?: Maybe<Scalars['DateTime']['output']>;
@@ -2074,6 +2151,8 @@ export type UpdateServiceRequestInput = {
 export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
+
+export type UpdateTaskPayload = OperationInfo | TaskType;
 
 export type UpdateUserInput = {
   email?: InputMaybe<Scalars['NonBlankString']['input']>;

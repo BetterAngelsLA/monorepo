@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional
 import pghistory
 from accounts.models import User
 from betterangels_backend import settings
+from common.enums import SelahTeamEnum
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
@@ -15,7 +16,7 @@ from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
 
-from .enums import MoodEnum, SelahTeamEnum, ServiceEnum, ServiceRequestStatusEnum
+from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum
 
 if TYPE_CHECKING:
     from pghistory.models import Events

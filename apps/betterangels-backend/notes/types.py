@@ -6,6 +6,7 @@ import strawberry_django
 from accounts.models import User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
+from common.enums import SelahTeamEnum
 from common.graphql.types import LocationInput, LocationType, NonBlankString
 from django.db.models import (
     BooleanField,
@@ -18,7 +19,7 @@ from django.db.models import (
     Value,
     When,
 )
-from notes.enums import SelahTeamEnum, ServiceRequestTypeEnum
+from notes.enums import ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.utils.query import filter_for_user

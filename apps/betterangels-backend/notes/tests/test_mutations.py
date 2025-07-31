@@ -6,7 +6,7 @@ from common.models import Address, Location
 from django.test import ignore_warnings
 from django.utils import timezone
 from model_bakery import baker
-from notes.enums import SelahTeamEnum
+from common.enums import SelahTeamEnum
 from notes.models import Mood, Note, ServiceRequest
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
