@@ -105,9 +105,8 @@ export function AppDrawer(props: IProps): ReactElement | null {
       className={maskCss}
     >
       <div onClick={(e) => e.stopPropagation()} className={mergeCss(parentCss)}>
-        {header && (
-          <AppDrawerHeader onClick={handleClose}>{header}</AppDrawerHeader>
-        )}
+        {header && <AppDrawerHeader>{header}</AppDrawerHeader>}
+
         <div className={mergeCss(contentCss)}>{content}</div>
 
         {footer && <AppDrawerFooter>{footer}</AppDrawerFooter>}
@@ -117,3 +116,4 @@ export function AppDrawer(props: IProps): ReactElement | null {
 }
 
 AppDrawer.Header = AppDrawerHeader;
+AppDrawer.Footer = AppDrawerFooter;

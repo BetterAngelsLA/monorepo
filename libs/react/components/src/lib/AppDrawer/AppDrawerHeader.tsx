@@ -2,14 +2,16 @@ import { PropsWithChildren } from 'react';
 
 import { mergeCss } from '@monorepo/react/components';
 import { CloseIcon } from '@monorepo/react/icons';
+import { useAppDrawer } from './state/useAppDrawer';
 
 interface IProps extends PropsWithChildren {
-  onClick: () => void;
   className?: string;
 }
 
 export function AppDrawerHeader(props: IProps) {
-  const { onClick, className, children } = props;
+  const { className, children } = props;
+
+  const { closeDrawer } = useAppDrawer();
 
   const parentCss = [
     'flex',
@@ -25,7 +27,7 @@ export function AppDrawerHeader(props: IProps) {
   return (
     <div className={mergeCss(parentCss)}>
       {children}
-      <CloseIcon className={mergeCss(iconCss)} onClick={onClick} />
+      <CloseIcon className={mergeCss(iconCss)} onClick={closeDrawer} />
     </div>
   );
 }

@@ -1,12 +1,20 @@
-import { Button, useAppDrawer } from '@monorepo/react/components';
+import { Button, mergeCss } from '@monorepo/react/components';
 import { useState } from 'react';
 import { useUser } from '../../hooks';
 import Input from '../Input';
 import { useAddOrganizationMemberMutation } from './__generated__/addOrganizationMember.generated';
 
-export function AddUserForm() {
+type TProps = {
+  className?: string;
+  onComplete?: () => void;
+  onCancel?: () => void;
+};
+
+export function AddUserForm(props: TProps) {
+  const { className, onComplete, onCancel } = props;
+
   const { user } = useUser();
-  const { closeDrawer } = useAppDrawer();
+  // const { closeDrawer } = useAppDrawer();
   const [disabled, setDisabled] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -22,12 +30,14 @@ export function AddUserForm() {
   const [addOrganizationMember, { data, loading, error }] =
     useAddOrganizationMemberMutation();
 
-  async function onSubmit() {
+  async function handleOnSubmit() {
     if (!orgId) {
       return;
     }
 
     setDisabled(true);
+
+    onComplete?.();
 
     try {
       const { data } = await addOrganizationMember({
@@ -64,13 +74,14 @@ export function AddUserForm() {
     }
   }
 
-  function onCancel() {
+  function handleOnCancel() {
     console.log('################################### onCancel');
-    closeDrawer();
   }
 
+  const parentCss = ['flex', 'flex-col', 'w-full', 'h-full', className];
+
   return (
-    <div className="flex flex-col w-full h-full">
+    <div className={mergeCss(parentCss)}>
       <div className="p-6">
         <Input
           required
@@ -112,7 +123,7 @@ export function AddUserForm() {
       <div className="mt-auto border-t border-neutral-90 p-6 flex justify-end items-center">
         <button
           className="mr-12 text-primary-20 text-base font-semibold"
-          onClick={onCancel}
+          onClick={handleOnCancel}
           disabled={disabled}
         >
           Cancel
@@ -121,7 +132,7 @@ export function AddUserForm() {
         <Button
           size="2xl"
           variant="accent"
-          onClick={onSubmit}
+          onClick={handleOnSubmit}
           disabled={disabled}
         >
           Add User
