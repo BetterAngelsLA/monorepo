@@ -56,7 +56,7 @@ export function Alert(): ReactElement | null {
   }
 
   const { content, type } = alert!;
-  const { color, icon } = alertConfig[type];
+  const { color, Icon } = alertConfig[type];
 
   const parentCss = [
     'fixed',
@@ -70,9 +70,10 @@ export function Alert(): ReactElement | null {
 
   const contentCss = [
     visible ? ANIMATION.SHOW : ANIMATION.HIDE,
+    'pointer-events-auto',
     'text-white',
-    'px-4',
-    'py-3',
+    'p-4',
+    'gap-4',
     'rounded-2xl',
     'shadow-lg',
     'w-fit',
@@ -81,14 +82,7 @@ export function Alert(): ReactElement | null {
     'justify-center',
   ];
 
-  const closeBtnCss = [
-    'flex',
-    'w-6',
-    'h-6',
-    'ml-auto',
-    'items-center',
-    'justify-center',
-  ];
+  const slotCss = ['w-6', 'flex', 'flex-col', 'items-center', 'justify-center'];
 
   return (
     <div className={mergeCss(parentCss)}>
@@ -97,11 +91,15 @@ export function Alert(): ReactElement | null {
           className={mergeCss(contentCss)}
           style={{ backgroundColor: color }}
         >
+          {Icon && <div className={mergeCss(slotCss)}>{Icon}</div>}
+
           {content}
 
-          <button className={mergeCss(closeBtnCss)} onClick={handleClose}>
-            <CloseIcon className="h-6" />
-          </button>
+          <div className={mergeCss(slotCss)}>
+            <button onClick={handleClose}>
+              <CloseIcon className="w-6" />
+            </button>
+          </div>
         </div>
       </div>
     </div>

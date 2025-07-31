@@ -10,5 +10,5 @@ export type TAlertAtomProps = {
 
 export type TAlertConfig = {
   color: string;
-  icon?: ReactNode;
+  Icon?: ReactNode;
 };
