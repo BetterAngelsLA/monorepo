@@ -3,9 +3,9 @@ import { z } from 'zod';
 export type TFormSchema = z.infer<typeof FormSchema>;
 
 export const defaultValues: TFormSchema = {
-  firstName: 'asdf',
-  lastName: 'asfd',
-  email: 'asdf@asdf.com',
+  firstName: '',
+  lastName: '',
+  email: '',
 };
 
 export const FormSchema = z.object({
