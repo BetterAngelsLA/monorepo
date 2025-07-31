@@ -19,6 +19,7 @@
     "@config-plugins/react-native-pdf": "^9.0.0",
     "@expo/metro-config": "~0.20.0",
     "@gorhom/bottom-sheet": "^5",
+    "@hookform/resolvers": "^5.2.1",
     "@likashefqet/react-native-image-zoom": "^4.2.1",
     "@portabletext/react": "^3.2.0",
     "@react-native-async-storage/async-storage": "2.1.2",
@@ -94,7 +95,8 @@
     "tailwind-merge": "^2.5.5",
     "tslib": "^2.3.0",
     "use-deep-compare-effect": "^1.8.1",
-    "validator": "^13.15.0"
+    "validator": "^13.15.0",
+    "zod": "^4.0.14"
   },
   "devDependencies": {
     "@babel/core": "^7.14.5",

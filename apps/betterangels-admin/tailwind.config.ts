@@ -1,5 +1,4 @@
 import { createGlobPatternsForDependencies } from '@nx/react/tailwind';
-// @ts-expect-error silence warn for missing types declarations
 import daisyui from 'daisyui';
 import { join } from 'path';
 import type { Config } from 'tailwindcss';
@@ -18,6 +17,7 @@ const config: Config = {
         primary: 'var(--font-primary)',
       },
       colors: {
+        'alert-60': 'var(--color-alert-60)',
         'brand-orange': 'var(--color-brand-orange)',
         'brand-yellow': 'var(--color-brand-yellow)',
         'brand-yellow-light': 'var(--color-brand-yellow-light)',
@@ -28,6 +28,7 @@ const config: Config = {
         'primary-60': 'var(--color-primary-60)',
         'primary-95': 'var(--color-primary-95)',
         'steel-blue': 'var(--color-steel-blue)',
+        'neutral-20': 'var(--color-neutral-20)',
         'neutral-30': 'var(--color-neutral-30)',
         'neutral-40': 'var(--color-neutral-40)',
         'neutral-55': 'var(--color-neutral-55)',

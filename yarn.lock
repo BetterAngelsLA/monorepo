@@ -3983,6 +3983,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@hookform/resolvers@npm:^5.2.1":
+  version: 5.2.1
+  resolution: "@hookform/resolvers@npm:5.2.1"
+  dependencies:
+    "@standard-schema/utils": "npm:^0.3.0"
+  peerDependencies:
+    react-hook-form: ^7.55.0
+  checksum: 10/9accc49f668209b58a4db5f410ab629d55fb9ac19d3cc6a591df9742a869286e1b929f117f419accaeb302a5941bf22f7e6da9c8b06cdb1104f57ac1a2a11c7e
+  languageName: node
+  linkType: hard
+
 "@humanwhocodes/config-array@npm:^0.11.14":
   version: 0.11.14
   resolution: "@humanwhocodes/config-array@npm:0.11.14"
@@ -5009,6 +5020,7 @@ __metadata:
     "@graphql-codegen/near-operation-file-preset": "npm:^3.0.0"
     "@graphql-codegen/typescript-react-apollo": "npm:^4.3.0"
     "@graphql-eslint/eslint-plugin": "npm:^3.20.1"
+    "@hookform/resolvers": "npm:^5.2.1"
     "@iarna/toml": "npm:^2.2.5"
     "@likashefqet/react-native-image-zoom": "npm:^4.2.1"
     "@nx-tools/container-metadata": "npm:^6.1.1"
@@ -5165,6 +5177,7 @@ __metadata:
     vite: "npm:6.2.4"
     vite-plugin-svgr: "npm:^4.3.0"
     vitest: "npm:^1.6.1"
+    zod: "npm:^4.0.14"
   languageName: unknown
   linkType: soft
 
@@ -7251,6 +7264,13 @@ __metadata:
   dependencies:
     "@sinonjs/commons": "npm:^3.0.0"
   checksum: 10/78155c7bd866a85df85e22028e046b8d46cf3e840f72260954f5e3ed5bd97d66c595524305a6841ffb3f681a08f6e5cef572a2cce5442a8a232dc29fb409b83e
+  languageName: node
+  linkType: hard
+
+"@standard-schema/utils@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "@standard-schema/utils@npm:0.3.0"
+  checksum: 10/7084f875d322792f2e0a5904009434c8374b9345b09ba89828b68fd56fa3c2b366d35bf340d9e8c72736ef01793c2f70d350c372ed79845dc3566c58d34b4b51
   languageName: node
   linkType: hard
 
@@ -27325,5 +27345,12 @@ __metadata:
   version: 0.8.15
   resolution: "zen-observable@npm:0.8.15"
   checksum: 10/30eac3f4055d33f446b4cd075d3543da347c2c8e68fbc35c3f5a19fb43be67c6ed27ee136bc8f8933efa547be7ce04957809ad00ee7f1b00a964f199ae6fb514
+  languageName: node
+  linkType: hard
+
+"zod@npm:^4.0.14":
+  version: 4.0.14
+  resolution: "zod@npm:4.0.14"
+  checksum: 10/7a4910c34f77a2ea8604811412ff917af8946675a84a7865c50ce071848f527719ed3a646ca7f420dc15e39bee5a249e60310405ff023d3e7222b132d2e1eb5a
   languageName: node
   linkType: hard
