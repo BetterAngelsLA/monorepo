@@ -1628,7 +1628,6 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "location": None,
             "status": "TO_DO",
             "dueBy": None,
-            "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
             "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
@@ -1663,7 +1662,6 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             },
             "status": "COMPLETED",
             "dueBy": None,
-            "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
             "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
@@ -1686,60 +1684,8 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
             "location": None,
             "status": "TO_DO",
             "dueBy": None,
-            "dueByGroup": DueByGroupEnum.NO_DUE_DATE.name,
             "clientProfile": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "createdAt": "2024-02-26T10:11:12+00:00",
         }
         self.assertEqual(updated_task, expected_task)
-
-    def test_update_task_location_mutation(self) -> None:
-        task_id = self.task["id"]
-        json_address_input, address_input = self._get_address_inputs()
-        location = {
-            "address": json_address_input,
-            "point": self.point,
-            "pointOfInterest": self.point_of_interest,
-        }
-        variables = {
-            "id": task_id,
-            "location": location,
-        }
-
-        expected_query_count = 23
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._update_task_location_fixture(variables)
-
-        assert isinstance(address_input["addressComponents"], list)
-        expected_address = {
-            "street": (
-                f"{address_input['addressComponents'][0]['long_name']} "
-                f"{address_input['addressComponents'][1]['long_name']}"
-            ),
-            "city": address_input["addressComponents"][3]["long_name"],
-            "state": address_input["addressComponents"][5]["short_name"],
-            "zipCode": address_input["addressComponents"][7]["long_name"],
-        }
-        expected_location = {
-            "id": ANY,
-            "address": expected_address,
-            "point": self.point,
-            "pointOfInterest": self.point_of_interest,
-        }
-        updated_task_location = response["data"]["updateTaskLocation"]["location"]
-        self.assertEqual(updated_task_location, expected_location)
-
-        task = Task.objects.get(id=task_id)
-        self.assertIsNotNone(task.location)
-
-        location = Location.objects.get(id=task.location.pk)  # type: ignore
-        self.assertEqual(task, location.tasks.first())
-
-    def test_delete_task_mutation(self) -> None:
-        expected_query_count = 10
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._delete_task_fixture(self.task["id"])
-
-        self.assertIsNotNone(response["data"]["deleteTask"])
-        with self.assertRaises(Task.DoesNotExist):
-            Task.objects.get(id=self.task["id"])

@@ -6,15 +6,10 @@ from accounts.models import User
 from accounts.tests.baker_recipes import permission_group_recipe
 from deepdiff import DeepDiff
 from django.test import ignore_warnings
-from django.utils import timezone
 from model_bakery import baker
 from notes.enums import SelahTeamEnum, ServiceEnum, ServiceRequestStatusEnum
 from notes.models import Note
-from notes.tests.utils import (
-    NoteGraphQLBaseTestCase,
-    ServiceRequestGraphQLBaseTestCase,
-    TaskGraphQLBaseTestCase,
-)
+from notes.tests.utils import NoteGraphQLBaseTestCase, ServiceRequestGraphQLBaseTestCase
 from unittest_parametrize import parametrize
 
 
