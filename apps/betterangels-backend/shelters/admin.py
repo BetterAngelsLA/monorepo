@@ -714,8 +714,6 @@ class ShelterAdmin(ImportExportModelAdmin):
             form.instance.hero_image_object_id = None
             form.instance.save()
 
-            return
-
         hero_image_selected = None
         for formset in formsets:
             for form_obj in formset.forms:
