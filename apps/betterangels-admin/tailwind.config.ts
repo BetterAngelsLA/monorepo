@@ -30,6 +30,7 @@ const config: Config = {
         'primary-95': 'var(--color-primary-95)',
         'steel-blue': 'var(--color-steel-blue)',
         'neutral-20': 'var(--color-neutral-20)',
+        'neutral-30': 'var(--color-neutral-30)',
         'neutral-40': 'var(--color-neutral-40)',
         'neutral-55': 'var(--color-neutral-55)',
         'neutral-70': 'var(--color-neutral-70)',
