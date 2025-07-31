@@ -1,3 +1,9 @@
+import PageLayout from '../Layout/PageLayout';
+
 export function ServicesPage() {
-  return <div>Services Page</div>;
+  return (
+    <PageLayout>
+      <div>Services Page</div>
+    </PageLayout>
+  );
 }

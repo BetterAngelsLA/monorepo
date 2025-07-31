@@ -9,20 +9,28 @@ interface UserProviderProps {
   children: ReactNode;
 }
 
-const parseUser = (user?: CurrentUserQuery['currentUser']): TUser | undefined =>
-  user
-    ? {
-        id: user.id,
-        username: user.username,
-        firstName: user.firstName ?? undefined,
-        lastName: user.lastName ?? undefined,
-        email: user.email,
-        organizations: user.organizations ?? null,
-        isOutreachAuthorized: user.isOutreachAuthorized ?? false,
-        hasAcceptedTos: user.hasAcceptedTos ?? false,
-        hasAcceptedPrivacyPolicy: user.hasAcceptedPrivacyPolicy ?? false,
-      }
-    : undefined;
+const parseUser = (
+  user?: CurrentUserQuery['currentUser']
+): TUser | undefined => {
+  if (!user) {
+    return undefined;
+  }
+
+  const userOrganization = user.organizations?.[0];
+
+  return {
+    id: user.id,
+    organization: userOrganization,
+    username: user.username,
+    firstName: user.firstName ?? undefined,
+    lastName: user.lastName ?? undefined,
+    email: user.email,
+    organizations: user.organizations ?? null,
+    isOutreachAuthorized: user.isOutreachAuthorized ?? false,
+    hasAcceptedTos: user.hasAcceptedTos ?? false,
+    hasAcceptedPrivacyPolicy: user.hasAcceptedPrivacyPolicy ?? false,
+  };
+};
 
 type UserResponse = {
   data?: CurrentUserQuery;

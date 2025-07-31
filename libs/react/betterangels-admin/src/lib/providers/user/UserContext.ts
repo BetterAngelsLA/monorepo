@@ -7,6 +7,7 @@ export type TOrganization = {
 
 export type TUser = {
   id: string;
+  organization?: TOrganization;
   username?: string;
   firstName?: string;
   lastName?: string;
