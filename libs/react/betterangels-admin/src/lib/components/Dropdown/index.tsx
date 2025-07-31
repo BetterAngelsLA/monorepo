@@ -1,39 +1,69 @@
-import { ReactElement } from 'react';
-import './index.css';
+import { ReactElement, useEffect, useRef, useState } from 'react';
 
-export default function Dropdown({
+type DropdownProps<T extends string> = {
+  options: T[];
+  onSelect: (option: T) => void;
+  className?: string;
+  position?: 'dropdown-start' | 'dropdown-end' | 'dropdown-center';
+  title: string | ReactElement;
+};
+
+export default function Dropdown<T extends string>({
   options,
   onSelect,
   className = '',
   position = 'dropdown-end',
   title,
-}: {
-  options: string[];
-  onSelect: (option: string) => void;
-  className?: string;
-  position?: 'dropdown-start' | 'dropdown-end' | 'dropdown-center';
-  title: string | ReactElement;
-}) {
+}: DropdownProps<T>) {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <div className={`dropdown ${position} ${className}`}>
-      <div tabIndex={0} className="m-1 cursor-pointer">
+    <div ref={dropdownRef} className={`relative inline-block ${className}`}>
+      <div
+        className="m-1 cursor-pointer"
+        onClick={() => setOpen((prev) => !prev)}
+      >
         {title}
       </div>
-      <ul
-        tabIndex={0}
-        className="dropdown-content menu bg-white rounded-2xl z-[1] w-52 p-2 shadow-sm"
-      >
-        {options.map((option) => (
-          <li key={option}>
-            <button
-              className={`text-sm text-primary-20`}
-              onClick={() => onSelect(option)}
-            >
-              {option}
-            </button>
-          </li>
-        ))}
-      </ul>
+      {open && (
+        <ul
+          className={`
+            absolute mt-2 min-w-[12rem]
+            rounded-2xl bg-white shadow-sm p-2 z-50
+            ${position === 'dropdown-end' ? 'right-0' : ''}
+            ${position === 'dropdown-start' ? 'left-0' : ''}
+            ${position === 'dropdown-center' ? 'left-1/2 -translate-x-1/2' : ''}
+          `}
+        >
+          {options.map((option) => (
+            <li key={option}>
+              <button
+                className="text-sm text-primary-20 w-full text-left px-4 py-2 rounded-lg hover:bg-neutral-98"
+                onClick={() => {
+                  onSelect(option);
+                  setOpen(false);
+                }}
+              >
+                {option}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
