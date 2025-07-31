@@ -6,12 +6,12 @@ export function useAppDrawer() {
   const [_drawer, setDrawer] = useAtom(appDrawerAtom);
 
   const closeDrawer = useCallback(() => {
-    setDrawer(null);
+    setDrawer((prev) => (prev ? { ...prev, visible: false } : null));
   }, [setDrawer]);
 
   const showDrawer = useCallback(
-    (drawerProps: TAppDrawerAtomProps) => {
-      setDrawer(drawerProps);
+    (props: Omit<TAppDrawerAtomProps, 'visible'>) => {
+      setDrawer({ ...props, visible: true });
     },
     [setDrawer]
   );

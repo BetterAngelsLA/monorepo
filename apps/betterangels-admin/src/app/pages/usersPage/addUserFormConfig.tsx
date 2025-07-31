@@ -3,6 +3,7 @@ import { TAppDrawerAtomProps } from '@monorepo/react/components';
 
 export const addUserFormConfig: TAppDrawerAtomProps = {
   content: <AddUserForm />,
+  visible: true,
   header: (
     <div className="text-xl font-semibold text-neutral-20 leading-6">
       Add User

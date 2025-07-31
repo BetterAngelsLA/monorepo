@@ -1,19 +1,72 @@
-import { Button } from '@monorepo/react/components';
+import { Button, useAppDrawer } from '@monorepo/react/components';
 import { useState } from 'react';
+import { useUser } from '../../hooks';
 import Input from '../Input';
+import { useAddOrganizationMemberMutation } from './__generated__/addOrganizationMember.generated';
 
 export function AddUserForm() {
+  const { user } = useUser();
+  const { closeDrawer } = useAppDrawer();
   const [disabled, setDisabled] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
 
-  function onSubmit() {
-    console.log('################################### onSubmit');
+  const orgId = user?.organizations?.[0].id;
+
+  console.log();
+  console.log('| -------------  user  ------------- |');
+  console.log(user);
+  console.log();
+
+  const [addOrganizationMember, { data, loading, error }] =
+    useAddOrganizationMemberMutation();
+
+  async function onSubmit() {
+    if (!orgId) {
+      return;
+    }
+
+    setDisabled(true);
+
+    try {
+      const { data } = await addOrganizationMember({
+        variables: {
+          data: {
+            firstName,
+            lastName,
+            email,
+            organizationId: orgId,
+          },
+        },
+      });
+
+      console.log();
+      console.log('| -------------  data  ------------- |');
+      console.log(data);
+      console.log();
+
+      // if (!data?.createNote || !('id' in data.createNote)) {
+      //   throw new Error('invalid mutation result');
+      // }
+
+      // const createdNoteId = data.createNote.id;
+
+      // default behavior
+      // router.navigate(`/add-note/${createdNoteId}`);
+    } catch (err) {
+      // console.error(
+      //   `error creating note for profileId [${clientProfileId}]: ${err}`
+      // );
+      // default behavior
+    } finally {
+      setDisabled(false);
+    }
   }
 
   function onCancel() {
     console.log('################################### onCancel');
+    closeDrawer();
   }
 
   return (

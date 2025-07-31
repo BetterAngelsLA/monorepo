@@ -34,17 +34,16 @@ export function AppDrawer(props: IProps): ReactElement | null {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (drawer) {
-      const placement = drawer.placement ?? 'right';
-
-      setPlacement(placement);
-      setShouldRender(true);
-      requestAnimationFrame(() => setVisible(true));
+    if (!drawer?.visible) {
+      setVisible(false);
 
       return;
     }
 
-    setVisible(false);
+    const placement = drawer.placement ?? 'right';
+    setShouldRender(true);
+    setPlacement(placement);
+    requestAnimationFrame(() => setVisible(true)); // open with animation
   }, [drawer]);
 
   // Unmount and clean up atom cleanup after hide animation completes
@@ -65,13 +64,23 @@ export function AppDrawer(props: IProps): ReactElement | null {
     return null;
   }
 
+  function handleClose() {
+    setDrawer((prev) => {
+      if (!prev) {
+        return null;
+      }
+
+      return { ...prev, visible: false };
+    });
+  }
+
   function handleMaskClick(e: MouseEvent<HTMLDivElement>) {
     e.stopPropagation();
 
-    setVisible(false);
+    handleClose();
   }
 
-  const { content, header, footer, contentClassName } = drawer || {};
+  const { content, header, footer, contentClassName } = drawer!;
 
   const transitions = DRAWER_TRANSITION[placement];
 
@@ -97,9 +106,7 @@ export function AppDrawer(props: IProps): ReactElement | null {
     >
       <div onClick={(e) => e.stopPropagation()} className={mergeCss(parentCss)}>
         {header && (
-          <AppDrawerHeader onClick={() => setVisible(false)}>
-            {header}
-          </AppDrawerHeader>
+          <AppDrawerHeader onClick={handleClose}>{header}</AppDrawerHeader>
         )}
         <div className={mergeCss(contentCss)}>{content}</div>
 
