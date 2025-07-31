@@ -17,14 +17,14 @@ vine = ">=5.0.0,<6.0.0"
 
 [[package]]
 name = "asgiref"
-version = "3.9.0"
+version = "3.9.1"
 description = "ASGI specs, helper code, and adapters"
 optional = false
 python-versions = ">=3.9"
 groups = ["main", "dev"]
 files = [
-    {file = "asgiref-3.9.0-py3-none-any.whl", hash = "sha256:06a41250a0114d2b6f6a2cb3ab962147d355b53d1de15eebc34a9d04a7b79981"},
-    {file = "asgiref-3.9.0.tar.gz", hash = "sha256:3dd2556d0f08c4fab8a010d9ab05ef8c34565f6bf32381d17505f7ca5b273767"},
+    {file = "asgiref-3.9.1-py3-none-any.whl", hash = "sha256:f3bba7092a48005b5f5bacd747d36ee4a5a61f4a269a6df590b43144355ebd2c"},
+    {file = "asgiref-3.9.1.tar.gz", hash = "sha256:a5ab6582236218e5ef1648f242fd9f10626cfd4de8dc377db215d5d5098e3142"},
 ]
 
 [package.extras]
@@ -86,18 +86,18 @@ django = "^5.2.4"
 django-admin-async-upload = {git = "https://github.com/BetterAngelsLA/django-admin-async-upload", rev = "cfa824d7d390c9b500ea735ecfd5aa546c8165cd"}
 django-admin-interface = "^0.30.1"
 django-admin-rangefilter = "^0.13.3"
-django-allauth = "^65.9.0"
+django-allauth = "^65.10.0"
 django-choices-field = "^2.3.0"
 django-ckeditor-5 = "^0.2.18"
 django-cors-headers = "^4.7.0"
 django-environ = "^0.12.0"
 django-extensions = "^4.1"
 django-guardian = "^3.0.3"
-django-import-export = "^4.3.8"
+django-import-export = "^4.3.9"
 django-organizations = "^2.5.0"
 django-pghistory = "^3.7.0"
 django-phonenumber-field = {version = "^8.1.0", extras = ["phonenumbers"]}
-django-post-office = "^3.9.1"
+django-post-office = "^3.10.0"
 django-select2 = "^8.4.1"
 django-ses = "^4.4.0"
 django-storages = {version = "^1.14.6", extras = ["s3"]}
@@ -106,10 +106,10 @@ django-waffle = "^5.0.0"
 djangorestframework = "^3.16.0"
 gunicorn = {version = "^23.0.0", extras = ["gevent"]}
 hiredis = "^3.2.1"
-newrelic = "^10.14.0"
+newrelic = "^10.15.0"
 psycopg = "^3.2.9"
 python-magic = "^0.4.27"
-strawberry-graphql-django = "^0.62.0"
+strawberry-graphql-django = "^0.65.1"
 whitenoise = "^6.9.0"
 
 [package.source]
@@ -194,18 +194,18 @@ css = ["tinycss2 (>=1.1.0,<1.5)"]
 
 [[package]]
 name = "boto3"
-version = "1.39.3"
+version = "1.39.17"
 description = "The AWS SDK for Python"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "boto3-1.39.3-py3-none-any.whl", hash = "sha256:056cfa2440fe1a157a7c2be897c749c83e1a322144aa4dad889f2fca66571019"},
-    {file = "boto3-1.39.3.tar.gz", hash = "sha256:0a367106497649ae3d8a7b571b8c3be01b7b935a0fe303d4cc2574ed03aecbb4"},
+    {file = "boto3-1.39.17-py3-none-any.whl", hash = "sha256:6af9f7d6db7b5e72d6869ae22ebad1b0c6602591af2ef5d914b331a055953df5"},
+    {file = "boto3-1.39.17.tar.gz", hash = "sha256:a6904a40b1c61f6a1766574b3155ec75a6020399fb570be2b51bf93a2c0a2b3d"},
 ]
 
 [package.dependencies]
-botocore = ">=1.39.3,<1.40.0"
+botocore = ">=1.39.17,<1.40.0"
 jmespath = ">=0.7.1,<2.0.0"
 s3transfer = ">=0.13.0,<0.14.0"
 
@@ -214,14 +214,14 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.39.3"
-description = "Type annotations for boto3 1.39.3 generated with mypy-boto3-builder 8.11.0"
+version = "1.39.17"
+description = "Type annotations for boto3 1.39.17 generated with mypy-boto3-builder 8.11.0"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "boto3_stubs-1.39.3-py3-none-any.whl", hash = "sha256:4daddb19374efa6d1bef7aded9cede0075f380722a9e60ab129ebba14ae66b69"},
-    {file = "boto3_stubs-1.39.3.tar.gz", hash = "sha256:9aad443b1d690951fd9ccb6fa20ad387bd0b1054c704566ff65dd0043a63fc26"},
+    {file = "boto3_stubs-1.39.17-py3-none-any.whl", hash = "sha256:5ca6cfb200263313223455497a818d051597c905f817251c613c8e3e41f2950e"},
+    {file = "boto3_stubs-1.39.17.tar.gz", hash = "sha256:f32236a3beccd83c7fe50e06e99f5bcee06a24e1f58c4bde3a404750bfe6d911"},
 ]
 
 [package.dependencies]
@@ -241,7 +241,7 @@ account = ["mypy-boto3-account (>=1.39.0,<1.40.0)"]
 acm = ["mypy-boto3-acm (>=1.39.0,<1.40.0)"]
 acm-pca = ["mypy-boto3-acm-pca (>=1.39.0,<1.40.0)"]
 aiops = ["mypy-boto3-aiops (>=1.39.0,<1.40.0)"]
-all = ["mypy-boto3-accessanalyzer (>=1.39.0,<1.40.0)", "mypy-boto3-account (>=1.39.0,<1.40.0)", "mypy-boto3-acm (>=1.39.0,<1.40.0)", "mypy-boto3-acm-pca (>=1.39.0,<1.40.0)", "mypy-boto3-aiops (>=1.39.0,<1.40.0)", "mypy-boto3-amp (>=1.39.0,<1.40.0)", "mypy-boto3-amplify (>=1.39.0,<1.40.0)", "mypy-boto3-amplifybackend (>=1.39.0,<1.40.0)", "mypy-boto3-amplifyuibuilder (>=1.39.0,<1.40.0)", "mypy-boto3-apigateway (>=1.39.0,<1.40.0)", "mypy-boto3-apigatewaymanagementapi (>=1.39.0,<1.40.0)", "mypy-boto3-apigatewayv2 (>=1.39.0,<1.40.0)", "mypy-boto3-appconfig (>=1.39.0,<1.40.0)", "mypy-boto3-appconfigdata (>=1.39.0,<1.40.0)", "mypy-boto3-appfabric (>=1.39.0,<1.40.0)", "mypy-boto3-appflow (>=1.39.0,<1.40.0)", "mypy-boto3-appintegrations (>=1.39.0,<1.40.0)", "mypy-boto3-application-autoscaling (>=1.39.0,<1.40.0)", "mypy-boto3-application-insights (>=1.39.0,<1.40.0)", "mypy-boto3-application-signals (>=1.39.0,<1.40.0)", "mypy-boto3-applicationcostprofiler (>=1.39.0,<1.40.0)", "mypy-boto3-appmesh (>=1.39.0,<1.40.0)", "mypy-boto3-apprunner (>=1.39.0,<1.40.0)", "mypy-boto3-appstream (>=1.39.0,<1.40.0)", "mypy-boto3-appsync (>=1.39.0,<1.40.0)", "mypy-boto3-apptest (>=1.39.0,<1.40.0)", "mypy-boto3-arc-zonal-shift (>=1.39.0,<1.40.0)", "mypy-boto3-artifact (>=1.39.0,<1.40.0)", "mypy-boto3-athena (>=1.39.0,<1.40.0)", "mypy-boto3-auditmanager (>=1.39.0,<1.40.0)", "mypy-boto3-autoscaling (>=1.39.0,<1.40.0)", "mypy-boto3-autoscaling-plans (>=1.39.0,<1.40.0)", "mypy-boto3-b2bi (>=1.39.0,<1.40.0)", "mypy-boto3-backup (>=1.39.0,<1.40.0)", "mypy-boto3-backup-gateway (>=1.39.0,<1.40.0)", "mypy-boto3-backupsearch (>=1.39.0,<1.40.0)", "mypy-boto3-batch (>=1.39.0,<1.40.0)", "mypy-boto3-bcm-data-exports (>=1.39.0,<1.40.0)", "mypy-boto3-bcm-pricing-calculator (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock-agent (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock-agent-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock-data-automation (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock-data-automation-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-billing (>=1.39.0,<1.40.0)", "mypy-boto3-billingconductor (>=1.39.0,<1.40.0)", "mypy-boto3-braket (>=1.39.0,<1.40.0)", "mypy-boto3-budgets (>=1.39.0,<1.40.0)", "mypy-boto3-ce (>=1.39.0,<1.40.0)", "mypy-boto3-chatbot (>=1.39.0,<1.40.0)", "mypy-boto3-chime (>=1.39.0,<1.40.0)", "mypy-boto3-chime-sdk-identity (>=1.39.0,<1.40.0)", "mypy-boto3-chime-sdk-media-pipelines (>=1.39.0,<1.40.0)", "mypy-boto3-chime-sdk-meetings (>=1.39.0,<1.40.0)", "mypy-boto3-chime-sdk-messaging (>=1.39.0,<1.40.0)", "mypy-boto3-chime-sdk-voice (>=1.39.0,<1.40.0)", "mypy-boto3-cleanrooms (>=1.39.0,<1.40.0)", "mypy-boto3-cleanroomsml (>=1.39.0,<1.40.0)", "mypy-boto3-cloud9 (>=1.39.0,<1.40.0)", "mypy-boto3-cloudcontrol (>=1.39.0,<1.40.0)", "mypy-boto3-clouddirectory (>=1.39.0,<1.40.0)", "mypy-boto3-cloudformation (>=1.39.0,<1.40.0)", "mypy-boto3-cloudfront (>=1.39.0,<1.40.0)", "mypy-boto3-cloudfront-keyvaluestore (>=1.39.0,<1.40.0)", "mypy-boto3-cloudhsm (>=1.39.0,<1.40.0)", "mypy-boto3-cloudhsmv2 (>=1.39.0,<1.40.0)", "mypy-boto3-cloudsearch (>=1.39.0,<1.40.0)", "mypy-boto3-cloudsearchdomain (>=1.39.0,<1.40.0)", "mypy-boto3-cloudtrail (>=1.39.0,<1.40.0)", "mypy-boto3-cloudtrail-data (>=1.39.0,<1.40.0)", "mypy-boto3-cloudwatch (>=1.39.0,<1.40.0)", "mypy-boto3-codeartifact (>=1.39.0,<1.40.0)", "mypy-boto3-codebuild (>=1.39.0,<1.40.0)", "mypy-boto3-codecatalyst (>=1.39.0,<1.40.0)", "mypy-boto3-codecommit (>=1.39.0,<1.40.0)", "mypy-boto3-codeconnections (>=1.39.0,<1.40.0)", "mypy-boto3-codedeploy (>=1.39.0,<1.40.0)", "mypy-boto3-codeguru-reviewer (>=1.39.0,<1.40.0)", "mypy-boto3-codeguru-security (>=1.39.0,<1.40.0)", "mypy-boto3-codeguruprofiler (>=1.39.0,<1.40.0)", "mypy-boto3-codepipeline (>=1.39.0,<1.40.0)", "mypy-boto3-codestar-connections (>=1.39.0,<1.40.0)", "mypy-boto3-codestar-notifications (>=1.39.0,<1.40.0)", "mypy-boto3-cognito-identity (>=1.39.0,<1.40.0)", "mypy-boto3-cognito-idp (>=1.39.0,<1.40.0)", "mypy-boto3-cognito-sync (>=1.39.0,<1.40.0)", "mypy-boto3-comprehend (>=1.39.0,<1.40.0)", "mypy-boto3-comprehendmedical (>=1.39.0,<1.40.0)", "mypy-boto3-compute-optimizer (>=1.39.0,<1.40.0)", "mypy-boto3-config (>=1.39.0,<1.40.0)", "mypy-boto3-connect (>=1.39.0,<1.40.0)", "mypy-boto3-connect-contact-lens (>=1.39.0,<1.40.0)", "mypy-boto3-connectcampaigns (>=1.39.0,<1.40.0)", "mypy-boto3-connectcampaignsv2 (>=1.39.0,<1.40.0)", "mypy-boto3-connectcases (>=1.39.0,<1.40.0)", "mypy-boto3-connectparticipant (>=1.39.0,<1.40.0)", "mypy-boto3-controlcatalog (>=1.39.0,<1.40.0)", "mypy-boto3-controltower (>=1.39.0,<1.40.0)", "mypy-boto3-cost-optimization-hub (>=1.39.0,<1.40.0)", "mypy-boto3-cur (>=1.39.0,<1.40.0)", "mypy-boto3-customer-profiles (>=1.39.0,<1.40.0)", "mypy-boto3-databrew (>=1.39.0,<1.40.0)", "mypy-boto3-dataexchange (>=1.39.0,<1.40.0)", "mypy-boto3-datapipeline (>=1.39.0,<1.40.0)", "mypy-boto3-datasync (>=1.39.0,<1.40.0)", "mypy-boto3-datazone (>=1.39.0,<1.40.0)", "mypy-boto3-dax (>=1.39.0,<1.40.0)", "mypy-boto3-deadline (>=1.39.0,<1.40.0)", "mypy-boto3-detective (>=1.39.0,<1.40.0)", "mypy-boto3-devicefarm (>=1.39.0,<1.40.0)", "mypy-boto3-devops-guru (>=1.39.0,<1.40.0)", "mypy-boto3-directconnect (>=1.39.0,<1.40.0)", "mypy-boto3-discovery (>=1.39.0,<1.40.0)", "mypy-boto3-dlm (>=1.39.0,<1.40.0)", "mypy-boto3-dms (>=1.39.0,<1.40.0)", "mypy-boto3-docdb (>=1.39.0,<1.40.0)", "mypy-boto3-docdb-elastic (>=1.39.0,<1.40.0)", "mypy-boto3-drs (>=1.39.0,<1.40.0)", "mypy-boto3-ds (>=1.39.0,<1.40.0)", "mypy-boto3-ds-data (>=1.39.0,<1.40.0)", "mypy-boto3-dsql (>=1.39.0,<1.40.0)", "mypy-boto3-dynamodb (>=1.39.0,<1.40.0)", "mypy-boto3-dynamodbstreams (>=1.39.0,<1.40.0)", "mypy-boto3-ebs (>=1.39.0,<1.40.0)", "mypy-boto3-ec2 (>=1.39.0,<1.40.0)", "mypy-boto3-ec2-instance-connect (>=1.39.0,<1.40.0)", "mypy-boto3-ecr (>=1.39.0,<1.40.0)", "mypy-boto3-ecr-public (>=1.39.0,<1.40.0)", "mypy-boto3-ecs (>=1.39.0,<1.40.0)", "mypy-boto3-efs (>=1.39.0,<1.40.0)", "mypy-boto3-eks (>=1.39.0,<1.40.0)", "mypy-boto3-eks-auth (>=1.39.0,<1.40.0)", "mypy-boto3-elasticache (>=1.39.0,<1.40.0)", "mypy-boto3-elasticbeanstalk (>=1.39.0,<1.40.0)", "mypy-boto3-elastictranscoder (>=1.39.0,<1.40.0)", "mypy-boto3-elb (>=1.39.0,<1.40.0)", "mypy-boto3-elbv2 (>=1.39.0,<1.40.0)", "mypy-boto3-emr (>=1.39.0,<1.40.0)", "mypy-boto3-emr-containers (>=1.39.0,<1.40.0)", "mypy-boto3-emr-serverless (>=1.39.0,<1.40.0)", "mypy-boto3-entityresolution (>=1.39.0,<1.40.0)", "mypy-boto3-es (>=1.39.0,<1.40.0)", "mypy-boto3-events (>=1.39.0,<1.40.0)", "mypy-boto3-evidently (>=1.39.0,<1.40.0)", "mypy-boto3-evs (>=1.39.0,<1.40.0)", "mypy-boto3-finspace (>=1.39.0,<1.40.0)", "mypy-boto3-finspace-data (>=1.39.0,<1.40.0)", "mypy-boto3-firehose (>=1.39.0,<1.40.0)", "mypy-boto3-fis (>=1.39.0,<1.40.0)", "mypy-boto3-fms (>=1.39.0,<1.40.0)", "mypy-boto3-forecast (>=1.39.0,<1.40.0)", "mypy-boto3-forecastquery (>=1.39.0,<1.40.0)", "mypy-boto3-frauddetector (>=1.39.0,<1.40.0)", "mypy-boto3-freetier (>=1.39.0,<1.40.0)", "mypy-boto3-fsx (>=1.39.0,<1.40.0)", "mypy-boto3-gamelift (>=1.39.0,<1.40.0)", "mypy-boto3-gameliftstreams (>=1.39.0,<1.40.0)", "mypy-boto3-geo-maps (>=1.39.0,<1.40.0)", "mypy-boto3-geo-places (>=1.39.0,<1.40.0)", "mypy-boto3-geo-routes (>=1.39.0,<1.40.0)", "mypy-boto3-glacier (>=1.39.0,<1.40.0)", "mypy-boto3-globalaccelerator (>=1.39.0,<1.40.0)", "mypy-boto3-glue (>=1.39.0,<1.40.0)", "mypy-boto3-grafana (>=1.39.0,<1.40.0)", "mypy-boto3-greengrass (>=1.39.0,<1.40.0)", "mypy-boto3-greengrassv2 (>=1.39.0,<1.40.0)", "mypy-boto3-groundstation (>=1.39.0,<1.40.0)", "mypy-boto3-guardduty (>=1.39.0,<1.40.0)", "mypy-boto3-health (>=1.39.0,<1.40.0)", "mypy-boto3-healthlake (>=1.39.0,<1.40.0)", "mypy-boto3-iam (>=1.39.0,<1.40.0)", "mypy-boto3-identitystore (>=1.39.0,<1.40.0)", "mypy-boto3-imagebuilder (>=1.39.0,<1.40.0)", "mypy-boto3-importexport (>=1.39.0,<1.40.0)", "mypy-boto3-inspector (>=1.39.0,<1.40.0)", "mypy-boto3-inspector-scan (>=1.39.0,<1.40.0)", "mypy-boto3-inspector2 (>=1.39.0,<1.40.0)", "mypy-boto3-internetmonitor (>=1.39.0,<1.40.0)", "mypy-boto3-invoicing (>=1.39.0,<1.40.0)", "mypy-boto3-iot (>=1.39.0,<1.40.0)", "mypy-boto3-iot-data (>=1.39.0,<1.40.0)", "mypy-boto3-iot-jobs-data (>=1.39.0,<1.40.0)", "mypy-boto3-iot-managed-integrations (>=1.39.0,<1.40.0)", "mypy-boto3-iotanalytics (>=1.39.0,<1.40.0)", "mypy-boto3-iotdeviceadvisor (>=1.39.0,<1.40.0)", "mypy-boto3-iotevents (>=1.39.0,<1.40.0)", "mypy-boto3-iotevents-data (>=1.39.0,<1.40.0)", "mypy-boto3-iotfleethub (>=1.39.0,<1.40.0)", "mypy-boto3-iotfleetwise (>=1.39.0,<1.40.0)", "mypy-boto3-iotsecuretunneling (>=1.39.0,<1.40.0)", "mypy-boto3-iotsitewise (>=1.39.0,<1.40.0)", "mypy-boto3-iotthingsgraph (>=1.39.0,<1.40.0)", "mypy-boto3-iottwinmaker (>=1.39.0,<1.40.0)", "mypy-boto3-iotwireless (>=1.39.0,<1.40.0)", "mypy-boto3-ivs (>=1.39.0,<1.40.0)", "mypy-boto3-ivs-realtime (>=1.39.0,<1.40.0)", "mypy-boto3-ivschat (>=1.39.0,<1.40.0)", "mypy-boto3-kafka (>=1.39.0,<1.40.0)", "mypy-boto3-kafkaconnect (>=1.39.0,<1.40.0)", "mypy-boto3-kendra (>=1.39.0,<1.40.0)", "mypy-boto3-kendra-ranking (>=1.39.0,<1.40.0)", "mypy-boto3-keyspaces (>=1.39.0,<1.40.0)", "mypy-boto3-keyspacesstreams (>=1.39.0,<1.40.0)", "mypy-boto3-kinesis (>=1.39.0,<1.40.0)", "mypy-boto3-kinesis-video-archived-media (>=1.39.0,<1.40.0)", "mypy-boto3-kinesis-video-media (>=1.39.0,<1.40.0)", "mypy-boto3-kinesis-video-signaling (>=1.39.0,<1.40.0)", "mypy-boto3-kinesis-video-webrtc-storage (>=1.39.0,<1.40.0)", "mypy-boto3-kinesisanalytics (>=1.39.0,<1.40.0)", "mypy-boto3-kinesisanalyticsv2 (>=1.39.0,<1.40.0)", "mypy-boto3-kinesisvideo (>=1.39.0,<1.40.0)", "mypy-boto3-kms (>=1.39.0,<1.40.0)", "mypy-boto3-lakeformation (>=1.39.0,<1.40.0)", "mypy-boto3-lambda (>=1.39.0,<1.40.0)", "mypy-boto3-launch-wizard (>=1.39.0,<1.40.0)", "mypy-boto3-lex-models (>=1.39.0,<1.40.0)", "mypy-boto3-lex-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-lexv2-models (>=1.39.0,<1.40.0)", "mypy-boto3-lexv2-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-license-manager (>=1.39.0,<1.40.0)", "mypy-boto3-license-manager-linux-subscriptions (>=1.39.0,<1.40.0)", "mypy-boto3-license-manager-user-subscriptions (>=1.39.0,<1.40.0)", "mypy-boto3-lightsail (>=1.39.0,<1.40.0)", "mypy-boto3-location (>=1.39.0,<1.40.0)", "mypy-boto3-logs (>=1.39.0,<1.40.0)", "mypy-boto3-lookoutequipment (>=1.39.0,<1.40.0)", "mypy-boto3-lookoutmetrics (>=1.39.0,<1.40.0)", "mypy-boto3-lookoutvision (>=1.39.0,<1.40.0)", "mypy-boto3-m2 (>=1.39.0,<1.40.0)", "mypy-boto3-machinelearning (>=1.39.0,<1.40.0)", "mypy-boto3-macie2 (>=1.39.0,<1.40.0)", "mypy-boto3-mailmanager (>=1.39.0,<1.40.0)", "mypy-boto3-managedblockchain (>=1.39.0,<1.40.0)", "mypy-boto3-managedblockchain-query (>=1.39.0,<1.40.0)", "mypy-boto3-marketplace-agreement (>=1.39.0,<1.40.0)", "mypy-boto3-marketplace-catalog (>=1.39.0,<1.40.0)", "mypy-boto3-marketplace-deployment (>=1.39.0,<1.40.0)", "mypy-boto3-marketplace-entitlement (>=1.39.0,<1.40.0)", "mypy-boto3-marketplace-reporting (>=1.39.0,<1.40.0)", "mypy-boto3-marketplacecommerceanalytics (>=1.39.0,<1.40.0)", "mypy-boto3-mediaconnect (>=1.39.0,<1.40.0)", "mypy-boto3-mediaconvert (>=1.39.0,<1.40.0)", "mypy-boto3-medialive (>=1.39.0,<1.40.0)", "mypy-boto3-mediapackage (>=1.39.0,<1.40.0)", "mypy-boto3-mediapackage-vod (>=1.39.0,<1.40.0)", "mypy-boto3-mediapackagev2 (>=1.39.0,<1.40.0)", "mypy-boto3-mediastore (>=1.39.0,<1.40.0)", "mypy-boto3-mediastore-data (>=1.39.0,<1.40.0)", "mypy-boto3-mediatailor (>=1.39.0,<1.40.0)", "mypy-boto3-medical-imaging (>=1.39.0,<1.40.0)", "mypy-boto3-memorydb (>=1.39.0,<1.40.0)", "mypy-boto3-meteringmarketplace (>=1.39.0,<1.40.0)", "mypy-boto3-mgh (>=1.39.0,<1.40.0)", "mypy-boto3-mgn (>=1.39.0,<1.40.0)", "mypy-boto3-migration-hub-refactor-spaces (>=1.39.0,<1.40.0)", "mypy-boto3-migrationhub-config (>=1.39.0,<1.40.0)", "mypy-boto3-migrationhuborchestrator (>=1.39.0,<1.40.0)", "mypy-boto3-migrationhubstrategy (>=1.39.0,<1.40.0)", "mypy-boto3-mpa (>=1.39.0,<1.40.0)", "mypy-boto3-mq (>=1.39.0,<1.40.0)", "mypy-boto3-mturk (>=1.39.0,<1.40.0)", "mypy-boto3-mwaa (>=1.39.0,<1.40.0)", "mypy-boto3-neptune (>=1.39.0,<1.40.0)", "mypy-boto3-neptune-graph (>=1.39.0,<1.40.0)", "mypy-boto3-neptunedata (>=1.39.0,<1.40.0)", "mypy-boto3-network-firewall (>=1.39.0,<1.40.0)", "mypy-boto3-networkflowmonitor (>=1.39.0,<1.40.0)", "mypy-boto3-networkmanager (>=1.39.0,<1.40.0)", "mypy-boto3-networkmonitor (>=1.39.0,<1.40.0)", "mypy-boto3-notifications (>=1.39.0,<1.40.0)", "mypy-boto3-notificationscontacts (>=1.39.0,<1.40.0)", "mypy-boto3-oam (>=1.39.0,<1.40.0)", "mypy-boto3-observabilityadmin (>=1.39.0,<1.40.0)", "mypy-boto3-odb (>=1.39.0,<1.40.0)", "mypy-boto3-omics (>=1.39.0,<1.40.0)", "mypy-boto3-opensearch (>=1.39.0,<1.40.0)", "mypy-boto3-opensearchserverless (>=1.39.0,<1.40.0)", "mypy-boto3-opsworks (>=1.39.0,<1.40.0)", "mypy-boto3-opsworkscm (>=1.39.0,<1.40.0)", "mypy-boto3-organizations (>=1.39.0,<1.40.0)", "mypy-boto3-osis (>=1.39.0,<1.40.0)", "mypy-boto3-outposts (>=1.39.0,<1.40.0)", "mypy-boto3-panorama (>=1.39.0,<1.40.0)", "mypy-boto3-partnercentral-selling (>=1.39.0,<1.40.0)", "mypy-boto3-payment-cryptography (>=1.39.0,<1.40.0)", "mypy-boto3-payment-cryptography-data (>=1.39.0,<1.40.0)", "mypy-boto3-pca-connector-ad (>=1.39.0,<1.40.0)", "mypy-boto3-pca-connector-scep (>=1.39.0,<1.40.0)", "mypy-boto3-pcs (>=1.39.0,<1.40.0)", "mypy-boto3-personalize (>=1.39.0,<1.40.0)", "mypy-boto3-personalize-events (>=1.39.0,<1.40.0)", "mypy-boto3-personalize-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-pi (>=1.39.0,<1.40.0)", "mypy-boto3-pinpoint (>=1.39.0,<1.40.0)", "mypy-boto3-pinpoint-email (>=1.39.0,<1.40.0)", "mypy-boto3-pinpoint-sms-voice (>=1.39.0,<1.40.0)", "mypy-boto3-pinpoint-sms-voice-v2 (>=1.39.0,<1.40.0)", "mypy-boto3-pipes (>=1.39.0,<1.40.0)", "mypy-boto3-polly (>=1.39.0,<1.40.0)", "mypy-boto3-pricing (>=1.39.0,<1.40.0)", "mypy-boto3-proton (>=1.39.0,<1.40.0)", "mypy-boto3-qapps (>=1.39.0,<1.40.0)", "mypy-boto3-qbusiness (>=1.39.0,<1.40.0)", "mypy-boto3-qconnect (>=1.39.0,<1.40.0)", "mypy-boto3-qldb (>=1.39.0,<1.40.0)", "mypy-boto3-qldb-session (>=1.39.0,<1.40.0)", "mypy-boto3-quicksight (>=1.39.0,<1.40.0)", "mypy-boto3-ram (>=1.39.0,<1.40.0)", "mypy-boto3-rbin (>=1.39.0,<1.40.0)", "mypy-boto3-rds (>=1.39.0,<1.40.0)", "mypy-boto3-rds-data (>=1.39.0,<1.40.0)", "mypy-boto3-redshift (>=1.39.0,<1.40.0)", "mypy-boto3-redshift-data (>=1.39.0,<1.40.0)", "mypy-boto3-redshift-serverless (>=1.39.0,<1.40.0)", "mypy-boto3-rekognition (>=1.39.0,<1.40.0)", "mypy-boto3-repostspace (>=1.39.0,<1.40.0)", "mypy-boto3-resiliencehub (>=1.39.0,<1.40.0)", "mypy-boto3-resource-explorer-2 (>=1.39.0,<1.40.0)", "mypy-boto3-resource-groups (>=1.39.0,<1.40.0)", "mypy-boto3-resourcegroupstaggingapi (>=1.39.0,<1.40.0)", "mypy-boto3-robomaker (>=1.39.0,<1.40.0)", "mypy-boto3-rolesanywhere (>=1.39.0,<1.40.0)", "mypy-boto3-route53 (>=1.39.0,<1.40.0)", "mypy-boto3-route53-recovery-cluster (>=1.39.0,<1.40.0)", "mypy-boto3-route53-recovery-control-config (>=1.39.0,<1.40.0)", "mypy-boto3-route53-recovery-readiness (>=1.39.0,<1.40.0)", "mypy-boto3-route53domains (>=1.39.0,<1.40.0)", "mypy-boto3-route53profiles (>=1.39.0,<1.40.0)", "mypy-boto3-route53resolver (>=1.39.0,<1.40.0)", "mypy-boto3-rum (>=1.39.0,<1.40.0)", "mypy-boto3-s3 (>=1.39.0,<1.40.0)", "mypy-boto3-s3control (>=1.39.0,<1.40.0)", "mypy-boto3-s3outposts (>=1.39.0,<1.40.0)", "mypy-boto3-s3tables (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker-a2i-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker-edge (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker-featurestore-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker-geospatial (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker-metrics (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-savingsplans (>=1.39.0,<1.40.0)", "mypy-boto3-scheduler (>=1.39.0,<1.40.0)", "mypy-boto3-schemas (>=1.39.0,<1.40.0)", "mypy-boto3-sdb (>=1.39.0,<1.40.0)", "mypy-boto3-secretsmanager (>=1.39.0,<1.40.0)", "mypy-boto3-security-ir (>=1.39.0,<1.40.0)", "mypy-boto3-securityhub (>=1.39.0,<1.40.0)", "mypy-boto3-securitylake (>=1.39.0,<1.40.0)", "mypy-boto3-serverlessrepo (>=1.39.0,<1.40.0)", "mypy-boto3-service-quotas (>=1.39.0,<1.40.0)", "mypy-boto3-servicecatalog (>=1.39.0,<1.40.0)", "mypy-boto3-servicecatalog-appregistry (>=1.39.0,<1.40.0)", "mypy-boto3-servicediscovery (>=1.39.0,<1.40.0)", "mypy-boto3-ses (>=1.39.0,<1.40.0)", "mypy-boto3-sesv2 (>=1.39.0,<1.40.0)", "mypy-boto3-shield (>=1.39.0,<1.40.0)", "mypy-boto3-signer (>=1.39.0,<1.40.0)", "mypy-boto3-simspaceweaver (>=1.39.0,<1.40.0)", "mypy-boto3-sms (>=1.39.0,<1.40.0)", "mypy-boto3-snow-device-management (>=1.39.0,<1.40.0)", "mypy-boto3-snowball (>=1.39.0,<1.40.0)", "mypy-boto3-sns (>=1.39.0,<1.40.0)", "mypy-boto3-socialmessaging (>=1.39.0,<1.40.0)", "mypy-boto3-sqs (>=1.39.0,<1.40.0)", "mypy-boto3-ssm (>=1.39.0,<1.40.0)", "mypy-boto3-ssm-contacts (>=1.39.0,<1.40.0)", "mypy-boto3-ssm-guiconnect (>=1.39.0,<1.40.0)", "mypy-boto3-ssm-incidents (>=1.39.0,<1.40.0)", "mypy-boto3-ssm-quicksetup (>=1.39.0,<1.40.0)", "mypy-boto3-ssm-sap (>=1.39.0,<1.40.0)", "mypy-boto3-sso (>=1.39.0,<1.40.0)", "mypy-boto3-sso-admin (>=1.39.0,<1.40.0)", "mypy-boto3-sso-oidc (>=1.39.0,<1.40.0)", "mypy-boto3-stepfunctions (>=1.39.0,<1.40.0)", "mypy-boto3-storagegateway (>=1.39.0,<1.40.0)", "mypy-boto3-sts (>=1.39.0,<1.40.0)", "mypy-boto3-supplychain (>=1.39.0,<1.40.0)", "mypy-boto3-support (>=1.39.0,<1.40.0)", "mypy-boto3-support-app (>=1.39.0,<1.40.0)", "mypy-boto3-swf (>=1.39.0,<1.40.0)", "mypy-boto3-synthetics (>=1.39.0,<1.40.0)", "mypy-boto3-taxsettings (>=1.39.0,<1.40.0)", "mypy-boto3-textract (>=1.39.0,<1.40.0)", "mypy-boto3-timestream-influxdb (>=1.39.0,<1.40.0)", "mypy-boto3-timestream-query (>=1.39.0,<1.40.0)", "mypy-boto3-timestream-write (>=1.39.0,<1.40.0)", "mypy-boto3-tnb (>=1.39.0,<1.40.0)", "mypy-boto3-transcribe (>=1.39.0,<1.40.0)", "mypy-boto3-transfer (>=1.39.0,<1.40.0)", "mypy-boto3-translate (>=1.39.0,<1.40.0)", "mypy-boto3-trustedadvisor (>=1.39.0,<1.40.0)", "mypy-boto3-verifiedpermissions (>=1.39.0,<1.40.0)", "mypy-boto3-voice-id (>=1.39.0,<1.40.0)", "mypy-boto3-vpc-lattice (>=1.39.0,<1.40.0)", "mypy-boto3-waf (>=1.39.0,<1.40.0)", "mypy-boto3-waf-regional (>=1.39.0,<1.40.0)", "mypy-boto3-wafv2 (>=1.39.0,<1.40.0)", "mypy-boto3-wellarchitected (>=1.39.0,<1.40.0)", "mypy-boto3-wisdom (>=1.39.0,<1.40.0)", "mypy-boto3-workdocs (>=1.39.0,<1.40.0)", "mypy-boto3-workmail (>=1.39.0,<1.40.0)", "mypy-boto3-workmailmessageflow (>=1.39.0,<1.40.0)", "mypy-boto3-workspaces (>=1.39.0,<1.40.0)", "mypy-boto3-workspaces-instances (>=1.39.0,<1.40.0)", "mypy-boto3-workspaces-thin-client (>=1.39.0,<1.40.0)", "mypy-boto3-workspaces-web (>=1.39.0,<1.40.0)", "mypy-boto3-xray (>=1.39.0,<1.40.0)"]
+all = ["mypy-boto3-accessanalyzer (>=1.39.0,<1.40.0)", "mypy-boto3-account (>=1.39.0,<1.40.0)", "mypy-boto3-acm (>=1.39.0,<1.40.0)", "mypy-boto3-acm-pca (>=1.39.0,<1.40.0)", "mypy-boto3-aiops (>=1.39.0,<1.40.0)", "mypy-boto3-amp (>=1.39.0,<1.40.0)", "mypy-boto3-amplify (>=1.39.0,<1.40.0)", "mypy-boto3-amplifybackend (>=1.39.0,<1.40.0)", "mypy-boto3-amplifyuibuilder (>=1.39.0,<1.40.0)", "mypy-boto3-apigateway (>=1.39.0,<1.40.0)", "mypy-boto3-apigatewaymanagementapi (>=1.39.0,<1.40.0)", "mypy-boto3-apigatewayv2 (>=1.39.0,<1.40.0)", "mypy-boto3-appconfig (>=1.39.0,<1.40.0)", "mypy-boto3-appconfigdata (>=1.39.0,<1.40.0)", "mypy-boto3-appfabric (>=1.39.0,<1.40.0)", "mypy-boto3-appflow (>=1.39.0,<1.40.0)", "mypy-boto3-appintegrations (>=1.39.0,<1.40.0)", "mypy-boto3-application-autoscaling (>=1.39.0,<1.40.0)", "mypy-boto3-application-insights (>=1.39.0,<1.40.0)", "mypy-boto3-application-signals (>=1.39.0,<1.40.0)", "mypy-boto3-applicationcostprofiler (>=1.39.0,<1.40.0)", "mypy-boto3-appmesh (>=1.39.0,<1.40.0)", "mypy-boto3-apprunner (>=1.39.0,<1.40.0)", "mypy-boto3-appstream (>=1.39.0,<1.40.0)", "mypy-boto3-appsync (>=1.39.0,<1.40.0)", "mypy-boto3-apptest (>=1.39.0,<1.40.0)", "mypy-boto3-arc-zonal-shift (>=1.39.0,<1.40.0)", "mypy-boto3-artifact (>=1.39.0,<1.40.0)", "mypy-boto3-athena (>=1.39.0,<1.40.0)", "mypy-boto3-auditmanager (>=1.39.0,<1.40.0)", "mypy-boto3-autoscaling (>=1.39.0,<1.40.0)", "mypy-boto3-autoscaling-plans (>=1.39.0,<1.40.0)", "mypy-boto3-b2bi (>=1.39.0,<1.40.0)", "mypy-boto3-backup (>=1.39.0,<1.40.0)", "mypy-boto3-backup-gateway (>=1.39.0,<1.40.0)", "mypy-boto3-backupsearch (>=1.39.0,<1.40.0)", "mypy-boto3-batch (>=1.39.0,<1.40.0)", "mypy-boto3-bcm-data-exports (>=1.39.0,<1.40.0)", "mypy-boto3-bcm-pricing-calculator (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock-agent (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock-agent-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock-agentcore (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock-agentcore-control (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock-data-automation (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock-data-automation-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-bedrock-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-billing (>=1.39.0,<1.40.0)", "mypy-boto3-billingconductor (>=1.39.0,<1.40.0)", "mypy-boto3-braket (>=1.39.0,<1.40.0)", "mypy-boto3-budgets (>=1.39.0,<1.40.0)", "mypy-boto3-ce (>=1.39.0,<1.40.0)", "mypy-boto3-chatbot (>=1.39.0,<1.40.0)", "mypy-boto3-chime (>=1.39.0,<1.40.0)", "mypy-boto3-chime-sdk-identity (>=1.39.0,<1.40.0)", "mypy-boto3-chime-sdk-media-pipelines (>=1.39.0,<1.40.0)", "mypy-boto3-chime-sdk-meetings (>=1.39.0,<1.40.0)", "mypy-boto3-chime-sdk-messaging (>=1.39.0,<1.40.0)", "mypy-boto3-chime-sdk-voice (>=1.39.0,<1.40.0)", "mypy-boto3-cleanrooms (>=1.39.0,<1.40.0)", "mypy-boto3-cleanroomsml (>=1.39.0,<1.40.0)", "mypy-boto3-cloud9 (>=1.39.0,<1.40.0)", "mypy-boto3-cloudcontrol (>=1.39.0,<1.40.0)", "mypy-boto3-clouddirectory (>=1.39.0,<1.40.0)", "mypy-boto3-cloudformation (>=1.39.0,<1.40.0)", "mypy-boto3-cloudfront (>=1.39.0,<1.40.0)", "mypy-boto3-cloudfront-keyvaluestore (>=1.39.0,<1.40.0)", "mypy-boto3-cloudhsm (>=1.39.0,<1.40.0)", "mypy-boto3-cloudhsmv2 (>=1.39.0,<1.40.0)", "mypy-boto3-cloudsearch (>=1.39.0,<1.40.0)", "mypy-boto3-cloudsearchdomain (>=1.39.0,<1.40.0)", "mypy-boto3-cloudtrail (>=1.39.0,<1.40.0)", "mypy-boto3-cloudtrail-data (>=1.39.0,<1.40.0)", "mypy-boto3-cloudwatch (>=1.39.0,<1.40.0)", "mypy-boto3-codeartifact (>=1.39.0,<1.40.0)", "mypy-boto3-codebuild (>=1.39.0,<1.40.0)", "mypy-boto3-codecatalyst (>=1.39.0,<1.40.0)", "mypy-boto3-codecommit (>=1.39.0,<1.40.0)", "mypy-boto3-codeconnections (>=1.39.0,<1.40.0)", "mypy-boto3-codedeploy (>=1.39.0,<1.40.0)", "mypy-boto3-codeguru-reviewer (>=1.39.0,<1.40.0)", "mypy-boto3-codeguru-security (>=1.39.0,<1.40.0)", "mypy-boto3-codeguruprofiler (>=1.39.0,<1.40.0)", "mypy-boto3-codepipeline (>=1.39.0,<1.40.0)", "mypy-boto3-codestar-connections (>=1.39.0,<1.40.0)", "mypy-boto3-codestar-notifications (>=1.39.0,<1.40.0)", "mypy-boto3-cognito-identity (>=1.39.0,<1.40.0)", "mypy-boto3-cognito-idp (>=1.39.0,<1.40.0)", "mypy-boto3-cognito-sync (>=1.39.0,<1.40.0)", "mypy-boto3-comprehend (>=1.39.0,<1.40.0)", "mypy-boto3-comprehendmedical (>=1.39.0,<1.40.0)", "mypy-boto3-compute-optimizer (>=1.39.0,<1.40.0)", "mypy-boto3-config (>=1.39.0,<1.40.0)", "mypy-boto3-connect (>=1.39.0,<1.40.0)", "mypy-boto3-connect-contact-lens (>=1.39.0,<1.40.0)", "mypy-boto3-connectcampaigns (>=1.39.0,<1.40.0)", "mypy-boto3-connectcampaignsv2 (>=1.39.0,<1.40.0)", "mypy-boto3-connectcases (>=1.39.0,<1.40.0)", "mypy-boto3-connectparticipant (>=1.39.0,<1.40.0)", "mypy-boto3-controlcatalog (>=1.39.0,<1.40.0)", "mypy-boto3-controltower (>=1.39.0,<1.40.0)", "mypy-boto3-cost-optimization-hub (>=1.39.0,<1.40.0)", "mypy-boto3-cur (>=1.39.0,<1.40.0)", "mypy-boto3-customer-profiles (>=1.39.0,<1.40.0)", "mypy-boto3-databrew (>=1.39.0,<1.40.0)", "mypy-boto3-dataexchange (>=1.39.0,<1.40.0)", "mypy-boto3-datapipeline (>=1.39.0,<1.40.0)", "mypy-boto3-datasync (>=1.39.0,<1.40.0)", "mypy-boto3-datazone (>=1.39.0,<1.40.0)", "mypy-boto3-dax (>=1.39.0,<1.40.0)", "mypy-boto3-deadline (>=1.39.0,<1.40.0)", "mypy-boto3-detective (>=1.39.0,<1.40.0)", "mypy-boto3-devicefarm (>=1.39.0,<1.40.0)", "mypy-boto3-devops-guru (>=1.39.0,<1.40.0)", "mypy-boto3-directconnect (>=1.39.0,<1.40.0)", "mypy-boto3-discovery (>=1.39.0,<1.40.0)", "mypy-boto3-dlm (>=1.39.0,<1.40.0)", "mypy-boto3-dms (>=1.39.0,<1.40.0)", "mypy-boto3-docdb (>=1.39.0,<1.40.0)", "mypy-boto3-docdb-elastic (>=1.39.0,<1.40.0)", "mypy-boto3-drs (>=1.39.0,<1.40.0)", "mypy-boto3-ds (>=1.39.0,<1.40.0)", "mypy-boto3-ds-data (>=1.39.0,<1.40.0)", "mypy-boto3-dsql (>=1.39.0,<1.40.0)", "mypy-boto3-dynamodb (>=1.39.0,<1.40.0)", "mypy-boto3-dynamodbstreams (>=1.39.0,<1.40.0)", "mypy-boto3-ebs (>=1.39.0,<1.40.0)", "mypy-boto3-ec2 (>=1.39.0,<1.40.0)", "mypy-boto3-ec2-instance-connect (>=1.39.0,<1.40.0)", "mypy-boto3-ecr (>=1.39.0,<1.40.0)", "mypy-boto3-ecr-public (>=1.39.0,<1.40.0)", "mypy-boto3-ecs (>=1.39.0,<1.40.0)", "mypy-boto3-efs (>=1.39.0,<1.40.0)", "mypy-boto3-eks (>=1.39.0,<1.40.0)", "mypy-boto3-eks-auth (>=1.39.0,<1.40.0)", "mypy-boto3-elasticache (>=1.39.0,<1.40.0)", "mypy-boto3-elasticbeanstalk (>=1.39.0,<1.40.0)", "mypy-boto3-elastictranscoder (>=1.39.0,<1.40.0)", "mypy-boto3-elb (>=1.39.0,<1.40.0)", "mypy-boto3-elbv2 (>=1.39.0,<1.40.0)", "mypy-boto3-emr (>=1.39.0,<1.40.0)", "mypy-boto3-emr-containers (>=1.39.0,<1.40.0)", "mypy-boto3-emr-serverless (>=1.39.0,<1.40.0)", "mypy-boto3-entityresolution (>=1.39.0,<1.40.0)", "mypy-boto3-es (>=1.39.0,<1.40.0)", "mypy-boto3-events (>=1.39.0,<1.40.0)", "mypy-boto3-evidently (>=1.39.0,<1.40.0)", "mypy-boto3-evs (>=1.39.0,<1.40.0)", "mypy-boto3-finspace (>=1.39.0,<1.40.0)", "mypy-boto3-finspace-data (>=1.39.0,<1.40.0)", "mypy-boto3-firehose (>=1.39.0,<1.40.0)", "mypy-boto3-fis (>=1.39.0,<1.40.0)", "mypy-boto3-fms (>=1.39.0,<1.40.0)", "mypy-boto3-forecast (>=1.39.0,<1.40.0)", "mypy-boto3-forecastquery (>=1.39.0,<1.40.0)", "mypy-boto3-frauddetector (>=1.39.0,<1.40.0)", "mypy-boto3-freetier (>=1.39.0,<1.40.0)", "mypy-boto3-fsx (>=1.39.0,<1.40.0)", "mypy-boto3-gamelift (>=1.39.0,<1.40.0)", "mypy-boto3-gameliftstreams (>=1.39.0,<1.40.0)", "mypy-boto3-geo-maps (>=1.39.0,<1.40.0)", "mypy-boto3-geo-places (>=1.39.0,<1.40.0)", "mypy-boto3-geo-routes (>=1.39.0,<1.40.0)", "mypy-boto3-glacier (>=1.39.0,<1.40.0)", "mypy-boto3-globalaccelerator (>=1.39.0,<1.40.0)", "mypy-boto3-glue (>=1.39.0,<1.40.0)", "mypy-boto3-grafana (>=1.39.0,<1.40.0)", "mypy-boto3-greengrass (>=1.39.0,<1.40.0)", "mypy-boto3-greengrassv2 (>=1.39.0,<1.40.0)", "mypy-boto3-groundstation (>=1.39.0,<1.40.0)", "mypy-boto3-guardduty (>=1.39.0,<1.40.0)", "mypy-boto3-health (>=1.39.0,<1.40.0)", "mypy-boto3-healthlake (>=1.39.0,<1.40.0)", "mypy-boto3-iam (>=1.39.0,<1.40.0)", "mypy-boto3-identitystore (>=1.39.0,<1.40.0)", "mypy-boto3-imagebuilder (>=1.39.0,<1.40.0)", "mypy-boto3-importexport (>=1.39.0,<1.40.0)", "mypy-boto3-inspector (>=1.39.0,<1.40.0)", "mypy-boto3-inspector-scan (>=1.39.0,<1.40.0)", "mypy-boto3-inspector2 (>=1.39.0,<1.40.0)", "mypy-boto3-internetmonitor (>=1.39.0,<1.40.0)", "mypy-boto3-invoicing (>=1.39.0,<1.40.0)", "mypy-boto3-iot (>=1.39.0,<1.40.0)", "mypy-boto3-iot-data (>=1.39.0,<1.40.0)", "mypy-boto3-iot-jobs-data (>=1.39.0,<1.40.0)", "mypy-boto3-iot-managed-integrations (>=1.39.0,<1.40.0)", "mypy-boto3-iotanalytics (>=1.39.0,<1.40.0)", "mypy-boto3-iotdeviceadvisor (>=1.39.0,<1.40.0)", "mypy-boto3-iotevents (>=1.39.0,<1.40.0)", "mypy-boto3-iotevents-data (>=1.39.0,<1.40.0)", "mypy-boto3-iotfleethub (>=1.39.0,<1.40.0)", "mypy-boto3-iotfleetwise (>=1.39.0,<1.40.0)", "mypy-boto3-iotsecuretunneling (>=1.39.0,<1.40.0)", "mypy-boto3-iotsitewise (>=1.39.0,<1.40.0)", "mypy-boto3-iotthingsgraph (>=1.39.0,<1.40.0)", "mypy-boto3-iottwinmaker (>=1.39.0,<1.40.0)", "mypy-boto3-iotwireless (>=1.39.0,<1.40.0)", "mypy-boto3-ivs (>=1.39.0,<1.40.0)", "mypy-boto3-ivs-realtime (>=1.39.0,<1.40.0)", "mypy-boto3-ivschat (>=1.39.0,<1.40.0)", "mypy-boto3-kafka (>=1.39.0,<1.40.0)", "mypy-boto3-kafkaconnect (>=1.39.0,<1.40.0)", "mypy-boto3-kendra (>=1.39.0,<1.40.0)", "mypy-boto3-kendra-ranking (>=1.39.0,<1.40.0)", "mypy-boto3-keyspaces (>=1.39.0,<1.40.0)", "mypy-boto3-keyspacesstreams (>=1.39.0,<1.40.0)", "mypy-boto3-kinesis (>=1.39.0,<1.40.0)", "mypy-boto3-kinesis-video-archived-media (>=1.39.0,<1.40.0)", "mypy-boto3-kinesis-video-media (>=1.39.0,<1.40.0)", "mypy-boto3-kinesis-video-signaling (>=1.39.0,<1.40.0)", "mypy-boto3-kinesis-video-webrtc-storage (>=1.39.0,<1.40.0)", "mypy-boto3-kinesisanalytics (>=1.39.0,<1.40.0)", "mypy-boto3-kinesisanalyticsv2 (>=1.39.0,<1.40.0)", "mypy-boto3-kinesisvideo (>=1.39.0,<1.40.0)", "mypy-boto3-kms (>=1.39.0,<1.40.0)", "mypy-boto3-lakeformation (>=1.39.0,<1.40.0)", "mypy-boto3-lambda (>=1.39.0,<1.40.0)", "mypy-boto3-launch-wizard (>=1.39.0,<1.40.0)", "mypy-boto3-lex-models (>=1.39.0,<1.40.0)", "mypy-boto3-lex-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-lexv2-models (>=1.39.0,<1.40.0)", "mypy-boto3-lexv2-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-license-manager (>=1.39.0,<1.40.0)", "mypy-boto3-license-manager-linux-subscriptions (>=1.39.0,<1.40.0)", "mypy-boto3-license-manager-user-subscriptions (>=1.39.0,<1.40.0)", "mypy-boto3-lightsail (>=1.39.0,<1.40.0)", "mypy-boto3-location (>=1.39.0,<1.40.0)", "mypy-boto3-logs (>=1.39.0,<1.40.0)", "mypy-boto3-lookoutequipment (>=1.39.0,<1.40.0)", "mypy-boto3-lookoutmetrics (>=1.39.0,<1.40.0)", "mypy-boto3-lookoutvision (>=1.39.0,<1.40.0)", "mypy-boto3-m2 (>=1.39.0,<1.40.0)", "mypy-boto3-machinelearning (>=1.39.0,<1.40.0)", "mypy-boto3-macie2 (>=1.39.0,<1.40.0)", "mypy-boto3-mailmanager (>=1.39.0,<1.40.0)", "mypy-boto3-managedblockchain (>=1.39.0,<1.40.0)", "mypy-boto3-managedblockchain-query (>=1.39.0,<1.40.0)", "mypy-boto3-marketplace-agreement (>=1.39.0,<1.40.0)", "mypy-boto3-marketplace-catalog (>=1.39.0,<1.40.0)", "mypy-boto3-marketplace-deployment (>=1.39.0,<1.40.0)", "mypy-boto3-marketplace-entitlement (>=1.39.0,<1.40.0)", "mypy-boto3-marketplace-reporting (>=1.39.0,<1.40.0)", "mypy-boto3-marketplacecommerceanalytics (>=1.39.0,<1.40.0)", "mypy-boto3-mediaconnect (>=1.39.0,<1.40.0)", "mypy-boto3-mediaconvert (>=1.39.0,<1.40.0)", "mypy-boto3-medialive (>=1.39.0,<1.40.0)", "mypy-boto3-mediapackage (>=1.39.0,<1.40.0)", "mypy-boto3-mediapackage-vod (>=1.39.0,<1.40.0)", "mypy-boto3-mediapackagev2 (>=1.39.0,<1.40.0)", "mypy-boto3-mediastore (>=1.39.0,<1.40.0)", "mypy-boto3-mediastore-data (>=1.39.0,<1.40.0)", "mypy-boto3-mediatailor (>=1.39.0,<1.40.0)", "mypy-boto3-medical-imaging (>=1.39.0,<1.40.0)", "mypy-boto3-memorydb (>=1.39.0,<1.40.0)", "mypy-boto3-meteringmarketplace (>=1.39.0,<1.40.0)", "mypy-boto3-mgh (>=1.39.0,<1.40.0)", "mypy-boto3-mgn (>=1.39.0,<1.40.0)", "mypy-boto3-migration-hub-refactor-spaces (>=1.39.0,<1.40.0)", "mypy-boto3-migrationhub-config (>=1.39.0,<1.40.0)", "mypy-boto3-migrationhuborchestrator (>=1.39.0,<1.40.0)", "mypy-boto3-migrationhubstrategy (>=1.39.0,<1.40.0)", "mypy-boto3-mpa (>=1.39.0,<1.40.0)", "mypy-boto3-mq (>=1.39.0,<1.40.0)", "mypy-boto3-mturk (>=1.39.0,<1.40.0)", "mypy-boto3-mwaa (>=1.39.0,<1.40.0)", "mypy-boto3-neptune (>=1.39.0,<1.40.0)", "mypy-boto3-neptune-graph (>=1.39.0,<1.40.0)", "mypy-boto3-neptunedata (>=1.39.0,<1.40.0)", "mypy-boto3-network-firewall (>=1.39.0,<1.40.0)", "mypy-boto3-networkflowmonitor (>=1.39.0,<1.40.0)", "mypy-boto3-networkmanager (>=1.39.0,<1.40.0)", "mypy-boto3-networkmonitor (>=1.39.0,<1.40.0)", "mypy-boto3-notifications (>=1.39.0,<1.40.0)", "mypy-boto3-notificationscontacts (>=1.39.0,<1.40.0)", "mypy-boto3-oam (>=1.39.0,<1.40.0)", "mypy-boto3-observabilityadmin (>=1.39.0,<1.40.0)", "mypy-boto3-odb (>=1.39.0,<1.40.0)", "mypy-boto3-omics (>=1.39.0,<1.40.0)", "mypy-boto3-opensearch (>=1.39.0,<1.40.0)", "mypy-boto3-opensearchserverless (>=1.39.0,<1.40.0)", "mypy-boto3-opsworks (>=1.39.0,<1.40.0)", "mypy-boto3-opsworkscm (>=1.39.0,<1.40.0)", "mypy-boto3-organizations (>=1.39.0,<1.40.0)", "mypy-boto3-osis (>=1.39.0,<1.40.0)", "mypy-boto3-outposts (>=1.39.0,<1.40.0)", "mypy-boto3-panorama (>=1.39.0,<1.40.0)", "mypy-boto3-partnercentral-selling (>=1.39.0,<1.40.0)", "mypy-boto3-payment-cryptography (>=1.39.0,<1.40.0)", "mypy-boto3-payment-cryptography-data (>=1.39.0,<1.40.0)", "mypy-boto3-pca-connector-ad (>=1.39.0,<1.40.0)", "mypy-boto3-pca-connector-scep (>=1.39.0,<1.40.0)", "mypy-boto3-pcs (>=1.39.0,<1.40.0)", "mypy-boto3-personalize (>=1.39.0,<1.40.0)", "mypy-boto3-personalize-events (>=1.39.0,<1.40.0)", "mypy-boto3-personalize-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-pi (>=1.39.0,<1.40.0)", "mypy-boto3-pinpoint (>=1.39.0,<1.40.0)", "mypy-boto3-pinpoint-email (>=1.39.0,<1.40.0)", "mypy-boto3-pinpoint-sms-voice (>=1.39.0,<1.40.0)", "mypy-boto3-pinpoint-sms-voice-v2 (>=1.39.0,<1.40.0)", "mypy-boto3-pipes (>=1.39.0,<1.40.0)", "mypy-boto3-polly (>=1.39.0,<1.40.0)", "mypy-boto3-pricing (>=1.39.0,<1.40.0)", "mypy-boto3-proton (>=1.39.0,<1.40.0)", "mypy-boto3-qapps (>=1.39.0,<1.40.0)", "mypy-boto3-qbusiness (>=1.39.0,<1.40.0)", "mypy-boto3-qconnect (>=1.39.0,<1.40.0)", "mypy-boto3-qldb (>=1.39.0,<1.40.0)", "mypy-boto3-qldb-session (>=1.39.0,<1.40.0)", "mypy-boto3-quicksight (>=1.39.0,<1.40.0)", "mypy-boto3-ram (>=1.39.0,<1.40.0)", "mypy-boto3-rbin (>=1.39.0,<1.40.0)", "mypy-boto3-rds (>=1.39.0,<1.40.0)", "mypy-boto3-rds-data (>=1.39.0,<1.40.0)", "mypy-boto3-redshift (>=1.39.0,<1.40.0)", "mypy-boto3-redshift-data (>=1.39.0,<1.40.0)", "mypy-boto3-redshift-serverless (>=1.39.0,<1.40.0)", "mypy-boto3-rekognition (>=1.39.0,<1.40.0)", "mypy-boto3-repostspace (>=1.39.0,<1.40.0)", "mypy-boto3-resiliencehub (>=1.39.0,<1.40.0)", "mypy-boto3-resource-explorer-2 (>=1.39.0,<1.40.0)", "mypy-boto3-resource-groups (>=1.39.0,<1.40.0)", "mypy-boto3-resourcegroupstaggingapi (>=1.39.0,<1.40.0)", "mypy-boto3-robomaker (>=1.39.0,<1.40.0)", "mypy-boto3-rolesanywhere (>=1.39.0,<1.40.0)", "mypy-boto3-route53 (>=1.39.0,<1.40.0)", "mypy-boto3-route53-recovery-cluster (>=1.39.0,<1.40.0)", "mypy-boto3-route53-recovery-control-config (>=1.39.0,<1.40.0)", "mypy-boto3-route53-recovery-readiness (>=1.39.0,<1.40.0)", "mypy-boto3-route53domains (>=1.39.0,<1.40.0)", "mypy-boto3-route53profiles (>=1.39.0,<1.40.0)", "mypy-boto3-route53resolver (>=1.39.0,<1.40.0)", "mypy-boto3-rum (>=1.39.0,<1.40.0)", "mypy-boto3-s3 (>=1.39.0,<1.40.0)", "mypy-boto3-s3control (>=1.39.0,<1.40.0)", "mypy-boto3-s3outposts (>=1.39.0,<1.40.0)", "mypy-boto3-s3tables (>=1.39.0,<1.40.0)", "mypy-boto3-s3vectors (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker-a2i-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker-edge (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker-featurestore-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker-geospatial (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker-metrics (>=1.39.0,<1.40.0)", "mypy-boto3-sagemaker-runtime (>=1.39.0,<1.40.0)", "mypy-boto3-savingsplans (>=1.39.0,<1.40.0)", "mypy-boto3-scheduler (>=1.39.0,<1.40.0)", "mypy-boto3-schemas (>=1.39.0,<1.40.0)", "mypy-boto3-sdb (>=1.39.0,<1.40.0)", "mypy-boto3-secretsmanager (>=1.39.0,<1.40.0)", "mypy-boto3-security-ir (>=1.39.0,<1.40.0)", "mypy-boto3-securityhub (>=1.39.0,<1.40.0)", "mypy-boto3-securitylake (>=1.39.0,<1.40.0)", "mypy-boto3-serverlessrepo (>=1.39.0,<1.40.0)", "mypy-boto3-service-quotas (>=1.39.0,<1.40.0)", "mypy-boto3-servicecatalog (>=1.39.0,<1.40.0)", "mypy-boto3-servicecatalog-appregistry (>=1.39.0,<1.40.0)", "mypy-boto3-servicediscovery (>=1.39.0,<1.40.0)", "mypy-boto3-ses (>=1.39.0,<1.40.0)", "mypy-boto3-sesv2 (>=1.39.0,<1.40.0)", "mypy-boto3-shield (>=1.39.0,<1.40.0)", "mypy-boto3-signer (>=1.39.0,<1.40.0)", "mypy-boto3-simspaceweaver (>=1.39.0,<1.40.0)", "mypy-boto3-sms (>=1.39.0,<1.40.0)", "mypy-boto3-snow-device-management (>=1.39.0,<1.40.0)", "mypy-boto3-snowball (>=1.39.0,<1.40.0)", "mypy-boto3-sns (>=1.39.0,<1.40.0)", "mypy-boto3-socialmessaging (>=1.39.0,<1.40.0)", "mypy-boto3-sqs (>=1.39.0,<1.40.0)", "mypy-boto3-ssm (>=1.39.0,<1.40.0)", "mypy-boto3-ssm-contacts (>=1.39.0,<1.40.0)", "mypy-boto3-ssm-guiconnect (>=1.39.0,<1.40.0)", "mypy-boto3-ssm-incidents (>=1.39.0,<1.40.0)", "mypy-boto3-ssm-quicksetup (>=1.39.0,<1.40.0)", "mypy-boto3-ssm-sap (>=1.39.0,<1.40.0)", "mypy-boto3-sso (>=1.39.0,<1.40.0)", "mypy-boto3-sso-admin (>=1.39.0,<1.40.0)", "mypy-boto3-sso-oidc (>=1.39.0,<1.40.0)", "mypy-boto3-stepfunctions (>=1.39.0,<1.40.0)", "mypy-boto3-storagegateway (>=1.39.0,<1.40.0)", "mypy-boto3-sts (>=1.39.0,<1.40.0)", "mypy-boto3-supplychain (>=1.39.0,<1.40.0)", "mypy-boto3-support (>=1.39.0,<1.40.0)", "mypy-boto3-support-app (>=1.39.0,<1.40.0)", "mypy-boto3-swf (>=1.39.0,<1.40.0)", "mypy-boto3-synthetics (>=1.39.0,<1.40.0)", "mypy-boto3-taxsettings (>=1.39.0,<1.40.0)", "mypy-boto3-textract (>=1.39.0,<1.40.0)", "mypy-boto3-timestream-influxdb (>=1.39.0,<1.40.0)", "mypy-boto3-timestream-query (>=1.39.0,<1.40.0)", "mypy-boto3-timestream-write (>=1.39.0,<1.40.0)", "mypy-boto3-tnb (>=1.39.0,<1.40.0)", "mypy-boto3-transcribe (>=1.39.0,<1.40.0)", "mypy-boto3-transfer (>=1.39.0,<1.40.0)", "mypy-boto3-translate (>=1.39.0,<1.40.0)", "mypy-boto3-trustedadvisor (>=1.39.0,<1.40.0)", "mypy-boto3-verifiedpermissions (>=1.39.0,<1.40.0)", "mypy-boto3-voice-id (>=1.39.0,<1.40.0)", "mypy-boto3-vpc-lattice (>=1.39.0,<1.40.0)", "mypy-boto3-waf (>=1.39.0,<1.40.0)", "mypy-boto3-waf-regional (>=1.39.0,<1.40.0)", "mypy-boto3-wafv2 (>=1.39.0,<1.40.0)", "mypy-boto3-wellarchitected (>=1.39.0,<1.40.0)", "mypy-boto3-wisdom (>=1.39.0,<1.40.0)", "mypy-boto3-workdocs (>=1.39.0,<1.40.0)", "mypy-boto3-workmail (>=1.39.0,<1.40.0)", "mypy-boto3-workmailmessageflow (>=1.39.0,<1.40.0)", "mypy-boto3-workspaces (>=1.39.0,<1.40.0)", "mypy-boto3-workspaces-instances (>=1.39.0,<1.40.0)", "mypy-boto3-workspaces-thin-client (>=1.39.0,<1.40.0)", "mypy-boto3-workspaces-web (>=1.39.0,<1.40.0)", "mypy-boto3-xray (>=1.39.0,<1.40.0)"]
 amp = ["mypy-boto3-amp (>=1.39.0,<1.40.0)"]
 amplify = ["mypy-boto3-amplify (>=1.39.0,<1.40.0)"]
 amplifybackend = ["mypy-boto3-amplifybackend (>=1.39.0,<1.40.0)"]
@@ -279,12 +279,14 @@ bcm-pricing-calculator = ["mypy-boto3-bcm-pricing-calculator (>=1.39.0,<1.40.0)"
 bedrock = ["mypy-boto3-bedrock (>=1.39.0,<1.40.0)"]
 bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.39.0,<1.40.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.39.0,<1.40.0)"]
+bedrock-agentcore = ["mypy-boto3-bedrock-agentcore (>=1.39.0,<1.40.0)"]
+bedrock-agentcore-control = ["mypy-boto3-bedrock-agentcore-control (>=1.39.0,<1.40.0)"]
 bedrock-data-automation = ["mypy-boto3-bedrock-data-automation (>=1.39.0,<1.40.0)"]
 bedrock-data-automation-runtime = ["mypy-boto3-bedrock-data-automation-runtime (>=1.39.0,<1.40.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.39.0,<1.40.0)"]
 billing = ["mypy-boto3-billing (>=1.39.0,<1.40.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.39.0,<1.40.0)"]
-boto3 = ["boto3 (==1.39.3)"]
+boto3 = ["boto3 (==1.39.17)"]
 braket = ["mypy-boto3-braket (>=1.39.0,<1.40.0)"]
 budgets = ["mypy-boto3-budgets (>=1.39.0,<1.40.0)"]
 ce = ["mypy-boto3-ce (>=1.39.0,<1.40.0)"]
@@ -575,6 +577,7 @@ s3 = ["mypy-boto3-s3 (>=1.39.0,<1.40.0)"]
 s3control = ["mypy-boto3-s3control (>=1.39.0,<1.40.0)"]
 s3outposts = ["mypy-boto3-s3outposts (>=1.39.0,<1.40.0)"]
 s3tables = ["mypy-boto3-s3tables (>=1.39.0,<1.40.0)"]
+s3vectors = ["mypy-boto3-s3vectors (>=1.39.0,<1.40.0)"]
 sagemaker = ["mypy-boto3-sagemaker (>=1.39.0,<1.40.0)"]
 sagemaker-a2i-runtime = ["mypy-boto3-sagemaker-a2i-runtime (>=1.39.0,<1.40.0)"]
 sagemaker-edge = ["mypy-boto3-sagemaker-edge (>=1.39.0,<1.40.0)"]
@@ -652,14 +655,14 @@ xray = ["mypy-boto3-xray (>=1.39.0,<1.40.0)"]
 
 [[package]]
 name = "botocore"
-version = "1.39.3"
+version = "1.39.17"
 description = "Low-level, data-driven core of boto 3."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "botocore-1.39.3-py3-none-any.whl", hash = "sha256:66a81cfac18ad5e9f47696c73fdf44cdbd8f8ca51ab3fca1effca0aabf61f02f"},
-    {file = "botocore-1.39.3.tar.gz", hash = "sha256:da8f477e119f9f8a3aaa8b3c99d9c6856ed0a243680aa3a3fbbfc15a8d4093fb"},
+    {file = "botocore-1.39.17-py3-none-any.whl", hash = "sha256:41db169e919f821b3ef684794c5e67dd7bb1f5ab905d33729b1d8c27fafe8004"},
+    {file = "botocore-1.39.17.tar.gz", hash = "sha256:1a1f0b29dab5d1b10d16f14423c16ac0a3043272f579e9ab0d757753ee9a7d2b"},
 ]
 
 [package.dependencies]
@@ -783,14 +786,14 @@ typing-extensions = ">=4.9.0,<5.0.0"
 
 [[package]]
 name = "certifi"
-version = "2025.6.15"
+version = "2025.7.14"
 description = "Python package for providing Mozilla's CA Bundle."
 optional = false
 python-versions = ">=3.7"
 groups = ["dev"]
 files = [
-    {file = "certifi-2025.6.15-py3-none-any.whl", hash = "sha256:2e0c7ce7cb5d8f8634ca55d2ba7e6ec2689a2fd6537d8dec1296a477a4910057"},
-    {file = "certifi-2025.6.15.tar.gz", hash = "sha256:d747aa5a8b9bbbb1bb8c22bb13e22bd1f18e9796defa16bab421f7f7a317323b"},
+    {file = "certifi-2025.7.14-py3-none-any.whl", hash = "sha256:6b31f564a415d79ee77df69d757bb49a5bb53bd9f756cbbe24394ffd6fc1f4b2"},
+    {file = "certifi-2025.7.14.tar.gz", hash = "sha256:8ea99dbdfaaf2ba2f9bac77b9249ef62ec5218e7c2b2e903378ed5fccf765995"},
 ]
 
 [[package]]
@@ -1269,13 +1272,13 @@ files = [
 
 [[package]]
 name = "django-allauth"
-version = "65.9.0"
+version = "65.10.0"
 description = "Integrated set of Django applications addressing authentication, registration, account management as well as 3rd party (social) account authentication."
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "django_allauth-65.9.0.tar.gz", hash = "sha256:a06bca9974df44321e94c33bcf770bb6f924d1a44b57defbce4d7ec54a55483e"},
+    {file = "django_allauth-65.10.0.tar.gz", hash = "sha256:47daa3b0e11a1d75724ea32995de37bd2b8963e9e4cce2b3a7fd64eb6d3b3c48"},
 ]
 
 [package.dependencies]
@@ -1283,11 +1286,11 @@ asgiref = ">=3.8.1"
 Django = ">=4.2.16"
 
 [package.extras]
-idp-oidc = ["oauthlib (>=3.2.2,<4)", "pyjwt[crypto] (>=2.0,<3)"]
+idp-oidc = ["oauthlib (>=3.3.0,<4)", "pyjwt[crypto] (>=2.0,<3)"]
 mfa = ["fido2 (>=1.1.2,<3)", "qrcode (>=7.0.0,<9)"]
 openid = ["python3-openid (>=3.0.8,<4)"]
 saml = ["python3-saml (>=1.15.0,<2.0.0)"]
-socialaccount = ["pyjwt[crypto] (>=2.0,<3)", "requests (>=2.0.0,<3)", "requests-oauthlib (>=0.3.0)"]
+socialaccount = ["oauthlib (>=3.3.0,<4)", "pyjwt[crypto] (>=2.0,<3)", "requests (>=2.0.0,<3)"]
 steam = ["python3-openid (>=3.0.8,<4)"]
 
 [[package]]
@@ -1420,14 +1423,14 @@ django = ">=3.2"
 
 [[package]]
 name = "django-import-export"
-version = "4.3.8"
+version = "4.3.9"
 description = "Django application and library for importing and exporting data with included admin integration."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "django_import_export-4.3.8-py3-none-any.whl", hash = "sha256:e735db31b89cf6ff3bf7bb6ae205a7f175b5614d829893ebe39769ea7e94e443"},
-    {file = "django_import_export-4.3.8.tar.gz", hash = "sha256:1a79d851a95cad1fb0acdb668378bb0b5c9811bb8d70393d6bdd2158c1f53b00"},
+    {file = "django_import_export-4.3.9-py3-none-any.whl", hash = "sha256:3d83b1c28f30935240ef9d914a1d4845c6fcaf5c7e5454889dda800eb5d374fb"},
+    {file = "django_import_export-4.3.9.tar.gz", hash = "sha256:966e01c2cbd6acda710a0a0097cd99b28d4f9883abbfbbf712f34a2e8eea8809"},
 ]
 
 [package.dependencies]
@@ -1536,14 +1539,14 @@ phonenumberslite = ["phonenumberslite (>=7.0.2)"]
 
 [[package]]
 name = "django-post-office"
-version = "3.9.1"
+version = "3.10.0"
 description = "A Django app to monitor and send mail asynchronously, complete with template support."
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "django-post_office-3.9.1.tar.gz", hash = "sha256:3d8f502f7829e4cf83e830d9efd6909bb44690af6bc41c7e4fc5a85d7b04df10"},
-    {file = "django_post_office-3.9.1-py3-none-any.whl", hash = "sha256:0082c4dd17854f66077ef457cf868c9bc5b6247de99d5755c45ddea1c518ed6f"},
+    {file = "django_post_office-3.10.0-py3-none-any.whl", hash = "sha256:bc0d3e40305486b729c4b7a79eafdeb468a245b9e9a3acaa12014ef84af1ac8b"},
+    {file = "django_post_office-3.10.0.tar.gz", hash = "sha256:95047f8d12e6544629a3ff979d527fdc3b538fa418c3fa4a0af8b5e665fb029e"},
 ]
 
 [package.dependencies]
@@ -1644,38 +1647,38 @@ commands = ["django-extensions (>=1.4.9)"]
 
 [[package]]
 name = "django-stubs"
-version = "5.2.1"
+version = "5.2.2"
 description = "Mypy stubs for Django"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "django_stubs-5.2.1-py3-none-any.whl", hash = "sha256:c0e170d70329c27e737a5b80c5518fb6161d0c4792321d11a4a93dcda120f4ef"},
-    {file = "django_stubs-5.2.1.tar.gz", hash = "sha256:e58260958e58f7b6a8da6bba56d6b31d16c0414079a4aa6baa01c668bd08d39d"},
+    {file = "django_stubs-5.2.2-py3-none-any.whl", hash = "sha256:79bd0fdbc78958a8f63e0b062bd9d03f1de539664476c0be62ade5f063c9e41e"},
+    {file = "django_stubs-5.2.2.tar.gz", hash = "sha256:2a04b510c7a812f88223fd7e6d87fb4ea98717f19c8e5c8b59691d83ad40a8a6"},
 ]
 
 [package.dependencies]
 django = "*"
-django-stubs-ext = ">=5.2.1"
-mypy = {version = ">=1.13,<1.17", optional = true, markers = "extra == \"compatible-mypy\""}
+django-stubs-ext = ">=5.2.2"
+mypy = {version = ">=1.13,<1.18", optional = true, markers = "extra == \"compatible-mypy\""}
 types-pyyaml = "*"
 typing-extensions = ">=4.11.0"
 
 [package.extras]
-compatible-mypy = ["mypy (>=1.13,<1.17)"]
+compatible-mypy = ["mypy (>=1.13,<1.18)"]
 oracle = ["oracledb"]
 redis = ["redis", "types-redis"]
 
 [[package]]
 name = "django-stubs-ext"
-version = "5.2.1"
+version = "5.2.2"
 description = "Monkey-patching and extensions for django-stubs"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "django_stubs_ext-5.2.1-py3-none-any.whl", hash = "sha256:98fb0646f1a1ef07708eec5f6f7d27523f12c0c8714abae8db981571ff957588"},
-    {file = "django_stubs_ext-5.2.1.tar.gz", hash = "sha256:fc0582cb3289306c43ce4a0a15af86922ce1dbec3c19eab80980ee70c04e0392"},
+    {file = "django_stubs_ext-5.2.2-py3-none-any.whl", hash = "sha256:8833bbe32405a2a0ce168d3f75a87168f61bd16939caf0e8bf173bccbd8a44c5"},
+    {file = "django_stubs_ext-5.2.2.tar.gz", hash = "sha256:d9d151b919fe2438760f5bd938f03e1cb08c84d0651f9e5917f1313907e42683"},
 ]
 
 [package.dependencies]
@@ -1717,29 +1720,29 @@ django = ">=4.2"
 
 [[package]]
 name = "djangorestframework-stubs"
-version = "3.16.0"
+version = "3.16.1"
 description = "PEP-484 stubs for django-rest-framework"
 optional = false
 python-versions = ">=3.10"
 groups = ["dev"]
 files = [
-    {file = "djangorestframework_stubs-3.16.0-py3-none-any.whl", hash = "sha256:2085a6e023de65843d4d53fe5abc73fbbc3ef380a59919ad9801182f6bb435de"},
-    {file = "djangorestframework_stubs-3.16.0.tar.gz", hash = "sha256:8c5ccdfe9271b1a37946a3564dc3714d521cd3f2f8695e528808e0c700538243"},
+    {file = "djangorestframework_stubs-3.16.1-py3-none-any.whl", hash = "sha256:0c8f05469473264603e450619d0466c3e4012ebed124cc0d52ac04dfa32ace00"},
+    {file = "djangorestframework_stubs-3.16.1.tar.gz", hash = "sha256:8e2662e2a751de5f535fbf7be03b534eb00a89bb9f1937d11a73f568dfb23dd1"},
 ]
 
 [package.dependencies]
 django-stubs = [
-    {version = ">=5.2.0"},
+    {version = ">=5.2.1"},
     {version = "*", extras = ["compatible-mypy"], optional = true, markers = "extra == \"compatible-mypy\""},
 ]
-mypy = {version = ">=1.13,<1.16", optional = true, markers = "extra == \"compatible-mypy\""}
+mypy = {version = ">=1.13,<1.17", optional = true, markers = "extra == \"compatible-mypy\""}
 requests = ">=2.0"
 types-PyYAML = "*"
 types-requests = "*"
 typing-extensions = ">=4.0"
 
 [package.extras]
-compatible-mypy = ["django-stubs[compatible-mypy]", "mypy (>=1.13,<1.16)"]
+compatible-mypy = ["django-stubs[compatible-mypy]", "mypy (>=1.13,<1.17)"]
 coreapi = ["coreapi (>=2.0.0)"]
 markdown = ["types-Markdown (>=0.1.5)"]
 
@@ -2495,48 +2498,49 @@ files = [
 
 [[package]]
 name = "mypy"
-version = "1.15.0"
+version = "1.16.1"
 description = "Optional static typing for Python"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "mypy-1.15.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:979e4e1a006511dacf628e36fadfecbcc0160a8af6ca7dad2f5025529e082c13"},
-    {file = "mypy-1.15.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:c4bb0e1bd29f7d34efcccd71cf733580191e9a264a2202b0239da95984c5b559"},
-    {file = "mypy-1.15.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:be68172e9fd9ad8fb876c6389f16d1c1b5f100ffa779f77b1fb2176fcc9ab95b"},
-    {file = "mypy-1.15.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c7be1e46525adfa0d97681432ee9fcd61a3964c2446795714699a998d193f1a3"},
-    {file = "mypy-1.15.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:2e2c2e6d3593f6451b18588848e66260ff62ccca522dd231cd4dd59b0160668b"},
-    {file = "mypy-1.15.0-cp310-cp310-win_amd64.whl", hash = "sha256:6983aae8b2f653e098edb77f893f7b6aca69f6cffb19b2cc7443f23cce5f4828"},
-    {file = "mypy-1.15.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:2922d42e16d6de288022e5ca321cd0618b238cfc5570e0263e5ba0a77dbef56f"},
-    {file = "mypy-1.15.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:2ee2d57e01a7c35de00f4634ba1bbf015185b219e4dc5909e281016df43f5ee5"},
-    {file = "mypy-1.15.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:973500e0774b85d9689715feeffcc980193086551110fd678ebe1f4342fb7c5e"},
-    {file = "mypy-1.15.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:5a95fb17c13e29d2d5195869262f8125dfdb5c134dc8d9a9d0aecf7525b10c2c"},
-    {file = "mypy-1.15.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:1905f494bfd7d85a23a88c5d97840888a7bd516545fc5aaedff0267e0bb54e2f"},
-    {file = "mypy-1.15.0-cp311-cp311-win_amd64.whl", hash = "sha256:c9817fa23833ff189db061e6d2eff49b2f3b6ed9856b4a0a73046e41932d744f"},
-    {file = "mypy-1.15.0-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:aea39e0583d05124836ea645f412e88a5c7d0fd77a6d694b60d9b6b2d9f184fd"},
-    {file = "mypy-1.15.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:2f2147ab812b75e5b5499b01ade1f4a81489a147c01585cda36019102538615f"},
-    {file = "mypy-1.15.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ce436f4c6d218a070048ed6a44c0bbb10cd2cc5e272b29e7845f6a2f57ee4464"},
-    {file = "mypy-1.15.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8023ff13985661b50a5928fc7a5ca15f3d1affb41e5f0a9952cb68ef090b31ee"},
-    {file = "mypy-1.15.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:1124a18bc11a6a62887e3e137f37f53fbae476dc36c185d549d4f837a2a6a14e"},
-    {file = "mypy-1.15.0-cp312-cp312-win_amd64.whl", hash = "sha256:171a9ca9a40cd1843abeca0e405bc1940cd9b305eaeea2dda769ba096932bb22"},
-    {file = "mypy-1.15.0-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:93faf3fdb04768d44bf28693293f3904bbb555d076b781ad2530214ee53e3445"},
-    {file = "mypy-1.15.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:811aeccadfb730024c5d3e326b2fbe9249bb7413553f15499a4050f7c30e801d"},
-    {file = "mypy-1.15.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:98b7b9b9aedb65fe628c62a6dc57f6d5088ef2dfca37903a7d9ee374d03acca5"},
-    {file = "mypy-1.15.0-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:c43a7682e24b4f576d93072216bf56eeff70d9140241f9edec0c104d0c515036"},
-    {file = "mypy-1.15.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:baefc32840a9f00babd83251560e0ae1573e2f9d1b067719479bfb0e987c6357"},
-    {file = "mypy-1.15.0-cp313-cp313-win_amd64.whl", hash = "sha256:b9378e2c00146c44793c98b8d5a61039a048e31f429fb0eb546d93f4b000bedf"},
-    {file = "mypy-1.15.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:e601a7fa172c2131bff456bb3ee08a88360760d0d2f8cbd7a75a65497e2df078"},
-    {file = "mypy-1.15.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:712e962a6357634fef20412699a3655c610110e01cdaa6180acec7fc9f8513ba"},
-    {file = "mypy-1.15.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:f95579473af29ab73a10bada2f9722856792a36ec5af5399b653aa28360290a5"},
-    {file = "mypy-1.15.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:8f8722560a14cde92fdb1e31597760dc35f9f5524cce17836c0d22841830fd5b"},
-    {file = "mypy-1.15.0-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:1fbb8da62dc352133d7d7ca90ed2fb0e9d42bb1a32724c287d3c76c58cbaa9c2"},
-    {file = "mypy-1.15.0-cp39-cp39-win_amd64.whl", hash = "sha256:d10d994b41fb3497719bbf866f227b3489048ea4bbbb5015357db306249f7980"},
-    {file = "mypy-1.15.0-py3-none-any.whl", hash = "sha256:5469affef548bd1895d86d3bf10ce2b44e33d86923c29e4d675b3e323437ea3e"},
-    {file = "mypy-1.15.0.tar.gz", hash = "sha256:404534629d51d3efea5c800ee7c42b72a6554d6c400e6a79eafe15d11341fd43"},
+    {file = "mypy-1.16.1-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:b4f0fed1022a63c6fec38f28b7fc77fca47fd490445c69d0a66266c59dd0b88a"},
+    {file = "mypy-1.16.1-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:86042bbf9f5a05ea000d3203cf87aa9d0ccf9a01f73f71c58979eb9249f46d72"},
+    {file = "mypy-1.16.1-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ea7469ee5902c95542bea7ee545f7006508c65c8c54b06dc2c92676ce526f3ea"},
+    {file = "mypy-1.16.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:352025753ef6a83cb9e7f2427319bb7875d1fdda8439d1e23de12ab164179574"},
+    {file = "mypy-1.16.1-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:ff9fa5b16e4c1364eb89a4d16bcda9987f05d39604e1e6c35378a2987c1aac2d"},
+    {file = "mypy-1.16.1-cp310-cp310-win_amd64.whl", hash = "sha256:1256688e284632382f8f3b9e2123df7d279f603c561f099758e66dd6ed4e8bd6"},
+    {file = "mypy-1.16.1-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:472e4e4c100062488ec643f6162dd0d5208e33e2f34544e1fc931372e806c0cc"},
+    {file = "mypy-1.16.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:ea16e2a7d2714277e349e24d19a782a663a34ed60864006e8585db08f8ad1782"},
+    {file = "mypy-1.16.1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:08e850ea22adc4d8a4014651575567b0318ede51e8e9fe7a68f25391af699507"},
+    {file = "mypy-1.16.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:22d76a63a42619bfb90122889b903519149879ddbf2ba4251834727944c8baca"},
+    {file = "mypy-1.16.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:2c7ce0662b6b9dc8f4ed86eb7a5d505ee3298c04b40ec13b30e572c0e5ae17c4"},
+    {file = "mypy-1.16.1-cp311-cp311-win_amd64.whl", hash = "sha256:211287e98e05352a2e1d4e8759c5490925a7c784ddc84207f4714822f8cf99b6"},
+    {file = "mypy-1.16.1-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:af4792433f09575d9eeca5c63d7d90ca4aeceda9d8355e136f80f8967639183d"},
+    {file = "mypy-1.16.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:66df38405fd8466ce3517eda1f6640611a0b8e70895e2a9462d1d4323c5eb4b9"},
+    {file = "mypy-1.16.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:44e7acddb3c48bd2713994d098729494117803616e116032af192871aed80b79"},
+    {file = "mypy-1.16.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0ab5eca37b50188163fa7c1b73c685ac66c4e9bdee4a85c9adac0e91d8895e15"},
+    {file = "mypy-1.16.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:dedb6229b2c9086247e21a83c309754b9058b438704ad2f6807f0d8227f6ebdd"},
+    {file = "mypy-1.16.1-cp312-cp312-win_amd64.whl", hash = "sha256:1f0435cf920e287ff68af3d10a118a73f212deb2ce087619eb4e648116d1fe9b"},
+    {file = "mypy-1.16.1-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:ddc91eb318c8751c69ddb200a5937f1232ee8efb4e64e9f4bc475a33719de438"},
+    {file = "mypy-1.16.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:87ff2c13d58bdc4bbe7dc0dedfe622c0f04e2cb2a492269f3b418df2de05c536"},
+    {file = "mypy-1.16.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0a7cfb0fe29fe5a9841b7c8ee6dffb52382c45acdf68f032145b75620acfbd6f"},
+    {file = "mypy-1.16.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:051e1677689c9d9578b9c7f4d206d763f9bbd95723cd1416fad50db49d52f359"},
+    {file = "mypy-1.16.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:d5d2309511cc56c021b4b4e462907c2b12f669b2dbeb68300110ec27723971be"},
+    {file = "mypy-1.16.1-cp313-cp313-win_amd64.whl", hash = "sha256:4f58ac32771341e38a853c5d0ec0dfe27e18e27da9cdb8bbc882d2249c71a3ee"},
+    {file = "mypy-1.16.1-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:7fc688329af6a287567f45cc1cefb9db662defeb14625213a5b7da6e692e2069"},
+    {file = "mypy-1.16.1-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:5e198ab3f55924c03ead626ff424cad1732d0d391478dfbf7bb97b34602395da"},
+    {file = "mypy-1.16.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:09aa4f91ada245f0a45dbc47e548fd94e0dd5a8433e0114917dc3b526912a30c"},
+    {file = "mypy-1.16.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:13c7cd5b1cb2909aa318a90fd1b7e31f17c50b242953e7dd58345b2a814f6383"},
+    {file = "mypy-1.16.1-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:58e07fb958bc5d752a280da0e890c538f1515b79a65757bbdc54252ba82e0b40"},
+    {file = "mypy-1.16.1-cp39-cp39-win_amd64.whl", hash = "sha256:f895078594d918f93337a505f8add9bd654d1a24962b4c6ed9390e12531eb31b"},
+    {file = "mypy-1.16.1-py3-none-any.whl", hash = "sha256:5fc2ac4027d0ef28d6ba69a0343737a23c4d1b83672bf38d1fe237bdc0643b37"},
+    {file = "mypy-1.16.1.tar.gz", hash = "sha256:6bd00a0a2094841c5e47e7374bb42b83d64c527a502e3334e1173a0c24437bab"},
 ]
 
 [package.dependencies]
 mypy_extensions = ">=1.0.0"
+pathspec = ">=0.9.0"
 typing_extensions = ">=4.6.0"
 
 [package.extras]
@@ -2572,26 +2576,26 @@ files = [
 
 [[package]]
 name = "mypy-boto3-ec2"
-version = "1.39.3"
-description = "Type annotations for boto3 EC2 1.39.3 service generated with mypy-boto3-builder 8.11.0"
+version = "1.39.17"
+description = "Type annotations for boto3 EC2 1.39.17 service generated with mypy-boto3-builder 8.11.0"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "mypy_boto3_ec2-1.39.3-py3-none-any.whl", hash = "sha256:9ce0401f6a01a94fb203a0005f087b5c8050fe0c8d22468ae3d92728e64497ed"},
-    {file = "mypy_boto3_ec2-1.39.3.tar.gz", hash = "sha256:eaa3fad36d52594408b305d315a284fc7507c8502505764ef8eba4005dc63390"},
+    {file = "mypy_boto3_ec2-1.39.17-py3-none-any.whl", hash = "sha256:9793301a51b2fc502550eafb51d56fa769d37fc81231aae96ac78d075a83dde9"},
+    {file = "mypy_boto3_ec2-1.39.17.tar.gz", hash = "sha256:cb70416be80a80a41895f4f64d74889c31126664fe0c5cd5376db95ac4f4895f"},
 ]
 
 [[package]]
 name = "mypy-boto3-lambda"
-version = "1.39.0"
-description = "Type annotations for boto3 Lambda 1.39.0 service generated with mypy-boto3-builder 8.11.0"
+version = "1.39.11"
+description = "Type annotations for boto3 Lambda 1.39.11 service generated with mypy-boto3-builder 8.11.0"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "mypy_boto3_lambda-1.39.0-py3-none-any.whl", hash = "sha256:d7da3c06f7dc60f5fa9e018a8ea1276aa958f83ffd50a3009687e23589a6d365"},
-    {file = "mypy_boto3_lambda-1.39.0.tar.gz", hash = "sha256:643a0c650427e849429530d9b570e6d573de7274984193f182033ccbfca55d0c"},
+    {file = "mypy_boto3_lambda-1.39.11-py3-none-any.whl", hash = "sha256:19ad0649bf768e68840a429306aef002bbdf90f9a91512f7efd8292ca88be892"},
+    {file = "mypy_boto3_lambda-1.39.11.tar.gz", hash = "sha256:a9867ba54ced8cfd1e977afaee053d1264c8d64ef215fe8d132b9a3a4736fe07"},
 ]
 
 [[package]]
@@ -2608,26 +2612,26 @@ files = [
 
 [[package]]
 name = "mypy-boto3-s3"
-version = "1.39.2"
-description = "Type annotations for boto3 S3 1.39.2 service generated with mypy-boto3-builder 8.11.0"
+version = "1.39.5"
+description = "Type annotations for boto3 S3 1.39.5 service generated with mypy-boto3-builder 8.11.0"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "mypy_boto3_s3-1.39.2-py3-none-any.whl", hash = "sha256:aa110de8944cc533babe5ae2dfae89a8fa13b961a7affa6a1c43c383228060e9"},
-    {file = "mypy_boto3_s3-1.39.2.tar.gz", hash = "sha256:e1977ee93ad57a2d9533a397e6255a41ca1b206018762c1cf4614271e6fede89"},
+    {file = "mypy_boto3_s3-1.39.5-py3-none-any.whl", hash = "sha256:57272e73faf0d38e65b5ed82c8b22650c8820c8d070c5b10e307fd98f247e05a"},
+    {file = "mypy_boto3_s3-1.39.5.tar.gz", hash = "sha256:b339a9128e96eaf74f87c40ee42711db82d31a45085ba78b262ae7683cb9e5f0"},
 ]
 
 [[package]]
 name = "mypy-boto3-sqs"
-version = "1.39.0"
-description = "Type annotations for boto3 SQS 1.39.0 service generated with mypy-boto3-builder 8.11.0"
+version = "1.39.14"
+description = "Type annotations for boto3 SQS 1.39.14 service generated with mypy-boto3-builder 8.11.0"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "mypy_boto3_sqs-1.39.0-py3-none-any.whl", hash = "sha256:ca434295143f811a9b8a1e9fd81f19a7213c3590ced5131cb648fc2107f4eaba"},
-    {file = "mypy_boto3_sqs-1.39.0.tar.gz", hash = "sha256:279d489e9b8ffb860f2dc6349608e9eb289ae0c8c3558739e9e62c595e456834"},
+    {file = "mypy_boto3_sqs-1.39.14-py3-none-any.whl", hash = "sha256:98a7eef1ae1e76ae406618e04b0a7adcf1c94fca95224a6e53477d68cb0b7c9c"},
+    {file = "mypy_boto3_sqs-1.39.14.tar.gz", hash = "sha256:6057006cdf86f2c2f3676ed6574c412990fd12a4412b3a0b9556a7c922493ca7"},
 ]
 
 [[package]]
@@ -2644,41 +2648,41 @@ files = [
 
 [[package]]
 name = "newrelic"
-version = "10.14.0"
+version = "10.15.0"
 description = "New Relic Python Agent"
 optional = false
 python-versions = ">=3.7"
 groups = ["main"]
 files = [
-    {file = "newrelic-10.14.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:082b381c91acc0b2a11b816847a8d728b6483ca9e9ba834f234dee5e6b93fb7d"},
-    {file = "newrelic-10.14.0-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a71366ac12c0b156a55d3400d35064cb393b6af5f2bd3a0eb48ed0efb2ffce8e"},
-    {file = "newrelic-10.14.0-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:ad2509b5f21d5aa3708ab9b72572a8d66c22b06d575ae42b7c667dd95bb502ea"},
-    {file = "newrelic-10.14.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:c8a0e30a17e9ff4ddd1f3f684e0e4a497eeee0fe5cb3de564b934bdffb6ac43d"},
-    {file = "newrelic-10.14.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:3e5003933089be0d2cd02bd08a62c6c0716f26fc875c0dff9551f206ff3c07bf"},
-    {file = "newrelic-10.14.0-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:34afdc76f21f9d66367ed7c2fba38872339bcfec3bfa91aad4bbd3f28b76d411"},
-    {file = "newrelic-10.14.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:267a3d747d0dbebbc1aaa296bfb03b16a1724510fda529efc58eee356dbc7704"},
-    {file = "newrelic-10.14.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:e866d3fb2d4b6f5493dd0b31e8ff4ba67aafaa563d0b7c0951dbf47fa4f0af72"},
-    {file = "newrelic-10.14.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:658f8c12d3974b1ca0ec16c373dfb9cbb663453372ca3964ad92539c94479b67"},
-    {file = "newrelic-10.14.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:448214f3f47cd5f620a5d649e810cd467c7edbbf3160f8d0f637e8385ba5e77d"},
-    {file = "newrelic-10.14.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:856c1487f5c5b1d0e4b7df288e43cf18cccd8e7edc63162aba13f7c203e6255b"},
-    {file = "newrelic-10.14.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:74c32b4c6767d0d39875ea40f937562729ab32167e2d5c9d12ce79798704b124"},
-    {file = "newrelic-10.14.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c582422d40570484007f1b3c5027f5ed3e58cdad4ad074ba87ffeb7321e42637"},
-    {file = "newrelic-10.14.0-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:231a60ccffae90ed10e5a4c30f07380afe120d178c0e3237a35e8800207de8c4"},
-    {file = "newrelic-10.14.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:79c14d5d9d0811fdb974b0c1493328a6daa0ceeffe397fdd5b6a52254053e203"},
-    {file = "newrelic-10.14.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:96f6f3e0b4474d3f941bd0246b50e5676e5ebd1b5d95a89c5aefb60568d14489"},
-    {file = "newrelic-10.14.0-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:55c3e9c62d10b670a155f466ce9202b3be2e2557dec7cf876bae014229160b5a"},
-    {file = "newrelic-10.14.0-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0e9074ada285e4ec3cb9c9a310c8d9820f7f33d44831195b999ea40d00466d99"},
-    {file = "newrelic-10.14.0-cp37-cp37m-musllinux_1_1_aarch64.whl", hash = "sha256:d35a5058599c491b8cc4cf0f102c5a0837acefe9d577a8fcb5cbdca1f05f1172"},
-    {file = "newrelic-10.14.0-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:d08187de95f8220df302553ebbeeaf446ea345e7206a65154a2286ed9e28d0c1"},
-    {file = "newrelic-10.14.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:9335c0c1a9d2b5fc80c701252276e11678414fa6ca3970bacecbd7e69a927bf9"},
-    {file = "newrelic-10.14.0-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d17a1529716cf2b1cbca3669065246af4af3dc9c2e74b93f26000f631dcce312"},
-    {file = "newrelic-10.14.0-cp38-cp38-musllinux_1_2_aarch64.whl", hash = "sha256:3b6625191a2c0ba9754f0a5d73d213c514e37e4a95dc4e57fc6e34be2de75a29"},
-    {file = "newrelic-10.14.0-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:24e92c7e4343bd43bea5d0e94e2e8fec21d27c997501ebd3e5dd14056dba9a8a"},
-    {file = "newrelic-10.14.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f2bf1c154ca85531c3d3a258c8dd7e213d8a741d10af36358304cc33493ff6e2"},
-    {file = "newrelic-10.14.0-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a638f0371ba82498911e229c93b38960f36ee51968c4201a9ec8933e702036f8"},
-    {file = "newrelic-10.14.0-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:86188bb9973c74cff88de3494ad6e5c6e617300febf14215d257d4b5e6b4e005"},
-    {file = "newrelic-10.14.0-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:3e9582abf32dbbbe9b191337cd0f6ea040ec461bf4c723fc66da1c68e0737bc9"},
-    {file = "newrelic-10.14.0.tar.gz", hash = "sha256:18e7e6fa1dd758ef3d1648e3b0f15c6b4d94271996dc129f630a4d7278309cf5"},
+    {file = "newrelic-10.15.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:78b1e46a14c1ea56d66167944877e355d59a589c304bbe6973d11f76bd9dc2ea"},
+    {file = "newrelic-10.15.0-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:294343756ef23d09a7f4683d79fbf3d387b7fca16199705cb6be90f557d5c8ec"},
+    {file = "newrelic-10.15.0-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:3f61f8d86f0aa023caa31bde7fd23cd5272e702bd695367e385779f949e6dab7"},
+    {file = "newrelic-10.15.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:319418cde6193bdca497433e771d7597719dd0c5aeb6dff65cffc6bf78a4f3fc"},
+    {file = "newrelic-10.15.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:830f9c6191aa5e6056ef08a39806982347ae31a462424cb802307973b9d8072c"},
+    {file = "newrelic-10.15.0-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1531ab83124f1b92ba3b3d02ac5f2894b0de972101dd7f84e5cdb775502b2d01"},
+    {file = "newrelic-10.15.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:12ae7cbff6fc26e02f65d643f183c58588d334fc531950bc4bcb9a6dfa1a2144"},
+    {file = "newrelic-10.15.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:dce475813f8d3d757a1a1b91b2ff51fe4c0b5660b55171936d0d5a8c73767d89"},
+    {file = "newrelic-10.15.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f7ebd2fd1a16608a36ce11a28707e311155e72a49a4727a6a6982a732338e5ed"},
+    {file = "newrelic-10.15.0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b61679657b01c51ca06e1862c042283a1f0c7b0d7f3f85acfed1160dfb2b7c54"},
+    {file = "newrelic-10.15.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:7112aab18da0008cfd21fdc15f15a81370dfa6f988fa8d7bf3f696cbf26f9a7b"},
+    {file = "newrelic-10.15.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:ac068e4a2be86037c111f9248af2e9c06cc65b1ef9a55de4087790b3c3958e01"},
+    {file = "newrelic-10.15.0-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:95c5b077c86ad315730793baa643354530a06bbcde9e2eeb18e0f170fa1811ec"},
+    {file = "newrelic-10.15.0-cp313-cp313-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:7f9896d69ca5638c88f2eb323e640157ce9159d92c41544afe7acedafe5f1d0d"},
+    {file = "newrelic-10.15.0-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:151055c933020df35ea87c94c1eb7d2fe4f4fb459a83304bdcac08a66d93f866"},
+    {file = "newrelic-10.15.0-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:4f54bace5901080c6b24eac719da636959598cd25804d948cf2fbbbce23bdae6"},
+    {file = "newrelic-10.15.0-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:89e6026b408e84ff3920e2c1580afd6370a8999e385b0a50adb5aa7d2bf20514"},
+    {file = "newrelic-10.15.0-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:56ac35688bea0cecbb647239d8bec25d425c15e708201a1b6b872a6939aa5e98"},
+    {file = "newrelic-10.15.0-cp37-cp37m-musllinux_1_1_aarch64.whl", hash = "sha256:0669dd109eacaab3f877378817f2163dc5705af6fafe02ec12bc5df54cd2fd8b"},
+    {file = "newrelic-10.15.0-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:95b4fbb008a5f42d2dfb4db6d5376d340d724f98f3e4e255ae89fda4bdac9aa4"},
+    {file = "newrelic-10.15.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:dae08d73a278ad94b46f7536375bf2b4f4eaf19069bfd787af385fe32d71e762"},
+    {file = "newrelic-10.15.0-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d7a0ca6b41f03d20a69d83a2100cc088cbd056d52bdcd55596bb0bfa1ed1841e"},
+    {file = "newrelic-10.15.0-cp38-cp38-musllinux_1_2_aarch64.whl", hash = "sha256:a907bc45a835c63fd923b7a93bda50631e781874832f56ec212ced2887dbc500"},
+    {file = "newrelic-10.15.0-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:b2504e440ec82a39eadf75f86d1eaba60cb0009446ca8447191547104598f0be"},
+    {file = "newrelic-10.15.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:224c1b6d369a7f179f432829c95a2e9e86231c080cb2d4e0847122eda3481f55"},
+    {file = "newrelic-10.15.0-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:efd61040df0dde96c4c84739b927aa652e97d46b3101411d0fc5274203852443"},
+    {file = "newrelic-10.15.0-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:588f04e9f152465b07c58d78ffb85eaa9f91e796bdcb501985f2288f7156e468"},
+    {file = "newrelic-10.15.0-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:35d45cedced870be221c2e577ce9e81e185d1f3dfe614404e9eb8fc8189d8d4d"},
+    {file = "newrelic-10.15.0.tar.gz", hash = "sha256:58b89e559e89c70248912c0583cf8d88fed6e5f54bc1f25429a802cf7a4cce71"},
 ]
 
 [package.extras]
@@ -2686,15 +2690,22 @@ infinite-tracing = ["grpcio", "protobuf"]
 
 [[package]]
 name = "orderly-set"
-version = "5.4.1"
+version = "5.5.0"
 description = "Orderly set"
 optional = false
 python-versions = ">=3.8"
 groups = ["main"]
 files = [
-    {file = "orderly_set-5.4.1-py3-none-any.whl", hash = "sha256:b5e21d21680bd9ef456885db800c5cb4f76a03879880c0175e1b077fb166fd83"},
-    {file = "orderly_set-5.4.1.tar.gz", hash = "sha256:a1fb5a4fdc5e234e9e8d8e5c1bbdbc4540f4dfe50d12bf17c8bc5dbf1c9c878d"},
+    {file = "orderly_set-5.5.0-py3-none-any.whl", hash = "sha256:46f0b801948e98f427b412fcabb831677194c05c3b699b80de260374baa0b1e7"},
+    {file = "orderly_set-5.5.0.tar.gz", hash = "sha256:e87185c8e4d8afa64e7f8160ee2c542a475b738bc891dc3f58102e654125e6ce"},
 ]
+
+[package.extras]
+coverage = ["coverage (>=7.6.0,<7.7.0)"]
+dev = ["bump2version (>=1.0.0,<1.1.0)", "ipdb (>=0.13.0,<0.14.0)"]
+optimize = ["orjson"]
+static = ["flake8 (>=7.1.0,<7.2.0)", "flake8-pyproject (>=1.2.3,<1.3.0)"]
+test = ["pytest (>=8.3.0,<8.4.0)", "pytest-benchmark (>=5.1.0,<5.2.0)", "pytest-cov (>=6.0.0,<6.1.0)", "python-dotenv (>=1.0.0,<1.1.0)"]
 
 [[package]]
 name = "packaging"
@@ -2754,14 +2765,14 @@ ptyprocess = ">=0.5"
 
 [[package]]
 name = "phonenumbers"
-version = "9.0.8"
+version = "9.0.10"
 description = "Python version of Google's common library for parsing, formatting, storing and validating international phone numbers."
 optional = false
 python-versions = "*"
 groups = ["main"]
 files = [
-    {file = "phonenumbers-9.0.8-py2.py3-none-any.whl", hash = "sha256:53d357111c0ead0d6408ae443613b18d3a053431ca1ddf7e881457c0969afcf9"},
-    {file = "phonenumbers-9.0.8.tar.gz", hash = "sha256:16f03f2cf65b5eee99ed25827d810febcab92b5d76f977e425fcd2e4ca6d4865"},
+    {file = "phonenumbers-9.0.10-py2.py3-none-any.whl", hash = "sha256:13b12d269be1f2b363c9bc2868656a7e2e8b50f1a1cef629c75005da6c374c6b"},
+    {file = "phonenumbers-9.0.10.tar.gz", hash = "sha256:c2d15a6a9d0534b14a7764f51246ada99563e263f65b80b0251d1a760ac4a1ba"},
 ]
 
 [[package]]
@@ -3330,106 +3341,99 @@ ocsp = ["cryptography (>=36.0.1)", "pyopenssl (==23.2.1)", "requests (>=2.31.0)"
 
 [[package]]
 name = "regex"
-version = "2024.11.6"
+version = "2025.7.34"
 description = "Alternative regular expression module, to replace re."
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "regex-2024.11.6-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:ff590880083d60acc0433f9c3f713c51f7ac6ebb9adf889c79a261ecf541aa91"},
-    {file = "regex-2024.11.6-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:658f90550f38270639e83ce492f27d2c8d2cd63805c65a13a14d36ca126753f0"},
-    {file = "regex-2024.11.6-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:164d8b7b3b4bcb2068b97428060b2a53be050085ef94eca7f240e7947f1b080e"},
-    {file = "regex-2024.11.6-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d3660c82f209655a06b587d55e723f0b813d3a7db2e32e5e7dc64ac2a9e86fde"},
-    {file = "regex-2024.11.6-cp310-cp310-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:d22326fcdef5e08c154280b71163ced384b428343ae16a5ab2b3354aed12436e"},
-    {file = "regex-2024.11.6-cp310-cp310-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:f1ac758ef6aebfc8943560194e9fd0fa18bcb34d89fd8bd2af18183afd8da3a2"},
-    {file = "regex-2024.11.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:997d6a487ff00807ba810e0f8332c18b4eb8d29463cfb7c820dc4b6e7562d0cf"},
-    {file = "regex-2024.11.6-cp310-cp310-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:02a02d2bb04fec86ad61f3ea7f49c015a0681bf76abb9857f945d26159d2968c"},
-    {file = "regex-2024.11.6-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:f02f93b92358ee3f78660e43b4b0091229260c5d5c408d17d60bf26b6c900e86"},
-    {file = "regex-2024.11.6-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:06eb1be98df10e81ebaded73fcd51989dcf534e3c753466e4b60c4697a003b67"},
-    {file = "regex-2024.11.6-cp310-cp310-musllinux_1_2_i686.whl", hash = "sha256:040df6fe1a5504eb0f04f048e6d09cd7c7110fef851d7c567a6b6e09942feb7d"},
-    {file = "regex-2024.11.6-cp310-cp310-musllinux_1_2_ppc64le.whl", hash = "sha256:fdabbfc59f2c6edba2a6622c647b716e34e8e3867e0ab975412c5c2f79b82da2"},
-    {file = "regex-2024.11.6-cp310-cp310-musllinux_1_2_s390x.whl", hash = "sha256:8447d2d39b5abe381419319f942de20b7ecd60ce86f16a23b0698f22e1b70008"},
-    {file = "regex-2024.11.6-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:da8f5fc57d1933de22a9e23eec290a0d8a5927a5370d24bda9a6abe50683fe62"},
-    {file = "regex-2024.11.6-cp310-cp310-win32.whl", hash = "sha256:b489578720afb782f6ccf2840920f3a32e31ba28a4b162e13900c3e6bd3f930e"},
-    {file = "regex-2024.11.6-cp310-cp310-win_amd64.whl", hash = "sha256:5071b2093e793357c9d8b2929dfc13ac5f0a6c650559503bb81189d0a3814519"},
-    {file = "regex-2024.11.6-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:5478c6962ad548b54a591778e93cd7c456a7a29f8eca9c49e4f9a806dcc5d638"},
-    {file = "regex-2024.11.6-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:2c89a8cc122b25ce6945f0423dc1352cb9593c68abd19223eebbd4e56612c5b7"},
-    {file = "regex-2024.11.6-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:94d87b689cdd831934fa3ce16cc15cd65748e6d689f5d2b8f4f4df2065c9fa20"},
-    {file = "regex-2024.11.6-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1062b39a0a2b75a9c694f7a08e7183a80c63c0d62b301418ffd9c35f55aaa114"},
-    {file = "regex-2024.11.6-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:167ed4852351d8a750da48712c3930b031f6efdaa0f22fa1933716bfcd6bf4a3"},
-    {file = "regex-2024.11.6-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:2d548dafee61f06ebdb584080621f3e0c23fff312f0de1afc776e2a2ba99a74f"},
-    {file = "regex-2024.11.6-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f2a19f302cd1ce5dd01a9099aaa19cae6173306d1302a43b627f62e21cf18ac0"},
-    {file = "regex-2024.11.6-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:bec9931dfb61ddd8ef2ebc05646293812cb6b16b60cf7c9511a832b6f1854b55"},
-    {file = "regex-2024.11.6-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:9714398225f299aa85267fd222f7142fcb5c769e73d7733344efc46f2ef5cf89"},
-    {file = "regex-2024.11.6-cp311-cp311-musllinux_1_2_i686.whl", hash = "sha256:202eb32e89f60fc147a41e55cb086db2a3f8cb82f9a9a88440dcfc5d37faae8d"},
-    {file = "regex-2024.11.6-cp311-cp311-musllinux_1_2_ppc64le.whl", hash = "sha256:4181b814e56078e9b00427ca358ec44333765f5ca1b45597ec7446d3a1ef6e34"},
-    {file = "regex-2024.11.6-cp311-cp311-musllinux_1_2_s390x.whl", hash = "sha256:068376da5a7e4da51968ce4c122a7cd31afaaec4fccc7856c92f63876e57b51d"},
-    {file = "regex-2024.11.6-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:ac10f2c4184420d881a3475fb2c6f4d95d53a8d50209a2500723d831036f7c45"},
-    {file = "regex-2024.11.6-cp311-cp311-win32.whl", hash = "sha256:c36f9b6f5f8649bb251a5f3f66564438977b7ef8386a52460ae77e6070d309d9"},
-    {file = "regex-2024.11.6-cp311-cp311-win_amd64.whl", hash = "sha256:02e28184be537f0e75c1f9b2f8847dc51e08e6e171c6bde130b2687e0c33cf60"},
-    {file = "regex-2024.11.6-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:52fb28f528778f184f870b7cf8f225f5eef0a8f6e3778529bdd40c7b3920796a"},
-    {file = "regex-2024.11.6-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:fdd6028445d2460f33136c55eeb1f601ab06d74cb3347132e1c24250187500d9"},
-    {file = "regex-2024.11.6-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:805e6b60c54bf766b251e94526ebad60b7de0c70f70a4e6210ee2891acb70bf2"},
-    {file = "regex-2024.11.6-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b85c2530be953a890eaffde05485238f07029600e8f098cdf1848d414a8b45e4"},
-    {file = "regex-2024.11.6-cp312-cp312-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:bb26437975da7dc36b7efad18aa9dd4ea569d2357ae6b783bf1118dabd9ea577"},
-    {file = "regex-2024.11.6-cp312-cp312-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:abfa5080c374a76a251ba60683242bc17eeb2c9818d0d30117b4486be10c59d3"},
-    {file = "regex-2024.11.6-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:70b7fa6606c2881c1db9479b0eaa11ed5dfa11c8d60a474ff0e095099f39d98e"},
-    {file = "regex-2024.11.6-cp312-cp312-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:0c32f75920cf99fe6b6c539c399a4a128452eaf1af27f39bce8909c9a3fd8cbe"},
-    {file = "regex-2024.11.6-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:982e6d21414e78e1f51cf595d7f321dcd14de1f2881c5dc6a6e23bbbbd68435e"},
-    {file = "regex-2024.11.6-cp312-cp312-musllinux_1_2_i686.whl", hash = "sha256:a7c2155f790e2fb448faed6dd241386719802296ec588a8b9051c1f5c481bc29"},
-    {file = "regex-2024.11.6-cp312-cp312-musllinux_1_2_ppc64le.whl", hash = "sha256:149f5008d286636e48cd0b1dd65018548944e495b0265b45e1bffecce1ef7f39"},
-    {file = "regex-2024.11.6-cp312-cp312-musllinux_1_2_s390x.whl", hash = "sha256:e5364a4502efca094731680e80009632ad6624084aff9a23ce8c8c6820de3e51"},
-    {file = "regex-2024.11.6-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:0a86e7eeca091c09e021db8eb72d54751e527fa47b8d5787caf96d9831bd02ad"},
-    {file = "regex-2024.11.6-cp312-cp312-win32.whl", hash = "sha256:32f9a4c643baad4efa81d549c2aadefaeba12249b2adc5af541759237eee1c54"},
-    {file = "regex-2024.11.6-cp312-cp312-win_amd64.whl", hash = "sha256:a93c194e2df18f7d264092dc8539b8ffb86b45b899ab976aa15d48214138e81b"},
-    {file = "regex-2024.11.6-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:a6ba92c0bcdf96cbf43a12c717eae4bc98325ca3730f6b130ffa2e3c3c723d84"},
-    {file = "regex-2024.11.6-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:525eab0b789891ac3be914d36893bdf972d483fe66551f79d3e27146191a37d4"},
-    {file = "regex-2024.11.6-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:086a27a0b4ca227941700e0b31425e7a28ef1ae8e5e05a33826e17e47fbfdba0"},
-    {file = "regex-2024.11.6-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:bde01f35767c4a7899b7eb6e823b125a64de314a8ee9791367c9a34d56af18d0"},
-    {file = "regex-2024.11.6-cp313-cp313-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:b583904576650166b3d920d2bcce13971f6f9e9a396c673187f49811b2769dc7"},
-    {file = "regex-2024.11.6-cp313-cp313-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:1c4de13f06a0d54fa0d5ab1b7138bfa0d883220965a29616e3ea61b35d5f5fc7"},
-    {file = "regex-2024.11.6-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3cde6e9f2580eb1665965ce9bf17ff4952f34f5b126beb509fee8f4e994f143c"},
-    {file = "regex-2024.11.6-cp313-cp313-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:0d7f453dca13f40a02b79636a339c5b62b670141e63efd511d3f8f73fba162b3"},
-    {file = "regex-2024.11.6-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:59dfe1ed21aea057a65c6b586afd2a945de04fc7db3de0a6e3ed5397ad491b07"},
-    {file = "regex-2024.11.6-cp313-cp313-musllinux_1_2_i686.whl", hash = "sha256:b97c1e0bd37c5cd7902e65f410779d39eeda155800b65fc4d04cc432efa9bc6e"},
-    {file = "regex-2024.11.6-cp313-cp313-musllinux_1_2_ppc64le.whl", hash = "sha256:f9d1e379028e0fc2ae3654bac3cbbef81bf3fd571272a42d56c24007979bafb6"},
-    {file = "regex-2024.11.6-cp313-cp313-musllinux_1_2_s390x.whl", hash = "sha256:13291b39131e2d002a7940fb176e120bec5145f3aeb7621be6534e46251912c4"},
-    {file = "regex-2024.11.6-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:4f51f88c126370dcec4908576c5a627220da6c09d0bff31cfa89f2523843316d"},
-    {file = "regex-2024.11.6-cp313-cp313-win32.whl", hash = "sha256:63b13cfd72e9601125027202cad74995ab26921d8cd935c25f09c630436348ff"},
-    {file = "regex-2024.11.6-cp313-cp313-win_amd64.whl", hash = "sha256:2b3361af3198667e99927da8b84c1b010752fa4b1115ee30beaa332cabc3ef1a"},
-    {file = "regex-2024.11.6-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:3a51ccc315653ba012774efca4f23d1d2a8a8f278a6072e29c7147eee7da446b"},
-    {file = "regex-2024.11.6-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:ad182d02e40de7459b73155deb8996bbd8e96852267879396fb274e8700190e3"},
-    {file = "regex-2024.11.6-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:ba9b72e5643641b7d41fa1f6d5abda2c9a263ae835b917348fc3c928182ad467"},
-    {file = "regex-2024.11.6-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:40291b1b89ca6ad8d3f2b82782cc33807f1406cf68c8d440861da6304d8ffbbd"},
-    {file = "regex-2024.11.6-cp38-cp38-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:cdf58d0e516ee426a48f7b2c03a332a4114420716d55769ff7108c37a09951bf"},
-    {file = "regex-2024.11.6-cp38-cp38-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:a36fdf2af13c2b14738f6e973aba563623cb77d753bbbd8d414d18bfaa3105dd"},
-    {file = "regex-2024.11.6-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d1cee317bfc014c2419a76bcc87f071405e3966da434e03e13beb45f8aced1a6"},
-    {file = "regex-2024.11.6-cp38-cp38-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:50153825ee016b91549962f970d6a4442fa106832e14c918acd1c8e479916c4f"},
-    {file = "regex-2024.11.6-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:ea1bfda2f7162605f6e8178223576856b3d791109f15ea99a9f95c16a7636fb5"},
-    {file = "regex-2024.11.6-cp38-cp38-musllinux_1_2_aarch64.whl", hash = "sha256:df951c5f4a1b1910f1a99ff42c473ff60f8225baa1cdd3539fe2819d9543e9df"},
-    {file = "regex-2024.11.6-cp38-cp38-musllinux_1_2_i686.whl", hash = "sha256:072623554418a9911446278f16ecb398fb3b540147a7828c06e2011fa531e773"},
-    {file = "regex-2024.11.6-cp38-cp38-musllinux_1_2_ppc64le.whl", hash = "sha256:f654882311409afb1d780b940234208a252322c24a93b442ca714d119e68086c"},
-    {file = "regex-2024.11.6-cp38-cp38-musllinux_1_2_s390x.whl", hash = "sha256:89d75e7293d2b3e674db7d4d9b1bee7f8f3d1609428e293771d1a962617150cc"},
-    {file = "regex-2024.11.6-cp38-cp38-musllinux_1_2_x86_64.whl", hash = "sha256:f65557897fc977a44ab205ea871b690adaef6b9da6afda4790a2484b04293a5f"},
-    {file = "regex-2024.11.6-cp38-cp38-win32.whl", hash = "sha256:6f44ec28b1f858c98d3036ad5d7d0bfc568bdd7a74f9c24e25f41ef1ebfd81a4"},
-    {file = "regex-2024.11.6-cp38-cp38-win_amd64.whl", hash = "sha256:bb8f74f2f10dbf13a0be8de623ba4f9491faf58c24064f32b65679b021ed0001"},
-    {file = "regex-2024.11.6-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:5704e174f8ccab2026bd2f1ab6c510345ae8eac818b613d7d73e785f1310f839"},
-    {file = "regex-2024.11.6-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:220902c3c5cc6af55d4fe19ead504de80eb91f786dc102fbd74894b1551f095e"},
-    {file = "regex-2024.11.6-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:5e7e351589da0850c125f1600a4c4ba3c722efefe16b297de54300f08d734fbf"},
-    {file = "regex-2024.11.6-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5056b185ca113c88e18223183aa1a50e66507769c9640a6ff75859619d73957b"},
-    {file = "regex-2024.11.6-cp39-cp39-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:2e34b51b650b23ed3354b5a07aab37034d9f923db2a40519139af34f485f77d0"},
-    {file = "regex-2024.11.6-cp39-cp39-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:5670bce7b200273eee1840ef307bfa07cda90b38ae56e9a6ebcc9f50da9c469b"},
-    {file = "regex-2024.11.6-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:08986dce1339bc932923e7d1232ce9881499a0e02925f7402fb7c982515419ef"},
-    {file = "regex-2024.11.6-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:93c0b12d3d3bc25af4ebbf38f9ee780a487e8bf6954c115b9f015822d3bb8e48"},
-    {file = "regex-2024.11.6-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_12_x86_64.manylinux2010_x86_64.whl", hash = "sha256:764e71f22ab3b305e7f4c21f1a97e1526a25ebdd22513e251cf376760213da13"},
-    {file = "regex-2024.11.6-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:f056bf21105c2515c32372bbc057f43eb02aae2fda61052e2f7622c801f0b4e2"},
-    {file = "regex-2024.11.6-cp39-cp39-musllinux_1_2_i686.whl", hash = "sha256:69ab78f848845569401469da20df3e081e6b5a11cb086de3eed1d48f5ed57c95"},
-    {file = "regex-2024.11.6-cp39-cp39-musllinux_1_2_ppc64le.whl", hash = "sha256:86fddba590aad9208e2fa8b43b4c098bb0ec74f15718bb6a704e3c63e2cef3e9"},
-    {file = "regex-2024.11.6-cp39-cp39-musllinux_1_2_s390x.whl", hash = "sha256:684d7a212682996d21ca12ef3c17353c021fe9de6049e19ac8481ec35574a70f"},
-    {file = "regex-2024.11.6-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:a03e02f48cd1abbd9f3b7e3586d97c8f7a9721c436f51a5245b3b9483044480b"},
-    {file = "regex-2024.11.6-cp39-cp39-win32.whl", hash = "sha256:41758407fc32d5c3c5de163888068cfee69cb4c2be844e7ac517a52770f9af57"},
-    {file = "regex-2024.11.6-cp39-cp39-win_amd64.whl", hash = "sha256:b2837718570f95dd41675328e111345f9b7095d821bac435aac173ac80b19983"},
-    {file = "regex-2024.11.6.tar.gz", hash = "sha256:7ab159b063c52a0333c884e4679f8d7a85112ee3078fe3d9004b2dd875585519"},
+    {file = "regex-2025.7.34-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d856164d25e2b3b07b779bfed813eb4b6b6ce73c2fd818d46f47c1eb5cd79bd6"},
+    {file = "regex-2025.7.34-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:2d15a9da5fad793e35fb7be74eec450d968e05d2e294f3e0e77ab03fa7234a83"},
+    {file = "regex-2025.7.34-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:95b4639c77d414efa93c8de14ce3f7965a94d007e068a94f9d4997bb9bd9c81f"},
+    {file = "regex-2025.7.34-cp310-cp310-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:5d7de1ceed5a5f84f342ba4a9f4ae589524adf9744b2ee61b5da884b5b659834"},
+    {file = "regex-2025.7.34-cp310-cp310-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:02e5860a250cd350c4933cf376c3bc9cb28948e2c96a8bc042aee7b985cfa26f"},
+    {file = "regex-2025.7.34-cp310-cp310-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:0a5966220b9a1a88691282b7e4350e9599cf65780ca60d914a798cb791aa1177"},
+    {file = "regex-2025.7.34-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:48fb045bbd4aab2418dc1ba2088a5e32de4bfe64e1457b948bb328a8dc2f1c2e"},
+    {file = "regex-2025.7.34-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:20ff8433fa45e131f7316594efe24d4679c5449c0ca69d91c2f9d21846fdf064"},
+    {file = "regex-2025.7.34-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:c436fd1e95c04c19039668cfb548450a37c13f051e8659f40aed426e36b3765f"},
+    {file = "regex-2025.7.34-cp310-cp310-musllinux_1_2_ppc64le.whl", hash = "sha256:0b85241d3cfb9f8a13cefdfbd58a2843f208f2ed2c88181bf84e22e0c7fc066d"},
+    {file = "regex-2025.7.34-cp310-cp310-musllinux_1_2_s390x.whl", hash = "sha256:075641c94126b064c65ab86e7e71fc3d63e7ff1bea1fb794f0773c97cdad3a03"},
+    {file = "regex-2025.7.34-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:70645cad3407d103d1dbcb4841839d2946f7d36cf38acbd40120fee1682151e5"},
+    {file = "regex-2025.7.34-cp310-cp310-win32.whl", hash = "sha256:3b836eb4a95526b263c2a3359308600bd95ce7848ebd3c29af0c37c4f9627cd3"},
+    {file = "regex-2025.7.34-cp310-cp310-win_amd64.whl", hash = "sha256:cbfaa401d77334613cf434f723c7e8ba585df162be76474bccc53ae4e5520b3a"},
+    {file = "regex-2025.7.34-cp310-cp310-win_arm64.whl", hash = "sha256:bca11d3c38a47c621769433c47f364b44e8043e0de8e482c5968b20ab90a3986"},
+    {file = "regex-2025.7.34-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:da304313761b8500b8e175eb2040c4394a875837d5635f6256d6fa0377ad32c8"},
+    {file = "regex-2025.7.34-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:35e43ebf5b18cd751ea81455b19acfdec402e82fe0dc6143edfae4c5c4b3909a"},
+    {file = "regex-2025.7.34-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:96bbae4c616726f4661fe7bcad5952e10d25d3c51ddc388189d8864fbc1b3c68"},
+    {file = "regex-2025.7.34-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:9feab78a1ffa4f2b1e27b1bcdaad36f48c2fed4870264ce32f52a393db093c78"},
+    {file = "regex-2025.7.34-cp311-cp311-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:f14b36e6d4d07f1a5060f28ef3b3561c5d95eb0651741474ce4c0a4c56ba8719"},
+    {file = "regex-2025.7.34-cp311-cp311-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:85c3a958ef8b3d5079c763477e1f09e89d13ad22198a37e9d7b26b4b17438b33"},
+    {file = "regex-2025.7.34-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:37555e4ae0b93358fa7c2d240a4291d4a4227cc7c607d8f85596cdb08ec0a083"},
+    {file = "regex-2025.7.34-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:ee38926f31f1aa61b0232a3a11b83461f7807661c062df9eb88769d86e6195c3"},
+    {file = "regex-2025.7.34-cp311-cp311-musllinux_1_2_ppc64le.whl", hash = "sha256:a664291c31cae9c4a30589bd8bc2ebb56ef880c9c6264cb7643633831e606a4d"},
+    {file = "regex-2025.7.34-cp311-cp311-musllinux_1_2_s390x.whl", hash = "sha256:f3e5c1e0925e77ec46ddc736b756a6da50d4df4ee3f69536ffb2373460e2dafd"},
+    {file = "regex-2025.7.34-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:d428fc7731dcbb4e2ffe43aeb8f90775ad155e7db4347a639768bc6cd2df881a"},
+    {file = "regex-2025.7.34-cp311-cp311-win32.whl", hash = "sha256:e154a7ee7fa18333ad90b20e16ef84daaeac61877c8ef942ec8dfa50dc38b7a1"},
+    {file = "regex-2025.7.34-cp311-cp311-win_amd64.whl", hash = "sha256:24257953d5c1d6d3c129ab03414c07fc1a47833c9165d49b954190b2b7f21a1a"},
+    {file = "regex-2025.7.34-cp311-cp311-win_arm64.whl", hash = "sha256:3157aa512b9e606586900888cd469a444f9b898ecb7f8931996cb715f77477f0"},
+    {file = "regex-2025.7.34-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:7f7211a746aced993bef487de69307a38c5ddd79257d7be83f7b202cb59ddb50"},
+    {file = "regex-2025.7.34-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:fb31080f2bd0681484b275461b202b5ad182f52c9ec606052020fe13eb13a72f"},
+    {file = "regex-2025.7.34-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:0200a5150c4cf61e407038f4b4d5cdad13e86345dac29ff9dab3d75d905cf130"},
+    {file = "regex-2025.7.34-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:739a74970e736df0773788377969c9fea3876c2fc13d0563f98e5503e5185f46"},
+    {file = "regex-2025.7.34-cp312-cp312-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:4fef81b2f7ea6a2029161ed6dea9ae13834c28eb5a95b8771828194a026621e4"},
+    {file = "regex-2025.7.34-cp312-cp312-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:ea74cf81fe61a7e9d77989050d0089a927ab758c29dac4e8e1b6c06fccf3ebf0"},
+    {file = "regex-2025.7.34-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e4636a7f3b65a5f340ed9ddf53585c42e3ff37101d383ed321bfe5660481744b"},
+    {file = "regex-2025.7.34-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:6cef962d7834437fe8d3da6f9bfc6f93f20f218266dcefec0560ed7765f5fe01"},
+    {file = "regex-2025.7.34-cp312-cp312-musllinux_1_2_ppc64le.whl", hash = "sha256:cbe1698e5b80298dbce8df4d8d1182279fbdaf1044e864cbc9d53c20e4a2be77"},
+    {file = "regex-2025.7.34-cp312-cp312-musllinux_1_2_s390x.whl", hash = "sha256:32b9f9bcf0f605eb094b08e8da72e44badabb63dde6b83bd530580b488d1c6da"},
+    {file = "regex-2025.7.34-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:524c868ba527eab4e8744a9287809579f54ae8c62fbf07d62aacd89f6026b282"},
+    {file = "regex-2025.7.34-cp312-cp312-win32.whl", hash = "sha256:d600e58ee6d036081c89696d2bdd55d507498a7180df2e19945c6642fac59588"},
+    {file = "regex-2025.7.34-cp312-cp312-win_amd64.whl", hash = "sha256:9a9ab52a466a9b4b91564437b36417b76033e8778e5af8f36be835d8cb370d62"},
+    {file = "regex-2025.7.34-cp312-cp312-win_arm64.whl", hash = "sha256:c83aec91af9c6fbf7c743274fd952272403ad9a9db05fe9bfc9df8d12b45f176"},
+    {file = "regex-2025.7.34-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:c3c9740a77aeef3f5e3aaab92403946a8d34437db930a0280e7e81ddcada61f5"},
+    {file = "regex-2025.7.34-cp313-cp313-macosx_10_13_x86_64.whl", hash = "sha256:69ed3bc611540f2ea70a4080f853741ec698be556b1df404599f8724690edbcd"},
+    {file = "regex-2025.7.34-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:d03c6f9dcd562c56527c42b8530aad93193e0b3254a588be1f2ed378cdfdea1b"},
+    {file = "regex-2025.7.34-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:6164b1d99dee1dfad33f301f174d8139d4368a9fb50bf0a3603b2eaf579963ad"},
+    {file = "regex-2025.7.34-cp313-cp313-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:1e4f4f62599b8142362f164ce776f19d79bdd21273e86920a7b604a4275b4f59"},
+    {file = "regex-2025.7.34-cp313-cp313-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:72a26dcc6a59c057b292f39d41465d8233a10fd69121fa24f8f43ec6294e5415"},
+    {file = "regex-2025.7.34-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:d5273fddf7a3e602695c92716c420c377599ed3c853ea669c1fe26218867002f"},
+    {file = "regex-2025.7.34-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:c1844be23cd40135b3a5a4dd298e1e0c0cb36757364dd6cdc6025770363e06c1"},
+    {file = "regex-2025.7.34-cp313-cp313-musllinux_1_2_ppc64le.whl", hash = "sha256:dde35e2afbbe2272f8abee3b9fe6772d9b5a07d82607b5788e8508974059925c"},
+    {file = "regex-2025.7.34-cp313-cp313-musllinux_1_2_s390x.whl", hash = "sha256:f3f6e8e7af516a7549412ce57613e859c3be27d55341a894aacaa11703a4c31a"},
+    {file = "regex-2025.7.34-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:469142fb94a869beb25b5f18ea87646d21def10fbacb0bcb749224f3509476f0"},
+    {file = "regex-2025.7.34-cp313-cp313-win32.whl", hash = "sha256:da7507d083ee33ccea1310447410c27ca11fb9ef18c95899ca57ff60a7e4d8f1"},
+    {file = "regex-2025.7.34-cp313-cp313-win_amd64.whl", hash = "sha256:9d644de5520441e5f7e2db63aec2748948cc39ed4d7a87fd5db578ea4043d997"},
+    {file = "regex-2025.7.34-cp313-cp313-win_arm64.whl", hash = "sha256:7bf1c5503a9f2cbd2f52d7e260acb3131b07b6273c470abb78568174fe6bde3f"},
+    {file = "regex-2025.7.34-cp314-cp314-macosx_10_13_universal2.whl", hash = "sha256:8283afe7042d8270cecf27cca558873168e771183d4d593e3c5fe5f12402212a"},
+    {file = "regex-2025.7.34-cp314-cp314-macosx_10_13_x86_64.whl", hash = "sha256:6c053f9647e3421dd2f5dff8172eb7b4eec129df9d1d2f7133a4386319b47435"},
+    {file = "regex-2025.7.34-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:a16dd56bbcb7d10e62861c3cd000290ddff28ea142ffb5eb3470f183628011ac"},
+    {file = "regex-2025.7.34-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:69c593ff5a24c0d5c1112b0df9b09eae42b33c014bdca7022d6523b210b69f72"},
+    {file = "regex-2025.7.34-cp314-cp314-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:98d0ce170fcde1a03b5df19c5650db22ab58af375aaa6ff07978a85c9f250f0e"},
+    {file = "regex-2025.7.34-cp314-cp314-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:d72765a4bff8c43711d5b0f5b452991a9947853dfa471972169b3cc0ba1d0751"},
+    {file = "regex-2025.7.34-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4494f8fd95a77eb434039ad8460e64d57baa0434f1395b7da44015bef650d0e4"},
+    {file = "regex-2025.7.34-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:4f42b522259c66e918a0121a12429b2abcf696c6f967fa37bdc7b72e61469f98"},
+    {file = "regex-2025.7.34-cp314-cp314-musllinux_1_2_ppc64le.whl", hash = "sha256:aaef1f056d96a0a5d53ad47d019d5b4c66fe4be2da87016e0d43b7242599ffc7"},
+    {file = "regex-2025.7.34-cp314-cp314-musllinux_1_2_s390x.whl", hash = "sha256:656433e5b7dccc9bc0da6312da8eb897b81f5e560321ec413500e5367fcd5d47"},
+    {file = "regex-2025.7.34-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:e91eb2c62c39705e17b4d42d4b86c4e86c884c0d15d9c5a47d0835f8387add8e"},
+    {file = "regex-2025.7.34-cp314-cp314-win32.whl", hash = "sha256:f978ddfb6216028c8f1d6b0f7ef779949498b64117fc35a939022f67f810bdcb"},
+    {file = "regex-2025.7.34-cp314-cp314-win_amd64.whl", hash = "sha256:4b7dc33b9b48fb37ead12ffc7bdb846ac72f99a80373c4da48f64b373a7abeae"},
+    {file = "regex-2025.7.34-cp314-cp314-win_arm64.whl", hash = "sha256:4b8c4d39f451e64809912c82392933d80fe2e4a87eeef8859fcc5380d0173c64"},
+    {file = "regex-2025.7.34-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:fd5edc3f453de727af267c7909d083e19f6426fc9dd149e332b6034f2a5611e6"},
+    {file = "regex-2025.7.34-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:fa1cdfb8db96ef20137de5587954c812821966c3e8b48ffc871e22d7ec0a4938"},
+    {file = "regex-2025.7.34-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:89c9504fc96268e8e74b0283e548f53a80c421182a2007e3365805b74ceef936"},
+    {file = "regex-2025.7.34-cp39-cp39-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:33be70d75fa05a904ee0dc43b650844e067d14c849df7e82ad673541cd465b5f"},
+    {file = "regex-2025.7.34-cp39-cp39-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl", hash = "sha256:57d25b6732ea93eeb1d090e8399b6235ca84a651b52d52d272ed37d3d2efa0f1"},
+    {file = "regex-2025.7.34-cp39-cp39-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl", hash = "sha256:baf2fe122a3db1c0b9f161aa44463d8f7e33eeeda47bb0309923deb743a18276"},
+    {file = "regex-2025.7.34-cp39-cp39-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1a764a83128af9c1a54be81485b34dca488cbcacefe1e1d543ef11fbace191e1"},
+    {file = "regex-2025.7.34-cp39-cp39-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:c7f663ccc4093877f55b51477522abd7299a14c5bb7626c5238599db6a0cb95d"},
+    {file = "regex-2025.7.34-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:4913f52fbc7a744aaebf53acd8d3dc1b519e46ba481d4d7596de3c862e011ada"},
+    {file = "regex-2025.7.34-cp39-cp39-musllinux_1_2_ppc64le.whl", hash = "sha256:efac4db9e044d47fd3b6b0d40b6708f4dfa2d8131a5ac1d604064147c0f552fd"},
+    {file = "regex-2025.7.34-cp39-cp39-musllinux_1_2_s390x.whl", hash = "sha256:7373afae7cfb716e3b8e15d0184510d518f9d21471f2d62918dbece85f2c588f"},
+    {file = "regex-2025.7.34-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:9960d162f3fecf6af252534a1ae337e9c2e20d74469fed782903b24e2cc9d3d7"},
+    {file = "regex-2025.7.34-cp39-cp39-win32.whl", hash = "sha256:95d538b10eb4621350a54bf14600cc80b514211d91a019dc74b8e23d2159ace5"},
+    {file = "regex-2025.7.34-cp39-cp39-win_amd64.whl", hash = "sha256:f7f3071b5faa605b0ea51ec4bb3ea7257277446b053f4fd3ad02b1dcb4e64353"},
+    {file = "regex-2025.7.34-cp39-cp39-win_arm64.whl", hash = "sha256:716a47515ba1d03f8e8a61c5013041c8c90f2e21f055203498105d7571b44531"},
+    {file = "regex-2025.7.34.tar.gz", hash = "sha256:9ead9765217afd04a86822dfcd4ed2747dfe426e887da413b15ff0ac2457e21a"},
 ]
 
 [[package]]
@@ -3456,14 +3460,14 @@ use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
 name = "s3transfer"
-version = "0.13.0"
+version = "0.13.1"
 description = "An Amazon S3 Transfer Manager"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "s3transfer-0.13.0-py3-none-any.whl", hash = "sha256:0148ef34d6dd964d0d8cf4311b2b21c474693e57c2e069ec708ce043d2b527be"},
-    {file = "s3transfer-0.13.0.tar.gz", hash = "sha256:f5e6db74eb7776a37208001113ea7aa97695368242b364d73e91c981ac522177"},
+    {file = "s3transfer-0.13.1-py3-none-any.whl", hash = "sha256:a981aa7429be23fe6dfc13e80e4020057cbab622b08c0315288758d67cabc724"},
+    {file = "s3transfer-0.13.1.tar.gz", hash = "sha256:c3fdba22ba1bd367922f27ec8032d6a1cf5f10c934fb5d68cf60fd5a23d936cf"},
 ]
 
 [package.dependencies]
@@ -3543,14 +3547,14 @@ tests = ["cython", "littleutils", "pygments", "pytest", "typeguard"]
 
 [[package]]
 name = "strawberry-graphql"
-version = "0.275.5"
+version = "0.278.0"
 description = "A library for creating GraphQL APIs"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "strawberry_graphql-0.275.5-py3-none-any.whl", hash = "sha256:b1d2c7c6febb5f8bd5bc9f3059d23f527f61f7a9fb6f7f24f4c5a7771dba7050"},
-    {file = "strawberry_graphql-0.275.5.tar.gz", hash = "sha256:080518de70b82c04a1f2d6118f268fadde45b985821e20e1550e3281afdecc41"},
+    {file = "strawberry_graphql-0.278.0-py3-none-any.whl", hash = "sha256:2815faee18156c079d91ac0092a34d18bbc67434b65ea7d34c1f97259e486f3b"},
+    {file = "strawberry_graphql-0.278.0.tar.gz", hash = "sha256:e3fee9cd107b5b8ca69dd534c1dca6f82e4a9cf44cf46a4d338f42938896521a"},
 ]
 
 [package.dependencies]
@@ -3579,20 +3583,20 @@ sanic = ["sanic (>=20.12.2)"]
 
 [[package]]
 name = "strawberry-graphql-django"
-version = "0.62.0"
+version = "0.65.1"
 description = "Strawberry GraphQL Django extension"
 optional = false
 python-versions = "<4.0,>=3.9"
 groups = ["main"]
 files = [
-    {file = "strawberry_graphql_django-0.62.0-py3-none-any.whl", hash = "sha256:ae61e5c9b9f4577009e0027c5fcb15357c8d25823966ea57b03a777c0b372657"},
-    {file = "strawberry_graphql_django-0.62.0.tar.gz", hash = "sha256:99d78da7191a65d19adeb76c92d02e4381087b0a95830ad223dbae32f051f898"},
+    {file = "strawberry_graphql_django-0.65.1-py3-none-any.whl", hash = "sha256:e0a69af97c50deb07197641cd0b7320e25b5a3148a05ae6006d1bf5103530e85"},
+    {file = "strawberry_graphql_django-0.65.1.tar.gz", hash = "sha256:de312b77d83ab475b875f76f44161e8c5d9d284f349df61cebc83b4362b57a17"},
 ]
 
 [package.dependencies]
 asgiref = ">=3.8"
 django = ">=4.2"
-strawberry-graphql = ">=0.264.0"
+strawberry-graphql = ">=0.276.2"
 
 [package.extras]
 debug-toolbar = ["django-debug-toolbar (>=3.4)"]
@@ -3787,14 +3791,14 @@ test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,
 
 [[package]]
 name = "types-awscrt"
-version = "0.27.4"
+version = "0.27.5"
 description = "Type annotations and code completion for awscrt"
 optional = false
 python-versions = ">=3.8"
 groups = ["dev"]
 files = [
-    {file = "types_awscrt-0.27.4-py3-none-any.whl", hash = "sha256:a8c4b9d9ae66d616755c322aba75ab9bd793c6fef448917e6de2e8b8cdf66fb4"},
-    {file = "types_awscrt-0.27.4.tar.gz", hash = "sha256:c019ba91a097e8a31d6948f6176ede1312963f41cdcacf82482ac877cbbcf390"},
+    {file = "types_awscrt-0.27.5-py3-none-any.whl", hash = "sha256:99ee40e787dfb92ae93a5c956251a03b847de3ac532552f7e06dd5eb6e0fd02f"},
+    {file = "types_awscrt-0.27.5.tar.gz", hash = "sha256:8eefe50d1709520663b77d3643a772c35ace3d8acfcb296f857627622c84cb4c"},
 ]
 
 [[package]]
@@ -3839,14 +3843,14 @@ files = [
 
 [[package]]
 name = "types-python-dateutil"
-version = "2.9.0.20250516"
+version = "2.9.0.20250708"
 description = "Typing stubs for python-dateutil"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "types_python_dateutil-2.9.0.20250516-py3-none-any.whl", hash = "sha256:2b2b3f57f9c6a61fba26a9c0ffb9ea5681c9b83e69cd897c6b5f668d9c0cab93"},
-    {file = "types_python_dateutil-2.9.0.20250516.tar.gz", hash = "sha256:13e80d6c9c47df23ad773d54b2826bd52dbbb41be87c3f339381c1700ad21ee5"},
+    {file = "types_python_dateutil-2.9.0.20250708-py3-none-any.whl", hash = "sha256:4d6d0cc1cc4d24a2dc3816024e502564094497b713f7befda4d5bc7a8e3fd21f"},
+    {file = "types_python_dateutil-2.9.0.20250708.tar.gz", hash = "sha256:ccdbd75dab2d6c9696c350579f34cffe2c281e4c5f27a585b2a2438dd1d5c8ab"},
 ]
 
 [[package]]
@@ -4277,18 +4281,18 @@ propcache = ">=0.2.1"
 
 [[package]]
 name = "zope-event"
-version = "5.1"
+version = "5.1.1"
 description = "Very basic event publishing system"
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
 files = [
-    {file = "zope_event-5.1-py3-none-any.whl", hash = "sha256:53de8f0e9f61dc0598141ac591f49b042b6d74784dab49971b9cc91d0f73a7df"},
-    {file = "zope_event-5.1.tar.gz", hash = "sha256:a153660e0c228124655748e990396b9d8295d6e4f546fa1b34f3319e1c666e7f"},
+    {file = "zope_event-5.1.1-py3-none-any.whl", hash = "sha256:8d5ea7b992c42ce73a6fa9c2ba99a004c52cd9f05d87f3220768ef0329b92df7"},
+    {file = "zope_event-5.1.1.tar.gz", hash = "sha256:c1ac931abf57efba71a2a313c5f4d57768a19b15c37e3f02f50eb1536be12d4e"},
 ]
 
 [package.dependencies]
-setuptools = "*"
+setuptools = ">=75.8.2"
 
 [package.extras]
 docs = ["Sphinx"]
@@ -4352,4 +4356,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "3.13.5"
-content-hash = "2c3de17c9461712ca20f3beb9154ad62e74ba7a7e9895e6c46428a2e712c286a"
+content-hash = "66f2037ce0bdd2021cca6d743455b7ee50830b000ce8c96c2375100ca17ae342"
