@@ -4,6 +4,7 @@ from typing import Any
 from accounts.groups import GroupTemplateNames
 from accounts.utils import (
     add_default_org_permissions_to_user,
+    create_default_org_permission_groups,
     remove_org_group_permissions_from_user,
     remove_organization_permission_group,
 )
@@ -58,6 +59,13 @@ def handle_organization_user_added(sender: Any, instance: OrganizationUser, crea
     if created:
         add_default_org_permissions_to_user(user, organization)
     logger.info(f"User {user.username} was added to organization {organization.name}.")
+
+
+@receiver(post_save, sender=Organization)
+def handle_organization_created(sender: Any, instance: Organization, created: bool, **kwargs: Any) -> None:
+    organization: Organization = instance
+    if created:
+        create_default_org_permission_groups(organization)
 
 
 @receiver(post_delete, sender=OrganizationUser)
