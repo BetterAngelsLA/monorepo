@@ -1,5 +1,4 @@
 import { ReactElement, useEffect, useRef, useState } from 'react';
-import './index.css';
 
 type DropdownProps<T extends string> = {
   options: T[];
