@@ -7,10 +7,11 @@ export type TOrganization = {
 
 export type TUser = {
   id: string;
+  email: string;
+  organization: TOrganization;
   username?: string;
   firstName?: string;
   lastName?: string;
-  email?: string | null;
   organizations: TOrganization[] | null;
   isOutreachAuthorized?: boolean;
   hasAcceptedTos?: boolean;
