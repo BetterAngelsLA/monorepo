@@ -94,8 +94,8 @@ class CreateNoteMoodInput:
 
 @strawberry_django.ordering.order(models.Note)
 class NoteOrder:
-    interacted_at: auto
     id: auto
+    interacted_at: auto
 
 
 @strawberry_django.filters.filter(models.Note)

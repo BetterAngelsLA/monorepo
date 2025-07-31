@@ -4,7 +4,7 @@ import strawberry_django
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
-from django.db.models import Q, QuerySet
+from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
 from strawberry import ID, Info, auto
 from tasks.enums import TaskStatusEnum
 
@@ -78,16 +78,38 @@ class TaskFilter:
         return queryset.filter(team__in=value), Q()
 
 
-@strawberry_django.order_type(models.Task)
+@strawberry_django.order_type(models.Task, one_of=False)
 class TaskOrder:
-    updated_at: auto
     id: auto
+    updated_at: auto
+
+    @strawberry_django.order_field
+    def status(self, value: strawberry_django.Ordering, prefix: str) -> list:
+        ordering_map = {
+            TaskStatusEnum.TO_DO.value: 0,
+            TaskStatusEnum.IN_PROGRESS.value: 1,
+            TaskStatusEnum.COMPLETED.value: 2,
+        }
+
+        if value in [
+            strawberry_django.Ordering.DESC,
+            strawberry_django.Ordering.DESC_NULLS_FIRST,
+            strawberry_django.Ordering.DESC_NULLS_LAST,
+        ]:
+            ordering_map = {k: 2 - v for k, v in ordering_map.items()}
+
+        return [
+            Case(
+                *[When(**{"status": status}, then=Value(order)) for status, order in ordering_map.items()],
+                default=Value(99),
+                output_field=IntegerField(),
+            )
+        ]
 
 
 @strawberry_django.type(models.Task)
 class TaskBaseType:
     description: auto
-    status: Optional[TaskStatusEnum]
     summary: auto
     team: Optional[SelahTeamEnum]
 
@@ -99,10 +121,13 @@ class TaskType(TaskBaseType):
     created_at: auto
     created_by: UserType
     organization: Optional[OrganizationType]
+    status: Optional[TaskStatusEnum]
     updated_at: auto
 
 
 @strawberry_django.input(models.Task, partial=True)
 class TaskInput(TaskBaseType):
     id: Optional[ID]
-    client_profile: ID
+    client_profile: Optional[ID]
+    organization: Optional[OrganizationType]
+    status: Optional[TaskStatusEnum] = TaskStatusEnum.TO_DO

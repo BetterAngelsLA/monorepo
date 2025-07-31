@@ -1272,6 +1272,10 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
+export type OneToManyInput = {
+  set?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export type OperationInfo = {
   __typename?: 'OperationInfo';
   /** List of messages returned by the operation. */
@@ -2019,16 +2023,22 @@ export type TaskFilter = {
 
 export type TaskInput = {
   clientProfile: Scalars['ID']['input'];
+  createdAt?: InputMaybe<Scalars['DateTime']['input']>;
+  createdBy?: InputMaybe<OneToManyInput>;
   description?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
+  organization?: InputMaybe<OneToManyInput>;
   status?: InputMaybe<TaskStatusEnum>;
   summary?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
+  updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
-export type TaskOrder =
-  { id: Ordering; updatedAt?: never; }
-  |  { id?: never; updatedAt: Ordering; };
+export type TaskOrder = {
+  id?: InputMaybe<Ordering>;
+  status?: InputMaybe<Ordering>;
+  updatedAt?: InputMaybe<Ordering>;
+};
 
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',

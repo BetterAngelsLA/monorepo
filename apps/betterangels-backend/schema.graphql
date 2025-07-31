@@ -34,8 +34,6 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
-directive @oneOf on INPUT_OBJECT
-
 enum AccessibilityChoices {
   MEDICAL_EQUIPMENT_PERMITTED
   WHEELCHAIR_ACCESSIBLE
@@ -1003,8 +1001,8 @@ type NoteImportRecordType {
 }
 
 input NoteOrder {
-  interactedAt: Ordering
   id: Ordering
+  interactedAt: Ordering
 }
 
 type NoteType {
@@ -1044,6 +1042,10 @@ type OffsetPaginationInfo {
 input OffsetPaginationInput {
   offset: Int! = 0
   limit: Int
+}
+
+input OneToManyInput {
+  set: ID
 }
 
 type OperationInfo {
@@ -1636,10 +1638,10 @@ input TaskFilter {
   OR: TaskFilter
   NOT: TaskFilter
   DISTINCT: Boolean
-  status: [TaskStatusEnum!]
-  organizations: [ID!]
   authors: [ID!]
+  organizations: [ID!]
   search: String
+  status: [TaskStatusEnum!]
   teams: [SelahTeamEnum!]
 }
 
@@ -1650,11 +1652,16 @@ input TaskInput {
   team: SelahTeamEnum
   id: ID
   clientProfile: ID!
+  createdAt: DateTime
+  createdBy: OneToManyInput
+  organization: OneToManyInput
+  updatedAt: DateTime
 }
 
-input TaskOrder @oneOf {
-  updatedAt: Ordering
+input TaskOrder {
   id: Ordering
+  updatedAt: Ordering
+  status: Ordering
 }
 
 enum TaskStatusEnum {
