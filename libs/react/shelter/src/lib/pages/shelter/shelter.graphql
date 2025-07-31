@@ -9,6 +9,7 @@ query ViewShelter($id: ID!) {
     entryInfo
     heroImage
     id
+    instagram
     maxStay
     name
     onSiteSecurity

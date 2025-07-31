@@ -50,7 +50,7 @@ function renderLabel(
         rel="noopener noreferrer"
         className="underline"
       >
-        Website
+        {key === 'instagram' ? 'Instagram' : 'Website'}
       </a>
     );
   }
@@ -70,7 +70,7 @@ export default function GeneralInfo({
       icon: <GlobeIcon className="h-6 w-6 stroke-primary-20" />,
     },
     {
-      label: 'Instagram',
+      label: shelter?.instagram,
       key: 'instagram',
       icon: <InstagramIcon className="h-6 w-6 fill-primary-20" />,
     },
@@ -108,15 +108,18 @@ export default function GeneralInfo({
 
         <GeneralServices shelter={shelter} />
       </div>
-      {contactInfo.map((info) => (
-        <div
-          key={info.key}
-          className="border-t border-neutral-90 flex items-center justify-between px-6 py-4 gap-1"
-        >
-          {renderLabel(info.label, info.key)}
-          {info.icon}
-        </div>
-      ))}
+      {contactInfo.map(
+        (info) =>
+          (info.key !== 'instagram' || info.label) && (
+            <div
+              key={info.key}
+              className="border-t border-neutral-90 flex items-center justify-between px-6 py-4 gap-1"
+            >
+              {renderLabel(info.label, info.key)}
+              {info.icon}
+            </div>
+          )
+      )}
 
       {hasNotesContent && (
         <div className="border-t border-neutral-90 flex items-center justify-between px-6 py-4">
