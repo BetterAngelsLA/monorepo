@@ -11,14 +11,17 @@ type IProps = {
 export function AppLayout(props: IProps): ReactElement {
   const { className = '' } = props;
 
-  const parentCss = ['flex', 'flex-row', className];
+  const parentCss = ['flex', 'flex-row', 'h-screen', className];
 
   return (
     <div className={mergeCss(parentCss)}>
-      <AppSidebar className="relative z-10" />
-      <Navbar />
-      <div className="bg-neutral-99 h-full w-full">
-        <Outlet />
+      <AppSidebar />
+      <div className="flex flex-col flex-1">
+        <Navbar />
+
+        <div className="flex-1 bg-neutral-99 overflow-auto">
+          <Outlet />
+        </div>
       </div>
     </div>
   );
