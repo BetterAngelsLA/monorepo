@@ -22,7 +22,7 @@ export function AddUserFormDrawer() {
   }
 
   function handleOnCancel() {
-    console.log('################################### onCancel');
+    closeDrawer();
   }
 
   const parentCss = ['flex', 'flex-col', 'h-full'];
@@ -35,7 +35,7 @@ export function AddUserFormDrawer() {
         </div>
       </AppDrawer.Header>
 
-      <AddUserForm onComplete={handleOnComplete} />
+      <AddUserForm onComplete={handleOnComplete} onCancel={handleOnCancel} />
     </div>
   );
 }

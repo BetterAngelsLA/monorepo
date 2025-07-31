@@ -1,8 +1,16 @@
-import { Button, mergeCss } from '@monorepo/react/components';
+import { zodResolver } from '@hookform/resolvers/zod'; // Install this resolver
+import { Button, mergeCss, useAlert } from '@monorepo/react/components';
+import { toError } from '@monorepo/react/shared';
 import { useState } from 'react';
+import { SubmitHandler, useForm } from 'react-hook-form';
+import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { useUser } from '../../hooks';
 import Input from '../Input';
-import { useAddOrganizationMemberMutation } from './__generated__/addOrganizationMember.generated';
+import {
+  AddOrganizationMemberMutation,
+  useAddOrganizationMemberMutation,
+} from './__generated__/addOrganizationMember.generated';
+import { FormSchema, TFormSchema, defaultValues } from './formSchema';
 
 type TProps = {
   className?: string;
@@ -14,125 +22,136 @@ export function AddUserForm(props: TProps) {
   const { className, onComplete, onCancel } = props;
 
   const { user } = useUser();
-  // const { closeDrawer } = useAppDrawer();
+  const { showAlert } = useAlert();
   const [disabled, setDisabled] = useState(false);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
 
-  const orgId = user?.organization?.id;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<TFormSchema>({
+    resolver: zodResolver(FormSchema),
+    defaultValues,
+  });
+
+  const organizationId = user?.organization?.id;
 
   const [addOrganizationMember, { data, loading, error }] =
     useAddOrganizationMemberMutation();
 
-  async function handleOnSubmit() {
-    if (!orgId) {
+  const onSubmit: SubmitHandler<TFormSchema> = async (values) => {
+    if (!organizationId) {
       return;
     }
 
     setDisabled(true);
 
-    onComplete?.();
-
     try {
-      const { data } = await addOrganizationMember({
+      const response = await addOrganizationMember({
         variables: {
           data: {
-            firstName,
-            lastName,
-            email,
-            organizationId: orgId,
+            ...values,
+            organizationId,
           },
         },
       });
 
-      console.log();
-      console.log('| -------------  data  ------------- |');
-      console.log(data);
-      console.log();
+      const errorMessage =
+        extractOperationInfoMessage<AddOrganizationMemberMutation>(
+          response,
+          'addOrganizationMember'
+        );
 
-      // if (!data?.createNote || !('id' in data.createNote)) {
-      //   throw new Error('invalid mutation result');
-      // }
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
 
-      // const createdNoteId = data.createNote.id;
-
-      // default behavior
-      // router.navigate(`/add-note/${createdNoteId}`);
+      onComplete?.();
     } catch (err) {
-      // console.error(
-      //   `error creating note for profileId [${clientProfileId}]: ${err}`
-      // );
-      // default behavior
+      const error = toError(err);
+
+      console.error(`error inviting user: ${error.message}`);
+
+      showAlert({
+        type: 'error',
+        content: error.message,
+      });
     } finally {
       setDisabled(false);
     }
-  }
+  };
 
   function handleOnCancel() {
-    console.log('################################### onCancel');
+    onCancel?.();
   }
 
   const parentCss = ['flex', 'flex-col', 'w-full', 'h-full', className];
 
   return (
     <div className={mergeCss(parentCss)}>
-      <div className="p-6">
-        <Input
-          required
-          type="text"
-          className="mb-4"
-          inputClassname="input-md w-96"
-          label="First Name"
-          value={firstName}
-          onChange={(e) => setFirstName(e.target.value)}
-          autoCapitalize="none"
-          placeholder="Enter first name"
-        />
+      <form>
+        <div className="p-6">
+          <Input
+            {...register('firstName')}
+            disabled={disabled}
+            required
+            type="text"
+            className="mb-4"
+            inputClassname="input-md w-96"
+            label="First Name"
+            placeholder="Enter first name"
+            autoCapitalize="none"
+            error={errors?.firstName?.message}
+          />
 
-        <Input
-          required
-          type="text"
-          className="mb-4"
-          inputClassname="input-md w-96"
-          label="Last Name"
-          value={lastName}
-          onChange={(e) => setLastName(e.target.value)}
-          autoCapitalize="none"
-          placeholder="Enter last name"
-        />
+          <Input
+            {...register('lastName')}
+            disabled={disabled}
+            required
+            type="text"
+            className="mb-4"
+            inputClassname="input-md w-96"
+            label="Last Name"
+            placeholder="Enter last name"
+            autoCapitalize="none"
+            error={errors?.lastName?.message}
+          />
 
-        <Input
-          required
-          type="email"
-          className="mb-4"
-          inputClassname="input-md w-96"
-          label="Email Address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          autoCapitalize="none"
-          placeholder="Enter email address"
-        />
-      </div>
+          <Input
+            {...register('email')}
+            disabled={disabled}
+            required
+            type="email"
+            className="mb-4"
+            inputClassname="input-md w-96"
+            label="Email Address"
+            placeholder="Enter email address"
+            autoCapitalize="none"
+            autoCorrect="off"
+            error={errors?.email?.message}
+          />
+        </div>
 
-      <div className="mt-auto border-t border-neutral-90 p-6 flex justify-end items-center">
-        <button
-          className="mr-12 text-primary-20 text-base font-semibold"
-          onClick={handleOnCancel}
-          disabled={disabled}
-        >
-          Cancel
-        </button>
+        <div className="mt-auto border-t border-neutral-90 p-6 flex justify-end items-center">
+          <button
+            type="button"
+            className="mr-12 text-primary-20 text-base font-semibold"
+            onClick={handleOnCancel}
+            disabled={disabled}
+          >
+            Cancel
+          </button>
 
-        <Button
-          size="2xl"
-          variant="accent"
-          onClick={handleOnSubmit}
-          disabled={disabled}
-        >
-          Add User
-        </Button>
-      </div>
+          <Button
+            size="2xl"
+            variant="accent"
+            onClick={handleSubmit(onSubmit)}
+            disabled={disabled}
+          >
+            Add User
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

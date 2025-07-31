@@ -4,10 +4,18 @@ import './index.css';
 interface IInputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   inputClassname?: string;
+  error?: string;
 }
 
 export default function Input(props: IInputProps) {
-  const { label, id: propId, className, inputClassname, ...rest } = props;
+  const {
+    label,
+    id: propId,
+    error,
+    className,
+    inputClassname,
+    ...rest
+  } = props;
   const generatedId = useId();
   const id = propId ?? generatedId;
 
@@ -29,6 +37,8 @@ export default function Input(props: IInputProps) {
         id={id}
         {...rest}
       />
+
+      {error && <div className="text-sm text-alert-60 mt-2">{error}</div>}
     </div>
   );
 }
