@@ -20,7 +20,7 @@ export function AddUserForm(props: TProps) {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
 
-  const orgId = user?.organization.id;
+  const orgId = user?.organization?.id;
 
   const [addOrganizationMember, { data, loading, error }] =
     useAddOrganizationMemberMutation();
