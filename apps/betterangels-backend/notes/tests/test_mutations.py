@@ -26,7 +26,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 37
+        expected_query_count = 34
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -42,7 +42,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "purpose": "New note purpose",
             "team": None,
             "location": None,
-            "moods": [],
             "providedServices": [],
             "requestedServices": [],
             "publicDetails": "New public details",
@@ -67,7 +66,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 25
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -87,7 +86,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
                 "point": self.point,
                 "pointOfInterest": self.point_of_interest,
             },
-            "moods": [],
             "providedServices": [],
             "requestedServices": [],
             "publicDetails": "Updated public details",
@@ -107,7 +105,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 22
+        expected_query_count = 19
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -117,7 +115,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "purpose": f"Session with {self.client_profile_1.full_name}",
             "team": None,
             "location": None,
-            "moods": [],
             "providedServices": [],
             "requestedServices": [],
             "publicDetails": f"{self.client_profile_1.full_name}'s public details",
@@ -359,7 +356,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {"id": self.note["id"]}
 
-        expected_query_count = 24
+        expected_query_count = 22
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(mutation, variables)
         self.assertIsNotNone(response["data"]["deleteNote"])

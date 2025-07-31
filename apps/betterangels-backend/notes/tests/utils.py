@@ -37,27 +37,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 point
                 pointOfInterest
             }
-            moods {
-                descriptor
-            }
-            purposes {
-                id
-                title
-            }
-            nextSteps {
-                id
-                title
-                location {
-                    address {
-                        street
-                        city
-                        state
-                        zipCode
-                    }
-                    point
-                    pointOfInterest
-                }
-            }
             providedServices {
                 id
                 service
@@ -77,7 +56,6 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.client_profile_1 = baker.make(ClientProfile, first_name="Dale", last_name="Cooper")
         self.client_profile_2 = baker.make(ClientProfile, first_name="Harry", last_name="Truman")
         self._setup_note()
-        self._setup_note_tasks()
         self._setup_location()
         self.provided_services = baker.make(ServiceRequest, _quantity=2)
         self.requested_services = baker.make(ServiceRequest, _quantity=2)
@@ -95,35 +73,35 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         # Logout after setting up the note
         self.graphql_client.logout()
 
-    def _setup_note_tasks(self) -> None:
-        # Force login the case manager to create tasks
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        self.purpose_1 = self._create_task_for_note_fixture(
-            {
-                "title": f"Purpose 1 for {self.note['id']}",
-                "status": "TO_DO",
-            },
-        )["data"]["createTask"]
-        self.purpose_2 = self._create_task_for_note_fixture(
-            {
-                "title": f"Purpose 2 for {self.note['id']}",
-                "status": "TO_DO",
-            },
-        )["data"]["createTask"]
-        self.next_step_1 = self._create_task_for_note_fixture(
-            {
-                "title": f"Purpose 1 for {self.note['id']}",
-                "status": "TO_DO",
-            },
-        )["data"]["createTask"]
-        self.next_step_2 = self._create_task_for_note_fixture(
-            {
-                "title": f"Next Step 2 for {self.note['id']}",
-                "status": "TO_DO",
-            },
-        )["data"]["createTask"]
-        # Logout after setting up the tasks
-        self.graphql_client.logout()
+    # def _setup_note_tasks(self) -> None:
+    #     # Force login the case manager to create tasks
+    #     self.graphql_client.force_login(self.org_1_case_manager_1)
+    #     self.purpose_1 = self._create_task_for_note_fixture(
+    #         {
+    #             "title": f"Purpose 1 for {self.note['id']}",
+    #             "status": "TO_DO",
+    #         },
+    #     )["data"]["createTask"]
+    #     self.purpose_2 = self._create_task_for_note_fixture(
+    #         {
+    #             "title": f"Purpose 2 for {self.note['id']}",
+    #             "status": "TO_DO",
+    #         },
+    #     )["data"]["createTask"]
+    #     self.next_step_1 = self._create_task_for_note_fixture(
+    #         {
+    #             "title": f"Purpose 1 for {self.note['id']}",
+    #             "status": "TO_DO",
+    #         },
+    #     )["data"]["createTask"]
+    #     self.next_step_2 = self._create_task_for_note_fixture(
+    #         {
+    #             "title": f"Next Step 2 for {self.note['id']}",
+    #             "status": "TO_DO",
+    #         },
+    #     )["data"]["createTask"]
+    #     # Logout after setting up the tasks
+    #     self.graphql_client.logout()
 
     def _setup_location(self) -> None:
         self.address = baker.make(

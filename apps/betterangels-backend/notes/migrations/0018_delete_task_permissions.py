@@ -21,11 +21,7 @@ def delete_task_permissions(apps, schema_editor):
     db_alias = schema_editor.connection.alias
 
     PERM_MAP = {perm.split(".")[1]: perm.label for perm in TaskPermissions}
-    for codename, _ in PERM_MAP.items():
-        Permission.objects.using(db_alias).delete(
-            codename=codename,
-            content_type=TaskContentType,
-        )
+    Permission.objects.filter(codename__in=PERM_MAP.keys(), content_type=TaskContentType).delete()
 
 
 class Migration(migrations.Migration):
