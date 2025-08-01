@@ -544,6 +544,15 @@ union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
+input CreateTaskInput {
+  clientProfile: ID
+  description: String
+  note: ID
+  summary: String!
+  team: SelahTeamEnum
+  status: TaskStatusEnum = TO_DO
+}
+
 union CreateTaskPayload = TaskType | OperationInfo
 
 """Date (isoformat)"""
@@ -960,8 +969,8 @@ type Mutation {
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload!
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
-  createTask(data: TaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
-  updateTask(data: TaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
+  createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
+  updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
 }
 
@@ -1641,16 +1650,6 @@ input TaskFilter {
   teams: [SelahTeamEnum!]
 }
 
-input TaskInput {
-  id: ID
-  clientProfile: ID
-  description: String
-  note: ID
-  summary: String!
-  team: SelahTeamEnum
-  status: TaskStatusEnum = TO_DO
-}
-
 input TaskOrder {
   id: Ordering
   updatedAt: Ordering
@@ -1797,6 +1796,14 @@ input UpdateServiceRequestInput {
 union UpdateServiceRequestPayload = ServiceRequestType | OperationInfo
 
 union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
+
+input UpdateTaskInput {
+  id: ID!
+  description: String
+  summary: String!
+  team: SelahTeamEnum
+  status: TaskStatusEnum = TO_DO
+}
 
 union UpdateTaskPayload = TaskType | OperationInfo
 

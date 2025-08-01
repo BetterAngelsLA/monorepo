@@ -546,6 +546,15 @@ export type CreateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
+export type CreateTaskInput = {
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  note?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<TaskStatusEnum>;
+  summary: Scalars['String']['input'];
+  team?: InputMaybe<SelahTeamEnum>;
+};
+
 export type CreateTaskPayload = OperationInfo | TaskType;
 
 export type DeleteClientContactPayload = ClientContactType | OperationInfo;
@@ -1039,7 +1048,7 @@ export type MutationCreateSocialMediaProfileArgs = {
 
 
 export type MutationCreateTaskArgs = {
-  data: TaskInput;
+  data: CreateTaskInput;
 };
 
 
@@ -1179,7 +1188,7 @@ export type MutationUpdateSocialMediaProfileArgs = {
 
 
 export type MutationUpdateTaskArgs = {
-  data: TaskInput;
+  data: UpdateTaskInput;
 };
 
 export type NoteDataImportType = {
@@ -2017,16 +2026,6 @@ export type TaskFilter = {
   teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
-export type TaskInput = {
-  clientProfile?: InputMaybe<Scalars['ID']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  id?: InputMaybe<Scalars['ID']['input']>;
-  note?: InputMaybe<Scalars['ID']['input']>;
-  status?: InputMaybe<TaskStatusEnum>;
-  summary: Scalars['String']['input'];
-  team?: InputMaybe<SelahTeamEnum>;
-};
-
 export type TaskOrder = {
   id?: InputMaybe<Ordering>;
   status?: InputMaybe<Ordering>;
@@ -2170,6 +2169,14 @@ export type UpdateServiceRequestInput = {
 export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 
 export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
+
+export type UpdateTaskInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  status?: InputMaybe<TaskStatusEnum>;
+  summary: Scalars['String']['input'];
+  team?: InputMaybe<SelahTeamEnum>;
+};
 
 export type UpdateTaskPayload = OperationInfo | TaskType;
 

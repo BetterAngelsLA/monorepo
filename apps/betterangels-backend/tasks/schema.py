@@ -21,7 +21,7 @@ from strawberry_django.utils.query import filter_for_user
 from tasks.models import Task
 from tasks.permissions import TaskPermissions
 
-from .types import TaskInput, TaskType
+from .types import CreateTaskInput, TaskType, UpdateTaskInput
 
 
 @strawberry.type
@@ -36,7 +36,7 @@ class Query:
 @strawberry.type
 class Mutation:
     @strawberry_django.mutation(extensions=[HasPerm(TaskPermissions.ADD)])
-    def create_task(self, info: Info, data: TaskInput) -> TaskType:
+    def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         with transaction.atomic():
             current_user = get_current_user(info)
             permission_group = get_user_permission_group(current_user)
@@ -62,7 +62,7 @@ class Mutation:
             return cast(TaskType, task)
 
     @strawberry_django.mutation(extensions=[PermissionedQuerySet(model=Task, perms=[TaskPermissions.CHANGE])])
-    def update_task(self, info: Info, data: TaskInput) -> TaskType:
+    def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         qs: QuerySet[Task] = info.context.qs
 
         with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
