@@ -83,30 +83,29 @@ class TaskFilter:
 class TaskOrder:
     id: auto
     updated_at: auto
-    status: auto
 
-    # @strawberry_django.order_field
-    # def status(self, value: strawberry_django.Ordering, prefix: str) -> list:
-    #     ordering_map = {
-    #         TaskStatusEnum.TO_DO.value: 0,
-    #         TaskStatusEnum.IN_PROGRESS.value: 1,
-    #         TaskStatusEnum.COMPLETED.value: 2,
-    #     }
+    @strawberry_django.order_field
+    def status(self, value: strawberry_django.Ordering, prefix: str) -> list:
+        ordering_map = {
+            TaskStatusEnum.TO_DO.value: 0,
+            TaskStatusEnum.IN_PROGRESS.value: 1,
+            TaskStatusEnum.COMPLETED.value: 2,
+        }
 
-    #     if value in [
-    #         strawberry_django.Ordering.DESC,
-    #         strawberry_django.Ordering.DESC_NULLS_FIRST,
-    #         strawberry_django.Ordering.DESC_NULLS_LAST,
-    #     ]:
-    #         ordering_map = {k: 2 - v for k, v in ordering_map.items()}
+        if value in [
+            strawberry_django.Ordering.DESC,
+            strawberry_django.Ordering.DESC_NULLS_FIRST,
+            strawberry_django.Ordering.DESC_NULLS_LAST,
+        ]:
+            ordering_map = {k: 2 - v for k, v in ordering_map.items()}
 
-    #     return [
-    #         Case(
-    #             *[When(**{"status": status}, then=Value(order)) for status, order in ordering_map.items()],
-    #             default=Value(99),
-    #             output_field=IntegerField(),
-    #         )
-    #     ]
+        return [
+            Case(
+                *[When(**{"status": status}, then=Value(order)) for status, order in ordering_map.items()],
+                default=Value(99),
+                output_field=IntegerField(),
+            )
+        ]
 
 
 @strawberry_django.type(models.Task, pagination=True, filters=TaskFilter, order=TaskOrder)  # type: ignore[literal-required]

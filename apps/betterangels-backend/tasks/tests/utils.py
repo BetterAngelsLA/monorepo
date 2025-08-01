@@ -21,8 +21,8 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
 
     def _tasks_query(self, fields: str) -> str:
         return f"""
-            query ($filters: TaskFilter) {{
-                tasks (filters: $filters) {{
+            query ($filters: TaskFilter, $order: TaskOrder) {{
+                tasks (filters: $filters, order: $order) {{
                     totalCount
                     results {{
                         {fields}
@@ -41,7 +41,7 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
         assert operation in ["create", "update"], "Invalid operation specified."
 
         mutation: str = f"""
-            mutation {operation.capitalize()}Task($data: TaskInput!) {{ # noqa: B950
+            mutation {operation.capitalize()}Task($data: {operation.capitalize()}TaskInput!) {{ # noqa: B950
                 {operation}Task(data: $data) {{
                     ... on OperationInfo {{
                         messages {{
