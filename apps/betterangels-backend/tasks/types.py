@@ -48,7 +48,9 @@ class TaskFilter:
         for term in search_terms:
             q_search = Q(
                 Q(client_profile__first_name__icontains=term)
+                | Q(client_profile__middle_name__icontains=term)
                 | Q(client_profile__last_name__icontains=term)
+                | Q(client_profile__nickname__icontains=term)
                 | Q(summary__icontains=term)
                 | Q(description__icontains=term)
             )
