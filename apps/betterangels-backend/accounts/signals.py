@@ -4,6 +4,7 @@ from typing import Any
 from accounts.groups import GroupTemplateNames
 from accounts.utils import (
     add_default_org_permissions_to_user,
+    create_default_org_permission_groups,
     remove_org_group_permissions_from_user,
     remove_organization_permission_group,
 )
@@ -13,7 +14,7 @@ from django.db.models.signals import post_delete, post_migrate, post_save, pre_d
 from django.dispatch import receiver
 from organizations.models import Organization, OrganizationUser
 
-from .models import PermissionGroupTemplate, User
+from .models import PermissionGroup, PermissionGroupTemplate, User
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +59,25 @@ def handle_organization_user_added(sender: Any, instance: OrganizationUser, crea
     if created:
         add_default_org_permissions_to_user(user, organization)
     logger.info(f"User {user.username} was added to organization {organization.name}.")
+
+
+@receiver(post_save, sender=PermissionGroup)
+def handle_caseworker_perm_group_created(sender: Any, instance: PermissionGroup, created: bool, **kwargs: Any) -> None:
+    """Creates default Group and PermissionGroup for a Caseworker organization.
+
+    A "Caseworker organization" is any org that has an associated
+    PermissionGroup based on the Caseworker PermissionGroupTemplate.
+
+    Caseworker organizations need "Admin" and "Superuser" Groups. This facilitates the creation of those Groups.
+
+    NOTE: This is a temporary solution until organization tags are implemented.
+          Currently, the only way to distinguish between a cw and non-cw org is
+          via the presence of an associated PermissionGroup.
+    """
+    organization: Organization = instance.organization
+
+    if created and instance.template == PermissionGroupTemplate.objects.get(name=GroupTemplateNames.CASEWORKER):
+        create_default_org_permission_groups(organization)
 
 
 @receiver(post_delete, sender=OrganizationUser)
