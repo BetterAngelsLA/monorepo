@@ -66,8 +66,8 @@ export default function LocationComponent(props: ILocationProps) {
     longitude: point ? point[0] : -118.251601,
     address: address
       ? `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
-      : 'L.A. County',
-    name: address && address.street ? address.street : 'L.A. County',
+      : '636 S Spring St, Los Angeles, CA 90014, USA',
+    name: address && address.street ? address.street : '636 S Spring St',
   });
 
   const isLocation = expanded === 'Location';
