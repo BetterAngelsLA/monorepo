@@ -12,7 +12,6 @@ from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
     ServiceRequestGraphQLUtilMixin,
-    TaskGraphQLBaseTestCase,
     TaskGraphQLUtilsMixin,
 )
 from unittest_parametrize import parametrize

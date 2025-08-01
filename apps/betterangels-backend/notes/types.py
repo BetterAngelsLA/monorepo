@@ -64,15 +64,6 @@ class UpdateServiceRequestInput:
     due_by: auto
 
 
-# @strawberry_django.input(models.Task)
-# class CreateNoteTaskInput:
-#     title: auto
-#     status: auto
-#     due_by: auto
-#     note_id: ID
-#     task_type: TaskTypeEnum
-
-
 @strawberry_django.type(models.Mood)
 class MoodType:
     id: ID

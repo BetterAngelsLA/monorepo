@@ -88,19 +88,16 @@ class Note(BaseModel):  # type: ignore[django-manager-missing]
         "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_notes"
     )
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
-    # This is the date & time displayed on the note. We don't want to use created_at
-    # on the FE because the Note may not be created during the client interaction.
     interacted_at = models.DateTimeField(default=timezone.now, db_index=True)
     is_submitted = models.BooleanField(default=False)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     private_details = models.TextField(blank=True)
     provided_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="provided_notes")
     public_details = models.TextField(blank=True)
     purpose = models.CharField(max_length=100, null=True, blank=True)
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
     team = TextChoicesField(SelahTeamEnum, null=True, blank=True)
-
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
     objects = models.Manager()
 

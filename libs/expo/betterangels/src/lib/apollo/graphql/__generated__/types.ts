@@ -2022,7 +2022,7 @@ export type TaskInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
-  summary?: InputMaybe<Scalars['String']['input']>;
+  summary: Scalars['String']['input'];
   team?: InputMaybe<SelahTeamEnum>;
 };
 
@@ -2047,7 +2047,7 @@ export type TaskType = {
   id: Scalars['ID']['output'];
   organization?: Maybe<OrganizationType>;
   status?: Maybe<TaskStatusEnum>;
-  summary: Scalars['String']['output'];
+  summary?: Maybe<Scalars['String']['output']>;
   team?: Maybe<SelahTeamEnum>;
   updatedAt: Scalars['DateTime']['output'];
 };

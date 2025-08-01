@@ -107,26 +107,25 @@ class TaskOrder:
         ]
 
 
-@strawberry_django.type(models.Task)
-class TaskBaseType:
-    description: auto
-    summary: auto
-    team: Optional[SelahTeamEnum]
-
-
 @strawberry_django.type(models.Task, pagination=True, filters=TaskFilter, order=TaskOrder)  # type: ignore[literal-required]
-class TaskType(TaskBaseType):
+class TaskType:
     id: ID
     client_profile: Optional[ClientProfileType]
     created_at: auto
     created_by: UserType
+    description: auto
     organization: Optional[OrganizationType]
     status: Optional[TaskStatusEnum]
+    summary: Optional[str]
+    team: Optional[SelahTeamEnum]
     updated_at: auto
 
 
 @strawberry_django.input(models.Task, partial=True)
-class TaskInput(TaskBaseType):
+class TaskInput:
     id: Optional[ID]
     client_profile: Optional[ID]
+    description: auto
+    summary: str
+    team: Optional[SelahTeamEnum]
     status: Optional[TaskStatusEnum] = TaskStatusEnum.TO_DO

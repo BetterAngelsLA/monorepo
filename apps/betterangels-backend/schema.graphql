@@ -1642,11 +1642,11 @@ input TaskFilter {
 }
 
 input TaskInput {
-  description: String
-  summary: String
-  team: SelahTeamEnum
   id: ID
   clientProfile: ID
+  description: String
+  summary: String!
+  team: SelahTeamEnum
   status: TaskStatusEnum = TO_DO
 }
 
@@ -1663,15 +1663,15 @@ enum TaskStatusEnum {
 }
 
 type TaskType {
-  description: String
-  summary: String!
-  team: SelahTeamEnum
   id: ID!
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
+  description: String
   organization: OrganizationType
   status: TaskStatusEnum
+  summary: String
+  team: SelahTeamEnum
   updatedAt: DateTime!
 }
 
