@@ -27,12 +27,6 @@ def add_default_org_permissions_to_user(user: User, organization: Organization) 
     )
     user.groups.add(org_caseworker_group.group)
 
-    # TODO: This is a hack (another one, yes) until we implement organization tags.
-    # This util should be called by a post_save signal for orgs. The majority of orgs
-    # are shelter orgs rather than actual user/caseworker orgs, so we can't implement a signal until
-    # we can distinguish between a caseworker org and a shelter org.
-    create_default_org_permission_groups(organization)
-
 
 def create_default_org_permission_groups(organization: Organization) -> None:
     default_templates = [
