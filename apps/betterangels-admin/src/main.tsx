@@ -4,6 +4,7 @@ import {
   AuthProvider,
   UserProvider,
 } from '@monorepo/react/betterangels-admin';
+import { DrawerProvider } from '@monorepo/react/components';
 import { createApolloClient } from '@monorepo/react/shared';
 import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
@@ -34,7 +35,9 @@ root.render(
         <BrowserRouter basename={basename}>
           <UserProvider>
             <AuthProvider>
-              <App />
+              <DrawerProvider>
+                <App />
+              </DrawerProvider>
             </AuthProvider>
           </UserProvider>
         </BrowserRouter>

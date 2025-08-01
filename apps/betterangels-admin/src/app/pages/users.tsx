@@ -1,10 +1,10 @@
 import { AddUserFormDrawer } from '@monorepo/react/betterangels-admin';
-import { Button, useAppDrawer } from '@monorepo/react/components';
+import { Button, useDrawer } from '@monorepo/react/components';
 import { PlusIcon } from '@monorepo/react/icons';
 import PageLayout from '../Layout/PageLayout';
 
 export function UsersPage() {
-  const { showDrawer } = useAppDrawer();
+  const { showDrawer } = useDrawer();
 
   function onShowDrawer() {
     showDrawer({

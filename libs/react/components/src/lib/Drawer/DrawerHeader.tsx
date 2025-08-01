@@ -2,16 +2,16 @@ import { PropsWithChildren } from 'react';
 
 import { mergeCss } from '@monorepo/react/components';
 import { CloseIcon } from '@monorepo/react/icons';
-import { useAppDrawer } from './state/useAppDrawer';
+import { useDrawer } from './DrawerProvider/useDrawer';
 
 interface IProps extends PropsWithChildren {
   className?: string;
 }
 
-export function AppDrawerHeader(props: IProps) {
+export function DrawerHeader(props: IProps) {
   const { className, children } = props;
 
-  const { closeDrawer } = useAppDrawer();
+  const { closeDrawer } = useDrawer();
 
   const parentCss = [
     'flex',

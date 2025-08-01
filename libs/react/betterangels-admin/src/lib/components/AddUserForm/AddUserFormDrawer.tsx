@@ -1,8 +1,8 @@
 import {
-  AppDrawer,
+  DrawerHeader,
   mergeCss,
   useAlert,
-  useAppDrawer,
+  useDrawer,
 } from '@monorepo/react/components';
 import { AddUserForm } from './AddUserForm';
 
@@ -13,7 +13,7 @@ type TProps = {
 export function AddUserFormDrawer(props: TProps) {
   const { className } = props;
 
-  const { closeDrawer } = useAppDrawer();
+  const { closeDrawer } = useDrawer();
   const { showAlert } = useAlert();
 
   function handleOnComplete() {
@@ -33,11 +33,11 @@ export function AddUserFormDrawer(props: TProps) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <AppDrawer.Header>
+      <DrawerHeader>
         <div className="text-xl font-semibold text-neutral-20 leading-6">
           Add User
         </div>
-      </AppDrawer.Header>
+      </DrawerHeader>
 
       <AddUserForm onComplete={handleOnComplete} onCancel={handleOnCancel} />
     </div>

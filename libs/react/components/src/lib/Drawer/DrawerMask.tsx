@@ -9,7 +9,7 @@ interface IProps extends PropsWithChildren {
   onClick: (e: MouseEvent<HTMLDivElement>) => void;
 }
 
-export function AppDrawerMask(props: IProps) {
+export function DrawerMask(props: IProps) {
   const { visible, className, onClick, children } = props;
 
   const parentCss = [

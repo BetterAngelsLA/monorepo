@@ -6,7 +6,7 @@ interface IProps extends PropsWithChildren {
   className?: string;
 }
 
-export function AppDrawerFooter(props: IProps) {
+export function DrawerFooter(props: IProps) {
   const { className, children } = props;
 
   const parentCss = [

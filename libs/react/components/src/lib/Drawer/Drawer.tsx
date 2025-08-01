@@ -2,10 +2,10 @@
  *
  * #### Usage ####
  *
- * 1. include <AppDrawer /> in App layout
- * 2. Use `showDrawer` from `useAppDrawer` hook:
+ * 1. include <DrawerProvider /> in App
+ * 2. Use `showDrawer` from `useDrawer` hook:
  *
- *   const { showDrawer } = useAppDrawer();
+ *   const { showDrawer } = useDrawer();
  *
  *   showDrawer({
  *      content: 'Hello drawer',
@@ -13,7 +13,6 @@
  *    });
  * */
 
-import { useAtom } from 'jotai';
 import {
   MouseEvent,
   PropsWithChildren,
@@ -23,29 +22,29 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { mergeCss } from '../../utils';
-import { AppDrawerFooter } from './AppDrawerFooter';
-import { AppDrawerHeader } from './AppDrawerHeader';
-import { AppDrawerMask } from './AppDrawerMask';
+import { DrawerFooter } from './DrawerFooter';
+import { DrawerHeader } from './DrawerHeader';
+import { DrawerMask } from './DrawerMask';
+import { useDrawer } from './DrawerProvider/useDrawer';
 import { CLOSE_ANIMATION_TIMING, DRAWER_ANIMATION } from './constants';
-import { appDrawerAtom } from './state/appDrawerAtom';
 
 export interface IProps extends PropsWithChildren {
   className?: string;
   maskCss?: string;
 }
 
-export function AppDrawer(props: IProps): ReactElement | null {
+export function Drawer(props: IProps): ReactElement | null {
   const { className, maskCss } = props;
 
   const location = useLocation();
-  const [drawer, setDrawer] = useAtom(appDrawerAtom);
+  const { drawer, closeDrawer } = useDrawer();
   const [visible, setVisible] = useState(false);
   const [shouldRender, setShouldRender] = useState(!!drawer);
   const [placement, setPlacement] = useState<'left' | 'right'>('right');
 
   // destroy Drawer if change page
   useEffect((): void => {
-    setDrawer(null);
+    closeDrawer();
   }, [location.pathname]);
 
   useEffect(() => {
@@ -66,7 +65,7 @@ export function AppDrawer(props: IProps): ReactElement | null {
     if (!visible && shouldRender) {
       const timeout = setTimeout(() => {
         setShouldRender(false);
-        setDrawer(null);
+        closeDrawer();
       }, CLOSE_ANIMATION_TIMING);
 
       return () => clearTimeout(timeout);
@@ -79,20 +78,10 @@ export function AppDrawer(props: IProps): ReactElement | null {
     return null;
   }
 
-  function handleClose() {
-    setDrawer((prev) => {
-      if (!prev) {
-        return null;
-      }
-
-      return { ...prev, visible: false };
-    });
-  }
-
   function handleMaskClick(e: MouseEvent<HTMLDivElement>) {
     e.stopPropagation();
 
-    handleClose();
+    closeDrawer();
   }
 
   const { content, header, footer, contentClassName } = drawer!;
@@ -114,21 +103,14 @@ export function AppDrawer(props: IProps): ReactElement | null {
   const contentCss = ['h-full', 'p-6', 'overflow-y-auto', contentClassName];
 
   return (
-    <AppDrawerMask
-      visible={visible}
-      onClick={handleMaskClick}
-      className={maskCss}
-    >
+    <DrawerMask visible={visible} onClick={handleMaskClick} className={maskCss}>
       <div onClick={(e) => e.stopPropagation()} className={mergeCss(parentCss)}>
-        {header && <AppDrawerHeader>{header}</AppDrawerHeader>}
+        {header && <DrawerHeader>{header}</DrawerHeader>}
 
         <div className={mergeCss(contentCss)}>{content}</div>
 
-        {footer && <AppDrawerFooter>{footer}</AppDrawerFooter>}
+        {footer && <DrawerFooter>{footer}</DrawerFooter>}
       </div>
-    </AppDrawerMask>
+    </DrawerMask>
   );
 }
-
-AppDrawer.Header = AppDrawerHeader;
-AppDrawer.Footer = AppDrawerFooter;
