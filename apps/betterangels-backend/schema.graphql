@@ -1652,6 +1652,7 @@ input TaskFilter {
 
 input TaskOrder {
   id: Ordering
+  createdAt: Ordering
   updatedAt: Ordering
   status: Ordering
 }

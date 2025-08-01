@@ -84,6 +84,7 @@ class TaskFilter:
 @strawberry_django.order_type(models.Task, one_of=False)
 class TaskOrder:
     id: auto
+    created_at: auto
     updated_at: auto
 
     @strawberry_django.order_field

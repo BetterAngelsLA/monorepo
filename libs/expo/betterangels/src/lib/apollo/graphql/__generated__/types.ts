@@ -2027,6 +2027,7 @@ export type TaskFilter = {
 };
 
 export type TaskOrder = {
+  createdAt?: InputMaybe<Ordering>;
   id?: InputMaybe<Ordering>;
   status?: InputMaybe<Ordering>;
   updatedAt?: InputMaybe<Ordering>;
