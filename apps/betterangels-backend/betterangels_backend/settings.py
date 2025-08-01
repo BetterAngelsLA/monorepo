@@ -125,6 +125,7 @@ INSTALLED_APPS = [
     "notes",
     "proxy",
     "shelters",
+    "tasks",
 ]
 
 MIDDLEWARE = [

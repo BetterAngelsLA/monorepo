@@ -5,11 +5,24 @@ import django.db.models.deletion
 import django.utils.timezone
 import django_choices_field.fields
 import notes.enums
-from notes.permissions import NotePermissions, TaskPermissions, ServiceRequestPermissions, PrivateDetailsPermissions
+from notes.permissions import NotePermissions, ServiceRequestPermissions, PrivateDetailsPermissions
 import pgtrigger.compiler
+from django.utils.translation import gettext_lazy as _
 import pgtrigger.migrations
 from django.conf import settings
 from django.db import migrations, models
+
+
+class TaskPermissions(models.TextChoices):
+    VIEW = "notes.view_task", _("Can view task")
+    CHANGE = "notes.change_task", _("Can change task")
+    DELETE = "notes.delete_task", _("Can delete task")
+    ADD = "notes.add_task", _("Can add task")
+
+
+class TaskStatusEnum(models.TextChoices):
+    COMPLETED = "completed", _("Completed")
+    TO_DO = "to_do", _("To Do")
 
 
 def create_permissions_if_not_exist(apps, schema_editor):
@@ -456,7 +469,7 @@ class Migration(migrations.Migration):
                     "status",
                     django_choices_field.fields.TextChoicesField(
                         choices=[("completed", "Completed"), ("to_do", "To Do")],
-                        choices_enum=notes.enums.TaskStatusEnum,
+                        choices_enum=TaskStatusEnum,
                         max_length=9,
                     ),
                 ),
@@ -792,7 +805,7 @@ class Migration(migrations.Migration):
                     "status",
                     django_choices_field.fields.TextChoicesField(
                         choices=[("completed", "Completed"), ("to_do", "To Do")],
-                        choices_enum=notes.enums.TaskStatusEnum,
+                        choices_enum=TaskStatusEnum,
                         max_length=9,
                     ),
                 ),
@@ -1011,7 +1024,7 @@ class Migration(migrations.Migration):
                     "status",
                     django_choices_field.fields.TextChoicesField(
                         choices=[("completed", "Completed"), ("to_do", "To Do")],
-                        choices_enum=notes.enums.TaskStatusEnum,
+                        choices_enum=TaskStatusEnum,
                         max_length=9,
                     ),
                 ),

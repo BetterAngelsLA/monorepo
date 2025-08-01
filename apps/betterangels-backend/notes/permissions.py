@@ -20,13 +20,6 @@ class ServiceRequestPermissions(models.TextChoices):
     ADD = "notes.add_servicerequest", _("Can add service request")
 
 
-class TaskPermissions(models.TextChoices):
-    VIEW = "notes.view_task", _("Can view task")
-    CHANGE = "notes.change_task", _("Can change task")
-    DELETE = "notes.delete_task", _("Can delete task")
-    ADD = "notes.add_task", _("Can add task")
-
-
 # Data Import
 class NoteImportRecordPermissions(models.TextChoices):
     VIEW = "notes.view_noteimportrecord", _("Can view note import record")
