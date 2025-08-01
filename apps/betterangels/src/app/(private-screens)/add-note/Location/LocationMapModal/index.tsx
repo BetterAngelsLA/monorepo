@@ -80,7 +80,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const bottomOffset = insets.bottom;
   const router = useRouter();
 
-  // Comment 1: Reset hasUserCleared when modal is closed
   const closeModal = (hasLocation: boolean) => {
     setHasUserCleared(false);
     if (!location?.address && !hasLocation) {
@@ -92,7 +91,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     setExpanded(undefined);
   };
 
-  // Cleanup effect for hasUserCleared
   useEffect(() => {
     return () => {
       setHasUserCleared(false);
@@ -212,7 +210,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     }
   };
 
-  // Comment 2: Optimize getLocation dependencies - remove unnecessary setters
   const getLocation = useCallback(async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
@@ -289,7 +286,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     } catch (err) {
       console.error(err);
     }
-  }, [baseUrl, location, updateNoteLocation, noteId]); // Removed unnecessary setters
+  }, [baseUrl, location, updateNoteLocation, noteId]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
