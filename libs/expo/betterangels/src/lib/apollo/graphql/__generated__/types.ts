@@ -1272,10 +1272,6 @@ export type OffsetPaginationInput = {
   offset?: Scalars['Int']['input'];
 };
 
-export type OneToManyInput = {
-  set?: InputMaybe<Scalars['ID']['input']>;
-};
-
 export type OperationInfo = {
   __typename?: 'OperationInfo';
   /** List of messages returned by the operation. */
@@ -2025,7 +2021,6 @@ export type TaskInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
-  organization?: InputMaybe<OneToManyInput>;
   status?: InputMaybe<TaskStatusEnum>;
   summary?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;

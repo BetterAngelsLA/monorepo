@@ -1,6 +1,5 @@
 from typing import Optional
 
-from model_bakery import baker
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLBaseTestCase
 from unittest_parametrize import parametrize

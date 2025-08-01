@@ -1,0 +1,106 @@
+from unittest.mock import ANY
+
+import time_machine
+from clients.models import ClientProfile
+from common.enums import SelahTeamEnum
+from django.test import ignore_warnings
+from model_bakery import baker
+from tasks.enums import TaskStatusEnum
+from tasks.models import Task
+from tasks.tests.utils import TaskGraphQLBaseTestCase
+
+
+@ignore_warnings(category=UserWarning)
+class TaskMutationTestCase(TaskGraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self._handle_user_login("org_1_case_manager_1")
+        self.org = self.org_1_case_manager_1.organizations_organization.first()
+
+    @time_machine.travel("07-31-2025 10:11:12", tick=False)
+    def test_create_task_mutation(self) -> None:
+        client_profile = baker.make(ClientProfile)
+        assert self.org
+
+        expected_query_count = 28
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            variables = {
+                "description": "task description",
+                "summary": "task summary",
+                "team": SelahTeamEnum.WDI_ON_SITE.name,
+                "clientProfile": str(client_profile.pk),
+                "status": TaskStatusEnum.TO_DO.name,
+            }
+
+            response = self._create_task_fixture(variables)
+
+        created_task = response["data"]["createTask"]
+        expected_task = {
+            **variables,
+            "id": ANY,
+            "clientProfile": {
+                "id": str(client_profile.pk),
+                "firstName": client_profile.first_name,
+                "lastName": client_profile.last_name,
+            },
+            "createdAt": "2025-07-31T10:11:12+00:00",
+            "createdBy": {
+                "id": str(self.org_1_case_manager_1.pk),
+                "firstName": self.org_1_case_manager_1.first_name,
+                "lastName": self.org_1_case_manager_1.last_name,
+            },
+            "organization": {
+                "id": str(self.org.pk),
+                "name": self.org.name,
+            },
+            "updatedAt": "2025-07-31T10:11:12+00:00",
+        }
+        self.assertEqual(created_task, expected_task)
+        self.assertTrue(Task.objects.filter(id=created_task["id"]).exists())
+
+    @time_machine.travel("07-31-2025 10:11:12", tick=False)
+    def test_update_task_mutation(self) -> None:
+        task_id = self._create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
+        assert self.org
+
+        variables = {
+            "id": task_id,
+            "description": "updated task description",
+            "summary": "updated task summary",
+            "team": SelahTeamEnum.WDI_ON_SITE.name,
+            "status": TaskStatusEnum.TO_DO.name,
+        }
+
+        expected_query_count = 16
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._update_task_fixture(variables)
+
+        updated_task = response["data"]["updateTask"]
+        expected_task = {
+            **variables,
+            "id": ANY,
+            "clientProfile": None,
+            "createdAt": "2025-07-31T10:11:12+00:00",
+            "createdBy": {
+                "id": str(self.org_1_case_manager_1.pk),
+                "firstName": self.org_1_case_manager_1.first_name,
+                "lastName": self.org_1_case_manager_1.last_name,
+            },
+            "organization": {
+                "id": str(self.org.pk),
+                "name": self.org.name,
+            },
+            "updatedAt": "2025-07-31T10:11:12+00:00",
+        }
+        self.assertEqual(updated_task, expected_task)
+
+    def test_delete_task_mutation(self) -> None:
+        task_id = self._create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
+
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._delete_task_fixture(task_id)
+
+        self.assertIsNotNone(response["data"]["deleteTask"])
+        with self.assertRaises(Task.DoesNotExist):
+            Task.objects.get(id=task_id)

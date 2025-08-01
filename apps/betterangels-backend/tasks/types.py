@@ -129,5 +129,4 @@ class TaskType(TaskBaseType):
 class TaskInput(TaskBaseType):
     id: Optional[ID]
     client_profile: Optional[ID]
-    organization: Optional[OrganizationType]
     status: Optional[TaskStatusEnum] = TaskStatusEnum.TO_DO
