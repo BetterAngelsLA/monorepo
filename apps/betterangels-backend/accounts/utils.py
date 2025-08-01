@@ -3,6 +3,7 @@ from typing import Union
 
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
+from django.apps.registry import Apps
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
@@ -25,6 +26,12 @@ def add_default_org_permissions_to_user(user: User, organization: Organization) 
         organization=organization, template=caseworker_permission_group
     )
     user.groups.add(org_caseworker_group.group)
+
+    # TODO: This is a hack (another one, yes) until we implement organization tags.
+    # This util should be called by a post_save signal for orgs. The majority of orgs
+    # are shelter orgs rather than actual user/caseworker orgs, so we can't implement a signal until
+    # we can distinguish between a caseworker org and a shelter org.
+    create_default_org_permission_groups(organization)
 
 
 def create_default_org_permission_groups(organization: Organization) -> None:
@@ -127,3 +134,41 @@ class OrgPermissionManager:
         """Remove both admin and superuser perms."""
         user.groups.remove(self._org_admin_group.group)
         user.groups.remove(self._org_superuser_group.group)
+
+
+# migration utils
+def create_missing_groups_for_org(
+    apps: Apps,
+    current_perm_group_templatess: list[GroupTemplateNames],
+    new_perm_group_templates: list[GroupTemplateNames],
+) -> None:
+    """Creates Groups and PermissionGroups for organizations.
+
+    Use when creating new permission group templates.
+
+    Args:
+      apps: django app registry (django.apps)
+      current_perm_group_templates: List of PermissionGroupTemplates. Organizations belonging to
+        any matching permission group will be updated.
+      new_perm_group_templates: List of PermissionGroupTemplates. A Group and PermissionGroup will
+        be created for all provided templates.
+    """
+    Organization = apps.get_model("organizations", "Organization")
+    Group = apps.get_model("auth", "Group")
+    PermissionGroup = apps.get_model("accounts", "PermissionGroup")
+    PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
+
+    for template in new_perm_group_templates:
+        perm_group_template = PermissionGroupTemplate.objects.get(name=template)
+        # `permissions.set(template_perms)` doesn't work in migrations, so we pass permission ids
+        perm_ids = perm_group_template.permissions.values_list("id", flat=True)
+
+        orgs = Organization.objects.filter(permission_groups__template__name__in=current_perm_group_templatess)
+
+        for org in orgs:
+            group_name = f"{org.name}_{perm_group_template.name}"
+            group, _ = Group.objects.get_or_create(name=group_name)
+            group.permissions.set(perm_ids)
+            PermissionGroup.objects.get_or_create(
+                organization=org, template=perm_group_template, group=group, name=template
+            )
