@@ -1645,6 +1645,7 @@ input TaskInput {
   id: ID
   clientProfile: ID
   description: String
+  note: ID
   summary: String!
   team: SelahTeamEnum
   status: TaskStatusEnum = TO_DO
@@ -1668,6 +1669,7 @@ type TaskType {
   createdAt: DateTime!
   createdBy: UserType!
   description: String
+  note: NoteType
   organization: OrganizationType
   status: TaskStatusEnum
   summary: String

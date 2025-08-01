@@ -74,26 +74,25 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def delete_task(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
-        """
-        NOTE: this function will need to change once Tasks are able to be associated with zero or more than one Note
-        """
-        user = get_current_user(info)
+        current_user = get_current_user(info)
 
         try:
             task = filter_for_user(
                 Task.objects.all(),
-                user,
+                current_user,
                 [TaskPermissions.DELETE],
             ).get(id=data.id)
-
         except Task.DoesNotExist:
-            raise PermissionError("You do not have permission to modify this task.")
+            raise PermissionError("You do not have permission to delete this task.")
 
         task_id = task.id
-        task.delete()
 
-        # note_id = task.get_note_id()
-        # with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
-        #     task.delete()
+        if note := task.note:
+            with pghistory.context(note_id=str(note.pk), timestamp=timezone.now(), label=info.field_name):
+                task.delete()
+
+            return DeletedObjectType(id=task_id)
+
+        task.delete()
 
         return DeletedObjectType(id=task_id)
