@@ -60,3 +60,23 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
             }}
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+    def _delete_task_fixture(self, task_id: int) -> Dict[str, Any]:
+        mutation: str = """
+            mutation ($id: ID!) {
+                deleteTask(data: { id: $id }) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on DeletedObjectType {
+                        id
+                    }
+                }
+            }
+        """
+
+        return self.execute_graphql(mutation, {"id": task_id})

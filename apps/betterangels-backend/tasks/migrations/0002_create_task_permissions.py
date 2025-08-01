@@ -32,6 +32,7 @@ def update_caseworker_permission_template(apps, schema_editor):
         perm.split(".")[1]
         for perm in [
             "tasks.add_task",
+            "tasks.view_task",
         ]
     ]
 

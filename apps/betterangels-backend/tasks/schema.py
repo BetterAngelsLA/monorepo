@@ -53,7 +53,6 @@ class Mutation:
             )
 
             permissions = [
-                TaskPermissions.VIEW,
                 TaskPermissions.CHANGE,
                 TaskPermissions.DELETE,
             ]
@@ -91,9 +90,10 @@ class Mutation:
             raise PermissionError("You do not have permission to modify this task.")
 
         task_id = task.id
-        note_id = task.get_note_id()
+        task.delete()
 
-        with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
-            task.delete()
+        # note_id = task.get_note_id()
+        # with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
+        #     task.delete()
 
         return DeletedObjectType(id=task_id)
