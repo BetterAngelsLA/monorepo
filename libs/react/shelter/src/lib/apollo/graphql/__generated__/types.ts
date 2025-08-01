@@ -2022,16 +2022,13 @@ export type TaskFilter = {
 };
 
 export type TaskInput = {
-  clientProfile: Scalars['ID']['input'];
-  createdAt?: InputMaybe<Scalars['DateTime']['input']>;
-  createdBy?: InputMaybe<OneToManyInput>;
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   id?: InputMaybe<Scalars['ID']['input']>;
   organization?: InputMaybe<OneToManyInput>;
   status?: InputMaybe<TaskStatusEnum>;
   summary?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
-  updatedAt?: InputMaybe<Scalars['DateTime']['input']>;
 };
 
 export type TaskOrder = {

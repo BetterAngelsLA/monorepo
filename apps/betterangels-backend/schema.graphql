@@ -1647,15 +1647,12 @@ input TaskFilter {
 
 input TaskInput {
   description: String
-  status: TaskStatusEnum
   summary: String
   team: SelahTeamEnum
   id: ID
-  clientProfile: ID!
-  createdAt: DateTime
-  createdBy: OneToManyInput
+  clientProfile: ID
   organization: OneToManyInput
-  updatedAt: DateTime
+  status: TaskStatusEnum = TO_DO
 }
 
 input TaskOrder {
@@ -1672,7 +1669,6 @@ enum TaskStatusEnum {
 
 type TaskType {
   description: String
-  status: TaskStatusEnum
   summary: String!
   team: SelahTeamEnum
   id: ID!
@@ -1680,6 +1676,7 @@ type TaskType {
   createdAt: DateTime!
   createdBy: UserType!
   organization: OrganizationType
+  status: TaskStatusEnum
   updatedAt: DateTime!
 }
 
