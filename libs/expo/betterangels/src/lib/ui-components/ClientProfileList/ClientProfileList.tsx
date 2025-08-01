@@ -145,10 +145,7 @@ export function ClientProfileList(props: TProps) {
         renderItem={renderItemFn}
         onEndReached={loadMoreClients}
         onEndReachedThreshold={0.05}
-        // ItemSeparatorComponent renders only between items in a batch
         ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
-        // set extraData to force re-render when data is appended, else
-        // newly loaded batch won't be separated by ItemSeparatorComponent
         extraData={clients.length}
         ListEmptyComponent={<ListEmptyState />}
         ListFooterComponent={renderFooter}
