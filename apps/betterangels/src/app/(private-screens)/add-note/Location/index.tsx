@@ -10,6 +10,7 @@ import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
 import { RefObject, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import LocationMapModal from './LocationMapModal';
+import { DEFAULT_LOCATION } from './constants';
 
 interface ILocationProps {
   scrollRef: RefObject<ScrollView | null>;
@@ -62,12 +63,12 @@ export default function LocationComponent(props: ILocationProps) {
     setErrors,
   } = props;
   const [location, setLocation] = useState<TLocation>({
-    latitude: point ? point[1] : 34.04499,
-    longitude: point ? point[0] : -118.251601,
+    latitude: point ? point[1] : DEFAULT_LOCATION.latitude,
+    longitude: point ? point[0] : DEFAULT_LOCATION.longitude,
     address: address
       ? `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
-      : '636 S Spring St, Los Angeles, CA 90014, USA',
-    name: address && address.street ? address.street : '636 S Spring St',
+      : DEFAULT_LOCATION.address,
+    name: address && address.street ? address.street : DEFAULT_LOCATION.name,
   });
 
   const isLocation = expanded === 'Location';
