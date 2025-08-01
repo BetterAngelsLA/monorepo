@@ -2,19 +2,28 @@ from unittest.mock import ANY
 
 from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
+from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
+from notes.models import Note
 from tasks.enums import TaskStatusEnum
-from tasks.tests.utils import TaskGraphQLBaseTestCase
+from tasks.tests.utils import TaskGraphQLUtilsMixin
 
 
-class TaskQueryTestCase(TaskGraphQLBaseTestCase):
+class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def setUp(self) -> None:
         super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self._handle_user_login("org_1_case_manager_1")
+
         self.client_profile = baker.make(ClientProfile)
+        org = self.org_1_case_manager_1.organizations_organization.first()
+        self.note = baker.make(Note, organization=org)
+
         self.task = self._create_task_fixture(
             {
                 "clientProfile": str(self.client_profile.pk),
                 "description": "task description",
+                "note": str(self.note.pk),
                 "status": TaskStatusEnum.TO_DO.name,
                 "summary": "task summary",
                 "team": SelahTeamEnum.WDI_ON_SITE.name,
@@ -27,7 +36,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
         query = f"""
             query ($id: ID!) {{
                 task(pk: $id) {{
-                    {self.task_fields}
+                    {self._task_fields()}
                 }}
             }}
         """
@@ -52,6 +61,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 "lastName": self.org_1_case_manager_1.last_name,
             },
             "description": "task description",
+            "note": {"id": str(self.note.pk)},
             "organization": {
                 "id": str(self.org_1.pk),
                 "name": self.org_1.name,
@@ -77,7 +87,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self._tasks_query(self.task_fields))
+            response = self.execute_graphql(self._tasks_query(self._task_fields()))
 
         expected_task = {
             "id": self.task["id"],
@@ -93,6 +103,7 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
                 "lastName": self.org_1_case_manager_1.last_name,
             },
             "description": "task description",
+            "note": {"id": str(self.note.pk)},
             "organization": {
                 "id": str(self.org_1.pk),
                 "name": self.org_1.name,
@@ -108,16 +119,8 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
 
     def test_tasks_query_authors_filter(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
-        task = self._create_task_fixture(
-            {
-                "clientProfile": str(self.client_profile.pk),
-                "description": "task 2 description",
-                "status": TaskStatusEnum.COMPLETED.name,
-                "summary": "task 2 summary",
-                "team": SelahTeamEnum.WDI_ON_SITE.name,
-            }
-        )["data"]["createTask"]
 
+        task_id = self._create_task_fixture({"summary": "task 2 summary"})["data"]["createTask"]["id"]
         filters = {"authors": [str(self.org_1_case_manager_2.pk)]}
         variables = {"filters": filters}
 
@@ -126,20 +129,12 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             response = self.execute_graphql(self._tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
-        self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task["id"])
+        self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
     def test_tasks_query_organizations_filter(self) -> None:
         self.graphql_client.force_login(self.org_2_case_manager_1)
-        task = self._create_task_fixture(
-            {
-                "clientProfile": str(self.client_profile.pk),
-                "description": "task 2 description",
-                "status": TaskStatusEnum.COMPLETED.name,
-                "summary": "task 2 summary",
-                "team": SelahTeamEnum.WDI_ON_SITE.name,
-            }
-        )["data"]["createTask"]
 
+        task_id = self._create_task_fixture({"summary": "task 2 summary"})["data"]["createTask"]["id"]
         filters = {"organizations": [str(self.org_2.pk)]}
         variables = {"filters": filters}
 
@@ -148,20 +143,11 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             response = self.execute_graphql(self._tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
-        self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task["id"])
+        self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
     def test_tasks_query_search_filter(self) -> None:
-        task = self._create_task_fixture(
-            {
-                "clientProfile": str(self.client_profile.pk),
-                "description": "task 2 description",
-                "status": TaskStatusEnum.COMPLETED.name,
-                "summary": "task 2 summary",
-                "team": SelahTeamEnum.WDI_ON_SITE.name,
-            }
-        )["data"]["createTask"]
-
-        filters = {"search": "2 des"}
+        task_id = self._create_task_fixture({"summary": "task 2 summary"})["data"]["createTask"]["id"]
+        filters = {"search": "2 sum"}
         variables = {"filters": filters}
 
         expected_query_count = 4
@@ -169,18 +155,17 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             response = self.execute_graphql(self._tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
-        self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task["id"])
+        self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
     def test_tasks_query_status_filter(self) -> None:
-        task = self._create_task_fixture(
+        task_id = self._create_task_fixture(
             {
-                "clientProfile": str(self.client_profile.pk),
-                "description": "task 2 description",
                 "status": TaskStatusEnum.COMPLETED.name,
                 "summary": "task 2 summary",
-                "team": SelahTeamEnum.WDI_ON_SITE.name,
             }
-        )["data"]["createTask"]
+        )[
+            "data"
+        ]["createTask"]["id"]
 
         filters = {"status": TaskStatusEnum.COMPLETED.name}
         variables = {"filters": filters}
@@ -190,18 +175,17 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             response = self.execute_graphql(self._tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
-        self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task["id"])
+        self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
     def test_tasks_query_teams_filter(self) -> None:
-        task = self._create_task_fixture(
+        task_id = self._create_task_fixture(
             {
-                "clientProfile": str(self.client_profile.pk),
-                "description": "task 2 description",
-                "status": TaskStatusEnum.COMPLETED.name,
                 "summary": "task 2 summary",
                 "team": SelahTeamEnum.SLCC_ON_SITE.name,
             }
-        )["data"]["createTask"]
+        )[
+            "data"
+        ]["createTask"]["id"]
 
         filters = {"teams": [SelahTeamEnum.SLCC_ON_SITE.name]}
         variables = {"filters": filters}
@@ -211,4 +195,4 @@ class TaskQueryTestCase(TaskGraphQLBaseTestCase):
             response = self.execute_graphql(self._tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
-        self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task["id"])
+        self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)

@@ -1,26 +1,23 @@
 from typing import Any, Dict
 
-from common.tests.utils import GraphQLBaseTestCase
+from test_utils.mixins import HasGraphQLProtocol
 
 
-class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
-    def setUp(self) -> None:
-        super().setUp()
-
-        self.task_fields = """
+class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
+    def _task_fields(self) -> str:
+        return """
             id
             clientProfile { id firstName lastName }
             createdAt
             createdBy { id firstName lastName }
             description
+            note { id }
             organization { id name }
             status
             summary
             team
             updatedAt
         """
-
-        self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def _tasks_query(self, fields: str) -> str:
         return f"""
@@ -54,7 +51,7 @@ class TaskGraphQLBaseTestCase(GraphQLBaseTestCase):
                         }}
                     }}
                     ... on TaskType {{
-                        {self.task_fields}
+                        {self._task_fields()}
                     }}
                 }}
             }}

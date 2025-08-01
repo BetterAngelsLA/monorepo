@@ -3,35 +3,40 @@ from unittest.mock import ANY
 import time_machine
 from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
+from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
 from model_bakery import baker
+from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task
-from tasks.tests.utils import TaskGraphQLBaseTestCase
+from tasks.tests.utils import TaskGraphQLUtilsMixin
 
 
 @ignore_warnings(category=UserWarning)
-class TaskMutationTestCase(TaskGraphQLBaseTestCase):
+class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def setUp(self) -> None:
         super().setUp()
-        self._handle_user_login("org_1_case_manager_1")
+        self.graphql_client.force_login(self.org_1_case_manager_1)
         self.org = self.org_1_case_manager_1.organizations_organization.first()
+        self.note = baker.make(Note, organization=self.org)
 
     @time_machine.travel("07-31-2025 10:11:12", tick=False)
     def test_create_task_mutation(self) -> None:
         client_profile = baker.make(ClientProfile)
         assert self.org
 
-        expected_query_count = 28
+        expected_query_count = 31
         with self.assertNumQueriesWithoutCache(expected_query_count):
             variables = {
+                "clientProfile": str(client_profile.pk),
                 "description": "task description",
+                "note": str(self.note.pk),
+                "status": TaskStatusEnum.TO_DO.name,
                 "summary": "task summary",
                 "team": SelahTeamEnum.WDI_ON_SITE.name,
-                "clientProfile": str(client_profile.pk),
-                "status": TaskStatusEnum.TO_DO.name,
             }
 
+            self.graphql_client.force_login(self.org_1_case_manager_1)
             response = self._create_task_fixture(variables)
 
         created_task = response["data"]["createTask"]
@@ -49,6 +54,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
+            "note": {"id": str(self.note.pk)},
             "organization": {
                 "id": str(self.org.pk),
                 "name": self.org.name,
@@ -66,9 +72,9 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
         variables = {
             "id": task_id,
             "description": "updated task description",
+            "status": TaskStatusEnum.TO_DO.name,
             "summary": "updated task summary",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
-            "status": TaskStatusEnum.TO_DO.name,
         }
 
         expected_query_count = 16
@@ -86,6 +92,7 @@ class TaskMutationTestCase(TaskGraphQLBaseTestCase):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
+            "note": None,
             "organization": {
                 "id": str(self.org.pk),
                 "name": self.org.name,

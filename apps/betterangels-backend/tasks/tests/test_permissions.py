@@ -1,13 +1,15 @@
 from typing import Optional
 
+from common.tests.utils import GraphQLBaseTestCase
 from tasks.models import Task
-from tasks.tests.utils import TaskGraphQLBaseTestCase
+from tasks.tests.utils import TaskGraphQLUtilsMixin
 from unittest_parametrize import parametrize
 
 
-class TaskPermissionTestCase(TaskGraphQLBaseTestCase):
+class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def setUp(self) -> None:
         super().setUp()
+        self.graphql_client.force_login(self.org_1_case_manager_1)
 
         self.task_id = self._create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
 
