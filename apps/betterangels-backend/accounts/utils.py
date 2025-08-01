@@ -139,7 +139,7 @@ class OrgPermissionManager:
 # migration utils
 def create_missing_groups_for_org(
     apps: Apps,
-    current_perm_group_templatess: list[GroupTemplateNames],
+    current_perm_group_templates: list[GroupTemplateNames],
     new_perm_group_templates: list[GroupTemplateNames],
 ) -> None:
     """Creates Groups and PermissionGroups for organizations.
@@ -163,7 +163,7 @@ def create_missing_groups_for_org(
         # `permissions.set(template_perms)` doesn't work in migrations, so we pass permission ids
         perm_ids = perm_group_template.permissions.values_list("id", flat=True)
 
-        orgs = Organization.objects.filter(permission_groups__template__name__in=current_perm_group_templatess)
+        orgs = Organization.objects.filter(permission_groups__template__name__in=current_perm_group_templates)
 
         for org in orgs:
             group_name = f"{org.name}_{perm_group_template.name}"
