@@ -274,6 +274,7 @@ class ShelterType:
     general_services: List[GeneralServiceType]
     health_services: List[HealthServiceType]
     immediate_needs: List[ImmediateNeedType]
+    instagram: auto
     interior_photos: List[ShelterPhotoType]
     location: Optional[ShelterLocationType]
     max_stay: auto

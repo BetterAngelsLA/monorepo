@@ -1551,6 +1551,7 @@ type ShelterType {
   generalServices: [GeneralServiceType!]!
   healthServices: [HealthServiceType!]!
   immediateNeeds: [ImmediateNeedType!]!
+  instagram: String
   interiorPhotos: [ShelterPhotoType!]!
   location: ShelterLocationType
   maxStay: Int

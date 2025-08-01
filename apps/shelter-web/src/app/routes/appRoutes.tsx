@@ -1,6 +1,7 @@
 import { Link, RouteObject } from 'react-router-dom';
 import Gallery from '../pages/gallery/gallery';
 import { Home } from '../pages/home/home';
+import { Policy } from '../pages/Policy';
 import Shelter from '../pages/shelter/shelter';
 
 export const routeChildren: RouteObject[] = [
@@ -15,6 +16,10 @@ export const routeChildren: RouteObject[] = [
   {
     path: '/shelter/:id/gallery',
     element: <Gallery />,
+  },
+  {
+    path: '/privacy-policy',
+    element: <Policy />,
   },
   {
     path: '/page-2',
