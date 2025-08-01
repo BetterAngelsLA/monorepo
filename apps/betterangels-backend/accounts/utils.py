@@ -153,6 +153,7 @@ def create_missing_groups_for_org(
       new_perm_group_templates: List of PermissionGroupTemplates. A Group and PermissionGroup will
         be created for all provided templates.
     """
+
     Organization = apps.get_model("organizations", "Organization")
     Group = apps.get_model("auth", "Group")
     PermissionGroup = apps.get_model("accounts", "PermissionGroup")
@@ -160,7 +161,8 @@ def create_missing_groups_for_org(
 
     for template in new_perm_group_templates:
         perm_group_template = PermissionGroupTemplate.objects.get(name=template)
-        # `permissions.set(template_perms)` doesn't work in migrations, so we pass permission ids
+        # Can't use `permissions.set(perm_group_template.permissions.all())` in a migration,
+        # so we pass permission ids
         perm_ids = perm_group_template.permissions.values_list("id", flat=True)
 
         orgs = Organization.objects.filter(permission_groups__template__name__in=current_perm_group_templates)
