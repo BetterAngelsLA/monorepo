@@ -76,7 +76,7 @@ def handle_caseworker_perm_group_created(sender: Any, instance: PermissionGroup,
     """
     organization: Organization = instance.organization
 
-    if instance.template == PermissionGroupTemplate.objects.get(name=GroupTemplateNames.CASEWORKER):
+    if created and instance.template == PermissionGroupTemplate.objects.get(name=GroupTemplateNames.CASEWORKER):
         create_default_org_permission_groups(organization)
 
 
