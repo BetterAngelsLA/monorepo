@@ -44,14 +44,16 @@ export default function Table<T>({
                 <td
                   key={colIndex}
                   className={`px-8 py-4 whitespace-nowrap ${
-                    colIndex === header.length - 1
-                      ? 'flex items-center justify-between max-w-[265px]'
-                      : ''
+                    colIndex === header.length - 1 ? 'max-w-[265px]' : ''
                   }`}
                 >
-                  {renderCell(row, colIndex)}
-                  {colIndex === header.length - 1 && action && (
-                    <span>{action(row)}</span>
+                  {colIndex === header.length - 1 ? (
+                    <div className="flex items-center justify-between w-full">
+                      {renderCell(row, colIndex)}
+                      {action && <span>{action(row)}</span>}
+                    </div>
+                  ) : (
+                    renderCell(row, colIndex)
                   )}
                 </td>
               ))}
