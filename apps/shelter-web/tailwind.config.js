@@ -34,6 +34,7 @@ module.exports = {
         'success-30': 'var(--color-success-30)',
         'success-90': 'var(--color-success-90)',
         'primary-dark': 'var(--color-primary-dark)',
+        'dark-blue': 'var(--color-dark-blue)',
       },
     },
     keyframes: {
