@@ -45,7 +45,7 @@ export default function Table<T>({
                   key={colIndex}
                   className={`px-8 py-4 whitespace-nowrap ${
                     colIndex === header.length - 1
-                      ? 'flex items-center justify-between max-w-52'
+                      ? 'flex items-center justify-between max-w-[265px]'
                       : ''
                   }`}
                 >

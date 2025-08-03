@@ -23,7 +23,6 @@ export default function Users() {
   const [totalCount, setTotalCount] = useState(0);
 
   const offset = (page - 1) * PAGE_SIZE;
-
   if (!user?.organizations || user.organizations.length === 0) {
     throw new Error('No organization found for the user');
   }
