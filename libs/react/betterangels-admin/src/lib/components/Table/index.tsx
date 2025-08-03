@@ -1,52 +1,96 @@
-import { EllipseIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
 
-type User = {
-  firstName: string;
-  lastName: string;
-  jobRole: string;
-  email: string;
-  lastLogin: string;
+type TableProps<T> = {
+  data: T[];
+  header: string[];
+  renderCell: (row: T, columnIndex: number) => ReactElement | string;
+  action?: (row: T) => ReactElement;
+  page?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 };
 
-type TableProps = {
-  data: User[];
-};
-
-export default function UserTable({ data }: TableProps): ReactElement {
+export default function Table<T>({
+  data,
+  header,
+  renderCell,
+  action,
+  page,
+  totalPages,
+  onPageChange,
+}: TableProps<T>): ReactElement {
   return (
-    <div className="overflow-x-auto rounded-lg border border-neutral-200">
-      <table className="min-w-full text-left text-sm">
+    <div className="overflow-x-auto w-full rounded-lg">
+      <table className="min-w-[800px] w-full text-left text-sm">
         <thead>
-          <tr className="bg-blue-100 text-sm font-medium text-neutral-700">
-            <th className="px-4 py-3">First Name</th>
-            <th className="px-4 py-3">Last Name</th>
-            <th className="px-4 py-3">Job Role</th>
-            <th className="px-4 py-3">Email Address</th>
-            <th className="px-4 py-3">Last Login</th>
-            <th className="px-4 py-3"></th>
+          <tr className="bg-primary-95">
+            {header.map((title) => (
+              <th
+                key={title}
+                className="text-sm py-4 px-8 font-normal whitespace-nowrap"
+              >
+                {title}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
-          {data.map((user, idx) => (
+          {data.map((row, rowIndex) => (
             <tr
-              key={`${user.email}-${idx}`}
-              className="border-b border-neutral-200 hover:bg-neutral-50"
+              key={`${row}-${rowIndex}`}
+              className="border-b border-neutral-90"
             >
-              <td className="px-4 py-3">{user.firstName}</td>
-              <td className="px-4 py-3">{user.lastName}</td>
-              <td className="px-4 py-3">{user.jobRole}</td>
-              <td className="px-4 py-3">{user.email}</td>
-              <td className="px-4 py-3">{user.lastLogin}</td>
-              <td className="px-4 py-3 text-right">
-                <button className="p-2 rounded-lg hover:bg-neutral-100">
-                  <EllipseIcon className="h-5 w-5 text-neutral-500" />
-                </button>
-              </td>
+              {header.map((_, colIndex) => (
+                <td
+                  key={colIndex}
+                  className={`px-8 py-4 whitespace-nowrap ${
+                    colIndex === header.length - 1
+                      ? 'flex items-center justify-between max-w-52'
+                      : ''
+                  }`}
+                >
+                  {renderCell(row, colIndex)}
+                  {colIndex === header.length - 1 && action && (
+                    <span>{action(row)}</span>
+                  )}
+                </td>
+              ))}
             </tr>
           ))}
         </tbody>
       </table>
+
+      {!!totalPages && totalPages > 1 && page && onPageChange && (
+        <div className="flex justify-center mt-4 space-x-1 w-full">
+          <button
+            onClick={() => onPageChange(Math.max(1, page - 1))}
+            disabled={page === 1}
+            className="px-3 py-1 rounded border border-neutral-300 text-sm disabled:opacity-50"
+          >
+            ‹
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <button
+              key={p}
+              onClick={() => onPageChange(p)}
+              className={`px-3 py-1 rounded text-sm border ${
+                page === p
+                  ? 'bg-blue-500 text-white border-blue-500'
+                  : 'border-neutral-300 hover:bg-neutral-100'
+              }`}
+            >
+              {p}
+            </button>
+          ))}
+          <button
+            onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+            disabled={page === totalPages}
+            className="px-3 py-1 rounded border border-neutral-300 text-sm disabled:opacity-50"
+          >
+            ›
+          </button>
+        </div>
+      )}
     </div>
   );
 }

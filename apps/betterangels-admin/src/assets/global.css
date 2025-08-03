@@ -44,6 +44,12 @@ body {
   border-radius: 8px;
 }
 
+.btn-lg {
+  height: 56px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
 .btn:is(:disabled, [disabled], .btn-disabled):not(.btn-link, .btn-ghost) {
   background-color: var(--color-neutral-90);
   box-shadow: none;
