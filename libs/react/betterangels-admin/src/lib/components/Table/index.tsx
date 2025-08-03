@@ -41,14 +41,9 @@ export default function Table<T>({
               className="border-b border-neutral-90"
             >
               {header.map((_, colIndex) => (
-                <td
-                  key={colIndex}
-                  className={`px-8 py-4 whitespace-nowrap ${
-                    colIndex === header.length - 1 ? 'max-w-[265px]' : ''
-                  }`}
-                >
+                <td key={colIndex} className={`px-8 py-4 whitespace-nowrap`}>
                   {colIndex === header.length - 1 ? (
-                    <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center justify-between w-full max-w-[200px]">
                       {renderCell(row, colIndex)}
                       {action && <span>{action(row)}</span>}
                     </div>
