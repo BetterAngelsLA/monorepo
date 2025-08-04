@@ -1,3 +1,4 @@
+import { Navbar } from '@monorepo/react/betterangels-admin';
 import { mergeCss } from '@monorepo/react/components';
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
@@ -10,12 +11,18 @@ type IProps = {
 export function AppLayout(props: IProps): ReactElement {
   const { className = '' } = props;
 
-  const parentCss = ['flex', 'flex-row', className];
+  const parentCss = ['flex', 'flex-row', 'h-screen', className];
 
   return (
     <div className={mergeCss(parentCss)}>
       <AppSidebar />
-      <Outlet />
+      <div className="flex flex-col flex-1">
+        <Navbar />
+
+        <div className="flex-1 bg-neutral-99 overflow-auto">
+          <Outlet />
+        </div>
+      </div>
     </div>
   );
 }
