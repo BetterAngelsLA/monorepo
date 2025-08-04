@@ -3,6 +3,7 @@ from typing import Union
 
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
+from django.apps.registry import Apps
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
 from django.db import transaction
 from django.db.models import Exists, OuterRef, QuerySet
@@ -16,15 +17,27 @@ def remove_organization_permission_group(organization: Organization) -> None:
 
 
 def add_default_org_permissions_to_user(user: User, organization: Organization) -> None:
-    default_permission_group, _ = PermissionGroupTemplate.objects.get_or_create(
+    caseworker_permission_group, _ = PermissionGroupTemplate.objects.get_or_create(
         # TODO: This is a hack for MVP. Not all orgs will default to caseworkers
         # we will want to have a default template selected for orgs on the org model.
         name=GroupTemplateNames.CASEWORKER
     )
-    org_permission_group, _ = PermissionGroup.objects.get_or_create(
-        organization=organization, template=default_permission_group
+    org_caseworker_group, _ = PermissionGroup.objects.get_or_create(
+        organization=organization, template=caseworker_permission_group
     )
-    user.groups.add(org_permission_group.group)
+    user.groups.add(org_caseworker_group.group)
+
+
+def create_default_org_permission_groups(organization: Organization) -> None:
+    default_templates = [
+        GroupTemplateNames.CASEWORKER,
+        GroupTemplateNames.ORG_ADMIN,
+        GroupTemplateNames.ORG_SUPERUSER,
+    ]
+
+    for temp in default_templates:
+        template, _ = PermissionGroupTemplate.objects.get_or_create(name=temp)
+        PermissionGroup.objects.get_or_create(organization=organization, template=template)
 
 
 def remove_org_group_permissions_from_user(user: User, organization: Organization) -> None:
@@ -115,3 +128,43 @@ class OrgPermissionManager:
         """Remove both admin and superuser perms."""
         user.groups.remove(self._org_admin_group.group)
         user.groups.remove(self._org_superuser_group.group)
+
+
+# migration utils
+def create_missing_groups_for_org(
+    apps: Apps,
+    current_perm_group_templates: list[GroupTemplateNames],
+    new_perm_group_templates: list[GroupTemplateNames],
+) -> None:
+    """Creates Groups and PermissionGroups for organizations.
+
+    Use when creating new permission group templates.
+
+    Args:
+      apps: django app registry (django.apps)
+      current_perm_group_templates: List of PermissionGroupTemplates. Organizations belonging to
+        any matching permission group will be updated.
+      new_perm_group_templates: List of PermissionGroupTemplates. A Group and PermissionGroup will
+        be created for all provided templates.
+    """
+
+    Organization = apps.get_model("organizations", "Organization")
+    Group = apps.get_model("auth", "Group")
+    PermissionGroup = apps.get_model("accounts", "PermissionGroup")
+    PermissionGroupTemplate = apps.get_model("accounts", "PermissionGroupTemplate")
+
+    for template in new_perm_group_templates:
+        perm_group_template = PermissionGroupTemplate.objects.get(name=template)
+        # Can't use `permissions.set(perm_group_template.permissions.all())` in a migration,
+        # so we pass permission ids
+        perm_ids = perm_group_template.permissions.values_list("id", flat=True)
+
+        orgs = Organization.objects.filter(permission_groups__template__name__in=current_perm_group_templates)
+
+        for org in orgs:
+            group_name = f"{org.name}_{perm_group_template.name}"
+            group, _ = Group.objects.get_or_create(name=group_name)
+            group.permissions.set(perm_ids)
+            PermissionGroup.objects.get_or_create(
+                organization=org, template=perm_group_template, group=group, name=template
+            )
