@@ -11,6 +11,13 @@ from tasks.enums import TaskStatusEnum
 from . import models
 
 
+def _filter_in(queryset: QuerySet, field: str, value: Optional[list]) -> tuple[QuerySet, Q]:
+    if not value:
+        return queryset, Q()
+
+    return queryset.filter(**{f"{field}__in": value}), Q()
+
+
 @strawberry_django.filter_type(models.Task)
 class TaskFilter:
     client_profile: Optional[ID]
@@ -20,19 +27,25 @@ class TaskFilter:
     def authors(
         self, queryset: QuerySet, info: Info, value: Optional[list[ID]], prefix: str
     ) -> tuple[QuerySet[models.Task], Q]:
-        if not value:
-            return queryset, Q()
-
-        return queryset.filter(created_by__in=value), Q()
+        return _filter_in(queryset, "created_by", value)
 
     @strawberry_django.filter_field
     def organizations(
         self, queryset: QuerySet, info: Info, value: Optional[list[ID]], prefix: str
     ) -> tuple[QuerySet[models.Task], Q]:
-        if not value:
-            return queryset, Q()
+        return _filter_in(queryset, "organization", value)
 
-        return queryset.filter(organization__in=value), Q()
+    @strawberry_django.filter_field
+    def status(
+        self, queryset: QuerySet, info: Info, value: Optional[list[TaskStatusEnum]], prefix: str
+    ) -> tuple[QuerySet[models.Task], Q]:
+        return _filter_in(queryset, "status", value)
+
+    @strawberry_django.filter_field
+    def teams(
+        self, queryset: QuerySet, value: Optional[list[SelahTeamEnum]], prefix: str
+    ) -> tuple[QuerySet[models.Task], Q]:
+        return _filter_in(queryset, "team", value)
 
     @strawberry_django.filter_field
     def search(
@@ -60,24 +73,6 @@ class TaskFilter:
             queryset.filter(query),
             Q(),
         )
-
-    @strawberry_django.filter_field
-    def status(
-        self, queryset: QuerySet, info: Info, value: Optional[list[TaskStatusEnum]], prefix: str
-    ) -> tuple[QuerySet[models.Task], Q]:
-        if not value:
-            return queryset, Q()
-
-        return queryset.filter(status__in=value), Q()
-
-    @strawberry_django.filter_field
-    def teams(
-        self, queryset: QuerySet, value: Optional[list[SelahTeamEnum]], prefix: str
-    ) -> tuple[QuerySet[models.Task], Q]:
-        if not value:
-            return queryset, Q()
-
-        return queryset.filter(team__in=value), Q()
 
 
 @strawberry_django.order_type(models.Task, one_of=False)

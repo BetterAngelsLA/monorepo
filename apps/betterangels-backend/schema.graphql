@@ -1646,9 +1646,9 @@ input TaskFilter {
   DISTINCT: Boolean
   authors: [ID!]
   organizations: [ID!]
-  search: String
   status: [TaskStatusEnum!]
   teams: [SelahTeamEnum!]
+  search: String
 }
 
 input TaskOrder {
