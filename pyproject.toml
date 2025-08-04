@@ -36,22 +36,22 @@ flake8 = "^7.3.0"
 isort = "^6.0.1"
 black = "^25.1.0"
 flake8-bugbear = "^24.12.12"
-django-stubs-ext = "5.2.1"
+django-stubs-ext = "5.2.2"
 djlint = "^1.36.4"
-django-stubs = { extras = ["compatible-mypy"], version = "5.2.1" }
+django-stubs = { extras = ["compatible-mypy"], version = "5.2.2" }
 celery-types = "^0.23.0"
 vcrpy = "^7.0.0"
 djangorestframework-stubs = { extras = [
     "compatible-mypy",
-], version = "^3.16.0" }
+], version = "^3.16.1" }
 ipython = "^9.4.0"
 pytest-django = "^4.11.1"
-boto3-stubs = { extras = ["essential"], version = "^1.39.3" }
+boto3-stubs = { extras = ["essential"], version = "^1.40.1" }
 model-bakery = "^1.20.5"
 unittest-parametrize = "^1.6.0"
 time-machine = "^2.16.0"
-types-python-dateutil = "^2.9.0.20250516"
-types-gevent = "^25.4.0.20250516"
+types-python-dateutil = "^2.9.0.20250708"
+types-gevent = "^25.4.0.20250801"
 
 
 [tool.pytest.ini_options]
