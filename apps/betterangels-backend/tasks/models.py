@@ -13,7 +13,7 @@ from tasks.enums import TaskStatusEnum
     pghistory.UpdateEvent("task.update"),
     pghistory.DeleteEvent("task.remove"),
 )
-class Task(BaseModel):  # type: ignore[django-manager-missing]
+class Task(BaseModel):
     client_profile = models.ForeignKey(
         "clients.ClientProfile", on_delete=models.SET_NULL, blank=True, null=True, related_name="tasks"
     )

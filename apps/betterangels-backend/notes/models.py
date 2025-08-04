@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     pghistory.UpdateEvent("service_request.update"),
     pghistory.DeleteEvent("service_request.remove"),
 )
-class ServiceRequest(BaseModel):  # type: ignore[django-manager-missing]
+class ServiceRequest(BaseModel):
     service = TextChoicesField(choices_enum=ServiceEnum)
     service_other = models.CharField(max_length=100, null=True, blank=True)
     client_profile = models.ForeignKey(
@@ -82,7 +82,7 @@ class ServiceRequest(BaseModel):  # type: ignore[django-manager-missing]
     pghistory.UpdateEvent("note.update"),
     pghistory.DeleteEvent("note.remove"),
 )
-class Note(BaseModel):  # type: ignore[django-manager-missing]
+class Note(BaseModel):
     attachments = GenericRelation(Attachment)
     client_profile = models.ForeignKey(
         "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_notes"
@@ -129,7 +129,7 @@ class Note(BaseModel):  # type: ignore[django-manager-missing]
     pghistory.DeleteEvent("note_provided_services.remove"),
     obj_field=None,
 )
-class NoteProvidedServices(Note.provided_services.through):  # type: ignore[name-defined]
+class NoteProvidedServices(Note.provided_services.through):
     class Meta:
         proxy = True
 
