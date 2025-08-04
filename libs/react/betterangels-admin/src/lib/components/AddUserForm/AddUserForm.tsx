@@ -3,6 +3,7 @@ import { Button, mergeCss, useAlert } from '@monorepo/react/components';
 import { toError } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
+import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { useUser } from '../../hooks';
 import Input from '../Input';
@@ -14,7 +15,7 @@ import { FormSchema, TFormSchema, defaultValues } from './formSchema';
 
 type TProps = {
   className?: string;
-  onComplete?: () => void;
+  onComplete?: (invited: OrganizationMemberType) => void;
   onCancel?: () => void;
 };
 
@@ -36,8 +37,7 @@ export function AddUserForm(props: TProps) {
 
   const organizationId = user?.organization?.id;
 
-  const [addOrganizationMember, { data, loading, error }] =
-    useAddOrganizationMemberMutation();
+  const [addOrganizationMember] = useAddOrganizationMemberMutation();
 
   const onSubmit: SubmitHandler<TFormSchema> = async (values) => {
     if (!organizationId) {
@@ -66,7 +66,13 @@ export function AddUserForm(props: TProps) {
         throw new Error(errorMessage);
       }
 
-      onComplete?.();
+      const invitedUser = response.data?.addOrganizationMember;
+
+      if (invitedUser?.__typename !== 'OrganizationMemberType') {
+        throw new Error('Sorry, something went wrong.');
+      }
+
+      onComplete?.(invitedUser);
     } catch (err) {
       const error = toError(err);
 

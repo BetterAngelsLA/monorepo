@@ -4,6 +4,7 @@ import {
   useAlert,
   useAppDrawer,
 } from '@monorepo/react/components';
+import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
 import { AddUserForm } from './AddUserForm';
 
 type TProps = {
@@ -16,11 +17,13 @@ export function AddUserFormDrawer(props: TProps) {
   const { closeDrawer } = useAppDrawer();
   const { showAlert } = useAlert();
 
-  function handleOnComplete() {
+  function handleOnComplete(invitedUser: OrganizationMemberType) {
     closeDrawer();
 
+    const { firstName, lastName } = invitedUser;
+
     showAlert({
-      content: 'User has been invited',
+      content: `${firstName} ${lastName} has been invited`,
       type: 'success',
     });
   }
