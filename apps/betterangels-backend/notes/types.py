@@ -23,6 +23,7 @@ from notes.enums import ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.utils.query import filter_for_user
+from tasks.types import TaskType
 
 from . import models
 
@@ -150,19 +151,20 @@ class NoteFilter:
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
 class NoteType:
     id: ID
-    organization: OrganizationType
-    purpose: auto
-    team: Optional[SelahTeamEnum]
-    location: Optional[LocationType]
-    moods: List[MoodType]
-    provided_services: List[ServiceRequestType]
-    requested_services: List[ServiceRequestType]
-    public_details: auto
-    is_submitted: auto
-    client_profile: ClientProfileType | None
+    client_profile: Optional[ClientProfileType]
     created_at: auto
     created_by: UserType
     interacted_at: auto
+    is_submitted: auto
+    location: Optional[LocationType]
+    moods: List[MoodType]
+    organization: OrganizationType
+    provided_services: List[ServiceRequestType]
+    public_details: auto
+    purpose: auto
+    requested_services: List[ServiceRequestType]
+    tasks: list[TaskType]
+    team: Optional[SelahTeamEnum]
 
     @strawberry_django.field(
         annotate={

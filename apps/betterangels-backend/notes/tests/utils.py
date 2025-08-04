@@ -25,6 +25,10 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             privateDetails
             publicDetails
             purpose
+            tasks {
+                id
+                summary
+            }
             team
             location {
                 id

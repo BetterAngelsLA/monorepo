@@ -25,7 +25,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
 
     @time_machine.travel("03-12-2024 10:11:12", tick=False)
     def test_create_note_mutation(self) -> None:
-        expected_query_count = 34
+        expected_query_count = 35
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._create_note_fixture(
                 {
@@ -38,17 +38,18 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         created_note = response["data"]["createNote"]
         expected_note = {
             "id": ANY,
-            "purpose": "New note purpose",
-            "team": None,
-            "location": None,
-            "providedServices": [],
-            "requestedServices": [],
-            "publicDetails": "New public details",
-            "privateDetails": "",
-            "isSubmitted": False,
             "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
+            "isSubmitted": False,
+            "location": None,
+            "privateDetails": "",
+            "providedServices": [],
+            "publicDetails": "New public details",
+            "purpose": "New note purpose",
+            "requestedServices": [],
+            "tasks": [],
+            "team": None,
         }
         self.assertEqual(created_note, expected_note)
 
@@ -65,7 +66,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 22
+        expected_query_count = 23
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
@@ -73,6 +74,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_note = {
             "id": self.note["id"],
             "purpose": "Updated note purpose",
+            "tasks": [],
             "team": SelahTeamEnum.WDI_ON_SITE.name,
             "location": {
                 "id": str(self.location.pk),
@@ -104,24 +106,25 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "interactedAt": "2024-03-12T10:11:12+00:00",
         }
 
-        expected_query_count = 19
+        expected_query_count = 20
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_fixture(variables)
 
         updated_note = response["data"]["updateNote"]
         expected_note = {
             "id": self.note["id"],
-            "purpose": f"Session with {self.client_profile_1.full_name}",
-            "team": None,
-            "location": None,
-            "providedServices": [],
-            "requestedServices": [],
-            "publicDetails": f"{self.client_profile_1.full_name}'s public details",
-            "privateDetails": "",
-            "isSubmitted": True,
             "clientProfile": {"id": str(self.client_profile_1.pk)},
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "interactedAt": "2024-03-12T10:11:12+00:00",
+            "isSubmitted": True,
+            "location": None,
+            "privateDetails": "",
+            "providedServices": [],
+            "publicDetails": f"{self.client_profile_1.full_name}'s public details",
+            "purpose": f"Session with {self.client_profile_1.full_name}",
+            "requestedServices": [],
+            "tasks": [],
+            "team": None,
         }
         self.assertEqual(updated_note, expected_note)
 

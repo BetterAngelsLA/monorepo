@@ -11,18 +11,20 @@ from model_bakery import baker
 from notes.enums import ServiceEnum, ServiceRequestStatusEnum
 from notes.models import Note
 from notes.tests.utils import NoteGraphQLBaseTestCase, ServiceRequestGraphQLBaseTestCase
+from tasks.tests.utils import TaskGraphQLUtilsMixin
 from unittest_parametrize import parametrize
 
 
 @ignore_warnings(category=UserWarning)
 @time_machine.travel("2024-03-11T10:11:12+00:00", tick=False)
-class NoteQueryTestCase(NoteGraphQLBaseTestCase):
+class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
     def test_note_query(self) -> None:
         note_id = self.note["id"]
+        task = self._create_task_fixture({"summary": "task summary", "note": note_id})["data"]["createTask"]
         # Update fields available on the note input
         self._update_note_fixture(
             {
@@ -50,7 +52,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
         """
 
         variables = {"id": note_id}
-        expected_query_count = 5
+        expected_query_count = 6
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
@@ -109,6 +111,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                     "status": ServiceRequestStatusEnum(self.requested_services[1].status).name,
                 },
             ],
+            "tasks": [{"id": str(task["id"]), "summary": "task summary"}],
         }
         note_differences = DeepDiff(expected_note, note, ignore_order=True)
         self.assertFalse(note_differences)
@@ -128,7 +131,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase):
                 }}
             }}
         """
-        expected_query_count = 6
+        expected_query_count = 7
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables={"offset": 0, "limit": 10})
 

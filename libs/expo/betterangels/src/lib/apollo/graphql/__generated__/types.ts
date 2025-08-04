@@ -1247,6 +1247,7 @@ export type NoteType = {
   publicDetails: Scalars['String']['output'];
   purpose?: Maybe<Scalars['String']['output']>;
   requestedServices: Array<ServiceRequestType>;
+  tasks: Array<TaskType>;
   team?: Maybe<SelahTeamEnum>;
   userCanEdit: Scalars['Boolean']['output'];
 };
@@ -1258,6 +1259,13 @@ export type NoteTypeProvidedServicesArgs = {
 
 
 export type NoteTypeRequestedServicesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type NoteTypeTasksArgs = {
+  filters?: InputMaybe<TaskFilter>;
+  order?: InputMaybe<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

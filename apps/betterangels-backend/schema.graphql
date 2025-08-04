@@ -1016,19 +1016,20 @@ input NoteOrder {
 
 type NoteType {
   id: ID!
-  organization: OrganizationType!
-  purpose: String
-  team: SelahTeamEnum
-  location: LocationType
-  moods: [MoodType!]!
-  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
-  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
-  publicDetails: String!
-  isSubmitted: Boolean!
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
   interactedAt: DateTime!
+  isSubmitted: Boolean!
+  location: LocationType
+  moods: [MoodType!]!
+  organization: OrganizationType!
+  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+  publicDetails: String!
+  purpose: String
+  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+  tasks(filters: TaskFilter, order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
+  team: SelahTeamEnum
   userCanEdit: Boolean!
   privateDetails: String
 }
