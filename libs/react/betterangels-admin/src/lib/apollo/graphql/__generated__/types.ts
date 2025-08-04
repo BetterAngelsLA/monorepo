@@ -2046,7 +2046,7 @@ export type TaskType = {
   createdBy: UserType;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  note?: Maybe<NoteType>;
+  note?: Maybe<DjangoModelType>;
   organization?: Maybe<OrganizationType>;
   status?: Maybe<TaskStatusEnum>;
   summary?: Maybe<Scalars['String']['output']>;

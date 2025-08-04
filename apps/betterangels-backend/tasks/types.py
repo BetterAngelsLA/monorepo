@@ -5,7 +5,6 @@ from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
 from django.db.models import Case, IntegerField, Q, QuerySet, Value, When
-from notes.types import NoteType
 from strawberry import ID, Info, auto
 from tasks.enums import TaskStatusEnum
 
@@ -118,7 +117,7 @@ class TaskType:
     created_at: auto
     created_by: UserType
     description: auto
-    note: Optional[NoteType]
+    note: auto
     organization: Optional[OrganizationType]
     status: Optional[TaskStatusEnum]
     summary: Optional[str]

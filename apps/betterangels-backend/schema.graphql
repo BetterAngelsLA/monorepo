@@ -1669,7 +1669,7 @@ type TaskType {
   createdAt: DateTime!
   createdBy: UserType!
   description: String
-  note: NoteType
+  note: DjangoModelType
   organization: OrganizationType
   status: TaskStatusEnum
   summary: String

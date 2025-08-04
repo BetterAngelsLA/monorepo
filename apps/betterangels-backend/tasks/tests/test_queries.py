@@ -64,7 +64,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin, Parametrized
                 "lastName": self.org_1_case_manager_1.last_name,
             },
             "description": "task description",
-            "note": {"id": str(self.note.pk)},
+            "note": {"pk": str(self.note.pk)},
             "organization": {
                 "id": str(self.org_1.pk),
                 "name": self.org_1.name,
@@ -106,7 +106,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin, Parametrized
                 "lastName": self.org_1_case_manager_1.last_name,
             },
             "description": "task description",
-            "note": {"id": str(self.note.pk)},
+            "note": {"pk": str(self.note.pk)},
             "organization": {
                 "id": str(self.org_1.pk),
                 "name": self.org_1.name,
