@@ -1,8 +1,4 @@
-import {
-  FileSearchIcon,
-  PlusIcon,
-  SearchIcon,
-} from '@monorepo/expo/shared/icons';
+import { FileSearchIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -11,7 +7,7 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ServiceEnum,
@@ -41,7 +37,7 @@ export default function ServicesModal(props: IServicesModalProps) {
   const { initialServices, noteId, refetch, type } = props;
 
   const { closeModalScreen } = useModalScreen();
-  const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
+  const { bottom: bottomInset } = useSafeAreaInsets();
   const [services, setServices] = useState<
     Array<{
       id: string | undefined;
@@ -193,21 +189,29 @@ export default function ServicesModal(props: IServicesModalProps) {
     }
   };
 
-  const closeModal = () => {
+  // TODO: this looks broken (maybe)
+  const onModalClose = () => {
     const newInitialServices = initialServices
       .filter((item) => item.service !== ServiceEnum.Other)
       .map((service) => ({ id: service.id, enum: service.service }));
+
     const initialServiceOthers = initialServices
       .filter((item) => item.service === ServiceEnum.Other)
       .map((service) => ({
         id: service.id,
         title: service.serviceOther || null,
       }));
+
     setServiceOthers(initialServiceOthers);
     setServices(newInitialServices);
-
-    closeModalScreen();
   };
+
+  // Run when modal is unmounted
+  useEffect(() => {
+    return () => {
+      onModalClose();
+    };
+  }, []);
 
   useEffect(() => {
     const newInitialServices = initialServices
@@ -235,26 +239,8 @@ export default function ServicesModal(props: IServicesModalProps) {
       style={{
         flex: 1,
         backgroundColor: Colors.WHITE,
-        paddingTop: topInset,
       }}
     >
-      <View
-        style={{
-          alignItems: 'flex-end',
-          paddingHorizontal: 24,
-          marginBottom: 4,
-        }}
-      >
-        <Pressable
-          accessible
-          accessibilityHint="closes the modal"
-          accessibilityRole="button"
-          accessibilityLabel="close"
-          onPress={closeModal}
-        >
-          <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
-        </Pressable>
-      </View>
       <MainScrollContainer keyboardAware>
         <ScrollView
           contentContainerStyle={{
@@ -265,9 +251,6 @@ export default function ServicesModal(props: IServicesModalProps) {
           style={{ paddingHorizontal: Spacings.xs }} // Reduced from Spacings.md
         >
           <View>
-            <TextBold size="lg">
-              {type === 'PROVIDED' ? 'Provided Services' : 'Requested Services'}
-            </TextBold>
             <TextRegular mt="xxs" mb="sm">
               Select the services to your client in this interaction.
             </TextRegular>
