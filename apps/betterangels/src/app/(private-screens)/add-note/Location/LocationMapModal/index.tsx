@@ -20,22 +20,11 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DEFAULT_LOCATION, INITIAL_LOCATION } from '../constants';
 import Directions from './Directions';
 import Header from './Header';
 import Map from './Map';
 import Selected from './Selected';
-
-const INITIAL_LOCATION = {
-  longitude: -118.258815,
-  latitude: 34.048655,
-};
-
-const DEFAULT_LOCATION = {
-  longitude: -122.406417,
-  latitude: 37.785834,
-  name: '200 Geary St',
-  address: '200 Geary St, San Francisco, CA 94102',
-};
 
 type locationLongLat = {
   longitude: number;
@@ -89,10 +78,10 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
-
   const router = useRouter();
 
   const closeModal = (hasLocation: boolean) => {
+    setHasUserCleared(false);
     if (!location?.address && !hasLocation) {
       setError(true);
     } else {
@@ -101,6 +90,12 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     router.back();
     setExpanded(undefined);
   };
+
+  useEffect(() => {
+    return () => {
+      setHasUserCleared(false);
+    };
+  }, []);
 
   const searchPlacesInCalifornia = useCallback(
     async (query: string) => {
@@ -113,7 +108,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         });
 
         setIsSearch(true);
-
         setSuggestions(predictions);
       } catch (err) {
         console.error('Error fetching place data:', err);
@@ -122,6 +116,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     },
     [baseUrl]
   );
+
   const onSuggestionsSelect = async (place: TPlacesPrediction) => {
     try {
       if (chooseDirections) {
@@ -291,21 +286,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
     } catch (err) {
       console.error(err);
     }
-  }, [
-    baseUrl,
-    location,
-    updateNoteLocation,
-    setUserLocation,
-    setLocation,
-    setCurrentLocation,
-    setInitialLocation,
-    setAddress,
-    setMinimizeModal,
-    setSelected,
-    setHasUserCleared,
-    noteId,
-    updateError,
-  ]);
+  }, [baseUrl, location, updateNoteLocation, noteId]);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -346,9 +327,13 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
         latitude: DEFAULT_LOCATION.latitude,
         name: DEFAULT_LOCATION.name,
       });
-      setSelected(true); // <-- This triggers the Selected overlay for the default
+      setSelected(true);
       setHasUserCleared(false);
     }
+
+    setSearchQuery('');
+    setIsSearch(false);
+    setSuggestions([]);
   }, [location]);
 
   const onDelete = () => {
@@ -416,7 +401,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
             mt="sm"
             placeholder="Type location"
             icon={<SearchIcon ml="sm" color={Colors.NEUTRAL_LIGHT} />}
-            value={hasUserCleared ? '' : address?.short || '200 Geary St'}
+            value={hasUserCleared ? '' : (address?.short || DEFAULT_LOCATION.name)}
             onChangeText={onSearchChange}
           />
           <FlatList

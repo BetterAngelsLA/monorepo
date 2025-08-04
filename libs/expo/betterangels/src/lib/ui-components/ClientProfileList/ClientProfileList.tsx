@@ -1,6 +1,7 @@
 import { Spacings } from '@monorepo/expo/shared/static';
+import { FlashList } from '@shopify/flash-list';
 import { ReactElement, useCallback, useEffect, useState } from 'react';
-import { FlatList, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { uniqueBy } from 'remeda';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
@@ -137,16 +138,14 @@ export function ClientProfileList(props: TProps) {
         renderHeaderText={renderHeaderText}
       />
 
-      <FlatList<TClientProfile>
+      <FlashList<TClientProfile>
+        estimatedItemSize={95}
         data={clients}
         keyExtractor={(item) => item.id}
         renderItem={renderItemFn}
         onEndReached={loadMoreClients}
         onEndReachedThreshold={0.05}
-        // ItemSeparatorComponent renders only between items in a batch
         ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
-        // set extraData to force re-render when data is appended, else
-        // newly loaded batch won't be separated by ItemSeparatorComponent
         extraData={clients.length}
         ListEmptyComponent={<ListEmptyState />}
         ListFooterComponent={renderFooter}
@@ -154,11 +153,6 @@ export function ClientProfileList(props: TProps) {
           paddingBottom: 60,
           paddingHorizontal: horizontalPadding,
         }}
-        // FlatList specific props for better performance
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        windowSize={10}
-        initialNumToRender={10}
       />
     </View>
   );
