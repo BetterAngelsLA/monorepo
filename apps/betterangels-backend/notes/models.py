@@ -129,7 +129,7 @@ class Note(BaseModel):
     pghistory.DeleteEvent("note_provided_services.remove"),
     obj_field=None,
 )
-class NoteProvidedServices(Note.provided_services.through):
+class NoteProvidedServices(Note.provided_services.through):  # type: ignore[name-defined]
     class Meta:
         proxy = True
 
