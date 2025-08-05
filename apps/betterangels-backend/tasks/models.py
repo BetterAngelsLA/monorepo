@@ -15,15 +15,19 @@ from tasks.enums import TaskStatusEnum
 )
 class Task(BaseModel):
     client_profile = models.ForeignKey(
-        "clients.ClientProfile", on_delete=models.SET_NULL, blank=True, null=True, related_name="tasks"
+        "clients.ClientProfile", on_delete=models.SET_NULL, blank=True, null=True, related_name="tasks", db_index=True
     )
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="tasks")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="tasks", db_index=True)
     description = models.TextField(blank=True, null=True)
-    note = models.ForeignKey("notes.Note", on_delete=models.SET_NULL, blank=True, null=True, related_name="tasks")
-    organization = models.ForeignKey(Organization, on_delete=models.SET_NULL, null=True, related_name="tasks")
-    status = TextChoicesField(choices_enum=TaskStatusEnum)
+    note = models.ForeignKey(
+        "notes.Note", on_delete=models.SET_NULL, blank=True, null=True, related_name="tasks", db_index=True
+    )
+    organization = models.ForeignKey(
+        Organization, on_delete=models.SET_NULL, null=True, related_name="tasks", db_index=True
+    )
+    status = TextChoicesField(choices_enum=TaskStatusEnum, db_index=True)
     summary = models.CharField(max_length=100)
-    team = TextChoicesField(SelahTeamEnum, null=True, blank=True)
+    team = TextChoicesField(SelahTeamEnum, null=True, blank=True, db_index=True)
 
     def __str__(self) -> str:
         return self.summary
