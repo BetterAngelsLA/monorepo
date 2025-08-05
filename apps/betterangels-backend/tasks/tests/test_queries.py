@@ -6,6 +6,7 @@ from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from notes.models import Note
+from tasks.enums import TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 from unittest_parametrize import ParametrizedTestCase, parametrize
@@ -26,7 +27,6 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin, Parametrized
                 "clientProfile": str(self.client_profile.pk),
                 "description": "task description",
                 "note": str(self.note.pk),
-                "status": Task.Status.TO_DO,
                 "summary": "task summary",
                 "team": SelahTeamEnum.WDI_ON_SITE.name,
             }
@@ -68,7 +68,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin, Parametrized
                 "id": str(self.org_1.pk),
                 "name": self.org_1.name,
             },
-            "status": Task.Status.TO_DO,
+            "status": TaskStatusEnum.TO_DO.name,
             "summary": "task summary",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
             "updatedAt": ANY,
@@ -81,7 +81,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin, Parametrized
             {
                 "clientProfile": str(self.client_profile.pk),
                 "description": "task 2 description",
-                "status": Task.Status.COMPLETED,
+                "status": TaskStatusEnum.COMPLETED.name,
                 "summary": "task 2 summary",
                 "team": SelahTeamEnum.WDI_ON_SITE.name,
             }
@@ -110,7 +110,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin, Parametrized
                 "id": str(self.org_1.pk),
                 "name": self.org_1.name,
             },
-            "status": Task.Status.TO_DO,
+            "status": TaskStatusEnum.TO_DO.name,
             "summary": "task summary",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
             "updatedAt": ANY,
@@ -162,14 +162,14 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin, Parametrized
     def test_tasks_query_status_filter(self) -> None:
         task_id = self._create_task_fixture(
             {
-                "status": Task.Status.COMPLETED,
+                "status": TaskStatusEnum.COMPLETED.name,
+                # "status": TaskStatusEnum.COMPLETED.name,
                 "summary": "task 2 summary",
             }
-        )["data"][
-            "createTask"
-        ]["id"]
+        )["data"]["createTask"]["id"]
 
-        filters = {"status": Task.Status.COMPLETED.name}
+        filters = {"status": TaskStatusEnum.COMPLETED.name}
+        # filters = {"status": TaskStatusEnum.COMPLETED.name.name}
         variables = {"filters": filters}
 
         # expected_query_count = 4
@@ -211,8 +211,10 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin, Parametrized
         Task.objects.all().delete()
 
         self._create_task_fixture({"summary": "task 1"})["data"]["createTask"]
-        self._create_task_fixture({"summary": "task 2", "status": Task.Status.IN_PROGRESS})["data"]["createTask"]
-        self._create_task_fixture({"summary": "task 3", "status": Task.Status.COMPLETED})["data"]["createTask"]
+        self._create_task_fixture({"summary": "task 2", "status": TaskStatusEnum.IN_PROGRESS.name})["data"][
+            "createTask"
+        ]
+        self._create_task_fixture({"summary": "task 3", "status": TaskStatusEnum.COMPLETED.name})["data"]["createTask"]
 
         variables = {"order": {"status": order}}
 
@@ -223,4 +225,5 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin, Parametrized
         self.assertEqual(response["data"]["tasks"]["totalCount"], 3)
 
         ordered_task_ids = [r["summary"] for r in response["data"]["tasks"]["results"]]
+        self.assertEqual(expected_order, ordered_task_ids)
         self.assertEqual(expected_order, ordered_task_ids)

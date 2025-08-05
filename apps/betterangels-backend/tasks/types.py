@@ -8,6 +8,7 @@ from django.db.models import Q, QuerySet
 from strawberry import ID, Info, auto
 
 from . import models
+from .enums import TaskStatusEnum
 
 
 def _filter_in(queryset: QuerySet, field: str, value: Optional[list]) -> tuple[QuerySet, Q]:
@@ -37,7 +38,7 @@ class TaskFilter:
 
     @strawberry_django.filter_field
     def status(
-        self, queryset: QuerySet, info: Info, value: Optional[list[int]], prefix: str
+        self, queryset: QuerySet, info: Info, value: Optional[list[TaskStatusEnum]], prefix: str
     ) -> tuple[QuerySet[models.Task], Q]:
         return _filter_in(queryset, "status", value)
 
@@ -92,7 +93,8 @@ class TaskType:
     description: auto
     note: auto
     organization: Optional[OrganizationType]
-    status: auto
+    status: Optional[TaskStatusEnum]
+    # status: auto
     summary: Optional[str]
     team: Optional[SelahTeamEnum]
     updated_at: auto
@@ -105,7 +107,8 @@ class CreateTaskInput:
     note: Optional[ID]
     summary: str
     team: Optional[SelahTeamEnum]
-    status: auto
+    status: Optional[TaskStatusEnum]
+    # status: auto
 
 
 @strawberry_django.input(models.Task, partial=True)
@@ -114,4 +117,6 @@ class UpdateTaskInput:
     description: auto
     summary: str
     team: Optional[SelahTeamEnum]
-    status: auto
+    status: Optional[TaskStatusEnum]
+    # status: auto
+    # status: auto

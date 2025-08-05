@@ -550,7 +550,7 @@ input CreateTaskInput {
   note: ID
   summary: String!
   team: SelahTeamEnum
-  status: Int
+  status: TaskStatusEnum
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
@@ -1646,7 +1646,7 @@ input TaskFilter {
   DISTINCT: Boolean
   authors: [ID!]
   organizations: [ID!]
-  status: [Int!]
+  status: [TaskStatusEnum!]
   teams: [SelahTeamEnum!]
   search: String
 }
@@ -1658,6 +1658,12 @@ input TaskOrder {
   status: Ordering
 }
 
+enum TaskStatusEnum {
+  TO_DO
+  IN_PROGRESS
+  COMPLETED
+}
+
 type TaskType {
   id: ID!
   clientProfile: ClientProfileType
@@ -1666,7 +1672,7 @@ type TaskType {
   description: String
   note: DjangoModelType
   organization: OrganizationType
-  status: Int!
+  status: TaskStatusEnum
   summary: String
   team: SelahTeamEnum
   updatedAt: DateTime!
@@ -1798,7 +1804,7 @@ input UpdateTaskInput {
   description: String
   summary: String!
   team: SelahTeamEnum
-  status: Int
+  status: TaskStatusEnum
 }
 
 union UpdateTaskPayload = TaskType | OperationInfo

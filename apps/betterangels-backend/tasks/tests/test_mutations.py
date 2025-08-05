@@ -7,6 +7,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
 from model_bakery import baker
 from notes.models import Note
+from tasks.enums import TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 
@@ -30,7 +31,6 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "clientProfile": str(client_profile.pk),
             "description": "task description",
             "note": str(self.note.pk),
-            "status": Task.Status.TO_DO,
             "summary": "task summary",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
         }
@@ -58,6 +58,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "id": str(self.org.pk),
                 "name": self.org.name,
             },
+            "status": TaskStatusEnum.TO_DO.name,
             "updatedAt": "2025-07-31T10:11:12+00:00",
         }
         self.assertEqual(created_task, expected_task)
@@ -71,7 +72,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         variables = {
             "id": task_id,
             "description": "updated task description",
-            "status": Task.Status.TO_DO,
+            "status": TaskStatusEnum.IN_PROGRESS.name,
             "summary": "updated task summary",
             "team": SelahTeamEnum.WDI_ON_SITE.name,
         }
@@ -109,4 +110,5 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         self.assertIsNotNone(response["data"]["deleteTask"])
         with self.assertRaises(Task.DoesNotExist):
+            Task.objects.get(id=task_id)
             Task.objects.get(id=task_id)
