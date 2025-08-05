@@ -29,5 +29,19 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, isLoading, location.pathname, location.state, navigate]);
 
+  if (isLoading) {
+    return null;
+  }
+
+  const access = getRouteAccess(location.pathname);
+
+  if (access === 'safe' && !user) {
+    return null;
+  }
+
+  if (access === 'unsafe' && user) {
+    return null;
+  }
+
   return <>{children}</>;
 }
