@@ -1,5 +1,5 @@
-import clsx from 'clsx';
 import { ButtonHTMLAttributes } from 'react';
+import { mergeCss } from '../../utils';
 
 interface IButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   /**
@@ -31,12 +31,14 @@ export function Button(props: IButtonProps) {
     secondary: 'bg-neutral-99 text-primary-20 active:bg-neutral-98',
   };
 
-  const buttonClass = clsx(
+  const buttonClass = [
     className,
     'font-semibold text-sm focus:outline-none rounded-lg',
     sizeClasses[size],
-    variantClasses[variant]
-  );
+    variantClasses[variant],
+    // 'bg-primary-20',
+    // 'bg-blue-500',
+  ];
 
-  return <button className={buttonClass} {...rest} />;
+  return <button className={mergeCss(buttonClass)} {...rest} />;
 }
