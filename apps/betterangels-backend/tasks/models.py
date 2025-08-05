@@ -12,7 +12,12 @@ from organizations.models import Organization
     pghistory.UpdateEvent("task.update"),
     pghistory.DeleteEvent("task.remove"),
 )
-class Task(BaseModel):
+class Task(BaseModel):  # type: ignore[django-manager-missing]
+    class Status(models.IntegerChoices):
+        TO_DO = 0, "To Do"
+        IN_PROGRESS = 1, "In Progress"
+        COMPLETED = 2, "Completed"
+
     client_profile = models.ForeignKey(
         "clients.ClientProfile", on_delete=models.SET_NULL, blank=True, null=True, related_name="tasks", db_index=True
     )
