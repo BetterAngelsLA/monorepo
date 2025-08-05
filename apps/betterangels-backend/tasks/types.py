@@ -27,7 +27,7 @@ def make_in_filter(
         if not value:
             return queryset, Q()
 
-        normalized_value = [enum[v] if enum and isinstance(v, str) else v for v in value]
+        normalized_value = [enum[v.name] if enum else v for v in value]
 
         return queryset.filter(**{f"{prefix}{field_name}__in": normalized_value}), Q()
 
