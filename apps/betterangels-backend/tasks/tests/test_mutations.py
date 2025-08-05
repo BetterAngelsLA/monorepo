@@ -25,18 +25,18 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         client_profile = baker.make(ClientProfile)
         assert self.org
 
-        # expected_query_count = 31
-        # with self.assertNumQueriesWithoutCache(expected_query_count):
-        variables = {
-            "clientProfile": str(client_profile.pk),
-            "description": "task description",
-            "note": str(self.note.pk),
-            "summary": "task summary",
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
-        }
+        expected_query_count = 31
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            variables = {
+                "clientProfile": str(client_profile.pk),
+                "description": "task description",
+                "note": str(self.note.pk),
+                "summary": "task summary",
+                "team": SelahTeamEnum.WDI_ON_SITE.name,
+            }
 
-        self.graphql_client.force_login(self.org_1_case_manager_1)
-        response = self._create_task_fixture(variables)
+            self.graphql_client.force_login(self.org_1_case_manager_1)
+            response = self._create_task_fixture(variables)
 
         created_task = response["data"]["createTask"]
         expected_task = {

@@ -163,18 +163,18 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin, Parametrized
         task_id = self._create_task_fixture(
             {
                 "status": TaskStatusEnum.COMPLETED.name,
-                # "status": TaskStatusEnum.COMPLETED.name,
                 "summary": "task 2 summary",
             }
-        )["data"]["createTask"]["id"]
+        )[
+            "data"
+        ]["createTask"]["id"]
 
         filters = {"status": TaskStatusEnum.COMPLETED.name}
-        # filters = {"status": TaskStatusEnum.COMPLETED.name.name}
         variables = {"filters": filters}
 
-        # expected_query_count = 4
-        # with self.assertNumQueriesWithoutCache(expected_query_count):
-        response = self.execute_graphql(self._tasks_query("id"), variables)
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self._tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)

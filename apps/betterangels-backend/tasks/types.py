@@ -1,52 +1,47 @@
-from typing import Optional
+from enum import Enum
+from typing import Any, List, Optional, Tuple, Type, TypeVar
 
 import strawberry_django
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
-from django.db.models import Q, QuerySet
+from django.db.models import Model, Q, QuerySet
 from strawberry import ID, Info, auto
+from strawberry.types.field import StrawberryField
+from tasks.enums import TaskStatusEnum
 
 from . import models
-from .enums import TaskStatusEnum
+
+T = TypeVar("T", bound=Model)
 
 
-def _filter_in(queryset: QuerySet, field: str, value: Optional[list]) -> tuple[QuerySet, Q]:
-    if not value:
-        return queryset, Q()
+def make_in_filter(
+    field_name: str,
+    value_type: Any,
+    enum: Optional[Type[Enum]] = None,
+) -> StrawberryField:
+    @strawberry_django.filter_field
+    def _filter(
+        queryset: QuerySet[T], info: Info, value: Optional[List[value_type]], prefix: str
+    ) -> Tuple[QuerySet[T], Q]:
+        if not value:
+            return queryset, Q()
 
-    return queryset.filter(**{f"{field}__in": value}), Q()
+        normalized_value = [enum[v] if enum and isinstance(v, str) else v for v in value]
+
+        return queryset.filter(**{f"{prefix}{field_name}__in": normalized_value}), Q()
+
+    return _filter
 
 
-@strawberry_django.filter_type(models.Task)
+@strawberry_django.filter_type(models.Task, lookups=True)
 class TaskFilter:
     client_profile: Optional[ID]
     created_by: Optional[ID]
-    # status:
-
-    @strawberry_django.filter_field
-    def authors(
-        self, queryset: QuerySet, info: Info, value: Optional[list[ID]], prefix: str
-    ) -> tuple[QuerySet[models.Task], Q]:
-        return _filter_in(queryset, "created_by", value)
-
-    @strawberry_django.filter_field
-    def organizations(
-        self, queryset: QuerySet, info: Info, value: Optional[list[ID]], prefix: str
-    ) -> tuple[QuerySet[models.Task], Q]:
-        return _filter_in(queryset, "organization", value)
-
-    @strawberry_django.filter_field
-    def status(
-        self, queryset: QuerySet, info: Info, value: Optional[list[TaskStatusEnum]], prefix: str
-    ) -> tuple[QuerySet[models.Task], Q]:
-        return _filter_in(queryset, "status", value)
-
-    @strawberry_django.filter_field
-    def teams(
-        self, queryset: QuerySet, value: Optional[list[SelahTeamEnum]], prefix: str
-    ) -> tuple[QuerySet[models.Task], Q]:
-        return _filter_in(queryset, "team", value)
+    authors = make_in_filter("created_by", ID)
+    organizations = make_in_filter("organization", ID)
+    status = make_in_filter("status", TaskStatusEnum, enum=TaskStatusEnum)
+    teams = make_in_filter("team", SelahTeamEnum, enum=SelahTeamEnum)
 
     @strawberry_django.filter_field
     def search(
@@ -94,7 +89,6 @@ class TaskType:
     note: auto
     organization: Optional[OrganizationType]
     status: Optional[TaskStatusEnum]
-    # status: auto
     summary: Optional[str]
     team: Optional[SelahTeamEnum]
     updated_at: auto
@@ -108,7 +102,6 @@ class CreateTaskInput:
     summary: str
     team: Optional[SelahTeamEnum]
     status: Optional[TaskStatusEnum]
-    # status: auto
 
 
 @strawberry_django.input(models.Task, partial=True)
@@ -118,5 +111,3 @@ class UpdateTaskInput:
     summary: str
     team: Optional[SelahTeamEnum]
     status: Optional[TaskStatusEnum]
-    # status: auto
-    # status: auto
