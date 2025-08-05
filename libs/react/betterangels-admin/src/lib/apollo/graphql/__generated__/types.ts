@@ -550,7 +550,7 @@ export type CreateTaskInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   note?: InputMaybe<Scalars['ID']['input']>;
-  status?: InputMaybe<TaskStatusEnum>;
+  status?: InputMaybe<Scalars['Int']['input']>;
   summary: Scalars['String']['input'];
   team?: InputMaybe<SelahTeamEnum>;
 };
@@ -2030,7 +2030,7 @@ export type TaskFilter = {
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
-  status?: InputMaybe<Array<TaskStatusEnum>>;
+  status?: InputMaybe<Array<Scalars['Int']['input']>>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
 };
 
@@ -2041,12 +2041,6 @@ export type TaskOrder = {
   updatedAt?: InputMaybe<Ordering>;
 };
 
-export enum TaskStatusEnum {
-  Completed = 'COMPLETED',
-  InProgress = 'IN_PROGRESS',
-  ToDo = 'TO_DO'
-}
-
 export type TaskType = {
   __typename?: 'TaskType';
   clientProfile?: Maybe<ClientProfileType>;
@@ -2056,7 +2050,7 @@ export type TaskType = {
   id: Scalars['ID']['output'];
   note?: Maybe<DjangoModelType>;
   organization?: Maybe<OrganizationType>;
-  status?: Maybe<TaskStatusEnum>;
+  status: Scalars['Int']['output'];
   summary?: Maybe<Scalars['String']['output']>;
   team?: Maybe<SelahTeamEnum>;
   updatedAt: Scalars['DateTime']['output'];
@@ -2182,7 +2176,7 @@ export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfile
 export type UpdateTaskInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
-  status?: InputMaybe<TaskStatusEnum>;
+  status?: InputMaybe<Scalars['Int']['input']>;
   summary: Scalars['String']['input'];
   team?: InputMaybe<SelahTeamEnum>;
 };

@@ -5,7 +5,6 @@ from common.models import BaseModel
 from django.db import models
 from django_choices_field import TextChoicesField
 from organizations.models import Organization
-from tasks.enums import TaskStatusEnum
 
 
 @pghistory.track(
@@ -25,7 +24,7 @@ class Task(BaseModel):
     organization = models.ForeignKey(
         Organization, on_delete=models.SET_NULL, null=True, related_name="tasks", db_index=True
     )
-    status = TextChoicesField(choices_enum=TaskStatusEnum, db_index=True)
+    status = models.IntegerField(choices=Status.choices, default=Status.TO_DO, db_index=True)
     summary = models.CharField(max_length=100)
     team = TextChoicesField(SelahTeamEnum, null=True, blank=True, db_index=True)
 
