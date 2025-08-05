@@ -60,10 +60,8 @@ export default function Users() {
         <div>
           <h1 className="mb-3 text-2xl font-bold">User Management</h1>
           <p className="max-w-[800px]">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Lorem
-            ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
-            tempor incididunt ut labore et dolore magna aliqua.
+            Add new users and view account information for all users in your
+            organization.
           </p>
         </div>
         <button className="btn btn-primary btn-lg gap-2 inline-flex">
