@@ -1,8 +1,9 @@
+import { useAppDrawer } from '@monorepo/react/components';
 import { EllipseIcon, PlusIcon } from '@monorepo/react/icons';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
-import { Table } from '../../components';
+import { AddUserFormDrawer, Table } from '../../components';
 import { useUser } from '../../hooks';
 import { useOrganizationMembersQuery } from './__generated__/users.generated';
 
@@ -21,12 +22,20 @@ export default function Users() {
   const [page, setPage] = useState(1);
   const [members, setMembers] = useState<OrganizationMemberType[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const { showDrawer } = useAppDrawer();
 
   const offset = (page - 1) * PAGE_SIZE;
   if (!user?.organizations || user.organizations.length === 0) {
     throw new Error('No organization found for the user');
   }
   const organizationId = user.organizations[0].id;
+
+  function handleShowDrawer() {
+    showDrawer({
+      content: <AddUserFormDrawer />,
+      contentClassName: 'p-0',
+    });
+  }
 
   const { data, loading } = useOrganizationMembersQuery({
     variables: {
@@ -64,7 +73,10 @@ export default function Users() {
             organization.
           </p>
         </div>
-        <button className="btn btn-primary btn-lg gap-2 inline-flex">
+        <button
+          onClick={handleShowDrawer}
+          className="btn btn-primary btn-lg gap-2 inline-flex"
+        >
           <PlusIcon color="white" className="w-3 h-3" />
           Add User
         </button>
