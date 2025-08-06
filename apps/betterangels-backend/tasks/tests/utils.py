@@ -21,8 +21,8 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
 
     def _tasks_query(self, fields: str) -> str:
         return f"""
-            query ($filters: TaskFilter, $order: TaskOrder) {{
-                tasks (filters: $filters, order: $order) {{
+            query ($filters: TaskFilter, $ordering: [TaskOrder!]) {{
+                tasks (filters: $filters, ordering: $ordering) {{
                     totalCount
                     results {{
                         {fields}

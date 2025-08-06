@@ -65,10 +65,8 @@ class Mutation:
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         qs: QuerySet[Task] = info.context.qs
 
-        with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
-            assert data.id
-            task = qs.get(pk=data.id)
-            task = resolvers.update(info, task, asdict(data))
+        task = qs.get(pk=data.id)
+        task = resolvers.update(info, task, asdict(data))
 
         return cast(TaskType, task)
 
@@ -86,13 +84,6 @@ class Mutation:
             raise PermissionError("You do not have permission to delete this task.")
 
         task_id = task.id
-
-        if note := task.note:
-            with pghistory.context(note_id=str(note.pk), timestamp=timezone.now(), label=info.field_name):
-                task.delete()
-
-            return DeletedObjectType(id=task_id)
-
         task.delete()
 
         return DeletedObjectType(id=task_id)

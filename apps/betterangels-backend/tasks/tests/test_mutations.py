@@ -77,7 +77,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "team": SelahTeamEnum.WDI_ON_SITE.name,
         }
 
-        expected_query_count = 16
+        expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_task_fixture(variables)
 
