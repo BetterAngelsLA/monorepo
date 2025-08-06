@@ -1,6 +1,5 @@
 from typing import cast
 
-import pghistory
 import strawberry
 import strawberry_django
 from accounts.utils import get_user_permission_group
@@ -9,7 +8,6 @@ from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.db import transaction
 from django.db.models import QuerySet
-from django.utils import timezone
 from guardian.shortcuts import assign_perm
 from strawberry import asdict
 from strawberry.types import Info

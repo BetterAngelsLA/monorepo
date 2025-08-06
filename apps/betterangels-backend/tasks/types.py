@@ -1,35 +1,26 @@
-from enum import Enum
-from typing import Any, List, Optional, Tuple, Type, TypeVar
+from typing import Any, List, Optional
 
 import strawberry_django
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
-from django.db.models import Model, Q, QuerySet
+from django.db.models import Q
 from strawberry import ID, Info, auto
 from strawberry.types.field import StrawberryField
 from tasks.enums import TaskStatusEnum
 
 from . import models
 
-T = TypeVar("T", bound=Model)
 
-
-def make_in_filter(
-    field_name: str,
-    value_type: Any,
-    enum: Optional[Type[Enum]] = None,
-) -> StrawberryField:
+def make_in_filter(field_name: str, value_type: Any) -> StrawberryField:
     @strawberry_django.filter_field
-    def _filter(
-        queryset: QuerySet[T], info: Info, value: Optional[List[value_type]], prefix: str
-    ) -> Tuple[QuerySet[T], Q]:
+    def _filter(info: Info, value: Optional[List[value_type]], prefix: str) -> Q:
         if not value:
-            return queryset, Q()
+            return Q()
 
-        normalized_value = [enum[v.name] if enum else v for v in value]
+        normalized_value = [value_type[v.name] if not isinstance(v, str) else v for v in value]
 
-        return queryset.filter(**{f"{prefix}{field_name}__in": normalized_value}), Q()
+        return Q(**{f"{prefix}{field_name}__in": normalized_value})
 
     return _filter
 
@@ -40,15 +31,13 @@ class TaskFilter:
     created_by: Optional[ID]
     authors = make_in_filter("created_by", ID)
     organizations = make_in_filter("organization", ID)
-    status = make_in_filter("status", TaskStatusEnum, enum=TaskStatusEnum)
-    teams = make_in_filter("team", SelahTeamEnum, enum=SelahTeamEnum)
+    status = make_in_filter("status", TaskStatusEnum)
+    teams = make_in_filter("team", SelahTeamEnum)
 
     @strawberry_django.filter_field
-    def search(
-        self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str
-    ) -> tuple[QuerySet[models.Task], Q]:
+    def search(self, info: Info, value: Optional[str], prefix: str) -> Q:
         if value is None:
-            return queryset, Q()
+            return Q()
 
         search_terms = value.split()
         query = Q()
@@ -65,10 +54,7 @@ class TaskFilter:
 
             query &= q_search
 
-        return (
-            queryset.filter(query),
-            Q(),
-        )
+        return Q(query)
 
 
 @strawberry_django.order_type(models.Task, one_of=False)
