@@ -1,4 +1,6 @@
+const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 import type { StorybookConfig } from '@storybook/react-webpack5';
+import * as path from 'path';
 
 const config: StorybookConfig = {
   stories: ['../src/lib/**/*.stories.@(ts|tsx)'],
@@ -8,41 +10,30 @@ const config: StorybookConfig = {
     options: {},
   },
   webpackFinal: async (config) => {
-    // Remove existing .css rule (usually already in config.module.rules)
+    // Remove existing .css rule to add Tailwind later
     config.module!.rules = (config.module!.rules || []).filter(
-      (rule): rule is { test: RegExp } => {
-        return (
-          typeof rule === 'object' &&
-          rule !== null &&
-          'test' in rule &&
-          rule.test instanceof RegExp &&
-          !rule.test.test('file.css')
-        );
-      }
+      (rule): rule is { test: RegExp } =>
+        typeof rule === 'object' &&
+        rule !== null &&
+        'test' in rule &&
+        rule.test instanceof RegExp &&
+        !rule.test.test('file.css')
     );
 
-    // Add our TS/TSX rule
     config.module?.rules?.push({
       test: /\.(ts|tsx)$/,
-      include: /libs\/react\/components/,
+      exclude: /node_modules/,
       use: [
         {
-          loader: require.resolve('babel-loader'),
+          loader: require.resolve('ts-loader'),
           options: {
-            presets: [
-              require.resolve('@babel/preset-env'),
-              require.resolve('@babel/preset-typescript'),
-              [
-                require.resolve('@babel/preset-react'),
-                { runtime: 'automatic' },
-              ],
-            ],
+            configFile: require.resolve('../tsconfig.json'),
+            transpileOnly: true,
           },
         },
       ],
     });
 
-    // Add our clean Tailwind CSS rule
     config.module?.rules?.push({
       test: /\.css$/,
       use: [
@@ -54,7 +45,7 @@ const config: StorybookConfig = {
             postcssOptions: {
               plugins: [
                 require('tailwindcss')({
-                  config: require.resolve('./tailwind.config.ts'), // or point to the app one
+                  config: path.resolve(__dirname, './tailwind.config.ts'),
                 }),
                 require('autoprefixer'),
               ],
@@ -62,10 +53,33 @@ const config: StorybookConfig = {
           },
         },
       ],
-      include: /libs\/react\/components/, // optional: limit scope
+      // DO NOT restrict this to just `libs/react/components`
+      // if tailwind.css is in `.storybook/`
+      include: path.resolve(__dirname), // allow .storybook/tailwind.css to match
     });
 
-    config.resolve?.extensions?.push('.ts', '.tsx');
+    // Load SVGs as raw text for createSvgComponent
+    config.module?.rules?.push({
+      test: /\.svg$/,
+      type: 'javascript/auto',
+      use: 'raw-loader',
+      exclude: /node_modules/,
+    });
+
+    // Resolve TS paths
+    config.resolve ??= {};
+    config.resolve.plugins ??= [];
+    config.resolve.plugins.push(
+      new TsconfigPathsPlugin({
+        configFile: path.resolve(
+          __dirname,
+          '../../../../libs/react/components/tsconfig.json'
+        ),
+      }) as unknown as { apply: (resolver: any) => void }
+    );
+
+    config.resolve.extensions?.push('.ts', '.tsx');
+
     return config;
   },
 };

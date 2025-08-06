@@ -3,7 +3,7 @@ import { Button } from './Button';
 
 const meta: Meta<typeof Button> = {
   component: Button,
-  title: 'Example/Button',
+  title: 'Components/Button',
 };
 export default meta;
 
