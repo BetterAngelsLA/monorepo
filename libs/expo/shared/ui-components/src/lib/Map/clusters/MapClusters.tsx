@@ -54,7 +54,7 @@ export function MapClusters<P extends IClusterGeoJson>(props: TProps<P>) {
 
           return (
             <CustomMarker
-              label={properties.lastSeen && 'Last Seen'}
+              label={properties['lastSeen'] && 'Last Seen'}
               renderIcon={() => pointRenderer(point)}
               key={`point-${id}`}
               coordinate={{ latitude, longitude }}
