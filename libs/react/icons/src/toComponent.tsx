@@ -11,12 +11,26 @@ type SvgProps = SVGProps<SVGSVGElement>;
 export function createSvgComponent(svgContent: string): FC<SvgProps> {
   return function SvgComponent(props: SvgProps) {
     const parser = new DOMParser();
-    const svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
+    let svgDoc = parser.parseFromString(svgContent, 'image/svg+xml');
 
-    const svgElement = svgDoc.querySelector('svg');
+    let svgElement = svgDoc.querySelector('svg');
 
+    // let svgDoc: Document;
+
+    // if (!svgElement) {
+    //   throw new Error('Invalid SVG content');
+    // }
     if (!svgElement) {
-      throw new Error('Invalid SVG content');
+      svgDoc = parser.parseFromString(
+        `<svg xmlns="http://www.w3.org/2000/svg">${svgContent}</svg>`,
+        'image/svg+xml'
+      );
+
+      svgElement = svgDoc.querySelector('svg');
+
+      if (!svgElement) {
+        throw new Error('Invalid SVG content');
+      }
     }
 
     const svgProps = {
