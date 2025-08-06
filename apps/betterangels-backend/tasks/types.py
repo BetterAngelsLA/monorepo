@@ -79,7 +79,7 @@ class TaskOrder:
     status: auto
 
 
-@strawberry_django.type(models.Task, pagination=True, filters=TaskFilter, order=TaskOrder)  # type: ignore[literal-required]
+@strawberry_django.type(models.Task, pagination=True, filters=TaskFilter, ordering=TaskOrder)
 class TaskType:
     id: ID
     client_profile: Optional[ClientProfileType]

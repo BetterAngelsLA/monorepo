@@ -1265,7 +1265,7 @@ export type NoteTypeRequestedServicesArgs = {
 
 export type NoteTypeTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
-  order?: InputMaybe<TaskOrder>;
+  ordering?: Array<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1616,7 +1616,7 @@ export type QueryTaskArgs = {
 
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
-  order?: InputMaybe<TaskOrder>;
+  ordering?: Array<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
