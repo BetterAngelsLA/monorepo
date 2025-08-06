@@ -18,12 +18,13 @@ export function useInteractionPointFeatures(clientProfileId: string) {
       return [];
     }
 
-    return interactions.map((i) =>
+    return interactions.map((i, index) =>
       toPointFeature({
         id: String(i.id),
         latitude: i.location!.point[1],
         longitude: i.location!.point[0],
         interactedAt: new Date(i.interactedAt),
+        lastSeen: index === 0,
       })
     );
   }, [interactions]);
