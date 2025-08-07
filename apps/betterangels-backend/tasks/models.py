@@ -12,7 +12,7 @@ from organizations.models import Organization
     pghistory.UpdateEvent("task.update"),
     pghistory.DeleteEvent("task.remove"),
 )
-class Task(BaseModel):  # type: ignore[django-manager-missing]
+class Task(BaseModel):
     class Status(models.IntegerChoices):
         TO_DO = 0, "To Do"
         IN_PROGRESS = 1, "In Progress"
@@ -22,15 +22,15 @@ class Task(BaseModel):  # type: ignore[django-manager-missing]
         "clients.ClientProfile", on_delete=models.SET_NULL, blank=True, null=True, related_name="tasks", db_index=True
     )
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="tasks", db_index=True)
-    description = models.TextField(blank=True, null=True)
+    description = models.TextField(blank=True, null=True, db_index=True)
     note = models.ForeignKey(
-        "notes.Note", on_delete=models.SET_NULL, blank=True, null=True, related_name="tasks", db_index=True
+        "notes.Note", on_delete=models.CASCADE, blank=True, null=True, related_name="tasks", db_index=True
     )
     organization = models.ForeignKey(
         Organization, on_delete=models.SET_NULL, null=True, related_name="tasks", db_index=True
     )
     status = IntegerChoicesField(Status, default=Status.TO_DO, db_index=True)
-    summary = models.CharField(max_length=100)
+    summary = models.CharField(max_length=100, db_index=True)
     team = TextChoicesField(SelahTeamEnum, null=True, blank=True, db_index=True)
 
     def __str__(self) -> str:
