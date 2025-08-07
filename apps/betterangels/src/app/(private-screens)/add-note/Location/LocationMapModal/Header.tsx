@@ -17,7 +17,7 @@ export default function Header(props: IHeaderProps) {
         backgroundColor: Colors.WHITE,
         paddingHorizontal: Spacings.sm,
         paddingTop: Spacings.sm,
-        paddingBottom: Spacings.xs,
+        paddingBottom: Spacings.sm,
         borderBottomWidth: 0.5,
         borderBottomColor: Colors.NEUTRAL_LIGHT,
       }}
