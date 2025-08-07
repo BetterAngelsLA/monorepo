@@ -83,7 +83,7 @@ export default function Users() {
           </button>
         )}
       </div>
-      {user.canViewOrgMembers ? (
+      {user.canViewOrgMembers && (
         <Table<(typeof members)[number]>
           header={TABLE_HEADER}
           data={members}
@@ -119,9 +119,9 @@ export default function Users() {
           totalPages={totalPages}
           onPageChange={(newPage) => setPage(newPage)}
         />
-      ) : (
-        "You don't have permission to view this organization's members."
       )}
+      {!user.canViewOrgMembers &&
+        "You don't have permission to view this organization's members."}
     </div>
   );
 }
