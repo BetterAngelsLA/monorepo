@@ -6,6 +6,7 @@ from accounts.utils import get_user_permission_group
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
 from common.permissions.utils import IsAuthenticated
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import QuerySet
 from guardian.shortcuts import assign_perm
@@ -79,7 +80,7 @@ class Mutation:
                 [TaskPermissions.DELETE],
             ).get(id=data.id)
         except Task.DoesNotExist:
-            raise PermissionError("You do not have permission to delete this task.")
+            raise PermissionDenied("You do not have permission to delete this task.")
 
         task_id = task.id
         task.delete()
