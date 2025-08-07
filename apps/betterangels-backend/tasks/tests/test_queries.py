@@ -9,10 +9,9 @@ from notes.models import Note
 from tasks.enums import TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
-from unittest_parametrize import ParametrizedTestCase, parametrize
 
 
-class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin, ParametrizedTestCase):
+class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def setUp(self) -> None:
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
