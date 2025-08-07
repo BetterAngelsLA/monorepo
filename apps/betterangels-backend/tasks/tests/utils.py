@@ -1,10 +1,10 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from test_utils.mixins import HasGraphQLProtocol
 
 
 class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
-    def _task_fields(self) -> str:
+    def get_task_fields(self) -> str:
         return """
             id
             clientProfile { id firstName lastName }
@@ -19,22 +19,22 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
             updatedAt
         """
 
-    def _tasks_query(self, fields: str) -> str:
+    def get_tasks_query(self, fields: Optional[str] = None) -> str:
         return f"""
             query ($filters: TaskFilter, $ordering: [TaskOrder!]) {{
                 tasks (filters: $filters, ordering: $ordering) {{
                     totalCount
                     results {{
-                        {fields}
+                        {fields or self.get_task_fields()}
                     }}
                 }}
             }}
         """
 
-    def _create_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def create_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("create", variables)
 
-    def _update_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+    def update_task_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
         return self._create_or_update_task_fixture("update", variables)
 
     def _create_or_update_task_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
@@ -51,14 +51,14 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
                         }}
                     }}
                     ... on TaskType {{
-                        {self._task_fields()}
+                        {self.get_task_fields()}
                     }}
                 }}
             }}
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _delete_task_fixture(self, task_id: int) -> Dict[str, Any]:
+    def delete_task_fixture(self, task_id: int) -> Dict[str, Any]:
         mutation: str = """
             mutation ($id: ID!) {
                 deleteTask(data: { id: $id }) {

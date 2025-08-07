@@ -1011,8 +1011,8 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
     #     revert_before_timestamp = timezone.now()
 
     #     # Delete tasks - should be discarded
-    #     self._delete_task_fixture(purpose_response["id"])
-    #     self._delete_task_fixture(next_step_response["id"])
+    #     self.delete_task_fixture(purpose_response["id"])
+    #     self.delete_task_fixture(next_step_response["id"])
 
     #     self.assertEqual(note.purposes.count(), 1)
     #     self.assertEqual(note.next_steps.count(), 1)
@@ -1310,8 +1310,8 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
     #     revert_before_timestamp = timezone.now()
 
     #     # Make updates that will be discarded
-    #     self._update_task_fixture({"id": purpose["id"], "title": "Discarded Purpose Title"})
-    #     self._update_task_fixture({"id": next_step["id"], "title": "Discarded Next Step Title"})
+    #     self.update_task_fixture({"id": purpose["id"], "title": "Discarded Purpose Title"})
+    #     self.update_task_fixture({"id": next_step["id"], "title": "Discarded Next Step Title"})
 
     #     # Revert to revert_before_timestamp state
     #     variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}

@@ -24,7 +24,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
     def test_note_query(self) -> None:
         note_id = self.note["id"]
-        task = self._create_task_fixture({"summary": "task summary", "note": note_id})["data"]["createTask"]
+        task = self.create_task_fixture({"summary": "task summary", "note": note_id})["data"]["createTask"]
         # Update fields available on the note input
         self._update_note_fixture(
             {

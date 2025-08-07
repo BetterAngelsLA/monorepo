@@ -11,7 +11,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         super().setUp()
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        self.task_id = self._create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
+        self.task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
 
     @parametrize(
         "user_label, should_succeed",
@@ -26,7 +26,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         task_count = Task.objects.count()
         variables = {"summary": "task summary"}
-        response = self._create_task_fixture(variables)
+        response = self.create_task_fixture(variables)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["createTask"]["id"])
@@ -56,7 +56,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "id": self.task_id,
             "summary": "updated task summary",
         }
-        response = self._update_task_fixture(variables)
+        response = self.update_task_fixture(variables)
 
         self.assertIsNotNone(response["data"]["updateTask"]["id"])
 
@@ -79,7 +79,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "id": pre_update.pk,
             "summary": "updated task summary",
         }
-        self._update_task_fixture(variables)
+        self.update_task_fixture(variables)
 
         post_update = Task.objects.get(pk=pre_update.id)
 
@@ -99,7 +99,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self._handle_user_login(user_label)
 
         task_count = Task.objects.count()
-        self._delete_task_fixture(self.task_id)
+        self.delete_task_fixture(self.task_id)
 
         self.assertTrue(Task.objects.filter(id=self.task_id).exists() != should_succeed)
         if should_succeed:
@@ -150,7 +150,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def test_view_tasks_permission(self, user_label: str, expected_task_count: Optional[int]) -> None:
         self._handle_user_login(user_label)
 
-        response = self.execute_graphql(self._tasks_query("id"))
+        response = self.execute_graphql(self.get_tasks_query("id"))
 
         if expected_task_count is not None:
             self.assertEqual(response["data"]["tasks"]["totalCount"], expected_task_count)

@@ -19,7 +19,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         org = self.org_1_case_manager_1.organizations_organization.first()
         self.note = baker.make(Note, organization=org)
 
-        self.task = self._create_task_fixture(
+        self.task = self.create_task_fixture(
             {
                 "clientProfile": str(self.client_profile.pk),
                 "description": "task description",
@@ -35,7 +35,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         query = f"""
             query ($id: ID!) {{
                 task(pk: $id) {{
-                    {self._task_fields()}
+                    {self.get_task_fields()}
                 }}
             }}
         """
@@ -74,7 +74,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(task, expected_task)
 
     def test_tasks_query(self) -> None:
-        self._create_task_fixture(
+        self.create_task_fixture(
             {
                 "clientProfile": str(self.client_profile.pk),
                 "description": "task 2 description",
@@ -86,7 +86,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self._tasks_query(self._task_fields()))
+            response = self.execute_graphql(self.get_tasks_query())
 
         expected_task = {
             "id": self.task["id"],
@@ -119,13 +119,13 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def test_tasks_query_authors_filter(self) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
 
-        task_id = self._create_task_fixture({"summary": "task 2 summary"})["data"]["createTask"]["id"]
+        task_id = self.create_task_fixture({"summary": "task 2 summary"})["data"]["createTask"]["id"]
         filters = {"authors": [str(self.org_1_case_manager_2.pk)]}
         variables = {"filters": filters}
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self._tasks_query("id"), variables)
+            response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
@@ -133,31 +133,31 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
     def test_tasks_query_organizations_filter(self) -> None:
         self.graphql_client.force_login(self.org_2_case_manager_1)
 
-        task_id = self._create_task_fixture({"summary": "task 2 summary"})["data"]["createTask"]["id"]
+        task_id = self.create_task_fixture({"summary": "task 2 summary"})["data"]["createTask"]["id"]
         filters = {"organizations": [str(self.org_2.pk)]}
         variables = {"filters": filters}
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self._tasks_query("id"), variables)
+            response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
     def test_tasks_query_search_filter(self) -> None:
-        task_id = self._create_task_fixture({"summary": "task 2 summary"})["data"]["createTask"]["id"]
+        task_id = self.create_task_fixture({"summary": "task 2 summary"})["data"]["createTask"]["id"]
         filters = {"search": "2 sum"}
         variables = {"filters": filters}
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self._tasks_query("id"), variables)
+            response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
     def test_tasks_query_status_filter(self) -> None:
-        task_id = self._create_task_fixture(
+        task_id = self.create_task_fixture(
             {
                 "status": TaskStatusEnum.COMPLETED.name,
                 "summary": "task 2 summary",
@@ -171,13 +171,13 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self._tasks_query("id"), variables)
+            response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
 
     def test_tasks_query_teams_filter(self) -> None:
-        task_id = self._create_task_fixture(
+        task_id = self.create_task_fixture(
             {
                 "summary": "task 2 summary",
                 "team": SelahTeamEnum.SLCC_ON_SITE.name,
@@ -191,7 +191,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self._tasks_query("id"), variables)
+            response = self.execute_graphql(self.get_tasks_query("id"), variables)
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)

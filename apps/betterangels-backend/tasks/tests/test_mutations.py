@@ -36,7 +36,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             }
 
             self.graphql_client.force_login(self.org_1_case_manager_1)
-            response = self._create_task_fixture(variables)
+            response = self.create_task_fixture(variables)
 
         created_task = response["data"]["createTask"]
         expected_task = {
@@ -66,7 +66,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
     @time_machine.travel("07-31-2025 10:11:12", tick=False)
     def test_update_task_mutation(self) -> None:
-        task_id = self._create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
+        task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
         assert self.org
 
         variables = {
@@ -79,7 +79,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         expected_query_count = 14
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._update_task_fixture(variables)
+            response = self.update_task_fixture(variables)
 
         updated_task = response["data"]["updateTask"]
         expected_task = {
@@ -102,11 +102,11 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(updated_task, expected_task)
 
     def test_delete_task_mutation(self) -> None:
-        task_id = self._create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
+        task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
 
         expected_query_count = 4
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._delete_task_fixture(task_id)
+            response = self.delete_task_fixture(task_id)
 
         self.assertIsNotNone(response["data"]["deleteTask"])
         with self.assertRaises(Task.DoesNotExist):
