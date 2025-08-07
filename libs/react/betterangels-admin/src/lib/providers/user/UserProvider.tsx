@@ -1,8 +1,9 @@
 import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { UserOrganizationPermissions } from '../../apollo/graphql/__generated__/types';
 import UserContext, { TUser } from './UserContext';
 import {
-  CurrentUserQuery,
-  useCurrentUserQuery,
+  CurrentOrgUserQuery,
+  useCurrentOrgUserQuery,
 } from './__generated__/UserProvider.generated';
 
 interface UserProviderProps {
@@ -10,13 +11,35 @@ interface UserProviderProps {
 }
 
 const parseUser = (
-  user?: CurrentUserQuery['currentUser']
+  user?: CurrentOrgUserQuery['currentUser']
 ): TUser | undefined => {
   if (!user) {
     return undefined;
   }
 
   const userOrganization = user.organizations?.[0];
+
+  if (!userOrganization) {
+    return undefined;
+  }
+
+  const { userPermissions } = userOrganization;
+
+  const canAccessOrgPortal = userPermissions?.includes(
+    UserOrganizationPermissions.AccessOrgPortal
+  );
+  const canAddOrgMember = userPermissions?.includes(
+    UserOrganizationPermissions.AddOrgMember
+  );
+  const canChangeOrgMemberRole = userPermissions?.includes(
+    UserOrganizationPermissions.ChangeOrgMemberRole
+  );
+  const canRemoveOrgMember = userPermissions?.includes(
+    UserOrganizationPermissions.RemoveOrgMember
+  );
+  const canViewOrgMembers = userPermissions?.includes(
+    UserOrganizationPermissions.ViewOrgMembers
+  );
 
   return {
     id: user.id,
@@ -26,14 +49,16 @@ const parseUser = (
     lastName: user.lastName ?? undefined,
     email: user.email,
     organizations: user.organizations ?? null,
-    isOutreachAuthorized: user.isOutreachAuthorized ?? false,
-    hasAcceptedTos: user.hasAcceptedTos ?? false,
-    hasAcceptedPrivacyPolicy: user.hasAcceptedPrivacyPolicy ?? false,
+    canAccessOrgPortal: canAccessOrgPortal ?? false,
+    canAddOrgMember: canAddOrgMember ?? false,
+    canChangeOrgMemberRole: canChangeOrgMemberRole ?? false,
+    canRemoveOrgMember: canRemoveOrgMember ?? false,
+    canViewOrgMembers: canViewOrgMembers ?? false,
   };
 };
 
 type UserResponse = {
-  data?: CurrentUserQuery;
+  data?: CurrentOrgUserQuery;
   errors?: readonly { message: string }[];
 };
 
@@ -41,7 +66,7 @@ export default function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<TUser | undefined>();
   const [isLoading, setIsLoading] = useState(true);
 
-  const { data, loading, error, refetch } = useCurrentUserQuery({
+  const { data, loading, error, refetch } = useCurrentOrgUserQuery({
     fetchPolicy: 'network-only',
     errorPolicy: 'all',
   });
