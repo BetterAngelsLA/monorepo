@@ -13,11 +13,11 @@ export type TUser = {
   lastName?: string;
   email?: string | null;
   organizations: TOrganization[] | null;
-  canAccessOrgPortal: boolean;
-  canAddOrgMember: boolean;
-  canChangeOrgMemberRole: boolean;
-  canRemoveOrgMember: boolean;
-  canViewOrgMembers: boolean;
+  canAccessOrgPortal?: boolean;
+  canAddOrgMember?: boolean;
+  canChangeOrgMemberRole?: boolean;
+  canRemoveOrgMember?: boolean;
+  canViewOrgMembers?: boolean;
 };
 
 export interface IUserProviderValue {

@@ -16,29 +16,25 @@ const parseUser = (
   if (!user) {
     return undefined;
   }
-
   const userOrganization = user.organizations?.[0];
-
   if (!userOrganization) {
     return undefined;
   }
 
-  const { userPermissions } = userOrganization;
+  const userPermissions = userOrganization.userPermissions ?? [];
+  const permissionMap = {
+    [UserOrganizationPermissions.AccessOrgPortal]: 'canAccessOrgPortal',
+    [UserOrganizationPermissions.AddOrgMember]: 'canAddOrgMember',
+    [UserOrganizationPermissions.ChangeOrgMemberRole]: 'canChangeOrgMemberRole',
+    [UserOrganizationPermissions.RemoveOrgMember]: 'canRemoveOrgMember',
+    [UserOrganizationPermissions.ViewOrgMembers]: 'canViewOrgMembers',
+  };
 
-  const canAccessOrgPortal = userPermissions?.includes(
-    UserOrganizationPermissions.AccessOrgPortal
-  );
-  const canAddOrgMember = userPermissions?.includes(
-    UserOrganizationPermissions.AddOrgMember
-  );
-  const canChangeOrgMemberRole = userPermissions?.includes(
-    UserOrganizationPermissions.ChangeOrgMemberRole
-  );
-  const canRemoveOrgMember = userPermissions?.includes(
-    UserOrganizationPermissions.RemoveOrgMember
-  );
-  const canViewOrgMembers = userPermissions?.includes(
-    UserOrganizationPermissions.ViewOrgMembers
+  const permFlags = Object.fromEntries(
+    Object.entries(permissionMap).map(([perm, key]) => [
+      key,
+      userPermissions.includes(perm as UserOrganizationPermissions),
+    ])
   );
 
   return {
@@ -49,11 +45,7 @@ const parseUser = (
     lastName: user.lastName ?? undefined,
     email: user.email,
     organizations: user.organizations ?? null,
-    canAccessOrgPortal: canAccessOrgPortal ?? false,
-    canAddOrgMember: canAddOrgMember ?? false,
-    canChangeOrgMemberRole: canChangeOrgMemberRole ?? false,
-    canRemoveOrgMember: canRemoveOrgMember ?? false,
-    canViewOrgMembers: canViewOrgMembers ?? false,
+    ...permFlags,
   };
 };
 
