@@ -2,6 +2,7 @@ import pghistory
 from accounts.models import User
 from common.enums import SelahTeamEnum
 from common.models import BaseModel
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from organizations.models import Organization
@@ -22,7 +23,7 @@ class Task(BaseModel):
         "clients.ClientProfile", on_delete=models.SET_NULL, blank=True, null=True, related_name="tasks", db_index=True
     )
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="tasks", db_index=True)
-    description = models.TextField(blank=True, null=True, db_index=True)
+    description = models.TextField(blank=True, null=True)
     note = models.ForeignKey(
         "notes.Note", on_delete=models.CASCADE, blank=True, null=True, related_name="tasks", db_index=True
     )
@@ -38,5 +39,17 @@ class Task(BaseModel):
 
     class Meta:
         ordering = ["-updated_at"]
+        indexes = [
+            GinIndex(
+                name="task_description_trgm",
+                fields=["description"],
+                opclasses=["gin_trgm_ops"],
+            ),
+            GinIndex(
+                name="task_summary_trgm",
+                fields=["summary"],
+                opclasses=["gin_trgm_ops"],
+            ),
+        ]
 
     objects = models.Manager()

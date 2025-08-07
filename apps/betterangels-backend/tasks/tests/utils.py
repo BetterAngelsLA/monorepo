@@ -8,7 +8,7 @@ class TaskGraphQLUtilsMixin(HasGraphQLProtocol):
         return """
             id
             clientProfile { id firstName lastName }
-            createdAt
+        createdAt
             createdBy { id firstName lastName }
             description
             note { pk }
