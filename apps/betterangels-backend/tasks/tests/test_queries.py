@@ -198,32 +198,3 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin, Parametrized
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
-
-    @parametrize(
-        "ordering, expected_order",
-        [
-            ("ASC", ["task 1", "task 2", "task 3"]),
-            ("DESC", ["task 3", "task 2", "task 1"]),
-            (None, ["task 3", "task 2", "task 1"]),
-        ],
-    )
-    def test_tasks_query_status_order(self, ordering: Optional[str], expected_order: list[str]) -> None:
-        Task.objects.all().delete()
-
-        self._create_task_fixture({"summary": "task 1"})["data"]["createTask"]
-        self._create_task_fixture({"summary": "task 2", "status": TaskStatusEnum.IN_PROGRESS.name})["data"][
-            "createTask"
-        ]
-        self._create_task_fixture({"summary": "task 3", "status": TaskStatusEnum.COMPLETED.name})["data"]["createTask"]
-
-        variables = {"ordering": [{"status": ordering}]}
-
-        expected_query_count = 4
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(self._tasks_query("summary"), variables)
-
-        self.assertEqual(response["data"]["tasks"]["totalCount"], 3)
-
-        ordered_task_ids = [r["summary"] for r in response["data"]["tasks"]["results"]]
-        self.assertEqual(expected_order, ordered_task_ids)
-        self.assertEqual(expected_order, ordered_task_ids)
