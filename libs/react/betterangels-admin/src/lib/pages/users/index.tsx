@@ -73,49 +73,55 @@ export default function Users() {
             organization.
           </p>
         </div>
-        <button
-          onClick={handleShowDrawer}
-          className="btn btn-primary btn-lg gap-2 inline-flex"
-        >
-          <PlusIcon color="white" className="w-3 h-3" />
-          Add User
-        </button>
-      </div>
-      <Table<(typeof members)[number]>
-        header={TABLE_HEADER}
-        data={members}
-        renderCell={(member, colIndex) => {
-          switch (colIndex) {
-            case 0:
-              return member.firstName ?? '';
-            case 1:
-              return member.lastName ?? '';
-            case 2:
-              return member.memberRole ?? '';
-            case 3:
-              return member.email ?? '';
-            case 4:
-              return member.lastLogin
-                ? formatDistanceToNow(parseISO(member.lastLogin), {
-                    addSuffix: true,
-                  })
-                : 'Never';
-            default:
-              return '';
-          }
-        }}
-        action={(member) => (
+        {user.canAddOrgMember && (
           <button
-            onClick={() => console.log('Clicked:', member)}
-            className="p-2 rounded-lg hover:bg-neutral-100"
+            onClick={handleShowDrawer}
+            className="btn btn-primary btn-lg gap-2 inline-flex"
           >
-            <EllipseIcon className="h-5 w-5 text-neutral-500" />
+            <PlusIcon color="white" className="w-3 h-3" />
+            Add User
           </button>
         )}
-        page={page}
-        totalPages={totalPages}
-        onPageChange={(newPage) => setPage(newPage)}
-      />
+      </div>
+      {user.canViewOrgMembers && (
+        <Table<(typeof members)[number]>
+          header={TABLE_HEADER}
+          data={members}
+          renderCell={(member, colIndex) => {
+            switch (colIndex) {
+              case 0:
+                return member.firstName ?? '';
+              case 1:
+                return member.lastName ?? '';
+              case 2:
+                return member.memberRole ?? '';
+              case 3:
+                return member.email ?? '';
+              case 4:
+                return member.lastLogin
+                  ? formatDistanceToNow(parseISO(member.lastLogin), {
+                      addSuffix: true,
+                    })
+                  : 'Never';
+              default:
+                return '';
+            }
+          }}
+          action={(member) => (
+            <button
+              onClick={() => console.log('Clicked:', member)}
+              className="p-2 rounded-lg hover:bg-neutral-100"
+            >
+              <EllipseIcon className="h-5 w-5 text-neutral-500" />
+            </button>
+          )}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={(newPage) => setPage(newPage)}
+        />
+      )}
+      {!user.canViewOrgMembers &&
+        "You don't have permission to view this organization's members."}
     </div>
   );
 }
