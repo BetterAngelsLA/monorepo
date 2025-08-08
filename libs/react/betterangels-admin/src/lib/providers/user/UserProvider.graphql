@@ -1,4 +1,4 @@
-query currentUser {
+query currentOrgUser {
   currentUser {
     id
     username
@@ -8,9 +8,7 @@ query currentUser {
     organizations: organizationsOrganization {
       id
       name
+      userPermissions
     }
-    isOutreachAuthorized
-    hasAcceptedTos
-    hasAcceptedPrivacyPolicy
   }
 }

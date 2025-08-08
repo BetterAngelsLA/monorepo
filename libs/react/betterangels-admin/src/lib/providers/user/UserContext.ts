@@ -13,9 +13,11 @@ export type TUser = {
   lastName?: string;
   email?: string | null;
   organizations: TOrganization[] | null;
-  isOutreachAuthorized?: boolean;
-  hasAcceptedTos?: boolean;
-  hasAcceptedPrivacyPolicy?: boolean;
+  canAccessOrgPortal?: boolean;
+  canAddOrgMember?: boolean;
+  canChangeOrgMemberRole?: boolean;
+  canRemoveOrgMember?: boolean;
+  canViewOrgMembers?: boolean;
 };
 
 export interface IUserProviderValue {
