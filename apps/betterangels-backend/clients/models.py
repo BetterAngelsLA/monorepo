@@ -211,7 +211,7 @@ class ClientProfile(BaseModel):
         ordering = ["first_name"]
 
 
-class ClientDocument(Attachment):  # type: ignore[django-manager-missing]
+class ClientDocument(Attachment):
     """This is here to allow for a separate admin interface for Client Documents"""
 
     class Meta:

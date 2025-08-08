@@ -11,7 +11,7 @@ from notes.enums import ServiceEnum
 from organizations.models import Organization
 from rangefilter.filters import DateRangeFilterBuilder
 
-from .models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest, Task
+from .models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest
 
 
 @admin.register(Mood)
@@ -156,31 +156,6 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
 
     def note_purpose(self, obj: Note) -> str:
         return f"{obj.purpose} ({obj.pk})"
-
-
-@admin.register(Task)
-class TaskAdmin(AttachmentAdminMixin, admin.ModelAdmin):
-    list_display = (
-        "title",
-        "client_profile",
-        "due_by",
-        "status",
-    )
-    list_filter = (
-        "due_by",
-        "status",
-        "created_at",
-        "updated_at",
-    )
-    search_fields = (
-        "title",
-        "created_by__email",
-        "client_profile__email",
-    )
-    readonly_fields = (
-        "created_at",
-        "updated_at",
-    )
 
 
 @admin.register(ServiceRequest)

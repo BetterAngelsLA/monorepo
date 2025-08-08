@@ -9,13 +9,15 @@ from shelters.schema import Query as SheltersQuery
 from strawberry import Schema
 from strawberry.tools import merge_types
 from strawberry_django.optimizer import DjangoOptimizerExtension
+from tasks.schema import Mutation as TasksMutation
+from tasks.schema import Query as TasksQuery
 
 # Schema Stiching
 # https://github.com/strawberry-graphql/strawberry/issues/566#issuecomment-1346660629
-queries = (AccountsQuery, ClientsQuery, CommonQuery, NotesQuery, SheltersQuery)
+queries = (AccountsQuery, ClientsQuery, CommonQuery, NotesQuery, TasksQuery, SheltersQuery)
 Query = merge_types("Query", queries)
 
-mutations = (AccountsMutation, ClientsMutation, NotesMutation)
+mutations = (AccountsMutation, ClientsMutation, NotesMutation, TasksMutation)
 Mutation = merge_types("Mutation", mutations)
 
 schema = Schema(
