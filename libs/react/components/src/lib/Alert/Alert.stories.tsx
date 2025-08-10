@@ -33,7 +33,7 @@ export const AlertDemo: Story = {
       return (
         <SbList>
           <SbButton
-            classname="bg-green-400"
+            className="bg-green-400"
             onClick={() =>
               showAlert({ content: 'Hello Success message', type: 'success' })
             }
@@ -41,7 +41,7 @@ export const AlertDemo: Story = {
             Show Success
           </SbButton>
           <SbButton
-            classname="bg-red-400"
+            className="bg-red-400"
             onClick={() =>
               showAlert({ content: 'Hello Error message', type: 'error' })
             }
