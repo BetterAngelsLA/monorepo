@@ -16,6 +16,7 @@ const config: Config = {
         primary: 'var(--font-primary)',
       },
       colors: {
+        'alert-60': 'var(--color-alert-60)',
         'brand-orange': 'var(--color-brand-orange)',
         'brand-yellow': 'var(--color-brand-yellow)',
         'brand-yellow-light': 'var(--color-brand-yellow-light)',
