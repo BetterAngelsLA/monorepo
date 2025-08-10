@@ -85,3 +85,6 @@ vitest.config.*.timestamp*
 !/poetry.lock
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+
+# storybook
+debug-storybook.log
