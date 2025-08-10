@@ -5,7 +5,7 @@ type TProps = PropsWithChildren<{
   classname?: string;
 }>;
 
-export function PageDecorator(props: TProps) {
+export function SbPage(props: TProps) {
   const { children, classname } = props;
 
   const parentCss = [

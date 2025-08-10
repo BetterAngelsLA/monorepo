@@ -1,6 +1,6 @@
 import { Children, ReactNode } from 'react';
 import { mergeCss } from '../../utils';
-import { ListItemDecorator } from './ListItemDecorator';
+import { SbListItem } from './SbListItem';
 
 type Props = {
   children: ReactNode;
@@ -9,7 +9,7 @@ type Props = {
   gap?: string | number;
 };
 
-export function ListDecorator(props: Props) {
+export function SbList(props: Props) {
   const { children, classname, itemClassname } = props;
 
   const parentCss = ['flex', 'flex-col', 'gap-4', classname];
@@ -18,9 +18,9 @@ export function ListDecorator(props: Props) {
   return (
     <div className={mergeCss(parentCss)}>
       {Children.map(children, (child, i) => (
-        <ListItemDecorator key={i} classname={mergeCss(listItemCss)}>
+        <SbListItem key={i} classname={mergeCss(listItemCss)}>
           {child}
-        </ListItemDecorator>
+        </SbListItem>
       ))}
     </div>
   );
