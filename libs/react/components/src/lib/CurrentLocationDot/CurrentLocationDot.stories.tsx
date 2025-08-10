@@ -1,14 +1,14 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { CurrentLocationDot } from './CurrentLocationDot';
+import { CurrentLocationDot as StoryComponent } from './CurrentLocationDot';
 
-const meta: Meta<typeof CurrentLocationDot> = {
-  component: CurrentLocationDot,
+const meta: Meta<typeof StoryComponent> = {
+  component: StoryComponent,
   title: 'Components/CurrentLocationDot',
 };
 export default meta;
 
-type Story = StoryObj<typeof CurrentLocationDot>;
+type Story = StoryObj<typeof StoryComponent>;
 
-export const LocationDot: Story = {
-  render: (args) => <CurrentLocationDot />,
+export const CurrentLocationDot: Story = {
+  render: (args) => <StoryComponent />,
 };
