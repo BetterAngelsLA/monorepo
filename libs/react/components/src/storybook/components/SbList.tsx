@@ -7,12 +7,21 @@ type Props = {
   className?: string;
   itemClassname?: string;
   gap?: string | number;
+  variant?: 'bordered';
 };
 
 export function SbList(props: Props) {
-  const { children, className, itemClassname } = props;
+  const { children, className, itemClassname, variant } = props;
 
-  const parentCss = ['flex', 'flex-col', 'gap-4', className];
+  const parentCss = [
+    'flex',
+    'flex-col',
+    'gap-4',
+    variant === 'bordered'
+      ? 'border-2 border-dotted border-gray-200 p-8'
+      : undefined,
+    className,
+  ];
   const listItemCss = [itemClassname];
 
   return (
