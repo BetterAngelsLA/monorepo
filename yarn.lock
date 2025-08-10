@@ -5173,6 +5173,7 @@ __metadata:
     react-native-web: "npm:^0.20.0"
     react-router-dom: "npm:6.29.0"
     remeda: "npm:^2.20.0"
+    storybook-addon-pseudo-states: "npm:4.0.3"
     stylus: "github:stylus/stylus#0.54.4"
     supercluster: "npm:^8.0.1"
     tailwind-merge: "npm:^2.5.5"
@@ -7587,7 +7588,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/icons@npm:^1.2.12":
+"@storybook/icons@npm:^1.2.10, @storybook/icons@npm:^1.2.12":
   version: 1.4.0
   resolution: "@storybook/icons@npm:1.4.0"
   peerDependencies:
@@ -24751,6 +24752,17 @@ __metadata:
   version: 2.14.4
   resolution: "store2@npm:2.14.4"
   checksum: 10/c92713e75544693b47053531b6e98d7b538512061017e06b8c7e99937da67866856227862f7bf1a818ecc36673b8d343c7b67c9cce03bd4ba0f68eff7cccaa8c
+  languageName: node
+  linkType: hard
+
+"storybook-addon-pseudo-states@npm:4.0.3":
+  version: 4.0.3
+  resolution: "storybook-addon-pseudo-states@npm:4.0.3"
+  dependencies:
+    "@storybook/icons": "npm:^1.2.10"
+  peerDependencies:
+    storybook: ^8.2.0
+  checksum: 10/82c1e3cd6d1b6d002c60137e4566e7639b0ebbf396933a47d997115ebf2264197b09e0ee1480bce9ff91bea6abf43eab6be665f32aee0fda1ce17eb6494675f7
   languageName: node
   linkType: hard
 
