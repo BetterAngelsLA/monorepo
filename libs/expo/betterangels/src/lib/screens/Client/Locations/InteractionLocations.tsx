@@ -11,7 +11,7 @@ export function InteractionLocations(props: TProps) {
   const { client } = props;
 
   if (!client?.clientProfile.id) {
-    throw new Error('Something went wrong. Please try again.');
+    throw new Error('Something went wrong. Please try again. ');
   }
 
   return (
