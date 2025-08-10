@@ -3,14 +3,14 @@ import { mergeCss } from '../../utils';
 
 type TProps = {
   children: ReactNode;
-  classname?: string;
+  className?: string;
   onClick?: () => void;
 };
 
 export function SbButton(props: TProps) {
-  const { onClick, children, classname } = props;
+  const { onClick, children, className } = props;
 
-  const parentCss = ['bg-gray-500', 'p-2', 'rounded', 'text-white', classname];
+  const parentCss = ['bg-gray-500', 'p-2', 'rounded', 'text-white', className];
 
   return (
     <button className={mergeCss(parentCss)} onClick={onClick}>

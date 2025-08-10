@@ -2,11 +2,11 @@ import { PropsWithChildren } from 'react';
 import { mergeCss } from '../../utils';
 
 type TProps = PropsWithChildren<{
-  classname?: string;
+  className?: string;
 }>;
 
 export function SbPage(props: TProps) {
-  const { children, classname } = props;
+  const { children, className } = props;
 
   const parentCss = [
     'w-full',
@@ -18,7 +18,7 @@ export function SbPage(props: TProps) {
     'flex',
     'flex-col',
     'gap-8',
-    classname,
+    className,
   ];
 
   return <div className={mergeCss(parentCss)}>{children}</div>;

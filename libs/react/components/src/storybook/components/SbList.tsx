@@ -4,21 +4,21 @@ import { SbListItem } from './SbListItem';
 
 type Props = {
   children: ReactNode;
-  classname?: string;
+  className?: string;
   itemClassname?: string;
   gap?: string | number;
 };
 
 export function SbList(props: Props) {
-  const { children, classname, itemClassname } = props;
+  const { children, className, itemClassname } = props;
 
-  const parentCss = ['flex', 'flex-col', 'gap-4', classname];
+  const parentCss = ['flex', 'flex-col', 'gap-4', className];
   const listItemCss = [itemClassname];
 
   return (
     <div className={mergeCss(parentCss)}>
       {Children.map(children, (child, i) => (
-        <SbListItem key={i} classname={mergeCss(listItemCss)}>
+        <SbListItem key={i} className={mergeCss(listItemCss)}>
           {child}
         </SbListItem>
       ))}

@@ -3,13 +3,13 @@ import { mergeCss } from '../../utils';
 
 type TProps = {
   children: ReactNode;
-  classname?: string;
+  className?: string;
 };
 
 export function SbListItem(props: TProps) {
-  const { children, classname } = props;
+  const { children, className } = props;
 
-  const parentCss = [classname];
+  const parentCss = [className];
 
   return <div className={mergeCss(parentCss)}>{children}</div>;
 }
