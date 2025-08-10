@@ -12,7 +12,7 @@ type Story = StoryObj<typeof StoryComponent>;
 
 const defaultArgs: IPillProps = {
   type: 'success',
-  label: 'HelloPill',
+  label: 'Hello Pill',
 };
 
 export const Pill: Story = {
