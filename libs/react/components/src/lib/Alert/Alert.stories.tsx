@@ -14,40 +14,41 @@
  * */
 
 import type { Meta, StoryObj } from '@storybook/react';
+import { SbButton, SbList } from '../../storybook';
 import { Alert } from './Alert';
 import { useAlert } from './state/useAlert';
 
 const meta: Meta = {
-  title: 'Playground/Alert Demo',
+  title: 'Components/Alert',
 };
 export default meta;
 
 type Story = StoryObj;
 
-export const LocalAlert: Story = {
+export const AlertDemo: Story = {
   render: () => {
     const Demo = () => {
       const { showAlert } = useAlert();
 
       return (
-        <div>
-          <button
-            className="bg-green-400 p-2 rounded text-white"
+        <SbList>
+          <SbButton
+            classname="bg-green-400"
             onClick={() =>
               showAlert({ content: 'Hello Success message', type: 'success' })
             }
           >
             Show Success
-          </button>
-          <button
-            className="bg-red-400 p-2 rounded text-white"
+          </SbButton>
+          <SbButton
+            classname="bg-red-400"
             onClick={() =>
               showAlert({ content: 'Hello Error message', type: 'error' })
             }
           >
-            <div>Show Error</div>
-          </button>
-        </div>
+            Show Error
+          </SbButton>
+        </SbList>
       );
     };
 
