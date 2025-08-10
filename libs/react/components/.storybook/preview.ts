@@ -1,5 +1,5 @@
 import type { Decorator, Preview } from '@storybook/react';
-import { PageDecorator, decorateWith } from '../src/storybook';
+import { SbPage, decorateWith } from '../src/storybook';
 import './tailwind.css';
 
 const preview: Preview = {
@@ -12,7 +12,7 @@ const preview: Preview = {
       },
     },
   },
-  decorators: [decorateWith(PageDecorator)] as Decorator[],
+  decorators: [decorateWith(SbPage)] as Decorator[],
 };
 
 export default preview;

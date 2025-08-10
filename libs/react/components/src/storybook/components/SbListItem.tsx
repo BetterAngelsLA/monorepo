@@ -6,7 +6,7 @@ type TProps = {
   classname?: string;
 };
 
-export function ListItemDecorator(props: TProps) {
+export function SbListItem(props: TProps) {
   const { children, classname } = props;
 
   const parentCss = [classname];

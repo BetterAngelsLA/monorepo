@@ -1,10 +1,6 @@
 import { UsersIcon } from '@monorepo/react/icons';
 import type { Meta, StoryObj } from '@storybook/react';
-import {
-  ListDecorator,
-  disableControls,
-  withMemoryRouter,
-} from '../../storybook';
+import { SbList, disableControls, withMemoryRouter } from '../../storybook';
 import { SidebarLink } from './SidebarLink';
 
 const meta: Meta<typeof SidebarLink> = {
@@ -28,7 +24,7 @@ export const WithIcon: Story = {
     const baseArgs = { ...withIconArgs, ...args };
 
     return (
-      <ListDecorator classname="max-w-[400px] p-8 border-2 border-gray-100">
+      <SbList classname="max-w-[400px] p-8 border-2 border-gray-100">
         <SidebarLink {...baseArgs}>text</SidebarLink>
         <SidebarLink {...baseArgs} className="pseudo-hover">
           hover
@@ -36,7 +32,7 @@ export const WithIcon: Story = {
         <SidebarLink {...baseArgs} className="pseudo-active">
           active
         </SidebarLink>
-      </ListDecorator>
+      </SbList>
     );
   },
 };
