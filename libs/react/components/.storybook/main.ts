@@ -4,7 +4,8 @@ import * as path from 'path';
 
 const config: StorybookConfig = {
   stories: ['../src/lib/**/*.stories.@(ts|tsx)'],
-  addons: ['@storybook/addon-essentials'],
+  addons: ['@storybook/addon-essentials', 'storybook-addon-pseudo-states'],
+
   framework: {
     name: '@storybook/react-webpack5',
     options: {},

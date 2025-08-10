@@ -2,17 +2,20 @@ import { useState } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 
-import { UsersIcon } from '@monorepo/react/icons';
+import {
+  GroupsIcon,
+  HandHeartOutlineIcon,
+  UsersIcon,
+} from '@monorepo/react/icons';
 import type { Meta, StoryObj } from '@storybook/react';
 import { BetterAngelsLogoBadge } from '../BetterAngelsLogoBadge';
 
 function SidebarStoryWrapper() {
-  const [isOpen, setIsOpen] = useState(true); // open by default
+  const [isOpen, setIsOpen] = useState(true);
 
   const userOrganization = { name: 'Storybook Org' };
 
   return (
-    // <div className="border-2 border-gray-700 flex flex-row h-screen">
     <div className="border-4 border-gray-300 flex flex-row h-screen">
       <Sidebar className="h-screen" onOpenChange={setIsOpen}>
         <Sidebar.Header>
@@ -24,13 +27,13 @@ function SidebarStoryWrapper() {
 
         <Sidebar.Content>
           <Sidebar.Link
-            to="/users"
+            to="/dashboard"
             collapsed={!isOpen}
             icon={(color: string) => <UsersIcon className="w-4" fill={color} />}
           >
             Users
           </Sidebar.Link>
-          {/* <Sidebar.Link
+          <Sidebar.Link
             to="/teams"
             collapsed={!isOpen}
             icon={(color: string) => (
@@ -38,8 +41,8 @@ function SidebarStoryWrapper() {
             )}
           >
             Teams
-          </Sidebar.Link> */}
-          {/* <Sidebar.Link
+          </Sidebar.Link>
+          <Sidebar.Link
             to="/services"
             collapsed={!isOpen}
             icon={(color: string) => (
@@ -47,7 +50,7 @@ function SidebarStoryWrapper() {
             )}
           >
             Services
-          </Sidebar.Link> */}
+          </Sidebar.Link>
         </Sidebar.Content>
       </Sidebar>
     </div>
@@ -55,7 +58,7 @@ function SidebarStoryWrapper() {
 }
 
 const meta: Meta<typeof SidebarStoryWrapper> = {
-  title: 'Layout/AppSidebar',
+  title: 'Layout/Sidebar/Sidebar',
   component: SidebarStoryWrapper,
   decorators: [
     (Story) => (

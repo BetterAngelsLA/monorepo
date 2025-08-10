@@ -1,0 +1,25 @@
+import { PropsWithChildren } from 'react';
+import { mergeCss } from '../../utils';
+
+type TProps = PropsWithChildren<{
+  classname?: string;
+}>;
+
+export function PageDecorator(props: TProps) {
+  const { children, classname } = props;
+
+  const parentCss = [
+    'w-full',
+    'h-screen',
+    'p-8',
+    'bg-white',
+    'border-4',
+    'border-slate-50',
+    'flex',
+    'flex-col',
+    'gap-8',
+    classname,
+  ];
+
+  return <div className={mergeCss(parentCss)}>{children}</div>;
+}
