@@ -4,7 +4,7 @@ import { SbList, disableControls, withMemoryRouter } from '../../storybook';
 import { SidebarLink } from './SidebarLink';
 
 const meta: Meta<typeof SidebarLink> = {
-  title: 'Layout/Sidebar/SidebarLink',
+  title: 'Components/Sidebar/SidebarLink',
   component: SidebarLink,
   decorators: [withMemoryRouter('/')],
   argTypes: disableControls(['to', 'icon', 'className', 'children']),
