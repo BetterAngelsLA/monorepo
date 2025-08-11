@@ -97,6 +97,15 @@ class NoteFilter:
     is_submitted: auto
 
     @strawberry_django.filter_field
+    def authors(
+        self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str
+    ) -> Tuple[QuerySet[models.Note], Q]:
+        if not value:
+            return queryset, Q()
+
+        return queryset.filter(created_by__in=value), Q()
+
+    @strawberry_django.filter_field
     def organizations(
         self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str
     ) -> Tuple[QuerySet[models.Note], Q]:
@@ -106,13 +115,13 @@ class NoteFilter:
         return queryset.filter(organization__in=value), Q()
 
     @strawberry_django.filter_field
-    def authors(
-        self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str
+    def teams(
+        self, queryset: QuerySet, value: Optional[List[SelahTeamEnum]], prefix: str
     ) -> Tuple[QuerySet[models.Note], Q]:
         if not value:
             return queryset, Q()
 
-        return queryset.filter(created_by__in=value), Q()
+        return queryset.filter(team__in=value), Q()
 
     @strawberry_django.filter_field
     def search(
@@ -137,15 +146,6 @@ class NoteFilter:
             queryset.filter(query),
             Q(),
         )
-
-    @strawberry_django.filter_field
-    def teams(
-        self, queryset: QuerySet, value: Optional[List[SelahTeamEnum]], prefix: str
-    ) -> Tuple[QuerySet[models.Note], Q]:
-        if not value:
-            return queryset, Q()
-
-        return queryset.filter(team__in=value), Q()
 
 
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]

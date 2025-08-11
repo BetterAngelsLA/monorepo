@@ -992,10 +992,10 @@ input NoteFilter {
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
-  organizations: [ID!]
   authors: [ID!]
-  search: String
+  organizations: [ID!]
   teams: [SelahTeamEnum!]
+  search: String
 }
 
 type NoteImportRecordType {
