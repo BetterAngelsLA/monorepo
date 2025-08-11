@@ -1,6 +1,5 @@
 import { ReactNode, RefObject } from 'react';
 import { Marker } from 'react-native-maps';
-import { CustomMarker } from '../mapUi/CustomMarker';
 import { TMapView } from '../types';
 import {
   ClusterOrPoint,
@@ -51,16 +50,15 @@ export function MapClusters<P extends IClusterGeoJson>(props: TProps<P>) {
           const { geometry, properties } = point;
           const [longitude, latitude] = geometry.coordinates;
           const { id } = properties;
-
           return (
-            <CustomMarker
-              label={properties['lastSeen'] && 'Last Seen'}
-              renderIcon={() => pointRenderer(point)}
+            <Marker
+              tracksViewChanges={false}
               key={`point-${id}`}
               coordinate={{ latitude, longitude }}
-              tracksViewChanges={false}
               onPress={() => onPointPress?.(point)}
-            />
+            >
+              {pointRenderer(point)}
+            </Marker>
           );
         }
       })}

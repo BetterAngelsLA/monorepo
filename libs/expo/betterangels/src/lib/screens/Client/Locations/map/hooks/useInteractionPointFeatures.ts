@@ -24,7 +24,8 @@ export function useInteractionPointFeatures(clientProfileId: string) {
         latitude: i.location!.point[1],
         longitude: i.location!.point[0],
         interactedAt: new Date(i.interactedAt),
-        lastSeen: index === 0,
+        // mostRecent prop is dependent on interactions NotesQuery sort order
+        mostRecent: index === 0,
       })
     );
   }, [interactions]);

@@ -50,6 +50,12 @@ export class MapClusterManager<P extends IClusterGeoJson> {
       maxZoom,
       extent,
       nodeSize,
+      map: (feature) => ({
+        mostRecent: feature.mostRecent,
+      }),
+      reduce: (acc, props) => {
+        acc.mostRecent = acc.mostRecent || props.mostRecent;
+      },
     });
   }
 
@@ -87,6 +93,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
         properties: {
           ...cluster.properties,
           _identityHash: generateClusterHash(cluster),
+          mostRecent: cluster.properties.mostRecent,
         },
       };
 
