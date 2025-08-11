@@ -1,18 +1,3 @@
-/** Global Alert component
- *
- * #### Usage ####
- *
- * 1. include <Alert /> in App layout
- * 2. Use `showAlert` from `useAlert` hook:
- *
- *   const { showAlert } = useAlert();
- *
- *   showAlert({
- *      content: 'Hello message',
- *      type: 'success',
- *    });
- * */
-
 import type { Meta, StoryObj } from '@storybook/react';
 import { SbButton, SbList } from '../../storybook';
 import { Alert } from './Alert';
@@ -21,6 +6,7 @@ import { useAlert } from './state/useAlert';
 const meta: Meta = {
   title: 'Components/Alert',
 };
+
 export default meta;
 
 type Story = StoryObj;

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { MemoryRouter } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 
 import {
@@ -8,6 +7,7 @@ import {
   UsersIcon,
 } from '@monorepo/react/icons';
 import type { Meta, StoryObj } from '@storybook/react';
+import { withMemoryRouter } from '../../storybook';
 import { BetterAngelsLogoBadge } from '../BetterAngelsLogoBadge';
 
 function SidebarStoryWrapper() {
@@ -60,13 +60,7 @@ function SidebarStoryWrapper() {
 const meta: Meta<typeof SidebarStoryWrapper> = {
   title: 'Layout/Sidebar/Sidebar',
   component: SidebarStoryWrapper,
-  decorators: [
-    (Story) => (
-      <MemoryRouter>
-        <Story />
-      </MemoryRouter>
-    ),
-  ],
+  decorators: [withMemoryRouter('/')],
 };
 
 export default meta;
