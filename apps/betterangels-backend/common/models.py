@@ -23,7 +23,7 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class Attachment(BaseModel):  # type: ignore[django-manager-missing]
+class Attachment(BaseModel):
     """
     Represents an attachment linked to any model instance within the app.
     Attachments are organized by namespaces to allow for application-specific
