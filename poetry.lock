@@ -3804,14 +3804,14 @@ files = [
 
 [[package]]
 name = "types-gevent"
-version = "25.4.0.20250801"
+version = "25.4.0.20250809"
 description = "Typing stubs for gevent"
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "types_gevent-25.4.0.20250801-py3-none-any.whl", hash = "sha256:442730a879434c35a2fb497c337124f7b0386ff8b18089a621192870eb7bd787"},
-    {file = "types_gevent-25.4.0.20250801.tar.gz", hash = "sha256:c4aaad6c9e58e8d953e6cea41cb59a9697b9005dd0bfddcdec1af9c42e838476"},
+    {file = "types_gevent-25.4.0.20250809-py3-none-any.whl", hash = "sha256:2b8a06ca191016df02495ed6c2d337fd2dd8fe154d9785882eedd9ef075fe253"},
+    {file = "types_gevent-25.4.0.20250809.tar.gz", hash = "sha256:509eb9586ec446acb9ee539a7872e26df8d4db7e46ec3c75ebf88d13862605c5"},
 ]
 
 [package.dependencies]
@@ -4357,4 +4357,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "3.13.5"
-content-hash = "75cfbe061f817a5f1dc87face0b43c31545c91bbae5f747980dc6dfac89d61dd"
+content-hash = "2269d96ad34b683db13c14a10e0ab46d351b2df700f98ac1cb991887c237283a"
