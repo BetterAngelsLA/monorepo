@@ -1,14 +1,29 @@
 import re
 from datetime import datetime
-from typing import NewType, Optional
+from typing import Any, NewType, Optional
 
 import strawberry
 import strawberry_django
 from common.constants import PHONE_NUMBER_REGEX
 from common.models import Address, Attachment, Location, PhoneNumber
+from django.db.models import Q
 from phonenumber_field.modelfields import PhoneNumber as DjangoPhoneNumber
 from phonenumber_field.phonenumber import PhoneNumber as DjangoPhoneNumberUtil
-from strawberry import ID, auto
+from strawberry import ID, Info, auto
+from strawberry.types.field import StrawberryField
+
+
+def make_in_filter(field_name: str, value_type: Any) -> StrawberryField:
+    @strawberry_django.filter_field
+    def _filter(info: Info, value: Optional[list[value_type]], prefix: str) -> Q:
+        if not value:
+            return Q()
+
+        normalized_value = [value_type[v.name] if not isinstance(v, str) else v for v in value]
+
+        return Q(**{f"{prefix}{field_name}__in": normalized_value})
+
+    return _filter
 
 
 def _parse_latitude(v: float) -> float:
