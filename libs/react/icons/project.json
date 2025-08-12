@@ -5,5 +5,21 @@
   "projectType": "library",
   "tags": [],
   "// targets": "to see all targets run: nx show project react-icons --web",
-  "targets": {}
+  "targets": {
+    "storybook": {
+      "executor": "@nx/storybook:storybook",
+      "options": {
+        "configDir": "libs/react/icons/.storybook",
+        "port": 4400
+      }
+    },
+    "build-storybook": {
+      "executor": "@nx/storybook:build",
+      "outputs": ["{options.outputDir}"],
+      "options": {
+        "configDir": "libs/react/icons/.storybook",
+        "outputDir": "dist/storybook/react-icons"
+      }
+    }
+  }
 }
