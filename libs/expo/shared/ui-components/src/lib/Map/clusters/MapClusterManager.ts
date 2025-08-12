@@ -54,7 +54,7 @@ export class MapClusterManager<P extends IClusterGeoJson> {
         mostRecent: feature.mostRecent,
       }),
       reduce: (acc, props) => {
-        acc.mostRecent = acc.mostRecent || props.mostRecent;
+        acc.mostRecent = acc.mostRecent || props['mostRecent'];
       },
     });
   }
