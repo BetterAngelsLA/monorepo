@@ -139,9 +139,9 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(response["data"]["notes"]["totalCount"], 1)
         self.assertEqual(response["data"]["notes"]["pageInfo"], {"limit": 10, "offset": 0})
 
-        # TODO: Add more validations once sort is implemented
+        notes = response["data"]["notes"]["results"]
         note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
-        self.assertFalse(response["data"]["notes"]["results"])
+        self.assertFalse(note_differences)
 
     @parametrize(
         ("authors, expected_results_count, expected_note_labels"),

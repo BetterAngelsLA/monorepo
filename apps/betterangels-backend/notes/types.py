@@ -7,7 +7,12 @@ from accounts.models import User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
-from common.graphql.types import LocationInput, LocationType, NonBlankString
+from common.graphql.types import (
+    LocationInput,
+    LocationType,
+    NonBlankString,
+    make_in_filter,
+)
 from django.db.models import (
     BooleanField,
     Case,
@@ -96,26 +101,9 @@ class NoteFilter:
     created_by: ID | None
     is_submitted: auto
 
-    @strawberry_django.filter_field
-    def authors(self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str) -> Q:
-        if not value:
-            return Q()
-
-        return Q(created_by__in=value)
-
-    @strawberry_django.filter_field
-    def organizations(self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str) -> Q:
-        if not value:
-            return Q()
-
-        return Q(organization__in=value)
-
-    @strawberry_django.filter_field
-    def teams(self, queryset: QuerySet, value: Optional[List[SelahTeamEnum]], prefix: str) -> Q:
-        if not value:
-            return Q()
-
-        return Q(team__in=value)
+    authors = make_in_filter("created_by", ID)
+    organizations = make_in_filter("organization", ID)
+    teams = make_in_filter("team", SelahTeamEnum)
 
     @strawberry_django.filter_field
     def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Q:
