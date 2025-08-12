@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 import strawberry
 import strawberry_django
@@ -97,38 +97,30 @@ class NoteFilter:
     is_submitted: auto
 
     @strawberry_django.filter_field
-    def authors(
-        self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str
-    ) -> Tuple[QuerySet[models.Note], Q]:
+    def authors(self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str) -> Q:
         if not value:
-            return queryset, Q()
+            return Q()
 
-        return queryset.filter(created_by__in=value), Q()
+        return Q(created_by__in=value)
 
     @strawberry_django.filter_field
-    def organizations(
-        self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str
-    ) -> Tuple[QuerySet[models.Note], Q]:
+    def organizations(self, queryset: QuerySet, info: Info, value: Optional[List[ID]], prefix: str) -> Q:
         if not value:
-            return queryset, Q()
+            return Q()
 
-        return queryset.filter(organization__in=value), Q()
+        return Q(organization__in=value)
 
     @strawberry_django.filter_field
-    def teams(
-        self, queryset: QuerySet, value: Optional[List[SelahTeamEnum]], prefix: str
-    ) -> Tuple[QuerySet[models.Note], Q]:
+    def teams(self, queryset: QuerySet, value: Optional[List[SelahTeamEnum]], prefix: str) -> Q:
         if not value:
-            return queryset, Q()
+            return Q()
 
-        return queryset.filter(team__in=value), Q()
+        return Q(team__in=value)
 
     @strawberry_django.filter_field
-    def search(
-        self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str
-    ) -> Tuple[QuerySet[models.Note], Q]:
+    def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Q:
         if value is None:
-            return queryset, Q()
+            return Q()
 
         search_terms = value.split()
         query = Q()
@@ -142,10 +134,7 @@ class NoteFilter:
 
             query &= q_search
 
-        return (
-            queryset.filter(query),
-            Q(),
-        )
+        return Q(query)
 
 
 @strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
@@ -246,9 +235,9 @@ class RevertNoteInput:
 @strawberry_django.filters.filter(User)
 class InteractionAuthorFilter:
     @strawberry_django.filter_field
-    def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Tuple[QuerySet[User], Q]:
+    def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Q:
         if value is None:
-            return queryset, Q()
+            return Q()
 
         search_terms = value.split()
         query = Q()
@@ -258,10 +247,7 @@ class InteractionAuthorFilter:
 
             query &= q_search
 
-        return (
-            queryset.filter(query),
-            Q(),
-        )
+        return Q(query)
 
 
 @strawberry_django.ordering.order(User)
