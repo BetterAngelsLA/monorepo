@@ -9,7 +9,23 @@ export enum ClientViewTabEnum {
   Docs = 'Docs',
   Interactions = 'Interactions',
   Locations = 'Locations',
+  Tasks = 'Tasks',
 }
+
+const orderedTabs: ClientViewTabEnum[] = [
+  ClientViewTabEnum.Profile,
+  ClientViewTabEnum.Docs,
+  ClientViewTabEnum.Interactions,
+  ClientViewTabEnum.Locations,
+];
+
+const orderedTabsWithTasks: ClientViewTabEnum[] = [
+  ClientViewTabEnum.Profile,
+  ClientViewTabEnum.Interactions,
+  ClientViewTabEnum.Tasks,
+  ClientViewTabEnum.Docs,
+  ClientViewTabEnum.Locations,
+];
 
 interface IClientTabsProps {
   selectedTab: ClientViewTabEnum;
@@ -19,15 +35,9 @@ interface IClientTabsProps {
 export default function ClientTabs(props: IClientTabsProps) {
   const { selectedTab, setTab } = props;
 
-  const clientLocationHistoryFeatureOn = useFeatureFlagActive(
-    FeatureFlags.LOCATION_HISTORY_FF
-  );
+  const tasksFeatureOn = useFeatureFlagActive(FeatureFlags.TASKS_FF);
 
-  let visibleTabs = Object.values(ClientViewTabEnum);
-
-  if (!clientLocationHistoryFeatureOn) {
-    visibleTabs = visibleTabs.filter((t) => t !== ClientViewTabEnum.Locations);
-  }
+  const visibleTabs = tasksFeatureOn ? orderedTabsWithTasks : orderedTabs;
 
   return (
     <View style={styles.container}>
