@@ -93,7 +93,6 @@ export class MapClusterManager<P extends IClusterGeoJson> {
         properties: {
           ...cluster.properties,
           _identityHash: generateClusterHash(cluster),
-          mostRecent: cluster.properties.mostRecent,
         },
       };
 
