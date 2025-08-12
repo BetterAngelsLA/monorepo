@@ -487,8 +487,6 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
         self.assertEqual(service_requests[0], self.service_request)
 
 
-@ignore_warnings(category=UserWarning)
-@time_machine.travel("2024-03-11T10:11:12+00:00", tick=False)
 class InteractionAuthorQueryTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()

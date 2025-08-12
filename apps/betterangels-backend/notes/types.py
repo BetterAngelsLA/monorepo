@@ -89,7 +89,7 @@ class CreateNoteMoodInput:
     note_id: ID
 
 
-@strawberry_django.ordering.order(models.Note)
+@strawberry_django.order_type(models.Note, one_of=False)
 class NoteOrder:
     id: auto
     interacted_at: auto
@@ -125,7 +125,13 @@ class NoteFilter:
         return Q(query)
 
 
-@strawberry_django.type(models.Note, pagination=True, filters=NoteFilter, order=NoteOrder)  # type: ignore[literal-required]
+@strawberry_django.type(
+    models.Note,
+    pagination=True,
+    filters=NoteFilter,
+    order=NoteOrder,  # type: ignore[literal-required]
+    ordering=NoteOrder,
+)
 class NoteType:
     id: ID
     client_profile: Optional[ClientProfileType]
@@ -238,7 +244,7 @@ class InteractionAuthorFilter:
         return Q(query)
 
 
-@strawberry_django.ordering.order(User)
+@strawberry_django.order_type(User, one_of=False)
 class InteractionAuthorOrder:
     first_name: auto
     last_name: auto
