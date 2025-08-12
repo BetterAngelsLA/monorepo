@@ -18,7 +18,7 @@ export const AppDrawerDemo: Story = {
       const { showDrawer } = useAppDrawer();
 
       return (
-        <SbList>
+        <SbList className="min-h-[300px] justify-end">
           <SbButton
             className="bg-purple-400"
             onClick={() => showDrawer({ content: 'hello content' })}

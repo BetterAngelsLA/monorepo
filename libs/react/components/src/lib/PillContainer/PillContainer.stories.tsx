@@ -24,7 +24,7 @@ const defaultArgs: TStoryProps = {
     'Etc Pill6',
   ],
   type: 'success',
-  maxVisible: 5,
+  maxVisible: 3,
 };
 
 export const PillContainer: Story = {
@@ -32,7 +32,7 @@ export const PillContainer: Story = {
     const baseArgs = { ...defaultArgs, ...args };
 
     return (
-      <SbList variant="bordered">
+      <SbList variant="bordered" className="w-[400px]">
         <StoryComponent {...baseArgs} />
       </SbList>
     );

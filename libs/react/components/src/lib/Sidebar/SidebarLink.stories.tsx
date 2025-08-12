@@ -24,7 +24,7 @@ export const WithIcon: Story = {
     const baseArgs = { ...withIconArgs, ...args };
 
     return (
-      <SbList className="max-w-[400px] p-8 border-2 border-gray-100">
+      <SbList className="w-[400px] p-8 border-2 border-gray-100">
         <SidebarLink {...baseArgs}>text</SidebarLink>
         <SidebarLink {...baseArgs} className="pseudo-hover">
           hover

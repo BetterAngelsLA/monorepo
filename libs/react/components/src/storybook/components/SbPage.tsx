@@ -10,16 +10,13 @@ export function SbPage(props: TProps) {
 
   const parentCss = [
     'w-full',
-    // 'h-screen',
     'h-full',
     'p-8',
     'bg-white',
-    'border-4',
-    'border-slate-50',
-    'flex-1',
-    'flex-col',
+    'flex',
     'grow',
     'gap-8',
+    'justify-center',
     className,
   ];
 

@@ -29,6 +29,6 @@ export const CheckboxGroup: Story = {
       onChange: setSelected,
     };
 
-    return <StoryComponent {...baseArgs} className="max-w-80" />;
+    return <StoryComponent {...baseArgs} className="w-80" />;
   },
 };
