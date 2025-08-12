@@ -1,0 +1,10 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "",
+    "types": ["node", "jest"],
+    "jsx": "react-jsx"
+  },
+  "include": ["./**/*", "../../**/*.ts", "../../**/*.tsx"],
+  "exclude": ["../**/*.spec.ts", "../**/*.test.ts"]
+}
