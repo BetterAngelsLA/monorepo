@@ -1,25 +1,18 @@
-import { LocationPinIcon } from '@monorepo/expo/shared/icons';
-import {
-  Colors,
-  Radiuses,
-  Shadow,
-  Spacings,
-} from '@monorepo/expo/shared/static';
 import {
   IMapClusterManager,
   LoadingView,
+  LocationMarker,
   MapClusterMarker,
   MapClusters,
   MapViewport,
   TClusterPoint,
   TMapView,
-  TextBold,
   panMap,
   regionDeltaMap,
   useClusters,
 } from '@monorepo/expo/shared/ui-components';
 import { useCallback, useMemo, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { useSnackbar } from '../../../../hooks';
 import { useClientInteractionsMapState } from '../../../../state';
@@ -75,29 +68,10 @@ export function InteractionsMap(props: TProps) {
   const renderClusterIconFn = useMemo(
     () => (cluster: TClusterPoint) =>
       (
-        <View style={{ alignItems: 'center' }}>
-          {cluster.properties.mostRecent && (
-            <View
-              style={{
-                paddingHorizontal: Spacings.sm,
-                paddingTop: Spacings.xs,
-                paddingBottom: Spacings.xxs,
-              }}
-            >
-              <View
-                style={{
-                  paddingHorizontal: Spacings.xs,
-                  backgroundColor: Colors.WHITE,
-                  borderRadius: Radiuses.xxxl,
-                  ...Shadow,
-                }}
-              >
-                <TextBold size="sm">Last Seen</TextBold>
-              </View>
-            </View>
-          )}
-          <MapClusterMarker itemCount={cluster.properties.point_count} />
-        </View>
+        <MapClusterMarker
+          label={cluster.properties['mostRecent'] ? 'Last Seen' : undefined}
+          itemCount={cluster.properties.point_count}
+        />
       ),
 
     []
@@ -105,29 +79,9 @@ export function InteractionsMap(props: TProps) {
 
   const renderPointWithLabel = useCallback(
     (point: { properties: { mostRecent: boolean } }) => (
-      <View style={{ alignItems: 'center' }}>
-        {point.properties.mostRecent && (
-          <View
-            style={{
-              paddingHorizontal: Spacings.sm,
-              paddingTop: Spacings.xs,
-              paddingBottom: Spacings.xxs,
-            }}
-          >
-            <View
-              style={{
-                paddingHorizontal: Spacings.xs,
-                backgroundColor: Colors.WHITE,
-                borderRadius: Radiuses.xxxl,
-                ...Shadow,
-              }}
-            >
-              <TextBold size="sm">Last Seen</TextBold>
-            </View>
-          </View>
-        )}
-        <LocationPinIcon width={25} height={36} />
-      </View>
+      <LocationMarker
+        label={point.properties.mostRecent ? 'Last Seen' : undefined}
+      />
     ),
     []
   );

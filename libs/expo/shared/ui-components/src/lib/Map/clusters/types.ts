@@ -34,7 +34,7 @@ export type IClusterGeoJson = GeoJsonProperties & TPropertiesBase;
 
 // Leaf/individual point inside a cluster
 export type TClusterLeafPoint<P extends IClusterGeoJson> = PointFeature<P> & {
-  properties: P & { cluster?: false; mostRecent: boolean };
+  properties: P & { cluster?: false };
 };
 
 // Cluster feature returned by Supercluster
@@ -45,7 +45,6 @@ export type TClusterPoint<P extends IClusterGeoJson = IClusterGeoJson> =
       cluster: true;
       cluster_id: number;
       point_count: number;
-      mostRecent: boolean;
 
       // present on clusters that cannot expand further
       maxZoomLeaves?: TClusterLeafPoint<P>[];
