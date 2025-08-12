@@ -5,13 +5,14 @@ import {
   MapClusterMarker,
   MapClusters,
   MapViewport,
+  TClusterLeafPoint,
   TClusterPoint,
   TMapView,
   panMap,
   regionDeltaMap,
   useClusters,
 } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { useSnackbar } from '../../../../hooks';
@@ -20,6 +21,8 @@ import { EmptyState } from '../EmptyState';
 import { useInteractionPointFeatures } from './hooks/useInteractionPointFeatures';
 import { useInteractionsMapRegion } from './hooks/useInteractionsMapRegion';
 import { TClusterInteraction } from './types';
+
+const LAST_SEEN_LABEL = 'Last Seen';
 
 const interactionsClusterOptions: IMapClusterManager = {
   radius: 50,
@@ -39,6 +42,7 @@ type TProps = {
 export function InteractionsMap(props: TProps) {
   const { clientProfileId } = props;
 
+  const mostRecentInteractionIdRef = useRef<string>('');
   const mapRef = useRef<TMapView | null>(null);
   const { showSnackbar } = useSnackbar();
   const [_mapState, setMapState] = useClientInteractionsMapState();
@@ -54,6 +58,17 @@ export function InteractionsMap(props: TProps) {
       opts: interactionsClusterOptions,
     });
 
+  // save most recent Interaction ID
+  useEffect(() => {
+    if (!interactions?.length) {
+      mostRecentInteractionIdRef.current = '';
+
+      return;
+    }
+
+    mostRecentInteractionIdRef.current = interactions[0].id;
+  }, [interactions]);
+
   const mapRegion = useInteractionsMapRegion({
     interaction: interactions?.[0],
     delta: regionDeltaMap.M,
@@ -65,24 +80,29 @@ export function InteractionsMap(props: TProps) {
     setMapState((prev) => ({ ...prev, region }));
   }
 
-  const renderClusterIconFn = useMemo(
-    () => (cluster: TClusterPoint) =>
-      (
-        <MapClusterMarker
-          label={cluster.properties['mostRecent'] ? 'Last Seen' : undefined}
-          itemCount={cluster.properties.point_count}
-        />
-      ),
+  const renderClusterIconFn = useCallback((cluster: TClusterPoint) => {
+    const leafIds = cluster.properties.leafIds || [];
+    const hasMostRecent =
+      !!mostRecentInteractionIdRef.current &&
+      leafIds.some((id) => String(id) === mostRecentInteractionIdRef.current);
 
-    []
-  );
+    return (
+      <MapClusterMarker
+        label={hasMostRecent ? LAST_SEEN_LABEL : undefined}
+        itemCount={cluster.properties.point_count}
+      />
+    );
+  }, []);
 
   const renderPointWithLabel = useCallback(
-    (point: { properties: { mostRecent: boolean } }) => (
-      <LocationMarker
-        label={point.properties.mostRecent ? 'Last Seen' : undefined}
-      />
-    ),
+    (point: TClusterLeafPoint<TClusterInteraction>) => {
+      const isMostRecent =
+        String(point.properties.id) === mostRecentInteractionIdRef.current;
+
+      return (
+        <LocationMarker label={isMostRecent ? LAST_SEEN_LABEL : undefined} />
+      );
+    },
     []
   );
 

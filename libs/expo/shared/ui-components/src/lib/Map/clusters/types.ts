@@ -48,6 +48,7 @@ export type TClusterPoint<P extends IClusterGeoJson = IClusterGeoJson> =
 
       // present on clusters that cannot expand further
       maxZoomLeaves?: TClusterLeafPoint<P>[];
+      leafIds?: string[];
     };
   };
 

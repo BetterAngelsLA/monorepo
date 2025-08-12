@@ -51,10 +51,10 @@ export class MapClusterManager<P extends IClusterGeoJson> {
       extent,
       nodeSize,
       map: (feature) => ({
-        mostRecent: feature['mostRecent'],
+        leafIds: [feature.id],
       }),
       reduce: (acc, props) => {
-        acc['mostRecent'] = acc['mostRecent'] || props['mostRecent'];
+        acc.leafIds.push(...props.leafIds);
       },
     });
   }
