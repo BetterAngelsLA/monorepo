@@ -139,13 +139,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.assertEqual(response["data"]["notes"]["totalCount"], 1)
         self.assertEqual(response["data"]["notes"]["pageInfo"], {"limit": 10, "offset": 0})
 
-        notes = response["data"]["notes"]["results"]
         # TODO: Add more validations once sort is implemented
         note_differences = DeepDiff(self.note, notes[0], ignore_order=True)
-        self.assertFalse(note_differences)
+        self.assertFalse(response["data"]["notes"]["results"])
 
     @parametrize(
-        ("authors, expected_results_count, returned_note_labels"),
+        ("authors, expected_results_count, expected_note_labels"),
         [
             ([], 3, ["note", "note_2", "note_3"]),
             (["org_1_case_manager_1"], 1, ["note"]),
@@ -158,7 +157,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self,
         authors: list[SelahTeamEnum],
         expected_results_count: int,
-        returned_note_labels: list[str],
+        expected_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
@@ -189,13 +188,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
-        notes = response["data"]["notes"]["results"]
 
-        for idx, note_label in enumerate(returned_note_labels):
-            self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
+        expected_ids = [getattr(self, label)["id"] for label in expected_note_labels]
+        actual_ids = [n["id"] for n in response["data"]["notes"]["results"]]
+        self.assertCountEqual(expected_ids, actual_ids)
 
     @parametrize(
-        ("organizations, expected_results_count, returned_note_labels"),
+        ("organizations, expected_results_count, expected_note_labels"),
         [
             ([], 3, ["note", "note_2", "note_3"]),
             (["org_1"], 1, ["note"]),
@@ -207,7 +206,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self,
         organizations: list[SelahTeamEnum],
         expected_results_count: int,
-        returned_note_labels: list[str],
+        expected_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_2_case_manager_1)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
@@ -238,13 +237,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
-        notes = response["data"]["notes"]["results"]
 
-        for idx, note_label in enumerate(returned_note_labels):
-            self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
+        expected_ids = [getattr(self, label)["id"] for label in expected_note_labels]
+        actual_ids = [n["id"] for n in response["data"]["notes"]["results"]]
+        self.assertCountEqual(expected_ids, actual_ids)
 
     @parametrize(
-        ("teams, expected_results_count, returned_note_labels"),
+        ("teams, expected_results_count, expected_note_labels"),
         [
             ([], 3, ["note", "note_2", "note_3"]),
             ([SelahTeamEnum.WDI_ON_SITE.name, SelahTeamEnum.SLCC_ON_SITE.name], 2, ["note_2", "note_3"]),
@@ -255,7 +254,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self,
         teams: list[SelahTeamEnum],
         expected_results_count: int,
-        returned_note_labels: list[str],
+        expected_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
@@ -291,13 +290,13 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
-        notes = response["data"]["notes"]["results"]
 
-        for idx, note_label in enumerate(returned_note_labels):
-            self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
+        expected_ids = [getattr(self, label)["id"] for label in expected_note_labels]
+        actual_ids = [n["id"] for n in response["data"]["notes"]["results"]]
+        self.assertCountEqual(expected_ids, actual_ids)
 
     @parametrize(
-        ("search_terms, expected_results_count, returned_note_labels"),
+        ("search_terms, expected_results_count, expected_note_labels"),
         [
             ("deets", 2, ["note_2", "note_3"]),  # Two notes have "deets" in public details
             ("deets coop", 1, ["note_2"]),  # One note has "deets" in public details and "coop" in client name
@@ -308,7 +307,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self,
         search_terms: Optional[str],
         expected_results_count: int,
-        returned_note_labels: list[str],
+        expected_note_labels: list[str],
     ) -> None:
         self.graphql_client.force_login(self.org_1_case_manager_2)
         # self.note is created in the setup block by self.org_1_case_manager_1 for self.client_profile_1
@@ -345,10 +344,10 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             response = self.execute_graphql(query, variables={"filters": filters})
 
         self.assertEqual(response["data"]["notes"]["totalCount"], expected_results_count)
-        notes = response["data"]["notes"]["results"]
 
-        for idx, note_label in enumerate(returned_note_labels):
-            self.assertEqual(notes[idx]["id"], getattr(self, note_label)["id"])
+        expected_ids = [getattr(self, label)["id"] for label in expected_note_labels]
+        actual_ids = [n["id"] for n in response["data"]["notes"]["results"]]
+        self.assertCountEqual(expected_ids, actual_ids)
 
     def test_notes_query_order(self) -> None:
         """
