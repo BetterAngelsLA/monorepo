@@ -1,4 +1,5 @@
-import type { Preview } from '@storybook/react';
+import type { Decorator, Preview } from '@storybook/react';
+import { SbPage, decorateWith } from '../src/storybook';
 import './tailwind.css';
 
 const preview: Preview = {
@@ -12,7 +13,7 @@ const preview: Preview = {
     },
   },
   tags: ['autodocs'],
-  // decorators: [decorateWith(SbPage)] as Decorator[],
+  decorators: [decorateWith(SbPage)] as Decorator[],
 };
 
 export default preview;

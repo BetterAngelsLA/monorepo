@@ -29,6 +29,6 @@ export const Checkbox: Story = {
       onChange: setChecked,
     };
 
-    return <StoryComponent {...baseArgs} />;
+    return <StoryComponent {...baseArgs} className="w-[300px]" />;
   },
 };

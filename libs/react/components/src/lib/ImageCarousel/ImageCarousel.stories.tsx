@@ -25,6 +25,6 @@ export const ImageCarousel: Story = {
       ...args,
     };
 
-    return <StoryComponent {...baseArgs} />;
+    return <StoryComponent {...baseArgs} className="h-80" />;
   },
 };

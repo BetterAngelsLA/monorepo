@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { SbButton, SbList } from '../../storybook';
+import { SbButton } from '../../storybook';
 import { Alert } from './Alert';
 import { useAlert } from './state/useAlert';
 
@@ -17,7 +17,7 @@ export const AlertDemo: Story = {
       const { showAlert } = useAlert();
 
       return (
-        <SbList>
+        <>
           <SbButton
             className="bg-green-400"
             onClick={() =>
@@ -34,7 +34,7 @@ export const AlertDemo: Story = {
           >
             Show Error
           </SbButton>
-        </SbList>
+        </>
       );
     };
 

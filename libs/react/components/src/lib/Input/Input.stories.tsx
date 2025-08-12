@@ -19,7 +19,7 @@ export const Input: Story = {
     const baseArgs = { ...defaultArgs, ...args };
 
     return (
-      <SbList className="max-w-[400px] p-8 border-2 border-gray-100">
+      <SbList className="w-[400px] p-8 border-2 border-gray-100">
         <StoryComponent {...baseArgs} />
       </SbList>
     );
