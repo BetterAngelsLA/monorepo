@@ -4,9 +4,9 @@ export const GET_NOTES = gql`
   query Notes(
     $filters: NoteFilter
     $pagination: OffsetPaginationInput
-    $order: NoteOrder
+    $ordering: [NoteOrder!]! = []
   ) {
-    notes(filters: $filters, pagination: $pagination, order: $order) {
+    notes(filters: $filters, pagination: $pagination, ordering: $ordering) {
       totalCount
       pageInfo {
         limit

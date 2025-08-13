@@ -6,7 +6,7 @@ const defaultOptions = {} as const;
 export type NotesQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.NoteFilter>;
   pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
-  order?: Types.InputMaybe<Types.NoteOrder>;
+  ordering?: Array<Types.NoteOrder> | Types.NoteOrder;
 }>;
 
 
@@ -21,8 +21,8 @@ export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteTy
 
 
 export const NotesDocument = gql`
-    query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput, $order: NoteOrder) {
-  notes(filters: $filters, pagination: $pagination, order: $order) {
+    query Notes($filters: NoteFilter, $pagination: OffsetPaginationInput, $ordering: [NoteOrder!]! = []) {
+  notes(filters: $filters, pagination: $pagination, ordering: $ordering) {
     totalCount
     pageInfo {
       limit
@@ -104,7 +104,7 @@ export const NotesDocument = gql`
  *   variables: {
  *      filters: // value for 'filters'
  *      pagination: // value for 'pagination'
- *      order: // value for 'order'
+ *      ordering: // value for 'ordering'
  *   },
  * });
  */
