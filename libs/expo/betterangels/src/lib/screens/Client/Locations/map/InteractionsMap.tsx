@@ -30,6 +30,12 @@ const interactionsClusterOptions: IMapClusterManager = {
       padding: { top: 50, bottom: 50, left: 50, right: 50 },
     },
   ],
+  map: (feature) => ({
+    mostRecent: feature['mostRecent'],
+  }),
+  reduce: (acc, props) => {
+    acc['mostRecent'] = acc['mostRecent'] || props['mostRecent'];
+  },
 };
 
 type TProps = {

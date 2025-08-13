@@ -5,6 +5,7 @@ import {
   Shadow,
   Spacings,
 } from '@monorepo/expo/shared/static';
+import { memo } from 'react';
 import { View } from 'react-native';
 import TextBold from '../../TextBold';
 
@@ -12,7 +13,7 @@ export interface ILocationMarkerProps {
   label?: string;
 }
 
-export function LocationMarker(props: ILocationMarkerProps) {
+function CustomLocationMarker(props: ILocationMarkerProps) {
   const { label } = props;
 
   return (
@@ -41,3 +42,5 @@ export function LocationMarker(props: ILocationMarkerProps) {
     </View>
   );
 }
+
+export const LocationMarker = memo(CustomLocationMarker);
