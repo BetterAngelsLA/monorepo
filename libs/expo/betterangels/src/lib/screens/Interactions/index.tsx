@@ -44,7 +44,7 @@ export default function Interactions() {
   const { data, loading, error, refetch } = useNotesQuery({
     variables: {
       pagination: { limit: paginationLimit, offset: offset },
-      order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
+      ordering: [{ interactedAt: Ordering.Desc }, { id: Ordering.Desc }],
       filters: {
         authors: filters.authors.length
           ? filters.authors.map((item) => item.id)
