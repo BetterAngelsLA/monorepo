@@ -5035,7 +5035,7 @@ __metadata:
     libphonenumber-js: "npm:^1.12.6"
     metro: "npm:^0.82.0"
     metro-react-native-babel-transformer: "npm:^0.77.0"
-    newrelic-react-native-agent: "npm:^1.5.3"
+    newrelic-react-native-agent: "npm:^1.5.7"
     nx: "npm:21.1.3"
     nx-cloud: "npm:19.1.0"
     postcss: "npm:8.4.38"
@@ -20050,9 +20050,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"newrelic-react-native-agent@npm:^1.5.3":
-  version: 1.5.6
-  resolution: "newrelic-react-native-agent@npm:1.5.6"
+"newrelic-react-native-agent@npm:^1.5.7":
+  version: 1.5.7
+  resolution: "newrelic-react-native-agent@npm:1.5.7"
   dependencies:
     "@expo/config-plugins": "npm:^9.0.0"
     "@react-native-community/cli-platform-android": "npm:^13.6.4"
@@ -20060,7 +20060,7 @@ __metadata:
     react-native-promise-rejection-utils: "npm:0.0.1"
   peerDependencies:
     react-native: "*"
-  checksum: 10/f411396cdfe44ebce1e2a3ba344515b4fc3c0a13d5b46d69b6219e701d46c532536272fbedd193787f5709c15ecf8d05207a461df4d72f761f56060fd3d5dcaa
+  checksum: 10/68278c630d35860d8aa7b72c09caecff9516b3a9aa18dcf7650f25015a743594a2e860a63ee5bbf9545ab1bffe9d63e96284da7446086bcd7768f374d501e4a5
   languageName: node
   linkType: hard
 
