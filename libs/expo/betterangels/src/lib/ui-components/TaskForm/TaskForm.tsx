@@ -4,24 +4,25 @@ import {
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
+import { extractExtensionErrors } from '../../apollo';
+import { applyManualFormErrors } from '../../errors';
+import { useSnackbar } from '../../hooks';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
+import { useCreateTaskMutation } from './__generated__/createTask.generated';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
 type TProps = {
-  taskId?: string;
+  onCancel?: () => void;
 };
 
 export function TaskForm(props: TProps) {
-  const { taskId } = props;
+  const { onCancel } = props;
 
-  const isEditMode = !!taskId;
-
-  const [isLoading, setIsLoading] = useState(false);
-
-  const router = useRouter();
+  const [disabled, setDisabled] = useState(false);
+  const { showSnackbar } = useSnackbar();
+  const [createTask] = useCreateTaskMutation();
 
   const {
     control,
@@ -39,32 +40,68 @@ export function TaskForm(props: TProps) {
   const onSubmit: SubmitHandler<TFormSchema> = async (
     formData: TFormSchema
   ) => {
-    console.log();
-    console.log('| -------------  SUBMIT formData  ------------- |');
-    console.log(formData);
-    console.log();
+    try {
+      setDisabled(true);
+
+      const { summary, description, team, status } = formData;
+
+      const response = await createTask({
+        variables: {
+          data: {
+            summary,
+            description,
+            status,
+            team: team || undefined,
+          },
+        },
+        errorPolicy: 'all',
+      });
+
+      const extensionErrors = extractExtensionErrors(response);
+
+      if (extensionErrors) {
+        applyManualFormErrors(extensionErrors, setError);
+
+        return;
+      }
+
+      const responseData = response.data;
+
+      if (!responseData) {
+        throw new Error('Missing Task mutation response data');
+      }
+    } catch (error) {
+      console.error('Task mutation error:', error);
+
+      showSnackbar({
+        message: 'Something went wrong. Please try again.',
+        type: 'error',
+      });
+    } finally {
+      setDisabled(false);
+    }
   };
 
   return (
     <Form.Page
       actionProps={{
         onSubmit: handleSubmit(onSubmit),
-        onLeftBtnClick: router.back,
-        disabled: isLoading,
+        onLeftBtnClick: onCancel,
+        disabled,
       }}
     >
       <Form>
         <Form.Fieldset>
           <ControlledInput
             control={control}
-            disabled={isLoading}
+            disabled={disabled}
             label={'Title'}
-            name={'title'}
+            name={'summary'}
             placeholder={'Enter title'}
             onDelete={() => {
-              setValue('title', emptyState.title);
+              setValue('summary', emptyState.summary);
             }}
-            errorMessage={errors.title?.message}
+            errorMessage={errors.summary?.message}
           />
 
           <Controller
@@ -72,7 +109,7 @@ export function TaskForm(props: TProps) {
             control={control}
             render={({ field }) => (
               <SingleSelect
-                disabled={isLoading}
+                disabled={disabled}
                 allowSelectNone={true}
                 label="Team"
                 placeholder="Select team"
@@ -90,7 +127,7 @@ export function TaskForm(props: TProps) {
             multiline
             numberOfLines={4}
             control={control}
-            disabled={isLoading}
+            disabled={disabled}
             label={'Description'}
             name={'description'}
             placeholder={'Enter description'}
@@ -106,7 +143,7 @@ export function TaskForm(props: TProps) {
             control={control}
             render={({ field }) => (
               <SingleSelect
-                disabled={isLoading}
+                disabled={disabled}
                 label="Status"
                 placeholder="Select status"
                 maxRadioItems={0}
@@ -121,8 +158,6 @@ export function TaskForm(props: TProps) {
           />
         </Form.Fieldset>
       </Form>
-
-      {/* {isEditMode && ()} */}
     </Form.Page>
   );
 }
