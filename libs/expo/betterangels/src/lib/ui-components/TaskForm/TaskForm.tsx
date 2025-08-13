@@ -6,7 +6,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { TaskType, extractOperationErrors } from '../../apollo';
+import { SelahTeamEnum, TaskType, extractOperationErrors } from '../../apollo';
 import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
@@ -15,12 +15,13 @@ import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
 type TProps = {
   clientProfileId?: string;
+  team?: SelahTeamEnum;
   onCancel?: () => void;
-  onSuccess?: (id: string) => void;
+  onSuccess?: (taskId: string) => void;
 };
 
 export function TaskForm(props: TProps) {
-  const { clientProfileId, onSuccess, onCancel } = props;
+  const { clientProfileId, team, onSuccess, onCancel } = props;
 
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
@@ -31,11 +32,12 @@ export function TaskForm(props: TProps) {
     handleSubmit,
     formState: { errors },
     resetField,
+    reset: resetForm,
     setError,
     setValue,
   } = useForm<TFormSchema>({
     resolver: zodResolver(FormSchema),
-    defaultValues: emptyState,
+    defaultValues: { ...emptyState, team: team || '' },
   });
 
   const onSubmit: SubmitHandler<TFormSchema> = async (
@@ -52,7 +54,7 @@ export function TaskForm(props: TProps) {
             summary,
             description,
             status,
-            team: team || undefined,
+            team: team || null,
             clientProfile: clientProfileId,
           },
         },
@@ -83,6 +85,7 @@ export function TaskForm(props: TProps) {
         throw new Error('mutation failed');
       }
 
+      resetForm();
       onSuccess?.((newTask as TaskType).id);
     } catch (error) {
       console.error('Task mutation error:', error);

@@ -3,15 +3,6 @@ import { SelahTeamEnum, TaskStatusEnum } from '../../apollo';
 
 export type TFormSchema = z.infer<typeof FormSchema>;
 
-//   input CreateTaskInput {
-//     clientProfile: ID
-//     description: String
-//     note: ID
-//     summary: String!
-//     team: SelahTeamEnum
-//     status: TaskStatusEnum
-//   }
-
 export const emptyState: TFormSchema = {
   summary: '',
   team: '',
