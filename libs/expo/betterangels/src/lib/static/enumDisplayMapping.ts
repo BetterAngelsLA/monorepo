@@ -16,6 +16,7 @@ import {
   ServiceEnum,
   ServiceRequestTypeEnum,
   SocialMediaEnum,
+  TaskStatusEnum,
   VeteranStatusEnum,
 } from '../apollo';
 
@@ -286,4 +287,12 @@ export const enumDisplaySelahTeam: {
     'Sunday Social / Atwater Outreach',
   [SelahTeamEnum.WdiOnSite]: 'WDI On-site',
   [SelahTeamEnum.WdiOutreach]: 'WDI Outreach',
+};
+
+export const enumDisplayTaskStatus: {
+  [key in TaskStatusEnum]: string;
+} = {
+  [TaskStatusEnum.ToDo]: 'To Do',
+  [TaskStatusEnum.InProgress]: 'In Progress',
+  [TaskStatusEnum.Completed]: 'Completed',
 };

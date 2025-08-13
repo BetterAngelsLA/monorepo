@@ -28,4 +28,5 @@ export { default as NavModal } from './NavModal';
 export { default as NoteCard } from './NoteCard';
 export { default as RequestedProvidedServices } from './RequestedProvidedServices';
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
+export * from './TaskForm';
 export { default as WebBrowserLink } from './WebBrowserLink';
