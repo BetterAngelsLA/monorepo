@@ -60,7 +60,7 @@ export default function SignIn() {
 
       if (res.ok && data?.meta?.is_authenticated) {
         await refetchUser();
-        navigate('/');
+        navigate('/users');
       } else {
         handleError('Invalid code. Please try again.');
       }
