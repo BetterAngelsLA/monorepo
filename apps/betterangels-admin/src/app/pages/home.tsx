@@ -1,13 +1,10 @@
-import { useUser } from '@monorepo/react/betterangels-admin';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
-  const { user } = useUser();
-  return (
-    <div className="flex items-center justify-center h-full bg-white flex-col">
-      {user?.canAccessOrgPortal && <div>Welcome to Home, {user?.email}!</div>}
-      {!user?.canAccessOrgPortal && (
-        <div>You don't have permission to access this service.</div>
-      )}
-    </div>
-  );
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate('/users');
+  }, []);
+  return null;
 }
