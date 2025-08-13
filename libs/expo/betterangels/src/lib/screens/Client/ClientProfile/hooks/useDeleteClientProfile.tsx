@@ -19,6 +19,37 @@ export function useDeleteClientProfile(props: TProps) {
     try {
       await deleteClientProfile({
         variables: { id },
+        update(cache) {
+          if (!id) return;
+          const storeId = cache.identify({ __typename: 'ClientProfile', id });
+
+          if (storeId) cache.evict({ id: storeId });
+          cache.modify({
+            id: 'ROOT_QUERY',
+            fields: {
+              clientProfiles(existing, { readField }) {
+                if (!existing) return existing;
+
+                const nextResults = (existing.results ?? []).filter(
+                  (ref: any) => readField('id', ref) !== id
+                );
+
+                const nextTotal =
+                  typeof existing.totalCount === 'number'
+                    ? Math.max(0, existing.totalCount - 1)
+                    : existing.totalCount;
+
+                return {
+                  ...existing,
+                  results: nextResults,
+                  totalCount: nextTotal,
+                };
+              },
+            },
+          });
+
+          cache.gc();
+        },
       });
 
       if (error) {
