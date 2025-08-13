@@ -6,32 +6,33 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { extractExtensionErrors } from '../../apollo';
-import { applyManualFormErrors } from '../../errors';
+import { TaskType, extractOperationErrors } from '../../apollo';
+import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
 import { useCreateTaskMutation } from './__generated__/createTask.generated';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
 type TProps = {
+  clientProfileId?: string;
   onCancel?: () => void;
+  onSuccess?: (id: string) => void;
 };
 
 export function TaskForm(props: TProps) {
-  const { onCancel } = props;
+  const { clientProfileId, onSuccess, onCancel } = props;
 
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
-  const [createTask] = useCreateTaskMutation();
+  const [createTaskMutation] = useCreateTaskMutation();
 
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid: formIsValid },
+    formState: { errors },
     resetField,
     setError,
     setValue,
-    clearErrors,
   } = useForm<TFormSchema>({
     resolver: zodResolver(FormSchema),
     defaultValues: emptyState,
@@ -45,31 +46,44 @@ export function TaskForm(props: TProps) {
 
       const { summary, description, team, status } = formData;
 
-      const response = await createTask({
+      const response = await createTaskMutation({
         variables: {
           data: {
             summary,
             description,
             status,
             team: team || undefined,
+            clientProfile: clientProfileId,
           },
         },
         errorPolicy: 'all',
       });
 
-      const extensionErrors = extractExtensionErrors(response);
+      const { validationErrors, errorMessage } = extractOperationErrors({
+        response,
+        queryKey: 'createTask',
+        fields: Object.keys(FormSchema.shape),
+        resultTypename: 'TaskType',
+      });
 
-      if (extensionErrors) {
-        applyManualFormErrors(extensionErrors, setError);
+      // if has field validation errors, apply and return
+      if (validationErrors?.length) {
+        applyOperationFieldErrors(validationErrors, setError);
 
         return;
       }
 
-      const responseData = response.data;
-
-      if (!responseData) {
-        throw new Error('Missing Task mutation response data');
+      if (errorMessage) {
+        throw new Error(errorMessage);
       }
+
+      const newTask = response.data?.createTask;
+
+      if (!newTask) {
+        throw new Error('mutation failed');
+      }
+
+      onSuccess?.((newTask as TaskType).id);
     } catch (error) {
       console.error('Task mutation error:', error);
 

@@ -1,11 +1,3 @@
-# input CreateTaskInput {
-#   clientProfile: ID
-#   description: String
-#   note: ID
-#   summary: String!
-#   team: SelahTeamEnum
-#   status: TaskStatusEnum
-# }
 mutation CreateTask($data: CreateTaskInput!) {
   createTask(data: $data) {
     ... on OperationInfo {
@@ -40,17 +32,3 @@ mutation CreateTask($data: CreateTaskInput!) {
     }
   }
 }
-
-# type TaskType {
-#   id: ID!
-#   clientProfile: ClientProfileType
-#   createdAt: DateTime!
-#   createdBy: UserType!
-#   description: String
-#   note: DjangoModelType
-#   organization: OrganizationType
-#   status: TaskStatusEnum
-#   summary: String
-#   team: SelahTeamEnum
-#   updatedAt: DateTime!
-# }
