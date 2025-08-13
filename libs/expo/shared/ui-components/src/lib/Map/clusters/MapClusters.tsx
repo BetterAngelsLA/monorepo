@@ -50,12 +50,11 @@ export function MapClusters<P extends IClusterGeoJson>(props: TProps<P>) {
           const { geometry, properties } = point;
           const [longitude, latitude] = geometry.coordinates;
           const { id } = properties;
-
           return (
             <Marker
+              tracksViewChanges={false}
               key={`point-${id}`}
               coordinate={{ latitude, longitude }}
-              tracksViewChanges={false}
               onPress={() => onPointPress?.(point)}
             >
               {pointRenderer(point)}
