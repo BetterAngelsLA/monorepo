@@ -1571,6 +1571,7 @@ export type QueryNoteArgs = {
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   order?: InputMaybe<NoteOrder>;
+  ordering?: Array<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

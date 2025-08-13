@@ -1,28 +1,15 @@
-from typing import Any, List, Optional
+from typing import Optional
 
 import strawberry_django
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
+from common.graphql.types import make_in_filter
 from django.db.models import Q
 from strawberry import ID, Info, auto
-from strawberry.types.field import StrawberryField
 from tasks.enums import TaskStatusEnum
 
 from . import models
-
-
-def make_in_filter(field_name: str, value_type: Any) -> StrawberryField:
-    @strawberry_django.filter_field
-    def _filter(info: Info, value: Optional[List[value_type]], prefix: str) -> Q:
-        if not value:
-            return Q()
-
-        normalized_value = [value_type[v.name] if not isinstance(v, str) else v for v in value]
-
-        return Q(**{f"{prefix}{field_name}__in": normalized_value})
-
-    return _filter
 
 
 @strawberry_django.filter_type(models.Task, lookups=True)
