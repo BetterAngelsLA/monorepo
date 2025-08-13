@@ -9,7 +9,6 @@ export const routeChildren: RouteObject[] = [
     path: '/',
     element: <Home />,
   },
-
   {
     path: '/users',
     element: <UsersPage />,
