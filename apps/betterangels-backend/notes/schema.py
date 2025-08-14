@@ -46,6 +46,8 @@ from .types import (
     NoteFilter,
     NoteImportRecordType,
     NoteType,
+    OrganizationServiceCategoryType,
+    OrganizationServiceType,
     RemoveNoteServiceRequestInput,
     RevertNoteInput,
     ServiceRequestType,
@@ -61,6 +63,14 @@ class Query:
 
     notes: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
+    )
+
+    services: OffsetPaginated[OrganizationServiceType] = strawberry_django.offset_paginated(
+        extensions=[HasPerm(NotePermissions.ADD)],
+    )
+
+    service_categories: OffsetPaginated[OrganizationServiceCategoryType] = strawberry_django.offset_paginated(
+        extensions=[HasPerm(NotePermissions.ADD)],
     )
 
     @strawberry_django.offset_paginated(
