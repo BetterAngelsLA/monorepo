@@ -37,7 +37,7 @@ class OrganizationServiceCategory(BaseModel):
 
     class Meta:
         constraints = [models.UniqueConstraint("name", "organization", name="unique_name_org")]
-        ordering = ("name",)
+        ordering = ("priority",)
 
     objects = models.Manager()
 
@@ -60,7 +60,7 @@ class OrganizationService(BaseModel):
 
     class Meta:
         constraints = [models.UniqueConstraint("service", "organization", name="unique_service_org")]
-        ordering = ("service",)
+        ordering = ("priority",)
 
     objects = models.Manager()
 

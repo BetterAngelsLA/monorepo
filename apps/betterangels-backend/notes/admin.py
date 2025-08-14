@@ -4,7 +4,6 @@ from adminsortable2.admin import SortableAdminMixin, SortableStackedInline
 from common.admin import AttachmentAdminMixin
 from django.contrib import admin
 from django.db.models import QuerySet
-from django.http import HttpRequest
 from import_export import fields, resources
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
