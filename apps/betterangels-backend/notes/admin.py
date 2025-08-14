@@ -167,32 +167,6 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         return f"{obj.purpose} ({obj.pk})"
 
 
-@admin.register(OrganizationService)
-class OrganizationServiceAdmin(admin.ModelAdmin):
-    list_display = (
-        "service",
-        "category",
-        "priority",
-        "organization",
-        "created_at",
-    )
-    list_filter = (
-        "service",
-        "organization",
-        "category",
-        "created_at",
-    )
-    search_fields = (
-        "service",
-        "category__name",
-        "organization__name",
-    )
-
-    class Meta:
-        model = OrganizationService
-        fields = "__all__"
-
-
 class OrganizationServiceInline(SortableStackedInline):
     ordering = ["priority"]
     model = OrganizationService
