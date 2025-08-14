@@ -228,7 +228,11 @@ class ServiceRequestAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
 
     @admin.display(description="Service")
-    def service_name(self, obj: ServiceRequest) -> str:
+    def service_name(self, obj: ServiceRequest) -> Optional[str]:
+        # TODO: undo after cutover
+        if not obj.service:
+            return None
+
         return str(obj.service.label if obj.service != ServiceEnum.OTHER else obj.service_other)
 
 
