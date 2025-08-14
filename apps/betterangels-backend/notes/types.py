@@ -331,4 +331,3 @@ class NoteImportRecordType:
     created_at: auto
     note: Optional[NoteType]
     raw_data: auto
-    raw_data: auto

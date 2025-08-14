@@ -10,7 +10,7 @@ from deepdiff import DeepDiff
 from django.test import ignore_warnings
 from model_bakery import baker
 from notes.enums import ServiceEnum, ServiceRequestStatusEnum
-from notes.models import Note
+from notes.models import Note, OrganizationService, OrganizationServiceCategory
 from notes.tests.utils import NoteGraphQLBaseTestCase, ServiceRequestGraphQLBaseTestCase
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 from unittest_parametrize import parametrize
@@ -485,6 +485,98 @@ class ServiceRequestQueryTestCase(ServiceRequestGraphQLBaseTestCase):
         service_requests = response["data"]["serviceRequests"]
         self.assertEqual(len(service_requests), 1)
         self.assertEqual(service_requests[0], self.service_request)
+
+
+class OrganizationServiceQueryTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_service_categories_query(self) -> None:
+        query = """
+            query (
+                $ordering: [OrganizationServiceCategoryOrdering!]! = [],
+                $subOrdering: [OrganizationServiceOrdering!]! = []
+            ) {
+                serviceCategories (ordering: $ordering) {
+                    totalCount
+                    results {
+                        id
+                        name
+                        priority
+                        services (ordering: $subOrdering) {
+                            id
+                            service
+                            priority
+                        }
+                    }
+                }
+            }
+        """
+        variables = {
+            "ordering": [{"priority": "ASC"}],
+            "subOrdering": [{"priority": "ASC"}],
+        }
+
+        expected_query_count = 6
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        results = response["data"]["serviceCategories"]["results"]
+
+        service_categories = OrganizationServiceCategory.objects.all()
+        self.assertEqual(response["data"]["serviceCategories"]["totalCount"], service_categories.count())
+
+        expected_categories = [{c.name: c.priority} for c in service_categories]
+        actual_categories = [{c["name"]: c["priority"]} for c in results]
+        self.assertCountEqual(expected_categories, actual_categories)
+
+
+class OrganizationServiceCategoryQueryTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+    def test_services_query(self) -> None:
+        query = """
+            query ($ordering: [OrganizationServiceOrdering!]! = []) {
+                services (ordering: $ordering) {
+                    totalCount
+                    results {
+                        id
+                        priority
+                        service
+                        category {
+                            id
+                            name
+                            priority
+                        }
+                    }
+                }
+            }
+        """
+        variables = {"ordering": [{"priority": "ASC"}]}
+
+        expected_query_count = 5
+
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(query, variables)
+
+        results = response["data"]["services"]["results"]
+
+        services = OrganizationService.objects.all()
+        self.assertEqual(response["data"]["services"]["totalCount"], services.count())
+
+        expected_services = [
+            {s.service: {"priority": s.priority, "category": s.category.name if s.category else None}} for s in services
+        ]
+        actual_services = [
+            {s["service"]: {"priority": s["priority"], "category": s["category"]["name"]}} for s in results
+        ]
+        self.assertCountEqual(expected_services, actual_services)
 
 
 class InteractionAuthorQueryTestCase(GraphQLBaseTestCase):
