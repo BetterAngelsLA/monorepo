@@ -5070,6 +5070,7 @@ __metadata:
     "@shopify/flash-list": "npm:1.7.6"
     "@storybook/addon-essentials": "npm:8.6.14"
     "@storybook/addon-react-native-web": "npm:^0.0.29"
+    "@storybook/blocks": "npm:^8.6.14"
     "@storybook/core-server": "npm:8.6.12"
     "@storybook/react-native": "npm:^8.4.2"
     "@storybook/react-vite": "npm:8.6.14"
@@ -7471,7 +7472,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@storybook/blocks@npm:8.6.14":
+"@storybook/blocks@npm:8.6.14, @storybook/blocks@npm:^8.6.14":
   version: 8.6.14
   resolution: "@storybook/blocks@npm:8.6.14"
   dependencies:
