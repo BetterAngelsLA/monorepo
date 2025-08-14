@@ -33,6 +33,42 @@ from tasks.types import TaskType
 from . import models
 
 
+@strawberry_django.order_type(models.OrganizationService, one_of=False)
+class OrganizationServiceOrdering:
+    id: auto
+    priority: auto
+
+
+@strawberry_django.order_type(models.OrganizationServiceCategory, one_of=False)
+class OrganizationServiceCategoryOrdering:
+    id: auto
+    priority: auto
+
+
+@strawberry_django.type(
+    models.OrganizationService,
+    pagination=True,
+    ordering=OrganizationServiceOrdering,
+)
+class OrganizationServiceType:
+    id: auto
+    category: "OrganizationServiceCategoryType"
+    priority: auto
+    service: auto
+
+
+@strawberry_django.type(
+    models.OrganizationServiceCategory,
+    pagination=True,
+    ordering=OrganizationServiceCategoryOrdering,
+)
+class OrganizationServiceCategoryType:
+    id: auto
+    name: auto
+    priority: auto
+    services: list[OrganizationServiceType]
+
+
 @strawberry_django.type(models.ServiceRequest, pagination=True)
 class ServiceRequestType:
     id: ID
@@ -294,4 +330,5 @@ class NoteImportRecordType:
     error_message: auto
     created_at: auto
     note: Optional[NoteType]
+    raw_data: auto
     raw_data: auto
