@@ -85,8 +85,9 @@ DEBUG = env("DEBUG")
 INSTALLED_APPS = [
     "admin_async_upload",
     "admin_interface",
-    "colorfield",
+    "adminsortable2",
     "betterangels_backend.apps.CustomAdminConfig",
+    "colorfield",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.gis",

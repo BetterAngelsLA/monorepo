@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "ordering": ("name",),
+                "ordering": ("priority",),
             },
         ),
         migrations.CreateModel(
@@ -59,7 +59,7 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "ordering": ("service",),
+                "ordering": ("priority",),
             },
         ),
         migrations.CreateModel(

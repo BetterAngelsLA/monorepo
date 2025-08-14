@@ -1,8 +1,10 @@
 from typing import Optional
 
+from adminsortable2.admin import SortableAdminMixin, SortableStackedInline
 from common.admin import AttachmentAdminMixin
 from django.contrib import admin
 from django.db.models import QuerySet
+from django.http import HttpRequest
 from import_export import fields, resources
 from import_export.admin import ExportActionMixin
 from import_export.formats.base_formats import CSV
@@ -170,8 +172,9 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
 class OrganizationServiceAdmin(admin.ModelAdmin):
     list_display = (
         "service",
-        "organization",
         "category",
+        "priority",
+        "organization",
         "created_at",
     )
     list_filter = (
@@ -191,8 +194,16 @@ class OrganizationServiceAdmin(admin.ModelAdmin):
         fields = "__all__"
 
 
+class OrganizationServiceInline(SortableStackedInline):
+    ordering = ["priority"]
+    model = OrganizationService
+    extra = 0
+
+
 @admin.register(OrganizationServiceCategory)
-class OrganizationServiceCategoryAdmin(admin.ModelAdmin):
+class OrganizationServiceCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
+    inlines = [OrganizationServiceInline]
+    ordering = ["priority"]
     list_display = (
         "name",
         "organization",
