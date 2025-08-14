@@ -523,7 +523,8 @@ export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
-  service: ServiceEnum;
+  service?: InputMaybe<ServiceEnum>;
+  serviceEnum?: InputMaybe<ServiceEnum>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   serviceRequestType: ServiceRequestTypeEnum;
 };
@@ -537,7 +538,8 @@ export type CreateProfileDataImportInput = {
 
 export type CreateServiceRequestInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
-  service: ServiceEnum;
+  service?: InputMaybe<ServiceEnum>;
+  serviceEnum?: InputMaybe<ServiceEnum>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   status: ServiceRequestStatusEnum;
 };
@@ -1856,7 +1858,8 @@ export type ServiceRequestType = {
   createdBy: UserType;
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
-  service: ServiceEnum;
+  service?: Maybe<ServiceEnum>;
+  serviceEnum?: Maybe<ServiceEnum>;
   serviceOther?: Maybe<Scalars['String']['output']>;
   status: ServiceRequestStatusEnum;
 };

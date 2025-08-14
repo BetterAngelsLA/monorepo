@@ -520,7 +520,8 @@ union CreateNoteMoodPayload = MoodType | OperationInfo
 union CreateNotePayload = NoteType | OperationInfo
 
 input CreateNoteServiceRequestInput {
-  service: ServiceEnum!
+  service: ServiceEnum
+  serviceEnum: ServiceEnum
   serviceOther: String
   noteId: ID!
   serviceRequestType: ServiceRequestTypeEnum!
@@ -534,7 +535,8 @@ input CreateProfileDataImportInput {
 }
 
 input CreateServiceRequestInput {
-  service: ServiceEnum!
+  service: ServiceEnum
+  serviceEnum: ServiceEnum
   status: ServiceRequestStatusEnum!
   serviceOther: String
   clientProfile: ID
@@ -1456,7 +1458,8 @@ enum ServiceRequestStatusEnum {
 
 type ServiceRequestType {
   id: ID!
-  service: ServiceEnum!
+  service: ServiceEnum
+  serviceEnum: ServiceEnum
   serviceOther: String
   status: ServiceRequestStatusEnum!
   dueBy: DateTime
