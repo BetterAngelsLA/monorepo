@@ -76,7 +76,7 @@ export const ModalScreenProvider = ({ children }: { children: ReactNode }) => {
 
   // Manual modal close method
   const closeModalScreen = () => {
-    if (pathname !== SCREEN_PATH_NAME) {
+    if (pathname !== SCREEN_PATH_NAME && presentation !== 'modal') {
       console.warn(
         `ModalScreenProvider: attempting to close modalScreen when path is ${SCREEN_PATH_NAME}`
       );
