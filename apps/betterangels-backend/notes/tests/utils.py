@@ -5,6 +5,7 @@ from common.models import Address, Location
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.gis.geos import Point
 from model_bakery import baker
+from notes.enums import ServiceEnum
 from notes.models import ServiceRequest
 from test_utils.mixins import HasGraphQLProtocol
 
@@ -44,6 +45,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             providedServices {
                 id
                 service
+                serviceEnum
                 serviceOther
                 dueBy
                 status
@@ -51,6 +53,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             requestedServices {
                 id
                 service
+                serviceEnum
                 serviceOther
                 dueBy
                 status
@@ -61,8 +64,11 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         self.client_profile_2 = baker.make(ClientProfile, first_name="Harry", last_name="Truman")
         self._setup_note()
         self._setup_location()
-        self.provided_services = baker.make(ServiceRequest, _quantity=2)
-        self.requested_services = baker.make(ServiceRequest, _quantity=2)
+
+        ps = [ServiceEnum.BAG, ServiceEnum.BOOK]
+        rs = [ServiceEnum.EBT, ServiceEnum.FOOD]
+        self.provided_services = [baker.make(ServiceRequest, service=s, service_enum=s) for s in ps]
+        self.requested_services = [baker.make(ServiceRequest, service=s, service_enum=s) for s in rs]
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
@@ -215,6 +221,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     ... on ServiceRequestType {
                         id
                         service
+                        serviceEnum
                         serviceOther
                         status
                         dueBy
@@ -301,6 +308,7 @@ class ServiceRequestGraphQLUtilMixin(HasGraphQLProtocol):
                     ... on ServiceRequestType {{
                         id
                         service
+                        serviceEnum
                         serviceOther
                         status
                         dueBy
