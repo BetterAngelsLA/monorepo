@@ -1,4 +1,4 @@
-export { default as ArrowLeftIcon } from './components/ArrowLeftIcon/ArrowLeftIcon';
+export { default as ArrowLeftIcon } from './components/arrowLeftIcon';
 export { default as BaShelterLogoIcon } from './components/baShelterLogoIcon';
 export { default as BedIcon } from './components/bedIcon';
 export { default as BenefitsCalIcon } from './components/benefitscalIcon';

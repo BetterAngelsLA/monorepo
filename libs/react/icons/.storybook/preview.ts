@@ -11,7 +11,7 @@ const preview: Preview = {
         date: /Date$/,
       },
     },
-    layout: 'centered',
+    // layout: 'centered',
   },
   tags: ['autodocs'],
   //   decorators: [decorateWith(SbPage)] as Decorator[],
