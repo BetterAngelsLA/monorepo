@@ -1,0 +1,34 @@
+mutation CreateTask($data: CreateTaskInput!) {
+  createTask(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on TaskType {
+      id
+      clientProfile {
+        id
+      }
+      createdAt
+      createdBy {
+        id
+      }
+      description
+      note {
+        pk
+      }
+      organization {
+        id
+        name
+      }
+      status
+      summary
+      team
+      updatedAt
+    }
+  }
+}
