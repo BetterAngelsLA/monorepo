@@ -1272,6 +1272,21 @@ files = [
 ]
 
 [[package]]
+name = "django-admin-sortable2"
+version = "2.2.8"
+description = "Generic drag-and-drop sorting for the List, the Stacked- and the Tabular-Inlines Views in the Django Admin"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "django_admin_sortable2-2.2.8-py3-none-any.whl", hash = "sha256:b4cf66d75450b0f89c883d94b10e6133a4e7832c5bfed1568e3e71e400dc2b48"},
+    {file = "django_admin_sortable2-2.2.8.tar.gz", hash = "sha256:59dfd7ced63e66adfb471b2a4d89ba3faae49c0148827047c8cf65759fc54c9e"},
+]
+
+[package.dependencies]
+Django = ">=4.2"
+
+[[package]]
 name = "django-allauth"
 version = "65.10.0"
 description = "Integrated set of Django applications addressing authentication, registration, account management as well as 3rd party (social) account authentication."
@@ -4357,4 +4372,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "3.13.5"
-content-hash = "75cfbe061f817a5f1dc87face0b43c31545c91bbae5f747980dc6dfac89d61dd"
+content-hash = "b0e19c4bac784a6922cc0bc09d24f673aebc207a2d41e29c2037acc41ef53a9d"

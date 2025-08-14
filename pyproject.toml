@@ -25,6 +25,7 @@ skip_glob = ["*/migrations/*"]
 
 [tool.poetry.dependencies]
 python = "3.13.5"
+django-admin-sortable2 = "^2.2.8"
 
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"
