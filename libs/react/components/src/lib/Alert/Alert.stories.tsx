@@ -1,3 +1,4 @@
+import { SbkPage, decorateWith } from '@monorepo/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
 import { SbButton } from '../../storybook';
 import { Alert } from './Alert';
@@ -12,6 +13,10 @@ export default meta;
 type Story = StoryObj;
 
 export const AlertDemo: Story = {
+  parameters: {
+    layout: null,
+  },
+  decorators: [decorateWith(SbkPage)],
   render: () => {
     const Demo = () => {
       const { showAlert } = useAlert();
@@ -45,9 +50,4 @@ export const AlertDemo: Story = {
       </>
     );
   },
-  parameters: {
-    // layout: null,
-    // SbkPage
-  },
-  // decorators: [decorateWith(SbkPage)],
 };
