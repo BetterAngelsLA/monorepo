@@ -30,7 +30,7 @@ const config: StorybookConfig = {
   viteFinal: async (config) =>
     mergeConfig(config, {
       plugins: [
-        rawSvgPlugin(), // Consider switching to SVGR globally for react icons
+        rawSvgPlugin(), // Consider switching to SVGR globally (for react)
         react(),
         nxViteTsPaths(),
       ],
