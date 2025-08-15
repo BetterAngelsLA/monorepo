@@ -1,5 +1,5 @@
+import { SbkButton, withMemoryRouter } from '@monorepo/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
-import { SbButton, SbList, withMemoryRouter } from '../../storybook';
 import { AppDrawer } from './AppDrawer';
 import { useAppDrawer } from './state/useAppDrawer';
 
@@ -18,14 +18,14 @@ export const AppDrawerDemo: Story = {
       const { showDrawer } = useAppDrawer();
 
       return (
-        <SbList className="min-h-[300px] justify-end">
-          <SbButton
+        <div className="flex flex-col gap-8">
+          <SbkButton
             className="bg-purple-400"
             onClick={() => showDrawer({ content: 'hello content' })}
           >
             Default
-          </SbButton>
-          <SbButton
+          </SbkButton>
+          <SbkButton
             className="bg-purple-400"
             onClick={() =>
               showDrawer({
@@ -36,16 +36,16 @@ export const AppDrawerDemo: Story = {
             }
           >
             with Header/Footer
-          </SbButton>
-          <SbButton
+          </SbkButton>
+          <SbkButton
             className="bg-blue-400"
             onClick={() =>
               showDrawer({ content: 'hello content', placement: 'left' })
             }
           >
             From Left
-          </SbButton>
-        </SbList>
+          </SbkButton>
+        </div>
       );
     };
 

@@ -1,6 +1,10 @@
 import { UsersIcon } from '@monorepo/react/icons';
+import {
+  SbkPanel,
+  disableControls,
+  withMemoryRouter,
+} from '@monorepo/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
-import { SbList, disableControls, withMemoryRouter } from '../../storybook';
 import { SidebarLink } from './SidebarLink';
 
 const meta: Meta<typeof SidebarLink> = {
@@ -24,7 +28,7 @@ export const WithIcon: Story = {
     const baseArgs = { ...withIconArgs, ...args };
 
     return (
-      <SbList className="w-[400px] p-8 border-2 border-gray-100">
+      <SbkPanel className="flex-col w-[400px] p-8 border-2 border-gray-100">
         <SidebarLink {...baseArgs}>text</SidebarLink>
         <SidebarLink {...baseArgs} className="pseudo-hover">
           hover
@@ -32,7 +36,7 @@ export const WithIcon: Story = {
         <SidebarLink {...baseArgs} className="pseudo-active">
           active
         </SidebarLink>
-      </SbList>
+      </SbkPanel>
     );
   },
 };

@@ -1,6 +1,5 @@
-import { SbkPage, decorateWith } from '@monorepo/storybook-web';
+import { SbkButton, SbkPanel } from '@monorepo/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
-import { SbButton } from '../../storybook';
 import { Alert } from './Alert';
 import { useAlert } from './state/useAlert';
 
@@ -16,30 +15,29 @@ export const AlertDemo: Story = {
   parameters: {
     layout: null,
   },
-  decorators: [decorateWith(SbkPage)],
   render: () => {
     const Demo = () => {
       const { showAlert } = useAlert();
 
       return (
-        <div className="mt-32 flex justify-between gap-8">
-          <SbButton
+        <SbkPanel className="mt-32 flex gap-8">
+          <SbkButton
             className="bg-green-400"
             onClick={() =>
               showAlert({ content: 'Hello Success message', type: 'success' })
             }
           >
             Show Success
-          </SbButton>
-          <SbButton
+          </SbkButton>
+          <SbkButton
             className="bg-red-400"
             onClick={() =>
               showAlert({ content: 'Hello Error message', type: 'error' })
             }
           >
             Show Error
-          </SbButton>
-        </div>
+          </SbkButton>
+        </SbkPanel>
       );
     };
 
