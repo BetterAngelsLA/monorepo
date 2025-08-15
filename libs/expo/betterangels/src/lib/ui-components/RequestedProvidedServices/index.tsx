@@ -14,7 +14,7 @@ import ServicesModal from './ServicesModal';
 interface IRequestedServicesProps {
   noteId: string;
   scrollRef: RefObject<ScrollView | null>;
-  services:
+  serviceRequests:
     | ViewNoteQuery['note']['requestedServices']
     | ViewNoteQuery['note']['providedServices'];
   refetch: () => void;
@@ -24,10 +24,16 @@ interface IRequestedServicesProps {
 export default function RequestedProvidedServices(
   props: IRequestedServicesProps
 ) {
-  const { noteId, services: initialServices, scrollRef, refetch, type } = props;
+  const {
+    noteId,
+    serviceRequests: initialServiceRequests,
+    scrollRef,
+    refetch,
+    type,
+  } = props;
   const { showModalScreen } = useModalScreen();
 
-  if (!initialServices) {
+  if (!initialServiceRequests) {
     return null;
   }
 
@@ -35,7 +41,7 @@ export default function RequestedProvidedServices(
     <FieldCard
       scrollRef={scrollRef}
       actionName={
-        initialServices.length ? (
+        initialServiceRequests.length ? (
           <View
             style={{
               flexDirection: 'row',
@@ -43,7 +49,7 @@ export default function RequestedProvidedServices(
               gap: Spacings.xs,
             }}
           >
-            {initialServices.map((item, index) => (
+            {initialServiceRequests.map((item, index) => (
               <Pill
                 variant={
                   type === ServiceRequestTypeEnum.Provided
@@ -73,7 +79,7 @@ export default function RequestedProvidedServices(
             <ServicesModal
               noteId={noteId}
               type={type}
-              initialServices={initialServices}
+              initialServiceRequests={initialServiceRequests}
               refetch={refetch}
             />
           ),

@@ -11,20 +11,20 @@ import { ScrollView } from 'react-native';
 interface IProvidedServicesProps {
   noteId: string;
   scrollRef: RefObject<ScrollView | null>;
-  services: ViewNoteQuery['note']['providedServices'];
+  serviceRequests: ViewNoteQuery['note']['providedServices'];
   refetch: (
     variables?: Partial<ViewNoteQueryVariables>
   ) => Promise<ApolloQueryResult<ViewNoteQuery>>;
 }
 
 export default function ProvidedServices(props: IProvidedServicesProps) {
-  const { noteId, services, scrollRef, refetch } = props;
+  const { noteId, serviceRequests, scrollRef, refetch } = props;
 
   return (
     <RequestedProvidedServices
       noteId={noteId}
       scrollRef={scrollRef}
-      services={services}
+      serviceRequests={serviceRequests}
       refetch={refetch}
       type={ServiceRequestTypeEnum.Provided}
     />

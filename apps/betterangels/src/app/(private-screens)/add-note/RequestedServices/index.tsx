@@ -9,18 +9,18 @@ import { ScrollView } from 'react-native';
 interface IRequestedServicesProps {
   noteId: string;
   scrollRef: RefObject<ScrollView | null>;
-  services: ViewNoteQuery['note']['requestedServices'];
+  serviceRequests: ViewNoteQuery['note']['requestedServices'];
   refetch: () => void;
 }
 
 export default function RequestedServices(props: IRequestedServicesProps) {
-  const { noteId, services, scrollRef, refetch } = props;
+  const { noteId, serviceRequests, scrollRef, refetch } = props;
 
   return (
     <RequestedProvidedServices
       noteId={noteId}
       scrollRef={scrollRef}
-      services={services}
+      serviceRequests={serviceRequests}
       refetch={refetch}
       type={ServiceRequestTypeEnum.Requested}
     />
