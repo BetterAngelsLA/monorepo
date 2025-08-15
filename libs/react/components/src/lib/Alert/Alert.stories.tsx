@@ -17,7 +17,7 @@ export const AlertDemo: Story = {
       const { showAlert } = useAlert();
 
       return (
-        <>
+        <div className="mt-32 flex justify-between gap-8">
           <SbButton
             className="bg-green-400"
             onClick={() =>
@@ -34,7 +34,7 @@ export const AlertDemo: Story = {
           >
             Show Error
           </SbButton>
-        </>
+        </div>
       );
     };
 
@@ -45,4 +45,9 @@ export const AlertDemo: Story = {
       </>
     );
   },
+  parameters: {
+    // layout: null,
+    // SbkPage
+  },
+  // decorators: [decorateWith(SbkPage)],
 };
