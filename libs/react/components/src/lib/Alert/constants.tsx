@@ -16,7 +16,7 @@ export const alertConfig: Record<TAlertType, TAlertConfig> = {
   success: {
     color: 'var(--color-success-30)',
     Icon: (
-      <CheckIcon className="h-6 text-success-30 bg-white rounded-full p-1 flex-shrink-0 " />
+      <CheckIcon className="text-success-30 bg-white rounded-full p-1 flex-shrink-0 w-6 h-6" />
     ),
   },
   error: {

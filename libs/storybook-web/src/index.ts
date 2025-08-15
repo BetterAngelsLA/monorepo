@@ -1,1 +1,1 @@
-export * from './lib/storybook-web';
+export * from './lib';
