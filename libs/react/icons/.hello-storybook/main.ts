@@ -1,13 +1,16 @@
+import { createRequire } from "node:module";
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 import type { StorybookConfig } from '@storybook/react-webpack5';
-import * as path from 'path';
+import * as path, { dirname, join } from 'path';
+
+const require = createRequire(import.meta.url);
 
 const config: StorybookConfig = {
   stories: ['../src/lib/**/*.stories.@(ts|tsx)'],
-  addons: ['@storybook/addon-essentials', 'storybook-addon-pseudo-states'],
+  addons: [getAbsolutePath("storybook-addon-pseudo-states"), getAbsolutePath("@storybook/addon-docs")],
 
   framework: {
-    name: '@storybook/react-webpack5',
+    name: getAbsolutePath("@storybook/react-webpack5"),
     options: {},
   },
   webpackFinal: async (config) => {
@@ -86,3 +89,7 @@ const config: StorybookConfig = {
 };
 
 export default config;
+
+function getAbsolutePath(value: string): any {
+  return dirname(require.resolve(join(value, "package.json")));
+}

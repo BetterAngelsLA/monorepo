@@ -60,7 +60,6 @@ export function Alert(): ReactElement | null {
   }
 
   function handleClose() {
-    console.log('################################### CLOSE');
     setAlert((prev) => {
       if (!prev) {
         return null;
