@@ -53,7 +53,7 @@ export const IconGallery: Story = {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
             gap: 16,
             alignItems: 'center',
           }}
@@ -76,7 +76,7 @@ export const IconGallery: Story = {
                 role="img"
                 aria-label={name}
               />
-              <div style={{ marginTop: 8, fontSize: 12, textAlign: 'center' }}>
+              <div style={{ marginTop: 16, fontSize: 12, textAlign: 'center' }}>
                 {name}
               </div>
             </div>
