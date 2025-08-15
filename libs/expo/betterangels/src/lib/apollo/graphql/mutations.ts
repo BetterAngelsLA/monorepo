@@ -94,6 +94,7 @@ export const CREATE_NOTE_SERVICE_REQUEST = gql`
       ... on ServiceRequestType {
         id
         service
+        serviceEnum
       }
     }
   }

@@ -1,15 +1,15 @@
 import { ControlledInput } from '@monorepo/expo/shared/ui-components';
 import { useForm } from 'react-hook-form';
-import ServiceOtherCheckbox from './ServiceOtherCheckbox';
+import ServiceRequestOtherCheckbox from './ServiceRequestOtherCheckbox';
 
 interface IOtherCategoryProps {
-  services: {
+  serviceRequests: {
     title: string | null;
     id: string | undefined;
     markedForDeletion?: boolean;
   }[];
-  setServices: (
-    services: {
+  setServiceRequests: (
+    serviceRequests: {
       title: string | null;
       id: string | undefined;
       markedForDeletion?: boolean;
@@ -18,31 +18,34 @@ interface IOtherCategoryProps {
 }
 
 export default function OtherCategory(props: IOtherCategoryProps) {
-  const { services, setServices } = props;
+  const { serviceRequests, setServiceRequests } = props;
 
   const { control, setValue } = useForm();
 
-  const appendService = (service: string) => {
-    setServices([...services, { title: service, id: undefined }]);
+  const appendServiceRequest = (serviceRequest: string) => {
+    setServiceRequests([
+      ...serviceRequests,
+      { title: serviceRequest, id: undefined },
+    ]);
   };
 
-  const handleAddOtherCategory = async (newService: string) => {
-    if (services.some((s) => s.title === newService)) {
+  const handleAddOtherCategory = async (newServiceRequest: string) => {
+    if (serviceRequests.some((s) => s.title === newServiceRequest)) {
       return;
     }
-    appendService(newService);
+    appendServiceRequest(newServiceRequest);
     setValue('otherCategory', '');
   };
 
   return (
     <>
-      {services.map((service, idx) => {
+      {serviceRequests.map((serviceRequest, idx) => {
         return (
-          <ServiceOtherCheckbox
-            key={service.title}
-            services={services}
-            setServices={setServices}
-            service={service}
+          <ServiceRequestOtherCheckbox
+            key={serviceRequest.title}
+            serviceRequests={serviceRequests}
+            setServiceRequests={setServiceRequests}
+            serviceRequest={serviceRequest}
             idx={idx}
           />
         );

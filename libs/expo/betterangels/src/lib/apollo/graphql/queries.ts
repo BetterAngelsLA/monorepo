@@ -38,11 +38,13 @@ export const GET_NOTES = gql`
         providedServices {
           id
           service
+          serviceEnum
           serviceOther
         }
         requestedServices {
           id
           service
+          serviceEnum
           serviceOther
         }
         publicDetails
@@ -103,11 +105,13 @@ export const GET_NOTE = gql`
       providedServices {
         id
         service
+        serviceEnum
         serviceOther
       }
       requestedServices {
         id
         service
+        serviceEnum
         serviceOther
       }
       publicDetails

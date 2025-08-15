@@ -18,11 +18,11 @@ export default function NoteCardServices(props: INoteCardServicesProps) {
           pillVariant={'warning'}
           pills={note['requestedServices']
             // TODO: remove after cutover
-            .filter((item) => !!item.service)
+            .filter((item) => !!item.serviceEnum)
             .map((item) =>
-              item.service === ServiceEnum.Other
+              item.serviceEnum === ServiceEnum.Other
                 ? item.serviceOther || ''
-                : enumDisplayServices[item.service!]
+                : enumDisplayServices[item.serviceEnum!]
             )}
           variant={'singleRow'}
         />
@@ -33,11 +33,11 @@ export default function NoteCardServices(props: INoteCardServicesProps) {
           pillVariant={'success'}
           pills={note['providedServices']
             // TODO: remove after cutover
-            .filter((item) => !!item.service)
+            .filter((item) => !!item.serviceEnum)
             .map((item) =>
-              item.service === ServiceEnum.Other
+              item.serviceEnum === ServiceEnum.Other
                 ? item.serviceOther || ''
-                : enumDisplayServices[item.service!]
+                : enumDisplayServices[item.serviceEnum!]
             )}
           variant={'singleRow'}
         />
