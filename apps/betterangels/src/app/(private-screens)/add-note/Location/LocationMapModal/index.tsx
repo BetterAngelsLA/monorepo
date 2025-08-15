@@ -20,7 +20,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DEFAULT_LOCATION, INITIAL_LOCATION } from '../constants';
+import { DEFAULT_LOCATION } from '../constants';
 import Directions from './Directions';
 import Header from './Header';
 import Map from './Map';
@@ -56,7 +56,10 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [minizeModal, setMinimizeModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearch, setIsSearch] = useState(false);
-  const [initialLocation, setInitialLocation] = useState(INITIAL_LOCATION);
+  const [initialLocation, setInitialLocation] = useState({
+    latitude: DEFAULT_LOCATION.latitude,
+    longitude: DEFAULT_LOCATION.longitude,
+  });
   const [suggestions, setSuggestions] = useState<TPlacesPrediction[]>([]);
   const [chooseDirections, setChooseDirections] = useState(false);
   const [selected, setSelected] = useState<boolean>(false);
