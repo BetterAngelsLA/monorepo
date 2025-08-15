@@ -95,7 +95,7 @@ class ServiceRequest(BaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return str(self.service if not self.service_other else self.service_other)
+        return str(self.service_enum if not self.service_other else self.service_other)
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:

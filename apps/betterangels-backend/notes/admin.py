@@ -99,7 +99,7 @@ class NoteResource(resources.ModelResource):
 
     def _join_services(self, services: QuerySet) -> str:
         return ", ".join(
-            s.service_other if s.service == ServiceEnum.OTHER else s.get_service_display() for s in services
+            s.service_other if s.service_enum == ServiceEnum.OTHER else s.get_service_display() for s in services
         )
 
     def dehydrate_requested_services(self, note: Note) -> str:
@@ -233,7 +233,7 @@ class ServiceRequestAdmin(admin.ModelAdmin):
         if not obj.service:
             return None
 
-        return str(obj.service.label if obj.service != ServiceEnum.OTHER else obj.service_other)
+        return str(obj.service.label if obj.service_enum != ServiceEnum.OTHER else obj.service_other)
 
 
 @admin.register(NoteDataImport)
