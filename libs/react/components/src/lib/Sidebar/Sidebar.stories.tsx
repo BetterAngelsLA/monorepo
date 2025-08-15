@@ -67,4 +67,8 @@ export default meta;
 
 type Story = StoryObj<typeof SidebarStoryWrapper>;
 
-export const SidebarStory: Story = {};
+export const SidebarStory: Story = {
+  parameters: {
+    layout: null,
+  },
+};

@@ -4,7 +4,7 @@ import { IInputProps, Input as StoryComponent } from './Input';
 
 const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
-  title: 'Form/Input',
+  title: 'Components/Form-Ui/Input',
 };
 export default meta;
 

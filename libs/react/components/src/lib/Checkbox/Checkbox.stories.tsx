@@ -4,7 +4,7 @@ import { disableControls } from '../../storybook';
 import { ICheckbox, Checkbox as StoryComponent } from './Checkbox';
 
 const meta: Meta<typeof StoryComponent> = {
-  title: 'Form/Checkbox',
+  title: 'Components/Form-Ui/Checkbox',
   component: StoryComponent,
   argTypes: {
     ...disableControls(['onChange']),
