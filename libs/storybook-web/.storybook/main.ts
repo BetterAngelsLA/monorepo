@@ -1,9 +1,9 @@
-import type { StorybookConfig } from '@storybook/react-vite';
-import { createRequire } from 'node:module';
-
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import type { StorybookConfig } from '@storybook/react-vite';
 import react from '@vitejs/plugin-react';
-import { mergeConfig } from 'vite';
+import { createRequire } from 'node:module';
+import { mergeConfig, searchForWorkspaceRoot } from 'vite';
+import { rawSvgPlugin } from './plugins/rawSvgPlugin';
 
 const require = createRequire(import.meta.url);
 
@@ -29,7 +29,12 @@ const config: StorybookConfig = {
 
   viteFinal: async (config) =>
     mergeConfig(config, {
-      plugins: [react(), nxViteTsPaths()],
+      plugins: [
+        rawSvgPlugin(), // Consider switching to SVGR globally for react icons
+        react(),
+        nxViteTsPaths(),
+      ],
+      server: { fs: { allow: [searchForWorkspaceRoot(process.cwd())] } },
     }),
 };
 
