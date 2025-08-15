@@ -6,6 +6,7 @@
   "scripts": {
     "storybook-start": "nx run expo-shared-ui-components:storybook",
     "storybook-build": "nx storybook build expo-shared-ui-components",
+    "storybook-web": "nx storybook storybook-web",
     "server": "nx start betterangels-backend",
     "ba": "nx start betterangels",
     "ba:build-dev": "nx build betterangels --profile development",
