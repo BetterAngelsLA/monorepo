@@ -1,3 +1,4 @@
+import { SbkPage, decorateWith } from '@monorepo/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ComponentType, SVGProps, useState } from 'react';
 import * as icons from '../index';
@@ -30,11 +31,13 @@ export default meta;
 type Story = StoryObj;
 
 export const IconGallery: Story = {
+  decorators: [decorateWith(SbkPage)],
+  parameters: { layout: false },
   render: () => {
     const [visibleIcons, setVisibleIcons] = useState<TIconItem[]>(iconList);
 
     return (
-      <div>
+      <div className="w-full flex flex-col">
         <div className="mb-8 w-96">
           <SbListSearch<TIconItem>
             placeholder="Search icons"

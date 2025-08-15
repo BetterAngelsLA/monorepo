@@ -17,7 +17,6 @@ export function SbkPage(props: TProps) {
     'grow',
     'gap-8',
     'justify-center',
-    'border-4 border-red-500',
     className,
   ];
 
