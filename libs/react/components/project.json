@@ -11,21 +11,6 @@
       "options": {
         "jestConfig": "libs/react/components/jest.config.ts"
       }
-    },
-    "storybook": {
-      "executor": "@nx/storybook:storybook",
-      "options": {
-        "configDir": "libs/react/components/.storybook",
-        "port": 4400
-      }
-    },
-    "build-storybook": {
-      "executor": "@nx/storybook:build",
-      "outputs": ["{options.outputDir}"],
-      "options": {
-        "configDir": "libs/react/components/.storybook",
-        "outputDir": "dist/storybook/react-components"
-      }
     }
   }
 }
