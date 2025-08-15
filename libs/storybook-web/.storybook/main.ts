@@ -1,6 +1,5 @@
 import type { StorybookConfig } from '@storybook/react-vite';
 import { createRequire } from 'node:module';
-import { dirname, join } from 'node:path';
 
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import react from '@vitejs/plugin-react';
@@ -13,14 +12,13 @@ const config: StorybookConfig = {
     '../../react/components/src/lib/**/*.@(mdx|stories.@(js|jsx|ts|tsx))',
     '../../react/icons/src/lib/components/**/*.@(mdx|stories.@(js|jsx|ts|tsx))',
   ],
-  addons: ['@storybook/addon-essentials', '@storybook/addon-interactions'],
+  addons: [],
   framework: {
-    // name: getAbsolutePath('@storybook/react-vite'),
     name: '@storybook/react-vite',
     options: {},
   },
 
-  // NOTE: Still not sure why need this, but breaks without it
+  // NOTE: still not sure why, but breaks without it
   typescript: {
     reactDocgen: 'react-docgen-typescript',
     reactDocgenTypescriptOptions: {
@@ -36,11 +34,3 @@ const config: StorybookConfig = {
 };
 
 export default config;
-
-// To customize your Vite configuration you can use the viteFinal field.
-// Check https://storybook.js.org/docs/react/builders/vite#configuration
-// and https://nx.dev/recipes/storybook/custom-builder-configs
-
-function getAbsolutePath(value: string): any {
-  return dirname(require.resolve(join(value, 'package.json')));
-}
