@@ -31,6 +31,7 @@ interface IServicesModalProps {
   initialServices: {
     id: string;
     service?: ServiceEnum | null | undefined;
+    serviceEnum?: ServiceEnum | null | undefined;
     serviceOther?: string | null;
   }[];
   refetch: () => void;
@@ -143,7 +144,7 @@ export default function ServicesModal(props: IServicesModalProps) {
             await createService({
               variables: {
                 data: {
-                  service: service.enum,
+                  serviceEnum: service.enum,
                   noteId,
                   serviceRequestType: type,
                 },
@@ -164,7 +165,7 @@ export default function ServicesModal(props: IServicesModalProps) {
             await createService({
               variables: {
                 data: {
-                  service: ServiceEnum.Other,
+                  serviceEnum: ServiceEnum.Other,
                   serviceOther: service.title,
                   noteId,
                   serviceRequestType: type,
@@ -196,11 +197,11 @@ export default function ServicesModal(props: IServicesModalProps) {
   const closeModal = () => {
     const newInitialServices = initialServices
       // TODO: remove after cutover
-      .filter((item) => !!item.service)
-      .filter((item) => item.service !== ServiceEnum.Other)
-      .map((service) => ({ id: service.id, enum: service.service! }));
+      .filter((item) => !!item.serviceEnum)
+      .filter((item) => item.serviceEnum !== ServiceEnum.Other)
+      .map((service) => ({ id: service.id, enum: service.serviceEnum! }));
     const initialServiceOthers = initialServices
-      .filter((item) => item.service === ServiceEnum.Other)
+      .filter((item) => item.serviceEnum === ServiceEnum.Other)
       .map((service) => ({
         id: service.id,
         title: service.serviceOther || null,
@@ -214,14 +215,14 @@ export default function ServicesModal(props: IServicesModalProps) {
   useEffect(() => {
     const newInitialServices = initialServices
       // TODO: remove after cutover
-      .filter((serviceItem) => !!serviceItem.service)
-      .filter((serviceItem) => serviceItem.service !== ServiceEnum.Other)
-      .map((serviceItem) => ({
-        id: serviceItem.id,
-        enum: serviceItem.service!,
+      .filter((item) => !!item.serviceEnum)
+      .filter((item) => item.serviceEnum !== ServiceEnum.Other)
+      .map((item) => ({
+        id: item.id,
+        enum: item.serviceEnum!,
       }));
     const initialServiceOthers = initialServices
-      .filter((item) => item.service === ServiceEnum.Other)
+      .filter((item) => item.serviceEnum === ServiceEnum.Other)
       .map((service) => ({
         id: service.id,
         title: service.serviceOther || '',
