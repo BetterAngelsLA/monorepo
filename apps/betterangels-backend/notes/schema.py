@@ -284,6 +284,8 @@ class Mutation:
                 ServiceRequest,
                 {
                     **service_request_data,
+                    "service": service_request_data["service"] or service_request_data["service_enum"],
+                    "service_enum": service_request_data["service_enum"] or service_request_data["service"],
                     "status": (
                         ServiceRequestStatusEnum.TO_DO
                         if service_request_type == ServiceRequestTypeEnum.REQUESTED

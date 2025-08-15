@@ -58,6 +58,16 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self.execute_graphql(query, variables)
 
+        # TODO: remove in cutover
+        assert self.provided_services[0].service
+        assert self.provided_services[1].service
+        assert self.requested_services[0].service
+        assert self.requested_services[1].service
+        assert self.provided_services[0].service_enum
+        assert self.provided_services[1].service_enum
+        assert self.requested_services[0].service_enum
+        assert self.requested_services[1].service_enum
+
         note = response["data"]["note"]
         expected_note = {
             "id": note_id,
@@ -84,6 +94,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 {
                     "id": str(self.provided_services[0].id),
                     "service": ServiceEnum(self.provided_services[0].service).name,
+                    "serviceEnum": ServiceEnum(self.provided_services[0].service_enum).name,
                     "serviceOther": self.provided_services[0].service_other,
                     "dueBy": self.provided_services[0].due_by,
                     "status": ServiceRequestStatusEnum(self.provided_services[0].status).name,
@@ -91,6 +102,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 {
                     "id": str(self.provided_services[1].id),
                     "service": ServiceEnum(self.provided_services[1].service).name,
+                    "serviceEnum": ServiceEnum(self.provided_services[1].service_enum).name,
                     "serviceOther": self.provided_services[1].service_other,
                     "dueBy": self.provided_services[1].due_by,
                     "status": ServiceRequestStatusEnum(self.provided_services[1].status).name,
@@ -100,6 +112,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 {
                     "id": str(self.requested_services[0].id),
                     "service": ServiceEnum(self.requested_services[0].service).name,
+                    "serviceEnum": ServiceEnum(self.requested_services[0].service_enum).name,
                     "serviceOther": self.requested_services[0].service_other,
                     "dueBy": self.requested_services[0].due_by,
                     "status": ServiceRequestStatusEnum(self.requested_services[0].status).name,
@@ -107,6 +120,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 {
                     "id": str(self.requested_services[1].id),
                     "service": ServiceEnum(self.requested_services[1].service).name,
+                    "serviceEnum": ServiceEnum(self.requested_services[1].service_enum).name,
                     "serviceOther": self.requested_services[1].service_other,
                     "dueBy": self.requested_services[1].due_by,
                     "status": ServiceRequestStatusEnum(self.requested_services[1].status).name,
