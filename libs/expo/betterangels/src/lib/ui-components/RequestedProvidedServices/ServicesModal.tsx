@@ -30,7 +30,7 @@ interface IServicesModalProps {
   noteId: string;
   initialServices: {
     id: string;
-    service: ServiceEnum;
+    service?: ServiceEnum | null | undefined;
     serviceOther?: string | null;
   }[];
   refetch: () => void;
@@ -195,8 +195,10 @@ export default function ServicesModal(props: IServicesModalProps) {
 
   const closeModal = () => {
     const newInitialServices = initialServices
+      // TODO: remove after cutover
+      .filter((item) => !!item.service)
       .filter((item) => item.service !== ServiceEnum.Other)
-      .map((service) => ({ id: service.id, enum: service.service }));
+      .map((service) => ({ id: service.id, enum: service.service! }));
     const initialServiceOthers = initialServices
       .filter((item) => item.service === ServiceEnum.Other)
       .map((service) => ({
@@ -211,10 +213,12 @@ export default function ServicesModal(props: IServicesModalProps) {
 
   useEffect(() => {
     const newInitialServices = initialServices
+      // TODO: remove after cutover
+      .filter((serviceItem) => !!serviceItem.service)
       .filter((serviceItem) => serviceItem.service !== ServiceEnum.Other)
       .map((serviceItem) => ({
         id: serviceItem.id,
-        enum: serviceItem.service,
+        enum: serviceItem.service!,
       }));
     const initialServiceOthers = initialServices
       .filter((item) => item.service === ServiceEnum.Other)
