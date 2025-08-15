@@ -1,5 +1,5 @@
+import { SbkPanel } from '@monorepo/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
-import { SbList } from '../../storybook';
 import { IInputProps, Input as StoryComponent } from './Input';
 
 const meta: Meta<typeof StoryComponent> = {
@@ -19,9 +19,9 @@ export const Input: Story = {
     const baseArgs = { ...defaultArgs, ...args };
 
     return (
-      <SbList className="w-[400px] p-8 border-2 border-gray-100">
+      <SbkPanel variant="bordered" className="w-[400px]">
         <StoryComponent {...baseArgs} />
-      </SbList>
+      </SbkPanel>
     );
   },
 };

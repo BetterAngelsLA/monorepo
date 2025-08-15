@@ -9,4 +9,5 @@ export { default as ExpandableContainer } from './ExpandableContainer';
 export * from './ImageCarousel';
 export { default as Pill } from './Pill';
 export { default as PillContainer } from './PillContainer';
+export * from './SearchInput';
 export * from './Sidebar';

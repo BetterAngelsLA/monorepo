@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { SbList } from '../../storybook';
 import { Button } from './Button';
 
 const meta: Meta<typeof Button> = {
@@ -12,7 +11,7 @@ type Story = StoryObj<typeof Button>;
 
 export const BasicButton: Story = {
   render: (args) => (
-    <SbList>
+    <div className="flex flex-col gap-4">
       <Button {...args}>text</Button>
       <Button {...args} className="pseudo-hover">
         hover
@@ -20,6 +19,6 @@ export const BasicButton: Story = {
       <Button {...args} className="pseudo-active">
         active
       </Button>
-    </SbList>
+    </div>
   ),
 };

@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { SbList } from '../../storybook';
 import { IPillProps, Pill as StoryComponent } from './Pill';
 
 const meta: Meta<typeof StoryComponent> = {
@@ -19,10 +18,6 @@ export const Pill: Story = {
   render: (args) => {
     const baseArgs = { ...defaultArgs, ...args };
 
-    return (
-      <SbList>
-        <StoryComponent {...baseArgs} />
-      </SbList>
-    );
+    return <StoryComponent {...baseArgs} />;
   },
 };

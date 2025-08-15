@@ -1,5 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { SbList } from '../../storybook';
 import { DropdownProps, Dropdown as StoryComponent } from './Dropdown';
 
 const meta: Meta<typeof StoryComponent> = {
@@ -21,9 +20,9 @@ export const Dropdown: Story = {
     const baseArgs = { ...defaultArgs, ...args };
 
     return (
-      <SbList className="w-full h-[300px] px-24 py-12 bg-gray-100">
+      <div className="h-[300px] px-24 py-12 bg-gray-100">
         <StoryComponent {...baseArgs} />
-      </SbList>
+      </div>
     );
   },
 };

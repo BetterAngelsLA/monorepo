@@ -1,12 +1,15 @@
+import { mergeCss } from '@monorepo/react/components';
 import { PropsWithChildren } from 'react';
-import { mergeCss } from '../../utils';
+
+type TVariant = 'bordered';
 
 type TProps = PropsWithChildren<{
   className?: string;
+  variant?: TVariant;
 }>;
 
-export function SbPage(props: TProps) {
-  const { children, className } = props;
+export function SbkPanel(props: TProps) {
+  const { children, variant, className } = props;
 
   const parentCss = [
     'w-full',
@@ -17,6 +20,9 @@ export function SbPage(props: TProps) {
     'grow',
     'gap-8',
     'justify-center',
+    variant === 'bordered'
+      ? 'border-2 border-dotted border-gray-200 p-8'
+      : undefined,
     className,
   ];
 

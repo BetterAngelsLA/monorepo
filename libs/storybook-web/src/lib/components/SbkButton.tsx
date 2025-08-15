@@ -1,5 +1,5 @@
+import { mergeCss } from '@monorepo/react/components';
 import { ReactNode } from 'react';
-import { mergeCss } from '../../utils';
 
 type TProps = {
   children: ReactNode;
@@ -7,7 +7,7 @@ type TProps = {
   onClick?: () => void;
 };
 
-export function SbButton(props: TProps) {
+export function SbkButton(props: TProps) {
   const { onClick, children, className } = props;
 
   const parentCss = ['bg-gray-500', 'p-2', 'rounded', 'text-white', className];

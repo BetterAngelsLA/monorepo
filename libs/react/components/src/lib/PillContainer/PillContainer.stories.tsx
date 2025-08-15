@@ -1,6 +1,6 @@
 // PillContainer.stories.tsx
+import { SbkPanel } from '@monorepo/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
-import { SbList } from '../../storybook';
 import {
   PillContainer as StoryComponent,
   IPillContainerProps as TStoryProps,
@@ -32,9 +32,9 @@ export const PillContainer: Story = {
     const baseArgs = { ...defaultArgs, ...args };
 
     return (
-      <SbList variant="bordered" className="w-[400px]">
+      <SbkPanel variant="bordered" className="w-[400px]">
         <StoryComponent {...baseArgs} />
-      </SbList>
+      </SbkPanel>
     );
   },
 };
