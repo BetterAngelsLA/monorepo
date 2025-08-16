@@ -1,30 +1,33 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { useForm } from 'react-hook-form';
-import { View } from 'react-native';
-import { Textarea } from './Textarea';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const TextareaMeta: ComponentMeta<typeof Textarea> = {
-  title: 'Textarea',
-  component: Textarea,
-  decorators: [
-    (Story) => {
-      return (
-        <View style={{ padding: Spacings.sm }}>
-          <View style={{ padding: Spacings.sm }}>
-            <Story />
-          </View>
-        </View>
-      );
-    },
-  ],
-};
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { useForm } from 'react-hook-form';
+// import { View } from 'react-native';
+// import { Textarea } from './Textarea';
 
-export default TextareaMeta;
+// const TextareaMeta: ComponentMeta<typeof Textarea> = {
+//   title: 'Textarea',
+//   component: Textarea,
+//   decorators: [
+//     (Story) => {
+//       return (
+//         <View style={{ padding: Spacings.sm }}>
+//           <View style={{ padding: Spacings.sm }}>
+//             <Story />
+//           </View>
+//         </View>
+//       );
+//     },
+//   ],
+// };
 
-type TextareaStory = ComponentStory<typeof Textarea>;
+// export default TextareaMeta;
 
-export const Basic: TextareaStory = () => {
-  const { control } = useForm();
-  return <Textarea label="Test" height={200} name="test" control={control} />;
-};
+// type TextareaStory = ComponentStory<typeof Textarea>;
+
+// export const Basic: TextareaStory = () => {
+//   const { control } = useForm();
+//   return <Textarea label="Test" height={200} name="test" control={control} />;
+// };

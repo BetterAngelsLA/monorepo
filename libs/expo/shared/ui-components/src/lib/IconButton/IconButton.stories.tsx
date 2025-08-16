@@ -1,27 +1,30 @@
-import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { IconButton } from './IconButton';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const IconButtonMeta: ComponentMeta<typeof IconButton> = {
-  title: 'IconButton',
-  component: IconButton,
-  args: {
-    variant: 'primary',
-    children: <PlusIcon size="sm" />,
-  },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: Spacings.sm }}>
-        <Story />
-      </View>
-    ),
-  ],
-};
+// import { PlusIcon } from '@monorepo/expo/shared/icons';
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { IconButton } from './IconButton';
 
-export default IconButtonMeta;
+// const IconButtonMeta: ComponentMeta<typeof IconButton> = {
+//   title: 'IconButton',
+//   component: IconButton,
+//   args: {
+//     variant: 'primary',
+//     children: <PlusIcon size="sm" />,
+//   },
+//   decorators: [
+//     (Story) => (
+//       <View style={{ padding: Spacings.sm }}>
+//         <Story />
+//       </View>
+//     ),
+//   ],
+// };
 
-type IconButtonStory = ComponentStory<typeof IconButton>;
+// export default IconButtonMeta;
 
-export const Basic: IconButtonStory = (args) => <IconButton {...args} />;
+// type IconButtonStory = ComponentStory<typeof IconButton>;
+
+// export const Basic: IconButtonStory = (args) => <IconButton {...args} />;

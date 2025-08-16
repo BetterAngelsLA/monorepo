@@ -1,37 +1,40 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { useState } from 'react';
-import { View } from 'react-native';
-import { BasicInput } from './BasicInput';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const BasicInputMeta: ComponentMeta<typeof BasicInput> = {
-  title: 'BasicInput',
-  component: BasicInput,
-  decorators: [
-    (Story) => {
-      return (
-        <View style={{ padding: Spacings.sm }}>
-          <View style={{ padding: Spacings.sm }}>
-            <Story />
-          </View>
-        </View>
-      );
-    },
-  ],
-};
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { useState } from 'react';
+// import { View } from 'react-native';
+// import { BasicInput } from './BasicInput';
 
-export default BasicInputMeta;
+// const BasicInputMeta: ComponentMeta<typeof BasicInput> = {
+//   title: 'BasicInput',
+//   component: BasicInput,
+//   decorators: [
+//     (Story) => {
+//       return (
+//         <View style={{ padding: Spacings.sm }}>
+//           <View style={{ padding: Spacings.sm }}>
+//             <Story />
+//           </View>
+//         </View>
+//       );
+//     },
+//   ],
+// };
 
-type BasicInputStory = ComponentStory<typeof BasicInput>;
+// export default BasicInputMeta;
 
-export const Basic: BasicInputStory = () => {
-  const [value, setValue] = useState('');
-  return (
-    <BasicInput
-      label="Test"
-      height={56}
-      value={value}
-      onChangeText={setValue}
-    />
-  );
-};
+// type BasicInputStory = ComponentStory<typeof BasicInput>;
+
+// export const Basic: BasicInputStory = () => {
+//   const [value, setValue] = useState('');
+//   return (
+//     <BasicInput
+//       label="Test"
+//       height={56}
+//       value={value}
+//       onChangeText={setValue}
+//     />
+//   );
+// };

@@ -1,100 +1,103 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { EventCard } from './EventCard';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const EventCardMeta: ComponentMeta<typeof EventCard> = {
-  title: 'EventCard',
-  component: EventCard,
-  args: {
-    title: 'Event Card somehthng somet dasf',
-    time: '09:00 AM',
-    address: '123 Wilshire Blvd',
-    participants: [
-      {
-        id: '1',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '2',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '3',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '4',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '1',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '2',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '3',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '4',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '1',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '2',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '3',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-      {
-        id: '4',
-        firstName: 'first',
-        lastName: 'first',
-        image: '',
-      },
-    ],
-  },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: 26 }}>
-        <Story />
-      </View>
-    ),
-  ],
-};
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { EventCard } from './EventCard';
 
-export default EventCardMeta;
+// const EventCardMeta: ComponentMeta<typeof EventCard> = {
+//   title: 'EventCard',
+//   component: EventCard,
+//   args: {
+//     title: 'Event Card somehthng somet dasf',
+//     time: '09:00 AM',
+//     address: '123 Wilshire Blvd',
+//     participants: [
+//       {
+//         id: '1',
+//         firstName: 'first',
+//         lastName: 'first',
+//         image: '',
+//       },
+//       {
+//         id: '2',
+//         firstName: 'first',
+//         lastName: 'first',
+//         image: '',
+//       },
+//       {
+//         id: '3',
+//         firstName: 'first',
+//         lastName: 'first',
+//         image: '',
+//       },
+//       {
+//         id: '4',
+//         firstName: 'first',
+//         lastName: 'first',
+//         image: '',
+//       },
+//       {
+//         id: '1',
+//         firstName: 'first',
+//         lastName: 'first',
+//         image: '',
+//       },
+//       {
+//         id: '2',
+//         firstName: 'first',
+//         lastName: 'first',
+//         image: '',
+//       },
+//       {
+//         id: '3',
+//         firstName: 'first',
+//         lastName: 'first',
+//         image: '',
+//       },
+//       {
+//         id: '4',
+//         firstName: 'first',
+//         lastName: 'first',
+//         image: '',
+//       },
+//       {
+//         id: '1',
+//         firstName: 'first',
+//         lastName: 'first',
+//         image: '',
+//       },
+//       {
+//         id: '2',
+//         firstName: 'first',
+//         lastName: 'first',
+//         image: '',
+//       },
+//       {
+//         id: '3',
+//         firstName: 'first',
+//         lastName: 'first',
+//         image: '',
+//       },
+//       {
+//         id: '4',
+//         firstName: 'first',
+//         lastName: 'first',
+//         image: '',
+//       },
+//     ],
+//   },
+//   decorators: [
+//     (Story) => (
+//       <View style={{ padding: 26 }}>
+//         <Story />
+//       </View>
+//     ),
+//   ],
+// };
 
-type PStory = ComponentStory<typeof EventCard>;
+// export default EventCardMeta;
 
-export const Basic: PStory = (args) => <EventCard {...args} />;
+// type PStory = ComponentStory<typeof EventCard>;
+
+// export const Basic: PStory = (args) => <EventCard {...args} />;

@@ -1,27 +1,30 @@
-import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { TextButton } from './TextButton';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const TextButtonMeta: ComponentMeta<typeof TextButton> = {
-  title: 'TextButton',
-  component: TextButton,
-  args: {
-    title: 'Hello world',
-    icon: <PlusIcon size="xs" />,
-  },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: Spacings.sm }}>
-        <Story />
-      </View>
-    ),
-  ],
-};
+// import { PlusIcon } from '@monorepo/expo/shared/icons';
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { TextButton } from './TextButton';
 
-export default TextButtonMeta;
+// const TextButtonMeta: ComponentMeta<typeof TextButton> = {
+//   title: 'TextButton',
+//   component: TextButton,
+//   args: {
+//     title: 'Hello world',
+//     icon: <PlusIcon size="xs" />,
+//   },
+//   decorators: [
+//     (Story) => (
+//       <View style={{ padding: Spacings.sm }}>
+//         <Story />
+//       </View>
+//     ),
+//   ],
+// };
 
-type TextButtonStory = ComponentStory<typeof TextButton>;
+// export default TextButtonMeta;
 
-export const Basic: TextButtonStory = (args) => <TextButton {...args} />;
+// type TextButtonStory = ComponentStory<typeof TextButton>;
+
+// export const Basic: TextButtonStory = (args) => <TextButton {...args} />;
