@@ -1,26 +1,29 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { Alert, View } from 'react-native';
-import { Copy } from './Copy';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const CopyMeta: ComponentMeta<typeof Copy> = {
-  title: 'Copy',
-  component: Copy,
-  args: {
-    textToCopy: 'Test Text',
-    closeCopy: () => Alert.alert('Copied'),
-  },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: Spacings.sm }}>
-        <Story />
-      </View>
-    ),
-  ],
-};
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { Alert, View } from 'react-native';
+// import { Copy } from './Copy';
 
-export default CopyMeta;
+// const CopyMeta: ComponentMeta<typeof Copy> = {
+//   title: 'Copy',
+//   component: Copy,
+//   args: {
+//     textToCopy: 'Test Text',
+//     closeCopy: () => Alert.alert('Copied'),
+//   },
+//   decorators: [
+//     (Story) => (
+//       <View style={{ padding: Spacings.sm }}>
+//         <Story />
+//       </View>
+//     ),
+//   ],
+// };
 
-type CopyStory = ComponentStory<typeof Copy>;
+// export default CopyMeta;
 
-export const Basic: CopyStory = (args) => <Copy {...args} />;
+// type CopyStory = ComponentStory<typeof Copy>;
+
+// export const Basic: CopyStory = (args) => <Copy {...args} />;
