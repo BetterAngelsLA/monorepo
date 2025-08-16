@@ -3,7 +3,7 @@ import {
   SbkPanel,
   disableControls,
   withMemoryRouter,
-} from '@monorepo/storybook-web';
+} from '@monorepo/react/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
 import { SidebarLink } from './SidebarLink';
 

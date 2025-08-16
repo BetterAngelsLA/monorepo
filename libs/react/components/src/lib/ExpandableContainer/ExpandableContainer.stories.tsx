@@ -1,4 +1,4 @@
-import { disableControls } from '@monorepo/storybook-web';
+import { disableControls } from '@monorepo/react/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ExpandableContainer } from './ExpandableContainer';
 

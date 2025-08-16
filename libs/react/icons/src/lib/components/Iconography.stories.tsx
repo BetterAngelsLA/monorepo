@@ -1,5 +1,5 @@
 import { SearchList } from '@monorepo/react/components';
-import { SbkPanel } from '@monorepo/storybook-web';
+import { SbkPanel } from '@monorepo/react/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ComponentType, SVGProps, useState } from 'react';
 import * as icons from '../index';
@@ -39,7 +39,7 @@ export const IconGallery: Story = {
       <SbkPanel className="flex-col">
         <div className="mb-8 w-96">
           <SearchList<TIconItem>
-            placeholder="Search icons xx"
+            placeholder="Search icons"
             data={iconList.map((entry) => {
               return {
                 text: entry.name,

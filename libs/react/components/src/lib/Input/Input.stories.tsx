@@ -1,4 +1,4 @@
-import { SbkPanel } from '@monorepo/storybook-web';
+import { SbkPanel } from '@monorepo/react/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
 import { IInputProps, Input as StoryComponent } from './Input';
 
