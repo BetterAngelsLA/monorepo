@@ -35,7 +35,7 @@
       "@monorepo/react/icons": ["libs/react/icons/src/index.ts"],
       "@monorepo/react/shared": ["libs/react/shared/src/index.ts"],
       "@monorepo/react/shelter": ["libs/react/shelter/src/index.ts"],
-      "@monorepo/storybook-web": ["libs/storybook-web/src/index.ts"]
+      "@monorepo/storybook-web": ["libs/react/storybook-web/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

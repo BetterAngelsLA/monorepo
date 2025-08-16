@@ -1,4 +1,3 @@
-// PillContainer.stories.tsx
 import { SbkPanel } from '@monorepo/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
 import {
