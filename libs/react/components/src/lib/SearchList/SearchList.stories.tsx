@@ -28,7 +28,7 @@ const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
   title: 'Components/Form-Ui/SearchList',
   argTypes: {
-    ...disableControls(['onChange', 'className', 'value']),
+    ...disableControls(['onChange', 'className', 'value', 'data']),
   },
 };
 
@@ -41,6 +41,7 @@ export const SearchList: Story = {
     const [results, setResults] = useState<string[]>([]);
 
     const finalArgs: TSearchListProps<string> = {
+      placeholder: 'search colors',
       ...args,
       data: colors.map((c) => {
         return { text: c, value: c };

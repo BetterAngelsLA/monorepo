@@ -9,13 +9,15 @@ type TDataItem<T> = {
 export type TProps<T> = {
   data: TDataItem<T>[];
   onChange: (results: T[]) => void;
+  label?: string;
   placeholder?: string;
   className?: string;
   caseSensitive?: boolean;
 };
 
 export function SearchList<T>(props: TProps<T>) {
-  const { data, onChange, caseSensitive, placeholder, className } = props;
+  const { data, onChange, caseSensitive, label, placeholder, className } =
+    props;
 
   const parentCss = ['flex', className];
 
@@ -34,7 +36,11 @@ export function SearchList<T>(props: TProps<T>) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <SearchInput placeholder={placeholder} onChange={onSearchChange} />
+      <SearchInput
+        placeholder={placeholder}
+        label={label}
+        onChange={onSearchChange}
+      />
     </div>
   );
 }
