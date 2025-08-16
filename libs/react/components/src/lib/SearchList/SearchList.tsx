@@ -1,12 +1,12 @@
-import { mergeCss } from '@monorepo/react/components';
-import { SbSearchInput } from './SbSearchInput';
+import { mergeCss } from '../../utils';
+import { SearchInput } from '../SearchInput';
 
 type TDataItem<T> = {
   text: string;
   value: T;
 };
 
-type TProps<T> = {
+export type TProps<T> = {
   data: TDataItem<T>[];
   onChange: (results: T[]) => void;
   placeholder?: string;
@@ -14,7 +14,7 @@ type TProps<T> = {
   caseSensitive?: boolean;
 };
 
-export function SbListSearch<T>(props: TProps<T>) {
+export function SearchList<T>(props: TProps<T>) {
   const { data, onChange, caseSensitive, placeholder, className } = props;
 
   const parentCss = ['flex', className];
@@ -34,7 +34,7 @@ export function SbListSearch<T>(props: TProps<T>) {
 
   return (
     <div className={mergeCss(parentCss)}>
-      <SbSearchInput placeholder={placeholder} onChange={onSearchChange} />
+      <SearchInput placeholder={placeholder} onChange={onSearchChange} />
     </div>
   );
 }

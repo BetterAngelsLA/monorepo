@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Input } from '../../../../components/src/lib/Input';
 
 export type TProps = {
-  value: string;
+  value?: string;
   label?: string;
   error?: string;
   placeholder?: string;
@@ -24,10 +24,10 @@ export function SearchInput(props: TProps) {
     className,
   } = props;
 
-  const [internalValue, setInternalValue] = useState(value);
+  const [internalValue, setInternalValue] = useState<string>(value || '');
 
   useEffect(() => {
-    setInternalValue(value);
+    setInternalValue(value || '');
   }, [value]);
 
   const debouncedChange = useMemo(

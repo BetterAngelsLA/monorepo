@@ -1,8 +1,8 @@
+import { SearchList } from '@monorepo/react/components';
 import { SbkPanel } from '@monorepo/storybook-web';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ComponentType, SVGProps, useState } from 'react';
 import * as icons from '../index';
-import { SbListSearch } from '../storybook';
 
 // Avoid prop collision with SVG's built-in `type` attribute
 type BaseSvgProps = Omit<SVGProps<SVGSVGElement>, 'type'>;
@@ -38,8 +38,8 @@ export const IconGallery: Story = {
     return (
       <SbkPanel className="flex-col">
         <div className="mb-8 w-96">
-          <SbListSearch<TIconItem>
-            placeholder="Search icons"
+          <SearchList<TIconItem>
+            placeholder="Search icons xx"
             data={iconList.map((entry) => {
               return {
                 text: entry.name,

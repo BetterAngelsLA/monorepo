@@ -10,4 +10,5 @@ export * from './ImageCarousel';
 export { default as Pill } from './Pill';
 export { default as PillContainer } from './PillContainer';
 export * from './SearchInput';
+export * from './SearchList';
 export * from './Sidebar';
