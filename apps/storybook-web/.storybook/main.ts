@@ -2,13 +2,12 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import type { StorybookConfig } from '@storybook/react-vite';
 import react from '@vitejs/plugin-react';
 import { mergeConfig, searchForWorkspaceRoot } from 'vite';
+import svgr from 'vite-plugin-svgr';
+import { LIB_STORY_GLOBS } from '../config';
 import { rawSvgPlugin } from './plugins/rawSvgPlugin';
 
 const config: StorybookConfig = {
-  stories: [
-    '../../../libs/react/components/src/lib/**/*.@(mdx|stories.@(js|jsx|ts|tsx))',
-    '../../../libs/react/icons/src/lib/components/**/*.@(mdx|stories.@(js|jsx|ts|tsx))',
-  ],
+  stories: LIB_STORY_GLOBS,
   addons: [],
   framework: {
     name: '@storybook/react-vite',
@@ -27,7 +26,8 @@ const config: StorybookConfig = {
   viteFinal: async (config) =>
     mergeConfig(config, {
       plugins: [
-        rawSvgPlugin(), // Consider switching to SVGR globally (for react)
+        svgr({}),
+        rawSvgPlugin(), // TODO: switch to SVGR globally for react libs
         react(),
         nxViteTsPaths(),
       ],

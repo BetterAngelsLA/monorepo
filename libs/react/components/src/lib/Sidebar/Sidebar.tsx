@@ -55,15 +55,13 @@ export function Sidebar(props: TProps) {
     'duration-300',
     'ease-in-out',
     'pb-8',
-    // 'border-4 border-green-500',
   ];
 
-  console.log('*****************  SIDEBAR isOpen:', isOpen);
   return (
     <div className={mergeCss(parentCss)}>
       <SidebarToggleBtn
         open={isOpen}
-        className="absolute top-8 right-0 -mr-4 border-4-x border-red-500"
+        className="absolute top-8 right-0 -mr-4"
         onClick={toggleOpen}
       />
       <div className={mergeCss(contentCss)}>
