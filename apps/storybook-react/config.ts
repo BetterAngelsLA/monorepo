@@ -8,7 +8,7 @@ const LIB_STORY_ROOTS = [
 
 const LIB_CONTENT_ROOTS = [
   './src', // host
-  '../../libs/react/storybook-web/src/lib', // storybook-web lib
+  '../../libs/react/storybook/src/lib', // react storybook lib
   ...LIB_STORY_ROOTS,
 ];
 

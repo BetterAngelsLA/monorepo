@@ -1,4 +1,4 @@
-import { disableControls } from '@monorepo/react/storybook-web';
+import { disableControls } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import { ICheckbox, Checkbox as StoryComponent } from './Checkbox';

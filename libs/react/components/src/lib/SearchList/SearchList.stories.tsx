@@ -1,4 +1,4 @@
-import { SbkPanel, disableControls } from '@monorepo/react/storybook-web';
+import { SbkPanel, disableControls } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import {

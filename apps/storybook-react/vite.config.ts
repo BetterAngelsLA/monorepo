@@ -4,7 +4,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig(() => ({
   root: __dirname,
-  cacheDir: '../../node_modules/.vite/apps/storybook-web',
+  cacheDir: '../../node_modules/.vite/apps/storybook-react',
   plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   // Uncomment this if you are using workers.
   // worker: {
@@ -18,7 +18,7 @@ export default defineConfig(() => ({
     reporters: ['default'],
     passWithNoTests: true,
     coverage: {
-      reportsDirectory: '../../coverage/apps/storybook-web',
+      reportsDirectory: '../../coverage/apps/storybook-react',
       provider: 'v8' as const,
     },
   },

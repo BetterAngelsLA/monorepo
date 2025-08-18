@@ -1,4 +1,4 @@
-import { SbkPanel } from '@monorepo/react/storybook-web';
+import { SbkPanel } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
 import {
   PillContainer as StoryComponent,

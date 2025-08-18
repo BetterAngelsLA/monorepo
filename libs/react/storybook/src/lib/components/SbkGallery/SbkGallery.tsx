@@ -1,5 +1,5 @@
 import { mergeCss } from '@monorepo/react/components';
-import { SbkPanel } from '@monorepo/react/storybook-web';
+import { SbkPanel } from '@monorepo/react/storybook';
 import { ReactNode, useState } from 'react';
 import { SbkGalleryCard } from './SbkGalleryCard';
 import { SbkGallerySearch } from './SbkGallerySearch';

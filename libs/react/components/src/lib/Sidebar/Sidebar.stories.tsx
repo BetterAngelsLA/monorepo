@@ -6,7 +6,7 @@ import {
   HandHeartOutlineIcon,
   UsersIcon,
 } from '@monorepo/react/icons';
-import { withMemoryRouter } from '@monorepo/react/storybook-web';
+import { withMemoryRouter } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
 import { BetterAngelsLogoBadge } from '../BetterAngelsLogoBadge';
 

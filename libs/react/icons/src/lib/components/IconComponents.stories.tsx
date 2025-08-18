@@ -1,4 +1,4 @@
-import { SbkGallery } from '@monorepo/react/storybook-web';
+import { SbkGallery } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ComponentType, SVGProps } from 'react';
 import * as icons from '../index';

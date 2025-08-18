@@ -1,4 +1,4 @@
-import { SbkGallery, extractFilename } from '@monorepo/react/storybook-web';
+import { SbkGallery, extractFilename } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
 import { ComponentType, SVGProps } from 'react';
 

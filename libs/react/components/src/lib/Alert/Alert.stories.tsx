@@ -1,4 +1,4 @@
-import { SbkButton, SbkPanel } from '@monorepo/react/storybook-web';
+import { SbkButton, SbkPanel } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Alert } from './Alert';
 import { useAlert } from './state/useAlert';

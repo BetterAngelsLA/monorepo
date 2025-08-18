@@ -1,9 +1,0 @@
-{
-  "name": "react-storybook-web",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/react/storybook-web/src",
-  "projectType": "library",
-  "tags": [],
-  "// targets": "to see all targets run: nx show project storybook-web --web",
-  "targets": {}
-}
