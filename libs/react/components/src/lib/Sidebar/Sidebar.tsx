@@ -35,7 +35,6 @@ export function Sidebar(props: TProps) {
     'relative',
     isOpen ? openClassName : closedClassName,
     className,
-    // 'border-4 border-blue-500',
   ];
 
   const contentCss = [
