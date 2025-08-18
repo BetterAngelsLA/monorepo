@@ -71,7 +71,8 @@ class OrganizationService(BaseModel):
     pghistory.DeleteEvent("service_request.remove"),
 )
 class ServiceRequest(BaseModel):
-    service = TextChoicesField(choices_enum=ServiceEnum)
+    service = TextChoicesField(choices_enum=ServiceEnum, null=True, blank=True)
+    service_enum = TextChoicesField(choices_enum=ServiceEnum, null=True, blank=True)
     service_other = models.CharField(max_length=100, null=True, blank=True)
     client_profile = models.ForeignKey(
         "clients.ClientProfile",
@@ -94,7 +95,7 @@ class ServiceRequest(BaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return str(self.service if not self.service_other else self.service_other)
+        return str(self.service_enum if not self.service_other else self.service_other)
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:
