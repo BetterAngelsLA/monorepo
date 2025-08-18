@@ -29,15 +29,10 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
   //     : '';
 
   const providedServicesArray = providedServices.map((item) => {
-    // TODO: remove after cutover
-    if (!item.serviceEnum) {
-      return;
-    }
-
     if (item.serviceEnum === ServiceEnum.Other) {
       return item.serviceOther;
     }
-    return enumDisplayServices[item.serviceEnum];
+    return enumDisplayServices[item.serviceEnum!];
   });
 
   const serviceIText =
@@ -59,15 +54,10 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
       : '';
 
   const requestedServicesArray = requestedServices.map((item) => {
-    // TODO: remove after cutover
-    if (!item.serviceEnum) {
-      return;
-    }
-
     if (item.serviceEnum === ServiceEnum.Other) {
       return item.serviceOther;
     }
-    return enumDisplayServices[item.serviceEnum];
+    return enumDisplayServices[item.serviceEnum!];
   });
 
   const updatedP =

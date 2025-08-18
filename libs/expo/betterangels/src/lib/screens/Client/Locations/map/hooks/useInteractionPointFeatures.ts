@@ -9,7 +9,7 @@ export function useInteractionPointFeatures(clientProfileId: string) {
   const { interactions, loading, error } = useGetClientInteractionsWithLocation(
     {
       id: clientProfileId,
-      dateSort: Ordering.Desc,
+      ordering: [{ interactedAt: Ordering.Desc }, { id: Ordering.Desc }],
     }
   );
 

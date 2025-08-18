@@ -1458,7 +1458,6 @@ enum ServiceRequestStatusEnum {
 
 type ServiceRequestType {
   id: ID!
-  service: ServiceEnum
   serviceEnum: ServiceEnum
   serviceOther: String
   status: ServiceRequestStatusEnum!
@@ -1467,6 +1466,7 @@ type ServiceRequestType {
   clientProfile: ClientProfileType
   createdBy: UserType!
   createdAt: DateTime!
+  service: ServiceEnum!
 }
 
 enum ServiceRequestTypeEnum {
