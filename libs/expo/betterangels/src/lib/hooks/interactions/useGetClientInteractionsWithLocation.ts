@@ -5,10 +5,10 @@ import {
   useNotesQuery,
 } from '../../apollo';
 
-const defaultSortOrder: Array<NoteOrder> = [
-  { interactedAt: Ordering.Desc },
-  { id: Ordering.Desc },
-];
+const defaultSortOrder: NoteOrder = {
+  interactedAt: Ordering.Desc,
+  id: Ordering.Desc,
+};
 
 type TProps = {
   id: string;
@@ -20,11 +20,14 @@ export function useGetClientInteractionsWithLocation(props: TProps) {
   const { id, idSort, dateSort } = props;
 
   const sortOrder = { ...defaultSortOrder, id: idSort, interactedAt: dateSort };
+  const sortOrderingArray = Object.entries(sortOrder).map(([key, value]) => ({
+    [key]: value,
+  }));
 
   const { data, error, loading } = useNotesQuery({
     variables: {
       pagination: { limit: 1000, offset: 0 },
-      ordering: sortOrder,
+      ordering: sortOrderingArray,
       filters: {
         clientProfile: id,
       },
