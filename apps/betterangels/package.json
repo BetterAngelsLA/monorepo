@@ -79,7 +79,9 @@
     "react-native-paper-dates": "*",
     "use-deep-compare-effect": "*",
     "jotai": "*",
-    "@shopify/flash-list": "*"
+    "@shopify/flash-list": "*",
+    "@hookform/resolvers": "*",
+    "zod": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",
