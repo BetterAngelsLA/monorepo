@@ -12,7 +12,7 @@ const defaultSortOrder: Array<NoteOrder> = [
 
 type TProps = {
   id: string;
-  ordering: Array<NoteOrder>;
+  ordering?: Array<NoteOrder>;
 };
 
 export function useGetClientInteractionsWithLocation(props: TProps) {
