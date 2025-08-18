@@ -12,36 +12,9 @@ import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useSignOut } from '../hooks';
+import { useFeatureFlagActive, useSignOut } from '../hooks';
+import { FeatureFlags } from '../providers';
 import { MainModal } from './MainModal';
-
-const ACTIONS = [
-  {
-    title: 'Home',
-    Icon: HouseLineIcon,
-    route: '/',
-  },
-  {
-    title: 'Clients',
-    Icon: UsersLineIcon,
-    route: '/clients',
-  },
-  {
-    title: 'Interactions',
-    Icon: NoteIcon,
-    route: '/interactions',
-  },
-  {
-    title: 'Tasks',
-    Icon: TaskListIcon,
-    route: '/tasks',
-  },
-  {
-    title: 'Settings',
-    Icon: SettingsOutlineIcon,
-    route: '/settings',
-  },
-];
 
 interface INavModalProps {
   image?: string;
@@ -59,6 +32,21 @@ export default function NavModal(props: INavModalProps) {
     setModalVisible(false);
   };
   const { signOut } = useSignOut();
+
+  const tasksFeatureOn = useFeatureFlagActive(FeatureFlags.TASKS_FF);
+
+  const ACTIONS = [
+    { title: 'Home', Icon: HouseLineIcon, route: '/' },
+    { title: 'Clients', Icon: UsersLineIcon, route: '/clients' },
+    { title: 'Interactions', Icon: NoteIcon, route: '/interactions' },
+    tasksFeatureOn && {
+      title: 'Tasks',
+      Icon: TaskListIcon,
+      route: '/tasks',
+    },
+    { title: 'Settings', Icon: SettingsOutlineIcon, route: '/settings' },
+  ].filter(Boolean);
+
   return (
     <>
       <Pressable
