@@ -29,11 +29,6 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
   //     : '';
 
   const providedServicesArray = providedServices.map((item) => {
-    // TODO: remove after cutover
-    if (!item.service) {
-      return;
-    }
-
     if (item.service === ServiceEnum.Other) {
       return item.serviceOther;
     }
@@ -59,11 +54,6 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
       : '';
 
   const requestedServicesArray = requestedServices.map((item) => {
-    // TODO: remove after cutover
-    if (!item.service) {
-      return;
-    }
-
     if (item.service === ServiceEnum.Other) {
       return item.serviceOther;
     }
