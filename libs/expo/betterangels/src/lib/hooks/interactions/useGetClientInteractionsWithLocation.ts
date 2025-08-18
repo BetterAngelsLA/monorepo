@@ -17,12 +17,10 @@ type TProps = {
 
 export function useGetClientInteractionsWithLocation(props: TProps) {
   const { id, ordering } = props;
-  const sortOrdering = ordering || defaultSortOrder;
-
   const { data, error, loading } = useNotesQuery({
     variables: {
       pagination: { limit: 1000, offset: 0 },
-      ordering: sortOrdering,
+      ordering: ordering || defaultSortOrder,
       filters: {
         clientProfile: id,
       },
