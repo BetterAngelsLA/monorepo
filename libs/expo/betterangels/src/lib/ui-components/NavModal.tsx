@@ -4,6 +4,7 @@ import {
   NoteIcon,
   SettingsOutlineIcon,
   SignOutIcon,
+  TaskListIcon,
   UsersLineIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
@@ -29,6 +30,11 @@ const ACTIONS = [
     title: 'Interactions',
     Icon: NoteIcon,
     route: '/interactions',
+  },
+  {
+    title: 'Tasks',
+    Icon: TaskListIcon,
+    route: '/tasks',
   },
   {
     title: 'Settings',
