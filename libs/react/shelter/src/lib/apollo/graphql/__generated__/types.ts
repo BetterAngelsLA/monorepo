@@ -1858,7 +1858,7 @@ export type ServiceRequestType = {
   createdBy: UserType;
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
-  service?: Maybe<ServiceEnum>;
+  service: ServiceEnum;
   serviceEnum?: Maybe<ServiceEnum>;
   serviceOther?: Maybe<Scalars['String']['output']>;
   status: ServiceRequestStatusEnum;

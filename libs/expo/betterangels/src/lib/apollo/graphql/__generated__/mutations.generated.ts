@@ -34,7 +34,7 @@ export type CreateNoteServiceRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateNoteServiceRequestMutation = { __typename?: 'Mutation', createNoteServiceRequest: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'ServiceRequestType', id: string, service?: Types.ServiceEnum | null } };
+export type CreateNoteServiceRequestMutation = { __typename?: 'Mutation', createNoteServiceRequest: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum } };
 
 export type DeleteServiceRequestMutationVariables = Types.Exact<{
   data: Types.DeleteDjangoObjectInput;
