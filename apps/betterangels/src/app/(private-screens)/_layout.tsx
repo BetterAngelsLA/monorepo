@@ -196,6 +196,12 @@ export default function PrivateLayout() {
           title: 'About App',
         })}
       />
+      <Stack.Screen
+        name="tasks"
+        options={getDefaultStackNavOptions({
+          title: 'Tasks',
+        })}
+      />
     </Stack>
   );
 }
