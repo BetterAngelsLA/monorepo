@@ -229,11 +229,7 @@ class ServiceRequestAdmin(admin.ModelAdmin):
 
     @admin.display(description="Service")
     def service_name(self, obj: ServiceRequest) -> Optional[str]:
-        # TODO: undo after cutover
-        if not obj.service_enum:
-            return None
-
-        return str(obj.service_enum.label if obj.service_enum != ServiceEnum.OTHER else obj.service_other)
+        return obj.service.service if obj.service else None
 
 
 @admin.register(NoteDataImport)
