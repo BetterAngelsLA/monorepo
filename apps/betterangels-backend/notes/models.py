@@ -23,12 +23,56 @@ if TYPE_CHECKING:
 
 
 @pghistory.track(
+    pghistory.InsertEvent("org_service_category.add"),
+    pghistory.UpdateEvent("org_service_category.update"),
+    pghistory.DeleteEvent("org_service_category.remove"),
+)
+class OrganizationServiceCategory(BaseModel):
+    name = models.CharField(max_length=100)
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT)
+    priority = models.PositiveIntegerField(blank=True, null=True)
+
+    def __str__(self) -> str:
+        return self.name
+
+    class Meta:
+        constraints = [models.UniqueConstraint("name", "organization", name="unique_name_org")]
+        ordering = ("priority",)
+
+    objects = models.Manager()
+
+
+@pghistory.track(
+    pghistory.InsertEvent("org_service.add"),
+    pghistory.UpdateEvent("org_service.update"),
+    pghistory.DeleteEvent("org_service.remove"),
+)
+class OrganizationService(BaseModel):
+    service = models.CharField(max_length=100)
+    category = models.ForeignKey(
+        OrganizationServiceCategory, on_delete=models.SET_NULL, null=True, related_name="services"
+    )
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="services")
+    priority = models.PositiveIntegerField(blank=True, null=True)
+
+    def __str__(self) -> str:
+        return self.service
+
+    class Meta:
+        constraints = [models.UniqueConstraint("service", "organization", name="unique_service_org")]
+        ordering = ("priority",)
+
+    objects = models.Manager()
+
+
+@pghistory.track(
     pghistory.InsertEvent("service_request.add"),
     pghistory.UpdateEvent("service_request.update"),
     pghistory.DeleteEvent("service_request.remove"),
 )
 class ServiceRequest(BaseModel):
-    service = TextChoicesField(choices_enum=ServiceEnum)
+    service = TextChoicesField(choices_enum=ServiceEnum, null=True, blank=True)
+    service_enum = TextChoicesField(choices_enum=ServiceEnum, null=True, blank=True)
     service_other = models.CharField(max_length=100, null=True, blank=True)
     client_profile = models.ForeignKey(
         "clients.ClientProfile",
@@ -51,7 +95,7 @@ class ServiceRequest(BaseModel):
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return str(self.service if not self.service_other else self.service_other)
+        return str(self.service_enum if not self.service_other else self.service_other)
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:

@@ -52,8 +52,8 @@ export default function RequestedProvidedServices(
                 }
                 key={index}
                 label={
-                  item.service !== ServiceEnum.Other
-                    ? enumDisplayServices[item.service]
+                  item.serviceEnum !== ServiceEnum.Other
+                    ? enumDisplayServices[item.serviceEnum!]
                     : item.serviceOther || ''
                 }
               />

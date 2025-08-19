@@ -18,7 +18,9 @@ import ClientProfileView from './ClientProfile';
 import ClientTabs, { ClientViewTabEnum } from './ClientTabs';
 import Docs from './Docs';
 import Interactions from './Interactions';
-import { InteractionLocations as Locations } from './Locations';
+import { InteractionLocations } from './Locations';
+import { TasksTab } from './Tasks';
+
 import {
   ClientProfileQuery,
   useClientProfileQuery,
@@ -34,7 +36,8 @@ const getTabComponent = (
   } = {
     Docs,
     Interactions,
-    Locations,
+    Locations: InteractionLocations,
+    Tasks: TasksTab,
   };
 
   if (key === ClientViewTabEnum.Profile) {

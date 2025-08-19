@@ -8,7 +8,8 @@ export function useMapClusterManager<P extends IClusterGeoJson>(
   // Unpack primitive fields so the dependency list tracks individual values
   // and not the `options` object reference. So the manager is rebuilt only when
   // one of these four numbers actually changes.
-  const { radius, maxZoom, extent, nodeSize, edgePadding } = options;
+  const { radius, maxZoom, extent, nodeSize, edgePadding, map, reduce } =
+    options;
 
   const memoizedEdgePadding = useMemo(
     () => edgePadding,
@@ -23,7 +24,9 @@ export function useMapClusterManager<P extends IClusterGeoJson>(
         extent,
         nodeSize,
         edgePadding: memoizedEdgePadding,
+        map,
+        reduce,
       }),
-    [radius, maxZoom, extent, nodeSize, memoizedEdgePadding]
+    [radius, maxZoom, extent, nodeSize, memoizedEdgePadding, map, reduce]
   );
 }

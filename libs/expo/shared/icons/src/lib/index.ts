@@ -88,6 +88,7 @@ export { default as SortSolidIcon } from './components/SortSolidIcon';
 export { default as StarIcon } from './components/StarIcon';
 export { default as SyringeIcon } from './components/SyringeIcon';
 export { default as TargetIcon } from './components/TargetIcon';
+export { default as TaskListIcon } from './components/TaskListIcon';
 export { default as TentIcon } from './components/TentIcon';
 export { default as ThreeDotIcon } from './components/ThreeDotIcon';
 export { default as TiktokIcon } from './components/TiktokIcon';

@@ -523,7 +523,8 @@ export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
-  service: ServiceEnum;
+  service?: InputMaybe<ServiceEnum>;
+  serviceEnum?: InputMaybe<ServiceEnum>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   serviceRequestType: ServiceRequestTypeEnum;
 };
@@ -537,7 +538,8 @@ export type CreateProfileDataImportInput = {
 
 export type CreateServiceRequestInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
-  service: ServiceEnum;
+  service?: InputMaybe<ServiceEnum>;
+  serviceEnum?: InputMaybe<ServiceEnum>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   status: ServiceRequestStatusEnum;
 };
@@ -1378,6 +1380,56 @@ export type OrganizationOrder = {
   name?: InputMaybe<Ordering>;
 };
 
+export type OrganizationServiceCategoryOrdering = {
+  id?: InputMaybe<Ordering>;
+  priority?: InputMaybe<Ordering>;
+};
+
+export type OrganizationServiceCategoryType = {
+  __typename?: 'OrganizationServiceCategoryType';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  priority?: Maybe<Scalars['Int']['output']>;
+  services: Array<OrganizationServiceType>;
+};
+
+
+export type OrganizationServiceCategoryTypeServicesArgs = {
+  ordering?: Array<OrganizationServiceOrdering>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type OrganizationServiceCategoryTypeOffsetPaginated = {
+  __typename?: 'OrganizationServiceCategoryTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<OrganizationServiceCategoryType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
+export type OrganizationServiceOrdering = {
+  id?: InputMaybe<Ordering>;
+  priority?: InputMaybe<Ordering>;
+};
+
+export type OrganizationServiceType = {
+  __typename?: 'OrganizationServiceType';
+  category: OrganizationServiceCategoryType;
+  id: Scalars['ID']['output'];
+  priority?: Maybe<Scalars['Int']['output']>;
+  service: Scalars['String']['output'];
+};
+
+export type OrganizationServiceTypeOffsetPaginated = {
+  __typename?: 'OrganizationServiceTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<OrganizationServiceType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type OrganizationType = {
   __typename?: 'OrganizationType';
   id: Scalars['ID']['output'];
@@ -1480,6 +1532,8 @@ export type Query = {
   notes: NoteTypeOffsetPaginated;
   organizationMember: OrganizationMemberType;
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
+  serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
+  services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
@@ -1571,6 +1625,7 @@ export type QueryNoteArgs = {
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   order?: InputMaybe<NoteOrder>;
+  ordering?: Array<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1583,6 +1638,18 @@ export type QueryOrganizationMemberArgs = {
 
 export type QueryOrganizationMembersArgs = {
   organizationId: Scalars['String']['input'];
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryServiceCategoriesArgs = {
+  ordering?: Array<OrganizationServiceCategoryOrdering>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryServicesArgs = {
+  ordering?: Array<OrganizationServiceOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1792,6 +1859,7 @@ export type ServiceRequestType = {
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   service: ServiceEnum;
+  serviceEnum?: Maybe<ServiceEnum>;
   serviceOther?: Maybe<Scalars['String']['output']>;
   status: ServiceRequestStatusEnum;
 };

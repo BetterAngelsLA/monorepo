@@ -1,5 +1,5 @@
 import { useAppDrawer } from '@monorepo/react/components';
-import { EllipseIcon, PlusIcon } from '@monorepo/react/icons';
+import { PlusIcon } from '@monorepo/react/icons';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
@@ -107,14 +107,15 @@ export default function Users() {
                 return '';
             }
           }}
-          action={(member) => (
-            <button
-              onClick={() => console.log('Clicked:', member)}
-              className="p-2 rounded-lg hover:bg-neutral-100"
-            >
-              <EllipseIcon className="h-5 w-5 text-neutral-500" />
-            </button>
-          )}
+          // TODO: for future implementation
+          // action={(member) => (
+          //   <button
+          //     onClick={() => console.log('Clicked:', member)}
+          //     className="p-2 rounded-lg hover:bg-neutral-100"
+          //   >
+          //     <EllipseIcon className="h-5 w-5 text-neutral-500" />
+          //   </button>
+          // )}
           page={page}
           totalPages={totalPages}
           onPageChange={(newPage) => setPage(newPage)}

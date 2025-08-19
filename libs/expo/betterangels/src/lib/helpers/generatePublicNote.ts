@@ -29,10 +29,10 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
   //     : '';
 
   const providedServicesArray = providedServices.map((item) => {
-    if (item.service === ServiceEnum.Other) {
+    if (item.serviceEnum === ServiceEnum.Other) {
       return item.serviceOther;
     }
-    return enumDisplayServices[item.service];
+    return enumDisplayServices[item.serviceEnum!];
   });
 
   const serviceIText =
@@ -54,10 +54,10 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
       : '';
 
   const requestedServicesArray = requestedServices.map((item) => {
-    if (item.service === ServiceEnum.Other) {
+    if (item.serviceEnum === ServiceEnum.Other) {
       return item.serviceOther;
     }
-    return enumDisplayServices[item.service];
+    return enumDisplayServices[item.serviceEnum!];
   });
 
   const updatedP =

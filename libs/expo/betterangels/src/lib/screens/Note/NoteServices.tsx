@@ -24,11 +24,14 @@ export default function NoteServices({
           <PillContainer
             maxVisible={5}
             pillVariant={'warning'}
-            pills={note['requestedServices'].map((item) =>
-              item.service === ServiceEnum.Other
-                ? item.serviceOther || ''
-                : enumDisplayServices[item.service]
-            )}
+            pills={note['requestedServices']
+              // TODO: remove after cutover
+              .filter((item) => !!item.serviceEnum)
+              .map((item) =>
+                item.serviceEnum === ServiceEnum.Other
+                  ? item.serviceOther || ''
+                  : enumDisplayServices[item.serviceEnum!]
+              )}
             variant={'expandable'}
           />
         </View>
@@ -41,11 +44,14 @@ export default function NoteServices({
           <PillContainer
             maxVisible={5}
             pillVariant={'success'}
-            pills={note['providedServices'].map((item) =>
-              item.service === ServiceEnum.Other
-                ? item.serviceOther || ''
-                : enumDisplayServices[item.service]
-            )}
+            pills={note['providedServices']
+              // TODO: remove after cutover
+              .filter((item) => !!item.serviceEnum)
+              .map((item) =>
+                item.serviceEnum === ServiceEnum.Other
+                  ? item.serviceOther || ''
+                  : enumDisplayServices[item.serviceEnum!]
+              )}
             variant={'expandable'}
           />
         </View>
