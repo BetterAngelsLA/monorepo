@@ -1,7 +1,8 @@
 import { Colors } from '@monorepo/expo/shared/static';
+import React from 'react';
 import {
-  MD3LightTheme as DefaultTheme,
-  PaperProvider,
+    MD3LightTheme as DefaultTheme,
+    PaperProvider,
 } from 'react-native-paper';
 import { en, registerTranslation } from 'react-native-paper-dates';
 
