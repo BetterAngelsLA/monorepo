@@ -87,17 +87,14 @@ runs:
             --runtimeVersion "${{ inputs.runtime-version }}" \
             --limit 1 --json --interactive false 2>/dev/null)
 
-          # Debug print of raw build_output
-          echo "--- RAW build_output for $platform ---"
-          echo "$build_output" | cat -v
-          echo ""
-
           # Extract only the JSON portion (from the first "[" to the last "]").
           cleaned_output=$(echo "$build_output" | sed ':a;N;$!ba;s/.*\(\[[^]]*\]\).*/\1/')
 
           # Use jq empty to validate the JSON. If it fails, the JSON is invalid.
           if ! echo "$cleaned_output" | jq empty >/dev/null 2>&1; then
             echo "Error: Received invalid JSON from build-list command for platform: $platform"
+            echo "Raw output was:"
+            echo "$build_output" | cat -v
             echo "Cleaned output was:"
             echo "$cleaned_output"
             exit 1
