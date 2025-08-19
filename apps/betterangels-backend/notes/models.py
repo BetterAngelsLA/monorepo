@@ -71,7 +71,9 @@ class OrganizationService(BaseModel):
     pghistory.DeleteEvent("service_request.remove"),
 )
 class ServiceRequest(BaseModel):
-    service = TextChoicesField(choices_enum=ServiceEnum, null=True, blank=True)
+    service = models.ForeignKey(
+        OrganizationService, on_delete=models.PROTECT, related_name="service_requests", null=True, blank=True
+    )
     service_enum = TextChoicesField(choices_enum=ServiceEnum, null=True, blank=True)
     service_other = models.CharField(max_length=100, null=True, blank=True)
     client_profile = models.ForeignKey(
