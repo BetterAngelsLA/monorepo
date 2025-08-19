@@ -24,7 +24,7 @@ from django.db.models import (
     Value,
     When,
 )
-from notes.enums import ServiceRequestTypeEnum
+from notes.enums import ServiceEnum, ServiceRequestTypeEnum
 from notes.permissions import NotePermissions, PrivateDetailsPermissions
 from strawberry import ID, Info, auto
 from strawberry_django.utils.query import filter_for_user
@@ -72,7 +72,7 @@ class OrganizationServiceCategoryType:
 @strawberry_django.type(models.ServiceRequest, pagination=True)
 class ServiceRequestType:
     id: ID
-    service: auto
+    service_enum: auto
     service_other: auto
     status: auto
     due_by: auto
@@ -81,10 +81,15 @@ class ServiceRequestType:
     created_by: UserType
     created_at: auto
 
+    @strawberry_django.field
+    def service(self, info: Info) -> ServiceEnum:
+        return self.service_enum  # type: ignore
+
 
 @strawberry_django.input(models.ServiceRequest)
 class CreateServiceRequestInput:
     service: auto
+    service_enum: auto
     status: auto
     service_other: auto
     client_profile: ID | None
@@ -93,6 +98,7 @@ class CreateServiceRequestInput:
 @strawberry_django.input(models.ServiceRequest)
 class CreateNoteServiceRequestInput:
     service: auto
+    service_enum: auto
     service_other: Optional[str]
     note_id: ID
     service_request_type: ServiceRequestTypeEnum

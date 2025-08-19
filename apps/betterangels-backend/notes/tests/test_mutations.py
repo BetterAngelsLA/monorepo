@@ -184,6 +184,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         variables = {
             "service": "BLANKET",
+            "serviceEnum": "BLANKET",
             "serviceOther": None,
             "noteId": self.note["id"],
             "serviceRequestType": service_request_type,
@@ -198,6 +199,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_service_request = {
             "id": ANY,
             "service": "BLANKET",
+            "serviceEnum": "BLANKET",
             "status": expected_status,
             "serviceOther": None,
             "dueBy": None,
@@ -215,6 +217,34 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             str(getattr(note, service_requests_to_check).get().id),
         )
 
+    def test_note_service_request_dual_write_service(self) -> None:
+        variables = {
+            "service": "BAG",
+            "serviceOther": None,
+            "noteId": self.note["id"],
+            "serviceRequestType": "PROVIDED",
+        }
+        response = self._create_note_service_request_fixture(variables)
+
+        created_service_request = response["data"]["createNoteServiceRequest"]
+
+        self.assertEqual(created_service_request["service"], "BAG")
+        self.assertEqual(created_service_request["serviceEnum"], "BAG")
+
+    def test_note_service_request_dual_write_service_enum(self) -> None:
+        variables = {
+            "serviceEnum": "WATER",
+            "serviceOther": None,
+            "noteId": self.note["id"],
+            "serviceRequestType": "PROVIDED",
+        }
+        response = self._create_note_service_request_fixture(variables)
+
+        created_service_request = response["data"]["createNoteServiceRequest"]
+
+        self.assertEqual(created_service_request["service"], "WATER")
+        self.assertEqual(created_service_request["serviceEnum"], "WATER")
+
     @parametrize(
         "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
         [
@@ -231,6 +261,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         variables = {
             "service": "OTHER",
+            "serviceEnum": "OTHER",
             "serviceOther": "Other Service",
             "noteId": self.note["id"],
             "serviceRequestType": service_request_type,
@@ -245,6 +276,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_service_request = {
             "id": ANY,
             "service": "OTHER",
+            "serviceEnum": "OTHER",
             "status": expected_status,
             "serviceOther": "Other Service",
             "dueBy": None,
@@ -277,6 +309,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         # First create note service request
         variables = {
             "service": "BLANKET",
+            "serviceEnum": "BLANKET",
             "serviceOther": None,
             "noteId": self.note["id"],
             "serviceRequestType": service_request_type,
