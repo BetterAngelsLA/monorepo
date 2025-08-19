@@ -26,11 +26,11 @@ export default function NoteServices({
             pillVariant={'warning'}
             pills={note['requestedServices']
               // TODO: remove after cutover
-              .filter((item) => !!item.service)
+              .filter((item) => !!item.serviceEnum)
               .map((item) =>
-                item.service === ServiceEnum.Other
+                item.serviceEnum === ServiceEnum.Other
                   ? item.serviceOther || ''
-                  : enumDisplayServices[item.service!]
+                  : enumDisplayServices[item.serviceEnum!]
               )}
             variant={'expandable'}
           />
@@ -46,11 +46,11 @@ export default function NoteServices({
             pillVariant={'success'}
             pills={note['providedServices']
               // TODO: remove after cutover
-              .filter((item) => !!item.service)
+              .filter((item) => !!item.serviceEnum)
               .map((item) =>
-                item.service === ServiceEnum.Other
+                item.serviceEnum === ServiceEnum.Other
                   ? item.serviceOther || ''
-                  : enumDisplayServices[item.service!]
+                  : enumDisplayServices[item.serviceEnum!]
               )}
             variant={'expandable'}
           />
