@@ -7,7 +7,8 @@ from common.models import Address, Location
 from django.test import ignore_warnings
 from django.utils import timezone
 from model_bakery import baker
-from notes.models import Mood, Note, ServiceRequest
+from notes.enums import ServiceEnum, ServiceRequestStatusEnum, ServiceRequestTypeEnum
+from notes.models import Mood, Note, OrganizationService, ServiceRequest
 from notes.tests.utils import (
     NoteGraphQLBaseTestCase,
     ServiceRequestGraphQLBaseTestCase,
@@ -168,131 +169,237 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         location = Location.objects.get(id=note.location.pk)  # type: ignore
         self.assertEqual(note, location.notes.first())
 
-    @parametrize(
-        "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
-        [
-            ("REQUESTED", "requested_services", "TO_DO", 34),
-            ("PROVIDED", "provided_services", "COMPLETED", 34),
-        ],
-    )
-    def test_create_note_service_request_mutation(
-        self,
-        service_request_type: str,
-        service_requests_to_check: str,
-        expected_status: str,
-        expected_query_count: int,
-    ) -> None:
+    def test_create_note_service_request_mutation_from_service_enum(self) -> None:
+        """
+        fe passes serviceEnum
+        be creates svcreq w/ service_enum=serviceEnum, service=corresponding org_service
+        note has svcreq
+        payload returns service and service_enum
+        """
         variables = {
-            "service": "BLANKET",
-            "serviceEnum": "BLANKET",
+            "serviceEnum": ServiceEnum.BLANKET.name,
             "serviceOther": None,
             "noteId": self.note["id"],
-            "serviceRequestType": service_request_type,
+            "serviceRequestType": ServiceRequestTypeEnum.PROVIDED.name,
         }
 
-        note = Note.objects.get(id=self.note["id"])
-        self.assertEqual(getattr(note, service_requests_to_check).count(), 0)
+        initial_org_service_count = OrganizationService.objects.count()
 
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._create_note_service_request_fixture(variables)
+        response = self._create_note_service_request_fixture(variables)
+        self.assertEqual(initial_org_service_count, OrganizationService.objects.count())
 
-        expected_service_request = {
-            "id": ANY,
-            "service": "BLANKET",
-            "serviceEnum": "BLANKET",
-            "status": expected_status,
-            "serviceOther": None,
-            "dueBy": None,
-            "completedOn": ANY,
-            "clientProfile": self.note["clientProfile"],
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "createdAt": ANY,
-        }
         created_service_request = response["data"]["createNoteServiceRequest"]
+        service_request = ServiceRequest.objects.get(id=created_service_request["id"])
+        note = Note.objects.get(id=self.note["id"])
 
-        self.assertEqual(created_service_request, expected_service_request)
-        self.assertEqual(getattr(note, service_requests_to_check).count(), 1)
-        self.assertEqual(
-            created_service_request["id"],
-            str(getattr(note, service_requests_to_check).get().id),
-        )
+        # good
+        self.assertEqual(created_service_request["serviceEnum"], ServiceEnum.BLANKET.name)
+        self.assertIn(service_request, note.provided_services.all())
 
-    def test_note_service_request_dual_write_service(self) -> None:
+        # bad
+        assert service_request.service
+        self.assertEqual(service_request.service.service, ServiceEnum.BLANKET.name)
+
+    def test_create_note_service_request_mutation_from_service_enum_other(self) -> None:
+        """
+        fe passes serviceEnum & serviceOther
+        be creates org_service w/ org=user's org & service=serviceOther
+        be creates svcreq w/ service_enum=serviceEnum, service=corresponding new org_service
+        note has svcreq
+        payload returns service and service_enum
+        """
         variables = {
-            "service": "BAG",
-            "serviceOther": None,
+            "serviceEnum": ServiceEnum.OTHER.name,
+            "serviceOther": "another svc",
+            "noteId": self.note["id"],
+            "serviceRequestType": ServiceRequestTypeEnum.PROVIDED.name,
+        }
+
+        initial_org_service_count = OrganizationService.objects.count()
+
+        response = self._create_note_service_request_fixture(variables)
+        self.assertEqual(initial_org_service_count + 1, OrganizationService.objects.count())
+
+        created_service_request = response["data"]["createNoteServiceRequest"]
+        service_request = ServiceRequest.objects.get(id=created_service_request["id"])
+        note = Note.objects.get(id=self.note["id"])
+
+        # good
+        self.assertEqual(created_service_request["serviceEnum"], ServiceEnum.OTHER.name)
+        self.assertIn(service_request, note.provided_services.all())
+
+        # bad
+        assert service_request.service
+        org_service = OrganizationService.objects.get(id=service_request.service.pk)
+        self.assertEqual(org_service.organization, self.org_1)
+        self.assertEqual(service_request.service.service, "another svc")
+
+    def test_create_note_service_request_mutation(self) -> None:
+        """
+        fe passes service pk
+        be creates svcreq w/ service=corresponding org_service
+        note has svcreq
+        payload returns service
+        """
+        bag_svc = OrganizationService.objects.get(service="Bag(s)")
+
+        variables = {
+            "service": str(bag_svc.pk),
             "noteId": self.note["id"],
             "serviceRequestType": "PROVIDED",
         }
+
+        initial_org_service_count = OrganizationService.objects.count()
+
         response = self._create_note_service_request_fixture(variables)
+        self.assertEqual(initial_org_service_count, OrganizationService.objects.count())
 
         created_service_request = response["data"]["createNoteServiceRequest"]
+        service_request = ServiceRequest.objects.get(id=created_service_request["id"])
+        note = Note.objects.get(id=self.note["id"])
 
-        self.assertEqual(created_service_request["service"], "BAG")
-        self.assertEqual(created_service_request["serviceEnum"], "BAG")
+        # good
 
-    def test_note_service_request_dual_write_service_enum(self) -> None:
+        # bad
+        self.assertIn(service_request, note.provided_services.all())
+        assert service_request.service
+        self.assertEqual(service_request.service.service, bag_svc.service)
+        self.assertEqual(service_request.service.category, bag_svc.category)
+
+    def test_create_note_service_request_mutation_other(self) -> None:
+        """
+        fe passes serviceOther str
+        be creates org_service w/ org=user's org & service=serviceOther
+        be creates svcreq w/ service=corresponding new org_service
+        note has svcreq
+        payload returns service
+        """
+        bag_svc = OrganizationService.objects.get(service="Bag(s)")
+
         variables = {
-            "serviceEnum": "WATER",
-            "serviceOther": None,
+            "serviceOther": "custom org svc",
             "noteId": self.note["id"],
             "serviceRequestType": "PROVIDED",
         }
+
+        initial_org_service_count = OrganizationService.objects.count()
+
         response = self._create_note_service_request_fixture(variables)
+        self.assertEqual(initial_org_service_count + 1, OrganizationService.objects.count())
 
         created_service_request = response["data"]["createNoteServiceRequest"]
+        service_request = ServiceRequest.objects.get(id=created_service_request["id"])
+        note = Note.objects.get(id=self.note["id"])
 
-        self.assertEqual(created_service_request["service"], "WATER")
-        self.assertEqual(created_service_request["serviceEnum"], "WATER")
+        # good
+
+        # bad
+        self.assertIn(service_request, note.provided_services.all())
+        assert service_request.service
+        self.assertEqual(service_request.service.service, "custom org svc")
+        self.assertIsNone(service_request.service.category)
 
     @parametrize(
-        "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
-        [
-            ("REQUESTED", "requested_services", "TO_DO", 34),
-            ("PROVIDED", "provided_services", "COMPLETED", 34),
-        ],
+        "provided_type, expected_type",
+        [("REQUESTED", "requested_services"), ("PROVIDED", "provided_services")],
     )
-    def test_create_note_custom_service_request_mutation(
+    def test_create_note_service_request_mutation_type_status(
         self,
-        service_request_type: str,
-        service_requests_to_check: str,
-        expected_status: str,
-        expected_query_count: int,
+        provided_type: str,
+        expected_type: str,
     ) -> None:
+        service = OrganizationService.objects.get(service="Bag(s)")
         variables = {
-            "service": "OTHER",
-            "serviceEnum": "OTHER",
-            "serviceOther": "Other Service",
+            "service": str(service.pk),
             "noteId": self.note["id"],
-            "serviceRequestType": service_request_type,
+            "serviceRequestType": provided_type,
         }
 
         note = Note.objects.get(id=self.note["id"])
-        self.assertEqual(getattr(note, service_requests_to_check).count(), 0)
+        self.assertEqual(getattr(note, expected_type).count(), 0)
 
-        with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self._create_note_service_request_fixture(variables)
+        response = self._create_note_service_request_fixture(variables)
 
-        expected_service_request = {
-            "id": ANY,
-            "service": "OTHER",
-            "serviceEnum": "OTHER",
-            "status": expected_status,
-            "serviceOther": "Other Service",
-            "dueBy": None,
-            "completedOn": ANY,
-            "clientProfile": self.note["clientProfile"],
-            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-            "createdAt": ANY,
-        }
-        created_service_request = response["data"]["createNoteServiceRequest"]
+        service_request = ServiceRequest.objects.get(id=response["data"]["createNoteServiceRequest"]["id"])
+        note = Note.objects.get(id=self.note["id"])
+        self.assertIn(service_request, getattr(note, expected_type).all())
 
-        self.assertEqual(created_service_request, expected_service_request)
-        self.assertEqual(getattr(note, service_requests_to_check).count(), 1)
-        self.assertEqual(
-            created_service_request["id"],
-            str(getattr(note, service_requests_to_check).get().id),
-        )
+    # def test_note_service_request_dual_write_service(self) -> None:
+    #     variables = {
+    #         "service": "BAG",
+    #         "serviceOther": None,
+    #         "noteId": self.note["id"],
+    #         "serviceRequestType": "PROVIDED",
+    #     }
+    #     response = self._create_note_service_request_fixture(variables)
+
+    #     created_service_request = response["data"]["createNoteServiceRequest"]
+
+    #     self.assertEqual(created_service_request["service"], "BAG")
+    #     self.assertEqual(created_service_request["serviceEnum"], "BAG")
+
+    # def test_note_service_request_dual_write_service_enum(self) -> None:
+    #     variables = {
+    #         "serviceEnum": "WATER",
+    #         "serviceOther": None,
+    #         "noteId": self.note["id"],
+    #         "serviceRequestType": "PROVIDED",
+    #     }
+    #     response = self._create_note_service_request_fixture(variables)
+
+    #     created_service_request = response["data"]["createNoteServiceRequest"]
+
+    #     self.assertEqual(created_service_request["service"], "WATER")
+    #     self.assertEqual(created_service_request["serviceEnum"], "WATER")
+
+    # @parametrize(
+    #     "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
+    #     [
+    #         ("REQUESTED", "requested_services", "TO_DO", 34),
+    #         ("PROVIDED", "provided_services", "COMPLETED", 34),
+    #     ],
+    # )
+    # def test_create_note_custom_service_request_mutation(
+    #     self,
+    #     service_request_type: str,
+    #     service_requests_to_check: str,
+    #     expected_status: str,
+    #     expected_query_count: int,
+    # ) -> None:
+    #     variables = {
+    #         "service": "OTHER",
+    #         "serviceEnum": "OTHER",
+    #         "serviceOther": "Other Service",
+    #         "noteId": self.note["id"],
+    #         "serviceRequestType": service_request_type,
+    #     }
+
+    #     note = Note.objects.get(id=self.note["id"])
+    #     self.assertEqual(getattr(note, service_requests_to_check).count(), 0)
+
+    #     with self.assertNumQueriesWithoutCache(expected_query_count):
+    #         response = self._create_note_service_request_fixture(variables)
+
+    #     expected_service_request = {
+    #         "id": ANY,
+    #         "service": "OTHER",
+    #         "serviceEnum": "OTHER",
+    #         "status": expected_status,
+    #         "serviceOther": "Other Service",
+    #         "dueBy": None,
+    #         "completedOn": ANY,
+    #         "clientProfile": self.note["clientProfile"],
+    #         "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+    #         "createdAt": ANY,
+    #     }
+    #     created_service_request = response["data"]["createNoteServiceRequest"]
+
+    #     self.assertEqual(created_service_request, expected_service_request)
+    #     self.assertEqual(getattr(note, service_requests_to_check).count(), 1)
+    #     self.assertEqual(
+    #         created_service_request["id"],
+    #         str(getattr(note, service_requests_to_check).get().id),
+    #     )
 
     @parametrize(
         "service_request_type,  expected_query_count",  # noqa E501

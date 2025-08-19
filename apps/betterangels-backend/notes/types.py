@@ -72,7 +72,7 @@ class OrganizationServiceCategoryType:
 @strawberry_django.type(models.ServiceRequest, pagination=True)
 class ServiceRequestType:
     id: ID
-    service: OrganizationServiceType
+    service: Optional[OrganizationServiceType]
     service_enum: auto
     service_other: auto
     status: auto
