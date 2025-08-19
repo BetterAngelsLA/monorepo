@@ -9,4 +9,5 @@ export { default as Home } from './Home';
 export { default as Interactions } from './Interactions';
 export { default as Note } from './Note';
 export { default as PublicNote } from './PublicNote';
+export { default as Tasks } from './Tasks';
 export { default as UserProfile } from './UserProfile';
