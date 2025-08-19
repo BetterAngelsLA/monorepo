@@ -72,6 +72,7 @@ class OrganizationServiceCategoryType:
 @strawberry_django.type(models.ServiceRequest, pagination=True)
 class ServiceRequestType:
     id: ID
+    service: OrganizationServiceType
     service_enum: auto
     service_other: auto
     status: auto
@@ -81,15 +82,11 @@ class ServiceRequestType:
     created_by: UserType
     created_at: auto
 
-    @strawberry_django.field
-    def service(self, info: Info) -> ServiceEnum:
-        return self.service_enum  # type: ignore
-
 
 @strawberry_django.input(models.ServiceRequest)
 class CreateServiceRequestInput:
-    service: auto
-    service_enum: auto
+    service: Optional[ID]
+    service_enum: Optional[ServiceEnum]
     status: auto
     service_other: auto
     client_profile: ID | None
@@ -97,8 +94,8 @@ class CreateServiceRequestInput:
 
 @strawberry_django.input(models.ServiceRequest)
 class CreateNoteServiceRequestInput:
-    service: auto
-    service_enum: auto
+    service: Optional[ID]
+    service_enum: Optional[ServiceEnum]
     service_other: Optional[str]
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
