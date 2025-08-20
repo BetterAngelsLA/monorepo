@@ -1,6 +1,7 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { Pressable, View } from 'react-native';
+import { IconButton } from '@monorepo/expo/shared/ui-components';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SelahTeamEnum, UpdateTaskInput } from '../../apollo';
 import { useModalScreen } from '../../providers';
@@ -43,17 +44,22 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
           marginBottom: 4,
         }}
       >
-        <Pressable
-          accessible
-          accessibilityHint="closes the modal"
-          accessibilityRole="button"
-          accessibilityLabel="close"
+        <IconButton
           onPress={closeModal}
+          accessibilityHint="closes the modal"
+          accessibilityLabel="Close modal"
+          variant="transparent"
         >
           <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
-        </Pressable>
+        </IconButton>
       </View>
-      <TaskForm task={task} team={team} onSuccess={onSuccess} noteId={noteId} />
+      <TaskForm
+        onCancel={closeModal}
+        task={task}
+        team={team}
+        onSuccess={onSuccess}
+        noteId={noteId}
+      />
     </View>
   );
 }

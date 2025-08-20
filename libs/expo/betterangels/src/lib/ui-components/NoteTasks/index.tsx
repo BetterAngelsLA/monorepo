@@ -59,39 +59,47 @@ export default function NoteTasks(props: INoteTasksProps) {
       }}
     >
       {!!tasks.length && (
-        <View
-          style={{
-            gap: Spacings.xs,
-          }}
-        >
-          {tasks.map((item, index) => {
-            return (
-              <CTAButton
-                onPress={() => onCTAPress(item)}
-                key={index}
-                label={item.summary || ''}
-              />
-            );
-          })}
-        </View>
+        <>
+          <View
+            style={{
+              gap: Spacings.xs,
+            }}
+          >
+            {tasks.map((item, index) => {
+              return (
+                <CTAButton
+                  onPress={() => onCTAPress(item)}
+                  key={index}
+                  label={item.summary || ''}
+                />
+              );
+            })}
+          </View>
+          <View
+            style={{ paddingVertical: Spacings.md, alignItems: 'flex-start' }}
+          >
+            <TextButton
+              onPress={() =>
+                showModalScreen({
+                  presentation: 'fullScreenModal',
+                  hideHeader: true,
+                  content: (
+                    <NoteTasksModal
+                      team={team}
+                      noteId={noteId}
+                      refetch={refetch}
+                    />
+                  ),
+                })
+              }
+              fontSize="sm"
+              title="Add Another Task"
+              color={Colors.PRIMARY}
+              accessibilityHint="Adds another task to the note"
+            />
+          </View>
+        </>
       )}
-      <View style={{ paddingVertical: Spacings.md, alignItems: 'flex-start' }}>
-        <TextButton
-          onPress={() =>
-            showModalScreen({
-              presentation: 'fullScreenModal',
-              hideHeader: true,
-              content: (
-                <NoteTasksModal team={team} noteId={noteId} refetch={refetch} />
-              ),
-            })
-          }
-          fontSize="sm"
-          title="Add Another Task"
-          color={Colors.PRIMARY}
-          accessibilityHint="Adds another task to the note"
-        />
-      </View>
     </FieldCard>
   );
 }
