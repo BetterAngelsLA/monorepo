@@ -133,7 +133,7 @@ export function TaskForm(props: TProps) {
 
     resetForm({
       ...emptyState,
-      summary: task.summary,
+      summary: task.summary || undefined,
       team: task.team || undefined,
       description: task.description || '',
       status: task.status || undefined,

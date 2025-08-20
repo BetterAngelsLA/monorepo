@@ -65,19 +65,9 @@ export default function NoteTasks(props: INoteTasksProps) {
           }}
         >
           {tasks.map((item, index) => {
-            // TODO: check why item.summary is required on update but not on create
             return (
               <CTAButton
-                onPress={() => {
-                  if (typeof item.summary !== 'string') return;
-
-                  const input: UpdateTaskInput = {
-                    id: item.id,
-                    summary: item.summary,
-                  };
-
-                  onCTAPress(input);
-                }}
+                onPress={() => onCTAPress(item)}
                 key={index}
                 label={item.summary || ''}
               />
