@@ -98,7 +98,7 @@ export default function AddNote() {
         query: NotesDocument,
         variables: {
           pagination: { limit: 10 + 1, offset: 0 },
-          ordering: [{ interactedAt: Ordering.Desc}, {id: Ordering.Desc }],
+          ordering: [{ interactedAt: Ordering.Desc }, { id: Ordering.Desc }],
           filters: { authors: [user?.id], search: '' },
         },
       },
@@ -271,6 +271,7 @@ export default function AddNote() {
         /> */}
         <ProvidedServices services={data.note.providedServices} {...props} />
         <RequestedServices services={data.note.requestedServices} {...props} />
+        {/* <Tasks tasks={data.note.tasks} team={data.note.team} {...props} /> */}
         <PublicNote
           note={data.note.publicDetails}
           isPublicNoteEdited={isPublicNoteEdited}
