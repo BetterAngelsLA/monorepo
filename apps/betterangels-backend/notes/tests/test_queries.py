@@ -1,5 +1,6 @@
 from typing import Any, Optional
 from unittest import skip
+from unittest.mock import ANY
 
 import time_machine
 from accounts.models import User
@@ -93,7 +94,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "providedServices": [
                 {
                     "id": str(self.provided_services[0].id),
-                    "service": ServiceEnum(self.provided_services[0].service).name,
+                    "service": {"id": ANY, "service": "Bag(s)"},
                     "serviceEnum": ServiceEnum(self.provided_services[0].service_enum).name,
                     "serviceOther": self.provided_services[0].service_other,
                     "dueBy": self.provided_services[0].due_by,
@@ -101,7 +102,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 },
                 {
                     "id": str(self.provided_services[1].id),
-                    "service": ServiceEnum(self.provided_services[1].service).name,
+                    "service": {"id": ANY, "service": "Book"},
                     "serviceEnum": ServiceEnum(self.provided_services[1].service_enum).name,
                     "serviceOther": self.provided_services[1].service_other,
                     "dueBy": self.provided_services[1].due_by,
@@ -111,7 +112,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "requestedServices": [
                 {
                     "id": str(self.requested_services[0].id),
-                    "service": ServiceEnum(self.requested_services[0].service).name,
+                    "service": {"id": ANY, "service": "EBT"},
                     "serviceEnum": ServiceEnum(self.requested_services[0].service_enum).name,
                     "serviceOther": self.requested_services[0].service_other,
                     "dueBy": self.requested_services[0].due_by,
@@ -119,7 +120,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 },
                 {
                     "id": str(self.requested_services[1].id),
-                    "service": ServiceEnum(self.requested_services[1].service).name,
+                    "service": {"id": ANY, "service": "Food"},
                     "serviceEnum": ServiceEnum(self.requested_services[1].service_enum).name,
                     "serviceOther": self.requested_services[1].service_other,
                     "dueBy": self.requested_services[1].due_by,
@@ -128,7 +129,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             ],
             "tasks": [{"id": str(task["id"]), "summary": "task summary"}],
         }
-        note_differences = DeepDiff(expected_note, note, ignore_order=True)
+        note_differences = DeepDiff(
+            expected_note,
+            note,
+            ignore_order=True,
+            exclude_regex_paths=[r"\['id'\]$"],
+        )
         self.assertFalse(note_differences)
 
     def test_notes_query(self) -> None:

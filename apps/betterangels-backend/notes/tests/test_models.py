@@ -4,8 +4,8 @@ import time_machine
 from accounts.models import User
 from django.test import TestCase
 from model_bakery import baker
-from notes.enums import ServiceEnum, ServiceRequestStatusEnum
-from notes.models import ServiceRequest
+from notes.enums import ServiceRequestStatusEnum
+from notes.models import OrganizationService, ServiceRequest
 
 
 class ServiceRequestModelTestCase(TestCase):
@@ -15,9 +15,11 @@ class ServiceRequestModelTestCase(TestCase):
     @time_machine.travel("03-11-2024 10:11:12", tick=False)
     def test_save(self) -> None:
         """Verify that completed_on is populated correctly."""
+        ebt_service = OrganizationService.objects.get(service="EBT")
+
         # Confirm that completed_on is set when a ServiceRequest is created as COMPLETED
         service_request_completed = ServiceRequest.objects.create(
-            service=ServiceEnum.BLANKET,
+            service=ebt_service,
             status=ServiceRequestStatusEnum.COMPLETED,
             created_by=self.user,
         )
@@ -28,7 +30,7 @@ class ServiceRequestModelTestCase(TestCase):
 
         # Confirm that completed_on isn't set when a ServiceRequest is created as TO_DO
         service_request_to_do = ServiceRequest.objects.create(
-            service=ServiceEnum.BLANKET,
+            service=ebt_service,
             status=ServiceRequestStatusEnum.TO_DO,
             created_by=self.user,
         )

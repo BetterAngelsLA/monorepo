@@ -297,7 +297,7 @@ class Mutation:
 
             if service_enum := service_request_data["service_enum"]:
                 if service_enum != ServiceEnum.OTHER:
-                    service_args["service"] = OrganizationService.objects.get(service=service_enum.label)
+                    service_args["service"] = OrganizationService.objects.get(service=service_enum.label)  # type: ignore
 
             service_request = resolvers.create(
                 info,
