@@ -15,8 +15,15 @@ from django.db.models import QuerySet
 from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
-from notes.models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest
+from notes.enums import ServiceEnum, ServiceRequestStatusEnum, ServiceRequestTypeEnum
+from notes.models import (
+    Mood,
+    Note,
+    NoteDataImport,
+    NoteImportRecord,
+    OrganizationService,
+    ServiceRequest,
+)
 from notes.permissions import (
     NoteImportRecordPermissions,
     NotePermissions,
@@ -279,12 +286,25 @@ class Mutation:
 
             permission_group = get_user_permission_group(user)
 
+            service_args = {}
+
+            if service_other := service_request_data["service_other"]:
+                service, _ = OrganizationService.objects.get_or_create(
+                    service=service_other,
+                    organization=permission_group.organization,
+                )
+                service_args["service"] = service
+
+            if service_enum := service_request_data["service_enum"]:
+                if service_enum != ServiceEnum.OTHER:
+                    service_args["service"] = OrganizationService.objects.get(service=service_enum.label)
+
             service_request = resolvers.create(
                 info,
                 ServiceRequest,
                 {
                     **service_request_data,
-                    "service_enum": service_request_data["service_enum"],
+                    **service_args,
                     "status": (
                         ServiceRequestStatusEnum.TO_DO
                         if service_request_type == ServiceRequestTypeEnum.REQUESTED

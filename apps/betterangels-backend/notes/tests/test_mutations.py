@@ -178,7 +178,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         """
         variables = {
             "serviceEnum": ServiceEnum.BLANKET.name,
-            "serviceOther": None,
             "noteId": self.note["id"],
             "serviceRequestType": ServiceRequestTypeEnum.PROVIDED.name,
         }
@@ -192,13 +191,11 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         service_request = ServiceRequest.objects.get(id=created_service_request["id"])
         note = Note.objects.get(id=self.note["id"])
 
-        # good
         self.assertEqual(created_service_request["serviceEnum"], ServiceEnum.BLANKET.name)
         self.assertIn(service_request, note.provided_services.all())
 
-        # bad
         assert service_request.service
-        self.assertEqual(service_request.service.service, ServiceEnum.BLANKET.name)
+        self.assertEqual(service_request.service.service, ServiceEnum.BLANKET.label)
 
     def test_create_note_service_request_mutation_from_service_enum_other(self) -> None:
         """
@@ -224,11 +221,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         service_request = ServiceRequest.objects.get(id=created_service_request["id"])
         note = Note.objects.get(id=self.note["id"])
 
-        # good
         self.assertEqual(created_service_request["serviceEnum"], ServiceEnum.OTHER.name)
         self.assertIn(service_request, note.provided_services.all())
 
-        # bad
         assert service_request.service
         org_service = OrganizationService.objects.get(id=service_request.service.pk)
         self.assertEqual(org_service.organization, self.org_1)
@@ -258,9 +253,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         service_request = ServiceRequest.objects.get(id=created_service_request["id"])
         note = Note.objects.get(id=self.note["id"])
 
-        # good
-
-        # bad
         self.assertIn(service_request, note.provided_services.all())
         assert service_request.service
         self.assertEqual(service_request.service.service, bag_svc.service)
@@ -274,8 +266,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note has svcreq
         payload returns service
         """
-        bag_svc = OrganizationService.objects.get(service="Bag(s)")
-
         variables = {
             "serviceOther": "custom org svc",
             "noteId": self.note["id"],
@@ -355,8 +345,8 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     # @parametrize(
     #     "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
     #     [
-    #         ("REQUESTED", "requested_services", "TO_DO", 34),
-    #         ("PROVIDED", "provided_services", "COMPLETED", 34),
+    #         ("REQUESTED", "requested_services", "TO_DO", 39),
+    #         ("PROVIDED", "provided_services", "COMPLETED", 39),
     #     ],
     # )
     # def test_create_note_custom_service_request_mutation(
