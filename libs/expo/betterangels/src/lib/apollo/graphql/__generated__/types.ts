@@ -2251,7 +2251,7 @@ export type UpdateTaskInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
   status?: InputMaybe<TaskStatusEnum>;
-  summary: Scalars['String']['input'];
+  summary?: InputMaybe<Scalars['String']['input']>;
   team?: InputMaybe<SelahTeamEnum>;
 };
 

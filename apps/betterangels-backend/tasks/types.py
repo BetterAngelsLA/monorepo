@@ -81,6 +81,6 @@ class CreateTaskInput:
 class UpdateTaskInput:
     id: ID
     description: auto
-    summary: str
+    summary: auto
     team: Optional[SelahTeamEnum]
     status: Optional[TaskStatusEnum]

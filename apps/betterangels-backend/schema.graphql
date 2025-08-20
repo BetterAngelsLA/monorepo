@@ -1851,7 +1851,7 @@ union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 input UpdateTaskInput {
   id: ID!
   description: String
-  summary: String!
+  summary: String
   team: SelahTeamEnum
   status: TaskStatusEnum
 }
