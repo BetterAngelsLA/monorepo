@@ -160,6 +160,7 @@ export function TaskForm(props: TProps) {
               setValue('summary', emptyState.summary);
             }}
             errorMessage={errors.summary?.message}
+            rules={{ required: true }}
           />
 
           <Controller
