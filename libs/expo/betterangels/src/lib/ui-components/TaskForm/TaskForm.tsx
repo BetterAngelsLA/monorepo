@@ -86,8 +86,7 @@ export function TaskForm(props: TProps) {
 
       const { validationErrors, errorMessage } = extractOperationErrors({
         response,
-        // queryKey: task ? 'updateTask' : 'createTask',
-        queryKey: 'createTask',
+        queryKey: task ? 'updateTask' : 'createTask',
         fields: Object.keys(FormSchema.shape),
         resultTypename: 'TaskType',
       });

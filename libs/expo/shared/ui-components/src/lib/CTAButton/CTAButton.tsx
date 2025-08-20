@@ -33,6 +33,7 @@ export function CTAButton({
       style={{
         backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
         borderRadius: Radiuses.xs,
+        opacity: isDisabled ? 0.5 : 1,
       }}
       accessibilityHint={accessibilityHint}
       accessibilityRole="button"

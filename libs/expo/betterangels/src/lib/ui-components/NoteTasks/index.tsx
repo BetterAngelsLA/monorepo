@@ -58,7 +58,7 @@ export default function NoteTasks(props: INoteTasksProps) {
           });
       }}
     >
-      {tasks.length && (
+      {!!tasks.length && (
         <View
           style={{
             gap: Spacings.xs,
