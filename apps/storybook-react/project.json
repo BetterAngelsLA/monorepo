@@ -5,6 +5,16 @@
   "sourceRoot": "apps/storybook-react/src",
   "tags": [],
   "targets": {
+    "set-env": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/set-base-path.js"
+      },
+      "configurations": {
+        "production": {},
+        "preview": {}
+      }
+    },
     "storybook": {
       "executor": "@nx/storybook:storybook",
       "options": {
@@ -14,6 +24,7 @@
     },
     "build": {
       "executor": "@nx/storybook:build",
+      "dependsOn": ["set-env"],
       "outputs": ["{workspaceRoot}/dist/apps/storybook-react/storybook-static"],
       "options": {
         "configDir": "apps/storybook-react/.storybook",
