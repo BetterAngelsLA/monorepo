@@ -92,9 +92,11 @@ export function SelectStatus({
           >
             <PlusIcon rotate="45deg" />
           </IconButton>
-          <TextBold mb="md" size="xl">
-            {title}
-          </TextBold>
+          {title && (
+            <TextBold mb="md" size="xl">
+              {title}
+            </TextBold>
+          )}
 
           <View style={styles.list}>
             {options.map((opt) => {
