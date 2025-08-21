@@ -4,16 +4,9 @@ import { defineConfig } from 'vite';
 
 // export default defineConfig(() => ({
 export default defineConfig(({ mode }) => {
-  const isDev = mode === 'development';
-  const basePath = isDev ? '/' : process.env.VITE_APP_BASE_PATH;
-
   return {
-    base: basePath,
     root: __dirname,
     cacheDir: '../../node_modules/.vite/apps/storybook-react',
-    define: {
-      'import.meta.env.VITE_APP_BASE_PATH': JSON.stringify(basePath),
-    },
 
     plugins: [nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
     // Uncomment this if you are using workers.
