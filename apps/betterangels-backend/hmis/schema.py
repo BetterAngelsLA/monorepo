@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth import login as django_login
 from strawberry.types import Info
 
-from .client import hmis_create_auth_token
+from .client import create_auth_token
 from .types import HmisLoginError, HmisLoginResult, HmisLoginSuccess
 
 User = get_user_model()
@@ -16,7 +16,7 @@ class Mutation:
     def hmisLogin(self, info: Info, email: str, password: str) -> HmisLoginResult:
         request = info.context["request"]
 
-        token = hmis_create_auth_token(email, password)
+        token = create_auth_token(email, password)
         if not token:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 

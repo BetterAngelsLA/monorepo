@@ -4,7 +4,7 @@ import requests
 from django.conf import settings
 
 
-def hmis_create_auth_token(
+def create_auth_token(
     username: str,
     password: str,
     *,
