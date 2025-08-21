@@ -33,7 +33,7 @@
     "post-pr-preview": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "node tools/scripts/post-preview-comment.js --url=https://admin.dev.betterangels.la$VITE_APP_BASE_PATH"
+        "command": "node tools/scripts/post-preview-comment.js --url=https://storybook.dev.betterangels.la$VITE_APP_BASE_PATH"
       }
     }
   }
