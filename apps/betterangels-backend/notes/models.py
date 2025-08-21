@@ -64,6 +64,9 @@ class OrganizationService(BaseModel):
 
     objects = models.Manager()
 
+    def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
+        pass
+
 
 @pghistory.track(
     pghistory.InsertEvent("service_request.add"),

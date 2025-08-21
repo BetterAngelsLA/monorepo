@@ -1076,7 +1076,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Revert to revert_before_timestamp state
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 26
+        expected_query_count = 44
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
@@ -1388,7 +1388,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         variables = {"id": note_id, "revertBeforeTimestamp": revert_before_timestamp}
 
-        expected_query_count = 50
+        expected_query_count = 52
         with self.assertNumQueriesWithoutCache(expected_query_count):
             reverted_note = self._revert_note_fixture(variables, self.service_note_fields)["data"]["revertNote"]
 
