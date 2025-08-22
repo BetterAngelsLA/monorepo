@@ -25,10 +25,10 @@
     "build": {
       "executor": "@nx/storybook:build",
       "dependsOn": ["set-env"],
-      "outputs": ["{workspaceRoot}/dist/apps/storybook-react/storybook-static"],
+      "outputs": ["{workspaceRoot}/dist/apps/storybook-react"],
       "options": {
         "configDir": "apps/storybook-react/.storybook",
-        "outputDir": "dist/apps/storybook-react/storybook-static"
+        "outputDir": "dist/apps/storybook-react"
       }
     },
     "deploy": {
