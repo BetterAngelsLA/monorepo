@@ -60,7 +60,6 @@ export function Alert(): ReactElement | null {
   }
 
   function handleClose() {
-    console.log('################################### CLOSE');
     setAlert((prev) => {
       if (!prev) {
         return null;
@@ -97,7 +96,14 @@ export function Alert(): ReactElement | null {
     'justify-center',
   ];
 
-  const slotCss = ['w-6', 'flex', 'flex-col', 'items-center', 'justify-center'];
+  const slotCss = [
+    'w-6',
+    'h-6',
+    'flex',
+    'flex-col',
+    'items-center',
+    'justify-center',
+  ];
 
   return (
     <div className={mergeCss(parentCss)}>
@@ -112,7 +118,7 @@ export function Alert(): ReactElement | null {
 
           <div className={mergeCss(slotCss)}>
             <button onClick={handleClose}>
-              <CloseIcon className="w-6" />
+              <CloseIcon className="w-6 h-6" />
             </button>
           </div>
         </div>

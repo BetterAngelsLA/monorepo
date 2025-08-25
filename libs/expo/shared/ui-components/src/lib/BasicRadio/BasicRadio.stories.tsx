@@ -1,26 +1,29 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { BasicRadio } from './BasicRadio';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const BasicRadioMeta: ComponentMeta<typeof BasicRadio> = {
-  title: 'BasicRadio',
-  component: BasicRadio,
-  args: {
-    label: 'Hello world',
-    accessibilityHint: 'custom BasicRadio',
-  },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: Spacings.sm }}>
-        <Story />
-      </View>
-    ),
-  ],
-};
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { BasicRadio } from './BasicRadio';
 
-export default BasicRadioMeta;
+// const BasicRadioMeta: ComponentMeta<typeof BasicRadio> = {
+//   title: 'BasicRadio',
+//   component: BasicRadio,
+//   args: {
+//     label: 'Hello world',
+//     accessibilityHint: 'custom BasicRadio',
+//   },
+//   decorators: [
+//     (Story) => (
+//       <View style={{ padding: Spacings.sm }}>
+//         <Story />
+//       </View>
+//     ),
+//   ],
+// };
 
-type BasicRadioStory = ComponentStory<typeof BasicRadio>;
+// export default BasicRadioMeta;
 
-export const Basic: BasicRadioStory = (args) => <BasicRadio {...args} />;
+// type BasicRadioStory = ComponentStory<typeof BasicRadio>;
+
+// export const Basic: BasicRadioStory = (args) => <BasicRadio {...args} />;

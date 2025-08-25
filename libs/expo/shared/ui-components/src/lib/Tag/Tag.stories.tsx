@@ -1,28 +1,31 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { Tag } from './Tag';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const TagMeta: ComponentMeta<typeof Tag> = {
-  title: 'Tag',
-  component: Tag,
-  decorators: [
-    (Story) => {
-      return (
-        <View style={{ padding: Spacings.sm }}>
-          <View style={{ padding: Spacings.sm }}>
-            <Story />
-          </View>
-        </View>
-      );
-    },
-  ],
-};
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { Tag } from './Tag';
 
-export default TagMeta;
+// const TagMeta: ComponentMeta<typeof Tag> = {
+//   title: 'Tag',
+//   component: Tag,
+//   decorators: [
+//     (Story) => {
+//       return (
+//         <View style={{ padding: Spacings.sm }}>
+//           <View style={{ padding: Spacings.sm }}>
+//             <Story />
+//           </View>
+//         </View>
+//       );
+//     },
+//   ],
+// };
 
-type TagStory = ComponentStory<typeof Tag>;
+// export default TagMeta;
 
-export const Basic: TagStory = () => {
-  return <Tag onRemove={() => console.log('Removed')} value="Tag 1" />;
-};
+// type TagStory = ComponentStory<typeof Tag>;
+
+// export const Basic: TagStory = () => {
+//   return <Tag onRemove={() => console.log('Removed')} value="Tag 1" />;
+// };

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Pill from '../Pill';
 
-interface IPillContainerProps {
+export interface IPillContainerProps {
   data: string[];
   type?: 'success';
   maxVisible: number;
