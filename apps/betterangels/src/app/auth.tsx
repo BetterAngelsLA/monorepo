@@ -75,9 +75,4 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'center',
   },
-  subnote: {
-    textAlign: 'center',
-    fontSize: 12,
-    opacity: 0.7,
-  },
 });
