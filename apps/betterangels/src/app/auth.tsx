@@ -15,48 +15,46 @@ export default function Auth() {
   return (
     <AuthContainer Logo={Logo}>
       <View style={styles.buttonsContainer}>
-        {/* ON: new dual-login UI */}
-        <FeatureFlagControlled flag={FeatureFlags.HMIS_FF} when={true}>
-          <>
-            <Text style={styles.heading}>Log in with</Text>
-
+        <FeatureFlagControlled
+          flag={FeatureFlags.HMIS_FF}
+          fallback={
+            // OFF: legacy "Get Started"
             <Button
-              accessibilityHint="Opens Better Angels login"
+              accessibilityHint="Goes to sign-in screen"
               onPress={() => router.navigate('/sign-in')}
-              testID="better-angels-login"
-              title="Better Angels"
+              testID="get-started-button"
+              title="Get Started"
               size="full"
               variant="primaryDark"
               borderRadius={50}
               borderWidth={0}
             />
+          }
+        >
+          {/* ON: new dual-login UI */}
+          <Text style={styles.heading}>Log in with</Text>
 
-            <View>
-              <Button
-                accessibilityHint="Opens HMIS login for service providers"
-                onPress={() => router.navigate('/sign-in-hmis')}
-                testID="hmis-login-button"
-                title="HMIS"
-                size="full"
-                variant="secondary"
-                borderRadius={50}
-                borderWidth={1}
-              />
-            </View>
-          </>
-        </FeatureFlagControlled>
-
-        {/* OFF: legacy "Get Started" */}
-        <FeatureFlagControlled flag={FeatureFlags.HMIS_FF} when={false}>
           <Button
-            accessibilityHint="Goes to sign-in screen"
+            accessibilityHint="Opens Better Angels login"
             onPress={() => router.navigate('/sign-in')}
-            testID="get-started-button"
-            title="Get Started"
+            testID="better-angels-login"
+            title="Better Angels"
             size="full"
             variant="primaryDark"
             borderRadius={50}
             borderWidth={0}
+            mb="sm"
+          />
+
+          <Button
+            accessibilityHint="Opens HMIS login for service providers"
+            onPress={() => router.navigate('/sign-in-hmis')}
+            testID="hmis-login-button"
+            title="HMIS"
+            size="full"
+            variant="secondary"
+            borderRadius={50}
+            borderWidth={1}
           />
         </FeatureFlagControlled>
       </View>
@@ -70,7 +68,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingBottom: 60,
     justifyContent: 'flex-end',
-    gap: 12,
   },
   heading: {
     fontSize: 18,
@@ -80,7 +77,6 @@ const styles = StyleSheet.create({
   },
   subnote: {
     textAlign: 'center',
-    marginTop: 6,
     fontSize: 12,
     opacity: 0.7,
   },

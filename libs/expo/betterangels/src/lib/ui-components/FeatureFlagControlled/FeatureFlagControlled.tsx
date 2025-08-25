@@ -2,20 +2,17 @@ import { ReactNode } from 'react';
 import { useFeatureFlagActive } from '../../hooks';
 import { TFeatureFlagValue } from '../../providers';
 
-type TProps = {
+type Props = {
   flag: TFeatureFlagValue;
   children: ReactNode;
-  when?: boolean;
+  fallback?: ReactNode;
 };
 
-export default function FeatureFlagControlled(props: TProps) {
-  const { flag, children, when = true } = props;
-
-  const featureActive = useFeatureFlagActive(flag);
-  const shouldRender = when ? featureActive : !featureActive;
-  if (!shouldRender) {
-    return null;
-  }
-
-  return children;
+export default function FeatureFlagControlled({
+  flag,
+  children,
+  fallback,
+}: Props): ReactNode {
+  const active = useFeatureFlagActive(flag);
+  return active ? children : fallback ?? null;
 }
