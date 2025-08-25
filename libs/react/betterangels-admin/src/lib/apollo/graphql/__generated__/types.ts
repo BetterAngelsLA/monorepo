@@ -753,6 +753,19 @@ export enum HmisAgencyEnum {
   Vash = 'VASH'
 }
 
+export type HmisLoginError = {
+  __typename?: 'HmisLoginError';
+  field?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+};
+
+export type HmisLoginSuccess = {
+  __typename?: 'HmisLoginSuccess';
+  hmisToken: Scalars['String']['output'];
+};
+
+export type HmisLoginSuccessHmisLoginError = HmisLoginError | HmisLoginSuccess;
+
 export type HmisProfileInput = {
   agency: HmisAgencyEnum;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
@@ -958,6 +971,7 @@ export type Mutation = {
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
   googleAuth: AuthResponse;
+  hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
@@ -1106,6 +1120,12 @@ export type MutationDeleteTaskArgs = {
 
 export type MutationGoogleAuthArgs = {
   input: AuthInput;
+};
+
+
+export type MutationHmisLoginArgs = {
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
 };
 
 

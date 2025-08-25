@@ -24,7 +24,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
     def test_hmis_login_success(self) -> None:
         with patch(
-            "hmis.schema.hmis_create_auth_token",
+            "hmis.schema.create_auth_token",
             return_value="TOK_123",
         ):
             resp = self.execute_graphql(
@@ -48,7 +48,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
     def test_hmis_login_invalid_credentials(self) -> None:
         with patch(
-            "hmis.schema.hmis_create_auth_token",
+            "hmis.schema.create_auth_token",
             return_value=None,
         ):
             resp = self.execute_graphql(
@@ -63,7 +63,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
     def test_hmis_login_unknown_email_no_autocreate(self) -> None:
         with patch(
-            "hmis.schema.hmis_create_auth_token",
+            "hmis.schema.create_auth_token",
             return_value="TOK_ABC",
         ):
             resp = self.execute_graphql(
@@ -74,6 +74,4 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         self.assertIsNone(resp.get("errors"))
         payload = resp["data"]["hmisLogin"]
         self.assertEqual(payload["__typename"], "HmisLoginError")
-        self.assertIn("Account not found", payload["message"])
-        # Matches your current mutation’s field name
-        self.assertEqual(payload["field"], "username")
+        self.assertIn("Invalid credentials or HMIS login failed", payload["message"])
