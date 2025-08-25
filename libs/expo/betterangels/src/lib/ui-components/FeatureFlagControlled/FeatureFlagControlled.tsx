@@ -5,7 +5,7 @@ import { TFeatureFlagValue } from '../../providers';
 type TProps = {
   flag: TFeatureFlagValue;
   children: ReactNode;
-  when?: boolean; // 👈 defaults to true
+  when?: boolean;
 };
 
 export default function FeatureFlagControlled(props: TProps) {
