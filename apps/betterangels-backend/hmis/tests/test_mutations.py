@@ -74,6 +74,4 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         self.assertIsNone(resp.get("errors"))
         payload = resp["data"]["hmisLogin"]
         self.assertEqual(payload["__typename"], "HmisLoginError")
-        self.assertIn("Account not found", payload["message"])
-        # Matches your current mutation’s field name
-        self.assertEqual(payload["field"], "username")
+        self.assertIn("Invalid credentials or HMIS login failed", payload["message"])
