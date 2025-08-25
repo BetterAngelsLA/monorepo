@@ -1,26 +1,29 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { Checkbox } from './Checkbox';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const CheckboxMeta: ComponentMeta<typeof Checkbox> = {
-  title: 'Checkbox',
-  component: Checkbox,
-  args: {
-    label: 'Hello world',
-    accessibilityHint: 'custom checkbox',
-  },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: Spacings.sm }}>
-        <Story />
-      </View>
-    ),
-  ],
-};
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { Checkbox } from './Checkbox';
 
-export default CheckboxMeta;
+// const CheckboxMeta: ComponentMeta<typeof Checkbox> = {
+//   title: 'Checkbox',
+//   component: Checkbox,
+//   args: {
+//     label: 'Hello world',
+//     accessibilityHint: 'custom checkbox',
+//   },
+//   decorators: [
+//     (Story) => (
+//       <View style={{ padding: Spacings.sm }}>
+//         <Story />
+//       </View>
+//     ),
+//   ],
+// };
 
-type CheckboxStory = ComponentStory<typeof Checkbox>;
+// export default CheckboxMeta;
 
-export const Basic: CheckboxStory = (args) => <Checkbox {...args} />;
+// type CheckboxStory = ComponentStory<typeof Checkbox>;
+
+// export const Basic: CheckboxStory = (args) => <Checkbox {...args} />;

@@ -1,6 +1,6 @@
+import { Dropdown } from '@monorepo/react/components';
 import { UserIcon } from '@monorepo/react/icons';
 import { useSignOut } from '../hooks';
-import Dropdown from './Dropdown';
 
 enum NavbarOption {
   SignOut = 'Sign Out',

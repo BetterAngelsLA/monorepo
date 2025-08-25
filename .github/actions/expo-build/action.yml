@@ -93,6 +93,8 @@ runs:
           # Use jq empty to validate the JSON. If it fails, the JSON is invalid.
           if ! echo "$cleaned_output" | jq empty >/dev/null 2>&1; then
             echo "Error: Received invalid JSON from build-list command for platform: $platform"
+            echo "Raw output was:"
+            echo "$build_output" | cat -v
             echo "Cleaned output was:"
             echo "$cleaned_output"
             exit 1

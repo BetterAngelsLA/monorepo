@@ -4,7 +4,7 @@ import { mergeCss } from '../../utils';
 import { ImageSlide } from './ImageSlide';
 import { SlideCounter } from './SlideCounter';
 
-type TProps = {
+export type TProps = {
   imageUrls: string[];
   className?: string;
   imageClassName?: string;

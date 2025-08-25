@@ -6,6 +6,7 @@ import {
 } from '@monorepo/react/components';
 import { UsersIcon } from '@monorepo/react/icons';
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 type IProps = {
   className?: string;
@@ -16,6 +17,7 @@ export function AppSidebar(props: IProps) {
 
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useUser();
+  const location = useLocation();
 
   const userOrganization = user?.organizations?.[0];
 
@@ -32,6 +34,7 @@ export function AppSidebar(props: IProps) {
         {user?.canViewOrgMembers && (
           <Sidebar.Link
             to="/users"
+            isActive={location.pathname === '/users'}
             collapsed={!isOpen}
             icon={(color: string) => <UsersIcon className="w-4" fill={color} />}
           >

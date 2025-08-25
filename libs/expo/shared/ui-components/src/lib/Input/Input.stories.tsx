@@ -1,32 +1,35 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { useState } from 'react';
-import { View } from 'react-native';
-import { Input } from './Input';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const InputMeta: ComponentMeta<typeof Input> = {
-  title: 'Input',
-  component: Input,
-  decorators: [
-    (Story) => {
-      return (
-        <View style={{ padding: Spacings.sm }}>
-          <View style={{ padding: Spacings.sm }}>
-            <Story />
-          </View>
-        </View>
-      );
-    },
-  ],
-};
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { useState } from 'react';
+// import { View } from 'react-native';
+// import { Input } from './Input';
 
-export default InputMeta;
+// const InputMeta: ComponentMeta<typeof Input> = {
+//   title: 'Input',
+//   component: Input,
+//   decorators: [
+//     (Story) => {
+//       return (
+//         <View style={{ padding: Spacings.sm }}>
+//           <View style={{ padding: Spacings.sm }}>
+//             <Story />
+//           </View>
+//         </View>
+//       );
+//     },
+//   ],
+// };
 
-type InputStory = ComponentStory<typeof Input>;
+// export default InputMeta;
 
-export const Basic: InputStory = () => {
-  const [value, setValue] = useState('');
-  return (
-    <Input label="Test" height={56} value={value} onChangeText={setValue} />
-  );
-};
+// type InputStory = ComponentStory<typeof Input>;
+
+// export const Basic: InputStory = () => {
+//   const [value, setValue] = useState('');
+//   return (
+//     <Input label="Test" height={56} value={value} onChangeText={setValue} />
+//   );
+// };

@@ -1,6 +1,6 @@
 import clsx from 'clsx';
 
-interface IPillProps {
+export interface IPillProps {
   /**
    * The type of pill. Determines background and border styles.
    * - `primary`: Primary-themed pill.

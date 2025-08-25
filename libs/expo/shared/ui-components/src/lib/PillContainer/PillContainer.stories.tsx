@@ -1,31 +1,34 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { PillContainer } from './PillContainer';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const meta: Meta<typeof PillContainer> = {
-  title: 'PillContainer',
-  component: PillContainer,
-  args: {
-    type: 'success',
-    data: [
-      'Service 1',
-      'Service 2',
-      'Service 3',
-      'Service 4',
-      'Service 5',
-      'Service 6',
-      'Service 7',
-      'Service 8',
-    ],
-    maxVisible: 5,
-  },
-};
+// import type { Meta, StoryObj } from '@storybook/react';
+// import { PillContainer } from './PillContainer';
 
-export default meta;
+// const meta: Meta<typeof PillContainer> = {
+//   title: 'PillContainer',
+//   component: PillContainer,
+//   args: {
+//     type: 'success',
+//     data: [
+//       'Service 1',
+//       'Service 2',
+//       'Service 3',
+//       'Service 4',
+//       'Service 5',
+//       'Service 6',
+//       'Service 7',
+//       'Service 8',
+//     ],
+//     maxVisible: 5,
+//   },
+// };
 
-type PillContainerStory = StoryObj<typeof PillContainer>;
+// export default meta;
 
-export const Basic: PillContainerStory = {
-  args: {
-    type: 'success',
-  },
-};
+// type PillContainerStory = StoryObj<typeof PillContainer>;
+
+// export const Basic: PillContainerStory = {
+//   args: {
+//     type: 'success',
+//   },
+// };

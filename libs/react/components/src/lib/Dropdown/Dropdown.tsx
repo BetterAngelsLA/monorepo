@@ -1,6 +1,6 @@
 import { ReactElement, useEffect, useRef, useState } from 'react';
 
-type DropdownProps<T extends string> = {
+export type DropdownProps<T extends string> = {
   options: T[];
   onSelect: (option: T) => void;
   className?: string;
@@ -8,7 +8,7 @@ type DropdownProps<T extends string> = {
   title: string | ReactElement;
 };
 
-export default function Dropdown<T extends string>({
+export function Dropdown<T extends string>({
   options,
   onSelect,
   className = '',

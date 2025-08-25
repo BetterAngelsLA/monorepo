@@ -5,10 +5,10 @@ import {
   useNotesQuery,
 } from '../../apollo';
 
-const defaultSortOrder: Array<NoteOrder> = [
-  { interactedAt: Ordering.Desc },
-  { id: Ordering.Desc },
-];
+const defaultSortOrder: NoteOrder = {
+  interactedAt: Ordering.Desc,
+  id: Ordering.Desc,
+};
 
 type TProps = {
   id: string;

@@ -1,26 +1,30 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import TextRegular from '../TextRegular';
-import { Accordion } from './Accordion';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const AccordionMeta: ComponentMeta<typeof Accordion> = {
-  title: 'Accordion',
-  component: Accordion,
-  args: {
-    title: 'title',
-    children: <TextRegular>children</TextRegular>,
-  },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: 26 }}>
-        <Story />
-      </View>
-    ),
-  ],
-};
+// const DisabledUntilFixed = {} as any;
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import TextRegular from '../TextRegular';
+// import { Accordion } from './Accordion';
 
-export default AccordionMeta;
+// const AccordionMeta: ComponentMeta<typeof Accordion> = {
+//   title: 'Accordion',
+//   component: Accordion,
+//   args: {
+//     title: 'title',
+//     children: <TextRegular>children</TextRegular>,
+//   },
+//   decorators: [
+//     (Story) => (
+//       <View style={{ padding: 26 }}>
+//         <Story />
+//       </View>
+//     ),
+//   ],
+// };
 
-type AccordionStory = ComponentStory<typeof Accordion>;
+// export default AccordionMeta;
 
-export const Basic: AccordionStory = (args) => <Accordion {...args} />;
+// type AccordionStory = ComponentStory<typeof Accordion>;
+
+// export const Basic: AccordionStory = (args) => <Accordion {...args} />;
