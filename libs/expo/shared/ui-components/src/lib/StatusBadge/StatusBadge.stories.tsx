@@ -1,25 +1,28 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { StatusBadge } from './StatusBadge';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const StatusBadgeMeta: ComponentMeta<typeof StatusBadge> = {
-  title: 'StatusBadge',
-  component: StatusBadge,
-  args: {
-    title: 'Accepted',
-  },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: Spacings.sm }}>
-        <Story />
-      </View>
-    ),
-  ],
-};
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { StatusBadge } from './StatusBadge';
 
-export default StatusBadgeMeta;
+// const StatusBadgeMeta: ComponentMeta<typeof StatusBadge> = {
+//   title: 'StatusBadge',
+//   component: StatusBadge,
+//   args: {
+//     title: 'Accepted',
+//   },
+//   decorators: [
+//     (Story) => (
+//       <View style={{ padding: Spacings.sm }}>
+//         <Story />
+//       </View>
+//     ),
+//   ],
+// };
 
-type StatusBadgeStory = ComponentStory<typeof StatusBadge>;
+// export default StatusBadgeMeta;
 
-export const Basic: StatusBadgeStory = (args) => <StatusBadge {...args} />;
+// type StatusBadgeStory = ComponentStory<typeof StatusBadge>;
+
+// export const Basic: StatusBadgeStory = (args) => <StatusBadge {...args} />;

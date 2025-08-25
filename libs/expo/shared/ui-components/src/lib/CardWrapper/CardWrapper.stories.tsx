@@ -1,26 +1,29 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { CardWrapper } from './CardWrapper';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const CardWrapperMeta: ComponentMeta<typeof CardWrapper> = {
-  title: 'CardWrapper',
-  component: CardWrapper,
-  args: {
-    title: 'Title',
-    subtitle: 'Subtitle',
-  },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: Spacings.sm }}>
-        <Story />
-      </View>
-    ),
-  ],
-};
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { CardWrapper } from './CardWrapper';
 
-export default CardWrapperMeta;
+// const CardWrapperMeta: ComponentMeta<typeof CardWrapper> = {
+//   title: 'CardWrapper',
+//   component: CardWrapper,
+//   args: {
+//     title: 'Title',
+//     subtitle: 'Subtitle',
+//   },
+//   decorators: [
+//     (Story) => (
+//       <View style={{ padding: Spacings.sm }}>
+//         <Story />
+//       </View>
+//     ),
+//   ],
+// };
 
-type CardWrapperStory = ComponentStory<typeof CardWrapper>;
+// export default CardWrapperMeta;
 
-export const Basic: CardWrapperStory = (args) => <CardWrapper {...args} />;
+// type CardWrapperStory = ComponentStory<typeof CardWrapper>;
+
+// export const Basic: CardWrapperStory = (args) => <CardWrapper {...args} />;

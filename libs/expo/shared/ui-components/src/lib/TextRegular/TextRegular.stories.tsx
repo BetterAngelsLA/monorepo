@@ -1,22 +1,25 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { TextRegular } from './TextRegular';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const TextRegularMeta: ComponentMeta<typeof TextRegular> = {
-  title: 'TextRegular',
-  component: TextRegular,
-  args: { children: 'Paragraph' },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: 26 }}>
-        <Story />
-      </View>
-    ),
-  ],
-};
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { TextRegular } from './TextRegular';
 
-export default TextRegularMeta;
+// const TextRegularMeta: ComponentMeta<typeof TextRegular> = {
+//   title: 'TextRegular',
+//   component: TextRegular,
+//   args: { children: 'Paragraph' },
+//   decorators: [
+//     (Story) => (
+//       <View style={{ padding: 26 }}>
+//         <Story />
+//       </View>
+//     ),
+//   ],
+// };
 
-type PStory = ComponentStory<typeof TextRegular>;
+// export default TextRegularMeta;
 
-export const Basic: PStory = (args) => <TextRegular {...args} />;
+// type PStory = ComponentStory<typeof TextRegular>;
+
+// export const Basic: PStory = (args) => <TextRegular {...args} />;
