@@ -44,7 +44,10 @@
         "command": "./tools/deploy/cloudfront_deploy.sh"
       },
       "configurations": {
-        "preview": {}
+        "preview": {},
+        "production": {
+          "command": "echo 'Skipping deploy to PRD'"
+        }
       },
       "dependsOn": ["build"]
     },
