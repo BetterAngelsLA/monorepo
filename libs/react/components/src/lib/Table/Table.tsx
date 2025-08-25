@@ -10,7 +10,7 @@ type TableProps<T> = {
   onPageChange?: (page: number) => void;
 };
 
-export default function Table<T>({
+export function Table<T>({
   data,
   header,
   renderCell,

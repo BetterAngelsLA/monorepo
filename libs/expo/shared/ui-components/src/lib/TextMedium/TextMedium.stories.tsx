@@ -1,22 +1,25 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { TextMedium } from './TextMedium';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const TextMediumMeta: ComponentMeta<typeof TextMedium> = {
-  title: 'TextMedium',
-  component: TextMedium,
-  args: { children: 'Paragraph' },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: 26 }}>
-        <Story />
-      </View>
-    ),
-  ],
-};
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { TextMedium } from './TextMedium';
 
-export default TextMediumMeta;
+// const TextMediumMeta: ComponentMeta<typeof TextMedium> = {
+//   title: 'TextMedium',
+//   component: TextMedium,
+//   args: { children: 'Paragraph' },
+//   decorators: [
+//     (Story) => (
+//       <View style={{ padding: 26 }}>
+//         <Story />
+//       </View>
+//     ),
+//   ],
+// };
 
-type PStory = ComponentStory<typeof TextMedium>;
+// export default TextMediumMeta;
 
-export const Basic: PStory = (args) => <TextMedium {...args} />;
+// type PStory = ComponentStory<typeof TextMedium>;
+
+// export const Basic: PStory = (args) => <TextMedium {...args} />;

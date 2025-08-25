@@ -1,6 +1,6 @@
 import { mergeCss } from '@monorepo/react/components';
 import { ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 type TProps = {
   className?: string;
@@ -8,13 +8,11 @@ type TProps = {
   icon?: (color: string) => ReactNode;
   children: ReactNode;
   collapsed?: boolean;
+  isActive?: boolean;
 };
 
 export function SidebarLink(props: TProps) {
-  const { className, to, icon, collapsed, children } = props;
-
-  const location = useLocation();
-  const isActive = location.pathname === to;
+  const { className, to, icon, collapsed, isActive, children } = props;
 
   const linkColor = isActive
     ? 'var(--color-primary-60)'

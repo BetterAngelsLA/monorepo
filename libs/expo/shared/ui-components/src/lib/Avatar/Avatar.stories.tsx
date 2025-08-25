@@ -1,22 +1,27 @@
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { Avatar } from './Avatar';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const AvatarMeta: ComponentMeta<typeof Avatar> = {
-  title: 'Avatar',
-  component: Avatar,
-  args: { firstName: 'Firstname', lastName: 'Lastname', size: 'md' },
-  decorators: [
-    (Story) => (
-      <View style={{ padding: 26 }}>
-        <Story />
-      </View>
-    ),
-  ],
-};
+// export const DisabledUntilFixed = {} as any;
 
-export default AvatarMeta;
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { Avatar } from './Avatar';
 
-type PStory = ComponentStory<typeof Avatar>;
+// const AvatarMeta: ComponentMeta<typeof Avatar> = {
+//   title: 'Avatar',
+//   component: Avatar,
+//   args: { firstName: 'Firstname', lastName: 'Lastname', size: 'md' },
+//   decorators: [
+//     (Story) => (
+//       <View style={{ padding: 26 }}>
+//         <Story />
+//       </View>
+//     ),
+//   ],
+// };
 
-export const Basic: PStory = (args) => <Avatar {...args} />;
+// export default AvatarMeta;
+
+// type PStory = ComponentStory<typeof Avatar>;
+
+// export const Basic: PStory = (args) => <Avatar {...args} />;

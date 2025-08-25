@@ -1,0 +1,1 @@
+export { withMemoryRouter } from './withMemoryRouter';

@@ -1,45 +1,48 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { SearchableDropdown } from './SearchableDropdown';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const SearchableDropdownMeta: ComponentMeta<typeof SearchableDropdown> = {
-  title: 'SearchableDropdown',
-  component: SearchableDropdown,
-  decorators: [
-    (Story) => {
-      return (
-        <View style={{ padding: Spacings.sm }}>
-          <View style={{ padding: Spacings.sm }}>
-            <Story />
-          </View>
-        </View>
-      );
-    },
-  ],
-};
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { SearchableDropdown } from './SearchableDropdown';
 
-export default SearchableDropdownMeta;
+// const SearchableDropdownMeta: ComponentMeta<typeof SearchableDropdown> = {
+//   title: 'SearchableDropdown',
+//   component: SearchableDropdown,
+//   decorators: [
+//     (Story) => {
+//       return (
+//         <View style={{ padding: Spacings.sm }}>
+//           <View style={{ padding: Spacings.sm }}>
+//             <Story />
+//           </View>
+//         </View>
+//       );
+//     },
+//   ],
+// };
 
-type SearchableDropdownStory = ComponentStory<typeof SearchableDropdown>;
+// export default SearchableDropdownMeta;
 
-export const Basic: SearchableDropdownStory = () => {
-  return (
-    <SearchableDropdown
-      extraTitle="Add Team"
-      onExtraPress={() => console.log('adding extra')}
-      setExternalValue={(item) => console.log(item)}
-      label="Label"
-      data={[
-        'test',
-        'test 1',
-        'second test',
-        'third',
-        'test',
-        'test 1',
-        'second test',
-        'third',
-      ]}
-    />
-  );
-};
+// type SearchableDropdownStory = ComponentStory<typeof SearchableDropdown>;
+
+// export const Basic: SearchableDropdownStory = () => {
+//   return (
+//     <SearchableDropdown
+//       extraTitle="Add Team"
+//       onExtraPress={() => console.log('adding extra')}
+//       setExternalValue={(item) => console.log(item)}
+//       label="Label"
+//       data={[
+//         'test',
+//         'test 1',
+//         'second test',
+//         'third',
+//         'test',
+//         'test 1',
+//         'second test',
+//         'third',
+//       ]}
+//     />
+//   );
+// };
