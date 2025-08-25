@@ -5,14 +5,15 @@ import { TFeatureFlagValue } from '../../providers';
 type TProps = {
   flag: TFeatureFlagValue;
   children: ReactNode;
+  when?: boolean; // 👈 defaults to true
 };
 
 export default function FeatureFlagControlled(props: TProps) {
-  const { flag, children } = props;
+  const { flag, children, when = true } = props;
 
   const featureActive = useFeatureFlagActive(flag);
-
-  if (!featureActive) {
+  const shouldRender = when ? featureActive : !featureActive;
+  if (!shouldRender) {
     return null;
   }
 
