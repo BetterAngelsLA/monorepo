@@ -428,20 +428,24 @@ class ContactInfoInline(admin.TabularInline):
     verbose_name_plural = "Additional Contacts"
 
 
-class ExteriorPhotoForm(forms.ModelForm):
-    make_hero_image = forms.BooleanField(required=False, label="Make Hero Image")
+class PhotoForm(forms.ModelForm):
+    make_hero_image = forms.BooleanField(
+        required=False,
+        label="Make Hero Image",
+    )
 
     class Meta:
+        fields = "__all__"
+
+
+class ExteriorPhotoForm(PhotoForm):
+    class Meta(PhotoForm.Meta):
         model = ExteriorPhoto
-        fields = "__all__"
 
 
-class InteriorPhotoForm(forms.ModelForm):
-    make_hero_image = forms.BooleanField(required=False, label="Make Hero Image")
-
-    class Meta:
+class InteriorPhotoForm(PhotoForm):
+    class Meta(PhotoForm.Meta):
         model = InteriorPhoto
-        fields = "__all__"
 
 
 class ExteriorPhotoInline(admin.TabularInline):
@@ -701,6 +705,17 @@ class ShelterResource(resources.ModelResource):
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
 
+    def _get_selected_hero(self, formsets: list[BaseFormSet]) -> Optional[Union[Type[models.Model], models.Model]]:
+        return next(
+            (
+                f.instance
+                for fs in formsets
+                for f in fs.forms
+                if f.cleaned_data and not f.cleaned_data.get("DELETE") and f.cleaned_data.get("make_hero_image")
+            ),
+            None,
+        )
+
     def save_related(
         self,
         request: HttpRequest,
@@ -715,20 +730,11 @@ class ShelterAdmin(ImportExportModelAdmin):
             form.instance.hero_image_object_id = None
             form.instance.save()
 
-        hero_image_selected = None
-        for formset in formsets:
-            for form_obj in formset.forms:
-                if (
-                    form_obj.cleaned_data
-                    and not form_obj.cleaned_data.get("DELETE", False)
-                    and form_obj.cleaned_data.get("make_hero_image")
-                ):
-                    hero_image_selected = form_obj.instance
-
-        if hero_image_selected:
-            content_type = ContentType.objects.get_for_model(hero_image_selected.__class__)
-            form.instance.hero_image_content_type = content_type
-            form.instance.hero_image_object_id = hero_image_selected.pk
+        hero = self._get_selected_hero(formsets)
+        if hero:
+            ct = ContentType.objects.get_for_model(hero)
+            form.instance.hero_image_content_type = ct
+            form.instance.hero_image_object_id = hero.pk
             form.instance.save()
 
     @admin.display(description="Current Hero Image")
