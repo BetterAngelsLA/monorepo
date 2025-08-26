@@ -48,4 +48,4 @@ def grant_missing_perms(dry_run: bool = True) -> None:
                 assign_perm(AttachmentPermissions.CHANGE, group, doc)
 
 
-grant_missing_perms(dry_run=False)
+grant_missing_perms(dry_run=True)
