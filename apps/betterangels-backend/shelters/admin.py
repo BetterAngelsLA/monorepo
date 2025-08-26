@@ -708,9 +708,6 @@ class ShelterAdmin(ImportExportModelAdmin):
         formsets: list[BaseFormSet],
         change: bool,
     ) -> None:
-        if form.errors:
-            return
-
         super().save_related(request, form, formsets, change)
 
         if form.cleaned_data.get("clear_hero_image"):
@@ -736,7 +733,7 @@ class ShelterAdmin(ImportExportModelAdmin):
 
     @admin.display(description="Current Hero Image")
     def display_hero_image(self, obj: Shelter) -> str:
-        if obj.hero_image and hasattr(obj.hero_image, "file") and obj.hero_image.file:
+        if obj.hero_image and obj.hero_image.file:
             return mark_safe(f'<img src="{obj.hero_image.file.url}" style="max-height: 200px;" />')
 
         return "No hero image selected"
