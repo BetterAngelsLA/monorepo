@@ -33,8 +33,7 @@ interface ISelectedProps {
     | null;
   setChooseDirections: (chooseDirections: boolean) => void;
   setSelected: (selected: boolean) => void;
-  closeModal: (hasLocation: boolean) => void;
-  setLocation: (location: TLocation) => void;
+  onSelectLocation: (location: TLocation) => void;
   noteId: string;
   minimizeModal: boolean;
 }
@@ -45,8 +44,7 @@ export default function Selected(props: ISelectedProps) {
     address,
     setChooseDirections,
     setSelected,
-    closeModal,
-    setLocation,
+    onSelectLocation,
     noteId,
     minimizeModal,
   } = props;
@@ -59,14 +57,13 @@ export default function Selected(props: ISelectedProps) {
   };
 
   async function selectLocation() {
-    setLocation({
+    onSelectLocation({
       longitude: currentLocation?.longitude,
       latitude: currentLocation?.latitude,
       address: address?.full,
       name: currentLocation?.name,
     });
 
-    closeModal(true);
     try {
       if (address && currentLocation) {
         const { data } = await updateNoteLocation({

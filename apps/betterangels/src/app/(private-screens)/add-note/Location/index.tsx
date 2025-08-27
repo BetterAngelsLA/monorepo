@@ -1,11 +1,17 @@
-import { MapView, Marker, PROVIDER_GOOGLE } from '@monorepo/expo/betterangels';
+import {
+  MapView,
+  Marker,
+  PROVIDER_GOOGLE,
+  useModalScreen,
+} from '@monorepo/expo/betterangels';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
-import { RefObject, useState } from 'react';
+import { RefObject, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import LocationMapModal from './LocationMapModal';
 
+const FIELD_KEY = 'Location';
 interface ILocationProps {
   scrollRef: RefObject<ScrollView | null>;
   expanded: string | undefined | null;
@@ -64,10 +70,14 @@ export default function LocationComponent(props: ILocationProps) {
       : null,
     name: address && address.street ? address.street : null,
   });
+  const locationRef = useRef<TLocation>(location);
 
-  const [isModalVisible, toggleModal] = useState(false);
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location, locationRef]);
 
-  const isLocation = expanded === 'Location';
+  const isLocation = expanded === FIELD_KEY;
+  const { showModalScreen, closeModalScreen } = useModalScreen();
 
   return (
     <FieldCard
@@ -77,14 +87,26 @@ export default function LocationComponent(props: ILocationProps) {
       mb="xs"
       error={errors.location ? 'Please enter a location' : undefined}
       setExpanded={() => {
-        if (isLocation) {
-          setExpanded(undefined);
-        } else {
-          setExpanded(isLocation ? undefined : 'Location');
+        setExpanded(isLocation ? undefined : FIELD_KEY);
 
-          toggleModal(true);
-          setExpanded('Location');
-        }
+        showModalScreen({
+          presentation: 'modal',
+          title: 'Type or Pin Location',
+          onClose: () => {
+            setErrors({
+              ...errors,
+              location: !locationRef.current,
+            });
+          },
+          content: (
+            <LocationMapModal
+              location={location}
+              noteId={noteId}
+              setLocation={setLocation}
+              onclose={closeModalScreen}
+            />
+          ),
+        });
       }}
       title="Location "
       actionName={
@@ -126,20 +148,6 @@ export default function LocationComponent(props: ILocationProps) {
           </MapView>
         </View>
       )}
-      <LocationMapModal
-        setError={(err) =>
-          setErrors({
-            ...errors,
-            location: err,
-          })
-        }
-        setLocation={setLocation}
-        location={location}
-        noteId={noteId}
-        toggleModal={toggleModal}
-        setExpanded={setExpanded}
-        isModalVisible={isModalVisible}
-      />
     </FieldCard>
   );
 }
