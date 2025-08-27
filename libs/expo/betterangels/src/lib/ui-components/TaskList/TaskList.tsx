@@ -1,6 +1,12 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { FlashList } from '@shopify/flash-list';
-import { ReactElement, useCallback, useEffect, useState } from 'react';
+import {
+  ReactElement,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { uniqueBy } from 'remeda';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -29,6 +35,7 @@ type TProps = {
   headerStyle?: ViewStyle;
   horizontalPadding?: number;
   renderHeaderText?: (props: ListHeaderProps) => string;
+  actionItem?: ReactNode;
 };
 
 export function TaskList(props: TProps) {
@@ -42,6 +49,7 @@ export function TaskList(props: TProps) {
     horizontalPadding = pagePaddingHorizontal,
     headerStyle,
     renderHeaderText,
+    actionItem,
   } = props;
 
   const [offset, setOffset] = useState<number>(0);
@@ -115,6 +123,7 @@ export function TaskList(props: TProps) {
   return (
     <View style={[styles.container, style]}>
       <TaskListHeader
+        actionItem={actionItem}
         style={[
           styles.header,
           { paddingHorizontal: horizontalPadding },

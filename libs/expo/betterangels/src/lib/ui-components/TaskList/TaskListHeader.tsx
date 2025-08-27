@@ -1,4 +1,5 @@
 import { TextMedium } from '@monorepo/expo/shared/ui-components';
+import { ReactNode } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { ListHeaderProps } from './types';
 
@@ -7,10 +8,12 @@ type TProps = {
   totalTasks: number;
   style?: StyleProp<ViewStyle>;
   renderHeaderText?: (params: ListHeaderProps) => string;
+  actionItem?: ReactNode;
 };
 
 export function TaskListHeader(props: TProps) {
-  const { visibleTasks, totalTasks, renderHeaderText, style } = props;
+  const { visibleTasks, totalTasks, renderHeaderText, style, actionItem } =
+    props;
 
   const headerText =
     typeof renderHeaderText === 'function'
@@ -20,6 +23,7 @@ export function TaskListHeader(props: TProps) {
   return (
     <View style={[styles.container, style]}>
       <TextMedium size="sm">{headerText}</TextMedium>
+      {actionItem}
     </View>
   );
 }
