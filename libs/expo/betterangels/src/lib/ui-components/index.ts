@@ -27,6 +27,7 @@ export { default as Modal } from './Modal';
 export * from './Nav';
 export { default as NavModal } from './NavModal';
 export { default as NoteCard } from './NoteCard';
+export { default as NoteTasks } from './NoteTasks';
 export { default as RequestedProvidedServices } from './RequestedProvidedServices';
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
 export { default as SelectStatus } from './SelectStatus';
