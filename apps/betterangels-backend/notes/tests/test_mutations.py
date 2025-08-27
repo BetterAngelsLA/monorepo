@@ -356,6 +356,42 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertEqual(len(updated_note["requestedServices"]), 0)
         self.assertEqual(len(updated_note["providedServices"]), 0)
 
+    # TODO: remove after cutover
+    def test_service_request_mutation_service_to_enum(self) -> None:
+        services = OrganizationService.objects.filter(organization__name="Better Angels")
+
+        for service in services:
+            response = self._create_note_service_request_fixture(
+                {
+                    "noteId": self.note["id"],
+                    "service": service.pk,
+                    "serviceRequestType": "PROVIDED",
+                }
+            )
+
+            self.assertEqual(response["data"]["createNoteServiceRequest"]["service"]["id"], str(service.pk))
+            service_enum = next((choice for choice in ServiceEnum if choice.label == service.label))
+            self.assertEqual(response["data"]["createNoteServiceRequest"]["serviceEnum"], service_enum.name)
+
+    # TODO: remove after cutover
+    def test_service_request_mutation_enum_to_service(self) -> None:
+        sevice_enums = [e for e in ServiceEnum if e != ServiceEnum.OTHER]
+
+        for service_enum in sevice_enums:
+            response = self._create_note_service_request_fixture(
+                {
+                    "noteId": self.note["id"],
+                    "serviceEnum": service_enum.name,
+                    "serviceRequestType": "PROVIDED",
+                }
+            )
+
+            self.assertEqual(
+                response["data"]["createNoteServiceRequest"]["service"]["id"],
+                str(OrganizationService.objects.get(label=service_enum.label).pk),
+            )
+            self.assertEqual(response["data"]["createNoteServiceRequest"]["serviceEnum"], service_enum.name)
+
     @skip("not implemented")
     def test_create_note_mood_mutation(self) -> None:
         baker.make(Mood, note_id=self.note["id"])
