@@ -726,8 +726,7 @@ class ShelterAdmin(ImportExportModelAdmin):
             form.instance.hero_image_object_id = None
             form.instance.save()
 
-        hero = self._get_selected_hero(formsets)
-        if hero:
+        if hero := self._get_selected_hero(formsets):
             ct = ContentType.objects.get_for_model(hero)
             form.instance.hero_image_content_type = ct
             form.instance.hero_image_object_id = hero.pk
