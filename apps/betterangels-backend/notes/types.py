@@ -54,7 +54,7 @@ class OrganizationServiceType:
     id: auto
     category: "OrganizationServiceCategoryType"
     priority: auto
-    service: auto
+    label: auto
 
 
 @strawberry_django.type(

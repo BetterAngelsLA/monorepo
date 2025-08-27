@@ -340,7 +340,7 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
     def test_create_note_service_request_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
-        water_svc = OrganizationService.objects.get(service="Water")
+        water_svc = OrganizationService.objects.get(label="Water")
 
         service_request_count = ServiceRequest.objects.count()
         variables = {

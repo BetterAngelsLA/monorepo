@@ -48,7 +48,7 @@ class OrganizationServiceCategory(BaseModel):
     pghistory.DeleteEvent("org_service.remove"),
 )
 class OrganizationService(BaseModel):
-    service = models.CharField(max_length=100)
+    label = models.CharField(max_length=100)
     category = models.ForeignKey(
         OrganizationServiceCategory, on_delete=models.SET_NULL, null=True, related_name="services"
     )
@@ -56,10 +56,10 @@ class OrganizationService(BaseModel):
     priority = models.PositiveIntegerField(blank=True, null=True)
 
     def __str__(self) -> str:
-        return self.service
+        return self.label
 
     class Meta:
-        constraints = [models.UniqueConstraint("service", "organization", name="unique_service_org")]
+        constraints = [models.UniqueConstraint("label", "organization", name="unique_label_org")]
         ordering = ("priority",)
 
     objects = models.Manager()

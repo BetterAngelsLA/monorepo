@@ -46,7 +46,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 id
                 service {
                     id
-                    service
+                    label
                 }
                 serviceEnum
                 serviceOther
@@ -57,7 +57,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                 id
                 service {
                     id
-                    service
+                    label
                 }
                 serviceEnum
                 serviceOther
@@ -74,11 +74,11 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
         ps = [ServiceEnum.BAG, ServiceEnum.BOOK]
         rs = [ServiceEnum.EBT, ServiceEnum.FOOD]
         self.provided_services = [
-            baker.make(ServiceRequest, service=OrganizationService.objects.get(service=s.label), service_enum=s)
+            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s.label), service_enum=s)
             for s in ps
         ]
         self.requested_services = [
-            baker.make(ServiceRequest, service=OrganizationService.objects.get(service=s.label), service_enum=s)
+            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s.label), service_enum=s)
             for s in rs
         ]
 
@@ -234,7 +234,7 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                         id
                         service {
                             id
-                            service
+                            label
                         }
                         serviceEnum
                         serviceOther

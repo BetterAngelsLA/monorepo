@@ -195,7 +195,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         self.assertIn(service_request, note.provided_services.all())
 
         assert service_request.service
-        self.assertEqual(service_request.service.service, ServiceEnum.BLANKET.label)
+        self.assertEqual(service_request.service.label, ServiceEnum.BLANKET.label)
 
     def test_create_note_service_request_mutation_from_service_enum_other(self) -> None:
         """
@@ -227,7 +227,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         assert service_request.service
         org_service = OrganizationService.objects.get(id=service_request.service.pk)
         self.assertEqual(org_service.organization, self.org_1)
-        self.assertEqual(service_request.service.service, "another svc")
+        self.assertEqual(service_request.service.label, "another svc")
 
     def test_create_note_service_request_mutation(self) -> None:
         """
@@ -236,7 +236,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note has svcreq
         payload returns service
         """
-        bag_svc = OrganizationService.objects.get(service="Bag(s)")
+        bag_svc = OrganizationService.objects.get(label="Bag(s)")
 
         variables = {
             "service": str(bag_svc.pk),
@@ -253,10 +253,10 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         service_request = ServiceRequest.objects.get(id=response_service_request["id"])
         note = Note.objects.get(id=self.note["id"])
 
-        self.assertEqual(response_service_request["service"]["service"], bag_svc.service)
+        self.assertEqual(response_service_request["service"]["label"], bag_svc.label)
         self.assertIn(service_request, note.provided_services.all())
         assert service_request.service
-        self.assertEqual(service_request.service.service, bag_svc.service)
+        self.assertEqual(service_request.service.label, bag_svc.label)
         self.assertEqual(service_request.service.category, bag_svc.category)
 
         # TODO: remove after cutover
@@ -286,10 +286,10 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         service_request = ServiceRequest.objects.get(id=response_service_request["id"])
         note = Note.objects.get(id=self.note["id"])
 
-        self.assertEqual(response_service_request["service"]["service"], "custom org svc")
+        self.assertEqual(response_service_request["service"]["label"], "custom org svc")
         self.assertIn(service_request, note.provided_services.all())
         assert service_request.service
-        self.assertEqual(service_request.service.service, "custom org svc")
+        self.assertEqual(service_request.service.label, "custom org svc")
         self.assertIsNone(service_request.service.category)
 
         # TODO: remove after cutover
@@ -307,7 +307,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         provided_type: str,
         expected_type: str,
     ) -> None:
-        service = OrganizationService.objects.get(service="Bag(s)")
+        service = OrganizationService.objects.get(label="Bag(s)")
         variables = {
             "service": str(service.pk),
             "noteId": self.note["id"],
@@ -323,83 +323,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         note = Note.objects.get(id=self.note["id"])
         self.assertIn(service_request, getattr(note, expected_type).all())
 
-    # def test_note_service_request_dual_write_service(self) -> None:
-    #     variables = {
-    #         "service": "BAG",
-    #         "serviceOther": None,
-    #         "noteId": self.note["id"],
-    #         "serviceRequestType": "PROVIDED",
-    #     }
-    #     response = self._create_note_service_request_fixture(variables)
-
-    #     created_service_request = response["data"]["createNoteServiceRequest"]
-
-    #     self.assertEqual(created_service_request["service"], "BAG")
-    #     self.assertEqual(created_service_request["serviceEnum"], "BAG")
-
-    # def test_note_service_request_dual_write_service_enum(self) -> None:
-    #     variables = {
-    #         "serviceEnum": "WATER",
-    #         "serviceOther": None,
-    #         "noteId": self.note["id"],
-    #         "serviceRequestType": "PROVIDED",
-    #     }
-    #     response = self._create_note_service_request_fixture(variables)
-
-    #     created_service_request = response["data"]["createNoteServiceRequest"]
-
-    #     self.assertEqual(created_service_request["service"], "WATER")
-    #     self.assertEqual(created_service_request["serviceEnum"], "WATER")
-
-    # @parametrize(
-    #     "service_request_type, service_requests_to_check, expected_status, expected_query_count",  # noqa E501
-    #     [
-    #         ("REQUESTED", "requested_services", "TO_DO", 39),
-    #         ("PROVIDED", "provided_services", "COMPLETED", 39),
-    #     ],
-    # )
-    # def test_create_note_custom_service_request_mutation(
-    #     self,
-    #     service_request_type: str,
-    #     service_requests_to_check: str,
-    #     expected_status: str,
-    #     expected_query_count: int,
-    # ) -> None:
-    #     variables = {
-    #         "service": "OTHER",
-    #         "serviceEnum": "OTHER",
-    #         "serviceOther": "Other Service",
-    #         "noteId": self.note["id"],
-    #         "serviceRequestType": service_request_type,
-    #     }
-
-    #     note = Note.objects.get(id=self.note["id"])
-    #     self.assertEqual(getattr(note, service_requests_to_check).count(), 0)
-
-    #     with self.assertNumQueriesWithoutCache(expected_query_count):
-    #         response = self._create_note_service_request_fixture(variables)
-
-    #     expected_service_request = {
-    #         "id": ANY,
-    #         "service": "OTHER",
-    #         "serviceEnum": "OTHER",
-    #         "status": expected_status,
-    #         "serviceOther": "Other Service",
-    #         "dueBy": None,
-    #         "completedOn": ANY,
-    #         "clientProfile": self.note["clientProfile"],
-    #         "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
-    #         "createdAt": ANY,
-    #     }
-    #     created_service_request = response["data"]["createNoteServiceRequest"]
-
-    #     self.assertEqual(created_service_request, expected_service_request)
-    #     self.assertEqual(getattr(note, service_requests_to_check).count(), 1)
-    #     self.assertEqual(
-    #         created_service_request["id"],
-    #         str(getattr(note, service_requests_to_check).get().id),
-    #     )
-
     @parametrize(
         "service_request_type,  expected_query_count",
         [
@@ -413,7 +336,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_query_count: int,
     ) -> None:
         # First create note service request
-        bag_svc = OrganizationService.objects.get(service="Bag(s)")
+        bag_svc = OrganizationService.objects.get(label="Bag(s)")
         variables = {
             "service": str(bag_svc.pk),
             "noteId": self.note["id"],
@@ -963,10 +886,10 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         """
         note_id = self.note["id"]
         note = Note.objects.get(id=note_id)
-        blanket_svc = OrganizationService.objects.get(service="Blanket")
-        water_svc = OrganizationService.objects.get(service="Water")
-        clothes_svc = OrganizationService.objects.get(service="Clothes")
-        food_svc = OrganizationService.objects.get(service="Food")
+        blanket_svc = OrganizationService.objects.get(label="Blanket")
+        water_svc = OrganizationService.objects.get(label="Water")
+        clothes_svc = OrganizationService.objects.get(label="Clothes")
+        food_svc = OrganizationService.objects.get(label="Food")
 
         # Add associations that will be persisted
         self._create_note_service_request_fixture(
@@ -1266,10 +1189,10 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         note = Note.objects.get(id=note_id)
         total_service_request_count = ServiceRequest.objects.count()
 
-        blanket_svc = OrganizationService.objects.get(service="Blanket")
-        water_svc = OrganizationService.objects.get(service="Water")
-        clothes_svc = OrganizationService.objects.get(service="Clothes")
-        food_svc = OrganizationService.objects.get(service="Food")
+        blanket_svc = OrganizationService.objects.get(label="Blanket")
+        water_svc = OrganizationService.objects.get(label="Water")
+        clothes_svc = OrganizationService.objects.get(label="Clothes")
+        food_svc = OrganizationService.objects.get(label="Food")
 
         # Add associations that will be persisted
         self._create_note_service_request_fixture(

@@ -15,7 +15,7 @@ class ServiceRequestModelTestCase(TestCase):
     @time_machine.travel("03-11-2024 10:11:12", tick=False)
     def test_save(self) -> None:
         """Verify that completed_on is populated correctly."""
-        ebt_service = OrganizationService.objects.get(service="EBT")
+        ebt_service = OrganizationService.objects.get(label="EBT")
 
         # Confirm that completed_on is set when a ServiceRequest is created as COMPLETED
         service_request_completed = ServiceRequest.objects.create(

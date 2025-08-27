@@ -1190,7 +1190,7 @@ type OrganizationServiceType {
   id: ID!
   category: OrganizationServiceCategoryType!
   priority: Int
-  service: String!
+  label: String!
 }
 
 type OrganizationServiceTypeOffsetPaginated {
@@ -1449,15 +1449,12 @@ enum ServiceEnum {
   SLEEPING_BAG
   SOCIAL_SECURITY_CARD_REPLACEMENT
   SSI_SSDI
-  STABILIZE
   STIMULUS_ASSISTANCE
-  STORAGE
   STORAGE_BELONGINGS
   STORAGE_DOCUMENTS
   TARP
   TENT
   THERAPIST_APPOINTMENT
-  TRANSPORT
   UNEMPLOYMENT_CERTIFICATION
   VACCINE_PASSPORT
   WATER
@@ -1470,7 +1467,7 @@ enum ServiceRequestStatusEnum {
 
 type ServiceRequestType {
   id: ID!
-  service: OrganizationServiceType!
+  service: OrganizationServiceType
   serviceEnum: ServiceEnum
   serviceOther: String
   status: ServiceRequestStatusEnum!
