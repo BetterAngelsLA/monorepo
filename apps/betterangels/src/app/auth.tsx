@@ -18,7 +18,6 @@ export default function Auth() {
         <FeatureFlagControlled
           flag={FeatureFlags.HMIS_FF}
           fallback={
-            // OFF: legacy "Get Started"
             <Button
               accessibilityHint="Goes to sign-in screen"
               onPress={() => router.navigate('/sign-in')}
@@ -31,9 +30,7 @@ export default function Auth() {
             />
           }
         >
-          {/* ON: new dual-login UI */}
           <Text style={styles.heading}>Log in with</Text>
-
           <Button
             accessibilityHint="Opens Better Angels login"
             onPress={() => router.navigate('/sign-in')}
