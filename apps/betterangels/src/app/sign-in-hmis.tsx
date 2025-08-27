@@ -1,4 +1,4 @@
-import { LoginForm, SignInContainer } from '@monorepo/expo/betterangels';
+import { HMISLoginForm, SignInContainer } from '@monorepo/expo/betterangels';
 import React from 'react';
 import { privacyPolicyUrl, termsOfServiceUrl } from '../../config';
 
@@ -8,7 +8,7 @@ export default function SignIn() {
       termsOfServiceUrl={termsOfServiceUrl}
       privacyPolicyUrl={privacyPolicyUrl}
     >
-      <LoginForm></LoginForm>
+      <HMISLoginForm></HMISLoginForm>
     </SignInContainer>
   );
 }
