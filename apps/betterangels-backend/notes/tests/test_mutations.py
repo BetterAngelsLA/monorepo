@@ -249,14 +249,19 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         response = self._create_note_service_request_fixture(variables)
         self.assertEqual(initial_org_service_count, OrganizationService.objects.count())
 
-        created_service_request = response["data"]["createNoteServiceRequest"]
-        service_request = ServiceRequest.objects.get(id=created_service_request["id"])
+        response_service_request = response["data"]["createNoteServiceRequest"]
+        service_request = ServiceRequest.objects.get(id=response_service_request["id"])
         note = Note.objects.get(id=self.note["id"])
 
+        self.assertEqual(response_service_request["service"]["service"], bag_svc.service)
         self.assertIn(service_request, note.provided_services.all())
         assert service_request.service
         self.assertEqual(service_request.service.service, bag_svc.service)
         self.assertEqual(service_request.service.category, bag_svc.category)
+
+        # TODO: remove after cutover
+        self.assertEqual(service_request.service_enum, ServiceEnum.BAG)
+        self.assertEqual(response_service_request["serviceEnum"], ServiceEnum.BAG.name)
 
     def test_create_note_service_request_mutation_other(self) -> None:
         """
@@ -277,14 +282,21 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         response = self._create_note_service_request_fixture(variables)
         self.assertEqual(initial_org_service_count + 1, OrganizationService.objects.count())
 
-        created_service_request = response["data"]["createNoteServiceRequest"]
-        service_request = ServiceRequest.objects.get(id=created_service_request["id"])
+        response_service_request = response["data"]["createNoteServiceRequest"]
+        service_request = ServiceRequest.objects.get(id=response_service_request["id"])
         note = Note.objects.get(id=self.note["id"])
 
+        self.assertEqual(response_service_request["service"]["service"], "custom org svc")
         self.assertIn(service_request, note.provided_services.all())
         assert service_request.service
         self.assertEqual(service_request.service.service, "custom org svc")
         self.assertIsNone(service_request.service.category)
+
+        # TODO: remove after cutover
+        self.assertEqual(service_request.service_enum, ServiceEnum.OTHER)
+        self.assertEqual(service_request.service_other, "custom org svc")
+        self.assertEqual(response_service_request["serviceEnum"], ServiceEnum.OTHER.name)
+        self.assertEqual(response_service_request["serviceOther"], "custom org svc")
 
     @parametrize(
         "provided_type, expected_type",
