@@ -401,7 +401,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     #     )
 
     @parametrize(
-        "service_request_type,  expected_query_count",  # noqa E501
+        "service_request_type,  expected_query_count",
         [
             ("REQUESTED", 10),
             ("PROVIDED", 10),
@@ -413,10 +413,9 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         expected_query_count: int,
     ) -> None:
         # First create note service request
+        bag_svc = OrganizationService.objects.get(service="Bag(s)")
         variables = {
-            "service": "BLANKET",
-            "serviceEnum": "BLANKET",
-            "serviceOther": None,
+            "service": str(bag_svc.pk),
             "noteId": self.note["id"],
             "serviceRequestType": service_request_type,
         }
@@ -1351,7 +1350,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Add associations that will be persisted
         self._create_note_service_request_fixture(
             {
-                "service": "OTHER",
                 "serviceOther": "Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
@@ -1359,7 +1357,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         )
         self._create_note_service_request_fixture(
             {
-                "service": "OTHER",
                 "serviceOther": "Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
@@ -1369,7 +1366,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Add associations that will be removed and then reverted
         reverted_requested_service = self._create_note_service_request_fixture(
             {
-                "service": "OTHER",
                 "serviceOther": "Retrieved Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
@@ -1378,7 +1374,6 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         reverted_provided_service = self._create_note_service_request_fixture(
             {
-                "service": "OTHER",
                 "serviceOther": "Retrieved Other Service",
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
