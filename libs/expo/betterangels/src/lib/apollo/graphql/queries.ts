@@ -110,6 +110,15 @@ export const GET_NOTE = gql`
         serviceEnum
         serviceOther
       }
+      tasks {
+        id
+        summary
+        team
+        description
+        status
+        createdAt
+        updatedAt
+      }
       publicDetails
       isSubmitted
       clientProfile {

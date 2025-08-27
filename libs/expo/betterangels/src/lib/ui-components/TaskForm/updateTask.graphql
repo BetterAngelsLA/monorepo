@@ -1,0 +1,15 @@
+mutation UpdateTask($data: UpdateTaskInput!) {
+  updateTask(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on TaskType {
+      id
+    }
+  }
+}
