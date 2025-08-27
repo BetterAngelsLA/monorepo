@@ -25,7 +25,9 @@ export function TaskCard(props: TaskCardProps) {
         <TextBold size="sm" mb="sm">
           {task.summary}
         </TextBold>
-        <TaskCardClient clientProfile={task.clientProfile} />
+        {task.clientProfile && (
+          <TaskCardClient clientProfile={task.clientProfile} />
+        )}
         <TaskCardCreatedBy
           organization={task.organization}
           createdBy={task.createdBy}
