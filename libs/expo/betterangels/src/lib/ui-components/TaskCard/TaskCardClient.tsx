@@ -1,14 +1,15 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { TaskType } from '../../apollo';
+import { TasksQuery } from '../TaskList/__generated__/Tasks.generated';
 
 type TaskCardClientProps = {
-  clientProfile: TaskType['clientProfile'];
+  clientProfile: TasksQuery['tasks']['results'][number]['clientProfile'];
 };
 
 export default function TaskCardClient(props: TaskCardClientProps) {
   const { clientProfile } = props;
+
   return (
     <View
       style={{

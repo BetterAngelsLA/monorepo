@@ -1,10 +1,11 @@
+import { useApolloClient } from '@apollo/client';
 import { Colors } from '@monorepo/expo/shared/static';
 import { useState } from 'react';
 import { TaskStatusEnum, TaskType } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { enumDisplayTaskStatus } from '../../static';
 import SelectStatus from '../SelectStatus';
-import { useUpdateTaskMutation } from '../TaskForm/__generated__/updateTask.generated';
+import { useUpdateTaskStatusMutation } from './__generated__/updateTask.generated';
 
 const OPTIONS = [
   {
@@ -34,14 +35,16 @@ type TaskCardStatusProps = {
 
 export default function TaskCardStatus(props: TaskCardStatusProps) {
   const { id, status } = props;
-  const [updateTaskMutation] = useUpdateTaskMutation();
+  const [updateTaskMutation] = useUpdateTaskStatusMutation();
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
+  const client = useApolloClient();
+
   const [value, setValue] = useState<TaskStatusEnum>(
     status || TaskStatusEnum.ToDo
   );
 
-  const onUpdateTask = async (newTask: TaskStatusEnum) => {
+  const onUpdateTask = async (newStatus: TaskStatusEnum) => {
     try {
       setDisabled(true);
 
@@ -49,10 +52,33 @@ export default function TaskCardStatus(props: TaskCardStatusProps) {
         variables: {
           data: {
             id,
-            status: newTask,
+            status: newStatus,
           },
         },
         errorPolicy: 'all',
+
+        update(cache, { data }) {
+          const payload = data?.updateTask;
+          if (!payload) return;
+
+          if (payload.__typename !== 'TaskType') {
+            return;
+          }
+
+          const entityId = cache.identify({
+            __typename: 'TaskType',
+            id: payload.id,
+          });
+          if (entityId) {
+            cache.modify({
+              id: entityId,
+              fields: {
+                status: () => payload.status,
+                updatedAt: () => payload.updatedAt ?? new Date().toISOString(),
+              },
+            });
+          }
+        },
       });
 
       const updatedTask = response.data?.updateTask;
@@ -67,8 +93,17 @@ export default function TaskCardStatus(props: TaskCardStatusProps) {
         message: 'Something went wrong. Please try again.',
         type: 'error',
       });
+
+      const cacheId = client.cache.identify({ __typename: 'Task', id });
+      client.cache.modify({
+        id: cacheId,
+        fields: {
+          status: () => newStatus,
+          updatedAt: () => new Date().toISOString(),
+        },
+      });
     } finally {
-      setValue(newTask);
+      setValue(newStatus);
       setDisabled(false);
     }
   };
