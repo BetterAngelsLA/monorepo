@@ -17,7 +17,7 @@ export type ViewNoteQueryVariables = Types.Exact<{
 }>;
 
 
-export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteType', id: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, organization: { __typename?: 'OrganizationType', id: string, name: string }, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, clientProfile?: { __typename?: 'ClientProfileType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, profilePhoto?: { __typename?: 'DjangoImageType', url: string } | null } | null, createdBy: { __typename?: 'UserType', id: string } } };
+export type ViewNoteQuery = { __typename?: 'Query', note: { __typename?: 'NoteType', id: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, organization: { __typename?: 'OrganizationType', id: string, name: string }, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, tasks: Array<{ __typename?: 'TaskType', id: string, summary?: string | null, team?: Types.SelahTeamEnum | null, description?: string | null, status?: Types.TaskStatusEnum | null, createdAt: any, updatedAt: any }>, clientProfile?: { __typename?: 'ClientProfileType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, profilePhoto?: { __typename?: 'DjangoImageType', url: string } | null } | null, createdBy: { __typename?: 'UserType', id: string } } };
 
 
 export const NotesDocument = gql`
@@ -158,6 +158,15 @@ export const ViewNoteDocument = gql`
       id
       serviceEnum
       serviceOther
+    }
+    tasks {
+      id
+      summary
+      team
+      description
+      status
+      createdAt
+      updatedAt
     }
     publicDetails
     isSubmitted
