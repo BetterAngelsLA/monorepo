@@ -15,6 +15,7 @@ export { default as DocumentModal } from './DocumentModal';
 export { default as ErrorCrashView } from './ErrorCrashView/ErrorCrashView';
 export { default as FeatureFlagControlled } from './FeatureFlagControlled/FeatureFlagControlled';
 export { FileThumbnail } from './FileThumbnail/FileThumbnail';
+export { default as TaskCard } from './TaskCard';
 export { default as Header } from './Header';
 export * from './Layout';
 export { default as LoginForm } from './LoginForm';
