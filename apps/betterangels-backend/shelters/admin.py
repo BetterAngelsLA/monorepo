@@ -422,6 +422,7 @@ class ContactInfoInline(admin.TabularInline):
     fields = ["contact_name", "contact_number"]
     verbose_name = "Additional Contact"
     verbose_name_plural = "Additional Contacts"
+    inline_key = "contactinfo"
 
 
 class PhotoForm(forms.ModelForm):
@@ -742,16 +743,6 @@ class ShelterAdmin(ImportExportModelAdmin):
     inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
         (
-            "Hero Image",
-            {
-                "fields": ("display_hero_image", "clear_hero_image"),
-                "description": (
-                    "This will appear as the main preview image for the shelter. "
-                    "You can select a different hero image in the photo section, below."
-                ),
-            },
-        ),
-        (
             "Basic Information",
             {
                 "fields": (
@@ -950,7 +941,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         self, request: HttpRequest, obj: Optional[Shelter] = None
     ) -> Union[list[str], Tuple[str, ...]]:
         readonly_fields = super().get_readonly_fields(request, obj)
-        readonly_fields = (*readonly_fields, "updated_at", "updated_by", "display_hero_image")
+        readonly_fields = (*readonly_fields, "updated_at", "updated_by")
         if not request.user.has_perm(ShelterFieldPermissions.CHANGE_IS_REVIEWED):
             readonly_fields = (*readonly_fields, "is_reviewed")
 
