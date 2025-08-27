@@ -294,6 +294,7 @@ class Mutation:
                     organization=permission_group.organization,
                 )
                 service_args["service"] = service
+                service_args["service_enum"] = ServiceEnum.OTHER
 
             if service_enum := service_request_data["service_enum"]:
                 if service_enum != ServiceEnum.OTHER:
