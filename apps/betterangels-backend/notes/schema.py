@@ -289,16 +289,24 @@ class Mutation:
             service_args = {}
 
             if service_other := service_request_data["service_other"]:
-                service, _ = OrganizationService.objects.get_or_create(
+                org_service, _ = OrganizationService.objects.get_or_create(
                     service=service_other,
                     organization=permission_group.organization,
                 )
-                service_args["service"] = service
+                service_args["service"] = org_service
                 service_args["service_enum"] = ServiceEnum.OTHER
 
             if service_enum := service_request_data["service_enum"]:
                 if service_enum != ServiceEnum.OTHER:
                     service_args["service"] = OrganizationService.objects.get(service=service_enum.label)  # type: ignore
+
+            if service := service_request_data["service"]:
+                org_service = OrganizationService.objects.get(id=service)
+                enum = next(
+                    (choice for choice in ServiceEnum if choice.label == org_service.service),
+                    None,
+                )
+                service_args["service_enum"] = enum
 
             service_request = resolvers.create(
                 info,
