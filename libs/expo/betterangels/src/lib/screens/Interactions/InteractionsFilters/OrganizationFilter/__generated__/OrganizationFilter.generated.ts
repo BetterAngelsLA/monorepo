@@ -6,6 +6,7 @@ const defaultOptions = {} as const;
 export type CaseworkerOrganizationsQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.OrganizationFilter>;
   order?: Types.InputMaybe<Types.OrganizationOrder>;
+  ordering?: Array<Types.InputMaybe<Types.OrganizationOrdering>> | Types.InputMaybe<Types.OrganizationOrdering>;
   pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
 }>;
 
@@ -14,10 +15,11 @@ export type CaseworkerOrganizationsQuery = { __typename?: 'Query', caseworkerOrg
 
 
 export const CaseworkerOrganizationsDocument = gql`
-    query CaseworkerOrganizations($filters: OrganizationFilter, $order: OrganizationOrder, $pagination: OffsetPaginationInput) {
+    query CaseworkerOrganizations($filters: OrganizationFilter, $order: OrganizationOrder, $ordering: [OrganizationOrdering]! = [], $pagination: OffsetPaginationInput) {
   caseworkerOrganizations(
     filters: $filters
     order: $order
+    ordering: $ordering
     pagination: $pagination
   ) {
     totalCount
@@ -47,6 +49,7 @@ export const CaseworkerOrganizationsDocument = gql`
  *   variables: {
  *      filters: // value for 'filters'
  *      order: // value for 'order'
+ *      ordering: // value for 'ordering'
  *      pagination: // value for 'pagination'
  *   },
  * });

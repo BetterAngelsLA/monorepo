@@ -5,8 +5,9 @@ import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
 export type ClientProfilesQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.ClientProfileFilter>;
-  pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
   order?: Types.InputMaybe<Types.ClientProfileOrder>;
+  ordering?: Array<Types.InputMaybe<Types.ClientProfileOrdering>> | Types.InputMaybe<Types.ClientProfileOrdering>;
+  pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
 }>;
 
 
@@ -14,8 +15,13 @@ export type ClientProfilesQuery = { __typename?: 'Query', clientProfiles: { __ty
 
 
 export const ClientProfilesDocument = gql`
-    query ClientProfiles($filters: ClientProfileFilter, $pagination: OffsetPaginationInput, $order: ClientProfileOrder) {
-  clientProfiles(filters: $filters, pagination: $pagination, order: $order) {
+    query ClientProfiles($filters: ClientProfileFilter, $order: ClientProfileOrder, $ordering: [ClientProfileOrdering]! = [], $pagination: OffsetPaginationInput) {
+  clientProfiles(
+    filters: $filters
+    order: $order
+    ordering: $ordering
+    pagination: $pagination
+  ) {
     totalCount
     pageInfo {
       limit
@@ -60,8 +66,9 @@ export const ClientProfilesDocument = gql`
  * const { data, loading, error } = useClientProfilesQuery({
  *   variables: {
  *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
  *      order: // value for 'order'
+ *      ordering: // value for 'ordering'
+ *      pagination: // value for 'pagination'
  *   },
  * });
  */

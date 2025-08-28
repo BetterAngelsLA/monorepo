@@ -1,9 +1,15 @@
 query ViewShelters(
   $filters: ShelterFilter
-  $pagination: OffsetPaginationInput
   $order: ShelterOrder
+  $ordering: [ShelterOrdering]! = []
+  $pagination: OffsetPaginationInput
 ) {
-  shelters(filters: $filters, pagination: $pagination, order: $order) {
+  shelters(
+    filters: $filters
+    order: $order
+    ordering: $ordering
+    pagination: $pagination
+  ) {
     totalCount
     results {
       id
