@@ -8,6 +8,7 @@ import { useModalScreen } from '../../providers';
 import { TaskForm } from '../TaskForm';
 
 interface INoteTasksModalProps {
+  clientProfileId: string;
   noteId: string;
   refetch: () => void;
   team?: SelahTeamEnum | null;
@@ -15,7 +16,7 @@ interface INoteTasksModalProps {
 }
 
 export default function NoteTasksModal(props: INoteTasksModalProps) {
-  const { noteId, refetch, team, task } = props;
+  const { clientProfileId, noteId, refetch, team, task } = props;
 
   const { closeModalScreen } = useModalScreen();
   const { top: topInset } = useSafeAreaInsets();
@@ -54,6 +55,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
         </IconButton>
       </View>
       <TaskForm
+        clientProfileId={clientProfileId}
         onCancel={closeModal}
         task={task}
         team={team}

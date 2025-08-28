@@ -9,6 +9,7 @@ import { RefObject } from 'react';
 import { ScrollView } from 'react-native';
 
 interface ITasksProps {
+  clientProfileId: string;
   noteId: string;
   scrollRef: RefObject<ScrollView | null>;
   tasks: ViewNoteQuery['note']['tasks'];
@@ -20,10 +21,11 @@ interface ITasksProps {
 }
 
 export default function Tasks(props: ITasksProps) {
-  const { noteId, tasks, scrollRef, refetch, team } = props;
+  const { clientProfileId, noteId, tasks, scrollRef, refetch, team } = props;
 
   return (
     <NoteTasks
+      clientProfileId={clientProfileId}
       noteId={noteId}
       scrollRef={scrollRef}
       tasks={tasks}
