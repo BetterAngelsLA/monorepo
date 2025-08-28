@@ -75,6 +75,7 @@ export function SearchBar(props: TProps) {
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
+    display: 'flex',
+    flexGrow: 1,
   },
 });
