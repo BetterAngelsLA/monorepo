@@ -2,7 +2,7 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { ScrollView, StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { FilterButton } from './FilterButton';
-import FilterOptions from './FilterOptions';
+import { FilterOptions } from './FilterOptions';
 
 type TFilters = {
   children: ReactNode;

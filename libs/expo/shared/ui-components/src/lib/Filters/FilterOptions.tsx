@@ -1,26 +1,37 @@
-import { pagePaddingHorizontal } from '@monorepo/expo/betterangels';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { Button, MultiSelect } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ScrollView,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-export type TFilterOption = {
-  id: string;
-  label: string;
-};
+import Button from '../Button';
+import MultiSelect from '../MultiSelect';
+import { TFilterOption } from './types';
 
 type TFilterOptions = {
   onSelected: (filters: TFilterOption[]) => void;
   options: TFilterOption[];
   initalSelected: TFilterOption[];
   title?: string;
+  searchPlaceholder?: string;
+  style?: StyleProp<ViewStyle>;
 };
 
 const paginationLimit = 25;
 
-export default function FilterOptions(props: TFilterOptions) {
-  const { options, initalSelected, onSelected, title } = props;
+export function FilterOptions(props: TFilterOptions) {
+  const {
+    options,
+    initalSelected,
+    onSelected,
+    title,
+    searchPlaceholder,
+    style,
+  } = props;
 
   const [selected, setSelected] = useState<TFilterOption[]>(initalSelected);
   const [search, setSearch] = useState<string>('');
@@ -37,7 +48,9 @@ export default function FilterOptions(props: TFilterOptions) {
   };
 
   return (
-    <View style={[{ paddingBottom: 35 + bottomOffset }, styles.container]}>
+    <View
+      style={[{ paddingBottom: 35 + bottomOffset }, styles.container, style]}
+    >
       <ScrollView
         // onScroll={handleScroll}
         // scrollEventThrottle={200}
@@ -45,7 +58,7 @@ export default function FilterOptions(props: TFilterOptions) {
       >
         <MultiSelect
           style={styles.multiSelect}
-          filterPlaceholder="Search"
+          filterPlaceholder={searchPlaceholder}
           withFilter
           title={title}
           search={search}
@@ -87,7 +100,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     gap: Spacings.lg,
-    paddingHorizontal: pagePaddingHorizontal,
+    paddingHorizontal: Spacings.sm,
     paddingTop: Spacings.lg,
   },
   multiSelect: {

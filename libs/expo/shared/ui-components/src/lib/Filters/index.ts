@@ -1,2 +1,2 @@
-export type { TFilterOption } from './FilterOptions';
 export { Filters } from './Filters';
+export type { TFilterOption } from './types';

@@ -2,14 +2,16 @@ import { Colors } from '@monorepo/expo/shared/static';
 import {
   Filters,
   SearchBar,
+  TFilterOption,
   TextButton,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { MainContainer } from '../../ui-components';
+import { FilterTeams, MainContainer } from '../../ui-components';
 
 export default function Tasks() {
+  const [selectedTeams, setSelectedTeams] = useState<TFilterOption[]>([]);
   const [search, setSearch] = useState('');
 
   function onFiltersReset() {
@@ -19,8 +21,6 @@ export default function Tasks() {
   useEffect(() => {
     console.log(search);
   }, [search]);
-
-  const filters = ['Clients', 'Teams', 'Status', 'Authors'];
 
   function onFilterPress(id: string) {
     console.log('CLICK FILTER id: ', id);
@@ -49,8 +49,8 @@ export default function Tasks() {
       </View>
 
       <Filters style={{ marginTop: 50 }}>
+        <FilterTeams onChange={setSelectedTeams} selected={selectedTeams} />
         <Filters.Button id="Clients" selected={[]} onPress={onFilterPress} />
-        <Filters.Button id="Teams" selected={[]} onPress={onFilterPress} />
         <Filters.Button
           id="authors"
           selected={['hello', 'one', 'twotwotwo']}
