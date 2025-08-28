@@ -140,7 +140,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    paddingVertical: Spacings.xs,
     width: '100%',
     height: 36,
     borderRadius: Radiuses.xs,

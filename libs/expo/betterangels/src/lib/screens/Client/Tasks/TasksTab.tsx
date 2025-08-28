@@ -50,9 +50,8 @@ export function TasksTab(props: TProps) {
           onCancel={() => {
             closeModalScreen();
           }}
-          onSuccess={(taskId) => {
+          onSuccess={() => {
             closeModalScreen();
-            alert(`Created Task ID ${taskId}`);
           }}
         />
       ),

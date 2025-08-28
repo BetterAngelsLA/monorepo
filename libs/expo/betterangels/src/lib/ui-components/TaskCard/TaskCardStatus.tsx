@@ -98,8 +98,7 @@ export default function TaskCardStatus(props: TaskCardStatusProps) {
       client.cache.modify({
         id: cacheId,
         fields: {
-          status: () => newStatus,
-          updatedAt: () => new Date().toISOString(),
+          status: () => status,
         },
       });
     } finally {
@@ -111,7 +110,7 @@ export default function TaskCardStatus(props: TaskCardStatusProps) {
   return (
     <SelectStatus
       disabled={disabled}
-      onChange={(e) => onUpdateTask(e as TaskStatusEnum)}
+      onChange={(status) => onUpdateTask(status as TaskStatusEnum)}
       options={OPTIONS}
       value={value}
     />
