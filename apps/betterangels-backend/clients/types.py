@@ -96,6 +96,13 @@ class ClientProfileOrder:
     id: auto
 
 
+@strawberry_django.order_type(ClientProfile, one_of=False)
+class ClientProfileOrdering:
+    first_name: auto
+    last_name: auto
+    id: auto
+
+
 @strawberry.input
 class ClientSearchInput:
     excluded_client_profile_id: Optional[str] = None
@@ -322,7 +329,13 @@ class ClientProfileBaseType:
     veteran_status: auto
 
 
-@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
+@strawberry_django.type(
+    ClientProfile,
+    filters=ClientProfileFilter,
+    order=ClientProfileOrder,  # type: ignore[literal-required]
+    ordering=ClientProfileOrdering,
+    pagination=True,
+)
 class ClientProfileType(ClientProfileBaseType):
     id: ID
     contacts: Optional[List[ClientContactType]]

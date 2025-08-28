@@ -137,6 +137,12 @@ class NoteOrder:
     interacted_at: auto
 
 
+@strawberry_django.order_type(models.Note, one_of=False)
+class NoteOrdering:
+    id: auto
+    interacted_at: auto
+
+
 @strawberry_django.filters.filter(models.Note)
 class NoteFilter:
     client_profile: ID | None
@@ -293,7 +299,19 @@ class InteractionAuthorOrder:
     id: auto
 
 
-@strawberry_django.type(User, filters=InteractionAuthorFilter, order=InteractionAuthorOrder)  # type: ignore[literal-required]
+@strawberry_django.order_type(User, one_of=False)
+class InteractionAuthorOrdering:
+    first_name: auto
+    last_name: auto
+    id: auto
+
+
+@strawberry_django.type(
+    User,
+    filters=InteractionAuthorFilter,
+    order=InteractionAuthorOrder,  # type: ignore[literal-required]
+    ordering=InteractionAuthorOrdering,
+)
 class InteractionAuthorType:
     id: ID
     first_name: auto

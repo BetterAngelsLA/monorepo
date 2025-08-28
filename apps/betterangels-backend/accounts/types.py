@@ -43,6 +43,12 @@ class OrganizationOrder:
     id: auto
 
 
+@strawberry_django.order_type(Organization, one_of=False)
+class OrganizationOrdering:
+    name: auto
+    id: auto
+
+
 @strawberry_django.filters.filter(Organization)
 class OrganizationFilter:
     @strawberry_django.filter_field
@@ -63,13 +69,24 @@ class OrganizationFilter:
         return (queryset.filter(query), Q())
 
 
-@strawberry_django.type(Organization, order=OrganizationOrder, filters=OrganizationFilter)  # type: ignore[literal-required]
+@strawberry_django.type(
+    Organization,
+    filters=OrganizationFilter,
+    order=OrganizationOrder,  # type: ignore[literal-required]
+    ordering=OrganizationOrdering,
+)
 class OrganizationType:
     id: ID
     name: auto
 
 
-@strawberry_django.type(Organization, order=OrganizationOrder, filters=OrganizationFilter, pagination=True)  # type: ignore[literal-required]
+@strawberry_django.type(
+    Organization,
+    filters=OrganizationFilter,
+    order=OrganizationOrder,  # type: ignore[literal-required]
+    ordering=OrganizationOrdering,
+    pagination=True,
+)
 class OrganizationForUserType(OrganizationType):
     @classmethod
     def get_queryset(
