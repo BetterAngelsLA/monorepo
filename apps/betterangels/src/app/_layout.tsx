@@ -56,7 +56,9 @@ export default function RootLayout() {
                             flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
                           >
                             <AppUpdatePrompt />
-                            <StatusBar style={Platform.OS === 'ios' ? 'light' : 'auto'} />
+                            <StatusBar
+                              style={Platform.OS === 'ios' ? 'light' : 'auto'}
+                            />
                           </FeatureFlagControlled>
                           {/* All Stack.Screens in AppRoutesStack */}
                           <AppRoutesStack />
