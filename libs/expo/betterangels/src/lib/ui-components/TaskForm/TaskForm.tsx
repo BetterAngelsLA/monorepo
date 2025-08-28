@@ -35,7 +35,6 @@ export function TaskForm(props: TProps) {
   const { showSnackbar } = useSnackbar();
   const [createTaskMutation] = useCreateTaskMutation();
   const [updateTaskMutation] = useUpdateTaskMutation();
-  console.log(clientProfileId);
   const {
     control,
     handleSubmit,
