@@ -34,6 +34,8 @@ When the condition fails, the following can be returned (following this priority
 """
 directive @hasPerm(permissions: [PermDefinition!]!, any: Boolean! = true) repeatable on FIELD_DEFINITION
 
+directive @oneOf on INPUT_OBJECT
+
 enum AccessibilityChoices {
   MEDICAL_EQUIPMENT_PERMITTED
   WHEELCHAIR_ACCESSIBLE
@@ -354,6 +356,12 @@ input ClientProfileImportRecordsBulkInput {
 }
 
 input ClientProfileOrder {
+  firstName: Ordering
+  lastName: Ordering
+  id: Ordering
+}
+
+input ClientProfileOrdering {
   firstName: Ordering
   lastName: Ordering
   id: Ordering
@@ -824,6 +832,12 @@ input InteractionAuthorOrder {
   id: Ordering
 }
 
+input InteractionAuthorOrdering {
+  firstName: Ordering
+  lastName: Ordering
+  id: Ordering
+}
+
 type InteractionAuthorType {
   id: ID!
   firstName: String
@@ -1159,6 +1173,11 @@ input OrganizationOrder {
   id: Ordering
 }
 
+input OrganizationOrdering {
+  name: Ordering
+  id: Ordering
+}
+
 input OrganizationServiceCategoryOrdering {
   id: Ordering
   priority: Ordering
@@ -1280,10 +1299,10 @@ enum PronounEnum {
 
 type Query {
   currentUser: UserType!
-  caseworkerOrganizations(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  caseworkerOrganizations(filters: OrganizationFilter, order: OrganizationOrder, ordering: [OrganizationOrdering!]! = [], pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   organizationMembers(organizationId: String!, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
-  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
+  clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder, ordering: [ClientProfileOrdering!]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
   clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
@@ -1301,11 +1320,11 @@ type Query {
   notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
-  interactionAuthors(filters: InteractionAuthorFilter, order: InteractionAuthorOrder, pagination: OffsetPaginationInput): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  interactionAuthors(filters: InteractionAuthorFilter, order: InteractionAuthorOrder, ordering: [InteractionAuthorOrdering!]! = [], pagination: OffsetPaginationInput): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(pagination: OffsetPaginationInput, filters: TaskFilter, ordering: [TaskOrder!]! = []): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
+  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder, ordering: [ShelterOrdering!]! = []): ShelterTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -1513,6 +1532,10 @@ type ShelterLocationType {
 }
 
 input ShelterOrder {
+  name: Ordering
+}
+
+input ShelterOrdering @oneOf {
   name: Ordering
 }
 
@@ -1899,7 +1922,7 @@ type UserType {
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
-  organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): [OrganizationForUserType!]
+  organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder, ordering: [OrganizationOrdering!]! = [], pagination: OffsetPaginationInput): [OrganizationForUserType!]
   username: String!
 }
 
