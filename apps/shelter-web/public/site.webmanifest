@@ -8,17 +8,17 @@
   "theme_color": "#1E3342",
   "icons": [
     {
-      "src": "transparent-logo.png",
+      "src": "android-chrome-192x192-circle.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "transparent-logo.png",
+      "src": "android-chrome-512x512-circle.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "transparent-logo.png",
+      "src": "android-chrome-1024x1024-circle.png",
       "sizes": "1024x1024",
       "type": "image/png"
     }
