@@ -26,6 +26,10 @@ export interface IMapClusterManager {
   nodeSize?: number;
   // padding to use with map.fitToCoordinates()
   edgePadding?: EdgePadding | TEdgePaddingBreakpoint[];
+  // Map clustering options
+  map?: (props: AnyProps) => AnyProps;
+  // Map clustering reduce function
+  reduce?: (acc: AnyProps, props: AnyProps) => void;
 }
 
 export class MapClusterManager<P extends IClusterGeoJson> {
@@ -40,6 +44,8 @@ export class MapClusterManager<P extends IClusterGeoJson> {
       extent = 256,
       nodeSize = 40,
       edgePadding,
+      reduce,
+      map,
     } = opts;
 
     this.maxZoom = maxZoom;
@@ -50,6 +56,8 @@ export class MapClusterManager<P extends IClusterGeoJson> {
       maxZoom,
       extent,
       nodeSize,
+      map,
+      reduce,
     });
   }
 

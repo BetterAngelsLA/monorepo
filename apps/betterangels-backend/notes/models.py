@@ -1,10 +1,10 @@
 import uuid
-from datetime import timedelta
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import pghistory
 from accounts.models import User
 from betterangels_backend import settings
+from common.enums import SelahTeamEnum
 from common.models import Attachment, BaseModel, Location
 from common.permissions.utils import permission_enums_to_django_meta_permissions
 from django.contrib.contenttypes.fields import GenericRelation
@@ -15,19 +15,54 @@ from django_choices_field import TextChoicesField
 from guardian.models import GroupObjectPermissionBase, UserObjectPermissionBase
 from notes.permissions import PrivateDetailsPermissions
 from organizations.models import Organization
-from strawberry_django.descriptors import model_property
 
-from .enums import (
-    DueByGroupEnum,
-    MoodEnum,
-    SelahTeamEnum,
-    ServiceEnum,
-    ServiceRequestStatusEnum,
-    TaskStatusEnum,
-)
+from .enums import MoodEnum, ServiceEnum, ServiceRequestStatusEnum
 
 if TYPE_CHECKING:
     from pghistory.models import Events
+
+
+@pghistory.track(
+    pghistory.InsertEvent("org_service_category.add"),
+    pghistory.UpdateEvent("org_service_category.update"),
+    pghistory.DeleteEvent("org_service_category.remove"),
+)
+class OrganizationServiceCategory(BaseModel):
+    name = models.CharField(max_length=100)
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT)
+    priority = models.PositiveIntegerField(blank=True, null=True)
+
+    def __str__(self) -> str:
+        return self.name
+
+    class Meta:
+        constraints = [models.UniqueConstraint("name", "organization", name="unique_name_org")]
+        ordering = ("priority",)
+
+    objects = models.Manager()
+
+
+@pghistory.track(
+    pghistory.InsertEvent("org_service.add"),
+    pghistory.UpdateEvent("org_service.update"),
+    pghistory.DeleteEvent("org_service.remove"),
+)
+class OrganizationService(BaseModel):
+    service = models.CharField(max_length=100)
+    category = models.ForeignKey(
+        OrganizationServiceCategory, on_delete=models.SET_NULL, null=True, related_name="services"
+    )
+    organization = models.ForeignKey(Organization, on_delete=models.PROTECT, related_name="services")
+    priority = models.PositiveIntegerField(blank=True, null=True)
+
+    def __str__(self) -> str:
+        return self.service
+
+    class Meta:
+        constraints = [models.UniqueConstraint("service", "organization", name="unique_service_org")]
+        ordering = ("priority",)
+
+    objects = models.Manager()
 
 
 @pghistory.track(
@@ -35,8 +70,9 @@ if TYPE_CHECKING:
     pghistory.UpdateEvent("service_request.update"),
     pghistory.DeleteEvent("service_request.remove"),
 )
-class ServiceRequest(BaseModel):  # type: ignore[django-manager-missing]
-    service = TextChoicesField(choices_enum=ServiceEnum)
+class ServiceRequest(BaseModel):
+    service = TextChoicesField(choices_enum=ServiceEnum, null=True, blank=True)
+    service_enum = TextChoicesField(choices_enum=ServiceEnum, null=True, blank=True)
     service_other = models.CharField(max_length=100, null=True, blank=True)
     client_profile = models.ForeignKey(
         "clients.ClientProfile",
@@ -59,7 +95,7 @@ class ServiceRequest(BaseModel):  # type: ignore[django-manager-missing]
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
-        return str(self.service if not self.service_other else self.service_other)
+        return str(self.service_enum if not self.service_other else self.service_other)
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
         match action:
@@ -86,98 +122,26 @@ class ServiceRequest(BaseModel):  # type: ignore[django-manager-missing]
 
 
 @pghistory.track(
-    pghistory.InsertEvent("task.add"),
-    pghistory.UpdateEvent("task.update"),
-    pghistory.DeleteEvent("task.remove"),
-)
-class Task(BaseModel):  # type: ignore[django-manager-missing]
-    title = models.CharField(max_length=100, blank=False)
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="tasks")
-    status = TextChoicesField(choices_enum=TaskStatusEnum)
-    due_by = models.DateTimeField(blank=True, null=True)
-    client_profile = models.ForeignKey(
-        "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_tasks"
-    )
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=False, related_name="tasks")
-
-    def __str__(self) -> str:
-        return self.title
-
-    def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
-        match action:
-            case "add":
-                self.delete()
-            case "update":
-                for field, changes in diff.items():
-                    setattr(self, field, changes[0])
-
-                self.save()
-            case _:
-                raise Exception(f"Action {action} is not revertable")
-
-    def get_note_id(self) -> int | None:
-        """
-        NOTE: this function will have to change once Tasks can be associated with multiple Notes
-        """
-        if note := Note.objects.filter(Q(purposes__id=self.id) | Q(next_steps__id=self.id)).first():
-            return note.id
-
-        return None
-
-    @model_property
-    def due_by_group(self) -> Optional[str]:
-        DAYS_IN_A_WEEK = 7
-
-        if self.due_by is None:
-            return DueByGroupEnum.NO_DUE_DATE
-
-        due_by_date = self.due_by.date()
-        today = timezone.now().date()
-
-        if due_by_date < today:
-            return DueByGroupEnum.OVERDUE
-
-        if due_by_date == today:
-            return DueByGroupEnum.TODAY
-
-        if due_by_date == today + timedelta(days=1):
-            return DueByGroupEnum.TOMORROW
-
-        if due_by_date <= today + timedelta(days=DAYS_IN_A_WEEK):
-            return DueByGroupEnum.IN_THE_NEXT_WEEK
-
-        return DueByGroupEnum.FUTURE_TASKS
-
-    class Meta:
-        ordering = ["-created_at"]
-
-
-@pghistory.track(
     pghistory.InsertEvent("note.add"),
     pghistory.UpdateEvent("note.update"),
     pghistory.DeleteEvent("note.remove"),
 )
-class Note(BaseModel):  # type: ignore[django-manager-missing]
+class Note(BaseModel):
     attachments = GenericRelation(Attachment)
     client_profile = models.ForeignKey(
         "clients.ClientProfile", on_delete=models.CASCADE, null=True, blank=True, related_name="client_profile_notes"
     )
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
-    # This is the date & time displayed on the note. We don't want to use created_at
-    # on the FE because the Note may not be created during the client interaction.
     interacted_at = models.DateTimeField(default=timezone.now, db_index=True)
     is_submitted = models.BooleanField(default=False)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="notes")
-    next_steps = models.ManyToManyField(Task, blank=True, related_name="next_step_notes")
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
     private_details = models.TextField(blank=True)
     provided_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="provided_notes")
     public_details = models.TextField(blank=True)
     purpose = models.CharField(max_length=100, null=True, blank=True)
-    purposes = models.ManyToManyField(Task, blank=True, related_name="purpose_notes")
     requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_notes")
     team = TextChoicesField(SelahTeamEnum, null=True, blank=True)
-
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE)
 
     objects = models.Manager()
 
@@ -202,48 +166,6 @@ class Note(BaseModel):  # type: ignore[django-manager-missing]
     class Meta:
         permissions = permission_enums_to_django_meta_permissions([PrivateDetailsPermissions])
         ordering = ["-interacted_at"]
-
-
-@pghistory.track(
-    pghistory.InsertEvent("note_purposes.add"),
-    pghistory.DeleteEvent("note_purposes.remove"),
-    obj_field=None,
-)
-class NotePurposes(Note.purposes.through):  # type: ignore[name-defined]
-    class Meta:
-        proxy = True
-
-    @staticmethod
-    def revert_action(action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any) -> None:
-        note = Note.objects.get(id=note_id)
-        task = Task.objects.get(id=task_id)
-
-        if action == "add":
-            note.purposes.remove(task)
-
-        elif action == "remove":
-            note.purposes.add(task)
-
-
-@pghistory.track(
-    pghistory.InsertEvent("note_next_steps.add"),
-    pghistory.DeleteEvent("note_next_steps.remove"),
-    obj_field=None,
-)
-class NoteNextSteps(Note.next_steps.through):  # type: ignore[name-defined]
-    class Meta:
-        proxy = True
-
-    @staticmethod
-    def revert_action(action: str, note_id: int, task_id: int, *args: Any, **kwargs: Any) -> None:
-        note = Note.objects.get(id=note_id)
-        task = Task.objects.get(id=task_id)
-
-        if action == "add":
-            note.next_steps.remove(task)
-
-        elif action == "remove":
-            note.next_steps.add(task)
 
 
 @pghistory.track(
@@ -309,14 +231,6 @@ class NoteUserObjectPermission(UserObjectPermissionBase):
 
 class NoteGroupObjectPermission(GroupObjectPermissionBase):
     content_object: models.ForeignKey = models.ForeignKey(Note, on_delete=models.CASCADE)
-
-
-class TaskUserObjectPermission(UserObjectPermissionBase):
-    content_object: models.ForeignKey = models.ForeignKey(Task, on_delete=models.CASCADE)
-
-
-class TaskGroupObjectPermission(GroupObjectPermissionBase):
-    content_object: models.ForeignKey = models.ForeignKey(Task, on_delete=models.CASCADE)
 
 
 class ServiceRequestUserObjectPermission(UserObjectPermissionBase):

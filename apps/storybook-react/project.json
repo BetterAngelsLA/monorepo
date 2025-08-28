@@ -1,0 +1,61 @@
+{
+  "name": "storybook-react",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "sourceRoot": "apps/storybook-react/src",
+  "tags": [],
+  "targets": {
+    "set-env": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/set-base-path.js"
+      },
+      "configurations": {
+        "production": {},
+        "preview": {}
+      }
+    },
+    "generate-storybook-head": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/generate-storybook-head.js"
+      },
+      "dependsOn": ["set-env"]
+    },
+    "storybook": {
+      "executor": "@nx/storybook:storybook",
+      "options": {
+        "configDir": "apps/storybook-react/.storybook",
+        "port": 4400
+      }
+    },
+    "build": {
+      "executor": "@nx/storybook:build",
+      "dependsOn": ["set-env", "generate-storybook-head"],
+      "outputs": ["{workspaceRoot}/dist/apps/storybook-react"],
+      "options": {
+        "configDir": "apps/storybook-react/.storybook",
+        "outputDir": "dist/apps/storybook-react"
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "./tools/deploy/cloudfront_deploy.sh"
+      },
+      "configurations": {
+        "preview": {},
+        "production": {
+          "command": "echo 'Skipping deploy to PRD'"
+        }
+      },
+      "dependsOn": ["build"]
+    },
+    "post-pr-preview": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node tools/scripts/post-preview-comment.js --url=https://storybook.dev.betterangels.la$VITE_APP_BASE_PATH"
+      }
+    }
+  }
+}

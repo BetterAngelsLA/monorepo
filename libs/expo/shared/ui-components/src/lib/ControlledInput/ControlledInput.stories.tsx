@@ -1,30 +1,33 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { useForm } from 'react-hook-form';
-import { View } from 'react-native';
-import { ControlledInput } from './ControlledInput';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const ControlledInputMeta: ComponentMeta<typeof ControlledInput> = {
-  title: 'ControlledInput',
-  component: ControlledInput,
-  decorators: [
-    (Story) => {
-      return (
-        <View style={{ padding: Spacings.sm }}>
-          <View style={{ padding: Spacings.sm }}>
-            <Story />
-          </View>
-        </View>
-      );
-    },
-  ],
-};
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { useForm } from 'react-hook-form';
+// import { View } from 'react-native';
+// import { ControlledInput } from './ControlledInput';
 
-export default ControlledInputMeta;
+// const ControlledInputMeta: ComponentMeta<typeof ControlledInput> = {
+//   title: 'ControlledInput',
+//   component: ControlledInput,
+//   decorators: [
+//     (Story) => {
+//       return (
+//         <View style={{ padding: Spacings.sm }}>
+//           <View style={{ padding: Spacings.sm }}>
+//             <Story />
+//           </View>
+//         </View>
+//       );
+//     },
+//   ],
+// };
 
-type ControlledInputStory = ComponentStory<typeof ControlledInput>;
+// export default ControlledInputMeta;
 
-export const Basic: ControlledInputStory = () => {
-  const { control } = useForm();
-  return <ControlledInput label="Test" name="test" control={control} />;
-};
+// type ControlledInputStory = ComponentStory<typeof ControlledInput>;
+
+// export const Basic: ControlledInputStory = () => {
+//   const { control } = useForm();
+//   return <ControlledInput label="Test" name="test" control={control} />;
+// };

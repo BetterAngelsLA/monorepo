@@ -1,5 +1,6 @@
 from typing import Optional
 
+from adminsortable2.admin import SortableAdminMixin, SortableStackedInline
 from common.admin import AttachmentAdminMixin
 from django.contrib import admin
 from django.db.models import QuerySet
@@ -11,7 +12,15 @@ from notes.enums import ServiceEnum
 from organizations.models import Organization
 from rangefilter.filters import DateRangeFilterBuilder
 
-from .models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest, Task
+from .models import (
+    Mood,
+    Note,
+    NoteDataImport,
+    NoteImportRecord,
+    OrganizationService,
+    OrganizationServiceCategory,
+    ServiceRequest,
+)
 
 
 @admin.register(Mood)
@@ -90,7 +99,7 @@ class NoteResource(resources.ModelResource):
 
     def _join_services(self, services: QuerySet) -> str:
         return ", ".join(
-            s.service_other if s.service == ServiceEnum.OTHER else s.get_service_display() for s in services
+            s.service_other if s.service_enum == ServiceEnum.OTHER else s.get_service_display() for s in services
         )
 
     def dehydrate_requested_services(self, note: Note) -> str:
@@ -158,29 +167,34 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         return f"{obj.purpose} ({obj.pk})"
 
 
-@admin.register(Task)
-class TaskAdmin(AttachmentAdminMixin, admin.ModelAdmin):
+class OrganizationServiceInline(SortableStackedInline):
+    ordering = ["priority"]
+    model = OrganizationService
+    extra = 0
+
+
+@admin.register(OrganizationServiceCategory)
+class OrganizationServiceCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
+    inlines = [OrganizationServiceInline]
+    ordering = ["priority"]
     list_display = (
-        "title",
-        "client_profile",
-        "due_by",
-        "status",
+        "name",
+        "organization",
+        "created_at",
     )
     list_filter = (
-        "due_by",
-        "status",
+        "name",
+        "organization",
         "created_at",
-        "updated_at",
     )
     search_fields = (
-        "title",
-        "created_by__email",
-        "client_profile__email",
+        "name",
+        "organization__name",
     )
-    readonly_fields = (
-        "created_at",
-        "updated_at",
-    )
+
+    class Meta:
+        model = OrganizationServiceCategory
+        fields = "__all__"
 
 
 @admin.register(ServiceRequest)
@@ -214,8 +228,12 @@ class ServiceRequestAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
 
     @admin.display(description="Service")
-    def service_name(self, obj: ServiceRequest) -> str:
-        return str(obj.service.label if obj.service != ServiceEnum.OTHER else obj.service_other)
+    def service_name(self, obj: ServiceRequest) -> Optional[str]:
+        # TODO: undo after cutover
+        if not obj.service_enum:
+            return None
+
+        return str(obj.service_enum.label if obj.service_enum != ServiceEnum.OTHER else obj.service_other)
 
 
 @admin.register(NoteDataImport)

@@ -3,11 +3,18 @@ import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
 import { ApolloProvider } from '@apollo/client';
+import { createApolloClient } from '@monorepo/react/shared';
 import App from './app/app';
-import { createApolloClient } from './app/shared/clients/apollo/client';
+
+const csrfCookieName =
+  import.meta.env.VITE_SHELTER_CSRF_COOKIE_NAME || 'csrftoken';
+const csrfHeaderName =
+  import.meta.env.VITE_SHELTER_CSRF_HEADER_NAME || 'x-csrftoken';
 
 const apolloClient = createApolloClient({
   apiUrl: import.meta.env.VITE_SHELTER_API_URL,
+  csrfCookieName,
+  csrfHeaderName,
 });
 
 // to allow preview by branch

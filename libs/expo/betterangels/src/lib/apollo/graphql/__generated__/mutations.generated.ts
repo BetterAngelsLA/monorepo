@@ -34,7 +34,7 @@ export type CreateNoteServiceRequestMutationVariables = Types.Exact<{
 }>;
 
 
-export type CreateNoteServiceRequestMutation = { __typename?: 'Mutation', createNoteServiceRequest: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'ServiceRequestType', id: string, service: Types.ServiceEnum } };
+export type CreateNoteServiceRequestMutation = { __typename?: 'Mutation', createNoteServiceRequest: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null } };
 
 export type DeleteServiceRequestMutationVariables = Types.Exact<{
   data: Types.DeleteDjangoObjectInput;
@@ -42,34 +42,6 @@ export type DeleteServiceRequestMutationVariables = Types.Exact<{
 
 
 export type DeleteServiceRequestMutation = { __typename?: 'Mutation', deleteServiceRequest: { __typename?: 'DeletedObjectType', id: number } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
-
-export type CreateNoteMoodMutationVariables = Types.Exact<{
-  data: Types.CreateNoteMoodInput;
-}>;
-
-
-export type CreateNoteMoodMutation = { __typename?: 'Mutation', createNoteMood: { __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
-
-export type DeleteMoodMutationVariables = Types.Exact<{
-  data: Types.DeleteDjangoObjectInput;
-}>;
-
-
-export type DeleteMoodMutation = { __typename?: 'Mutation', deleteMood: { __typename?: 'DeletedObjectType', id: number } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
-
-export type UpdateTaskMutationVariables = Types.Exact<{
-  data: Types.UpdateTaskInput;
-}>;
-
-
-export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'TaskType', id: string, title: string, status: Types.TaskStatusEnum, dueBy?: any | null, createdAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } };
-
-export type DeleteTaskMutationVariables = Types.Exact<{
-  id: Types.Scalars['ID']['input'];
-}>;
-
-
-export type DeleteTaskMutation = { __typename?: 'Mutation', deleteTask: { __typename?: 'DeletedObjectType', id: number } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 export type UpdateNoteLocationMutationVariables = Types.Exact<{
   data: Types.UpdateNoteLocationInput;
@@ -273,7 +245,7 @@ export const CreateNoteServiceRequestDocument = gql`
     }
     ... on ServiceRequestType {
       id
-      service
+      serviceEnum
     }
   }
 }
@@ -346,185 +318,6 @@ export function useDeleteServiceRequestMutation(baseOptions?: Apollo.MutationHoo
 export type DeleteServiceRequestMutationHookResult = ReturnType<typeof useDeleteServiceRequestMutation>;
 export type DeleteServiceRequestMutationResult = Apollo.MutationResult<DeleteServiceRequestMutation>;
 export type DeleteServiceRequestMutationOptions = Apollo.BaseMutationOptions<DeleteServiceRequestMutation, DeleteServiceRequestMutationVariables>;
-export const CreateNoteMoodDocument = gql`
-    mutation CreateNoteMood($data: CreateNoteMoodInput!) {
-  createNoteMood(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-    ... on MoodType {
-      id
-      descriptor
-    }
-  }
-}
-    `;
-export type CreateNoteMoodMutationFn = Apollo.MutationFunction<CreateNoteMoodMutation, CreateNoteMoodMutationVariables>;
-
-/**
- * __useCreateNoteMoodMutation__
- *
- * To run a mutation, you first call `useCreateNoteMoodMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateNoteMoodMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createNoteMoodMutation, { data, loading, error }] = useCreateNoteMoodMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useCreateNoteMoodMutation(baseOptions?: Apollo.MutationHookOptions<CreateNoteMoodMutation, CreateNoteMoodMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateNoteMoodMutation, CreateNoteMoodMutationVariables>(CreateNoteMoodDocument, options);
-      }
-export type CreateNoteMoodMutationHookResult = ReturnType<typeof useCreateNoteMoodMutation>;
-export type CreateNoteMoodMutationResult = Apollo.MutationResult<CreateNoteMoodMutation>;
-export type CreateNoteMoodMutationOptions = Apollo.BaseMutationOptions<CreateNoteMoodMutation, CreateNoteMoodMutationVariables>;
-export const DeleteMoodDocument = gql`
-    mutation DeleteMood($data: DeleteDjangoObjectInput!) {
-  deleteMood(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-    ... on DeletedObjectType {
-      id
-    }
-  }
-}
-    `;
-export type DeleteMoodMutationFn = Apollo.MutationFunction<DeleteMoodMutation, DeleteMoodMutationVariables>;
-
-/**
- * __useDeleteMoodMutation__
- *
- * To run a mutation, you first call `useDeleteMoodMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteMoodMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteMoodMutation, { data, loading, error }] = useDeleteMoodMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useDeleteMoodMutation(baseOptions?: Apollo.MutationHookOptions<DeleteMoodMutation, DeleteMoodMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteMoodMutation, DeleteMoodMutationVariables>(DeleteMoodDocument, options);
-      }
-export type DeleteMoodMutationHookResult = ReturnType<typeof useDeleteMoodMutation>;
-export type DeleteMoodMutationResult = Apollo.MutationResult<DeleteMoodMutation>;
-export type DeleteMoodMutationOptions = Apollo.BaseMutationOptions<DeleteMoodMutation, DeleteMoodMutationVariables>;
-export const UpdateTaskDocument = gql`
-    mutation UpdateTask($data: UpdateTaskInput!) {
-  updateTask(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-    ... on TaskType {
-      id
-      title
-      status
-      dueBy
-      clientProfile {
-        id
-      }
-      createdBy {
-        id
-      }
-      createdAt
-    }
-  }
-}
-    `;
-export type UpdateTaskMutationFn = Apollo.MutationFunction<UpdateTaskMutation, UpdateTaskMutationVariables>;
-
-/**
- * __useUpdateTaskMutation__
- *
- * To run a mutation, you first call `useUpdateTaskMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUpdateTaskMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [updateTaskMutation, { data, loading, error }] = useUpdateTaskMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useUpdateTaskMutation(baseOptions?: Apollo.MutationHookOptions<UpdateTaskMutation, UpdateTaskMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UpdateTaskMutation, UpdateTaskMutationVariables>(UpdateTaskDocument, options);
-      }
-export type UpdateTaskMutationHookResult = ReturnType<typeof useUpdateTaskMutation>;
-export type UpdateTaskMutationResult = Apollo.MutationResult<UpdateTaskMutation>;
-export type UpdateTaskMutationOptions = Apollo.BaseMutationOptions<UpdateTaskMutation, UpdateTaskMutationVariables>;
-export const DeleteTaskDocument = gql`
-    mutation DeleteTask($id: ID!) {
-  deleteTask(data: {id: $id}) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-    ... on DeletedObjectType {
-      id
-    }
-  }
-}
-    `;
-export type DeleteTaskMutationFn = Apollo.MutationFunction<DeleteTaskMutation, DeleteTaskMutationVariables>;
-
-/**
- * __useDeleteTaskMutation__
- *
- * To run a mutation, you first call `useDeleteTaskMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteTaskMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteTaskMutation, { data, loading, error }] = useDeleteTaskMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDeleteTaskMutation(baseOptions?: Apollo.MutationHookOptions<DeleteTaskMutation, DeleteTaskMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteTaskMutation, DeleteTaskMutationVariables>(DeleteTaskDocument, options);
-      }
-export type DeleteTaskMutationHookResult = ReturnType<typeof useDeleteTaskMutation>;
-export type DeleteTaskMutationResult = Apollo.MutationResult<DeleteTaskMutation>;
-export type DeleteTaskMutationOptions = Apollo.BaseMutationOptions<DeleteTaskMutation, DeleteTaskMutationVariables>;
 export const UpdateNoteLocationDocument = gql`
     mutation UpdateNoteLocation($data: UpdateNoteLocationInput!) {
   updateNoteLocation(data: $data) {

@@ -93,7 +93,7 @@ export const CREATE_NOTE_SERVICE_REQUEST = gql`
       }
       ... on ServiceRequestType {
         id
-        service
+        serviceEnum
       }
     }
   }
@@ -102,84 +102,6 @@ export const CREATE_NOTE_SERVICE_REQUEST = gql`
 export const DELETE_SERVICE_REQUEST = gql`
   mutation DeleteServiceRequest($data: DeleteDjangoObjectInput!) {
     deleteServiceRequest(data: $data) {
-      ... on OperationInfo {
-        messages {
-          kind
-          field
-          message
-        }
-      }
-      ... on DeletedObjectType {
-        id
-      }
-    }
-  }
-`;
-
-export const CREATE_NOTE_MOOD = gql`
-  mutation CreateNoteMood($data: CreateNoteMoodInput!) {
-    createNoteMood(data: $data) {
-      ... on OperationInfo {
-        messages {
-          kind
-          field
-          message
-        }
-      }
-      ... on MoodType {
-        id
-        descriptor
-      }
-    }
-  }
-`;
-
-export const DELETE_MOOD = gql`
-  mutation DeleteMood($data: DeleteDjangoObjectInput!) {
-    deleteMood(data: $data) {
-      ... on OperationInfo {
-        messages {
-          kind
-          field
-          message
-        }
-      }
-      ... on DeletedObjectType {
-        id
-      }
-    }
-  }
-`;
-
-export const UPDATE_TASK = gql`
-  mutation UpdateTask($data: UpdateTaskInput!) {
-    updateTask(data: $data) {
-      ... on OperationInfo {
-        messages {
-          kind
-          field
-          message
-        }
-      }
-      ... on TaskType {
-        id
-        title
-        status
-        dueBy
-        clientProfile {
-          id
-        }
-        createdBy {
-          id
-        }
-        createdAt
-      }
-    }
-  }
-`;
-export const DELETE_TASK = gql`
-  mutation DeleteTask($id: ID!) {
-    deleteTask(data: { id: $id }) {
       ... on OperationInfo {
         messages {
           kind

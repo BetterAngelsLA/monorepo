@@ -51,14 +51,6 @@ enum AdaAccommodationEnum {
   OTHER
 }
 
-input AddNoteTaskInput {
-  taskId: ID!
-  noteId: ID!
-  taskType: TaskTypeEnum!
-}
-
-union AddNoteTaskPayload = NoteType | OperationInfo
-
 union AddOrganizationMemberPayload = OrganizationMemberType | OperationInfo
 
 input AddressInput {
@@ -233,6 +225,20 @@ type ClientContactTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [ClientContactType!]!
+}
+
+input ClientDocumentFilter {
+  AND: ClientDocumentFilter
+  OR: ClientDocumentFilter
+  NOT: ClientDocumentFilter
+  DISTINCT: Boolean
+  documentGroups: [ClientDocumentGroupEnum!]
+}
+
+enum ClientDocumentGroupEnum {
+  DOC_READY
+  FORMS
+  OTHER
 }
 
 enum ClientDocumentNamespaceEnum {
@@ -514,7 +520,8 @@ union CreateNoteMoodPayload = MoodType | OperationInfo
 union CreateNotePayload = NoteType | OperationInfo
 
 input CreateNoteServiceRequestInput {
-  service: ServiceEnum!
+  service: ServiceEnum
+  serviceEnum: ServiceEnum
   serviceOther: String
   noteId: ID!
   serviceRequestType: ServiceRequestTypeEnum!
@@ -522,23 +529,14 @@ input CreateNoteServiceRequestInput {
 
 union CreateNoteServiceRequestPayload = ServiceRequestType | OperationInfo
 
-input CreateNoteTaskInput {
-  title: String!
-  status: TaskStatusEnum!
-  dueBy: DateTime
-  noteId: ID!
-  taskType: TaskTypeEnum!
-}
-
-union CreateNoteTaskPayload = TaskType | OperationInfo
-
 input CreateProfileDataImportInput {
   sourceFile: String!
   notes: String
 }
 
 input CreateServiceRequestInput {
-  service: ServiceEnum!
+  service: ServiceEnum
+  serviceEnum: ServiceEnum
   status: ServiceRequestStatusEnum!
   serviceOther: String
   clientProfile: ID
@@ -549,10 +547,12 @@ union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
 union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 input CreateTaskInput {
-  title: String!
-  status: TaskStatusEnum!
-  dueBy: DateTime
   clientProfile: ID
+  description: String
+  note: ID
+  summary: String!
+  team: SelahTeamEnum
+  status: TaskStatusEnum
 }
 
 union CreateTaskPayload = TaskType | OperationInfo
@@ -628,15 +628,6 @@ type DjangoImageType {
 
 type DjangoModelType {
   pk: ID!
-}
-
-enum DueByGroupEnum {
-  OVERDUE
-  TODAY
-  TOMORROW
-  IN_THE_NEXT_WEEK
-  FUTURE_TASKS
-  NO_DUE_DATE
 }
 
 enum EntryRequirementChoices {
@@ -754,6 +745,17 @@ enum HmisAgencyEnum {
   CHAMP
   VASH
 }
+
+type HmisLoginError {
+  message: String!
+  field: String
+}
+
+type HmisLoginSuccess {
+  hmisToken: String!
+}
+
+union HmisLoginSuccessHmisLoginError = HmisLoginSuccess | HmisLoginError
 
 input HmisProfileInput {
   hmisId: NonBlankString
@@ -966,13 +968,12 @@ type Mutation {
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
+  hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
   updateNoteLocation(data: UpdateNoteLocationInput!): UpdateNoteLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_note"}], any: true)
   revertNote(data: RevertNoteInput!): RevertNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
-  addNoteTask(data: AddNoteTaskInput!): AddNoteTaskPayload!
-  removeNoteTask(data: RemoveNoteTaskInput!): RemoveNoteTaskPayload!
   createNoteMood(data: CreateNoteMoodInput!): CreateNoteMoodPayload!
   deleteMood(data: DeleteDjangoObjectInput!): DeleteMoodPayload!
   createServiceRequest(data: CreateServiceRequestInput!): CreateServiceRequestPayload! @hasPerm(permissions: [{app: "notes", permission: "add_servicerequest"}], any: true)
@@ -980,13 +981,11 @@ type Mutation {
   updateServiceRequest(data: UpdateServiceRequestInput!): UpdateServiceRequestPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_servicerequest"}], any: true)
   removeNoteServiceRequest(data: RemoveNoteServiceRequestInput!): RemoveNoteServiceRequestPayload!
   deleteServiceRequest(data: DeleteDjangoObjectInput!): DeleteServiceRequestPayload!
-  createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
-  createNoteTask(data: CreateNoteTaskInput!): CreateNoteTaskPayload! @hasPerm(permissions: [{app: "notes", permission: "add_task"}], any: true)
-  updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
-  updateTaskLocation(data: UpdateTaskLocationInput!): UpdateTaskLocationPayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "change_task"}], any: true)
-  deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
   createNoteDataImport(data: CreateNoteDataImportInput!): CreateNoteDataImportPayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
   importNote(data: ImportNoteInput!): ImportNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_noteimportrecord"}], any: true)
+  createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
+  updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
+  deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
 }
 
 scalar NonBlankString
@@ -1007,10 +1006,10 @@ input NoteFilter {
   OR: NoteFilter
   NOT: NoteFilter
   DISTINCT: Boolean
-  organizations: [ID!]
   authors: [ID!]
-  search: String
+  organizations: [ID!]
   teams: [SelahTeamEnum!]
+  search: String
 }
 
 type NoteImportRecordType {
@@ -1025,27 +1024,26 @@ type NoteImportRecordType {
 }
 
 input NoteOrder {
-  interactedAt: Ordering
   id: Ordering
+  interactedAt: Ordering
 }
 
 type NoteType {
   id: ID!
-  organization: OrganizationType!
-  purpose: String
-  team: SelahTeamEnum
-  location: LocationType
-  moods: [MoodType!]!
-  purposes(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
-  nextSteps(order: TaskOrder, pagination: OffsetPaginationInput): [TaskType!]!
-  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
-  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
-  publicDetails: String!
-  isSubmitted: Boolean!
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
   interactedAt: DateTime!
+  isSubmitted: Boolean!
+  location: LocationType
+  moods: [MoodType!]!
+  organization: OrganizationType!
+  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+  publicDetails: String!
+  purpose: String
+  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+  tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
+  team: SelahTeamEnum
   userCanEdit: Boolean!
   privateDetails: String
 }
@@ -1161,6 +1159,50 @@ input OrganizationOrder {
   id: Ordering
 }
 
+input OrganizationServiceCategoryOrdering {
+  id: Ordering
+  priority: Ordering
+}
+
+type OrganizationServiceCategoryType {
+  id: ID!
+  name: String!
+  priority: Int
+  services(ordering: [OrganizationServiceOrdering!]! = [], pagination: OffsetPaginationInput): [OrganizationServiceType!]!
+}
+
+type OrganizationServiceCategoryTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [OrganizationServiceCategoryType!]!
+}
+
+input OrganizationServiceOrdering {
+  id: Ordering
+  priority: Ordering
+}
+
+type OrganizationServiceType {
+  id: ID!
+  category: OrganizationServiceCategoryType!
+  priority: Int
+  service: String!
+}
+
+type OrganizationServiceTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [OrganizationServiceType!]!
+}
+
 type OrganizationType {
   id: ID!
   name: String!
@@ -1243,7 +1285,6 @@ type Query {
   organizationMembers(organizationId: String!, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
-  clientDocuments(pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
   clientContacts(pagination: OffsetPaginationInput): ClientContactTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)
   clientHouseholdMember(pk: ID!): ClientHouseholdMemberType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clienthouseholdmember"}], any: true)
@@ -1253,11 +1294,16 @@ type Query {
   socialMediaProfile(pk: ID!): SocialMediaProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
   socialMediaProfiles(pagination: OffsetPaginationInput): SocialMediaProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_socialmediaprofile"}], any: true)
   clientProfile(pk: ID!): ClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
+  clientDocuments(clientId: String!, filters: ClientDocumentFilter, pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
-  notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
+  services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  serviceCategories(pagination: OffsetPaginationInput, ordering: [OrganizationServiceCategoryOrdering!]! = []): OrganizationServiceCategoryTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   interactionAuthors(filters: InteractionAuthorFilter, order: InteractionAuthorOrder, pagination: OffsetPaginationInput): InteractionAuthorTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
+  tasks(pagination: OffsetPaginationInput, filters: TaskFilter, ordering: [TaskOrder!]! = []): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
   shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
 }
@@ -1296,14 +1342,6 @@ input RemoveNoteServiceRequestInput {
 }
 
 union RemoveNoteServiceRequestPayload = NoteType | OperationInfo
-
-input RemoveNoteTaskInput {
-  taskId: ID!
-  noteId: ID!
-  taskType: TaskTypeEnum!
-}
-
-union RemoveNoteTaskPayload = NoteType | OperationInfo
 
 input RevertNoteInput {
   id: ID!
@@ -1432,7 +1470,7 @@ enum ServiceRequestStatusEnum {
 
 type ServiceRequestType {
   id: ID!
-  service: ServiceEnum!
+  serviceEnum: ServiceEnum
   serviceOther: String
   status: ServiceRequestStatusEnum!
   dueBy: DateTime
@@ -1440,6 +1478,7 @@ type ServiceRequestType {
   clientProfile: ClientProfileType
   createdBy: UserType!
   createdAt: DateTime!
+  service: ServiceEnum!
 }
 
 enum ServiceRequestTypeEnum {
@@ -1537,6 +1576,7 @@ type ShelterType {
   generalServices: [GeneralServiceType!]!
   healthServices: [HealthServiceType!]!
   immediateNeeds: [ImmediateNeedType!]!
+  instagram: String
   interiorPhotos: [ShelterPhotoType!]!
   location: ShelterLocationType
   maxStay: Int
@@ -1658,31 +1698,55 @@ type SwitchType {
   lastModified: DateTime
 }
 
+input TaskFilter {
+  clientProfile: ID
+  createdBy: ID
+  AND: TaskFilter
+  OR: TaskFilter
+  NOT: TaskFilter
+  DISTINCT: Boolean
+  authors: [ID!]
+  organizations: [ID!]
+  status: [TaskStatusEnum!]
+  teams: [SelahTeamEnum!]
+  search: String
+}
+
 input TaskOrder {
-  dueBy: Ordering
   id: Ordering
+  createdAt: Ordering
+  updatedAt: Ordering
+  status: Ordering
 }
 
 enum TaskStatusEnum {
-  COMPLETED
   TO_DO
+  IN_PROGRESS
+  COMPLETED
 }
 
 type TaskType {
   id: ID!
-  title: String!
-  location: LocationType
-  status: TaskStatusEnum!
-  dueBy: DateTime
-  dueByGroup: DueByGroupEnum!
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
+  description: String
+  note: DjangoModelType
+  organization: OrganizationType
+  status: TaskStatusEnum
+  summary: String
+  team: SelahTeamEnum
+  updatedAt: DateTime!
 }
 
-enum TaskTypeEnum {
-  PURPOSE
-  NEXT_STEP
+type TaskTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [TaskType!]!
 }
 
 """Time (isoformat)"""
@@ -1798,18 +1862,11 @@ union UpdateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 input UpdateTaskInput {
   id: ID!
-  title: String
-  location: ID
+  description: String
+  summary: String
+  team: SelahTeamEnum
   status: TaskStatusEnum
-  dueBy: DateTime
 }
-
-input UpdateTaskLocationInput {
-  id: ID!
-  location: LocationInput!
-}
-
-union UpdateTaskLocationPayload = TaskType | OperationInfo
 
 union UpdateTaskPayload = TaskType | OperationInfo
 

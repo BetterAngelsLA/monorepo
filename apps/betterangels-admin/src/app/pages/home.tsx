@@ -1,13 +1,10 @@
-import { useSignOut, useUser } from '@monorepo/react/betterangels-admin';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
-  const { user } = useUser();
-  const { signOut } = useSignOut();
-
-  return (
-    <div>
-      <div>Welcome to Home, {user?.email}!</div>
-      <button onClick={signOut}>Sign Out</button>
-    </div>
-  );
+  const navigate = useNavigate();
+  useEffect(() => {
+    navigate('/users');
+  }, []);
+  return null;
 }

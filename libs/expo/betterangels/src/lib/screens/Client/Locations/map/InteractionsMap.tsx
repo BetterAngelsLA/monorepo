@@ -1,7 +1,7 @@
-import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import {
   IMapClusterManager,
   LoadingView,
+  LocationMarker,
   MapClusterMarker,
   MapClusters,
   MapViewport,
@@ -11,7 +11,7 @@ import {
   regionDeltaMap,
   useClusters,
 } from '@monorepo/expo/shared/ui-components';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import { Region } from 'react-native-maps';
 import { useSnackbar } from '../../../../hooks';
@@ -30,6 +30,12 @@ const interactionsClusterOptions: IMapClusterManager = {
       padding: { top: 50, bottom: 50, left: 50, right: 50 },
     },
   ],
+  map: (feature) => ({
+    mostRecent: feature['mostRecent'],
+  }),
+  reduce: (acc, props) => {
+    acc['mostRecent'] = acc['mostRecent'] || props['mostRecent'];
+  },
 };
 
 type TProps = {
@@ -67,12 +73,22 @@ export function InteractionsMap(props: TProps) {
 
   const renderClusterIconFn = useMemo(
     () => (cluster: TClusterPoint) =>
-      <MapClusterMarker itemCount={cluster.properties.point_count} />,
+      (
+        <MapClusterMarker
+          label={cluster.properties['mostRecent'] ? 'Last Seen' : undefined}
+          itemCount={cluster.properties.point_count}
+        />
+      ),
+
     []
   );
 
-  const renderPointIconFn = useMemo(
-    () => () => <LocationPinIcon width={25} height={36} />,
+  const renderPointWithLabel = useCallback(
+    (point: { properties: { mostRecent: boolean } }) => (
+      <LocationMarker
+        label={point.properties.mostRecent ? 'Last Seen' : undefined}
+      />
+    ),
     []
   );
 
@@ -175,7 +191,7 @@ export function InteractionsMap(props: TProps) {
         mapRef={mapRef}
         clusters={clusters}
         clusterRenderer={renderClusterIconFn}
-        pointRenderer={renderPointIconFn}
+        pointRenderer={renderPointWithLabel}
         onClusterPress={onClusterPress}
         onPointPress={(p) => onMarkerPress(p.properties.id)}
       />

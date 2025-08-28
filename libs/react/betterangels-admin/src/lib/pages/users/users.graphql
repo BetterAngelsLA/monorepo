@@ -1,0 +1,20 @@
+query OrganizationMembers(
+  $organizationId: String!
+  $pagination: OffsetPaginationInput
+) {
+  organizationMembers(
+    organizationId: $organizationId
+    pagination: $pagination
+  ) {
+    totalCount
+    results {
+      email
+      firstName
+      id
+      lastLogin
+      lastName
+      memberRole
+      middleName
+    }
+  }
+}

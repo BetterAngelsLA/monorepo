@@ -307,13 +307,14 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         self._handle_user_login(user_label)
 
         query = """
-            query {
-                clientDocuments {
+            query ($clientId: String!){
+                clientDocuments(clientId: $clientId) {
                     totalCount
                 }
             }
         """
-        response = self.execute_graphql(query)
+        variables = {"clientId": str(self.client_profile_1["id"])}
+        response = self.execute_graphql(query, variables)
 
         if expected_document_count is not None:
             self.assertEqual(response["data"]["clientDocuments"]["totalCount"], expected_document_count)

@@ -7,6 +7,7 @@ import strawberry
 import strawberry_django
 from clients.enums import (
     AdaAccommodationEnum,
+    ClientDocumentGroupEnum,
     ClientDocumentNamespaceEnum,
     LanguageEnum,
     LivingSituationEnum,
@@ -37,9 +38,46 @@ from .models import (
 )
 
 MIN_INTERACTED_AGO_FOR_ACTIVE_STATUS = dict(days=90)
+CLIENT_DOCUMENT_NAMESPACE_GROUPS = {
+    ClientDocumentGroupEnum.DOC_READY: [
+        ClientDocumentNamespaceEnum.DRIVERS_LICENSE_FRONT,
+        ClientDocumentNamespaceEnum.DRIVERS_LICENSE_BACK,
+        ClientDocumentNamespaceEnum.PHOTO_ID,
+        ClientDocumentNamespaceEnum.BIRTH_CERTIFICATE,
+        ClientDocumentNamespaceEnum.SOCIAL_SECURITY_CARD,
+        ClientDocumentNamespaceEnum.OTHER_DOC_READY,
+    ],
+    ClientDocumentGroupEnum.FORMS: [
+        ClientDocumentNamespaceEnum.CONSENT_FORM,
+        ClientDocumentNamespaceEnum.HMIS_FORM,
+        ClientDocumentNamespaceEnum.INCOME_FORM,
+        ClientDocumentNamespaceEnum.OTHER_FORM,
+    ],
+    ClientDocumentGroupEnum.OTHER: [
+        ClientDocumentNamespaceEnum.OTHER_CLIENT_DOCUMENT,
+    ],
+}
 
 
-@strawberry_django.type(Attachment, pagination=True)
+@filter(Attachment)
+class ClientDocumentFilter:
+    @strawberry_django.filter_field
+    def document_groups(
+        self,
+        queryset: QuerySet[Attachment],
+        info: Info,
+        value: Optional[List[ClientDocumentGroupEnum]],
+        prefix: str,
+    ) -> Tuple[QuerySet[Attachment], Q]:
+        if not value:
+            return queryset, Q()
+
+        namespaces = [ns.value for group in value for ns in CLIENT_DOCUMENT_NAMESPACE_GROUPS[group]]
+
+        return queryset.filter(namespace__in=namespaces), Q()
+
+
+@strawberry_django.type(Attachment, pagination=True, filters=ClientDocumentFilter)
 class ClientDocumentType(AttachmentInterface):
     namespace: ClientDocumentNamespaceEnum
 

@@ -15,21 +15,13 @@ from django.db.models import QuerySet
 from django.db.models.expressions import Subquery
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum, TaskTypeEnum
-from notes.models import (
-    Mood,
-    Note,
-    NoteDataImport,
-    NoteImportRecord,
-    ServiceRequest,
-    Task,
-)
+from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
+from notes.models import Mood, Note, NoteDataImport, NoteImportRecord, ServiceRequest
 from notes.permissions import (
     NoteImportRecordPermissions,
     NotePermissions,
     PrivateDetailsPermissions,
     ServiceRequestPermissions,
-    TaskPermissions,
 )
 from notes.utils import NoteReverter
 from strawberry import asdict
@@ -42,14 +34,11 @@ from strawberry_django.permissions import HasPerm, HasRetvalPerm
 from strawberry_django.utils.query import filter_for_user
 
 from .types import (
-    AddNoteTaskInput,
     CreateNoteDataImportInput,
     CreateNoteInput,
     CreateNoteMoodInput,
     CreateNoteServiceRequestInput,
-    CreateNoteTaskInput,
     CreateServiceRequestInput,
-    CreateTaskInput,
     ImportNoteInput,
     InteractionAuthorType,
     MoodType,
@@ -57,16 +46,14 @@ from .types import (
     NoteFilter,
     NoteImportRecordType,
     NoteType,
+    OrganizationServiceCategoryType,
+    OrganizationServiceType,
     RemoveNoteServiceRequestInput,
-    RemoveNoteTaskInput,
     RevertNoteInput,
     ServiceRequestType,
-    TaskType,
     UpdateNoteInput,
     UpdateNoteLocationInput,
     UpdateServiceRequestInput,
-    UpdateTaskInput,
-    UpdateTaskLocationInput,
 )
 
 
@@ -76,6 +63,14 @@ class Query:
 
     notes: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
+    )
+
+    services: OffsetPaginated[OrganizationServiceType] = strawberry_django.offset_paginated(
+        extensions=[HasPerm(NotePermissions.ADD)],
+    )
+
+    service_categories: OffsetPaginated[OrganizationServiceCategoryType] = strawberry_django.offset_paginated(
+        extensions=[HasPerm(NotePermissions.ADD)],
     )
 
     @strawberry_django.offset_paginated(
@@ -185,70 +180,6 @@ class Mutation:
     )
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def add_note_task(self, info: Info, data: AddNoteTaskInput) -> NoteType:
-        with transaction.atomic(), pghistory.context(
-            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
-        ):
-            user = get_current_user(info)
-            try:
-                note = filter_for_user(
-                    Note.objects.all(),
-                    user,
-                    [NotePermissions.CHANGE],
-                ).get(id=data.note_id)
-            except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this note.")
-            try:
-                task = filter_for_user(
-                    Task.objects.all(),
-                    user,
-                    [TaskPermissions.CHANGE],
-                ).get(id=data.task_id)
-            except Task.DoesNotExist:
-                raise PermissionError("You do not have permission to access that task.")
-
-            if data.task_type == TaskTypeEnum.PURPOSE:
-                note.purposes.add(task)
-            elif data.task_type == TaskTypeEnum.NEXT_STEP:
-                note.next_steps.add(task)
-            else:
-                raise NotImplementedError
-
-            return cast(NoteType, note)
-
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def remove_note_task(self, info: Info, data: RemoveNoteTaskInput) -> NoteType:
-        with transaction.atomic(), pghistory.context(
-            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
-        ):
-            user = get_current_user(info)
-            try:
-                note = filter_for_user(
-                    Note.objects.all(),
-                    user,
-                    [NotePermissions.CHANGE],
-                ).get(id=data.note_id)
-            except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this note.")
-            try:
-                task = filter_for_user(
-                    Task.objects.all(),
-                    user,
-                    [TaskPermissions.CHANGE],
-                ).get(id=data.task_id)
-            except Task.DoesNotExist:
-                raise PermissionError("You do not have permission to access that task.")
-
-            if data.task_type == TaskTypeEnum.PURPOSE:
-                note.purposes.remove(task)
-            elif data.task_type == TaskTypeEnum.NEXT_STEP:
-                note.next_steps.remove(task)
-            else:
-                raise NotImplementedError
-
-            return cast(NoteType, note)
-
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_note_mood(self, info: Info, data: CreateNoteMoodInput) -> MoodType:
         with transaction.atomic(), pghistory.context(
             note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
@@ -353,6 +284,7 @@ class Mutation:
                 ServiceRequest,
                 {
                     **service_request_data,
+                    "service_enum": service_request_data["service_enum"] or service_request_data["service"],
                     "status": (
                         ServiceRequestStatusEnum.TO_DO
                         if service_request_type == ServiceRequestTypeEnum.REQUESTED
@@ -448,154 +380,6 @@ class Mutation:
             service_request.delete()
 
         return DeletedObjectType(id=service_request_id)
-
-    @strawberry_django.mutation(extensions=[HasPerm(TaskPermissions.ADD)])
-    def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
-        with transaction.atomic():
-            user = get_current_user(info)
-            permission_group = get_user_permission_group(user)
-
-            task_data = asdict(data)
-            task = resolvers.create(
-                info,
-                Task,
-                {
-                    **task_data,
-                    "created_by": user,
-                },
-            )
-
-            permissions = [
-                TaskPermissions.VIEW,
-                TaskPermissions.CHANGE,
-                TaskPermissions.DELETE,
-            ]
-            for perm in permissions:
-                assign_perm(perm, permission_group.group, task)
-
-            return cast(TaskType, task)
-
-    @strawberry_django.mutation(extensions=[HasPerm(TaskPermissions.ADD)])
-    def create_note_task(self, info: Info, data: CreateNoteTaskInput) -> TaskType:
-        with transaction.atomic(), pghistory.context(
-            note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
-        ):
-            user = get_current_user(info)
-            task_data = asdict(data)
-            task_type = str(task_data.pop("task_type"))
-            note_id = str(task_data.pop("note_id"))
-            try:
-                note = filter_for_user(
-                    Note.objects.all(),
-                    user,
-                    [NotePermissions.CHANGE],
-                ).get(id=note_id)
-            except Note.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this note.")
-
-            permission_group = get_user_permission_group(user)
-
-            task = resolvers.create(
-                info,
-                Task,
-                {
-                    **task_data,
-                    "client_profile": note.client_profile,
-                    "created_by": user,
-                },
-            )
-
-            permissions = [
-                TaskPermissions.VIEW,
-                TaskPermissions.CHANGE,
-                TaskPermissions.DELETE,
-            ]
-            for perm in permissions:
-                assign_perm(perm, permission_group.group, task)
-
-            if task_type == TaskTypeEnum.PURPOSE:
-                note.purposes.add(task)
-            elif task_type == TaskTypeEnum.NEXT_STEP:
-                note.next_steps.add(task)
-            else:
-                raise NotImplementedError
-
-            return cast(TaskType, task)
-
-    @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[TaskPermissions.CHANGE])])
-    def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
-        with transaction.atomic():
-            task_data = asdict(data)
-            task = Task.objects.get(id=data.id)
-            note_id = task.get_note_id()
-
-            with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
-                task = resolvers.update(
-                    info,
-                    task,
-                    {
-                        **task_data,
-                    },
-                )
-
-            return cast(TaskType, task)
-
-    @strawberry_django.mutation(
-        extensions=[
-            HasRetvalPerm(perms=[TaskPermissions.CHANGE]),
-        ]
-    )
-    def update_task_location(self, info: Info, data: UpdateTaskLocationInput) -> TaskType:
-        with transaction.atomic():
-            user = get_current_user(info)
-            try:
-                task = filter_for_user(
-                    Task.objects.all(),
-                    user,
-                    [TaskPermissions.CHANGE],
-                ).get(id=data.id)
-            except Task.DoesNotExist:
-                raise PermissionError("You do not have permission to modify this task.")
-
-            note_id = task.get_note_id()
-
-            with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
-                location_data: Dict = strawberry.asdict(data)
-                location = Location.get_or_create_location(location_data["location"])
-                task = resolvers.update(
-                    info,
-                    task,
-                    {
-                        "location": location,
-                    },
-                )
-
-            return cast(TaskType, task)
-
-    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def delete_task(self, info: Info, data: DeleteDjangoObjectInput) -> DeletedObjectType:
-        """
-        NOTE: this function will need to change once Tasks are able to be associated with zero or more than one Note
-        """
-        user = get_current_user(info)
-
-        try:
-            task = filter_for_user(
-                Task.objects.all(),
-                user,
-                [TaskPermissions.DELETE],
-            ).get(id=data.id)
-
-        except Task.DoesNotExist:
-            raise PermissionError("You do not have permission to modify this task.")
-
-        task_id = task.id
-        note_id = task.get_note_id()
-
-        with pghistory.context(note_id=str(note_id), timestamp=timezone.now(), label=info.field_name):
-            task.delete()
-
-        return DeletedObjectType(id=task_id)
 
     @strawberry_django.mutation(extensions=[HasPerm(NoteImportRecordPermissions.ADD)])
     def create_note_data_import(self, info: Info, data: CreateNoteDataImportInput) -> NoteDataImportType:

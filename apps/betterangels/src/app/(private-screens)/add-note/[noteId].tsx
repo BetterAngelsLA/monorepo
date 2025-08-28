@@ -27,6 +27,7 @@ import PublicNote from './PublicNote';
 import Purpose from './Purpose';
 import RequestedServices from './RequestedServices';
 import SubmittedModal from './SubmittedModal';
+import Tasks from './Tasks';
 import Team from './Team';
 
 const renderModal = (
@@ -98,7 +99,7 @@ export default function AddNote() {
         query: NotesDocument,
         variables: {
           pagination: { limit: 10 + 1, offset: 0 },
-          order: { interactedAt: Ordering.Desc, id: Ordering.Desc },
+          ordering: [{ interactedAt: Ordering.Desc }, { id: Ordering.Desc }],
           filters: { authors: [user?.id], search: '' },
         },
       },
@@ -271,6 +272,7 @@ export default function AddNote() {
         /> */}
         <ProvidedServices services={data.note.providedServices} {...props} />
         <RequestedServices services={data.note.requestedServices} {...props} />
+        <Tasks tasks={data.note.tasks} team={data.note.team} {...props} />
         <PublicNote
           note={data.note.publicDetails}
           isPublicNoteEdited={isPublicNoteEdited}

@@ -4,9 +4,9 @@ export const GET_NOTES = gql`
   query Notes(
     $filters: NoteFilter
     $pagination: OffsetPaginationInput
-    $order: NoteOrder
+    $ordering: [NoteOrder!]! = []
   ) {
-    notes(filters: $filters, pagination: $pagination, order: $order) {
+    notes(filters: $filters, pagination: $pagination, ordering: $ordering) {
       totalCount
       pageInfo {
         limit
@@ -37,12 +37,12 @@ export const GET_NOTES = gql`
         }
         providedServices {
           id
-          service
+          serviceEnum
           serviceOther
         }
         requestedServices {
           id
-          service
+          serviceEnum
           serviceOther
         }
         publicDetails
@@ -102,13 +102,22 @@ export const GET_NOTE = gql`
       }
       providedServices {
         id
-        service
+        serviceEnum
         serviceOther
       }
       requestedServices {
         id
-        service
+        serviceEnum
         serviceOther
+      }
+      tasks {
+        id
+        summary
+        team
+        description
+        status
+        createdAt
+        updatedAt
       }
       publicDetails
       isSubmitted

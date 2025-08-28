@@ -1,5 +1,6 @@
 export const routeAccess = {
   '/': 'safe',
+  '/users': 'safe',
   '/sign-in': 'unsafe',
   '/privacy-policy': 'neutral',
 } as const;
@@ -15,5 +16,6 @@ export function getRouteAccess(pathname: string): AccessType {
       return routeAccess[route as keyof typeof routeAccess];
     }
   }
+
   return 'neutral';
 }

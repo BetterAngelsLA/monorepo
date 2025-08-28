@@ -22,7 +22,7 @@ from strawberry_django.descriptors import model_property
     pghistory.UpdateEvent("user.update"),
     pghistory.DeleteEvent("user.remove"),
 )
-class User(AbstractBaseUser, PermissionsMixin):  # type: ignore[django-manager-missing]
+class User(AbstractBaseUser, PermissionsMixin):
     username_validator = UnicodeUsernameValidator()
 
     email = models.EmailField(unique=True, null=True, blank=True)

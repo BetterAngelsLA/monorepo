@@ -23,11 +23,25 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     if (access === 'unsafe' && user) {
-      const from = (location.state as any)?.from || '/';
+      const from = (location.state as any)?.from || '/users';
       hasRedirected.current = true;
       navigate(from, { replace: true });
     }
   }, [user, isLoading, location.pathname, location.state, navigate]);
+
+  if (isLoading) {
+    return null;
+  }
+
+  const access = getRouteAccess(location.pathname);
+
+  if (access === 'safe' && !user) {
+    return null;
+  }
+
+  if (access === 'unsafe' && user) {
+    return null;
+  }
 
   return <>{children}</>;
 }

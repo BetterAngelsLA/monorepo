@@ -1,35 +1,38 @@
-import { Spacings } from '@monorepo/expo/shared/static';
-import { ComponentMeta, ComponentStory } from '@storybook/react-native';
-import { View } from 'react-native';
-import { Select } from './Select';
+export default { title: 'Disabled until Expo storybook fixed' };
+export const Placeholder = () => null;
 
-const SelectMeta: ComponentMeta<typeof Select> = {
-  title: 'Select',
-  component: Select,
-  decorators: [
-    (Story) => {
-      return (
-        <View style={{ padding: Spacings.sm }}>
-          <View style={{ padding: Spacings.sm }}>
-            <Story />
-          </View>
-        </View>
-      );
-    },
-  ],
-};
+// import { Spacings } from '@monorepo/expo/shared/static';
+// import { ComponentMeta, ComponentStory } from '@storybook/react-native';
+// import { View } from 'react-native';
+// import { Select } from './Select';
 
-export default SelectMeta;
+// const SelectMeta: ComponentMeta<typeof Select> = {
+//   title: 'Select',
+//   component: Select,
+//   decorators: [
+//     (Story) => {
+//       return (
+//         <View style={{ padding: Spacings.sm }}>
+//           <View style={{ padding: Spacings.sm }}>
+//             <Story />
+//           </View>
+//         </View>
+//       );
+//     },
+//   ],
+// };
 
-type SelectStory = ComponentStory<typeof Select>;
+// export default SelectMeta;
 
-export const Basic: SelectStory = () => {
-  return (
-    <Select
-      label="Test"
-      placeholder="Select something"
-      setExternalValue={(value) => console.log(value)}
-      data={['Test 1', 'Test 2']}
-    />
-  );
-};
+// type SelectStory = ComponentStory<typeof Select>;
+
+// export const Basic: SelectStory = () => {
+//   return (
+//     <Select
+//       label="Test"
+//       placeholder="Select something"
+//       setExternalValue={(value) => console.log(value)}
+//       data={['Test 1', 'Test 2']}
+//     />
+//   );
+// };

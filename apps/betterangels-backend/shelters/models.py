@@ -4,6 +4,8 @@ import pghistory
 from admin_async_upload.models import AsyncFileField
 from common.models import BaseModel
 from common.permissions.utils import permission_enums_to_django_meta_permissions
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.core.files.storage import default_storage
@@ -203,7 +205,13 @@ class Shelter(BaseModel):
     email = models.EmailField(max_length=254, blank=True, null=True)
     phone = PhoneNumberField(blank=True, null=True)
     website = models.URLField(blank=True, null=True)
+    instagram = models.URLField(blank=True, null=True)
     operating_hours = TimeRangeField(null=True, blank=True)
+
+    # Hero Image
+    hero_image_content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True)
+    hero_image_object_id = models.PositiveIntegerField(null=True, blank=True)
+    hero_image = GenericForeignKey("hero_image_content_type", "hero_image_object_id")
 
     # Summary Information
     description = CKEditor5Field()

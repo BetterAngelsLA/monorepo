@@ -1,6 +1,12 @@
-import { Colors } from '@monorepo/expo/shared/static';
+import {
+  Colors,
+  Radiuses,
+  Shadow,
+  Spacings,
+} from '@monorepo/expo/shared/static';
 import { memo, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import TextBold from '../TextBold';
 import { SIZES, variantStyleMap } from './constants';
 import { getContentAndSize } from './getContentAndSize';
 
@@ -15,6 +21,7 @@ interface IMapClusterMarkerProps {
   itemCount?: number;
   subscriptAfter?: boolean;
   hasHouse?: boolean;
+  label?: string;
 }
 
 function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
@@ -25,6 +32,7 @@ function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
     text,
     itemCount,
     subscriptAfter,
+    label,
     // hasHouse,
   } = props;
 
@@ -45,44 +53,65 @@ function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
   );
 
   return (
-    <View
-      style={[
-        styles.outerCircle,
-        {
-          backgroundColor: variantFillColor,
-          padding: SIZES[markerSize].outerPadding,
-          height: SIZES[markerSize].size,
-          width: SIZES[markerSize].size,
-        },
-      ]}
-    >
+    <View style={{ alignItems: 'center' }}>
+      {label && (
+        <View
+          style={{
+            paddingHorizontal: Spacings.sm,
+            paddingTop: Spacings.xs,
+            paddingBottom: Spacings.xxs,
+          }}
+        >
+          <View
+            style={{
+              paddingHorizontal: Spacings.xs,
+              backgroundColor: Colors.WHITE,
+              borderRadius: Radiuses.xxxl,
+              ...Shadow,
+            }}
+          >
+            <TextBold size="sm">{label}</TextBold>
+          </View>
+        </View>
+      )}
       <View
         style={[
-          styles.innerCircle,
+          styles.outerCircle,
           {
             backgroundColor: variantFillColor,
-            borderColor: variantBorderColor,
+            padding: SIZES[markerSize].outerPadding,
+            height: SIZES[markerSize].size,
+            width: SIZES[markerSize].size,
           },
         ]}
       >
-        <Text
+        <View
           style={[
-            styles.text,
+            styles.innerCircle,
             {
-              fontSize: SIZES[markerSize].fontSize,
-              color: textColor || variantTextColor,
+              backgroundColor: variantFillColor,
+              borderColor: variantBorderColor,
             },
           ]}
         >
-          {content}
-          {(subscriptAfter || showSubscript) && (
-            <Text style={{ fontSize: SIZES[markerSize].subscriptAfterSize }}>
-              +
-            </Text>
-          )}
-        </Text>
-      </View>
-      {/* {hasHouse && (
+          <Text
+            style={[
+              styles.text,
+              {
+                fontSize: SIZES[markerSize].fontSize,
+                color: textColor || variantTextColor,
+              },
+            ]}
+          >
+            {content}
+            {(subscriptAfter || showSubscript) && (
+              <Text style={{ fontSize: SIZES[markerSize].subscriptAfterSize }}>
+                +
+              </Text>
+            )}
+          </Text>
+        </View>
+        {/* {hasHouse && (
           <View
             style={[
               styles.house,
@@ -98,6 +127,7 @@ function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
             />
           </View>
         )} */}
+      </View>
     </View>
   );
 }

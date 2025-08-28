@@ -48,6 +48,8 @@ env = environ.Env(
     DJANGO_CACHE_BLOCKING_TIMEOUT=(float, 1.0),
     DJANGO_CACHE_MAX_CONNECTIONS=(int, 100),
     GOOGLE_MAPS_API_KEY=(str, ""),
+    HMIS_API_KEY=(str, ""),
+    HMIS_GRAPHQL_URL=(str, ""),
     IS_LOCAL_DEV=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, True),
     MEDIA_URL=(str, "/media/"),
@@ -85,8 +87,9 @@ DEBUG = env("DEBUG")
 INSTALLED_APPS = [
     "admin_async_upload",
     "admin_interface",
-    "colorfield",
+    "adminsortable2",
     "betterangels_backend.apps.CustomAdminConfig",
+    "colorfield",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.gis",
@@ -121,10 +124,12 @@ INSTALLED_APPS = [
     "accounts",
     "clients",
     "common",
+    "hmis",
     "legal",
     "notes",
     "proxy",
     "shelters",
+    "tasks",
 ]
 
 MIDDLEWARE = [
@@ -346,7 +351,6 @@ POST_OFFICE = {
 EMAIL_FILE_PATH = "./tmp/app-emails"  # change this to your preferred location
 INVITATION_BACKEND = "accounts.backends.CustomInvitations"
 
-
 # Django Guardian
 # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_user_obj_perms_model
 # https://github.com/django-guardian/django-guardian/blob/77de2033951c2e6b8fba2ac6258defdd23902bbf/docs/configuration.rst#guardian_group_obj_perms_model
@@ -360,6 +364,10 @@ PLACES_MAPS_API_KEY = GOOGLE_MAPS_API_KEY
 PLACES_MAP_WIDGET_HEIGHT = 480
 PLACES_MAP_OPTIONS = '{"center": { "lat": 34.0549, "lng": -118.2426 }, "zoom": 10}'
 PLACES_MARKER_OPTIONS = '{"draggable": true}'
+
+# HMIS
+HMIS_API_KEY = env("HMIS_API_KEY")
+HMIS_GRAPHQL_URL = env("HMIS_GRAPHQL_URL")
 
 # Logging Configuration
 # https://django-structlog.readthedocs.io/en/latest/getting_started.html

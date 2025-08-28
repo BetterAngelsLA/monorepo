@@ -48,14 +48,6 @@ export enum AdaAccommodationEnum {
   Visual = 'VISUAL'
 }
 
-export type AddNoteTaskInput = {
-  noteId: Scalars['ID']['input'];
-  taskId: Scalars['ID']['input'];
-  taskType: TaskTypeEnum;
-};
-
-export type AddNoteTaskPayload = NoteType | OperationInfo;
-
 export type AddOrganizationMemberPayload = OperationInfo | OrganizationMemberType;
 
 export type AddressInput = {
@@ -234,6 +226,20 @@ export type ClientContactTypeOffsetPaginated = {
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
 };
+
+export type ClientDocumentFilter = {
+  AND?: InputMaybe<ClientDocumentFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<ClientDocumentFilter>;
+  OR?: InputMaybe<ClientDocumentFilter>;
+  documentGroups?: InputMaybe<Array<ClientDocumentGroupEnum>>;
+};
+
+export enum ClientDocumentGroupEnum {
+  DocReady = 'DOC_READY',
+  Forms = 'FORMS',
+  Other = 'OTHER'
+}
 
 export enum ClientDocumentNamespaceEnum {
   BirthCertificate = 'BIRTH_CERTIFICATE',
@@ -517,22 +523,13 @@ export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
-  service: ServiceEnum;
+  service?: InputMaybe<ServiceEnum>;
+  serviceEnum?: InputMaybe<ServiceEnum>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   serviceRequestType: ServiceRequestTypeEnum;
 };
 
 export type CreateNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
-
-export type CreateNoteTaskInput = {
-  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
-  noteId: Scalars['ID']['input'];
-  status: TaskStatusEnum;
-  taskType: TaskTypeEnum;
-  title: Scalars['String']['input'];
-};
-
-export type CreateNoteTaskPayload = OperationInfo | TaskType;
 
 export type CreateProfileDataImportInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
@@ -541,7 +538,8 @@ export type CreateProfileDataImportInput = {
 
 export type CreateServiceRequestInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
-  service: ServiceEnum;
+  service?: InputMaybe<ServiceEnum>;
+  serviceEnum?: InputMaybe<ServiceEnum>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   status: ServiceRequestStatusEnum;
 };
@@ -552,9 +550,11 @@ export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfile
 
 export type CreateTaskInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
-  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
-  status: TaskStatusEnum;
-  title: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  note?: InputMaybe<Scalars['ID']['input']>;
+  status?: InputMaybe<TaskStatusEnum>;
+  summary: Scalars['String']['input'];
+  team?: InputMaybe<SelahTeamEnum>;
 };
 
 export type CreateTaskPayload = OperationInfo | TaskType;
@@ -630,15 +630,6 @@ export type DjangoModelType = {
   __typename?: 'DjangoModelType';
   pk: Scalars['ID']['output'];
 };
-
-export enum DueByGroupEnum {
-  FutureTasks = 'FUTURE_TASKS',
-  InTheNextWeek = 'IN_THE_NEXT_WEEK',
-  NoDueDate = 'NO_DUE_DATE',
-  Overdue = 'OVERDUE',
-  Today = 'TODAY',
-  Tomorrow = 'TOMORROW'
-}
 
 export enum EntryRequirementChoices {
   Background = 'BACKGROUND',
@@ -761,6 +752,19 @@ export enum HmisAgencyEnum {
   Pasadena = 'PASADENA',
   Vash = 'VASH'
 }
+
+export type HmisLoginError = {
+  __typename?: 'HmisLoginError';
+  field?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+};
+
+export type HmisLoginSuccess = {
+  __typename?: 'HmisLoginSuccess';
+  hmisToken: Scalars['String']['output'];
+};
+
+export type HmisLoginSuccessHmisLoginError = HmisLoginError | HmisLoginSuccess;
 
 export type HmisProfileInput = {
   agency: HmisAgencyEnum;
@@ -940,7 +944,6 @@ export type MoodType = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  addNoteTask: AddNoteTaskPayload;
   addOrganizationMember: AddOrganizationMemberPayload;
   appleAuth: AuthResponse;
   createClientContact: CreateClientContactPayload;
@@ -953,7 +956,6 @@ export type Mutation = {
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteMood: CreateNoteMoodPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
-  createNoteTask: CreateNoteTaskPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
@@ -969,12 +971,12 @@ export type Mutation = {
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
   googleAuth: AuthResponse;
+  hmisLogin: HmisLoginSuccessHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
-  removeNoteTask: RemoveNoteTaskPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -988,12 +990,6 @@ export type Mutation = {
   updateServiceRequest: UpdateServiceRequestPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
-  updateTaskLocation: UpdateTaskLocationPayload;
-};
-
-
-export type MutationAddNoteTaskArgs = {
-  data: AddNoteTaskInput;
 };
 
 
@@ -1054,11 +1050,6 @@ export type MutationCreateNoteMoodArgs = {
 
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
-};
-
-
-export type MutationCreateNoteTaskArgs = {
-  data: CreateNoteTaskInput;
 };
 
 
@@ -1132,6 +1123,12 @@ export type MutationGoogleAuthArgs = {
 };
 
 
+export type MutationHmisLoginArgs = {
+  email: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+};
+
+
 export type MutationImportClientProfileArgs = {
   data: ImportClientProfileInput;
 };
@@ -1149,11 +1146,6 @@ export type MutationLoginArgs = {
 
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
-};
-
-
-export type MutationRemoveNoteTaskArgs = {
-  data: RemoveNoteTaskInput;
 };
 
 
@@ -1221,11 +1213,6 @@ export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
 };
 
-
-export type MutationUpdateTaskLocationArgs = {
-  data: UpdateTaskLocationInput;
-};
-
 export type NoteDataImportType = {
   __typename?: 'NoteDataImportType';
   id: Scalars['UUID']['output'];
@@ -1276,22 +1263,15 @@ export type NoteType = {
   isSubmitted: Scalars['Boolean']['output'];
   location?: Maybe<LocationType>;
   moods: Array<MoodType>;
-  nextSteps: Array<TaskType>;
   organization: OrganizationType;
   privateDetails?: Maybe<Scalars['String']['output']>;
   providedServices: Array<ServiceRequestType>;
   publicDetails: Scalars['String']['output'];
   purpose?: Maybe<Scalars['String']['output']>;
-  purposes: Array<TaskType>;
   requestedServices: Array<ServiceRequestType>;
+  tasks: Array<TaskType>;
   team?: Maybe<SelahTeamEnum>;
   userCanEdit: Scalars['Boolean']['output'];
-};
-
-
-export type NoteTypeNextStepsArgs = {
-  order?: InputMaybe<TaskOrder>;
-  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -1300,13 +1280,14 @@ export type NoteTypeProvidedServicesArgs = {
 };
 
 
-export type NoteTypePurposesArgs = {
-  order?: InputMaybe<TaskOrder>;
+export type NoteTypeRequestedServicesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
-export type NoteTypeRequestedServicesArgs = {
+export type NoteTypeTasksArgs = {
+  filters?: InputMaybe<TaskFilter>;
+  ordering?: Array<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1419,6 +1400,56 @@ export type OrganizationOrder = {
   name?: InputMaybe<Ordering>;
 };
 
+export type OrganizationServiceCategoryOrdering = {
+  id?: InputMaybe<Ordering>;
+  priority?: InputMaybe<Ordering>;
+};
+
+export type OrganizationServiceCategoryType = {
+  __typename?: 'OrganizationServiceCategoryType';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  priority?: Maybe<Scalars['Int']['output']>;
+  services: Array<OrganizationServiceType>;
+};
+
+
+export type OrganizationServiceCategoryTypeServicesArgs = {
+  ordering?: Array<OrganizationServiceOrdering>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+export type OrganizationServiceCategoryTypeOffsetPaginated = {
+  __typename?: 'OrganizationServiceCategoryTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<OrganizationServiceCategoryType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
+export type OrganizationServiceOrdering = {
+  id?: InputMaybe<Ordering>;
+  priority?: InputMaybe<Ordering>;
+};
+
+export type OrganizationServiceType = {
+  __typename?: 'OrganizationServiceType';
+  category: OrganizationServiceCategoryType;
+  id: Scalars['ID']['output'];
+  priority?: Maybe<Scalars['Int']['output']>;
+  service: Scalars['String']['output'];
+};
+
+export type OrganizationServiceTypeOffsetPaginated = {
+  __typename?: 'OrganizationServiceTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<OrganizationServiceType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type OrganizationType = {
   __typename?: 'OrganizationType';
   id: Scalars['ID']['output'];
@@ -1521,10 +1552,14 @@ export type Query = {
   notes: NoteTypeOffsetPaginated;
   organizationMember: OrganizationMemberType;
   organizationMembers: OrganizationMemberTypeOffsetPaginated;
+  serviceCategories: OrganizationServiceCategoryTypeOffsetPaginated;
+  services: OrganizationServiceTypeOffsetPaginated;
   shelter: ShelterType;
   shelters: ShelterTypeOffsetPaginated;
   socialMediaProfile: SocialMediaProfileType;
   socialMediaProfiles: SocialMediaProfileTypeOffsetPaginated;
+  task: TaskType;
+  tasks: TaskTypeOffsetPaginated;
 };
 
 
@@ -1557,6 +1592,8 @@ export type QueryClientDocumentArgs = {
 
 
 export type QueryClientDocumentsArgs = {
+  clientId: Scalars['String']['input'];
+  filters?: InputMaybe<ClientDocumentFilter>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1608,6 +1645,7 @@ export type QueryNoteArgs = {
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   order?: InputMaybe<NoteOrder>;
+  ordering?: Array<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1620,6 +1658,18 @@ export type QueryOrganizationMemberArgs = {
 
 export type QueryOrganizationMembersArgs = {
   organizationId: Scalars['String']['input'];
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryServiceCategoriesArgs = {
+  ordering?: Array<OrganizationServiceCategoryOrdering>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryServicesArgs = {
+  ordering?: Array<OrganizationServiceOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1642,6 +1692,18 @@ export type QuerySocialMediaProfileArgs = {
 
 
 export type QuerySocialMediaProfilesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryTaskArgs = {
+  pk: Scalars['ID']['input'];
+};
+
+
+export type QueryTasksArgs = {
+  filters?: InputMaybe<TaskFilter>;
+  ordering?: Array<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1679,14 +1741,6 @@ export type RemoveNoteServiceRequestInput = {
 };
 
 export type RemoveNoteServiceRequestPayload = NoteType | OperationInfo;
-
-export type RemoveNoteTaskInput = {
-  noteId: Scalars['ID']['input'];
-  taskId: Scalars['ID']['input'];
-  taskType: TaskTypeEnum;
-};
-
-export type RemoveNoteTaskPayload = NoteType | OperationInfo;
 
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
@@ -1825,6 +1879,7 @@ export type ServiceRequestType = {
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
   service: ServiceEnum;
+  serviceEnum?: Maybe<ServiceEnum>;
   serviceOther?: Maybe<Scalars['String']['output']>;
   status: ServiceRequestStatusEnum;
 };
@@ -1932,6 +1987,7 @@ export type ShelterType = {
   heroImage?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   immediateNeeds: Array<ImmediateNeedType>;
+  instagram?: Maybe<Scalars['String']['output']>;
   interiorPhotos: Array<ShelterPhotoType>;
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
@@ -2052,13 +2108,30 @@ export type SwitchType = {
   name: Scalars['String']['output'];
 };
 
+export type TaskFilter = {
+  AND?: InputMaybe<TaskFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<TaskFilter>;
+  OR?: InputMaybe<TaskFilter>;
+  authors?: InputMaybe<Array<Scalars['ID']['input']>>;
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
+  createdBy?: InputMaybe<Scalars['ID']['input']>;
+  organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
+  search?: InputMaybe<Scalars['String']['input']>;
+  status?: InputMaybe<Array<TaskStatusEnum>>;
+  teams?: InputMaybe<Array<SelahTeamEnum>>;
+};
+
 export type TaskOrder = {
-  dueBy?: InputMaybe<Ordering>;
+  createdAt?: InputMaybe<Ordering>;
   id?: InputMaybe<Ordering>;
+  status?: InputMaybe<Ordering>;
+  updatedAt?: InputMaybe<Ordering>;
 };
 
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
+  InProgress = 'IN_PROGRESS',
   ToDo = 'TO_DO'
 }
 
@@ -2067,18 +2140,24 @@ export type TaskType = {
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
-  dueBy?: Maybe<Scalars['DateTime']['output']>;
-  dueByGroup: DueByGroupEnum;
+  description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  location?: Maybe<LocationType>;
-  status: TaskStatusEnum;
-  title: Scalars['String']['output'];
+  note?: Maybe<DjangoModelType>;
+  organization?: Maybe<OrganizationType>;
+  status?: Maybe<TaskStatusEnum>;
+  summary?: Maybe<Scalars['String']['output']>;
+  team?: Maybe<SelahTeamEnum>;
+  updatedAt: Scalars['DateTime']['output'];
 };
 
-export enum TaskTypeEnum {
-  NextStep = 'NEXT_STEP',
-  Purpose = 'PURPOSE'
-}
+export type TaskTypeOffsetPaginated = {
+  __typename?: 'TaskTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<TaskType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
 
 export type TimeRange = {
   __typename?: 'TimeRange';
@@ -2189,19 +2268,12 @@ export type UpdateServiceRequestPayload = OperationInfo | ServiceRequestType;
 export type UpdateSocialMediaProfilePayload = OperationInfo | SocialMediaProfileType;
 
 export type UpdateTaskInput = {
-  dueBy?: InputMaybe<Scalars['DateTime']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
-  location?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
-  title?: InputMaybe<Scalars['String']['input']>;
+  summary?: InputMaybe<Scalars['String']['input']>;
+  team?: InputMaybe<SelahTeamEnum>;
 };
-
-export type UpdateTaskLocationInput = {
-  id: Scalars['ID']['input'];
-  location: LocationInput;
-};
-
-export type UpdateTaskLocationPayload = OperationInfo | TaskType;
 
 export type UpdateTaskPayload = OperationInfo | TaskType;
 
