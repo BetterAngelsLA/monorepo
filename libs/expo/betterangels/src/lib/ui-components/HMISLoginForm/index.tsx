@@ -30,17 +30,14 @@ export default function HMISLoginForm() {
 
       setSubmitting(true);
 
-      // If your schema expects `email` instead of `email`, change the variable key
       const { data, errors } = await hmisLogin({
         variables: { email, password },
       });
 
-      // Transport / GraphQL errors
       if (errors && errors.length > 0) {
         throw new Error(errors.map((e) => e.message).join('; '));
       }
 
-      // App-level (union) result
       const result = data?.hmisLogin;
       if (!result) throw new Error('No response from server');
 

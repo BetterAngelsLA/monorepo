@@ -9,17 +9,12 @@ import { useUser } from '../../hooks';
 import { useFeatureControls } from '../../providers';
 
 type AuthLayoutProps = {
-  title?: string;
-  subtitle?: string;
   children: ReactNode;
-
-  termsOfServiceUrl?: string;
-  privacyPolicyUrl?: string;
+  termsOfServiceUrl: string;
+  privacyPolicyUrl: string;
 };
 
 export default function SignInContainer({
-  title = 'Welcome!',
-  subtitle = 'Log in for Better Angels and start making a difference in the LA community.',
   children,
   termsOfServiceUrl,
   privacyPolicyUrl,
@@ -55,17 +50,13 @@ export default function SignInContainer({
       keyboardShouldPersistTaps="handled"
     >
       <TextBold mb="xs" size="xl">
-        {title}
+        Welcome!
       </TextBold>
-
-      {subtitle ? (
-        <TextRegular size="sm" mb="xl">
-          {subtitle}
-        </TextRegular>
-      ) : null}
-
+      <TextRegular size="sm" mb="xl">
+        Log in for Better Angels and start making a difference in the LA
+        community.
+      </TextRegular>
       {children}
-
       {termsOfServiceUrl && privacyPolicyUrl ? (
         <TextRegular textAlign="center" size="sm" color={Colors.BLACK} mt="xl">
           By continuing, you agree to our{' '}

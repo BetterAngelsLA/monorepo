@@ -45,23 +45,6 @@ export default function AppRoutesStack() {
           title: '',
         }}
       />
-      <Stack.Screen
-        name="sign-in-hmis"
-        options={{
-          headerLeft: () => (
-            <IconButton
-              onPress={() => router.back()}
-              variant="transparent"
-              accessibilityLabel="goes to get started screen"
-              accessibilityHint="goes to get started screen"
-            >
-              <ArrowLeftIcon />
-            </IconButton>
-          ),
-          headerShadowVisible: false,
-          title: '',
-        }}
-      />
 
       <Stack.Screen name="auth" options={{ headerShown: false }} />
     </Stack>

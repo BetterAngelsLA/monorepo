@@ -31,9 +31,15 @@ export default function Auth() {
           }
         >
           <Text style={styles.heading}>Log in with</Text>
+
           <Button
             accessibilityHint="Opens Better Angels login"
-            onPress={() => router.navigate('/sign-in')}
+            onPress={() =>
+              router.navigate({
+                pathname: '/sign-in',
+                params: { provider: 'ba' },
+              })
+            }
             testID="better-angels-login"
             title="Better Angels"
             size="full"
@@ -45,7 +51,12 @@ export default function Auth() {
 
           <Button
             accessibilityHint="Opens HMIS login for service providers"
-            onPress={() => router.navigate('/sign-in-hmis')}
+            onPress={() =>
+              router.navigate({
+                pathname: '/sign-in',
+                params: { provider: 'hmis' },
+              })
+            }
             testID="hmis-login-button"
             title="HMIS"
             size="full"
