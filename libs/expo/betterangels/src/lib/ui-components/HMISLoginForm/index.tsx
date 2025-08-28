@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { Colors } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
   Loading,
-  TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { useUser } from '../../hooks';
 import { useHmisLoginMutation } from './__generated__/HMISLogin.generated';
@@ -13,45 +13,37 @@ import { useHmisLoginMutation } from './__generated__/HMISLogin.generated';
 export default function HMISLoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
   const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string>('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const [hmisLogin, { loading }] = useHmisLoginMutation();
   const { refetchUser } = useUser();
 
   const onSubmit = useCallback(async () => {
+    if (!email.trim() || !password.trim()) {
+      setErrorMsg('Enter your HMIS email and password.');
+      return;
+    }
+    setErrorMsg('');
+    setSubmitting(true);
     try {
-      setErrorMsg('');
-      if (!email.trim() || !password.trim()) {
-        setErrorMsg('Enter your HMIS email and password.');
-        return;
-      }
-
-      setSubmitting(true);
-
       const { data, errors } = await hmisLogin({
         variables: { email, password },
       });
-
-      if (errors && errors.length > 0) {
+      if (errors?.length)
         throw new Error(errors.map((e) => e.message).join('; '));
-      }
 
-      const result = data?.hmisLogin;
-      if (!result) throw new Error('No response from server');
+      const res = data?.hmisLogin;
+      if (!res) throw new Error('No response from server');
 
-      switch (result.__typename) {
-        case 'HmisLoginSuccess':
-          await refetchUser();
-          // TODO: this needs to be stored somewhere?
-          console.log(result.hmisToken);
-          return;
-        case 'HmisLoginError':
-          throw new Error(result.message ?? 'Invalid HMIS credentials');
-        default:
-          throw new Error(`Unexpected response type: ${result.__typename}`);
+      if (res.__typename === 'HmisLoginSuccess') {
+        await refetchUser();
+        console.log(res.hmisToken);
+        return;
       }
+      if (res.__typename === 'HmisLoginError')
+        throw new Error(res.message ?? 'Invalid HMIS credentials');
+      throw new Error(`Unexpected response type: ${res.__typename}`);
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : 'Login failed');
     } finally {
@@ -60,7 +52,6 @@ export default function HMISLoginForm() {
   }, [email, password, hmisLogin, refetchUser]);
 
   const busy = submitting || loading;
-
   return (
     <View style={styles.container}>
       <BasicInput
@@ -91,11 +82,7 @@ export default function HMISLoginForm() {
         testID="hmis-password"
       />
 
-      {!!errorMsg && (
-        <TextRegular color="red" mt="xs" accessibilityRole="alert">
-          {errorMsg}
-        </TextRegular>
-      )}
+      {!!errorMsg && <Text style={styles.error}>{errorMsg}</Text>}
 
       <Button
         mt="md"
@@ -104,7 +91,7 @@ export default function HMISLoginForm() {
         size="full"
         variant="primary"
         accessibilityHint="Sign in with your HMIS email and password"
-        title={busy ? 'Signing in…' : 'Sign In'}
+        title="Sign In"
         icon={busy ? <Loading size="small" color="white" /> : undefined}
         onPress={onSubmit}
         disabled={busy}
@@ -116,4 +103,5 @@ export default function HMISLoginForm() {
 
 const styles = StyleSheet.create({
   container: { width: '100%' },
+  error: { color: Colors.ERROR, marginTop: 10 },
 });
