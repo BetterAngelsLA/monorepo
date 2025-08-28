@@ -34,16 +34,15 @@ export default function HMISLoginForm() {
         throw new Error(errors.map((e) => e.message).join('; '));
 
       const res = data?.hmisLogin;
-      if (!res) throw new Error('No response from server');
-
+      if (!res) {
+        console.error('No response from server');
+        return;
+      }
       if (res.__typename === 'HmisLoginSuccess') {
         await refetchUser();
         console.log(res.hmisToken);
         return;
       }
-      if (res.__typename === 'HmisLoginError')
-        throw new Error(res.message ?? 'Invalid HMIS credentials');
-      throw new Error(`Unexpected response type: ${res.__typename}`);
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : 'Login failed');
     } finally {
