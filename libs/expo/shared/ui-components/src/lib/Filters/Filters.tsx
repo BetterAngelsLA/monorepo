@@ -2,6 +2,7 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import { ScrollView, StyleProp, StyleSheet, ViewStyle } from 'react-native';
 import { FilterButton } from './FilterButton';
+import FilterOptions from './FilterOptions';
 
 type TFilters = {
   children: ReactNode;
@@ -26,17 +27,14 @@ export function Filters(props: TFilters) {
 }
 
 Filters.Button = FilterButton;
+Filters.Options = FilterOptions;
 
 const styles = StyleSheet.create({
   container: {
     flexGrow: 0,
     flexShrink: 0,
-    // borderColor: 'red',
-    // borderWidth: 8,
   },
   contentStyle: {
     gap: Spacings.xs,
-    // borderColor: 'blue',
-    // borderWidth: 8,
   },
 });

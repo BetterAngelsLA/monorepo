@@ -1,6 +1,12 @@
 import { ChevronLeftIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { Pressable, StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import {
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { BaseContainer } from '../Container';
 import TextRegular from '../TextRegular';
 
@@ -8,24 +14,22 @@ export type TFilterButton = {
   id: string;
   selected: string[];
   onPress: (id: string) => void;
+  labelMaxWidth?: number;
   style?: StyleProp<ViewStyle>;
 };
 
 export function FilterButton(props: TFilterButton) {
-  const { id, selected, onPress, style } = props;
+  const { id, selected, onPress, labelMaxWidth, style } = props;
 
-  let computedLabel = id;
+  let visibleLabel = selected[0] || id;
   let backgroundColor = Colors.WHITE;
   let textColor = Colors.PRIMARY_EXTRA_DARK;
+  let extraSelected = 0;
 
   if (selected.length) {
     textColor = Colors.WHITE;
     backgroundColor = Colors.PRIMARY;
-
-    computedLabel =
-      selected.length === 1
-        ? selected[0]
-        : `${selected[0]} + (${selected.length - 1})`;
+    extraSelected = selected.length - 1;
   }
 
   return (
@@ -34,7 +38,16 @@ export function FilterButton(props: TFilterButton) {
       accessibilityRole="button"
       style={[styles.container, { backgroundColor: backgroundColor }, style]}
     >
-      <TextRegular color={textColor}>{computedLabel}</TextRegular>
+      <View style={{ maxWidth: labelMaxWidth }}>
+        <TextRegular color={textColor} numberOfLines={1} ellipsizeMode="tail">
+          {visibleLabel}
+        </TextRegular>
+      </View>
+      {!!extraSelected && (
+        <TextRegular color={textColor} numberOfLines={1} ellipsizeMode="tail">
+          + ({extraSelected})
+        </TextRegular>
+      )}
       <BaseContainer mx="xs" my="xxs">
         <ChevronLeftIcon color={textColor} size="sm" rotate="-90deg" />
       </BaseContainer>

@@ -114,25 +114,16 @@ export function MultiSelect<T>(props: TMultiSelect<T>) {
         </TextBold>
       )}
 
-      {!!onSearch && !!withFilter && (
+      {!!withFilter && (
         <BasicInput
-          value={search}
-          onDelete={() => onSearch('')}
+          value={search || searchText}
+          onDelete={() => onSearch?.('') || setSearchText('')}
+          onChangeText={(query) => onSearch?.(query) || setSearchText(query)}
+          placeholder={filterPlaceholder}
+          icon={<SearchIcon color={Colors.NEUTRAL} />}
           autoCorrect={false}
-          onChangeText={(query) => onSearch(query)}
-          placeholder={filterPlaceholder}
-          icon={<SearchIcon color={Colors.NEUTRAL} />}
-          mb="md"
-        />
-      )}
-
-      {!!withFilter && !onSearch && (
-        <BasicInput
-          value={searchText}
-          onDelete={() => setSearchText('')}
-          onChangeText={(query) => setSearchText(query)}
-          placeholder={filterPlaceholder}
-          icon={<SearchIcon color={Colors.NEUTRAL} />}
+          spellCheck={false}
+          autoCapitalize="none"
           mb="md"
         />
       )}
