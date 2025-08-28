@@ -4,29 +4,37 @@ import {
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { SelahTeamEnum, TaskType, extractOperationErrors } from '../../apollo';
+import {
+  SelahTeamEnum,
+  TaskType,
+  UpdateTaskInput,
+  extractOperationErrors,
+} from '../../apollo';
 import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
 import { useCreateTaskMutation } from './__generated__/createTask.generated';
+import { useUpdateTaskMutation } from './__generated__/updateTask.generated';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
 type TProps = {
   clientProfileId?: string;
-  team?: SelahTeamEnum;
+  team?: SelahTeamEnum | null;
+  noteId?: string;
   onCancel?: () => void;
   onSuccess?: (taskId: string) => void;
+  task?: UpdateTaskInput | null;
 };
 
 export function TaskForm(props: TProps) {
-  const { clientProfileId, team, onSuccess, onCancel } = props;
+  const { clientProfileId, team, onSuccess, onCancel, noteId, task } = props;
 
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
   const [createTaskMutation] = useCreateTaskMutation();
-
+  const [updateTaskMutation] = useUpdateTaskMutation();
   const {
     control,
     handleSubmit,
@@ -48,22 +56,36 @@ export function TaskForm(props: TProps) {
 
       const { summary, description, team, status } = formData;
 
-      const response = await createTaskMutation({
-        variables: {
-          data: {
-            summary,
-            description,
-            status,
-            team: team || null,
-            clientProfile: clientProfileId,
-          },
-        },
-        errorPolicy: 'all',
-      });
+      const response = task
+        ? await updateTaskMutation({
+            variables: {
+              data: {
+                id: task.id,
+                summary,
+                description,
+                status,
+                team: team || null,
+              },
+            },
+            errorPolicy: 'all',
+          })
+        : await createTaskMutation({
+            variables: {
+              data: {
+                summary,
+                description,
+                status,
+                team: team || null,
+                clientProfile: clientProfileId,
+                note: noteId || null,
+              },
+            },
+            errorPolicy: 'all',
+          });
 
       const { validationErrors, errorMessage } = extractOperationErrors({
         response,
-        queryKey: 'createTask',
+        queryKey: task ? 'updateTask' : 'createTask',
         fields: Object.keys(FormSchema.shape),
         resultTypename: 'TaskType',
       });
@@ -79,7 +101,13 @@ export function TaskForm(props: TProps) {
         throw new Error(errorMessage);
       }
 
-      const newTask = response.data?.createTask;
+      let newTask;
+
+      if (response.data && 'updateTask' in response.data) {
+        newTask = response.data.updateTask;
+      } else {
+        newTask = response.data?.createTask;
+      }
 
       if (!newTask) {
         throw new Error('mutation failed');
@@ -98,6 +126,18 @@ export function TaskForm(props: TProps) {
       setDisabled(false);
     }
   };
+
+  useEffect(() => {
+    if (!task) return;
+
+    resetForm({
+      ...emptyState,
+      summary: task.summary || undefined,
+      team: task.team || undefined,
+      description: task.description || '',
+      status: task.status || undefined,
+    });
+  }, [task]);
 
   return (
     <Form.Page
