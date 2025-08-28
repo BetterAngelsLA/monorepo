@@ -1,4 +1,3 @@
-import { LocationIcon } from '@monorepo/react/icons';
 import { useMap } from '@vis.gl/react-google-maps';
 import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -73,14 +72,12 @@ export function ShelterCard(props: TShelterCard) {
         />
 
         <div className={mergeCss(contentCss)}>
-          <div className="font-medium md:text-lg leading-[1.125rem] tracking-[.03125rem]">
+          <div className="font-semibold md:text-lg leading-[1.125rem] tracking-[.03125rem]">
             {name}
           </div>
 
           {formattedAddress && (
             <div className="text-sm md:text-sm mt-2 flex items-start">
-              <LocationIcon className="h-4 mr-2" />
-
               <div className="flex-inline flex-wrap">
                 <span>{formattedAddress}</span>
 
