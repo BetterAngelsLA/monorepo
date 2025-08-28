@@ -16,7 +16,7 @@ export default function HMISLoginForm() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const [hmisLogin, { loading }] = useHmisLoginMutation();
+  const [hmisLogin] = useHmisLoginMutation();
   const { refetchUser } = useUser();
 
   const onSubmit = useCallback(async () => {
@@ -50,7 +50,6 @@ export default function HMISLoginForm() {
     }
   }, [email, password, hmisLogin, refetchUser]);
 
-  const busy = submitting || loading;
   return (
     <View style={styles.container}>
       <BasicInput
@@ -91,9 +90,9 @@ export default function HMISLoginForm() {
         variant="primary"
         accessibilityHint="Sign in with your HMIS email and password"
         title="Sign In"
-        icon={busy ? <Loading size="small" color="white" /> : undefined}
+        icon={submitting ? <Loading size="small" color="white" /> : undefined}
         onPress={onSubmit}
-        disabled={busy}
+        disabled={submitting}
         testID="hmis-submit"
       />
     </View>
