@@ -65,6 +65,12 @@ class OrganizationService(BaseModel):
     objects = models.Manager()
 
     def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
+        """This is here to support note reversion.
+
+        NoteReverter calls `obj.revert_action` on all related objects, deleting recently created ones.
+        An OrganizationService can't be deleted it's referenced by a ServiceRequest object.
+        Because reversion is atomic, the ServiceRequests referencing a given OrganizationService still exist
+        when the reverter attempts to delete the OrganizationService object, causing an IntegrityError."""
         pass
 
 
