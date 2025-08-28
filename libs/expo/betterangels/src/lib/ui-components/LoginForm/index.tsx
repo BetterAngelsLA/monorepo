@@ -1,5 +1,5 @@
 import { useApiConfig } from '@monorepo/expo/shared/clients';
-import { Regex } from '@monorepo/expo/shared/static';
+import { Colors, Regex } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
@@ -229,7 +229,7 @@ export default function LoginForm() {
 
 const styles = StyleSheet.create({
   container: { width: '100%' },
-  error: { color: 'red', marginTop: 10 },
+  error: { color: Colors.ERROR, marginTop: 10 },
   info: {
     color: '#555',
     marginTop: 4,
