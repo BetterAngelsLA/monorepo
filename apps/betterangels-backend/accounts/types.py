@@ -49,7 +49,7 @@ class OrganizationOrdering:
     id: auto
 
 
-@strawberry_django.filters.filter(Organization)
+@strawberry_django.filter_type(Organization)
 class OrganizationFilter:
     @strawberry_django.filter_field
     def search(

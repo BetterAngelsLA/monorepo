@@ -185,7 +185,7 @@ class ShelterPropertyInput:
     parking: Optional[List[ParkingChoices]] = None
 
 
-@strawberry_django.filters.filter(Shelter)
+@strawberry_django.filter_type(Shelter)
 class ShelterFilter:
     @strawberry_django.filter_field
     def properties(
