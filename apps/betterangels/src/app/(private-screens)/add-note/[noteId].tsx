@@ -249,6 +249,10 @@ export default function AddNote() {
     return null;
   }
 
+  if (!data.note.clientProfile || isLoading) {
+    return null;
+  }
+
   return (
     <View style={{ flex: 1 }}>
       <MainScrollContainer
@@ -272,7 +276,12 @@ export default function AddNote() {
         /> */}
         <ProvidedServices services={data.note.providedServices} {...props} />
         <RequestedServices services={data.note.requestedServices} {...props} />
-        <Tasks tasks={data.note.tasks} team={data.note.team} {...props} />
+        <Tasks
+          clientProfileId={data.note.clientProfile.id}
+          tasks={data.note.tasks}
+          team={data.note.team}
+          {...props}
+        />
         <PublicNote
           note={data.note.publicDetails}
           isPublicNoteEdited={isPublicNoteEdited}
