@@ -14,6 +14,8 @@ import { TFilterOption } from './types';
 
 type TFilterOptions = {
   onSelected: (filters: TFilterOption[]) => void;
+  onSearch?: (search: string) => void;
+  searchDebounceMs?: number;
   options: TFilterOption[];
   initalSelected: TFilterOption[];
   title?: string;
@@ -28,6 +30,8 @@ export function FilterOptions(props: TFilterOptions) {
     options,
     initalSelected,
     onSelected,
+    onSearch,
+    searchDebounceMs,
     title,
     searchPlaceholder,
     style,
@@ -62,6 +66,8 @@ export function FilterOptions(props: TFilterOptions) {
           withFilter
           title={title}
           search={search}
+          onSearch={onSearch}
+          searchDebounceMs={searchDebounceMs}
           //   onSearch={(query) => {
           //     console.log('*****************  Search Result:', query);
           //     setSearch(query);

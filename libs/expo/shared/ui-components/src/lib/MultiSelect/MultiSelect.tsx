@@ -3,6 +3,7 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Key, ReactNode, useState } from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import BasicInput from '../BasicInput';
+import { SearchBar } from '../SearchBar';
 import TextBold from '../TextBold';
 import { MultiSelectItem, TMultiSelectItem } from './MultiSelectItem';
 import { NoResultsFound } from './NoResultsFound';
@@ -26,6 +27,7 @@ export interface TMultiSelect<T> {
   filterPlaceholder?: string;
   onSearch?: (search: string) => void;
   search?: string;
+  searchDebounceMs?: number;
   renderOption?: (
     option: T,
     props: TMultiSelectItem,
@@ -43,6 +45,7 @@ export function MultiSelect<T>(props: TMultiSelect<T>) {
     onChange,
     onSearch,
     search,
+    searchDebounceMs,
     title,
     withSelectAll,
     selectAllIdx = 0,
@@ -114,7 +117,7 @@ export function MultiSelect<T>(props: TMultiSelect<T>) {
         </TextBold>
       )}
 
-      {!!withFilter && (
+      {!!withFilter && !searchDebounceMs && (
         <BasicInput
           value={search || searchText}
           onDelete={() => onSearch?.('') || setSearchText('')}
@@ -125,6 +128,18 @@ export function MultiSelect<T>(props: TMultiSelect<T>) {
           spellCheck={false}
           autoCapitalize="none"
           mb="md"
+        />
+      )}
+
+      {/* TODO: consolidate to use SearchBar only once udpate Interaction Filters */}
+      {!!withFilter && !!onSearch && !!searchDebounceMs && (
+        <SearchBar
+          debounceMs={searchDebounceMs}
+          value={search || ''}
+          onClear={() => onSearch('')}
+          onChange={onSearch}
+          placeholder={filterPlaceholder}
+          style={{ marginBottom: Spacings.xs }}
         />
       )}
 

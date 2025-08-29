@@ -15,7 +15,7 @@ export { default as DocumentModal } from './DocumentModal';
 export { default as ErrorCrashView } from './ErrorCrashView/ErrorCrashView';
 export { default as FeatureFlagControlled } from './FeatureFlagControlled/FeatureFlagControlled';
 export { FileThumbnail } from './FileThumbnail/FileThumbnail';
-export * from './FilterTeams';
+export * from './Filters';
 export { default as HMISLoginForm } from './HMISLoginForm';
 export { default as Header } from './Header';
 export * from './Layout';

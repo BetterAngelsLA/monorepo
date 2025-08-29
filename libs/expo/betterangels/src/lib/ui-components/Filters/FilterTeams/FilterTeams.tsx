@@ -1,7 +1,7 @@
 import { Filters, TFilterOption } from '@monorepo/expo/shared/ui-components';
 import { StyleProp, ViewStyle } from 'react-native';
-import { useModalScreen } from '../../providers';
-import { enumDisplaySelahTeam, pagePaddingHorizontal } from '../../static';
+import { useModalScreen } from '../../../providers';
+import { enumDisplaySelahTeam, pagePaddingHorizontal } from '../../../static';
 
 const teamOptions: TFilterOption[] = Object.entries(enumDisplaySelahTeam).map(
   ([key, value]) => ({

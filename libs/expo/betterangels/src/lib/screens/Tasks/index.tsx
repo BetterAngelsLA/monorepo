@@ -8,10 +8,11 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { FilterTeams, MainContainer } from '../../ui-components';
+import { FilterTeams, FilterUsers, MainContainer } from '../../ui-components';
 
 export default function Tasks() {
   const [selectedTeams, setSelectedTeams] = useState<TFilterOption[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<TFilterOption[]>([]);
   const [search, setSearch] = useState('');
 
   function onFiltersReset() {
@@ -49,6 +50,7 @@ export default function Tasks() {
       </View>
 
       <Filters style={{ marginTop: 50 }}>
+        <FilterUsers onChange={setSelectedUsers} selected={selectedUsers} />
         <FilterTeams onChange={setSelectedTeams} selected={selectedTeams} />
         <Filters.Button id="Clients" selected={[]} onPress={onFilterPress} />
         <Filters.Button
