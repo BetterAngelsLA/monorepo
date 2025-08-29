@@ -1299,7 +1299,7 @@ export type NoteTypeRequestedServicesArgs = {
 
 export type NoteTypeTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
-  ordering?: Array<TaskOrder>;
+  ordering?: Array<InputMaybe<TaskOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1432,7 +1432,7 @@ export type OrganizationServiceCategoryType = {
 
 
 export type OrganizationServiceCategoryTypeServicesArgs = {
-  ordering?: Array<OrganizationServiceOrdering>;
+  ordering?: Array<InputMaybe<OrganizationServiceOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1589,7 +1589,7 @@ export type QueryBulkClientProfileImportRecordsArgs = {
 export type QueryCaseworkerOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
-  ordering?: Array<OrganizationOrdering>;
+  ordering?: Array<InputMaybe<OrganizationOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1634,7 +1634,7 @@ export type QueryClientProfileArgs = {
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
-  ordering?: Array<ClientProfileOrdering>;
+  ordering?: Array<InputMaybe<ClientProfileOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1652,7 +1652,7 @@ export type QueryHmisProfilesArgs = {
 export type QueryInteractionAuthorsArgs = {
   filters?: InputMaybe<InteractionAuthorFilter>;
   order?: InputMaybe<InteractionAuthorOrder>;
-  ordering?: Array<InteractionAuthorOrdering>;
+  ordering?: Array<InputMaybe<InteractionAuthorOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1665,7 +1665,7 @@ export type QueryNoteArgs = {
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   order?: InputMaybe<NoteOrder>;
-  ordering?: Array<NoteOrder>;
+  ordering?: Array<InputMaybe<NoteOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1683,13 +1683,13 @@ export type QueryOrganizationMembersArgs = {
 
 
 export type QueryServiceCategoriesArgs = {
-  ordering?: Array<OrganizationServiceCategoryOrdering>;
+  ordering?: Array<InputMaybe<OrganizationServiceCategoryOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryServicesArgs = {
-  ordering?: Array<OrganizationServiceOrdering>;
+  ordering?: Array<InputMaybe<OrganizationServiceOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1702,7 +1702,7 @@ export type QueryShelterArgs = {
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
   order?: InputMaybe<ShelterOrder>;
-  ordering?: Array<ShelterOrdering>;
+  ordering?: Array<InputMaybe<ShelterOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1724,7 +1724,7 @@ export type QueryTaskArgs = {
 
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
-  ordering?: Array<TaskOrder>;
+  ordering?: Array<InputMaybe<TaskOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2337,7 +2337,7 @@ export type UserType = {
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
-  ordering?: Array<OrganizationOrdering>;
+  ordering?: Array<InputMaybe<OrganizationOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

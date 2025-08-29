@@ -48,7 +48,7 @@ class OrganizationServiceCategoryOrdering:
 @strawberry_django.type(
     models.OrganizationService,
     pagination=True,
-    ordering=OrganizationServiceOrdering,
+    ordering=Optional[OrganizationServiceOrdering],
 )
 class OrganizationServiceType:
     id: auto
@@ -60,7 +60,7 @@ class OrganizationServiceType:
 @strawberry_django.type(
     models.OrganizationServiceCategory,
     pagination=True,
-    ordering=OrganizationServiceCategoryOrdering,
+    ordering=Optional[OrganizationServiceCategoryOrdering],
 )
 class OrganizationServiceCategoryType:
     id: auto
@@ -178,7 +178,7 @@ class NoteFilter:
     pagination=True,
     filters=NoteFilter,
     order=NoteOrder,  # type: ignore[literal-required]
-    ordering=NoteOrder,
+    ordering=Optional[NoteOrder],
 )
 class NoteType:
     id: ID
@@ -310,7 +310,7 @@ class InteractionAuthorOrdering:
     User,
     filters=InteractionAuthorFilter,
     order=InteractionAuthorOrder,  # type: ignore[literal-required]
-    ordering=InteractionAuthorOrdering,
+    ordering=Optional[InteractionAuthorOrdering],
 )
 class InteractionAuthorType:
     id: ID

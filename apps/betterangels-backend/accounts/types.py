@@ -73,7 +73,7 @@ class OrganizationFilter:
     Organization,
     filters=OrganizationFilter,
     order=OrganizationOrder,  # type: ignore[literal-required]
-    ordering=OrganizationOrdering,
+    ordering=Optional[OrganizationOrdering],
 )
 class OrganizationType:
     id: ID
@@ -84,7 +84,7 @@ class OrganizationType:
     Organization,
     filters=OrganizationFilter,
     order=OrganizationOrder,  # type: ignore[literal-required]
-    ordering=OrganizationOrdering,
+    ordering=Optional[OrganizationOrdering],
     pagination=True,
 )
 class OrganizationForUserType(OrganizationType):

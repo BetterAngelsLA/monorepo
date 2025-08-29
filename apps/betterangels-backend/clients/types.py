@@ -333,7 +333,7 @@ class ClientProfileBaseType:
     ClientProfile,
     filters=ClientProfileFilter,
     order=ClientProfileOrder,  # type: ignore[literal-required]
-    ordering=ClientProfileOrdering,
+    ordering=Optional[ClientProfileOrdering],
     pagination=True,
 )
 class ClientProfileType(ClientProfileBaseType):

@@ -252,7 +252,12 @@ class TimeRange:
     end: Optional[datetime]
 
 
-@strawberry_django.type(Shelter, filters=ShelterFilter, order=ShelterOrder, ordering=ShelterOrdering)  # type: ignore
+@strawberry_django.type(
+    Shelter,
+    filters=ShelterFilter,  # type: ignore
+    order=ShelterOrder,
+    ordering=Optional[ShelterOrdering],
+)
 class ShelterType:
     id: ID
     accessibility: List[AccessibilityType]
