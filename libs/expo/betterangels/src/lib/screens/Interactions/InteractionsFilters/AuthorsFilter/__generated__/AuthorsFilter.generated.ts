@@ -6,6 +6,7 @@ const defaultOptions = {} as const;
 export type InteractionAuthorsQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.InteractionAuthorFilter>;
   order?: Types.InputMaybe<Types.InteractionAuthorOrder>;
+  ordering?: Array<Types.InputMaybe<Types.InteractionAuthorOrdering>> | Types.InputMaybe<Types.InteractionAuthorOrdering>;
   pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
 }>;
 
@@ -14,8 +15,13 @@ export type InteractionAuthorsQuery = { __typename?: 'Query', interactionAuthors
 
 
 export const InteractionAuthorsDocument = gql`
-    query InteractionAuthors($filters: InteractionAuthorFilter, $order: InteractionAuthorOrder, $pagination: OffsetPaginationInput) {
-  interactionAuthors(filters: $filters, order: $order, pagination: $pagination) {
+    query InteractionAuthors($filters: InteractionAuthorFilter, $order: InteractionAuthorOrder, $ordering: [InteractionAuthorOrdering]! = [], $pagination: OffsetPaginationInput) {
+  interactionAuthors(
+    filters: $filters
+    order: $order
+    ordering: $ordering
+    pagination: $pagination
+  ) {
     totalCount
     results {
       id
@@ -45,6 +51,7 @@ export const InteractionAuthorsDocument = gql`
  *   variables: {
  *      filters: // value for 'filters'
  *      order: // value for 'order'
+ *      ordering: // value for 'ordering'
  *      pagination: // value for 'pagination'
  *   },
  * });

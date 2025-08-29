@@ -5,8 +5,9 @@ import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
 export type ViewSheltersQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.ShelterFilter>;
-  pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
   order?: Types.InputMaybe<Types.ShelterOrder>;
+  ordering?: Array<Types.InputMaybe<Types.ShelterOrdering>> | Types.InputMaybe<Types.ShelterOrdering>;
+  pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
 }>;
 
 
@@ -14,8 +15,13 @@ export type ViewSheltersQuery = { __typename?: 'Query', shelters: { __typename?:
 
 
 export const ViewSheltersDocument = gql`
-    query ViewShelters($filters: ShelterFilter, $pagination: OffsetPaginationInput, $order: ShelterOrder) {
-  shelters(filters: $filters, pagination: $pagination, order: $order) {
+    query ViewShelters($filters: ShelterFilter, $order: ShelterOrder, $ordering: [ShelterOrdering]! = [], $pagination: OffsetPaginationInput) {
+  shelters(
+    filters: $filters
+    order: $order
+    ordering: $ordering
+    pagination: $pagination
+  ) {
     totalCount
     results {
       id
@@ -45,8 +51,9 @@ export const ViewSheltersDocument = gql`
  * const { data, loading, error } = useViewSheltersQuery({
  *   variables: {
  *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
  *      order: // value for 'order'
+ *      ordering: // value for 'ordering'
+ *      pagination: // value for 'pagination'
  *   },
  * });
  */
