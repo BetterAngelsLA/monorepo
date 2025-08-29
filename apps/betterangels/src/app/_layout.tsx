@@ -3,6 +3,7 @@ import 'expo-dev-client';
 import {
   AppUpdatePrompt,
   BlockingScreenProvider,
+  createApolloCache,
   ErrorCrashView,
   FeatureControlProvider,
   FeatureFlagControlled,
@@ -37,6 +38,8 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorCrashView {...props} />;
 }
 
+const apolloCacheStore = createApolloCache();
+
 export default function RootLayout() {
   useNewRelic();
 
@@ -44,7 +47,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <NativePaperProvider>
         <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <ApolloClientProvider>
+          <ApolloClientProvider cacheStore={apolloCacheStore}>
             <FeatureControlProvider>
               <KeyboardProvider>
                 <KeyboardToolbarProvider>

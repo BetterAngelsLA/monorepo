@@ -1,3 +1,16 @@
+# {
+#     "interactionAuthors": {
+#         "__typename": "InteractionAuthorTypeOffsetPaginated",
+#         "pageInfo": {
+#             "__typename": "OffsetPaginationInfo",
+#             "limit": 3,
+#             "offset": 0
+#         },
+#         "results": ["[Object]", "[Object]", "[Object]"],
+#         "totalCount": 151
+#     }
+# }
+
 query GetUsers(
   $filters: InteractionAuthorFilter
   $order: InteractionAuthorOrder
