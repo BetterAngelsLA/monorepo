@@ -48,7 +48,7 @@ class OrganizationServiceCategory(BaseModel):
     pghistory.DeleteEvent("org_service.remove"),
 )
 class OrganizationService(BaseModel):
-    service = models.CharField(max_length=100)
+    label = models.CharField(max_length=100)
     category = models.ForeignKey(
         OrganizationServiceCategory, on_delete=models.SET_NULL, null=True, related_name="services"
     )
@@ -56,13 +56,22 @@ class OrganizationService(BaseModel):
     priority = models.PositiveIntegerField(blank=True, null=True)
 
     def __str__(self) -> str:
-        return self.service
+        return self.label
 
     class Meta:
-        constraints = [models.UniqueConstraint("service", "organization", name="unique_service_org")]
+        constraints = [models.UniqueConstraint("label", "organization", name="unique_label_org")]
         ordering = ("priority",)
 
     objects = models.Manager()
+
+    def revert_action(self, action: str, diff: Dict[str, Any], *args: Any, **kwargs: Any) -> None:
+        """This is here to support note reversion.
+
+        NoteReverter calls `obj.revert_action` on all related objects, deleting recently created ones.
+        An OrganizationService can't be deleted if it's referenced by a ServiceRequest object.
+        Because reversion is atomic, the ServiceRequests referencing a given OrganizationService still exist
+        when the reverter attempts to delete the OrganizationService object, causing an IntegrityError."""
+        pass
 
 
 @pghistory.track(
@@ -71,7 +80,9 @@ class OrganizationService(BaseModel):
     pghistory.DeleteEvent("service_request.remove"),
 )
 class ServiceRequest(BaseModel):
-    service = TextChoicesField(choices_enum=ServiceEnum, null=True, blank=True)
+    service = models.ForeignKey(
+        OrganizationService, on_delete=models.PROTECT, related_name="service_requests", null=True, blank=True
+    )
     service_enum = TextChoicesField(choices_enum=ServiceEnum, null=True, blank=True)
     service_other = models.CharField(max_length=100, null=True, blank=True)
     client_profile = models.ForeignKey(

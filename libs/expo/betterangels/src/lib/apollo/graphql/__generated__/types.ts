@@ -523,8 +523,8 @@ export type CreateNotePayload = NoteType | OperationInfo;
 
 export type CreateNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
-  service?: InputMaybe<ServiceEnum>;
   serviceEnum?: InputMaybe<ServiceEnum>;
+  serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   serviceRequestType: ServiceRequestTypeEnum;
 };
@@ -538,8 +538,8 @@ export type CreateProfileDataImportInput = {
 
 export type CreateServiceRequestInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
-  service?: InputMaybe<ServiceEnum>;
   serviceEnum?: InputMaybe<ServiceEnum>;
+  serviceId?: InputMaybe<Scalars['ID']['input']>;
   serviceOther?: InputMaybe<Scalars['String']['input']>;
   status: ServiceRequestStatusEnum;
 };
@@ -1437,8 +1437,8 @@ export type OrganizationServiceType = {
   __typename?: 'OrganizationServiceType';
   category: OrganizationServiceCategoryType;
   id: Scalars['ID']['output'];
+  label: Scalars['String']['output'];
   priority?: Maybe<Scalars['Int']['output']>;
-  service: Scalars['String']['output'];
 };
 
 export type OrganizationServiceTypeOffsetPaginated = {
@@ -1851,15 +1851,12 @@ export enum ServiceEnum {
   SleepingBag = 'SLEEPING_BAG',
   SocialSecurityCardReplacement = 'SOCIAL_SECURITY_CARD_REPLACEMENT',
   SsiSsdi = 'SSI_SSDI',
-  Stabilize = 'STABILIZE',
   StimulusAssistance = 'STIMULUS_ASSISTANCE',
-  Storage = 'STORAGE',
   StorageBelongings = 'STORAGE_BELONGINGS',
   StorageDocuments = 'STORAGE_DOCUMENTS',
   Tarp = 'TARP',
   Tent = 'TENT',
   TherapistAppointment = 'THERAPIST_APPOINTMENT',
-  Transport = 'TRANSPORT',
   UnemploymentCertification = 'UNEMPLOYMENT_CERTIFICATION',
   VaccinePassport = 'VACCINE_PASSPORT',
   Water = 'WATER'
@@ -1878,7 +1875,7 @@ export type ServiceRequestType = {
   createdBy: UserType;
   dueBy?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['ID']['output'];
-  service: ServiceEnum;
+  service?: Maybe<OrganizationServiceType>;
   serviceEnum?: Maybe<ServiceEnum>;
   serviceOther?: Maybe<Scalars['String']['output']>;
   status: ServiceRequestStatusEnum;

@@ -33,7 +33,7 @@ service_by_category = [
             "Internet Access",
             "LAHOP",
             "HMIS Consent",
-            "Consent to Connect",
+            "Consent to Connect (CM or Council District)",
         ],
     },
     {

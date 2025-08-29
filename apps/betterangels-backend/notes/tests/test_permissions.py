@@ -2,7 +2,7 @@ from typing import Optional
 from unittest import skip
 
 from model_bakery import baker
-from notes.models import Mood, Note, ServiceRequest
+from notes.models import Mood, Note, OrganizationService, ServiceRequest
 from notes.tests.utils import NoteGraphQLBaseTestCase, ServiceRequestGraphQLBaseTestCase
 from unittest_parametrize import parametrize
 
@@ -340,9 +340,11 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
     def test_create_note_service_request_permission(self, user_label: str, should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
+        water_svc = OrganizationService.objects.get(label="Water")
+
         service_request_count = ServiceRequest.objects.count()
         variables = {
-            "service": "WATER",
+            "serviceId": str(water_svc.pk),
             "noteId": self.note["id"],
             "serviceRequestType": "REQUESTED",
         }

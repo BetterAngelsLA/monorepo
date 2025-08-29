@@ -6,7 +6,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.gis.geos import Point
 from model_bakery import baker
 from notes.enums import ServiceEnum
-from notes.models import ServiceRequest
+from notes.models import OrganizationService, ServiceRequest
 from test_utils.mixins import HasGraphQLProtocol
 
 
@@ -44,7 +44,10 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
             providedServices {
                 id
-                service
+                service {
+                    id
+                    label
+                }
                 serviceEnum
                 serviceOther
                 dueBy
@@ -52,7 +55,10 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
             }
             requestedServices {
                 id
-                service
+                service {
+                    id
+                    label
+                }
                 serviceEnum
                 serviceOther
                 dueBy
@@ -67,8 +73,14 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
 
         ps = [ServiceEnum.BAG, ServiceEnum.BOOK]
         rs = [ServiceEnum.EBT, ServiceEnum.FOOD]
-        self.provided_services = [baker.make(ServiceRequest, service=s, service_enum=s) for s in ps]
-        self.requested_services = [baker.make(ServiceRequest, service=s, service_enum=s) for s in rs]
+        self.provided_services = [
+            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s.label), service_enum=s)
+            for s in ps
+        ]
+        self.requested_services = [
+            baker.make(ServiceRequest, service=OrganizationService.objects.get(label=s.label), service_enum=s)
+            for s in rs
+        ]
 
     def _setup_note(self) -> None:
         # Force login the case manager to create a note
@@ -220,7 +232,10 @@ class NoteGraphQLBaseTestCase(GraphQLBaseTestCase):
                     }
                     ... on ServiceRequestType {
                         id
-                        service
+                        service {
+                            id
+                            label
+                        }
                         serviceEnum
                         serviceOther
                         status

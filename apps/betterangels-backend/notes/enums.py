@@ -71,15 +71,12 @@ class ServiceEnum(models.TextChoices):
     SLEEPING_BAG = "sleeping_bag", _("Sleeping Bag")
     SOCIAL_SECURITY_CARD_REPLACEMENT = "social_security_card_replacement", _("Social Security Card Replacement")
     SSI_SSDI = "ssi_ssdi", _("SSI/SSDI")
-    STABILIZE = "stabilize", _("Stabilize")  # TODO: remove once fe has been updated
     STIMULUS_ASSISTANCE = "stimulus_assistance", _("Stimulus Assistance")
-    STORAGE = "storage", _("Storage")  # TODO: remove once fe has been updated
     STORAGE_BELONGINGS = "storage_belongings", _("Storage - Belongings")
     STORAGE_DOCUMENTS = "storage_documents", _("Storage - Documents")
     TARP = "tarp", _("Tarp")
     TENT = "tent", _("Tent")
     THERAPIST_APPOINTMENT = "therapist_appointment", _("Therapist Appointment")
-    TRANSPORT = "transport", _("Transport")  # TODO: remove once fe has been updated
     UNEMPLOYMENT_CERTIFICATION = "unemployment_certification", _("Unemployment Certification")
     VACCINE_PASSPORT = "vaccine_passport", _("Vaccine Passport")
     WATER = "water", _("Water")
