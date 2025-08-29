@@ -50,7 +50,6 @@ export default function Tasks() {
       </View>
 
       <Filters style={{ marginTop: 50 }}>
-        <FilterUsers onChange={setSelectedUsers} selected={selectedUsers} />
         <FilterTeams onChange={setSelectedTeams} selected={selectedTeams} />
         <Filters.Button id="Clients" selected={[]} onPress={onFilterPress} />
         <Filters.Button
@@ -64,6 +63,8 @@ export default function Tasks() {
       <View style={{ marginTop: 25 }}>
         <TextRegular>{search}</TextRegular>
       </View>
+
+      <FilterUsers onChange={setSelectedUsers} selected={selectedUsers} />
     </MainContainer>
   );
 }
