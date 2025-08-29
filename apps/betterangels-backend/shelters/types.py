@@ -254,8 +254,8 @@ class TimeRange:
 
 @strawberry_django.type(
     Shelter,
-    filters=ShelterFilter,  # type: ignore
-    order=ShelterOrder,
+    filters=ShelterFilter,
+    order=ShelterOrder,  # type: ignore
     ordering=Optional[ShelterOrdering],
 )
 class ShelterType:
