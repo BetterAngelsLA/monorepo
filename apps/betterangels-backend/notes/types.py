@@ -48,7 +48,7 @@ class OrganizationServiceCategoryOrdering:
 @strawberry_django.type(
     models.OrganizationService,
     pagination=True,
-    ordering=OrganizationServiceOrdering,
+    ordering=Optional[OrganizationServiceOrdering],
 )
 class OrganizationServiceType:
     id: auto
@@ -60,7 +60,7 @@ class OrganizationServiceType:
 @strawberry_django.type(
     models.OrganizationServiceCategory,
     pagination=True,
-    ordering=OrganizationServiceCategoryOrdering,
+    ordering=Optional[OrganizationServiceCategoryOrdering],
 )
 class OrganizationServiceCategoryType:
     id: auto
@@ -137,7 +137,13 @@ class NoteOrder:
     interacted_at: auto
 
 
-@strawberry_django.filters.filter(models.Note)
+@strawberry_django.order_type(models.Note, one_of=False)
+class NoteOrdering:
+    id: auto
+    interacted_at: auto
+
+
+@strawberry_django.filter_type(models.Note)
 class NoteFilter:
     client_profile: ID | None
     created_by: ID | None
@@ -172,7 +178,7 @@ class NoteFilter:
     pagination=True,
     filters=NoteFilter,
     order=NoteOrder,  # type: ignore[literal-required]
-    ordering=NoteOrder,
+    ordering=Optional[NoteOrder],
 )
 class NoteType:
     id: ID
@@ -268,7 +274,7 @@ class RevertNoteInput:
     revert_before_timestamp: datetime
 
 
-@strawberry_django.filters.filter(User)
+@strawberry_django.filter_type(User)
 class InteractionAuthorFilter:
     @strawberry_django.filter_field
     def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Q:
@@ -293,7 +299,19 @@ class InteractionAuthorOrder:
     id: auto
 
 
-@strawberry_django.type(User, filters=InteractionAuthorFilter, order=InteractionAuthorOrder)  # type: ignore[literal-required]
+@strawberry_django.order_type(User, one_of=False)
+class InteractionAuthorOrdering:
+    first_name: auto
+    last_name: auto
+    id: auto
+
+
+@strawberry_django.type(
+    User,
+    filters=InteractionAuthorFilter,
+    order=InteractionAuthorOrder,  # type: ignore[literal-required]
+    ordering=Optional[InteractionAuthorOrdering],
+)
 class InteractionAuthorType:
     id: ID
     first_name: auto
