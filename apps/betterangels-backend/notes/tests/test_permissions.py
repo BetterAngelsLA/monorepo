@@ -344,7 +344,7 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
 
         service_request_count = ServiceRequest.objects.count()
         variables = {
-            "service": str(water_svc.pk),
+            "serviceId": str(water_svc.pk),
             "noteId": self.note["id"],
             "serviceRequestType": "REQUESTED",
         }

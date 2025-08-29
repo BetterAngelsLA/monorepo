@@ -231,7 +231,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         bag_svc = OrganizationService.objects.get(label="Bag(s)")
 
         variables = {
-            "service": str(bag_svc.pk),
+            "serviceId": str(bag_svc.pk),
             "noteId": self.note["id"],
             "serviceRequestType": "PROVIDED",
         }
@@ -304,7 +304,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
     ) -> None:
         service = OrganizationService.objects.get(label="Bag(s)")
         variables = {
-            "service": str(service.pk),
+            "serviceId": str(service.pk),
             "noteId": self.note["id"],
             "serviceRequestType": provided_type,
         }
@@ -333,7 +333,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         # First create note service request
         bag_svc = OrganizationService.objects.get(label="Bag(s)")
         variables = {
-            "service": str(bag_svc.pk),
+            "serviceId": str(bag_svc.pk),
             "noteId": self.note["id"],
             "serviceRequestType": service_request_type,
         }
@@ -364,7 +364,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             response = self._create_note_service_request_fixture(
                 {
                     "noteId": self.note["id"],
-                    "service": service.pk,
+                    "serviceId": service.pk,
                     "serviceRequestType": "PROVIDED",
                 }
             )
@@ -925,14 +925,14 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Add associations that will be persisted
         self._create_note_service_request_fixture(
             {
-                "service": str(blanket_svc.pk),
+                "serviceId": str(blanket_svc.pk),
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
             }
         )
         self._create_note_service_request_fixture(
             {
-                "service": str(water_svc.pk),
+                "serviceId": str(water_svc.pk),
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
             }
@@ -946,7 +946,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Add associations that will be discarded
         discarded_requested_service_id = self._create_note_service_request_fixture(
             {
-                "service": str(clothes_svc.pk),
+                "serviceId": str(clothes_svc.pk),
                 "serviceOther": None,
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
@@ -955,7 +955,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         discarded_provided_service_id = self._create_note_service_request_fixture(
             {
-                "service": str(food_svc.pk),
+                "serviceId": str(food_svc.pk),
                 "serviceOther": None,
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
@@ -1228,14 +1228,14 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Add associations that will be persisted
         self._create_note_service_request_fixture(
             {
-                "service": str(blanket_svc.pk),
+                "serviceId": str(blanket_svc.pk),
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
             }
         )
         self._create_note_service_request_fixture(
             {
-                "service": str(water_svc.pk),
+                "serviceId": str(water_svc.pk),
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
             }
@@ -1246,7 +1246,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
         # Add associations that will be removed and then reverted
         reverted_requested_service = self._create_note_service_request_fixture(
             {
-                "service": str(clothes_svc.pk),
+                "serviceId": str(clothes_svc.pk),
                 "noteId": note_id,
                 "serviceRequestType": "REQUESTED",
             }
@@ -1254,7 +1254,7 @@ class NoteRevertMutationTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin,
 
         reverted_provided_service = self._create_note_service_request_fixture(
             {
-                "service": str(food_svc.pk),
+                "serviceId": str(food_svc.pk),
                 "noteId": note_id,
                 "serviceRequestType": "PROVIDED",
             }

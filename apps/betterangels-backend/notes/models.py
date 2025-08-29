@@ -68,7 +68,7 @@ class OrganizationService(BaseModel):
         """This is here to support note reversion.
 
         NoteReverter calls `obj.revert_action` on all related objects, deleting recently created ones.
-        An OrganizationService can't be deleted it's referenced by a ServiceRequest object.
+        An OrganizationService can't be deleted if it's referenced by a ServiceRequest object.
         Because reversion is atomic, the ServiceRequests referencing a given OrganizationService still exist
         when the reverter attempts to delete the OrganizationService object, causing an IntegrityError."""
         pass
