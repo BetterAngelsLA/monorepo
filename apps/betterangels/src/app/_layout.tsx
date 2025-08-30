@@ -3,7 +3,7 @@ import 'expo-dev-client';
 import {
   AppUpdatePrompt,
   BlockingScreenProvider,
-  createApolloCache,
+  cachePolicyRegistry,
   ErrorCrashView,
   FeatureControlProvider,
   FeatureFlagControlled,
@@ -18,6 +18,7 @@ import {
 import {
   ApiConfigProvider,
   ApolloClientProvider,
+  createApolloCache,
 } from '@monorepo/expo/shared/clients';
 import { StatusBar } from 'expo-status-bar';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -38,7 +39,9 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorCrashView {...props} />;
 }
 
-const apolloCacheStore = createApolloCache();
+const APOLLO_CACHE_STORE = createApolloCache({
+  policyMap: cachePolicyRegistry,
+});
 
 export default function RootLayout() {
   useNewRelic();
@@ -47,7 +50,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <NativePaperProvider>
         <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <ApolloClientProvider cacheStore={apolloCacheStore}>
+          <ApolloClientProvider cacheStore={APOLLO_CACHE_STORE}>
             <FeatureControlProvider>
               <KeyboardProvider>
                 <KeyboardToolbarProvider>

@@ -1,1 +1,1 @@
-export { createApolloCache } from './apolloCache';
+export { cachePolicyRegistry } from './cachePolicyRegistry';

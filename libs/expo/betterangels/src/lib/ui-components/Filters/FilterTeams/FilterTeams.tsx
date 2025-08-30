@@ -17,10 +17,21 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
 };
 
+class AppOutOfSyncError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AppOutOfSyncError'; // set the error name
+  }
+}
+
 export function FilterTeams(props: TProps) {
   const { onChange, selected, style, title = 'Filter Teams' } = props;
 
   const { showModalScreen, closeModalScreen } = useModalScreen();
+
+  if (title) {
+    throw new AppOutOfSyncError('app out of sync');
+  }
 
   function onSelect(newSelected: TFilterOption[]) {
     onChange(newSelected);

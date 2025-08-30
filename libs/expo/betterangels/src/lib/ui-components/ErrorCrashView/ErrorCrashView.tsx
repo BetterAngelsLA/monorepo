@@ -6,7 +6,24 @@ import { StyleSheet, View } from 'react-native';
 import { AppUpdatePrompt } from '../AppUpdatePrompt';
 
 export default function ErrorCrashView(props: ErrorBoundaryProps) {
-  const { retry } = props;
+  const { retry, error } = props;
+
+  console.log('');
+  console.log('*****************  CRASH');
+  console.log('*****************  error:', error);
+
+  console.log('*****************  typeof error:', typeof error);
+  console.log('*****************  error.name:', error.name);
+  console.log('*****************  error.message:', error.message);
+
+  console.log();
+  console.log('| -------------  props  ------------- |');
+  console.log(props);
+  console.log();
+
+  if (error.name === 'AppOutOfSyncError') {
+    alert('AppOutOfSyncError');
+  }
 
   const [hasRetried, setHasRetried] = useState(false);
 
