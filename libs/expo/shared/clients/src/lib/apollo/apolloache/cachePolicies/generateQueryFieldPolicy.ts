@@ -1,5 +1,5 @@
 import type { FieldPolicy } from '@apollo/client';
-import { TCacheMergeOpts, generateMergeFn } from '../cachePolicies';
+import { TCacheMergeOpts, generateMergeFn } from './cacheMerge';
 
 type TPolicyOpts<TVars> = {
   /** Include only filters/sort etc. Never include pagination here. */

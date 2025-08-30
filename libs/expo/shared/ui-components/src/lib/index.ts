@@ -60,6 +60,7 @@ export { default as MapClusterMarker } from './MapClusterMarker';
 export { default as MediaPickerModal } from './MediaPickerModal';
 export { BaseModal } from './Modal';
 export { default as MultiSelect } from './MultiSelect';
+export * from './PaginatedList';
 export { default as PdfViewer } from './PdfViewer';
 export { default as PhoneNumberBtn } from './PhoneNumberBtn';
 export * from './PhoneNumberInput';

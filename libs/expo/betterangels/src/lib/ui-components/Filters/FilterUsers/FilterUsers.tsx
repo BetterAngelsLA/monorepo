@@ -1,5 +1,6 @@
 import { NetworkStatus } from '@apollo/client';
 import {
+  PaginatedList,
   TFilterOption,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
@@ -9,7 +10,7 @@ import { StyleProp, View, ViewStyle } from 'react-native';
 import { Ordering } from '../../../apollo';
 import { useGetUsersQuery } from './__generated__/getUsers.generated';
 
-const paginationLimit = 10;
+const paginationLimit = 20;
 
 type TProps = {
   onChange: (filters: TFilterOption[]) => void;
@@ -48,7 +49,7 @@ export function FilterUsers(props: TProps) {
   useEffect(() => {
     const results = data?.interactionAuthors?.results ?? [];
 
-    console.log('*****************  results Len:', results.length);
+    // console.log('*****************  results Len:', results.length);
 
     const newOptions = results
       .filter((item) => (currentUserId ? item.id !== currentUserId : true))
@@ -72,7 +73,9 @@ export function FilterUsers(props: TProps) {
   const fetchingRef = useRef(false);
 
   useEffect(() => {
-    if (!loadingMore) fetchingRef.current = false;
+    if (!loadingMore) {
+      fetchingRef.current = false;
+    }
   }, [loadingMore]);
 
   const loadMore = () => {
@@ -106,25 +109,29 @@ export function FilterUsers(props: TProps) {
   }
 
   return (
-    <FlashList<TFilterOption>
-      style={style}
-      estimatedItemSize={95}
-      data={options}
-      keyExtractor={(item) => item.id}
-      renderItem={renderItemFn}
-      onEndReached={loadMore}
-      onEndReachedThreshold={0.05} // keep your original that worked
-      ItemSeparatorComponent={() => <View style={{ height: 35 }} />}
-      // small footer helps ensure there’s space to hit the end
-      ListFooterComponent={
-        loadingMore ? (
-          <TextRegular>Loading…</TextRegular>
-        ) : (
-          <View style={{ height: 16 }} />
-        )
-      }
-      contentContainerStyle={{ paddingBottom: 60 }}
-    />
+    <>
+      <PaginatedList queryName="interactionAuthors" />
+
+      <FlashList<TFilterOption>
+        style={style}
+        estimatedItemSize={95}
+        data={options}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItemFn}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.05} // keep your original that worked
+        ItemSeparatorComponent={() => <View style={{ height: 35 }} />}
+        // small footer helps ensure there’s space to hit the end
+        ListFooterComponent={
+          loadingMore ? (
+            <TextRegular>Loading…</TextRegular>
+          ) : (
+            <View style={{ height: 16 }} />
+          )
+        }
+        contentContainerStyle={{ paddingBottom: 60 }}
+      />
+    </>
   );
 }
 

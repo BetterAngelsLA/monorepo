@@ -1,3 +1,7 @@
 export * from './cachePolicies';
-export { createApolloCache } from './createApolloCache';
+export {
+  assertQueryFieldHasMerge,
+  createApolloCache,
+  getTypePoliciesFromCache,
+} from './createApolloCache';
 export * from './types';
