@@ -60,16 +60,6 @@ export function FilterUsers(props: TProps) {
 
   return (
     <View style={{ flex: 1 }}>
-      <View
-        style={{
-          marginBottom: 16,
-        }}
-      >
-        <TextRegular>
-          Showing {options.length} out of {total}{' '}
-        </TextRegular>
-      </View>
-
       <MultiSelectInfinite<TFilterOption>
         serchPlaceholder="Search authors"
         title="Filter - Authors"
@@ -81,6 +71,7 @@ export function FilterUsers(props: TProps) {
         options={options}
         selected={selected}
         loadMore={loadMore}
+        totalOptions={total}
         isLoadingMore={isLoadingMore}
         valueKey="id"
         labelKey="label"

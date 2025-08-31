@@ -1,0 +1,1 @@
+export { NoResultsView } from './NoResultsView';

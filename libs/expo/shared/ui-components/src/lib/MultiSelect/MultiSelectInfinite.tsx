@@ -2,8 +2,10 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { FlashList } from '@shopify/flash-list';
 import { ReactNode, useCallback } from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
+import { NoResultsView } from '../NoResultsView';
 import { SearchBar } from '../SearchBar';
 import TextBold from '../TextBold';
+import TextMedium from '../TextMedium';
 import TextRegular from '../TextRegular';
 import { MultiSelectItem, TMultiSelectItem } from './MultiSelectItem';
 
@@ -25,9 +27,11 @@ export interface TMultiSelect<T> {
     props: TMultiSelectItem,
     index: number
   ) => ReactNode;
+  totalOptions?: number;
   loadMore?: () => void;
   isLoadingMore?: boolean;
   estimatedItemSize?: number;
+  listItemGap?: number;
 }
 
 export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
@@ -45,8 +49,10 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
     serchPlaceholder = 'Search',
     renderOption,
     loadMore,
+    totalOptions,
     isLoadingMore,
     estimatedItemSize,
+    listItemGap = 8,
   } = props;
   function isSelected(option: T): boolean {
     return !!selected.find((item) => {
@@ -110,6 +116,12 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
         />
       )}
 
+      {!!totalOptions && (
+        <TextMedium size="sm" mb="sm">
+          Displaying {options.length} of {totalOptions} options
+        </TextMedium>
+      )}
+
       <FlashList<T>
         estimatedItemSize={estimatedItemSize || 64}
         data={options}
@@ -118,7 +130,8 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
         renderItem={renderItemFn}
         onEndReached={loadMore}
         onEndReachedThreshold={0.05} // keep your original that worked
-        ItemSeparatorComponent={() => <View style={{ height: 24 }} />}
+        ItemSeparatorComponent={() => <View style={{ height: listItemGap }} />}
+        ListEmptyComponent={<NoResultsView />}
         // small footer helps ensure there’s space to hit the end
         ListFooterComponent={
           isLoadingMore ? (
