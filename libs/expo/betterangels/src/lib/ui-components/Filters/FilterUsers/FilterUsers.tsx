@@ -59,7 +59,7 @@ export function FilterUsers(props: TProps) {
   }
 
   return (
-    <View style={{ borderWidth: 4, borderColor: 'red', flex: 1 }}>
+    <View style={{ flex: 1 }}>
       <View
         style={{
           marginBottom: 16,

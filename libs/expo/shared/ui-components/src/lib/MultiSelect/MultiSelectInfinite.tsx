@@ -27,6 +27,7 @@ export interface TMultiSelect<T> {
   ) => ReactNode;
   loadMore?: () => void;
   isLoadingMore?: boolean;
+  estimatedItemSize?: number;
 }
 
 export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
@@ -45,6 +46,7 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
     renderOption,
     loadMore,
     isLoadingMore,
+    estimatedItemSize,
   } = props;
   function isSelected(option: T): boolean {
     return !!selected.find((item) => {
@@ -109,8 +111,7 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
       )}
 
       <FlashList<T>
-        style={{ borderWidth: 4, borderColor: 'blue', flex: 1 }}
-        estimatedItemSize={25}
+        estimatedItemSize={estimatedItemSize || 64}
         data={options}
         extraData={selected}
         keyExtractor={(item) => String(item[valueKey])}
