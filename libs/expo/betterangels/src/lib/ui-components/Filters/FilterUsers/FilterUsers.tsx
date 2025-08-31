@@ -1,20 +1,16 @@
-import { NetworkStatus } from '@apollo/client';
 import {
-  PaginatedList,
+  MultiSelectInfinite,
   TFilterOption,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { FlashList } from '@shopify/flash-list';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
-import { Ordering } from '../../../apollo';
+import { usePaginatedQuery } from '../../../hooks';
 import { useGetUsersQuery } from './__generated__/getUsers.generated';
 
-const paginationLimit = 20;
-
 type TProps = {
-  onChange: (filters: TFilterOption[]) => void;
-  selected: TFilterOption[];
+  onChange?: (filters: TFilterOption[]) => void;
+  selected?: TFilterOption[];
   title?: string;
   currentUserId?: string;
   style?: StyleProp<ViewStyle>;
@@ -23,35 +19,25 @@ type TProps = {
 export function FilterUsers(props: TProps) {
   const { currentUserId, style } = props;
 
+  const [searchQuery, setSearchQuery] = useState('');
   const [options, setOptions] = useState<TFilterOption[]>([]);
-  const [filterSearch, setFilterSearch] = useState('');
+  const [selected, setSelected] = useState<TFilterOption[]>([]);
 
-  const orderVars = useMemo(
-    () => ({
-      // firstName: Ordering.AscNullsFirst,
-      // lastName: Ordering.AscNullsFirst,
-      // id: Ordering.Desc,
-      id: Ordering.Asc,
-    }),
-    []
-  );
-
-  const { data, error, fetchMore, networkStatus } = useGetUsersQuery({
-    variables: {
-      filters: { search: filterSearch },
-      order: orderVars,
-      pagination: { limit: paginationLimit, offset: 0 },
-    },
-    // allow distinguishing `initial` load vs `loading more`
-    notifyOnNetworkStatusChange: true,
+  const { items, total, isLoadingMore, loadMore, error } = usePaginatedQuery<
+    ReturnType<typeof useGetUsersQuery> extends { data: infer D } ? D : never,
+    { id: string; firstName?: string | null; lastName?: string | null },
+    Parameters<typeof useGetUsersQuery>[0] extends { variables: infer V }
+      ? V
+      : never
+  >({
+    useQueryHook: useGetUsersQuery as any,
+    queryFieldName: 'interactionAuthors',
+    pageSize: 20,
+    searchQuery,
   });
 
   useEffect(() => {
-    const results = data?.interactionAuthors?.results ?? [];
-
-    // console.log('*****************  results Len:', results.length);
-
-    const newOptions = results
+    const newOptions = items
       .filter((item) => (currentUserId ? item.id !== currentUserId : true))
       .map((item) => ({
         id: item.id,
@@ -61,225 +47,44 @@ export function FilterUsers(props: TProps) {
       }));
 
     setOptions(newOptions);
-  }, [data, currentUserId]);
-
-  const results = data?.interactionAuthors?.results ?? [];
-  const total = data?.interactionAuthors?.totalCount ?? 0;
-  const hasMore = results.length < total;
-
-  const loadingMore = networkStatus === NetworkStatus.fetchMore;
-
-  // Prevent rapid double-calls from FlashList
-  const fetchingRef = useRef(false);
-
-  useEffect(() => {
-    if (!loadingMore) {
-      fetchingRef.current = false;
-    }
-  }, [loadingMore]);
-
-  const loadMore = () => {
-    if (!hasMore || loadingMore || fetchingRef.current) {
-      return;
-    }
-
-    fetchingRef.current = true;
-
-    fetchMore({
-      variables: {
-        filters: { search: filterSearch },
-        order: orderVars,
-        pagination: { limit: paginationLimit, offset: results.length },
-      },
-    }).catch(() => {
-      fetchingRef.current = false;
-    });
-  };
-
-  const renderItemFn = useCallback(({ item }: { item: TFilterOption }) => {
-    return <TextRegular>{item.label}</TextRegular>;
-  }, []);
+  }, [items.length, currentUserId]);
 
   if (error) {
     return (
       <TextRegular>
-        Failed to load users: {String(error.message ?? error)}
+        {/* Failed to load users: {String((error as Error).message ?? error)} */}
+        Failed to load users: {String(error)}
       </TextRegular>
     );
   }
 
   return (
-    <>
-      <PaginatedList queryName="interactionAuthors" />
+    <View style={{ borderWidth: 4, borderColor: 'red', flex: 1 }}>
+      <View
+        style={{
+          marginBottom: 16,
+        }}
+      >
+        <TextRegular>
+          Showing {options.length} out of {total}{' '}
+        </TextRegular>
+      </View>
 
-      <FlashList<TFilterOption>
-        style={style}
-        estimatedItemSize={95}
-        data={options}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItemFn}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.05} // keep your original that worked
-        ItemSeparatorComponent={() => <View style={{ height: 35 }} />}
-        // small footer helps ensure there’s space to hit the end
-        ListFooterComponent={
-          loadingMore ? (
-            <TextRegular>Loading…</TextRegular>
-          ) : (
-            <View style={{ height: 16 }} />
-          )
-        }
-        contentContainerStyle={{ paddingBottom: 60 }}
+      <MultiSelectInfinite<TFilterOption>
+        serchPlaceholder="Search authors"
+        title="Filter - Authors"
+        searchDebounceMs={50}
+        onSearch={setSearchQuery}
+        onChange={(newSelected) => {
+          setSelected(newSelected);
+        }}
+        options={options}
+        selected={selected}
+        loadMore={loadMore}
+        isLoadingMore={isLoadingMore}
+        valueKey="id"
+        labelKey="label"
       />
-    </>
+    </View>
   );
 }
-
-// import {
-//   TFilterOption,
-//   TextRegular,
-// } from '@monorepo/expo/shared/ui-components';
-// import { FlashList } from '@shopify/flash-list';
-// import { useCallback, useEffect, useState } from 'react';
-// import { StyleProp, View, ViewStyle } from 'react-native';
-// import { Ordering } from '../../../apollo';
-// import { useGetUsersQuery } from './__generated__/getUsers.generated';
-
-// const paginationLimit = 10;
-
-// type TProps = {
-//   onChange: (filters: TFilterOption[]) => void;
-//   selected: TFilterOption[];
-//   title?: string;
-//   currentUserId?: string;
-//   style?: StyleProp<ViewStyle>;
-// };
-
-// export function FilterUsers(props: TProps) {
-//   const [options, setOptions] = useState<TFilterOption[]>([]);
-//   const [filterSearch, setFilterSearch] = useState('');
-
-//   const { data, loading, error, fetchMore } = useGetUsersQuery({
-//     variables: {
-//       filters: { search: filterSearch },
-//       order: {
-//         firstName: Ordering.AscNullsFirst,
-//         lastName: Ordering.AscNullsFirst,
-//         id: Ordering.Desc,
-//       },
-//       pagination: { limit: paginationLimit, offset: 0 },
-//     },
-//   });
-
-//   useEffect(() => {
-//     if (!data?.interactionAuthors) {
-//       return;
-//     }
-
-//     const { results } = data.interactionAuthors;
-
-//     const newOptions = results
-//       .filter((item) => item.id !== '1')
-//       .map((item) => ({
-//         id: item.id,
-//         label: `${item.id} - ${item.firstName} ${item.lastName || ''}`,
-//       }));
-
-//     setOptions(newOptions);
-//   }, [data]);
-
-//   const results = data?.interactionAuthors?.results ?? [];
-//   const total = data?.interactionAuthors?.totalCount ?? 0;
-//   const hasMore = results.length < total;
-
-//   const loadMore = () => {
-//     if (!hasMore || loading) {
-//       return;
-//     }
-
-//     fetchMore({
-//       variables: {
-//         filters: { search: filterSearch },
-//         order: {
-//           firstName: Ordering.AscNullsFirst,
-//           lastName: Ordering.AscNullsFirst,
-//           id: Ordering.Desc,
-//         },
-//         pagination: { limit: paginationLimit, offset: results.length },
-//       },
-//     });
-//   };
-
-//   const renderItemFn = useCallback(({ item }: { item: TFilterOption }) => {
-//     return <TextRegular>{item.label}</TextRegular>;
-//   }, []);
-
-//   return (
-//     <FlashList<TFilterOption>
-//       estimatedItemSize={95}
-//       data={options}
-//       keyExtractor={(item) => item.id}
-//       renderItem={renderItemFn}
-//       onEndReached={loadMore}
-//       onEndReachedThreshold={0.05}
-//       ItemSeparatorComponent={() => <View style={{ height: 35 }} />}
-//       contentContainerStyle={{
-//         paddingBottom: 60,
-//       }}
-//     />
-//   );
-// }
-
-// <Filters.Options
-//   title={title}
-//   options={options}
-//   onSelected={onSelect}
-//   onSearch={(r) => console.log(r)}
-//   searchDebounceMs={300}
-//   initalSelected={selected}
-//   searchPlaceholder="Search authors"
-//   style={{ paddingHorizontal: pagePaddingHorizontal }}
-// />
-
-// <Filters.Button
-//   id="Authors"
-//   selected={selected.map((s) => s.label)}
-//   onPress={onFilterPress}
-//   style={style}
-//   labelMaxWidth={100}
-// />
-
-// function onSelect(newSelected: TFilterOption[]) {
-//   onChange(newSelected);
-
-//   closeModalScreen();
-// }
-
-// function onFilterPress(id: string) {
-//   showModalScreen({
-//     presentation: 'modal',
-//     content: (
-//       <Filters.Options
-//         title={title}
-//         options={teamOptions}
-//         onSelected={onSelect}
-//         onSearch={(r) => console.log(r)}
-//         searchDebounceMs={300}
-//         initalSelected={selected}
-//         searchPlaceholder="Search authors"
-//         style={{ paddingHorizontal: pagePaddingHorizontal }}
-//       />
-//     ),
-//     title: title,
-//   });
-// }
-
-// const { showModalScreen, closeModalScreen } = useModalScreen();
-
-// const {
-//   onChange,
-//   selected,
-//   currentUserId,
-//   style,
-//   title = 'Filter Users',
-// } = props;

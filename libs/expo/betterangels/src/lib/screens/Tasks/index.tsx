@@ -1,11 +1,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import {
-  SearchBar,
-  TFilterOption,
-  TextButton,
-} from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { TFilterOption } from '@monorepo/expo/shared/ui-components';
+import { useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { FilterUsers, MainContainer } from '../../ui-components';
 
 export default function Tasks() {
@@ -18,9 +14,9 @@ export default function Tasks() {
     setSearch('');
   }
 
-  useEffect(() => {
-    console.log(search);
-  }, [search]);
+  // useEffect(() => {
+  //   console.log(search);
+  // }, [search]);
 
   function onFilterPress(id: string) {
     console.log('CLICK FILTER id: ', id);
@@ -28,7 +24,7 @@ export default function Tasks() {
 
   return (
     <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <View style={styles.searchContainer}>
+      {/* <View style={styles.searchContainer}>
         <SearchBar
           value={search}
           placeholder="Search tasks"
@@ -38,6 +34,7 @@ export default function Tasks() {
           onClear={() => {
             setSearch('');
           }}
+          debounceMs={100}
         />
         <TextButton
           onPress={onFiltersReset}
@@ -46,7 +43,7 @@ export default function Tasks() {
           title="Reset"
           accessibilityHint="Reset filters"
         />
-      </View>
+      </View> */}
 
       {/* <Filters style={{ marginTop: 50 }}>
         <FilterTeams onChange={setSelectedTeams} selected={selectedTeams} />
@@ -63,7 +60,9 @@ export default function Tasks() {
         <TextRegular>{search}</TextRegular>
       </View> */}
 
-      <FilterUsers onChange={setSelectedUsers} selected={selectedUsers} />
+      {/* <FilterUsers onChange={setSelectedUsers} selected={selectedUsers} /> */}
+      {/* <FilterUserList onChange={setSelectedUsers} selected={selectedUsers} /> */}
+      <FilterUsers />
     </MainContainer>
   );
 }

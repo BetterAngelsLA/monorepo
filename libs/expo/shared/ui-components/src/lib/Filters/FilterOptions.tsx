@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Button from '../Button';
-import MultiSelect from '../MultiSelect';
+import { MultiSelect } from '../MultiSelect';
 import { TFilterOption } from './types';
 
 type TFilterOptions = {
