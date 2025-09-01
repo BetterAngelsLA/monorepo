@@ -2,6 +2,7 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { Filters, TFilterOption } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
+import { useUser } from '../../hooks';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
 import {
   FilterClients,
@@ -25,17 +26,16 @@ const teamOptions: TFilterOption[] = Object.entries(enumDisplaySelahTeam).map(
 );
 
 export default function Tasks() {
+  const { user } = useUser();
+
+  const currentUserLabel = 'Me';
+
   const [selectedTeams, setSelectedTeams] = useState<TFilterOption[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<TFilterOption[]>([]);
-  const [selectedAuthors, setSelectedAuthors] = useState<TFilterOption[]>([]);
   const [selectedClients, setSelectedClients] = useState<TFilterOption[]>([]);
-
-  const [search, setSearch] = useState('');
-  // selected: TFilterOption[];
-
-  function onFiltersReset() {
-    setSearch('');
-  }
+  const [selectedAuthors, setSelectedAuthors] = useState<TFilterOption[]>(
+    user ? [{ id: user.id, label: currentUserLabel }] : []
+  );
 
   return (
     <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
@@ -69,9 +69,11 @@ export default function Tasks() {
         />
         <FilterUsers
           label={'Authors'}
-          title="Filter - Author"
+          title="Filter - Author x"
           onChange={setSelectedAuthors}
           selected={selectedAuthors}
+          currentUserId={user?.id}
+          currentUserLabel={currentUserLabel}
         />
         <FilterStatic
           label="Teams"

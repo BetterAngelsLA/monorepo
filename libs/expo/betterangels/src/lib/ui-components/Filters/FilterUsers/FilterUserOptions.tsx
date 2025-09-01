@@ -6,7 +6,7 @@ import {
 import { useMemo, useState } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
 import { Ordering } from '../../../apollo';
-import { usePaginatedQuery, useUser } from '../../../hooks';
+import { usePaginatedQuery } from '../../../hooks';
 import {
   useGetUsersQuery,
   type GetUsersQuery,
@@ -21,7 +21,8 @@ type TProps = {
   selected?: TFilterOption[];
   title?: string;
   searchPlaceholder?: string;
-  meLabel?: string;
+  currentUserId?: string;
+  currentUserLabel?: string;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -29,11 +30,10 @@ export function FilterUserOptions(props: TProps) {
   const {
     onSelected,
     selected = [],
-    meLabel = 'Me',
+    currentUserId,
+    currentUserLabel = 'Me',
     searchPlaceholder,
   } = props;
-
-  const { user: currentUser } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
 
   const { items, total, loading, loadMore, error } = usePaginatedQuery<
@@ -56,21 +56,21 @@ export function FilterUserOptions(props: TProps) {
 
   const options = useMemo<TFilterOption[]>(() => {
     const optionLisList = items
-      .filter((u) => searchQuery || currentUser?.id !== u.id)
+      .filter((u) => searchQuery || currentUserId !== u.id)
       .map((u) => ({
         id: u.id,
         label: `${u.id} - ${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
       }));
 
-    if (currentUser && !searchQuery) {
+    if (currentUserId && !searchQuery) {
       optionLisList.unshift({
-        id: currentUser.id,
-        label: meLabel,
+        id: currentUserId,
+        label: currentUserLabel,
       });
     }
 
     return optionLisList;
-  }, [items, currentUser]);
+  }, [items, currentUserId]);
 
   if (error) {
     return (

@@ -5,7 +5,8 @@ import { FilterUserOptions } from './FilterUserOptions';
 
 type TProps = {
   label: string;
-  meLabel?: string;
+  currentUserId?: string;
+  currentUserLabel?: string;
   onChange: (filters: TFilterOption[]) => void;
   selected?: TFilterOption[];
   title?: string;
@@ -16,7 +17,8 @@ type TProps = {
 export function FilterUsers(props: TProps) {
   const {
     label,
-    meLabel,
+    currentUserId,
+    currentUserLabel,
     onChange,
     selected = [],
     title,
@@ -40,7 +42,8 @@ export function FilterUsers(props: TProps) {
           onSelected={onSelect}
           selected={selected}
           searchPlaceholder={searchPlaceholder}
-          meLabel={meLabel}
+          currentUserLabel={currentUserLabel}
+          currentUserId={currentUserId}
         />
       ),
       title: title,
