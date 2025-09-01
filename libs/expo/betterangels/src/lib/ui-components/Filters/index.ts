@@ -1,2 +1,3 @@
-export * from './FilterTeams';
+export * from './FilterClients';
+export * from './FilterStatic';
 export * from './FilterUsers';

@@ -93,6 +93,14 @@ export function usePaginatedQuery<TData, TItem, TVars>(args: {
     notifyOnNetworkStatusChange: true,
   });
 
+  // console.log();
+  // console.log('| -------------  data  ------------- |');
+  // console.log(data);
+  // const res = (data && (data as any)['results']) || {};
+  // console.log(JSON.stringify(res, null, 2));
+  // console.log(JSON.stringify(data, null, 2));
+  // console.log();
+
   const { items, total } = useMemo(
     () => effectiveSelect(data),
     [data, effectiveSelect]

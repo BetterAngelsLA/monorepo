@@ -2,24 +2,39 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { Filters, TFilterOption } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { StyleSheet } from 'react-native';
-import { FilterTeams, FilterUsers, MainContainer } from '../../ui-components';
+import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
+import {
+  FilterClients,
+  FilterStatic,
+  FilterUsers,
+  MainContainer,
+} from '../../ui-components';
+
+const statusOptions: TFilterOption[] = Object.entries(
+  enumDisplayTaskStatus
+).map(([key, value]) => ({
+  id: key,
+  label: value,
+}));
+
+const teamOptions: TFilterOption[] = Object.entries(enumDisplaySelahTeam).map(
+  ([key, value]) => ({
+    id: key,
+    label: value,
+  })
+);
 
 export default function Tasks() {
   const [selectedTeams, setSelectedTeams] = useState<TFilterOption[]>([]);
+  const [selectedStatus, setSelectedStatus] = useState<TFilterOption[]>([]);
   const [selectedAuthors, setSelectedAuthors] = useState<TFilterOption[]>([]);
+  const [selectedClients, setSelectedClients] = useState<TFilterOption[]>([]);
+
   const [search, setSearch] = useState('');
   // selected: TFilterOption[];
 
   function onFiltersReset() {
     setSearch('');
-  }
-
-  // useEffect(() => {
-  //   console.log(search);
-  // }, [search]);
-
-  function onFilterPress(id: string) {
-    console.log('CLICK FILTER id: ', id);
   }
 
   return (
@@ -46,17 +61,32 @@ export default function Tasks() {
       </View> */}
 
       <Filters style={{ marginTop: 50 }}>
+        <FilterClients
+          label={'Clients'}
+          title="Filter - Client"
+          onChange={setSelectedClients}
+          selected={selectedClients}
+        />
         <FilterUsers
-          title="Filter Authors"
+          label={'Authors'}
+          title="Filter - Author"
           onChange={setSelectedAuthors}
           selected={selectedAuthors}
         />
-        <FilterTeams
-          title="Filter Teams"
+        <FilterStatic
+          label="Teams"
+          options={teamOptions}
+          title="Filter - Teams"
           onChange={setSelectedTeams}
           selected={selectedTeams}
         />
-        <Filters.Button id="Clients" selected={[]} onPress={onFilterPress} />
+        <FilterStatic
+          label="Status"
+          options={statusOptions}
+          title="Filter - Status"
+          onChange={setSelectedStatus}
+          selected={selectedStatus}
+        />
       </Filters>
     </MainContainer>
   );

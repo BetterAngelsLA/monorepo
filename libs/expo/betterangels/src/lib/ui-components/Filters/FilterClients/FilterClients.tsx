@@ -1,19 +1,18 @@
 import { Filters, TFilterOption } from '@monorepo/expo/shared/ui-components';
 import { StyleProp, ViewStyle } from 'react-native';
 import { useModalScreen } from '../../../providers';
-import { FilterUserOptions } from './FilterUserOptions';
+import { FilterClientOptions } from './FilterClientOptions';
 
 type TProps = {
   label: string;
   onChange: (filters: TFilterOption[]) => void;
   selected?: TFilterOption[];
   title?: string;
-  currentUserId?: string;
   style?: StyleProp<ViewStyle>;
 };
 
-export function FilterUsers(props: TProps) {
-  const { label, currentUserId, onChange, selected = [], title, style } = props;
+export function FilterClients(props: TProps) {
+  const { label, onChange, selected = [], title, style } = props;
 
   const { showModalScreen, closeModalScreen } = useModalScreen();
 
@@ -27,11 +26,7 @@ export function FilterUsers(props: TProps) {
     showModalScreen({
       presentation: 'modal',
       content: () => (
-        <FilterUserOptions
-          onSelected={onSelect}
-          selected={selected}
-          currentUserId={currentUserId}
-        />
+        <FilterClientOptions onSelected={onSelect} selected={selected} />
       ),
       title: title,
     });

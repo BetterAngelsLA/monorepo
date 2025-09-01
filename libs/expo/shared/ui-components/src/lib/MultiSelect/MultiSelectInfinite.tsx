@@ -143,6 +143,7 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
           )
         }
         contentContainerStyle={{ paddingBottom: 60 }}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );

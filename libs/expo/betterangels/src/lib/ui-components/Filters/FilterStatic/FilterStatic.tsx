@@ -11,14 +11,25 @@ const teamOptions: TFilterOption[] = Object.entries(enumDisplaySelahTeam).map(
 );
 
 type TProps = {
+  label: string;
   onChange: (filters: TFilterOption[]) => void;
+  options: TFilterOption[];
   selected: TFilterOption[];
   title?: string;
+  searchPlaceholder?: string;
   style?: StyleProp<ViewStyle>;
 };
 
-export function FilterTeams(props: TProps) {
-  const { onChange, selected, style, title } = props;
+export function FilterStatic(props: TProps) {
+  const {
+    label,
+    options,
+    selected,
+    onChange,
+    searchPlaceholder,
+    style,
+    title,
+  } = props;
 
   const { showModalScreen, closeModalScreen } = useModalScreen();
 
@@ -28,15 +39,15 @@ export function FilterTeams(props: TProps) {
     closeModalScreen();
   }
 
-  function onFilterPress(id: string) {
+  function onFilterPress() {
     showModalScreen({
       presentation: 'modal',
       content: (
         <Filters.Options
-          options={teamOptions}
+          options={options}
           onSelected={onSelect}
           initialSelected={selected}
-          searchPlaceholder="Search teams"
+          searchPlaceholder={searchPlaceholder}
         />
       ),
       title: title,
@@ -45,7 +56,7 @@ export function FilterTeams(props: TProps) {
 
   return (
     <Filters.Button
-      id="Teams"
+      label={label}
       selected={selected.map((s) => s.label)}
       onPress={onFilterPress}
       labelMaxWidth={100}

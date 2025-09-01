@@ -1,1 +1,0 @@
-export { FilterTeams } from './FilterTeams';

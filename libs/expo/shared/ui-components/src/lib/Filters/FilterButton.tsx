@@ -11,17 +11,17 @@ import { BaseContainer } from '../Container';
 import TextRegular from '../TextRegular';
 
 export type TFilterButton = {
-  id: string;
+  label: string;
   selected: string[];
-  onPress: (id: string) => void;
+  onPress: (id?: string) => void;
   labelMaxWidth?: number;
   style?: StyleProp<ViewStyle>;
 };
 
 export function FilterButton(props: TFilterButton) {
-  const { id, selected, onPress, labelMaxWidth, style } = props;
+  const { label, selected, onPress, labelMaxWidth, style } = props;
 
-  let visibleLabel = selected[0] || id;
+  let visibleLabel = selected[0] || label;
   let backgroundColor = Colors.WHITE;
   let textColor = Colors.PRIMARY_EXTRA_DARK;
   let extraSelected = 0;
@@ -34,7 +34,7 @@ export function FilterButton(props: TFilterButton) {
 
   return (
     <Pressable
-      onPress={() => onPress(id)}
+      onPress={() => onPress()}
       accessibilityRole="button"
       style={[styles.container, { backgroundColor: backgroundColor }, style]}
     >
