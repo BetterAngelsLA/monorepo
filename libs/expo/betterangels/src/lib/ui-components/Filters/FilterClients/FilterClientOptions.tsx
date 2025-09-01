@@ -6,8 +6,14 @@ import {
 import { useMemo, useState } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
 import { usePaginatedQuery } from '../../../hooks';
-// import { useGetUsersQuery } from './__generated__/getUsers.generated';
-import { useFilterClientProfilesQuery } from './__generated__/filterClientProfiles.generated';
+import {
+  useFilterClientProfilesQuery,
+  type FilterClientProfilesQuery,
+} from './__generated__/filterClientProfiles.generated';
+
+type TClientResult = NonNullable<
+  FilterClientProfilesQuery['clientProfiles']
+>['results'][number];
 
 type TProps = {
   onSelected: (filters: TFilterOption[]) => void;
@@ -22,32 +28,25 @@ export function FilterClientOptions(props: TProps) {
 
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { items, total, loading, loadMore, error } = usePaginatedQuery<
-    ReturnType<typeof useFilterClientProfilesQuery> extends { data: infer D }
-      ? D
-      : never,
-    { id: string; firstName?: string | null; lastName?: string | null },
-    Parameters<typeof useFilterClientProfilesQuery>[0] extends {
-      variables: infer V;
-    }
-      ? V
-      : never
-  >({
-    useQueryHook: useFilterClientProfilesQuery as any,
-    queryFieldName: 'clientProfiles',
-    pageSize: 20,
-    searchQuery,
-  });
+  const { items, total, loading, loadMore, error } =
+    usePaginatedQuery<TClientResult>({
+      useQueryHook: useFilterClientProfilesQuery as any,
+      queryFieldName: 'clientProfiles',
+      pageSize: 20,
+      searchQuery,
+    });
 
   // clientProfiles
   // "__typename": "ClientProfileTypeOffsetPaginated",
   // results
   // "__typename": "ClientProfileType",
 
+  console.log('*****************  items LEN:', items.length);
+
   const options = useMemo<TFilterOption[]>(
     () =>
       items
-        .filter((u) => !!u.firstName)
+        .filter((u) => u.firstName || u.lastName)
         .map((u) => ({
           id: u.id,
           label: `${u.id} - ${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),

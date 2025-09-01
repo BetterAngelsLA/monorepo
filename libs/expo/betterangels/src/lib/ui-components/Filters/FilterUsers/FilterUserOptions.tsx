@@ -5,51 +5,61 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo, useState } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
-import { usePaginatedQuery } from '../../../hooks';
-import { useGetUsersQuery } from './__generated__/getUsers.generated';
+import { usePaginatedQuery, useUser } from '../../../hooks';
+import {
+  useGetUsersQuery,
+  type GetUsersQuery,
+} from './__generated__/getUsers.generated';
+
+type TUserResult = NonNullable<
+  GetUsersQuery['interactionAuthors']
+>['results'][number];
 
 type TProps = {
   onSelected: (filters: TFilterOption[]) => void;
   selected?: TFilterOption[];
   title?: string;
   searchPlaceholder?: string;
-  currentUserId?: string;
+  meLabel?: string;
   style?: StyleProp<ViewStyle>;
 };
 
 export function FilterUserOptions(props: TProps) {
-  const { onSelected, selected = [], currentUserId, searchPlaceholder } = props;
+  const {
+    onSelected,
+    selected = [],
+    meLabel = 'Me',
+    searchPlaceholder,
+  } = props;
 
+  const { user: currentUser } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { items, total, loading, loadMore, error } = usePaginatedQuery<
-    ReturnType<typeof useGetUsersQuery> extends { data: infer D } ? D : never,
-    { id: string; firstName?: string | null; lastName?: string | null },
-    Parameters<typeof useGetUsersQuery>[0] extends { variables: infer V }
-      ? V
-      : never
-  >({
-    useQueryHook: useGetUsersQuery as any,
-    queryFieldName: 'interactionAuthors',
-    pageSize: 20,
-    searchQuery,
-  });
+  const { items, total, loading, loadMore, error } =
+    usePaginatedQuery<TUserResult>({
+      useQueryHook: useGetUsersQuery as any,
+      queryFieldName: 'interactionAuthors',
+      pageSize: 20,
+      searchQuery,
+    });
 
-  // interactionAuthors
-  // "__typename": "InteractionAuthorTypeOffsetPaginated",
-  // results
-  // "__typename": "InteractionAuthorType",
+  const options = useMemo<TFilterOption[]>(() => {
+    const optionLisList = items
+      .filter((u) => searchQuery || currentUser?.id !== u.id)
+      .map((u) => ({
+        id: u.id,
+        label: `${u.id} - ${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
+      }));
 
-  const options = useMemo<TFilterOption[]>(
-    () =>
-      items
-        // .filter((u) => (currentUserId ? u.id !== currentUserId : true))
-        .map((u) => ({
-          id: u.id,
-          label: `${u.id} - ${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(),
-        })),
-    [items, currentUserId]
-  );
+    if (currentUser && !searchQuery) {
+      optionLisList.unshift({
+        id: currentUser.id,
+        label: meLabel,
+      });
+    }
+
+    return optionLisList;
+  }, [items, currentUser]);
 
   if (error) {
     return (

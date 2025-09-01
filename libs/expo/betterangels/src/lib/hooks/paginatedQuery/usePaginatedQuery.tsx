@@ -32,14 +32,16 @@ type BuildVars<TVars> = (params: {
   limit: number;
 }) => TVars;
 
-export function usePaginatedQuery<TData, TItem, TVars>(args: {
+export function usePaginatedQuery<
+  TItem,
+  TData = unknown,
+  TVars = unknown
+>(args: {
   useQueryHook: UseQueryHook<TData, TVars>;
-  queryFieldName: string; // must match your Query field (e.g., "interactionAuthors")
+  queryFieldName: string;
   searchQuery?: string;
   pageSize: number;
-  /** defaults to d?.<queryFieldName>.results + totalCount */
   select?: Selector<TData, TItem>;
-  /** defaults to { filters:{search}, pagination:{offset,limit} } */
   buildVars?: BuildVars<TVars>;
   initialSearch?: string;
   debounceMs?: number;
@@ -54,8 +56,6 @@ export function usePaginatedQuery<TData, TItem, TVars>(args: {
     searchQuery = '',
     resetOn = [],
   } = args;
-
-  console.log('*****************  HOOK searchQuery:', searchQuery);
 
   // Assert cache policy exists
   const client = useApolloClient();
@@ -92,14 +92,6 @@ export function usePaginatedQuery<TData, TItem, TVars>(args: {
     variables: baseVars,
     notifyOnNetworkStatusChange: true,
   });
-
-  // console.log();
-  // console.log('| -------------  data  ------------- |');
-  // // console.log(data);
-  // // // const res = (data && (data as any)['results']) || {};
-  // // // console.log(JSON.stringify(res, null, 2));
-  // console.log(JSON.stringify(data, null, 2));
-  // console.log();
 
   const { items, total } = useMemo(
     () => effectiveSelect(data),
