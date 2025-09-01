@@ -1,15 +1,10 @@
-import {
-  MultiSelectInfinite,
-  TFilterOption,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
-import { StyleProp, View, ViewStyle } from 'react-native';
-import { usePaginatedQuery } from '../../../hooks';
-import { useGetUsersQuery } from './__generated__/getUsers.generated';
+import { Filters, TFilterOption } from '@monorepo/expo/shared/ui-components';
+import { StyleProp, ViewStyle } from 'react-native';
+import { useModalScreen } from '../../../providers';
+import { FilterUserOptions } from './FilterUserOptions';
 
 type TProps = {
-  onChange?: (filters: TFilterOption[]) => void;
+  onChange: (filters: TFilterOption[]) => void;
   selected?: TFilterOption[];
   title?: string;
   currentUserId?: string;
@@ -17,65 +12,37 @@ type TProps = {
 };
 
 export function FilterUsers(props: TProps) {
-  const { currentUserId, style } = props;
+  const { currentUserId, onChange, selected = [], title, style } = props;
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [options, setOptions] = useState<TFilterOption[]>([]);
-  const [selected, setSelected] = useState<TFilterOption[]>([]);
+  const { showModalScreen, closeModalScreen } = useModalScreen();
 
-  const { items, total, isLoadingMore, loadMore, error } = usePaginatedQuery<
-    ReturnType<typeof useGetUsersQuery> extends { data: infer D } ? D : never,
-    { id: string; firstName?: string | null; lastName?: string | null },
-    Parameters<typeof useGetUsersQuery>[0] extends { variables: infer V }
-      ? V
-      : never
-  >({
-    useQueryHook: useGetUsersQuery as any,
-    queryFieldName: 'interactionAuthors',
-    pageSize: 20,
-    searchQuery,
-  });
+  function onSelect(newSelected: TFilterOption[]) {
+    onChange(newSelected);
 
-  useEffect(() => {
-    const newOptions = items
-      .filter((item) => (currentUserId ? item.id !== currentUserId : true))
-      .map((item) => ({
-        id: item.id,
-        label: `${item.id} - ${item.firstName ?? ''} ${
-          item.lastName ?? ''
-        }`.trim(),
-      }));
+    closeModalScreen();
+  }
 
-    setOptions(newOptions);
-  }, [items.length, currentUserId]);
-
-  if (error) {
-    return (
-      <TextRegular>
-        {/* Failed to load users: {String((error as Error).message ?? error)} */}
-        Failed to load users: {String(error)}
-      </TextRegular>
-    );
+  function onFilterPress(id: string) {
+    showModalScreen({
+      presentation: 'modal',
+      content: () => (
+        <FilterUserOptions
+          onSelected={onSelect}
+          selected={selected}
+          currentUserId={currentUserId}
+        />
+      ),
+      title: title,
+    });
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <MultiSelectInfinite<TFilterOption>
-        serchPlaceholder="Search authors"
-        title="Filter - Authors"
-        searchDebounceMs={50}
-        onSearch={setSearchQuery}
-        onChange={(newSelected) => {
-          setSelected(newSelected);
-        }}
-        options={options}
-        selected={selected}
-        loadMore={loadMore}
-        totalOptions={total}
-        isLoadingMore={isLoadingMore}
-        valueKey="id"
-        labelKey="label"
-      />
-    </View>
+    <Filters.Button
+      id="Authors"
+      selected={selected.map((s) => s.label)}
+      onPress={onFilterPress}
+      labelMaxWidth={100}
+      style={style}
+    />
   );
 }

@@ -144,7 +144,7 @@ export default function OrganizationFilter(props: IOrganizationFilterProps) {
             showsVerticalScrollIndicator={false}
           >
             <MultiSelect
-              filterPlaceholder="Search"
+              searchPlaceholder="Search"
               withFilter
               title="Filter - Organizations"
               search={search}

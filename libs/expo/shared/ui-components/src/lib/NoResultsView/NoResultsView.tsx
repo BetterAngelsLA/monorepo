@@ -1,8 +1,9 @@
 import { UserSearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { ReactNode } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
+import TextBold from '../TextBold';
+import TextRegular from '../TextRegular';
 
 type TProps = {
   style?: ViewStyle;

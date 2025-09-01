@@ -144,7 +144,7 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
             showsVerticalScrollIndicator={false}
           >
             <MultiSelect
-              filterPlaceholder="Search"
+              searchPlaceholder="Search"
               withFilter
               title="Filter - Authors"
               search={search}

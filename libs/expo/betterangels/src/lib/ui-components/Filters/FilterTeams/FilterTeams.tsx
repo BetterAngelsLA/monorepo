@@ -1,7 +1,7 @@
 import { Filters, TFilterOption } from '@monorepo/expo/shared/ui-components';
 import { StyleProp, ViewStyle } from 'react-native';
 import { useModalScreen } from '../../../providers';
-import { enumDisplaySelahTeam, pagePaddingHorizontal } from '../../../static';
+import { enumDisplaySelahTeam } from '../../../static';
 
 const teamOptions: TFilterOption[] = Object.entries(enumDisplaySelahTeam).map(
   ([key, value]) => ({
@@ -17,21 +17,10 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-class AppOutOfSyncError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'AppOutOfSyncError'; // set the error name
-  }
-}
-
 export function FilterTeams(props: TProps) {
-  const { onChange, selected, style, title = 'Filter Teams' } = props;
+  const { onChange, selected, style, title } = props;
 
   const { showModalScreen, closeModalScreen } = useModalScreen();
-
-  if (title) {
-    throw new AppOutOfSyncError('app out of sync');
-  }
 
   function onSelect(newSelected: TFilterOption[]) {
     onChange(newSelected);
@@ -44,12 +33,10 @@ export function FilterTeams(props: TProps) {
       presentation: 'modal',
       content: (
         <Filters.Options
-          title={title}
           options={teamOptions}
           onSelected={onSelect}
-          initalSelected={selected}
+          initialSelected={selected}
           searchPlaceholder="Search teams"
-          style={{ paddingHorizontal: pagePaddingHorizontal }}
         />
       ),
       title: title,
@@ -61,8 +48,8 @@ export function FilterTeams(props: TProps) {
       id="Teams"
       selected={selected.map((s) => s.label)}
       onPress={onFilterPress}
-      style={style}
       labelMaxWidth={100}
+      style={style}
     />
   );
 }

@@ -1,45 +1,42 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { useState } from 'react';
-import {
-  ScrollView,
-  StyleProp,
-  StyleSheet,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Button from '../Button';
-import { MultiSelect } from '../MultiSelect';
+import { MultiSelectInfinite } from '../MultiSelect';
+import { FilterActionButtons } from './FilterActionButton';
+import { OptionsList } from './OptionsList';
 import { TFilterOption } from './types';
 
-type TFilterOptions = {
+type TBaseFilterOptions = {
+  type?: 'default' | 'infinite';
   onSelected: (filters: TFilterOption[]) => void;
   onSearch?: (search: string) => void;
+  searchQuery?: string;
   searchDebounceMs?: number;
   options: TFilterOption[];
-  initalSelected: TFilterOption[];
+  initialSelected: TFilterOption[];
   title?: string;
   searchPlaceholder?: string;
   style?: StyleProp<ViewStyle>;
 };
 
-const paginationLimit = 25;
+type TDefaultFilterOptions = TBaseFilterOptions & {
+  type?: 'default';
+};
+
+type TInfiniteFilterOptions = TBaseFilterOptions & {
+  type: 'infinite';
+  loadMore: () => void;
+  totalOptions?: number;
+  loading?: boolean;
+};
+
+type TFilterOptions = TDefaultFilterOptions | TInfiniteFilterOptions;
 
 export function FilterOptions(props: TFilterOptions) {
-  const {
-    options,
-    initalSelected,
-    onSelected,
-    onSearch,
-    searchDebounceMs,
-    title,
-    searchPlaceholder,
-    style,
-  } = props;
+  const { type, initialSelected, onSelected, style, ...rest } = props;
 
-  const [selected, setSelected] = useState<TFilterOption[]>(initalSelected);
-  const [search, setSearch] = useState<string>('');
-
+  const [selected, setSelected] = useState<TFilterOption[]>(initialSelected);
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
 
@@ -51,53 +48,27 @@ export function FilterOptions(props: TFilterOptions) {
     setSelected([]);
   };
 
+  const infiniteMode = type === 'infinite';
+
   return (
     <View
       style={[{ paddingBottom: 35 + bottomOffset }, styles.container, style]}
     >
-      <ScrollView
-        // onScroll={handleScroll}
-        // scrollEventThrottle={200}
-        showsVerticalScrollIndicator={false}
-      >
-        <MultiSelect
-          style={styles.multiSelect}
-          filterPlaceholder={searchPlaceholder}
-          withFilter
-          title={title}
-          search={search}
-          onSearch={onSearch}
-          searchDebounceMs={searchDebounceMs}
-          //   onSearch={(query) => {
-          //     console.log('*****************  Search Result:', query);
-          //     setSearch(query);
-          //   }}
-          //   onChange={(e: { id: string; label: string }[]) => setSelected(e)}
+      {!infiniteMode && (
+        <OptionsList onChange={setSelected} selected={selected} {...rest} />
+      )}
+
+      {!!infiniteMode && (
+        <MultiSelectInfinite<TFilterOption>
           onChange={setSelected}
-          options={options}
           selected={selected}
           valueKey="id"
           labelKey="label"
+          {...rest}
         />
-      </ScrollView>
+      )}
 
-      <View style={styles.buttonRow}>
-        <Button
-          onPress={handleClearBoxes}
-          size="md"
-          title="Clear"
-          variant="secondary"
-          accessibilityHint="clear all selections"
-        />
-
-        <Button
-          onPress={handleOnDone}
-          size="md"
-          title="Done"
-          variant="primary"
-          accessibilityHint="apply selections filter"
-        />
-      </View>
+      <FilterActionButtons onDone={handleOnDone} onClear={handleClearBoxes} />
     </View>
   );
 }
@@ -111,10 +82,5 @@ const styles = StyleSheet.create({
   },
   multiSelect: {
     paddingBottom: 40,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 10,
   },
 });

@@ -74,7 +74,7 @@ export default function TeamsFilter(props: ITeamFilterProps) {
         >
           <ScrollView>
             <MultiSelect
-              filterPlaceholder="Search"
+              searchPlaceholder="Search"
               withFilter
               withSelectAll
               selectAllLabel="All Teams"

@@ -154,7 +154,7 @@ describe('MultiSelect component', () => {
         <MultiSelect
           {...defaultProps}
           withFilter
-          filterPlaceholder="Search options"
+          searchPlaceholder="Search options"
         />
       );
 

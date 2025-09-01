@@ -24,7 +24,7 @@ export interface TMultiSelect<T> {
   selectAllIdx?: TSelectAllIdx;
   selectAllLabel?: string;
   withFilter?: boolean;
-  filterPlaceholder?: string;
+  searchPlaceholder?: string;
   onSearch?: (search: string) => void;
   search?: string;
   searchDebounceMs?: number;
@@ -51,7 +51,7 @@ export function MultiSelect<T>(props: TMultiSelect<T>) {
     selectAllIdx = 0,
     selectAllLabel = SELECT_ALL_LABEL_DEFAULT,
     withFilter,
-    filterPlaceholder = 'Search',
+    searchPlaceholder = 'Search',
     renderOption,
   } = props;
 
@@ -122,7 +122,7 @@ export function MultiSelect<T>(props: TMultiSelect<T>) {
           value={search || searchText}
           onDelete={() => onSearch?.('') || setSearchText('')}
           onChangeText={(query) => onSearch?.(query) || setSearchText(query)}
-          placeholder={filterPlaceholder}
+          placeholder={searchPlaceholder}
           icon={<SearchIcon color={Colors.NEUTRAL} />}
           autoCorrect={false}
           spellCheck={false}
@@ -138,7 +138,7 @@ export function MultiSelect<T>(props: TMultiSelect<T>) {
           value={search || ''}
           onClear={() => onSearch('')}
           onChange={onSearch}
-          placeholder={filterPlaceholder}
+          placeholder={searchPlaceholder}
           style={{ marginBottom: Spacings.xs }}
         />
       )}

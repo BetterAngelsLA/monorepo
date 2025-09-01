@@ -11,16 +11,16 @@ import { MultiSelectItem, TMultiSelectItem } from './MultiSelectItem';
 
 export interface TMultiSelect<T> {
   style?: StyleProp<ViewStyle>;
-  options: T[];
+  options?: T[];
   selected: T[];
   valueKey: keyof T;
   labelKey: keyof T;
   onChange: (newSelected: T[]) => void;
   title?: string;
   withFilter?: boolean;
-  serchPlaceholder?: string;
   onSearch?: (search: string) => void;
   search?: string;
+  searchPlaceholder?: string;
   searchDebounceMs?: number;
   renderOption?: (
     option: T,
@@ -29,7 +29,7 @@ export interface TMultiSelect<T> {
   ) => ReactNode;
   totalOptions?: number;
   loadMore?: () => void;
-  isLoadingMore?: boolean;
+  loading?: boolean;
   estimatedItemSize?: number;
   listItemGap?: number;
 }
@@ -46,11 +46,11 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
     search,
     searchDebounceMs,
     title,
-    serchPlaceholder = 'Search',
+    searchPlaceholder = 'Search',
     renderOption,
     loadMore,
     totalOptions,
-    isLoadingMore,
+    loading,
     estimatedItemSize,
     listItemGap = 8,
   } = props;
@@ -111,12 +111,12 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
           value={search || ''}
           onClear={() => onSearch('')}
           onChange={onSearch}
-          placeholder={serchPlaceholder}
+          placeholder={searchPlaceholder}
           style={{ marginBottom: Spacings.lg }}
         />
       )}
 
-      {!!totalOptions && (
+      {!loading && options && !!totalOptions && (
         <TextMedium size="sm" mb="sm">
           Displaying {options.length} of {totalOptions} options
         </TextMedium>
@@ -129,13 +129,15 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
         keyExtractor={(item) => String(item[valueKey])}
         renderItem={renderItemFn}
         onEndReached={loadMore}
-        onEndReachedThreshold={0.05} // keep your original that worked
+        onEndReachedThreshold={0.05}
         ItemSeparatorComponent={() => <View style={{ height: listItemGap }} />}
-        ListEmptyComponent={<NoResultsView />}
+        ListEmptyComponent={() => (loading ? null : <NoResultsView />)}
         // small footer helps ensure there’s space to hit the end
         ListFooterComponent={
-          isLoadingMore ? (
-            <TextRegular>Loading…</TextRegular>
+          loading ? (
+            <TextRegular mt="lg" size="md" textAlign="center">
+              Loading…
+            </TextRegular>
           ) : (
             <View style={{ height: 16 }} />
           )

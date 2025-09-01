@@ -1,5 +1,3 @@
-// usePaginatedQuery.tsx
-
 import {
   NetworkStatus,
   useApolloClient,
@@ -23,9 +21,8 @@ type UseQueryHook<TData, TVars> = (args: {
   error?: unknown;
 };
 
-// --- types for customization ---
 type Selector<TData, TItem> = (data: TData | undefined) => {
-  items: ReadonlyArray<TItem>;
+  items: ReadonlyArray<TItem> | undefined;
   total: number;
 };
 
@@ -54,37 +51,23 @@ export function usePaginatedQuery<TData, TItem, TVars>(args: {
     pageSize,
     select,
     buildVars,
-    initialSearch = '',
     searchQuery = '',
-    // debounceMs = 250,
     resetOn = [],
   } = args;
 
   console.log('*****************  HOOK searchQuery:', searchQuery);
 
-  // --- 1. Assert cache policy exists ---
+  // Assert cache policy exists
   const client = useApolloClient();
 
   useMemo(() => {
-    // const tp = getTypePoliciesFromCache(client.cache);
-    // assertQueryFieldHasMerge(tp, queryFieldName);
     assertQueryFieldHasMerge(client.cache, queryFieldName);
   }, [client.cache, queryFieldName]);
 
-  // --- 2. Search w/ debounce ---
-  //   const [search, setSearch] = useState(initialSearch);
-  //   const [debounced, setDebounced] = useState(initialSearch);
-
-  //   useEffect(() => {
-  //     const t = setTimeout(() => setDebounced(search), debounceMs);
-  //     return () => clearTimeout(t);
-  //   }, [search, debounceMs]);
-
-  // --- 3. Default builders ---
   const defaultSelect: Selector<any, any> = (d) => {
     const field = (d as any)?.[queryFieldName] ?? {};
     return {
-      items: field.results ?? [],
+      items: field.results ?? undefined, // undefined === initial loading
       total: field.totalCount ?? 0,
     };
   };
@@ -99,7 +82,6 @@ export function usePaginatedQuery<TData, TItem, TVars>(args: {
   const effectiveBuildVars = (buildVars ??
     defaultBuildVars) as BuildVars<TVars>;
 
-  // --- 4. Run query (offset 0) ---
   const baseVars = useMemo(
     () =>
       effectiveBuildVars({ search: searchQuery, offset: 0, limit: pageSize }),
@@ -115,13 +97,22 @@ export function usePaginatedQuery<TData, TItem, TVars>(args: {
     () => effectiveSelect(data),
     [data, effectiveSelect]
   );
-  const hasMore = items.length < total;
-  const isLoadingMore = networkStatus === NetworkStatus.fetchMore;
+
+  const safeLen = items?.length ?? 0; // account for items.lenth being undefined
+  const hasMore = safeLen < total;
+
+  const loading =
+    items === undefined ||
+    (networkStatus !== NetworkStatus.ready &&
+      networkStatus !== NetworkStatus.setVariables);
 
   const inFlight = useRef(false);
+
   useEffect(() => {
-    if (!isLoadingMore) inFlight.current = false;
-  }, [isLoadingMore]);
+    if (!loading) {
+      inFlight.current = false;
+    }
+  }, [loading]);
 
   // Reset on search / resetOn change
   useEffect(() => {
@@ -129,15 +120,16 @@ export function usePaginatedQuery<TData, TItem, TVars>(args: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery, ...resetOn]);
 
-  // --- 5. Load more (cache handles merge) ---
   const loadMore = useCallback(() => {
-    if (!hasMore || isLoadingMore || inFlight.current) return;
+    if (!hasMore || loading || inFlight.current) {
+      return;
+    }
+
     inFlight.current = true;
 
-    const nextOffset = items.length;
     const nextVars = effectiveBuildVars({
       search: searchQuery,
-      offset: nextOffset,
+      offset: safeLen,
       limit: pageSize,
     });
 
@@ -146,8 +138,8 @@ export function usePaginatedQuery<TData, TItem, TVars>(args: {
     });
   }, [
     hasMore,
-    isLoadingMore,
-    items.length,
+    loading,
+    safeLen,
     searchQuery,
     pageSize,
     effectiveBuildVars,
@@ -155,11 +147,9 @@ export function usePaginatedQuery<TData, TItem, TVars>(args: {
   ]);
 
   return {
-    items,
+    items: items || [],
     total,
-    // search,
-    // setSearch,
-    isLoadingMore,
+    loading,
     hasMore,
     loadMore,
     error,
