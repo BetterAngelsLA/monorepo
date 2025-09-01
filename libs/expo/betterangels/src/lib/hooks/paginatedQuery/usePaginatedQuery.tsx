@@ -95,9 +95,9 @@ export function usePaginatedQuery<TData, TItem, TVars>(args: {
 
   // console.log();
   // console.log('| -------------  data  ------------- |');
-  // console.log(data);
-  // const res = (data && (data as any)['results']) || {};
-  // console.log(JSON.stringify(res, null, 2));
+  // // console.log(data);
+  // // // const res = (data && (data as any)['results']) || {};
+  // // // console.log(JSON.stringify(res, null, 2));
   // console.log(JSON.stringify(data, null, 2));
   // console.log();
 

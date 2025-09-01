@@ -5,31 +5,15 @@ import {
 
 export const cachePolicyRegistry: TCachePoliyConfig = {
   clientProfiles: {
-    modelName: 'ClientProfileType',
-    modelPK: 'id',
+    entityTypename: 'ClientProfileType',
     fieldPolicy: generateQueryFieldPolicy({
-      keyArgs: ['filters', 'order'],
-      // mergeOpts should be optional / use default
-      mergeOpts: {
-        mode: 'wrapper', // should be optional / default
-        resultsKey: 'results', // should be optional / default
-        totalKey: 'totalCount', // should be optional / default
-        pageInfoKey: 'pageInfo', // should be optional / default
-      },
+      keyArgs: ['filters', 'order'], // exludes pagination so results can be merged
     }),
   },
   interactionAuthors: {
-    modelName: 'InteractionAuthorType',
-    modelPK: 'id',
+    entityTypename: 'InteractionAuthorType',
     fieldPolicy: generateQueryFieldPolicy({
-      keyArgs: ['filters', 'order'],
-      // mergeOpts should be optional / use default
-      mergeOpts: {
-        mode: 'wrapper', // should be optional / default
-        resultsKey: 'results', // should be optional / default
-        totalKey: 'totalCount', // should be optional / default
-        pageInfoKey: 'pageInfo', // should be optional / default
-      },
+      keyArgs: ['filters', 'order'], // exludes pagination so results can be merged
     }),
   },
 };

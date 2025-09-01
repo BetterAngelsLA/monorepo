@@ -1,3 +1,21 @@
+# input ClientProfileFilter {
+#   AND: ClientProfileFilter
+#   OR: ClientProfileFilter
+#   NOT: ClientProfileFilter
+#   DISTINCT: Boolean
+#   isActive: Boolean
+#   search: String
+#   searchClient: ClientSearchInput
+# }
+
+# input ClientSearchInput {
+#   excludedClientProfileId: String = null
+#   californiaId: String = null
+#   firstName: String = null
+#   lastName: String = null
+#   middleName: String = null
+# }
+
 query FilterClientProfiles(
   $filters: ClientProfileFilter
   $pagination: OffsetPaginationInput
@@ -18,3 +36,60 @@ query FilterClientProfiles(
     }
   }
 }
+
+# Payload
+# {
+#   "clientProfiles": {
+#     "__typename": "ClientProfileTypeOffsetPaginated",
+#     "totalCount": 166,
+#     "pageInfo": {
+#       "__typename": "OffsetPaginationInfo",
+#       "limit": 20,
+#       "offset": 0
+#     },
+#     "results": [
+#       {
+#         "__typename": "ClientProfileType",
+#         "id": "293",
+#         "firstName": "A",
+#         "lastName": "C",
+#         "middleName": "B",
+#         "nickname": "Nosh"
+#       },
+#       {
+#         "__typename": "ClientProfileType",
+#         "id": "343",
+#         "firstName": "Aaron",
+#         "lastName": "Smith",
+#         "middleName": null,
+#         "nickname": "Aaron, Big Dog"
+
+# Policies:
+# {
+#   "ClientProfileType": {
+#     "keyFields": [
+#       "id"
+#     ]
+#   },
+#   "InteractionAuthorType": {
+#     "keyFields": [
+#       "id"
+#     ]
+#   },
+#   "Query": {
+#     "fields": {
+#       "clientProfiles": {
+#         "keyArgs": [
+#           "filters",
+#           "order"
+#         ]
+#       },
+#       "interactionAuthors": {
+#         "keyArgs": [
+#           "filters",
+#           "order"
+#         ]
+#       }
+#     }
+#   }
+# }

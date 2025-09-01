@@ -1,42 +1,58 @@
 import { FieldPolicy, TypePolicies, TypePolicy } from '@apollo/client';
 import { TCachePoliyConfig } from '../types';
 
+const DEFAULT_KEY_FIELDS = ['id'] as const;
+
 export function generateCachePolicies(
-  policyMap: TCachePoliyConfig
+  registry: TCachePoliyConfig
 ): TypePolicies {
-  // Collect Query field policies
   const queryFields: Record<string, FieldPolicy> = {};
+  const typePoliciesByName: Record<string, TypePolicy> = {};
 
-  // Collect per-typename policies (entity config)
-  const modelPolicies: Record<string, TypePolicy> = {};
-
-  for (const [fieldName, entry] of Object.entries(policyMap)) {
-    // 1) Query.<fieldName>
-    queryFields[fieldName] = entry.fieldPolicy;
-
-    // 2) Entity typename config (keyFields) — add only once per typename
-    const typename = entry.modelName;
-
-    if (!modelPolicies[typename]) {
-      const typePolicy: TypePolicy = {};
-      if (entry.modelPK) {
-        // Only set if you explicitly provided a PK (e.g., 'id' or a custom/composite in future)
-        typePolicy.keyFields = [entry.modelPK];
-      }
-      modelPolicies[typename] = typePolicy;
+  for (const [fieldName, entry] of Object.entries(registry)) {
+    // 1) Attach Query field policy if provided
+    if (entry.fieldPolicy) {
+      queryFields[fieldName] = entry.fieldPolicy;
     }
+
+    // 2) Attach entity type policy if entityTypename provided
+    const entityTypename = entry.entityTypename;
+    if (!entityTypename) {
+      continue;
+    }
+
+    // Resolve desired keyFields
+    // keyFields: ['id'] (default): normal entity with a stable id.
+    // keyFields: ['a','b']: composite key when there’s no single id.
+    // keyFields: false: value objects / payload wrappers you don’t want cached as entities.
+    const desiredKeyFields: TypePolicy['keyFields'] =
+      entry.keyFields === false
+        ? false
+        : Array.isArray(entry.keyFields)
+        ? entry.keyFields
+        : [...DEFAULT_KEY_FIELDS]; // default ['id']
+
+    // De-dupe & guard conflicts
+    const existingPolicy = typePoliciesByName[entityTypename];
+
+    if (existingPolicy) {
+      const a = JSON.stringify(existingPolicy.keyFields ?? null);
+      const b = JSON.stringify(desiredKeyFields ?? null);
+
+      if (a !== b && typeof console !== 'undefined') {
+        console.warn(
+          `[generateCachePolicies] Conflicting keyFields for ${entityTypename}. existing=${a}, ignored=${b}`
+        );
+      }
+
+      continue;
+    }
+
+    typePoliciesByName[entityTypename] = { keyFields: desiredKeyFields };
   }
 
-  // Assemble final TypePolicies
-  const typePolicies: TypePolicies = {
-    // entity policies
-    ...modelPolicies,
-
-    // root Query field policies
-    Query: {
-      fields: queryFields,
-    },
+  return {
+    ...typePoliciesByName,
+    Query: { fields: queryFields },
   };
-
-  return typePolicies;
 }
