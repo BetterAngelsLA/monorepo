@@ -5,6 +5,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo, useState } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
+import { Ordering } from '../../../apollo';
 import { usePaginatedQuery } from '../../../hooks';
 import {
   useFilterClientProfilesQuery,
@@ -28,13 +29,23 @@ export function FilterClientOptions(props: TProps) {
 
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { items, total, loading, loadMore, error } =
-    usePaginatedQuery<TClientResult>({
-      useQueryHook: useFilterClientProfilesQuery as any,
-      queryFieldName: 'clientProfiles',
-      pageSize: 20,
-      searchQuery,
-    });
+  const { items, total, loading, loadMore, error } = usePaginatedQuery<
+    TClientResult,
+    typeof useFilterClientProfilesQuery
+  >({
+    useQueryHook: useFilterClientProfilesQuery,
+    queryFieldName: 'clientProfiles',
+    variables: {
+      order: {
+        firstName: Ordering.AscNullsLast,
+        lastName: Ordering.AscNullsLast,
+        id: Ordering.Desc,
+      },
+      filters: {
+        search: searchQuery,
+      },
+    },
+  });
 
   // clientProfiles
   // "__typename": "ClientProfileTypeOffsetPaginated",

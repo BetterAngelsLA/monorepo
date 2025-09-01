@@ -5,6 +5,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo, useState } from 'react';
 import { StyleProp, ViewStyle } from 'react-native';
+import { Ordering } from '../../../apollo';
 import { usePaginatedQuery, useUser } from '../../../hooks';
 import {
   useGetUsersQuery,
@@ -35,13 +36,23 @@ export function FilterUserOptions(props: TProps) {
   const { user: currentUser } = useUser();
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { items, total, loading, loadMore, error } =
-    usePaginatedQuery<TUserResult>({
-      useQueryHook: useGetUsersQuery as any,
-      queryFieldName: 'interactionAuthors',
-      pageSize: 20,
-      searchQuery,
-    });
+  const { items, total, loading, loadMore, error } = usePaginatedQuery<
+    TUserResult,
+    typeof useGetUsersQuery
+  >({
+    useQueryHook: useGetUsersQuery,
+    queryFieldName: 'interactionAuthors',
+    variables: {
+      order: {
+        firstName: Ordering.AscNullsLast,
+        lastName: Ordering.AscNullsLast,
+        id: Ordering.Desc,
+      },
+      filters: {
+        search: searchQuery,
+      },
+    },
+  });
 
   const options = useMemo<TFilterOption[]>(() => {
     const optionLisList = items
