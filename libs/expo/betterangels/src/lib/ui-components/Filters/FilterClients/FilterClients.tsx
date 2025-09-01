@@ -8,11 +8,19 @@ type TProps = {
   onChange: (filters: TFilterOption[]) => void;
   selected?: TFilterOption[];
   title?: string;
+  searchPlaceholder?: string;
   style?: StyleProp<ViewStyle>;
 };
 
 export function FilterClients(props: TProps) {
-  const { label, onChange, selected = [], title, style } = props;
+  const {
+    label,
+    onChange,
+    selected = [],
+    title,
+    searchPlaceholder,
+    style,
+  } = props;
 
   const { showModalScreen, closeModalScreen } = useModalScreen();
 
@@ -26,7 +34,11 @@ export function FilterClients(props: TProps) {
     showModalScreen({
       presentation: 'modal',
       content: () => (
-        <FilterClientOptions onSelected={onSelect} selected={selected} />
+        <FilterClientOptions
+          onSelected={onSelect}
+          selected={selected}
+          searchPlaceholder={searchPlaceholder}
+        />
       ),
       title: title,
     });

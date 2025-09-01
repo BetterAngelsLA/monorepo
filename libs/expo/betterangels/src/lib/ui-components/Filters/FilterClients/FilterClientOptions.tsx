@@ -13,11 +13,12 @@ type TProps = {
   onSelected: (filters: TFilterOption[]) => void;
   selected?: TFilterOption[];
   title?: string;
+  searchPlaceholder?: string;
   style?: StyleProp<ViewStyle>;
 };
 
 export function FilterClientOptions(props: TProps) {
-  const { onSelected, selected = [] } = props;
+  const { onSelected, selected = [], searchPlaceholder } = props;
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -66,7 +67,7 @@ export function FilterClientOptions(props: TProps) {
   return (
     <Filters.Options
       type="infinite"
-      searchPlaceholder="Search Authors"
+      searchPlaceholder={searchPlaceholder}
       searchDebounceMs={100}
       onSelected={onSelected}
       initialSelected={selected}

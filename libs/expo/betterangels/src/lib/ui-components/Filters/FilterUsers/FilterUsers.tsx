@@ -8,12 +8,21 @@ type TProps = {
   onChange: (filters: TFilterOption[]) => void;
   selected?: TFilterOption[];
   title?: string;
+  searchPlaceholder?: string;
   currentUserId?: string;
   style?: StyleProp<ViewStyle>;
 };
 
 export function FilterUsers(props: TProps) {
-  const { label, currentUserId, onChange, selected = [], title, style } = props;
+  const {
+    label,
+    currentUserId,
+    onChange,
+    selected = [],
+    title,
+    searchPlaceholder,
+    style,
+  } = props;
 
   const { showModalScreen, closeModalScreen } = useModalScreen();
 
@@ -31,6 +40,7 @@ export function FilterUsers(props: TProps) {
           onSelected={onSelect}
           selected={selected}
           currentUserId={currentUserId}
+          searchPlaceholder={searchPlaceholder}
         />
       ),
       title: title,
