@@ -20,7 +20,7 @@ import { useUpdateTaskMutation } from './__generated__/updateTask.generated';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
 type TProps = {
-  clientProfileId?: string;
+  clientProfileId?: string | null;
   team?: SelahTeamEnum | null;
   noteId?: string;
   onCancel?: () => void;
