@@ -18,6 +18,7 @@ export function OptionsList(props: TProps) {
     searchDebounceMs,
     title,
     searchPlaceholder,
+    itemGap,
     style,
   } = props;
 
@@ -34,6 +35,7 @@ export function OptionsList(props: TProps) {
         searchDebounceMs={searchDebounceMs}
         options={options}
         selected={selected}
+        itemGap={itemGap}
         valueKey="id"
         labelKey="label"
       />

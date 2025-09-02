@@ -18,6 +18,7 @@ type TBaseFilterOptions = {
   initialSelected: TFilterOption[];
   title?: string;
   searchPlaceholder?: string;
+  itemGap?: number;
   style?: StyleProp<ViewStyle>;
 };
 

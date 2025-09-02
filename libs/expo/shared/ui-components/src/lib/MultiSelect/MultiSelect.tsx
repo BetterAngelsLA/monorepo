@@ -28,6 +28,7 @@ export interface TMultiSelect<T> {
   onSearch?: (search: string) => void;
   search?: string;
   searchDebounceMs?: number;
+  itemGap?: number;
   renderOption?: (
     option: T,
     props: TMultiSelectItem,
@@ -53,6 +54,7 @@ export function MultiSelect<T>(props: TMultiSelect<T>) {
     withFilter,
     searchPlaceholder = 'Search',
     renderOption,
+    itemGap = Spacings.xs,
   } = props;
 
   const [searchText, setSearchText] = useState('');
@@ -143,7 +145,7 @@ export function MultiSelect<T>(props: TMultiSelect<T>) {
         />
       )}
 
-      <View style={{ gap: Spacings.xs }}>
+      <View style={{ gap: itemGap }}>
         {!visibleOptions.length && <NoResultsFound />}
 
         {!!visibleOptions.length &&

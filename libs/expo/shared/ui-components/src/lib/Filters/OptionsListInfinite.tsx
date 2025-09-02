@@ -9,6 +9,7 @@ export type TProps = {
   searchDebounceMs?: number;
   options: TFilterOption[];
   totalOptions?: number;
+  itemGap?: number;
   selected: TFilterOption[];
   title?: string;
   searchPlaceholder?: string;
@@ -30,6 +31,7 @@ export function OptionsListInfinite(props: TProps) {
     totalOptions,
     title,
     searchPlaceholder,
+    itemGap,
     style,
   } = props;
 
@@ -47,6 +49,7 @@ export function OptionsListInfinite(props: TProps) {
       loadMore={loadMore}
       totalOptions={totalOptions}
       loading={loading}
+      itemGap={itemGap}
       valueKey="id"
       labelKey="label"
     />

@@ -31,7 +31,7 @@ export interface TMultiSelect<T> {
   loadMore?: () => void;
   loading?: boolean;
   estimatedItemSize?: number;
-  listItemGap?: number;
+  itemGap?: number;
 }
 
 export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
@@ -52,7 +52,7 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
     totalOptions,
     loading,
     estimatedItemSize,
-    listItemGap = 8,
+    itemGap = Spacings.xs,
   } = props;
   function isSelected(option: T): boolean {
     return !!selected.find((item) => {
@@ -130,7 +130,7 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
         renderItem={renderItemFn}
         onEndReached={loadMore}
         onEndReachedThreshold={0.05}
-        ItemSeparatorComponent={() => <View style={{ height: listItemGap }} />}
+        ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
         ListEmptyComponent={() => (loading ? null : <NoResultsView />)}
         // small footer helps ensure there’s space to hit the end
         ListFooterComponent={
