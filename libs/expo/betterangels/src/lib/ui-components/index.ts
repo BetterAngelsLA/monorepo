@@ -33,5 +33,6 @@ export { default as RequestedProvidedServices } from './RequestedProvidedService
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
 export { default as SelectStatus } from './SelectStatus';
 export { default as SignInContainer } from './SignInContainer';
+export * from './TaskFilters';
 export * from './TaskForm';
 export { default as WebBrowserLink } from './WebBrowserLink';

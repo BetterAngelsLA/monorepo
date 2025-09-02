@@ -81,7 +81,8 @@
     "jotai": "*",
     "@shopify/flash-list": "*",
     "@hookform/resolvers": "*",
-    "zod": "*"
+    "zod": "*",
+    "object-hash": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",
