@@ -1,0 +1,40 @@
+query Tasks(
+  $filters: TaskFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [TaskOrder!]! = []
+) {
+  tasks(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    totalCount
+    pageInfo {
+      limit
+      offset
+    }
+    results {
+      id
+      summary
+      description
+      status
+      team
+      organization {
+        id
+        name
+      }
+      clientProfile {
+        id
+        firstName
+        lastName
+        profilePhoto {
+          name
+          url
+        }
+      }
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+      createdAt
+      updatedAt
+    }
+  }
+}
