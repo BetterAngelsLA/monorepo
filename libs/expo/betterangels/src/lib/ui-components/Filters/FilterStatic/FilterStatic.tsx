@@ -17,6 +17,7 @@ type TProps = {
   selected: TFilterOption[];
   title?: string;
   searchPlaceholder?: string;
+  skipSearch?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -27,6 +28,7 @@ export function FilterStatic(props: TProps) {
     selected,
     onChange,
     searchPlaceholder,
+    skipSearch,
     style,
     title,
   } = props;
@@ -45,6 +47,7 @@ export function FilterStatic(props: TProps) {
       content: (
         <Filters.Options
           options={options}
+          skipSearch={skipSearch}
           onSelected={onSelect}
           initialSelected={selected}
           searchPlaceholder={searchPlaceholder}

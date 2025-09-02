@@ -11,6 +11,7 @@ type TBaseFilterOptions = {
   type?: 'default' | 'infinite';
   onSelected: (filters: TFilterOption[]) => void;
   onSearch?: (search: string) => void;
+  skipSearch?: boolean;
   searchQuery?: string;
   searchDebounceMs?: number;
   options: TFilterOption[];
@@ -20,7 +21,7 @@ type TBaseFilterOptions = {
   style?: StyleProp<ViewStyle>;
 };
 
-type TDefaultFilterOptions = TBaseFilterOptions & {
+export type TDefaultFilterOptions = TBaseFilterOptions & {
   type?: 'default';
 };
 
@@ -55,7 +56,7 @@ export function FilterOptions(props: TFilterOptions) {
       style={[{ paddingBottom: 35 + bottomOffset }, styles.container, style]}
     >
       {!infiniteMode && (
-        <OptionsList onChange={setSelected} selected={selected} {...rest} />
+        <OptionsList onSelected={setSelected} selected={selected} {...rest} />
       )}
 
       {!!infiniteMode && (

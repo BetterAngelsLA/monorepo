@@ -1,25 +1,19 @@
-import { ScrollView, StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import { MultiSelect } from '../MultiSelect';
+import { TDefaultFilterOptions } from './FilterOptions';
 import { TFilterOption } from './types';
 
-type TProps = {
-  onChange: (filters: TFilterOption[]) => void;
-  onSearch?: (search: string) => void;
-  searchQuery?: string;
-  searchDebounceMs?: number;
-  options: TFilterOption[];
+type TProps = Omit<TDefaultFilterOptions, 'initialSelected'> & {
   selected: TFilterOption[];
-  title?: string;
-  searchPlaceholder?: string;
-  style?: StyleProp<ViewStyle>;
 };
 
 export function OptionsList(props: TProps) {
   const {
     options,
     selected,
-    onChange,
+    onSelected,
     onSearch,
+    skipSearch,
     searchQuery,
     searchDebounceMs,
     title,
@@ -32,11 +26,11 @@ export function OptionsList(props: TProps) {
       <MultiSelect
         style={[styles.multiSelect, style]}
         searchPlaceholder={searchPlaceholder}
-        withFilter
+        withFilter={!skipSearch}
         title={title}
         search={searchQuery}
         onSearch={onSearch}
-        onChange={onChange}
+        onChange={onSelected}
         searchDebounceMs={searchDebounceMs}
         options={options}
         selected={selected}

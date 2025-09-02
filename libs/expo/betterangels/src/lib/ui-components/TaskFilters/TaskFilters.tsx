@@ -75,6 +75,7 @@ export function TaskFilters(props: TProps) {
       />
       <FilterStatic
         label="Status"
+        skipSearch={true}
         options={statusOptions}
         title="Filter - Status"
         onChange={(next) => onFilterChange('status', next)}
