@@ -6,6 +6,13 @@ import pgtrigger.migrations
 from django.db import migrations, models
 
 
+def clear_column_values(apps, schema_editor) -> None:
+    ServiceRequest = apps.get_model("notes", "ServiceRequest")
+    ServiceRequestEvent = apps.get_model("notes", "ServiceRequestEvent")
+    ServiceRequest.objects.all().update(service=None)
+    ServiceRequestEvent.objects.all().update(service=None)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -13,6 +20,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(clear_column_values, migrations.RunPython.noop),
         pgtrigger.migrations.RemoveTrigger(
             model_name="servicerequest",
             name="service_request_add_insert",
