@@ -16,6 +16,7 @@ export { default as ErrorCrashView } from './ErrorCrashView/ErrorCrashView';
 export { default as FeatureFlagControlled } from './FeatureFlagControlled/FeatureFlagControlled';
 export { FileThumbnail } from './FileThumbnail/FileThumbnail';
 export { default as Header } from './Header';
+export { default as HMISLoginForm } from './HMISLoginForm';
 export * from './Layout';
 export { default as LoginForm } from './LoginForm';
 export { default as MainContainer } from './MainContainer';
@@ -31,6 +32,7 @@ export { default as RequestedProvidedServices } from './RequestedProvidedService
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
 export { default as SelectStatus } from './SelectStatus';
 export { default as TaskCard } from './TaskCard';
+export { default as SignInContainer } from './SignInContainer';
 export * from './TaskForm';
 export * from './TaskList';
 export { default as WebBrowserLink } from './WebBrowserLink';

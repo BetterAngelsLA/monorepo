@@ -11,6 +11,7 @@ import { useModalScreen } from '../../providers';
 import NoteTasksModal from './NoteTaskModal';
 
 interface INoteTasksProps {
+  clientProfileId: string;
   noteId: string;
   scrollRef: RefObject<ScrollView | null>;
   tasks?: ViewNoteQuery['note']['tasks'];
@@ -19,7 +20,7 @@ interface INoteTasksProps {
 }
 
 export default function NoteTasks(props: INoteTasksProps) {
-  const { noteId, tasks, scrollRef, refetch, team } = props;
+  const { clientProfileId, noteId, tasks, scrollRef, refetch, team } = props;
   const { showModalScreen } = useModalScreen();
 
   if (!tasks) {
@@ -32,6 +33,7 @@ export default function NoteTasks(props: INoteTasksProps) {
       hideHeader: true,
       content: (
         <NoteTasksModal
+          clientProfileId={clientProfileId}
           task={task}
           team={team}
           noteId={noteId}
@@ -53,7 +55,12 @@ export default function NoteTasks(props: INoteTasksProps) {
             presentation: 'fullScreenModal',
             hideHeader: true,
             content: (
-              <NoteTasksModal team={team} noteId={noteId} refetch={refetch} />
+              <NoteTasksModal
+                clientProfileId={clientProfileId}
+                team={team}
+                noteId={noteId}
+                refetch={refetch}
+              />
             ),
           });
       }}
@@ -85,6 +92,7 @@ export default function NoteTasks(props: INoteTasksProps) {
                   hideHeader: true,
                   content: (
                     <NoteTasksModal
+                      clientProfileId={clientProfileId}
                       team={team}
                       noteId={noteId}
                       refetch={refetch}
