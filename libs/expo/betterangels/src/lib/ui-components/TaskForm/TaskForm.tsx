@@ -17,19 +17,29 @@ import { useSnackbar } from '../../hooks';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
 import { useCreateTaskMutation } from './__generated__/createTask.generated';
 import { useUpdateTaskMutation } from './__generated__/updateTask.generated';
+import DeleteTask from './DeleteTask';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
 type TProps = {
-  clientProfileId?: string;
+  clientProfileId?: string | null;
   team?: SelahTeamEnum | null;
   noteId?: string;
   onCancel?: () => void;
   onSuccess?: (taskId: string) => void;
   task?: UpdateTaskInput | null;
+  arrivedFrom?: string;
 };
 
 export function TaskForm(props: TProps) {
-  const { clientProfileId, team, onSuccess, onCancel, noteId, task } = props;
+  const {
+    clientProfileId,
+    team,
+    onSuccess,
+    onCancel,
+    noteId,
+    task,
+    arrivedFrom,
+  } = props;
 
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
@@ -47,6 +57,17 @@ export function TaskForm(props: TProps) {
     resolver: zodResolver(FormSchema),
     defaultValues: { ...emptyState, team: team || '' },
   });
+
+  const getArgsFromStoreFieldName = (storeFieldName?: string) => {
+    if (!storeFieldName) return null;
+    const i = storeFieldName.indexOf('(');
+    if (i < 0) return null;
+    try {
+      return JSON.parse(storeFieldName.slice(i + 1, -1));
+    } catch {
+      return null;
+    }
+  };
 
   const onSubmit: SubmitHandler<TFormSchema> = async (
     formData: TFormSchema
@@ -68,6 +89,22 @@ export function TaskForm(props: TProps) {
               },
             },
             errorPolicy: 'all',
+            update(cache, { data }) {
+              const payload = data?.updateTask;
+              if (!payload || payload.__typename !== 'TaskType') return;
+
+              cache.modify({
+                id: cache.identify({ __typename: 'TaskType', id: payload.id }),
+                fields: {
+                  summary: () => payload.summary,
+                  description: () => payload.description,
+                  status: () => payload.status,
+                  team: () => payload.team,
+                  updatedAt: () =>
+                    payload.updatedAt ?? new Date().toISOString(),
+                },
+              });
+            },
           })
         : await createTaskMutation({
             variables: {
@@ -81,6 +118,49 @@ export function TaskForm(props: TProps) {
               },
             },
             errorPolicy: 'all',
+            update(cache, { data }) {
+              const created = data?.createTask;
+              if (!created || created.__typename !== 'TaskType') return;
+
+              cache.modify({
+                id: 'ROOT_QUERY',
+                fields: {
+                  tasks(existing: any = {}, details: any) {
+                    if (!existing?.results) return existing;
+
+                    const { toReference, readField, storeFieldName } = details;
+                    const vars = getArgsFromStoreFieldName(storeFieldName);
+                    const offset = vars?.pagination?.offset ?? 0;
+                    if (offset !== 0) return existing;
+
+                    const newRef = toReference({
+                      __typename: 'TaskType',
+                      id: created.id,
+                    });
+                    if (
+                      existing.results.some(
+                        (ref: any) => readField('id', ref) === created.id
+                      )
+                    )
+                      return existing;
+
+                    let results = [newRef, ...existing.results];
+
+                    const limit = vars?.pagination?.limit;
+                    if (typeof limit === 'number' && results.length > limit) {
+                      results = results.slice(0, limit);
+                    }
+
+                    const totalCount =
+                      typeof existing.totalCount === 'number'
+                        ? existing.totalCount + 1
+                        : existing.totalCount;
+
+                    return { ...existing, results, totalCount };
+                  },
+                },
+              });
+            },
           });
 
       const { validationErrors, errorMessage } = extractOperationErrors({
@@ -215,6 +295,11 @@ export function TaskForm(props: TProps) {
           />
         </Form.Fieldset>
       </Form>
+      <DeleteTask
+        onSuccess={onSuccess}
+        arrivedFrom={arrivedFrom}
+        id={task?.id}
+      />
     </Form.Page>
   );
 }

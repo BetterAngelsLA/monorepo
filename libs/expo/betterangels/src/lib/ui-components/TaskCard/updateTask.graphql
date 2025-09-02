@@ -1,0 +1,39 @@
+mutation UpdateTaskStatus($data: UpdateTaskInput!) {
+  updateTask(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+
+    ... on TaskType {
+      id
+      summary
+      description
+      status
+      team
+      organization {
+        id
+        name
+      }
+      clientProfile {
+        id
+        firstName
+        lastName
+        profilePhoto {
+          name
+          url
+        }
+      }
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+      createdAt
+      updatedAt
+    }
+  }
+}

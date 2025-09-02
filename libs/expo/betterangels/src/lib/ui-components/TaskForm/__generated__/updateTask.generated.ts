@@ -8,7 +8,7 @@ export type UpdateTaskMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'TaskType', id: string } };
+export type UpdateTaskMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'TaskType', id: string, summary?: string | null, description?: string | null, status?: Types.TaskStatusEnum | null, team?: Types.SelahTeamEnum | null, updatedAt: any } };
 
 
 export const UpdateTaskDocument = gql`
@@ -23,6 +23,11 @@ export const UpdateTaskDocument = gql`
     }
     ... on TaskType {
       id
+      summary
+      description
+      status
+      team
+      updatedAt
     }
   }
 }

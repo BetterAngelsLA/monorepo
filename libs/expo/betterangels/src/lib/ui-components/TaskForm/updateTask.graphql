@@ -10,6 +10,11 @@ mutation UpdateTask($data: UpdateTaskInput!) {
 
     ... on TaskType {
       id
+      summary
+      description
+      status
+      team
+      updatedAt
     }
   }
 }

@@ -31,6 +31,8 @@ export { default as NoteTasks } from './NoteTasks';
 export { default as RequestedProvidedServices } from './RequestedProvidedServices';
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
 export { default as SelectStatus } from './SelectStatus';
+export { default as TaskCard } from './TaskCard';
 export { default as SignInContainer } from './SignInContainer';
 export * from './TaskForm';
+export * from './TaskList';
 export { default as WebBrowserLink } from './WebBrowserLink';

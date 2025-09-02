@@ -1,0 +1,31 @@
+query TaskSummary($id: ID!) {
+  task(pk: $id) {
+    ... on TaskType {
+      id
+      summary
+      description
+      status
+      team
+      organization {
+        id
+        name
+      }
+      clientProfile {
+        id
+        firstName
+        lastName
+        profilePhoto {
+          name
+          url
+        }
+      }
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+      createdAt
+      updatedAt
+    }
+  }
+}
