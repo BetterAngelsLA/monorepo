@@ -5,7 +5,6 @@ import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
 export type CaseworkerOrganizationsQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.OrganizationFilter>;
-  order?: Types.InputMaybe<Types.OrganizationOrder>;
   pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
 }>;
 
@@ -14,12 +13,8 @@ export type CaseworkerOrganizationsQuery = { __typename?: 'Query', caseworkerOrg
 
 
 export const CaseworkerOrganizationsDocument = gql`
-    query CaseworkerOrganizations($filters: OrganizationFilter, $order: OrganizationOrder, $pagination: OffsetPaginationInput) {
-  caseworkerOrganizations(
-    filters: $filters
-    order: $order
-    pagination: $pagination
-  ) {
+    query CaseworkerOrganizations($filters: OrganizationFilter, $pagination: OffsetPaginationInput) {
+  caseworkerOrganizations(filters: $filters, pagination: $pagination) {
     totalCount
     results {
       id
@@ -46,7 +41,6 @@ export const CaseworkerOrganizationsDocument = gql`
  * const { data, loading, error } = useCaseworkerOrganizationsQuery({
  *   variables: {
  *      filters: // value for 'filters'
- *      order: // value for 'order'
  *      pagination: // value for 'pagination'
  *   },
  * });

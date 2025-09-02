@@ -37,12 +37,6 @@ class LoginInput:
     password: str
 
 
-@strawberry_django.ordering.order(Organization)
-class OrganizationOrder:
-    name: auto
-    id: auto
-
-
 @strawberry_django.order_type(Organization, one_of=False)
 class OrganizationOrdering:
     name: auto
@@ -72,8 +66,6 @@ class OrganizationFilter:
 @strawberry_django.type(
     Organization,
     filters=OrganizationFilter,
-    order=OrganizationOrder,  # type: ignore[literal-required]
-    ordering=Optional[OrganizationOrdering],
 )
 class OrganizationType:
     id: ID
@@ -83,8 +75,6 @@ class OrganizationType:
 @strawberry_django.type(
     Organization,
     filters=OrganizationFilter,
-    order=OrganizationOrder,  # type: ignore[literal-required]
-    ordering=Optional[OrganizationOrdering],
     pagination=True,
 )
 class OrganizationForUserType(OrganizationType):
