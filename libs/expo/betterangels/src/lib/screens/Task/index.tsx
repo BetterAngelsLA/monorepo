@@ -10,7 +10,13 @@ import TaskSummaryHeader from './TaskSummaryHeader';
 import TaskSummaryStatus from './TaskSummaryStatus';
 import TaskSummaryUpdatedAt from './TaskSummaryUpdatedAt';
 
-export default function Task({ id }: { id: string; arrivedFrom?: string }) {
+export default function Task({
+  id,
+  arrivedFrom,
+}: {
+  id: string;
+  arrivedFrom?: string;
+}) {
   const { data, loading, error } = useTaskSummaryQuery({
     variables: { id },
     fetchPolicy: 'cache-and-network',
@@ -29,7 +35,7 @@ export default function Task({ id }: { id: string; arrivedFrom?: string }) {
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View accessibilityRole="button" style={styles.body}>
-        <TaskSummaryHeader task={task} />
+        <TaskSummaryHeader arrivedFrom={arrivedFrom} task={task} />
         <TaskSummaryUpdatedAt updatedAt={task.updatedAt} />
         <View>
           {task.clientProfile && (

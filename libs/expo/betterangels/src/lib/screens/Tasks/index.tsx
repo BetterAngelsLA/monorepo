@@ -14,6 +14,7 @@ export default function Tasks() {
   const handleTaskPress = useCallback((task: TTask) => {
     router.navigate({
       pathname: `/task/${task.id}`,
+      params: { arrivedFrom: '/tasks' },
     });
   }, []);
 

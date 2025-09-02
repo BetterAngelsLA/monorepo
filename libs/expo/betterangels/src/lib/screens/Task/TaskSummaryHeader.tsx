@@ -6,9 +6,10 @@ import { TaskSummaryQuery } from './__generated__/TaskSummary.generated';
 
 type TTaskSummaryHeaderProps = {
   task: TaskSummaryQuery['task'];
+  arrivedFrom?: string;
 };
 export default function TaskSummaryHeader(props: TTaskSummaryHeaderProps) {
-  const { task } = props;
+  const { task, arrivedFrom } = props;
 
   const { showModalScreen, closeModalScreen } = useModalScreen();
 
@@ -17,6 +18,7 @@ export default function TaskSummaryHeader(props: TTaskSummaryHeaderProps) {
       presentation: 'modal',
       content: (
         <TaskForm
+          arrivedFrom={arrivedFrom}
           clientProfileId={task?.clientProfile?.id}
           task={task}
           onCancel={() => {
