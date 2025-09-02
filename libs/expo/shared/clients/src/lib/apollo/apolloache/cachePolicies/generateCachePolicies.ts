@@ -1,10 +1,10 @@
 import { FieldPolicy, TypePolicies, TypePolicy } from '@apollo/client';
-import { TCachePoliyConfig } from '../types';
+import { TCachePolicyConfig } from '../types';
 
 const DEFAULT_KEY_FIELDS = ['id'] as const;
 
 export function generateCachePolicies(
-  registry: TCachePoliyConfig
+  registry: TCachePolicyConfig
 ): TypePolicies {
   const queryFields: Record<string, FieldPolicy> = {};
   const typePoliciesByName: Record<string, TypePolicy> = {};

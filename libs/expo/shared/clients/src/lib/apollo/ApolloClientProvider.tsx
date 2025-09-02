@@ -1,7 +1,7 @@
 import { ApolloProvider, InMemoryCache } from '@apollo/client';
 import React, { ReactNode, useMemo } from 'react';
 import { useApiConfig } from '../http';
-import { TCachePoliyConfig, createApolloCache } from './apolloache';
+import { TCachePolicyConfig, createApolloCache } from './apolloache';
 import { createApolloClient } from './client';
 
 /**
@@ -16,7 +16,7 @@ import { createApolloClient } from './client';
 type TProps = {
   children: ReactNode;
   cacheStore?: InMemoryCache;
-  policyConfig?: TCachePoliyConfig;
+  policyConfig?: TCachePolicyConfig;
 };
 
 export const ApolloClientProvider = (props: TProps) => {

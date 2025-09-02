@@ -1,20 +1,24 @@
 import type { FieldPolicy } from '@apollo/client';
 import { TCacheMergeOpts, generateMergeFn } from './cacheMerge';
 
-type TPolicyOpts<TVars> = {
-  /** Include only filters/sort etc. Never include pagination here. */
+type TPolicyOpts<TItem, TVars> = {
   keyArgs: ReadonlyArray<string> | false;
-  /** Options for the merge behavior (wrapper vs array, keys, adaptArgs…) */
-  mergeOpts?: TCacheMergeOpts<TVars>;
+  mergeOpts?: TCacheMergeOpts<TItem, TVars>;
 };
 
-export function generateQueryFieldPolicy<TItem, TVars>(
-  opts: TPolicyOpts<TVars>
+export function generateQueryFieldPolicy<
+  TItem = unknown,
+  TVars = { pagination?: { offset?: number; limit?: number } }
+>(
+  opts: TPolicyOpts<TItem, TVars>
 ): FieldPolicy<Record<string, unknown>, Record<string, unknown>> {
   const { keyArgs, mergeOpts } = opts;
 
   return {
     keyArgs,
-    merge: generateMergeFn<TItem, TVars>(mergeOpts) as FieldPolicy['merge'],
+    merge: generateMergeFn<TItem, TVars>(mergeOpts) as FieldPolicy<
+      Record<string, unknown>,
+      Record<string, unknown>
+    >['merge'],
   };
 }

@@ -11,7 +11,7 @@ export type TCachePolicyEntry = {
   fieldPolicy: FieldPolicy<Record<string, unknown>, Record<string, unknown>>;
 };
 
-export type TCachePoliyConfig = Record<string, TCachePolicyEntry>;
+export type TCachePolicyConfig = Record<string, TCachePolicyEntry>;
 
 // extended type to allow referencing TypePolicies attached to the cache store.
 // primiarily used for validation that a query has a policy (when necessary)

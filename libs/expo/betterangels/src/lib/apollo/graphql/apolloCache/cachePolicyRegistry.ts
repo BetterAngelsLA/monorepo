@@ -1,19 +1,21 @@
 import {
-  TCachePoliyConfig,
+  TCachePolicyConfig,
   generateQueryFieldPolicy,
 } from '@monorepo/expo/shared/clients';
 
-export const cachePolicyRegistry: TCachePoliyConfig = {
+export const cachePolicyRegistry: TCachePolicyConfig = {
   clientProfiles: {
     entityTypename: 'ClientProfileType',
     fieldPolicy: generateQueryFieldPolicy({
-      keyArgs: ['filters', 'order'], // exludes pagination so results can be merged
+      // exclude pagination so results can be merged by the merge fn
+      keyArgs: ['filters', 'order'],
     }),
   },
   interactionAuthors: {
     entityTypename: 'InteractionAuthorType',
     fieldPolicy: generateQueryFieldPolicy({
-      keyArgs: ['filters', 'order'], // exludes pagination so results can be merged
+      // exclude pagination so results can be merged by the merge fn
+      keyArgs: ['filters', 'order'],
     }),
   },
 };

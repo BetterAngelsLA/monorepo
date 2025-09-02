@@ -1,7 +1,12 @@
 import type { FieldFunctionOptions, FieldMergeFunction } from '@apollo/client';
-import { AdaptArgs, PageVars, TCacheMergeOpts, WrapperMode } from './types';
-import { arrayMerge } from './utils/arrayMerge';
-import { wrapperMerge } from './utils/wrapperMerge';
+import { arrayMerge } from './mergeFunctions/arrayMerge';
+import { cacheMerge } from './mergeFunctions/cacheMerge';
+import type {
+  AdaptArgs,
+  PageVars,
+  TCacheMergeOpts,
+  WrapperMode,
+} from './types';
 
 function defaultAdapt<TVars = unknown>(vars: TVars | undefined): PageVars {
   return (
@@ -16,19 +21,24 @@ type TResult = FieldMergeFunction<
 >;
 
 export function generateMergeFn<TItem = unknown, TVars = unknown>(
-  opts?: TCacheMergeOpts<TVars>
+  opts?: TCacheMergeOpts<TItem, TVars>
 ): TResult {
-  const mode = (opts?.mode ?? 'wrapper') as 'array' | 'wrapper';
-  const adapt = (opts?.adaptArgs ?? defaultAdapt) as AdaptArgs<unknown>;
+  const adapt = (opts?.adaptArgs ?? defaultAdapt) as AdaptArgs<TVars>;
 
-  if (mode === 'array') {
-    return arrayMerge<TItem>(adapt);
+  if (opts?.mode === 'array') {
+    return arrayMerge<TItem, TVars>(adapt) as unknown as TResult; // <-- pass TVars
   }
 
-  // Merge for wrapper: { results, totalCount, pageInfo }
-  const resultsKey = (opts as WrapperMode<TVars>)?.resultsKey ?? 'results';
-  const totalKey = (opts as WrapperMode<TVars>)?.totalKey ?? 'totalCount';
-  const pageInfoKey = (opts as WrapperMode<TVars>)?.pageInfoKey ?? 'pageInfo';
+  const {
+    resultsKey = 'results',
+    totalKey = 'totalCount',
+    pageInfoKey = 'pageInfo',
+    mergeItemOpts,
+  } = (opts ?? {}) as WrapperMode<TItem, TVars>;
 
-  return wrapperMerge<TItem>({ resultsKey, totalKey, pageInfoKey }, adapt);
+  return cacheMerge<TItem, TVars>(
+    { resultsKey, totalKey, pageInfoKey },
+    adapt,
+    mergeItemOpts
+  ) as unknown as TResult;
 }

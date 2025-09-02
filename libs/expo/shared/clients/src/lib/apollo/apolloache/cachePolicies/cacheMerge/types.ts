@@ -1,35 +1,30 @@
-/** Minimal pagination shape you might extract from variables */
-export type PageVars = { offset?: number | null; limit?: number | null };
+import type { FieldFunctionOptions } from '@apollo/client';
 
-/** Map your query variables to { offset, limit } */
-export type AdaptArgs<TVars = unknown> = (vars: TVars | undefined) => PageVars;
+export type PageVars = { offset?: number; limit?: number };
+export type AdaptArgs<TVars> = (vars: TVars | undefined) => PageVars;
 
-/** Default: read from vars.pagination.{offset,limit} */
-function defaultAdapt<TVars = unknown>(vars: TVars | undefined): PageVars {
-  return (
-    (vars as unknown as { pagination?: PageVars } | undefined)?.pagination ?? {}
-  );
-}
-
-/** Common options shared by both modes */
-export type CommonOpts<TVars> = {
+export type BaseMergeOpts<TVars> = {
+  /** Optional adapter to extract { offset, limit } from your query variables */
   adaptArgs?: AdaptArgs<TVars>;
 };
 
-/** Field is a plain array (e.g., users(): User[]) */
-export type ArrayMode<TVars> = CommonOpts<TVars> & {
-  mode: 'array';
-};
-
-/** Field is a wrapper object (default), e.g. { results, totalCount, pageInfo } */
-export type WrapperMode<TVars> = CommonOpts<TVars> & {
+export type WrapperMode<TItem, TVars> = BaseMergeOpts<TVars> & {
   mode?: 'wrapper';
   resultsKey?: string;
   totalKey?: string;
   pageInfoKey?: string;
+  mergeItemOpts?: {
+    getId?: (
+      item: TItem,
+      readField: FieldFunctionOptions['readField']
+    ) => string | number | null | undefined;
+  };
 };
 
-/** Discriminated union of merge options */
-export type TCacheMergeOpts<TVars = unknown> =
-  | ArrayMode<TVars>
-  | WrapperMode<TVars>;
+export type ArrayMode<TVars> = BaseMergeOpts<TVars> & {
+  mode: 'array';
+};
+
+export type TCacheMergeOpts<TItem, TVars> =
+  | WrapperMode<TItem, TVars>
+  | ArrayMode<TVars>;
