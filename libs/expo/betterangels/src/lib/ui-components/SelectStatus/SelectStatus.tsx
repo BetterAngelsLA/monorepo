@@ -68,7 +68,7 @@ export function SelectStatus({
         ]}
       >
         <TextBold size="sm" color={current?.text}>
-          {current?.value}
+          {current?.displayValue}
         </TextBold>
         <Chevron up={open} />
       </Pressable>
@@ -118,7 +118,7 @@ export function SelectStatus({
                   accessibilityRole="button"
                   accessibilityState={{ selected }}
                 >
-                  <TextBold color={opt.text}>{opt.value}</TextBold>
+                  <TextBold color={opt.text}>{opt.displayValue}</TextBold>
                 </Pressable>
               );
             })}
@@ -140,7 +140,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'center',
-    paddingVertical: Spacings.xs,
     width: '100%',
     height: 36,
     borderRadius: Radiuses.xs,

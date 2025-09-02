@@ -4,29 +4,37 @@ import {
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import { SelahTeamEnum, TaskType, extractOperationErrors } from '../../apollo';
+import {
+  SelahTeamEnum,
+  TaskType,
+  UpdateTaskInput,
+  extractOperationErrors,
+} from '../../apollo';
 import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
 import { useCreateTaskMutation } from './__generated__/createTask.generated';
+import { useUpdateTaskMutation } from './__generated__/updateTask.generated';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
 type TProps = {
   clientProfileId?: string;
-  team?: SelahTeamEnum;
+  team?: SelahTeamEnum | null;
+  noteId?: string;
   onCancel?: () => void;
   onSuccess?: (taskId: string) => void;
+  task?: UpdateTaskInput | null;
 };
 
 export function TaskForm(props: TProps) {
-  const { clientProfileId, team, onSuccess, onCancel } = props;
+  const { clientProfileId, team, onSuccess, onCancel, noteId, task } = props;
 
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
   const [createTaskMutation] = useCreateTaskMutation();
-
+  const [updateTaskMutation] = useUpdateTaskMutation();
   const {
     control,
     handleSubmit,
@@ -40,6 +48,17 @@ export function TaskForm(props: TProps) {
     defaultValues: { ...emptyState, team: team || '' },
   });
 
+  const getArgsFromStoreFieldName = (storeFieldName?: string) => {
+    if (!storeFieldName) return null;
+    const i = storeFieldName.indexOf('(');
+    if (i < 0) return null;
+    try {
+      return JSON.parse(storeFieldName.slice(i + 1, -1));
+    } catch {
+      return null;
+    }
+  };
+
   const onSubmit: SubmitHandler<TFormSchema> = async (
     formData: TFormSchema
   ) => {
@@ -48,22 +67,96 @@ export function TaskForm(props: TProps) {
 
       const { summary, description, team, status } = formData;
 
-      const response = await createTaskMutation({
-        variables: {
-          data: {
-            summary,
-            description,
-            status,
-            team: team || null,
-            clientProfile: clientProfileId,
-          },
-        },
-        errorPolicy: 'all',
-      });
+      const response = task
+        ? await updateTaskMutation({
+            variables: {
+              data: {
+                id: task.id,
+                summary,
+                description,
+                status,
+                team: team || null,
+              },
+            },
+            errorPolicy: 'all',
+            update(cache, { data }) {
+              const payload = data?.updateTask;
+              if (!payload || payload.__typename !== 'TaskType') return;
+
+              cache.modify({
+                id: cache.identify({ __typename: 'TaskType', id: payload.id }),
+                fields: {
+                  summary: () => payload.summary,
+                  description: () => payload.description,
+                  status: () => payload.status,
+                  team: () => payload.team,
+                  updatedAt: () =>
+                    payload.updatedAt ?? new Date().toISOString(),
+                },
+              });
+            },
+          })
+        : await createTaskMutation({
+            variables: {
+              data: {
+                summary,
+                description,
+                status,
+                team: team || null,
+                clientProfile: clientProfileId,
+                note: noteId || null,
+              },
+            },
+            errorPolicy: 'all',
+            update(cache, { data }) {
+              const created = data?.createTask;
+              if (!created || created.__typename !== 'TaskType') return;
+
+              cache.modify({
+                id: 'ROOT_QUERY',
+                fields: {
+                  tasks(existing: any = {}, details: any) {
+                    if (!existing?.results) return existing;
+
+                    const { toReference, readField, storeFieldName } = details;
+                    const vars = getArgsFromStoreFieldName(storeFieldName);
+                    const offset = vars?.pagination?.offset ?? 0;
+                    if (offset !== 0) return existing;
+
+                    const newRef = toReference({
+                      __typename: 'TaskType',
+                      id: created.id,
+                    });
+                    if (
+                      existing.results.some(
+                        (ref: any) => readField('id', ref) === created.id
+                      )
+                    ) {
+                      return existing;
+                    }
+
+                    let results = [newRef, ...existing.results];
+
+                    const limit = vars?.pagination?.limit;
+                    if (typeof limit === 'number' && results.length > limit) {
+                      results = results.slice(0, limit);
+                    }
+
+                    const totalCount =
+                      typeof existing.totalCount === 'number'
+                        ? existing.totalCount + 1
+                        : existing.totalCount;
+
+                    return { ...existing, results, totalCount };
+                  },
+                },
+              });
+            },
+          });
 
       const { validationErrors, errorMessage } = extractOperationErrors({
         response,
-        queryKey: 'createTask',
+        queryKey: task ? 'updateTask' : 'createTask',
         fields: Object.keys(FormSchema.shape),
         resultTypename: 'TaskType',
       });
@@ -79,7 +172,13 @@ export function TaskForm(props: TProps) {
         throw new Error(errorMessage);
       }
 
-      const newTask = response.data?.createTask;
+      let newTask;
+
+      if (response.data && 'updateTask' in response.data) {
+        newTask = response.data.updateTask;
+      } else {
+        newTask = response.data?.createTask;
+      }
 
       if (!newTask) {
         throw new Error('mutation failed');
@@ -98,6 +197,18 @@ export function TaskForm(props: TProps) {
       setDisabled(false);
     }
   };
+
+  useEffect(() => {
+    if (!task) return;
+
+    resetForm({
+      ...emptyState,
+      summary: task.summary || undefined,
+      team: task.team || undefined,
+      description: task.description || '',
+      status: task.status || undefined,
+    });
+  }, [task]);
 
   return (
     <Form.Page

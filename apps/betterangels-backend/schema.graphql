@@ -520,7 +520,7 @@ union CreateNoteMoodPayload = MoodType | OperationInfo
 union CreateNotePayload = NoteType | OperationInfo
 
 input CreateNoteServiceRequestInput {
-  service: ServiceEnum
+  serviceId: ID
   serviceEnum: ServiceEnum
   serviceOther: String
   noteId: ID!
@@ -535,7 +535,7 @@ input CreateProfileDataImportInput {
 }
 
 input CreateServiceRequestInput {
-  service: ServiceEnum
+  serviceId: ID
   serviceEnum: ServiceEnum
   status: ServiceRequestStatusEnum!
   serviceOther: String
@@ -745,6 +745,17 @@ enum HmisAgencyEnum {
   CHAMP
   VASH
 }
+
+type HmisLoginError {
+  message: String!
+  field: String
+}
+
+type HmisLoginSuccess {
+  hmisToken: String!
+}
+
+union HmisLoginSuccessHmisLoginError = HmisLoginSuccess | HmisLoginError
 
 input HmisProfileInput {
   hmisId: NonBlankString
@@ -957,6 +968,7 @@ type Mutation {
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
+  hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
@@ -1178,7 +1190,7 @@ type OrganizationServiceType {
   id: ID!
   category: OrganizationServiceCategoryType!
   priority: Int
-  service: String!
+  label: String!
 }
 
 type OrganizationServiceTypeOffsetPaginated {
@@ -1437,15 +1449,12 @@ enum ServiceEnum {
   SLEEPING_BAG
   SOCIAL_SECURITY_CARD_REPLACEMENT
   SSI_SSDI
-  STABILIZE
   STIMULUS_ASSISTANCE
-  STORAGE
   STORAGE_BELONGINGS
   STORAGE_DOCUMENTS
   TARP
   TENT
   THERAPIST_APPOINTMENT
-  TRANSPORT
   UNEMPLOYMENT_CERTIFICATION
   VACCINE_PASSPORT
   WATER
@@ -1458,6 +1467,7 @@ enum ServiceRequestStatusEnum {
 
 type ServiceRequestType {
   id: ID!
+  service: OrganizationServiceType
   serviceEnum: ServiceEnum
   serviceOther: String
   status: ServiceRequestStatusEnum!
@@ -1466,7 +1476,6 @@ type ServiceRequestType {
   clientProfile: ClientProfileType
   createdBy: UserType!
   createdAt: DateTime!
-  service: ServiceEnum!
 }
 
 enum ServiceRequestTypeEnum {

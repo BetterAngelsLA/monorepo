@@ -1,5 +1,6 @@
 from typing import Any, Optional
 from unittest import skip
+from unittest.mock import ANY
 
 import time_machine
 from accounts.models import User
@@ -93,7 +94,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "providedServices": [
                 {
                     "id": str(self.provided_services[0].id),
-                    "service": ServiceEnum(self.provided_services[0].service).name,
+                    "service": {"id": ANY, "label": "Bag(s)"},
                     "serviceEnum": ServiceEnum(self.provided_services[0].service_enum).name,
                     "serviceOther": self.provided_services[0].service_other,
                     "dueBy": self.provided_services[0].due_by,
@@ -101,7 +102,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 },
                 {
                     "id": str(self.provided_services[1].id),
-                    "service": ServiceEnum(self.provided_services[1].service).name,
+                    "service": {"id": ANY, "label": "Book"},
                     "serviceEnum": ServiceEnum(self.provided_services[1].service_enum).name,
                     "serviceOther": self.provided_services[1].service_other,
                     "dueBy": self.provided_services[1].due_by,
@@ -111,7 +112,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "requestedServices": [
                 {
                     "id": str(self.requested_services[0].id),
-                    "service": ServiceEnum(self.requested_services[0].service).name,
+                    "service": {"id": ANY, "label": "EBT"},
                     "serviceEnum": ServiceEnum(self.requested_services[0].service_enum).name,
                     "serviceOther": self.requested_services[0].service_other,
                     "dueBy": self.requested_services[0].due_by,
@@ -119,7 +120,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 },
                 {
                     "id": str(self.requested_services[1].id),
-                    "service": ServiceEnum(self.requested_services[1].service).name,
+                    "service": {"id": ANY, "label": "Food"},
                     "serviceEnum": ServiceEnum(self.requested_services[1].service_enum).name,
                     "serviceOther": self.requested_services[1].service_other,
                     "dueBy": self.requested_services[1].due_by,
@@ -128,7 +129,12 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             ],
             "tasks": [{"id": str(task["id"]), "summary": "task summary"}],
         }
-        note_differences = DeepDiff(expected_note, note, ignore_order=True)
+        note_differences = DeepDiff(
+            expected_note,
+            note,
+            ignore_order=True,
+            exclude_regex_paths=[r"\['id'\]$"],
+        )
         self.assertFalse(note_differences)
 
     def test_notes_query(self) -> None:
@@ -521,7 +527,7 @@ class OrganizationServiceQueryTestCase(GraphQLBaseTestCase):
                         priority
                         services (ordering: $subOrdering) {
                             id
-                            service
+                            label
                             priority
                         }
                     }
@@ -562,7 +568,7 @@ class OrganizationServiceCategoryQueryTestCase(GraphQLBaseTestCase):
                     results {
                         id
                         priority
-                        service
+                        label
                         category {
                             id
                             name
@@ -585,10 +591,10 @@ class OrganizationServiceCategoryQueryTestCase(GraphQLBaseTestCase):
         self.assertEqual(response["data"]["services"]["totalCount"], services.count())
 
         expected_services = [
-            {s.service: {"priority": s.priority, "category": s.category.name if s.category else None}} for s in services
+            {s.label: {"priority": s.priority, "category": s.category.name if s.category else None}} for s in services
         ]
         actual_services = [
-            {s["service"]: {"priority": s["priority"], "category": s["category"]["name"]}} for s in results
+            {s["label"]: {"priority": s["priority"], "category": s["category"]["name"]}} for s in results
         ]
         self.assertCountEqual(expected_services, actual_services)
 
