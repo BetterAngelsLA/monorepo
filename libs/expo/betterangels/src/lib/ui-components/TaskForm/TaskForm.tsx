@@ -131,8 +131,9 @@ export function TaskForm(props: TProps) {
                       existing.results.some(
                         (ref: any) => readField('id', ref) === created.id
                       )
-                    )
+                    ) {
                       return existing;
+                    }
 
                     let results = [newRef, ...existing.results];
 
