@@ -1,5 +1,8 @@
 {
-  "extends": ["../../.eslintrc.json"],
+  "extends": [
+    "plugin:@nx/react", // this is a TS lib, so not sure it should be using this plugin, though keeps it consitent with others
+    "../../.eslintrc.json"
+  ],
   "ignorePatterns": [
     "!**/*",
     "**/vite.config.*.timestamp*",

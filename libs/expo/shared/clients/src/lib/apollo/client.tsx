@@ -15,8 +15,6 @@ type TArgs = {
 export const createApolloClient = (args: TArgs) => {
   const { cacheStore, apiUrl, csrfUrl = `${apiUrl}/admin/login/` } = args;
 
-  console.log('*****************  csrfUrl:', csrfUrl);
-
   return new ApolloClient({
     link: from([
       setContext(async (_, { headers = {} }) => {

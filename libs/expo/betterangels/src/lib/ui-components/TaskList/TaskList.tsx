@@ -1,26 +1,20 @@
+import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Spacings } from '@monorepo/expo/shared/static';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { FlashList } from '@shopify/flash-list';
-import {
-  ReactElement,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { uniqueBy } from 'remeda';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import { InputMaybe, TaskFilter, TaskOrder } from '../../apollo';
 import { pagePaddingHorizontal } from '../../static';
+import { ListEmptyState } from './ListEmptyState';
+import { ListLoadingView } from './ListLoadingView';
+import { TaskListHeader } from './TaskListHeader';
 import { TasksQuery, useTasksQuery } from './__generated__/Tasks.generated';
 import {
   DEFAULT_ITEM_GAP,
   DEFAULT_PAGINATION_LIMIT,
   DEFAULT_QUERY_ORDER,
 } from './constants';
-import { ListEmptyState } from './ListEmptyState';
-import { ListLoadingView } from './ListLoadingView';
-import { TaskListHeader } from './TaskListHeader';
 import { ListHeaderProps } from './types';
 
 type TTask = TasksQuery['tasks']['results'][number];
@@ -52,51 +46,19 @@ export function TaskList(props: TProps) {
     actionItem,
   } = props;
 
-  const [offset, setOffset] = useState<number>(0);
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const [tasks, setTasks] = useState<TTask[] | undefined>(undefined);
-
-  const { data, loading } = useTasksQuery({
+  const { items, total, loading, loadMore, error } = useInfiniteScrollQuery<
+    TTask,
+    typeof useTasksQuery
+  >({
+    useQueryHook: useTasksQuery,
+    queryFieldName: 'tasks',
     variables: {
       filters,
       ordering: order || undefined,
-      pagination: { limit: paginationLimit, offset: offset },
     },
-    fetchPolicy: 'cache-and-network',
-    nextFetchPolicy: 'cache-first',
+    pageSize: paginationLimit,
+    silencePolicyCheck: true,
   });
-
-  useDeepCompareEffect(() => {
-    setOffset(0);
-    setTasks(undefined);
-  }, [filters]);
-
-  useEffect(() => {
-    if (!data || !('tasks' in data)) {
-      return;
-    }
-
-    const { results, totalCount: newTotalCount } = data.tasks;
-
-    setTotalCount(newTotalCount);
-
-    setTasks((prevTasks) => {
-      if (offset === 0 || prevTasks === undefined) {
-        return results;
-      }
-
-      return uniqueBy([...prevTasks, ...results], (task) => task.id);
-    });
-
-    setHasMore(offset + paginationLimit < newTotalCount);
-  }, [data, offset]);
-
-  function loadMoreTasks() {
-    if (hasMore && !loading) {
-      setOffset((prevOffset) => prevOffset + paginationLimit);
-    }
-  }
 
   const renderItemFn = useCallback(
     ({ item }: { item: TTask }) => renderItem(item),
@@ -112,12 +74,18 @@ export function TaskList(props: TProps) {
   };
 
   // initial query hasn't run yet
-  if (tasks === undefined && loading) {
+  if (items === undefined && loading) {
     return <ListLoadingView fullScreen={true} />;
   }
 
-  if (!tasks) {
-    return null;
+  if (error) {
+    console.error(error);
+
+    return (
+      <TextRegular>
+        Sorry, there was an error loading the task list.
+      </TextRegular>
+    );
   }
 
   return (
@@ -129,22 +97,22 @@ export function TaskList(props: TProps) {
           { paddingHorizontal: horizontalPadding },
           headerStyle,
         ]}
-        totalTasks={totalCount}
-        visibleTasks={tasks.length}
+        totalTasks={total}
+        visibleTasks={items.length}
         renderHeaderText={renderHeaderText}
       />
       <FlashList<TTask>
         estimatedItemSize={95}
-        data={tasks}
+        data={items}
         keyExtractor={(item) => item.id}
         renderItem={renderItemFn}
-        onEndReached={loadMoreTasks}
+        onEndReached={loadMore}
         onEndReachedThreshold={0.05}
         // ItemSeparatorComponent renders only between items in a batch
         ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
         // set extraData to force re-render when data is appended, else
         // newly loaded batch won't be separated by ItemSeparatorComponent
-        extraData={tasks.length}
+        extraData={items.length}
         ListEmptyComponent={<ListEmptyState />}
         ListFooterComponent={renderFooter}
         contentContainerStyle={{
