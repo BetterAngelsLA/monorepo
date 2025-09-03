@@ -1,5 +1,4 @@
-// src/lib/cachePolicy/generateFieldPolicy.test.ts
-import type { FieldPolicy, TypePolicies } from '@apollo/client';
+import type { FieldPolicy } from '@apollo/client';
 import {
   afterEach,
   beforeEach,
@@ -9,6 +8,8 @@ import {
   vi,
   type MockInstance,
 } from 'vitest';
+import { generateFieldPolicy } from './generateFieldPolicy';
+import { generateMergeFn } from './merge';
 
 // 🔁 Mock BEFORE importing the SUT. Define mocks INSIDE the factory (no top-level refs).
 vi.mock('./merge', () => {
@@ -39,17 +40,10 @@ vi.mock('./merge', () => {
   return { generateMergeFn };
 });
 
-// Now import SUT and the mocked symbol
-import { generateFieldPolicy } from './generateFieldPolicy';
-import { generateMergeFn } from './merge';
-
 function narrowMerge(p: FieldPolicy) {
   expect(typeof p.merge).toBe('function');
   return p.merge as (existing: any, incoming: any, context: any) => any;
 }
-
-const getQueryFields = (p: TypePolicies) =>
-  (p['Query'] as unknown as { fields: Record<string, FieldPolicy> }).fields;
 
 describe('generateFieldPolicy', () => {
   let warnSpy: MockInstance<[message?: any, ...optionalParams: any[]], void>;
@@ -58,6 +52,7 @@ describe('generateFieldPolicy', () => {
     vi.clearAllMocks();
     warnSpy = vi
       .spyOn(console, 'warn')
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       .mockImplementation(() => {}) as unknown as MockInstance<
       [message?: any, ...optionalParams: any[]],
       void

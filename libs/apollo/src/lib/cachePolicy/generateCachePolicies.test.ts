@@ -31,6 +31,7 @@ describe('generateCachePolicies', () => {
   beforeEach(() => {
     warnSpy = vi
       .spyOn(console, 'warn')
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       .mockImplementation(() => {}) as unknown as MockInstance<
       [message?: any, ...optionalParams: any[]],
       void
