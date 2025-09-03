@@ -1,6 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { FlashList } from '@shopify/flash-list';
-import { ReactNode, useCallback } from 'react';
+import { FlashList, ListRenderItem } from '@shopify/flash-list';
+import { ReactElement, useCallback } from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import { NoResultsView } from '../NoResultsView';
 import { SearchBar } from '../SearchBar';
@@ -22,11 +22,7 @@ export interface TMultiSelect<T> {
   search?: string;
   searchPlaceholder?: string;
   searchDebounceMs?: number;
-  renderOption?: (
-    option: T,
-    props: TMultiSelectItem,
-    index: number
-  ) => ReactNode;
+  renderOption?: (option: T, props: TMultiSelectItem) => ReactElement;
   totalOptions?: number;
   loadMore?: () => void;
   loading?: boolean;
@@ -74,7 +70,7 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
     return onChange([...selected, item]);
   };
 
-  const renderItemFn = useCallback(
+  const renderItemFn: ListRenderItem<T> = useCallback(
     ({ item }: { item: T }) => {
       const isChecked = isSelected(item);
       const label = String(item[labelKey] ?? '');
@@ -83,6 +79,18 @@ export function MultiSelectInfinite<T>(props: TMultiSelect<T>) {
         ? `uncheck option: ${label}`
         : `check option: ${label}`;
       const testId = `MultiSelect-option-${label.replace(/\s+/g, '-')}`;
+
+      const optionProps = {
+        isChecked,
+        onClick,
+        label,
+        accessibilityHint,
+        testId,
+      };
+
+      if (renderOption) {
+        return renderOption(item, optionProps);
+      }
 
       return (
         <MultiSelectItem

@@ -1,5 +1,4 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { StyleSheet } from 'react-native';
 import {
   MainContainer,
   TSelectedTaskFilters,
@@ -17,12 +16,3 @@ export default function Tasks() {
     </MainContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  searchContainer: {
-    width: '100%',
-    display: 'flex',
-    flexDirection: 'row',
-    gap: 16,
-  },
-});

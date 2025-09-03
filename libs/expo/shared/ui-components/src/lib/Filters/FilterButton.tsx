@@ -21,7 +21,7 @@ export type TFilterButton = {
 export function FilterButton(props: TFilterButton) {
   const { label, selected, onPress, labelMaxWidth, style } = props;
 
-  let visibleLabel = selected[0] || label;
+  const visibleLabel = selected[0] || label;
   let backgroundColor = Colors.WHITE;
   let textColor = Colors.PRIMARY_EXTRA_DARK;
   let extraSelected = 0;

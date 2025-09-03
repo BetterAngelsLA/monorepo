@@ -155,7 +155,7 @@ export function usePaginatedQuery<TItem, H extends AnyGeneratedHook>(args: {
 
   // Refetch when **semantic inputs** change (stable variables) or resetOn
   useEffect(() => {
-    refetch(initialVars as Partial<TVars>).catch(() => {});
+    refetch(initialVars as Partial<TVars>);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [varsKey, ...resetOn]);
 

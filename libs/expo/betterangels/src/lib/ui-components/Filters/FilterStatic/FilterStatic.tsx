@@ -1,14 +1,6 @@
 import { Filters, TFilterOption } from '@monorepo/expo/shared/ui-components';
 import { StyleProp, ViewStyle } from 'react-native';
 import { useModalScreen } from '../../../providers';
-import { enumDisplaySelahTeam } from '../../../static';
-
-const teamOptions: TFilterOption[] = Object.entries(enumDisplaySelahTeam).map(
-  ([key, value]) => ({
-    id: key,
-    label: value,
-  })
-);
 
 type TProps = {
   label: string;
