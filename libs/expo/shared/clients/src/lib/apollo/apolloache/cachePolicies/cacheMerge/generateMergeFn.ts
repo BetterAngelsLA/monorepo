@@ -1,6 +1,6 @@
 import type { FieldFunctionOptions, FieldMergeFunction } from '@apollo/client';
-import { arrayMerge } from './mergeFunctions/arrayMerge';
-import { cacheMerge } from './mergeFunctions/cacheMerge';
+import { mergeArrayPayload } from './mergeFunctions/mergeArrayPayload';
+import { mergeObjectPayload } from './mergeFunctions/mergeObjectPayload';
 import type {
   AdaptArgs,
   PageVars,
@@ -26,7 +26,7 @@ export function generateMergeFn<TItem = unknown, TVars = unknown>(
   const adapt = (opts?.adaptArgs ?? defaultAdapt) as AdaptArgs<TVars>;
 
   if (opts?.mode === 'array') {
-    return arrayMerge<TItem, TVars>(adapt) as unknown as TResult; // <-- pass TVars
+    return mergeArrayPayload<TItem, TVars>(adapt) as unknown as TResult; // <-- pass TVars
   }
 
   const {
@@ -36,7 +36,7 @@ export function generateMergeFn<TItem = unknown, TVars = unknown>(
     mergeItemOpts,
   } = (opts ?? {}) as WrapperMode<TItem, TVars>;
 
-  return cacheMerge<TItem, TVars>(
+  return mergeObjectPayload<TItem, TVars>(
     { resultsKey, totalKey, pageInfoKey },
     adapt,
     mergeItemOpts

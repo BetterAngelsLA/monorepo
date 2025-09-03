@@ -82,7 +82,8 @@
     "@shopify/flash-list": "*",
     "@hookform/resolvers": "*",
     "zod": "*",
-    "object-hash": "*"
+    "object-hash": "*",
+    "graphql": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

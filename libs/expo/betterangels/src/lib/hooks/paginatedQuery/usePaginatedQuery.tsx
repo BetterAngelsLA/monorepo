@@ -67,6 +67,13 @@ export function usePaginatedQuery<TItem, H extends AnyGeneratedHook>(args: {
 
   /** Extra deps that should trigger a refetch/reset */
   resetOn?: ReadonlyArray<unknown>;
+
+  /* TODO: implement `resultsMode` or `includeUndefined` option?
+   * Merged results can possibly include `undefined` values in list
+   * sparse: include undefined
+   * dense: exclude undefined
+   * resultsMode?: 'dense' | 'sparse';
+   */
 }) {
   type TData = HookData<H>;
   type TVars = HookVars<H>;

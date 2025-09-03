@@ -1,7 +1,7 @@
 import type { FieldFunctionOptions, FieldMergeFunction } from '@apollo/client';
 import type { AdaptArgs } from '../types';
 
-export function arrayMerge<TItem = unknown, TVars = unknown>(
+export function mergeArrayPayload<TItem = unknown, TVars = unknown>(
   adapt: AdaptArgs<TVars>
 ): FieldMergeFunction<
   readonly TItem[] | undefined,
