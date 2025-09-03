@@ -1407,6 +1407,11 @@ export type OrganizationMemberTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
+export type OrganizationOrder = {
+  id?: InputMaybe<Ordering>;
+  name?: InputMaybe<Ordering>;
+};
+
 export type OrganizationServiceCategoryOrdering = {
   id?: InputMaybe<Ordering>;
   priority?: InputMaybe<Ordering>;
@@ -1578,6 +1583,7 @@ export type QueryBulkClientProfileImportRecordsArgs = {
 
 export type QueryCaseworkerOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
+  order?: InputMaybe<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2324,6 +2330,7 @@ export type UserType = {
 
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
+  order?: InputMaybe<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

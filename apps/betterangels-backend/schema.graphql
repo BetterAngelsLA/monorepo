@@ -1168,6 +1168,11 @@ type OrganizationMemberTypeOffsetPaginated {
   results: [OrganizationMemberType!]!
 }
 
+input OrganizationOrder {
+  name: Ordering
+  id: Ordering
+}
+
 input OrganizationServiceCategoryOrdering {
   id: Ordering
   priority: Ordering
@@ -1289,7 +1294,7 @@ enum PronounEnum {
 
 type Query {
   currentUser: UserType!
-  caseworkerOrganizations(filters: OrganizationFilter, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
+  caseworkerOrganizations(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   organizationMembers(organizationId: String!, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder, ordering: [ClientProfileOrdering]! = []): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
@@ -1912,7 +1917,7 @@ type UserType {
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
-  organizationsOrganization(filters: OrganizationFilter, pagination: OffsetPaginationInput): [OrganizationForUserType!]
+  organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): [OrganizationForUserType!]
   username: String!
 }
 
