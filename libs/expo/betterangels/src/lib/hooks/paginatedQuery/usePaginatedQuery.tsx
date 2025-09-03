@@ -95,23 +95,27 @@ export function usePaginatedQuery<TItem, H extends AnyGeneratedHook>(args: {
   }, [client.cache, queryFieldName]);
 
   // Default selector
-  const defaultSelect: Selector<any, any> = (d) => {
-    const field = (d as any)?.[queryFieldName] ?? {};
-    return {
-      items: field.results ?? undefined,
-      total: field.totalCount ?? 0,
-    };
-  };
-  const effectiveSelect = (select ?? defaultSelect) as Selector<TData, TItem>;
+  const defaultSelect = useCallback<Selector<TData, TItem>>(
+    (d) => {
+      const field = (d as any)?.[queryFieldName] ?? {};
+      return {
+        items: field.results ?? undefined,
+        total: field.totalCount ?? 0,
+      };
+    },
+    [queryFieldName]
+  );
+
+  const effectiveSelect = select ?? defaultSelect;
 
   // Make `variables` stable **inside** the hook (identity-insensitive)
   const varsKey = useMemo(() => JSON.stringify(variables ?? {}), [variables]);
-  const stableVars = useMemo(() => variables as TVars | undefined, [varsKey]);
+  const stableVars = useMemo<TVars | undefined>(() => variables, [varsKey]);
 
   // Default composer: copy base and inject pagination
   const defaultCompose: ComposeVars<TVars> = (base, { offset, limit }) => ({
     ...(base ?? ({} as TVars)),
-    pagination: { limit, offset } as any,
+    pagination: { limit, offset },
   });
 
   const makeVars = useCallback(
@@ -164,8 +168,10 @@ export function usePaginatedQuery<TItem, H extends AnyGeneratedHook>(args: {
     if (!hasMore || loading || inFlight.current) return;
     inFlight.current = true;
 
-    const nextVars = makeVars(safeLen, pageSize);
-    fetchMore({ variables: nextVars }).catch(() => {
+    const expectedOffset = safeLen;
+    const nextVars = makeVars(expectedOffset, pageSize);
+
+    fetchMore({ variables: nextVars }).finally(() => {
       inFlight.current = false;
     });
   }, [hasMore, loading, safeLen, pageSize, makeVars, fetchMore]);
