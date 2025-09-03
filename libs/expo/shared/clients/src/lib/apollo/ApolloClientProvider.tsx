@@ -1,4 +1,5 @@
-import { ApolloProvider } from '@apollo/client';
+import { ApolloProvider, InMemoryCache } from '@apollo/client';
+import { TCachePolicyConfig, createApolloCache } from '@monorepo/apollo';
 import React, { ReactNode, useMemo } from 'react';
 import { useApiConfig } from '../http';
 import { createApolloClient } from './client';
@@ -11,11 +12,22 @@ import { createApolloClient } from './client';
  * @param props - The props for the component, including children.
  * @returns A provider component that supplies the Apollo Client to its children.
  */
-export const ApolloClientProvider = ({ children }: { children: ReactNode }) => {
+
+type TProps = {
+  children: ReactNode;
+  cacheStore?: InMemoryCache;
+  policyConfig?: TCachePolicyConfig;
+};
+
+export const ApolloClientProvider = (props: TProps) => {
+  const { policyConfig, cacheStore, children } = props;
+
   const { baseUrl } = useApiConfig();
 
+  const cache = cacheStore || createApolloCache({ policyConfig });
+
   const apolloClient = useMemo(() => {
-    return createApolloClient(baseUrl);
+    return createApolloClient({ apiUrl: baseUrl, cacheStore: cache });
   }, [baseUrl]);
 
   if (!apolloClient) {

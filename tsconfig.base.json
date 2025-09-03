@@ -17,6 +17,7 @@
     "baseUrl": ".",
     "paths": {
       "@betterangels/*": ["apps/betterangels/*"],
+      "@monorepo/apollo": ["libs/apollo/src/index.ts"],
       "@monorepo/assets": ["libs/assets/src/index.ts"],
       "@monorepo/expo/betterangels": ["libs/expo/betterangels/src/index.ts"],
       "@monorepo/expo/shared/clients": [

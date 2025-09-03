@@ -1,0 +1,1 @@
+export { cachePolicyRegistry } from './cachePolicyRegistry';

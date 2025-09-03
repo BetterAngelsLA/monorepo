@@ -1,0 +1,1 @@
+export { createApolloCache } from './createApolloCache';
