@@ -360,6 +360,12 @@ export type ClientProfileOrder = {
   lastName?: InputMaybe<Ordering>;
 };
 
+export type ClientProfileOrdering = {
+  firstName?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  lastName?: InputMaybe<Ordering>;
+};
+
 export type ClientProfilePhotoInput = {
   clientProfile: Scalars['ID']['input'];
   photo: Scalars['Upload']['input'];
@@ -834,6 +840,12 @@ export type InteractionAuthorOrder = {
   lastName?: InputMaybe<Ordering>;
 };
 
+export type InteractionAuthorOrdering = {
+  firstName?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  lastName?: InputMaybe<Ordering>;
+};
+
 export type InteractionAuthorType = {
   __typename?: 'InteractionAuthorType';
   firstName?: Maybe<Scalars['String']['output']>;
@@ -1287,7 +1299,7 @@ export type NoteTypeRequestedServicesArgs = {
 
 export type NoteTypeTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
-  ordering?: Array<TaskOrder>;
+  ordering?: Array<InputMaybe<TaskOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1400,6 +1412,11 @@ export type OrganizationOrder = {
   name?: InputMaybe<Ordering>;
 };
 
+export type OrganizationOrdering = {
+  id?: InputMaybe<Ordering>;
+  name?: InputMaybe<Ordering>;
+};
+
 export type OrganizationServiceCategoryOrdering = {
   id?: InputMaybe<Ordering>;
   priority?: InputMaybe<Ordering>;
@@ -1415,7 +1432,7 @@ export type OrganizationServiceCategoryType = {
 
 
 export type OrganizationServiceCategoryTypeServicesArgs = {
-  ordering?: Array<OrganizationServiceOrdering>;
+  ordering?: Array<InputMaybe<OrganizationServiceOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1572,6 +1589,7 @@ export type QueryBulkClientProfileImportRecordsArgs = {
 export type QueryCaseworkerOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
+  ordering?: Array<InputMaybe<OrganizationOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1616,6 +1634,7 @@ export type QueryClientProfileArgs = {
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
+  ordering?: Array<InputMaybe<ClientProfileOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1633,6 +1652,7 @@ export type QueryHmisProfilesArgs = {
 export type QueryInteractionAuthorsArgs = {
   filters?: InputMaybe<InteractionAuthorFilter>;
   order?: InputMaybe<InteractionAuthorOrder>;
+  ordering?: Array<InputMaybe<InteractionAuthorOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1645,7 +1665,7 @@ export type QueryNoteArgs = {
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
   order?: InputMaybe<NoteOrder>;
-  ordering?: Array<NoteOrder>;
+  ordering?: Array<InputMaybe<NoteOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1663,13 +1683,13 @@ export type QueryOrganizationMembersArgs = {
 
 
 export type QueryServiceCategoriesArgs = {
-  ordering?: Array<OrganizationServiceCategoryOrdering>;
+  ordering?: Array<InputMaybe<OrganizationServiceCategoryOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
 export type QueryServicesArgs = {
-  ordering?: Array<OrganizationServiceOrdering>;
+  ordering?: Array<InputMaybe<OrganizationServiceOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1682,6 +1702,7 @@ export type QueryShelterArgs = {
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
   order?: InputMaybe<ShelterOrder>;
+  ordering?: Array<InputMaybe<ShelterOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1703,7 +1724,7 @@ export type QueryTaskArgs = {
 
 export type QueryTasksArgs = {
   filters?: InputMaybe<TaskFilter>;
-  ordering?: Array<TaskOrder>;
+  ordering?: Array<InputMaybe<TaskOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1916,6 +1937,9 @@ export type ShelterLocationType = {
 export type ShelterOrder = {
   name?: InputMaybe<Ordering>;
 };
+
+export type ShelterOrdering =
+  { name: Ordering; };
 
 export type ShelterPhotoType = {
   __typename?: 'ShelterPhotoType';
@@ -2310,6 +2334,7 @@ export type UserType = {
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
+  ordering?: Array<InputMaybe<OrganizationOrdering>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
