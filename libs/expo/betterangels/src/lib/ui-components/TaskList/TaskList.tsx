@@ -57,7 +57,6 @@ export function TaskList(props: TProps) {
       ordering: order || undefined,
     },
     pageSize: paginationLimit,
-    silencePolicyCheck: true,
   });
 
   const renderItemFn = useCallback(
