@@ -5200,6 +5200,7 @@ __metadata:
     jiti: "npm:2.4.2"
     jotai: "npm:^2.12.5"
     jsdom: "npm:~22.1.0"
+    jsonc-eslint-parser: "npm:^2.1.0"
     libphonenumber-js: "npm:^1.12.6"
     metro: "npm:^0.82.0"
     metro-react-native-babel-transformer: "npm:^0.77.0"

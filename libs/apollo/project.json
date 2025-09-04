@@ -1,0 +1,35 @@
+{
+  "name": "apollo",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/apollo/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "libs/apollo",
+        "commands": [
+          {
+            "command": "tsc --noEmit -p tsconfig.lib.json"
+          }
+        ]
+      }
+    },
+    "build": {
+      "executor": "@nx/js:swc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/apollo",
+        "main": "libs/apollo/src/index.ts",
+        "tsConfig": "libs/apollo/tsconfig.lib.json",
+        "assets": ["libs/apollo/*.md"]
+      }
+    }
+  }
+}
