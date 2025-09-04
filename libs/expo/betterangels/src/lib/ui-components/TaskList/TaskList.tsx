@@ -1,5 +1,5 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { FlashList } from '@shopify/flash-list';
+import { InfiniteList } from '@monorepo/expo/shared/ui-components';
 import {
   ReactElement,
   ReactNode,
@@ -12,15 +12,13 @@ import { uniqueBy } from 'remeda';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { InputMaybe, TaskFilter, TaskOrder } from '../../apollo';
 import { pagePaddingHorizontal } from '../../static';
+import { TaskListHeader } from './TaskListHeader';
 import { TasksQuery, useTasksQuery } from './__generated__/Tasks.generated';
 import {
   DEFAULT_ITEM_GAP,
   DEFAULT_PAGINATION_LIMIT,
   DEFAULT_QUERY_ORDER,
 } from './constants';
-import { ListEmptyState } from './ListEmptyState';
-import { ListLoadingView } from './ListLoadingView';
-import { TaskListHeader } from './TaskListHeader';
 import { ListHeaderProps } from './types';
 
 type TTask = TasksQuery['tasks']['results'][number];
@@ -99,58 +97,39 @@ export function TaskList(props: TProps) {
   }
 
   const renderItemFn = useCallback(
-    ({ item }: { item: TTask }) => renderItem(item),
+    (item: TTask) => renderItem(item),
     [renderItem]
   );
-
-  const renderFooter = () => {
-    if (!loading) {
-      return null;
-    }
-
-    return <ListLoadingView style={{ paddingVertical: 40 }} />;
-  };
-
-  // initial query hasn't run yet
-  if (tasks === undefined && loading) {
-    return <ListLoadingView fullScreen={true} />;
-  }
 
   if (!tasks) {
     return null;
   }
 
   return (
-    <View style={[styles.container, style]}>
+    <View
+      style={[
+        styles.container,
+        { paddingHorizontal: horizontalPadding },
+        style,
+      ]}
+    >
       <TaskListHeader
         actionItem={actionItem}
-        style={[
-          styles.header,
-          { paddingHorizontal: horizontalPadding },
-          headerStyle,
-        ]}
+        style={[styles.header, headerStyle]}
         totalTasks={totalCount}
         visibleTasks={tasks.length}
         renderHeaderText={renderHeaderText}
       />
-      <FlashList<TTask>
-        estimatedItemSize={95}
+
+      <InfiniteList<TTask>
         data={tasks}
-        keyExtractor={(item) => item.id}
+        estimatedItemSize={259}
+        idKey="id"
         renderItem={renderItemFn}
-        onEndReached={loadMoreTasks}
-        onEndReachedThreshold={0.05}
-        // ItemSeparatorComponent renders only between items in a batch
-        ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
-        // set extraData to force re-render when data is appended, else
-        // newly loaded batch won't be separated by ItemSeparatorComponent
-        extraData={tasks.length}
-        ListEmptyComponent={<ListEmptyState />}
-        ListFooterComponent={renderFooter}
-        contentContainerStyle={{
-          paddingBottom: 60,
-          paddingHorizontal: horizontalPadding,
-        }}
+        loading={loading}
+        loadMore={loadMoreTasks}
+        hasMore={hasMore}
+        itemGap={itemGap}
       />
     </View>
   );
@@ -162,8 +141,5 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: Spacings.xs,
-  },
-  listContent: {
-    paddingBottom: 60,
   },
 });
