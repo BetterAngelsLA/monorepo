@@ -4,7 +4,7 @@ import {
   FlashList,
   type FlashListProps,
 } from '@shopify/flash-list';
-import { ReactElement, ReactNode, useCallback } from 'react';
+import { ReactElement, ReactNode, useCallback, useMemo } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { EmptyListView } from './EmptyListView';
 import { ListLoadingView } from './ListLoadingView';
@@ -20,7 +20,6 @@ type TExtraFlashListProps<T> = Omit<
   | 'contentContainerStyle' // use contentStyle instead
   | 'onEndReached'
   | 'onEndReachedThreshold'
-  | 'extraData'
 >;
 
 type KeyOfType<T, V> = keyof {
@@ -60,6 +59,7 @@ export function InfiniteList<
     loadMore,
     loading,
     hasMore,
+    extraData,
     estimatedItemSize,
     ListEmptyComponent,
     ListFooterComponent,
@@ -107,6 +107,13 @@ export function InfiniteList<
     contentStyle,
   ]);
 
+  // Ensures separators re-render when data grows or
+  // data changes based on extraData prop
+  const stableExtraData = useMemo(
+    () => [data.length, itemGap, extraData],
+    [data.length, itemGap, extraData]
+  );
+
   return (
     <FlashList<T>
       estimatedItemSize={estimatedItemSize}
@@ -116,8 +123,7 @@ export function InfiniteList<
       onEndReached={onEndReached}
       onEndReachedThreshold={onEndReachedThreshold}
       ItemSeparatorComponent={Separator}
-      // Ensures separators render correctly when data grows
-      extraData={data.length}
+      extraData={stableExtraData}
       ListEmptyComponent={emptyComponent}
       ListFooterComponent={footerComponent}
       contentContainerStyle={mergedContentContainerStyle}
