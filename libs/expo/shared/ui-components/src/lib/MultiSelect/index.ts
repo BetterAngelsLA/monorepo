@@ -1,2 +1,2 @@
 export { MultiSelect as default } from './MultiSelect';
-export { MultiSelectNew } from './MultiSelectNew';
+export { MultiSelect_V2 } from './MultiSelect_V2';

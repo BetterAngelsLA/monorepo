@@ -1,5 +1,5 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { InfiniteList } from '@monorepo/expo/shared/ui-components';
+import { MultiSelectNew } from '@monorepo/expo/shared/ui-components';
 import {
   ReactElement,
   ReactNode,
@@ -12,13 +12,8 @@ import { uniqueBy } from 'remeda';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { InputMaybe, TaskFilter, TaskOrder } from '../../apollo';
 import { pagePaddingHorizontal } from '../../static';
-import { TaskListHeader } from './TaskListHeader';
 import { TasksQuery, useTasksQuery } from './__generated__/Tasks.generated';
-import {
-  DEFAULT_ITEM_GAP,
-  DEFAULT_PAGINATION_LIMIT,
-  DEFAULT_QUERY_ORDER,
-} from './constants';
+import { DEFAULT_ITEM_GAP, DEFAULT_QUERY_ORDER } from './constants';
 import { ListHeaderProps } from './types';
 
 type TTask = TasksQuery['tasks']['results'][number];
@@ -41,7 +36,9 @@ export function TaskList(props: TProps) {
     filters,
     order = DEFAULT_QUERY_ORDER,
     itemGap = DEFAULT_ITEM_GAP,
-    paginationLimit = DEFAULT_PAGINATION_LIMIT,
+    // paginationLimit = DEFAULT_PAGINATION_LIMIT,
+    // paginationLimit = 10,
+    paginationLimit = 100,
     renderItem,
     style,
     horizontalPadding = pagePaddingHorizontal,
@@ -54,6 +51,10 @@ export function TaskList(props: TProps) {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [tasks, setTasks] = useState<TTask[] | undefined>(undefined);
+
+  const [selected, setSelected] = useState<TTask[]>([]);
+
+  //
 
   const { data, loading } = useTasksQuery({
     variables: {
@@ -109,11 +110,15 @@ export function TaskList(props: TProps) {
     <View
       style={[
         styles.container,
-        { paddingHorizontal: horizontalPadding },
+        {
+          paddingHorizontal: horizontalPadding,
+          borderWidth: 8,
+          borderColor: 'blue',
+        },
         style,
       ]}
     >
-      <TaskListHeader
+      {/* <TaskListHeader
         actionItem={actionItem}
         style={[styles.header, headerStyle]}
         totalTasks={totalCount}
@@ -130,7 +135,57 @@ export function TaskList(props: TProps) {
         loadMore={loadMoreTasks}
         hasMore={hasMore}
         itemGap={itemGap}
+      /> */}
+      <MultiSelectNew<TTask>
+        mode="remote"
+        searchDebounceMs={50}
+        title="MultiSelectNew Title"
+        itemGap={itemGap}
+        options={tasks}
+        estimatedItemSize={58}
+        valueKey="id"
+        labelKey="summary"
+        selected={selected}
+        onChange={setSelected}
+        loading={loading}
+        loadMore={loadMoreTasks}
+        hasMore={hasMore}
+        totalOptions={totalCount}
+        onSearch={(query) => {
+          console.log(
+            '################################### SEARCH query: ',
+            query
+          );
+        }}
       />
+
+      {/* <MultiSelect
+          style={{ borderWidth: 4, borderColor: 'red' }}
+          filterPlaceholder="filter search"
+          withFilter
+          title="Multiselect Title"
+          // search={searchQuery}
+          // onSearch={onSearch}
+          // onChange={onSelected}
+          onChange={(newSelected) => {
+            console.log(
+              '################################### CHANGE: ',
+              newSelected
+            );
+          }}
+          // searchDebounceMs={searchDebounceMs}
+          options={tasks.map((t) => {
+            return {
+              id: t.id,
+              label: t.id,
+            };
+          })}
+          // selected={selected}
+          selected={[]}
+          itemGap={itemGap}
+          valueKey="id"
+          labelKey="label"
+        /> */}
     </View>
   );
 }

@@ -1,73 +1,69 @@
-import { ComponentProps, ReactElement, ReactNode } from 'react';
-import { StyleProp, ViewStyle } from 'react-native';
-import { InfiniteList } from '../InfiniteList';
-import { TMultiSelectItem } from './MultiSelectItem';
+import type { ComponentProps, ReactElement } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
+import type { InfiniteList } from '../InfiniteList';
+import type { TMultiSelectItem } from './MultiSelectItem';
 
-// Common props
-type MultiSelectSharedProps<T> = {
-  style?: StyleProp<ViewStyle>;
+export type SearchProps =
+  // Local, client-side filtering
+  | {
+      withLocalFilter: true;
+      searchPlaceholder?: string;
+      onSearch?: never;
+      searchDebounceMs?: never;
+    }
+  // Server-side search (UI emits query; parent fetches and updates `options`)
+  | {
+      withLocalFilter?: false;
+      onSearch: (q: string) => void;
+      searchDebounceMs?: number;
+      searchPlaceholder?: string;
+    }
+  // No search
+  | {
+      withLocalFilter?: false;
+      onSearch?: undefined;
+      searchDebounceMs?: never;
+      searchPlaceholder?: string;
+    };
+
+export type MultiSelectBaseProps<T> = {
   options?: T[];
   selected: T[];
   valueKey: keyof T;
   labelKey: keyof T;
-  onChange: (newSelected: T[]) => void;
+  onChange: (next: T[]) => void;
+
   title?: string;
-  useVirtualized?: boolean; // use FlashList?
-  // including estimatedItemSize helps with performance
-  // list items should be roughly similar size - see FlashList suggestion in console
-  estimatedItemSize?: number;
-
-  // Visuals
   itemGap?: number;
-  contentStyle?: ComponentProps<typeof InfiniteList<T>>['contentStyle'];
-  onEndReachedThreshold?: number;
-  showScrollIndicator?: boolean;
+  style?: StyleProp<ViewStyle>;
 
-  // Customize
+  withSelectAll?: boolean;
+  selectAllIdx?: number | 'last';
+  selectAllLabel?: string;
+  selectAllValue?: string;
+
   renderOption?: (
     option: T,
     props: TMultiSelectItem,
-    index?: number
+    index: number
   ) => ReactElement;
   ListEmptyComponent?: ReactElement | null;
-  ListFooterComponent?: ReactElement | null;
-  LoadingViewContent?: ReactNode | null;
+} & SearchProps;
+
+export type InfiniteListProps<T> = Omit<
+  ComponentProps<typeof InfiniteList<T>>,
+  'data' | 'idKey' | 'renderItem'
+>;
+
+export type MultiSelectStaticProps<T> = MultiSelectBaseProps<T> & {
+  infinite: false;
 };
 
-// Local Mode — client-side filter, no remote search/pagination
-type MultiSelectLocalProps<T> = MultiSelectSharedProps<T> & {
-  mode?: 'local';
-  withFilter?: boolean; // show local search box?
-  searchPlaceholder?: string;
-  searchDebounceMs?: number;
-
-  // Never
-  onSearch?: never;
-  searchQuery?: never;
-  loadMore?: never;
-  hasMore?: never;
-  totalOptions?: never;
-  loading?: boolean;
-};
-
-// Remote Mode — server search + pagination
-type MultiSelectRemoteProps<T> = MultiSelectSharedProps<T> & {
-  mode: 'remote';
-  onSearch: (query: string) => void;
-  searchQuery?: string;
-  searchPlaceholder?: string;
-  searchDebounceMs?: number;
-
-  // Pagination
-  loadMore?: () => void;
-  hasMore?: boolean;
-  totalOptions?: number;
-  loading?: boolean;
-
-  // Never
-  withFilter?: never;
+export type MultiSelectInfiniteProps<T> = MultiSelectBaseProps<T> & {
+  infinite?: true;
+  infiniteProps?: InfiniteListProps<T>;
 };
 
 export type MultiSelectProps<T> =
-  | MultiSelectLocalProps<T>
-  | MultiSelectRemoteProps<T>;
+  | MultiSelectStaticProps<T>
+  | MultiSelectInfiniteProps<T>;

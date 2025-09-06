@@ -8,6 +8,7 @@ import { ReactElement, ReactNode, useCallback, useMemo } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { EmptyListView } from './EmptyListView';
 import { ListLoadingView } from './ListLoadingView';
+import { ResultsHeader, TRenderResultsHeader } from './ResultsHeader';
 
 type TExtraFlashListProps<T> = Omit<
   Partial<FlashListProps<T>>,
@@ -17,28 +18,23 @@ type TExtraFlashListProps<T> = Omit<
   | 'ListEmptyComponent'
   | 'ListFooterComponent'
   | 'ItemSeparatorComponent'
-  | 'contentContainerStyle' // use contentStyle instead
   | 'onEndReached'
   | 'onEndReachedThreshold'
 >;
 
-type KeyOfType<T, V> = keyof {
-  [K in keyof T as T[K] extends V | null | undefined ? K : never]: unknown;
-};
-
-export interface InfiniteListProps<
-  T,
-  K extends KeyOfType<T, string | number> = KeyOfType<T, string | number>
-> extends TExtraFlashListProps<T> {
+export interface InfiniteListProps<T, K extends keyof T = keyof T>
+  extends TExtraFlashListProps<T> {
   style?: StyleProp<ViewStyle>;
   data: T[];
-  idKey: K; // used as a stable key to extract, e.g. "id"
+  idKey: K;
   renderItem: (item: T) => ReactElement | null;
   estimatedItemSize?: number; // rendering optimization. see console message if undefined
   loadMore?: () => void;
   loading?: boolean;
   hasMore?: boolean;
   itemGap?: number;
+  totalItems?: number;
+  renderResultsHeader?: TRenderResultsHeader | null;
   ListEmptyComponent?: ReactElement | null;
   ListFooterComponent?: ReactElement | null;
   LoadingViewContent?: ReactNode | null;
@@ -47,12 +43,12 @@ export interface InfiniteListProps<
   showScrollIndicator?: boolean;
 }
 
-export function InfiniteList<
-  T,
-  K extends KeyOfType<T, string | number> = KeyOfType<T, string | number>
->(props: InfiniteListProps<T, K>) {
+export function InfiniteList<T, K extends keyof T = keyof T>(
+  props: InfiniteListProps<T, K>
+) {
   const {
     style,
+    contentContainerStyle,
     data,
     idKey,
     renderItem,
@@ -64,8 +60,9 @@ export function InfiniteList<
     ListEmptyComponent,
     ListFooterComponent,
     LoadingViewContent,
-    contentStyle,
     onEndReachedThreshold = 0.05,
+    renderResultsHeader,
+    totalItems,
     itemGap = Spacings.xs,
     showScrollIndicator = false,
     ...rest
@@ -77,6 +74,8 @@ export function InfiniteList<
     ({ item }: { item: T }) => renderItem(item),
     [renderItem]
   );
+
+  console.log('loading: ', loading);
 
   const onEndReached = useCallback(() => {
     if (!loading && hasMore && loadMore) {
@@ -104,7 +103,7 @@ export function InfiniteList<
 
   const mergedContentContainerStyle: ContentStyle = StyleSheet.flatten([
     styles.contentContainer,
-    contentStyle,
+    contentContainerStyle,
   ]);
 
   // Ensures separators re-render when data grows or
@@ -115,26 +114,43 @@ export function InfiniteList<
   );
 
   return (
-    <FlashList<T>
-      estimatedItemSize={estimatedItemSize}
-      data={data as T[]}
-      keyExtractor={keyExtractor}
-      renderItem={renderItemWrapped}
-      onEndReached={onEndReached}
-      onEndReachedThreshold={onEndReachedThreshold}
-      ItemSeparatorComponent={Separator}
-      extraData={stableExtraData}
-      ListEmptyComponent={emptyComponent}
-      ListFooterComponent={footerComponent}
-      contentContainerStyle={mergedContentContainerStyle}
-      showsVerticalScrollIndicator={showScrollIndicator}
-      {...rest}
-    />
+    <View style={[styles.container, style]}>
+      <ResultsHeader
+        visibleCount={data.length}
+        totalCount={totalItems}
+        renderResultsHeader={renderResultsHeader}
+        style={styles.resultsHeader}
+      />
+
+      <FlashList<T>
+        estimatedItemSize={estimatedItemSize}
+        data={data as T[]}
+        keyExtractor={keyExtractor}
+        renderItem={renderItemWrapped}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={onEndReachedThreshold}
+        ItemSeparatorComponent={Separator}
+        extraData={stableExtraData}
+        ListEmptyComponent={emptyComponent}
+        ListFooterComponent={footerComponent}
+        contentContainerStyle={mergedContentContainerStyle}
+        showsVerticalScrollIndicator={showScrollIndicator}
+        {...rest}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    borderWidth: 4,
+    borderColor: 'red',
+  },
   contentContainer: {
     paddingBottom: 60,
+  },
+  resultsHeader: {
+    marginBottom: Spacings.xs,
   },
 });
