@@ -131,8 +131,9 @@ export function MultiSelectInfinite<T>(props: MultiSelectInfiniteProps<T>) {
           initialQuery=""
           data={options}
           placeholder={searchPlaceholder}
-          extractSearchText={(i) => String((i as any)[labelKey] ?? '')}
+          extractSearchText={(i) => String(i[labelKey] ?? '')}
           onChange={(items) => setFiltered(items)}
+          style={{ marginBottom: Spacings.lg }}
         />
       )}
 
@@ -141,8 +142,8 @@ export function MultiSelectInfinite<T>(props: MultiSelectInfiniteProps<T>) {
         <SearchBar
           value={''} // UI-only; not controlling from here
           onChange={onSearch!}
-          placeholder={searchPlaceholder ?? 'Search'}
-          debounceMs={searchDebounceMs ?? 500}
+          placeholder={searchPlaceholder}
+          debounceMs={searchDebounceMs}
           style={{ marginBottom: Spacings.lg }}
         />
       )}
