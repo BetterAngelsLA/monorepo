@@ -26,8 +26,6 @@ export default function Task({ id }: { id: string; arrivedFrom?: string }) {
   if (error) throw new Error('Something went wrong. Please try again.');
   if (!task) return null;
 
-  console.log(task.status, task.summary);
-
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View accessibilityRole="button" style={styles.body}>
