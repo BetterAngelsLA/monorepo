@@ -2,10 +2,10 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { TasksQuery } from '../TaskList/__generated__/Tasks.generated';
+import TaskStatusBtn from '../TaskStatusBtn';
 import TaskCardBody from './TaskCardBody';
 import TaskCardClient from './TaskCardClient';
 import TaskCardCreatedBy from './TaskCardCreatedBy';
-import TaskCardStatus from './TaskCardStatus';
 
 type TaskCardProps = {
   task: TasksQuery['tasks']['results'][number];
@@ -38,7 +38,7 @@ export function TaskCard(props: TaskCardProps) {
           createdAt={task.createdAt}
         />
       </Pressable>
-      <TaskCardStatus id={task.id} status={task.status} />
+      <TaskStatusBtn id={task.id} status={task.status} />
     </View>
   );
 }

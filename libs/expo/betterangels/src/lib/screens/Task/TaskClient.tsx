@@ -1,13 +1,13 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextBold } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { TaskSummaryQuery } from './__generated__/TaskSummary.generated';
+import { TaskQuery } from './__generated__/Task.generated';
 
-type TaskSummaryClientProps = {
-  clientProfile: TaskSummaryQuery['task']['clientProfile'];
+type TaskClientProps = {
+  clientProfile: TaskQuery['task']['clientProfile'];
 };
 
-export default function TaskSummaryClient(props: TaskSummaryClientProps) {
+export default function TaskClient(props: TaskClientProps) {
   const { clientProfile } = props;
 
   return (

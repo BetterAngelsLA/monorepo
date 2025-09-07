@@ -6,15 +6,15 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { enumDisplaySelahTeam } from '../../static';
-import { TaskSummaryQuery } from './__generated__/TaskSummary.generated';
+import { TaskQuery } from './__generated__/Task.generated';
 
-type TaskSummaryCreatedByProps = {
-  createdBy: TaskSummaryQuery['task']['createdBy'];
-  team?: TaskSummaryQuery['task']['team'];
-  organization?: TaskSummaryQuery['task']['organization'];
+type TaskCreatedByProps = {
+  createdBy: TaskQuery['task']['createdBy'];
+  team?: TaskQuery['task']['team'];
+  organization?: TaskQuery['task']['organization'];
 };
 
-export default function TaskSummaryCreatedBy(props: TaskSummaryCreatedByProps) {
+export default function TaskCreatedBy(props: TaskCreatedByProps) {
   const { createdBy, team, organization } = props;
 
   return (
@@ -26,8 +26,8 @@ export default function TaskSummaryCreatedBy(props: TaskSummaryCreatedByProps) {
       <Avatar
         mr="xs"
         size="sm"
-        accessibilityLabel={`creater's profile photo`}
-        accessibilityHint={`creater's profile photo`}
+        accessibilityLabel={`creator's profile photo`}
+        accessibilityHint={`creator's profile photo`}
         imageUrl={''}
       />
       <View>

@@ -6,9 +6,7 @@ type TTaskSummaryUpdatedAtProps = {
   updatedAt: string;
 };
 
-export default function TaskSummaryUpdatedAt(
-  props: TTaskSummaryUpdatedAtProps
-) {
+export default function TaskUpdatedAt(props: TTaskSummaryUpdatedAtProps) {
   const { updatedAt } = props;
   return (
     <View style={styles.container}>

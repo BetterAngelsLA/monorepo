@@ -2,11 +2,11 @@ import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { TaskType } from '../../apollo';
 
-type TaskSummaryBodyProps = {
+type TaskBodyProps = {
   description: TaskType['description'];
 };
 
-export default function TaskSummaryBody(props: TaskSummaryBodyProps) {
+export default function TaskBody(props: TaskBodyProps) {
   const { description } = props;
 
   return (

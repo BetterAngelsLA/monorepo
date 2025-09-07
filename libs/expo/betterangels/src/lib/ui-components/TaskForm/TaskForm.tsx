@@ -39,7 +39,6 @@ export function TaskForm(props: TProps) {
     control,
     handleSubmit,
     formState: { errors },
-    resetField,
     reset: resetForm,
     setError,
     setValue,
@@ -261,7 +260,7 @@ export function TaskForm(props: TProps) {
             placeholder={'Enter description'}
             inputStyle={{ minHeight: 150 }}
             onDelete={() => {
-              resetField('description');
+              setValue('description', emptyState.description);
             }}
             errorMessage={errors.description?.message}
           />

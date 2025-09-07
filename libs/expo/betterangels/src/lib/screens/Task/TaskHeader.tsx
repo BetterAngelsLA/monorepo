@@ -2,12 +2,12 @@ import { EditButton, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { useModalScreen } from '../../providers';
 import { TaskForm } from '../../ui-components';
-import { TaskSummaryQuery } from './__generated__/TaskSummary.generated';
+import { TaskQuery } from './__generated__/Task.generated';
 
-type TTaskSummaryHeaderProps = {
-  task: TaskSummaryQuery['task'];
+type TTaskHeaderProps = {
+  task: TaskQuery['task'];
 };
-export default function TaskSummaryHeader(props: TTaskSummaryHeaderProps) {
+export default function TaskHeader(props: TTaskHeaderProps) {
   const { task } = props;
 
   const { showModalScreen, closeModalScreen } = useModalScreen();
@@ -17,7 +17,7 @@ export default function TaskSummaryHeader(props: TTaskSummaryHeaderProps) {
       presentation: 'modal',
       content: (
         <TaskForm
-          clientProfileId={task?.clientProfile?.id}
+          clientProfileId={task.clientProfile?.id}
           task={task}
           onCancel={() => {
             closeModalScreen();
