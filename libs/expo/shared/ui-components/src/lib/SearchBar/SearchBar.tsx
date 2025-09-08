@@ -66,7 +66,7 @@ export function SearchBar(props: TProps) {
           onChange('');
           onClear?.();
         }}
-        icon={<SearchIcon ml="sm" color={Colors.NEUTRAL} />}
+        icon={<SearchIcon color={Colors.NEUTRAL} />}
         {...textInputRest}
       />
     </View>

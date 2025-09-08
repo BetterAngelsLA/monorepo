@@ -1,5 +1,5 @@
-import Checkbox from '../Checkbox';
-import TextRegular from '../TextRegular';
+import Checkbox from '../../Checkbox';
+import TextRegular from '../../TextRegular';
 
 export interface TMultiSelectItem {
   isChecked?: boolean;

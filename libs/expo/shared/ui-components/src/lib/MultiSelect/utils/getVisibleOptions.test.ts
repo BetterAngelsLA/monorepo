@@ -1,4 +1,4 @@
-import { SELECT_ALL_LABEL_DEFAULT, SELECT_ALL_VALUE } from './constants';
+import { SELECT_ALL_LABEL_DEFAULT, SELECT_ALL_VALUE } from '../constants';
 import { TGetVisibleOptions, getVisibleOptions } from './getVisibleOptions';
 
 type TOption = {

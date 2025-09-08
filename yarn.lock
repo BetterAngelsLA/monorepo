@@ -5245,6 +5245,7 @@ __metadata:
     swc-loader: "npm:0.1.15"
     tailwind-merge: "npm:^2.5.5"
     tailwindcss: "npm:3.4.17"
+    ts-essentials: "npm:^10.1.1"
     ts-jest: "npm:^29.1.0"
     ts-loader: "npm:^9.5.2"
     ts-node: "npm:10.9.1"
@@ -26098,6 +26099,18 @@ __metadata:
   version: 2.2.0
   resolution: "ts-dedent@npm:2.2.0"
   checksum: 10/93ed8f7878b6d5ed3c08d99b740010eede6bccfe64bce61c5a4da06a2c17d6ddbb80a8c49c2d15251de7594a4f93ffa21dd10e7be75ef66a4dc9951b4a94e2af
+  languageName: node
+  linkType: hard
+
+"ts-essentials@npm:^10.1.1":
+  version: 10.1.1
+  resolution: "ts-essentials@npm:10.1.1"
+  peerDependencies:
+    typescript: ">=4.5.0"
+  peerDependenciesMeta:
+    typescript:
+      optional: true
+  checksum: 10/ab0a468175ba6a7162aa80a55fcd936a8d830ae302f5561ca918d29a5212b4cd2e619c447bf5bc253f9d1faf186f5728c4ef8684ceaace3a7c6bbdffa54dd1bd
   languageName: node
   linkType: hard
 

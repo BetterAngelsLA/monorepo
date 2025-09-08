@@ -1,5 +1,5 @@
-import { TSelectAllIdx } from './MultiSelect';
-import { SELECT_ALL_LABEL_DEFAULT, SELECT_ALL_VALUE } from './constants';
+import { TSelectAllIdx } from '../MultiSelect';
+import { SELECT_ALL_LABEL_DEFAULT, SELECT_ALL_VALUE } from '../constants';
 
 export type TGetVisibleOptions<T> = {
   options: T[];

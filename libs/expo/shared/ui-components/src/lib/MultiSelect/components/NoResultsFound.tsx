@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import TextRegular from '../TextRegular';
+import TextRegular from '../../TextRegular';
 
 const DEFAULT_TITLE = 'no results found';
 
