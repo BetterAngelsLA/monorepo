@@ -7,13 +7,16 @@ import TaskCardClient from './TaskCardClient';
 import TaskCardCreatedBy from './TaskCardCreatedBy';
 import TaskCardStatus from './TaskCardStatus';
 
+type TaskCardVariant = 'default' | 'withoutClient';
+
 type TaskCardProps = {
   task: TasksQuery['tasks']['results'][number];
   onPress?: (task: TasksQuery['tasks']['results'][number]) => void;
+  variant?: TaskCardVariant;
 };
 
 export function TaskCard(props: TaskCardProps) {
-  const { task, onPress } = props;
+  const { task, onPress, variant = 'default' } = props;
 
   return (
     <View style={styles.container}>
@@ -25,9 +28,11 @@ export function TaskCard(props: TaskCardProps) {
         <TextBold size="sm" mb="sm">
           {task.summary}
         </TextBold>
-        {task.clientProfile && (
+
+        {variant !== 'withoutClient' && task.clientProfile && (
           <TaskCardClient clientProfile={task.clientProfile} />
         )}
+
         <TaskCardCreatedBy
           organization={task.organization}
           createdBy={task.createdBy}
