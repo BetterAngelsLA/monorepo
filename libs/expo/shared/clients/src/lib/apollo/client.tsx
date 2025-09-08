@@ -6,11 +6,16 @@ import { Platform } from 'react-native';
 import { CSRF_HEADER_NAME, getCSRFToken } from '../common';
 import { isReactNativeFileInstance } from './ReactNativeFile';
 
-export const createApolloClient = (
-  apiUrl: string,
-  csrfUrl = `${apiUrl}/admin/login/`
-) =>
-  new ApolloClient({
+type TArgs = {
+  apiUrl: string;
+  csrfUrl?: string;
+  cacheStore?: InMemoryCache;
+};
+
+export const createApolloClient = (args: TArgs) => {
+  const { cacheStore, apiUrl, csrfUrl = `${apiUrl}/admin/login/` } = args;
+
+  return new ApolloClient({
     link: from([
       setContext(async (_, { headers = {} }) => {
         const token = await getCSRFToken(apiUrl, csrfUrl);
@@ -29,6 +34,7 @@ export const createApolloClient = (
         isExtractableFile: isReactNativeFileInstance,
       }),
     ]),
-    cache: new InMemoryCache(),
+    cache: cacheStore || new InMemoryCache(),
     credentials: 'include',
   });
+};

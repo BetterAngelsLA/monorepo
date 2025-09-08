@@ -3,6 +3,7 @@ import 'expo-dev-client';
 import {
   AppUpdatePrompt,
   BlockingScreenProvider,
+  cachePolicyRegistry,
   ErrorCrashView,
   FeatureControlProvider,
   FeatureFlagControlled,
@@ -23,7 +24,7 @@ import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
 import { type ErrorBoundaryProps } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppRoutesStack from './AppRoutesStack';
 
@@ -44,7 +45,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <NativePaperProvider>
         <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <ApolloClientProvider>
+          <ApolloClientProvider policyConfig={cachePolicyRegistry}>
             <FeatureControlProvider>
               <KeyboardProvider>
                 <KeyboardToolbarProvider>
@@ -52,11 +53,13 @@ export default function RootLayout() {
                     <BlockingScreenProvider>
                       <SnackbarProvider>
                         <ModalScreenProvider>
-                          <StatusBar style="light" />
                           <FeatureFlagControlled
                             flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
                           >
                             <AppUpdatePrompt />
+                            <StatusBar
+                              style={Platform.OS === 'ios' ? 'light' : 'auto'}
+                            />
                           </FeatureFlagControlled>
                           {/* All Stack.Screens in AppRoutesStack */}
                           <AppRoutesStack />
