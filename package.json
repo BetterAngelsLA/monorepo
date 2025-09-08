@@ -183,6 +183,7 @@
     "jest-expo": "~53.0.7",
     "jiti": "2.4.2",
     "jsdom": "~22.1.0",
+    "jsonc-eslint-parser": "^2.1.0",
     "metro": "^0.82.0",
     "metro-react-native-babel-transformer": "^0.77.0",
     "nx": "21.1.3",

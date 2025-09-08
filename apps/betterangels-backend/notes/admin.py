@@ -99,7 +99,7 @@ class NoteResource(resources.ModelResource):
 
     def _join_services(self, services: QuerySet) -> str:
         return ", ".join(
-            s.service_other if s.service_enum == ServiceEnum.OTHER else s.get_service_display() for s in services
+            s.service_other if s.service_enum == ServiceEnum.OTHER else str(s.service_enum.label) for s in services
         )
 
     def dehydrate_requested_services(self, note: Note) -> str:
@@ -201,6 +201,7 @@ class OrganizationServiceCategoryAdmin(SortableAdminMixin, admin.ModelAdmin):
 class ServiceRequestAdmin(admin.ModelAdmin):
     list_display = (
         "service_name",
+        "service__category",
         "status",
         "due_by",
         "completed_on",
@@ -209,7 +210,7 @@ class ServiceRequestAdmin(admin.ModelAdmin):
         "created_at",
     )
     list_filter = (
-        "service",
+        "service__category",
         "status",
         "due_by",
         "completed_on",
@@ -217,7 +218,8 @@ class ServiceRequestAdmin(admin.ModelAdmin):
         "updated_at",
     )
     search_fields = (
-        "service",
+        "service__label",
+        "service__category__name",
         "created_by__email",
         "created_by__first_name",
         "created_by__last_name",

@@ -3,6 +3,7 @@ import 'expo-dev-client';
 import {
   AppUpdatePrompt,
   BlockingScreenProvider,
+  cachePolicyRegistry,
   ErrorCrashView,
   FeatureControlProvider,
   FeatureFlagControlled,
@@ -44,7 +45,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={styles.root}>
       <NativePaperProvider>
         <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <ApolloClientProvider>
+          <ApolloClientProvider policyConfig={cachePolicyRegistry}>
             <FeatureControlProvider>
               <KeyboardProvider>
                 <KeyboardToolbarProvider>
