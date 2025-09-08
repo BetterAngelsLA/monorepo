@@ -27,6 +27,8 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     LoadingViewContent,
     onEndReachedThreshold = 0.05,
     renderResultsHeader,
+    modelName,
+    modelNamePlural,
     itemGap = Spacings.xs,
     showScrollIndicator = false,
     ItemSeparatorComponent,
@@ -102,6 +104,8 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
       <ResultsHeader
         visibleCount={data.length}
         totalCount={totalItems}
+        modelName={modelName}
+        modelNamePlural={modelNamePlural}
         renderResultsHeader={renderResultsHeader}
         style={styles.resultsHeader}
       />

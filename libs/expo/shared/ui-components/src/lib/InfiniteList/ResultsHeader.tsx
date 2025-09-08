@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { View, ViewStyle } from 'react-native';
 import TextMedium from '../TextMedium';
 
-export type TRenderResultsHeader = (
+export type TRenderListResultsHeader = (
   visible: number,
   total: number | undefined
 ) => ReactNode | null;
@@ -10,12 +10,21 @@ export type TRenderResultsHeader = (
 type TProps = {
   visibleCount: number;
   totalCount?: number;
-  renderResultsHeader?: TRenderResultsHeader | null;
+  renderResultsHeader?: TRenderListResultsHeader | null;
+  modelName?: string;
+  modelNamePlural?: string;
   style?: ViewStyle;
 };
 
 export function ResultsHeader(props: TProps) {
-  const { renderResultsHeader, visibleCount, totalCount, style } = props;
+  const {
+    renderResultsHeader,
+    visibleCount,
+    totalCount,
+    modelName,
+    modelNamePlural,
+    style,
+  } = props;
 
   if (renderResultsHeader === null) {
     return null;
@@ -25,10 +34,15 @@ export function ResultsHeader(props: TProps) {
     return renderResultsHeader(visibleCount, totalCount);
   }
 
+  const itemNameSingular = modelName || 'item';
+  const itemNamePlural = modelNamePlural || `${itemNameSingular}s`;
+
+  const normalizedName = visibleCount === 1 ? itemNameSingular : itemNamePlural;
+
   const text =
     totalCount === undefined
-      ? `Displaying ${visibleCount} items`
-      : `Displaying ${visibleCount} of ${totalCount} items`;
+      ? `Displaying ${visibleCount} ${normalizedName}`
+      : `Displaying ${visibleCount} of ${totalCount} ${normalizedName}`;
 
   return (
     <View style={style}>

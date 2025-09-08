@@ -2,7 +2,7 @@ import { type FlashListProps } from '@shopify/flash-list';
 import type { ComponentType, ReactElement, ReactNode } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { XOR } from 'ts-essentials';
-import { TRenderResultsHeader } from './ResultsHeader';
+import { TRenderListResultsHeader } from './ResultsHeader';
 
 // FlashListProps to pass thru
 type ExtraFlashListProps<T> = Omit<
@@ -36,7 +36,9 @@ type InfiniteListBaseProps<T> = {
   loading?: boolean;
   itemGap?: number;
   totalItems?: number;
-  renderResultsHeader?: TRenderResultsHeader | null;
+  modelName?: string; // singular model name to render in ResultsHeader
+  modelNamePlural?: string; // plural model name to render in ResultsHeader
+  renderResultsHeader?: TRenderListResultsHeader | null;
   LoadingViewContent?: ReactNode | null;
   showScrollIndicator?: boolean;
   ItemSeparatorComponent?: ComponentType<any> | null;

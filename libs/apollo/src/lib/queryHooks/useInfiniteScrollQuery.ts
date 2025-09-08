@@ -104,7 +104,7 @@ type AnyGeneratedHook = (
 
 type Selector<TData, TItem> = (data: TData | undefined) => {
   /** Keep undefined until first data arrives to avoid empty-state flash */
-  items: ReadonlyArray<TItem> | undefined;
+  items: TItem[] | undefined;
   total: number;
 };
 
@@ -121,7 +121,7 @@ type TProps<TItem, H> = {
   variables?: HookVars<H>;
   composeVars?: ComposeVars<HookVars<H>>;
   select?: Selector<HookData<H>, TItem>;
-  resetOn?: ReadonlyArray<unknown>;
+  resetOn?: Array<unknown>;
   fetchPolicy?: QueryHookOptions<HookData<H>, HookVars<H>>['fetchPolicy'];
   nextFetchPolicy?: QueryHookOptions<
     HookData<H>,
@@ -240,7 +240,7 @@ export function useInfiniteScrollQuery<TItem, H extends AnyGeneratedHook>(
   }, [hasMore, loading, safeLen, pageSize, makeVars, fetchMore]);
 
   return {
-    items: (items ?? []) as ReadonlyArray<TItem>,
+    items: items ?? [],
     total,
     loading,
     hasMore,
