@@ -189,7 +189,7 @@ class ShelterPropertyInput:
     parking: Optional[List[ParkingChoices]] = None
 
 
-@strawberry_django.filters.filter(Shelter)
+@strawberry_django.filter_type(Shelter)
 class ShelterFilter:
     @strawberry_django.filter_field
     def properties(
@@ -245,13 +245,23 @@ class ShelterOrder:
     name: auto
 
 
+@strawberry_django.order_type(Shelter)
+class ShelterOrdering:
+    name: auto
+
+
 @strawberry.type
 class TimeRange:
     start: Optional[datetime]
     end: Optional[datetime]
 
 
-@strawberry_django.type(Shelter, filters=ShelterFilter, order=ShelterOrder)  # type: ignore
+@strawberry_django.type(
+    Shelter,
+    filters=ShelterFilter,
+    order=ShelterOrder,  # type: ignore
+    ordering=Optional[ShelterOrdering],
+)
 class ShelterType:
     id: ID
     accessibility: List[AccessibilityType]
