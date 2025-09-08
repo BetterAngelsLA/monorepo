@@ -38,6 +38,7 @@ class OrganizationServiceCategory(BaseModel):
     class Meta:
         constraints = [models.UniqueConstraint("name", "organization", name="unique_name_org")]
         ordering = ("priority",)
+        verbose_name_plural = "Service Categories"
 
     objects = models.Manager()
 
