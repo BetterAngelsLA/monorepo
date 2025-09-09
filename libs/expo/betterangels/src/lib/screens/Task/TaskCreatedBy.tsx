@@ -1,4 +1,4 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import {
   Avatar,
   TextBold,
@@ -6,22 +6,21 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { enumDisplaySelahTeam } from '../../static';
-import { TasksQuery } from '../TaskList/__generated__/Tasks.generated';
+import { TaskQuery } from './__generated__/Task.generated';
 
-type TaskCardCreatedByProps = {
-  createdBy: TasksQuery['tasks']['results'][number]['createdBy'];
-  team?: TasksQuery['tasks']['results'][number]['team'];
-  organization?: TasksQuery['tasks']['results'][number]['organization'];
+type TaskCreatedByProps = {
+  createdBy: TaskQuery['task']['createdBy'];
+  team?: TaskQuery['task']['team'];
+  organization?: TaskQuery['task']['organization'];
 };
 
-export default function TaskCardCreatedBy(props: TaskCardCreatedByProps) {
+export default function TaskCreatedBy(props: TaskCreatedByProps) {
   const { createdBy, team, organization } = props;
 
   return (
     <View
       style={{
         flexDirection: 'row',
-        marginBottom: Spacings.sm,
       }}
     >
       <Avatar

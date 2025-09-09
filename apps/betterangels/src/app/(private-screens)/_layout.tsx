@@ -202,6 +202,13 @@ export default function PrivateLayout() {
           title: 'Tasks',
         })}
       />
+
+      <Stack.Screen
+        name="task/[id]"
+        options={getDefaultStackNavOptions({
+          title: 'Task',
+        })}
+      />
     </Stack>
   );
 }

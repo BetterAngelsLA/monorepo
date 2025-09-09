@@ -1,13 +1,5 @@
-mutation UpdateTaskStatus($data: UpdateTaskInput!) {
-  updateTask(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-
+query Task($id: ID!) {
+  task(pk: $id) {
     ... on TaskType {
       id
       summary
