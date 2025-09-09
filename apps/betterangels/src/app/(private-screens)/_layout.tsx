@@ -43,26 +43,7 @@ export default function PrivateLayout() {
           headerTitleAlign: 'center',
         }}
       />
-      <Stack.Screen
-        name="interactions"
-        options={{
-          title: 'Interactions',
-          headerTitleAlign: 'center',
-          headerStyle: {
-            backgroundColor: Colors.BRAND_DARK_BLUE,
-          },
-          headerLeft: () => (
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="goes to previous screen"
-              title="Back"
-              onPress={router.back}
-            />
-          ),
-        }}
-      />
+
       <Stack.Screen
         name="note/[id]"
         options={{
