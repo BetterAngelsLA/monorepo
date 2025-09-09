@@ -32,7 +32,7 @@ function getInitialFilterValues(user?: TUser) {
 export default function Tasks() {
   const { user } = useUser();
 
-  const [searchQ, setSearchQ] = useState('');
+  const [search, setSearch] = useState('');
   const [filtersKey, setFiltersKey] = useState(0);
 
   const [currentFilters, setCurrentFilters] = useState<TTaskFilters>(
@@ -55,7 +55,7 @@ export default function Tasks() {
   }
 
   function onFilterReset() {
-    setSearchQ('');
+    setSearch('');
     const initial = getInitialFilterValues(user);
     setCurrentFilters(initial);
     setFiltersKey((k) => k + 1); // inc key to trigger remount
@@ -70,22 +70,18 @@ export default function Tasks() {
   }
 
   const serverFilters = toTaskFilterValue({
-    search: searchQ,
-    authors: currentFilters.authors,
-    organizations: currentFilters.organizations,
-    teams: currentFilters.teams,
-    status: currentFilters.status,
-    clientProfile: currentFilters.clientProfile,
+    search,
+    ...currentFilters,
   });
 
   return (
     <View style={styles.container}>
       <View style={styles.searchRow}>
         <SearchBar
-          value={searchQ}
+          value={search}
           placeholder="Search tasks"
-          onChange={(text) => setSearchQ(text)}
-          onClear={() => setSearchQ('')}
+          onChange={(text) => setSearch(text)}
+          onClear={() => setSearch('')}
           style={{ flexGrow: 1 }}
         />
         <TextButton

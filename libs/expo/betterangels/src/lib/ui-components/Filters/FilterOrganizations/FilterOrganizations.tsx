@@ -49,7 +49,6 @@ export function FilterOrganizations(props: TProps) {
       label={buttonLabel}
       selected={selected.map((s) => s.label)}
       onPress={showOptionsScreen}
-      labelMaxWidth={150}
       style={style}
     />
   );

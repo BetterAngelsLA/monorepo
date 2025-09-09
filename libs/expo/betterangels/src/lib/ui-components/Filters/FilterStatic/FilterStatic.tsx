@@ -42,7 +42,6 @@ export function FilterStatic(props: TProps) {
       label={buttonLabel}
       selected={selected.map((s) => s.label)}
       onPress={showOptionScreen}
-      labelMaxWidth={100}
       style={style}
     />
   );

@@ -55,7 +55,6 @@ export function FilterUsers(props: TProps) {
       label={buttonLabel}
       selected={selected.map((s) => s.label)}
       onPress={showOptionsScreen}
-      labelMaxWidth={100}
       style={style}
     />
   );
