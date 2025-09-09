@@ -31,9 +31,10 @@ export function useRenderRow<T>(args: TProps<T>) {
 
   return useCallback(
     (item: T, index: number) => {
-      const isAll = isLocalSearch && isSelectAllOption(item);
-      const checked = isAll ? allAreSelected() : isSelected(item);
       const label = getLabel(item);
+      const checked = isSelectAllOption(item)
+        ? allAreSelected()
+        : isSelected(item);
 
       const optionProps: TMultiSelectItem = {
         isChecked: checked,

@@ -5,10 +5,9 @@ import {
   TRenderListResultsHeader,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
-import { ReactElement, useCallback } from 'react';
+import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { InputMaybe, TaskFilter, TaskOrder } from '../../apollo';
-import { pagePaddingHorizontal } from '../../static';
 import { ListLoadingView } from './ListLoadingView';
 import { TasksQuery, useTasksQuery } from './__generated__/Tasks.generated';
 import {
@@ -27,7 +26,8 @@ type TProps = {
   order?: TaskOrder | null;
   paginationLimit?: number;
   headerStyle?: ViewStyle;
-  renderHeaderText?: TRenderListResultsHeader;
+  renderHeader?: TRenderListResultsHeader;
+  actionItem?: ReactNode;
 };
 
 export function TaskList(props: TProps) {
@@ -37,7 +37,7 @@ export function TaskList(props: TProps) {
     itemGap = DEFAULT_ITEM_GAP,
     paginationLimit = DEFAULT_PAGINATION_LIMIT,
     renderItem,
-    renderHeaderText,
+    renderHeader,
     style,
   } = props;
 
@@ -68,13 +68,7 @@ export function TaskList(props: TProps) {
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        { paddingHorizontal: pagePaddingHorizontal },
-        style,
-      ]}
-    >
+    <View style={[styles.container, style]}>
       <InfiniteList<TTask>
         estimatedItemSize={95}
         data={items}
@@ -87,7 +81,7 @@ export function TaskList(props: TProps) {
         hasMore={hasMore}
         modelName="task"
         LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
-        renderResultsHeader={renderHeaderText}
+        renderResultsHeader={renderHeader}
       />
     </View>
   );

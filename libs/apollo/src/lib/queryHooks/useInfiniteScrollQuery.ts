@@ -64,7 +64,7 @@
  * --------------------------------------------------------------------
  *
  * {
- *   items:    ReadonlyArray<TItem>
+ *   items:    Array<TItem>
  *   total:    number
  *   loading:  boolean
  *   hasMore:  boolean

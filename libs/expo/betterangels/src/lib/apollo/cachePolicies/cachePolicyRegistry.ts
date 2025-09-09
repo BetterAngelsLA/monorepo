@@ -120,4 +120,22 @@ export const cachePolicyRegistry: TCachePolicyConfig = {
       keyArgs: ['filters', 'order'],
     }),
   },
+  clientProfiles: {
+    entityTypename: 'ClientProfileType',
+    fieldPolicy: generateFieldPolicy({
+      keyArgs: ['filters', 'order'],
+    }),
+  },
+  interactionAuthors: {
+    entityTypename: 'InteractionAuthorType',
+    fieldPolicy: generateFieldPolicy({
+      keyArgs: ['filters', 'order'],
+    }),
+  },
+  caseworkerOrganizations: {
+    entityTypename: 'OrganizationType',
+    fieldPolicy: generateFieldPolicy({
+      keyArgs: ['filters', 'order'],
+    }),
+  },
 };

@@ -1,5 +1,5 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { InfiniteList } from '../../InfiniteList';
 import { SearchBar } from '../../SearchBar';
@@ -40,6 +40,7 @@ export function MultiSelectInfinite<T>(props: MultiSelectInfiniteProps<T>) {
 
     // pass-through for InfiniteList/FlashList
     infiniteProps,
+    keyExtractor,
   } = props;
 
   const hasLocalFilter = withLocalFilter === true;
@@ -92,6 +93,18 @@ export function MultiSelectInfinite<T>(props: MultiSelectInfiniteProps<T>) {
     renderOption,
   });
 
+  const keyExtractorStable = useCallback(
+    (item: T, idx: number) => {
+      if (keyExtractor) {
+        return keyExtractor(item, idx);
+      }
+
+      // default
+      return String(item[valueKey!]);
+    },
+    [keyExtractor, valueKey]
+  );
+
   return (
     <View style={[{ flex: 1, width: '100%' }, style]}>
       {!!title && (
@@ -123,7 +136,7 @@ export function MultiSelectInfinite<T>(props: MultiSelectInfiniteProps<T>) {
 
       <InfiniteList<T>
         data={visibleOptions}
-        idKey={valueKey}
+        keyExtractor={keyExtractorStable}
         renderItem={(item) => renderRow(item, -1)} // infinite list takes Item only
         itemGap={itemGap}
         extraData={signature}

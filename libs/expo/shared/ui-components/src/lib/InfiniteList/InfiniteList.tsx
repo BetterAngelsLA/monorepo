@@ -13,7 +13,6 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     style,
     contentContainerStyle,
     data,
-    idKey,
     keyExtractor,
     renderItem,
     loadMore,
@@ -34,19 +33,6 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     ItemSeparatorComponent,
     ...rest
   } = props;
-
-  const keyExtractorStable = useCallback(
-    (item: T, idx: number) => {
-      if (keyExtractor) {
-        return keyExtractor(item, idx);
-      }
-
-      // idKey exists if no keyExtractor
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      return String(item[idKey!]);
-    },
-    [keyExtractor, idKey]
-  );
 
   const renderItemStable = useCallback(
     ({ item }: { item: T }) => renderItem(item),
@@ -113,7 +99,6 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
       <FlashList<T>
         estimatedItemSize={estimatedItemSize}
         data={data}
-        keyExtractor={keyExtractorStable}
         renderItem={renderItemStable}
         onEndReached={onEndReached}
         onEndReachedThreshold={onEndReachedThreshold}

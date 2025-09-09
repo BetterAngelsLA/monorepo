@@ -1,6 +1,6 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Fragment, useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { SearchListBar } from '../../SearchListBar';
 import TextBold from '../../TextBold';
 import { DEFAULT_MARGIN_BOTTOM } from '../constants';
@@ -8,6 +8,7 @@ import type { MultiSelectStaticProps } from '../types';
 import { useMultiSelect } from '../utils/useMultiSelect';
 import { useRenderRow } from '../utils/useRenderRow';
 import { useWithSelectAllOption } from '../utils/useWithSelectAllOption';
+import { NoResultsFound } from './NoResultsFound';
 
 export function MultiSelectStatic<T>(props: MultiSelectStaticProps<T>) {
   const {
@@ -27,9 +28,8 @@ export function MultiSelectStatic<T>(props: MultiSelectStaticProps<T>) {
     selectAllLabel,
     selectAllValue,
 
-    // row / empty
+    // row renderer
     renderOption,
-    ListEmptyComponent,
 
     // search/filter
     withLocalFilter,
@@ -104,15 +104,21 @@ export function MultiSelectStatic<T>(props: MultiSelectStaticProps<T>) {
         />
       )}
 
-      <View style={{ gap: itemGap }}>
-        {visibleOptions.length === 0
-          ? ListEmptyComponent ?? null
-          : visibleOptions.map((it, i) => (
-              <Fragment key={`${[valueKey]}}-${i})`}>
-                {renderRow(it, i)}
-              </Fragment>
-            ))}
-      </View>
+      {!visibleOptions.length && <NoResultsFound />}
+
+      {!!visibleOptions.length && (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            gap: itemGap,
+            paddingBottom: 20,
+          }}
+        >
+          {visibleOptions.map((it, i) => (
+            <Fragment key={`${[valueKey]}}-${i})`}>{renderRow(it, i)}</Fragment>
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 }

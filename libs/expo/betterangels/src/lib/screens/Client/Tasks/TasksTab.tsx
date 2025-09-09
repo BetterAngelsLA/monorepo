@@ -1,16 +1,16 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { IconButton, SearchBar } from '@monorepo/expo/shared/ui-components';
+import {
+  IconButton,
+  SearchBar,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useModalScreen } from '../../../providers';
-import {
-  HorizontalContainer,
-  TaskCard,
-  TaskForm,
-  TaskList,
-} from '../../../ui-components';
+import { pagePaddingHorizontal } from '../../../static';
+import { TaskCard, TaskForm, TaskList } from '../../../ui-components';
 import { TasksQuery } from '../../Tasks/__generated__/Tasks.generated';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 
@@ -39,6 +39,26 @@ export function TasksTab(props: TProps) {
 
   const { showModalScreen, closeModalScreen } = useModalScreen();
 
+  function renderListHeaderText(visible: number, total: number | undefined) {
+    return (
+      <View style={styles.listHeader}>
+        <TextRegular size="sm">
+          Displaying {visible} of {total} tasks
+        </TextRegular>
+
+        <IconButton
+          variant="secondary"
+          borderColor={Colors.WHITE}
+          accessibilityLabel="open Task form"
+          accessibilityHint="opens Task form"
+          onPress={openTaskForm}
+        >
+          <PlusIcon />
+        </IconButton>
+      </View>
+    );
+  }
+
   if (!client?.clientProfile.id) {
     throw new Error('Something went wrong. Please try again.');
   }
@@ -63,30 +83,18 @@ export function TasksTab(props: TProps) {
 
   return (
     <View style={styles.container}>
-      <HorizontalContainer>
-        <SearchBar
-          value={search}
-          placeholder="Search tasks"
-          onChange={(text) => setSearch(text)}
-          onClear={() => setSearch('')}
-          style={{ marginBottom: Spacings.xs }}
-        />
-      </HorizontalContainer>
+      <SearchBar
+        value={search}
+        placeholder="Search tasks"
+        onChange={(text) => setSearch(text)}
+        onClear={() => setSearch('')}
+        style={{ marginBottom: Spacings.xs }}
+      />
 
       <TaskList
-        actionItem={
-          <IconButton
-            variant="secondary"
-            borderColor={Colors.WHITE}
-            accessibilityLabel="open Task form"
-            accessibilityHint="opens Task form"
-            onPress={openTaskForm}
-          >
-            <PlusIcon />
-          </IconButton>
-        }
         filters={{ search, clientProfile: client.clientProfile.id }}
         renderItem={renderTaskItem}
+        renderHeader={renderListHeaderText}
       />
     </View>
   );
@@ -97,5 +105,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
     paddingTop: Spacings.md,
+    paddingHorizontal: pagePaddingHorizontal,
+  },
+  listHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacings.xs,
   },
 });
