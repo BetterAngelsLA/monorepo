@@ -1,141 +1,119 @@
 /**
- * cachePolicyRegistry
+ * Apollo Cache Policy Registry (declarative, type-safe)
  *
- * Central registry of Apollo cache policies. Passed into
- * `generateCachePolicies` to produce a `typePolicies` object
- * for `InMemoryCache`.
+ * This file defines `policyConfig` as a small, declarative list of entries
+ * built with `buildEntry<Q, V>()`, then turns it into the final
+ * `cachePolicyRegistry` via `buildPolicies(...)`.
  *
- * --------------------------------------------------------------------
- * TCachePolicyConfig (mental model)
- * --------------------------------------------------------------------
+ * WHY THIS PATTERN
+ * ─────────────────
+ * • Fewer bugs: Compile-time checks ensure each entry is valid:
+ *   - `key` must be a list-like field on the query result type `Q`
+ *     (i.e., the field has a `.results: []` array). Non-list fields like
+ *     `__typename` are rejected.
+ *   - `entityTypename` must match the literal `__typename` of the items inside
+ *     that list (prevents silent mismatches).
+ *   - `keyArgs` must be valid variable names from `V` and automatically
+ *     exclude `"pagination"` (we merge pages client-side).
  *
- * type TCachePolicyConfig = Record<
- *   string,
- *   {
- *     fieldPolicy?: FieldPolicy;
- *     entityTypename?: string;
- *     keyFields?: ReadonlyArray<string> | false;
- *   }
- * >;
+ * • DRY, readable: Each entry is a single ~5-line object; no repeated generics
+ *   or string literals scattered around the codebase.
  *
- * - fieldPolicy:   Query field policy (merge, keyArgs, etc.)
- * - entityTypename: Entity typename to attach keyFields policy
- * - keyFields:
- *     • omitted → defaults to ['id']
- *     • array   → composite key (['orgId','slug'])
- *     • false   → treat as value object (never normalized)
+ * • Safe build: `buildPolicies()` assembles an object keyed by each entry’s
+ *   `key`, preserving exact types; in dev it warns about duplicate keys.
  *
- * --------------------------------------------------------------------
- * Basic Scenario
- * --------------------------------------------------------------------
+ * HOW IT WORKS
+ * ─────────────
+ * 1) `buildEntry<Q, V>({...})` validates and captures:
+ *    - `key`: the Query root field (e.g., "tasks")
+ *    - `entityTypename`: the list item typename (e.g., "TaskType")
+ *    - `keyArgs`: variables to include in Apollo `keyArgs` (e.g., ["filters","ordering"])
+ *      Note: "pagination" is intentionally excluded to enable merge-on-scroll.
  *
- * import { TCachePolicyConfig, generateFieldPolicy } from '@monorepo/apollo';
+ * 2) `buildPolicies(policyConfig)` maps the array into a
+ *    `TCachePolicyConfig` object suitable for `generateCachePolicies(...)`.
  *
- * export const cachePolicyRegistry: TCachePolicyConfig = {
- *   tasks: {
- *     entityTypename: 'TaskType',
- *     fieldPolicy: generateFieldPolicy({
- *       // exclude pagination so pages can merge
- *       keyArgs: ['filters', 'order'],
- *     }),
- *     // keyFields omitted → defaults to ['id']
- *   },
- * };
+ * 3) Elsewhere, pass `cachePolicyRegistry` to your `generateCachePolicies`
+ *    to produce the Apollo `TypePolicies`:
  *
- * const cache = new InMemoryCache({
- *   typePolicies: generateCachePolicies(cachePolicyRegistry),
- * });
+ *    const typePolicies = generateCachePolicies(cachePolicyRegistry, {
+ *      defaultKeyFields: ['id'],   // optional: override default keying
+ *      strictConflicts: true,      // optional: fail on duplicate keyFields
+ *    });
  *
- * --------------------------------------------------------------------
- * Advanced Scenario
- * --------------------------------------------------------------------
+ * USAGE
+ * ──────
+ * • Add a new list query:
+ *   buildEntry<SomeQuery, SomeQueryVariables>({
+ *     key: 'someField',                 // must exist on SomeQuery and have .results:[]
+ *     entityTypename: 'SomeItemType',   // must match items’ __typename
+ *     keyArgs: ['filters', 'order'] as const, // subset of SomeQueryVariables keys
+ *   })
  *
- * export const cachePolicyRegistry: TCachePolicyConfig = {
- *   // 1) Paginated tasks list with infinite scroll
- *   tasks: {
- *     entityTypename: 'TaskType',
- *     fieldPolicy: generateFieldPolicy({
- *       keyArgs: ['filters', 'order'], // exclude pagination
- *     }),
- *   },
+ * • Keep `policyConfig` as a readonly tuple (`as const`) so keys stay literal.
  *
- *   // 2) Another list with different dimensions
- *   clientProfiles: {
- *     entityTypename: 'ClientProfile',
- *     fieldPolicy: generateFieldPolicy({
- *       keyArgs: ['filters', 'order', 'region'],
- *     }),
- *   },
- *
- *   // 3) Value object payload wrapper (never normalized)
- *   createTaskPayload: {
- *     entityTypename: 'CreateTaskPayload',
- *     keyFields: false,
- *   },
- *
- *   // 4) Composite key entity
- *   project: {
- *     entityTypename: 'Project',
- *     keyFields: ['orgId', 'slug'],
- *   },
- *
- *   // 5) Field with custom merge options
- *   activities: {
- *     entityTypename: 'Activity',
- *     fieldPolicy: generateFieldPolicy({
- *       keyArgs: ['filters'],
- *       // mergeOpts can be passed here to override defaults
- *     }),
- *   },
- * };
- *
- * const cache = new InMemoryCache({
- *   typePolicies: generateCachePolicies(cachePolicyRegistry),
- * });
- *
- * --------------------------------------------------------------------
- * Notes
- * --------------------------------------------------------------------
- *
- * - keyArgs on Query field controls list partitioning.
- *   Omit pagination so pages merge; include filters/order/etc.
- *
- * - keyFields on entity type controls normalization.
- *   Omit → ['id'], Array → composite key, false → value object.
- *
- * - Conflicts: If multiple entries define different keyFields for the
- *   same entityTypename, the first wins and a warning is logged.
- *
- * - Merge behavior: generateFieldPolicy delegates to generateMergeFn.
- *   By default, supports offset/limit infinite scrolling.
- *   Pass mergeOpts to customize merging if needed.
+ * PITFALLS / GOTCHAS
+ * ───────────────────
+ * • Duplicate keys: If you list the same `key` twice in `policyConfig`,
+ *   `buildPolicies` will warn in dev and the last one wins. Remove duplicates.
+ * • Wrong arg name: If the server uses `ordering` (not `order`), your entry
+ *   must use `['filters','ordering']` or it won’t be part of the cache key.
+ * • Don’t include "pagination" in `keyArgs`—page merging relies on excluding it.
+ * • If a result type shouldn’t be normalized as an entity (no stable id),
+ *   set `keyFields: false` for that typename in your `generateCachePolicies` step.
  */
 
-import { TCachePolicyConfig, generateFieldPolicy } from '@monorepo/apollo';
+import {
+  TCachePolicyConfig,
+  buildPolicyConfig,
+  queryPolicyRecord,
+} from '@monorepo/apollo';
+import {
+  FilterClientProfilesQuery,
+  FilterClientProfilesQueryVariables,
+} from '../../ui-components/Filters/FilterClients/__generated__/filterClientProfiles.generated';
+import {
+  FilterOrganizationsQuery,
+  FilterOrganizationsQueryVariables,
+} from '../../ui-components/Filters/FilterOrganizations/__generated__/filterOrganizations.generated';
+import {
+  FilterUsersQuery,
+  FilterUsersQueryVariables,
+} from '../../ui-components/Filters/FilterUsers/__generated__/filterUsers.generated';
+import {
+  TasksQuery,
+  TasksQueryVariables,
+} from '../../ui-components/TaskList/__generated__/Tasks.generated';
 
-export const cachePolicyRegistry: TCachePolicyConfig = {
-  tasks: {
+const policyConfig = [
+  queryPolicyRecord<TasksQuery, TasksQueryVariables>({
+    key: 'tasks',
     entityTypename: 'TaskType',
-    fieldPolicy: generateFieldPolicy({
-      keyArgs: ['filters', 'order'],
-    }),
-  },
-  clientProfiles: {
+    keyArgs: ['filters', 'ordering'] as const,
+  }),
+  queryPolicyRecord<
+    FilterClientProfilesQuery,
+    FilterClientProfilesQueryVariables
+  >({
+    key: 'clientProfiles',
     entityTypename: 'ClientProfileType',
-    fieldPolicy: generateFieldPolicy({
-      keyArgs: ['filters', 'order'],
-    }),
-  },
-  interactionAuthors: {
+    keyArgs: ['filters', 'order'] as const,
+  }),
+  queryPolicyRecord<FilterUsersQuery, FilterUsersQueryVariables>({
+    key: 'interactionAuthors',
     entityTypename: 'InteractionAuthorType',
-    fieldPolicy: generateFieldPolicy({
-      keyArgs: ['filters', 'order'],
-    }),
-  },
-  caseworkerOrganizations: {
+    keyArgs: ['filters', 'order'] as const,
+  }),
+  queryPolicyRecord<
+    FilterOrganizationsQuery,
+    FilterOrganizationsQueryVariables
+  >({
+    key: 'caseworkerOrganizations',
     entityTypename: 'OrganizationType',
-    fieldPolicy: generateFieldPolicy({
-      keyArgs: ['filters', 'order'],
-    }),
-  },
-};
+    keyArgs: ['filters', 'order'] as const,
+  }),
+] as const;
+
+export const cachePolicyRegistry = buildPolicyConfig(
+  policyConfig
+) satisfies TCachePolicyConfig;
