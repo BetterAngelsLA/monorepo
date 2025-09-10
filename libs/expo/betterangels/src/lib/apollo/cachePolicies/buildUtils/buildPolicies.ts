@@ -1,12 +1,56 @@
-// Builds the registry object from a readonly tuple of entries.
-// Avoids "string key" widening by using fromEntries + a precise mapped type.
+/**
+ * Turns an array of entry definitions (from `buildEntry`) into a
+ * fully-typed Apollo cache policy registry object.
+ *
+ * Each entry in `defs` is expected to look like:
+ *
+ *   {
+ *     key:   "tasks",
+ *     build: () => ({ entityTypename: "TaskType", fieldPolicy: {...} })
+ *   }
+ *
+ * At compile-time:
+ *   • The returned object has one property per `key` in `defs`.
+ *   • Each property’s value is the return type of its corresponding `build()`.
+ *     This keeps `entityTypename` and `fieldPolicy` literals intact.
+ *
+ * At runtime:
+ *   • Iterates over `defs`, calls `build()` for each, and collects them into
+ *     an object keyed by `key`.
+ *   • In development, logs a warning if any duplicate keys are found.
+ *     (The later one would override the earlier one.)
+ *
+ * Example:
+ *
+ * ```ts
+ * const entries = [
+ *   buildEntry<TasksQuery, TasksQueryVariables>({
+ *     key: 'tasks',
+ *     entityTypename: 'TaskType',
+ *     keyArgs: ['filters', 'ordering'] as const,
+ *   }),
+ *   buildEntry<FilterUsersQuery, FilterUsersQueryVariables>({
+ *     key: 'interactionAuthors',
+ *     entityTypename: 'InteractionAuthorType',
+ *     keyArgs: ['filters', 'order'] as const,
+ *   }),
+ * ] as const;
+ *
+ * export const cachePolicyRegistry = buildPolicies(entries);
+ *
+ * // Result type:
+ * // {
+ * //   tasks: { entityTypename: "TaskType"; fieldPolicy: FieldPolicy },
+ * //   interactionAuthors: { entityTypename: "InteractionAuthorType"; fieldPolicy: FieldPolicy },
+ * // }
+ * ```
+ *
+ * @param defs - readonly array of entries created via `buildEntry`
+ * @returns object keyed by each entry’s `key`, with typed policy values
+ */
 export function buildPolicies<
   const T extends readonly { key: string; build: () => any }[]
 >(defs: T) {
-  type Out = {
-    [I in T[number] as I['key']]: ReturnType<I['build']>;
-  };
-
   // (Optional) dev-time duplicate-key warning
   if (process.env.NODE_ENV !== 'production') {
     const seen = new Set<string>();
@@ -18,10 +62,9 @@ export function buildPolicies<
           `[apollo buildPolicies] Duplicate key "${d.key}" – later one will override.`
         );
       }
-
       seen.add(d.key);
     }
   }
 
-  return Object.fromEntries(defs.map((d) => [d.key, d.build()])) as Out;
+  return Object.fromEntries(defs.map((d) => [d.key, d.build()]));
 }
