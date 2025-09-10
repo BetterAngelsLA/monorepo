@@ -3,7 +3,6 @@ import * as Types from '../../../apollo/graphql/__generated__/types';
 import * as Apollo from '@apollo/client';
 import { gql } from '@apollo/client';
 const defaultOptions = {} as const;
-
 export type TasksQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.TaskFilter>;
   pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
