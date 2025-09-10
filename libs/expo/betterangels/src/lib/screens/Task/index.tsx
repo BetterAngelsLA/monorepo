@@ -2,22 +2,17 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { LoadingView } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer } from '../../ui-components';
-import { useTaskSummaryQuery } from './__generated__/TaskSummary.generated';
-import TaskSummaryBody from './TaskSummaryBody';
-import TaskSummaryClient from './TaskSummaryClient';
-import TaskSummaryCreatedBy from './TaskSummaryCreatedBy';
-import TaskSummaryHeader from './TaskSummaryHeader';
-import TaskSummaryStatus from './TaskSummaryStatus';
-import TaskSummaryUpdatedAt from './TaskSummaryUpdatedAt';
 
-export default function Task({
-  id,
-  arrivedFrom,
-}: {
-  id: string;
-  arrivedFrom?: string;
-}) {
-  const { data, loading, error } = useTaskSummaryQuery({
+import TaskStatusBtn from '../../ui-components/TaskStatusBtn';
+import { useTaskQuery } from './__generated__/Task.generated';
+import TaskBody from './TaskBody';
+import TaskClient from './TaskClient';
+import TaskCreatedBy from './TaskCreatedBy';
+import TaskHeader from './TaskHeader';
+import TaskUpdatedAt from './TaskUpdatedAt';
+
+export default function Task({ id }: { id: string; arrivedFrom?: string }) {
+  const { data, loading, error } = useTaskQuery({
     variables: { id },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -35,21 +30,21 @@ export default function Task({
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View accessibilityRole="button" style={styles.body}>
-        <TaskSummaryHeader arrivedFrom={arrivedFrom} task={task} />
-        <TaskSummaryUpdatedAt updatedAt={task.updatedAt} />
+        <TaskHeader task={task} />
+        <TaskUpdatedAt updatedAt={task.updatedAt} />
         <View>
           {task.clientProfile && (
-            <TaskSummaryClient clientProfile={task.clientProfile} />
+            <TaskClient clientProfile={task.clientProfile} />
           )}
-          <TaskSummaryCreatedBy
+          <TaskCreatedBy
             organization={task.organization}
             createdBy={task.createdBy}
             team={task.team}
           />
         </View>
-        {task.description && <TaskSummaryBody description={task.description} />}
+        {task.description && <TaskBody description={task.description} />}
       </View>
-      <TaskSummaryStatus id={task.id} status={task.status} />
+      <TaskStatusBtn id={task.id} status={task.status} />
     </MainScrollContainer>
   );
 }

@@ -1,7 +1,7 @@
 import { Task } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
-export default function NoteScreen() {
+export default function TaskScreen() {
   const { id, arrivedFrom } = useLocalSearchParams<{
     id: string;
     arrivedFrom?: string;
