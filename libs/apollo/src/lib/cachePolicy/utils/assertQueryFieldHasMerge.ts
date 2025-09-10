@@ -4,8 +4,8 @@ import {
   TypePolicies,
   TypePolicy,
 } from '@apollo/client';
-import { TYPE_POLICIES_SYM } from './constants';
-import { TCacheWithPolicies } from './types';
+import { TYPE_POLICIES_SYM } from '../constants';
+import { TCacheWithPolicies } from '../types';
 
 export function getTypePoliciesFromCache(cache: InMemoryCache): TypePolicies {
   if (!(TYPE_POLICIES_SYM in cache)) {
