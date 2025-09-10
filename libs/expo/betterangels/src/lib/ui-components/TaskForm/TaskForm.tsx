@@ -17,19 +17,29 @@ import { useSnackbar } from '../../hooks';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
 import { useCreateTaskMutation } from './__generated__/createTask.generated';
 import { useUpdateTaskMutation } from './__generated__/updateTask.generated';
+import DeleteTask from './DeleteTask';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
 type TProps = {
-  clientProfileId?: string;
+  clientProfileId?: string | null;
   team?: SelahTeamEnum | null;
   noteId?: string;
   onCancel?: () => void;
   onSuccess?: (taskId: string) => void;
   task?: UpdateTaskInput | null;
+  arrivedFrom?: string;
 };
 
 export function TaskForm(props: TProps) {
-  const { clientProfileId, team, onSuccess, onCancel, noteId, task } = props;
+  const {
+    clientProfileId,
+    team,
+    onSuccess,
+    onCancel,
+    noteId,
+    task,
+    arrivedFrom,
+  } = props;
 
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
@@ -39,7 +49,6 @@ export function TaskForm(props: TProps) {
     control,
     handleSubmit,
     formState: { errors },
-    resetField,
     reset: resetForm,
     setError,
     setValue,
@@ -261,7 +270,7 @@ export function TaskForm(props: TProps) {
             placeholder={'Enter description'}
             inputStyle={{ minHeight: 150 }}
             onDelete={() => {
-              resetField('description');
+              setValue('description', emptyState.description);
             }}
             errorMessage={errors.description?.message}
           />
@@ -286,6 +295,11 @@ export function TaskForm(props: TProps) {
           />
         </Form.Fieldset>
       </Form>
+      <DeleteTask
+        onSuccess={onSuccess}
+        arrivedFrom={arrivedFrom}
+        id={task?.id}
+      />
     </Form.Page>
   );
 }

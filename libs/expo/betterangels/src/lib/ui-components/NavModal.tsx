@@ -1,11 +1,8 @@
 import {
   BarsIcon,
-  HouseLineIcon,
-  NoteIcon,
   SettingsOutlineIcon,
   SignOutIcon,
   TaskListIcon,
-  UsersLineIcon,
 } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
@@ -36,9 +33,6 @@ export default function NavModal(props: INavModalProps) {
   const tasksFeatureOn = useFeatureFlagActive(FeatureFlags.TASKS_FF);
 
   const ACTIONS = [
-    { title: 'Home', Icon: HouseLineIcon, route: '/' },
-    { title: 'Clients', Icon: UsersLineIcon, route: '/clients' },
-    { title: 'Interactions', Icon: NoteIcon, route: '/interactions' },
     tasksFeatureOn && {
       title: 'Tasks',
       Icon: TaskListIcon,

@@ -27,6 +27,7 @@ export function TasksTab(props: TProps) {
   const handleTaskPress = useCallback((task: TTask) => {
     router.navigate({
       pathname: `/task/${task.id}`,
+      params: { arrivedFrom: `/client/${client?.clientProfile.id}` },
     });
   }, []);
 

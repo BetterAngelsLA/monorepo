@@ -8,7 +8,7 @@ export type UpdateTaskStatusMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateTaskStatusMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'TaskType', id: string, summary?: string | null, description?: string | null, status?: Types.TaskStatusEnum | null, team?: Types.SelahTeamEnum | null, createdAt: any, updatedAt: any, organization?: { __typename?: 'OrganizationType', id: string, name: string } | null, clientProfile?: { __typename?: 'ClientProfileType', id: string, firstName?: string | null, lastName?: string | null, profilePhoto?: { __typename?: 'DjangoImageType', name: string, url: string } | null } | null, createdBy: { __typename?: 'UserType', id: string, firstName?: string | null, lastName?: string | null } } };
+export type UpdateTaskStatusMutation = { __typename?: 'Mutation', updateTask: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'TaskType', id: string, status?: Types.TaskStatusEnum | null, updatedAt: any } };
 
 
 export const UpdateTaskStatusDocument = gql`
@@ -23,29 +23,7 @@ export const UpdateTaskStatusDocument = gql`
     }
     ... on TaskType {
       id
-      summary
-      description
       status
-      team
-      organization {
-        id
-        name
-      }
-      clientProfile {
-        id
-        firstName
-        lastName
-        profilePhoto {
-          name
-          url
-        }
-      }
-      createdBy {
-        id
-        firstName
-        lastName
-      }
-      createdAt
       updatedAt
     }
   }

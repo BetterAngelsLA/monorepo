@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { TaskStatusEnum, TaskType } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { enumDisplayTaskStatus } from '../../static';
-import SelectStatus from '../SelectStatus';
-import { useUpdateTaskStatusMutation } from './__generated__/updateTask.generated';
+import { SelectStatus } from '../../ui-components';
+import { useUpdateTaskStatusMutation } from './__generated__/updateTaskStatus.generated';
 
 const OPTIONS = [
   {
@@ -28,12 +28,12 @@ const OPTIONS = [
   },
 ];
 
-type TaskCardStatusProps = {
+type TaskStatusBtnProps = {
   id: TaskType['id'];
   status: TaskType['status'];
 };
 
-export default function TaskCardStatus(props: TaskCardStatusProps) {
+export function TaskStatusBtn(props: TaskStatusBtnProps) {
   const { id, status } = props;
 
   const [updateTaskMutation] = useUpdateTaskStatusMutation();
@@ -113,6 +113,11 @@ export default function TaskCardStatus(props: TaskCardStatusProps) {
       setDisabled(false);
     }
   };
+
+  useEffect(() => {
+    if (status == null) return;
+    setValue((prev) => (prev === status ? prev : status));
+  }, [status]);
 
   return (
     <SelectStatus
