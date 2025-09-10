@@ -1,12 +1,7 @@
 import { Filters, TFilterOption } from '@monorepo/expo/shared/ui-components';
 import { ViewStyle } from 'react-native';
 import { useUser } from '../../hooks';
-import {
-  FilterClients,
-  FilterOrganizations,
-  FilterStatic,
-  FilterUsers,
-} from '../Filters';
+import { FilterOrganizations, FilterStatic, FilterUsers } from '../Filters';
 import { statusOptions, teamOptions } from './constants';
 import { TTaskFilterType, TTaskFilters } from './types';
 
@@ -34,13 +29,14 @@ export function TaskFilters(props: TProps) {
 
   return (
     <Filters style={style}>
+      {/* ADD BACK once DEV-2155 completed and update FilterClients component
       <FilterClients
         buttonLabel={'Clients'}
         title="Filter - Client"
         onChange={(next) => onFilterChange('clientProfile', next)}
         initialSelected={selected.clientProfile}
         searchPlaceholder="Search clients"
-      />
+      /> */}
 
       <FilterStatic
         buttonLabel="Teams"

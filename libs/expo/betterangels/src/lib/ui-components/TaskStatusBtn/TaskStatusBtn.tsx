@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { TaskStatusEnum, TaskType } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { enumDisplayTaskStatus } from '../../static';
-import { SelectStatus } from '../../ui-components';
+import SelectStatus from '../SelectStatus';
 import { useUpdateTaskStatusMutation } from './__generated__/updateTaskStatus.generated';
 
 const OPTIONS = [

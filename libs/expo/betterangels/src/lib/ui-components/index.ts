@@ -37,4 +37,5 @@ export { default as TaskCard } from './TaskCard';
 export * from './TaskFilters';
 export * from './TaskForm';
 export * from './TaskList';
+export { default as TaskStatusBtn } from './TaskStatusBtn';
 export { default as WebBrowserLink } from './WebBrowserLink';

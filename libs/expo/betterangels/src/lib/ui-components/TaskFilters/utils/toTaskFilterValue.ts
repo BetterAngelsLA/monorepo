@@ -12,7 +12,7 @@ export function toTaskFilterValue(input: {
   organizations?: TFilterOption[];
   teams?: TFilterOption[];
   status?: TFilterOption[];
-  clientProfile?: TFilterOption[]; // single-select in UI? we'll pick first
+  clientProfile?: TFilterOption[];
 }): TaskFilter {
   return {
     search: input.search || undefined,
@@ -20,6 +20,7 @@ export function toTaskFilterValue(input: {
     organizations: toIds(input.organizations),
     teams: toEnums<SelahTeamEnum>(input.teams),
     status: toEnums<TaskStatusEnum>(input.status),
+    // TODO once DEV-2155 completed - pass all IDs
     clientProfile: input.clientProfile?.[0]?.id, // TaskFilter expects a single ID
   };
 }
