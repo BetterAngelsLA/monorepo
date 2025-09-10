@@ -5,8 +5,8 @@ export type TUseMultiSelect<T> = {
   options: T[];
   selected: T[];
   onChange: (next: T[]) => void;
-  valueKey: Extract<keyof T, string | number>;
-  labelKey: Extract<keyof T, string | number>;
+  valueKey: keyof T;
+  labelKey: keyof T;
   withSelectAll?: boolean;
   selectAllValue?: string;
 };

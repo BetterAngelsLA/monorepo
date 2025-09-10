@@ -1,21 +1,20 @@
 import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { TextRegular } from '@monorepo/expo/shared/ui-components';
-import { FlashList } from '@shopify/flash-list';
+import {
+  InfiniteList,
+  TRenderListResultsHeader,
+  TextRegular,
+} from '@monorepo/expo/shared/ui-components';
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { InputMaybe, TaskFilter, TaskOrder } from '../../apollo';
-import { pagePaddingHorizontal } from '../../static';
-import { ListEmptyState } from './ListEmptyState';
 import { ListLoadingView } from './ListLoadingView';
-import { TaskListHeader } from './TaskListHeader';
 import { TasksQuery, useTasksQuery } from './__generated__/Tasks.generated';
 import {
   DEFAULT_ITEM_GAP,
   DEFAULT_PAGINATION_LIMIT,
   DEFAULT_QUERY_ORDER,
 } from './constants';
-import { ListHeaderProps } from './types';
 
 type TTask = TasksQuery['tasks']['results'][number];
 
@@ -27,8 +26,7 @@ type TProps = {
   order?: TaskOrder | null;
   paginationLimit?: number;
   headerStyle?: ViewStyle;
-  horizontalPadding?: number;
-  renderHeaderText?: (props: ListHeaderProps) => string;
+  renderHeader?: TRenderListResultsHeader;
   actionItem?: ReactNode;
 };
 
@@ -39,43 +37,25 @@ export function TaskList(props: TProps) {
     itemGap = DEFAULT_ITEM_GAP,
     paginationLimit = DEFAULT_PAGINATION_LIMIT,
     renderItem,
+    renderHeader,
     style,
-    horizontalPadding = pagePaddingHorizontal,
-    headerStyle,
-    renderHeaderText,
-    actionItem,
   } = props;
 
-  const { items, total, loading, loadMore, error } = useInfiniteScrollQuery<
-    TTask,
-    typeof useTasksQuery
-  >({
-    useQueryHook: useTasksQuery,
-    queryFieldName: 'tasks',
-    variables: {
-      filters,
-      ordering: order || undefined,
-    },
-    pageSize: paginationLimit,
-  });
+  const { items, total, loading, loadMore, hasMore, error } =
+    useInfiniteScrollQuery<TTask, typeof useTasksQuery>({
+      useQueryHook: useTasksQuery,
+      queryFieldName: 'tasks',
+      variables: {
+        filters,
+        ordering: order || undefined,
+      },
+      pageSize: paginationLimit,
+    });
 
   const renderItemFn = useCallback(
-    ({ item }: { item: TTask }) => renderItem(item),
+    (item: TTask) => renderItem(item),
     [renderItem]
   );
-
-  const renderFooter = () => {
-    if (!loading) {
-      return null;
-    }
-
-    return <ListLoadingView style={{ paddingVertical: 40 }} />;
-  };
-
-  // initial query hasn't run yet
-  if (items === undefined && loading) {
-    return <ListLoadingView fullScreen={true} />;
-  }
 
   if (error) {
     console.error(error);
@@ -89,35 +69,19 @@ export function TaskList(props: TProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <TaskListHeader
-        actionItem={actionItem}
-        style={[
-          styles.header,
-          { paddingHorizontal: horizontalPadding },
-          headerStyle,
-        ]}
-        totalTasks={total}
-        visibleTasks={items.length}
-        renderHeaderText={renderHeaderText}
-      />
-      <FlashList<TTask>
+      <InfiniteList<TTask>
         estimatedItemSize={95}
         data={items}
         keyExtractor={(item) => item.id}
+        totalItems={total}
         renderItem={renderItemFn}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.05}
-        // ItemSeparatorComponent renders only between items in a batch
-        ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
-        // set extraData to force re-render when data is appended, else
-        // newly loaded batch won't be separated by ItemSeparatorComponent
-        extraData={items.length}
-        ListEmptyComponent={<ListEmptyState />}
-        ListFooterComponent={renderFooter}
-        contentContainerStyle={{
-          paddingBottom: 60,
-          paddingHorizontal: horizontalPadding,
-        }}
+        itemGap={itemGap}
+        loading={loading}
+        loadMore={loadMore}
+        hasMore={hasMore}
+        modelName="task"
+        LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
+        renderResultsHeader={renderHeader}
       />
     </View>
   );
@@ -129,8 +93,5 @@ const styles = StyleSheet.create({
   },
   header: {
     marginBottom: Spacings.xs,
-  },
-  listContent: {
-    paddingBottom: 60,
   },
 });

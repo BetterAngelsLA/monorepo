@@ -1,6 +1,6 @@
 import { useApolloClient } from '@apollo/client';
 import { Colors } from '@monorepo/expo/shared/static';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TaskStatusEnum, TaskType } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { enumDisplayTaskStatus } from '../../static';
@@ -35,6 +35,7 @@ type TaskCardStatusProps = {
 
 export default function TaskCardStatus(props: TaskCardStatusProps) {
   const { id, status } = props;
+
   const [updateTaskMutation] = useUpdateTaskStatusMutation();
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
@@ -43,6 +44,12 @@ export default function TaskCardStatus(props: TaskCardStatusProps) {
   const [value, setValue] = useState<TaskStatusEnum>(
     status || TaskStatusEnum.ToDo
   );
+
+  useEffect(() => {
+    if (status && status !== value) {
+      setValue(status);
+    }
+  }, [id, status]);
 
   const onUpdateTask = async (newStatus: TaskStatusEnum) => {
     try {

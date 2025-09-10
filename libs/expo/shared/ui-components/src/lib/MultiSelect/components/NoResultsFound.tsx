@@ -9,6 +9,7 @@ interface IProps {
 
 export function NoResultsFound(props: IProps) {
   const { title = DEFAULT_TITLE } = props;
+
   return (
     <View style={styles.container}>
       <TextRegular>{title}</TextRegular>

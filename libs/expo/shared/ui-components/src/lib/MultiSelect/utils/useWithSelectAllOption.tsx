@@ -4,8 +4,8 @@ import { SELECT_ALL_LABEL_DEFAULT, SELECT_ALL_VALUE } from '../constants';
 
 type TProps<T> = {
   options: T[];
-  valueKey: Extract<keyof T, string | number>;
-  labelKey: Extract<keyof T, string | number>;
+  valueKey: keyof T;
+  labelKey: keyof T;
 
   withSelectAll?: boolean;
   selectAllIdx?: TSelectAllIdx;

@@ -86,7 +86,8 @@
     "graphql": "*",
     "vite": "*",
     "@nx/vite": "*",
-    "ts-essentials": "*"
+    "ts-essentials": "*",
+    "vitest": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",
