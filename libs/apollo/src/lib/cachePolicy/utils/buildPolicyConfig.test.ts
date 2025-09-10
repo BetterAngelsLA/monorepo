@@ -19,7 +19,7 @@ describe('buildPolicyConfig', () => {
   });
 
   it('logs a warning for duplicate keys in non-production', () => {
-    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const spy = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
 
     buildPolicyConfig([
       { key: 'dup', buildFn: () => ({ one: 1 }) },

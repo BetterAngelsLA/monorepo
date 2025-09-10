@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_QUERY_RESULTS_KEY } from '../constants';
+import { generateFieldPolicy } from '../generateFieldPolicy';
+import { queryPolicyRecord } from './queryPolicyRecord';
 
-// Mock BEFORE importing SUT (path must match SUT import)
 vi.mock('../generateFieldPolicy', () => {
   return {
     generateFieldPolicy: vi.fn((_opts: { keyArgs: string[] }) => ({
@@ -10,12 +12,7 @@ vi.mock('../generateFieldPolicy', () => {
   };
 });
 
-// Now import SUT + mocked symbol
-import { DEFAULT_QUERY_RESULTS_KEY } from '../constants';
-import { generateFieldPolicy } from '../generateFieldPolicy';
-import { queryPolicyRecord } from './queryPolicyRecord';
-
-// ---- Minimal fake types (replace with real generated types if you prefer)
+// Minimal fake types
 type TasksQuery = {
   __typename?: 'Query';
   tasks: {
