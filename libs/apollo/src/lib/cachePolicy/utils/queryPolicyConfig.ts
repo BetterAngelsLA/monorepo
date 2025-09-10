@@ -1,7 +1,7 @@
 /**
  * Strongly-typed builder for a single Apollo cache policy entry.
  *
- * `buildEntry` is used when constructing your `cachePolicyRegistry`.
+ * `tasksPolicyConfig` is used when constructing your `cachePolicyRegistry`.
  * It validates at compile-time that:
  *
  *   • `key` is a valid **list-like field** on the query type `Q`
@@ -29,13 +29,13 @@
  * Example:
  *
  * ```ts
- * const tasksEntry = buildEntry<TasksQuery, TasksQueryVariables>({
+ * const tasksPolicyConfig = queryPolicyConfig<TasksQuery, TasksQueryVariables>({
  *   key: 'tasks',                         // must be a key of TasksQuery
  *   entityTypename: 'TaskType',           // must match TasksQuery.tasks.results.__typename
  *   keyArgs: ['filters', 'ordering'] as const, // must be valid vars, excludes 'pagination'
  * });
  *
- * // Later combined via buildUsing([tasksEntry, ...])
+ * // Later combined via buildUsing([tasksPolicyConfig, ...])
  * ```
  *
  * @typeParam Q - GraphQL query result type (e.g. `TasksQuery`)
@@ -43,7 +43,7 @@
  */
 
 import type { FieldPolicy } from '@apollo/client';
-import { generateFieldPolicy } from '@monorepo/apollo';
+import { generateFieldPolicy } from '../generateFieldPolicy';
 import type {
   AllowedKeys,
   OffsetListKey,
@@ -51,7 +51,7 @@ import type {
   TypenameOf,
 } from './types';
 
-export function buildEntry<Q, V>(cfg: {
+export function queryPolicyConfig<Q, V>(cfg: {
   key: OffsetListKey<Q> & string;
   entityTypename: TypenameOf<ResultItemOf<Q, typeof cfg.key & keyof Q>>;
   keyArgs: readonly AllowedKeys<V>[];

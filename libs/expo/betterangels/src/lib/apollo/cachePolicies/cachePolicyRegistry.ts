@@ -63,7 +63,11 @@
  *   set `keyFields: false` for that typename in your `generateCachePolicies` step.
  */
 
-import { TCachePolicyConfig } from '@monorepo/apollo';
+import {
+  TCachePolicyConfig,
+  buildPolicyConfig,
+  queryPolicyConfig,
+} from '@monorepo/apollo';
 import {
   FilterClientProfilesQuery,
   FilterClientProfilesQueryVariables,
@@ -80,32 +84,36 @@ import {
   TasksQuery,
   TasksQueryVariables,
 } from '../../ui-components/TaskList/__generated__/Tasks.generated';
-import { buildEntry } from './buildUtils/buildEntry';
-import { buildPolicies } from './buildUtils/buildPolicies';
 
 const policyConfig = [
-  buildEntry<TasksQuery, TasksQueryVariables>({
+  queryPolicyConfig<TasksQuery, TasksQueryVariables>({
     key: 'tasks',
     entityTypename: 'TaskType',
     keyArgs: ['filters', 'ordering'] as const,
   }),
-  buildEntry<FilterClientProfilesQuery, FilterClientProfilesQueryVariables>({
+  queryPolicyConfig<
+    FilterClientProfilesQuery,
+    FilterClientProfilesQueryVariables
+  >({
     key: 'clientProfiles',
     entityTypename: 'ClientProfileType',
     keyArgs: ['filters', 'order'] as const,
   }),
-  buildEntry<FilterUsersQuery, FilterUsersQueryVariables>({
+  queryPolicyConfig<FilterUsersQuery, FilterUsersQueryVariables>({
     key: 'interactionAuthors',
     entityTypename: 'InteractionAuthorType',
     keyArgs: ['filters', 'order'] as const,
   }),
-  buildEntry<FilterOrganizationsQuery, FilterOrganizationsQueryVariables>({
+  queryPolicyConfig<
+    FilterOrganizationsQuery,
+    FilterOrganizationsQueryVariables
+  >({
     key: 'caseworkerOrganizations',
     entityTypename: 'OrganizationType',
     keyArgs: ['filters', 'order'] as const,
   }),
 ] as const;
 
-export const cachePolicyRegistry = buildPolicies(
+export const cachePolicyRegistry = buildPolicyConfig(
   policyConfig
 ) satisfies TCachePolicyConfig;

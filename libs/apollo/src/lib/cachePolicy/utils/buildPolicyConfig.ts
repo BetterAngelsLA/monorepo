@@ -36,7 +36,7 @@
  *   }),
  * ] as const;
  *
- * export const cachePolicyRegistry = buildPolicies(entries);
+ * export const cachePolicyRegistry = buildPolicyConfig(entries);
  *
  * // Result type:
  * // {
@@ -48,18 +48,18 @@
  * @param defs - readonly array of entries created via `buildEntry`
  * @returns object keyed by each entry’s `key`, with typed policy values
  */
-export function buildPolicies<
+export function buildPolicyConfig<
   const T extends readonly { key: string; build: () => any }[]
 >(defs: T) {
   // (Optional) dev-time duplicate-key warning
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env['NODE_ENV'] !== 'production') {
     const seen = new Set<string>();
 
     for (const d of defs) {
       if (seen.has(d.key)) {
         // eslint-disable-next-line no-console
         console.warn(
-          `[apollo buildPolicies] Duplicate key "${d.key}" – later one will override.`
+          `[apollo buildPolicyConfig] Duplicate key "${d.key}" – later one will override.`
         );
       }
       seen.add(d.key);
