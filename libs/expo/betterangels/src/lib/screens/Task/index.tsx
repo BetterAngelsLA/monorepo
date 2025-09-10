@@ -2,6 +2,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { LoadingView } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer } from '../../ui-components';
+
 import TaskStatusBtn from '../../ui-components/TaskStatusBtn';
 import { useTaskQuery } from './__generated__/Task.generated';
 import TaskBody from './TaskBody';
