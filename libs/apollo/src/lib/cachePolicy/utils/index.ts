@@ -1,2 +1,2 @@
 export { buildPolicyConfig } from './buildPolicyConfig';
-export { queryPolicyConfig } from './queryPolicyConfig';
+export { queryPolicyRecord } from './queryPolicyRecord';

@@ -66,7 +66,7 @@
 import {
   TCachePolicyConfig,
   buildPolicyConfig,
-  queryPolicyConfig,
+  queryPolicyRecord,
 } from '@monorepo/apollo';
 import {
   FilterClientProfilesQuery,
@@ -86,12 +86,12 @@ import {
 } from '../../ui-components/TaskList/__generated__/Tasks.generated';
 
 const policyConfig = [
-  queryPolicyConfig<TasksQuery, TasksQueryVariables>({
+  queryPolicyRecord<TasksQuery, TasksQueryVariables>({
     key: 'tasks',
     entityTypename: 'TaskType',
     keyArgs: ['filters', 'ordering'] as const,
   }),
-  queryPolicyConfig<
+  queryPolicyRecord<
     FilterClientProfilesQuery,
     FilterClientProfilesQueryVariables
   >({
@@ -99,12 +99,12 @@ const policyConfig = [
     entityTypename: 'ClientProfileType',
     keyArgs: ['filters', 'order'] as const,
   }),
-  queryPolicyConfig<FilterUsersQuery, FilterUsersQueryVariables>({
+  queryPolicyRecord<FilterUsersQuery, FilterUsersQueryVariables>({
     key: 'interactionAuthors',
     entityTypename: 'InteractionAuthorType',
     keyArgs: ['filters', 'order'] as const,
   }),
-  queryPolicyConfig<
+  queryPolicyRecord<
     FilterOrganizationsQuery,
     FilterOrganizationsQueryVariables
   >({
