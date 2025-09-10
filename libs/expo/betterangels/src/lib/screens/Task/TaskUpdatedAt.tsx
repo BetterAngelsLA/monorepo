@@ -2,11 +2,11 @@ import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { StyleSheet, View } from 'react-native';
 
-type TTaskSummaryUpdatedAtProps = {
+type TTaskUpdatedAtProps = {
   updatedAt: string;
 };
 
-export default function TaskUpdatedAt(props: TTaskSummaryUpdatedAtProps) {
+export default function TaskUpdatedAt(props: TTaskUpdatedAtProps) {
   const { updatedAt } = props;
   return (
     <View style={styles.container}>

@@ -32,7 +32,6 @@ export function TasksTab(props: TProps) {
   }, []);
 
   const renderTaskItem = useCallback(
-    (task: TTask) => <TaskCard task={task} onPress={handleTaskPress} />,
     (task: TTask) => (
       <TaskCard task={task} onPress={handleTaskPress} variant="withoutClient" />
     ),
