@@ -1,6 +1,5 @@
 import {
   BarsIcon,
-  HouseLineIcon,
   SettingsOutlineIcon,
   SignOutIcon,
   TaskListIcon,
@@ -34,7 +33,6 @@ export default function NavModal(props: INavModalProps) {
   const tasksFeatureOn = useFeatureFlagActive(FeatureFlags.TASKS_FF);
 
   const ACTIONS = [
-    { title: 'Home', Icon: HouseLineIcon, route: '/' },
     tasksFeatureOn && {
       title: 'Tasks',
       Icon: TaskListIcon,
