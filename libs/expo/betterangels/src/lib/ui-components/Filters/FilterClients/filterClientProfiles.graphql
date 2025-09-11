@@ -1,0 +1,20 @@
+query FilterClientProfiles(
+  $filters: ClientProfileFilter
+  $pagination: OffsetPaginationInput
+  $order: ClientProfileOrder
+) {
+  clientProfiles(filters: $filters, pagination: $pagination, order: $order) {
+    totalCount
+    results {
+      id
+      firstName
+      lastName
+      middleName
+      nickname
+    }
+    pageInfo {
+      limit
+      offset
+    }
+  }
+}

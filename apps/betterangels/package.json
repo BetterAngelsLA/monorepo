@@ -86,6 +86,7 @@
     "graphql": "*",
     "vite": "*",
     "@nx/vite": "*",
+    "ts-essentials": "*",
     "vitest": "*"
   },
   "scripts": {
