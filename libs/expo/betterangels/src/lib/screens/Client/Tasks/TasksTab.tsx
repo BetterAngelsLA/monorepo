@@ -22,12 +22,17 @@ type TProps = {
 
 export function TasksTab(props: TProps) {
   const { client } = props;
+
   const [search, setSearch] = useState('');
+
+  const currentPath = client
+    ? `/client/${client?.clientProfile.id}`
+    : undefined;
 
   const handleTaskPress = useCallback((task: TTask) => {
     router.navigate({
       pathname: `/task/${task.id}`,
-      params: { arrivedFrom: `/client/${client?.clientProfile.id}` },
+      params: { arrivedFrom: currentPath },
     });
   }, []);
 
@@ -76,6 +81,7 @@ export function TasksTab(props: TProps) {
           onSuccess={() => {
             closeModalScreen();
           }}
+          arrivedFrom={currentPath || '/tasks'}
         />
       ),
       title: 'Follow-Up Task',
