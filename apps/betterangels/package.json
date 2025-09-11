@@ -87,7 +87,8 @@
     "vite": "*",
     "@nx/vite": "*",
     "ts-essentials": "*",
-    "vitest": "*"
+    "vitest": "*",
+    "@storybook/react-native-web-vite": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

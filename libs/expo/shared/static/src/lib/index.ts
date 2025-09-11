@@ -12,10 +12,10 @@ export { Regex } from './regex';
 export { Shadow } from './shadow';
 export { Spacings } from './spacings';
 export {
+  FileThumbnailSizeDefault,
   IdThumbnailSize,
   ImageThumbnailSizeDefault,
   thumbnailSizes,
-  type FileThumbnailSizeDefault,
   type TThumbnailSize,
 } from './thumbnail';
 export * from './types';
