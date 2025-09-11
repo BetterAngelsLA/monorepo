@@ -17,7 +17,7 @@ export function HeroCarousel(props: TProps) {
 
   const imageUrls = images.map((i) => i.file.url);
 
-  const parentCss = ['bg-white', className];
+  const parentCss = ['bg-white', 'h-[200px]', className];
   const placeholderCss = ['h-[250px]', className];
 
   if (!images.length) {
