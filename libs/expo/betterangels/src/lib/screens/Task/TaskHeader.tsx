@@ -1,14 +1,24 @@
 import { EditButton, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useModalScreen } from '../../providers';
 import { TaskForm } from '../../ui-components';
 import { TaskQuery } from './__generated__/Task.generated';
 
+type TSearchParams = {
+  arrivedFrom?: string;
+};
+
 type TTaskHeaderProps = {
   task: TaskQuery['task'];
 };
+
 export default function TaskHeader(props: TTaskHeaderProps) {
   const { task } = props;
+
+  const { arrivedFrom } = useLocalSearchParams<TSearchParams>();
+
+  const currentPath = arrivedFrom || '/tasks';
 
   const { showModalScreen, closeModalScreen } = useModalScreen();
 
@@ -25,6 +35,7 @@ export default function TaskHeader(props: TTaskHeaderProps) {
           onSuccess={() => {
             closeModalScreen();
           }}
+          arrivedFrom={currentPath}
         />
       ),
       title: 'Follow-Up Task',

@@ -14,9 +14,31 @@ type TDeleteTaskProps = {
 export default function DeleteTask(props: TDeleteTaskProps) {
   const { id, arrivedFrom, onSuccess } = props;
 
-  const [deleteTask, { loading: isDeleting }] = useDeleteTaskMutation();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
+
+  const [deleteTask, { loading: isDeleting }] = useDeleteTaskMutation({
+    update(cache, { data }) {
+      if (data?.deleteTask?.__typename !== 'DeletedObjectType') {
+        console.error(
+          `[DeleteTask] failed to delete Task id [${id}]. __typename DeletedObjectType missing from response.`
+        );
+
+        return;
+      }
+
+      // Cache store ID is a string, so must convert
+      const deletedId = String(data.deleteTask.id);
+
+      cache.evict({
+        // Note `__typename: 'TaskType'` is not in the response payload. It uses a generic `DeletedObjectType`.
+        id: cache.identify({ __typename: 'TaskType', id: deletedId }),
+      });
+
+      // clean up
+      cache.gc();
+    },
+  });
 
   if (!id) {
     return null;
