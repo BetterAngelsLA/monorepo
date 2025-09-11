@@ -26,7 +26,7 @@ export function TasksTab(props: TProps) {
   const [search, setSearch] = useState('');
 
   const currentPath = client
-    ? `/client/${client?.clientProfile.id}`
+    ? `/client/${client?.clientProfile.id}?newTab=Tasks`
     : undefined;
 
   const handleTaskPress = useCallback((task: TTask) => {
