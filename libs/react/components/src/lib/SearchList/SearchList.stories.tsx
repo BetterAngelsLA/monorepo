@@ -26,7 +26,7 @@ const colors: string[] = [
 
 const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
-  title: 'Components/Form-Ui/SearchList',
+  title: 'Form-Ui/SearchList',
   argTypes: {
     ...disableControls(['onChange', 'className', 'value', 'data']),
   },

@@ -4,7 +4,7 @@ import { Alert } from './Alert';
 import { useAlert } from './state/useAlert';
 
 const meta: Meta = {
-  title: 'Components/Alert',
+  title: 'Alert',
 };
 
 export default meta;

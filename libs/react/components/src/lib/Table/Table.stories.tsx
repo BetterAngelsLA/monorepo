@@ -5,7 +5,7 @@ import { Table as StoryComponent } from './Table';
 
 const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
-  title: 'Components/Table',
+  title: 'Table',
   parameters: {
     controls: { disable: true },
   },

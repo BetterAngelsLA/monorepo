@@ -4,7 +4,7 @@ import { AppDrawer } from './AppDrawer';
 import { useAppDrawer } from './state/useAppDrawer';
 
 const meta: Meta = {
-  title: 'Components/AppDrawer',
+  title: 'AppDrawer',
   decorators: [withMemoryRouter('/')],
 };
 

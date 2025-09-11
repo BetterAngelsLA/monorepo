@@ -3,7 +3,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ExpandableContainer } from './ExpandableContainer';
 
 const meta: Meta<typeof ExpandableContainer> = {
-  title: 'Components/ExpandableContainer',
+  title: 'ExpandableContainer',
   component: ExpandableContainer,
   argTypes: {
     ...disableControls(['onClick']),

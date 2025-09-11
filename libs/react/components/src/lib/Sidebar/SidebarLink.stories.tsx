@@ -8,7 +8,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { SidebarLink } from './SidebarLink';
 
 const meta: Meta<typeof SidebarLink> = {
-  title: 'Components/Sidebar/SidebarLink',
+  title: 'Sidebar/SidebarLink',
   component: SidebarLink,
   decorators: [withMemoryRouter('/')],
   argTypes: disableControls(['to', 'icon', 'className', 'children']),

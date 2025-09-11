@@ -3,7 +3,7 @@ import { DropdownProps, Dropdown as StoryComponent } from './Dropdown';
 
 const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
-  title: 'Components/Dropdown',
+  title: 'Dropdown',
 };
 export default meta;
 

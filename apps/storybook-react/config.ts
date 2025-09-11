@@ -1,44 +1,67 @@
 import { join } from 'path';
+import { StoriesSpecifier } from 'storybook/internal/types';
 
-const LIB_STORY_ROOTS = [
-  '../../libs/react/components/src/lib',
-  '../../libs/assets/src/icons',
-  '../../libs/react/icons/src/lib/components',
+const storyFileTypes = '**/*.@(mdx|stories.@(js|jsx|ts|tsx))';
+
+// source directories
+const ICON_SVG_STORY_DIRS = ['../../libs/assets/src/icons'];
+
+const REACT_ICON_COMPONENT_DIRS = ['../../libs/react/icons/src/lib/components'];
+
+const REACT_COMPONENT_STORY_DIRS = ['../../libs/react/components/src/lib'];
+
+// stories
+export const PLATFORM_STORIES: StoriesSpecifier[] = [
+  ...ICON_SVG_STORY_DIRS.map((d) => ({
+    directory: join(__dirname, d),
+    files: storyFileTypes,
+    titlePrefix: 'Platform',
+  })),
 ];
 
-const RN_LIB_STORY_ROOTS = ['../../libs/expo/shared/ui-components/src/lib'];
+export const REACT_STORIES: StoriesSpecifier[] = [
+  ...REACT_ICON_COMPONENT_DIRS.map((d) => ({
+    directory: join(__dirname, d),
+    files: storyFileTypes,
+    titlePrefix: 'Web/Icons',
+  })),
+  ...REACT_COMPONENT_STORY_DIRS.map((d) => ({
+    directory: join(__dirname, d),
+    files: storyFileTypes,
+    titlePrefix: 'Web/Components',
+  })),
+];
 
-const LIB_CONTENT_ROOTS = [
+// use RN_COMPONENT_STORY_DIRS pattern once expo lib stories are updated
+// currently the placeholder stories have duplicate names which crashes
+export const RN_STORIES: StoriesSpecifier[] = [
+  {
+    directory: join(
+      __dirname,
+      '../../libs/expo/shared/ui-components/src/lib/Pill'
+    ),
+    files: 'Pill.stories.tsx',
+    titlePrefix: 'RN Components',
+  },
+  {
+    directory: join(
+      __dirname,
+      '../../libs/expo/shared/ui-components/src/lib/PillContainer'
+    ),
+    files: 'PillContainer.stories.tsx',
+    titlePrefix: 'RN Components',
+  },
+];
+
+// For tailwind to generate classes
+const TAILWIND_CONTENT_DIRS = [
   './src', // host
   '../../libs/react/storybook/src/lib', // react storybook lib
-  ...LIB_STORY_ROOTS,
+  ...REACT_COMPONENT_STORY_DIRS, // react components lib
 ];
 
-export const REACT_LIB_STORY_GLOBS = [
-  ...LIB_STORY_ROOTS.map((p) =>
-    join(__dirname, p, '**/*.@(mdx|stories.@(js|jsx|ts|tsx))')
+export const TAILWIND_CONTENT_GLOBS = [
+  ...TAILWIND_CONTENT_DIRS.map((p) =>
+    join(__dirname, p, '**/*.{ts,tsx,mdx,html}')
   ),
-];
-
-// TODO: use glob once `placeholder` files are updated
-// right now they all have same name and collide
-// export const RN_LIB_STORY_GLOBS = [
-//   ...RN_LIB_STORY_ROOTS.map((p) =>
-//     join(__dirname, p, '**/*.@(mdx|stories.@(js|jsx|ts|tsx))')
-//   ),
-// ];
-
-export const RN_LIB_STORY_GLOBS = [
-  ...RN_LIB_STORY_ROOTS.map((p) => join(__dirname, p, 'Pill/Pill.stories.tsx')),
-  ...RN_LIB_STORY_ROOTS.map((p) =>
-    join(__dirname, p, 'PillContainer/PillContainer.stories.tsx')
-  ),
-];
-export const ALL_LIB_STORY_GLOBS = [
-  ...REACT_LIB_STORY_GLOBS,
-  ...RN_LIB_STORY_GLOBS,
-];
-
-export const LIB_CONTENT_GLOBS = [
-  ...LIB_CONTENT_ROOTS.map((p) => join(__dirname, p, '**/*.{ts,tsx,mdx,html}')),
 ];

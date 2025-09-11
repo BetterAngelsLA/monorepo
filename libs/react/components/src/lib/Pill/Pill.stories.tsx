@@ -3,7 +3,7 @@ import { IPillProps, Pill as StoryComponent } from './Pill';
 
 const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
-  title: 'Components/Pill',
+  title: 'Pill',
 };
 export default meta;
 

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ImageCarousel as StoryComponent, TProps } from './ImageCarousel';
 
 const meta: Meta<typeof StoryComponent> = {
-  title: 'Components/ImageCarousel',
+  title: 'ImageCarousel',
   component: StoryComponent,
 };
 export default meta;

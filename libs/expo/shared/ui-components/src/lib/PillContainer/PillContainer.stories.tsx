@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { PillContainer } from './PillContainer';
 
 const meta: Meta<typeof PillContainer> = {
-  title: 'React Native/Pills/PillContainer',
+  title: 'PillContainer',
   component: PillContainer,
   args: {
     variant: 'expandable',

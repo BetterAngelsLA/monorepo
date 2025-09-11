@@ -7,7 +7,7 @@ import {
 
 const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
-  title: 'Components/PillContainer',
+  title: 'PillContainer',
 };
 export default meta;
 

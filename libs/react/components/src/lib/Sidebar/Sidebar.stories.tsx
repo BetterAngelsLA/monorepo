@@ -58,7 +58,7 @@ function SidebarStoryWrapper() {
 }
 
 const meta: Meta<typeof SidebarStoryWrapper> = {
-  title: 'Components/Sidebar/Sidebar',
+  title: 'Sidebar/Sidebar',
   component: SidebarStoryWrapper,
   decorators: [withMemoryRouter('/')],
 };

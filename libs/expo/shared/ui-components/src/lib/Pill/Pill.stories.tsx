@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { Pill, type IPillProps } from './Pill';
 
 const meta: Meta<IPillProps> = {
-  title: 'React Native/Pill',
+  title: 'Pill',
   component: Pill,
   args: {
     label: 'Hello',
