@@ -4,10 +4,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "storybook-start": "nx run expo-shared-ui-components:storybook",
-    "storybook-build": "nx storybook build expo-shared-ui-components",
-    "storybook-react": "nx run storybook-react:storybook",
-    "storybook-react-build": "nx run storybook-react:build",
+    "storybook": "nx run storybook-react:storybook",
+    "storybook-build": "nx run storybook-react:build",
     "server": "nx start betterangels-backend",
     "ba": "nx start betterangels",
     "ba:build-dev": "nx build betterangels --profile development",
