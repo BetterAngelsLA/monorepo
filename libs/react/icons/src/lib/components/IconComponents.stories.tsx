@@ -20,7 +20,6 @@ const iconList: TIconItem[] = Object.entries(icons).map(([key, value]) => {
 });
 
 const meta: Meta = {
-  title: 'Iconography',
   parameters: { controls: { disable: true } },
 };
 export default meta;

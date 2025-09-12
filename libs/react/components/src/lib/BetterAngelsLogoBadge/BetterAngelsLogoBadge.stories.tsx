@@ -3,7 +3,7 @@ import { BetterAngelsLogoBadge as StoryComponent } from './BetterAngelsLogoBadge
 
 const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
-  title: 'Components/BetterAngelsLogoBadge',
+  title: 'BetterAngelsLogoBadge',
 };
 export default meta;
 

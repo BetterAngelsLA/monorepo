@@ -1,0 +1,15 @@
+/* Fonts Family declarations se used in ract-native */
+@font-face {
+  font-family: 'Poppins-Regular';
+  src: url('../libs/assets/src/fonts/Poppins-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Poppins-Medium';
+  src: url('../libs/assets/src/fonts/Poppins-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Poppins-SemiBold';
+  src: url('../libs/assets/src/fonts/Poppins-SemiBold.ttf') format('truetype');
+}

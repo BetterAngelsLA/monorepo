@@ -3,7 +3,7 @@ import { DropdownProps, Dropdown as StoryComponent } from './Dropdown';
 
 const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
-  title: 'Components/Dropdown',
+  title: 'Dropdown',
 };
 export default meta;
 
@@ -16,13 +16,14 @@ const defaultArgs: DropdownProps<string> = {
 };
 
 export const Dropdown: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'h-[400px] bg-gray-100',
+    },
+  },
   render: (args) => {
     const baseArgs = { ...defaultArgs, ...args };
 
-    return (
-      <div className="h-[300px] px-24 py-12 bg-gray-100">
-        <StoryComponent {...baseArgs} />
-      </div>
-    );
+    return <StoryComponent {...baseArgs} />;
   },
 };

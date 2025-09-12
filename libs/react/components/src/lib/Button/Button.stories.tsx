@@ -3,15 +3,20 @@ import { Button } from './Button';
 
 const meta: Meta<typeof Button> = {
   component: Button,
-  title: 'Components/Button',
+  title: 'Button',
 };
 export default meta;
 
 type Story = StoryObj<typeof Button>;
 
 export const BasicButton: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'flex-col w-[280px]',
+    },
+  },
   render: (args) => (
-    <div className="flex flex-col gap-4">
+    <>
       <Button {...args}>text</Button>
       <Button {...args} className="pseudo-hover">
         hover
@@ -19,6 +24,6 @@ export const BasicButton: Story = {
       <Button {...args} className="pseudo-active">
         active
       </Button>
-    </div>
+    </>
   ),
 };
