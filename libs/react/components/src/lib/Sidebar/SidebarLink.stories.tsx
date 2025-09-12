@@ -1,9 +1,5 @@
 import { UsersIcon } from '@monorepo/react/icons';
-import {
-  SbkPanel,
-  disableControls,
-  withMemoryRouter,
-} from '@monorepo/react/storybook';
+import { disableControls, withMemoryRouter } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
 import { SidebarLink } from './SidebarLink';
 
@@ -24,11 +20,16 @@ const withIconArgs = {
 };
 
 export const WithIcon: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'flex-col',
+    },
+  },
   render: (args) => {
     const baseArgs = { ...withIconArgs, ...args };
 
     return (
-      <SbkPanel className="flex-col w-[400px] p-8 border-2 border-gray-100">
+      <>
         <SidebarLink {...baseArgs}>text</SidebarLink>
         <SidebarLink {...baseArgs} className="pseudo-hover">
           hover
@@ -36,7 +37,7 @@ export const WithIcon: Story = {
         <SidebarLink {...baseArgs} className="pseudo-active">
           active
         </SidebarLink>
-      </SbkPanel>
+      </>
     );
   },
 };

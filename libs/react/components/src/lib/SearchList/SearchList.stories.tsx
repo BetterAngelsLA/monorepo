@@ -1,4 +1,4 @@
-import { SbkPanel, disableControls } from '@monorepo/react/storybook';
+import { disableControls } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
 import { useState } from 'react';
 import {
@@ -37,6 +37,11 @@ export default meta;
 type Story = StoryObj<typeof StoryComponent>;
 
 export const SearchList: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'flex-col w-[400px]',
+    },
+  },
   render: (args) => {
     const [results, setResults] = useState<string[]>([]);
 
@@ -50,7 +55,7 @@ export const SearchList: Story = {
     };
 
     return (
-      <SbkPanel variant="bordered" className="w-[400px] flex-col">
+      <>
         <StoryComponent {...finalArgs} />
 
         <div className="mt-4 text-sm flex flex-col">
@@ -68,7 +73,7 @@ export const SearchList: Story = {
             )}
           </div>
         </div>
-      </SbkPanel>
+      </>
     );
   },
 };

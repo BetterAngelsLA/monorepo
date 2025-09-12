@@ -26,7 +26,7 @@ export const ExpandableContainerDemo: Story = {
     const baseArgs = { ...defaultArgs, ...args };
 
     return (
-      <ExpandableContainer {...baseArgs} className="w-80">
+      <ExpandableContainer {...baseArgs} className="w-full">
         Lorem ipsum dolor sit amet consectetur adipisicing elit.
       </ExpandableContainer>
     );

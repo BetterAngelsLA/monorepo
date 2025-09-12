@@ -16,8 +16,8 @@ function SidebarStoryWrapper() {
   const userOrganization = { name: 'Storybook Org' };
 
   return (
-    <div className="border-4 border-gray-300 flex flex-row h-[400px] w-full">
-      <Sidebar className="h-screen" onOpenChange={setIsOpen}>
+    <div className="border-4 border-gray-300 flex flex-row max-h-[800px] w-full">
+      <Sidebar className="h-[600px]" onOpenChange={setIsOpen}>
         <Sidebar.Header>
           <BetterAngelsLogoBadge className="ml-1 mr-2 flex-shrink-0" />
           {userOrganization?.name && isOpen && (
@@ -69,6 +69,8 @@ type Story = StoryObj<typeof SidebarStoryWrapper>;
 
 export const SidebarStory: Story = {
   parameters: {
-    layout: null,
+    customLayout: {
+      variant: 'basic',
+    },
   },
 };

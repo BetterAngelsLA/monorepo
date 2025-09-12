@@ -1,4 +1,4 @@
-import { SbkButton, SbkPanel } from '@monorepo/react/storybook';
+import { SbkButton } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
 import { Alert } from './Alert';
 import { useAlert } from './state/useAlert';
@@ -13,14 +13,16 @@ type Story = StoryObj;
 
 export const AlertDemo: Story = {
   parameters: {
-    layout: null,
+    customLayout: {
+      canvasStye: { width: 400 },
+    },
   },
   render: () => {
     const Demo = () => {
       const { showAlert } = useAlert();
 
       return (
-        <SbkPanel className="mt-32 flex gap-8">
+        <>
           <SbkButton
             className="bg-green-400"
             onClick={() =>
@@ -37,7 +39,7 @@ export const AlertDemo: Story = {
           >
             Show Error
           </SbkButton>
-        </SbkPanel>
+        </>
       );
     };
 

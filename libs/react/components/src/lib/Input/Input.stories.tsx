@@ -1,4 +1,3 @@
-import { SbkPanel } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
 import { IInputProps, Input as StoryComponent } from './Input';
 
@@ -15,13 +14,14 @@ const defaultArgs: IInputProps = {
 };
 
 export const Input: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'w-[400px]',
+    },
+  },
   render: (args) => {
     const baseArgs = { ...defaultArgs, ...args };
 
-    return (
-      <SbkPanel variant="bordered" className="w-[400px]">
-        <StoryComponent {...baseArgs} />
-      </SbkPanel>
-    );
+    return <StoryComponent {...baseArgs} />;
   },
 };

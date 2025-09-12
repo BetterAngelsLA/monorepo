@@ -68,6 +68,11 @@ const pagesData: TTableItem[][] = [
 ];
 
 export const Table: Story = {
+  parameters: {
+    customLayout: {
+      variant: 'basic',
+    },
+  },
   render: () => {
     const [currentPage, setCurrentPage] = useState(1);
 

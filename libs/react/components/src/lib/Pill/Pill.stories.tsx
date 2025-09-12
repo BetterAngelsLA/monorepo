@@ -16,8 +16,8 @@ const defaultArgs: IPillProps = {
 
 export const Pill: Story = {
   render: (args) => {
-    const baseArgs = { ...defaultArgs, ...args };
+    const storyArgs = { ...defaultArgs, ...args };
 
-    return <StoryComponent {...baseArgs} />;
+    return <StoryComponent {...storyArgs} />;
   },
 };

@@ -19,6 +19,11 @@ const defaultArgs: Pick<TProps, 'imageUrls'> = {
 };
 
 export const ImageCarousel: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'w-full',
+    },
+  },
   render: (args) => {
     const baseArgs: TProps = {
       ...defaultArgs,
