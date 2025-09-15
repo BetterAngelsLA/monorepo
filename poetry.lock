@@ -4005,14 +4005,14 @@ markers = {dev = "sys_platform == \"win32\""}
 
 [[package]]
 name = "unittest-parametrize"
-version = "1.6.0"
+version = "1.8.0"
 description = "Parametrize tests within unittest TestCases."
 optional = false
 python-versions = ">=3.9"
 groups = ["dev"]
 files = [
-    {file = "unittest_parametrize-1.6.0-py3-none-any.whl", hash = "sha256:fcbc0023304b08624b38a4762d25b691468d66f61fd5f11672b372ed71eee0e2"},
-    {file = "unittest_parametrize-1.6.0.tar.gz", hash = "sha256:d9d2209a265b61b310ce81c1890f0e3a2282025deae758773f04d5a692cf1a3f"},
+    {file = "unittest_parametrize-1.8.0-py3-none-any.whl", hash = "sha256:10a580aa04d13cf4f1c8e5e07be5694392b7ecef3b4d585bfc2bddce65bc3275"},
+    {file = "unittest_parametrize-1.8.0.tar.gz", hash = "sha256:90818ddeb28648e795eb53983f42d44e273b26ab03a1db49c27f6830ed419236"},
 ]
 
 [[package]]
@@ -4414,4 +4414,4 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.1"
 python-versions = "3.13.5"
-content-hash = "75cfbe061f817a5f1dc87face0b43c31545c91bbae5f747980dc6dfac89d61dd"
+content-hash = "781c76de0d6c38438d0bb04a6eb3562def467d7f808956ad47303dea8438e944"
