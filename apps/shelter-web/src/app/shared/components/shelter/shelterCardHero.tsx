@@ -11,9 +11,9 @@ type TShelterCard = {
 export function ShelterCardHero(props: TShelterCard) {
   const { imageUrl, shelterName, className, photos } = props;
 
-  const imageCss = ['w-full h-[120px] object-cover rounded-[20px]'];
+  const imageCss = ['w-full h-[120px] object-cover rounded-lg'];
   const thumbImg = [
-    'inline-block align-top w-[159px] h-[120px] mr-2 last:mr-0 rounded-[20px]',
+    'inline-block align-top w-[159px] h-[120px] mr-2 last:mr-0 rounded-lg',
   ];
   const placeholderCss = [
     'border border-neutral-90 w-[328px] md:w-96',
@@ -28,7 +28,7 @@ export function ShelterCardHero(props: TShelterCard) {
 
   if (urls.length === 0 && imageUrl) urls.push(imageUrl);
 
-  if (urls.length === 0) {
+  if (urls.length > 0) {
     return <ImagePlaceholder className={mergeCss(placeholderCss)} />;
   }
 
@@ -68,7 +68,7 @@ export function ShelterCardHero(props: TShelterCard) {
 
   return (
     <div className={mergeCss(['w-full min-w-0', className])}>
-      <div className="overflow-hidden rounded-[20px]">
+      <div className="overflow-hidden rounded-lg">
         <div
           className="w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain"
           style={{ WebkitOverflowScrolling: 'touch' }}
