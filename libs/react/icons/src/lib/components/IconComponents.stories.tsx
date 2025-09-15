@@ -27,7 +27,11 @@ export default meta;
 type Story = StoryObj;
 
 export const IconComponents: Story = {
-  parameters: { layout: false },
+  parameters: {
+    customLayout: {
+      variant: 'basic',
+    },
+  },
   render: () => {
     return (
       <SbkGallery

@@ -14,7 +14,7 @@ type Story = StoryObj;
 export const AlertDemo: Story = {
   parameters: {
     customLayout: {
-      canvasStye: { width: 400 },
+      canvasStyle: { width: 400 },
     },
   },
   render: () => {
