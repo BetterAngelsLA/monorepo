@@ -51,7 +51,7 @@ model-bakery = "^1.20.5"
 unittest-parametrize = "^1.6.0"
 time-machine = "^2.16.0"
 types-python-dateutil = "^2.9.0.20250708"
-types-gevent = "^25.4.0.20250801"
+types-gevent = "^25.4.0.20250915"
 
 
 [tool.pytest.ini_options]
