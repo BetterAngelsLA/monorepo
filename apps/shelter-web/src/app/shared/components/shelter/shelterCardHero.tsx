@@ -28,7 +28,7 @@ export function ShelterCardHero(props: TShelterCard) {
 
   if (urls.length === 0 && imageUrl) urls.push(imageUrl);
 
-  if (urls.length > 0) {
+  if (urls.length === 0) {
     return <ImagePlaceholder className={mergeCss(placeholderCss)} />;
   }
 
