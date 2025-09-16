@@ -1,4 +1,3 @@
-import { SbkPanel } from '@monorepo/react/storybook';
 import type { Meta, StoryObj } from '@storybook/react';
 import {
   PillContainer as StoryComponent,
@@ -7,7 +6,7 @@ import {
 
 const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
-  title: 'Components/PillContainer',
+  title: 'PillContainer',
 };
 export default meta;
 
@@ -30,10 +29,6 @@ export const PillContainer: Story = {
   render: (args) => {
     const baseArgs = { ...defaultArgs, ...args };
 
-    return (
-      <SbkPanel variant="bordered" className="w-[400px]">
-        <StoryComponent {...baseArgs} />
-      </SbkPanel>
-    );
+    return <StoryComponent {...baseArgs} />;
   },
 };
