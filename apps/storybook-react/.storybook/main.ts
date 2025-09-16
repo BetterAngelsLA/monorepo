@@ -4,12 +4,20 @@ import 'dotenv/config';
 import { resolve } from 'path';
 import { mergeConfig, searchForWorkspaceRoot } from 'vite';
 import svgr from 'vite-plugin-svgr';
-import { PLATFORM_STORIES, REACT_STORIES, RN_STORIES } from '../config';
+import {
+  PLATFORM_STORIES,
+  REACT_SHARED_LIB_STORIES,
+  RN_SHARED_LIB_STORIES,
+} from '../config';
 import { appendReactQueryForRnSvg } from './plugins/appendReactQueryForRnSvg';
 import { rawSvgPlugin } from './plugins/rawSvgPlugin';
 
 const config: StorybookConfig = {
-  stories: [...PLATFORM_STORIES, ...REACT_STORIES, ...RN_STORIES],
+  stories: [
+    ...PLATFORM_STORIES,
+    ...REACT_SHARED_LIB_STORIES,
+    ...RN_SHARED_LIB_STORIES,
+  ],
   addons: [],
   framework: {
     name: '@storybook/react-native-web-vite',
