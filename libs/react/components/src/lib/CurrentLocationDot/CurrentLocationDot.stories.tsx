@@ -3,7 +3,7 @@ import { CurrentLocationDot as StoryComponent } from './CurrentLocationDot';
 
 const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
-  title: 'Components/CurrentLocationDot',
+  title: 'CurrentLocationDot',
 };
 export default meta;
 

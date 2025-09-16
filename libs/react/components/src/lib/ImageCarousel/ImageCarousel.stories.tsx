@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react';
 import { ImageCarousel as StoryComponent, TProps } from './ImageCarousel';
 
 const meta: Meta<typeof StoryComponent> = {
-  title: 'Components/ImageCarousel',
+  title: 'ImageCarousel',
   component: StoryComponent,
 };
 export default meta;
@@ -19,6 +19,11 @@ const defaultArgs: Pick<TProps, 'imageUrls'> = {
 };
 
 export const ImageCarousel: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'w-full',
+    },
+  },
   render: (args) => {
     const baseArgs: TProps = {
       ...defaultArgs,
