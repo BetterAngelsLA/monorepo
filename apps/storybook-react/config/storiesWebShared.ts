@@ -2,6 +2,7 @@ import { join } from 'path';
 import { StoriesSpecifier } from 'storybook/internal/types';
 import { storyFileTypes } from './constants';
 
+// React Shared Libs
 const REACT_ICON_COMPONENT_DIRS = [
   '../../../libs/react/icons/src/lib/components',
 ];

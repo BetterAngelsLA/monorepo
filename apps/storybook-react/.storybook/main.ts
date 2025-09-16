@@ -6,6 +6,7 @@ import { mergeConfig, searchForWorkspaceRoot } from 'vite';
 import svgr from 'vite-plugin-svgr';
 import {
   PLATFORM_STORIES,
+  REACT_APP_LIB_STORIES,
   REACT_SHARED_LIB_STORIES,
   RN_SHARED_LIB_STORIES,
 } from '../config';
@@ -17,6 +18,7 @@ const config: StorybookConfig = {
     ...PLATFORM_STORIES,
     ...REACT_SHARED_LIB_STORIES,
     ...RN_SHARED_LIB_STORIES,
+    ...REACT_APP_LIB_STORIES,
   ],
   addons: [],
   framework: {
