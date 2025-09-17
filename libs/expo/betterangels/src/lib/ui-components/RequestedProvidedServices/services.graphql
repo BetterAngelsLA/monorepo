@@ -1,0 +1,17 @@
+query Services(
+  $ordering: [OrganizationServiceOrdering!]! = []
+  $pagination: OffsetPaginationInput
+) {
+  services(pagination: $pagination, ordering: $ordering) {
+    results {
+      category {
+        id
+        name
+        priority
+      }
+      priority
+      label
+      id
+    }
+  }
+}

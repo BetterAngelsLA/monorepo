@@ -25,6 +25,7 @@ import { ServicesByCategory } from '../../static';
 import MainScrollContainer from '../MainScrollContainer';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
+import { useServicesQuery } from './__generated__/services.generated';
 
 interface IServicesModalProps {
   noteId: string;
@@ -41,6 +42,7 @@ interface IServicesModalProps {
 export default function ServicesModal(props: IServicesModalProps) {
   const { initialServices, noteId, refetch, type } = props;
 
+  const { data: availableServices, loading } = useServicesQuery();
   const { closeModalScreen } = useModalScreen();
   const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
   const [services, setServices] = useState<
@@ -211,6 +213,14 @@ export default function ServicesModal(props: IServicesModalProps) {
 
     closeModalScreen();
   };
+
+  useEffect(() => {
+    console.log(loading);
+    console.log(availableServices);
+    if (availableServices) {
+      console.log(availableServices);
+    }
+  }, [availableServices]);
 
   useEffect(() => {
     const newInitialServices = initialServices
