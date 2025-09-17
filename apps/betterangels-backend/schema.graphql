@@ -1188,7 +1188,7 @@ input OrganizationServiceOrdering {
 
 type OrganizationServiceType {
   id: ID!
-  category: OrganizationServiceCategoryType!
+  category: OrganizationServiceCategoryType
   priority: Int
   label: String!
 }
@@ -1702,6 +1702,7 @@ input TaskFilter {
   OR: TaskFilter
   NOT: TaskFilter
   DISTINCT: Boolean
+  clientProfiles: [ID!]
   authors: [ID!]
   organizations: [ID!]
   status: [TaskStatusEnum!]
