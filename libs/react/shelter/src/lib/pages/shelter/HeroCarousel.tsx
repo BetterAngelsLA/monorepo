@@ -23,7 +23,7 @@ export function HeroCarousel(props: TProps) {
 
   const rest = images
     .map((i) => i.file?.url)
-    .filter((u): u is string => !!u && u !== shelter.heroImage);
+    .filter((u) => u !== shelter.heroImage);
 
   const imageUrls = shelter.heroImage ? [shelter.heroImage, ...rest] : rest;
 
