@@ -50,11 +50,7 @@ from shelters.models import (
     ShelterProgram,
 )
 from shelters.models import ShelterType as ShelterKind
-from shelters.models import (
-    SpecialSituationRestriction,
-    Storage,
-    TrainingService,
-)
+from shelters.models import SpecialSituationRestriction, Storage, TrainingService
 from strawberry import ID, asdict, auto
 
 
@@ -324,6 +320,9 @@ class ShelterType:
         ],
     )
     def hero_image(self, root: Shelter) -> Optional[str]:
+        if self.hero_image:
+            return str(self.hero_image.file.url)
+
         photo = next(
             (photos[0] for photos in (self._exterior_photos, self._interior_photos) if photos),
             None,
