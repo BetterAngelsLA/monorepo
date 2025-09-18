@@ -50,20 +50,6 @@ class HmisApiBridge:
         # If server replies non-JSON on error, .json() will raise — we treat as failure.
         return resp.json() or {}
 
-    # TODO: Add unit test
-    def _to_graphql_input(self, d: dict) -> str:
-        """Convert dict to GraphQL input string, handling lists without quotes."""
-        parts = []
-        for k, v in d.items():
-            if isinstance(v, str):
-                parts.append(f'{k}: "{v}"')
-            elif isinstance(v, list):
-                list_repr = "[" + ",".join(f'"{x}"' if isinstance(x, str) else str(x) for x in v) + "]"
-                parts.append(f"{k}: {list_repr}")
-            else:
-                parts.append(f"{k}: {v}")
-        return "{ " + ", ".join(parts) + " }"
-
     def _extract_response_body_from_mutation(
         self,
         mutation: str,
@@ -90,20 +76,7 @@ class HmisApiBridge:
 
         return mutation[start : i - 1].strip()
 
-    def _to_hmis_type(self, query: str, type: Optional[str] = None) -> str:
-        """Convert HmisObjectType → Object."""
-
-        query = re.sub(r"\bHmis(\w+)Type\b", r"\1", query)
-        query = re.sub(r"Hmis", "", query)
-
-        return query
-
-    def _format_query(
-        self,
-        original_query: bytes,
-        is_list_query: bool = False,
-        # subbed_vars: Optional[str] = None,
-    ) -> str:
+    def _format_query(self, original_query: bytes, is_list_query: bool = False) -> str:
         # convert from byte string
         query = json.loads(original_query.decode("utf-8"))["query"]
 
