@@ -1435,7 +1435,7 @@ export type OrganizationServiceOrdering = {
 
 export type OrganizationServiceType = {
   __typename?: 'OrganizationServiceType';
-  category: OrganizationServiceCategoryType;
+  category?: Maybe<OrganizationServiceCategoryType>;
   id: Scalars['ID']['output'];
   label: Scalars['String']['output'];
   priority?: Maybe<Scalars['Int']['output']>;
@@ -2112,6 +2112,7 @@ export type TaskFilter = {
   OR?: InputMaybe<TaskFilter>;
   authors?: InputMaybe<Array<Scalars['ID']['input']>>;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
+  clientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
