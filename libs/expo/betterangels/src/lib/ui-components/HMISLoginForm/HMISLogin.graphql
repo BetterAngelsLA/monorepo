@@ -1,7 +1,7 @@
 mutation HMISLogin($email: String!, $password: String!) {
   hmisLogin(email: $email, password: $password) {
-    ... on HmisLoginSuccess {
-      hmisToken
+    ... on UserType {
+      id
     }
     ... on HmisLoginError {
       field
