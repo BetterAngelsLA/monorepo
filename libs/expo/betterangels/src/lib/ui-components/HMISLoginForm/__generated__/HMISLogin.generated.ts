@@ -9,14 +9,14 @@ export type HmisLoginMutationVariables = Types.Exact<{
 }>;
 
 
-export type HmisLoginMutation = { __typename?: 'Mutation', hmisLogin: { __typename?: 'HmisLoginError', field?: string | null, message: string } | { __typename?: 'HmisLoginSuccess', hmisToken: string } };
+export type HmisLoginMutation = { __typename?: 'Mutation', hmisLogin: { __typename?: 'HmisLoginError', field?: string | null, message: string } | { __typename?: 'UserType', id: string } };
 
 
 export const HmisLoginDocument = gql`
     mutation HMISLogin($email: String!, $password: String!) {
   hmisLogin(email: $email, password: $password) {
-    ... on HmisLoginSuccess {
-      hmisToken
+    ... on UserType {
+      id
     }
     ... on HmisLoginError {
       field
