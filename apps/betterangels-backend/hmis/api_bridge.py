@@ -32,7 +32,7 @@ class HmisApiBridge:
         self.api_key = HMIS_GRAPHQL_API_KEY
 
         token = self._get_auth_token()
-        auth_header = {"Authorization": f"Bearer {token}" if token else {}}
+        auth_header = {"Authorization": f"Bearer {token}"} if token else {}
 
         self.headers = {
             "Content-Type": "application/json",
@@ -139,7 +139,7 @@ class HmisApiBridge:
     def _set_auth_token(self, token: str) -> None:
         """"""
         decoded = jwt.decode(token, options={"verify_signature": False})
-        print(decoded)
+        self.session.set_expiry(decoded["exp"] - 1)
 
         f = self._fernet()
         self.session[_SESSION_KEY] = f.encrypt(token.encode("utf-8")).decode("utf-8")
