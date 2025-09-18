@@ -12,15 +12,14 @@ export function toTaskFilterValue(input: {
   organizations?: TFilterOption[];
   teams?: TFilterOption[];
   status?: TFilterOption[];
-  clientProfile?: TFilterOption[];
+  clientProfiles?: TFilterOption[];
 }): TaskFilter {
   return {
     search: input.search || undefined,
     authors: toIds(input.authors),
     organizations: toIds(input.organizations),
+    clientProfiles: toIds(input.clientProfiles),
     teams: toEnums<SelahTeamEnum>(input.teams),
     status: toEnums<TaskStatusEnum>(input.status),
-    // TODO once DEV-2155 completed - pass all IDs
-    clientProfile: input.clientProfile?.[0]?.id, // TaskFilter expects a single ID
   };
 }
