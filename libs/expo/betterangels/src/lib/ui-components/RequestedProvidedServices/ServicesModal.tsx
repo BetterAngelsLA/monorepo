@@ -21,17 +21,27 @@ import {
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
-import { ServicesByCategory } from '../../static';
 import MainScrollContainer from '../MainScrollContainer';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
-import { useServicesQuery } from './__generated__/services.generated';
+import {
+  ServiceCategoriesQuery,
+  useServiceCategoriesQuery,
+} from './__generated__/services.generated';
+
+type ApiCategory =
+  ServiceCategoriesQuery['serviceCategories']['results'][number];
+
+type TCategory = { title: string; items: string[] };
 
 interface IServicesModalProps {
   noteId: string;
   initialServices: {
     id: string;
-    service?: ServiceEnum | null | undefined;
+    service?: {
+      label?: string;
+      id: string;
+    } | null;
     serviceEnum?: ServiceEnum | null | undefined;
     serviceOther?: string | null;
   }[];
@@ -42,13 +52,13 @@ interface IServicesModalProps {
 export default function ServicesModal(props: IServicesModalProps) {
   const { initialServices, noteId, refetch, type } = props;
 
-  const { data: availableServices, loading } = useServicesQuery();
+  const { data: availableCategories } = useServiceCategoriesQuery();
   const { closeModalScreen } = useModalScreen();
   const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
   const [services, setServices] = useState<
     Array<{
       id: string | undefined;
-      enum: ServiceEnum | null;
+      label?: string | null;
       markedForDeletion?: boolean;
     }>
   >([]);
@@ -71,12 +81,42 @@ export default function ServicesModal(props: IServicesModalProps) {
     setSearchText(text);
   };
 
-  const filteredServices = ServicesByCategory.map((category) => ({
-    ...category,
-    items: category.items.filter((item) =>
-      item.toLowerCase().includes(searchText.toLowerCase())
-    ),
-  }));
+  function filterServicesByText(
+    categories: TCategory[],
+    searchText: string
+  ): TCategory[] {
+    const q = searchText.trim().toLowerCase();
+    if (!q) return categories;
+
+    return categories
+      .map((cat) => ({
+        ...cat,
+        items: cat.items.filter((item) => item.toLowerCase().includes(q)),
+      }))
+      .filter((cat) => cat.items.length > 0);
+  }
+
+  function toServicesByCategory(categories: ApiCategory[]): TCategory[] {
+    return [...categories]
+      .sort(
+        (a, b) => a?.priority - b?.priority || a?.name.localeCompare(b?.name)
+      )
+      .map((cat) => ({
+        title: cat.name,
+        items: [...(cat.services ?? [])]
+          .sort(
+            (a, b) =>
+              a?.priority - b?.priority || a?.label.localeCompare(b?.label)
+          )
+          .map((s) => s.label),
+      }));
+  }
+
+  const categories = toServicesByCategory(
+    availableCategories?.serviceCategories.results || []
+  );
+
+  const filteredServices = filterServicesByText(categories, searchText);
 
   const reset = async () => {
     try {
@@ -104,7 +144,7 @@ export default function ServicesModal(props: IServicesModalProps) {
     );
     const toCreateServices = services.filter(
       (service) =>
-        service.enum !== null && !service.id && !service.markedForDeletion
+        service.label !== null && !service.id && !service.markedForDeletion
     );
 
     const toRemoveOtherServices = serviceOthers.filter(
@@ -141,12 +181,12 @@ export default function ServicesModal(props: IServicesModalProps) {
       }
 
       for (const service of toCreateServices) {
-        if (service.enum) {
+        if (service.label) {
           try {
             await createService({
               variables: {
                 data: {
-                  serviceEnum: service.enum,
+                  service: service.label,
                   noteId,
                   serviceRequestType: type,
                 },
@@ -154,7 +194,7 @@ export default function ServicesModal(props: IServicesModalProps) {
             });
           } catch (error) {
             console.error(
-              `Error creating service with enum ${service.enum}:`,
+              `Error creating service with enum ${service.label}:`,
               error
             );
           }
@@ -199,9 +239,9 @@ export default function ServicesModal(props: IServicesModalProps) {
   const closeModal = () => {
     const newInitialServices = initialServices
       // TODO: remove after cutover
-      .filter((item) => !!item.serviceEnum)
+      .filter((item) => !!item.service?.label)
       .filter((item) => item.serviceEnum !== ServiceEnum.Other)
-      .map((service) => ({ id: service.id, enum: service.serviceEnum! }));
+      .map((service) => ({ id: service.id, label: service.service?.label }));
     const initialServiceOthers = initialServices
       .filter((item) => item.serviceEnum === ServiceEnum.Other)
       .map((service) => ({
@@ -215,21 +255,13 @@ export default function ServicesModal(props: IServicesModalProps) {
   };
 
   useEffect(() => {
-    console.log(loading);
-    console.log(availableServices);
-    if (availableServices) {
-      console.log(availableServices);
-    }
-  }, [availableServices]);
-
-  useEffect(() => {
     const newInitialServices = initialServices
       // TODO: remove after cutover
       .filter((item) => !!item.serviceEnum)
       .filter((item) => item.serviceEnum !== ServiceEnum.Other)
       .map((item) => ({
         id: item.id,
-        enum: item.serviceEnum!,
+        label: item.service?.label,
       }));
     const initialServiceOthers = initialServices
       .filter((item) => item.serviceEnum === ServiceEnum.Other)
@@ -242,9 +274,7 @@ export default function ServicesModal(props: IServicesModalProps) {
     setServices(newInitialServices);
   }, [initialServices]);
 
-  const hasResults = filteredServices.some(
-    (category) => category.items.length > 0
-  );
+  const hasResults = categories.some((category) => category.items.length > 0);
   return (
     <View
       style={{

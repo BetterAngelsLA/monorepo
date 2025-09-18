@@ -8,7 +8,7 @@ import {
   ViewNoteQuery,
 } from '../../apollo';
 import { useModalScreen } from '../../providers';
-import { enumDisplayServiceType, enumDisplayServices } from '../../static';
+import { enumDisplayServiceType } from '../../static';
 import ServicesModal from './ServicesModal';
 
 interface IRequestedServicesProps {
@@ -53,7 +53,7 @@ export default function RequestedProvidedServices(
                 key={index}
                 label={
                   item.serviceEnum !== ServiceEnum.Other
-                    ? enumDisplayServices[item.serviceEnum!]
+                    ? item.service?.label || ''
                     : item.serviceOther || ''
                 }
               />

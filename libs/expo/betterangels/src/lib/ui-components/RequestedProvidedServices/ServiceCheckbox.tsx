@@ -1,19 +1,20 @@
 import { Checkbox, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { ServiceEnum } from '../../apollo';
-import { enumDisplayServices } from '../../static';
 
 interface IServiceCheckboxProps {
-  service: ServiceEnum;
+  service: string;
   idx: number;
   services: {
     id: string | undefined;
-    enum: ServiceEnum | null;
+    enum?: ServiceEnum | null;
+    label?: string | null;
     markedForDeletion?: boolean;
   }[];
   setServices: (
     services: {
-      enum: ServiceEnum | null;
+      enum?: ServiceEnum | null;
+      label?: string | null;
       id: string | undefined;
       markedForDeletion?: boolean;
     }[]
@@ -23,26 +24,26 @@ interface IServiceCheckboxProps {
 export default function ServiceCheckbox(props: IServiceCheckboxProps) {
   const { service, idx, services, setServices } = props;
 
-  const serviceEntry = services.find((s) => s.enum === service);
+  const serviceEntry = services.find((s) => s.label === service);
   const isChecked = (serviceEntry && !serviceEntry.markedForDeletion) || false;
 
   const handleCheck = () => {
     if (isChecked) {
       setServices(
         services.map((s) =>
-          s.enum === service ? { ...s, markedForDeletion: true } : s
+          s.label === service ? { ...s, markedForDeletion: true } : s
         )
       );
     } else if (serviceEntry) {
       setServices(
         services.map((s) =>
-          s.enum === service ? { ...s, markedForDeletion: false } : s
+          s.label === service ? { ...s, markedForDeletion: false } : s
         )
       );
     } else {
       setServices([
         ...services,
-        { enum: service, id: undefined, markedForDeletion: false },
+        { label: service, id: undefined, markedForDeletion: false },
       ]);
     }
   };
@@ -57,7 +58,7 @@ export default function ServiceCheckbox(props: IServiceCheckboxProps) {
       label={
         <View style={styles.labelContainer}>
           <TextRegular style={{ flex: 1 }} ml="xs">
-            {enumDisplayServices[service]}
+            {service}
           </TextRegular>
         </View>
       }
