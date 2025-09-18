@@ -16,6 +16,7 @@ from . import models
 class TaskFilter:
     client_profile: Optional[ID]
     created_by: Optional[ID]
+    client_profiles = make_in_filter("client_profile", ID)
     authors = make_in_filter("created_by", ID)
     organizations = make_in_filter("organization", ID)
     status = make_in_filter("status", TaskStatusEnum)
