@@ -23,7 +23,8 @@ import { StatusBar } from 'expo-status-bar';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
-import { type ErrorBoundaryProps } from 'expo-router';
+import { router, type ErrorBoundaryProps } from 'expo-router';
+import { useCallback } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AppRoutesStack from './AppRoutesStack';
@@ -41,11 +42,19 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 export default function RootLayout() {
   useNewRelic();
 
+  const onUnauthenticated = useCallback(() => {
+    router.dismissAll();
+    router.replace('/auth');
+  }, []);
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <NativePaperProvider>
         <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <ApolloClientProvider policyConfig={cachePolicyRegistry}>
+          <ApolloClientProvider
+            policyConfig={cachePolicyRegistry}
+            onUnauthenticated={onUnauthenticated}
+          >
             <FeatureControlProvider>
               <KeyboardProvider>
                 <KeyboardToolbarProvider>
