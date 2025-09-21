@@ -15,17 +15,19 @@ import {
 import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
+import DeleteTask from './DeleteTask';
 import { useCreateTaskMutation } from './__generated__/createTask.generated';
 import { useUpdateTaskMutation } from './__generated__/updateTask.generated';
-import DeleteTask from './DeleteTask';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
+
+type TActionType = 'update' | 'delete';
 
 type TProps = {
   clientProfileId?: string | null;
   team?: SelahTeamEnum | null;
   noteId?: string;
   onCancel?: () => void;
-  onSuccess?: (taskId: string) => void;
+  onSuccess?: (taskId: string, action: TActionType) => void;
   task?: UpdateTaskInput | null;
   arrivedFrom?: string;
 };
@@ -194,7 +196,7 @@ export function TaskForm(props: TProps) {
       }
 
       resetForm();
-      onSuccess?.((newTask as TaskType).id);
+      onSuccess?.((newTask as TaskType).id, 'update');
     } catch (error) {
       console.error('Task mutation error:', error);
 
@@ -230,6 +232,7 @@ export function TaskForm(props: TProps) {
       <Form>
         <Form.Fieldset>
           <ControlledInput
+            required
             control={control}
             disabled={disabled}
             label={'Title'}
@@ -295,10 +298,11 @@ export function TaskForm(props: TProps) {
           />
         </Form.Fieldset>
       </Form>
+
       <DeleteTask
-        onSuccess={onSuccess}
-        arrivedFrom={arrivedFrom}
         id={task?.id}
+        onSuccess={(id) => onSuccess?.(id, 'delete')}
+        arrivedFrom={arrivedFrom}
       />
     </Form.Page>
   );

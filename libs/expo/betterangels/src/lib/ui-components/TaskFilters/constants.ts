@@ -4,7 +4,7 @@ import { TTaskFilters } from './types';
 
 export const nullTaskFilters: TTaskFilters = {
   authors: [],
-  clientProfile: [],
+  clientProfiles: [],
   status: [],
   teams: [],
   organizations: [],

@@ -1,20 +1,19 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { IPillProps, Pill as StoryComponent } from './Pill';
+import { ImagePlaceholder as StoryComponent, TProps } from './ImagePlaceholder';
 
 const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
-  title: 'Pill',
+  title: 'Image Placeholder',
 };
 export default meta;
 
 type Story = StoryObj<typeof StoryComponent>;
 
-const defaultArgs: IPillProps = {
-  type: 'success',
-  label: 'Hello Pill',
+const defaultArgs: TProps = {
+  className: 'w-80',
 };
 
-export const Pill: Story = {
+export const ImagePlaceholder: Story = {
   render: (args) => {
     const storyArgs = { ...defaultArgs, ...args };
 

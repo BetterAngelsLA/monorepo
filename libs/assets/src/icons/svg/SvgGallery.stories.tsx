@@ -51,7 +51,11 @@ export default meta;
 type Story = StoryObj;
 
 export const ReactSvgGallery: Story = {
-  parameters: { layout: false },
+  parameters: {
+    customLayout: {
+      variant: 'basic',
+    },
+  },
   render: () => {
     return (
       <SbkGallery

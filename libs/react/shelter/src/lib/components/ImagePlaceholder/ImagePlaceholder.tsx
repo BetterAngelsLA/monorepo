@@ -1,7 +1,7 @@
 import { mergeCss } from '@monorepo/react/components';
 import { ImageIcon } from '@monorepo/react/icons';
 
-type TProps = {
+export type TProps = {
   className?: string;
 };
 
