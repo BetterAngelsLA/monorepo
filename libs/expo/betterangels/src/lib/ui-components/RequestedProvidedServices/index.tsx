@@ -2,11 +2,7 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
-import {
-  ServiceEnum,
-  ServiceRequestTypeEnum,
-  ViewNoteQuery,
-} from '../../apollo';
+import { ServiceRequestTypeEnum, ViewNoteQuery } from '../../apollo';
 import { useModalScreen } from '../../providers';
 import { enumDisplayServiceType } from '../../static';
 import ServicesModal from './ServicesModal';
@@ -51,11 +47,7 @@ export default function RequestedProvidedServices(
                     : 'primary'
                 }
                 key={index}
-                label={
-                  item.serviceEnum !== ServiceEnum.Other
-                    ? item.service?.label || ''
-                    : item.serviceOther || ''
-                }
+                label={item.service?.label || ''}
               />
             ))}
           </View>

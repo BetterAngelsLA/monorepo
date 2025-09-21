@@ -1,51 +1,45 @@
 import { Checkbox, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
-import { ServiceEnum } from '../../apollo';
+
+type TItem = { id: string; label: string };
+
+type SelectedService = {
+  requestId?: string;
+  serviceId: string;
+  label: string;
+  markedForDeletion?: boolean;
+};
 
 interface IServiceCheckboxProps {
-  service: string;
+  service: TItem;
   idx: number;
-  services: {
-    id: string | undefined;
-    enum?: ServiceEnum | null;
-    label?: string | null;
-    markedForDeletion?: boolean;
-  }[];
-  setServices: (
-    services: {
-      enum?: ServiceEnum | null;
-      label?: string | null;
-      id: string | undefined;
-      markedForDeletion?: boolean;
-    }[]
-  ) => void;
+  services: SelectedService[];
+  setServices: React.Dispatch<React.SetStateAction<SelectedService[]>>;
 }
 
 export default function ServiceCheckbox(props: IServiceCheckboxProps) {
   const { service, idx, services, setServices } = props;
-
-  const serviceEntry = services.find((s) => s.label === service);
-  const isChecked = (serviceEntry && !serviceEntry.markedForDeletion) || false;
+  const entry = services.find((s) => s.serviceId === service.id);
+  const isChecked = !!entry && (!entry.requestId || !entry.markedForDeletion);
 
   const handleCheck = () => {
-    if (isChecked) {
-      setServices(
-        services.map((s) =>
-          s.label === service ? { ...s, markedForDeletion: true } : s
-        )
-      );
-    } else if (serviceEntry) {
-      setServices(
-        services.map((s) =>
-          s.label === service ? { ...s, markedForDeletion: false } : s
-        )
-      );
-    } else {
-      setServices([
-        ...services,
-        { label: service, id: undefined, markedForDeletion: false },
-      ]);
-    }
+    setServices((prev: SelectedService[]) => {
+      const i = prev.findIndex((s) => s.serviceId === service.id);
+      if (i === -1) {
+        return [...prev, { serviceId: service.id, label: service.label }];
+      }
+
+      const cur = prev[i];
+
+      if (!cur.requestId) {
+        return prev.filter((s) => s.serviceId !== service.id);
+      }
+
+      const next = [...prev];
+      const currentlyChecked = !(cur.requestId && cur.markedForDeletion);
+      next[i] = { ...cur, markedForDeletion: currentlyChecked };
+      return next;
+    });
   };
 
   return (
@@ -54,11 +48,11 @@ export default function ServiceCheckbox(props: IServiceCheckboxProps) {
       mt={idx !== 0 ? 'xs' : undefined}
       hasBorder
       onCheck={handleCheck}
-      accessibilityHint={service}
+      accessibilityHint={service.label}
       label={
         <View style={styles.labelContainer}>
           <TextRegular style={{ flex: 1 }} ml="xs">
-            {service}
+            {service.label}
           </TextRegular>
         </View>
       }
