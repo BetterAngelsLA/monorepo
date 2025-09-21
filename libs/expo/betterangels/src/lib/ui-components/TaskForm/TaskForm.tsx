@@ -232,6 +232,7 @@ export function TaskForm(props: TProps) {
       <Form>
         <Form.Fieldset>
           <ControlledInput
+            required
             control={control}
             disabled={disabled}
             label={'Title'}
