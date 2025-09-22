@@ -39,7 +39,6 @@ export default function HMISLoginForm() {
         return;
       }
       if (res.__typename === 'UserType') {
-        await refetchUser();
         return;
       }
     } catch (e) {
