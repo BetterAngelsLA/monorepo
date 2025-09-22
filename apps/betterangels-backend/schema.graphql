@@ -746,16 +746,130 @@ enum HmisAgencyEnum {
   VASH
 }
 
+type HmisClientDataType {
+  middleName: String
+  nameSuffix: HmisSuffixEnum
+  alias: String
+  raceEthnicity: [HmisRaceEnum!]!
+  additionalRaceEthnicity: String
+  differentIdentityText: String
+  gender: [HmisGenderEnum!]!
+  veteranStatus: HmisVeteranStatusEnum!
+}
+
+input HmisClientFilterInput {
+  search: String = null
+}
+
+type HmisClientListType {
+  items: [HmisClientType!]!
+  meta: HmisListMetaType
+}
+
+union HmisClientListTypeHmisListClientsError = HmisClientListType | HmisListClientsError
+
+type HmisClientType {
+  personalId: String
+  uniqueIdentifier: String
+  firstName: String
+  lastName: String
+  nameDataQuality: HmisNameQualityEnum
+  ssn1: String
+  ssn2: String
+  ssn3: String
+  ssnDataQuality: HmisSsnQualityEnum
+  dob: String
+  dobDataQuality: HmisDobQualityEnum
+  data: HmisClientDataType
+}
+
+union HmisClientTypeHmisCreateClientError = HmisClientType | HmisCreateClientError
+
+union HmisClientTypeHmisGetClientError = HmisClientType | HmisGetClientError
+
+type HmisCreateClientError {
+  message: String!
+  field: String
+}
+
+input HmisCreateClientInput {
+  firstName: String!
+  lastName: String!
+  nameDataQuality: Int = 99
+  ssn1: String = ""
+  ssn2: String = ""
+  ssn3: String = "xxxx"
+  ssnDataQuality: Int = 99
+  dob: String = ""
+  dobDataQuality: Int = 99
+}
+
+input HmisCreateClientSubItemsInput {
+  middleName: String = ""
+  nameSuffix: Int = 9
+  alias: String = ""
+  additionalRaceEthnicity: String = ""
+  differentIdentityText: String = ""
+  raceEthnicity: [Int!] = [99]
+  gender: [Int!] = [99]
+  veteranStatus: Int = 99
+}
+
+enum HmisDobQualityEnum {
+  FULL
+  PARTIAL
+  DONT_KNOW
+  NO_ANSWER
+  NOT_COLLECTED
+}
+
+enum HmisGenderEnum {
+  WOMAN_GIRL
+  MAN_BOY
+  SPECIFIC
+  TRANSGENDER
+  NON_BINARY
+  QUESTIONING
+  DIFFERENT
+  DONT_KNOW
+  NO_ANSWER
+  NOT_COLLECTED
+}
+
+type HmisGetClientError {
+  message: String!
+  field: String
+}
+
+type HmisListClientsError {
+  message: String!
+  field: String
+}
+
+type HmisListMetaType {
+  currentPage: Int
+  perPage: Int
+  pageCount: Int
+  totalCount: Int
+}
+
 type HmisLoginError {
   message: String!
   field: String
 }
 
-type HmisLoginSuccess {
-  hmisToken: String!
+enum HmisNameQualityEnum {
+  FULL
+  PARTIAL
+  DONT_KNOW
+  NO_ANSWER
+  NOT_COLLECTED
 }
 
-union HmisLoginSuccessHmisLoginError = HmisLoginSuccess | HmisLoginError
+input HmisPaginationInput {
+  page: Int = null
+  perPage: Int = 10
+}
 
 input HmisProfileInput {
   hmisId: NonBlankString
@@ -778,6 +892,48 @@ type HmisProfileTypeOffsetPaginated {
 
   """List of paginated results."""
   results: [HmisProfileType!]!
+}
+
+enum HmisRaceEnum {
+  INDIGENOUS
+  ASIAN
+  BLACK
+  HISPANIC
+  MIDDLE_EASTERN
+  PACIFIC_ISLANDER
+  WHITE
+  DONT_KNOW
+  NO_ANSWER
+  NOT_COLLECTED
+}
+
+enum HmisSsnQualityEnum {
+  FULL
+  PARTIAL
+  DONT_KNOW
+  NO_ANSWER
+  NOT_COLLECTED
+}
+
+enum HmisSuffixEnum {
+  JR
+  SR
+  FIRST
+  SECOND
+  THIRD
+  FOURTH
+  FIFTH
+  SIXTH
+  DONT_KNOW
+  NO_ANSWER
+}
+
+enum HmisVeteranStatusEnum {
+  NO
+  YES
+  DONT_KNOW
+  NO_ANSWER
+  NOT_COLLECTED
 }
 
 enum ImmediateNeedChoices {
@@ -968,7 +1124,8 @@ type Mutation {
   updateClientProfilePhoto(data: ClientProfilePhotoInput!): UpdateClientProfilePhotoPayload! @hasRetvalPerm(permissions: [{app: "clients", permission: "change_clientprofile"}], any: true)
   createClientProfileDataImport(data: CreateProfileDataImportInput!): CreateClientProfileDataImportPayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
   importClientProfile(data: ImportClientProfileInput!): ImportClientProfilePayload! @hasPerm(permissions: [{app: "clients", permission: "add_clientprofileimportrecord"}], any: true)
-  hmisLogin(email: String!, password: String!): HmisLoginSuccessHmisLoginError!
+  hmisLogin(email: String!, password: String!): UserTypeHmisLoginError!
+  hmisCreateClient(clientInput: HmisCreateClientInput!, clientSubItemsInput: HmisCreateClientSubItemsInput!): HmisClientTypeHmisCreateClientError!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
@@ -1297,6 +1454,8 @@ type Query {
   clientDocuments(clientId: String!, filters: ClientDocumentFilter, pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
+  hmisGetClient(personalId: ID!): HmisClientTypeHmisGetClientError!
+  hmisListClients(pagination: HmisPaginationInput = null, filter: HmisClientFilterInput = null): HmisClientListTypeHmisListClientsError!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
@@ -1900,6 +2059,8 @@ type UserType {
   organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): [OrganizationForUserType!]
   username: String!
 }
+
+union UserTypeHmisLoginError = UserType | HmisLoginError
 
 enum VeteranStatusEnum {
   YES
