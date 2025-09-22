@@ -13,7 +13,6 @@ from django.http import HttpRequest
 from hmis.types import HmisClientFilterInput, HmisPaginationInput
 
 _SESSION_KEY = "hmis_auth_token"
-_SESSION_SET_AT_KEY = "hmis_auth_token_set_at"
 HMIS_GRAPHQL_ENDPOINT = getattr(settings, "HMIS_GRAPHQL_URL", None)
 HMIS_GRAPHQL_API_KEY = getattr(settings, "HMIS_API_KEY", None)
 
@@ -116,7 +115,6 @@ class HmisApiBridge:
 
         f = self._fernet()
         self.session[_SESSION_KEY] = f.encrypt(token.encode("utf-8")).decode("utf-8")
-        self.session[_SESSION_SET_AT_KEY] = datetime.now(timezone.utc).isoformat()
         self.session.modified = True
 
     def _get_auth_token(self) -> Optional[str]:
@@ -134,9 +132,8 @@ class HmisApiBridge:
             return None
 
     def _clear_auth_token(self) -> None:
-        for k in (_SESSION_KEY, _SESSION_SET_AT_KEY):
-            if k in self.session:
-                del self.session[k]
+        if _SESSION_KEY in self.session:
+            del self.session[_SESSION_KEY]
 
         self.session.modified = True
 
