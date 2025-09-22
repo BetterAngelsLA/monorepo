@@ -43,7 +43,7 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
   return (
     <>
       <View style={{ position: 'relative' }}>
-        <Pressable onPress={handleOpenModal}>
+        <Pressable onPress={handleOpenModal} accessibilityRole="button" accessibilityHint="update profile photo">
           <Avatar
             loading={loading}
             size="xl"
@@ -56,6 +56,7 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
         <View style={{ position: 'absolute', bottom: 0, right: Spacings.xs }}>
           <EditButton
             onClick={handleOpenModal}
+            accessibilityHint={'update profile photo'}
             iconSize="sm"
             style={{
               backgroundColor: Colors.WHITE,

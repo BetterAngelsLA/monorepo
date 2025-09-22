@@ -14,8 +14,6 @@ import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ClientCaseManager } from './ClientCaseManager';
 import { ProfilePhotoUploader } from './ProfilePhotoUploader';
 
-
-
 interface IClientHeaderProps {
   client: ClientProfileQuery['clientProfile'] | undefined;
 }
@@ -40,7 +38,7 @@ export function ClientHeader(props: IClientHeaderProps) {
         }}
       >
         <ProfilePhotoUploader
-          clientId={client?.id!}
+          clientId={client?.id ?? ''}
           imageUrl={client?.profilePhoto?.url}
         />
         <TextMedium size="lg">
