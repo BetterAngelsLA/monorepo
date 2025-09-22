@@ -250,3 +250,44 @@ class HmisApiBridge:
             return {"errors": errors}
 
         return data.get("data", {}).get("createClient") or {}
+
+    def update_client(
+        self,
+        client_input: dict[str, Any],
+        client_sub_items_input: dict[str, Any],
+    ) -> Optional[dict[str, Any]]:
+
+        mutation_body = json.loads(self.request.body.decode("utf-8"))["query"]
+        payload_body = self._extract_response_body_from_mutation(mutation_body)
+
+        mutation = f"""
+            mutation (
+                $clientInput: UpdateClientInput!,
+                $clientSubItemsInput: UpdateClientSubItemsInput!
+            ) {{
+                updateClient(
+                    client: $clientInput,
+                    data: $clientSubItemsInput,
+                ) {{
+                    {payload_body}
+                }}
+            }}
+        """
+
+        client_input_camel = dict_keys_to_camel(client_input)
+        client_sub_items_input_camel = dict_keys_to_camel(client_sub_items_input)
+
+        data = self._make_request(
+            body={
+                "query": mutation,
+                "variables": {
+                    "clientInput": client_input_camel,
+                    "clientSubItemsInput": client_sub_items_input_camel,
+                },
+            }
+        )
+
+        if errors := data.get("errors"):
+            return {"errors": errors}
+
+        return data.get("data", {}).get("updateClient") or {}
