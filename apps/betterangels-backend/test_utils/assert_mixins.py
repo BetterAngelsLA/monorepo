@@ -29,7 +29,7 @@ class GraphQLAssertionsMixin:
         errors = response.get("errors", [])
 
         self.assertIsInstance(errors, list)
-        self.assertGreater(len(errors), 0)
+        self.assertEqual(len(errors), 1)
 
         error = errors[0]
 

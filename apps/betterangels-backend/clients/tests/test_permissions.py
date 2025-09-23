@@ -56,6 +56,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"]["createClientProfile"]["id"])
             self.assertEqual(client_count + 1, ClientProfile.objects.count())
         else:
+            self.assertEqual(client_count, ClientProfile.objects.count())
             if user_label is None:
                 self.assertGraphQLUnauthenticated(response)
             else:
@@ -68,8 +69,6 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
                         "message": "You don't have permission to access this app.",
                     },
                 )
-
-            self.assertEqual(client_count, ClientProfile.objects.count())
 
     @parametrize(
         "user_label, should_succeed",
@@ -93,6 +92,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"]["updateClientProfile"]["id"])
             self.assertNotEqual(original_nickname, updated_nickname)
         else:
+            self.assertEqual(original_nickname, updated_nickname)
             if user_label is None:
                 self.assertGraphQLUnauthenticated(response)
             else:
@@ -104,7 +104,6 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
                         "Cannot filter against a non-conditional expression.",
                     },
                 )
-            self.assertEqual(original_nickname, updated_nickname)
 
     @parametrize(
         "user_label, should_succeed",
@@ -305,14 +304,13 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
                 "id" in response["data"]["clientDocument"],
                 "Should return the attachment.",
             )
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
-            if user_label is None:
-                self.assertGraphQLUnauthenticated(response)
-            else:
-                self.assertTrue(
-                    "errors" in response,
-                    "Should not have access to view the client document.",
-                )
+            self.assertTrue(
+                "errors" in response,
+                "Should not have access to view the client document.",
+            )
 
     @parametrize(
         "user_label, expected_document_count",
@@ -370,19 +368,18 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             document = Attachment.objects.get(id=self.client_document["id"])
             self.assertIsNotNone(response["data"]["updateClientDocument"]["id"])
             self.assertEqual(document.original_filename, "Updated name.txt")
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
-            if user_label is None:
-                self.assertGraphQLUnauthenticated(response)
-            else:
-                self.assertEqual(len(response["data"]["updateClientDocument"]["messages"]), 1)
-                self.assertEqual(
-                    response["data"]["updateClientDocument"]["messages"][0],
-                    {
-                        "kind": "PERMISSION",
-                        "field": None,
-                        "message": "You don't have permission to access this app.",
-                    },
-                )
+            self.assertEqual(len(response["data"]["updateClientDocument"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["updateClientDocument"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
 
 class ClientContactPermissionTestCase(ClientContactBaseTestCase):
@@ -508,19 +505,18 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateClientContact"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
-            if user_label is None:
-                self.assertGraphQLUnauthenticated(response)
-            else:
-                self.assertEqual(len(response["data"]["updateClientContact"]["messages"]), 1)
-                self.assertEqual(
-                    response["data"]["updateClientContact"]["messages"][0],
-                    {
-                        "kind": "PERMISSION",
-                        "field": None,
-                        "message": "You don't have permission to access this app.",
-                    },
-                )
+            self.assertEqual(len(response["data"]["updateClientContact"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["updateClientContact"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
     @parametrize(
         "user_label, should_succeed",
@@ -540,19 +536,18 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["deleteClientContact"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
-            if user_label is None:
-                self.assertGraphQLUnauthenticated(response)
-            else:
-                self.assertEqual(len(response["data"]["deleteClientContact"]["messages"]), 1)
-                self.assertEqual(
-                    response["data"]["deleteClientContact"]["messages"][0],
-                    {
-                        "kind": "PERMISSION",
-                        "field": None,
-                        "message": "You don't have permission to access this app.",
-                    },
-                )
+            self.assertEqual(len(response["data"]["deleteClientContact"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["deleteClientContact"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
 
 class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase):
@@ -678,19 +673,18 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateClientHouseholdMember"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
-            if user_label is None:
-                self.assertGraphQLUnauthenticated(response)
-            else:
-                self.assertEqual(len(response["data"]["updateClientHouseholdMember"]["messages"]), 1)
-                self.assertEqual(
-                    response["data"]["updateClientHouseholdMember"]["messages"][0],
-                    {
-                        "kind": "PERMISSION",
-                        "field": None,
-                        "message": "You don't have permission to access this app.",
-                    },
-                )
+            self.assertEqual(len(response["data"]["updateClientHouseholdMember"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["updateClientHouseholdMember"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
     @parametrize(
         "user_label, should_succeed",
@@ -710,19 +704,18 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["deleteClientHouseholdMember"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
-            if user_label is None:
-                self.assertGraphQLUnauthenticated(response)
-            else:
-                self.assertEqual(len(response["data"]["deleteClientHouseholdMember"]["messages"]), 1)
-                self.assertEqual(
-                    response["data"]["deleteClientHouseholdMember"]["messages"][0],
-                    {
-                        "kind": "PERMISSION",
-                        "field": None,
-                        "message": "You don't have permission to access this app.",
-                    },
-                )
+            self.assertEqual(len(response["data"]["deleteClientHouseholdMember"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["deleteClientHouseholdMember"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
 
 class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
@@ -848,19 +841,18 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateHmisProfile"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
-            if user_label is None:
-                self.assertGraphQLUnauthenticated(response)
-            else:
-                self.assertEqual(len(response["data"]["updateHmisProfile"]["messages"]), 1)
-                self.assertEqual(
-                    response["data"]["updateHmisProfile"]["messages"][0],
-                    {
-                        "kind": "PERMISSION",
-                        "field": None,
-                        "message": "You don't have permission to access this app.",
-                    },
-                )
+            self.assertEqual(len(response["data"]["updateHmisProfile"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["updateHmisProfile"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
     @parametrize(
         "user_label, should_succeed",
@@ -880,19 +872,18 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["deleteHmisProfile"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
-            if user_label is None:
-                self.assertGraphQLUnauthenticated(response)
-            else:
-                self.assertEqual(len(response["data"]["deleteHmisProfile"]["messages"]), 1)
-                self.assertEqual(
-                    response["data"]["deleteHmisProfile"]["messages"][0],
-                    {
-                        "kind": "PERMISSION",
-                        "field": None,
-                        "message": "You don't have permission to access this app.",
-                    },
-                )
+            self.assertEqual(len(response["data"]["deleteHmisProfile"]["messages"]), 1)
+            self.assertEqual(
+                response["data"]["deleteHmisProfile"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": None,
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
 
 class OrganizationPermissionTestCase(GraphQLBaseTestCase):
@@ -931,8 +922,7 @@ class OrganizationPermissionTestCase(GraphQLBaseTestCase):
 
         if should_succeed:
             self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) > 0)
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
-            if user_label is None:
-                self.assertGraphQLUnauthenticated(response)
-            else:
-                self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) == 0)
+            self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) == 0)

@@ -225,11 +225,10 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
 
         if should_succeed:
             self.assertTrue(response["data"]["interactionAuthors"]["totalCount"] > 0)
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
-            if user_label is None:
-                self.assertGraphQLUnauthenticated(response)
-            else:
-                self.assertTrue(response["data"]["interactionAuthors"]["totalCount"] == 0)
+            self.assertTrue(response["data"]["interactionAuthors"]["totalCount"] == 0)
 
     @parametrize(
         "user_label, should_succeed",
@@ -405,6 +404,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"]["createServiceRequest"]["id"])
             self.assertEqual(service_request_count + 1, ServiceRequest.objects.count())
         else:
+            self.assertEqual(service_request_count, ServiceRequest.objects.count())
             if user_label is None:
                 self.assertGraphQLUnauthenticated(response)
             else:
@@ -416,7 +416,6 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
                         "message": "You don't have permission to access this app.",
                     },
                 )
-            self.assertEqual(service_request_count, ServiceRequest.objects.count())
 
     @parametrize(
         "user_label, should_succeed",
@@ -466,18 +465,17 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateServiceRequest"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
-            if user_label is None:
-                self.assertGraphQLUnauthenticated(response)
-            else:
-                self.assertEqual(
-                    response["data"]["updateServiceRequest"]["messages"][0],
-                    {
-                        "kind": "PERMISSION",
-                        "field": "updateServiceRequest",
-                        "message": "You don't have permission to access this app.",
-                    },
-                )
+            self.assertEqual(
+                response["data"]["updateServiceRequest"]["messages"][0],
+                {
+                    "kind": "PERMISSION",
+                    "field": "updateServiceRequest",
+                    "message": "You don't have permission to access this app.",
+                },
+            )
 
     @parametrize(
         "user_label, should_succeed",
