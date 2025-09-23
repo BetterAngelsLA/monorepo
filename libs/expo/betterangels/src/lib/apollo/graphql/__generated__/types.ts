@@ -957,6 +957,7 @@ export type HmisUpdateClientInput = {
   firstName: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
   nameDataQuality: Scalars['Int']['input'];
+  personalId: Scalars['String']['input'];
   ssn1: Scalars['String']['input'];
   ssn2: Scalars['String']['input'];
   ssn3: Scalars['String']['input'];

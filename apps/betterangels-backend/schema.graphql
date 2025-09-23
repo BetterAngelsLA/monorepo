@@ -936,6 +936,7 @@ type HmisUpdateClientError {
 }
 
 input HmisUpdateClientInput {
+  personalId: String!
   firstName: String!
   lastName: String!
   nameDataQuality: Int!
