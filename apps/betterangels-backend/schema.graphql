@@ -2053,10 +2053,11 @@ type UserType {
   middleName: NonBlankString
   email: NonBlankString
   id: ID!
+  organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): [OrganizationForUserType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
+  isHmisUser: Boolean
   isOutreachAuthorized: Boolean
-  organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): [OrganizationForUserType!]
   username: String!
 }
 

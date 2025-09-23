@@ -17,7 +17,7 @@ LOGIN_MUTATION = """
     mutation ($email: String!, $password: String!) {
         hmisLogin(email: $email, password: $password) {
             __typename
-            ... on UserType { id }
+            ... on UserType { id isHmisUser }
             ... on HmisLoginError { message field }
         }
     }
@@ -81,6 +81,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         payload = resp["data"]["hmisLogin"]
         self.assertEqual(payload["__typename"], "UserType")
         self.assertEqual(payload["id"], str(self.existing_user.pk))
+        self.assertEqual(payload["isHmisUser"], True)
 
         # Session should now contain the logged-in user
         session = self.graphql_client.session
