@@ -753,18 +753,138 @@ export enum HmisAgencyEnum {
   Vash = 'VASH'
 }
 
+export type HmisClientDataType = {
+  __typename?: 'HmisClientDataType';
+  additionalRaceEthnicity?: Maybe<Scalars['String']['output']>;
+  alias?: Maybe<Scalars['String']['output']>;
+  differentIdentityText?: Maybe<Scalars['String']['output']>;
+  gender: Array<HmisGenderEnum>;
+  middleName?: Maybe<Scalars['String']['output']>;
+  nameSuffix?: Maybe<HmisSuffixEnum>;
+  raceEthnicity: Array<HmisRaceEnum>;
+  veteranStatus: HmisVeteranStatusEnum;
+};
+
+export type HmisClientFilterInput = {
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type HmisClientListType = {
+  __typename?: 'HmisClientListType';
+  items: Array<HmisClientType>;
+  meta?: Maybe<HmisListMetaType>;
+};
+
+export type HmisClientListTypeHmisListClientsError = HmisClientListType | HmisListClientsError;
+
+export type HmisClientType = {
+  __typename?: 'HmisClientType';
+  data?: Maybe<HmisClientDataType>;
+  dob?: Maybe<Scalars['String']['output']>;
+  dobDataQuality?: Maybe<HmisDobQualityEnum>;
+  firstName?: Maybe<Scalars['String']['output']>;
+  lastName?: Maybe<Scalars['String']['output']>;
+  nameDataQuality?: Maybe<HmisNameQualityEnum>;
+  personalId?: Maybe<Scalars['String']['output']>;
+  ssn1?: Maybe<Scalars['String']['output']>;
+  ssn2?: Maybe<Scalars['String']['output']>;
+  ssn3?: Maybe<Scalars['String']['output']>;
+  ssnDataQuality?: Maybe<HmisSsnQualityEnum>;
+  uniqueIdentifier?: Maybe<Scalars['String']['output']>;
+};
+
+export type HmisClientTypeHmisCreateClientError = HmisClientType | HmisCreateClientError;
+
+export type HmisClientTypeHmisGetClientError = HmisClientType | HmisGetClientError;
+
+export type HmisCreateClientError = {
+  __typename?: 'HmisCreateClientError';
+  field?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+};
+
+export type HmisCreateClientInput = {
+  dob?: InputMaybe<Scalars['String']['input']>;
+  dobDataQuality?: InputMaybe<Scalars['Int']['input']>;
+  firstName: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
+  nameDataQuality?: InputMaybe<Scalars['Int']['input']>;
+  ssn1?: InputMaybe<Scalars['String']['input']>;
+  ssn2?: InputMaybe<Scalars['String']['input']>;
+  ssn3?: InputMaybe<Scalars['String']['input']>;
+  ssnDataQuality?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type HmisCreateClientSubItemsInput = {
+  additionalRaceEthnicity?: InputMaybe<Scalars['String']['input']>;
+  alias?: InputMaybe<Scalars['String']['input']>;
+  differentIdentityText?: InputMaybe<Scalars['String']['input']>;
+  gender?: InputMaybe<Array<Scalars['Int']['input']>>;
+  middleName?: InputMaybe<Scalars['String']['input']>;
+  nameSuffix?: InputMaybe<Scalars['Int']['input']>;
+  raceEthnicity?: InputMaybe<Array<Scalars['Int']['input']>>;
+  veteranStatus?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export enum HmisDobQualityEnum {
+  DontKnow = 'DONT_KNOW',
+  Full = 'FULL',
+  NotCollected = 'NOT_COLLECTED',
+  NoAnswer = 'NO_ANSWER',
+  Partial = 'PARTIAL'
+}
+
+export enum HmisGenderEnum {
+  Different = 'DIFFERENT',
+  DontKnow = 'DONT_KNOW',
+  ManBoy = 'MAN_BOY',
+  NonBinary = 'NON_BINARY',
+  NotCollected = 'NOT_COLLECTED',
+  NoAnswer = 'NO_ANSWER',
+  Questioning = 'QUESTIONING',
+  Specific = 'SPECIFIC',
+  Transgender = 'TRANSGENDER',
+  WomanGirl = 'WOMAN_GIRL'
+}
+
+export type HmisGetClientError = {
+  __typename?: 'HmisGetClientError';
+  field?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+};
+
+export type HmisListClientsError = {
+  __typename?: 'HmisListClientsError';
+  field?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+};
+
+export type HmisListMetaType = {
+  __typename?: 'HmisListMetaType';
+  currentPage?: Maybe<Scalars['Int']['output']>;
+  pageCount?: Maybe<Scalars['Int']['output']>;
+  perPage?: Maybe<Scalars['Int']['output']>;
+  totalCount?: Maybe<Scalars['Int']['output']>;
+};
+
 export type HmisLoginError = {
   __typename?: 'HmisLoginError';
   field?: Maybe<Scalars['String']['output']>;
   message: Scalars['String']['output'];
 };
 
-export type HmisLoginSuccess = {
-  __typename?: 'HmisLoginSuccess';
-  hmisToken: Scalars['String']['output'];
-};
+export enum HmisNameQualityEnum {
+  DontKnow = 'DONT_KNOW',
+  Full = 'FULL',
+  NotCollected = 'NOT_COLLECTED',
+  NoAnswer = 'NO_ANSWER',
+  Partial = 'PARTIAL'
+}
 
-export type HmisLoginSuccessHmisLoginError = HmisLoginError | HmisLoginSuccess;
+export type HmisPaginationInput = {
+  page?: InputMaybe<Scalars['Int']['input']>;
+  perPage?: InputMaybe<Scalars['Int']['input']>;
+};
 
 export type HmisProfileInput = {
   agency: HmisAgencyEnum;
@@ -788,6 +908,48 @@ export type HmisProfileTypeOffsetPaginated = {
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
 };
+
+export enum HmisRaceEnum {
+  Asian = 'ASIAN',
+  Black = 'BLACK',
+  DontKnow = 'DONT_KNOW',
+  Hispanic = 'HISPANIC',
+  Indigenous = 'INDIGENOUS',
+  MiddleEastern = 'MIDDLE_EASTERN',
+  NotCollected = 'NOT_COLLECTED',
+  NoAnswer = 'NO_ANSWER',
+  PacificIslander = 'PACIFIC_ISLANDER',
+  White = 'WHITE'
+}
+
+export enum HmisSsnQualityEnum {
+  DontKnow = 'DONT_KNOW',
+  Full = 'FULL',
+  NotCollected = 'NOT_COLLECTED',
+  NoAnswer = 'NO_ANSWER',
+  Partial = 'PARTIAL'
+}
+
+export enum HmisSuffixEnum {
+  DontKnow = 'DONT_KNOW',
+  Fifth = 'FIFTH',
+  First = 'FIRST',
+  Fourth = 'FOURTH',
+  Jr = 'JR',
+  NoAnswer = 'NO_ANSWER',
+  Second = 'SECOND',
+  Sixth = 'SIXTH',
+  Sr = 'SR',
+  Third = 'THIRD'
+}
+
+export enum HmisVeteranStatusEnum {
+  DontKnow = 'DONT_KNOW',
+  No = 'NO',
+  NotCollected = 'NOT_COLLECTED',
+  NoAnswer = 'NO_ANSWER',
+  Yes = 'YES'
+}
 
 export enum ImmediateNeedChoices {
   Clothing = 'CLOTHING',
@@ -971,7 +1133,8 @@ export type Mutation = {
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
   googleAuth: AuthResponse;
-  hmisLogin: HmisLoginSuccessHmisLoginError;
+  hmisCreateClient: HmisClientTypeHmisCreateClientError;
+  hmisLogin: UserTypeHmisLoginError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
@@ -1120,6 +1283,12 @@ export type MutationDeleteTaskArgs = {
 
 export type MutationGoogleAuthArgs = {
   input: AuthInput;
+};
+
+
+export type MutationHmisCreateClientArgs = {
+  clientInput: HmisCreateClientInput;
+  clientSubItemsInput: HmisCreateClientSubItemsInput;
 };
 
 
@@ -1545,6 +1714,8 @@ export type Query = {
   clientProfiles: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
+  hmisGetClient: HmisClientTypeHmisGetClientError;
+  hmisListClients: HmisClientListTypeHmisListClientsError;
   hmisProfile: HmisProfileType;
   hmisProfiles: HmisProfileTypeOffsetPaginated;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
@@ -1617,6 +1788,17 @@ export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryHmisGetClientArgs = {
+  personalId: Scalars['ID']['input'];
+};
+
+
+export type QueryHmisListClientsArgs = {
+  filter?: InputMaybe<HmisClientFilterInput>;
+  pagination?: InputMaybe<HmisPaginationInput>;
 };
 
 
@@ -2313,6 +2495,8 @@ export type UserTypeOrganizationsOrganizationArgs = {
   order?: InputMaybe<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
+
+export type UserTypeHmisLoginError = HmisLoginError | UserType;
 
 export enum VeteranStatusEnum {
   No = 'NO',
