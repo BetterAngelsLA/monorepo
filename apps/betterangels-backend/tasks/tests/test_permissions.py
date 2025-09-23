@@ -13,24 +13,15 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         self.task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
 
-    def test_create_task_access(self) -> None:
-        self._handle_user_login(None)
-        task_count = Task.objects.count()
-        variables = {"summary": "task summary"}
-        response = self.create_task_fixture(variables)
-
-        self.assertGraphQLUnauthenticated(response)
-
-        self.assertEqual(task_count, Task.objects.count())
-
     @parametrize(
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Caseworker should succeed
             ("non_case_manager_user", False),  # Non CW should not succeed
+            (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_task_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_create_task_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         task_count = Task.objects.count()
@@ -41,15 +32,19 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             self.assertIsNotNone(response["data"]["createTask"]["id"])
             self.assertEqual(task_count + 1, Task.objects.count())
         else:
-            self.assertEqual(
-                response["data"]["createTask"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "createTask",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
             self.assertEqual(task_count, Task.objects.count())
+
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertEqual(
+                    response["data"]["createTask"]["messages"][0],
+                    {
+                        "kind": "PERMISSION",
+                        "field": "createTask",
+                        "message": "You don't have permission to access this app.",
+                    },
+                )
 
     @parametrize(
         "user_label",

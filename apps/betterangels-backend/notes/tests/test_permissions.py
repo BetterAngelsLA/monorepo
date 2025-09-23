@@ -11,6 +11,21 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 
+    def test_create_task_anonymous_user(self) -> None:
+        self._handle_user_login(None)
+
+        note_count = Note.objects.count()
+        variables = {
+            "purpose": "Test Note",
+            "publicDetails": "This is a test note.",
+            "clientProfile": str(self.client_profile_1.pk),
+        }
+        response = self._create_note_fixture(variables)
+
+        self.assertGraphQLUnauthenticated(response)
+
+        self.assertEqual(note_count, Note.objects.count())
+
     @parametrize(
         "user_label, should_succeed",
         [
@@ -19,7 +34,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_note_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_create_note_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         note_count = Note.objects.count()
@@ -34,15 +49,18 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"]["createNote"]["id"])
             self.assertEqual(note_count + 1, Note.objects.count())
         else:
-            self.assertEqual(
-                response["data"]["createNote"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "createNote",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
             self.assertEqual(note_count, Note.objects.count())
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertEqual(
+                    response["data"]["createNote"]["messages"][0],
+                    {
+                        "kind": "PERMISSION",
+                        "field": "createNote",
+                        "message": "You don't have permission to access this app.",
+                    },
+                )
 
     @parametrize(
         "user_label, should_succeed",
@@ -54,7 +72,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_note_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_delete_note_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         note_count = Note.objects.count()
@@ -138,7 +156,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_note_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_note_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         mutation = """
@@ -156,6 +174,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"])
         else:
             self.assertIsNotNone(response["errors"])
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         "user_label, expected_interaction_count",
@@ -169,7 +189,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (None, None),  # Anonymous user should return error
         ],
     )
-    def test_view_notes_permission(self, user_label: str, expected_interaction_count: Optional[int]) -> None:
+    def test_view_notes_permission(self, user_label: Optional[str], expected_interaction_count: Optional[int]) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -189,6 +209,8 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertEqual(response["data"]["notes"]["totalCount"], expected_interaction_count)
         else:
             self.assertTrue("errors" in response)
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         "user_label, should_succeed",
@@ -198,7 +220,7 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_interaction_authors_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_interaction_authors_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -219,7 +241,10 @@ class NotePermissionTestCase(NoteGraphQLBaseTestCase):
         if should_succeed:
             self.assertTrue(response["data"]["interactionAuthors"]["totalCount"] > 0)
         else:
-            self.assertTrue(response["data"]["interactionAuthors"]["totalCount"] == 0)
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertTrue(response["data"]["interactionAuthors"]["totalCount"] == 0)
 
     @parametrize(
         "user_label, should_succeed",
@@ -286,7 +311,7 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_note_mood_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_create_note_mood_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         variables = {
@@ -303,6 +328,8 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
                     response["errors"][0]["message"],
                     "You do not have permission to modify this note.",
                 )
+            elif user_label is None:
+                self.assertGraphQLUnauthenticated(response)
             else:
                 self.assertEqual(
                     response["errors"][0]["message"],
@@ -319,7 +346,7 @@ class NoteMoodPermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_mood_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_delete_mood_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         mood = baker.make(Mood, note_id=self.note["id"])
         self._delete_mood_fixture(mood_id=mood.pk)
@@ -337,7 +364,7 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_note_service_request_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_create_note_service_request_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         water_svc = OrganizationService.objects.get(label="Water")
@@ -354,11 +381,14 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"]["createNoteServiceRequest"]["id"])
             self.assertEqual(service_request_count + 1, ServiceRequest.objects.count())
         else:
+            self.assertEqual(service_request_count, ServiceRequest.objects.count())
             if user_label == "org_2_case_manager_1":
                 self.assertEqual(
                     response["errors"][0]["message"],
                     "You do not have permission to modify this note.",
                 )
+            elif user_label is None:
+                self.assertGraphQLUnauthenticated(response)
             else:
                 self.assertEqual(
                     response["data"]["createNoteServiceRequest"]["messages"][0],
@@ -368,7 +398,6 @@ class NoteServiceRequestPermissionTestCase(NoteGraphQLBaseTestCase):
                         "message": "You don't have permission to access this app.",
                     },
                 )
-            self.assertEqual(service_request_count, ServiceRequest.objects.count())
 
 
 @skip("Service Requests are not currently implemented")
@@ -380,7 +409,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_service_request_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_create_service_request_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         service_request_count = ServiceRequest.objects.count()
@@ -391,14 +420,17 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"]["createServiceRequest"]["id"])
             self.assertEqual(service_request_count + 1, ServiceRequest.objects.count())
         else:
-            self.assertEqual(
-                response["data"]["createServiceRequest"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "createServiceRequest",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertEqual(
+                    response["data"]["createServiceRequest"]["messages"][0],
+                    {
+                        "kind": "PERMISSION",
+                        "field": "createServiceRequest",
+                        "message": "You don't have permission to access this app.",
+                    },
+                )
             self.assertEqual(service_request_count, ServiceRequest.objects.count())
 
     @parametrize(
@@ -437,7 +469,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_update_service_request_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_update_service_request_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         variables = {
@@ -450,14 +482,17 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateServiceRequest"]["id"])
         else:
-            self.assertEqual(
-                response["data"]["updateServiceRequest"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "updateServiceRequest",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertEqual(
+                    response["data"]["updateServiceRequest"]["messages"][0],
+                    {
+                        "kind": "PERMISSION",
+                        "field": "updateServiceRequest",
+                        "message": "You don't have permission to access this app.",
+                    },
+                )
 
     @parametrize(
         "user_label, should_succeed",
@@ -469,7 +504,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_service_request_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_service_request_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -487,6 +522,8 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"])
         else:
             self.assertIsNotNone(response["errors"])
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         "user_label, should_succeed",
@@ -498,7 +535,7 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_service_requests_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_service_requests_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         mutation = """
@@ -513,3 +550,6 @@ class ServiceRequestPermissionTestCase(ServiceRequestGraphQLBaseTestCase):
         response = self.execute_graphql(mutation, variables)
 
         self.assertTrue(len(response["data"]["serviceRequests"]) == should_succeed)
+
+        if user_label is None:
+            self.assertGraphQLUnauthenticated(response)
