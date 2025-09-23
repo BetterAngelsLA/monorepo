@@ -35,7 +35,7 @@ type TItem = { id: string; label: string };
 type TCategory = { title: string; items: TItem[] };
 
 type SelectedService = {
-  requestId?: string;
+  serviceRequestId?: string;
   serviceId: string;
   label: string;
   markedForDeletion?: boolean;
@@ -43,7 +43,7 @@ type SelectedService = {
 
 interface IServicesModalProps {
   noteId: string;
-  initialServices: {
+  initialServiceRequests: {
     id: string;
     service?: {
       label?: string;
@@ -56,7 +56,7 @@ interface IServicesModalProps {
 }
 
 export default function ServicesModal(props: IServicesModalProps) {
-  const { initialServices, noteId, refetch, type } = props;
+  const { initialServiceRequests, noteId, refetch, type } = props;
 
   const { data: availableCategories } = useServiceCategoriesQuery();
   const { closeModalScreen } = useModalScreen();
@@ -66,7 +66,7 @@ export default function ServicesModal(props: IServicesModalProps) {
   const [serviceOthers, setServiceOthers] = useState<
     {
       serviceOther: string | null;
-      requestId: string | undefined;
+      serviceRequestId: string | undefined;
       markedForDeletion?: boolean;
     }[]
   >([]);
@@ -74,7 +74,7 @@ export default function ServicesModal(props: IServicesModalProps) {
   const [searchText, setSearchText] = useState('');
 
   const [deleteService] = useDeleteServiceRequestMutation();
-  const [createService] = useCreateNoteServiceRequestMutation();
+  const [createServiceRequest] = useCreateNoteServiceRequestMutation();
   const { showSnackbar } = useSnackbar();
 
   const handleFilter = (text: string) => {
@@ -141,11 +141,11 @@ export default function ServicesModal(props: IServicesModalProps) {
     setIsSubmitLoading(true);
     try {
       const toCreate = services.filter(
-        (s) => !s.requestId && !s.markedForDeletion
+        (s) => !s.serviceRequestId && !s.markedForDeletion
       );
 
       for (const s of toCreate) {
-        await createService({
+        await createServiceRequest({
           variables: {
             data: {
               serviceId: s.serviceId,
@@ -157,27 +157,29 @@ export default function ServicesModal(props: IServicesModalProps) {
       }
 
       const toDelete = services.filter(
-        (s) => s.requestId && s.markedForDeletion
+        (s) => s.serviceRequestId && s.markedForDeletion
       );
       const toRemoveOtherServices = serviceOthers.filter(
-        (service) => service.markedForDeletion && !!service.requestId
+        (service) => service.markedForDeletion && !!service.serviceRequestId
       );
 
       const toRemoveServicesWithOther = [...toRemoveOtherServices, ...toDelete];
 
       for (const s of toRemoveServicesWithOther) {
-        await deleteService({ variables: { data: { id: s.requestId! } } });
+        await deleteService({
+          variables: { data: { id: s.serviceRequestId! } },
+        });
       }
 
       const toCreateOtherServices = serviceOthers.filter(
         (service) =>
           service.serviceOther !== null &&
-          !service.requestId &&
+          !service.serviceRequestId &&
           !service.markedForDeletion
       );
 
       for (const service of toCreateOtherServices) {
-        await createService({
+        await createServiceRequest({
           variables: {
             data: {
               serviceOther: service.serviceOther,
@@ -202,18 +204,18 @@ export default function ServicesModal(props: IServicesModalProps) {
   };
 
   const closeModal = () => {
-    const existing: SelectedService[] = initialServices
+    const existing: SelectedService[] = initialServiceRequests
       .filter((it) => it.service?.id)
       .map((it) => ({
-        requestId: it.id,
+        serviceRequestId: it.id,
         serviceId: it.service!.id,
         label: it.service?.label ?? '',
       }));
 
-    const initialServiceOthers = initialServices
+    const initialServiceOthers = initialServiceRequests
       .filter((item) => !!item.serviceOther)
       .map((service) => ({
-        requestId: service.id,
+        serviceRequestId: service.id,
         serviceOther: service.serviceOther || null,
       }));
 
@@ -223,25 +225,25 @@ export default function ServicesModal(props: IServicesModalProps) {
   };
 
   useEffect(() => {
-    const existing: SelectedService[] = initialServices
+    const existing: SelectedService[] = initialServiceRequests
       .filter((it) => it.service?.id)
       .map((it) => ({
-        requestId: it.id,
+        serviceRequestId: it.id,
         serviceId: it.service!.id,
         label: it.service?.label ?? '',
       }));
 
-    const initialServiceOthers = initialServices
+    const initialServiceOthers = initialServiceRequests
       .filter((item) => !!item.serviceOther)
       .map((service) => ({
-        requestId: service.id,
+        serviceRequestId: service.id,
         serviceOther: service.serviceOther || '',
       }));
 
     setServiceOthers(initialServiceOthers);
 
     setServices(existing);
-  }, [initialServices]);
+  }, [initialServiceRequests]);
 
   return (
     <View
