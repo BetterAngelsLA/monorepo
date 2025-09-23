@@ -5,13 +5,13 @@ import ServiceOtherCheckbox from './ServiceOtherCheckbox';
 interface IOtherCategoryProps {
   services: {
     serviceOther: string | null;
-    id: string | undefined;
+    requestId: string | undefined;
     markedForDeletion?: boolean;
   }[];
   setServices: (
     services: {
       serviceOther: string | null;
-      id: string | undefined;
+      requestId: string | undefined;
       markedForDeletion?: boolean;
     }[]
   ) => void;
@@ -23,7 +23,7 @@ export default function OtherCategory(props: IOtherCategoryProps) {
   const { control, setValue } = useForm();
 
   const appendService = (service: string) => {
-    setServices([...services, { serviceOther: service, id: undefined }]);
+    setServices([...services, { serviceOther: service, requestId: undefined }]);
   };
 
   const handleAddOtherCategory = async (newService: string) => {

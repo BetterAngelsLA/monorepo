@@ -4,18 +4,18 @@ import { StyleSheet, View } from 'react-native';
 interface IServiceOtherCheckboxProps {
   service: {
     serviceOther: string | null;
-    id?: string;
+    requestId?: string;
   };
   idx: number;
   services: {
-    id: string | undefined;
+    requestId: string | undefined;
     serviceOther: string | null;
     markedForDeletion?: boolean;
   }[];
   setServices: (
     services: {
       serviceOther: string | null;
-      id: string | undefined;
+      requestId: string | undefined;
       markedForDeletion?: boolean;
     }[]
   ) => void;
@@ -53,7 +53,7 @@ export default function ServiceOtherCheckbox(
         ...services,
         {
           serviceOther: service.serviceOther,
-          id: undefined,
+          requestId: undefined,
           markedForDeletion: false,
         },
       ]);

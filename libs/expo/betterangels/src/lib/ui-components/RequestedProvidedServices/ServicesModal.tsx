@@ -66,7 +66,7 @@ export default function ServicesModal(props: IServicesModalProps) {
   const [serviceOthers, setServiceOthers] = useState<
     {
       serviceOther: string | null;
-      id: string | undefined;
+      requestId: string | undefined;
       markedForDeletion?: boolean;
     }[]
   >([]);
@@ -159,14 +159,20 @@ export default function ServicesModal(props: IServicesModalProps) {
       const toDelete = services.filter(
         (s) => s.requestId && s.markedForDeletion
       );
-      for (const s of toDelete) {
+      const toRemoveOtherServices = serviceOthers.filter(
+        (service) => service.markedForDeletion && !!service.requestId
+      );
+
+      const toRemoveServicesWithOther = [...toRemoveOtherServices, ...toDelete];
+
+      for (const s of toRemoveServicesWithOther) {
         await deleteService({ variables: { data: { id: s.requestId! } } });
       }
 
       const toCreateOtherServices = serviceOthers.filter(
         (service) =>
           service.serviceOther !== null &&
-          !service.id &&
+          !service.requestId &&
           !service.markedForDeletion
       );
 
@@ -204,8 +210,15 @@ export default function ServicesModal(props: IServicesModalProps) {
         label: it.service?.label ?? '',
       }));
 
+    const initialServiceOthers = initialServices
+      .filter((item) => !!item.serviceOther)
+      .map((service) => ({
+        requestId: service.id,
+        serviceOther: service.serviceOther || null,
+      }));
+
     setServices(existing);
-    setServiceOthers([]);
+    setServiceOthers(initialServiceOthers);
     closeModalScreen();
   };
 
@@ -217,6 +230,15 @@ export default function ServicesModal(props: IServicesModalProps) {
         serviceId: it.service!.id,
         label: it.service?.label ?? '',
       }));
+
+    const initialServiceOthers = initialServices
+      .filter((item) => !!item.serviceOther)
+      .map((service) => ({
+        requestId: service.id,
+        serviceOther: service.serviceOther || '',
+      }));
+
+    setServiceOthers(initialServiceOthers);
 
     setServices(existing);
   }, [initialServices]);
