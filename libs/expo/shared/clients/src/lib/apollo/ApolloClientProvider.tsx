@@ -17,17 +17,33 @@ type TProps = {
   children: ReactNode;
   cacheStore?: InMemoryCache;
   policyConfig?: TCachePolicyConfig;
+  onUnauthenticated?: () => void;
+  authPath?: string;
+  debugMode?: boolean;
 };
 
 export const ApolloClientProvider = (props: TProps) => {
-  const { policyConfig, cacheStore, children } = props;
+  const {
+    policyConfig,
+    cacheStore,
+    children,
+    authPath,
+    onUnauthenticated,
+    debugMode,
+  } = props;
 
   const { baseUrl } = useApiConfig();
 
   const cache = cacheStore || createApolloCache({ policyConfig });
 
   const apolloClient = useMemo(() => {
-    return createApolloClient({ apiUrl: baseUrl, cacheStore: cache });
+    return createApolloClient({
+      apiUrl: baseUrl,
+      cacheStore: cache,
+      onUnauthenticated,
+      authPath,
+      debugMode,
+    });
   }, [baseUrl]);
 
   if (!apolloClient) {
