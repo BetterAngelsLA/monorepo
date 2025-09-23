@@ -70,7 +70,7 @@ export function ShelterCardHero(props: TShelterCard) {
     <div className={mergeCss(['w-full min-w-0', className])}>
       <div className="overflow-hidden rounded-lg">
         <div
-          className="w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain scrollbar-hide"
+          className="w-full max-w-full min-w-0 overflow-x-auto overscroll-x-contain"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
           <div className="whitespace-nowrap">
