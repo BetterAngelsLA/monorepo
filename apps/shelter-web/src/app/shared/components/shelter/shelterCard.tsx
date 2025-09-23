@@ -94,7 +94,7 @@ export function ShelterCard(props: TShelterCard) {
           {formattedAddress && (
             <div className="text-sm md:text-sm mt-2 flex items-start">
               <div className="flex-inline flex-wrap">
-                <span>{formattedAddress}</span>
+                <span className="no-underline">{formattedAddress}</span>
 
                 <DistanceAway
                   className="ml-1 inline"
