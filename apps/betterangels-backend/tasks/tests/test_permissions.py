@@ -13,12 +13,21 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         self.task_id = self.create_task_fixture({"summary": "task summary"})["data"]["createTask"]["id"]
 
+    def test_create_task_access(self) -> None:
+        self._handle_user_login(None)
+        task_count = Task.objects.count()
+        variables = {"summary": "task summary"}
+        response = self.create_task_fixture(variables)
+
+        self.assertGraphQLUnauthenticated(response)
+
+        self.assertEqual(task_count, Task.objects.count())
+
     @parametrize(
         "user_label, should_succeed",
         [
             ("org_1_case_manager_1", True),  # Caseworker should succeed
             ("non_case_manager_user", False),  # Non CW should not succeed
-            (None, False),  # Anonymous user should not succeed
         ],
     )
     def test_create_task_permission(self, user_label: str, should_succeed: bool) -> None:
