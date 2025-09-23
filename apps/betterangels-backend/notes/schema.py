@@ -66,22 +66,29 @@ from .types import (
 
 @strawberry.type
 class Query:
-    note: NoteType = strawberry_django.field(extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter)
+    note: NoteType = strawberry_django.field(
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(NotePermissions.VIEW)], filters=NoteFilter
+    )
 
     notes: OffsetPaginated[NoteType] = strawberry_django.offset_paginated(
+        permission_classes=[IsAuthenticated],
         extensions=[HasRetvalPerm(NotePermissions.VIEW)],
     )
 
     services: OffsetPaginated[OrganizationServiceType] = strawberry_django.offset_paginated(
+        permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
 
     service_categories: OffsetPaginated[OrganizationServiceCategoryType] = strawberry_django.offset_paginated(
+        permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
 
     @strawberry_django.offset_paginated(
-        OffsetPaginated[InteractionAuthorType], extensions=[HasPerm(NotePermissions.ADD)]
+        OffsetPaginated[InteractionAuthorType],
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(NotePermissions.ADD)],
     )
     def interaction_authors(self) -> QuerySet[User]:
         return get_outreach_authorized_users()
@@ -90,7 +97,7 @@ class Query:
 @strawberry.type
 class Mutation:
     # Notes
-    @strawberry_django.mutation(extensions=[HasPerm(NotePermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(NotePermissions.ADD)])
     def create_note(self, info: Info, data: CreateNoteInput) -> NoteType:
         with transaction.atomic():
             user = get_current_user(info)
@@ -122,7 +129,10 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry.django.mutation(extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])])
+    @strawberry.django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
+    )
     def update_note(self, info: Info, data: UpdateNoteInput) -> NoteType:
         qs: QuerySet[Note] = info.context.qs
 
@@ -134,9 +144,10 @@ class Mutation:
         return cast(NoteType, note)
 
     @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
         extensions=[
             HasRetvalPerm(perms=[NotePermissions.CHANGE]),
-        ]
+        ],
     )
     def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
         with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
@@ -162,7 +173,10 @@ class Mutation:
 
             return cast(NoteType, note)
 
-    @strawberry_django.mutation(extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[PermissionedQuerySet(model=Note, perms=[NotePermissions.CHANGE])],
+    )
     def revert_note(self, info: Info, data: RevertNoteInput) -> NoteType:
         qs: QuerySet[Note] = info.context.qs
         note = qs.get(id=data.id)
@@ -181,6 +195,7 @@ class Mutation:
 
     delete_note: NoteType = mutations.delete(
         DeleteDjangoObjectInput,
+        permission_classes=[IsAuthenticated],
         extensions=[
             HasRetvalPerm(perms=NotePermissions.DELETE),
         ],
@@ -240,7 +255,9 @@ class Mutation:
 
         return DeletedObjectType(id=mood_id)
 
-    @strawberry_django.mutation(extensions=[HasPerm(ServiceRequestPermissions.ADD)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(ServiceRequestPermissions.ADD)]
+    )
     def create_service_request(self, info: Info, data: CreateServiceRequestInput) -> ServiceRequestType:
         with transaction.atomic():
             user = get_current_user(info)
@@ -266,7 +283,9 @@ class Mutation:
 
             return cast(ServiceRequestType, service_request)
 
-    @strawberry_django.mutation(extensions=[HasPerm(ServiceRequestPermissions.ADD)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(ServiceRequestPermissions.ADD)]
+    )
     def create_note_service_request(self, info: Info, data: CreateNoteServiceRequestInput) -> ServiceRequestType:
         with transaction.atomic(), pghistory.context(
             note_id=data.note_id, timestamp=timezone.now(), label=info.field_name
@@ -342,7 +361,9 @@ class Mutation:
 
             return cast(ServiceRequestType, service_request)
 
-    @strawberry_django.mutation(extensions=[HasRetvalPerm(perms=[ServiceRequestPermissions.CHANGE])])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ServiceRequestPermissions.CHANGE])]
+    )
     def update_service_request(self, info: Info, data: UpdateServiceRequestInput) -> ServiceRequestType:
         with transaction.atomic():
             service_request_data = asdict(data)
@@ -411,7 +432,9 @@ class Mutation:
 
         return DeletedObjectType(id=service_request_id)
 
-    @strawberry_django.mutation(extensions=[HasPerm(NoteImportRecordPermissions.ADD)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(NoteImportRecordPermissions.ADD)]
+    )
     def create_note_data_import(self, info: Info, data: CreateNoteDataImportInput) -> NoteDataImportType:
         user = cast(User, get_current_user(info))
         record = NoteDataImport.objects.create(
@@ -427,7 +450,9 @@ class Mutation:
             imported_by=record.imported_by,
         )
 
-    @strawberry_django.mutation(extensions=[HasPerm(NoteImportRecordPermissions.ADD)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(NoteImportRecordPermissions.ADD)]
+    )
     def import_note(self, info: Info, data: ImportNoteInput) -> NoteImportRecordType:
         """
         Imports a note. If the note input includes a 'parentId' field,
