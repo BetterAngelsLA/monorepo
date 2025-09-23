@@ -5,13 +5,16 @@ import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
 import { Platform } from 'react-native';
 import { CSRF_HEADER_NAME, getCSRFToken } from '../common';
 import { isReactNativeFileInstance } from './ReactNativeFile';
-import { createErrorLink } from './createErrorLink';
+import { createErrorLink } from './links/createErrorLink';
+import { loggerLink } from './links/loggerLink';
 
 type TArgs = {
   apiUrl: string;
   csrfUrl?: string;
   cacheStore?: InMemoryCache;
   onUnauthenticated?: () => void;
+  authPath?: string;
+  withLogs?: boolean;
 };
 
 export const createApolloClient = (args: TArgs) => {
@@ -19,7 +22,9 @@ export const createApolloClient = (args: TArgs) => {
     cacheStore,
     apiUrl,
     csrfUrl = `${apiUrl}/admin/login/`,
+    authPath,
     onUnauthenticated,
+    withLogs = false,
   } = args;
 
   const authLink = setContext(async (_, { headers = {} }) => {
@@ -35,6 +40,7 @@ export const createApolloClient = (args: TArgs) => {
   });
 
   const errorLink = createErrorLink({
+    authPath,
     onUnauthenticated,
   });
 
@@ -46,8 +52,15 @@ export const createApolloClient = (args: TArgs) => {
     isExtractableFile: isReactNativeFileInstance,
   });
 
+  const links = [errorLink, authLink, restLink, uploadLink];
+
+  // debug only: logs gql req/resp
+  if (withLogs && process.env.NODE_ENV !== 'production') {
+    links.unshift(loggerLink);
+  }
+
   return new ApolloClient({
-    link: from([errorLink, authLink, restLink, uploadLink]),
+    link: from(links),
     cache: cacheStore || new InMemoryCache(),
     credentials: 'include',
   });
