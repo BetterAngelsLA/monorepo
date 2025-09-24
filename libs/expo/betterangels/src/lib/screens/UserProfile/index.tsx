@@ -27,6 +27,7 @@ export default function UserProfile() {
           ? user.organizations?.map((org) => org.name).join(', ')
           : 'None',
     },
+    { title: 'Login via', value: user.isHmisUser ? 'HMIS' : 'BetterAngels' },
   ];
   const { signOut } = useSignOut();
 
@@ -70,6 +71,7 @@ export default function UserProfile() {
         {userInfo.map((item, index) => (
           <InfoCard key={index} title={item.title} value={item.value} />
         ))}
+
         <DeleteModal
           body={`All data associated with your account will be deleted. This action cannot be undone.`}
           title={`Permanently delete your account?`}
