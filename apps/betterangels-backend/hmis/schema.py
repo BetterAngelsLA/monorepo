@@ -136,6 +136,9 @@ class Mutation:
         # into an organization that is linked to HMIS.
         try:
             user = User.objects.get(email__iexact=email)
+            if not user.is_hmis_user:
+                user.is_hmis_user = True
+                user.save()
         except User.DoesNotExist:
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
