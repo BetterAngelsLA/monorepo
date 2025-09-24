@@ -37,7 +37,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_client_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_create_client_profile_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         client_count = ClientProfile.objects.count()
@@ -56,16 +56,19 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"]["createClientProfile"]["id"])
             self.assertEqual(client_count + 1, ClientProfile.objects.count())
         else:
-            self.assertEqual(len(response["data"]["createClientProfile"]["messages"]), 1)
-            self.assertEqual(
-                response["data"]["createClientProfile"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "createClientProfile",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
             self.assertEqual(client_count, ClientProfile.objects.count())
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertEqual(len(response["data"]["createClientProfile"]["messages"]), 1)
+                self.assertEqual(
+                    response["data"]["createClientProfile"]["messages"][0],
+                    {
+                        "kind": "PERMISSION",
+                        "field": "createClientProfile",
+                        "message": "You don't have permission to access this app.",
+                    },
+                )
 
     @parametrize(
         "user_label, should_succeed",
@@ -77,7 +80,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_update_client_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_update_client_profile_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         original_nickname = ClientProfile.objects.get(id=self.client_profile_1["id"]).nickname
 
@@ -89,15 +92,18 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"]["updateClientProfile"]["id"])
             self.assertNotEqual(original_nickname, updated_nickname)
         else:
-            self.assertEqual(len(response["errors"]), 1)
-            self.assertIn(
-                response["errors"][0]["message"],
-                {
-                    "You do not have permission to modify this client.",
-                    "Cannot filter against a non-conditional expression.",
-                },
-            )
             self.assertEqual(original_nickname, updated_nickname)
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertEqual(len(response["errors"]), 1)
+                self.assertIn(
+                    response["errors"][0]["message"],
+                    {
+                        "You do not have permission to modify this client.",
+                        "Cannot filter against a non-conditional expression.",
+                    },
+                )
 
     @parametrize(
         "user_label, should_succeed",
@@ -109,7 +115,7 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_client_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_client_profile_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -130,6 +136,8 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertIsNotNone(response["data"])
         else:
             self.assertIsNotNone(response["errors"])
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         "user_label, should_succeed",
@@ -180,7 +188,9 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, None),  # Anonymous user should return error
         ],
     )
-    def test_view_client_profiles_permission(self, user_label: str, expected_client_count: Optional[int]) -> None:
+    def test_view_client_profiles_permission(
+        self, user_label: Optional[str], expected_client_count: Optional[int]
+    ) -> None:
         self._handle_user_login(user_label)
         query = """
             query {
@@ -195,6 +205,8 @@ class ClientProfilePermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertEqual(response["data"]["clientProfiles"]["totalCount"], expected_client_count)
         else:
             self.assertTrue("errors" in response)
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
 
 @override_settings(DEFAULT_FILE_STORAGE="django.core.files.storage.InMemoryStorage")
@@ -220,7 +232,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_client_document_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_create_client_document_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         response = self._create_client_document_fixture(
             self.client_profile_1["id"],
@@ -228,11 +240,15 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             b"This is a test file",
             "test.txt",
         )
-        attachment_id = response.get("data", {}).get("createClientDocument", {}).get("id")
-        if should_succeed:
-            self.assertIsNotNone(attachment_id)
+
+        if user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
-            self.assertIsNone(attachment_id)
+            attachment_id = response.get("data", {}).get("createClientDocument", {}).get("id")
+            if should_succeed:
+                self.assertIsNotNone(attachment_id)
+            else:
+                self.assertIsNone(attachment_id)
 
     @parametrize(
         "user_label, should_succeed",
@@ -244,7 +260,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_client_document_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_delete_client_document_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login("org_1_case_manager_1")
         response = self._create_client_document_fixture(
             self.client_profile_1["id"],
@@ -254,9 +270,12 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
         client_document_id = response["data"]["createClientDocument"]["id"]
 
         self._handle_user_login(user_label)
-        self._delete_client_document_fixture(client_document_id)
+        delete_response = self._delete_client_document_fixture(client_document_id)
 
         self.assertTrue(Attachment.objects.filter(id=client_document_id).exists() != should_succeed)
+
+        if user_label is None:
+            self.assertGraphQLUnauthenticated(delete_response)
 
     @parametrize(
         "user_label, should_succeed",
@@ -268,7 +287,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_client_document_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_client_document_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         query = """
             query ($id: ID!) {
@@ -285,6 +304,8 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
                 "id" in response["data"]["clientDocument"],
                 "Should return the attachment.",
             )
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
             self.assertTrue(
                 "errors" in response,
@@ -303,7 +324,9 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, None),  # Anonymous user should return error
         ],
     )
-    def test_view_client_documents_permission(self, user_label: str, expected_document_count: Optional[int]) -> None:
+    def test_view_client_documents_permission(
+        self, user_label: Optional[str], expected_document_count: Optional[int]
+    ) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -320,6 +343,8 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             self.assertEqual(response["data"]["clientDocuments"]["totalCount"], expected_document_count)
         else:
             self.assertTrue("errors" in response)
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         "user_label, should_succeed",
@@ -331,7 +356,7 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_update_client_document_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_update_client_document_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
         variables = {
             "id": self.client_document["id"],
@@ -343,6 +368,8 @@ class ClientDocumentPermissionTestCase(ClientProfileGraphQLBaseTestCase):
             document = Attachment.objects.get(id=self.client_document["id"])
             self.assertIsNotNone(response["data"]["updateClientDocument"]["id"])
             self.assertEqual(document.original_filename, "Updated name.txt")
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
             self.assertEqual(len(response["data"]["updateClientDocument"]["messages"]), 1)
             self.assertEqual(
@@ -369,7 +396,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_client_contact_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_client_contact_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -386,6 +413,8 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             self.assertEqual(response["data"]["clientContact"]["id"], self.client_contact_1["id"])
         else:
             self.assertIsNotNone(response["errors"])
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         "user_label, expected_profile_count",
@@ -399,7 +428,9 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             (None, None),  # Anonymous user should return error
         ],
     )
-    def test_view_client_contacts_permission(self, user_label: str, expected_profile_count: int | None) -> None:
+    def test_view_client_contacts_permission(
+        self, user_label: Optional[str], expected_profile_count: int | None
+    ) -> None:
         self._handle_user_login(user_label)
         query = """
             query {
@@ -414,6 +445,8 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             self.assertEqual(response["data"]["clientContacts"]["totalCount"], expected_profile_count)
         else:
             self.assertTrue("errors" in response)
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         "user_label, should_succeed",
@@ -423,7 +456,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_client_contact_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_create_client_contact_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         client_contact_count = ClientContact.objects.count()
@@ -437,16 +470,19 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             self.assertIsNotNone(response["data"]["createClientContact"]["id"])
             self.assertEqual(client_contact_count + 1, ClientContact.objects.count())
         else:
-            self.assertEqual(len(response["data"]["createClientContact"]["messages"]), 1)
-            self.assertEqual(
-                response["data"]["createClientContact"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "createClientContact",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
             self.assertEqual(client_contact_count, ClientContact.objects.count())
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertEqual(len(response["data"]["createClientContact"]["messages"]), 1)
+                self.assertEqual(
+                    response["data"]["createClientContact"]["messages"][0],
+                    {
+                        "kind": "PERMISSION",
+                        "field": "createClientContact",
+                        "message": "You don't have permission to access this app.",
+                    },
+                )
 
     @parametrize(
         "user_label, should_succeed",
@@ -458,7 +494,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_update_client_contact_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_update_client_contact_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         variables = {
@@ -469,6 +505,8 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateClientContact"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
             self.assertEqual(len(response["data"]["updateClientContact"]["messages"]), 1)
             self.assertEqual(
@@ -490,7 +528,7 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_client_contact_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_delete_client_contact_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         variables = {"object": "ClientContact", "object_id": self.client_contact_1["id"]}
@@ -498,6 +536,8 @@ class ClientContactPermissionTestCase(ClientContactBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["deleteClientContact"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
             self.assertEqual(len(response["data"]["deleteClientContact"]["messages"]), 1)
             self.assertEqual(
@@ -524,7 +564,7 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_client_household_member_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_client_household_member_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -541,6 +581,8 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
             self.assertEqual(response["data"]["clientHouseholdMember"]["id"], self.client_household_member_1["id"])
         else:
             self.assertIsNotNone(response["errors"])
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         "user_label, expected_profile_count",
@@ -555,7 +597,7 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
         ],
     )
     def test_view_client_household_members_permission(
-        self, user_label: str, expected_profile_count: int | None
+        self, user_label: Optional[str], expected_profile_count: int | None
     ) -> None:
         self._handle_user_login(user_label)
         query = """
@@ -571,6 +613,8 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
             self.assertEqual(response["data"]["clientHouseholdMembers"]["totalCount"], expected_profile_count)
         else:
             self.assertTrue("errors" in response)
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         "user_label, should_succeed",
@@ -580,7 +624,7 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_client_household_member_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_create_client_household_member_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         client_household_member_count = ClientHouseholdMember.objects.count()
@@ -594,16 +638,19 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
             self.assertIsNotNone(response["data"]["createClientHouseholdMember"]["id"])
             self.assertEqual(client_household_member_count + 1, ClientHouseholdMember.objects.count())
         else:
-            self.assertEqual(len(response["data"]["createClientHouseholdMember"]["messages"]), 1)
-            self.assertEqual(
-                response["data"]["createClientHouseholdMember"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "createClientHouseholdMember",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
             self.assertEqual(client_household_member_count, ClientHouseholdMember.objects.count())
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertEqual(len(response["data"]["createClientHouseholdMember"]["messages"]), 1)
+                self.assertEqual(
+                    response["data"]["createClientHouseholdMember"]["messages"][0],
+                    {
+                        "kind": "PERMISSION",
+                        "field": "createClientHouseholdMember",
+                        "message": "You don't have permission to access this app.",
+                    },
+                )
 
     @parametrize(
         "user_label, should_succeed",
@@ -615,7 +662,7 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_update_client_household_member_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_update_client_household_member_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         variables = {
@@ -626,6 +673,8 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateClientHouseholdMember"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
             self.assertEqual(len(response["data"]["updateClientHouseholdMember"]["messages"]), 1)
             self.assertEqual(
@@ -647,7 +696,7 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_client_household_member_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_delete_client_household_member_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         variables = {"object": "ClientHouseholdMember", "object_id": self.client_household_member_1["id"]}
@@ -655,6 +704,8 @@ class ClientHouseholdMemberPermissionTestCase(ClientHouseholdMemberBaseTestCase)
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["deleteClientHouseholdMember"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
             self.assertEqual(len(response["data"]["deleteClientHouseholdMember"]["messages"]), 1)
             self.assertEqual(
@@ -681,7 +732,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_hmis_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_hmis_profile_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -698,6 +749,8 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             self.assertEqual(response["data"]["hmisProfile"]["id"], self.hmis_profile_1["id"])
         else:
             self.assertIsNotNone(response["errors"])
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         "user_label, expected_profile_count",
@@ -711,7 +764,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             (None, None),  # Anonymous user should return error
         ],
     )
-    def test_view_hmis_profiles_permission(self, user_label: str, expected_profile_count: int | None) -> None:
+    def test_view_hmis_profiles_permission(self, user_label: Optional[str], expected_profile_count: int | None) -> None:
         self._handle_user_login(user_label)
         query = """
             query {
@@ -726,6 +779,8 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             self.assertEqual(response["data"]["hmisProfiles"]["totalCount"], expected_profile_count)
         else:
             self.assertTrue("errors" in response)
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         "user_label, should_succeed",
@@ -735,7 +790,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_hmis_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_create_hmis_profile_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         hmis_profile_count = HmisProfile.objects.count()
@@ -750,16 +805,19 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             self.assertIsNotNone(response["data"]["createHmisProfile"]["id"])
             self.assertEqual(hmis_profile_count + 1, HmisProfile.objects.count())
         else:
-            self.assertEqual(len(response["data"]["createHmisProfile"]["messages"]), 1)
-            self.assertEqual(
-                response["data"]["createHmisProfile"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "createHmisProfile",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
             self.assertEqual(hmis_profile_count, HmisProfile.objects.count())
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertEqual(len(response["data"]["createHmisProfile"]["messages"]), 1)
+                self.assertEqual(
+                    response["data"]["createHmisProfile"]["messages"][0],
+                    {
+                        "kind": "PERMISSION",
+                        "field": "createHmisProfile",
+                        "message": "You don't have permission to access this app.",
+                    },
+                )
 
     @parametrize(
         "user_label, should_succeed",
@@ -771,7 +829,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_update_hmis_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_update_hmis_profile_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         variables = {
@@ -783,6 +841,8 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["updateHmisProfile"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
             self.assertEqual(len(response["data"]["updateHmisProfile"]["messages"]), 1)
             self.assertEqual(
@@ -804,7 +864,7 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_hmis_profile_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_delete_hmis_profile_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         variables = {"object": "HmisProfile", "object_id": self.hmis_profile_1["id"]}
@@ -812,6 +872,8 @@ class HmisProfilePermissionTestCase(HmisProfileBaseTestCase):
 
         if should_succeed:
             self.assertIsNotNone(response["data"]["deleteHmisProfile"]["id"])
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
             self.assertEqual(len(response["data"]["deleteHmisProfile"]["messages"]), 1)
             self.assertEqual(
@@ -833,7 +895,7 @@ class OrganizationPermissionTestCase(GraphQLBaseTestCase):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_caseworker_organizations_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_caseworker_organizations_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         # This recipe creates an organization in the process. Including this here because even though
@@ -860,5 +922,7 @@ class OrganizationPermissionTestCase(GraphQLBaseTestCase):
 
         if should_succeed:
             self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) > 0)
+        elif user_label is None:
+            self.assertGraphQLUnauthenticated(response)
         else:
             self.assertTrue(len(response["data"]["caseworkerOrganizations"]["results"]) == 0)
