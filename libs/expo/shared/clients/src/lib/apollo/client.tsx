@@ -12,7 +12,6 @@ type TArgs = {
   cacheStore?: InMemoryCache;
   onUnauthenticated?: () => void;
   authPath?: string;
-  debugMode?: boolean;
 };
 
 export const createApolloClient = (args: TArgs) => {
@@ -22,7 +21,6 @@ export const createApolloClient = (args: TArgs) => {
     csrfUrl = `${apiUrl}/admin/login/`,
     authPath,
     onUnauthenticated,
-    debugMode = false,
   } = args;
 
   const authLink = createAuthLink({ apiUrl, csrfUrl });
@@ -43,7 +41,10 @@ export const createApolloClient = (args: TArgs) => {
   const links = [errorLink, authLink, restLink, uploadLink];
 
   // debug only: logs gql req/resp
-  if (debugMode && process.env.NODE_ENV !== 'production') {
+  if (
+    process.env['EXPO_PUBLIC_GQL_DEBUG'] === 'true' &&
+    process.env.NODE_ENV !== 'production'
+  ) {
     links.unshift(loggerLink);
   }
 

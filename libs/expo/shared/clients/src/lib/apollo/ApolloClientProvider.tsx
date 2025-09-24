@@ -19,18 +19,11 @@ type TProps = {
   policyConfig?: TCachePolicyConfig;
   onUnauthenticated?: () => void;
   authPath?: string;
-  debugMode?: boolean;
 };
 
 export const ApolloClientProvider = (props: TProps) => {
-  const {
-    policyConfig,
-    cacheStore,
-    children,
-    authPath,
-    onUnauthenticated,
-    debugMode,
-  } = props;
+  const { policyConfig, cacheStore, children, authPath, onUnauthenticated } =
+    props;
 
   const { baseUrl } = useApiConfig();
 
@@ -45,9 +38,8 @@ export const ApolloClientProvider = (props: TProps) => {
       cacheStore: cache,
       onUnauthenticated,
       authPath,
-      debugMode,
     });
-  }, [baseUrl, cache, onUnauthenticated, authPath, debugMode]);
+  }, [baseUrl, cache, onUnauthenticated, authPath]);
 
   if (!apolloClient) {
     return null;
