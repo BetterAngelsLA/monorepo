@@ -466,7 +466,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
             "ssn2": "**",
             "ssn3": "6789",
             "ssnDataQuality": HmisSsnQualityEnum.PARTIAL.name,
-            "dob": "2001-01-01",
+            "dob": "2002-02-02",
             "dobDataQuality": HmisDobQualityEnum.PARTIAL.name,
             "data": expected_data,
         }

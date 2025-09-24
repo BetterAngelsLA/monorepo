@@ -48,6 +48,48 @@ class HmisApiBridge:
         # If server replies non-JSON on error, .json() will raise — we treat as failure.
         return resp.json() or {}
 
+    def _build_client_mutation(self, operation: str, payload_fields: str) -> str:
+        operation_cap = operation.capitalize()
+        return f"""
+            mutation (
+                $clientInput: {operation_cap}ClientInput!,
+                $clientSubItemsInput: {operation_cap}ClientSubItemsInput!
+            ) {{
+                {operation}Client(
+                    client: $clientInput,
+                    data: $clientSubItemsInput
+                ) {{
+                    {payload_fields}
+                }}
+            }}
+        """
+
+    def _run_client_mutation(
+        self,
+        operation: str,
+        client_input: dict[str, Any],
+        client_sub_items_input: dict[str, Any],
+    ) -> dict[str, Any]:
+        raw_query = self.request.body.decode("utf-8")
+        payload = self._extract_response_body_from_mutation(raw_query)
+
+        variables = {
+            "clientInput": dict_keys_to_camel(client_input),
+            "clientSubItemsInput": dict_keys_to_camel(client_sub_items_input),
+        }
+
+        data = self._make_request(
+            {
+                "query": self._build_client_mutation(operation, payload),
+                "variables": variables,
+            }
+        )
+
+        if errors := data.get("errors"):
+            return {"errors": errors}
+
+        return data.get("data", {}).get(f"{operation}Client") or {}
+
     def _extract_response_body_from_mutation(
         self,
         mutation: str,
@@ -215,79 +257,11 @@ class HmisApiBridge:
         client_input: dict[str, Any],
         client_sub_items_input: dict[str, Any],
     ) -> Optional[dict[str, Any]]:
-
-        mutation_body = json.loads(self.request.body.decode("utf-8"))["query"]
-        payload_body = self._extract_response_body_from_mutation(mutation_body)
-
-        mutation = f"""
-            mutation (
-                $clientInput: CreateClientInput!,
-                $clientSubItemsInput: CreateClientSubItemsInput!
-            ) {{
-                createClient(
-                    client: $clientInput,
-                    data: $clientSubItemsInput,
-                ) {{
-                    {payload_body}
-                }}
-            }}
-        """
-
-        client_input_camel = dict_keys_to_camel(client_input)
-        client_sub_items_input_camel = dict_keys_to_camel(client_sub_items_input)
-
-        data = self._make_request(
-            body={
-                "query": mutation,
-                "variables": {
-                    "clientInput": client_input_camel,
-                    "clientSubItemsInput": client_sub_items_input_camel,
-                },
-            }
-        )
-
-        if errors := data.get("errors"):
-            return {"errors": errors}
-
-        return data.get("data", {}).get("createClient") or {}
+        return self._run_client_mutation("create", client_input, client_sub_items_input)
 
     def update_client(
         self,
         client_input: dict[str, Any],
         client_sub_items_input: dict[str, Any],
     ) -> Optional[dict[str, Any]]:
-
-        mutation_body = json.loads(self.request.body.decode("utf-8"))["query"]
-        payload_body = self._extract_response_body_from_mutation(mutation_body)
-
-        mutation = f"""
-            mutation (
-                $clientInput: UpdateClientInput!,
-                $clientSubItemsInput: UpdateClientSubItemsInput!
-            ) {{
-                updateClient(
-                    client: $clientInput,
-                    data: $clientSubItemsInput,
-                ) {{
-                    {payload_body}
-                }}
-            }}
-        """
-
-        client_input_camel = dict_keys_to_camel(client_input)
-        client_sub_items_input_camel = dict_keys_to_camel(client_sub_items_input)
-
-        data = self._make_request(
-            body={
-                "query": mutation,
-                "variables": {
-                    "clientInput": client_input_camel,
-                    "clientSubItemsInput": client_sub_items_input_camel,
-                },
-            }
-        )
-
-        if errors := data.get("errors"):
-            return {"errors": errors}
-
-        return data.get("data", {}).get("updateClient") or {}
+        return self._run_client_mutation("update", client_input, client_sub_items_input)
