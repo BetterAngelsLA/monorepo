@@ -5,7 +5,7 @@ import {
   WFEdit,
 } from '@monorepo/expo/shared/icons';
 import { DeleteModal } from '@monorepo/expo/shared/ui-components';
-import * as FileSystem from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
 import { Alert, Platform } from 'react-native';
@@ -62,13 +62,12 @@ export default function DocumentModal({
     }
 
     try {
-      const cacheUri = `${FileSystem.cacheDirectory}${originalFilename}`;
-      const { uri: localUri } = await FileSystem.downloadAsync(url, cacheUri);
+      const cacheDest = new File(new Directory(Paths.cache), originalFilename);
+      const downloaded = await File.downloadFileAsync(url, cacheDest);
 
       if (Platform.OS === 'android') {
-        const perm =
-          await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
-        if (!perm.granted) {
+        const pickedDir = await Directory.pickDirectoryAsync();
+        if (!pickedDir) {
           Alert.alert(
             'Permission Required',
             'Storage access is required to save the file.'
@@ -76,27 +75,18 @@ export default function DocumentModal({
           return;
         }
 
-        const newUri = await FileSystem.StorageAccessFramework.createFileAsync(
-          perm.directoryUri,
+        const outFile = pickedDir.createFile(
           originalFilename,
-          mimeType
+          mimeType ?? null
         );
-        const base64 = await FileSystem.readAsStringAsync(localUri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
-        await FileSystem.StorageAccessFramework.writeAsStringAsync(
-          newUri,
-          base64,
-          {
-            encoding: FileSystem.EncodingType.Base64,
-          }
-        );
+        const bytes = await downloaded.bytes();
+        outFile.write(bytes);
       } else {
         if (!(await Sharing.isAvailableAsync())) {
           Alert.alert('Sharing Error', 'Sharing not supported on this device.');
           return;
         }
-        await Sharing.shareAsync(localUri, {
+        await Sharing.shareAsync(downloaded.uri, {
           dialogTitle: 'Save or share file',
           mimeType,
         });

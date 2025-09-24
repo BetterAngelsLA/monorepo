@@ -70,7 +70,6 @@ export function TaskList(props: TProps) {
   return (
     <View style={[styles.container, style]}>
       <InfiniteList<TTask>
-        estimatedItemSize={95}
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}

@@ -139,7 +139,6 @@ export function ClientProfileList(props: TProps) {
       />
 
       <FlashList<TClientProfile>
-        estimatedItemSize={95}
         data={clients}
         keyExtractor={(item) => item.id}
         renderItem={renderItemFn}
