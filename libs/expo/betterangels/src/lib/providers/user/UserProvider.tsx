@@ -60,9 +60,9 @@ export default function UserProvider({ children }: UserProviderProps) {
   const refetchUser = useCallback(async () => {
     try {
       const res = await refetch();
-
       updateUser(res);
     } catch (err) {
+      console.error('Error refetching user data:', err);
       setUser(undefined);
     }
   }, [refetch, updateUser]);

@@ -34,7 +34,10 @@ export const ApolloClientProvider = (props: TProps) => {
 
   const { baseUrl } = useApiConfig();
 
-  const cache = cacheStore || createApolloCache({ policyConfig });
+  const cache = useMemo(
+    () => cacheStore || createApolloCache({ policyConfig }),
+    [cacheStore, policyConfig]
+  );
 
   const apolloClient = useMemo(() => {
     return createApolloClient({
@@ -44,7 +47,7 @@ export const ApolloClientProvider = (props: TProps) => {
       authPath,
       debugMode,
     });
-  }, [baseUrl]);
+  }, [baseUrl, cache, onUnauthenticated, authPath, debugMode]);
 
   if (!apolloClient) {
     return null;
