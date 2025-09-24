@@ -5396,8 +5396,8 @@ __metadata:
     "@hookform/resolvers": "npm:^5.2.1"
     "@iarna/toml": "npm:^2.2.5"
     "@likashefqet/react-native-image-zoom": "npm:^4.2.1"
-    "@nx-tools/container-metadata": "npm:^6.1.1"
-    "@nx-tools/nx-container": "npm:6.2.0"
+    "@nx-tools/container-metadata": "npm:^6.8.2"
+    "@nx-tools/nx-container": "npm:6.8.2"
     "@nx/devkit": "npm:21.5.3"
     "@nx/eslint": "npm:21.5.3"
     "@nx/eslint-plugin": "npm:21.5.3"
@@ -5835,21 +5835,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nx-tools/ci-context@npm:6.1.1":
-  version: 6.1.1
-  resolution: "@nx-tools/ci-context@npm:6.1.1"
-  dependencies:
-    "@actions/github": "npm:^6.0.0"
-    "@nx-tools/core": "npm:6.1.1"
-    "@octokit/openapi-types": "npm:^22.0.0"
-    ci-info: "npm:^4.0.0"
-    properties-file: "npm:^3.5.4"
-  peerDependencies:
-    tslib: ^2.5.0
-  checksum: 10/6ec93565354f62d217a3d084ee61b0acc3e7ce8f141f4432dfca6f0fbe45460d8a7b0ff9266775f26c5a59203d116a866b742969339a3eca871026152d8639dd
-  languageName: node
-  linkType: hard
-
 "@nx-tools/ci-context@npm:6.8.2":
   version: 6.8.2
   resolution: "@nx-tools/ci-context@npm:6.8.2"
@@ -5865,25 +5850,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nx-tools/container-metadata@npm:6.1.1":
-  version: 6.1.1
-  resolution: "@nx-tools/container-metadata@npm:6.1.1"
-  dependencies:
-    "@nx-tools/ci-context": "npm:6.1.1"
-    "@nx-tools/core": "npm:6.1.1"
-    "@renovate/pep440": "npm:1.0.0"
-    csv-parse: "npm:^5.5.5"
-    handlebars: "npm:^4.7.8"
-    moment-timezone: "npm:^0.5.45"
-    semver: "npm:^7.6.0"
-  peerDependencies:
-    "@nx/devkit": ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0
-    tslib: ^2.5.0
-  checksum: 10/e777395846d4a99b9335508b2a1f6c8d5b674c743589b077b09a10014e64277ff2c21f238bd19bee8b0b8b66d9e95670d33a42b92792cfe29c984cbaa885d05d
-  languageName: node
-  linkType: hard
-
-"@nx-tools/container-metadata@npm:^6.1.1":
+"@nx-tools/container-metadata@npm:6.8.2, @nx-tools/container-metadata@npm:^6.8.2":
   version: 6.8.2
   resolution: "@nx-tools/container-metadata@npm:6.8.2"
   dependencies:
@@ -5898,22 +5865,6 @@ __metadata:
     "@nx/devkit": ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
     tslib: ^2.5.0
   checksum: 10/4beb6702895be132c94747ecf8aec5abc55b647bd485a913efc9dc7f377fb3569a7f35b4d20e569fb5c9bc01c6c59e88f05655af4e967b1b274a0b2c2ed545fb
-  languageName: node
-  linkType: hard
-
-"@nx-tools/core@npm:6.1.1":
-  version: 6.1.1
-  resolution: "@nx-tools/core@npm:6.1.1"
-  dependencies:
-    "@actions/exec": "npm:^1.1.1"
-    "@actions/io": "npm:^1.1.3"
-    chalk: "npm:^4.1.2"
-    ci-info: "npm:^4.0.0"
-    csv-parse: "npm:^5.5.5"
-  peerDependencies:
-    "@nx/devkit": ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0
-    tslib: ^2.5.0
-  checksum: 10/425231e518b06ebb68e819cdb9d989323cab8292ac1bf638756ccfe68d7f260b5932862cfc015d2bbf33591675041779bc74ba9b00b8ae77a731c9ff34d64f35
   languageName: node
   linkType: hard
 
@@ -5933,23 +5884,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nx-tools/nx-container@npm:6.2.0":
-  version: 6.2.0
-  resolution: "@nx-tools/nx-container@npm:6.2.0"
+"@nx-tools/nx-container@npm:6.8.2":
+  version: 6.8.2
+  resolution: "@nx-tools/nx-container@npm:6.8.2"
   dependencies:
-    "@nx-tools/container-metadata": "npm:6.1.1"
-    "@nx-tools/core": "npm:6.1.1"
+    "@nx-tools/container-metadata": "npm:6.8.2"
+    "@nx-tools/core": "npm:6.8.2"
     csv-parse: "npm:^5.5.5"
     handlebars: "npm:^4.7.8"
     semver: "npm:^7.6.0"
     tmp: "npm:^0.2.3"
   peerDependencies:
-    "@nx/devkit": ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0
-    "@nx/js": ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0
-    "@swc/helpers": ~0.5.11
+    "@nx/devkit": ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
+    "@nx/js": ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
     dotenv: ">=16.0.0"
-    nx: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0
-  checksum: 10/2553be3f924411c7e360a29977a230e0d109823c63d6844a75556e3bed8e6dc30166498310665389ffcd50617167fdbc810f7b477acaca0953ef85adfeb59cd7
+    nx: ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0 || ^20.0.0 || ^21.0.0
+    tslib: ^2.5.0
+  checksum: 10/13b5654e3aa093d77967b88fd46ba6c7765434c2d5c5316d9d548b8c34bbf67bef54375bb05b390a9ab7483017750ab2299d753d24dc76411aa9e852b7e9e826
   languageName: node
   linkType: hard
 
