@@ -11,28 +11,31 @@ type SelectedService = {
 };
 
 interface IServiceCheckboxProps {
-  service: TItem;
+  serviceRequest: TItem;
   idx: number;
-  services: SelectedService[];
-  setServices: React.Dispatch<React.SetStateAction<SelectedService[]>>;
+  serviceRequests: SelectedService[];
+  setServiceRequests: React.Dispatch<React.SetStateAction<SelectedService[]>>;
 }
 
 export default function ServiceCheckbox(props: IServiceCheckboxProps) {
-  const { service, idx, services, setServices } = props;
-  const entry = services.find((s) => s.serviceId === service.id);
+  const { serviceRequest, idx, serviceRequests, setServiceRequests } = props;
+  const entry = serviceRequests.find((s) => s.serviceId === serviceRequest.id);
   const isChecked = !!entry && (!entry.requestId || !entry.markedForDeletion);
 
   const handleCheck = () => {
-    setServices((prev: SelectedService[]) => {
-      const i = prev.findIndex((s) => s.serviceId === service.id);
+    setServiceRequests((prev: SelectedService[]) => {
+      const i = prev.findIndex((s) => s.serviceId === serviceRequest.id);
       if (i === -1) {
-        return [...prev, { serviceId: service.id, label: service.label }];
+        return [
+          ...prev,
+          { serviceId: serviceRequest.id, label: serviceRequest.label },
+        ];
       }
 
       const cur = prev[i];
 
       if (!cur.requestId) {
-        return prev.filter((s) => s.serviceId !== service.id);
+        return prev.filter((s) => s.serviceId !== serviceRequest.id);
       }
 
       const next = [...prev];
@@ -48,11 +51,11 @@ export default function ServiceCheckbox(props: IServiceCheckboxProps) {
       mt={idx !== 0 ? 'xs' : undefined}
       hasBorder
       onCheck={handleCheck}
-      accessibilityHint={service.label}
+      accessibilityHint={serviceRequest.label}
       label={
         <View style={styles.labelContainer}>
           <TextRegular style={{ flex: 1 }} ml="xs">
-            {service.label}
+            {serviceRequest.label}
           </TextRegular>
         </View>
       }

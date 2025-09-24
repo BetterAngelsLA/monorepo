@@ -61,9 +61,9 @@ export default function ServicesModal(props: IServicesModalProps) {
   const { data: availableCategories } = useServiceCategoriesQuery();
   const { closeModalScreen } = useModalScreen();
   const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
-  const [services, setServices] = useState<SelectedService[]>([]);
+  const [serviceRequests, setServiceRequests] = useState<SelectedService[]>([]);
 
-  const [serviceOthers, setServiceOthers] = useState<
+  const [serviceRequestsOthers, setServiceRequestsOthers] = useState<
     {
       serviceOther: string | null;
       serviceRequestId: string | undefined;
@@ -119,28 +119,36 @@ export default function ServicesModal(props: IServicesModalProps) {
   const filteredServices = filterServicesByText(categories, searchText);
   const hasResults = filteredServices.some((c) => c.items.length > 0);
 
-  const reset = async () => {
-    try {
-      const deleteServices = services.map((service) => ({
-        ...service,
-        markedForDeletion: true,
-      }));
-      const deleteServiceOthers = serviceOthers.map((service) => ({
-        ...service,
-        markedForDeletion: true,
+  const computeInitial = () => {
+    const existing = initialServiceRequests
+      .filter((it) => it.service?.id)
+      .map((it) => ({
+        serviceRequestId: it.id,
+        serviceId: it.service!.id,
+        label: it.service?.label ?? '',
       }));
 
-      setServices(deleteServices);
-      setServiceOthers(deleteServiceOthers);
-    } catch (e) {
-      console.error(e);
-    }
+    const others = initialServiceRequests
+      .filter((it) => !!it.serviceOther)
+      .map((it) => ({
+        serviceRequestId: it.id,
+        serviceOther: it.serviceOther!,
+        markedForDeletion: false,
+      }));
+
+    return { existing, others };
+  };
+
+  const reset = () => {
+    const { existing, others } = computeInitial();
+    setServiceRequests(existing);
+    setServiceRequestsOthers(others);
   };
 
   const submitServices = async () => {
     setIsSubmitLoading(true);
     try {
-      const toCreate = services.filter(
+      const toCreate = serviceRequests.filter(
         (s) => !s.serviceRequestId && !s.markedForDeletion
       );
 
@@ -156,10 +164,10 @@ export default function ServicesModal(props: IServicesModalProps) {
         });
       }
 
-      const toDelete = services.filter(
+      const toDelete = serviceRequests.filter(
         (s) => s.serviceRequestId && s.markedForDeletion
       );
-      const toRemoveOtherServices = serviceOthers.filter(
+      const toRemoveOtherServices = serviceRequestsOthers.filter(
         (service) => service.markedForDeletion && !!service.serviceRequestId
       );
 
@@ -171,7 +179,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         });
       }
 
-      const toCreateOtherServices = serviceOthers.filter(
+      const toCreateOtherServices = serviceRequestsOthers.filter(
         (service) =>
           service.serviceOther !== null &&
           !service.serviceRequestId &&
@@ -219,8 +227,8 @@ export default function ServicesModal(props: IServicesModalProps) {
         serviceOther: service.serviceOther || null,
       }));
 
-    setServices(existing);
-    setServiceOthers(initialServiceOthers);
+    setServiceRequests(existing);
+    setServiceRequestsOthers(initialServiceOthers);
     closeModalScreen();
   };
 
@@ -240,9 +248,9 @@ export default function ServicesModal(props: IServicesModalProps) {
         serviceOther: service.serviceOther || '',
       }));
 
-    setServiceOthers(initialServiceOthers);
+    setServiceRequestsOthers(initialServiceOthers);
 
-    setServices(existing);
+    setServiceRequests(existing);
   }, [initialServiceRequests]);
 
   return (
@@ -303,9 +311,9 @@ export default function ServicesModal(props: IServicesModalProps) {
                     return (
                       <ServiceCheckbox
                         key={item.id}
-                        services={services}
-                        setServices={setServices}
-                        service={item}
+                        serviceRequests={serviceRequests}
+                        setServiceRequests={setServiceRequests}
+                        serviceRequest={item}
                         idx={idx}
                       />
                     );
@@ -340,8 +348,8 @@ export default function ServicesModal(props: IServicesModalProps) {
           <View>
             <TextBold>Other</TextBold>
             <OtherCategory
-              setServices={setServiceOthers}
-              services={serviceOthers}
+              setServiceRequests={setServiceRequestsOthers}
+              serviceRequests={serviceRequestsOthers}
             />
           </View>
         </ScrollView>

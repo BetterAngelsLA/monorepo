@@ -3,12 +3,12 @@ import { useForm } from 'react-hook-form';
 import ServiceOtherCheckbox from './ServiceOtherCheckbox';
 
 interface IOtherCategoryProps {
-  services: {
+  serviceRequests: {
     serviceOther: string | null;
     serviceRequestId: string | undefined;
     markedForDeletion?: boolean;
   }[];
-  setServices: (
+  setServiceRequests: (
     services: {
       serviceOther: string | null;
       serviceRequestId: string | undefined;
@@ -18,19 +18,19 @@ interface IOtherCategoryProps {
 }
 
 export default function OtherCategory(props: IOtherCategoryProps) {
-  const { services, setServices } = props;
+  const { serviceRequests, setServiceRequests } = props;
 
   const { control, setValue } = useForm();
 
   const appendService = (service: string) => {
-    setServices([
-      ...services,
+    setServiceRequests([
+      ...serviceRequests,
       { serviceOther: service, serviceRequestId: undefined },
     ]);
   };
 
   const handleAddOtherCategory = async (newService: string) => {
-    if (services.some((s) => s.serviceOther === newService)) {
+    if (serviceRequests.some((s) => s.serviceOther === newService)) {
       return;
     }
     appendService(newService);
@@ -39,12 +39,12 @@ export default function OtherCategory(props: IOtherCategoryProps) {
 
   return (
     <>
-      {services.map((service, idx) => {
+      {serviceRequests.map((service, idx) => {
         return (
           <ServiceOtherCheckbox
             key={service.serviceOther}
-            services={services}
-            setServices={setServices}
+            serviceRequests={serviceRequests}
+            setServiceRequests={setServiceRequests}
             service={service}
             idx={idx}
           />

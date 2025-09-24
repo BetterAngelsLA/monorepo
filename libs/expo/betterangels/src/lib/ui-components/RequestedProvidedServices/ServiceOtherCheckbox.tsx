@@ -7,13 +7,13 @@ interface IServiceOtherCheckboxProps {
     serviceRequestId?: string;
   };
   idx: number;
-  services: {
+  serviceRequests: {
     serviceRequestId: string | undefined;
     serviceOther: string | null;
     markedForDeletion?: boolean;
   }[];
-  setServices: (
-    services: {
+  setServiceRequests: (
+    serviceRequests: {
       serviceOther: string | null;
       serviceRequestId: string | undefined;
       markedForDeletion?: boolean;
@@ -24,33 +24,33 @@ interface IServiceOtherCheckboxProps {
 export default function ServiceOtherCheckbox(
   props: IServiceOtherCheckboxProps
 ) {
-  const { service, idx, services, setServices } = props;
+  const { service, idx, serviceRequests, setServiceRequests } = props;
 
-  const serviceEntry = services.find(
-    (s) => s.serviceOther === service.serviceOther
+  const serviceEntry = serviceRequests.find(
+    (s) => s.serviceRequestId === service.serviceRequestId
   );
   const isChecked = (serviceEntry && !serviceEntry.markedForDeletion) || false;
 
   const handleCheck = () => {
     if (isChecked) {
-      setServices(
-        services.map((s) =>
-          s.serviceOther === service.serviceOther
+      setServiceRequests(
+        serviceRequests.map((s) =>
+          s.serviceRequestId === service.serviceRequestId
             ? { ...s, markedForDeletion: true }
             : s
         )
       );
     } else if (serviceEntry) {
-      setServices(
-        services.map((s) =>
-          s.serviceOther === service.serviceOther
+      setServiceRequests(
+        serviceRequests.map((s) =>
+          s.serviceRequestId === service.serviceRequestId
             ? { ...s, markedForDeletion: false }
             : s
         )
       );
     } else {
-      setServices([
-        ...services,
+      setServiceRequests([
+        ...serviceRequests,
         {
           serviceOther: service.serviceOther,
           serviceRequestId: undefined,
