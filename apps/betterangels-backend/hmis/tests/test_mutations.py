@@ -105,9 +105,12 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         self.existing_user = baker.make(get_user_model(), _fill_optional=["email"])
 
     def test_hmis_login_success(self) -> None:
+        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
+        return_value = {"data": {"createAuthToken": {"authToken": token}}}
+
         with patch(
-            "hmis.api_bridge.HmisApiBridge.create_auth_token",
-            return_value="success",
+            "hmis.api_bridge.HmisApiBridge._make_request",
+            return_value=return_value,
         ):
             resp = self.execute_graphql(
                 LOGIN_MUTATION,

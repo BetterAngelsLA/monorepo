@@ -6,6 +6,7 @@ from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
 from common.graphql.types import NonBlankString
+from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import CharField, F, Q, QuerySet, Value
 from django.db.models.functions import Concat
@@ -16,6 +17,7 @@ from strawberry_django.auth.utils import get_current_user
 from .models import User
 
 ADMIN_PORTAL_PERMISSION_GROUPS = [GroupTemplateNames.ORG_ADMIN, GroupTemplateNames.ORG_SUPERUSER]
+HMIS_SESSION_KEY = getattr(settings, "HMIS_SESSION_KEY", None)
 
 
 @strawberry.input
@@ -122,9 +124,15 @@ class UserType(UserBaseType):
     organizations_organization: Optional[List[OrganizationForUserType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
-    is_hmis_user: Optional[bool]
     is_outreach_authorized: Optional[bool]
     username: auto
+
+    @strawberry_django.field
+    def is_hmis_user(self, info: Info) -> bool:
+        request = info.context["request"]
+        session = request.session
+
+        return bool(session[HMIS_SESSION_KEY])
 
 
 @strawberry_django.type(User)

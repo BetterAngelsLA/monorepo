@@ -23,7 +23,7 @@ from graphql.type import GraphQLObjectType as _GraphQLObjectType
 from hmis.errors import is_hmis_unauthenticated
 from hmis.types import HmisClientFilterInput, HmisPaginationInput
 
-_SESSION_KEY = "hmis_auth_token"
+HMIS_SESSION_KEY = getattr(settings, "HMIS_SESSION_KEY", None)
 HMIS_GRAPHQL_ENDPOINT = getattr(settings, "HMIS_GRAPHQL_URL", None)
 HMIS_GRAPHQL_API_KEY = getattr(settings, "HMIS_API_KEY", None)
 GRAPHQL_SCHEMA_PATH = "betterangels_backend.schema.schema"
@@ -36,12 +36,13 @@ class HmisApiBridge:
         self.request = request
         self.session = request.session
 
-        if HMIS_GRAPHQL_ENDPOINT is None or HMIS_GRAPHQL_API_KEY is None:
+        if HMIS_GRAPHQL_ENDPOINT is None or HMIS_GRAPHQL_API_KEY is None or HMIS_SESSION_KEY is None:
             raise Exception("HMIS not configured")
 
         self.endpoint = HMIS_GRAPHQL_ENDPOINT
         self.api_key = HMIS_GRAPHQL_API_KEY
         self.schema = self._load_graphql_schema()
+        self.session_key = HMIS_SESSION_KEY
 
         token = self._get_auth_token()
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
@@ -212,11 +213,11 @@ class HmisApiBridge:
         self.session.set_expiry(decoded["exp"] - 1)
 
         f = self._fernet()
-        self.session[_SESSION_KEY] = f.encrypt(token.encode("utf-8")).decode("utf-8")
+        self.session[self.session_key] = f.encrypt(token.encode("utf-8")).decode("utf-8")
         self.session.modified = True
 
     def _get_auth_token(self) -> Optional[str]:
-        enc = self.session.get(_SESSION_KEY)
+        enc = self.session.get(self.session_key)
 
         if not enc:
             return None
@@ -230,8 +231,8 @@ class HmisApiBridge:
             return None
 
     def _clear_auth_token(self) -> None:
-        if _SESSION_KEY in self.session:
-            del self.session[_SESSION_KEY]
+        if self.session_key in self.session:
+            del self.session[self.session_key]
 
         self.session.modified = True
 

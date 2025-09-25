@@ -50,6 +50,7 @@ env = environ.Env(
     GOOGLE_MAPS_API_KEY=(str, ""),
     HMIS_API_KEY=(str, ""),
     HMIS_GRAPHQL_URL=(str, ""),
+    HMIS_SESSION_KEY=(str, ""),
     HMIS_TOKEN_KEY=(str, ""),
     IS_LOCAL_DEV=(bool, False),
     LANGUAGE_COOKIE_SECURE=(bool, True),
@@ -369,6 +370,7 @@ PLACES_MARKER_OPTIONS = '{"draggable": true}'
 # HMIS
 HMIS_API_KEY = env("HMIS_API_KEY")
 HMIS_GRAPHQL_URL = env("HMIS_GRAPHQL_URL")
+HMIS_SESSION_KEY = env("HMIS_SESSION_KEY")
 HMIS_TOKEN_KEY = env("HMIS_TOKEN_KEY")
 
 # Logging Configuration
