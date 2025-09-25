@@ -5359,7 +5359,7 @@ __metadata:
     "@react-native-cookies/cookies": "npm:^6.2.1"
     "@react-native-picker/picker": "npm:2.11.1"
     "@sanity/client": "npm:^6.27.1"
-    "@shopify/flash-list": "npm:2.0.3"
+    "@shopify/flash-list": "npm:2.0.2"
     "@storybook/addon-docs": "npm:9.1.2"
     "@storybook/addon-react-native-web": "npm:^0.0.29"
     "@storybook/react-native": "npm:^9.1.0"
@@ -7803,16 +7803,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@shopify/flash-list@npm:2.0.3":
-  version: 2.0.3
-  resolution: "@shopify/flash-list@npm:2.0.3"
+"@shopify/flash-list@npm:2.0.2":
+  version: 2.0.2
+  resolution: "@shopify/flash-list@npm:2.0.2"
   dependencies:
     tslib: "npm:2.8.1"
   peerDependencies:
     "@babel/runtime": "*"
     react: "*"
     react-native: "*"
-  checksum: 10/5078d3779cfba5f286c73e1802ea78ecc337c3ae847b32f74af0de3bb38b2b96a759b1a0e04a5fd328387b31a57a436468bd022daec9af246ca2615d8ff3e44a
+  checksum: 10/9e4dad24e886b6ff318a66a27500e1293fa28d7c466453893c45a73ca195e9fac5d6cd41142cb5ad7480f8a89475ecd5ba0dfbac61a20b7704eb85b690990540
   languageName: node
   linkType: hard
 
