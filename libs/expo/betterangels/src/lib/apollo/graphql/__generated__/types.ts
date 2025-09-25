@@ -797,6 +797,8 @@ export type HmisClientTypeHmisCreateClientError = HmisClientType | HmisCreateCli
 
 export type HmisClientTypeHmisGetClientError = HmisClientType | HmisGetClientError;
 
+export type HmisClientTypeHmisUpdateClientError = HmisClientType | HmisUpdateClientError;
+
 export type HmisCreateClientError = {
   __typename?: 'HmisCreateClientError';
   field?: Maybe<Scalars['String']['output']>;
@@ -942,6 +944,36 @@ export enum HmisSuffixEnum {
   Sr = 'SR',
   Third = 'THIRD'
 }
+
+export type HmisUpdateClientError = {
+  __typename?: 'HmisUpdateClientError';
+  field?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+};
+
+export type HmisUpdateClientInput = {
+  dob: Scalars['String']['input'];
+  dobDataQuality: Scalars['Int']['input'];
+  firstName: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
+  nameDataQuality: Scalars['Int']['input'];
+  personalId: Scalars['String']['input'];
+  ssn1: Scalars['String']['input'];
+  ssn2: Scalars['String']['input'];
+  ssn3: Scalars['String']['input'];
+  ssnDataQuality: Scalars['Int']['input'];
+};
+
+export type HmisUpdateClientSubItemsInput = {
+  additionalRaceEthnicity: Scalars['String']['input'];
+  alias: Scalars['String']['input'];
+  differentIdentityText: Scalars['String']['input'];
+  gender: Array<Scalars['Int']['input']>;
+  middleName: Scalars['String']['input'];
+  nameSuffix: Scalars['Int']['input'];
+  raceEthnicity: Array<Scalars['Int']['input']>;
+  veteranStatus: Scalars['Int']['input'];
+};
 
 export enum HmisVeteranStatusEnum {
   DontKnow = 'DONT_KNOW',
@@ -1135,6 +1167,7 @@ export type Mutation = {
   googleAuth: AuthResponse;
   hmisCreateClient: HmisClientTypeHmisCreateClientError;
   hmisLogin: UserTypeHmisLoginError;
+  hmisUpdateClient: HmisClientTypeHmisUpdateClientError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
@@ -1295,6 +1328,12 @@ export type MutationHmisCreateClientArgs = {
 export type MutationHmisLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
+};
+
+
+export type MutationHmisUpdateClientArgs = {
+  clientInput: HmisUpdateClientInput;
+  clientSubItemsInput: HmisUpdateClientSubItemsInput;
 };
 
 

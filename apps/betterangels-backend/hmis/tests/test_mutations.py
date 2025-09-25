@@ -60,6 +60,43 @@ CREATE_CLIENT_MUTATION = """
     }
 """
 
+UPDATE_CLIENT_MUTATION = """
+    mutation hmisUpdateClient(
+        $clientInput: HmisUpdateClientInput!,
+        $clientSubItemsInput: HmisUpdateClientSubItemsInput!
+    ) {
+        hmisUpdateClient(
+            clientInput: $clientInput,
+            clientSubItemsInput: $clientSubItemsInput,
+        ) {
+            ... on HmisClientType {
+                personalId
+                uniqueIdentifier
+                firstName
+                lastName
+                nameDataQuality
+                ssn1
+                ssn2
+                ssn3
+                ssnDataQuality
+                dob
+                dobDataQuality
+                data {
+                    middleName
+                    nameSuffix
+                    alias
+                    raceEthnicity
+                    additionalRaceEthnicity
+                    differentIdentityText
+                    gender
+                    veteranStatus
+                }
+            }
+            ... on HmisUpdateClientError { message field }
+        }
+    }
+"""
+
 
 @override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
 class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
@@ -345,3 +382,94 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
         self.assertIsNone(resp.get("errors"))
         payload = resp["data"]["hmisCreateClient"]
         self.assertIn("Quality of SSN is invalid.", payload["message"])
+
+    def test_hmis_update_client_success(self) -> None:
+        client_input = {
+            "personalId": "1",
+            "firstName": "Firsty",
+            "lastName": "Lasty",
+            "nameDataQuality": 1,
+            "ssn1": "123",
+            "ssn2": "45",
+            "ssn3": "6789",
+            "ssnDataQuality": 2,
+            "dob": "2002-02-02",
+            "dobDataQuality": 2,
+        }
+        client_sub_items_input = {
+            "middleName": "Middly",
+            "nameSuffix": 2,
+            "alias": "Nicky",
+            "additionalRaceEthnicity": "add re",
+            "differentIdentityText": "diff id",
+            "raceEthnicity": [2],
+            "gender": [2],
+            "veteranStatus": 8,
+        }
+
+        return_value = {
+            "personalId": "1",
+            "uniqueIdentifier": "981C4E53A",
+            "firstName": "Firsty",
+            "lastName": "Lasty",
+            "nameDataQuality": 1,
+            "ssn1": "***",
+            "ssn2": "**",
+            "ssn3": "6789",
+            "ssnDataQuality": 2,
+            "dob": "2002-02-02",
+            "dobDataQuality": 2,
+            "data": {
+                "middleName": "Middly",
+                "nameSuffix": 2,
+                "alias": "Nicky",
+                "additionalRaceEthnicity": "add re",
+                "differentIdentityText": "diff id",
+                "raceEthnicity": [2],
+                "gender": [2],
+                "veteranStatus": 8,
+            },
+        }
+
+        with patch(
+            "hmis.api_bridge.HmisApiBridge.update_client",
+            return_value=return_value,
+        ):
+            resp = self.execute_graphql(
+                UPDATE_CLIENT_MUTATION,
+                variables={
+                    "clientInput": client_input,
+                    "clientSubItemsInput": client_sub_items_input,
+                },
+            )
+
+        self.assertIsNone(resp.get("errors"))
+
+        payload = resp["data"]["hmisUpdateClient"]
+
+        expected_data = {
+            "middleName": "Middly",
+            "nameSuffix": "SR",
+            "alias": "Nicky",
+            "additionalRaceEthnicity": "add re",
+            "differentIdentityText": "diff id",
+            "raceEthnicity": [HmisRaceEnum.ASIAN.name],
+            "gender": [HmisGenderEnum.SPECIFIC.name],
+            "veteranStatus": HmisVeteranStatusEnum.DONT_KNOW.name,
+        }
+        expected_client = {
+            "personalId": "1",
+            "uniqueIdentifier": "981C4E53A",
+            "firstName": "Firsty",
+            "lastName": "Lasty",
+            "nameDataQuality": HmisNameQualityEnum.FULL.name,
+            "ssn1": "***",
+            "ssn2": "**",
+            "ssn3": "6789",
+            "ssnDataQuality": HmisSsnQualityEnum.PARTIAL.name,
+            "dob": "2002-02-02",
+            "dobDataQuality": HmisDobQualityEnum.PARTIAL.name,
+            "data": expected_data,
+        }
+
+        self.assertEqual(payload, expected_client)

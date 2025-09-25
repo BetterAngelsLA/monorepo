@@ -26,6 +26,10 @@ from .types import (
     HmisLoginError,
     HmisLoginResult,
     HmisPaginationInput,
+    HmisUpdateClientError,
+    HmisUpdateClientInput,
+    HmisUpdateClientResult,
+    HmisUpdateClientSubItemsInput,
 )
 
 User = get_user_model()
@@ -167,6 +171,31 @@ class Mutation:
 
         if errors := response.get("errors"):
             return HmisCreateClientError(message=errors[0]["message"])
+
+        client = get_client_from_response(response)
+
+        return client
+
+    @strawberry.mutation
+    def hmis_update_client(
+        self,
+        info: Info,
+        client_input: HmisUpdateClientInput,
+        client_sub_items_input: HmisUpdateClientSubItemsInput,
+    ) -> HmisUpdateClientResult:
+        request = info.context["request"]
+        hmis_api_bridge = HmisApiBridge(request=request)
+
+        response = hmis_api_bridge.update_client(
+            client_input=strawberry.asdict(client_input),
+            client_sub_items_input=strawberry.asdict(client_sub_items_input),
+        )
+
+        if not response:
+            return HmisUpdateClientError(message="Something went wrong")
+
+        if errors := response.get("errors"):
+            return HmisUpdateClientError(message=errors[0]["message"])
 
         client = get_client_from_response(response)
 
