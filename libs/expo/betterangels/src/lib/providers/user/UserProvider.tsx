@@ -74,7 +74,13 @@ export default function UserProvider({ children }: UserProviderProps) {
   }, [appBecameActive, refetchUser]);
 
   const contextValue = useMemo(
-    () => ({ user, setUser, isLoading: loading, refetchUser }),
+    () => ({
+      user,
+      setUser,
+      isLoading: loading,
+      refetchUser,
+      isHmisUser: user?.isHmisUser,
+    }),
     [user, loading, refetchUser]
   );
 

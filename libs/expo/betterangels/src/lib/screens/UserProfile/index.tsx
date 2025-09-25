@@ -9,12 +9,19 @@ import {
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useDeleteCurrentUserMutation } from '../../apollo';
-import { useSignOut, useSnackbar, useUser } from '../../hooks';
+import {
+  useFeatureFlagActive,
+  useSignOut,
+  useSnackbar,
+  useUser,
+} from '../../hooks';
+import { FeatureFlags } from '../../providers';
 import InfoCard from './InfoCard';
 
 export default function UserProfile() {
   const { user } = useUser();
   const { showSnackbar } = useSnackbar();
+  const hmisFeatureOn = useFeatureFlagActive(FeatureFlags.HMIS_FF);
 
   if (!user) throw new Error('Something went wrong');
   const [deleteCurrentUser] = useDeleteCurrentUserMutation();
@@ -27,8 +34,15 @@ export default function UserProfile() {
           ? user.organizations?.map((org) => org.name).join(', ')
           : 'None',
     },
-    { title: 'Login via', value: user.isHmisUser ? 'HMIS' : 'BetterAngels' },
   ];
+
+  if (hmisFeatureOn) {
+    userInfo.push({
+      title: 'Login method',
+      value: user.isHmisUser ? 'HMIS' : 'BetterAngels',
+    });
+  }
+
   const { signOut } = useSignOut();
 
   async function deleteCurrentUserFunction() {
