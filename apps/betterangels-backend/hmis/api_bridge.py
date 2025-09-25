@@ -1,6 +1,6 @@
 import json
 import re
-from typing import Any, Optional, Sequence
+from typing import Any, Optional
 
 import jwt
 import requests
@@ -11,29 +11,20 @@ from django.conf import settings
 from django.http import HttpRequest
 from django.utils.module_loading import import_string
 from graphql import (
-    GraphQLError,
     GraphQLField,
     GraphQLObjectType,
     GraphQLSchema,
     parse,
-    print_ast,
     specified_rules,
     validate,
 )
 from graphql.type import GraphQLObjectType as _GraphQLObjectType
-from graphql.validation import ValidationRule
 from hmis.types import HmisClientFilterInput, HmisPaginationInput
 
 _SESSION_KEY = "hmis_auth_token"
 HMIS_GRAPHQL_ENDPOINT = getattr(settings, "HMIS_GRAPHQL_URL", None)
 HMIS_GRAPHQL_API_KEY = getattr(settings, "HMIS_API_KEY", None)
 GRAPHQL_SCHEMA_PATH = "betterangels_backend.schema.schema"
-
-
-def _load_graphql_schema() -> GraphQLSchema:
-    obj = import_string(GRAPHQL_SCHEMA_PATH)
-
-    return getattr(obj, "_schema", obj)  # type: ignore
 
 
 class HmisApiBridge:
@@ -48,6 +39,7 @@ class HmisApiBridge:
 
         self.endpoint = HMIS_GRAPHQL_ENDPOINT
         self.api_key = HMIS_GRAPHQL_API_KEY
+        self.schema = self._load_graphql_schema()
 
         token = self._get_auth_token()
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
@@ -57,6 +49,11 @@ class HmisApiBridge:
             "x-api-key": self.api_key,
             **auth_header,
         }
+
+    def _load_graphql_schema(self) -> GraphQLSchema:
+        obj = import_string(GRAPHQL_SCHEMA_PATH)
+
+        return getattr(obj, "_schema", obj)  # type: ignore
 
     def _make_request(self, body: dict[str, Any], timeout: Optional[float] = None) -> dict[str, Any]:
         resp = requests.post(
@@ -70,7 +67,6 @@ class HmisApiBridge:
 
     def _validate_selection_for_type(
         self,
-        schema: GraphQLSchema,
         object_typename: str,
         selection: str,
     ) -> str:
@@ -78,12 +74,12 @@ class HmisApiBridge:
         if not selection.strip():
             raise ValueError("Empty selection set.")
 
-        gql_type = schema.get_type(object_typename)
+        gql_type = self.schema.get_type(object_typename)
         if not isinstance(gql_type, _GraphQLObjectType):
             raise ValueError(f"Type '{object_typename}' is not an object type in the schema.")
 
         Q = GraphQLObjectType(name="_Q", fields=lambda: {"_x": GraphQLField(gql_type)})
-        synthetic = GraphQLSchema(query=Q, types=list(schema.type_map.values()))
+        synthetic = GraphQLSchema(query=Q, types=list(self.schema.type_map.values()))
 
         # Parse & validate: query { _x { <selection> } }
         doc = parse(f"query __Q__ {{ _x {{ {selection} }} }}")
@@ -94,14 +90,10 @@ class HmisApiBridge:
 
         return selection
 
-    def _build_client_mutation(self, operation: str, payload_fields: str, expected_type: str) -> str:
+    def _build_client_mutation(self, operation: str, response_fields: str, expected_type: str) -> str:
         operation_cap = operation.capitalize()
-
-        cleaned_payload = re.sub(r"\\n", "", payload_fields)
-        schema = _load_graphql_schema()
-
-        if schema and expected_type:
-            safe_selection = self._validate_selection_for_type(schema, expected_type, cleaned_payload)
+        cleaned_fields = re.sub(r"\\n", "", response_fields)
+        safe_selection = self._validate_selection_for_type(expected_type, cleaned_fields)
 
         return f"""
             mutation (
@@ -124,7 +116,7 @@ class HmisApiBridge:
         client_sub_items_input: dict[str, Any],
     ) -> dict[str, Any]:
         raw_query = self.request.body.decode("utf-8")
-        payload_fields = self._extract_response_fields(raw_query)
+        response_fields = self._extract_response_fields(raw_query)
 
         variables = {
             "clientInput": dict_keys_to_camel(client_input),
@@ -133,7 +125,7 @@ class HmisApiBridge:
 
         data = self._make_request(
             {
-                "query": self._build_client_mutation(operation, payload_fields, "HmisClientType"),
+                "query": self._build_client_mutation(operation, response_fields, "HmisClientType"),
                 "variables": variables,
             }
         )
@@ -169,9 +161,11 @@ class HmisApiBridge:
 
         return mutation[start : i - 1].strip()
 
-    def _format_query(self, original_query: bytes, is_list_query: bool = False) -> str:
+    def _format_query(self, original_query: bytes, expected_type: str, is_list_query: bool = False) -> str:
         # convert from byte string
         query = json.loads(original_query.decode("utf-8"))["query"]
+        response_fields = self._extract_response_fields(query)
+        self._validate_selection_for_type(expected_type, response_fields)
 
         # remove hmis prefix from query name
         query = re.sub(r"hmis([A-Z])", lambda m: m.group(1).lower(), query)
@@ -269,7 +263,7 @@ class HmisApiBridge:
         return "success"
 
     def get_client(self, personal_id: str) -> Optional[dict[str, Any]]:
-        query = self._format_query(original_query=self.request.body)
+        query = self._format_query(original_query=self.request.body, expected_type="HmisClientType")
 
         data = self._make_request(
             body={
@@ -288,7 +282,9 @@ class HmisApiBridge:
         pagination: Optional[HmisPaginationInput],
         filter: Optional[HmisClientFilterInput],
     ) -> Optional[dict[str, Any]]:
-        query = self._format_query(original_query=self.request.body, is_list_query=True)
+        query = self._format_query(
+            original_query=self.request.body, expected_type="HmisClientListType", is_list_query=True
+        )
 
         data = self._make_request(
             body={
