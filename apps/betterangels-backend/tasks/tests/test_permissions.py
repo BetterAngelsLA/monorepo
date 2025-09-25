@@ -21,7 +21,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_create_task_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_create_task_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         task_count = Task.objects.count()
@@ -32,15 +32,18 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             self.assertIsNotNone(response["data"]["createTask"]["id"])
             self.assertEqual(task_count + 1, Task.objects.count())
         else:
-            self.assertEqual(
-                response["data"]["createTask"]["messages"][0],
-                {
-                    "kind": "PERMISSION",
-                    "field": "createTask",
-                    "message": "You don't have permission to access this app.",
-                },
-            )
             self.assertEqual(task_count, Task.objects.count())
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
+            else:
+                self.assertEqual(
+                    response["data"]["createTask"]["messages"][0],
+                    {
+                        "kind": "PERMISSION",
+                        "field": "createTask",
+                        "message": "You don't have permission to access this app.",
+                    },
+                )
 
     @parametrize(
         "user_label",
@@ -70,7 +73,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             (None,),  # Anonymous
         ],
     )
-    def test_update_task_permission_denied(self, user_label: str) -> None:
+    def test_update_task_permission_denied(self, user_label: Optional[str]) -> None:
         self._handle_user_login(user_label)
 
         pre_update = Task.objects.get(pk=self.task_id)
@@ -79,7 +82,9 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "id": pre_update.pk,
             "summary": "updated task summary",
         }
-        self.update_task_fixture(variables)
+        response = self.update_task_fixture(variables)
+        if user_label is None:
+            self.assertGraphQLUnauthenticated(response)
 
         post_update = Task.objects.get(pk=pre_update.id)
 
@@ -95,11 +100,14 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_delete_task_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_delete_task_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         task_count = Task.objects.count()
-        self.delete_task_fixture(self.task_id)
+        response = self.delete_task_fixture(self.task_id)
+
+        if user_label is None:
+            self.assertGraphQLUnauthenticated(response)
 
         self.assertTrue(Task.objects.filter(id=self.task_id).exists() != should_succeed)
         if should_succeed:
@@ -117,7 +125,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             (None, False),  # Anonymous user should not succeed
         ],
     )
-    def test_view_task_permission(self, user_label: str, should_succeed: bool) -> None:
+    def test_view_task_permission(self, user_label: Optional[str], should_succeed: bool) -> None:
         self._handle_user_login(user_label)
 
         query = """
@@ -134,6 +142,8 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             self.assertIsNotNone(response["data"])
         else:
             self.assertIsNotNone(response["errors"])
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         "user_label, expected_task_count",
@@ -147,7 +157,7 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             (None, None),  # Anonymous user should return error
         ],
     )
-    def test_view_tasks_permission(self, user_label: str, expected_task_count: Optional[int]) -> None:
+    def test_view_tasks_permission(self, user_label: Optional[str], expected_task_count: Optional[int]) -> None:
         self._handle_user_login(user_label)
 
         response = self.execute_graphql(self.get_tasks_query("id"))
@@ -156,3 +166,5 @@ class TaskPermissionTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             self.assertEqual(response["data"]["tasks"]["totalCount"], expected_task_count)
         else:
             self.assertTrue("errors" in response)
+            if user_label is None:
+                self.assertGraphQLUnauthenticated(response)

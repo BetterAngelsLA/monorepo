@@ -1,0 +1,14 @@
+mutation DeleteTask($id: ID!) {
+  deleteTask(data: { id: $id }) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on DeletedObjectType {
+      id
+    }
+  }
+}

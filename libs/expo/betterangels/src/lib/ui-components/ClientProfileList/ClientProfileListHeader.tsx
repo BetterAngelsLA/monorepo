@@ -39,7 +39,7 @@ export function ClientProfileListHeader(props: TProps) {
           fontSize="sm"
           regular={true}
           title="All Clients"
-          onPress={() => router.navigate('/clients')}
+          onPress={() => router.navigate('/')}
         />
       )}
     </View>

@@ -1,0 +1,1 @@
+export { createErrorLink } from './errorLink';

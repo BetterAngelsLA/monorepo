@@ -3,31 +3,34 @@ import { useForm } from 'react-hook-form';
 import ServiceOtherCheckbox from './ServiceOtherCheckbox';
 
 interface IOtherCategoryProps {
-  services: {
-    title: string | null;
-    id: string | undefined;
+  serviceRequests: {
+    serviceOther: string | null;
+    serviceRequestId: string | undefined;
     markedForDeletion?: boolean;
   }[];
-  setServices: (
+  setServiceRequests: (
     services: {
-      title: string | null;
-      id: string | undefined;
+      serviceOther: string | null;
+      serviceRequestId: string | undefined;
       markedForDeletion?: boolean;
     }[]
   ) => void;
 }
 
 export default function OtherCategory(props: IOtherCategoryProps) {
-  const { services, setServices } = props;
+  const { serviceRequests, setServiceRequests } = props;
 
   const { control, setValue } = useForm();
 
   const appendService = (service: string) => {
-    setServices([...services, { title: service, id: undefined }]);
+    setServiceRequests([
+      ...serviceRequests,
+      { serviceOther: service, serviceRequestId: undefined },
+    ]);
   };
 
   const handleAddOtherCategory = async (newService: string) => {
-    if (services.some((s) => s.title === newService)) {
+    if (serviceRequests.some((s) => s.serviceOther === newService)) {
       return;
     }
     appendService(newService);
@@ -36,12 +39,12 @@ export default function OtherCategory(props: IOtherCategoryProps) {
 
   return (
     <>
-      {services.map((service, idx) => {
+      {serviceRequests.map((service, idx) => {
         return (
           <ServiceOtherCheckbox
-            key={service.title}
-            services={services}
-            setServices={setServices}
+            key={service.serviceOther}
+            serviceRequests={serviceRequests}
+            setServiceRequests={setServiceRequests}
             service={service}
             idx={idx}
           />

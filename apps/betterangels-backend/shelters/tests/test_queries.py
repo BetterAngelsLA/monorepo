@@ -334,7 +334,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
 
-        expected_query_count = 24
+        expected_query_count = 28
 
         variables = {"order": {"name": "ASC"}}
 

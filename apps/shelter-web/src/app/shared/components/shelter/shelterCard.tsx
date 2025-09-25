@@ -18,6 +18,8 @@ export type TShelter = {
   heroImage?: string | null;
   distanceInMiles?: number | null;
   location?: TShelterLocation | null;
+  exteriorPhotos?: Array<{ file: { url: string; name: string } }> | null;
+  interiorPhotos?: Array<{ file: { url: string; name: string } }> | null;
 };
 
 type TShelterCard = {
@@ -30,7 +32,15 @@ type TShelterCard = {
 
 export function ShelterCard(props: TShelterCard) {
   const {
-    shelter: { id, name, heroImage, distanceInMiles, location },
+    shelter: {
+      id,
+      name,
+      heroImage,
+      distanceInMiles,
+      location,
+      exteriorPhotos,
+      interiorPhotos,
+    },
     originCoordinates,
     className,
     footer,
@@ -62,14 +72,19 @@ export function ShelterCard(props: TShelterCard) {
     navigate(`/shelter/${id}`);
   };
 
+  const photos = [...(exteriorPhotos || []), ...(interiorPhotos || [])];
+
   return (
     <div className={mergeCss(parentCss)} onClick={onNavigate}>
       <div className={mergeCss(bodyCss)}>
-        <ShelterCardHero
-          className="md:w-96 md:mr-4"
-          imageUrl={heroImage}
-          shelterName={name}
-        />
+        <div className="w-full md:w-96 md:mr-4 min-w-0">
+          <ShelterCardHero
+            className="w-full"
+            imageUrl={heroImage}
+            photos={photos}
+            shelterName={name}
+          />
+        </div>
 
         <div className={mergeCss(contentCss)}>
           <div className="font-semibold md:text-lg leading-[1.125rem] tracking-[.03125rem]">
@@ -79,7 +94,7 @@ export function ShelterCard(props: TShelterCard) {
           {formattedAddress && (
             <div className="text-sm md:text-sm mt-2 flex items-start">
               <div className="flex-inline flex-wrap">
-                <span>{formattedAddress}</span>
+                <span className="no-underline">{formattedAddress}</span>
 
                 <DistanceAway
                   className="ml-1 inline"

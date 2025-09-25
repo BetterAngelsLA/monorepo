@@ -20,7 +20,7 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
     {
       title: 'Add interaction',
       Icon: FilePlusIcon,
-      route: '/clients',
+      route: '/',
       params: {
         createInteraction: 'true',
       },

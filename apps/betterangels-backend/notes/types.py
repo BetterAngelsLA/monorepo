@@ -52,7 +52,7 @@ class OrganizationServiceCategoryOrdering:
 )
 class OrganizationServiceType:
     id: auto
-    category: "OrganizationServiceCategoryType"
+    category: Optional["OrganizationServiceCategoryType"]
     priority: auto
     label: auto
 

@@ -1,6 +1,13 @@
-import { Home } from '@monorepo/expo/betterangels';
+import { Clients, ClientsAddInteraction } from '@monorepo/expo/betterangels';
+import { useLocalSearchParams } from 'expo-router';
 import Logo from '../assets/images/logo.svg';
 
 export default function HomeScreen() {
-  return <Home Logo={Logo} />;
+  const { createInteraction } = useLocalSearchParams();
+
+  if (createInteraction) {
+    return <ClientsAddInteraction Logo={Logo} />;
+  }
+
+  return <Clients Logo={Logo} />;
 }

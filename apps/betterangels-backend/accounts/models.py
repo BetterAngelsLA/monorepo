@@ -40,6 +40,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(auto_now_add=True)
     has_accepted_privacy_policy = models.BooleanField(default=False)
     has_accepted_tos = models.BooleanField(default=False)
+    is_hmis_user = models.BooleanField(default=False)
     last_login = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(
         ("active"),

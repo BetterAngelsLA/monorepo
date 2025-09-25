@@ -324,6 +324,9 @@ class ShelterType:
         ],
     )
     def hero_image(self, root: Shelter) -> Optional[str]:
+        if self.hero_image:
+            return str(self.hero_image.file.url)
+
         photo = next(
             (photos[0] for photos in (self._exterior_photos, self._interior_photos) if photos),
             None,

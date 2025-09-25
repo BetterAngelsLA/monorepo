@@ -10,7 +10,7 @@ export type ViewSheltersQueryVariables = Types.Exact<{
 }>;
 
 
-export type ViewSheltersQuery = { __typename?: 'Query', shelters: { __typename?: 'ShelterTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'ShelterType', id: string, name: string, heroImage?: string | null, distanceInMiles?: number | null, location?: { __typename?: 'ShelterLocationType', latitude: number, longitude: number, place: string } | null }> } };
+export type ViewSheltersQuery = { __typename?: 'Query', shelters: { __typename?: 'ShelterTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'ShelterType', id: string, name: string, heroImage?: string | null, distanceInMiles?: number | null, exteriorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', url: string, name: string } }>, interiorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', url: string, name: string } }>, location?: { __typename?: 'ShelterLocationType', latitude: number, longitude: number, place: string } | null }> } };
 
 
 export const ViewSheltersDocument = gql`
@@ -21,6 +21,18 @@ export const ViewSheltersDocument = gql`
       id
       name
       heroImage
+      exteriorPhotos {
+        file {
+          url
+          name
+        }
+      }
+      interiorPhotos {
+        file {
+          url
+          name
+        }
+      }
       distanceInMiles
       location {
         latitude

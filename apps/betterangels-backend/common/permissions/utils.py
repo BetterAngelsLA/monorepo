@@ -1,8 +1,10 @@
 from typing import Any, Sequence, Tuple, Type
 
 import strawberry
+from common.errors import APIErrorCodes
 from django.db.models import TextChoices
 from django.utils.encoding import force_str
+from graphql import GraphQLError
 from strawberry_django.auth.utils import get_current_user
 
 
@@ -33,6 +35,12 @@ class IsAuthenticated(strawberry.BasePermission):
     def has_permission(self, source: Any, info: strawberry.Info, **kwargs: Any) -> bool:
         user = get_current_user(info)
         if user is None or not user.is_authenticated or not user.is_active:
-            return False
+            raise GraphQLError(
+                self.message,
+                extensions={
+                    "code": APIErrorCodes.UNAUTHENTICATED,
+                    "http": {"status": 401},
+                },
+            )
 
         return True

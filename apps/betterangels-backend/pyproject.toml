@@ -53,6 +53,7 @@ django-allauth = "^65.10.0"
 djangorestframework = "^3.16.0"
 cryptography = "^45.0.5"
 django-admin-sortable2 = "^2.2.8"
+pyjwt = "^2.10.1"
 
 [build-system]
 requires = ["poetry-core"]

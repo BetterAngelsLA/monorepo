@@ -23,7 +23,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const handleClientPress = useCallback((client: TClientProfile) => {
     router.navigate({
       pathname: `/client/${client.id}`,
-      params: { arrivedFrom: '/clients' },
+      params: { arrivedFrom: '/' },
     });
   }, []);
 

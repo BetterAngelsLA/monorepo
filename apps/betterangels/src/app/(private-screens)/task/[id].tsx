@@ -1,0 +1,15 @@
+import { Task } from '@monorepo/expo/betterangels';
+import { useLocalSearchParams } from 'expo-router';
+
+export default function TaskScreen() {
+  const { id, arrivedFrom } = useLocalSearchParams<{
+    id: string;
+    arrivedFrom?: string;
+  }>();
+
+  if (!id) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
+  return <Task id={id} arrivedFrom={arrivedFrom} />;
+}

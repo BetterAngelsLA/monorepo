@@ -3,19 +3,19 @@ import { StyleSheet, View } from 'react-native';
 
 interface IServiceOtherCheckboxProps {
   service: {
-    title: string | null;
-    id?: string;
+    serviceOther: string | null;
+    serviceRequestId?: string;
   };
   idx: number;
-  services: {
-    id: string | undefined;
-    title: string | null;
+  serviceRequests: {
+    serviceRequestId: string | undefined;
+    serviceOther: string | null;
     markedForDeletion?: boolean;
   }[];
-  setServices: (
-    services: {
-      title: string | null;
-      id: string | undefined;
+  setServiceRequests: (
+    serviceRequests: {
+      serviceOther: string | null;
+      serviceRequestId: string | undefined;
       markedForDeletion?: boolean;
     }[]
   ) => void;
@@ -24,28 +24,38 @@ interface IServiceOtherCheckboxProps {
 export default function ServiceOtherCheckbox(
   props: IServiceOtherCheckboxProps
 ) {
-  const { service, idx, services, setServices } = props;
+  const { service, idx, serviceRequests, setServiceRequests } = props;
 
-  const serviceEntry = services.find((s) => s.title === service.title);
+  const serviceEntry = serviceRequests.find(
+    (s) => s.serviceRequestId === service.serviceRequestId
+  );
   const isChecked = (serviceEntry && !serviceEntry.markedForDeletion) || false;
 
   const handleCheck = () => {
     if (isChecked) {
-      setServices(
-        services.map((s) =>
-          s.title === service.title ? { ...s, markedForDeletion: true } : s
+      setServiceRequests(
+        serviceRequests.map((s) =>
+          s.serviceRequestId === service.serviceRequestId
+            ? { ...s, markedForDeletion: true }
+            : s
         )
       );
     } else if (serviceEntry) {
-      setServices(
-        services.map((s) =>
-          s.title === service.title ? { ...s, markedForDeletion: false } : s
+      setServiceRequests(
+        serviceRequests.map((s) =>
+          s.serviceRequestId === service.serviceRequestId
+            ? { ...s, markedForDeletion: false }
+            : s
         )
       );
     } else {
-      setServices([
-        ...services,
-        { title: service.title, id: undefined, markedForDeletion: false },
+      setServiceRequests([
+        ...serviceRequests,
+        {
+          serviceOther: service.serviceOther,
+          serviceRequestId: undefined,
+          markedForDeletion: false,
+        },
       ]);
     }
   };
@@ -56,10 +66,10 @@ export default function ServiceOtherCheckbox(
       mt={idx !== 0 ? 'xs' : undefined}
       hasBorder
       onCheck={handleCheck}
-      accessibilityHint={service.title || ''}
+      accessibilityHint={service.serviceOther || ''}
       label={
         <View style={styles.labelContainer}>
-          <TextRegular ml="xs">{service.title}</TextRegular>
+          <TextRegular ml="xs">{service.serviceOther}</TextRegular>
         </View>
       }
     />

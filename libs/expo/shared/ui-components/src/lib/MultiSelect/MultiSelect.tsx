@@ -4,10 +4,13 @@ import { Key, ReactNode, useState } from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import BasicInput from '../BasicInput';
 import TextBold from '../TextBold';
-import { MultiSelectItem, TMultiSelectItem } from './MultiSelectItem';
-import { NoResultsFound } from './NoResultsFound';
+import {
+  MultiSelectItem,
+  TMultiSelectItem,
+} from './components/MultiSelectItem';
+import { NoResultsFound } from './components/NoResultsFound';
 import { SELECT_ALL_LABEL_DEFAULT, SELECT_ALL_VALUE } from './constants';
-import { getVisibleOptions } from './getVisibleOptions';
+import { getVisibleOptions } from './utils/getVisibleOptions';
 
 export type TSelectAllIdx = number | 'last';
 

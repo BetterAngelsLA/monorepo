@@ -25,16 +25,18 @@ from .types import CreateTaskInput, TaskType, UpdateTaskInput
 
 @strawberry.type
 class Query:
-    task: TaskType = strawberry_django.field(extensions=[HasRetvalPerm(TaskPermissions.VIEW)])
+    task: TaskType = strawberry_django.field(
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
+    )
 
     tasks: OffsetPaginated[TaskType] = strawberry_django.offset_paginated(
-        extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(TaskPermissions.VIEW)]
     )
 
 
 @strawberry.type
 class Mutation:
-    @strawberry_django.mutation(extensions=[HasPerm(TaskPermissions.ADD)])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated], extensions=[HasPerm(TaskPermissions.ADD)])
     def create_task(self, info: Info, data: CreateTaskInput) -> TaskType:
         with transaction.atomic():
             current_user = get_current_user(info)
@@ -60,7 +62,10 @@ class Mutation:
 
             return cast(TaskType, task)
 
-    @strawberry_django.mutation(extensions=[PermissionedQuerySet(model=Task, perms=[TaskPermissions.CHANGE])])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated],
+        extensions=[PermissionedQuerySet(model=Task, perms=[TaskPermissions.CHANGE])],
+    )
     def update_task(self, info: Info, data: UpdateTaskInput) -> TaskType:
         qs: QuerySet[Task] = info.context.qs
 

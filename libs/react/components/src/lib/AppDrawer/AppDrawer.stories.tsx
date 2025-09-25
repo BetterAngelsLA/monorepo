@@ -4,7 +4,7 @@ import { AppDrawer } from './AppDrawer';
 import { useAppDrawer } from './state/useAppDrawer';
 
 const meta: Meta = {
-  title: 'Components/AppDrawer',
+  title: 'AppDrawer',
   decorators: [withMemoryRouter('/')],
 };
 
@@ -13,12 +13,17 @@ export default meta;
 type Story = StoryObj;
 
 export const AppDrawerDemo: Story = {
+  parameters: {
+    customLayout: {
+      canvasClassName: 'flex-col',
+    },
+  },
   render: () => {
     const Demo = () => {
       const { showDrawer } = useAppDrawer();
 
       return (
-        <div className="flex flex-col gap-8">
+        <>
           <SbkButton
             className="bg-purple-400"
             onClick={() => showDrawer({ content: 'hello content' })}
@@ -45,7 +50,7 @@ export const AppDrawerDemo: Story = {
           >
             From Left
           </SbkButton>
-        </div>
+        </>
       );
     };
 

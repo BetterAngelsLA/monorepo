@@ -118,13 +118,12 @@ class UserBaseType:
 
 @strawberry_django.type(User)
 class UserType(UserBaseType):
-    # TODO: has_accepted_tos, has_accepted_privacy_policy, is_outreach_authorized shouldn't be optional.
-    # Temporary fix while we figure out type generation
     id: ID
+    organizations_organization: Optional[List[OrganizationForUserType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
+    is_hmis_user: Optional[bool]
     is_outreach_authorized: Optional[bool]
-    organizations_organization: Optional[List[OrganizationForUserType]]
     username: auto
 
 

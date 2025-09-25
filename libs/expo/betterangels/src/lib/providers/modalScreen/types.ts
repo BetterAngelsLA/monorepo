@@ -5,7 +5,7 @@ export type noOpFn = () => void;
 export type TModalPresentationType = 'modal' | 'card' | 'fullScreenModal';
 
 export type TShowModalScreenProps = {
-  content: ReactNode;
+  content: ReactNode | (() => ReactNode);
   presentation?: TModalPresentationType;
   title?: string;
   hideHeader?: boolean;
