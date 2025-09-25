@@ -15,7 +15,7 @@ export type TUser = {
   isOutreachAuthorized?: boolean;
   hasAcceptedTos?: boolean;
   hasAcceptedPrivacyPolicy?: boolean;
-  isHmisUser?: boolean | undefined;
+  isHmisUser?: boolean;
 };
 
 export interface IUserProviderValue {

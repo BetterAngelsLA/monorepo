@@ -24,6 +24,7 @@ const parseUser = (user?: CurrentUserQuery['currentUser']): TUser | undefined =>
         isOutreachAuthorized: user.isOutreachAuthorized ?? false,
         hasAcceptedTos: user.hasAcceptedTos ?? false,
         hasAcceptedPrivacyPolicy: user.hasAcceptedPrivacyPolicy ?? false,
+        isHmisUser: user.isHmisUser ?? undefined,
       }
     : undefined;
 
