@@ -12,5 +12,6 @@ query currentUser {
     isOutreachAuthorized
     hasAcceptedTos
     hasAcceptedPrivacyPolicy
+    isHmisUser
   }
 }

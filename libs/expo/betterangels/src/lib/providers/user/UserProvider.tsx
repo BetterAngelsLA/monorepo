@@ -24,6 +24,7 @@ const parseUser = (user?: CurrentUserQuery['currentUser']): TUser | undefined =>
         isOutreachAuthorized: user.isOutreachAuthorized ?? false,
         hasAcceptedTos: user.hasAcceptedTos ?? false,
         hasAcceptedPrivacyPolicy: user.hasAcceptedPrivacyPolicy ?? false,
+        isHmisUser: user.isHmisUser ?? undefined,
       }
     : undefined;
 
@@ -74,7 +75,13 @@ export default function UserProvider({ children }: UserProviderProps) {
   }, [appBecameActive, refetchUser]);
 
   const contextValue = useMemo(
-    () => ({ user, setUser, isLoading: loading, refetchUser }),
+    () => ({
+      user,
+      setUser,
+      isLoading: loading,
+      refetchUser,
+      isHmisUser: user?.isHmisUser,
+    }),
     [user, loading, refetchUser]
   );
 
