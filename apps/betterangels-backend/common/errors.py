@@ -1,0 +1,2 @@
+class APIErrorCodes:
+    UNAUTHENTICATED = "UNAUTHENTICATED"

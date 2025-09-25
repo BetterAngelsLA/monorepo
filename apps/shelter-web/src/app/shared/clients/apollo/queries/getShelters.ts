@@ -12,6 +12,18 @@ export const GET_SHELTERS_QUERY = gql`
         id
         name
         heroImage
+        exteriorPhotos {
+          file {
+            url
+            name
+          }
+        }
+        interiorPhotos {
+          file {
+            url
+            name
+          }
+        }
         location {
           place
           latitude
