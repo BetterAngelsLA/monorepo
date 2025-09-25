@@ -5476,7 +5476,7 @@ __metadata:
     react-native-open-maps: "npm:^0.4.3"
     react-native-paper: "npm:^5.12.5"
     react-native-paper-dates: "npm:^0.22.47"
-    react-native-pdf: "npm:^6.7.7"
+    react-native-pdf: "patch:react-native-pdf@npm%3A6.7.7#~/.yarn/patches/react-native-pdf-npm-6.7.7-7aa1e3a631.patch"
     react-native-reanimated: "npm:~4.1.0"
     react-native-safe-area-context: "npm:~5.6.0"
     react-native-screens: "npm:~4.16.0"
@@ -23558,7 +23558,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-pdf@npm:^6.7.7":
+"react-native-pdf@npm:6.7.7":
   version: 6.7.7
   resolution: "react-native-pdf@npm:6.7.7"
   dependencies:
@@ -23569,6 +23569,20 @@ __metadata:
     react-native: "*"
     react-native-blob-util: ">=0.13.7"
   checksum: 10/b6e24c82103be0b03820ea3239509f369660fb701252e4d9888b1cbf1bcf5895e81f631c8e71e16a6579075080c79c0d311fe5cdf45511099a944893b8239263
+  languageName: node
+  linkType: hard
+
+"react-native-pdf@patch:react-native-pdf@npm%3A6.7.7#~/.yarn/patches/react-native-pdf-npm-6.7.7-7aa1e3a631.patch":
+  version: 6.7.7
+  resolution: "react-native-pdf@patch:react-native-pdf@npm%3A6.7.7#~/.yarn/patches/react-native-pdf-npm-6.7.7-7aa1e3a631.patch::version=6.7.7&hash=451d58"
+  dependencies:
+    crypto-js: "npm:4.2.0"
+    deprecated-react-native-prop-types: "npm:^2.3.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-blob-util: ">=0.13.7"
+  checksum: 10/0beae2bd54c5b55a4d362ad63fb293e251adb7dbbb658e284e20ba832b49d9080215fee171ec1d75168dc61ff6775ad9fe2fd9c18f049aa964aec3dd3ea37ede
   languageName: node
   linkType: hard
 
