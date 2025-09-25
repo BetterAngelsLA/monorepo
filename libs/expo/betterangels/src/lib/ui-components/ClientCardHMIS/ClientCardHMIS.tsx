@@ -6,6 +6,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 import { HmisClientType } from '../../apollo';
+import { NameSuffixHMIS } from './NameSuffixHMIS';
 
 export interface IClientCardProps {
   client: HmisClientType;
@@ -16,7 +17,7 @@ export function ClientCardHMIS(props: IClientCardProps) {
     client: { firstName, lastName, dob, data: metadata },
   } = props;
 
-  const { alias, middleName } = metadata || {};
+  const { alias, middleName, nameSuffix } = metadata || {};
 
   return (
     <View style={styles.container}>
@@ -24,6 +25,7 @@ export function ClientCardHMIS(props: IClientCardProps) {
         <TextBold size="sm">{firstName}</TextBold>
         {!!middleName && <TextBold size="sm">{middleName}</TextBold>}
         <TextBold size="sm">{lastName}</TextBold>
+        <NameSuffixHMIS suffix={nameSuffix} />
         {!!alias && <TextBold size="sm">({alias})</TextBold>}
       </View>
 
@@ -45,7 +47,8 @@ export function ClientCardHMIS(props: IClientCardProps) {
 const styles = StyleSheet.create({
   container: {
     borderRadius: Radiuses.xs,
-    padding: Spacings.xs,
+    paddingVertical: Spacings.sm,
+    paddingHorizontal: Spacings.xs,
     backgroundColor: Colors.WHITE,
     gap: Spacings.xxs,
   },
