@@ -2,6 +2,7 @@ export { default as AddressField } from './AddressField';
 export { AppUpdatePrompt } from './AppUpdatePrompt';
 export { default as AuthContainer } from './AuthContainer';
 export * from './ClientCard';
+export * from './ClientCardHMIS';
 export { default as ClientCardModal } from './ClientCardModal';
 export {
   ClientProfileCard,
