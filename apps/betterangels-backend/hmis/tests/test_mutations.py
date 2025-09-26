@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import patch
 
 from common.tests.utils import GraphQLBaseTestCase
@@ -9,6 +10,7 @@ from hmis.enums import (
     HmisNameQualityEnum,
     HmisRaceEnum,
     HmisSsnQualityEnum,
+    HmisSuffixEnum,
     HmisVeteranStatusEnum,
 )
 from model_bakery import baker
@@ -164,7 +166,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
     def test_hmis_login_unknown_email_no_autocreate(self) -> None:
         with patch(
-            "hmis.api_bridge.HmisApiBridge.create_auth_token",
+            "hmis.api_bridge.HmisApiBridge._make_request",
             return_value=self.success_response,
         ):
             resp = self.execute_graphql(
@@ -179,125 +181,63 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
 
 class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.maxDiff = None
+
     def test_hmis_create_client_success(self) -> None:
-        client_input = {
-            "firstName": "Firsty",
-            "lastName": "Lasty",
-            "nameDataQuality": 1,
-            "ssn1": "***",
-            "ssn2": "**",
-            "ssn3": "xxxx",
-            "ssnDataQuality": 99,
-            "dob": "2001-01-01",
-            "dobDataQuality": 1,
-        }
-        client_sub_items_input = {
-            "middleName": "Middly",
-            "nameSuffix": 1,
-            "alias": "Nicky",
-            "additionalRaceEthnicity": "add re",
-            "differentIdentityText": "diff id",
-            "raceEthnicity": [1],
-            "gender": [1],
-            "veteranStatus": 1,
-        }
-
-        return_value = {
-            "personalId": "1",
-            "uniqueIdentifier": "981C4E53A",
-            "firstName": "Firsty",
-            "lastName": "Lasty",
-            "nameDataQuality": 1,
-            "ssn1": "***",
-            "ssn2": "**",
-            "ssn3": "xxxx",
-            "ssnDataQuality": 99,
-            "dob": "2001-01-01",
-            "dobDataQuality": 1,
+        return_value: dict[str, Any] = {
             "data": {
-                "middleName": "Middly",
-                "nameSuffix": 1,
-                "alias": "Nicky",
-                "raceEthnicity": [1],
-                "additionalRaceEthnicity": "add re",
-                "differentIdentityText": "diff id",
-                "gender": [1],
-                "veteranStatus": 1,
-            },
+                "createClient": {
+                    "personalId": "1",
+                    "uniqueIdentifier": "123AB456C",
+                    "firstName": "Firsty",
+                    "lastName": "Lasty",
+                    "nameDataQuality": 1,
+                    "ssn1": "***",
+                    "ssn2": "**",
+                    "ssn3": "xxxx",
+                    "ssnDataQuality": 99,
+                    "dob": None,
+                    "dobDataQuality": 99,
+                    "data": {
+                        "middleName": None,
+                        "nameSuffix": 9,
+                        "alias": None,
+                        "raceEthnicity": [99],
+                        "additionalRaceEthnicity": None,
+                        "differentIdentityText": None,
+                        "gender": [99],
+                        "veteranStatus": 99,
+                    },
+                }
+            }
         }
 
-        with patch(
-            "hmis.api_bridge.HmisApiBridge.create_client",
-            return_value=return_value,
-        ):
-            resp = self.execute_graphql(
-                CREATE_CLIENT_MUTATION,
-                variables={
-                    "clientInput": client_input,
-                    "clientSubItemsInput": client_sub_items_input,
-                },
-            )
-
-        self.assertIsNone(resp.get("errors"))
-
-        payload = resp["data"]["hmisCreateClient"]
-
-        expected_data = {
-            "middleName": "Middly",
-            "nameSuffix": "JR",
-            "alias": "Nicky",
-            "additionalRaceEthnicity": "add re",
-            "differentIdentityText": "diff id",
-            "raceEthnicity": [HmisRaceEnum.INDIGENOUS.name],
-            "gender": [HmisGenderEnum.MAN_BOY.name],
-            "veteranStatus": HmisVeteranStatusEnum.YES.name,
-        }
-        expected_client = {
-            "personalId": "1",
-            "uniqueIdentifier": "981C4E53A",
-            "firstName": "Firsty",
-            "lastName": "Lasty",
-            "nameDataQuality": HmisNameQualityEnum.FULL.name,
-            "ssn1": "***",
-            "ssn2": "**",
-            "ssn3": "xxxx",
-            "ssnDataQuality": HmisSsnQualityEnum.NOT_COLLECTED.name,
-            "dob": "2001-01-01",
-            "dobDataQuality": HmisDobQualityEnum.FULL.name,
-            "data": expected_data,
-        }
-
-        self.assertEqual(payload, expected_client)
-
-    def test_partial_hmis_create_client_success(self) -> None:
         client_input = {
             "firstName": "Firsty",
             "lastName": "Lasty",
-        }
-        client_sub_items_input = {
-            "middleName": "",
-            "alias": "",
-        }
-
-        return_value = {
-            "personalId": "1",
-            "uniqueIdentifier": "981C4E53A",
-            "firstName": "Firsty",
-            "lastName": "Lasty",
             "nameDataQuality": 1,
+            "ssn1": "***",
+            "ssn2": "**",
             "ssn3": "xxxx",
             "ssnDataQuality": 99,
             "dob": None,
             "dobDataQuality": 99,
-            "data": {
-                "raceEthnicity": [99],
-                "gender": [99],
-                "veteranStatus": 99,
-            },
+        }
+        client_sub_items_input = {
+            "middleName": None,
+            "nameSuffix": 9,
+            "alias": None,
+            "additionalRaceEthnicity": None,
+            "differentIdentityText": None,
+            "raceEthnicity": [99],
+            "gender": [99],
+            "veteranStatus": 99,
         }
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge.create_client",
+            "hmis.api_bridge.HmisApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -314,7 +254,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
 
         expected_data = {
             "middleName": None,
-            "nameSuffix": None,
+            "nameSuffix": HmisSuffixEnum.NO_ANSWER.name,
             "alias": None,
             "additionalRaceEthnicity": None,
             "differentIdentityText": None,
@@ -324,12 +264,12 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
         }
         expected_client = {
             "personalId": "1",
-            "uniqueIdentifier": "981C4E53A",
+            "uniqueIdentifier": "123AB456C",
             "firstName": "Firsty",
             "lastName": "Lasty",
             "nameDataQuality": HmisNameQualityEnum.FULL.name,
-            "ssn1": None,
-            "ssn2": None,
+            "ssn1": "***",
+            "ssn2": "**",
             "ssn3": "xxxx",
             "ssnDataQuality": HmisSsnQualityEnum.NOT_COLLECTED.name,
             "dob": None,
@@ -340,22 +280,8 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
         self.assertEqual(payload, expected_client)
 
     def test_hmis_create_client_invalid_input(self) -> None:
-        client_input = {
-            "firstName": "Firsty",
-            "lastName": "Lasty",
-            "nameDataQuality": 1,
-            "ssn3": "xxxx",
-            "ssnDataQuality": 99999999,
-            "dob": "2001-01-01",
-            "dobDataQuality": 1,
-        }
-        client_sub_items_input = {
-            "raceEthnicity": [1],
-            "gender": [1],
-            "veteranStatus": 1,
-        }
-
         return_value = {
+            "data": {"createClient": None},
             "errors": [
                 {
                     "path": ["createClient"],
@@ -363,26 +289,33 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
                     "errorType": "422",
                     "errorInfo": None,
                     "locations": [{"line": 6, "column": 17, "sourceName": None}],
-                    "message": (
-                        '{"name":"Unprocessable entity","message":"{\\"ssnQuality\\":[\\"Quality of SSN'
-                        'is invalid.\\"],\\"ssn_quality\\":[\\"Quality of SSN is invalid.\\"]}","code":0,'
-                        '"status":422,"messages":{"ssnQuality":["Quality of SSN is invalid."],"ssn_quality":'
-                        '["Quality of SSN is invalid."]}}'
-                    ),
+                    "message": '{"name":"Unprocessable entity","message":"{\\"ssnQuality\\":[\\"Quality of SSN is invalid.\\"],\\"nameQuality\\":[\\"Quality of Name is invalid.\\"],\\"dobQuality\\":[\\"Quality of DOB is invalid.\\"],\\"ssn_quality\\":[\\"Quality of SSN is invalid.\\"],\\"name_quality\\":[\\"Quality of Name is invalid.\\"],\\"dob_quality\\":[\\"Quality of DOB is invalid.\\"]}","code":0,"status":422,"messages":{"ssnQuality":["Quality of SSN is invalid."],"nameQuality":["Quality of Name is invalid."],"dobQuality":["Quality of DOB is invalid."],"ssn_quality":["Quality of SSN is invalid."],"name_quality":["Quality of Name is invalid."],"dob_quality":["Quality of DOB is invalid."]}}',
                 },
                 {
-                    "path": ["createClient"],
+                    "path": ["createClient", "personalId"],
                     "locations": None,
-                    "message": (
-                        "Cannot return null for non-nullable "
-                        "type: 'ID' within parent 'Client' (/createClient/personalId)"
-                    ),
+                    "message": "Cannot return null for non-nullable type: 'ID' within parent 'Client' (/createClient/personalId)",
                 },
-            ]
+            ],
+        }
+
+        client_input = {
+            "firstName": "Firsty",
+            "lastName": "Lasty",
+            "nameDataQuality": 22,
+            "ssn3": "xxxx",
+            "ssnDataQuality": 22,
+            "dob": "2001-01-01",
+            "dobDataQuality": 22,
+        }
+        client_sub_items_input = {
+            "raceEthnicity": [22],
+            "gender": [22],
+            "veteranStatus": 22,
         }
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge.create_client",
+            "hmis.api_bridge.HmisApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
