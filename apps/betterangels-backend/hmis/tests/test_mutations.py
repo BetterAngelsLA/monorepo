@@ -104,13 +104,14 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         super().setUp()
         self.existing_user = baker.make(get_user_model(), _fill_optional=["email"])
 
-    def test_hmis_login_success(self) -> None:
         token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
-        return_value = {"data": {"createAuthToken": {"authToken": token}}}
+        self.success_response = {"data": {"createAuthToken": {"authToken": token}}}
+
+    def test_hmis_login_success(self) -> None:
 
         with patch(
             "hmis.api_bridge.HmisApiBridge._make_request",
-            return_value=return_value,
+            return_value=self.success_response,
         ):
             resp = self.execute_graphql(
                 LOGIN_MUTATION,
@@ -133,9 +134,23 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         )
 
     def test_hmis_login_invalid_credentials(self) -> None:
+        return_value = {
+            "data": {"createAuthToken": {"authToken": None}},
+            "errors": [
+                {
+                    "path": ["createAuthToken"],
+                    "data": None,
+                    "errorType": "422",
+                    "errorInfo": None,
+                    "locations": [{"line": 5, "column": 5, "sourceName": None}],
+                    "message": '{"name":"Unprocessable entity","message":"{\\"username\\":[\\"Incorrect username or password.\\"]}","code":0,"status":422,"messages":{"username":["Incorrect username or password."]}}',
+                }
+            ],
+        }
+
         with patch(
-            "hmis.api_bridge.HmisApiBridge.create_auth_token",
-            return_value=None,
+            "hmis.api_bridge.HmisApiBridge._make_request",
+            return_value=return_value,
         ):
             resp = self.execute_graphql(
                 LOGIN_MUTATION,
@@ -150,7 +165,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
     def test_hmis_login_unknown_email_no_autocreate(self) -> None:
         with patch(
             "hmis.api_bridge.HmisApiBridge.create_auth_token",
-            return_value="TOK_ABC",
+            return_value=self.success_response,
         ):
             resp = self.execute_graphql(
                 LOGIN_MUTATION,
