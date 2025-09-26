@@ -297,13 +297,13 @@ class HmisApiBridge:
             original_query=self.request.body, expected_type="HmisClientListType", is_list_query=True
         )
 
+        filter_vars = {"filter": strawberry.asdict(filter)} if filter else {}
+        pagination_vars = {"pagination": strawberry.asdict(pagination)} if pagination else {}
+
         data = self._make_request(
             body={
                 "query": query,
-                "variables": {
-                    "pagination": strawberry.asdict(pagination),
-                    "filter": strawberry.asdict(filter),
-                },
+                "variables": {**filter_vars, **pagination_vars},
             }
         )
 

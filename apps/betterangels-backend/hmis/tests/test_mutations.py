@@ -186,7 +186,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
         self.maxDiff = None
 
     def test_hmis_create_client_success(self) -> None:
-        return_value: dict[str, Any] = {
+        return_value = {
             "data": {
                 "createClient": {
                     "personalId": "1",
