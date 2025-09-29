@@ -5472,7 +5472,6 @@ __metadata:
     react-native-gesture-handler: "npm:~2.28.0"
     react-native-keyboard-controller: "npm:1.18.5"
     react-native-maps: "npm:1.20.1"
-    react-native-modal: "npm:^14.0.0-rc.1"
     react-native-open-maps: "npm:^0.4.3"
     react-native-paper: "npm:^5.12.5"
     react-native-paper-dates: "npm:^0.22.47"
@@ -23433,15 +23432,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-animatable@npm:1.4.0":
-  version: 1.4.0
-  resolution: "react-native-animatable@npm:1.4.0"
-  dependencies:
-    prop-types: "npm:^15.8.1"
-  checksum: 10/df11665d1e5b67cdaf4b9f1e9cfa15e315a2654e3e6850cf1d22ce8c092ee272fe78352f11bea0a4461d58372c6c35cefd2e5619d09928f8fd72972547d74b8a
-  languageName: node
-  linkType: hard
-
 "react-native-blob-util@npm:^0.21.2":
   version: 0.21.3
   resolution: "react-native-blob-util@npm:0.21.3"
@@ -23505,18 +23495,6 @@ __metadata:
     react-native-web:
       optional: true
   checksum: 10/582fbf4d2f210251626e7f8296cf05451453a974b56b6855dae44839c895462781057b0ebcece920cb413e58d2e4c57ec229bd55678da25d5600278317dc3e51
-  languageName: node
-  linkType: hard
-
-"react-native-modal@npm:^14.0.0-rc.1":
-  version: 14.0.0-rc.1
-  resolution: "react-native-modal@npm:14.0.0-rc.1"
-  dependencies:
-    react-native-animatable: "npm:1.4.0"
-  peerDependencies:
-    react: "*"
-    react-native: ">=0.70.0"
-  checksum: 10/569ed4419769b120b6a676094f1594801bf3fa7ac6c3eda4fa4f6405ba63afe9998b7e70e67614e20c717b0f181410516a697b5bf40dc3ed8ad3c2db280a6307
   languageName: node
   linkType: hard
 
