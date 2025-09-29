@@ -1,16 +1,9 @@
 import { ChevronLeftIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { IconButton, TextBold } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Animated,
-  Modal,
-  Platform,
-  Pressable,
-  StyleSheet,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type SelectStatusProps = {
@@ -19,10 +12,8 @@ type SelectStatusProps = {
   disabled?: boolean;
   options: { value: string; displayValue?: string; bg: string; text: string }[];
   title?: string;
-  selectedValue?: string | null; // kept for compatibility with your other usage
+  selectedValue?: string | null;
 };
-
-const DURATION = 220;
 
 export function SelectStatus({
   value,
@@ -31,62 +22,23 @@ export function SelectStatus({
   options,
   title,
 }: SelectStatusProps) {
-  const insets = useSafeAreaInsets();
   const [open, setOpen] = useState(false);
-
-  // one driver for both backdrop and sheet to avoid flicker
-  const progress = useRef(new Animated.Value(0)).current;
-  const [sheetH, setSheetH] = useState(260);
+  const insets = useSafeAreaInsets();
+  const bottomOffset = insets.bottom;
 
   const current = useMemo(
     () => options.find((o) => o.value === value),
     [value, options]
   );
 
-  const animateTo = useCallback(
-    (to: 0 | 1, after?: () => void) => {
-      Animated.timing(progress, {
-        toValue: to,
-        duration: DURATION,
-        useNativeDriver: true,
-      }).start(({ finished }) => {
-        if (finished) after?.();
-      });
-    },
-    [progress]
-  );
-
   const openSheet = () => {
-    if (disabled || open) return;
+    if (disabled) return;
     setOpen(true);
-    progress.setValue(0);
-    animateTo(1);
   };
 
-  const closeSheet = (commit?: string) => {
-    animateTo(0, () => {
-      setOpen(false);
-      if (commit !== undefined) onChange(commit);
-    });
+  const closeSheet = () => {
+    setOpen(false);
   };
-
-  // Re-run open animation if Modal is shown again
-  useEffect(() => {
-    if (open) {
-      progress.setValue(0);
-      animateTo(1);
-    }
-  }, [open, animateTo, progress]);
-
-  const translateY = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [sheetH, 0],
-  });
-
-  const backdropOpacity = progress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 0.5],
-  });
 
   const Chevron = ({ up = false }: { up?: boolean }) => (
     <ChevronLeftIcon
@@ -108,7 +60,9 @@ export function SelectStatus({
         onPress={openSheet}
         style={({ pressed }) => [
           styles.trigger,
-          { backgroundColor: current?.bg ?? Colors.NEUTRAL_DARK },
+          {
+            backgroundColor: current?.bg ?? Colors.NEUTRAL_DARK,
+          },
           pressed && !disabled ? { opacity: 0.85 } : undefined,
           disabled ? { opacity: 0.6 } : undefined,
         ]}
@@ -120,82 +74,67 @@ export function SelectStatus({
       </Pressable>
 
       <Modal
-        visible={open}
-        transparent
-        animationType="none" // we do a custom fade+slide
-        presentationStyle="overFullScreen"
-        statusBarTranslucent={Platform.OS === 'android'}
-        onRequestClose={() => closeSheet()}
+        style={styles.modal}
+        backdropOpacity={0.5}
+        isVisible={open}
+        onBackdropPress={closeSheet}
+        useNativeDriverForBackdrop={true}
       >
-        {/* Backdrop */}
-        <TouchableWithoutFeedback
-          accessibilityRole="button"
-          onPress={() => closeSheet()}
+        <View
+          style={[styles.sheet, { paddingBottom: bottomOffset + Spacings.md }]}
         >
-          <Animated.View
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: '#000', opacity: backdropOpacity },
-            ]}
-          />
-        </TouchableWithoutFeedback>
-
-        {/* Bottom Sheet */}
-        <Animated.View
-          pointerEvents="box-none"
-          style={[styles.sheetContainer, { transform: [{ translateY }] }]}
-          onLayout={(e) => setSheetH(e.nativeEvent.layout.height || sheetH)}
-        >
-          <View
-            style={[
-              styles.sheet,
-              { paddingBottom: insets.bottom + Spacings.md },
-            ]}
+          <IconButton
+            style={{ alignSelf: 'flex-end' }}
+            onPress={closeSheet}
+            variant={'transparent'}
+            accessibilityLabel={'close menu'}
+            accessibilityHint={'Closes the menu'}
           >
-            <IconButton
-              style={{ alignSelf: 'flex-end' }}
-              onPress={() => closeSheet()}
-              variant="transparent"
-              accessibilityLabel="close menu"
-              accessibilityHint="Closes the menu"
-            >
-              <PlusIcon rotate="45deg" />
-            </IconButton>
+            <PlusIcon rotate="45deg" />
+          </IconButton>
+          {title && (
+            <TextBold mb="md" size="xl">
+              {title}
+            </TextBold>
+          )}
 
-            {title && (
-              <TextBold mb="md" size="xl">
-                {title}
-              </TextBold>
-            )}
+          <View style={styles.list}>
+            {options.map((opt) => {
+              const selected = value === opt.value;
+              const onPress = () => {
+                onChange(opt.value);
+                setTimeout(closeSheet, 30);
+              };
 
-            <View style={styles.list}>
-              {options.map((opt) => {
-                const selected = value === opt.value;
-                return (
-                  <Pressable
-                    key={opt.value}
-                    onPress={() => closeSheet(opt.value)}
-                    style={({ pressed }) => [
-                      styles.optionRow,
-                      { backgroundColor: opt.bg },
-                      pressed ? { opacity: 0.9 } : undefined,
-                    ]}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected }}
-                  >
-                    <TextBold color={opt.text}>{opt.displayValue}</TextBold>
-                  </Pressable>
-                );
-              })}
-            </View>
+              return (
+                <Pressable
+                  key={`${opt.value}`}
+                  onPress={onPress}
+                  style={({ pressed }) => [
+                    styles.optionRow,
+                    { backgroundColor: opt.bg },
+                    pressed ? { opacity: 0.9 } : undefined,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                >
+                  <TextBold color={opt.text}>{opt.displayValue}</TextBold>
+                </Pressable>
+              );
+            })}
           </View>
-        </Animated.View>
+        </View>
       </Modal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
+  modal: {
+    margin: 0,
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -209,24 +148,15 @@ const styles = StyleSheet.create({
     gap: Spacings.xs,
   },
 
-  sheetContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-
   sheet: {
     backgroundColor: Colors.WHITE,
     borderTopLeftRadius: Radiuses.md,
     borderTopRightRadius: Radiuses.md,
     paddingHorizontal: Spacings.md,
   },
-
   list: {
     gap: Spacings.xs,
   },
-
   optionRow: {
     borderRadius: Radiuses.xs,
     height: 44,

@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { TaskStatusEnum, TaskType } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { enumDisplayTaskStatus } from '../../static';
-import SelectStatus, { Option } from '../SelectStatus';
+import SelectStatus from '../SelectStatus';
 import { useUpdateTaskStatusMutation } from './__generated__/updateTaskStatus.generated';
 
-const OPTIONS: Option<TaskStatusEnum>[] = [
+const OPTIONS = [
   {
     value: TaskStatusEnum.ToDo,
     displayValue: enumDisplayTaskStatus[TaskStatusEnum.ToDo],
@@ -33,7 +33,9 @@ type TaskStatusBtnProps = {
   status: TaskType['status'];
 };
 
-export function TaskStatusBtn({ id, status }: TaskStatusBtnProps) {
+export function TaskStatusBtn(props: TaskStatusBtnProps) {
+  const { id, status } = props;
+
   const [updateTaskMutation] = useUpdateTaskStatusMutation();
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
@@ -44,7 +46,9 @@ export function TaskStatusBtn({ id, status }: TaskStatusBtnProps) {
   );
 
   useEffect(() => {
-    if (status != null) setValue(status);
+    if (status && status !== value) {
+      setValue(status);
+    }
   }, [id, status]);
 
   const onUpdateTask = async (newStatus: TaskStatusEnum) => {
@@ -53,12 +57,20 @@ export function TaskStatusBtn({ id, status }: TaskStatusBtnProps) {
 
       const response = await updateTaskMutation({
         variables: {
-          data: { id, status: newStatus },
+          data: {
+            id,
+            status: newStatus,
+          },
         },
         errorPolicy: 'all',
+
         update(cache, { data }) {
           const payload = data?.updateTask;
-          if (!payload || payload.__typename !== 'TaskType') return;
+          if (!payload) return;
+
+          if (payload.__typename !== 'TaskType') {
+            return;
+          }
 
           const entityId = cache.identify({
             __typename: 'TaskType',
@@ -76,10 +88,14 @@ export function TaskStatusBtn({ id, status }: TaskStatusBtnProps) {
         },
       });
 
-      if (!response.data?.updateTask) throw new Error('mutation failed');
-      setValue(newStatus);
+      const updatedTask = response.data?.updateTask;
+
+      if (!updatedTask) {
+        throw new Error('mutation failed');
+      }
     } catch (error) {
       console.error('Task status update error:', error);
+
       showSnackbar({
         message: 'Something went wrong. Please try again.',
         type: 'error',
@@ -88,17 +104,25 @@ export function TaskStatusBtn({ id, status }: TaskStatusBtnProps) {
       const cacheId = client.cache.identify({ __typename: 'Task', id });
       client.cache.modify({
         id: cacheId,
-        fields: { status: () => status },
+        fields: {
+          status: () => status,
+        },
       });
     } finally {
+      setValue(newStatus);
       setDisabled(false);
     }
   };
 
+  useEffect(() => {
+    if (status == null) return;
+    setValue((prev) => (prev === status ? prev : status));
+  }, [status]);
+
   return (
-    <SelectStatus<TaskStatusEnum>
+    <SelectStatus
       disabled={disabled}
-      onChange={onUpdateTask} // (next: TaskStatusEnum) => Promise<void> OK
+      onChange={(status) => onUpdateTask(status as TaskStatusEnum)}
       options={OPTIONS}
       value={value}
     />
