@@ -1,0 +1,69 @@
+# input HmisCreateClientInput {
+#   firstName: String!
+#   lastName: String!
+#   nameDataQuality: Int = 99
+#   ssn1: String = ""
+#   ssn2: String = ""
+#   ssn3: String = "xxxx"
+#   ssnDataQuality: Int = 99
+#   dob: String = ""
+#   dobDataQuality: Int = 99
+# }
+
+# input HmisCreateClientSubItemsInput {
+#   middleName: String = ""
+#   nameSuffix: Int = 9
+#   alias: String = ""
+#   additionalRaceEthnicity: String = ""
+#   differentIdentityText: String = ""
+#   raceEthnicity: [Int!] = [99]
+#   gender: [Int!] = [99]
+#   veteranStatus: Int = 99
+# }
+
+# hmisCreateClient(clientInput: HmisCreateClientInput!, clientSubItemsInput: HmisCreateClientSubItemsInput!): HmisClientTypeHmisCreateClientError!
+
+# $clientInput: HmisCreateClientInput!,
+# $clientSubItemsInput: HmisCreateClientSubItemsInput!
+
+# mutation hmisCreateClient(
+#     $clientInput: HmisCreateClientInput!,
+#     $clientSubItemsInput: HmisCreateClientSubItemsInput!
+
+mutation CreateHmisClient(
+  $clientInput: HmisCreateClientInput!
+  $clientSubItemsInput: HmisCreateClientSubItemsInput!
+) {
+  hmisCreateClient(
+    clientInput: $clientInput
+    clientSubItemsInput: $clientSubItemsInput
+  ) {
+    ... on HmisClientType {
+      personalId
+      uniqueIdentifier
+      firstName
+      lastName
+      nameDataQuality
+      ssn1
+      ssn2
+      ssn3
+      ssnDataQuality
+      dob
+      dobDataQuality
+      data {
+        middleName
+        nameSuffix
+        alias
+        raceEthnicity
+        additionalRaceEthnicity
+        differentIdentityText
+        gender
+        veteranStatus
+      }
+    }
+    ... on HmisCreateClientError {
+      message
+      field
+    }
+  }
+}
