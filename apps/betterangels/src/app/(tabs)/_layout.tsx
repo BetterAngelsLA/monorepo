@@ -4,8 +4,7 @@ import {
   useUser,
 } from '@monorepo/expo/betterangels';
 import {
-  HouseLineIcon,
-  HouseSolidIcon,
+  NoteIcon,
   PlusIcon,
   UsersLineIcon,
   UsersSolidIcon,
@@ -83,15 +82,24 @@ export default function TabLayout() {
       <Tabs screenOptions={screenOptions}>
         <Tabs.Screen
           name="index"
+          listeners={{
+            tabPress: (e) => {
+              e.preventDefault();
+              router.navigate({
+                pathname: '/',
+                params: { title: '', select: 'false' },
+              });
+            },
+          }}
           options={{
             title: '',
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 focused={focused}
                 color={color}
-                Icon={HouseSolidIcon}
-                InactiveIcon={HouseLineIcon}
-                label="Home"
+                Icon={UsersSolidIcon}
+                InactiveIcon={UsersLineIcon}
+                label="Clients"
               />
             ),
           }}
@@ -125,25 +133,16 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="clients"
-          listeners={{
-            tabPress: (e) => {
-              e.preventDefault();
-              router.navigate({
-                pathname: '/clients',
-                params: { title: '', select: 'false' },
-              });
-            },
-          }}
+          name="interactions"
           options={{
             title: '',
             tabBarIcon: ({ color, focused }) => (
               <TabIcon
                 focused={focused}
                 color={color}
-                Icon={UsersSolidIcon}
-                InactiveIcon={UsersLineIcon}
-                label="All Clients"
+                Icon={NoteIcon}
+                InactiveIcon={NoteIcon}
+                label="Interactions"
               />
             ),
           }}

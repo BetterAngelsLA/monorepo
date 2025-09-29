@@ -6,8 +6,8 @@ import {
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
-import { useEffect, useMemo, useState } from 'react';
-import { FlatList, RefreshControl, View } from 'react-native';
+import { ElementType, useEffect, useMemo, useState } from 'react';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { uniqueBy } from 'remeda';
 import {
   NotesQuery,
@@ -16,7 +16,7 @@ import {
   useNotesQuery,
 } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
-import { MainContainer, NoteCard } from '../../ui-components';
+import { Header, HorizontalContainer, NoteCard } from '../../ui-components';
 import InteractionsFilters from './InteractionsFilters';
 import InteractionsHeader from './InteractionsHeader';
 import InteractionsSorting from './InteractionsSorting';
@@ -29,7 +29,7 @@ type TFilters = {
   teams: { id: SelahTeamEnum; label: string }[];
 };
 
-export default function Interactions() {
+export default function Interactions({ Logo }: { Logo: ElementType }) {
   const { user } = useUser();
   const [totalCount, setTotalCount] = useState<number>(0);
   const [search, setSearch] = useState<string>('');
@@ -138,70 +138,89 @@ export default function Interactions() {
   if (error) throw new Error('Something went wrong!');
 
   return (
-    <MainContainer pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <InteractionsHeader
-        onFiltersReset={onFiltersReset}
-        search={search}
-        setSearch={onChange}
-      />
-      <InteractionsFilters filters={filters} setFilters={updateFilters} />
-      <InteractionsSorting
-        sort={sort}
-        setSort={setSort}
-        notes={notes}
-        totalCount={totalCount}
-      />
-      {search && !loading && notes.length < 1 && (
-        <View
-          style={{
-            flexGrow: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
+    <View style={styles.container}>
+      <Header title="Interactions" Logo={Logo} />
+      <HorizontalContainer style={styles.content}>
+        <InteractionsHeader
+          onFiltersReset={onFiltersReset}
+          search={search}
+          setSearch={onChange}
+        />
+        <InteractionsFilters filters={filters} setFilters={updateFilters} />
+        <InteractionsSorting
+          sort={sort}
+          setSort={setSort}
+          notes={notes}
+          totalCount={totalCount}
+        />
+        {search && !loading && notes.length < 1 && (
           <View
             style={{
-              height: 90,
-              width: 90,
+              flexGrow: 1,
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: Radiuses.xxxl,
-              backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-              marginBottom: Spacings.md,
             }}
           >
-            <FileSearchIcon size="2xl" />
-          </View>
-          <TextBold mb="xs" size="sm">
-            No Results
-          </TextBold>
-          <TextRegular size="sm">Try searching for something else.</TextRegular>
-        </View>
-      )}
-      <FlatList
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={Colors.PRIMARY}
-          />
-        }
-        ItemSeparatorComponent={() => <View style={{ height: Spacings.xs }} />}
-        data={notes}
-        renderItem={({ item: note }) => (
-          <NoteCard note={note} variant="interactions" />
-        )}
-        keyExtractor={(note) => note.id}
-        ListFooterComponent={() =>
-          loading ? (
-            <View style={{ marginTop: 10, alignItems: 'center' }}>
-              <Loading size="large" color={Colors.NEUTRAL_DARK} />
+            <View
+              style={{
+                height: 90,
+                width: 90,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: Radiuses.xxxl,
+                backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
+                marginBottom: Spacings.md,
+              }}
+            >
+              <FileSearchIcon size="2xl" />
             </View>
-          ) : null
-        }
-        onEndReached={loadMoreInteractions}
-        onEndReachedThreshold={0.5}
-      />
-    </MainContainer>
+            <TextBold mb="xs" size="sm">
+              No Results
+            </TextBold>
+            <TextRegular size="sm">
+              Try searching for something else.
+            </TextRegular>
+          </View>
+        )}
+        <FlatList
+          contentContainerStyle={{ paddingBottom: 60 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={Colors.PRIMARY}
+            />
+          }
+          ItemSeparatorComponent={() => (
+            <View style={{ height: Spacings.xs }} />
+          )}
+          data={notes}
+          renderItem={({ item: note }) => (
+            <NoteCard note={note} variant="interactions" />
+          )}
+          keyExtractor={(note) => note.id}
+          ListFooterComponent={() =>
+            loading ? (
+              <View style={{ marginTop: 10, alignItems: 'center' }}>
+                <Loading size="large" color={Colors.NEUTRAL_DARK} />
+              </View>
+            ) : null
+          }
+          onEndReached={loadMoreInteractions}
+          onEndReachedThreshold={0.5}
+        />
+      </HorizontalContainer>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.NEUTRAL_EXTRA_LIGHT,
+  },
+  content: {
+    flex: 1,
+    marginTop: Spacings.sm,
+  },
+});

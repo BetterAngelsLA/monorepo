@@ -85,7 +85,13 @@
     "@swc/helpers": "*",
     "graphql": "*",
     "vite": "*",
-    "@nx/vite": "*"
+    "@nx/vite": "*",
+    "ts-essentials": "*",
+    "vitest": "*",
+    "@storybook/react-native-web-vite": "*",
+    "@nx/detox": "*",
+    "@nx/rollup": "*",
+    "@types/geojson": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

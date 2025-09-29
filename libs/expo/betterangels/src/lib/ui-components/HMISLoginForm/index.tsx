@@ -38,9 +38,9 @@ export default function HMISLoginForm() {
         console.error('No response from server');
         return;
       }
-      if (res.__typename === 'HmisLoginSuccess') {
-        await refetchUser();
-        console.log(res.hmisToken);
+      if (res.__typename === 'UserType') {
+        refetchUser();
+
         return;
       }
     } catch (e) {

@@ -20,7 +20,6 @@ const iconList: TIconItem[] = Object.entries(icons).map(([key, value]) => {
 });
 
 const meta: Meta = {
-  title: 'Iconography',
   parameters: { controls: { disable: true } },
 };
 export default meta;
@@ -28,7 +27,11 @@ export default meta;
 type Story = StoryObj;
 
 export const IconComponents: Story = {
-  parameters: { layout: false },
+  parameters: {
+    customLayout: {
+      variant: 'basic',
+    },
+  },
   render: () => {
     return (
       <SbkGallery

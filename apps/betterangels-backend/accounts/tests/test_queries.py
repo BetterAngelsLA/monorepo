@@ -35,21 +35,20 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
 
         response = self.execute_graphql(query)
 
-        self.assertEqual(len(response["errors"]), 1, "Expected exactly one error")
-        self.assertEqual(response["errors"][0]["message"], "User is not logged in.")
-        self.assertIsNone(response["data"])
+        self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
-        ("organization_count, is_outreach_authorized, expected_query_count"),
+        ("organization_count, is_hmis_user, is_outreach_authorized, expected_query_count"),
         [
-            (0, False, 3),
-            (1, True, 4),
-            (2, True, 4),
+            (0, False, False, 3),
+            (1, True, True, 4),
+            (2, False, True, 4),
         ],
     )
     def test_logged_in_user_query(
         self,
         organization_count: int,
+        is_hmis_user: bool,
         is_outreach_authorized: bool,
         expected_query_count: int,
     ) -> None:
@@ -63,6 +62,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             username="testuser",
             has_accepted_tos=True,
             has_accepted_privacy_policy=True,
+            is_hmis_user=is_hmis_user,
         )
         self.graphql_client.force_login(user)
 
@@ -77,23 +77,24 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             )
 
         query = """
-        query {
-            currentUser {
-                username
-                firstName
-                lastName
-                middleName
-                email
-                hasAcceptedTos
-                hasAcceptedPrivacyPolicy
-                isOutreachAuthorized
-                organizations: organizationsOrganization {
-                    id
-                    name
-                    userPermissions
+            query {
+                currentUser {
+                    username
+                    firstName
+                    lastName
+                    middleName
+                    email
+                    hasAcceptedTos
+                    hasAcceptedPrivacyPolicy
+                    isHmisUser
+                    isOutreachAuthorized
+                    organizations: organizationsOrganization {
+                        id
+                        name
+                        userPermissions
+                    }
                 }
             }
-        }
         """
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -131,6 +132,10 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertEqual(
             response["data"]["currentUser"]["isOutreachAuthorized"],
             is_outreach_authorized,
+        )
+        self.assertEqual(
+            response["data"]["currentUser"]["isHmisUser"],
+            is_hmis_user,
         )
         self.assertEqual(
             response["data"]["currentUser"]["hasAcceptedTos"],
