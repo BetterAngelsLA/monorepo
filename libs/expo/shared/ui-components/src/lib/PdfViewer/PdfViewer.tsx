@@ -34,7 +34,9 @@ export default function PdfViewer(props: TProps) {
     setHasError(false);
 
     async function downloadAndSetPdf() {
-      if (!url) return;
+      if (!url) {
+        return;
+      }
 
       try {
         if (url.startsWith('file://') || url.startsWith('content://')) {
