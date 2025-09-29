@@ -15,6 +15,7 @@ export type TUser = {
   isOutreachAuthorized?: boolean;
   hasAcceptedTos?: boolean;
   hasAcceptedPrivacyPolicy?: boolean;
+  isHmisUser: boolean;
 };
 
 export interface IUserProviderValue {
@@ -22,6 +23,7 @@ export interface IUserProviderValue {
   setUser: Dispatch<SetStateAction<TUser | undefined>>;
   isLoading: boolean;
   refetchUser: () => Promise<void>;
+  isHmisUser: boolean;
 }
 
 const UserContext = createContext<IUserProviderValue | undefined>(undefined);
