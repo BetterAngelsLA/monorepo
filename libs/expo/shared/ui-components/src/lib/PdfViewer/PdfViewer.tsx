@@ -25,7 +25,9 @@ export default function PdfViewer(props: TProps) {
   function onLoadError(err: unknown) {
     setHasError(true);
     console.error('PdfViewer Load Error:', err);
-    onError?.();
+    if (onError) {
+      onError();
+    }
   }
 
   useEffect(() => {
@@ -35,17 +37,13 @@ export default function PdfViewer(props: TProps) {
       if (!url) return;
 
       try {
-        // If already a local file, just use it
         if (url.startsWith('file://') || url.startsWith('content://')) {
           setLocalFileUri(url);
           setLoading(false);
           return;
         }
 
-        // Create a file handle for the destination
         const destFile = new File(new Directory(Paths.document), 'temp.pdf');
-
-        // New API: downloads to a Directory or a File instance
         const downloaded = await File.downloadFileAsync(url, destFile);
 
         setLocalFileUri(downloaded.uri);
@@ -60,9 +58,17 @@ export default function PdfViewer(props: TProps) {
     downloadAndSetPdf();
   }, [url]);
 
-  if (!url) return null;
-  if (hasError) return <ErrorScreen />;
-  if (loading) return <LoadingScreen />;
+  if (!url) {
+    return null;
+  }
+
+  if (hasError) {
+    return <ErrorScreen />;
+  }
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   return (
     <View style={{ flex: 1 }}>
@@ -80,7 +86,13 @@ export default function PdfViewer(props: TProps) {
 
 function LoadingScreen() {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <Loading size="large" color={Colors.NEUTRAL_DARK} />
     </View>
   );
@@ -88,8 +100,19 @@ function LoadingScreen() {
 
 function ErrorScreen() {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-      <TextMedium style={{ width: '80%' }} textAlign="center">
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <TextMedium
+        style={{
+          width: '80%',
+        }}
+        textAlign="center"
+      >
         Sorry, there was a problem loading the PDF file.
       </TextMedium>
     </View>
