@@ -77,7 +77,10 @@ export default function PdfViewer(props: TProps) {
           uri: localFileUri || url,
           cache,
         }}
-        style={{ flex: 1, width }}
+        style={{
+          flex: 1,
+          width: width,
+        }}
         onError={onLoadError}
       />
     </View>
