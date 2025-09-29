@@ -51,6 +51,32 @@ class HmisCreateClientSubItemsInput:
 
 
 @strawberry.input
+class HmisUpdateClientInput:
+    personal_id: str
+    first_name: str
+    last_name: str
+    name_data_quality: int
+    ssn1: str
+    ssn2: str
+    ssn3: str
+    ssn_data_quality: int
+    dob: str
+    dob_data_quality: int
+
+
+@strawberry.input
+class HmisUpdateClientSubItemsInput:
+    middle_name: str
+    name_suffix: int
+    alias: str
+    additional_race_ethnicity: str
+    different_identity_text: str
+    race_ethnicity: list[int]
+    gender: list[int]
+    veteran_status: int
+
+
+@strawberry.input
 class HmisCreateReleaseOfInformationInput:
     permission: Optional[int]
     start_date: Optional[str]
@@ -149,6 +175,12 @@ class HmisCreateClientError:
 
 
 @strawberry.type
+class HmisUpdateClientError:
+    message: str
+    field: Optional[str] = None
+
+
+@strawberry.type
 class HmisGetClientError:
     message: str
     field: Optional[str] = None
@@ -162,4 +194,5 @@ class HmisListClientsError:
 
 HmisGetClientResult = Union[HmisClientType, HmisGetClientError]
 HmisCreateClientResult = Union[HmisClientType, HmisCreateClientError]
+HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]
 HmisListClientsResult = Union[HmisClientListType, HmisListClientsError]
