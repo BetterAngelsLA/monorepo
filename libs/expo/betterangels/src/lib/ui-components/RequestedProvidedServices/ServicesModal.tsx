@@ -14,24 +14,41 @@ import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  ServiceEnum,
   ServiceRequestTypeEnum,
   useCreateNoteServiceRequestMutation,
   useDeleteServiceRequestMutation,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
-import { ServicesByCategory } from '../../static';
 import MainScrollContainer from '../MainScrollContainer';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
+import {
+  ServiceCategoriesQuery,
+  useServiceCategoriesQuery,
+} from './__generated__/services.generated';
+
+type ApiCategory =
+  ServiceCategoriesQuery['serviceCategories']['results'][number];
+
+type TItem = { id: string; label: string };
+type TCategory = { title: string; items: TItem[] };
+
+type SelectedService = {
+  serviceRequestId?: string;
+  serviceId: string;
+  label: string;
+  markedForDeletion?: boolean;
+};
 
 interface IServicesModalProps {
   noteId: string;
-  initialServices: {
+  initialServiceRequests: {
     id: string;
-    service?: ServiceEnum | null | undefined;
-    serviceEnum?: ServiceEnum | null | undefined;
+    service?: {
+      label?: string;
+      id: string;
+    } | null;
     serviceOther?: string | null;
   }[];
   refetch: () => void;
@@ -39,22 +56,17 @@ interface IServicesModalProps {
 }
 
 export default function ServicesModal(props: IServicesModalProps) {
-  const { initialServices, noteId, refetch, type } = props;
+  const { initialServiceRequests, noteId, refetch, type } = props;
 
+  const { data: availableCategories } = useServiceCategoriesQuery();
   const { closeModalScreen } = useModalScreen();
   const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
-  const [services, setServices] = useState<
-    Array<{
-      id: string | undefined;
-      enum: ServiceEnum | null;
-      markedForDeletion?: boolean;
-    }>
-  >([]);
+  const [serviceRequests, setServiceRequests] = useState<SelectedService[]>([]);
 
-  const [serviceOthers, setServiceOthers] = useState<
+  const [serviceRequestsOthers, setServiceRequestsOthers] = useState<
     {
-      title: string | null;
-      id: string | undefined;
+      serviceOther: string | null;
+      serviceRequestId: string | undefined;
       markedForDeletion?: boolean;
     }[]
   >([]);
@@ -62,123 +74,128 @@ export default function ServicesModal(props: IServicesModalProps) {
   const [searchText, setSearchText] = useState('');
 
   const [deleteService] = useDeleteServiceRequestMutation();
-  const [createService] = useCreateNoteServiceRequestMutation();
+  const [createServiceRequest] = useCreateNoteServiceRequestMutation();
   const { showSnackbar } = useSnackbar();
 
   const handleFilter = (text: string) => {
     setSearchText(text);
   };
 
-  const filteredServices = ServicesByCategory.map((category) => ({
-    ...category,
-    items: category.items.filter((item) =>
-      item.toLowerCase().includes(searchText.toLowerCase())
-    ),
-  }));
+  function filterServicesByText(
+    categories: TCategory[],
+    searchText: string
+  ): TCategory[] {
+    const q = searchText.trim().toLowerCase();
+    if (!q) return categories;
+    return categories
+      .map((cat) => ({
+        ...cat,
+        items: cat.items.filter((item) => item.label.toLowerCase().includes(q)),
+      }))
+      .filter((cat) => cat.items.length > 0);
+  }
 
-  const reset = async () => {
-    try {
-      const deleteServices = services.map((service) => ({
-        ...service,
-        markedForDeletion: true,
+  function toServicesByCategory(categories: ApiCategory[]): TCategory[] {
+    return [...categories]
+      .sort(
+        (a, b) =>
+          (a.priority ?? 0) - (b.priority ?? 0) || a.name.localeCompare(b.name)
+      )
+      .map((cat) => ({
+        title: cat.name,
+        items: [...(cat.services ?? [])]
+          .sort(
+            (a, b) =>
+              (a.priority ?? 0) - (b.priority ?? 0) ||
+              a.label.localeCompare(b.label)
+          )
+          .map((s) => ({ id: s.id, label: s.label })),
       }));
-      const deleteServiceOthers = serviceOthers.map((service) => ({
-        ...service,
-        markedForDeletion: true,
+  }
+
+  const categories = toServicesByCategory(
+    availableCategories?.serviceCategories?.results ?? []
+  );
+  const filteredServices = filterServicesByText(categories, searchText);
+  const hasResults = filteredServices.some((c) => c.items.length > 0);
+
+  const computeInitial = () => {
+    const existing = initialServiceRequests
+      .filter((it) => it.service?.id)
+      .map((it) => ({
+        serviceRequestId: it.id,
+        serviceId: it.service!.id,
+        label: it.service?.label ?? '',
       }));
 
-      setServices(deleteServices);
-      setServiceOthers(deleteServiceOthers);
-    } catch (e) {
-      console.error(e);
-    }
+    const others = initialServiceRequests
+      .filter((it) => !!it.serviceOther)
+      .map((it) => ({
+        serviceRequestId: it.id,
+        serviceOther: it.serviceOther!,
+        markedForDeletion: false,
+      }));
+
+    return { existing, others };
+  };
+
+  const reset = () => {
+    const { existing, others } = computeInitial();
+    setServiceRequests(existing);
+    setServiceRequestsOthers(others);
   };
 
   const submitServices = async () => {
     setIsSubmitLoading(true);
-    const toCreateOtherServices = serviceOthers.filter(
-      (service) =>
-        service.title !== null && !service.id && !service.markedForDeletion
-    );
-    const toCreateServices = services.filter(
-      (service) =>
-        service.enum !== null && !service.id && !service.markedForDeletion
-    );
-
-    const toRemoveOtherServices = serviceOthers.filter(
-      (service) => service.markedForDeletion && !!service.id
-    );
-
-    const toRemoveServices = services.filter(
-      (service) => service.markedForDeletion && !!service.id
-    );
-
-    const toRemoveServicesWithOther = [
-      ...toRemoveOtherServices,
-      ...toRemoveServices,
-    ];
-
     try {
-      for (const service of toRemoveServicesWithOther) {
-        if (service.id) {
-          try {
-            await deleteService({
-              variables: {
-                data: {
-                  id: service.id,
-                },
-              },
-            });
-          } catch (error) {
-            console.error(
-              `Error deleting service with id ${service.id}:`,
-              error
-            );
-          }
-        }
+      const toCreate = serviceRequests.filter(
+        (s) => !s.serviceRequestId && !s.markedForDeletion
+      );
+
+      for (const s of toCreate) {
+        await createServiceRequest({
+          variables: {
+            data: {
+              serviceId: s.serviceId,
+              noteId,
+              serviceRequestType: type,
+            },
+          },
+        });
       }
 
-      for (const service of toCreateServices) {
-        if (service.enum) {
-          try {
-            await createService({
-              variables: {
-                data: {
-                  serviceEnum: service.enum,
-                  noteId,
-                  serviceRequestType: type,
-                },
-              },
-            });
-          } catch (error) {
-            console.error(
-              `Error creating service with enum ${service.enum}:`,
-              error
-            );
-          }
-        }
+      const toDelete = serviceRequests.filter(
+        (s) => s.serviceRequestId && s.markedForDeletion
+      );
+      const toRemoveOtherServices = serviceRequestsOthers.filter(
+        (service) => service.markedForDeletion && !!service.serviceRequestId
+      );
+
+      const toRemoveServicesWithOther = [...toRemoveOtherServices, ...toDelete];
+
+      for (const s of toRemoveServicesWithOther) {
+        await deleteService({
+          variables: { data: { id: s.serviceRequestId! } },
+        });
       }
+
+      const toCreateOtherServices = serviceRequestsOthers.filter(
+        (service) =>
+          service.serviceOther !== null &&
+          !service.serviceRequestId &&
+          !service.markedForDeletion
+      );
 
       for (const service of toCreateOtherServices) {
-        if (service.title) {
-          try {
-            await createService({
-              variables: {
-                data: {
-                  serviceEnum: ServiceEnum.Other,
-                  serviceOther: service.title,
-                  noteId,
-                  serviceRequestType: type,
-                },
-              },
-            });
-          } catch (error) {
-            console.error(
-              `Error creating service with title ${service.title}:`,
-              error
-            );
-          }
-        }
+        await createServiceRequest({
+          variables: {
+            data: {
+              serviceOther: service.serviceOther,
+              noteId,
+              serviceRequestType: type,
+            },
+          },
+        });
       }
 
       refetch();
@@ -195,46 +212,47 @@ export default function ServicesModal(props: IServicesModalProps) {
   };
 
   const closeModal = () => {
-    const newInitialServices = initialServices
-      // TODO: remove after cutover
-      .filter((item) => !!item.serviceEnum)
-      .filter((item) => item.serviceEnum !== ServiceEnum.Other)
-      .map((service) => ({ id: service.id, enum: service.serviceEnum! }));
-    const initialServiceOthers = initialServices
-      .filter((item) => item.serviceEnum === ServiceEnum.Other)
-      .map((service) => ({
-        id: service.id,
-        title: service.serviceOther || null,
+    const existing: SelectedService[] = initialServiceRequests
+      .filter((it) => it.service?.id)
+      .map((it) => ({
+        serviceRequestId: it.id,
+        serviceId: it.service!.id,
+        label: it.service?.label ?? '',
       }));
-    setServiceOthers(initialServiceOthers);
-    setServices(newInitialServices);
 
+    const initialServiceOthers = initialServiceRequests
+      .filter((item) => !!item.serviceOther)
+      .map((service) => ({
+        serviceRequestId: service.id,
+        serviceOther: service.serviceOther || null,
+      }));
+
+    setServiceRequests(existing);
+    setServiceRequestsOthers(initialServiceOthers);
     closeModalScreen();
   };
 
   useEffect(() => {
-    const newInitialServices = initialServices
-      // TODO: remove after cutover
-      .filter((item) => !!item.serviceEnum)
-      .filter((item) => item.serviceEnum !== ServiceEnum.Other)
-      .map((item) => ({
-        id: item.id,
-        enum: item.serviceEnum!,
+    const existing: SelectedService[] = initialServiceRequests
+      .filter((it) => it.service?.id)
+      .map((it) => ({
+        serviceRequestId: it.id,
+        serviceId: it.service!.id,
+        label: it.service?.label ?? '',
       }));
-    const initialServiceOthers = initialServices
-      .filter((item) => item.serviceEnum === ServiceEnum.Other)
+
+    const initialServiceOthers = initialServiceRequests
+      .filter((item) => !!item.serviceOther)
       .map((service) => ({
-        id: service.id,
-        title: service.serviceOther || '',
+        serviceRequestId: service.id,
+        serviceOther: service.serviceOther || '',
       }));
 
-    setServiceOthers(initialServiceOthers);
-    setServices(newInitialServices);
-  }, [initialServices]);
+    setServiceRequestsOthers(initialServiceOthers);
 
-  const hasResults = filteredServices.some(
-    (category) => category.items.length > 0
-  );
+    setServiceRequests(existing);
+  }, [initialServiceRequests]);
+
   return (
     <View
       style={{
@@ -292,10 +310,10 @@ export default function ServicesModal(props: IServicesModalProps) {
                   {service.items.map((item, idx) => {
                     return (
                       <ServiceCheckbox
-                        key={item}
-                        services={services}
-                        setServices={setServices}
-                        service={item}
+                        key={item.id}
+                        serviceRequests={serviceRequests}
+                        setServiceRequests={setServiceRequests}
+                        serviceRequest={item}
                         idx={idx}
                       />
                     );
@@ -330,8 +348,8 @@ export default function ServicesModal(props: IServicesModalProps) {
           <View>
             <TextBold>Other</TextBold>
             <OtherCategory
-              setServices={setServiceOthers}
-              services={serviceOthers}
+              setServiceRequests={setServiceRequestsOthers}
+              serviceRequests={serviceRequestsOthers}
             />
           </View>
         </ScrollView>
