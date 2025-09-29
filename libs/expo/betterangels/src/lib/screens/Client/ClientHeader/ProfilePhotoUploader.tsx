@@ -14,7 +14,6 @@ interface Props {
 
 export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [modalKey, setModalKey] = useState(0);
   const { showSnackbar } = useSnackbar();
   const [updatePhoto, { loading }] = useUpdateClientProfilePhotoMutation({
     refetchQueries: [
@@ -32,7 +31,6 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
   };
 
   const handleOpenModal = () => {
-    setModalKey(prev => prev + 1);
     setIsModalVisible(true);
   };
 
@@ -52,23 +50,14 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
             accessibilityLabel="client's profile photo"
             accessibilityHint="client's profile photo"
           />
-        </Pressable>
-        <View style={{ position: 'absolute', bottom: 0, right: Spacings.xs }}>
           <EditButton
-            onClick={handleOpenModal}
-            accessibilityHint={'update profile photo'}
-            iconSize="sm"
-            style={{
-              backgroundColor: Colors.WHITE,
-              borderRadius: 12,
-              width: 24,
-              height: 24,
-            }}
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            onClick={() => {}}
+            style={{ position: 'absolute', bottom: 0, right: Spacings.xs }}
           />
-        </View>
+        </Pressable>
       </View>
       <MediaPickerModal
-        key={`modal-${modalKey}`}
         isModalVisible={isModalVisible}
         setModalVisible={handleCloseModal}
         allowMultiple={false}
