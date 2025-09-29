@@ -1,8 +1,17 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
-import Modal from 'react-native-modal';
+import React from 'react';
+import {
+  Animated,
+  Image,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AnimatedIcon from './AnimatedIcon';
 
@@ -14,68 +23,77 @@ interface ISubmittedModalProps {
   firstName: string | null | undefined;
 }
 
-export default function SubmittedModal(props: ISubmittedModalProps) {
-  const { closeModal, isModalVisible, firstName } = props;
-
+export default function SubmittedModal({
+  closeModal,
+  isModalVisible,
+  firstName,
+}: ISubmittedModalProps) {
   const insets = useSafeAreaInsets();
-  const bottomOffset = insets.bottom;
-  const topOffset = insets.top;
 
   return (
     <Modal
-      style={{
-        margin: 0,
-        flex: 1,
-        justifyContent: 'flex-end',
-        backgroundColor: Colors.WHITE,
-      }}
-      isVisible={isModalVisible}
-      onBackdropPress={closeModal}
+      visible={isModalVisible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent={Platform.OS === 'android'}
+      presentationStyle="overFullScreen"
+      onRequestClose={closeModal}
     >
-      <AnimatedIcon />
-
-      <View
-        style={{
-          flex: 1,
-          borderTopLeftRadius: 8,
-          borderTopRightRadius: 8,
-          paddingTop: topOffset + Spacings.xs,
-          paddingHorizontal: Spacings.md,
-          paddingBottom: 35 + bottomOffset,
-          backgroundColor: Colors.WHITE,
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-        }}
-      >
-        <Pressable
-          style={{
-            position: 'absolute',
-            top: Spacings.md,
-            right: Spacings.sm,
-            padding: Spacings.sm,
-          }}
-          accessible
-          accessibilityHint="closes the modal"
-          accessibilityRole="button"
-          accessibilityLabel="close"
-          onPress={closeModal}
-        >
-          <PlusIcon rotate="45deg" size="md" color={Colors.BLACK} />
-        </Pressable>
-
-        <View style={styles.modalOverlay}>
-          <TextBold color={Colors.PRIMARY_DARK} size="xl">
-            You are such an Angel!
-          </TextBold>
-          <Image
-            accessibilityIgnoresInvertColors
-            source={require(IMAGE_SOURCE)}
-            style={{ width: 120, height: 115, marginTop: 67, marginBottom: 50 }}
+      {/* Backdrop */}
+      <TouchableWithoutFeedback accessibilityRole="button" onPress={closeModal}>
+        <View style={StyleSheet.absoluteFillObject}>
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: '#000', opacity: 0.5 },
+            ]}
           />
-          <TextRegular textAlign="center" size="md">
-            Thank you for helping{firstName ? ` ${firstName}` : ''}!
-          </TextRegular>
+        </View>
+      </TouchableWithoutFeedback>
+
+      {/* Content */}
+      <View style={styles.container}>
+        <AnimatedIcon />
+
+        <View
+          style={[
+            styles.content,
+            {
+              paddingTop: insets.top + Spacings.xs,
+              paddingBottom: 35 + insets.bottom,
+            },
+          ]}
+        >
+          {/* Close button */}
+          <Pressable
+            style={styles.closeButton}
+            accessible
+            accessibilityHint="closes the modal"
+            accessibilityRole="button"
+            accessibilityLabel="close"
+            onPress={closeModal}
+          >
+            <PlusIcon rotate="45deg" size="md" color={Colors.BLACK} />
+          </Pressable>
+
+          <View style={styles.modalOverlay}>
+            <TextBold color={Colors.PRIMARY_DARK} size="xl">
+              You are such an Angel!
+            </TextBold>
+            <Image
+              accessibilityIgnoresInvertColors
+              source={require(IMAGE_SOURCE)}
+              style={{
+                width: 120,
+                height: 115,
+                marginTop: 67,
+                marginBottom: 50,
+              }}
+            />
+            <TextRegular textAlign="center" size="md">
+              Thank you for helping{firstName ? ` ${firstName}` : ''}!
+            </TextRegular>
+          </View>
         </View>
       </View>
     </Modal>
@@ -83,6 +101,25 @@ export default function SubmittedModal(props: ISubmittedModalProps) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  content: {
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    paddingHorizontal: Spacings.md,
+    backgroundColor: Colors.WHITE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: Spacings.md,
+    right: Spacings.sm,
+    padding: Spacings.sm,
+  },
   modalOverlay: {
     justifyContent: 'flex-end',
     alignItems: 'center',
