@@ -3,11 +3,11 @@ import {
   Modal,
   ModalProps,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { PickerItem } from './PickerItem';
 import { NONE_VALUE } from './constants';
 import { TPickerItem } from './types';

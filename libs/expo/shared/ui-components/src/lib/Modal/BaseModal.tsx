@@ -1,6 +1,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { PropsWithChildren } from 'react';
-import { Modal, SafeAreaView } from 'react-native';
+import { Modal } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ModalHeader } from './ModalHeader';
 
 export interface IFileViewerModal extends PropsWithChildren {
