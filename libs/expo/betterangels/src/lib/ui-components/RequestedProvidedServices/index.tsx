@@ -2,13 +2,9 @@ import { Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
 import { RefObject } from 'react';
 import { ScrollView, View } from 'react-native';
-import {
-  ServiceEnum,
-  ServiceRequestTypeEnum,
-  ViewNoteQuery,
-} from '../../apollo';
+import { ServiceRequestTypeEnum, ViewNoteQuery } from '../../apollo';
 import { useModalScreen } from '../../providers';
-import { enumDisplayServiceType, enumDisplayServices } from '../../static';
+import { enumDisplayServiceType } from '../../static';
 import ServicesModal from './ServicesModal';
 
 interface IRequestedServicesProps {
@@ -24,10 +20,16 @@ interface IRequestedServicesProps {
 export default function RequestedProvidedServices(
   props: IRequestedServicesProps
 ) {
-  const { noteId, services: initialServices, scrollRef, refetch, type } = props;
+  const {
+    noteId,
+    services: initialServiceRequests,
+    scrollRef,
+    refetch,
+    type,
+  } = props;
   const { showModalScreen } = useModalScreen();
 
-  if (!initialServices) {
+  if (!initialServiceRequests) {
     return null;
   }
 
@@ -35,7 +37,7 @@ export default function RequestedProvidedServices(
     <FieldCard
       scrollRef={scrollRef}
       actionName={
-        initialServices.length ? (
+        initialServiceRequests.length ? (
           <View
             style={{
               flexDirection: 'row',
@@ -43,7 +45,7 @@ export default function RequestedProvidedServices(
               gap: Spacings.xs,
             }}
           >
-            {initialServices.map((item, index) => (
+            {initialServiceRequests.map((item, index) => (
               <Pill
                 variant={
                   type === ServiceRequestTypeEnum.Provided
@@ -51,11 +53,7 @@ export default function RequestedProvidedServices(
                     : 'primary'
                 }
                 key={index}
-                label={
-                  item.serviceEnum !== ServiceEnum.Other
-                    ? enumDisplayServices[item.serviceEnum!]
-                    : item.serviceOther || ''
-                }
+                label={item.service?.label || ''}
               />
             ))}
           </View>
@@ -73,7 +71,7 @@ export default function RequestedProvidedServices(
             <ServicesModal
               noteId={noteId}
               type={type}
-              initialServices={initialServices}
+              initialServiceRequests={initialServiceRequests}
               refetch={refetch}
             />
           ),

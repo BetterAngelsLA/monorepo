@@ -8,11 +8,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.models import Site
 from django.test import TestCase
 from model_bakery import baker
+from test_utils.assert_mixins import GraphQLAssertionsMixin
 from test_utils.mixins import GraphQLTestCaseMixin
 from unittest_parametrize import ParametrizedTestCase
 
 
-class GraphQLBaseTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase):
+class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, ParametrizedTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
         self._setup_users()
