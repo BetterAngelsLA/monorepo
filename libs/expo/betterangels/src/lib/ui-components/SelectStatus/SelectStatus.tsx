@@ -1,10 +1,9 @@
 import { ChevronLeftIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { IconButton, TextBold } from '@monorepo/expo/shared/ui-components';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
-  Easing,
   Modal,
   Platform,
   Pressable,
@@ -14,77 +13,70 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export type Option<T extends string> = {
-  value: T;
-  displayValue?: string;
-  bg: string;
-  text: string;
-};
-
-export type SelectStatusProps<T extends string> = {
-  value: T;
-  onChange: (next: T) => void | Promise<void>;
+type SelectStatusProps = {
+  value: string;
+  onChange: (next: string) => void;
   disabled?: boolean;
-  options: Option<T>[];
+  options: { value: string; displayValue?: string; bg: string; text: string }[];
   title?: string;
+  selectedValue?: string | null; // kept for compatibility with your other usage
 };
 
-const BACKDROP_MAX_OPACITY = 0.5;
-const ANIM_IN_MS = 220;
-const ANIM_OUT_MS = 220;
+const DURATION = 220;
 
-export function SelectStatus<T extends string>({
+export function SelectStatus({
   value,
   onChange,
   disabled,
   options,
   title,
-}: SelectStatusProps<T>) {
+}: SelectStatusProps) {
   const insets = useSafeAreaInsets();
-  const [visible, setVisible] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  // one progress drives both backdrop & sheet (prevents flicker)
+  // one driver for both backdrop and sheet to avoid flicker
   const progress = useRef(new Animated.Value(0)).current;
-  const [sheetH, setSheetH] = useState(280);
+  const [sheetH, setSheetH] = useState(260);
 
   const current = useMemo(
     () => options.find((o) => o.value === value),
     [value, options]
   );
 
-  const open = useCallback(() => {
-    if (disabled || visible) return;
-    setVisible(true);
-    progress.stopAnimation();
-    progress.setValue(0);
-    requestAnimationFrame(() => {
+  const animateTo = useCallback(
+    (to: 0 | 1, after?: () => void) => {
       Animated.timing(progress, {
-        toValue: 1,
-        duration: ANIM_IN_MS,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }).start();
-    });
-  }, [disabled, visible, progress]);
-
-  const close = useCallback(
-    (commit?: T) => {
-      progress.stopAnimation();
-      Animated.timing(progress, {
-        toValue: 0,
-        duration: ANIM_OUT_MS,
-        easing: Easing.in(Easing.cubic),
+        toValue: to,
+        duration: DURATION,
         useNativeDriver: true,
       }).start(({ finished }) => {
-        if (!finished) return;
-        setVisible(false);
-        if (commit !== undefined) void onChange(commit);
+        if (finished) after?.();
       });
     },
-    [progress, onChange]
+    [progress]
   );
 
-  const onSelect = (next: T) => close(next);
+  const openSheet = () => {
+    if (disabled || open) return;
+    setOpen(true);
+    progress.setValue(0);
+    animateTo(1);
+  };
+
+  const closeSheet = (commit?: string) => {
+    animateTo(0, () => {
+      setOpen(false);
+      if (commit !== undefined) onChange(commit);
+    });
+  };
+
+  // Re-run open animation if Modal is shown again
+  useEffect(() => {
+    if (open) {
+      progress.setValue(0);
+      animateTo(1);
+    }
+  }, [open, animateTo, progress]);
 
   const translateY = progress.interpolate({
     inputRange: [0, 1],
@@ -93,7 +85,7 @@ export function SelectStatus<T extends string>({
 
   const backdropOpacity = progress.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, BACKDROP_MAX_OPACITY],
+    outputRange: [0, 0.5],
   });
 
   const Chevron = ({ up = false }: { up?: boolean }) => (
@@ -106,7 +98,6 @@ export function SelectStatus<T extends string>({
 
   return (
     <>
-      {/* Trigger */}
       <Pressable
         disabled={disabled}
         accessibilityRole="button"
@@ -114,7 +105,7 @@ export function SelectStatus<T extends string>({
         accessibilityLabel={
           current ? `${current.value}, open menu` : 'Open menu'
         }
-        onPress={open}
+        onPress={openSheet}
         style={({ pressed }) => [
           styles.trigger,
           { backgroundColor: current?.bg ?? Colors.NEUTRAL_DARK },
@@ -125,22 +116,21 @@ export function SelectStatus<T extends string>({
         <TextBold size="sm" color={current?.text}>
           {current?.displayValue}
         </TextBold>
-        <Chevron up={visible} />
+        <Chevron up={open} />
       </Pressable>
 
-      {/* Sheet Modal */}
       <Modal
+        visible={open}
         transparent
-        visible={visible}
-        animationType="none" // custom animated backdrop/sheet
-        statusBarTranslucent={Platform.OS === 'android'}
+        animationType="none" // we do a custom fade+slide
         presentationStyle="overFullScreen"
-        onRequestClose={() => close()}
+        statusBarTranslucent={Platform.OS === 'android'}
+        onRequestClose={() => closeSheet()}
       >
         {/* Backdrop */}
         <TouchableWithoutFeedback
           accessibilityRole="button"
-          onPress={() => close()}
+          onPress={() => closeSheet()}
         >
           <Animated.View
             style={[
@@ -154,7 +144,7 @@ export function SelectStatus<T extends string>({
         <Animated.View
           pointerEvents="box-none"
           style={[styles.sheetContainer, { transform: [{ translateY }] }]}
-          onLayout={(e) => setSheetH(e.nativeEvent.layout.height || 280)}
+          onLayout={(e) => setSheetH(e.nativeEvent.layout.height || sheetH)}
         >
           <View
             style={[
@@ -164,7 +154,7 @@ export function SelectStatus<T extends string>({
           >
             <IconButton
               style={{ alignSelf: 'flex-end' }}
-              onPress={() => close()}
+              onPress={() => closeSheet()}
               variant="transparent"
               accessibilityLabel="close menu"
               accessibilityHint="Closes the menu"
@@ -184,7 +174,7 @@ export function SelectStatus<T extends string>({
                 return (
                   <Pressable
                     key={opt.value}
-                    onPress={() => onSelect(opt.value)}
+                    onPress={() => closeSheet(opt.value)}
                     style={({ pressed }) => [
                       styles.optionRow,
                       { backgroundColor: opt.bg },
@@ -218,21 +208,25 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 0,
     gap: Spacings.xs,
   },
+
   sheetContainer: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
   },
+
   sheet: {
-    backgroundColor: Colors.WHITE, // solid sheet avoids underlying flashes
+    backgroundColor: Colors.WHITE,
     borderTopLeftRadius: Radiuses.md,
     borderTopRightRadius: Radiuses.md,
     paddingHorizontal: Spacings.md,
   },
+
   list: {
     gap: Spacings.xs,
   },
+
   optionRow: {
     borderRadius: Radiuses.xs,
     height: 44,
