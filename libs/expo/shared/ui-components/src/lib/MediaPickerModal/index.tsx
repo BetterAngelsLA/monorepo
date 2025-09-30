@@ -5,7 +5,6 @@ import {
   Shadow,
   Spacings,
 } from '@monorepo/expo/shared/static';
-import { BaseModal } from '@monorepo/expo/shared/ui-components';
 import { resizeImage } from '@monorepo/expo/shared/utils';
 import { useCameraPermissions } from 'expo-camera';
 import * as DocumentPicker from 'expo-document-picker';
@@ -14,6 +13,7 @@ import { useState } from 'react';
 import { Alert, Pressable, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Camera from '../Camera';
+import { BaseModal } from '../Modal';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
 
