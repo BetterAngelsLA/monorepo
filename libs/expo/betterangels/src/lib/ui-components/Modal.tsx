@@ -1,6 +1,6 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode, useEffect, useMemo, useRef } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Animated,
   Easing,
@@ -10,10 +10,10 @@ import {
   StyleSheet,
   View,
   useWindowDimensions,
+  type DimensionValue,
+  type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-type DimensionVal = number | string;
 
 interface IModalProps {
   isModalVisible: boolean;
@@ -21,10 +21,10 @@ interface IModalProps {
   children: ReactNode;
   closeButton?: boolean;
   opacity?: number;
-  vertical?: boolean; // true = bottom sheet; false = slide from right
+  vertical?: boolean;
   ml?: number;
   mt?: number;
-  height?: DimensionVal;
+  height?: DimensionValue;
   propogateSwipe?: boolean;
   onLayout?: () => void;
   fullWidth?: boolean;
@@ -47,44 +47,49 @@ export default function Modal({
   const insets = useSafeAreaInsets();
   const { width, height: screenH } = useWindowDimensions();
 
+  // Stable animated values
   const translate = useRef(new Animated.Value(0)).current;
   const backdrop = useRef(new Animated.Value(0)).current;
 
   const OFF = vertical ? screenH : width;
-  const DUR_IN = 260,
-    DUR_OUT = 200;
+  const DUR_IN = 260;
+  const DUR_OUT = 200;
 
-  const animate = (toOpen: boolean) => {
-    Animated.parallel([
-      Animated.timing(translate, {
-        toValue: toOpen ? 0 : OFF,
-        duration: toOpen ? DUR_IN : DUR_OUT,
-        easing: toOpen ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(backdrop, {
-        toValue: toOpen ? opacity : 0,
-        duration: toOpen ? DUR_IN - 60 : DUR_OUT - 20,
-        easing: toOpen ? Easing.out(Easing.quad) : Easing.in(Easing.quad),
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      if (!toOpen) closeModal();
-    });
-  };
+  // Memoized animator
+  const animate = useCallback(
+    (toOpen: boolean) => {
+      Animated.parallel([
+        Animated.timing(translate, {
+          toValue: toOpen ? 0 : OFF,
+          duration: toOpen ? DUR_IN : DUR_OUT,
+          easing: toOpen ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(backdrop, {
+          toValue: toOpen ? opacity : 0,
+          duration: toOpen ? DUR_IN - 60 : DUR_OUT - 20,
+          easing: toOpen ? Easing.out(Easing.quad) : Easing.in(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        if (!toOpen) closeModal();
+      });
+    },
+    [OFF, opacity, closeModal, translate, backdrop]
+  );
 
+  // Show/hide with animation
   useEffect(() => {
     if (isModalVisible) {
-      // start offscreen on show
       translate.setValue(OFF);
       backdrop.setValue(0);
       animate(true);
     } else {
       animate(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isModalVisible, OFF, opacity, vertical]);
+  }, [isModalVisible, OFF, animate, translate, backdrop]);
 
+  // Memoized pan handlers (only when swipe is enabled)
   const panHandlers = useMemo(() => {
     if (!propogateSwipe) return {};
     return PanResponder.create({
@@ -103,16 +108,19 @@ export default function Modal({
       },
       onPanResponderRelease: (_, g) => {
         const delta = vertical ? g.dy : g.dx;
-        const shouldClose =
-          delta > OFF * 0.25 || (vertical ? g.vy : g.vx) > 0.8;
-        shouldClose ? animate(false) : animate(true);
+        const vel = vertical ? g.vy : g.vx;
+        const shouldClose = delta > OFF * 0.25 || vel > 0.8;
+        animate(!shouldClose ? true : false);
       },
     }).panHandlers;
   }, [propogateSwipe, vertical, OFF, opacity, animate, translate, backdrop]);
 
-  const transform = vertical
-    ? [{ translateY: translate }]
-    : [{ translateX: translate }];
+  // Memoized transform style
+  const transform = useMemo<ViewStyle['transform']>(
+    () =>
+      vertical ? [{ translateY: translate }] : [{ translateX: translate }],
+    [vertical, translate]
+  );
 
   return (
     <RNModal
@@ -157,11 +165,11 @@ export default function Modal({
               borderTopLeftRadius: Radiuses.xs,
               borderTopRightRadius: Radiuses.xs,
               paddingBottom: 35 + insets.bottom,
-              paddingTop: fullWidth ? insets.top + Spacings.xs : Spacings.xs,
-              ...(fullWidth ? { flex: 1 } : null),
-              ...(height != null ? { height } : null),
+              paddingTop: (fullWidth ? insets.top : 0) + Spacings.xs,
               alignSelf: vertical ? 'stretch' : 'flex-end',
-            },
+              ...(fullWidth ? { flex: 1 as number } : {}),
+              ...(height !== undefined ? { height } : {}),
+            } as ViewStyle,
           ]}
         >
           {propogateSwipe && vertical && (

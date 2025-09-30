@@ -1,8 +1,13 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { PropsWithChildren, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import {
   Animated,
-  Dimensions,
   Easing,
   Platform,
   Pressable,
@@ -10,6 +15,7 @@ import {
   StyleSheet,
   View,
   ViewStyle,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ModalHeader } from './ModalHeader';
@@ -25,13 +31,13 @@ export interface IFileViewerModal extends PropsWithChildren {
 
   /** Sheet options */
   direction?: 'up' | 'right'; // 'up' = bottom sheet, 'right' = right drawer
-  panelOffset?: number; // left margin for right drawer (like old `ml`)
+  panelOffset?: number; // left margin for right drawer
   backdropOpacity?: number; // 0..1
-  sheetTopPadding?: number; // NEW: top padding for 'up' sheets (to match original)
+  sheetTopPadding?: number; // extra top padding for 'up' sheets
 
   /** Style overrides */
-  panelStyle?: ViewStyle; // outer animated card container (size/radius/bg)
-  contentStyle?: ViewStyle; // inner content container (padding, etc.)
+  panelStyle?: ViewStyle;
+  contentStyle?: ViewStyle;
 }
 
 const OPEN_MS = 260;
@@ -47,113 +53,67 @@ export function BaseModal({
   direction = 'up',
   panelOffset = 0,
   backdropOpacity = 0.5,
-  sheetTopPadding = 0, // default none
+  sheetTopPadding = 0,
   panelStyle,
   contentStyle,
 }: IFileViewerModal) {
-  const screenH = useMemo(() => Dimensions.get('window').height, []);
-  const screenW = useMemo(() => Dimensions.get('window').width, []);
+  const { width: screenW, height: screenH } = useWindowDimensions();
   const [mounted, setMounted] = useState(isOpen);
 
-  const closingRef = useRef(false);
-  const progress = useRef(new Animated.Value(0)).current;
-  const dim = useRef(new Animated.Value(0)).current;
+  // single progress drives both panel + backdrop
+  const t = useRef(new Animated.Value(0)).current;
+
+  const OFF = direction === 'right' ? screenW : screenH;
+
+  const animate = useCallback(
+    (open: boolean) => {
+      Animated.timing(t, {
+        toValue: open ? 1 : 0,
+        duration: open ? OPEN_MS : CLOSE_MS,
+        easing: open ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (finished && !open) {
+          setMounted(false);
+          onClose?.();
+          setIsOpen?.(false);
+        }
+      });
+    },
+    [t, onClose, setIsOpen]
+  );
 
   useEffect(() => {
     if (variant === 'sheet') {
       if (isOpen) {
         setMounted(true);
-        closingRef.current = false;
-        Animated.parallel([
-          Animated.timing(progress, {
-            toValue: 1,
-            duration: OPEN_MS,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: true,
-          }),
-          Animated.timing(dim, {
-            toValue: 1,
-            duration: OPEN_MS - 60,
-            easing: Easing.out(Easing.quad),
-            useNativeDriver: true,
-          }),
-        ]).start();
-      } else if (mounted && !closingRef.current) {
-        requestClose();
+        t.setValue(0); // reset offscreen
+        animate(true);
+      } else if (mounted) {
+        animate(false);
       }
     } else {
       setMounted(isOpen);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [variant, isOpen]);
-
-  const requestClose = () => {
-    if (variant === 'fullscreen') {
-      onClose?.();
-      setIsOpen?.(false);
-      return;
-    }
-    if (!mounted || closingRef.current) return;
-
-    closingRef.current = true;
-    Animated.parallel([
-      Animated.timing(progress, {
-        toValue: 0,
-        duration: CLOSE_MS,
-        easing: Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(dim, {
-        toValue: 0,
-        duration: CLOSE_MS - 40,
-        easing: Easing.in(Easing.quad),
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setMounted(false);
-      closingRef.current = false;
-      onClose?.();
-      setIsOpen?.(false);
-    });
-  };
+  }, [variant, isOpen, mounted, animate, t]);
 
   if (!mounted && !isOpen) return null;
 
-  // Off-screen vectors
-  const offX = direction === 'right' ? screenW : 0;
-  const offY = direction === 'right' ? 0 : screenH;
+  // translate along the active axis
+  const translate = t.interpolate({
+    inputRange: [0, 1],
+    outputRange: [OFF, 0],
+  });
 
-  const panelAnim = {
-    transform: [
-      {
-        translateX: progress.interpolate({
-          inputRange: [0, 1],
-          outputRange: [offX, 0],
-        }),
-      },
-      {
-        translateY: progress.interpolate({
-          inputRange: [0, 1],
-          outputRange: [offY, 0],
-        }),
-      },
-    ],
-    opacity: progress.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
-  };
+  const transform: ViewStyle['transform'] =
+    direction === 'right'
+      ? [{ translateX: translate }]
+      : [{ translateY: translate }];
 
-  const backdropAnim = {
-    opacity: dim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, backdropOpacity],
-    }),
-  };
-
-  const hostAlign =
-    direction === 'right' ? { alignItems: 'flex-end' as const } : null;
-  const hostTopPad =
-    direction === 'up' && sheetTopPadding > 0
-      ? { paddingTop: sheetTopPadding }
-      : null;
+  const dimOpacity = t.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, backdropOpacity],
+  });
 
   return (
     <RNModal
@@ -162,25 +122,31 @@ export function BaseModal({
       animationType={variant === 'fullscreen' ? 'slide' : 'none'}
       statusBarTranslucent
       presentationStyle={variant === 'sheet' ? 'overFullScreen' : 'fullScreen'}
-      onRequestClose={requestClose}
+      onRequestClose={() =>
+        variant === 'sheet' ? animate(false) : onClose?.()
+      }
     >
       {variant === 'fullscreen' ? (
         <SafeAreaView style={{ flex: 1, backgroundColor: Colors.WHITE }}>
-          <ModalHeader onClose={requestClose} title={title} />
+          <ModalHeader onClose={() => onClose?.()} title={title} />
           {children}
         </SafeAreaView>
       ) : (
         <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
           {/* Backdrop */}
           <Animated.View
-            style={[StyleSheet.absoluteFill, styles.backdrop, backdropAnim]}
+            style={[
+              StyleSheet.absoluteFill,
+              styles.backdrop,
+              { opacity: dimOpacity },
+            ]}
           >
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Close modal"
               accessibilityHint="Dismisses the modal"
               style={StyleSheet.absoluteFill}
-              onPress={requestClose}
+              onPress={() => animate(false)}
             />
           </Animated.View>
 
@@ -188,16 +154,18 @@ export function BaseModal({
           <View
             style={[
               styles.host,
-              hostAlign || undefined,
-              hostTopPad || undefined,
+              direction === 'right' ? { alignItems: 'flex-end' } : undefined,
+              direction === 'up' && sheetTopPadding > 0
+                ? { paddingTop: sheetTopPadding }
+                : undefined,
             ]}
             pointerEvents="box-none"
           >
             <Animated.View
               style={[
                 styles.cardPanel,
-                direction === 'right' ? { marginLeft: panelOffset } : null,
-                panelAnim,
+                direction === 'right' ? { marginLeft: panelOffset } : undefined,
+                { transform },
                 panelStyle,
               ]}
             >
