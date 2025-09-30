@@ -211,6 +211,7 @@
     "cookie": ">=0.7.0",
     "cross-spawn": ">=7.0.5",
     "micromatch": ">=4.0.8",
+    "react-native-maps": "^1.26.7",
     "ws": ">=8.17.1",
     "@expo/config-plugins": ">=54.0.1"
   },
