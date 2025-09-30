@@ -70,7 +70,7 @@ class HmisApiBridge:
         if errors := response.get("errors"):
             if is_hmis_unauthenticated(errors):
                 # TODO: destroy session here?
-                raise UnauthenticatedGQLError(errors)
+                raise UnauthenticatedGQLError()
 
         # If server replies non-JSON on error, .json() will raise — we treat as failure.
         return response
