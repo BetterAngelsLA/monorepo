@@ -1,5 +1,5 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Spacings } from '@monorepo/expo/shared/static';
 import { Avatar, EditButton, MediaPickerModal } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
