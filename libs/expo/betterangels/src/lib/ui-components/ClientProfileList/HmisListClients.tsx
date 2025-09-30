@@ -117,7 +117,6 @@ export function HmisListClients(props: TProps) {
       />
 
       <FlashList<TClient>
-        estimatedItemSize={95}
         data={clients}
         keyExtractor={(item) =>
           item.uniqueIdentifier ??

@@ -7,6 +7,7 @@ import { HmisClientListType } from '../../apollo';
 import { useUser } from '../../hooks';
 import {
   ClientCard,
+  ClientCardHMIS,
   ClientCardModal,
   ClientProfileList,
   Header,
@@ -44,11 +45,8 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   );
 
   const renderHmisClientItem = useCallback(
-    (client: THmisClient) => (
-      // TODO: update with HMIS client card
-      <View>{client.firstName}</View>
-    ),
-    [setCurrentClient, handleClientPress]
+    (client: THmisClient) => <ClientCardHMIS client={client} />,
+    []
   );
 
   return (
