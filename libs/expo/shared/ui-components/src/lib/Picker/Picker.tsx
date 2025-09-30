@@ -83,7 +83,7 @@ export default function Picker({
   return (
     <>
       <PickerField
-        style={getMarginStyles({ ...rest, required, disabled })}
+        style={getMarginStyles({ ...rest })}
         disabled={disabled}
         required={required}
         placeholder={placeholder}
