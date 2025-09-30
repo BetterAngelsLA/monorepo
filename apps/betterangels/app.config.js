@@ -37,7 +37,6 @@ export default {
       buildNumber: '1.0.64',
       associatedDomains: [`applinks:${HOSTNAME}`],
       config: {
-        googleMapsApiKey: process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY,
         usesNonExemptEncryption: false,
       },
     },
@@ -67,11 +66,7 @@ export default {
           category: ['BROWSABLE', 'DEFAULT'],
         },
       ],
-      config: {
-        googleMaps: {
-          apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
-        },
-      },
+      config: {},
       versionCode: 63,
     },
     web: {
@@ -133,6 +128,14 @@ export default {
         'expo-document-picker',
         {
           iCloudContainerEnvironment: 'Production',
+        },
+      ],
+      [
+        'react-native-maps',
+        {
+          iosGoogleMapsApiKey: process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY,
+          androidGoogleMapsApiKey:
+            process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
         },
       ],
     ],
