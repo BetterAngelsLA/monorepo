@@ -16,11 +16,7 @@ import {
   Spacings,
   getMarginStyles,
 } from '@monorepo/expo/shared/static';
-import {
-  BaseModal,
-  TextBold,
-  TextRegular,
-} from '@monorepo/expo/shared/ui-components';
+import { BaseModal, TextBold, TextRegular } from '../';
 
 import { PickerField } from './PickerField';
 import { NONE_VALUE } from './constants';
@@ -132,6 +128,7 @@ export default function Picker({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Done"
+            accessibilityHint="Confirm your selection and close the picker"
             onPress={onDone}
           >
             <TextBold color={Colors.IOS_BLUE} size="ms">
