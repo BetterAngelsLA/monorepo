@@ -5,13 +5,14 @@ import {
   Shadow,
   Spacings,
 } from '@monorepo/expo/shared/static';
+import { BaseModal } from '@monorepo/expo/shared/ui-components';
 import { resizeImage } from '@monorepo/expo/shared/utils';
 import { useCameraPermissions } from 'expo-camera';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
-import Modal from 'react-native-modal';
+import { Alert, Pressable, View, ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Camera from '../Camera';
 import TextBold from '../TextBold';
 import TextRegular from '../TextRegular';
@@ -32,37 +33,31 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
     setFiles,
     allowMultiple = true,
   } = props;
+
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-
   const [permission, requestPermission] = useCameraPermissions();
+  const insets = useSafeAreaInsets();
 
-  const closeModal = () => {
-    setModalVisible(false);
-  };
+  const closeModal = () => setModalVisible(false);
 
   const pickDocuments = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: MimeTypes.PDF,
       });
-
       const { canceled, assets } = result;
+      if (canceled || !assets?.length) return;
 
-      if (canceled || !assets?.length) {
-        return;
-      }
-
-      const uploadPromises = assets.map(async (asset) => {
-        const file = new ReactNativeFile({
-          uri: asset.uri,
-          name: asset.name || Date.now().toString(),
-          type: asset.mimeType || MimeTypes.PDF,
-        });
-
-        return file;
-      });
-
-      const uploadedFiles = await Promise.all(uploadPromises);
+      const uploadedFiles = await Promise.all(
+        assets.map(
+          async (asset) =>
+            new ReactNativeFile({
+              uri: asset.uri,
+              name: asset.name || Date.now().toString(),
+              type: asset.mimeType || MimeTypes.PDF,
+            })
+        )
+      );
 
       setFiles(uploadedFiles);
       setModalVisible(false);
@@ -88,24 +83,22 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: false,
         allowsMultipleSelection: allowMultiple,
       });
 
       if (!result.canceled && result.assets) {
-        const uploadPromises = result.assets.map(async (asset) => {
-          const resizedPhoto = await resizeImage({ uri: asset.uri });
-          const file = new ReactNativeFile({
-            uri: resizedPhoto.uri,
-            name: asset?.fileName || Date.now().toString(),
-            type: asset.mimeType || 'image/jpeg',
-          });
-
-          return file;
-        });
-
-        const uploadedImages = await Promise.all(uploadPromises);
+        const uploadedImages = await Promise.all(
+          result.assets.map(async (asset) => {
+            const resizedPhoto = await resizeImage({ uri: asset.uri });
+            return new ReactNativeFile({
+              uri: resizedPhoto.uri,
+              name: asset?.fileName || Date.now().toString(),
+              type: asset.mimeType || 'image/jpeg',
+            });
+          })
+        );
 
         setFiles(uploadedImages);
         setModalVisible(false);
@@ -115,15 +108,53 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
     }
   };
 
+  // Panel & content styles
+  const panelStyle: ViewStyle = isCameraOpen
+    ? {
+        // full-screen camera
+        flex: 1,
+        backgroundColor: Colors.WHITE,
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+        shadowOpacity: 0,
+        elevation: 0,
+        margin: 0,
+      }
+    : {
+        // sheet spans screen width; we create insets via content padding
+        backgroundColor: 'transparent',
+        borderTopLeftRadius: 0,
+        borderTopRightRadius: 0,
+        shadowOpacity: 0,
+        elevation: 0,
+        // ❌ no margins here (prevents overflow on the right)
+      };
+
+  const contentStyle: ViewStyle = isCameraOpen
+    ? {
+        paddingHorizontal: 0,
+        paddingBottom: 0,
+        paddingTop: 0,
+        flex: 1,
+      }
+    : {
+        // ✅ use padding to inset the floating cards and keep them centered
+        paddingHorizontal: 20,
+        paddingBottom: insets.bottom + 20,
+        paddingTop: 0,
+        alignSelf: 'stretch',
+      };
+
   return (
-    <Modal
-      animationIn="slideInUp"
-      animationOut="slideOutDown"
+    <BaseModal
+      title={null}
+      isOpen={isModalVisible}
+      onClose={closeModal}
+      variant="sheet"
+      direction="up"
       backdropOpacity={0.5}
-      onBackdropPress={closeModal}
-      isVisible={isModalVisible}
-      style={{ justifyContent: 'flex-end', margin: isCameraOpen ? 0 : 20 }}
-      useNativeDriverForBackdrop={true}
+      panelStyle={panelStyle}
+      contentStyle={contentStyle}
     >
       {isCameraOpen ? (
         <Camera
@@ -154,6 +185,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
             >
               <TextRegular color={Colors.PRIMARY}>From Photo Album</TextRegular>
             </Pressable>
+
             <Pressable
               onPress={getPermissionsAndOpenCamera}
               style={{
@@ -167,6 +199,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
             >
               <TextRegular color={Colors.PRIMARY}>Take Photo</TextRegular>
             </Pressable>
+
             <Pressable
               onPress={pickDocuments}
               style={{
@@ -181,6 +214,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
               <TextRegular color={Colors.PRIMARY}>Upload PDF file</TextRegular>
             </Pressable>
           </View>
+
           <Pressable
             style={{
               backgroundColor: Colors.WHITE,
@@ -197,6 +231,6 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
           </Pressable>
         </>
       )}
-    </Modal>
+    </BaseModal>
   );
 }
