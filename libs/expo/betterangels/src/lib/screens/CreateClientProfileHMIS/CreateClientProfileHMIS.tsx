@@ -1,11 +1,16 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ControlledInput, Form } from '@monorepo/expo/shared/ui-components';
+import {
+  ControlledInput,
+  Form,
+  SingleSelect,
+} from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { extractHMISErrors } from '../../apollo';
 import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
+import { enumHmisNameQuality } from '../../static';
 import { useCreateHmisClientMutation } from './__generated__/createHmisClient.generated';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
@@ -35,7 +40,7 @@ export function CreateClientProfileHMIS() {
 
       const { firstName, lastName, middleName } = formData;
 
-      const { data, errors } = await createHMISClientMutation({
+      const { data } = await createHMISClientMutation({
         variables: {
           clientInput: {
             firstName,
@@ -51,38 +56,48 @@ export function CreateClientProfileHMIS() {
       const result = data?.hmisCreateClient;
 
       if (!result) {
-        throw new Error(`[createHMISClientMutation error]: invalid response`);
+        throw new Error('missing hmisCreateClient response');
       }
 
       if (result?.__typename === 'HmisCreateClientError') {
         const { message: hmisErrorMessage } = result;
 
-        const hmisErrors = extractHMISErrors(hmisErrorMessage);
+        const { status, fieldErrors = [] } =
+          extractHMISErrors(hmisErrorMessage) || {};
 
-        if (hmisErrors?.status === 422) {
-          const fieldErrorMessages = hmisErrors?.messages || [];
+        console.log(JSON.stringify(fieldErrors, null, 2));
 
-          const fieldErrors = Object.entries(fieldErrorMessages)
-            .filter(([fieldName, _fieldMessages]) =>
-              formKeys.includes(fieldName)
-            )
-            .map(([fieldName, fieldMessages]) => {
-              const errMsg = fieldMessages.join(', ');
-              return {
-                field: fieldName,
-                message: errMsg,
-              };
-            });
+        // handle unprocessable_entity errors and exit
+        if (status === 422) {
+          const formFieldErrors = fieldErrors.filter(({ field }) =>
+            formKeys.includes(field)
+          );
 
-          applyOperationFieldErrors(fieldErrors, setError);
+          applyOperationFieldErrors(formFieldErrors, setError);
 
           return;
         }
 
-        throw new Error(`[HmisCreateClientError]: ${hmisErrorMessage}`);
+        // HmisCreateClientError exists but not 422
+        // throw generic error
+        throw new Error(hmisErrorMessage);
       }
+
+      if (result?.__typename !== 'HmisClientType') {
+        throw new Error('invalid hmisCreateClient response');
+      }
+
+      const { uniqueIdentifier } = result;
+
+      // TODO: decide on HMIS PK and handle /client/${uniqueIdentifier route
+      // router.replace(`/client/${uniqueIdentifier}`);
+      // temporary Snackbar message:
+      showSnackbar({
+        message: `Created HMIS client with uniqueIdentifier: [${uniqueIdentifier}]. But cannot redirect yet.`,
+        type: 'success',
+      });
     } catch (error) {
-      console.error('Task mutation error:', error);
+      console.error('createHMISClientMutation error:', error);
 
       showSnackbar({
         message: 'Something went wrong. Please try again.',
@@ -139,6 +154,38 @@ export function CreateClientProfileHMIS() {
               setValue('lastName', emptyState.lastName);
             }}
             errorMessage={errors.lastName?.message}
+          />
+
+          <Controller
+            name="nameDataQuality"
+            control={control}
+            render={({ field }) => (
+              <SingleSelect
+                allowSelectNone={true}
+                disabled={disabled}
+                label="Name Data Quality"
+                placeholder="Select quality"
+                maxRadioItems={0}
+                items={Object.entries(enumHmisNameQuality).map(
+                  ([value, displayValue]) => ({ value, displayValue })
+                )}
+                selectedValue={field.value}
+                onChange={(value) => field.onChange(value || '')}
+                error={errors.nameDataQuality?.message}
+              />
+            )}
+          />
+
+          <ControlledInput
+            control={control}
+            disabled={disabled}
+            label={'Alias'}
+            name={'aliases'}
+            placeholder={'Enter aliases'}
+            onDelete={() => {
+              setValue('aliases', emptyState.aliases);
+            }}
+            errorMessage={errors.aliases?.message}
           />
         </Form.Fieldset>
       </Form>

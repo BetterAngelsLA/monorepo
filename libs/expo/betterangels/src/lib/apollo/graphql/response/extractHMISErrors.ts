@@ -1,7 +1,4 @@
-type TFieldError = {
-  fieldName: string;
-  message: string;
-};
+import { TFieldError } from '../../../errors/formErrors/types';
 
 export type THMISErrors = {
   code?: number;
@@ -22,9 +19,9 @@ export function extractHMISErrors(message?: string): THMISErrors | null {
     const { code, status, name, messages } = errJSON;
 
     const fieldErrors = Object.entries(messages || {}).map(
-      ([fieldName, fieldMessages]) => {
+      ([field, fieldMessages]) => {
         return {
-          fieldName,
+          field,
           message: fieldMessages.join(', '),
         };
       }
