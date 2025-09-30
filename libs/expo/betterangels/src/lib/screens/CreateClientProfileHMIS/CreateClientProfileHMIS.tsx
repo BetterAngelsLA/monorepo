@@ -38,16 +38,19 @@ export function CreateClientProfileHMIS() {
     try {
       setDisabled(true);
 
-      const { firstName, lastName, middleName } = formData;
+      const { firstName, lastName, middleName, nameDataQuality, alias } =
+        formData;
 
       const { data } = await createHMISClientMutation({
         variables: {
           clientInput: {
             firstName,
             lastName,
+            // nameDataQuality, TODO: fix enum treatment
           },
           clientSubItemsInput: {
             middleName,
+            alias,
           },
         },
         errorPolicy: 'all',
@@ -183,9 +186,9 @@ export function CreateClientProfileHMIS() {
             name={'aliases'}
             placeholder={'Enter aliases'}
             onDelete={() => {
-              setValue('aliases', emptyState.aliases);
+              setValue('alias', emptyState.alias);
             }}
-            errorMessage={errors.aliases?.message}
+            errorMessage={errors.alias?.message}
           />
         </Form.Fieldset>
       </Form>
