@@ -58,7 +58,6 @@
     "expo-location": "*",
     "expo-document-picker": "*",
     "expo-image-picker": "*",
-    "react-native-modal": "*",
     "expo-file-system": "*",
     "react-native-pdf": "*",
     "@react-native-picker/picker": "*",
