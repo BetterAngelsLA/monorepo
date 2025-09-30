@@ -24,7 +24,7 @@ const parseUser = (user?: CurrentUserQuery['currentUser']): TUser | undefined =>
         isOutreachAuthorized: user.isOutreachAuthorized ?? false,
         hasAcceptedTos: user.hasAcceptedTos ?? false,
         hasAcceptedPrivacyPolicy: user.hasAcceptedPrivacyPolicy ?? false,
-        isHmisUser: !!user.isHmisUser,
+        isHmisUser: user.isHmisUser ?? undefined,
       }
     : undefined;
 
@@ -80,7 +80,7 @@ export default function UserProvider({ children }: UserProviderProps) {
       setUser,
       isLoading: loading,
       refetchUser,
-      isHmisUser: user?.isHmisUser || false,
+      isHmisUser: user?.isHmisUser,
     }),
     [user, loading, refetchUser]
   );
