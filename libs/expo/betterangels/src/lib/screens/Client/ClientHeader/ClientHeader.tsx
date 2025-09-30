@@ -5,14 +5,14 @@ import {
 } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
-  Avatar,
   TextMedium,
-  TextRegular,
+  TextRegular
 } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { enumDisplayLanguage } from '../../../static/enumDisplayMapping';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import { ClientCaseManager } from './ClientCaseManager';
+import { ProfilePhotoUploader } from './ProfilePhotoUploader';
 
 interface IClientHeaderProps {
   client: ClientProfileQuery['clientProfile'] | undefined;
@@ -37,18 +37,16 @@ export function ClientHeader(props: IClientHeaderProps) {
           marginBottom: Spacings.xxs,
         }}
       >
-        <Avatar
-          mr="xs"
-          size="xl"
+        <ProfilePhotoUploader
+          clientId={client?.id ?? ''}
           imageUrl={client?.profilePhoto?.url}
-          accessibilityLabel={`client's profile photo`}
-          accessibilityHint={`client's profile photo`}
         />
         <TextMedium size="lg">
           {client?.firstName} {client?.lastName}{' '}
           {client?.nickname && `(${client.nickname})`}
         </TextMedium>
       </View>
+
       <View
         style={{ flexDirection: 'row', alignItems: 'center', gap: Spacings.xs }}
       >
