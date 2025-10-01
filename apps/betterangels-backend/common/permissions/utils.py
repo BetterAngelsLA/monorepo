@@ -1,10 +1,9 @@
 from typing import Any, Sequence, Tuple, Type
 
 import strawberry
-from common.errors import APIErrorCodes
+from common.errors import UnauthenticatedGQLError
 from django.db.models import TextChoices
 from django.utils.encoding import force_str
-from graphql import GraphQLError
 from strawberry_django.auth.utils import get_current_user
 
 
@@ -30,17 +29,9 @@ def permission_enums_to_django_meta_permissions(
 
 
 class IsAuthenticated(strawberry.BasePermission):
-    message = "You must be logged in to perform this action."
-
     def has_permission(self, source: Any, info: strawberry.Info, **kwargs: Any) -> bool:
         user = get_current_user(info)
         if user is None or not user.is_authenticated or not user.is_active:
-            raise GraphQLError(
-                self.message,
-                extensions={
-                    "code": APIErrorCodes.UNAUTHENTICATED,
-                    "http": {"status": 401},
-                },
-            )
+            raise UnauthenticatedGQLError()
 
         return True

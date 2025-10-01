@@ -5,6 +5,7 @@ from typing import Any, Optional
 import jwt
 import requests
 import strawberry
+from common.errors import UnauthenticatedGQLError
 from common.utils import dict_keys_to_camel
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
@@ -19,6 +20,7 @@ from graphql import (
     validate,
 )
 from graphql.type import GraphQLObjectType as _GraphQLObjectType
+from hmis.errors import is_hmis_unauthenticated
 from hmis.types import HmisClientFilterInput, HmisPaginationInput
 
 _SESSION_KEY = "hmis_auth_token"
@@ -62,8 +64,16 @@ class HmisApiBridge:
             json=body,
             timeout=timeout,
         )
+
+        response = resp.json() or {}
+
+        if errors := response.get("errors"):
+            if is_hmis_unauthenticated(errors):
+                # TODO: destroy session here?
+                raise UnauthenticatedGQLError()
+
         # If server replies non-JSON on error, .json() will raise — we treat as failure.
-        return resp.json() or {}
+        return response
 
     def _validate_selection_for_type(
         self,
