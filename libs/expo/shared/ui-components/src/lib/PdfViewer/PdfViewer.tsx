@@ -27,7 +27,7 @@ export default function PdfViewer({
   cacheKey,
   onError,
   headers,
-  maxCacheEntries,
+  maxCacheEntries = 20,
 }: TProps) {
   const [localUri, setLocalUri] = useState<string | null>(null);
   const [hasError, setHasError] = useState<boolean>(false);
