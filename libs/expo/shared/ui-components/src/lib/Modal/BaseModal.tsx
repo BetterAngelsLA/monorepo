@@ -13,36 +13,36 @@ import {
   ViewStyle,
   useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ModalHeader } from './ModalHeader';
 
 export interface IFileViewerModal extends PropsWithChildren {
-  /** Header title; if null/undefined in fullscreen, we auto-render a safe-area overlay close */
+  /** Header title. If null/undefined in fullscreen, we auto-render a safe-area overlay close. */
   title?: string | null;
 
-  /** External visibility */
+  /** External visibility control (controlled component). */
   isOpen: boolean;
 
-  /** Optional: parent setter (used when the modal initiates a close) */
+  /** Optional setter invoked on internal close (backdrop/overlay/hardware back). */
   setIsOpen?: (open: boolean) => void;
 
-  /** Called after an internal close (backdrop/overlay/hardware back in sheet/fullscreen) */
+  /** Fired after an internal close finishes. Parent-driven closes should NOT rely on this. */
   onClose?: () => void;
 
-  /** 'fullscreen' uses RN modal animation; 'sheet' is our slide+fade with backdrop */
+  /** 'fullscreen' uses RN Modal animation; 'sheet' uses a custom slide + backdrop fade. */
   variant?: 'fullscreen' | 'sheet';
 
   /** Sheet options */
-  direction?: 'up' | 'right'; // 'up' => bottom sheet, 'right' => drawer
-  panelOffset?: number; // drawer left margin
-  backdropOpacity?: number; // 0..1
-  sheetTopPadding?: number; // extra top padding for 'up' sheets
+  direction?: 'up' | 'right'; // 'up' => bottom sheet; 'right' => side drawer
+  panelOffset?: number; // left margin for 'right' drawer
+  backdropOpacity?: number; // 0..1 (dim amount)
+  sheetTopPadding?: number; // extra space at top for 'up' sheets
 
   /** Style overrides */
   panelStyle?: ViewStyle;
   contentStyle?: ViewStyle;
 
-  /** Force overlay close in fullscreen (otherwise auto-enabled when title == null) */
+  /** Force overlay close in fullscreen (otherwise auto-enabled when title == null). */
   useOverlayClose?: boolean;
   overlayCloseColor?: string;
 }
@@ -68,21 +68,21 @@ export function BaseModal({
 }: IFileViewerModal) {
   const { width: screenW, height: screenH } = useWindowDimensions();
 
-  // ---- SHEET ANIMATION STATE ----
+  // --- SHEET animation state ---
   const [mounted, setMounted] = useState(isOpen); // only relevant for 'sheet'
-  const progress = useRef(new Animated.Value(0)).current; // 0 closed -> 1 open
+  const progress = useRef(new Animated.Value(0)).current; // 0 -> closed, 1 -> open
   const OFF = direction === 'right' ? screenW : screenH;
 
-  const animateTo = (to: 0 | 1, after?: () => void) => {
+  const animateTo = (to: 0 | 1, done?: () => void) => {
     Animated.timing(progress, {
       toValue: to,
       duration: to ? DUR_IN : DUR_OUT,
       easing: to ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
       useNativeDriver: true,
-    }).start(({ finished }) => finished && after?.());
+    }).start(({ finished }) => finished && done?.());
   };
 
-  // Mount/unmount for sheet; fullscreen relies on RN Modal visibility
+  // Mount/unmount for sheet; fullscreen relies on RNModal visibility.
   useEffect(() => {
     if (variant !== 'sheet') {
       setMounted(isOpen);
@@ -91,52 +91,20 @@ export function BaseModal({
     if (isOpen) {
       if (!mounted) setMounted(true);
       progress.setValue(0);
+      // Kick off open animation on next frame to avoid layout thrash.
       requestAnimationFrame(() => animateTo(1));
     } else if (mounted) {
-      animateTo(0, () => setMounted(false)); // parent-driven close: don't call onClose to avoid double-callbacks
+      // Parent-driven close: animate out; do not call onClose to avoid double-callbacks.
+      animateTo(0, () => setMounted(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [variant, isOpen]); // simple & stable
+  }, [variant, isOpen]);
 
-  // Auto overlay for fullscreen with no title (full-bleed viewers)
+  // Auto overlay for fullscreen w/o title (full-bleed viewers)
   const shouldOverlayClose =
     useOverlayClose ?? (variant === 'fullscreen' && title == null);
 
-  // Build a SafeArea overlay "X" that always sits below the notch/status bar.
-  // Using SafeAreaView avoids brittle insets math and works reliably inside RN Modal windows.
-  const overlayClose = shouldOverlayClose ? (
-    <SafeAreaView
-      pointerEvents="box-none"
-      edges={['top', 'right']}
-      style={StyleSheet.absoluteFill}
-    >
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Close"
-        accessibilityHint="Closes the modal"
-        onPress={() => {
-          setIsOpen?.(false);
-          onClose?.();
-        }}
-        style={{
-          position: 'absolute',
-          top: 0, // SafeAreaView provides the top inset
-          right: 0,
-          padding: 8,
-          marginTop: 8,
-          marginRight: 12,
-          zIndex: 10,
-        }}
-      >
-        <PlusIcon rotate="45deg" size="lg" color={overlayCloseColor} />
-      </Pressable>
-    </SafeAreaView>
-  ) : null;
-
-  // If sheet not mounted and not open, render nothing
-  if (variant === 'sheet' && !mounted && !isOpen) return null;
-
-  // Derived sheet transforms
+  // Sheet transforms
   const translate = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [OFF, 0],
@@ -150,8 +118,7 @@ export function BaseModal({
     outputRange: [0, backdropOpacity],
   });
 
-  // Internal close for SHEET (animate out, then notify)
-  const requestSheetClose = () => {
+  const internalSheetClose = () => {
     animateTo(0, () => {
       setMounted(false);
       setIsOpen?.(false);
@@ -159,94 +126,136 @@ export function BaseModal({
     });
   };
 
+  const internalFullscreenClose = () => {
+    setIsOpen?.(false);
+    onClose?.();
+  };
+
+  // Early out for sheet when not mounted
+  if (variant === 'sheet' && !mounted && !isOpen) return null;
+
   return (
     <RNModal
       visible={variant === 'sheet' ? mounted : isOpen}
       transparent={variant === 'sheet'}
       animationType={variant === 'fullscreen' ? 'slide' : 'none'}
-      statusBarTranslucent={variant === 'sheet'} // sheets draw under status bar; fullscreen uses SafeArea
+      statusBarTranslucent={variant === 'sheet'} // sheets draw under the status bar; fullscreen uses SafeArea
       presentationStyle={variant === 'sheet' ? 'overFullScreen' : 'fullScreen'}
       onRequestClose={() => {
-        if (variant === 'sheet') {
-          requestSheetClose();
-        } else {
-          setIsOpen?.(false);
-          onClose?.();
-        }
+        if (variant === 'sheet') internalSheetClose();
+        else internalFullscreenClose();
       }}
     >
-      {variant === 'fullscreen' ? (
-        shouldOverlayClose ? (
-          // Full-bleed content; overlay "X" respects safe area
-          <View style={{ flex: 1, backgroundColor: Colors.WHITE }}>
-            {children}
-            {overlayClose}
-          </View>
-        ) : (
-          // Header mode: always below notch
-          <SafeAreaView
-            edges={['top', 'left', 'right', 'bottom']}
-            style={{ flex: 1, backgroundColor: Colors.WHITE }}
-          >
-            {title != null && (
-              <ModalHeader onClose={() => onClose?.()} title={title} />
-            )}
-            {children}
-          </SafeAreaView>
-        )
-      ) : (
-        // ---- SHEET ----
-        <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-          {/* Backdrop */}
-          <Animated.View
-            style={[
-              StyleSheet.absoluteFill,
-              styles.backdrop,
-              { opacity: dimOpacity },
-            ]}
-          >
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Close modal"
-              accessibilityHint="Dismisses the modal"
-              style={StyleSheet.absoluteFill}
-              onPress={requestSheetClose}
-            />
-          </Animated.View>
-
-          {/* Panel host */}
-          <View
-            style={[
-              styles.host,
-              direction === 'right' ? { alignItems: 'flex-end' } : undefined,
-              direction === 'up' && sheetTopPadding > 0
-                ? { paddingTop: sheetTopPadding }
-                : undefined,
-            ]}
-            pointerEvents="box-none"
-          >
-            <Animated.View
-              style={[
-                styles.cardPanel,
-                direction === 'right' ? { marginLeft: panelOffset } : undefined,
-                { transform },
-                panelStyle,
-              ]}
-            >
-              <SafeAreaView style={[styles.cardInner, contentStyle]}>
+      {/* Always provide safe-area context inside RNModal to avoid stale/missing insets on reopen */}
+      <SafeAreaProvider>
+        {variant === 'fullscreen' ? (
+          shouldOverlayClose ? (
+            // Fullscreen content (no header). Keep ALL edges safe so PDF/WebViews won't overlap bars.
+            <View style={styles.flexWhite}>
+              <SafeAreaView
+                edges={['top', 'left', 'right', 'bottom']}
+                style={styles.flex}
+              >
                 {children}
               </SafeAreaView>
+
+              {/* Safe-area overlay close (below notch, above content) */}
+              <SafeAreaView
+                pointerEvents="box-none"
+                edges={['top', 'right']}
+                style={StyleSheet.absoluteFill}
+              >
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Close"
+                  accessibilityHint="Closes the modal"
+                  onPress={internalFullscreenClose}
+                  style={styles.overlayClose}
+                >
+                  <PlusIcon
+                    rotate="45deg"
+                    size="lg"
+                    color={overlayCloseColor}
+                  />
+                </Pressable>
+              </SafeAreaView>
+            </View>
+          ) : (
+            // Fullscreen with header (content below the notch)
+            <SafeAreaView
+              edges={['top', 'left', 'right', 'bottom']}
+              style={styles.flexWhite}
+            >
+              {title != null && (
+                <ModalHeader onClose={internalFullscreenClose} title={title} />
+              )}
+              {children}
+            </SafeAreaView>
+          )
+        ) : (
+          // --- SHEET ---
+          <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+            {/* Backdrop */}
+            <Animated.View
+              style={[
+                StyleSheet.absoluteFill,
+                styles.backdrop,
+                { opacity: dimOpacity },
+              ]}
+            >
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Close modal"
+                accessibilityHint="Dismisses the modal"
+                style={StyleSheet.absoluteFill}
+                onPress={internalSheetClose}
+              />
             </Animated.View>
+
+            {/* Panel host */}
+            <View
+              style={[
+                styles.host,
+                direction === 'right' ? { alignItems: 'flex-end' } : undefined,
+                direction === 'up' && sheetTopPadding > 0
+                  ? { paddingTop: sheetTopPadding }
+                  : undefined,
+              ]}
+              pointerEvents="box-none"
+            >
+              <Animated.View
+                style={[
+                  styles.cardPanel,
+                  direction === 'right'
+                    ? { marginLeft: panelOffset }
+                    : undefined,
+                  { transform },
+                  panelStyle,
+                ]}
+              >
+                {/* For a bottom sheet, pad left/right/bottom only */}
+                <SafeAreaView
+                  edges={['left', 'right', 'bottom']}
+                  style={[styles.cardInner, contentStyle]}
+                >
+                  {children}
+                </SafeAreaView>
+              </Animated.View>
+            </View>
           </View>
-        </View>
-      )}
+        )}
+      </SafeAreaProvider>
     </RNModal>
   );
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  flexWhite: { flex: 1, backgroundColor: Colors.WHITE },
+
   backdrop: { backgroundColor: '#000' },
   host: { flex: 1, justifyContent: 'flex-end' },
+
   cardPanel: {
     width: '100%',
     backgroundColor: Colors.WHITE,
@@ -263,6 +272,16 @@ const styles = StyleSheet.create({
   },
   // callers can pass { flex: 1 } via contentStyle to stretch
   cardInner: { flex: 0 },
+
+  overlayClose: {
+    position: 'absolute',
+    top: 0, // SafeAreaView adds inset for us
+    right: 0,
+    padding: 8,
+    marginTop: 8,
+    marginRight: 12,
+    zIndex: 10,
+  },
 });
 
 export default BaseModal;
