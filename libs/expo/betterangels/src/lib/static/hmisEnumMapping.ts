@@ -1,3 +1,5 @@
+// HMIS Enum Inputs are integers, while outputs seem to be strings
+// TODO: move logic to BE
 export enum HmisSsnQualityIntEnum {
   FULL = 1,
   PARTIAL = 2,

@@ -16,5 +16,6 @@ export const FormSchema = z.object({
   lastName: z.string().min(1, 'Last Name is required.'),
   middleName: z.string(),
   alias: z.string(),
+  // form uses string Enum while api requires an integer - converted onSubmit
   nameDataQuality: z.enum(HmisNameQualityEnum).or(z.literal('')),
 });

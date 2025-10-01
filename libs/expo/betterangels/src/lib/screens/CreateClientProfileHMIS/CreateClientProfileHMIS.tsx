@@ -73,8 +73,6 @@ export function CreateClientProfileHMIS() {
         const { status, fieldErrors = [] } =
           extractHMISErrors(hmisErrorMessage) || {};
 
-        console.log(JSON.stringify(fieldErrors, null, 2));
-
         // handle unprocessable_entity errors and exit
         if (status === 422) {
           const formFieldErrors = fieldErrors.filter(({ field }) =>

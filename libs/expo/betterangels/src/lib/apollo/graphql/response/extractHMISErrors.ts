@@ -4,21 +4,25 @@ export type THMISErrors = {
   code?: number;
   status?: number;
   name?: string;
+  message?: Record<string, string[]>; // hmis can send message, messages or both
   messages?: Record<string, string[]>;
   fieldErrors?: TFieldError[];
 };
 
-export function extractHMISErrors(message?: string): THMISErrors | null {
-  if (!message) {
+export function extractHMISErrors(hmisError?: string): THMISErrors | null {
+  if (!hmisError) {
     return null;
   }
 
   try {
-    const errJSON: THMISErrors = JSON.parse(message);
+    const errJSON: THMISErrors = JSON.parse(hmisError);
 
-    const { code, status, name, messages } = errJSON;
+    const { code, status, name, message, messages } = errJSON;
 
-    const fieldErrors = Object.entries(messages || {}).map(
+    // hmis can send message, messages or both (with same data)
+    const errMessages = messages || message;
+
+    const fieldErrors = Object.entries(errMessages || {}).map(
       ([field, fieldMessages]) => {
         return {
           field,
