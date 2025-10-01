@@ -10,7 +10,7 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { extractHMISErrors } from '../../apollo';
 import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
-import { enumHmisNameQuality } from '../../static';
+import { HmisNameQualityIntEnum, enumHmisNameQuality } from '../../static';
 import { useCreateHmisClientMutation } from './__generated__/createHmisClient.generated';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
@@ -41,12 +41,17 @@ export function CreateClientProfileHMIS() {
       const { firstName, lastName, middleName, nameDataQuality, alias } =
         formData;
 
+      const nameQualityEnumInt =
+        HmisNameQualityIntEnum[
+          nameDataQuality as keyof typeof HmisNameQualityIntEnum
+        ];
+
       const { data } = await createHMISClientMutation({
         variables: {
           clientInput: {
             firstName,
             lastName,
-            // nameDataQuality, TODO: fix enum treatment
+            nameDataQuality: nameQualityEnumInt,
           },
           clientSubItemsInput: {
             middleName,
