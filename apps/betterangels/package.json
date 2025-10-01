@@ -90,7 +90,8 @@
     "@storybook/react-native-web-vite": "*",
     "@nx/detox": "*",
     "@nx/rollup": "*",
-    "@types/geojson": "*"
+    "@types/geojson": "*",
+    "expo-crypto": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

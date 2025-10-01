@@ -5424,6 +5424,7 @@ __metadata:
     expo-camera: "npm:~17.0.8"
     expo-clipboard: "npm:~8.0.7"
     expo-constants: "npm:~18.0.9"
+    expo-crypto: "npm:~15.0.7"
     expo-dev-client: "npm:~6.0.12"
     expo-document-picker: "npm:~14.0.7"
     expo-font: "npm:~14.0.8"
@@ -11677,7 +11678,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"base64-js@npm:^1.2.3, base64-js@npm:^1.3.1, base64-js@npm:^1.5.1":
+"base64-js@npm:^1.2.3, base64-js@npm:^1.3.0, base64-js@npm:^1.3.1, base64-js@npm:^1.5.1":
   version: 1.5.1
   resolution: "base64-js@npm:1.5.1"
   checksum: 10/669632eb3745404c2f822a18fc3a0122d2f9a7a13f7fb8b5823ee19d1d2ff9ee5b52c53367176ea4ad093c332fd5ab4bd0ebae5a8e27917a4105a4cfc86b1005
@@ -15218,6 +15219,17 @@ __metadata:
     expo: "*"
     react-native: "*"
   checksum: 10/500ff0b0929a4cba7f114ea99bbe5e42ea18b9ea37d39f6be1c626fa702c35a9b386b620b72e51c3c9e8e7d44c2a3377dd4810dbf98ac96333d1d9c0967bedd9
+  languageName: node
+  linkType: hard
+
+"expo-crypto@npm:~15.0.7":
+  version: 15.0.7
+  resolution: "expo-crypto@npm:15.0.7"
+  dependencies:
+    base64-js: "npm:^1.3.0"
+  peerDependencies:
+    expo: "*"
+  checksum: 10/4ebbfa8b92739aaf49babeb9e62b3b20c8c5c3b314befe32a29288caa059b2fed3877e4544f9563a5e5e462a3989c2ad668fa93e2318dca6381a757a2ba2ea5b
   languageName: node
   linkType: hard
 
