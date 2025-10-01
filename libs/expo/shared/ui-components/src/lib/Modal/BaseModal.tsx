@@ -1,11 +1,7 @@
+// libs/expo/shared/ui-components/src/lib/Modal/BaseModal.tsx
+import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { PropsWithChildren, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
@@ -21,27 +17,38 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ModalHeader } from './ModalHeader';
 
 export interface IFileViewerModal extends PropsWithChildren {
+  /** Header title; if null/undefined in fullscreen, we auto-render a safe-area overlay close */
   title?: string | null;
+
+  /** External visibility */
   isOpen: boolean;
+
+  /** Optional: parent setter (used when the modal initiates a close) */
   setIsOpen?: (open: boolean) => void;
+
+  /** Called after an internal close (backdrop/overlay/hardware back in sheet/fullscreen) */
   onClose?: () => void;
 
-  /** 'fullscreen' uses RN Modal slide; 'sheet' is a card with our own animation/backdrop */
+  /** 'fullscreen' uses RN modal animation; 'sheet' is our slide+fade with backdrop */
   variant?: 'fullscreen' | 'sheet';
 
   /** Sheet options */
-  direction?: 'up' | 'right'; // 'up' = bottom sheet, 'right' = right drawer
-  panelOffset?: number; // left margin for right drawer
+  direction?: 'up' | 'right'; // 'up' => bottom sheet, 'right' => drawer
+  panelOffset?: number; // drawer left margin
   backdropOpacity?: number; // 0..1
   sheetTopPadding?: number; // extra top padding for 'up' sheets
 
   /** Style overrides */
   panelStyle?: ViewStyle;
   contentStyle?: ViewStyle;
+
+  /** Force overlay close in fullscreen (otherwise auto-enabled when title == null) */
+  useOverlayClose?: boolean;
+  overlayCloseColor?: string;
 }
 
-const OPEN_MS = 260;
-const CLOSE_MS = 220;
+const DUR_IN = 260;
+const DUR_OUT = 200;
 
 export function BaseModal({
   title,
@@ -56,82 +63,139 @@ export function BaseModal({
   sheetTopPadding = 0,
   panelStyle,
   contentStyle,
+  useOverlayClose,
+  overlayCloseColor = Colors.BLACK,
 }: IFileViewerModal) {
   const { width: screenW, height: screenH } = useWindowDimensions();
-  const [mounted, setMounted] = useState(isOpen);
 
-  // single progress drives both panel + backdrop
-  const t = useRef(new Animated.Value(0)).current;
-
+  // ---- SHEET ANIMATION STATE ----
+  const [mounted, setMounted] = useState(isOpen); // only relevant for 'sheet'
+  const progress = useRef(new Animated.Value(0)).current; // 0 closed -> 1 open
   const OFF = direction === 'right' ? screenW : screenH;
 
-  const animate = useCallback(
-    (open: boolean) => {
-      Animated.timing(t, {
-        toValue: open ? 1 : 0,
-        duration: open ? OPEN_MS : CLOSE_MS,
-        easing: open ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
-        useNativeDriver: true,
-      }).start(({ finished }) => {
-        if (finished && !open) {
-          setMounted(false);
-          onClose?.();
-          setIsOpen?.(false);
-        }
-      });
-    },
-    [t, onClose, setIsOpen]
-  );
+  const animateTo = (to: 0 | 1, after?: () => void) => {
+    Animated.timing(progress, {
+      toValue: to,
+      duration: to ? DUR_IN : DUR_OUT,
+      easing: to ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+      useNativeDriver: true,
+    }).start(({ finished }) => finished && after?.());
+  };
 
+  // Mount/unmount for sheet; fullscreen relies on RN Modal visibility
   useEffect(() => {
-    if (variant === 'sheet') {
-      if (isOpen) {
-        setMounted(true);
-        t.setValue(0); // reset offscreen
-        animate(true);
-      } else if (mounted) {
-        animate(false);
-      }
-    } else {
+    if (variant !== 'sheet') {
       setMounted(isOpen);
+      return;
     }
-  }, [variant, isOpen, mounted, animate, t]);
+    if (isOpen) {
+      if (!mounted) setMounted(true);
+      progress.setValue(0);
+      requestAnimationFrame(() => animateTo(1));
+    } else if (mounted) {
+      animateTo(0, () => setMounted(false)); // parent-driven close: don't call onClose to avoid double-callbacks
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [variant, isOpen]); // simple & stable
 
-  if (!mounted && !isOpen) return null;
+  // Auto overlay for fullscreen with no title (full-bleed viewers)
+  const shouldOverlayClose =
+    useOverlayClose ?? (variant === 'fullscreen' && title == null);
 
-  // translate along the active axis
-  const translate = t.interpolate({
+  // Build a SafeArea overlay "X" that always sits below the notch/status bar.
+  // Using SafeAreaView avoids brittle insets math and works reliably inside RN Modal windows.
+  const overlayClose = shouldOverlayClose ? (
+    <SafeAreaView
+      pointerEvents="box-none"
+      edges={['top', 'right']}
+      style={StyleSheet.absoluteFill}
+    >
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Close"
+        accessibilityHint="Closes the modal"
+        onPress={() => {
+          setIsOpen?.(false);
+          onClose?.();
+        }}
+        style={{
+          position: 'absolute',
+          top: 0, // SafeAreaView provides the top inset
+          right: 0,
+          padding: 8,
+          marginTop: 8,
+          marginRight: 12,
+          zIndex: 10,
+        }}
+      >
+        <PlusIcon rotate="45deg" size="lg" color={overlayCloseColor} />
+      </Pressable>
+    </SafeAreaView>
+  ) : null;
+
+  // If sheet not mounted and not open, render nothing
+  if (variant === 'sheet' && !mounted && !isOpen) return null;
+
+  // Derived sheet transforms
+  const translate = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [OFF, 0],
   });
-
   const transform: ViewStyle['transform'] =
     direction === 'right'
       ? [{ translateX: translate }]
       : [{ translateY: translate }];
-
-  const dimOpacity = t.interpolate({
+  const dimOpacity = progress.interpolate({
     inputRange: [0, 1],
     outputRange: [0, backdropOpacity],
   });
 
+  // Internal close for SHEET (animate out, then notify)
+  const requestSheetClose = () => {
+    animateTo(0, () => {
+      setMounted(false);
+      setIsOpen?.(false);
+      onClose?.();
+    });
+  };
+
   return (
     <RNModal
-      visible={mounted}
+      visible={variant === 'sheet' ? mounted : isOpen}
       transparent={variant === 'sheet'}
       animationType={variant === 'fullscreen' ? 'slide' : 'none'}
-      statusBarTranslucent
+      statusBarTranslucent={variant === 'sheet'} // sheets draw under status bar; fullscreen uses SafeArea
       presentationStyle={variant === 'sheet' ? 'overFullScreen' : 'fullScreen'}
-      onRequestClose={() =>
-        variant === 'sheet' ? animate(false) : onClose?.()
-      }
+      onRequestClose={() => {
+        if (variant === 'sheet') {
+          requestSheetClose();
+        } else {
+          setIsOpen?.(false);
+          onClose?.();
+        }
+      }}
     >
       {variant === 'fullscreen' ? (
-        <SafeAreaView style={{ flex: 1, backgroundColor: Colors.WHITE }}>
-          <ModalHeader onClose={() => onClose?.()} title={title} />
-          {children}
-        </SafeAreaView>
+        shouldOverlayClose ? (
+          // Full-bleed content; overlay "X" respects safe area
+          <View style={{ flex: 1, backgroundColor: Colors.WHITE }}>
+            {children}
+            {overlayClose}
+          </View>
+        ) : (
+          // Header mode: always below notch
+          <SafeAreaView
+            edges={['top', 'left', 'right', 'bottom']}
+            style={{ flex: 1, backgroundColor: Colors.WHITE }}
+          >
+            {title != null && (
+              <ModalHeader onClose={() => onClose?.()} title={title} />
+            )}
+            {children}
+          </SafeAreaView>
+        )
       ) : (
+        // ---- SHEET ----
         <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
           {/* Backdrop */}
           <Animated.View
@@ -146,7 +210,7 @@ export function BaseModal({
               accessibilityLabel="Close modal"
               accessibilityHint="Dismisses the modal"
               style={StyleSheet.absoluteFill}
-              onPress={() => animate(false)}
+              onPress={requestSheetClose}
             />
           </Animated.View>
 
@@ -197,7 +261,7 @@ const styles = StyleSheet.create({
     // Android elevation
     ...Platform.select({ android: { elevation: 10 } }),
   },
-  // default is compact; callers may pass { flex: 1 } to stretch
+  // callers can pass { flex: 1 } via contentStyle to stretch
   cardInner: { flex: 0 },
 });
 
