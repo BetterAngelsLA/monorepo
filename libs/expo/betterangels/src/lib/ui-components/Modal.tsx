@@ -1,6 +1,13 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
+import {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Animated,
   Easing,
@@ -17,81 +24,107 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface IModalProps {
   isModalVisible: boolean;
-  closeModal: () => void;
+  closeModal: () => void; // parent toggles visibility; we call after exit when user closes
   children: ReactNode;
   closeButton?: boolean;
-  opacity?: number;
-  vertical?: boolean;
+  opacity?: number; // backdrop target opacity (0..1)
+  vertical?: boolean; // true = slide up; false = slide from right
   ml?: number;
   mt?: number;
   height?: DimensionValue;
-  propogateSwipe?: boolean;
-  onLayout?: () => void;
   fullWidth?: boolean;
+
+  propagateSwipe?: boolean;
+  onLayout?: () => void;
 }
+
+const DUR_IN = 260;
+const DUR_OUT = 200;
 
 export default function Modal({
   isModalVisible,
   closeModal,
   children,
   closeButton,
-  opacity = 0,
-  vertical = false,
+  opacity = 0.5,
+  vertical = true,
   ml = 0,
   mt,
   height,
-  propogateSwipe = false,
-  onLayout,
   fullWidth = true,
+  propagateSwipe,
+  onLayout,
 }: IModalProps) {
+  const enableSwipe = propagateSwipe === true;
   const insets = useSafeAreaInsets();
   const { width, height: screenH } = useWindowDimensions();
 
-  // Stable animated values
-  const translate = useRef(new Animated.Value(0)).current;
-  const backdrop = useRef(new Animated.Value(0)).current;
+  // 0 = closed, 1 = open
+  const progress = useRef(new Animated.Value(0)).current;
+  const [mounted, setMounted] = useState<boolean>(isModalVisible);
+  const prevVisible = useRef<boolean>(isModalVisible);
 
   const OFF = vertical ? screenH : width;
-  const DUR_IN = 260;
-  const DUR_OUT = 200;
 
-  // Memoized animator
-  const animate = useCallback(
-    (toOpen: boolean) => {
-      Animated.parallel([
-        Animated.timing(translate, {
-          toValue: toOpen ? 0 : OFF,
-          duration: toOpen ? DUR_IN : DUR_OUT,
-          easing: toOpen ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(backdrop, {
-          toValue: toOpen ? opacity : 0,
-          duration: toOpen ? DUR_IN - 60 : DUR_OUT - 20,
-          easing: toOpen ? Easing.out(Easing.quad) : Easing.in(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        if (!toOpen) closeModal();
-      });
-    },
-    [OFF, opacity, closeModal, translate, backdrop]
+  // Derived animations from single driver
+  const translate = useMemo(
+    () =>
+      progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [OFF, 0],
+      }),
+    [progress, OFF]
   );
 
-  // Show/hide with animation
-  useEffect(() => {
-    if (isModalVisible) {
-      translate.setValue(OFF);
-      backdrop.setValue(0);
-      animate(true);
-    } else {
-      animate(false);
-    }
-  }, [isModalVisible, OFF, animate, translate, backdrop]);
+  const backdropOpacity = useMemo(
+    () =>
+      progress.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, opacity],
+      }),
+    [progress, opacity]
+  );
 
-  // Memoized pan handlers (only when swipe is enabled)
+  const animateTo = useCallback(
+    (to: 0 | 1, after?: () => void, dur = to ? DUR_IN : DUR_OUT) => {
+      Animated.timing(progress, {
+        toValue: to,
+        duration: dur,
+        easing: to ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }).start(({ finished }) => finished && after?.());
+    },
+    [progress]
+  );
+
+  // Only animate on real visibility flips
+  useEffect(() => {
+    const was = prevVisible.current;
+    const now = isModalVisible;
+    prevVisible.current = now;
+
+    if (now && !was) {
+      setMounted(true);
+      // reset to fully closed before opening
+      progress.setValue(0);
+      requestAnimationFrame(() => animateTo(1));
+    } else if (!now && was) {
+      // parent requested close: animate out, then unmount
+      animateTo(0, () => setMounted(false));
+    }
+  }, [isModalVisible, animateTo, progress]);
+
+  const requestClose = useCallback(() => {
+    // user-initiated close: animate out first, then notify parent
+    animateTo(0, () => {
+      setMounted(false);
+      closeModal?.();
+    });
+  }, [animateTo, closeModal]);
+
+  // Swipe-to-close
   const panHandlers = useMemo(() => {
-    if (!propogateSwipe) return {};
+    if (!enableSwipe) return {};
     return PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) =>
         vertical
@@ -101,45 +134,51 @@ export default function Modal({
         const delta = vertical ? g.dy : g.dx;
         if (delta > 0) {
           const clamped = Math.min(delta, OFF);
-          translate.setValue(clamped);
-          const progress = 1 - Math.min(clamped / OFF, 1);
-          backdrop.setValue(opacity * progress);
+          const p = 1 - clamped / OFF; // 1..0 as you drag down/right
+          progress.setValue(p);
         }
       },
       onPanResponderRelease: (_, g) => {
         const delta = vertical ? g.dy : g.dx;
         const vel = vertical ? g.vy : g.vx;
         const shouldClose = delta > OFF * 0.25 || vel > 0.8;
-        animate(!shouldClose ? true : false);
+        animateTo(shouldClose ? 0 : 1);
+        if (shouldClose) {
+          // ensure parent state updates after exit
+          setTimeout(() => requestClose(), DUR_OUT);
+        }
       },
     }).panHandlers;
-  }, [propogateSwipe, vertical, OFF, opacity, animate, translate, backdrop]);
+  }, [enableSwipe, vertical, OFF, progress, animateTo, requestClose]);
 
-  // Memoized transform style
-  const transform = useMemo<ViewStyle['transform']>(
+  const transform: ViewStyle['transform'] = useMemo(
     () =>
       vertical ? [{ translateY: translate }] : [{ translateX: translate }],
     [vertical, translate]
   );
 
+  if (!mounted) return null;
+
   return (
     <RNModal
-      visible={isModalVisible}
+      visible
       transparent
       animationType="none"
-      onRequestClose={() => animate(false)}
       statusBarTranslucent
+      onRequestClose={requestClose}
     >
       {/* Backdrop */}
       <Animated.View
         style={[
           StyleSheet.absoluteFill,
-          { backgroundColor: '#000', opacity: backdrop },
+          { backgroundColor: '#000', opacity: backdropOpacity },
         ]}
       >
         <Pressable
           accessibilityRole="button"
-          onPress={() => animate(false)}
+          accessibilityLabel="Close"
+          accessibilityHint="Closes the modal"
+          onPress={requestClose}
           style={StyleSheet.absoluteFill}
         />
       </Animated.View>
@@ -167,12 +206,12 @@ export default function Modal({
               paddingBottom: 35 + insets.bottom,
               paddingTop: (fullWidth ? insets.top : 0) + Spacings.xs,
               alignSelf: vertical ? 'stretch' : 'flex-end',
-              ...(fullWidth ? { flex: 1 as number } : {}),
-              ...(height !== undefined ? { height } : {}),
+              ...(fullWidth ? ({ flex: 1 } as const) : null),
+              ...(height !== undefined ? { height } : null),
             } as ViewStyle,
           ]}
         >
-          {propogateSwipe && vertical && (
+          {enableSwipe && vertical && (
             <View
               style={{
                 alignSelf: 'center',
@@ -187,11 +226,11 @@ export default function Modal({
 
           {closeButton && (
             <Pressable
-              style={{ alignSelf: 'flex-end', marginRight: Spacings.md }}
-              accessibilityLabel="close"
-              accessibilityHint="closes the modal"
               accessibilityRole="button"
-              onPress={() => animate(false)}
+              accessibilityLabel="Close"
+              accessibilityHint="Closes the modal"
+              onPress={requestClose}
+              style={{ alignSelf: 'flex-end', marginRight: Spacings.md }}
             >
               <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
             </Pressable>
