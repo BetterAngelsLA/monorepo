@@ -5,7 +5,6 @@ import {
   GenderEnum,
   HairColorEnum,
   HmisAgencyEnum,
-  HmisNameQualityEnum,
   LanguageEnum,
   LivingSituationEnum,
   MaritalStatusEnum,
@@ -293,14 +292,4 @@ export const enumDisplayTaskStatus: {
   [TaskStatusEnum.ToDo]: 'To Do',
   [TaskStatusEnum.InProgress]: 'In Progress',
   [TaskStatusEnum.Completed]: 'Completed',
-};
-
-export const enumHmisNameQuality: {
-  [key in HmisNameQualityEnum]: string;
-} = {
-  [HmisNameQualityEnum.Full]: 'Full name reported',
-  [HmisNameQualityEnum.Partial]: 'Partial, street name, or code name reported',
-  [HmisNameQualityEnum.DontKnow]: "Client doesn't know",
-  [HmisNameQualityEnum.NoAnswer]: 'Client prefers not to answer',
-  [HmisNameQualityEnum.NotCollected]: 'Data not collected',
 };

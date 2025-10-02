@@ -93,15 +93,9 @@ export function CreateClientProfileHMIS() {
         throw new Error('invalid hmisCreateClient response');
       }
 
-      const { uniqueIdentifier } = result;
+      const { personalId } = result;
 
-      // TODO: decide on HMIS PK and handle /client/${uniqueIdentifier route
-      // router.replace(`/client/${uniqueIdentifier}`);
-      // temporary Snackbar message:
-      showSnackbar({
-        message: `Created HMIS client with uniqueIdentifier: [${uniqueIdentifier}]. But cannot redirect yet.`,
-        type: 'success',
-      });
+      router.replace(`/client/${personalId}`);
     } catch (error) {
       console.error('createHMISClientMutation error:', error);
 
