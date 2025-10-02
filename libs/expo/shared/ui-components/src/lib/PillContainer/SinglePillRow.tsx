@@ -175,7 +175,7 @@ export const SinglePillRow: React.FC<Props> = React.memo(
     const overflow = Math.max(0, sorted.length - visible);
 
     return (
-      <View style={styles.root} collapsable={false}>
+      <View collapsable={false}>
         <View
           style={[styles.row, !ready && { height: skeletonHeight }]}
           onLayout={onRowLayout}
@@ -236,8 +236,6 @@ export const SinglePillRow: React.FC<Props> = React.memo(
 );
 
 const styles = StyleSheet.create({
-  // no overflow:'hidden' to avoid tiny clip; we use a small right padding instead
-  root: {},
   row: {
     flexDirection: 'row',
     alignItems: 'center',
