@@ -1,12 +1,18 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { LoadingView } from '@monorepo/expo/shared/ui-components';
+import { LoadingView, Tabs } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import { ClientViewTabEnum } from '../Client/ClientTabs';
 import { HMISClientHeader } from './HMISClientHeader';
 import { useGetHmisClientQuery } from './__generated__/getHMISClient.generated';
-import { HMISClientTabs } from './tabs';
+import { renderTabComponent } from './tabs/utils/renderTabComponent';
+
+const hmisTabs: ClientViewTabEnum[] = [
+  ClientViewTabEnum.Profile,
+  //   ClientViewTabEnum.Docs,
+  //   ClientViewTabEnum.Interactions,
+];
 
 type TProps = {
   id: string;
@@ -15,9 +21,9 @@ type TProps = {
 };
 
 export function ClientHMIS(props: TProps) {
-  const { id: personalId } = props;
+  const { id: personalId, openCard } = props;
 
-  const [tab, setTab] = useState(ClientViewTabEnum.Profile);
+  const [currentTab, setCurrentTab] = useState(ClientViewTabEnum.Profile);
 
   const { data, loading, error } = useGetHmisClientQuery({
     variables: { personalId },
@@ -45,8 +51,14 @@ export function ClientHMIS(props: TProps) {
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
       <HMISClientHeader client={client} />
-      <HMISClientTabs selectedTab={tab} setTab={setTab} />
-      {/* {getTabComponent(tab, data, openCard)} */}
+
+      <Tabs
+        tabs={hmisTabs}
+        selectedTab={currentTab}
+        onTabPress={setCurrentTab}
+      />
+
+      {renderTabComponent(currentTab, { client, openCard })}
     </MainContainer>
   );
 }

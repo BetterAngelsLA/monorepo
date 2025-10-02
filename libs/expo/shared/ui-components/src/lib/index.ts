@@ -82,6 +82,7 @@ export { default as SingleSelect } from './SingleSelect';
 export { default as Snackbar } from './Snackbar';
 export { SocialMediaIcon, TSocialMediaType } from './SocialMediaIcon';
 export { default as StatusBadge } from './StatusBadge';
+export * from './Tabs';
 export { default as Tag } from './Tag';
 export { default as TextBold } from './TextBold';
 export { default as TextButton } from './TextButton';
