@@ -53,7 +53,6 @@ export default function NavModal(props: INavModalProps) {
         <BarsIcon size={'xl'} color={Colors.WHITE} />
       </Pressable>
       <MainModal
-        ml={Spacings.xl}
         opacity={0.5}
         closeButton
         actions={ACTIONS}

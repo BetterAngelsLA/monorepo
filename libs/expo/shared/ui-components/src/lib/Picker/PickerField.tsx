@@ -39,33 +39,31 @@ export function PickerField(props: TProps) {
   );
 
   return (
-    <>
-      <View
-        style={[
-          {
-            borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
-          },
-          style,
-        ]}
-      >
-        <Input
-          asSelect
-          disabled={disabled}
-          required={required}
-          placeholder={placeholder}
-          value={getDisplayValue(selectedValue)}
-          label={label}
-          error={!!error}
-          errorMessage={error}
-          onFocus={onFocus}
-          slotRight={{
-            focusableInput: true,
-            component: <ChevronLeftIcon size="sm" rotate={'-90deg'} />,
-            accessibilityLabel: `selector for ${label || 'field'}`,
-            accessibilityHint: `opens selector for ${label || 'field'}`,
-          }}
-        />
-      </View>
-    </>
+    <View
+      style={[
+        {
+          borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
+        },
+        style,
+      ]}
+    >
+      <Input
+        asSelect
+        disabled={disabled}
+        required={required}
+        placeholder={placeholder}
+        value={getDisplayValue(selectedValue)}
+        label={label}
+        error={!!error}
+        errorMessage={error}
+        onFocus={onFocus}
+        slotRight={{
+          focusableInput: true,
+          component: <ChevronLeftIcon size="sm" rotate={'-90deg'} />,
+          accessibilityLabel: `selector for ${label || 'field'}`,
+          accessibilityHint: `opens selector for ${label || 'field'}`,
+        }}
+      />
+    </View>
   );
 }

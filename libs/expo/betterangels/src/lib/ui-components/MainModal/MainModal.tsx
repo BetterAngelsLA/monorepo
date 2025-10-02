@@ -2,8 +2,9 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
 import { ElementType, Fragment, ReactNode, isValidElement } from 'react';
 import { DimensionValue, StyleSheet, View } from 'react-native';
-import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { BaseModal } from '@monorepo/expo/shared/ui-components';
 import { MainModalActionBtn } from './MainModalActionBtn';
 import { MainModalCloseBtn } from './MainModalCloseBtn';
 
@@ -22,102 +23,81 @@ interface IMainModalProps {
   bottomSection?: ReactNode;
   topSection?: ReactNode;
   closeButton?: boolean;
+  /** Backdrop opacity (0–1) */
   opacity?: number;
+  /** When false, slide from right (drawer). When true, slide up (bottom sheet). */
   vertical?: boolean;
+  /** Left margin for right-drawer partial width */
   ml?: number;
+  /** Fixed height or 'auto' */
   height?: DimensionValue;
 }
 
-export function MainModal(props: IMainModalProps) {
-  const {
-    isModalVisible,
-    closeModal,
-    actions,
-    bottomSection,
-    topSection,
-    closeButton,
-    opacity = 0,
-    vertical = false,
-    ml = 0,
-    height = 'auto',
-  } = props;
-
+export function MainModal({
+  isModalVisible,
+  closeModal,
+  actions,
+  bottomSection,
+  topSection,
+  closeButton,
+  opacity = 0, // match original default
+  vertical = false, // match original default
+  ml = 0,
+  height = 'auto',
+}: IMainModalProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
-  const bottomOffset = insets.bottom;
-  const topOffset = insets.top;
-
   return (
-    <Modal
-      style={{
-        margin: 0,
-        marginLeft: ml,
-        flex: 1,
-        justifyContent: 'flex-end',
-      }}
-      animationIn={vertical ? 'slideInUp' : 'slideInRight'}
-      animationOut={vertical ? 'slideOutDown' : 'slideOutRight'}
+    <BaseModal
+      title={null}
+      isOpen={isModalVisible}
+      onClose={closeModal}
+      variant="sheet"
+      direction={vertical ? 'up' : 'right'}
+      panelOffset={ml}
       backdropOpacity={opacity}
-      isVisible={isModalVisible}
-      onBackdropPress={closeModal}
-      useNativeDriverForBackdrop={true}
+      panelStyle={{
+        borderTopLeftRadius: Radiuses.xs,
+        borderTopRightRadius: Radiuses.xs,
+        backgroundColor: Colors.WHITE,
+        height,
+      }}
+      contentStyle={{
+        paddingTop: insets.top + Spacings.xs,
+        paddingHorizontal: Spacings.md,
+        paddingBottom: 35 + insets.bottom,
+      }}
     >
-      <View
-        style={{
-          borderTopLeftRadius: Radiuses.xs,
-          borderTopRightRadius: Radiuses.xs,
-          paddingTop: topOffset + Spacings.xs,
-          paddingHorizontal: Spacings.md,
-          paddingBottom: 35 + bottomOffset,
-          backgroundColor: Colors.WHITE,
-          height,
-        }}
-      >
-        {closeButton && <MainModalCloseBtn onPress={closeModal} />}
+      {closeButton && <MainModalCloseBtn onPress={closeModal} />}
 
-        <View style={styles.modalOverlay}>
-          {topSection}
+      <View style={styles.modalOverlay}>
+        {topSection}
 
-          {actions.map((action, idx: number) => {
-            // if action is a ReactNode, return (render)
-            if (isValidElement(action)) {
-              return <Fragment key={idx}>{action}</Fragment>;
-            }
+        {actions.map((action, idx: number) => {
+          if (isValidElement(action))
+            return <Fragment key={idx}>{action}</Fragment>;
 
-            // is not ReactNode, so treat as `TMainModalAction` type
-            const { title, route, params, Icon, onPress } =
-              action as TMainModalAction;
+          const { title, route, params, Icon, onPress } =
+            action as TMainModalAction;
+          return (
+            <MainModalActionBtn
+              key={idx}
+              title={title}
+              Icon={Icon}
+              onPress={() => {
+                if (onPress) return onPress();
+                // Original behavior: close then navigate immediately
+                closeModal();
+                if (route) router.navigate({ pathname: route, params });
+              }}
+            />
+          );
+        })}
 
-            return (
-              <MainModalActionBtn
-                key={idx}
-                title={title}
-                Icon={Icon}
-                onPress={() => {
-                  // custom callback: invoke and return
-                  if (onPress) {
-                    return onPress();
-                  }
-
-                  // default behavior
-                  closeModal();
-
-                  if (route) {
-                    router.navigate({
-                      pathname: route,
-                      params: params,
-                    });
-                  }
-                }}
-              />
-            );
-          })}
-
-          {bottomSection}
-        </View>
+        {bottomSection}
       </View>
-    </Modal>
+    </BaseModal>
   );
 }
 
@@ -131,3 +111,5 @@ const styles = StyleSheet.create({
     marginRight: 'auto',
   },
 });
+
+export default MainModal;

@@ -211,6 +211,7 @@ export default function FileScreenComponent(props: TFileScreenComponent) {
           title={fileView.title}
           isOpen={true}
           onClose={() => setFileView(null)}
+          variant="fullscreen"
         >
           {fileView.content}
         </BaseModal>

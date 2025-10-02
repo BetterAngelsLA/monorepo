@@ -5,6 +5,7 @@ import {
   Spacings,
 } from '@monorepo/expo/shared/static';
 import {
+  BaseModal,
   Button,
   Checkbox,
   TextBold,
@@ -19,7 +20,6 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignOut } from '../hooks';
 import { useUpdateCurrentUserMutation } from '../providers';
@@ -37,6 +37,10 @@ interface IConsentModalProps {
   user: TUser;
 }
 
+interface CheckedItems {
+  isTosChecked: boolean;
+  isPrivacyPolicyChecked: boolean;
+}
 interface CheckboxData {
   key: keyof CheckedItems;
   accessibilityHint: string;
@@ -44,26 +48,19 @@ interface CheckboxData {
   url: string;
 }
 
-interface CheckedItems {
-  isTosChecked: boolean;
-  isPrivacyPolicyChecked: boolean;
-}
-
-export default function ConsentModal(props: IConsentModalProps) {
-  const {
-    isModalVisible,
-    opacity = 0,
-    vertical = true,
-    ml = 0,
-    privacyPolicyUrl,
-    termsOfServiceUrl,
-    closeModal,
-    user,
-  } = props;
-
+export default function ConsentModal({
+  isModalVisible,
+  opacity = 0,
+  vertical = true,
+  ml = 0,
+  privacyPolicyUrl,
+  termsOfServiceUrl,
+  closeModal,
+  user,
+  height = 'auto',
+}: IConsentModalProps) {
   const [updateCurrentUser, { error }] = useUpdateCurrentUserMutation();
-
-  const [checkedItems, setCheckedItems] = useState({
+  const [checkedItems, setCheckedItems] = useState<CheckedItems>({
     isTosChecked: false,
     isPrivacyPolicyChecked: false,
   });
@@ -86,19 +83,14 @@ export default function ConsentModal(props: IConsentModalProps) {
   };
 
   const { signOut } = useSignOut();
+  const handleCheck = (key: 'isTosChecked' | 'isPrivacyPolicyChecked') =>
+    setCheckedItems((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const handleCheck = (key: 'isTosChecked' | 'isPrivacyPolicyChecked') => {
-    setCheckedItems((prevState) => ({
-      ...prevState,
-      [key]: !prevState[key],
-    }));
-  };
   const insets = useSafeAreaInsets();
-  const bottomOffset = insets.bottom;
   const topOffset = insets.top;
+  const bottomOffset = insets.bottom;
 
-  const dimensions = Dimensions.get('window');
-  const windowHeight = dimensions.height;
+  const windowHeight = Dimensions.get('window').height;
 
   const checkboxData: CheckboxData[] = [
     {
@@ -115,12 +107,12 @@ export default function ConsentModal(props: IConsentModalProps) {
     },
   ];
 
-  const renderCheckboxes = () => {
-    return checkboxData.map((item) => (
+  const renderCheckboxes = () =>
+    checkboxData.map((item) => (
       <Checkbox
         key={item.key}
         isChecked={checkedItems[item.key]}
-        isConsent={true}
+        isConsent
         hasBorder={false}
         onCheck={() => handleCheck(item.key)}
         accessibilityHint={item.accessibilityHint}
@@ -140,39 +132,36 @@ export default function ConsentModal(props: IConsentModalProps) {
         }
       />
     ));
-  };
 
   return (
-    <Modal
-      style={{
-        margin: 0,
-        marginLeft: ml,
-        flex: 1,
-        flexDirection: 'column',
-        justifyContent: 'flex-end',
-        height: '100%',
-        paddingTop: topOffset + 10,
-      }}
-      animationIn={vertical ? 'slideInUp' : 'slideInRight'}
-      animationOut={vertical ? 'slideOutDown' : 'slideOutRight'}
+    <BaseModal
+      title={null}
+      isOpen={isModalVisible}
+      onClose={closeModal}
+      variant="sheet"
+      direction={vertical ? 'up' : 'right'}
+      panelOffset={ml}
       backdropOpacity={opacity}
-      isVisible={isModalVisible}
-      useNativeDriverForBackdrop={true}
+      sheetTopPadding={vertical ? topOffset + 10 : 0} // <-- matches original placement
+      panelStyle={{
+        // Grow to top like original (or honor explicit height)
+        ...(height === 'auto' ? { flexGrow: 1 } : { height }),
+        borderTopLeftRadius: Radiuses.xs,
+        borderTopRightRadius: Radiuses.xs,
+        backgroundColor: Colors.WHITE,
+      }}
+      contentStyle={{
+        // Stretch inner content so header/body/footer spacing matches original
+        flex: 1,
+        paddingTop: 0, // handle sits at true top of the card
+        paddingHorizontal: Spacings.md,
+        paddingBottom: bottomOffset + Spacings.xs,
+      }}
     >
-      <View
-        style={{
-          flexGrow: 1,
-          zIndex: 1,
-          borderTopLeftRadius: Radiuses.xs,
-          borderTopRightRadius: Radiuses.xs,
-          paddingHorizontal: Spacings.md,
-          paddingBottom: bottomOffset + Spacings.xs,
-          backgroundColor: Colors.WHITE,
-          justifyContent: 'space-between',
-        }}
-      >
+      <View style={{ flex: 1, justifyContent: 'space-between' }}>
         <View>
           <View style={styles.header}>
+            {/* pull tab */}
             <View
               style={{
                 width: 18,
@@ -184,7 +173,7 @@ export default function ConsentModal(props: IConsentModalProps) {
                 marginVertical: 5,
               }}
             />
-            <TextRegular size={'lg'} style={styles.consent}>
+            <TextRegular size="lg" style={styles.consent}>
               Consent
             </TextRegular>
             <View
@@ -196,38 +185,32 @@ export default function ConsentModal(props: IConsentModalProps) {
               }}
             />
             <Image
-              style={{
-                height: windowHeight * 0.325,
-              }}
+              style={{ height: windowHeight * 0.325 }}
               resizeMode="contain"
               source={require('../../../../shared/images/consent.png')}
-              accessibilityIgnoresInvertColors={true}
+              accessibilityIgnoresInvertColors
             />
           </View>
-          <TextBold
-            size={'sm'}
-            mb={'xs'}
-            mt={'sm'}
-            color={Colors.PRIMARY_EXTRA_DARK}
-          >
+
+          <TextBold size="sm" mb="xs" mt="sm" color={Colors.PRIMARY_EXTRA_DARK}>
             Welcome to:
           </TextBold>
-          <TextBold size={'lg'} mb={'xs'} color={Colors.PRIMARY_EXTRA_DARK}>
+          <TextBold size="lg" mb="xs" color={Colors.PRIMARY_EXTRA_DARK}>
             The Better Angels App
           </TextBold>
-          <TextRegular size={'sm'} mb="md" color={Colors.PRIMARY_EXTRA_DARK}>
+          <TextRegular size="sm" mb="md" color={Colors.PRIMARY_EXTRA_DARK}>
             Please confirm the following:
           </TextRegular>
+
           {renderCheckboxes()}
         </View>
+
         <View>
           <Button
             accessibilityHint="Submits agreement and goes to welcome screen"
             onPress={submitAgreements}
             disabled={
               !checkedItems.isPrivacyPolicyChecked || !checkedItems.isTosChecked
-                ? true
-                : false
             }
             mb="sm"
             title="Get Started"
@@ -246,7 +229,7 @@ export default function ConsentModal(props: IConsentModalProps) {
           />
         </View>
       </View>
-    </Modal>
+    </BaseModal>
   );
 }
 
