@@ -1,333 +1,259 @@
+// SinglePillRow.tsx — RN 0.81 / Fabric + FlashList safe
 import { Spacings } from '@monorepo/expo/shared/static';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { LayoutChangeEvent, PixelRatio, View } from 'react-native';
-import { sortBy, uniqueBy } from 'remeda';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  LayoutChangeEvent,
+  PixelRatio,
+  Platform,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Pill from '../Pill';
-import type { IPillProps } from '../Pill/Pill';
+import { IPillProps } from '../Pill/Pill';
 import TextRegular from '../TextRegular';
 
-// =======================
-// Module-level shared caches
-// =======================
-const pillWidthCache = new Map<string, number>(); // key: `${variant}|${fontScale}|${label}`
-const overflowWidthCache = new Map<string, number>(); // key: `${fontScale}|+ ${n}`
-
-const makePillKey = (
-  variant: IPillProps['variant'],
-  fontScale: number,
-  label: string
-) => `${variant}|${fontScale}|${label}`;
-
-const makeOverflowKey = (fontScale: number, remaining: number) =>
-  `${fontScale}|+ ${remaining}`;
-
-// =======================
-// Types
-// =======================
-type SortMode = 'preserve' | 'shortest-first';
-
-export type SinglePillRowProps = {
+type Props = {
   pills: string[];
   pillVariant: IPillProps['variant'];
-  sortMode?: SortMode; // default 'shortest-first'
-  gap?: number; // default Spacings.xxs
-  dedupe?: boolean; // default true
-  caseInsensitive?: boolean; // default false
-  // First-pass estimate to avoid blank row before real widths land:
-  estimateCharWidth?: number; // default 7
-  estimateBasePadding?: number; // default 22
+  /** Inner L/R padding in the parent container (FlashList cell), if any */
+  containerHPad?: number;
+  /** Height of the placeholder while measuring (match your pill height) */
+  skeletonHeight?: number;
 };
 
-type HiddenMeasureRowProps = {
-  pillsToMeasure: string[];
-  pillVariant: IPillProps['variant'];
-  onPillWidth: (label: string, w: number) => void;
-  overflowProbe: string | null;
-  onOverflowWidth: (key: string, w: number) => void;
-  gap: number;
+const GAP = Spacings.xxs ?? 4; // between pills
+const OGAP = Spacings.xs ?? 8; // before "+ N"
+
+const px = (n: number) => Math.floor(PixelRatio.roundToNearestPixel(n));
+const SAFETY_MAIN = Platform.select({ ios: 2, android: 3, default: 3 })!;
+const SAFETY_OVERFLOW = SAFETY_MAIN + 1; // tiny extra for "+ N"
+const RIGHT_PAD = SAFETY_MAIN; // gives a small landing zone on the right
+const K = 1.12; // inflation to avoid under-estimation
+
+// Largest k with predicate true
+const upperBound = (lo: number, hi: number, ok: (k: number) => boolean) => {
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (ok(mid)) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
 };
 
-// =======================
-// Hidden measurer
-// Only renders labels we *haven't* cached yet (+ current overflow probe)
-// =======================
-const HiddenMeasureRow: React.FC<HiddenMeasureRowProps> = ({
-  pillsToMeasure,
-  pillVariant,
-  onPillWidth,
-  overflowProbe,
-  onOverflowWidth,
-  gap,
-}) => (
-  <View
-    style={{ opacity: 0, height: 0, overflow: 'hidden' }}
-    collapsable={false}
-    accessibilityElementsHidden
-    importantForAccessibility="no-hide-descendants"
-  >
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      {pillsToMeasure.map((label: string, _i: number) => (
-        <View
-          key={`measure-${label}`}
-          style={{ marginLeft: _i === 0 ? 0 : gap }}
-          onLayout={(e) => onPillWidth(label, e.nativeEvent.layout.width)}
-        >
-          <Pill variant={pillVariant} label={label} />
-        </View>
-      ))}
-      {overflowProbe && (
-        <View
-          style={{ marginLeft: gap }}
-          onLayout={(e) =>
-            onOverflowWidth(overflowProbe, e.nativeEvent.layout.width)
-          }
-        >
-          <TextRegular size="sm">{overflowProbe}</TextRegular>
-        </View>
-      )}
-    </View>
-  </View>
-);
-
-// =======================
-// Component
-// =======================
-const byCase = (s: string, ci: boolean) => (ci ? s.toLowerCase() : s);
-
-export const SinglePillRow: React.FC<SinglePillRowProps> = React.memo(
-  ({
+export const SinglePillRow: React.FC<Props> = React.memo(
+  function SinglePillRow({
     pills,
     pillVariant,
-    sortMode = 'shortest-first',
-    gap = Spacings.xxs,
-    dedupe = true,
-    caseInsensitive = false,
-    estimateCharWidth = 7,
-    estimateBasePadding = 22,
-  }) => {
-    const fontScale = PixelRatio.getFontScale(); // include user accessibility setting in cache key
+    containerHPad = 0,
+    skeletonHeight = 32,
+  }) {
+    // Phase control (skeleton until measured)
+    const [ready, setReady] = useState(false);
 
-    // UI state
-    const [visibleCount, setVisibleCount] = useState(0);
-    const [overflowProbe, setOverflowProbe] = useState<string | null>(null);
+    // Container width
+    const [containerW, setContainerW] = useState(0);
+    const onContainerLayout = (e: LayoutChangeEvent) => {
+      const raw = e?.nativeEvent?.layout?.width ?? 0;
+      if (!raw) return;
+      const inner = px(raw - containerHPad * 2);
+      if (inner > 0 && inner !== containerW) setContainerW(inner);
+    };
 
-    // Refs
-    const containerWidthRef = useRef(0);
-    const rafIdRef = useRef<number | null>(null);
-
-    // Queue a single RAF for recalc to avoid stacking multiple calls
-    const queueRecalc = useCallback((fn: () => void) => {
-      if (rafIdRef.current != null) return;
-      rafIdRef.current = requestAnimationFrame(() => {
-        rafIdRef.current = null;
-        fn();
-      });
-    }, []);
-
-    // 1) Dedupe first (preserve first occurrence). Using a content-based key so in-place mutations are detected.
-    const basePills: string[] = useMemo(() => {
-      if (!dedupe) return pills;
-      return uniqueBy(pills, (label: string) => byCase(label, caseInsensitive));
-    }, [pills, dedupe, caseInsensitive]);
-
-    const baseKey = useMemo(() => basePills.join('|'), [basePills]);
-
-    // 2) Estimate width for unknown labels to avoid blank-first-pass
-    const estimateWidth = useCallback(
-      (label: string) => estimateBasePadding + estimateCharWidth * label.length,
-      [estimateBasePadding, estimateCharWidth]
+    // Pack tighter by rendering shortest → longest
+    const sorted = useMemo(
+      () => [...pills].sort((a, b) => a.length - b.length),
+      [pills]
     );
 
-    // 3) Compute the array we’ll *display* (optionally shortest-first).
-    //    For sorting we prefer cached width, fall back to estimated width.
-    const displayPills: string[] = useMemo(() => {
-      if (sortMode !== 'shortest-first') return basePills;
+    // Representative label = longest (for avgChar + chrome)
+    const rep = useMemo(
+      () =>
+        sorted.length
+          ? sorted.reduce((a, b) => (a.length >= b.length ? a : b))
+          : '',
+      [sorted]
+    );
 
-      return sortBy(
-        basePills,
-        (label: string) => {
-          const cached = pillWidthCache.get(
-            makePillKey(pillVariant, fontScale, label)
-          );
-          return cached ?? estimateWidth(label);
-        },
-        (label: string) => label // stable tiebreaker
+    // Minimal measurements
+    const [repTextW, setRepTextW] = useState<number | null>(null); // longest as Text
+    const [repPillW, setRepPillW] = useState<number | null>(null); // longest inside <Pill>
+
+    // Measured widths for "+ 9", "+ 99", "+ 999"
+    const [ow1, setOw1] = useState<number | null>(null);
+    const [ow2, setOw2] = useState<number | null>(null);
+    const [ow3, setOw3] = useState<number | null>(null);
+
+    // Final visible count
+    const [visibleCount, setVisibleCount] = useState(1);
+
+    const recompute = useCallback(() => {
+      if (
+        !containerW ||
+        !rep ||
+        repTextW == null ||
+        repPillW == null ||
+        ow1 == null ||
+        ow2 == null ||
+        ow3 == null
+      ) {
+        return;
+      }
+
+      const chrome = Math.max(0, px(repPillW - repTextW));
+      const avgChar = repTextW / Math.max(1, rep.length);
+
+      // Estimated pill widths (pixel-rounded + inflation)
+      const widths = sorted.map(
+        (label) => px(avgChar * label.length * K) + chrome
       );
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [baseKey, sortMode, fontScale, pillVariant, estimateWidth]);
+      const n = widths.length;
 
-    // 4) Which labels still need measuring?
-    const pillsToMeasure: string[] = useMemo(
-      () =>
-        displayPills.filter(
-          (label) =>
-            !pillWidthCache.has(makePillKey(pillVariant, fontScale, label))
-        ),
-      [displayPills, pillVariant, fontScale]
-    );
-
-    // Are all current labels measured?
-    const allMeasured = useMemo(
-      () =>
-        displayPills.every((label) =>
-          pillWidthCache.has(makePillKey(pillVariant, fontScale, label))
-        ),
-      [displayPills, pillVariant, fontScale]
-    );
-
-    // 5) Recalc fit — hybrid (cached widths preferred, estimates for unknowns)
-    const recalc = useCallback(() => {
-      const CW = containerWidthRef.current;
-      if (CW <= 0) return;
-
-      // Build width vector using cached or estimated widths
-      const widths: number[] = displayPills.map((label) => {
-        const key = makePillKey(pillVariant, fontScale, label);
-        return pillWidthCache.get(key) ?? estimateWidth(label);
-      });
-
-      let k = widths.length;
-      while (k >= 0) {
-        let total = 0;
-        for (let i = 0; i < k; i++) total += widths[i] + (i > 0 ? gap : 0);
-
-        const needsOverflow = k < widths.length;
-        if (needsOverflow) {
-          const remaining = widths.length - k;
-          const ok = makeOverflowKey(fontScale, remaining);
-          let ow = overflowWidthCache.get(ok);
-
-          // If we don't have an exact overflow width yet, measure it.
-          if (typeof ow !== 'number') {
-            setOverflowProbe(`+ ${remaining}`);
-            // Still include a conservative estimate to prevent dropping to 0
-            // (using text length * char width + a tiny base)
-            ow =
-              estimateBasePadding +
-              estimateCharWidth * String(remaining).length +
-              10;
-          }
-
-          total += (k > 0 ? gap : 0) + ow;
-        }
-
-        if (total <= CW) {
-          // LATCH: avoid flicker to 0 while not all measured
-          if (k === 0 && !allMeasured && visibleCount > 0) {
-            return; // keep previous non-zero count until stable
-          }
-          if (visibleCount !== k) setVisibleCount(k);
-          return;
-        }
-        k -= 1;
+      // Prefix sums with gaps
+      const prefix = new Array(n + 1).fill(0);
+      for (let k = 1; k <= n; k++) {
+        prefix[k] = prefix[k - 1] + (k > 1 ? GAP : 0) + widths[k - 1];
       }
 
-      // Only drop to 0 if all are measured (true "doesn't fit") or there are no pills
-      if ((allMeasured || displayPills.length === 0) && visibleCount !== 0) {
-        setVisibleCount(0);
+      const MAX = containerW;
+
+      // Helper: reserve for "+ N" using measured buckets
+      const reserve = (remain: number) => {
+        if (remain <= 0) return 0;
+        const proto = remain >= 100 ? ow3! : remain >= 10 ? ow2! : ow1!;
+        return OGAP + px(proto) + SAFETY_OVERFLOW;
+      };
+
+      // Pass 1: try without overflow chip
+      let k = upperBound(
+        0,
+        n,
+        (i) => prefix[i] <= MAX - SAFETY_MAIN - RIGHT_PAD
+      );
+
+      // Pass 2: with measured overflow reservation
+      if (k < n) {
+        k = upperBound(
+          0,
+          n,
+          (i) => prefix[i] + reserve(n - i) <= MAX - SAFETY_MAIN - RIGHT_PAD
+        );
       }
-    }, [
-      displayPills,
-      gap,
-      visibleCount,
-      estimateWidth,
-      fontScale,
-      pillVariant,
-      allMeasured,
-      estimateBasePadding,
-      estimateCharWidth,
-    ]);
 
-    // 6) Handlers
-    const onContainerLayout = useCallback(
-      (e: LayoutChangeEvent) => {
-        const w = e.nativeEvent.layout.width;
-        if (w > 0 && w !== containerWidthRef.current) {
-          containerWidthRef.current = w;
-          queueRecalc(recalc);
-        }
-      },
-      [queueRecalc, recalc]
-    );
+      // Final clamp using the SAME reserve we render with (guarantees no spill)
+      while (
+        k > 0 &&
+        prefix[k] + (k < n ? reserve(n - k) : 0) > MAX - RIGHT_PAD - SAFETY_MAIN
+      ) {
+        k--;
+      }
 
-    const onPillWidth = useCallback(
-      (label: string, w: number) => {
-        const key = makePillKey(pillVariant, fontScale, label);
-        if (pillWidthCache.get(key) !== w) {
-          pillWidthCache.set(key, w);
-          queueRecalc(recalc);
-        }
-      },
-      [queueRecalc, recalc, pillVariant, fontScale]
-    );
+      setVisibleCount(Math.max(1, k));
+      setReady(true);
+    }, [containerW, rep, repTextW, repPillW, ow1, ow2, ow3, sorted]);
 
-    const onOverflowWidth = useCallback(
-      (probeText: string, w: number) => {
-        const n = Number(probeText.replace('+', '').trim());
-        const key = makeOverflowKey(fontScale, Number.isFinite(n) ? n : 0);
-        if (overflowWidthCache.get(key) !== w) {
-          overflowWidthCache.set(key, w);
-          setOverflowProbe(null);
-          queueRecalc(recalc);
-        }
-      },
-      [queueRecalc, recalc, fontScale]
-    );
-
-    // 7) Reset fit when content/order changes
     useEffect(() => {
-      setOverflowProbe(null);
-      queueRecalc(recalc);
-    }, [baseKey, queueRecalc, recalc]);
+      recompute();
+    }, [recompute]);
 
-    // 8) First fit
-    useEffect(() => {
-      queueRecalc(recalc);
-    }, [queueRecalc, recalc]);
+    // ---- Measurers (always mounted; tiny opacity so Fabric/FlashList lays them out) ----
+    const onTextRep = (e: any) => {
+      const w = e?.nativeEvent?.lines?.[0]?.width;
+      if (typeof w === 'number' && w > 0 && w !== repTextW) setRepTextW(w);
+    };
+    const onPillRep = (e: LayoutChangeEvent) => {
+      const w = px(e?.nativeEvent?.layout?.width ?? 0);
+      if (w > 0 && w !== repPillW) setRepPillW(w);
+    };
+    const onOw = (digits: 1 | 2 | 3) => (e: any) => {
+      const w = e?.nativeEvent?.lines?.[0]?.width;
+      if (typeof w !== 'number' || w <= 0) return;
+      if (digits === 1 && ow1 == null) setOw1(w);
+      if (digits === 2 && ow2 == null) setOw2(w);
+      if (digits === 3 && ow3 == null) setOw3(w);
+    };
+
+    const overflow = Math.max(0, sorted.length - visibleCount);
 
     return (
-      <View
-        onLayout={onContainerLayout}
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginBottom: Spacings.xs,
-        }}
-      >
-        {displayPills.slice(0, visibleCount).map((label: string, i: number) => (
-          <View key={`pill-${label}`} style={{ marginLeft: i === 0 ? 0 : gap }}>
-            <Pill variant={pillVariant} label={label} />
-          </View>
-        ))}
+      <View style={styles.root} collapsable={false}>
+        <View
+          style={[styles.row, !ready && { height: skeletonHeight }]}
+          onLayout={onContainerLayout}
+          collapsable={false}
+        >
+          {ready &&
+            sorted.slice(0, visibleCount).map((label, idx) => (
+              <View
+                key={`${label}-${idx}`}
+                style={{ marginLeft: idx === 0 ? 0 : GAP }}
+                collapsable={false}
+              >
+                <Pill variant={pillVariant} label={label} />
+              </View>
+            ))}
 
-        {/* Avoid showing lone "+N" before we can render any pill */}
-        {visibleCount < displayPills.length &&
-          (visibleCount > 0 || allMeasured) && (
-            <View style={{ marginLeft: visibleCount > 0 ? gap : 0 }}>
-              <TextRegular size="sm">
-                + {displayPills.length - visibleCount}
-              </TextRegular>
+          {ready && overflow > 0 && (
+            <View
+              style={{ marginLeft: OGAP, flexShrink: 0 }}
+              collapsable={false}
+            >
+              <TextRegular size="sm">+ {overflow}</TextRegular>
             </View>
           )}
 
-        {/* Hidden measurer renders ONLY uncached labels (+ current overflow probe) */}
-        {(pillsToMeasure.length > 0 || overflowProbe) && (
-          <HiddenMeasureRow
-            pillsToMeasure={pillsToMeasure}
-            pillVariant={pillVariant}
-            onPillWidth={onPillWidth}
-            overflowProbe={overflowProbe}
-            onOverflowWidth={onOverflowWidth}
-            gap={gap}
-          />
-        )}
+          {/* Invisible measurers kept in-row so Fabric/FlashList won’t prune them */}
+          <View
+            style={styles.measurers}
+            pointerEvents="none"
+            collapsable={false}
+            accessible={false}
+          >
+            {!!rep && (
+              <>
+                <TextRegular
+                  size="sm"
+                  numberOfLines={1}
+                  onTextLayout={onTextRep}
+                >
+                  {rep}
+                </TextRegular>
+                <View onLayout={onPillRep} collapsable={false}>
+                  <Pill variant={pillVariant} label={rep} />
+                </View>
+              </>
+            )}
+
+            {/* Measure overflow chip prototypes (exact, digit-aware) */}
+            <TextRegular size="sm" numberOfLines={1} onTextLayout={onOw(1)}>
+              + 9
+            </TextRegular>
+            <TextRegular size="sm" numberOfLines={1} onTextLayout={onOw(2)}>
+              + 99
+            </TextRegular>
+            <TextRegular size="sm" numberOfLines={1} onTextLayout={onOw(3)}>
+              + 999
+            </TextRegular>
+          </View>
+        </View>
       </View>
     );
   }
 );
+
+const styles = StyleSheet.create({
+  // NOTE: no overflow:'hidden' — avoids clipping tiny rounding differences
+  root: {},
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacings.xs ?? 8,
+    paddingRight: RIGHT_PAD, // small right inset to absorb rounding
+  },
+  // Keep measurers inside row; tiny opacity so glyphs actually lay out
+  measurers: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    opacity: 0.0,
+  },
+});
