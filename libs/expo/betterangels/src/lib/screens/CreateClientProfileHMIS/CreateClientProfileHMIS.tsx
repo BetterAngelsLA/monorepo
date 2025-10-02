@@ -10,7 +10,12 @@ import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import { extractHMISErrors } from '../../apollo';
 import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
-import { HmisNameQualityIntEnum, enumHmisNameQuality } from '../../static';
+import {
+  HmisNameQualityIntEnum,
+  HmisSuffixIntEnum,
+  enumDisplayHmisSuffix,
+  enumHmisNameQuality,
+} from '../../static';
 import { useCreateHmisClientMutation } from './__generated__/createHmisClient.generated';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
@@ -38,13 +43,27 @@ export function CreateClientProfileHMIS() {
     try {
       setDisabled(true);
 
-      const { firstName, lastName, middleName, nameDataQuality, alias } =
-        formData;
+      const {
+        firstName,
+        lastName,
+        middleName,
+        nameDataQuality,
+        alias,
+        nameSuffix,
+      } = formData;
 
       const nameQualityEnumInt =
         HmisNameQualityIntEnum[
           nameDataQuality as keyof typeof HmisNameQualityIntEnum
         ];
+
+      const suffixEnumInt =
+        HmisSuffixIntEnum[nameSuffix as keyof typeof HmisSuffixIntEnum];
+
+      console.log();
+      console.log('| -------------  alias  ------------- |');
+      console.log(alias);
+      console.log();
 
       const { data } = await createHMISClientMutation({
         variables: {
@@ -56,6 +75,7 @@ export function CreateClientProfileHMIS() {
           clientSubItemsInput: {
             middleName,
             alias,
+            nameSuffix: suffixEnumInt,
           },
         },
         errorPolicy: 'all',
@@ -119,12 +139,12 @@ export function CreateClientProfileHMIS() {
       <Form>
         <Form.Fieldset>
           <ControlledInput
+            name="firstName"
             required
             control={control}
             disabled={disabled}
-            label={'First name'}
-            name={'firstName'}
-            placeholder={'Enter first name'}
+            label="First name"
+            placeholder="Enter first name"
             onDelete={() => {
               setValue('firstName', emptyState.firstName);
             }}
@@ -132,11 +152,11 @@ export function CreateClientProfileHMIS() {
           />
 
           <ControlledInput
+            name="middleName"
             control={control}
             disabled={disabled}
-            label={'Middle Name'}
-            name={'middleName'}
-            placeholder={'Enter middle name'}
+            label="Middle Name"
+            placeholder="Enter middle name"
             onDelete={() => {
               setValue('middleName', emptyState.middleName);
             }}
@@ -144,12 +164,12 @@ export function CreateClientProfileHMIS() {
           />
 
           <ControlledInput
+            name="lastName"
             required
             control={control}
             disabled={disabled}
-            label={'Last Name'}
-            name={'lastName'}
-            placeholder={'Enter last name'}
+            label="Last Name"
+            placeholder="Enter last name"
             onDelete={() => {
               setValue('lastName', emptyState.lastName);
             }}
@@ -159,7 +179,7 @@ export function CreateClientProfileHMIS() {
           <Controller
             name="nameDataQuality"
             control={control}
-            render={({ field }) => (
+            render={({ field: { value, onChange } }) => (
               <SingleSelect
                 allowSelectNone={true}
                 disabled={disabled}
@@ -167,20 +187,40 @@ export function CreateClientProfileHMIS() {
                 placeholder="Select quality"
                 maxRadioItems={0}
                 items={Object.entries(enumHmisNameQuality).map(
-                  ([value, displayValue]) => ({ value, displayValue })
+                  ([val, displayValue]) => ({ value: val, displayValue })
                 )}
-                selectedValue={field.value}
-                onChange={(value) => field.onChange(value || '')}
+                selectedValue={value}
+                onChange={(value) => onChange(value || '')}
                 error={errors.nameDataQuality?.message}
               />
             )}
           />
 
+          <Controller
+            name="nameSuffix"
+            control={control}
+            render={({ field: { value, onChange } }) => (
+              <SingleSelect
+                allowSelectNone={true}
+                disabled={disabled}
+                label="Suffix"
+                placeholder="Select suffix"
+                maxRadioItems={0}
+                items={Object.entries(enumDisplayHmisSuffix).map(
+                  ([val, displayValue]) => ({ value: val, displayValue })
+                )}
+                selectedValue={value}
+                onChange={(value) => onChange(value || '')}
+                error={errors.nameSuffix?.message}
+              />
+            )}
+          />
+
           <ControlledInput
+            name="alias"
             control={control}
             disabled={disabled}
-            label={'Alias'}
-            name={'aliases'}
+            label="Alias"
             placeholder={'Enter aliases'}
             onDelete={() => {
               setValue('alias', emptyState.alias);
