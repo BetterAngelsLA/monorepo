@@ -33,7 +33,6 @@ export const unstable_settings = {
   initialRouteName: '(tabs)',
 };
 
-// Render Error page on uncaught error
 export function ErrorBoundary(props: ErrorBoundaryProps) {
   return <ErrorCrashView {...props} />;
 }
