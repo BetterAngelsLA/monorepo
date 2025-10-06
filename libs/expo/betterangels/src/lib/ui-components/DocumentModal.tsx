@@ -80,7 +80,7 @@ export default function DocumentModal({
           mimeType ?? null
         );
         const bytes = await downloaded.bytes();
-        outFile.write(bytes);
+        outFile.write(bytes, {});
       } else {
         if (!(await Sharing.isAvailableAsync())) {
           Alert.alert('Sharing Error', 'Sharing not supported on this device.');
