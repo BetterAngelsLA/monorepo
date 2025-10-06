@@ -1,5 +1,4 @@
-import { Picker as RNPicker } from '@react-native-picker/picker';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
   Platform,
@@ -19,6 +18,7 @@ import {
 import { BaseModal, TextBold, TextRegular } from '../';
 
 import { PickerField } from './PickerField';
+import { WheelPicker } from './WheelPicker';
 import { NONE_VALUE } from './constants';
 import { IPickerProps } from './types';
 
@@ -42,39 +42,67 @@ export default function Picker({
   ...rest
 }: Props) {
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<string | null>(selectedValue ?? null);
   const insets = useSafeAreaInsets();
 
+  // Stabilize draft value (no parent re-render)
+  const wheelDraftRef = useRef<string | null>(selectedValue ?? null);
+
+  // on open, initialize wheelDraftRef based on current selection
   useEffect(() => {
-    if (open) setDraft(selectedValue ?? null);
-  }, [open, selectedValue]);
+    if (open) {
+      wheelDraftRef.current =
+        selectedValue ??
+        (allowSelectNone ? NONE_VALUE : items[0]?.value ?? null);
+    }
+  }, [open, selectedValue, allowSelectNone, items]);
 
   const titleText = useMemo(
     () => label ?? placeholder ?? 'Select',
     [label, placeholder]
   );
 
-  const openSheet = () => {
-    if (disabled) return;
+  const showWheel = Platform.OS === 'ios' && useWheelOnIOS;
+
+  // Initial value for the wheel each time it's opened/reset
+  const initialWheelValue = useMemo(
+    () =>
+      (selectedValue ?? (allowSelectNone ? NONE_VALUE : items[0]?.value)) as
+        | string
+        | undefined,
+    [selectedValue, allowSelectNone, items]
+  );
+
+  const openSheet = useCallback(() => {
+    if (disabled) {
+      return;
+    }
+
     Keyboard.dismiss();
     setOpen(true);
-  };
-  const closeSheet = () => setOpen(false);
+  }, [disabled]);
 
-  const commit = (val: string) => {
-    closeSheet();
-    if (val === NONE_VALUE) return onChange(null);
-    onChange(val);
-  };
+  const closeSheet = useCallback(() => setOpen(false), []);
 
-  const onDone = () => {
+  const commit = useCallback(
+    (val: string) => {
+      closeSheet();
+
+      if (val === NONE_VALUE) {
+        return onChange(null);
+      }
+
+      onChange(val);
+    },
+    [closeSheet, onChange]
+  );
+
+  const onDone = useCallback(() => {
     const fallback = allowSelectNone
       ? NONE_VALUE
       : items[0]?.value ?? NONE_VALUE;
-    commit(draft ?? fallback);
-  };
 
-  const showWheel = Platform.OS === 'ios' && useWheelOnIOS;
+    commit(wheelDraftRef.current ?? fallback);
+  }, [allowSelectNone, items, commit]);
 
   return (
     <>
@@ -106,7 +134,6 @@ export default function Picker({
         // Ensure the whole content area is the same as panel (avoid stray white)
         contentStyle={{
           paddingTop: showWheel ? 0 : Spacings.xs,
-          paddingHorizontal: Spacings.md,
           paddingBottom: insets.bottom + Spacings.sm,
           backgroundColor: showWheel ? Colors.IOS_GRAY : 'transparent',
         }}
@@ -137,32 +164,23 @@ export default function Picker({
           </Pressable>
         </View>
 
-        {showWheel ? (
-          // iOS wheel — solid gray below the white header bar
+        {!!showWheel && (
+          // iOS wheel — controlled by WheelPicker's own state
           <View style={styles.wheelWrap}>
-            <RNPicker
-              style={styles.wheel}
-              selectedValue={
-                draft ?? (allowSelectNone ? NONE_VALUE : items[0]?.value)
-              }
-              onValueChange={(val: string) => setDraft(val)}
-            >
-              {!!allowSelectNone && (
-                <RNPicker.Item
-                  label={selectNoneLabel || placeholder || 'None'}
-                  value={NONE_VALUE}
-                />
-              )}
-              {items.map((item) => (
-                <RNPicker.Item
-                  key={item.value}
-                  label={item.displayValue ?? item.value}
-                  value={item.value}
-                />
-              ))}
-            </RNPicker>
+            <WheelPicker
+              initialValue={initialWheelValue}
+              items={items}
+              allowSelectNone={allowSelectNone}
+              placeholder={placeholder}
+              selectNoneLabel={selectNoneLabel}
+              onDraftChange={(val) => {
+                wheelDraftRef.current = val;
+              }}
+            />
           </View>
-        ) : (
+        )}
+
+        {!showWheel && (
           // Cross-platform list
           <ScrollView
             contentContainerStyle={styles.list}
