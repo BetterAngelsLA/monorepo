@@ -1,7 +1,7 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
-import { TextButton } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, memo } from 'react';
 import { Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import TextButton from '../TextButton';
 
 type TabItemProps<T extends string | number> = {
   value: T;

@@ -8,11 +8,7 @@ import { HMISClientHeader } from './HMISClientHeader';
 import { useGetHmisClientQuery } from './__generated__/getHMISClient.generated';
 import { renderTabComponent } from './tabs/utils/renderTabComponent';
 
-const hmisTabs: ClientViewTabEnum[] = [
-  ClientViewTabEnum.Profile,
-  //   ClientViewTabEnum.Docs,
-  //   ClientViewTabEnum.Interactions,
-];
+const hmisTabs: ClientViewTabEnum[] = [ClientViewTabEnum.Profile];
 
 type TProps = {
   id: string;
@@ -25,18 +21,9 @@ export function ClientHMIS(props: TProps) {
 
   const [currentTab, setCurrentTab] = useState(ClientViewTabEnum.Profile);
 
-  const { data, loading, error } = useGetHmisClientQuery({
+  const { data, loading } = useGetHmisClientQuery({
     variables: { personalId },
   });
-
-  console.log('');
-  console.log('*****************  RESULT:', personalId);
-  console.log(JSON.stringify(data, null, 2));
-
-  console.log('');
-  console.log('gql error');
-  console.log(error);
-  console.log('');
 
   if (loading) {
     return <LoadingView />;
@@ -62,31 +49,3 @@ export function ClientHMIS(props: TProps) {
     </MainContainer>
   );
 }
-
-// ... on HmisGetClientError {
-//       message
-//       field
-//     }
-// const HmisGetClientError = {
-//   errors: [
-//     {
-//       data: null,
-//       errorInfo: null,
-//       errorType: '404',
-//       locations: [{ column: 3, line: 2, sourceName: null }],
-//       message: {
-//         name: 'Not Found',
-//         message: 'Page not found.',
-//         code: 0,
-//         status: 404,
-//       },
-//       path: ['getClient'],
-//     },
-//     {
-//       locations: null,
-//       message:
-//         "Cannot return null for non-nullable type: 'ID' within parent 'Client' (/getClient/personalId)",
-//       path: ['getClient', 'personalId'],
-//     },
-//   ],
-// };

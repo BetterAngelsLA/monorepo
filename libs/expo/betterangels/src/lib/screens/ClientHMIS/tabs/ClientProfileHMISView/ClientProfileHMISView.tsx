@@ -39,7 +39,7 @@ export function ClientProfileHMISView(props: TProps) {
       return;
     }
 
-    console.log('edit FullName hmis');
+    console.log('edit FullName hmis: ', card);
 
     // const route = getEditButtonRoute({
     //   clientProfile: clientProfile,

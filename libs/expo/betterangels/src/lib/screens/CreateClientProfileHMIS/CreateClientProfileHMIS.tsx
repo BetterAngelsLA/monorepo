@@ -60,11 +60,6 @@ export function CreateClientProfileHMIS() {
       const suffixEnumInt =
         HmisSuffixIntEnum[nameSuffix as keyof typeof HmisSuffixIntEnum];
 
-      console.log();
-      console.log('| -------------  alias  ------------- |');
-      console.log(alias);
-      console.log();
-
       const { data } = await createHMISClientMutation({
         variables: {
           clientInput: {

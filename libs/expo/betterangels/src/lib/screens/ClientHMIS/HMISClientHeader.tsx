@@ -4,8 +4,6 @@ import { View } from 'react-native';
 import { HmisClientType, HmisSuffixEnum } from '../../apollo';
 import { getExistingHmisSuffix } from '../../static';
 
-const excludedSuffixes = [HmisSuffixEnum.DontKnow, HmisSuffixEnum.NoAnswer];
-
 interface IClientHeaderProps {
   client?: HmisClientType;
 }
