@@ -15,7 +15,9 @@ import {
   Spacings,
   getMarginStyles,
 } from '@monorepo/expo/shared/static';
-import { BaseModal, TextBold, TextRegular } from '../';
+import { BaseModal } from '../Modal/BaseModal';
+import { TextBold } from '../TextBold/TextBold';
+import { TextRegular } from '../TextRegular/TextRegular';
 
 import { PickerField } from './PickerField';
 import { WheelPicker } from './WheelPicker';
