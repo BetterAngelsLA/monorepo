@@ -99,11 +99,11 @@ export function Avatar(props: IAvatarProps) {
             accessibilityRole="image"
             accessibilityHint={accessibilityHint}
             accessibilityIgnoresInvertColors
+            contentFit="cover"
             style={{
               height: SIZE[size] - 1,
               width: SIZE[size] - 1,
               borderRadius: Radiuses.xxxl,
-              resizeMode: 'cover',
             }}
             source={{
               uri: imageUrl,

@@ -42,7 +42,7 @@ export default function ImageGrid({
               { width: imageSize, height: imageSize, margin: baseMargin },
             ]}
             source={{ uri: image.url }}
-            resizeMode="cover"
+            contentFit="cover"
             accessibilityIgnoresInvertColors
             key={image.id}
           />

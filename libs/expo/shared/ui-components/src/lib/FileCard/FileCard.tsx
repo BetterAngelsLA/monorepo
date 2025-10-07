@@ -59,7 +59,7 @@ export function FileCard(props: IFileCardProps) {
             <Image
               style={{ width: 36, height: 36 }}
               source={{ uri: url }}
-              resizeMode="cover"
+              contentFit="cover"
               accessibilityIgnoresInvertColors
             />
           )}

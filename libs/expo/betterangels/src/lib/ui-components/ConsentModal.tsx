@@ -182,7 +182,7 @@ export default function ConsentModal({
             />
             <Image
               style={{ height: windowHeight * 0.325 }}
-              resizeMode="contain"
+              contentFit="contain"
               source={require('../../../../shared/images/consent.png')}
               accessibilityIgnoresInvertColors
             />

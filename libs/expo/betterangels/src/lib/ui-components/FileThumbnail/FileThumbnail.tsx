@@ -89,7 +89,7 @@ function FileThumbnailBase(props: IProps) {
             width: '100%',
           }}
           source={{ uri }}
-          resizeMode="cover"
+          contentFit="cover"
           accessibilityIgnoresInvertColors
         />
       )}
