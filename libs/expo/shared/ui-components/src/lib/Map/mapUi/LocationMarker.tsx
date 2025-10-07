@@ -10,7 +10,7 @@ import { StyleSheet, View } from 'react-native';
 import TextBold from '../../TextBold';
 
 export interface ILocationMarkerProps {
-  label?: string; // "Last Seen"
+  label?: string;
 }
 
 const PIN_W = 25;
