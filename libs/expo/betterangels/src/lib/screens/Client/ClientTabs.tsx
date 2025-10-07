@@ -1,6 +1,13 @@
 import { Colors, FontSizes, Spacings } from '@monorepo/expo/shared/static';
 import { TextButton } from '@monorepo/expo/shared/ui-components';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import {
+  LayoutChangeEvent,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useFeatureFlagActive } from '../../hooks';
 import { FeatureFlags } from '../../providers';
 
@@ -32,51 +39,88 @@ interface IClientTabsProps {
   setTab: (tab: ClientViewTabEnum) => void;
 }
 
-export default function ClientTabs(props: IClientTabsProps) {
-  const { selectedTab, setTab } = props;
-
+export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
   const tasksFeatureOn = useFeatureFlagActive(FeatureFlags.TASKS_FF);
-
   const visibleTabs = tasksFeatureOn ? orderedTabsWithTasks : orderedTabs;
 
   return (
     <View style={styles.container}>
       <ScrollView
-        contentContainerStyle={{ backgroundColor: Colors.WHITE }}
-        showsHorizontalScrollIndicator={false}
         horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
       >
         {visibleTabs.map((t) => (
-          <View
-            style={[
-              styles.tab,
-              {
-                borderBottomWidth: t === selectedTab ? 3 : 0,
-              },
-            ]}
+          <TabItem
             key={t}
-          >
-            <TextButton
-              onPress={() => setTab(t)}
-              style={styles.textBtn}
-              regular={t !== selectedTab}
-              title={t}
-              accessibilityHint={`select ${t} tab`}
-            />
-            <Pressable style={styles.pressable} accessibilityRole="button">
-              <Text
-                style={styles.tabText}
-                accessibilityHint={`select ${t} tab`}
-              >
-                {t}
-              </Text>
-            </Pressable>
-          </View>
+            label={t}
+            active={t === selectedTab}
+            onPress={() => setTab(t)}
+          />
         ))}
       </ScrollView>
     </View>
   );
 }
+
+/** ---------- Single Tab (fixed width = bold width, keep TextButton styling) ---------- */
+type TabItemProps = {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+};
+
+function TabItem({ label, active, onPress }: TabItemProps) {
+  const [boldW, setBoldW] = useState<number | null>(null);
+
+  const onBoldMeasure = (e: LayoutChangeEvent) => {
+    if (boldW == null) {
+      setBoldW(Math.ceil(e.nativeEvent.layout.width));
+    }
+  };
+
+  // Width = bold text width + the same horizontal padding TextButton uses
+  const tabWidthStyle = useMemo(
+    () => (boldW != null ? { width: boldW + PADDING_H * 2 } : null),
+    [boldW]
+  );
+
+  return (
+    <View
+      style={[
+        styles.tab,
+        { borderBottomColor: active ? Colors.PRIMARY : 'transparent' }, // visually identical to old: 3px when active, none when not
+      ]}
+    >
+      {/* Hidden measurer uses the same font metrics your old invisible text used */}
+      <Text
+        style={styles.hiddenMeasureBold}
+        onLayout={onBoldMeasure}
+        numberOfLines={1}
+      >
+        {label}
+      </Text>
+
+      {/* Visible control = your original TextButton (keeps exact colors/regular prop behavior) */}
+      <TextButton
+        onPress={onPress}
+        style={[styles.textBtn, tabWidthStyle]} // fixed width kills horizontal jiggle
+        regular={!active} // EXACT original prop semantics
+        title={label}
+        accessibilityHint={`select ${label} tab`}
+      />
+    </View>
+  );
+}
+
+/** ---- Layout constants to keep row perfectly stable ---- */
+const PADDING_H = Spacings.sm; // matches original TextButton padding
+const TAB_VPAD = Spacings.sm; // vertical padding inside each tab
+const TAB_LINE = FontSizes.md.lineHeight; // token line-height for label
+const TAB_FONT = FontSizes.md.fontSize;
+const TAB_HEIGHT =
+  Math.ceil(typeof TAB_LINE === 'number' ? TAB_LINE : Number(TAB_LINE)) +
+  TAB_VPAD * 2;
 
 const styles = StyleSheet.create({
   container: {
@@ -84,27 +128,41 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: Colors.NEUTRAL_LIGHT,
   },
+  scrollContent: {
+    backgroundColor: Colors.WHITE,
+  },
+
+  // Row-level: constant underline height; only color toggles
   tab: {
-    position: 'relative',
+    borderColor: Colors.PRIMARY,
+    borderBottomWidth: 3, // constant so row height never changes
     alignItems: 'center',
     justifyContent: 'center',
-    borderColor: Colors.PRIMARY,
   },
+
+  // Keep using your original TextButton; remove absolute positioning
   textBtn: {
-    position: 'absolute',
-    zIndex: 100,
-    padding: Spacings.sm,
-  },
-  pressable: {
-    padding: Spacings.sm,
+    // match old padding; fix overall height so Android doesn’t nudge the row
+    paddingHorizontal: PADDING_H,
+    paddingVertical: TAB_VPAD,
+    minHeight: TAB_HEIGHT,
     justifyContent: 'center',
-    opacity: 0,
+    alignItems: 'center',
   },
-  tabText: {
+
+  // Hidden measurer for bold width (mirrors your old invisible <Text/> metrics)
+  hiddenMeasureBold: {
+    position: 'absolute',
+    opacity: 0,
+    left: -9999,
+    top: -9999,
+    // mirror tabText in your original code to approximate TextButton label width when bold
     letterSpacing: 0.4,
     textAlign: 'center',
     fontFamily: 'Poppins-SemiBold',
-    fontSize: FontSizes.md.fontSize,
-    lineHeight: FontSizes.md.lineHeight,
+    fontSize: TAB_FONT,
+    lineHeight: TAB_LINE,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 });
