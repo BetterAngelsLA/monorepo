@@ -11,15 +11,11 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 import { useState } from 'react';
-import {
-  DimensionValue,
-  Dimensions,
-  Image,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { DimensionValue, Dimensions, StyleSheet, View } from 'react-native';
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignOut } from '../hooks';
 import { useUpdateCurrentUserMutation } from '../providers';

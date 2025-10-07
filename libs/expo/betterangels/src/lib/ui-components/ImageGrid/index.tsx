@@ -1,6 +1,7 @@
 import { Radiuses } from '@monorepo/expo/shared/static';
+import { Image } from 'expo-image';
 import { useState } from 'react';
-import { Image, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 const BASE_MARGIN = 5;
 const NUM_COLUMNS = 3;

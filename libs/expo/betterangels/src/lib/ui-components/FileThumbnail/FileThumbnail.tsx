@@ -8,7 +8,8 @@ import {
   TRadius,
   TThumbnailSize,
 } from '@monorepo/expo/shared/static';
-import { Image, TouchableOpacity, View } from 'react-native';
+import { Image } from 'expo-image';
+import { TouchableOpacity, View } from 'react-native';
 import { ThumbnailDeleteButton } from './ThumbnailDeleteButton';
 
 interface IProps {
