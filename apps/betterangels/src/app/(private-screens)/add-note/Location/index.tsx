@@ -135,6 +135,7 @@ export default function LocationComponent(props: ILocationProps) {
               latitude: location.latitude,
               longitude: location.longitude,
             }}
+            userInterfaceStyle="light"
             style={styles.map}
           >
             <Marker
