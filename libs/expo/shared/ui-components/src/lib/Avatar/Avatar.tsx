@@ -1,6 +1,7 @@
 import { UserOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { Image, View } from 'react-native';
+import { Image } from 'expo-image';
+import { View } from 'react-native';
 import Loading from '../Loading';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
