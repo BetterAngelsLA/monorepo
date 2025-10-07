@@ -74,25 +74,28 @@ function TabItem({ label, active, onPress }: TabItemProps) {
   const [boldW, setBoldW] = useState<number | null>(null);
 
   const onBoldMeasure = (e: LayoutChangeEvent) => {
-    if (boldW == null) {
-      setBoldW(Math.ceil(e.nativeEvent.layout.width));
-    }
+    if (boldW == null) setBoldW(Math.ceil(e.nativeEvent.layout.width));
   };
 
-  // Width = bold text width + the same horizontal padding TextButton uses
   const tabWidthStyle = useMemo(
-    () => (boldW != null ? { width: boldW + PADDING_H * 2 } : null),
+    () =>
+      boldW != null ? ({ width: boldW + PADDING_H * 2 } as const) : undefined,
     [boldW]
+  );
+
+  const btnStyle = useMemo(
+    () => StyleSheet.flatten([styles.textBtn, tabWidthStyle]),
+    [tabWidthStyle]
   );
 
   return (
     <View
       style={[
         styles.tab,
-        { borderBottomColor: active ? Colors.PRIMARY : 'transparent' }, // visually identical to old: 3px when active, none when not
+        { borderBottomColor: active ? Colors.PRIMARY : 'transparent' },
       ]}
     >
-      {/* Hidden measurer uses the same font metrics your old invisible text used */}
+      {/* Hidden measurer uses bold metrics to lock width */}
       <Text
         style={styles.hiddenMeasureBold}
         onLayout={onBoldMeasure}
@@ -101,11 +104,11 @@ function TabItem({ label, active, onPress }: TabItemProps) {
         {label}
       </Text>
 
-      {/* Visible control = your original TextButton (keeps exact colors/regular prop behavior) */}
+      {/* Visible control = original TextButton (keeps exact colors/regular prop behavior) */}
       <TextButton
         onPress={onPress}
-        style={[styles.textBtn, tabWidthStyle]} // fixed width kills horizontal jiggle
-        regular={!active} // EXACT original prop semantics
+        style={btnStyle}
+        regular={!active}
         title={label}
         accessibilityHint={`select ${label} tab`}
       />
@@ -114,9 +117,9 @@ function TabItem({ label, active, onPress }: TabItemProps) {
 }
 
 /** ---- Layout constants to keep row perfectly stable ---- */
-const PADDING_H = Spacings.sm; // matches original TextButton padding
-const TAB_VPAD = Spacings.sm; // vertical padding inside each tab
-const TAB_LINE = FontSizes.md.lineHeight; // token line-height for label
+const PADDING_H = Spacings.sm;
+const TAB_VPAD = Spacings.sm;
+const TAB_LINE = FontSizes.md.lineHeight;
 const TAB_FONT = FontSizes.md.fontSize;
 const TAB_HEIGHT =
   Math.ceil(typeof TAB_LINE === 'number' ? TAB_LINE : Number(TAB_LINE)) +
@@ -132,17 +135,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.WHITE,
   },
 
-  // Row-level: constant underline height; only color toggles
   tab: {
     borderColor: Colors.PRIMARY,
-    borderBottomWidth: 3, // constant so row height never changes
+    borderBottomWidth: 3,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  // Keep using your original TextButton; remove absolute positioning
   textBtn: {
-    // match old padding; fix overall height so Android doesn’t nudge the row
     paddingHorizontal: PADDING_H,
     paddingVertical: TAB_VPAD,
     minHeight: TAB_HEIGHT,
@@ -150,13 +150,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // Hidden measurer for bold width (mirrors your old invisible <Text/> metrics)
   hiddenMeasureBold: {
     position: 'absolute',
     opacity: 0,
     left: -9999,
     top: -9999,
-    // mirror tabText in your original code to approximate TextButton label width when bold
     letterSpacing: 0.4,
     textAlign: 'center',
     fontFamily: 'Poppins-SemiBold',
