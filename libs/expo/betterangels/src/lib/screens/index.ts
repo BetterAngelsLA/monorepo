@@ -1,5 +1,6 @@
 export * from './AppSettings';
 export { default as Client } from './Client';
+export * from './ClientHMIS';
 export * from './ClientProfileForms';
 export { default as Clients } from './Clients';
 export * from './ClientsAddInteraction';
