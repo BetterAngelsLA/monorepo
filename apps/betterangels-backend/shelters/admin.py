@@ -900,7 +900,7 @@ class ShelterAdmin(DALFModelAdmin, ImportExportModelAdmin):
         ("pets", DALFRelatedFieldAjax),
         ("parking", DALFRelatedFieldAjax),
         # Restrictions
-        "max_stay",
+        ("max_stay", DALFChoicesField),
         "on_site_security",
         # Services Offered
         ("immediate_needs", DALFRelatedFieldAjax),
@@ -912,8 +912,8 @@ class ShelterAdmin(DALFModelAdmin, ImportExportModelAdmin):
         # Ecosystem Information
         ("cities", DALFRelatedFieldAjax),
         ("spa", DALFRelatedFieldAjax),
-        "city_council_district",
-        "supervisorial_district",
+        ("city_council_district", DALFChoicesField),
+        ("supervisorial_district", DALFChoicesField),
         ("shelter_programs", DALFRelatedFieldAjax),
         ("funders", DALFRelatedFieldAjax),
         # Better Angels Review
