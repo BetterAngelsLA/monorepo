@@ -29,26 +29,19 @@ export const SectionDefaults = {
   [ClientProfileSectionEnum.FullName]: FnEmptyState,
 } as const;
 
-export function isValidSectionKeyHMIS(value: unknown): value is TSectionKey {
-  return typeof value === 'string' && value in SectionSchemas;
-}
-
 export function parseAsSectionKeyHMIS(value: unknown): TSectionKey | null {
   if (typeof value === 'string' && value in SectionSchemas) {
     return value as TSectionKey;
   }
+
   return null;
 }
-
-// export function makeResolver<K extends TSectionKey>(section: K) {
-//   return zodResolver(SectionSchemas[section]);
-// }
 
 export function makeResolver(section: TSectionKey) {
   return zodResolver(SectionSchemas[section]);
 }
 
-export const SectionClientMapper = {
+const SectionMappingFnMap = {
   [ClientProfileSectionEnum.FullName]: mapClientToFullNameSchema,
 } as const;
 
@@ -56,7 +49,7 @@ export function mapClientToForm<K extends TSectionKey>(
   section: K,
   client: HmisClientType
 ) {
-  const mapperFn = SectionClientMapper[section];
+  const mapperFn = SectionMappingFnMap[section];
 
   return mapperFn(client);
 }

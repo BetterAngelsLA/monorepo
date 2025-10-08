@@ -70,6 +70,7 @@ export function toHmisUpdateClientSubItemsInput(
     veteranStatus: FALLBACK_VETERAN_STATUS_INT,
   };
 
+  // override with values from form
   for (const key of formKeys) {
     if (key === 'middleName') {
       inputs.middleName = toStringInput(values.middleName);
@@ -89,7 +90,7 @@ export function toHmisUpdateClientSubItemsInput(
       continue;
     }
 
-    // TODO: update for future Form fields
+    // ... update for future Form fields
   }
 
   return inputs;
@@ -113,6 +114,7 @@ export function toHmisUpdateClientInput(
     dobDataQuality: toDobDataQualityInput(client.dobDataQuality),
   };
 
+  // override with values from form
   for (const key of formKeys) {
     if (key === 'firstName') {
       inputs.firstName = toStringInput(values.firstName);
@@ -132,7 +134,7 @@ export function toHmisUpdateClientInput(
       continue;
     }
 
-    // TODO: update for future Form fields
+    // ... update for future Form fields
   }
 
   return inputs;

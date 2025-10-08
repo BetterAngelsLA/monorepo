@@ -24,7 +24,7 @@ import {
   TUpdateClientInputsUnion,
   toHMISClientProfileInputs,
 } from './toHMISClientProfileInputs';
-import { AnySectionValues } from './types';
+import { TAnySectionValues } from './types';
 
 type TProps = {
   id: string;
@@ -58,7 +58,7 @@ export function ClientHMISEdit(props: TProps) {
     }
   }, [screenTitle, navigation]);
 
-  const formMethods = useForm<AnySectionValues>({
+  const formMethods = useForm<TAnySectionValues>({
     resolver: makeResolver(sectionName),
     defaultValues: SectionDefaults[sectionName],
   });
@@ -173,7 +173,7 @@ export function ClientHMISEdit(props: TProps) {
 
       const { personalId: returnedId } = updatedClient;
 
-      router.replace(`/client/${returnedId}`);
+      router.dismissTo(`/client/${returnedId}`);
     } catch (error) {
       console.error('updateHmisClientMutation error:', error);
 
