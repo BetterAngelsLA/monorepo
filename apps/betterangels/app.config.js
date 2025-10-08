@@ -21,7 +21,7 @@ export default {
     name: IS_PRODUCTION ? 'BetterAngels' : 'BetterAngels (Dev)',
     slug: 'betterangels',
     scheme: IS_PRODUCTION ? 'betterangels' : 'betterangels-dev',
-    version: '1.0.52',
+    version: '1.0.53',
     orientation: 'portrait',
     icon: IS_PRODUCTION
       ? './src/app/assets/images/icon.png'
@@ -34,10 +34,9 @@ export default {
     ios: {
       supportsTablet: true,
       bundleIdentifier: BUNDLE_IDENTIFIER,
-      buildNumber: '1.0.63',
+      buildNumber: '1.0.64',
       associatedDomains: [`applinks:${HOSTNAME}`],
       config: {
-        googleMapsApiKey: process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY,
         usesNonExemptEncryption: false,
       },
     },
@@ -67,12 +66,8 @@ export default {
           category: ['BROWSABLE', 'DEFAULT'],
         },
       ],
-      config: {
-        googleMaps: {
-          apiKey: process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
-        },
-      },
-      versionCode: 62,
+      config: {},
+      versionCode: 63,
     },
     web: {
       favicon: './src/app/assets/images/favicon.png',
@@ -135,6 +130,14 @@ export default {
           iCloudContainerEnvironment: 'Production',
         },
       ],
+      [
+        'react-native-maps',
+        {
+          iosGoogleMapsApiKey: process.env.EXPO_PUBLIC_IOS_GOOGLEMAPS_APIKEY,
+          androidGoogleMapsApiKey:
+            process.env.EXPO_PUBLIC_ANDROID_GOOGLEMAPS_APIKEY,
+        },
+      ],
     ],
     extra: {
       router: {
@@ -144,7 +147,7 @@ export default {
         projectId: '53171ba4-60ca-40cb-b3e6-b0c2393677b8',
       },
     },
-    newArchEnabled: false,
+    newArchEnabled: true,
     owner: 'better-angels',
     runtimeVersion: process.env.RUNTIME_VERSION,
   },

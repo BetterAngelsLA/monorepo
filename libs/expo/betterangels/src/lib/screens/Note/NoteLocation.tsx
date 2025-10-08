@@ -26,6 +26,7 @@ export default function NoteLocation({
           longitude: note?.location?.point[0],
         }}
         style={styles.map}
+        userInterfaceStyle="light"
       >
         <Marker
           coordinate={{
