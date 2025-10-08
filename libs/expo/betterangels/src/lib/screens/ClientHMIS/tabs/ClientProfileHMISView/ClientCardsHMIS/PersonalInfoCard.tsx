@@ -1,13 +1,13 @@
 import { formatDateStatic } from '@monorepo/expo/shared/ui-components';
 import {
-  enumHmisDobQuality,
-  enumHmisVeteranStatusEnum,
-} from 'libs/expo/betterangels/src/lib/static';
-import {
   HmisClientType,
   HmisDobQualityEnum,
   HmisVeteranStatusEnum,
 } from '../../../../../apollo';
+import {
+  enumHmisDobQuality,
+  enumHmisVeteranStatusEnum,
+} from '../../../../../static';
 import {
   ClientProfileCard,
   ClientProfileCardContainer,
