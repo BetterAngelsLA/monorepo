@@ -107,7 +107,6 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_ckeditor_5",
     "django_structlog",
-    "dalf",
     "guardian",
     "places",
     "post_office",
