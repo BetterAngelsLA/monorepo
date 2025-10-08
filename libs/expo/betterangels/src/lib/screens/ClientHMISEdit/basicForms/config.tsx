@@ -9,6 +9,11 @@ import {
   mapClientToFullNameSchema,
 } from './FullName';
 
+// titles
+export const SectionTitle: Partial<Record<ClientProfileSectionEnum, string>> = {
+  [ClientProfileSectionEnum.FullName]: 'Edit Full Name',
+} as const;
+
 // forms
 export const SectionForms = {
   [ClientProfileSectionEnum.FullName]: FullNameForm,

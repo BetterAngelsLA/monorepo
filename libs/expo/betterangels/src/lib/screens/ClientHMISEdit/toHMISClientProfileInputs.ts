@@ -88,9 +88,9 @@ export function toHmisUpdateClientSubItemsInput(
 
       continue;
     }
-  }
 
-  // TODO: update for future Form fields
+    // TODO: update for future Form fields
+  }
 
   return inputs;
 }
@@ -131,9 +131,9 @@ export function toHmisUpdateClientInput(
 
       continue;
     }
-  }
 
-  // TODO: update for future Form fields
+    // TODO: update for future Form fields
+  }
 
   return inputs;
 }

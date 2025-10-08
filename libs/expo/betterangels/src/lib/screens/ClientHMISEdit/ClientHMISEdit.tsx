@@ -1,17 +1,21 @@
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
-import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useNavigation, useRouter } from 'expo-router';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { HmisClientType, extractHMISErrors } from '../../apollo';
 import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
-import { useGetHmisClientQuery } from '../ClientHMIS/__generated__/getHMISClient.generated';
-import { useHmisUpdateClientMutation } from './__generated__/UpdateHMISClient.generated';
+import {
+  GetHmisClientDocument,
+  useGetHmisClientQuery,
+} from '../ClientHMIS/__generated__/getHMISClient.generated';
+import { useHmisUpdateClientMutation } from './__generated__/hmisUpdateClient.generated';
 import {
   SectionDefaults,
   SectionForms,
   SectionSchemas,
+  SectionTitle,
   makeResolver,
   mapClientToForm,
   parseAsSectionKeyHMIS,
@@ -31,12 +35,13 @@ export function ClientHMISEdit(props: TProps) {
   const { componentName, id: personalId } = props;
 
   const router = useRouter();
+  const navigation = useNavigation();
   const { showSnackbar } = useSnackbar();
 
   const [client, setClient] = useState<HmisClientType>();
 
   const sectionName = parseAsSectionKeyHMIS(componentName);
-  const [updateHMISClientMution, { loading: isUpdating }] =
+  const [updateHmisClientMutation, { loading: isUpdating }] =
     useHmisUpdateClientMutation();
 
   const debugMode = process.env['EXPO_PUBLIC_GQL_DEBUG'] === 'true';
@@ -44,6 +49,14 @@ export function ClientHMISEdit(props: TProps) {
   if (!sectionName) {
     throw new Error(`Invalid componentName [${componentName}].`);
   }
+
+  const screenTitle = SectionTitle[sectionName];
+
+  useLayoutEffect(() => {
+    if (screenTitle) {
+      navigation.setOptions({ title: screenTitle });
+    }
+  }, [screenTitle, navigation]);
 
   const formMethods = useForm<AnySectionValues>({
     resolver: makeResolver(sectionName),
@@ -99,12 +112,17 @@ export function ClientHMISEdit(props: TProps) {
         values as TUpdateClientInputsUnion
       );
 
-      const { data: updateData, errors } = await updateHMISClientMution({
+      const { data: updateData, errors } = await updateHmisClientMutation({
         variables: {
           clientInput,
           clientSubItemsInput,
         },
         errorPolicy: 'all',
+        // TODO: replace with cache typePolicy or push directly to cache
+        refetchQueries: [
+          { query: GetHmisClientDocument, variables: { personalId } },
+        ],
+        awaitRefetchQueries: true,
       });
 
       if (debugMode && errors) {
@@ -118,7 +136,7 @@ export function ClientHMISEdit(props: TProps) {
         throw new Error('missing hmisUpdateClient response');
       }
 
-      if (updatedClient?.__typename === 'HmisUpdateClientError') {
+      if (updatedClient.__typename === 'HmisUpdateClientError') {
         const { message: hmisErrorMessage } = updatedClient;
 
         const parsedErr = extractHMISErrors(hmisErrorMessage) || {};
@@ -148,8 +166,16 @@ export function ClientHMISEdit(props: TProps) {
         // throw generic error
         throw new Error(hmisErrorMessage);
       }
+
+      if (updatedClient.__typename !== 'HmisClientType') {
+        throw new Error('invalid hmisUpdateClient response');
+      }
+
+      const { personalId: returnedId } = updatedClient;
+
+      router.replace(`/client/${returnedId}`);
     } catch (error) {
-      console.error('updateHMISClientMution error:', error);
+      console.error('updateHmisClientMutation error:', error);
 
       showSnackbar({
         message: 'Something went wrong. Please try again.',

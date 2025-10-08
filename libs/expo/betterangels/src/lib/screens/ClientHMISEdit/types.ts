@@ -5,7 +5,7 @@ import {
 } from '../../apollo';
 import { SectionSchemas } from './basicForms/config';
 
-type Flatten<T> = { [K in keyof T]: T[K] } & {};
+type Flatten<T> = { [K in keyof T]: T[K] };
 
 export type SectionValues<K extends TSectionKey> = z.infer<
   (typeof SectionSchemas)[K]

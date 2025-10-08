@@ -42,6 +42,7 @@ export const FALLBACK_VETERAN_STATUS = HmisVeteranStatusEnum.NotCollected;
 export const FALLBACK_VETERAN_STATUS_INT =
   HmisVeteranStatusEnumInt.NOT_COLLECTED;
 
+// TBD how SSN works
 export const FALLBACK_SSN_1 = 'xxx';
 export const FALLBACK_SSN_2 = 'xx';
 export const FALLBACK_SSN_3 = 'xxxx';
