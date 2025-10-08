@@ -7,7 +7,6 @@ import places
 import requests
 from betterangels_backend import settings
 from common.models import Location
-from dalf.admin import DALFChoicesField, DALFModelAdmin, DALFRelatedFieldAjax
 from django import forms
 from django.contrib import admin
 from django.contrib.admin.models import ADDITION, CHANGE, DELETION
@@ -701,7 +700,7 @@ class ShelterResource(resources.ModelResource):
 
 
 @admin.register(Shelter)
-class ShelterAdmin(DALFModelAdmin, ImportExportModelAdmin):
+class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
 
     def _get_selected_hero(self, formsets: list[BaseFormSet]) -> Optional[Union[Type[models.Model], models.Model]]:
@@ -888,39 +887,39 @@ class ShelterAdmin(DALFModelAdmin, ImportExportModelAdmin):
     )
     list_filter = (
         # Basic Information
-        ("organization", DALFRelatedFieldAjax),
+        "organization",
         # Summary Info
-        ("demographics", DALFRelatedFieldAjax),
-        ("special_situation_restrictions", DALFRelatedFieldAjax),
-        ("shelter_types", DALFRelatedFieldAjax),
+        "demographics",
+        "special_situation_restrictions",
+        "shelter_types",
         # Sleeping Details
-        ("room_styles", DALFRelatedFieldAjax),
+        "room_styles",
         # Shelter Details
-        ("accessibility", DALFRelatedFieldAjax),
-        ("storage", DALFRelatedFieldAjax),
-        ("pets", DALFRelatedFieldAjax),
-        ("parking", DALFRelatedFieldAjax),
+        "accessibility",
+        "storage",
+        "pets",
+        "parking",
         # Restrictions
-        ("max_stay", DALFChoicesField),
+        "max_stay",
         "on_site_security",
         # Services Offered
-        ("immediate_needs", DALFRelatedFieldAjax),
-        ("general_services", DALFRelatedFieldAjax),
-        ("health_services", DALFRelatedFieldAjax),
-        ("training_services", DALFRelatedFieldAjax),
+        "immediate_needs",
+        "general_services",
+        "health_services",
+        "training_services",
         # Entry Requirements
-        ("entry_requirements", DALFRelatedFieldAjax),
+        "entry_requirements",
         # Ecosystem Information
-        ("cities", DALFRelatedFieldAjax),
-        ("spa", DALFRelatedFieldAjax),
-        ("city_council_district", DALFChoicesField),
-        ("supervisorial_district", DALFChoicesField),
-        ("shelter_programs", DALFRelatedFieldAjax),
-        ("funders", DALFRelatedFieldAjax),
+        "cities",
+        "spa",
+        "city_council_district",
+        "supervisorial_district",
+        "shelter_programs",
+        "funders",
         # Better Angels Review
-        ("overall_rating", DALFChoicesField),
+        "overall_rating",
         # Better Angels Administration
-        ("status", DALFChoicesField),
+        "status",
     )
     search_fields = ("name", "organization__name", "description", "subjective_review")
     resource_class = ShelterResource
