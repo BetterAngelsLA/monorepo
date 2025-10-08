@@ -52,6 +52,7 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
     userLocation,
   } = props;
   const { baseUrl } = useApiConfig();
+
   async function placePin(e: any, isId: boolean) {
     if (chooseDirections) {
       setChooseDirections(false);
@@ -62,27 +63,26 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
     const name =
       e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
     const placeId = e.nativeEvent.placeId || undefined;
+
+    setCurrentLocation({ longitude, latitude, name });
+    setInitialLocation({ longitude, latitude });
+    setMinimizeModal(false);
+    setSelected(true);
+
     const url = isId
       ? `${baseUrl}/proxy/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
       : `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
       // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const { data } = await axios.get(url, {
-        params: {
-          withCredentials: true,
-        },
+        withCredentials: true,
+        signal: controller.signal,
+        timeout: 8000,
       });
 
-      setCurrentLocation({
-        longitude,
-        latitude,
-        name,
-      });
-
-      setInitialLocation({
-        longitude,
-        latitude,
-      });
+      clearTimeout(timeoutId);
 
       const googleAddress = isId
         ? data.result.formatted_address
@@ -101,7 +101,12 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
       setMinimizeModal(false);
       setSelected(true);
     } catch (err) {
-      console.error(err);
+      setAddress({
+        short: name || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+        full: name || `${latitude}, ${longitude}`,
+        addressComponents: [],
+      });
+      console.error('Reverse geocode failed:', err);
     }
   }
 
