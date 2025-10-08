@@ -72,6 +72,7 @@ develop = true
 celery = {version = "^5.5.3", extras = ["redis"]}
 celery-redbeat = "^2.3.3"
 cryptography = "^45.0.5"
+dalf = "^0.5.0"
 deepdiff = "^8.6.1"
 dj-places = "^5.2.1"
 django = "^5.2.7"
@@ -1134,6 +1135,22 @@ files = [
 editorconfig = ">=0.12.2"
 jsbeautifier = "*"
 six = ">=1.13.0"
+
+[[package]]
+name = "dalf"
+version = "0.5.0"
+description = "Dead simple autocompletion for Django admin list_filter with goodies."
+optional = false
+python-versions = ">=3.11"
+groups = ["main"]
+files = [
+    {file = "dalf-0.5.0-py3-none-any.whl", hash = "sha256:efb3c48f9226a8e7caf8f4a301d0d29339cc0cc9e6f8c07182da4e276fd8ba55"},
+    {file = "dalf-0.5.0.tar.gz", hash = "sha256:2755570be160deeb21ac4eb59da5a6b18d1565eb1ae90400b1961d677f05d964"},
+]
+
+[package.extras]
+build = ["build", "twine"]
+dev = ["Django", "pytest", "pytest-cov", "pytest-django", "pytest-factoryboy"]
 
 [[package]]
 name = "decorator"
