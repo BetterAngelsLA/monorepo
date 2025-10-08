@@ -10,7 +10,7 @@ import {
   GetHmisClientDocument,
   useGetHmisClientQuery,
 } from '../ClientHMIS/__generated__/getHMISClient.generated';
-import { useHmisUpdateClientMutation } from './__generated__/hmisUpdateClient.generated';
+import { useHmisUpdateClientMutation } from './__generated__/updateHmisClient.generated';
 import {
   SectionDefaults,
   SectionForms,
