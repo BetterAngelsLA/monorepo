@@ -43,7 +43,7 @@ export default function TaskHeader(props: TTaskHeaderProps) {
   }
   return (
     <View style={styles.container}>
-      <TextRegular>{task.summary}</TextRegular>
+      <TextRegular style={{ flex: 1 }}>{task.summary}</TextRegular>
       <EditButton iconSize="md" onClick={openTaskForm} />
     </View>
   );
