@@ -1,7 +1,8 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { format } from 'date-fns';
+import { Image } from 'expo-image';
 import { ReactNode } from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import TextRegular from '../TextRegular';
 
 interface IFileCardProps {
@@ -58,7 +59,7 @@ export function FileCard(props: IFileCardProps) {
             <Image
               style={{ width: 36, height: 36 }}
               source={{ uri: url }}
-              resizeMode="cover"
+              contentFit="cover"
               accessibilityIgnoresInvertColors
             />
           )}

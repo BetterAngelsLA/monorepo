@@ -1,5 +1,5 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { ContentStyle, FlashList } from '@shopify/flash-list';
+import { FlashList } from '@shopify/flash-list';
 import { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { EmptyListView } from './EmptyListView';
@@ -20,7 +20,6 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     hasMore,
     totalItems,
     extraData,
-    estimatedItemSize,
     ListEmptyComponent,
     ListFooterComponent,
     LoadingViewContent,
@@ -74,7 +73,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     return ListEmptyComponent ?? <EmptyListView />;
   }, [loading, ListEmptyComponent]);
 
-  const mergedContentContainerStyle: ContentStyle = useMemo(
+  const mergedContentContainerStyle = useMemo(
     () => StyleSheet.flatten([styles.contentContainer, contentContainerStyle]),
     [contentContainerStyle]
   );
@@ -97,7 +96,6 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
       />
 
       <FlashList<T>
-        estimatedItemSize={estimatedItemSize}
         data={data}
         renderItem={renderItemStable}
         onEndReached={onEndReached}

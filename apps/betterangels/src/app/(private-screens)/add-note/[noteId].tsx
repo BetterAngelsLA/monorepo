@@ -26,7 +26,6 @@ import ProvidedServices from './ProvidedServices';
 import PublicNote from './PublicNote';
 import Purpose from './Purpose';
 import RequestedServices from './RequestedServices';
-import SubmittedModal from './SubmittedModal';
 import Tasks from './Tasks';
 import Team from './Team';
 
@@ -114,7 +113,6 @@ export default function AddNote() {
     time: false,
   });
   const [isPublicNoteEdited, setIsPublicNoteEdited] = useState(false);
-  const [isSubmitted, setSubmitted] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const navigation = useNavigation();
 
@@ -328,15 +326,6 @@ export default function AddNote() {
           )
         }
         onSubmit={submitNote}
-      />
-
-      <SubmittedModal
-        firstName={data.note.clientProfile?.firstName}
-        closeModal={() => {
-          setSubmitted(false);
-          router.navigate(getClientProfileUrl(data?.note.clientProfile?.id));
-        }}
-        isModalVisible={isSubmitted}
       />
     </View>
   );
