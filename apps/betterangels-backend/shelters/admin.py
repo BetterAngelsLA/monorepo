@@ -951,11 +951,11 @@ class ShelterAdmin(ImportExportModelAdmin):
         # Limit events to just the objects in *this* queryset (admin page w/ filters)
         # This uses pghistory's optimized aggregator instead of scanning all events.
         scoped_events = (
-            pghistory.models.MiddlewareEvents.objects.tracks(qs)  # <-- key line: restrict to these Shelters
+            pghistory.models.MiddlewareEvents.objects.tracks(qs)
             .exclude(user__isnull=True)
             .order_by("pgh_obj_id", "-pgh_created_at")
-            .distinct("pgh_obj_id")  # 1 row per object (latest)
-            .annotate(  # pack everything we need once
+            .distinct("pgh_obj_id")
+            .annotate(
                 obj=JSONObject(
                     user_id=F("user_id"),
                     created=F("pgh_created_at"),
@@ -966,7 +966,6 @@ class ShelterAdmin(ImportExportModelAdmin):
             )
         )
 
-        # Single scalar subquery against the already-scoped, deduped set
         return qs.annotate(last_event=Subquery(scoped_events.filter(pgh_obj_id=OuterRef("pk_text")).values("obj")[:1]))
 
     def save_related(
