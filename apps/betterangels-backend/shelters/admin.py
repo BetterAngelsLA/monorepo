@@ -3,7 +3,6 @@ import logging
 from typing import Any, Optional, Tuple, Type, TypeVar, Union, cast
 from urllib.parse import quote
 
-import pghistory.models
 import places
 import requests
 from betterangels_backend import settings
@@ -30,6 +29,7 @@ from import_export.fields import Field
 from import_export.results import RowResult
 from import_export.widgets import ForeignKeyWidget, ManyToManyWidget
 from organizations.models import Organization
+from pghistory.models import MiddlewareEvents
 from shelters.permissions import ShelterFieldPermissions
 
 from .enums import (
@@ -951,7 +951,7 @@ class ShelterAdmin(ImportExportModelAdmin):
         # Limit events to just the objects in *this* queryset (admin page w/ filters)
         # This uses pghistory's optimized aggregator instead of scanning all events.
         scoped_events = (
-            pghistory.models.MiddlewareEvents.objects.tracks(qs)
+            MiddlewareEvents.objects.tracks(qs)
             .exclude(user__isnull=True)
             .order_by("pgh_obj_id", "-pgh_created_at")
             .distinct("pgh_obj_id")
