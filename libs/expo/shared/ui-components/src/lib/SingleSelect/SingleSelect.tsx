@@ -39,7 +39,6 @@ export function SingleSelect(props: ISingleSelectProps) {
   } = props;
 
   const asSelect = items.length > maxRadioItems;
-
   const selectedItem = items.find((item) => item.value === selectedValue);
 
   if (asSelect) {
@@ -77,6 +76,7 @@ export function SingleSelect(props: ISingleSelectProps) {
           value={value}
         />
       ))}
+
       {error && (
         <TextRegular size="sm" color={Colors.ERROR}>
           {error}

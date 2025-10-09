@@ -1,6 +1,7 @@
 import { getMarginStyles } from '@monorepo/expo/shared/static';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Keyboard } from 'react-native';
+
 import { PickerField } from './PickerField';
 import { PickerModal } from './PickerModal';
 import { NONE_VALUE } from './constants';
@@ -19,20 +20,26 @@ export default function Picker(props: IPickerProps) {
     required,
     disabled,
   } = props;
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
 
-  function onSelect(newValue: string) {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const open = useCallback(() => {
+    if (disabled) return;
     Keyboard.dismiss();
-    setIsModalVisible(false);
+    setIsModalVisible(true);
+  }, [disabled]);
 
-    if (newValue === NONE_VALUE) {
-      onChange(null);
+  const close = useCallback(() => setIsModalVisible(false), []);
 
-      return;
-    }
-
-    onChange(newValue);
-  }
+  const onSelect = useCallback(
+    (newValue: string) => {
+      Keyboard.dismiss();
+      setIsModalVisible(false);
+      if (newValue === NONE_VALUE) return onChange(null);
+      onChange(newValue);
+    },
+    [onChange]
+  );
 
   return (
     <>
@@ -42,10 +49,7 @@ export default function Picker(props: IPickerProps) {
         required={required}
         placeholder={placeholder}
         selectedValue={selectedValue}
-        onFocus={() => {
-          Keyboard.dismiss();
-          setIsModalVisible(true);
-        }}
+        onFocus={open}
         items={items}
         label={label}
         error={error}
@@ -58,7 +62,7 @@ export default function Picker(props: IPickerProps) {
         allowSelectNone={allowSelectNone}
         selectNoneLabel={selectNoneLabel || placeholder}
         onSelect={onSelect}
-        onClose={() => setIsModalVisible(false)}
+        onClose={close}
       />
     </>
   );

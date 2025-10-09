@@ -1,9 +1,12 @@
 import { ChevronLeftIcon, PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { IconButton, TextBold } from '@monorepo/expo/shared/ui-components';
+import {
+  BaseModal,
+  IconButton,
+  TextBold,
+} from '@monorepo/expo/shared/ui-components';
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import Modal from 'react-native-modal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type SelectStatusProps = {
@@ -36,9 +39,7 @@ export function SelectStatus({
     setOpen(true);
   };
 
-  const closeSheet = () => {
-    setOpen(false);
-  };
+  const closeSheet = () => setOpen(false);
 
   const Chevron = ({ up = false }: { up?: boolean }) => (
     <ChevronLeftIcon
@@ -60,9 +61,7 @@ export function SelectStatus({
         onPress={openSheet}
         style={({ pressed }) => [
           styles.trigger,
-          {
-            backgroundColor: current?.bg ?? Colors.NEUTRAL_DARK,
-          },
+          { backgroundColor: current?.bg ?? Colors.NEUTRAL_DARK },
           pressed && !disabled ? { opacity: 0.85 } : undefined,
           disabled ? { opacity: 0.6 } : undefined,
         ]}
@@ -73,25 +72,33 @@ export function SelectStatus({
         <Chevron up={open} />
       </Pressable>
 
-      <Modal
-        style={styles.modal}
+      <BaseModal
+        title={null}
+        isOpen={open}
+        onClose={closeSheet}
+        variant="sheet"
         backdropOpacity={0.5}
-        isVisible={open}
-        onBackdropPress={closeSheet}
-        useNativeDriverForBackdrop={true}
+        panelStyle={{
+          borderTopLeftRadius: Radiuses.md,
+          borderTopRightRadius: Radiuses.md,
+          backgroundColor: Colors.WHITE,
+        }}
+        contentStyle={{
+          paddingHorizontal: Spacings.md,
+          paddingBottom: bottomOffset, // tightened: safe-area only (no extra spacing)
+        }}
       >
-        <View
-          style={[styles.sheet, { paddingBottom: bottomOffset + Spacings.md }]}
-        >
+        <View style={styles.sheet}>
           <IconButton
             style={{ alignSelf: 'flex-end' }}
             onPress={closeSheet}
-            variant={'transparent'}
-            accessibilityLabel={'close menu'}
-            accessibilityHint={'Closes the menu'}
+            variant="transparent"
+            accessibilityLabel="close menu"
+            accessibilityHint="Closes the menu"
           >
             <PlusIcon rotate="45deg" />
           </IconButton>
+
           {title && (
             <TextBold mb="md" size="xl">
               {title}
@@ -103,12 +110,12 @@ export function SelectStatus({
               const selected = value === opt.value;
               const onPress = () => {
                 onChange(opt.value);
-                setTimeout(closeSheet, 30);
+                setTimeout(closeSheet, 30); // preserve original tiny delay
               };
 
               return (
                 <Pressable
-                  key={`${opt.value}`}
+                  key={opt.value}
                   onPress={onPress}
                   style={({ pressed }) => [
                     styles.optionRow,
@@ -124,17 +131,12 @@ export function SelectStatus({
             })}
           </View>
         </View>
-      </Modal>
+      </BaseModal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  modal: {
-    margin: 0,
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
   trigger: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -147,12 +149,10 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 0,
     gap: Spacings.xs,
   },
-
   sheet: {
     backgroundColor: Colors.WHITE,
     borderTopLeftRadius: Radiuses.md,
     borderTopRightRadius: Radiuses.md,
-    paddingHorizontal: Spacings.md,
   },
   list: {
     gap: Spacings.xs,
