@@ -11,11 +11,15 @@ import { extractHMISErrors } from '../../apollo';
 import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import {
-  HmisNameQualityIntEnum,
-  HmisSuffixIntEnum,
   enumDisplayHmisSuffix,
   enumHmisNameQuality,
+  toHmisNameQualityInt,
+  toHmisSuffixEnumInt,
 } from '../../static';
+import {
+  FALLBACK_NAME_DATA_QUALITY_INT,
+  FALLBACK_NAME_SUFFIX_INT,
+} from '../ClientHMISEdit/constants';
 import { useCreateHmisClientMutation } from './__generated__/createHmisClient.generated';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
@@ -52,25 +56,20 @@ export function CreateClientProfileHMIS() {
         nameSuffix,
       } = formData;
 
-      const nameQualityEnumInt =
-        HmisNameQualityIntEnum[
-          nameDataQuality as keyof typeof HmisNameQualityIntEnum
-        ];
-
-      const suffixEnumInt =
-        HmisSuffixIntEnum[nameSuffix as keyof typeof HmisSuffixIntEnum];
-
       const { data } = await createHMISClientMutation({
         variables: {
           clientInput: {
             firstName,
             lastName,
-            nameDataQuality: nameQualityEnumInt,
+            nameDataQuality:
+              toHmisNameQualityInt(nameDataQuality) ??
+              FALLBACK_NAME_DATA_QUALITY_INT,
           },
           clientSubItemsInput: {
             middleName,
             alias,
-            nameSuffix: suffixEnumInt,
+            nameSuffix:
+              toHmisSuffixEnumInt(nameSuffix) ?? FALLBACK_NAME_SUFFIX_INT,
           },
         },
         errorPolicy: 'all',
