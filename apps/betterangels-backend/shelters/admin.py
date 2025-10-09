@@ -945,9 +945,6 @@ class ShelterAdmin(ImportExportModelAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet[Shelter]:
         qs: QuerySet[Shelter] = super().get_queryset(request)
 
-        # pghistory stores pgh_obj_id as TEXT; cast pk once for safe equality
-        qs = qs.annotate(pk_text=Cast("pk", output_field=models.TextField()))
-
         # Limit events to just the objects in *this* queryset (admin page w/ filters)
         # This uses pghistory's optimized aggregator instead of scanning all events.
         scoped_events = (
@@ -966,7 +963,11 @@ class ShelterAdmin(ImportExportModelAdmin):
             )
         )
 
-        return qs.annotate(last_event=Subquery(scoped_events.filter(pgh_obj_id=OuterRef("pk_text")).values("obj")[:1]))
+        return qs.annotate(
+            last_event=Subquery(
+                scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
+            )
+        )
 
     def save_related(
         self,
