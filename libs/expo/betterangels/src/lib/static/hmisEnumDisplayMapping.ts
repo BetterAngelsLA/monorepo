@@ -1,4 +1,9 @@
-import { HmisNameQualityEnum, HmisSuffixEnum } from '../apollo';
+import {
+  HmisDobQualityEnum,
+  HmisNameQualityEnum,
+  HmisSuffixEnum,
+  HmisVeteranStatusEnum,
+} from '../apollo';
 
 export const enumHmisNameQuality: {
   [key in HmisNameQualityEnum]: string;
@@ -8,6 +13,26 @@ export const enumHmisNameQuality: {
   [HmisNameQualityEnum.DontKnow]: "Client doesn't know",
   [HmisNameQualityEnum.NoAnswer]: 'Client prefers not to answer',
   [HmisNameQualityEnum.NotCollected]: 'Data not collected',
+};
+
+export const enumHmisDobQuality: {
+  [key in HmisDobQualityEnum]: string;
+} = {
+  [HmisDobQualityEnum.Full]: 'Full DOB reported',
+  [HmisDobQualityEnum.Partial]: 'Approximate or partial DOB reported',
+  [HmisDobQualityEnum.DontKnow]: "Client doesn't know",
+  [HmisDobQualityEnum.NoAnswer]: 'Client prefers not to answer',
+  [HmisDobQualityEnum.NotCollected]: 'Data not collected',
+};
+
+export const enumHmisVeteranStatusEnum: {
+  [key in HmisVeteranStatusEnum]: string;
+} = {
+  [HmisVeteranStatusEnum.No]: 'No',
+  [HmisVeteranStatusEnum.Yes]: 'Yes',
+  [HmisVeteranStatusEnum.DontKnow]: "Client doesn't know",
+  [HmisVeteranStatusEnum.NoAnswer]: 'Client prefers not to answer',
+  [HmisVeteranStatusEnum.NotCollected]: 'Data not collected',
 };
 
 export const enumDisplayHmisSuffix: {
