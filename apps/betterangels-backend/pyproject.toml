@@ -19,7 +19,7 @@ include = "betterangels_backend"
 [tool.poetry.dependencies]
 python = "3.13.5"
 psycopg = "^3.2.9"
-django = "^5.2.4"
+django = "^5.2.7"
 django-environ = "^0.12.0"
 gunicorn = { extras = ["gevent"], version = "^23.0.0" }
 django-extensions = "^4.1"
@@ -38,7 +38,7 @@ django-pghistory = "^3.7.0"
 django-storages = { extras = ["s3"], version = "^1.14.6" }
 django-waffle = "^5.0.0"
 django-structlog = "^9.1.1"
-deepdiff = "^8.5.0"
+deepdiff = "^8.6.1"
 django-phonenumber-field = { extras = ["phonenumbers"], version = "^8.1.0" }
 django-ckeditor-5 = "^0.2.18"
 newrelic = "^10.15.0"

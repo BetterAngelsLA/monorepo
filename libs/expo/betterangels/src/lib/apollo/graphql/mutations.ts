@@ -57,6 +57,16 @@ export const REVERT_NOTE = gql`
           point
           pointOfInterest
         }
+        providedServices {
+          id
+          serviceEnum
+          serviceOther
+        }
+        requestedServices {
+          id
+          serviceEnum
+          serviceOther
+        }
         publicDetails
         isSubmitted
         clientProfile {

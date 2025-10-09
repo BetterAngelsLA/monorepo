@@ -40,7 +40,6 @@ export default function HMISLoginForm() {
       }
       if (res.__typename === 'UserType') {
         refetchUser();
-
         return;
       }
     } catch (e) {

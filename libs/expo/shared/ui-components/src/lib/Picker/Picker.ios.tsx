@@ -1,144 +1,233 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import {
   Colors,
   Radiuses,
   Spacings,
   getMarginStyles,
 } from '@monorepo/expo/shared/static';
-import { Picker as RNPicker } from '@react-native-picker/picker';
-import { useEffect, useState } from 'react';
-import {
-  Keyboard,
-  Pressable,
-  SafeAreaView,
-  StyleSheet,
-  View,
-} from 'react-native';
-import Modal from 'react-native-modal';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import TextBold from '../TextBold';
+import { BaseModal } from '../Modal/BaseModal';
+import { TextBold } from '../TextBold/TextBold';
+import { TextRegular } from '../TextRegular/TextRegular';
+
 import { PickerField } from './PickerField';
+import { WheelPicker } from './WheelPicker';
 import { NONE_VALUE } from './constants';
 import { IPickerProps } from './types';
 
-export default function Picker(props: IPickerProps) {
-  const {
-    onChange,
-    error,
-    selectedValue,
-    placeholder,
-    allowSelectNone,
-    selectNoneLabel,
-    items,
-    label,
-    required,
-    disabled,
-  } = props;
-  const [localValue, setLocalValue] = useState<string | null>(null);
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+type Props = IPickerProps & { useWheelOnIOS?: boolean };
+
+export default function Picker({
+  onChange,
+  error,
+  selectedValue,
+  placeholder,
+  allowSelectNone,
+  selectNoneLabel,
+  items,
+  label,
+  required,
+  disabled,
+  useWheelOnIOS = true,
+  ...rest
+}: Props) {
+  const [open, setOpen] = useState(false);
+  const insets = useSafeAreaInsets();
+
+  const draftRef = useRef<string | null>(selectedValue ?? null);
 
   useEffect(() => {
-    setLocalValue(selectedValue || null);
-  }, [selectedValue, setLocalValue]);
+    if (!open) return;
+    draftRef.current =
+      selectedValue ?? (allowSelectNone ? NONE_VALUE : items[0]?.value ?? null);
+  }, [open, selectedValue, allowSelectNone, items]);
 
-  function onPressDone() {
-    Keyboard.dismiss();
-    setIsModalVisible(false);
+  const titleText = useMemo(
+    () => label ?? placeholder ?? 'Select',
+    [label, placeholder]
+  );
 
-    if (localValue === NONE_VALUE) {
-      onChange(null);
+  const initialWheelValue = useMemo(
+    () =>
+      (selectedValue ?? (allowSelectNone ? NONE_VALUE : items[0]?.value)) as
+        | string
+        | undefined,
+    [selectedValue, allowSelectNone, items]
+  );
 
-      return;
-    }
+  const openPicker = useCallback(() => {
+    if (!disabled) setOpen(true);
+  }, [disabled]);
 
-    onChange(localValue || items[0].value);
-  }
+  const closePicker = useCallback(() => setOpen(false), []);
 
-  const insets = useSafeAreaInsets();
-  const bottomOffset = insets.bottom;
+  const commit = useCallback(
+    (val: string) => {
+      closePicker();
+      if (val === NONE_VALUE) return onChange(null);
+      onChange(val);
+    },
+    [closePicker, onChange]
+  );
+
+  const onDone = useCallback(() => {
+    const fallback = allowSelectNone
+      ? NONE_VALUE
+      : items[0]?.value ?? NONE_VALUE;
+    const v = draftRef.current ?? fallback;
+    commit(v);
+  }, [allowSelectNone, items, commit]);
 
   return (
     <>
       <PickerField
-        style={getMarginStyles(props)}
+        style={getMarginStyles({ ...rest })}
         disabled={disabled}
         required={required}
         placeholder={placeholder}
         selectedValue={selectedValue}
-        onFocus={() => {
-          Keyboard.dismiss();
-          setIsModalVisible(true);
-        }}
+        onFocus={openPicker}
         items={items}
         label={label}
         error={error}
       />
-      <Modal
-        style={styles.modal}
+
+      <BaseModal
+        title={null}
+        isOpen={open}
+        onClose={closePicker}
+        variant="sheet"
+        direction="up"
         backdropOpacity={0.5}
-        isVisible={isModalVisible}
-        onBackdropPress={() => setIsModalVisible(false)}
-        useNativeDriverForBackdrop={true}
+        panelStyle={{
+          borderTopLeftRadius: Radiuses.xs,
+          borderTopRightRadius: Radiuses.xs,
+          backgroundColor: useWheelOnIOS ? Colors.IOS_GRAY : Colors.WHITE,
+        }}
+        contentStyle={{
+          paddingTop: useWheelOnIOS ? 0 : Spacings.xs,
+          paddingBottom: insets.bottom + Spacings.sm,
+          backgroundColor: useWheelOnIOS ? Colors.IOS_GRAY : 'transparent',
+        }}
       >
-        <SafeAreaView
-          style={{
-            borderTopLeftRadius: Radiuses.xs,
-            borderTopRightRadius: Radiuses.xs,
-            paddingBottom: bottomOffset,
-            backgroundColor: Colors.IOS_GRAY,
-          }}
+        {/* Header */}
+        <View
+          style={[
+            styles.headerRow,
+            styles.headerBar,
+            useWheelOnIOS && styles.headerBarRadius,
+          ]}
         >
-          <View style={styles.doneContainer}>
-            <Pressable
-              accessibilityHint={`selects ${localValue}`}
-              accessibilityRole="button"
-              onPress={onPressDone}
-            >
-              <TextBold color={Colors.IOS_BLUE} size="ms">
-                Done
-              </TextBold>
-            </Pressable>
+          <TextBold size="ms">{titleText}</TextBold>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Done"
+            accessibilityHint="Confirms your selection and closes the picker"
+            onPress={onDone}
+          >
+            <TextBold color={Colors.IOS_BLUE} size="ms">
+              Done
+            </TextBold>
+          </Pressable>
+        </View>
+
+        {useWheelOnIOS ? (
+          <View style={styles.wheelWrap}>
+            <WheelPicker
+              initialValue={initialWheelValue}
+              items={items}
+              allowSelectNone={allowSelectNone}
+              placeholder={placeholder}
+              selectNoneLabel={selectNoneLabel}
+              onDraftChange={(val) => {
+                draftRef.current = val;
+              }}
+            />
           </View>
-          <RNPicker
-            style={{ backgroundColor: Colors.IOS_GRAY }}
-            selectedValue={localValue}
-            onValueChange={(itemValue) => setLocalValue(itemValue)}
+        ) : (
+          <ScrollView
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
             {!!allowSelectNone && (
-              <RNPicker.Item
-                label={selectNoneLabel || placeholder}
-                // using null value will return a string with value of `null`,
-                // so using NONE_VALUE to be consistent with Android
-                value={NONE_VALUE}
-                enabled={true}
-              />
+              <Pressable
+                onPress={() => commit(NONE_VALUE)}
+                style={({ pressed }) => [
+                  styles.row,
+                  pressed && { opacity: 0.9 },
+                ]}
+                accessibilityRole="button"
+              >
+                <TextRegular>
+                  {selectNoneLabel || placeholder || 'None'}
+                </TextRegular>
+              </Pressable>
             )}
-
-            {items.map((item) => (
-              <RNPicker.Item
-                key={item.value}
-                label={item.displayValue || item.value}
-                value={item.value}
-              />
-            ))}
-          </RNPicker>
-        </SafeAreaView>
-      </Modal>
+            {items.map((item) => {
+              const selected = item.value === selectedValue;
+              return (
+                <Pressable
+                  key={item.value}
+                  onPress={() => commit(item.value)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  style={({ pressed }) => [
+                    styles.row,
+                    pressed && { opacity: 0.9 },
+                    selected && styles.selectedRow,
+                  ]}
+                >
+                  <TextRegular>{item.displayValue ?? item.value}</TextRegular>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        )}
+      </BaseModal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  modal: {
-    margin: 0,
-    flex: 1,
-    justifyContent: 'flex-end',
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  doneContainer: {
-    height: 42,
-    width: '100%',
-    backgroundColor: '#f8f8f8ff',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
+  headerBar: {
+    backgroundColor: Colors.WHITE,
     paddingHorizontal: Spacings.xs,
+    paddingVertical: Spacings.xs,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.NEUTRAL_LIGHT,
+  },
+  headerBarRadius: {
+    borderTopLeftRadius: Radiuses.xs,
+    borderTopRightRadius: Radiuses.xs,
+  },
+  list: {
+    gap: Spacings.xs,
+    paddingTop: Spacings.sm,
+    paddingBottom: Spacings.xs,
+    backgroundColor: Colors.WHITE,
+  },
+  row: {
+    minHeight: 44,
+    borderRadius: Radiuses.xs,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.WHITE,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Colors.NEUTRAL_LIGHT,
+  },
+  selectedRow: { borderColor: Colors.PRIMARY },
+  wheelWrap: {
+    backgroundColor: Colors.IOS_GRAY,
+    borderBottomLeftRadius: Radiuses.xs,
+    borderBottomRightRadius: Radiuses.xs,
+    overflow: 'hidden',
   },
 });

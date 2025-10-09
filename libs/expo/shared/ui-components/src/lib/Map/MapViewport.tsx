@@ -62,6 +62,7 @@ export function MapViewport(props: TMapProps) {
         onMapReady={onMapIsReady}
         onRegionChangeComplete={onRegionChangeComplete}
         style={[styles.map, mapStyle]}
+        userInterfaceStyle="light"
       >
         {children}
       </MapView>

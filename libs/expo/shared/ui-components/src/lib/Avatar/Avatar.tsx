@@ -1,6 +1,7 @@
 import { UserOutlineIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { Image, View } from 'react-native';
+import { Image } from 'expo-image';
+import { View } from 'react-native';
 import Loading from '../Loading';
 
 type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
@@ -98,11 +99,11 @@ export function Avatar(props: IAvatarProps) {
             accessibilityRole="image"
             accessibilityHint={accessibilityHint}
             accessibilityIgnoresInvertColors
+            contentFit="cover"
             style={{
               height: SIZE[size] - 1,
               width: SIZE[size] - 1,
               borderRadius: Radiuses.xxxl,
-              resizeMode: 'cover',
             }}
             source={{
               uri: imageUrl,
