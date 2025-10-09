@@ -3,9 +3,9 @@ import { HmisClientType } from '../../../apollo';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
 import { TSectionKey } from '../types';
 import {
-  FormSchema as FNFormSchema,
-  emptyState as FnEmptyState,
-  FullNameForm,
+  FullNameFormHmis,
+  FullNameFormSchema,
+  fullNameFormEmptyState,
   mapClientToFullNameSchema,
 } from './FullName';
 
@@ -16,17 +16,17 @@ export const SectionTitle: Partial<Record<ClientProfileSectionEnum, string>> = {
 
 // forms
 export const SectionForms = {
-  [ClientProfileSectionEnum.FullName]: FullNameForm,
+  [ClientProfileSectionEnum.FullName]: FullNameFormHmis,
 } as const;
 
 // schemas
 export const SectionSchemas = {
-  [ClientProfileSectionEnum.FullName]: FNFormSchema,
+  [ClientProfileSectionEnum.FullName]: FullNameFormSchema,
 } as const;
 
 // defaults
 export const SectionDefaults = {
-  [ClientProfileSectionEnum.FullName]: FnEmptyState,
+  [ClientProfileSectionEnum.FullName]: fullNameFormEmptyState,
 } as const;
 
 export function parseAsSectionKeyHMIS(value: unknown): TSectionKey | null {

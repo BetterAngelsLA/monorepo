@@ -5,22 +5,14 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { Controller, useFormContext } from 'react-hook-form';
 import { enumDisplayHmisSuffix, enumHmisNameQuality } from '../../../../static';
-import { TFormSchema, emptyState } from './formSchema';
+import { TFullNameFormSchema, fullNameFormEmptyState } from './formSchema';
 
-type FullNameFormProps = {
-  disabled?: boolean;
-};
-
-export function FullNameForm(props: FullNameFormProps) {
-  const { disabled } = props;
-
+export function FullNameFormHmis() {
   const {
     control,
     setValue,
     formState: { errors, isSubmitting },
-  } = useFormContext<TFormSchema>();
-
-  const isDisabled = disabled || isSubmitting;
+  } = useFormContext<TFullNameFormSchema>();
 
   return (
     <Form>
@@ -29,11 +21,11 @@ export function FullNameForm(props: FullNameFormProps) {
           name="firstName"
           required
           control={control}
-          disabled={isDisabled}
+          disabled={isSubmitting}
           label="First name"
           placeholder="Enter first name"
           onDelete={() => {
-            setValue('firstName', emptyState.firstName);
+            setValue('firstName', fullNameFormEmptyState.firstName);
           }}
           errorMessage={errors.firstName?.message}
         />
@@ -41,11 +33,11 @@ export function FullNameForm(props: FullNameFormProps) {
         <ControlledInput
           name="middleName"
           control={control}
-          disabled={isDisabled}
+          disabled={isSubmitting}
           label="Middle Name"
           placeholder="Enter middle name"
           onDelete={() => {
-            setValue('middleName', emptyState.middleName);
+            setValue('middleName', fullNameFormEmptyState.middleName);
           }}
           errorMessage={errors.middleName?.message}
         />
@@ -54,11 +46,11 @@ export function FullNameForm(props: FullNameFormProps) {
           name="lastName"
           required
           control={control}
-          disabled={isDisabled}
+          disabled={isSubmitting}
           label="Last Name"
           placeholder="Enter last name"
           onDelete={() => {
-            setValue('lastName', emptyState.lastName);
+            setValue('lastName', fullNameFormEmptyState.lastName);
           }}
           errorMessage={errors.lastName?.message}
         />
@@ -69,7 +61,7 @@ export function FullNameForm(props: FullNameFormProps) {
           render={({ field: { value, onChange } }) => (
             <SingleSelect
               allowSelectNone={true}
-              disabled={isDisabled}
+              disabled={isSubmitting}
               label="Name Data Quality"
               placeholder="Select quality"
               maxRadioItems={0}
@@ -89,7 +81,7 @@ export function FullNameForm(props: FullNameFormProps) {
           render={({ field: { value, onChange } }) => (
             <SingleSelect
               allowSelectNone={true}
-              disabled={isDisabled}
+              disabled={isSubmitting}
               label="Suffix"
               placeholder="Select suffix"
               maxRadioItems={0}
@@ -106,11 +98,11 @@ export function FullNameForm(props: FullNameFormProps) {
         <ControlledInput
           name="alias"
           control={control}
-          disabled={isDisabled}
+          disabled={isSubmitting}
           label="Alias"
           placeholder={'Enter aliases'}
           onDelete={() => {
-            setValue('alias', emptyState.alias);
+            setValue('alias', fullNameFormEmptyState.alias);
           }}
           errorMessage={errors.alias?.message}
         />
