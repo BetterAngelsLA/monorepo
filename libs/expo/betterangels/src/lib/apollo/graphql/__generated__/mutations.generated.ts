@@ -20,7 +20,7 @@ export type RevertNoteMutationVariables = Types.Exact<{
 }>;
 
 
-export type RevertNoteMutation = { __typename?: 'Mutation', revertNote: { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } | { __typename?: 'OperationInfo' } };
+export type RevertNoteMutation = { __typename?: 'Mutation', revertNote: { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } | { __typename?: 'OperationInfo' } };
 
 export type DeleteNoteMutationVariables = Types.Exact<{
   data: Types.DeleteDjangoObjectInput;
@@ -157,6 +157,16 @@ export const RevertNoteDocument = gql`
         }
         point
         pointOfInterest
+      }
+      providedServices {
+        id
+        serviceEnum
+        serviceOther
+      }
+      requestedServices {
+        id
+        serviceEnum
+        serviceOther
       }
       publicDetails
       isSubmitted
