@@ -1,6 +1,7 @@
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
+import { WFEdit } from '@monorepo/expo/shared/icons';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { Avatar, EditButton, MediaPickerModal } from '@monorepo/expo/shared/ui-components';
+import { Avatar, MediaPickerModal } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSnackbar } from '../../../hooks';
@@ -50,11 +51,14 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
             accessibilityLabel="client's profile photo"
             accessibilityHint="client's profile photo"
           />
-          <EditButton
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-            onClick={() => {}}
-            style={{ position: 'absolute', bottom: 0, right: Spacings.xs }}
-          />
+          <View style={{
+            position: 'absolute',
+            bottom: 0,
+            right: Spacings.xs,
+            backgroundColor: 'white'
+          }}>
+            <WFEdit />
+          </View>
         </Pressable>
       </View>
       <MediaPickerModal
