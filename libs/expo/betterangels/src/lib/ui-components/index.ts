@@ -2,6 +2,7 @@ export { default as AddressField } from './AddressField';
 export { AppUpdatePrompt } from './AppUpdatePrompt';
 export { default as AuthContainer } from './AuthContainer';
 export * from './ClientCard';
+export * from './ClientCardHMIS';
 export { default as ClientCardModal } from './ClientCardModal';
 export {
   ClientProfileCard,
@@ -16,8 +17,8 @@ export { default as ErrorCrashView } from './ErrorCrashView/ErrorCrashView';
 export { default as FeatureFlagControlled } from './FeatureFlagControlled/FeatureFlagControlled';
 export { FileThumbnail } from './FileThumbnail/FileThumbnail';
 export * from './Filters';
-export { default as HMISLoginForm } from './HMISLoginForm';
 export { default as Header } from './Header';
+export { default as HMISLoginForm } from './HMISLoginForm';
 export * from './Layout';
 export { default as LoginForm } from './LoginForm';
 export { default as MainContainer } from './MainContainer';

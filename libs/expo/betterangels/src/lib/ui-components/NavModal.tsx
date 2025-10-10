@@ -9,7 +9,7 @@ import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useFeatureFlagActive, useSignOut } from '../hooks';
+import { useFeatureFlagActive, useSignOut, useUser } from '../hooks';
 import { FeatureFlags } from '../providers';
 import { MainModal } from './MainModal';
 
@@ -18,6 +18,8 @@ interface INavModalProps {
 }
 
 export default function NavModal(props: INavModalProps) {
+  const { isHmisUser } = useUser();
+
   const { image } = props;
   const [isModalVisible, setModalVisible] = useState(false);
   const router = useRouter();
@@ -51,7 +53,6 @@ export default function NavModal(props: INavModalProps) {
         <BarsIcon size={'xl'} color={Colors.WHITE} />
       </Pressable>
       <MainModal
-        ml={Spacings.xl}
         opacity={0.5}
         closeButton
         actions={ACTIONS}
@@ -93,6 +94,13 @@ export default function NavModal(props: INavModalProps) {
                 <TextRegular color={Colors.PRIMARY_EXTRA_DARK}>
                   Profile
                 </TextRegular>
+                {isHmisUser && (
+                  <View style={styles.profileTag}>
+                    <TextRegular size="sm" color={Colors.PRIMARY_EXTRA_DARK}>
+                      HMIS
+                    </TextRegular>
+                  </View>
+                )}
               </View>
             )}
           </Pressable>
@@ -145,5 +153,12 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  profileTag: {
+    marginLeft: 'auto',
+    backgroundColor: Colors.BRAND_SKY_BLUE,
+    borderRadius: Radiuses.md,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
   },
 });

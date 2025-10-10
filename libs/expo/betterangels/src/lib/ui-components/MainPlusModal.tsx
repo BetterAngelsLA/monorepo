@@ -34,7 +34,7 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
 
   return (
     <MainModal
-      vertical
+      vertical={true}
       actions={ACTIONS}
       isModalVisible={isModalVisible}
       closeModal={closeModal}

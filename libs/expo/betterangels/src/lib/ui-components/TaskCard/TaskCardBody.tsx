@@ -17,7 +17,13 @@ export default function TaskCardBody(props: TaskCardBodyProps) {
       {description && (
         <>
           <TextRegular size="xs">Description</TextRegular>
-          <TextBold mb="sm" size="sm">
+          <TextBold
+            style={{ flex: 1 }}
+            numberOfLines={2}
+            ellipsizeMode="tail"
+            mb="sm"
+            size="sm"
+          >
             {description}
           </TextBold>
         </>

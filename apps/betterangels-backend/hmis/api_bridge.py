@@ -5,15 +5,28 @@ from typing import Any, Optional
 import jwt
 import requests
 import strawberry
+from common.errors import UnauthenticatedGQLError
 from common.utils import dict_keys_to_camel
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.http import HttpRequest
+from django.utils.module_loading import import_string
+from graphql import (
+    GraphQLField,
+    GraphQLObjectType,
+    GraphQLSchema,
+    parse,
+    specified_rules,
+    validate,
+)
+from graphql.type import GraphQLObjectType as _GraphQLObjectType
+from hmis.errors import is_hmis_unauthenticated
 from hmis.types import HmisClientFilterInput, HmisPaginationInput
 
 _SESSION_KEY = "hmis_auth_token"
 HMIS_GRAPHQL_ENDPOINT = getattr(settings, "HMIS_GRAPHQL_URL", None)
 HMIS_GRAPHQL_API_KEY = getattr(settings, "HMIS_API_KEY", None)
+GRAPHQL_SCHEMA_PATH = "betterangels_backend.schema.schema"
 
 
 class HmisApiBridge:
@@ -28,6 +41,7 @@ class HmisApiBridge:
 
         self.endpoint = HMIS_GRAPHQL_ENDPOINT
         self.api_key = HMIS_GRAPHQL_API_KEY
+        self.schema = self._load_graphql_schema()
 
         token = self._get_auth_token()
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
@@ -38,6 +52,11 @@ class HmisApiBridge:
             **auth_header,
         }
 
+    def _load_graphql_schema(self) -> GraphQLSchema:
+        obj = import_string(GRAPHQL_SCHEMA_PATH)
+
+        return getattr(obj, "_schema", obj)  # type: ignore
+
     def _make_request(self, body: dict[str, Any], timeout: Optional[float] = None) -> dict[str, Any]:
         resp = requests.post(
             self.endpoint,
@@ -45,10 +64,88 @@ class HmisApiBridge:
             json=body,
             timeout=timeout,
         )
-        # If server replies non-JSON on error, .json() will raise — we treat as failure.
-        return resp.json() or {}
 
-    def _extract_response_body_from_mutation(
+        response = resp.json() or {}
+
+        if errors := response.get("errors"):
+            if is_hmis_unauthenticated(errors):
+                # TODO: destroy session here?
+                raise UnauthenticatedGQLError()
+
+        # If server replies non-JSON on error, .json() will raise — we treat as failure.
+        return response
+
+    def _validate_selection_for_type(
+        self,
+        object_typename: str,
+        selection: str,
+    ) -> str:
+        """Validate query contents against provided type."""
+        if not selection.strip():
+            raise ValueError("Empty selection set.")
+
+        gql_type = self.schema.get_type(object_typename)
+        if not isinstance(gql_type, _GraphQLObjectType):
+            raise ValueError(f"Type '{object_typename}' is not an object type in the schema.")
+
+        Q = GraphQLObjectType(name="_Q", fields=lambda: {"_x": GraphQLField(gql_type)})
+        synthetic = GraphQLSchema(query=Q, types=list(self.schema.type_map.values()))
+
+        # Parse & validate: query { _x { <selection> } }
+        doc = parse(f"query __Q__ {{ _x {{ {selection} }} }}")
+        rules = list(specified_rules)
+        errors = validate(synthetic, doc, rules)
+        if errors:
+            raise ValueError("; ".join(e.message for e in errors))
+
+        return selection
+
+    def _build_client_mutation(self, operation: str, response_fields: str, expected_type: str) -> str:
+        operation_cap = operation.capitalize()
+        cleaned_fields = re.sub(r"\\n", "", response_fields)
+        safe_selection = self._validate_selection_for_type(expected_type, cleaned_fields)
+
+        return f"""
+            mutation (
+                $clientInput: {operation_cap}ClientInput!,
+                $clientSubItemsInput: {operation_cap}ClientSubItemsInput!
+            ) {{
+                {operation}Client(
+                    client: $clientInput,
+                    data: $clientSubItemsInput
+                ) {{
+                    {safe_selection}
+                }}
+            }}
+        """
+
+    def _run_client_mutation(
+        self,
+        operation: str,
+        client_input: dict[str, Any],
+        client_sub_items_input: dict[str, Any],
+    ) -> dict[str, Any]:
+        raw_query = self.request.body.decode("utf-8")
+        response_fields = self._extract_response_fields(raw_query)
+
+        variables = {
+            "clientInput": dict_keys_to_camel(client_input),
+            "clientSubItemsInput": dict_keys_to_camel(client_sub_items_input),
+        }
+
+        data = self._make_request(
+            {
+                "query": self._build_client_mutation(operation, response_fields, "HmisClientType"),
+                "variables": variables,
+            }
+        )
+
+        if errors := data.get("errors"):
+            return {"errors": errors}
+
+        return data.get("data", {}).get(f"{operation}Client") or {}
+
+    def _extract_response_fields(
         self,
         mutation: str,
     ) -> str:
@@ -74,9 +171,11 @@ class HmisApiBridge:
 
         return mutation[start : i - 1].strip()
 
-    def _format_query(self, original_query: bytes, is_list_query: bool = False) -> str:
+    def _format_query(self, original_query: bytes, expected_type: str, is_list_query: bool = False) -> str:
         # convert from byte string
         query = json.loads(original_query.decode("utf-8"))["query"]
+        response_fields = self._extract_response_fields(query)
+        self._validate_selection_for_type(expected_type, response_fields)
 
         # remove hmis prefix from query name
         query = re.sub(r"hmis([A-Z])", lambda m: m.group(1).lower(), query)
@@ -174,7 +273,7 @@ class HmisApiBridge:
         return "success"
 
     def get_client(self, personal_id: str) -> Optional[dict[str, Any]]:
-        query = self._format_query(original_query=self.request.body)
+        query = self._format_query(original_query=self.request.body, expected_type="HmisClientType")
 
         data = self._make_request(
             body={
@@ -193,7 +292,9 @@ class HmisApiBridge:
         pagination: Optional[HmisPaginationInput],
         filter: Optional[HmisClientFilterInput],
     ) -> Optional[dict[str, Any]]:
-        query = self._format_query(original_query=self.request.body, is_list_query=True)
+        query = self._format_query(
+            original_query=self.request.body, expected_type="HmisClientListType", is_list_query=True
+        )
 
         data = self._make_request(
             body={
@@ -215,38 +316,11 @@ class HmisApiBridge:
         client_input: dict[str, Any],
         client_sub_items_input: dict[str, Any],
     ) -> Optional[dict[str, Any]]:
+        return self._run_client_mutation("create", client_input, client_sub_items_input)
 
-        mutation_body = json.loads(self.request.body.decode("utf-8"))["query"]
-        payload_body = self._extract_response_body_from_mutation(mutation_body)
-
-        mutation = f"""
-            mutation (
-                $clientInput: CreateClientInput!,
-                $clientSubItemsInput: CreateClientSubItemsInput!
-            ) {{
-                createClient(
-                    client: $clientInput,
-                    data: $clientSubItemsInput,
-                ) {{
-                    {payload_body}
-                }}
-            }}
-        """
-
-        client_input_camel = dict_keys_to_camel(client_input)
-        client_sub_items_input_camel = dict_keys_to_camel(client_sub_items_input)
-
-        data = self._make_request(
-            body={
-                "query": mutation,
-                "variables": {
-                    "clientInput": client_input_camel,
-                    "clientSubItemsInput": client_sub_items_input_camel,
-                },
-            }
-        )
-
-        if errors := data.get("errors"):
-            return {"errors": errors}
-
-        return data.get("data", {}).get("createClient") or {}
+    def update_client(
+        self,
+        client_input: dict[str, Any],
+        client_sub_items_input: dict[str, Any],
+    ) -> Optional[dict[str, Any]]:
+        return self._run_client_mutation("update", client_input, client_sub_items_input)

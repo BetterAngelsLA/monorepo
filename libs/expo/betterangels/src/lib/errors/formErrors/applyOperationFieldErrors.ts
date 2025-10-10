@@ -1,10 +1,8 @@
-type TOperationError = {
-  field?: string | null;
-  message: string;
-};
+import { OperationMessage } from '../../apollo';
+import { TFieldError } from './types';
 
 export function applyOperationFieldErrors<T>(
-  errors: TOperationError[],
+  errors: TFieldError[] | OperationMessage[],
   setError: (name: keyof T, error: { type: string; message: string }) => void
 ) {
   errors.forEach(({ field, message }) => {

@@ -138,6 +138,7 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
         height: '100%',
         width: '100%',
       }}
+      userInterfaceStyle="light"
     >
       {currentLocation && (
         <Marker
