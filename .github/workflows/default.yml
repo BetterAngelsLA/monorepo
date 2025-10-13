@@ -13,6 +13,7 @@ env:
   ASSUMED_ROLE: arn:aws:iam::174477281453:role/github-actions-oidc-role
   ECR_REGISTRY: 174477281453.dkr.ecr.us-west-2.amazonaws.com
   COMPOSE_FILE: docker-compose.yml:docker-compose-ci.yml
+  HMIS_TOKEN_KEY: LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=
 
 jobs:
   BuildTestDeploy:
