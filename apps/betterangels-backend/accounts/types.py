@@ -127,7 +127,7 @@ class UserType(UserBaseType):
     username: auto
 
     @strawberry_django.field
-    def is_hmis_user(self, info: Info) -> bool:
+    def is_hmis_user(self, info: Info) -> Optional[bool]:
         request = info.context["request"]
         session = request.session
 
