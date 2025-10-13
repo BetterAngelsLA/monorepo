@@ -9,7 +9,7 @@ from accounts.permissions import UserOrganizationPermissions
 from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
-from django.test import ignore_warnings
+from django.test import ignore_warnings, override_settings
 from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
 from organizations.models import Organization, OrganizationUser
@@ -148,6 +148,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         )
         self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
 
+    @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_logged_in_hmis_user_query(self) -> None:
         hmis_user = baker.make(get_user_model(), _fill_optional=["email"])
 

@@ -108,6 +108,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
         self.success_response = {"data": {"createAuthToken": {"authToken": token}}}
 
+    @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_hmis_login_success(self) -> None:
         with patch(
             "hmis.api_bridge.HmisApiBridge._make_request",
