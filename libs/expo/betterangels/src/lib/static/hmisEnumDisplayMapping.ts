@@ -1,5 +1,6 @@
 import {
   HmisDobQualityEnum,
+  HmisGenderEnum,
   HmisNameQualityEnum,
   HmisSuffixEnum,
   HmisVeteranStatusEnum,
@@ -23,6 +24,21 @@ export const enumHmisDobQuality: {
   [HmisDobQualityEnum.DontKnow]: "Client doesn't know",
   [HmisDobQualityEnum.NoAnswer]: 'Client prefers not to answer',
   [HmisDobQualityEnum.NotCollected]: 'Data not collected',
+};
+
+export const enumHmisGender: {
+  [key in HmisGenderEnum]: string;
+} = {
+  [HmisGenderEnum.WomanGirl]: 'Woman (Girl, if child)',
+  [HmisGenderEnum.ManBoy]: 'Man (Boy, if child)',
+  [HmisGenderEnum.Specific]: 'Culturally Specific Identity (e.g., Two-Spirit)',
+  [HmisGenderEnum.Transgender]: 'Transgender',
+  [HmisGenderEnum.NonBinary]: 'Non-Binary',
+  [HmisGenderEnum.Questioning]: 'Questioning',
+  [HmisGenderEnum.Different]: 'Different Identity',
+  [HmisGenderEnum.DontKnow]: "Client doesn't know",
+  [HmisGenderEnum.NoAnswer]: 'Client prefers not to answer',
+  [HmisGenderEnum.NotCollected]: 'Data not collected',
 };
 
 export const enumHmisVeteranStatusEnum: {

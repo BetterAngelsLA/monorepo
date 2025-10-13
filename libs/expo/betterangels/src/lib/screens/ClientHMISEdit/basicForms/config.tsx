@@ -3,6 +3,12 @@ import { HmisClientType } from '../../../apollo';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
 import { TSectionKey } from '../types';
 import {
+  DemographicInfoForm,
+  DemographicInfoFormSchema,
+  demographicInfoFormEmptyState,
+  mapClientToDemographicSchema,
+} from './DemographicInfo';
+import {
   FullNameFormHmis,
   FullNameFormSchema,
   fullNameFormEmptyState,
@@ -12,21 +18,25 @@ import {
 // titles
 export const SectionTitle: Partial<Record<ClientProfileSectionEnum, string>> = {
   [ClientProfileSectionEnum.FullName]: 'Edit Full Name',
+  [ClientProfileSectionEnum.Demographic]: 'Edit Demographic Info',
 } as const;
 
 // forms
 export const SectionForms = {
   [ClientProfileSectionEnum.FullName]: FullNameFormHmis,
+  [ClientProfileSectionEnum.Demographic]: DemographicInfoForm,
 } as const;
 
 // schemas
 export const SectionSchemas = {
   [ClientProfileSectionEnum.FullName]: FullNameFormSchema,
+  [ClientProfileSectionEnum.Demographic]: DemographicInfoFormSchema,
 } as const;
 
 // defaults
 export const SectionDefaults = {
   [ClientProfileSectionEnum.FullName]: fullNameFormEmptyState,
+  [ClientProfileSectionEnum.Demographic]: demographicInfoFormEmptyState,
 } as const;
 
 export function parseAsSectionKeyHMIS(value: unknown): TSectionKey | null {
@@ -43,6 +53,7 @@ export function makeResolver(section: TSectionKey) {
 
 const SectionMappingFnMap = {
   [ClientProfileSectionEnum.FullName]: mapClientToFullNameSchema,
+  [ClientProfileSectionEnum.Demographic]: mapClientToDemographicSchema,
 } as const;
 
 export function mapClientToForm<K extends TSectionKey>(
