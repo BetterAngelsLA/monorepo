@@ -22,8 +22,8 @@ from graphql import (
 from graphql.type import GraphQLObjectType as _GraphQLObjectType
 from hmis.errors import is_hmis_unauthenticated
 from hmis.types import HmisClientFilterInput, HmisPaginationInput
+from common.constants import HMIS_SESSION_KEY
 
-HMIS_SESSION_KEY = getattr(settings, "HMIS_SESSION_KEY", None)
 HMIS_GRAPHQL_ENDPOINT = getattr(settings, "HMIS_GRAPHQL_URL", None)
 HMIS_GRAPHQL_API_KEY = getattr(settings, "HMIS_API_KEY", None)
 GRAPHQL_SCHEMA_PATH = "betterangels_backend.schema.schema"

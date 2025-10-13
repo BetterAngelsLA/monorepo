@@ -110,7 +110,6 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         self.success_response = {"data": {"createAuthToken": {"authToken": token}}}
 
     def test_hmis_login_success(self) -> None:
-
         with patch(
             "hmis.api_bridge.HmisApiBridge._make_request",
             return_value=self.success_response,

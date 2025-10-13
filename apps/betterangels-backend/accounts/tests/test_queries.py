@@ -9,6 +9,7 @@ from accounts.permissions import UserOrganizationPermissions
 from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
+from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
 from organizations.models import Organization, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
@@ -38,17 +39,16 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
-        ("organization_count, is_hmis_user, is_outreach_authorized, expected_query_count"),
+        ("organization_count, is_outreach_authorized, expected_query_count"),
         [
-            (0, False, False, 3),
-            (1, True, True, 4),
-            (2, False, True, 4),
+            (0, False, 3),
+            (1, True, 4),
+            (2, True, 4),
         ],
     )
     def test_logged_in_user_query(
         self,
         organization_count: int,
-        is_hmis_user: bool,
         is_outreach_authorized: bool,
         expected_query_count: int,
     ) -> None:
@@ -62,7 +62,6 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             username="testuser",
             has_accepted_tos=True,
             has_accepted_privacy_policy=True,
-            is_hmis_user=is_hmis_user,
         )
         self.graphql_client.force_login(user)
 
@@ -135,7 +134,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         )
         self.assertEqual(
             response["data"]["currentUser"]["isHmisUser"],
-            is_hmis_user,
+            False,
         )
         self.assertEqual(
             response["data"]["currentUser"]["hasAcceptedTos"],
@@ -376,4 +375,5 @@ class OrganizationMemberQueryTestCase(GraphQLBaseTestCase, ParametrizedTestCase)
             [m["memberRole"] for m in response["data"]["organizationMembers"]["results"]],
         )
         self.assertEqual(response["data"]["organizationMembers"]["totalCount"], 3)
+        self.assertCountEqual(expected_members, actual_members)
         self.assertCountEqual(expected_members, actual_members)
