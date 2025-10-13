@@ -134,7 +134,26 @@ class UserType(UserBaseType):
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
 
 
-@strawberry_django.type(User)
+@strawberry_django.order_type(User, one_of=False)
+class OrganizationMemberOrdering:
+    id: auto
+    email: auto
+    first_name: auto
+    last_login: auto
+    last_name: auto
+
+    @strawberry_django.order_field
+    def member_role(
+        self,
+        info: Info,
+        queryset: QuerySet,
+        value: auto,
+        prefix: str,
+    ) -> tuple[QuerySet[User], list[strawberry_django.Ordering]]:
+        return queryset, [value.resolve(f"{prefix}_member_role")]
+
+
+@strawberry_django.type(User, pagination=True, ordering=OrganizationMemberOrdering)
 class OrganizationMemberType(UserBaseType):
     id: ID
     last_login: auto

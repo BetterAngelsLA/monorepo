@@ -1,5 +1,5 @@
 import uuid
-from typing import cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
@@ -29,6 +29,7 @@ from .types import (
     AuthInput,
     AuthResponse,
     LoginInput,
+    OrganizationMemberOrdering,
     OrganizationMemberType,
     OrganizationType,
     OrgInvitationInput,
@@ -105,7 +106,9 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
-    def organization_members(self, info: Info, organization_id: str) -> QuerySet[User]:
+    def organization_members(
+        self, info: Info, organization_id: str, ordering: Optional[list[OrganizationMemberOrdering]] = None
+    ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
         try:
             organization = filter_for_user(
