@@ -133,7 +133,6 @@ class Mutation:
 
         token = hmis_api_bridge.create_auth_token(email, password)
         if not token:
-            print("~" * 50, "schema not token")
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
         # Require an existing user record.
@@ -142,7 +141,6 @@ class Mutation:
         try:
             user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:
-            print("~" * 50, "user does not exist")
             return HmisLoginError(message="Invalid credentials or HMIS login failed")
 
         backend = settings.AUTHENTICATION_BACKENDS[0]

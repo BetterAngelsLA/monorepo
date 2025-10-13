@@ -203,31 +203,18 @@ class HmisApiBridge:
     def _fernet(self) -> Fernet:
         key = getattr(settings, "HMIS_TOKEN_KEY", None)
         if not key:
-            print("~" * 50, "not key")
             raise RuntimeError("HMIS_TOKEN_KEY is not configured")
 
         return Fernet(key)
 
     def _set_auth_token(self, token: str) -> None:
         """"""
-        print("~" * 50, "set_auth_token token")
-        print(token[:10])
         decoded = jwt.decode(token, options={"verify_signature": False})
-        print("~" * 50, "decoded")
-        print(decoded)
-        print("~" * 50, "expiry initial")
-        print(self.session.get_expiry_date())
         self.session.set_expiry(decoded["exp"] - decoded["iat"] - 1)
-        print("~" * 50, "expiry updated")
-        print(self.session.get_expiry_date())
 
         f = self._fernet()
-        print("~" * 50, "f")
-        print(f)
         self.session[self.session_key] = f.encrypt(token.encode("utf-8")).decode("utf-8")
 
-        print("~" * 50, "self.session[self.session_key]")
-        print(self.session[self.session_key])
         self.session.modified = True
 
     def _get_auth_token(self) -> Optional[str]:
@@ -269,8 +256,6 @@ class HmisApiBridge:
             },
             timeout=5.0,
         )
-        print("~" * 50, "data")
-        print(data)
         # GraphQL errors OR missing token → failure
         if data.get("errors"):
             return None
@@ -278,17 +263,14 @@ class HmisApiBridge:
         token = (data.get("data", {}).get("createAuthToken") or {}).get("authToken")
 
         if not token:
-            print("~" * 50, "bridge not token")
             return None
 
         try:
             self._set_auth_token(token)
         except RuntimeError:
-            print("~" * 50, "runtime error")
             return None
 
         # TODO: not this... just something like this
-        print("~" * 50, "success")
         return "success"
 
     def get_client(self, personal_id: str) -> Optional[dict[str, Any]]:
