@@ -203,6 +203,7 @@ class HmisApiBridge:
     def _fernet(self) -> Fernet:
         key = getattr(settings, "HMIS_TOKEN_KEY", None)
         if not key:
+            print("~" * 50, "not key")
             raise RuntimeError("HMIS_TOKEN_KEY is not configured")
 
         return Fernet(key)
@@ -214,7 +215,11 @@ class HmisApiBridge:
         decoded = jwt.decode(token, options={"verify_signature": False})
         print("~" * 50, "decoded")
         print(decoded)
+        print("~" * 50, "expiry initial")
+        print(self.session.get_expiry_date())
         self.session.set_expiry(decoded["exp"] - decoded["iat"] - 1)
+        print("~" * 50, "expiry updated")
+        print(self.session.get_expiry_date())
 
         f = self._fernet()
         print("~" * 50, "f")
