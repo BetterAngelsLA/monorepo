@@ -1,5 +1,4 @@
 import { Colors } from '@monorepo/expo/shared/static';
-import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -8,7 +7,11 @@ import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { MainScrollContainer } from '../../../../ui-components';
 import { ExpandableProfileContainer } from '../../../Client/ClientProfile/ExpandableProfileContainer';
 import { getHMISEditButtonRoute } from '../../../Client/ClientProfile/utils/getHMISEditButtonRoute';
-import { FullNameCardHmis, PersonalInfoCardHmis } from './ClientCardsHMIS';
+import {
+  DemographicInfoCardHmis,
+  FullNameCardHmis,
+  PersonalInfoCardHmis,
+} from './ClientCardsHMIS';
 
 type TProps = {
   client?: HmisClientType;
@@ -78,7 +81,7 @@ export function ClientProfileHMISView(props: TProps) {
           onOpenCloseClick={onOpenCloseClick}
           onEditClick={onClickEdit}
         >
-          <TextBold>demo</TextBold>
+          <DemographicInfoCardHmis client={client} />
         </ExpandableProfileContainer>
       </View>
     </MainScrollContainer>
