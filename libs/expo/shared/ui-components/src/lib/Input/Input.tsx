@@ -42,6 +42,17 @@ const defaultAsSelectProps: TextInputProps = {
   caretHidden: true,
 };
 
+const baseTextInputStyle = {
+  paddingHorizontal: Spacings.sm,
+  paddingVertical: Spacings.sm,
+  flex: 1,
+  fontFamily: 'Poppins-Regular' as const,
+  fontSize: FontSizes.md.fontSize,
+  includeFontPadding: false,
+  textAlignVertical: 'top' as const,
+  ...Platform.select({ web: { outline: 'none' as const } }),
+};
+
 export function Input(props: IInputProps) {
   const {
     label,
@@ -59,6 +70,7 @@ export function Input(props: IInputProps) {
     borderRadius = Radiuses.xs,
     errorMessage,
     asSelect,
+    placeholderTextColor = Colors.NEUTRAL,
     ...rest
   } = props;
 
@@ -66,17 +78,20 @@ export function Input(props: IInputProps) {
   const nonMarginOtherProps = omitMarginProps(rest);
   const asSelectProps = asSelect ? defaultAsSelectProps : {};
 
+  const inputProps: TextInputProps = {
+    editable: !disabled,
+    autoCorrect,
+    autoCapitalize,
+    placeholderTextColor,
+    ...asSelectProps,
+    ...nonMarginOtherProps,
+    value: value ?? '',
+  };
+
   return (
-    <View
-      style={[
-        styles.container,
-        style,
-        {
-          ...getMarginStyles(props),
-        },
-      ]}
-    >
+    <View style={[styles.container, style, getMarginStyles(props)]}>
       {label && <FormFieldLabel label={label} required={required} />}
+
       <View
         style={[
           styles.input,
@@ -98,33 +113,18 @@ export function Input(props: IInputProps) {
         <TextInput
           ref={inputRef}
           style={[
+            baseTextInputStyle,
             {
               color: disabled
                 ? Colors.NEUTRAL_LIGHT
                 : Colors.PRIMARY_EXTRA_DARK,
-              paddingHorizontal: Spacings.sm,
-              flex: 1,
-              fontFamily: 'Poppins-Regular',
-              fontSize: FontSizes.md.fontSize,
-              paddingVertical: Spacings.sm,
-              textAlignVertical: 'top',
-              ...Platform.select({
-                web: {
-                  outline: 'none',
-                },
-              }),
             },
             inputStyle,
           ]}
-          editable={!disabled}
-          autoCorrect={autoCorrect}
-          autoCapitalize={autoCapitalize}
-          {...asSelectProps}
-          {...nonMarginOtherProps}
-          value={value}
+          {...inputProps}
         />
 
-        {value && onDelete && (
+        {!!value && onDelete && (
           <InputSlot
             placement="right"
             disabled={disabled}
@@ -154,28 +154,11 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
     width: '100%',
-    display: 'flex',
   },
   input: {
     position: 'relative',
-    fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
     flexDirection: 'row',
-  },
-  label: {
-    flexDirection: 'row',
-    marginBottom: Spacings.xs,
-  },
-  labelText: {
-    fontSize: FontSizes.sm.fontSize,
-    lineHeight: FontSizes.sm.lineHeight,
-    color: Colors.PRIMARY_EXTRA_DARK,
-    textTransform: 'capitalize',
-    fontFamily: 'Poppins-Regular',
-  },
-  required: {
-    marginLeft: 2,
-    color: Colors.ERROR_DARK,
   },
 });
