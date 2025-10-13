@@ -1,4 +1,5 @@
 import { Colors } from '@monorepo/expo/shared/static';
+import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
@@ -59,6 +60,15 @@ export function ClientProfileHMISView(props: TProps) {
           onEditClick={onClickEdit}
         >
           <FullNameCardHmis client={client} />
+        </ExpandableProfileContainer>
+
+        <ExpandableProfileContainer
+          card={ClientProfileSectionEnum.Demographic}
+          openCard={expandedCard}
+          onOpenCloseClick={onOpenCloseClick}
+          onEditClick={onClickEdit}
+        >
+          <TextBold>i'm empy, but edit link should work</TextBold>
         </ExpandableProfileContainer>
       </View>
     </MainScrollContainer>
