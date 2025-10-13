@@ -3,22 +3,28 @@ import { SearchBar } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { HmisClientListType } from '../../apollo';
+import { useUser } from '../../hooks';
 import {
   ClientCard,
+  ClientCardHMIS,
   ClientCardModal,
   ClientProfileList,
   Header,
+  HmisListClients,
   HorizontalContainer,
 } from '../../ui-components';
 import { ClientProfilesQuery } from './__generated__/Clients.generated';
 
 type TClientProfile = ClientProfilesQuery['clientProfiles']['results'][number];
+type THmisClient = HmisClientListType['items'][number];
 
 export default function Clients({ Logo }: { Logo: ElementType }) {
   const [currentClient, setCurrentClient] = useState<TClientProfile | null>(
     null
   );
   const [search, setSearch] = useState('');
+  const { isHmisUser } = useUser();
 
   const handleClientPress = useCallback((client: TClientProfile) => {
     router.navigate({
@@ -38,6 +44,11 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
     [setCurrentClient, handleClientPress]
   );
 
+  const renderHmisClientItem = useCallback(
+    (client: THmisClient) => <ClientCardHMIS client={client} />,
+    []
+  );
+
   return (
     <View style={styles.container}>
       <Header title="Clients" Logo={Logo} />
@@ -53,7 +64,17 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           />
         </HorizontalContainer>
 
-        <ClientProfileList filters={{ search }} renderItem={renderClientItem} />
+        {isHmisUser ? (
+          <HmisListClients
+            filter={{ search }}
+            renderItem={renderHmisClientItem}
+          />
+        ) : (
+          <ClientProfileList
+            filters={{ search }}
+            renderItem={renderClientItem}
+          />
+        )}
       </View>
 
       {currentClient && (
