@@ -34,8 +34,5 @@ query HmisListClients(
         totalCount
       }
     }
-    ... on HmisListClientsError {
-      message
-    }
   }
 }
