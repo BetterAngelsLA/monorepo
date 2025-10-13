@@ -1,3 +1,4 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect, useState } from 'react';
@@ -11,20 +12,11 @@ import {
   useGetHmisClientQuery,
 } from '../ClientHMIS/__generated__/getHMISClient.generated';
 import { useHmisUpdateClientMutation } from './__generated__/updateHmisClient.generated';
-import {
-  SectionDefaults,
-  SectionForms,
-  SectionSchemas,
-  SectionTitle,
-  makeResolver,
-  mapClientToForm,
-  parseAsSectionKeyHMIS,
-} from './basicForms/config';
+import { hmisFormConfig, parseAsSectionKeyHMIS } from './basicForms/config';
 import {
   TUpdateClientInputsUnion,
   toHMISClientProfileInputs,
 } from './toHMISClientProfileInputs';
-import { TAnySectionValues } from './types';
 
 type TProps = {
   id: string;
@@ -41,16 +33,26 @@ export function ClientHMISEdit(props: TProps) {
   const [client, setClient] = useState<HmisClientType>();
 
   const sectionName = parseAsSectionKeyHMIS(componentName);
-  const [updateHmisClientMutation, { loading: isUpdating }] =
-    useHmisUpdateClientMutation();
-
-  const debugMode = process.env['EXPO_PUBLIC_GQL_DEBUG'] === 'true';
 
   if (!sectionName) {
     throw new Error(`Invalid componentName [${componentName}].`);
   }
 
-  const screenTitle = SectionTitle[sectionName];
+  const {
+    title: screenTitle,
+    Form: SectionForm,
+    schema: sectionSchema,
+    resolver,
+    emptyState,
+    dataMapper,
+  } = hmisFormConfig[sectionName];
+
+  type TFormValues = z.input<typeof sectionSchema>;
+
+  const [updateHmisClientMutation, { loading: isUpdating }] =
+    useHmisUpdateClientMutation();
+
+  const debugMode = process.env['EXPO_PUBLIC_GQL_DEBUG'] === 'true';
 
   useLayoutEffect(() => {
     if (screenTitle) {
@@ -58,9 +60,9 @@ export function ClientHMISEdit(props: TProps) {
     }
   }, [screenTitle, navigation]);
 
-  const formMethods = useForm<TAnySectionValues>({
-    resolver: makeResolver(sectionName),
-    defaultValues: SectionDefaults[sectionName],
+  const formMethods = useForm<TFormValues>({
+    resolver: zodResolver(sectionSchema),
+    defaultValues: emptyState,
   });
 
   const { data: clientData, loading: clientDataLoading } =
@@ -83,7 +85,7 @@ export function ClientHMISEdit(props: TProps) {
 
     setClient(client);
 
-    const mappedValues = mapClientToForm(sectionName, client);
+    const mappedValues = dataMapper(client);
 
     formMethods.reset({
       ...mappedValues,
@@ -93,12 +95,7 @@ export function ClientHMISEdit(props: TProps) {
   if (clientDataLoading) {
     return <LoadingView />;
   }
-
-  const sectionSchema = SectionSchemas[sectionName];
-
-  const onSubmit: SubmitHandler<z.infer<typeof sectionSchema>> = async (
-    values
-  ) => {
+  const onSubmit: SubmitHandler<TFormValues> = async (values) => {
     try {
       if (!client) {
         return;
@@ -184,8 +181,6 @@ export function ClientHMISEdit(props: TProps) {
     }
   };
 
-  const FormContent = SectionForms[sectionName];
-
   return (
     <FormProvider {...formMethods}>
       <Form.Page
@@ -195,7 +190,7 @@ export function ClientHMISEdit(props: TProps) {
           disabled: isUpdating || formMethods.formState.isSubmitting,
         }}
       >
-        <FormContent />
+        <SectionForm />
       </Form.Page>
     </FormProvider>
   );
