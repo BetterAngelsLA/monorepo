@@ -44,7 +44,7 @@ export default function Picker(props: IPickerProps) {
   return (
     <>
       <PickerField
-        style={getMarginStyles(props)} // apply margins once here
+        style={getMarginStyles(props)}
         disabled={disabled}
         required={required}
         placeholder={placeholder}

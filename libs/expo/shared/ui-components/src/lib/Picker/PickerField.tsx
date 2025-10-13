@@ -43,7 +43,7 @@ export const PickerField = React.memo(function PickerField(props: TProps) {
       disabled={disabled}
       required={required}
       placeholder={placeholder}
-      value={displayValue ?? ''} // always-controlled; '' => placeholder shows
+      value={displayValue ?? ''}
       label={label}
       error={!!error}
       errorMessage={error}
