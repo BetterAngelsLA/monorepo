@@ -3,6 +3,7 @@ import { FlashList } from '@shopify/flash-list';
 import { ReactElement, useCallback, useEffect, useState } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { uniqueBy } from 'remeda';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
   HmisClientFilterInput,
   HmisClientListType,
@@ -54,7 +55,7 @@ export function HmisListClients(props: TProps) {
     nextFetchPolicy: 'cache-first',
   });
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     setPage(1);
     setClients(undefined);
     setHasMore(true);
