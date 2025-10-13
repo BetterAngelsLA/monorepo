@@ -210,7 +210,7 @@ class HmisApiBridge:
     def _set_auth_token(self, token: str) -> None:
         """"""
         decoded = jwt.decode(token, options={"verify_signature": False})
-        self.session.set_expiry(decoded["exp"] - 1)
+        self.session.set_expiry(decoded["exp"] - decoded["iat"] - 1)
 
         f = self._fernet()
         self.session[self.session_key] = f.encrypt(token.encode("utf-8")).decode("utf-8")
