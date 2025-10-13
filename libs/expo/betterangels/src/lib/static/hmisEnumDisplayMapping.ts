@@ -2,6 +2,7 @@ import {
   HmisDobQualityEnum,
   HmisGenderEnum,
   HmisNameQualityEnum,
+  HmisRaceEnum,
   HmisSuffixEnum,
   HmisVeteranStatusEnum,
 } from '../apollo';
@@ -39,6 +40,21 @@ export const enumHmisGender: {
   [HmisGenderEnum.DontKnow]: "Client doesn't know",
   [HmisGenderEnum.NoAnswer]: 'Client prefers not to answer',
   [HmisGenderEnum.NotCollected]: 'Data not collected',
+};
+
+export const enumHmisRace: {
+  [key in HmisRaceEnum]: string;
+} = {
+  [HmisRaceEnum.Indigenous]: 'American Indian, Alaska Native, or Indigenous',
+  [HmisRaceEnum.Asian]: 'Asian or Asian American',
+  [HmisRaceEnum.Black]: 'Black, African American, or African',
+  [HmisRaceEnum.Hispanic]: 'Hispanic/Latina/o',
+  [HmisRaceEnum.MiddleEastern]: 'Middle Eastern or North African',
+  [HmisRaceEnum.PacificIslander]: 'Native Hawaiian or Pacific Islander',
+  [HmisRaceEnum.White]: 'White',
+  [HmisRaceEnum.DontKnow]: 'Client doesn’t know',
+  [HmisRaceEnum.NoAnswer]: 'Client prefers not to answer',
+  [HmisRaceEnum.NotCollected]: 'Data not collected',
 };
 
 export const enumHmisVeteranStatusEnum: {

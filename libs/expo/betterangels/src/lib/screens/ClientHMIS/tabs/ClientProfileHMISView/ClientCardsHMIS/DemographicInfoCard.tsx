@@ -1,4 +1,7 @@
-import { enumHmisGender } from 'libs/expo/betterangels/src/lib/static';
+import {
+  enumHmisGender,
+  enumHmisRace,
+} from 'libs/expo/betterangels/src/lib/static';
 import { HmisClientType } from '../../../../../apollo';
 import {
   ClientProfileCard,
@@ -14,20 +17,34 @@ export function DemographicInfoCardHmis(props: TProps) {
   const { client } = props;
 
   const { data } = client || {};
-  const { gender, additionalRaceEthnicity, differentIdentityText } = data || {};
+  const {
+    gender,
+    raceEthnicity,
+    additionalRaceEthnicity,
+    differentIdentityText,
+  } = data || {};
 
-  const genderValue = (gender || [])
+  const genderValues = (gender || [])
     .filter((key) => !!key)
     .map((key) => enumHmisGender[key])
+    .join(', ');
+
+  const raceEthnicityValues = (raceEthnicity || [])
+    .filter((key) => !!key)
+    .map((key) => enumHmisRace[key])
     .join(', ');
 
   const content: TClientProfileCardItem[] = [
     {
       header: ['Gender'],
-      rows: [[genderValue]],
+      rows: [[genderValues]],
     },
     {
-      header: ['Additional Race Ethnicity'],
+      header: ['Race and Ethnicity'],
+      rows: [[raceEthnicityValues]],
+    },
+    {
+      header: ['Additional Race and Ethnicity'],
       rows: [[additionalRaceEthnicity]],
     },
     {
