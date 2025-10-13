@@ -1,4 +1,3 @@
-from typing import Any
 from unittest.mock import patch
 
 from common.tests.utils import GraphQLBaseTestCase

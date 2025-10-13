@@ -5,6 +5,7 @@ from typing import Any, Optional
 import jwt
 import requests
 import strawberry
+from common.constants import HMIS_SESSION_KEY
 from common.errors import UnauthenticatedGQLError
 from common.utils import dict_keys_to_camel
 from cryptography.fernet import Fernet, InvalidToken
@@ -22,7 +23,6 @@ from graphql import (
 from graphql.type import GraphQLObjectType as _GraphQLObjectType
 from hmis.errors import is_hmis_unauthenticated
 from hmis.types import HmisClientFilterInput, HmisPaginationInput
-from common.constants import HMIS_SESSION_KEY
 
 HMIS_GRAPHQL_ENDPOINT = getattr(settings, "HMIS_GRAPHQL_URL", None)
 HMIS_GRAPHQL_API_KEY = getattr(settings, "HMIS_API_KEY", None)

@@ -7,7 +7,6 @@ from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
 from common.constants import HMIS_SESSION_KEY
 from common.graphql.types import NonBlankString
-from django.conf import settings
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import CharField, F, Q, QuerySet, Value
 from django.db.models.functions import Concat
