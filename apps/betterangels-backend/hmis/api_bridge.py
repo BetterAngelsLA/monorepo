@@ -255,7 +255,7 @@ class HmisApiBridge:
             },
             timeout=5.0,
         )
-        print("~" * 20, "data")
+        print("~" * 50, "data")
         print(data)
         # GraphQL errors OR missing token → failure
         if data.get("errors"):
@@ -264,6 +264,7 @@ class HmisApiBridge:
         token = (data.get("data", {}).get("createAuthToken") or {}).get("authToken")
 
         if not token:
+            print("~" * 50, "bridge not token")
             return None
 
         try:
@@ -272,6 +273,7 @@ class HmisApiBridge:
             return None
 
         # TODO: not this... just something like this
+        print("~" * 50, "success")
         return "success"
 
     def get_client(self, personal_id: str) -> Optional[dict[str, Any]]:
