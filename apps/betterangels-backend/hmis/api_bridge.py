@@ -209,11 +209,20 @@ class HmisApiBridge:
 
     def _set_auth_token(self, token: str) -> None:
         """"""
+        print("~" * 50, "set_auth_token token")
+        print(token[:10])
         decoded = jwt.decode(token, options={"verify_signature": False})
+        print("~" * 50, "decoded")
+        print(decoded)
         self.session.set_expiry(decoded["exp"] - decoded["iat"] - 1)
 
         f = self._fernet()
+        print("~" * 50, "f")
+        print(f)
         self.session[self.session_key] = f.encrypt(token.encode("utf-8")).decode("utf-8")
+
+        print("~" * 50, "self.session[self.session_key]")
+        print(self.session[self.session_key])
         self.session.modified = True
 
     def _get_auth_token(self) -> Optional[str]:
@@ -270,6 +279,7 @@ class HmisApiBridge:
         try:
             self._set_auth_token(token)
         except RuntimeError:
+            print("~" * 50, "runtime error")
             return None
 
         # TODO: not this... just something like this
