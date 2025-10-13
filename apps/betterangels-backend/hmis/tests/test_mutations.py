@@ -179,10 +179,6 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
 
 class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
-    def setUp(self) -> None:
-        super().setUp()
-        self.maxDiff = None
-
     def test_hmis_create_client_success(self) -> None:
         return_value = {
             "data": {

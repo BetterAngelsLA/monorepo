@@ -5,7 +5,7 @@ import strawberry_django
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
-from common.constants import HMIS_SESSION_KEY
+from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import CharField, F, Q, QuerySet, Value
@@ -131,7 +131,7 @@ class UserType(UserBaseType):
         request = info.context["request"]
         session = request.session
 
-        return bool(session.get(HMIS_SESSION_KEY, None))
+        return bool(session.get(HMIS_SESSION_KEY_NAME, None))
 
 
 @strawberry_django.type(User)

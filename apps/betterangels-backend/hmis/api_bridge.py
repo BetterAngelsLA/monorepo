@@ -5,7 +5,7 @@ from typing import Any, Optional
 import jwt
 import requests
 import strawberry
-from common.constants import HMIS_SESSION_KEY
+from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
 from common.utils import dict_keys_to_camel
 from cryptography.fernet import Fernet, InvalidToken
@@ -36,13 +36,13 @@ class HmisApiBridge:
         self.request = request
         self.session = request.session
 
-        if HMIS_GRAPHQL_ENDPOINT is None or HMIS_GRAPHQL_API_KEY is None or HMIS_SESSION_KEY is None:
+        if HMIS_GRAPHQL_ENDPOINT is None or HMIS_GRAPHQL_API_KEY is None or HMIS_SESSION_KEY_NAME is None:
             raise Exception("HMIS not configured")
 
         self.endpoint = HMIS_GRAPHQL_ENDPOINT
         self.api_key = HMIS_GRAPHQL_API_KEY
         self.schema = self._load_graphql_schema()
-        self.session_key = HMIS_SESSION_KEY
+        self.session_key = HMIS_SESSION_KEY_NAME
 
         token = self._get_auth_token()
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
