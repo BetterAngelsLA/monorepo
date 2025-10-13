@@ -255,7 +255,8 @@ class HmisApiBridge:
             },
             timeout=5.0,
         )
-
+        print("~" * 20, "data")
+        print(data)
         # GraphQL errors OR missing token → failure
         if data.get("errors"):
             return None
