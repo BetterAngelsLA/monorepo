@@ -2088,9 +2088,9 @@ type UserType {
   organizationsOrganization(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): [OrganizationForUserType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
-  isHmisUser: Boolean
   isOutreachAuthorized: Boolean
   username: String!
+  isHmisUser: Boolean
 }
 
 union UserTypeHmisLoginError = UserType | HmisLoginError
