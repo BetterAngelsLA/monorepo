@@ -1,0 +1,23 @@
+import { z } from 'zod';
+import { HmisNameQualityEnum, HmisSuffixEnum } from '../../../../apollo';
+
+export type TFormSchema = z.infer<typeof FormSchema>;
+
+export const emptyState: TFormSchema = {
+  firstName: '',
+  lastName: '',
+  middleName: '',
+  alias: '',
+  nameDataQuality: '',
+  nameSuffix: '',
+};
+
+export const FormSchema = z.object({
+  firstName: z.string().min(1, 'First Name is required.'),
+  lastName: z.string().min(1, 'Last Name is required.'),
+  middleName: z.string(),
+  alias: z.string(),
+  // form uses string Enum while api requires an integer - converted onSubmit
+  nameDataQuality: z.enum(HmisNameQualityEnum).or(z.literal('')),
+  nameSuffix: z.enum(HmisSuffixEnum).or(z.literal('')),
+});

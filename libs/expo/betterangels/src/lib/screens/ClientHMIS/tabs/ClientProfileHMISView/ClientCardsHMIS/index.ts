@@ -1,0 +1,1 @@
+export { FullNameCardHmis } from './FullNameCard';

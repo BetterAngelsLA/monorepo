@@ -1,0 +1,37 @@
+mutation HmisUpdateClient(
+  $clientInput: HmisUpdateClientInput!
+  $clientSubItemsInput: HmisUpdateClientSubItemsInput!
+) {
+  hmisUpdateClient(
+    clientInput: $clientInput
+    clientSubItemsInput: $clientSubItemsInput
+  ) {
+    ... on HmisClientType {
+      personalId
+      uniqueIdentifier
+      firstName
+      lastName
+      nameDataQuality
+      ssn1
+      ssn2
+      ssn3
+      ssnDataQuality
+      dob
+      dobDataQuality
+      data {
+        middleName
+        nameSuffix
+        alias
+        raceEthnicity
+        additionalRaceEthnicity
+        differentIdentityText
+        gender
+        veteranStatus
+      }
+    }
+    ... on HmisUpdateClientError {
+      message
+      field
+    }
+  }
+}

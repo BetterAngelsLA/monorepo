@@ -14,8 +14,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import OuterRef, QuerySet, Subquery
-from django.db.models.functions import Cast
+from django.db.models import F, OuterRef, QuerySet, Subquery
+from django.db.models.functions import Cast, JSONObject
 from django.forms import BaseFormSet, TimeInput
 from django.http import HttpRequest
 from django.urls import reverse
@@ -945,25 +945,28 @@ class ShelterAdmin(ImportExportModelAdmin):
     def get_queryset(self, request: HttpRequest) -> QuerySet[Shelter]:
         qs: QuerySet[Shelter] = super().get_queryset(request)
 
-        # Cast the outer PK (bigint) to TEXT to match pghistory's pgh_obj_id type
-        last_evt_qs = (
-            MiddlewareEvents.objects.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField()))
+        # Limit events to just the objects in *this* queryset (admin page w/ filters)
+        # This uses pghistory's optimized aggregator instead of scanning all events.
+        scoped_events = (
+            MiddlewareEvents.objects.tracks(qs)
             .exclude(user__isnull=True)
-            .order_by("-pgh_created_at")
+            .order_by("pgh_obj_id", "-pgh_created_at")
+            .distinct("pgh_obj_id")
+            .annotate(
+                obj=JSONObject(
+                    user_id=F("user_id"),
+                    created=F("pgh_created_at"),
+                    first=F("user__first_name"),
+                    last=F("user__last_name"),
+                    username=F("user__username"),
+                )
+            )
         )
 
         return qs.annotate(
-            _last_event_user_id=Subquery(last_evt_qs.values("user_id")[:1]),
-            _last_event_at=Subquery(last_evt_qs.values("pgh_created_at")[:1]),
-            _last_event_user_first_name=Subquery(
-                User.objects.filter(id=Subquery(last_evt_qs.values("user_id")[:1])).values("first_name")[:1]
-            ),
-            _last_event_user_last_name=Subquery(
-                User.objects.filter(id=Subquery(last_evt_qs.values("user_id")[:1])).values("last_name")[:1]
-            ),
-            _last_event_username=Subquery(
-                User.objects.filter(id=Subquery(last_evt_qs.values("user_id")[:1])).values("username")[:1]
-            ),
+            last_event=Subquery(
+                scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
+            )
         )
 
     def save_related(
@@ -994,20 +997,11 @@ class ShelterAdmin(ImportExportModelAdmin):
         return "No hero image selected"
 
     def updated_by(self, obj: Shelter) -> str:
-        uid: Optional[int] = getattr(obj, "_last_event_user_id", None)
+        data = getattr(obj, "last_event", None) or {}
+        uid = data.get("user_id")
         if not uid:
             return "No updates yet"
-
-        first: Optional[str] = getattr(obj, "_last_event_user_first_name", None)
-        last: Optional[str] = getattr(obj, "_last_event_user_last_name", None)
-        username: Optional[str] = getattr(obj, "_last_event_username", None)
-
-        # Prefer "First Last" if present, else username, else fallback
-        name_parts = [p for p in [first, last] if p]
-        label: str = " ".join(name_parts) if name_parts else (username or f"User {uid}")
-
-        user_admin_url: str = reverse(
-            f"admin:{User._meta.app_label}_{User._meta.model_name}_change",
-            args=[uid],
-        )
-        return format_html('<a href="{}">{}</a>', user_admin_url, label)
+        name = f'{(data.get("first") or "").strip()} {(data.get("last") or "").strip()}'.strip()
+        label = name or (data.get("username") or f"User {uid}")
+        url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
+        return format_html('<a href="{}">{}</a>', url, label)
