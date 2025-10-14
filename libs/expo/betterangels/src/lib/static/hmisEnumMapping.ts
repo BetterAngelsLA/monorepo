@@ -3,7 +3,9 @@
 
 import {
   HmisDobQualityEnum,
+  HmisGenderEnum,
   HmisNameQualityEnum,
+  HmisRaceEnum,
   HmisSsnQualityEnum,
   HmisSuffixEnum,
 } from '../apollo';
@@ -149,6 +151,32 @@ export const HmisNameSuffixIntMap: Record<HmisSuffixEnum, number> = {
   [HmisSuffixEnum.NoAnswer]: HmisSuffixIntEnumInt.NO_ANSWER,
 };
 
+export const HmisGenderIntMap: Record<HmisGenderEnum, number> = {
+  [HmisGenderEnum.Different]: HmisGenderEnumInt.DIFFERENT,
+  [HmisGenderEnum.DontKnow]: HmisGenderEnumInt.DONT_KNOW,
+  [HmisGenderEnum.ManBoy]: HmisGenderEnumInt.MAN_BOY,
+  [HmisGenderEnum.NonBinary]: HmisGenderEnumInt.NON_BINARY,
+  [HmisGenderEnum.NotCollected]: HmisGenderEnumInt.NOT_COLLECTED,
+  [HmisGenderEnum.NoAnswer]: HmisGenderEnumInt.NO_ANSWER,
+  [HmisGenderEnum.Questioning]: HmisGenderEnumInt.QUESTIONING,
+  [HmisGenderEnum.Specific]: HmisGenderEnumInt.SPECIFIC,
+  [HmisGenderEnum.Transgender]: HmisGenderEnumInt.TRANSGENDER,
+  [HmisGenderEnum.WomanGirl]: HmisGenderEnumInt.WOMAN_GIRL,
+};
+
+export const HmisRaceIntMap: Record<HmisRaceEnum, number> = {
+  [HmisRaceEnum.Asian]: HmisRaceEnumInt.ASIAN,
+  [HmisRaceEnum.Black]: HmisRaceEnumInt.BLACK,
+  [HmisRaceEnum.DontKnow]: HmisRaceEnumInt.DONT_KNOW,
+  [HmisRaceEnum.Hispanic]: HmisRaceEnumInt.HISPANIC,
+  [HmisRaceEnum.Indigenous]: HmisRaceEnumInt.INDIGENOUS,
+  [HmisRaceEnum.MiddleEastern]: HmisRaceEnumInt.MIDDLE_EASTERN,
+  [HmisRaceEnum.NotCollected]: HmisRaceEnumInt.NOT_COLLECTED,
+  [HmisRaceEnum.NoAnswer]: HmisRaceEnumInt.NO_ANSWER,
+  [HmisRaceEnum.PacificIslander]: HmisRaceEnumInt.PACIFIC_ISLANDER,
+  [HmisRaceEnum.White]: HmisRaceEnumInt.WHITE,
+};
+
 // mapping helpers
 export function toHmisNameQualityInt(
   value?: HmisNameQualityEnum | string | null
@@ -172,4 +200,20 @@ export function toHmisDobQualityEnumInt(
   value?: HmisDobQualityEnum | string | null
 ): number | null {
   return HmisDobQualityIntMap[value as HmisDobQualityEnum] ?? null;
+}
+
+export function toHmisEnumInt(value?: string | null): number | null {
+  return HmisDobQualityIntMap[value as HmisDobQualityEnum] ?? null;
+}
+
+export function toGenderEnumInt(
+  value?: HmisGenderEnum | string | null
+): number | null {
+  return HmisGenderIntMap[value as HmisGenderEnum] ?? null;
+}
+
+export function toRaceEnumInt(
+  value?: HmisRaceEnum | string | null
+): number | null {
+  return HmisRaceEnumInt[value as HmisRaceEnum] ?? null;
 }
