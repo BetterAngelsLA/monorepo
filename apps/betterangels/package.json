@@ -92,7 +92,8 @@
     "@nx/rollup": "*",
     "@types/geojson": "*",
     "expo-crypto": "*",
-    "expo-image": "*"
+    "expo-image": "*",
+    "react-router-dom": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

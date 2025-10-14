@@ -1,50 +1,31 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
-import { IconButton, TextBold } from '@monorepo/expo/shared/ui-components';
+import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { View } from 'react-native';
 import { HmisClientType } from '../../../../apollo';
+import { MainScrollContainer } from '../../../../ui-components';
 
 type TProps = {
   client?: HmisClientType;
 };
 
 export function ClientInteractionsHmisView(props: TProps) {
-  const { client } = props;
-
-  function onCreatePress() {
-    console.log('CLICKED create btn');
-
-    router.navigate('/hmis-notes/create');
-  }
+  const { client: _client } = props;
 
   return (
-    <View>
-      <TextBold>hello interactions tab</TextBold>
-
-      <IconButton
-        // disabled={isDisabled}
-        variant="secondary"
-        borderColor={Colors.WHITE}
-        accessibilityLabel="asdf"
-        accessibilityHint="asdf"
-        onPress={onCreatePress}
-      >
-        <PlusIcon />
-      </IconButton>
-    </View>
+    <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+      <View>
+        <IconButton
+          variant="secondary"
+          borderColor={Colors.WHITE}
+          accessibilityLabel="create an interaction"
+          accessibilityHint="create new interaction"
+          onPress={() => router.navigate('/hmis-notes/create')}
+        >
+          <PlusIcon />
+        </IconButton>
+      </View>
+    </MainScrollContainer>
   );
-}
-
-{
-  /* <CreateClientInteractionBtn
-  clientProfileId={clientProfile.id}
-  onCreated={(noteId) => {
-    closeModal();
-    router.navigate(`/add-note/${noteId}`);
-  }}
-  style={{ width: '100%' }}
-  >
-  <MainModalActionBtnBody title="Add Interaction" Icon={FilePlusIcon} />
-  </CreateClientInteractionBtn> */
 }
