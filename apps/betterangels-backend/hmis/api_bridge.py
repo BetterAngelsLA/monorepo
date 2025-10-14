@@ -182,7 +182,7 @@ class HmisApiBridge:
         query = re.sub(r"hmis([A-Z])", lambda m: m.group(1).lower(), query)
 
         # remove our error type definition
-        query = re.sub(r"\.\.\.\s+on\s+Hmis\w*Error\s*{\s*message\s*}", "", query)
+        query = re.sub(r"\.\.\.\s*on\s+Hmis\w*Error\s*{[^}]*}", "", query)
 
         # convert HmisObjectType -> Object
         query = re.sub(r"\bHmis(\w+)Type\b", r"\1", query)
