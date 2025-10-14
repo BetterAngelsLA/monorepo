@@ -1,8 +1,5 @@
-import {
-  enumHmisGender,
-  enumHmisRace,
-} from 'libs/expo/betterangels/src/lib/static';
 import { HmisClientType } from '../../../../../apollo';
+import { enumHmisGender, enumHmisRace } from '../../../../../static';
 import {
   ClientProfileCard,
   ClientProfileCardContainer,

@@ -1,51 +1,37 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { ComponentType } from 'react';
-import { z, ZodType } from 'zod';
-import { HmisClientType } from '../../../apollo';
+import { ZodType } from 'zod';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
 import { THmisFormSectionKey, TSectionConfig } from '../types';
 import {
   DemographicInfoForm,
-  demographicInfoFormEmptyState,
   DemographicInfoFormSchema,
+  demographicInfoFormEmptyState,
   mapClientToDemographicSchema,
 } from './DemographicInfo';
 import {
-  fullNameFormEmptyState,
   FullNameFormHmis,
   FullNameFormSchema,
+  fullNameFormEmptyState,
   mapClientToFullNameSchema,
 } from './FullName';
 
-function generateSectionConfig<S extends ZodType<any, any, any>>(config: {
-  title: string;
-  Form: ComponentType<any>;
-  schema: S;
-  emptyState: z.input<S>;
-  dataMapper: (client: HmisClientType) => z.input<S>;
-}): TSectionConfig<S> {
-  return {
-    ...config,
-    resolver: zodResolver(config.schema),
-  };
-}
-
 export const hmisFormConfig = {
-  [ClientProfileSectionEnum.FullName]: generateSectionConfig({
+  [ClientProfileSectionEnum.FullName]: {
     title: 'Edit Full Name',
     Form: FullNameFormHmis,
     schema: FullNameFormSchema,
     emptyState: fullNameFormEmptyState,
     dataMapper: mapClientToFullNameSchema,
-  }),
-  [ClientProfileSectionEnum.Demographic]: generateSectionConfig({
+  },
+  [ClientProfileSectionEnum.Demographic]: {
     title: 'Edit Demographic Info',
     Form: DemographicInfoForm,
     schema: DemographicInfoFormSchema,
     emptyState: demographicInfoFormEmptyState,
     dataMapper: mapClientToDemographicSchema,
-  }),
-} as const;
+  },
+} as const satisfies Partial<
+  Record<ClientProfileSectionEnum, TSectionConfig<ZodType<any, any, any>>>
+>;
 
 export function parseAsSectionKeyHMIS(
   value: unknown

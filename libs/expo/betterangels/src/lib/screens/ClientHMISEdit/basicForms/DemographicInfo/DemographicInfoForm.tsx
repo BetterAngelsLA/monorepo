@@ -1,53 +1,15 @@
-// import { TextBold } from '@monorepo/expo/shared/ui-components';
-// import { View } from 'react-native';
-
-// export function DemographicInfoForm() {
-//   return (
-//     <View>
-//       <TextBold>DEMO INFO FORM</TextBold>
-//     </View>
-//   );
-// }
-
 import {
   ControlledInput,
   Form,
   MultiSelect_V2,
 } from '@monorepo/expo/shared/ui-components';
 import { useFormContext } from 'react-hook-form';
-import {
-  HmisGenderEnum,
-  HmisRaceEnum,
-  HmisUpdateClientSubItemsInput,
-} from '../../../../apollo';
+import { HmisGenderEnum, HmisRaceEnum } from '../../../../apollo';
 import { enumHmisGender, enumHmisRace } from '../../../../static';
 import {
   TDemographicInfoFormSchema,
   demographicInfoFormEmptyState as emptyState,
 } from './formSchema';
-
-// OURS
-// gender
-// Pronouns
-// Race
-// Place of Birth
-// Height
-// Eye Color
-// Hair Color
-// Marital Status
-// Physical Description
-// ADA Accommodation
-
-// const inputs: HmisUpdateClientSubItemsInput = {
-//   middleName: client.data?.middleName || '',
-//   nameSuffix: toNameSuffixInput(client.data?.nameSuffix),
-//   alias: values.alias || '',
-//   additionalRaceEthnicity: values.additionalRaceEthnicity || '',
-//   differentIdentityText: values.differentIdentityText || '',
-//   gender: [FALLBACK_GENDER_INT],
-//   raceEthnicity: [FALLBACK_RACE_ETHNICITY_INT],
-//   veteranStatus: FALLBACK_VETERAN_STATUS_INT,
-// };
 
 export function DemographicInfoForm() {
   const {
@@ -59,14 +21,6 @@ export function DemographicInfoForm() {
 
   const genderValues = watch('gender') || [];
   const raceValues = watch('raceEthnicity') || [];
-
-  // HMIS
-  // gender: Array<Scalars['Int']['input']>;
-  // raceEthnicity: Array<Scalars['Int']['input']>;
-  // additionalRaceEthnicity: Scalars['String']['input'];
-  // differentIdentityText: Scalars['String']['input'];
-
-  const inputs: Partial<HmisUpdateClientSubItemsInput> = {};
 
   return (
     <Form>

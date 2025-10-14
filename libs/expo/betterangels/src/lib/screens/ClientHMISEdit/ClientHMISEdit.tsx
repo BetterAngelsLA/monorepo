@@ -42,7 +42,6 @@ export function ClientHMISEdit(props: TProps) {
     title: screenTitle,
     Form: SectionForm,
     schema: sectionSchema,
-    resolver,
     emptyState,
     dataMapper,
   } = hmisFormConfig[sectionName];
