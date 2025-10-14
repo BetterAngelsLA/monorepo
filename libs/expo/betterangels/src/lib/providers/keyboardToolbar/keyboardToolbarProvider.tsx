@@ -1,19 +1,11 @@
 import { ReactNode, useState } from 'react';
 import { KeyboardToolbar } from 'react-native-keyboard-controller';
-
 import { KeyboardToolbarContext } from './keyboardToolbarContext';
 
-type TKeyboardToolbarProvider = {
-  children: ReactNode;
-};
+type Props = { children: ReactNode };
 
-export default function KeyboardToolbarProvider(
-  props: TKeyboardToolbarProvider
-) {
-  const { children } = props;
-
+export default function KeyboardToolbarProvider({ children }: Props) {
   const [keyboardArrowsVisible, setKeyboardArrowsVisible] = useState(false);
-
   const showKeyboardArrows = () => setKeyboardArrowsVisible(true);
   const hideKeyboardArrows = () => setKeyboardArrowsVisible(false);
 
@@ -27,7 +19,35 @@ export default function KeyboardToolbarProvider(
     >
       {children}
 
-      <KeyboardToolbar showArrows={keyboardArrowsVisible} />
+      <KeyboardToolbar>
+        {/* Optional: custom background */}
+        {/* <KeyboardToolbar.Background>…</KeyboardToolbar.Background> */}
+
+        {/* Optional: center content */}
+        {/* <KeyboardToolbar.Content>…</KeyboardToolbar.Content> */}
+
+        {keyboardArrowsVisible && (
+          <>
+            <KeyboardToolbar.Prev
+              onPress={() => {
+                /* your logic */
+              }}
+            />
+            <KeyboardToolbar.Next
+              onPress={() => {
+                /* your logic */
+              }}
+            />
+          </>
+        )}
+
+        <KeyboardToolbar.Done
+          onPress={() => {
+            // default behavior: dismiss keyboard
+            // or you can call your custom hideKeyboardArrows etc.
+          }}
+        />
+      </KeyboardToolbar>
     </KeyboardToolbarContext.Provider>
   );
 }
