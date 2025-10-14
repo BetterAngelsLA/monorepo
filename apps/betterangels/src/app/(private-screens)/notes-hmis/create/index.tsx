@@ -1,14 +1,17 @@
-import { TextBold } from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
+import { HmisProgramNoteCreate } from '@monorepo/expo/betterangels';
+import { useLocalSearchParams } from 'expo-router';
 
-type TProps = {};
+type TSearchParams = {
+  hmisClientId: string;
+  arrivedFrom?: string;
+};
 
-export default function InteractionsHmisCreate(props: TProps) {
-  const {} = props;
+export default function InteractionsHmisCreateScreen() {
+  const { hmisClientId } = useLocalSearchParams<TSearchParams>();
 
-  return (
-    <View>
-      <TextBold>CREATE NOTE</TextBold>
-    </View>
-  );
+  if (!hmisClientId) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
+  return <HmisProgramNoteCreate hmisClientId={hmisClientId} />;
 }

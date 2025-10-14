@@ -7,7 +7,7 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useUser } from '../hooks';
-import { MainModal } from './MainModal';
+import { MainModal, TMainModalAction } from './MainModal';
 
 interface IMainPlusModalProps {
   closeModal: () => void;
@@ -19,21 +19,24 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
 
   const { isHmisUser } = useUser();
 
-  const ACTIONS = [
-    {
-      title: 'Add interaction',
-      Icon: FilePlusIcon,
-      route: isHmisUser ? '/notes-hmis/create' : '/',
-      params: {
-        createInteraction: isHmisUser ? '' : 'true',
-      },
-    },
+  const ACTIONS: TMainModalAction[] = [
     {
       title: 'Add client',
       Icon: UserAddIcon,
       route: '/clients/create',
     },
   ];
+
+  if (!isHmisUser) {
+    ACTIONS.unshift({
+      title: 'Add interaction',
+      Icon: FilePlusIcon,
+      route: '/',
+      params: {
+        createInteraction: 'true',
+      },
+    });
+  }
 
   return (
     <MainModal

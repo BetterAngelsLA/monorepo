@@ -11,7 +11,11 @@ type TProps = {
 };
 
 export function ClientInteractionsHmisView(props: TProps) {
-  const { client: _client } = props;
+  const { client } = props;
+
+  if (!client) {
+    return null;
+  }
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
@@ -21,7 +25,11 @@ export function ClientInteractionsHmisView(props: TProps) {
           borderColor={Colors.WHITE}
           accessibilityLabel="create an interaction"
           accessibilityHint="create new interaction"
-          onPress={() => router.navigate('/notes-hmis/create')}
+          onPress={() =>
+            router.navigate(
+              `/notes-hmis/create?hmisClientId=${client.personalId}`
+            )
+          }
         >
           <PlusIcon />
         </IconButton>
