@@ -6,6 +6,7 @@ import {
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { useUser } from '../hooks';
 import { MainModal } from './MainModal';
 
 interface IMainPlusModalProps {
@@ -16,13 +17,15 @@ interface IMainPlusModalProps {
 export default function MainPlusModal(props: IMainPlusModalProps) {
   const { isModalVisible, closeModal } = props;
 
+  const { isHmisUser } = useUser();
+
   const ACTIONS = [
     {
       title: 'Add interaction',
       Icon: FilePlusIcon,
-      route: '/',
+      route: isHmisUser ? '/hmis-notes/create' : '/',
       params: {
-        createInteraction: 'true',
+        createInteraction: isHmisUser ? '' : 'true',
       },
     },
     {
