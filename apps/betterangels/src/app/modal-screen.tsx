@@ -1,7 +1,4 @@
-import {
-  KeyboardToolbarProvider,
-  useModalScreen,
-} from '@monorepo/expo/betterangels';
+import { useModalScreen } from '@monorepo/expo/betterangels';
 import { Colors } from '@monorepo/expo/shared/static';
 import { View } from 'react-native';
 
@@ -13,15 +10,13 @@ export default function BaseModalScreen() {
   }
 
   return (
-    <KeyboardToolbarProvider>
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: Colors.WHITE,
-        }}
-      >
-        {content}
-      </View>
-    </KeyboardToolbarProvider>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: Colors.WHITE,
+      }}
+    >
+      {content}
+    </View>
   );
 }
