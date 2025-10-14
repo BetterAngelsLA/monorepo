@@ -23,7 +23,7 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
     {
       title: 'Add interaction',
       Icon: FilePlusIcon,
-      route: isHmisUser ? '/hmis-notes/create' : '/',
+      route: isHmisUser ? '/notes-hmis/create' : '/',
       params: {
         createInteraction: isHmisUser ? '' : 'true',
       },

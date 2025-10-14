@@ -21,7 +21,7 @@ export function ClientInteractionsHmisView(props: TProps) {
           borderColor={Colors.WHITE}
           accessibilityLabel="create an interaction"
           accessibilityHint="create new interaction"
-          onPress={() => router.navigate('/hmis-notes/create')}
+          onPress={() => router.navigate('/notes-hmis/create')}
         >
           <PlusIcon />
         </IconButton>
