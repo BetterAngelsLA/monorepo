@@ -11,7 +11,7 @@ import {
   demographicInfoFormEmptyState as emptyState,
 } from './formSchema';
 
-export function DemographicInfoForm() {
+export function DemographicInfoFormHmis() {
   const {
     control,
     watch,
@@ -44,6 +44,19 @@ export function DemographicInfoForm() {
         />
       </Form.Field>
 
+      <Form.Field title="Different Identity Text">
+        <ControlledInput
+          name="differentIdentityText"
+          control={control}
+          disabled={isSubmitting}
+          placeholder="Enter different identity text"
+          onDelete={() => {
+            setValue('differentIdentityText', emptyState.differentIdentityText);
+          }}
+          errorMessage={errors.differentIdentityText?.message}
+        />
+      </Form.Field>
+
       <Form.Field title="Race and Ethnicity">
         <MultiSelect_V2
           options={Object.entries(enumHmisRace).map(([key, value]) => ({
@@ -69,8 +82,7 @@ export function DemographicInfoForm() {
           name="additionalRaceEthnicity"
           control={control}
           disabled={isSubmitting}
-          label="Additional race ethnicity"
-          placeholder="Enter additional race ethnicity"
+          placeholder="Enter additional race and ethnicity"
           onDelete={() => {
             setValue(
               'additionalRaceEthnicity',
@@ -78,20 +90,6 @@ export function DemographicInfoForm() {
             );
           }}
           errorMessage={errors.additionalRaceEthnicity?.message}
-        />
-      </Form.Field>
-
-      <Form.Field title="Different Identity Text">
-        <ControlledInput
-          name="differentIdentityText"
-          control={control}
-          disabled={isSubmitting}
-          label="Different identity text"
-          placeholder="Enter different identity text"
-          onDelete={() => {
-            setValue('differentIdentityText', emptyState.differentIdentityText);
-          }}
-          errorMessage={errors.differentIdentityText?.message}
         />
       </Form.Field>
     </Form>

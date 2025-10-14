@@ -2,7 +2,7 @@ import { ZodType } from 'zod';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
 import { THmisFormSectionKey, TSectionConfig } from '../types';
 import {
-  DemographicInfoForm,
+  DemographicInfoFormHmis,
   DemographicInfoFormSchema,
   demographicInfoFormEmptyState,
   mapClientToDemographicSchema,
@@ -24,7 +24,7 @@ export const hmisFormConfig = {
   },
   [ClientProfileSectionEnum.Demographic]: {
     title: 'Edit Demographic Info',
-    Form: DemographicInfoForm,
+    Form: DemographicInfoFormHmis,
     schema: DemographicInfoFormSchema,
     emptyState: demographicInfoFormEmptyState,
     dataMapper: mapClientToDemographicSchema,

@@ -1,4 +1,4 @@
-export { DemographicInfoForm } from './DemographicInfoForm';
+export { DemographicInfoFormHmis } from './DemographicInfoFormHmis';
 export {
   DemographicInfoFormSchema,
   demographicInfoFormEmptyState,
