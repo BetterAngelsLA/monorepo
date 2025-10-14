@@ -8,7 +8,10 @@ import { HMISClientHeader } from './HMISClientHeader';
 import { useGetHmisClientQuery } from './__generated__/getHMISClient.generated';
 import { renderTabComponent } from './tabs/utils/renderTabComponent';
 
-const hmisTabs: ClientViewTabEnum[] = [ClientViewTabEnum.Profile];
+const hmisTabs: ClientViewTabEnum[] = [
+  ClientViewTabEnum.Profile,
+  ClientViewTabEnum.Interactions,
+];
 
 type TProps = {
   id: string;

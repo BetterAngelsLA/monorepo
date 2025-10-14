@@ -147,6 +147,31 @@ export default function PrivateLayout() {
         options={getDefaultStackNavOptions()}
       />
       <Stack.Screen
+        name="hmis-notes/index"
+        options={getDefaultStackNavOptions({
+          title: 'Interactions',
+        })}
+      />
+      <Stack.Screen
+        name="hmis-notes/create/index"
+        options={getDefaultStackNavOptions({
+          title: 'Add Interaction',
+        })}
+      />
+      <Stack.Screen
+        name="hmis-notes/[id]/index"
+        options={getDefaultStackNavOptions({
+          title: 'Interaction',
+        })}
+      />
+      <Stack.Screen
+        name="hmis-notes/[id]/edit"
+        options={getDefaultStackNavOptions({
+          title: 'Edit Interaction',
+        })}
+      />
+
+      <Stack.Screen
         name="file/[id]"
         options={{
           headerTitleAlign: 'center',
