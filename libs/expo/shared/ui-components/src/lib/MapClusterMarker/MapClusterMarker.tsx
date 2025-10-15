@@ -20,40 +20,40 @@ interface IMapClusterMarkerProps {
   text?: string;
   itemCount?: number;
   subscriptAfter?: boolean;
-  hasHouse?: boolean;
   label?: string;
 }
 
 function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
   const {
     textColor,
-    size, // no default here; if undefined, getContentAndSize() will know what to do.
+    size,
     variant = 'primary',
     text,
     itemCount,
     subscriptAfter,
     label,
-    // hasHouse,
   } = props;
 
-  const {
-    borderColor: variantBorderColor,
-    fillColor: variantFillColor,
-    textColor: variantTextColor,
-  } = variantStyleMap[variant];
+  const { fillColor: variantFillColor, textColor: variantTextColor } =
+    variantStyleMap[variant];
 
   const { content, markerSize, showSubscript } = useMemo(
-    () =>
-      getContentAndSize({
-        text,
-        itemCount,
-        size,
-      }),
+    () => getContentAndSize({ text, itemCount, size }),
     [text, itemCount, size]
   );
 
+  // Build the full label in a *single* Text node (avoids nested Text snapshot issues)
+  const labelText =
+    showSubscript || subscriptAfter ? `${content}+` : String(content);
+
+  // Numeric sizing only
+  const outerSize = SIZES[markerSize].size;
+  const outerPadding = SIZES[markerSize].outerPadding;
+  const ringDiameter = Math.max(outerSize - 2 * outerPadding, 0);
+  const ringWidth = 2;
+
   return (
-    <View style={{ alignItems: 'center' }}>
+    <View style={{ alignItems: 'center' }} collapsable={false}>
       {label && (
         <View
           style={{
@@ -74,59 +74,49 @@ function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
           </View>
         </View>
       )}
+
+      {/* Outer orange disk */}
       <View
+        collapsable={false}
         style={[
           styles.outerCircle,
           {
+            width: outerSize,
+            height: outerSize,
+            borderRadius: outerSize / 2,
             backgroundColor: variantFillColor,
-            padding: SIZES[markerSize].outerPadding,
-            height: SIZES[markerSize].size,
-            width: SIZES[markerSize].size,
           },
         ]}
       >
+        {/* Thin white inner ring (transparent fill so orange shows inside) */}
         <View
+          collapsable={false}
+          style={{
+            position: 'absolute',
+            width: ringDiameter,
+            height: ringDiameter,
+            borderRadius: ringDiameter / 2,
+            borderWidth: ringWidth,
+            borderColor: Colors.WHITE,
+            backgroundColor: 'transparent',
+          }}
+        />
+
+        {/* Centered count text */}
+        <Text
           style={[
-            styles.innerCircle,
+            styles.text,
             {
-              backgroundColor: variantFillColor,
-              borderColor: variantBorderColor,
+              fontFamily: 'Poppins-SemiBold', // MUST equal your useFonts key
+              fontSize: SIZES[markerSize].fontSize,
+              color: textColor || variantTextColor || Colors.WHITE,
             },
           ]}
+          numberOfLines={1}
+          allowFontScaling={false}
         >
-          <Text
-            style={[
-              styles.text,
-              {
-                fontSize: SIZES[markerSize].fontSize,
-                color: textColor || variantTextColor,
-              },
-            ]}
-          >
-            {content}
-            {(subscriptAfter || showSubscript) && (
-              <Text style={{ fontSize: SIZES[markerSize].subscriptAfterSize }}>
-                +
-              </Text>
-            )}
-          </Text>
-        </View>
-        {/* {hasHouse && (
-          <View
-            style={[
-              styles.house,
-              {
-                height: SIZES[size].houseContainer,
-                width: SIZES[size].houseContainer,
-              },
-            ]}
-          >
-            <HouseSolidIcon
-              color={Colors.NEUTRAL_EXTRA_DARK}
-              size={SIZES[size].houseIcon}
-            />
-          </View>
-        )} */}
+          {labelText}
+        </Text>
       </View>
     </View>
   );
@@ -134,35 +124,16 @@ function BaseMapClusterMarker(props: IMapClusterMarkerProps) {
 
 const styles = StyleSheet.create({
   outerCircle: {
-    borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
   },
-  innerCircle: {
-    borderRadius: 100,
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
-    height: '100%',
-  },
   text: {
-    fontFamily: 'Poppins-SemiBold',
-    letterSpacing: -2,
-    includeFontPadding: false, // Android only
-    textAlignVertical: 'center', // Android only
-  },
-  house: {
-    position: 'absolute',
-    top: -5,
-    right: -10,
-    backgroundColor: Colors.WHITE,
-    borderRadius: 100,
-    borderWidth: 2,
-    borderColor: Colors.NEUTRAL_EXTRA_DARK,
-    alignItems: 'center',
-    justifyContent: 'center',
+    // Safer tracking to avoid glyph clipping on Android
+    letterSpacing: -0.5,
+    textAlign: 'center',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 });
 

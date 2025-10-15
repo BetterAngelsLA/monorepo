@@ -50,6 +50,7 @@ export default function NoteCard(props: INoteCardProps) {
         organization={note.organization}
         team={note.team}
       />
+
       {(!!note.providedServices.length || !!note.requestedServices.length) && (
         <NoteCardServices note={note} />
       )}
