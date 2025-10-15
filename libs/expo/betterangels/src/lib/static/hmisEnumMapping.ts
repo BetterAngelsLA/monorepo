@@ -8,6 +8,7 @@ import {
   HmisRaceEnum,
   HmisSsnQualityEnum,
   HmisSuffixEnum,
+  HmisVeteranStatusEnum,
 } from '../apollo';
 
 export const HmisSsnQualityEnumInt = {
@@ -216,4 +217,10 @@ export function toRaceEnumInt(
   value?: HmisRaceEnum | string | null
 ): number | null {
   return HmisRaceEnumInt[value as HmisRaceEnum] ?? null;
+}
+
+export function toHmisVeteranStatusEnumInt(
+  value?: HmisVeteranStatusEnum | string | null
+): number | null {
+  return HmisVeteranTheaterEnumInt[value as HmisVeteranStatusEnum] ?? null;
 }
