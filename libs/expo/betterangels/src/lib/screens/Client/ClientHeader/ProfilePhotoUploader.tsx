@@ -14,59 +14,65 @@ interface Props {
 }
 
 export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
   const { showSnackbar } = useSnackbar();
+
   const [updatePhoto, { loading }] = useUpdateClientProfilePhotoMutation({
     refetchQueries: [
       { query: ClientProfileDocument, variables: { id: clientId } },
     ],
   });
 
-  const onUpload = async (file: ReactNativeFile) => {
+  const handleUpload = async (file: ReactNativeFile) => {
     try {
-      await updatePhoto({ variables: { data: { clientProfile: clientId, photo: file } } });
-      setIsModalVisible(false);
+      await updatePhoto({
+        variables: { data: { clientProfile: clientId, photo: file } },
+      });
     } catch {
-      showSnackbar({ message: 'Error uploading profile photo.', type: 'error' });
+      showSnackbar({
+        message: 'Error uploading profile photo.',
+        type: 'error',
+      });
+    } finally {
+      setModalVisible(false);
     }
-  };
-
-  const handleOpenModal = () => {
-    setIsModalVisible(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalVisible(false);
   };
 
   return (
     <>
-      <View style={{ position: 'relative' }}>
-        <Pressable onPress={handleOpenModal} accessibilityRole="button" accessibilityHint="update profile photo">
+      <Pressable
+        onPress={() => setModalVisible(true)}
+        accessibilityRole="button"
+        accessibilityHint="update profile photo"
+      >
+        <View style={{ position: 'relative' }}>
           <Avatar
             loading={loading}
             size="xl"
             mr="xs"
             imageUrl={imageUrl}
             accessibilityLabel="client's profile photo"
-            accessibilityHint="client's profile photo"
+            accessibilityHint="update profile photo"
           />
-          <View style={{
-            position: 'absolute',
-            bottom: 0,
-            right: Spacings.xs,
-            backgroundColor: 'white'
-          }}>
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: Spacings.xs,
+              backgroundColor: 'white',
+            }}
+          >
             <WFEdit />
           </View>
-        </Pressable>
-      </View>
+        </View>
+      </Pressable>
+
       <MediaPickerModal
         isModalVisible={isModalVisible}
-        setModalVisible={handleCloseModal}
+        setModalVisible={setModalVisible}
         allowMultiple={false}
-        onCapture={onUpload}
-        setFiles={(files) => onUpload(files[0])}
+        onCapture={handleUpload}
+        setFiles={(files) => handleUpload(files[0])}
       />
     </>
   );
