@@ -48,7 +48,7 @@ export function ClientProfileList({
   headerStyle,
   showAllClientsLink,
   style,
-  horizontalPadding = pagePaddingHorizontal, // matches SearchBar in Clients page
+  horizontalPadding = pagePaddingHorizontal,
 }: TProps) {
   const { items, total, loading, loadMore, hasMore, error } =
     useInfiniteScrollQuery<TClientProfile, typeof useClientProfilesQuery>({
