@@ -10,7 +10,7 @@ import { useCameraPermissions } from 'expo-camera';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Alert, Pressable, View, ViewStyle } from 'react-native';
+import { Alert, Pressable, StyleSheet, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Camera from '../Camera';
 import { BaseModal } from '../Modal';
@@ -35,7 +35,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
   } = props;
 
   const [isCameraOpen, setIsCameraOpen] = useState(false);
-  const [permission, requestPermission] = useCameraPermissions();
+  const [, requestPermission] = useCameraPermissions();
   const insets = useSafeAreaInsets();
 
   const closeModal = () => setModalVisible(false);
@@ -67,7 +67,9 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
   };
 
   const getPermissionsAndOpenCamera = async () => {
-    if (permission) {
+    try {
+      // Don’t gate the call on permission object existence;
+      // request returns the current status too.
       const { granted } = await requestPermission();
       if (granted) {
         setIsCameraOpen(true);
@@ -77,6 +79,8 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
           'You need to grant camera permission to use this app'
         );
       }
+    } catch (e) {
+      console.error('Camera permission error:', e);
     }
   };
 
@@ -99,7 +103,6 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
             });
           })
         );
-
         setFiles(uploadedImages);
         setModalVisible(false);
       }
@@ -108,37 +111,34 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
     }
   };
 
-  // Panel & content styles
+  // Panel & content styles — force full-bleed when camera is open
   const panelStyle: ViewStyle = isCameraOpen
     ? {
-        // full-screen camera
-        flex: 1,
-        backgroundColor: Colors.WHITE,
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: Colors.BLACK,
         borderTopLeftRadius: 0,
         borderTopRightRadius: 0,
         shadowOpacity: 0,
         elevation: 0,
         margin: 0,
+        padding: 0,
+        alignSelf: 'stretch',
+        overflow: 'hidden',
       }
     : {
-        // sheet spans screen width; we create insets via content padding
         backgroundColor: 'transparent',
         borderTopLeftRadius: 0,
         borderTopRightRadius: 0,
         shadowOpacity: 0,
         elevation: 0,
-        // ❌ no margins here (prevents overflow on the right)
       };
 
   const contentStyle: ViewStyle = isCameraOpen
     ? {
-        paddingHorizontal: 0,
-        paddingBottom: 0,
-        paddingTop: 0,
-        flex: 1,
+        ...StyleSheet.absoluteFillObject,
+        padding: 0,
       }
     : {
-        // ✅ use padding to inset the floating cards and keep them centered
         paddingHorizontal: 20,
         paddingBottom: insets.bottom + 20,
         paddingTop: 0,
@@ -157,11 +157,14 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
       contentStyle={contentStyle}
     >
       {isCameraOpen ? (
-        <Camera
-          setModalVisible={setModalVisible}
-          setIsCameraOpen={setIsCameraOpen}
-          onCapture={onCapture}
-        />
+        // Ensure child fills the available area
+        <View style={{ flex: 1, backgroundColor: Colors.BLACK }}>
+          <Camera
+            setModalVisible={setModalVisible}
+            setIsCameraOpen={setIsCameraOpen}
+            onCapture={onCapture}
+          />
+        </View>
       ) : (
         <>
           <View
