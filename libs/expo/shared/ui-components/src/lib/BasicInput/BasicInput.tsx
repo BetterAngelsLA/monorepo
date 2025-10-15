@@ -37,7 +37,6 @@ interface IBasicInputProps extends TextInputProps {
   icon?: React.ReactNode;
   onDelete?: () => void;
   borderRadius?: number;
-  placeholderTextColor?: string;
 }
 
 const CLEAR_TOUCH = Spacings.lg;
@@ -64,7 +63,6 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
       autoCorrect = true,
       borderRadius = Radiuses.xs,
       errorMessage,
-      placeholderTextColor = Colors.NEUTRAL_LIGHT,
       ...rest
     },
     ref
@@ -119,7 +117,7 @@ export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
             allowFontScaling={false}
             editable={!disabled}
             autoCorrect={autoCorrect}
-            placeholderTextColor={placeholderTextColor}
+            placeholderTextColor={Colors.NEUTRAL_LIGHT}
             // keep defaultValue working if not controlled
             {...rest}
             {...(isControlled
