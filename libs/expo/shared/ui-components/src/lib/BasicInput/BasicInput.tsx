@@ -7,6 +7,7 @@ import {
 } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
+  Platform,
   Pressable,
   StyleProp,
   StyleSheet,
@@ -22,7 +23,7 @@ type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IBasicInputProps extends TextInputProps {
   label?: string;
-  height?: 40 | 44 | 56 | 200;
+  height?: 40 | 44 | 56 | 200; // single-line heights + tall variant
   required?: boolean;
   disabled?: boolean;
   error?: boolean;
@@ -39,40 +40,33 @@ interface IBasicInputProps extends TextInputProps {
   borderRadius?: number;
 }
 
-export function BasicInput(props: IBasicInputProps) {
-  const {
-    label,
-    error,
-    required,
-    disabled,
-    componentStyle,
-    height = 56,
-    mb,
-    mt,
-    my,
-    mx,
-    ml,
-    mr,
-    icon,
-    value,
-    onDelete,
-    autoCorrect = true,
-    borderRadius = Radiuses.xs,
-    errorMessage,
-    placeholderTextColor = Colors.NEUTRAL,
-    multiline: multilineProp,
-    ...rest
-  } = props;
-
-  const isMultiline = !!multilineProp || height >= 100;
-
-  const color = disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK;
-  const stringValue = typeof value === 'string' ? value : '';
+export function BasicInput({
+  label,
+  error,
+  required,
+  disabled,
+  componentStyle,
+  height = 56,
+  mb,
+  mt,
+  my,
+  mx,
+  ml,
+  mr,
+  icon,
+  value,
+  onDelete,
+  autoCorrect = true,
+  borderRadius = Radiuses.xs,
+  errorMessage,
+  ...rest
+}: IBasicInputProps) {
+  const isControlled = value !== undefined;
 
   return (
     <View
       style={[
-        styles.inputBasicContainer,
+        styles.container,
         componentStyle,
         {
           marginBottom: mb && Spacings[mb],
@@ -85,7 +79,7 @@ export function BasicInput(props: IBasicInputProps) {
       ]}
     >
       {label && (
-        <View style={styles.label}>
+        <View style={styles.labelRow}>
           <Text style={styles.labelText}>{label}</Text>
           {required && <Text style={styles.required}>*</Text>}
         </View>
@@ -93,64 +87,53 @@ export function BasicInput(props: IBasicInputProps) {
 
       <View
         style={[
-          styles.inputBasic,
+          styles.row,
           {
-            height, // fixed control height on the row
+            height, // the row owns the height
+            paddingLeft: Spacings.sm,
             borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
             borderRadius,
-            paddingLeft: icon ? Spacings.sm : 0,
-            // center single-line at the ROW level
-            alignItems: isMultiline ? 'flex-start' : 'center',
-            paddingTop: isMultiline ? Spacings.xs : 0,
-            paddingBottom: isMultiline ? Spacings.xs : 0,
           },
         ]}
       >
         {icon}
 
-        {/* centering wrapper: no math, no specs */}
-        <View
-          style={{
-            flex: 1,
-            justifyContent: isMultiline ? 'flex-start' : 'center',
-          }}
-        >
-          <TextInput
-            multiline={isMultiline}
-            numberOfLines={isMultiline ? undefined : 1}
-            allowFontScaling={isMultiline ? true : false}
-            placeholderTextColor={placeholderTextColor}
-            value={stringValue}
-            editable={!disabled}
-            autoCorrect={autoCorrect}
-            {...rest}
-            style={{
-              flexGrow: 0,
-              color,
-              paddingLeft: icon ? Spacings.xs : Spacings.sm,
+        <TextInput
+          // Single-line input – this helps Android treat textAlignVertical correctly
+          multiline={false}
+          style={[
+            styles.input,
+            {
+              color: disabled
+                ? Colors.NEUTRAL_LIGHT
+                : Colors.PRIMARY_EXTRA_DARK,
               paddingRight: onDelete ? 38 : Spacings.sm,
-              paddingTop: 0,
-              paddingBottom: 0,
-
-              fontFamily: 'Poppins-Regular',
-              fontSize: FontSizes.md.fontSize,
-
+            },
+            Platform.OS === 'android' && {
+              height: '100%', // <-- REQUIRED for Android vertical centering
+              textAlignVertical: 'center',
               includeFontPadding: false,
-              textAlignVertical: isMultiline ? 'top' : 'center',
-            }}
-          />
-        </View>
+            },
+          ]}
+          editable={!disabled}
+          autoCorrect={autoCorrect}
+          placeholderTextColor={Colors.NEUTRAL_LIGHT}
+          // Allow placeholder/defaultValue/etc from callers
+          {...rest}
+          // Only control the value if actually provided (keeps defaultValue working)
+          {...(isControlled ? { value } : {})}
+        />
 
-        {stringValue && onDelete && (
+        {!!value && !!onDelete && (
           <Pressable
             accessible
             accessibilityRole="button"
             accessibilityLabel="delete icon"
             accessibilityHint="deletes input's value"
             onPress={onDelete}
-            style={styles.pressable}
+            style={styles.clearBtn}
           >
-            <View style={styles.icon}>
+            <View style={styles.clearIconBg}>
               <PlusIcon size="xs" rotate="45deg" />
             </View>
           </Pressable>
@@ -167,22 +150,9 @@ export function BasicInput(props: IBasicInputProps) {
 }
 
 const styles = StyleSheet.create({
-  inputBasicContainer: {
-    position: 'relative',
-    width: '100%',
-  },
-  inputBasic: {
-    position: 'relative',
-    fontFamily: 'Poppins-Regular',
-    backgroundColor: Colors.WHITE,
-    borderWidth: 1,
-    alignItems: 'center',
-    flexDirection: 'row',
-  },
-  label: {
-    flexDirection: 'row',
-    marginBottom: Spacings.xs,
-  },
+  container: { width: '100%' },
+
+  labelRow: { flexDirection: 'row', marginBottom: Spacings.xs },
   labelText: {
     fontSize: FontSizes.sm.fontSize,
     lineHeight: FontSizes.sm.lineHeight,
@@ -190,11 +160,26 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
     fontFamily: 'Poppins-Regular',
   },
-  required: {
-    marginLeft: 2,
-    color: 'red',
+  required: { marginLeft: 2, color: Colors.ERROR },
+
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center', // centers the (short) iOS input within the tall row
+    backgroundColor: Colors.WHITE,
+    borderWidth: 1,
+    position: 'relative',
   },
-  pressable: {
+
+  input: {
+    flex: 1,
+    paddingVertical: 0, // remove extra vertical padding so centering is true
+    paddingLeft: Spacings.xs,
+    fontFamily: 'Poppins-Regular',
+    fontSize: FontSizes.md.fontSize,
+    // no height on iOS; it will size to its text metrics naturally
+  },
+
+  clearBtn: {
     position: 'absolute',
     right: Spacings.xs,
     height: Spacings.lg,
@@ -202,7 +187,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  icon: {
+  clearIconBg: {
     height: Spacings.sm,
     width: Spacings.sm,
     backgroundColor: Colors.NEUTRAL_LIGHT,
