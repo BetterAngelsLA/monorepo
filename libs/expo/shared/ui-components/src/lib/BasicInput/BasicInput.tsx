@@ -7,7 +7,6 @@ import {
 } from '@monorepo/expo/shared/static';
 import { ReactNode } from 'react';
 import {
-  Platform,
   Pressable,
   StyleProp,
   StyleSheet,
@@ -60,8 +59,15 @@ export function BasicInput(props: IBasicInputProps) {
     autoCorrect = true,
     borderRadius = Radiuses.xs,
     errorMessage,
+    placeholderTextColor = Colors.NEUTRAL,
+    multiline: multilineProp,
     ...rest
   } = props;
+
+  const isMultiline = !!multilineProp || height >= 100;
+
+  const color = disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK;
+  const stringValue = typeof value === 'string' ? value : '';
 
   return (
     <View
@@ -84,38 +90,58 @@ export function BasicInput(props: IBasicInputProps) {
           {required && <Text style={styles.required}>*</Text>}
         </View>
       )}
+
       <View
         style={[
           styles.inputBasic,
           {
-            paddingLeft: icon ? Spacings.sm : 0,
-            borderColor: error ? 'red' : Colors.NEUTRAL_LIGHT,
+            height, // fixed control height on the row
+            borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
             borderRadius,
+            paddingLeft: icon ? Spacings.sm : 0,
+            // center single-line at the ROW level
+            alignItems: isMultiline ? 'flex-start' : 'center',
+            paddingTop: isMultiline ? Spacings.xs : 0,
+            paddingBottom: isMultiline ? Spacings.xs : 0,
           },
         ]}
       >
         {icon}
-        <TextInput
+
+        {/* centering wrapper: no math, no specs */}
+        <View
           style={{
-            color: disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK,
-            paddingLeft: icon ? Spacings.xs : Spacings.sm,
-            paddingRight: onDelete ? 38 : Spacings.sm,
             flex: 1,
-            fontFamily: 'Poppins-Regular',
-            fontSize: FontSizes.md.fontSize,
-            height,
-            ...Platform.select({
-              web: {
-                outline: 'none',
-              },
-            }),
+            justifyContent: isMultiline ? 'flex-start' : 'center',
           }}
-          editable={!disabled}
-          autoCorrect={autoCorrect}
-          {...rest}
-          value={value}
-        />
-        {value && onDelete && (
+        >
+          <TextInput
+            multiline={isMultiline}
+            numberOfLines={isMultiline ? undefined : 1}
+            allowFontScaling={isMultiline ? true : false}
+            placeholderTextColor={placeholderTextColor}
+            value={stringValue}
+            editable={!disabled}
+            autoCorrect={autoCorrect}
+            {...rest}
+            style={{
+              flexGrow: 0,
+              color,
+              paddingLeft: icon ? Spacings.xs : Spacings.sm,
+              paddingRight: onDelete ? 38 : Spacings.sm,
+              paddingTop: 0,
+              paddingBottom: 0,
+
+              fontFamily: 'Poppins-Regular',
+              fontSize: FontSizes.md.fontSize,
+
+              includeFontPadding: false,
+              textAlignVertical: isMultiline ? 'top' : 'center',
+            }}
+          />
+        </View>
+
+        {stringValue && onDelete && (
           <Pressable
             accessible
             accessibilityRole="button"
@@ -130,6 +156,7 @@ export function BasicInput(props: IBasicInputProps) {
           </Pressable>
         )}
       </View>
+
       {errorMessage && (
         <TextRegular mt="xxs" size="sm" color={Colors.ERROR}>
           {errorMessage}

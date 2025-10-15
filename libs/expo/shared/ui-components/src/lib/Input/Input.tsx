@@ -9,7 +9,6 @@ import {
 } from '@monorepo/expo/shared/static';
 import { useRef } from 'react';
 import {
-  Platform,
   StyleProp,
   StyleSheet,
   TextInput,
@@ -63,14 +62,15 @@ export function Input(props: IInputProps) {
     ...rest
   } = props;
 
-  // Pull out multiline before we strip margin props (used to center text)
+  // read before stripping margin props
   const { multiline = false } = rest as TextInputProps;
 
   const inputRef = useRef<TextInput>(null);
   const nonMarginOtherProps = omitMarginProps(rest);
   const asSelectProps = asSelect ? defaultAsSelectProps : {};
 
-  const isEmpty = (value ?? '') === '';
+  const stringValue = typeof value === 'string' ? value : '';
+  const isEmpty = stringValue === '';
   const color = disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK;
   const showClear = !!onDelete && !isEmpty;
 
@@ -84,6 +84,10 @@ export function Input(props: IInputProps) {
           {
             borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
             borderRadius,
+            // row owns vertical alignment; wrapper will center single-line
+            alignItems: multiline ? 'flex-start' : 'center',
+            paddingTop: multiline ? Spacings.xs : 0,
+            paddingBottom: multiline ? Spacings.xs : 0,
           },
         ]}
       >
@@ -96,21 +100,40 @@ export function Input(props: IInputProps) {
           />
         )}
 
-        <TextInput
-          ref={inputRef}
-          style={[
-            styles.inputText,
-            { color, textAlignVertical: multiline ? 'top' : 'center' },
-            inputStyle,
-          ]}
-          editable={!disabled}
-          autoCorrect={autoCorrect}
-          autoCapitalize={autoCapitalize}
-          placeholderTextColor={placeholderTextColor}
-          value={value ?? ''}
-          {...asSelectProps}
-          {...nonMarginOtherProps}
-        />
+        {/* centering wrapper: no math, no specs */}
+        <View
+          style={{
+            flex: 1,
+            justifyContent: multiline ? 'flex-start' : 'center',
+          }}
+        >
+          <TextInput
+            ref={inputRef}
+            multiline={multiline}
+            numberOfLines={multiline ? undefined : 1}
+            allowFontScaling={multiline ? true : false}
+            editable={!disabled}
+            autoCorrect={autoCorrect}
+            autoCapitalize={autoCapitalize}
+            placeholderTextColor={placeholderTextColor}
+            value={stringValue}
+            {...asSelectProps}
+            {...nonMarginOtherProps}
+            style={[
+              styles.inputText,
+              {
+                // natural single-line height: no vertical padding/height/lineHeight
+                paddingTop: 0,
+                paddingBottom: 0,
+                color,
+                // Android helpers; ignored on iOS
+                includeFontPadding: false,
+                textAlignVertical: multiline ? 'top' : 'center',
+              },
+              inputStyle,
+            ]}
+          />
+        </View>
 
         {showClear && (
           <InputSlot
@@ -150,12 +173,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   inputText: {
-    paddingHorizontal: Spacings.sm,
-    paddingVertical: Spacings.sm,
     flex: 1,
+    paddingHorizontal: Spacings.sm,
     fontFamily: 'Poppins-Regular',
     fontSize: FontSizes.md.fontSize,
-    includeFontPadding: false,
-    ...Platform.select({ web: { outline: 'none' as const } }),
   },
 });
