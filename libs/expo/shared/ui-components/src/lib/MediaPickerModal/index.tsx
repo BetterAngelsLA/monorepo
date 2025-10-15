@@ -67,27 +67,21 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
   };
 
   const getPermissionsAndOpenCamera = async () => {
-    try {
-      // Don’t gate the call on permission object existence;
-      // request returns the current status too.
-      const { granted } = await requestPermission();
-      if (granted) {
-        setIsCameraOpen(true);
-      } else {
-        Alert.alert(
-          'Permission Denied',
-          'You need to grant camera permission to use this app'
-        );
-      }
-    } catch (e) {
-      console.error('Camera permission error:', e);
+    const { granted } = await requestPermission();
+    if (granted) {
+      setIsCameraOpen(true);
+    } else {
+      Alert.alert(
+        'Permission Denied',
+        'You need to grant camera permission to use this app'
+      );
     }
   };
 
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: false,
         allowsMultipleSelection: allowMultiple,
       });
@@ -111,7 +105,6 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
     }
   };
 
-  // Panel & content styles — force full-bleed when camera is open
   const panelStyle: ViewStyle = isCameraOpen
     ? {
         ...StyleSheet.absoluteFillObject,
@@ -134,10 +127,7 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
       };
 
   const contentStyle: ViewStyle = isCameraOpen
-    ? {
-        ...StyleSheet.absoluteFillObject,
-        padding: 0,
-      }
+    ? { ...StyleSheet.absoluteFillObject, padding: 0 }
     : {
         paddingHorizontal: 20,
         paddingBottom: insets.bottom + 20,
@@ -157,7 +147,6 @@ export default function MediaPickerModal(props: IMediaPickerModalProps) {
       contentStyle={contentStyle}
     >
       {isCameraOpen ? (
-        // Ensure child fills the available area
         <View style={{ flex: 1, backgroundColor: Colors.BLACK }}>
           <Camera
             setModalVisible={setModalVisible}
