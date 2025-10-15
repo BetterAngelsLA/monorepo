@@ -199,8 +199,6 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     fontFamily: 'Poppins-Regular',
     fontSize: FontSizes.md.fontSize,
-    // no lineHeight; avoids iOS caret shift
-    // no explicit height on iOS
   },
 
   clearBtn: {
