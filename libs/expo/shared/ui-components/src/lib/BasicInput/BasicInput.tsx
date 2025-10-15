@@ -5,9 +5,8 @@ import {
   Radiuses,
   Spacings,
 } from '@monorepo/expo/shared/static';
-import { ReactNode } from 'react';
+import React, { forwardRef, useMemo } from 'react';
 import {
-  Platform,
   Pressable,
   StyleProp,
   StyleSheet,
@@ -23,7 +22,7 @@ type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IBasicInputProps extends TextInputProps {
   label?: string;
-  height?: 40 | 44 | 56 | 200; // single-line heights + tall variant
+  height?: 40 | 44 | 56 | 200;
   required?: boolean;
   disabled?: boolean;
   error?: boolean;
@@ -35,119 +34,138 @@ interface IBasicInputProps extends TextInputProps {
   mx?: TSpacing;
   ml?: TSpacing;
   mr?: TSpacing;
-  icon?: ReactNode;
+  icon?: React.ReactNode;
   onDelete?: () => void;
   borderRadius?: number;
+  placeholderTextColor?: string;
 }
 
-export function BasicInput({
-  label,
-  error,
-  required,
-  disabled,
-  componentStyle,
-  height = 56,
-  mb,
-  mt,
-  my,
-  mx,
-  ml,
-  mr,
-  icon,
-  value,
-  onDelete,
-  autoCorrect = true,
-  borderRadius = Radiuses.xs,
-  errorMessage,
-  ...rest
-}: IBasicInputProps) {
-  const isControlled = value !== undefined;
+const CLEAR_TOUCH = Spacings.lg;
+const CLEAR_PAD_RIGHT = Spacings.xs + CLEAR_TOUCH;
 
-  return (
-    <View
-      style={[
-        styles.container,
-        componentStyle,
-        {
-          marginBottom: mb && Spacings[mb],
-          marginTop: mt && Spacings[mt],
-          marginLeft: ml && Spacings[ml],
-          marginRight: mr && Spacings[mr],
-          marginHorizontal: mx && Spacings[mx],
-          marginVertical: my && Spacings[my],
-        },
-      ]}
-    >
-      {label && (
-        <View style={styles.labelRow}>
-          <Text style={styles.labelText}>{label}</Text>
-          {required && <Text style={styles.required}>*</Text>}
-        </View>
-      )}
+export const BasicInput = forwardRef<TextInput, IBasicInputProps>(
+  function BasicInput(
+    {
+      label,
+      error,
+      required,
+      disabled,
+      componentStyle,
+      height = 56,
+      mb,
+      mt,
+      my,
+      mx,
+      ml,
+      mr,
+      icon,
+      value,
+      onDelete,
+      autoCorrect = true,
+      borderRadius = Radiuses.xs,
+      errorMessage,
+      placeholderTextColor = Colors.NEUTRAL_LIGHT,
+      ...rest
+    },
+    ref
+  ) {
+    const isControlled = value !== undefined;
+    const color = disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK;
 
-      <View
-        style={[
-          styles.row,
-          {
-            height, // the row owns the height
-            paddingLeft: Spacings.sm,
-            borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
-            borderRadius,
-          },
-        ]}
-      >
-        {icon}
+    // show clear only when controlled and non-empty
+    const showClear =
+      !!onDelete && isControlled && String(value ?? '').length > 0;
 
-        <TextInput
-          // Single-line input – this helps Android treat textAlignVertical correctly
-          multiline={false}
+    // margins consolidated
+    const margins = useMemo(
+      () => ({
+        marginBottom: mb && Spacings[mb],
+        marginTop: mt && Spacings[mt],
+        marginLeft: ml && Spacings[ml],
+        marginRight: mr && Spacings[mr],
+        marginHorizontal: mx && Spacings[mx],
+        marginVertical: my && Spacings[my],
+      }),
+      [mb, mt, ml, mr, mx, my]
+    );
+
+    return (
+      <View style={[styles.container, componentStyle, margins]}>
+        {label && (
+          <View style={styles.labelRow}>
+            <Text style={styles.labelText}>{label}</Text>
+            {required && <Text style={styles.required}>*</Text>}
+          </View>
+        )}
+
+        <View
           style={[
-            styles.input,
+            styles.row,
             {
-              color: disabled
-                ? Colors.NEUTRAL_LIGHT
-                : Colors.PRIMARY_EXTRA_DARK,
-              paddingRight: onDelete ? 38 : Spacings.sm,
-            },
-            Platform.OS === 'android' && {
-              height: '100%', // <-- REQUIRED for Android vertical centering
-              textAlignVertical: 'center',
-              includeFontPadding: false,
+              height,
+              borderColor: error ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
+              borderRadius,
+              paddingLeft: icon ? 0 : Spacings.sm, // avoid double left padding
             },
           ]}
-          editable={!disabled}
-          autoCorrect={autoCorrect}
-          placeholderTextColor={Colors.NEUTRAL_LIGHT}
-          // Allow placeholder/defaultValue/etc from callers
-          {...rest}
-          // Only control the value if actually provided (keeps defaultValue working)
-          {...(isControlled ? { value } : {})}
-        />
+        >
+          {icon && <View style={styles.leftIconWrap}>{icon}</View>}
 
-        {!!value && !!onDelete && (
-          <Pressable
-            accessible
-            accessibilityRole="button"
-            accessibilityLabel="delete icon"
-            accessibilityHint="deletes input's value"
-            onPress={onDelete}
-            style={styles.clearBtn}
-          >
-            <View style={styles.clearIconBg}>
-              <PlusIcon size="xs" rotate="45deg" />
-            </View>
-          </Pressable>
+          <TextInput
+            ref={ref}
+            // single-line; baseline centered by the row
+            multiline={false}
+            numberOfLines={1}
+            allowFontScaling={false}
+            editable={!disabled}
+            autoCorrect={autoCorrect}
+            placeholderTextColor={placeholderTextColor}
+            // keep defaultValue working if not controlled
+            {...rest}
+            {...(isControlled
+              ? {
+                  value:
+                    typeof value === 'string' ? value : String(value ?? ''),
+                }
+              : {})}
+            style={[
+              styles.input,
+              {
+                color,
+                paddingLeft: icon ? Spacings.xs : 0, // when icon exists, give a small inset
+                paddingRight: showClear ? CLEAR_PAD_RIGHT : Spacings.sm,
+                textAlignVertical: 'center', // Android; ignored on iOS
+                includeFontPadding: false, // Android; ignored on iOS
+              },
+            ]}
+          />
+
+          {showClear && (
+            <Pressable
+              accessible
+              accessibilityRole="button"
+              accessibilityLabel={`clear ${label || 'input'}`}
+              accessibilityHint={`clears ${label || 'input'} value`}
+              onPress={onDelete}
+              hitSlop={8}
+              style={styles.clearBtn}
+            >
+              <View style={styles.clearIconBg}>
+                <PlusIcon size="xs" rotate="45deg" />
+              </View>
+            </Pressable>
+          )}
+        </View>
+
+        {errorMessage && (
+          <TextRegular mt="xxs" size="sm" color={Colors.ERROR}>
+            {errorMessage}
+          </TextRegular>
         )}
       </View>
-
-      {errorMessage && (
-        <TextRegular mt="xxs" size="sm" color={Colors.ERROR}>
-          {errorMessage}
-        </TextRegular>
-      )}
-    </View>
-  );
-}
+    );
+  }
+);
 
 const styles = StyleSheet.create({
   container: { width: '100%' },
@@ -163,27 +181,35 @@ const styles = StyleSheet.create({
   required: { marginLeft: 2, color: Colors.ERROR },
 
   row: {
+    position: 'relative',
     flexDirection: 'row',
-    alignItems: 'center', // centers the (short) iOS input within the tall row
+    alignItems: 'center',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
-    position: 'relative',
+  },
+
+  leftIconWrap: {
+    height: Spacings.lg,
+    width: Spacings.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: Spacings.xs,
   },
 
   input: {
     flex: 1,
-    paddingVertical: 0, // remove extra vertical padding so centering is true
-    paddingLeft: Spacings.xs,
+    paddingVertical: 0,
     fontFamily: 'Poppins-Regular',
     fontSize: FontSizes.md.fontSize,
-    // no height on iOS; it will size to its text metrics naturally
+    // no lineHeight; avoids iOS caret shift
+    // no explicit height on iOS
   },
 
   clearBtn: {
     position: 'absolute',
     right: Spacings.xs,
-    height: Spacings.lg,
-    width: Spacings.lg,
+    height: CLEAR_TOUCH,
+    width: CLEAR_TOUCH,
     alignItems: 'center',
     justifyContent: 'center',
   },
