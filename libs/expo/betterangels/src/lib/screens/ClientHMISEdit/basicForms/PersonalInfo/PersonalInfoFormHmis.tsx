@@ -45,6 +45,7 @@ export function PersonalInfoFormHmis() {
     <Form>
       <Form.Fieldset>
         <DatePicker
+          label="Date of Birth"
           type="numeric"
           validRange={{
             endDate: new Date(),

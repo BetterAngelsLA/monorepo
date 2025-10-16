@@ -82,14 +82,6 @@ export const HmisVeteranStatusEnumInt = {
   NOT_COLLECTED: 99, // "Data not collected"
 } as const;
 
-export const HmisVeteranTheaterEnumInt = {
-  NO: 0, // "No"
-  YES: 1, // "Yes"
-  DONT_KNOW: 8, // "Client doesn't know"
-  NO_ANSWER: 9, // "Client prefers not to answer"
-  NOT_COLLECTED: 99, // "Data not collected"
-};
-
 export const HmisBranchEnumInt = {
   ARMY: 1, // "Army"
   AIR_FORCE: 2, // "Air Force"
@@ -222,5 +214,5 @@ export function toRaceEnumInt(
 export function toHmisVeteranStatusEnumInt(
   value?: HmisVeteranStatusEnum | string | null
 ): number | null {
-  return HmisVeteranTheaterEnumInt[value as HmisVeteranStatusEnum] ?? null;
+  return HmisVeteranStatusEnumInt[value as HmisVeteranStatusEnum] ?? null;
 }
