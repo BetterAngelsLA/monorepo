@@ -82,13 +82,6 @@ export enum AttachmentType {
   Video = 'VIDEO'
 }
 
-export type AuthInput = {
-  code?: InputMaybe<Scalars['String']['input']>;
-  code_verifier?: InputMaybe<Scalars['String']['input']>;
-  id_token?: InputMaybe<Scalars['String']['input']>;
-  redirect_uri?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type AuthResponse = {
   __typename?: 'AuthResponse';
   status_code: Scalars['String']['output'];
@@ -1139,7 +1132,6 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
-  appleAuth: AuthResponse;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
@@ -1164,7 +1156,6 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
-  googleAuth: AuthResponse;
   hmisCreateClient: HmisClientTypeHmisCreateClientError;
   hmisLogin: UserTypeHmisLoginError;
   hmisUpdateClient: HmisClientTypeHmisUpdateClientError;
@@ -1191,11 +1182,6 @@ export type Mutation = {
 
 export type MutationAddOrganizationMemberArgs = {
   data: OrgInvitationInput;
-};
-
-
-export type MutationAppleAuthArgs = {
-  input: AuthInput;
 };
 
 
@@ -1311,11 +1297,6 @@ export type MutationDeleteSocialMediaProfileArgs = {
 
 export type MutationDeleteTaskArgs = {
   data: DeleteDjangoObjectInput;
-};
-
-
-export type MutationGoogleAuthArgs = {
-  input: AuthInput;
 };
 
 

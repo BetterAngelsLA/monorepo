@@ -1,0 +1,15 @@
+repos:
+  - repo: local
+    hooks:
+      - id: forbid-secrets-in-cassettes
+        name: Forbid secrets in VCR cassettes
+        entry: bash -c '! find apps -type d -name cassettes -exec grep -RIEi "authorization|x-api-key|http|Bearer|token\\s+[A-Za-z0-9._-]+" {} +'
+        language: system
+        pass_filenames: false
+
+      - id: forbid-vcr-usage
+        name: Forbid @vcr usage
+        entry: bash -c 'if git diff --cached --name-only | grep -E "\.py$" | xargs grep -n "@vcr" --color=never --with-filename; then echo "❌ Found @vcr decorator — use scrubbed_vcr instead."; exit 1; fi'
+        language: system
+        types: [python]
+        pass_filenames: false

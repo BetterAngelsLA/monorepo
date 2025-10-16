@@ -25,6 +25,7 @@ skip_glob = ["*/migrations/*"]
 
 [tool.poetry.dependencies]
 python = "3.13.5"
+pre-commit = "^4.3.0"
 
 [tool.poetry.dependencies.betterangels-backend]
 path = "apps/betterangels-backend"

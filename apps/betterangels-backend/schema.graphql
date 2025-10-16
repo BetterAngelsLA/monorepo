@@ -84,13 +84,6 @@ enum AttachmentType {
   UNKNOWN
 }
 
-input AuthInput {
-  code: String
-  code_verifier: String
-  id_token: String
-  redirect_uri: String
-}
-
 type AuthResponse {
   status_code: String!
 }
@@ -1129,8 +1122,6 @@ type MoodType {
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
-  googleAuth(input: AuthInput!): AuthResponse!
-  appleAuth(input: AuthInput!): AuthResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
   addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
