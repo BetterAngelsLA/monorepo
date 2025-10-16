@@ -130,16 +130,6 @@ class Mutation:
         # The is a stub and logic is handled client-side by Apollo
         return AuthResponse(status_code="")
 
-    @strawberry.mutation
-    def google_auth(self, input: AuthInput) -> AuthResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
-
-    @strawberry.mutation
-    def apple_auth(self, input: AuthInput) -> AuthResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
-
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_current_user(self, info: Info, data: UpdateUserInput) -> UserType:
         user = cast(User, get_current_user(info))
