@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: forbid-secrets-in-cassettes
+        name: Forbid secrets in VCR cassettes
+        entry: bash -c '! find apps -type d -name cassettes -exec grep -RIE "authorization:|x-api-key:|Bearer|uri:\\s+[A-Za-z0-9._-]+" {} +'
+        language: system
+        pass_filenames: false
