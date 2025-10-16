@@ -26,7 +26,6 @@ from strawberry_django.utils.query import filter_for_user
 
 from .models import PermissionGroup, User
 from .types import (
-    AuthInput,
     AuthResponse,
     LoginInput,
     OrganizationMemberType,
