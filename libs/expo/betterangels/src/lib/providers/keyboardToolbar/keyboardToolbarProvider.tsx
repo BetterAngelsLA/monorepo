@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 type Props = { children: ReactNode };
 
 export default function KeyboardToolbarProvider({ children }: Props) {
-  const [_openSeq, setOpenSeq] = useState(0); // used to force remount
+  const [openSeq, setOpenSeq] = useState(0); // used to force remount
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function KeyboardToolbarProvider({ children }: Props) {
     <>
       {children}
 
-      <KeyboardToolbar insets={insets}>
+      <KeyboardToolbar insets={insets} key={openSeq}>
         <KeyboardToolbar.Done />
       </KeyboardToolbar>
     </>
