@@ -1,33 +1,34 @@
-import { ReactNode, useState } from 'react';
-import { KeyboardToolbar } from 'react-native-keyboard-controller';
+import { ReactNode, useEffect, useState } from 'react';
+import {
+  KeyboardEvents,
+  KeyboardToolbar,
+} from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { KeyboardToolbarContext } from './keyboardToolbarContext';
+type Props = { children: ReactNode };
 
-type TKeyboardToolbarProvider = {
-  children: ReactNode;
-};
+export default function KeyboardToolbarProvider({ children }: Props) {
+  const [_openSeq, setOpenSeq] = useState(0); // used to force remount
+  const insets = useSafeAreaInsets();
 
-export default function KeyboardToolbarProvider(
-  props: TKeyboardToolbarProvider
-) {
-  const { children } = props;
+  useEffect(() => {
+    const sub = KeyboardEvents.addListener('keyboardWillShow', () => {
+      // iOS 18 + Fabric: the input accessory (toolbar) can be snapshotted on the first open
+      // (observed on iPhone XS 18.5), causing the Done/Next/Prev buttons not to fire.
+      // This bumps the key to force a fresh mount each time the keyboard opens.
+      setOpenSeq((n) => n + 1);
+    });
 
-  const [keyboardArrowsVisible, setKeyboardArrowsVisible] = useState(false);
-
-  const showKeyboardArrows = () => setKeyboardArrowsVisible(true);
-  const hideKeyboardArrows = () => setKeyboardArrowsVisible(false);
+    return () => sub.remove();
+  }, []);
 
   return (
-    <KeyboardToolbarContext.Provider
-      value={{
-        keyboardArrowsVisible,
-        showKeyboardArrows,
-        hideKeyboardArrows,
-      }}
-    >
+    <>
       {children}
 
-      <KeyboardToolbar showArrows={keyboardArrowsVisible} />
-    </KeyboardToolbarContext.Provider>
+      <KeyboardToolbar insets={insets}>
+        <KeyboardToolbar.Done />
+      </KeyboardToolbar>
+    </>
   );
 }
