@@ -829,6 +829,40 @@ export enum HmisDobQualityEnum {
   Partial = 'PARTIAL'
 }
 
+export type HmisEnrollmentDataType = {
+  __typename?: 'HmisEnrollmentDataType';
+  field?: Maybe<Scalars['String']['output']>;
+  value?: Maybe<Scalars['String']['output']>;
+};
+
+export type HmisEnrollmentHouseholdMemberType = {
+  __typename?: 'HmisEnrollmentHouseholdMemberType';
+  enrollmentId?: Maybe<Scalars['String']['output']>;
+  personalId?: Maybe<Scalars['String']['output']>;
+};
+
+export type HmisEnrollmentListType = {
+  __typename?: 'HmisEnrollmentListType';
+  items: Array<HmisEnrollmentType>;
+  meta?: Maybe<HmisListMetaType>;
+};
+
+export type HmisEnrollmentListTypeHmisListEnrollmentsError = HmisEnrollmentListType | HmisListEnrollmentsError;
+
+export type HmisEnrollmentType = {
+  __typename?: 'HmisEnrollmentType';
+  data?: Maybe<Array<HmisEnrollmentDataType>>;
+  dateCreated?: Maybe<Scalars['String']['output']>;
+  dateUpdated?: Maybe<Scalars['String']['output']>;
+  enrollmentHouseholdMembers?: Maybe<Array<HmisEnrollmentHouseholdMemberType>>;
+  enrollmentId?: Maybe<Scalars['String']['output']>;
+  entryDate?: Maybe<Scalars['String']['output']>;
+  exitDate?: Maybe<Scalars['String']['output']>;
+  householdId?: Maybe<Scalars['String']['output']>;
+  personalId?: Maybe<Scalars['String']['output']>;
+  project?: Maybe<HmisProjectType>;
+};
+
 export enum HmisGenderEnum {
   Different = 'DIFFERENT',
   DontKnow = 'DONT_KNOW',
@@ -850,6 +884,12 @@ export type HmisGetClientError = {
 
 export type HmisListClientsError = {
   __typename?: 'HmisListClientsError';
+  field?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+};
+
+export type HmisListEnrollmentsError = {
+  __typename?: 'HmisListEnrollmentsError';
   field?: Maybe<Scalars['String']['output']>;
   message: Scalars['String']['output'];
 };
@@ -902,6 +942,16 @@ export type HmisProfileTypeOffsetPaginated = {
   results: Array<HmisProfileType>;
   /** Total count of existing results. */
   totalCount: Scalars['Int']['output'];
+};
+
+export type HmisProjectType = {
+  __typename?: 'HmisProjectType';
+  dateCreated?: Maybe<Scalars['String']['output']>;
+  dateUpdated?: Maybe<Scalars['String']['output']>;
+  organizationId?: Maybe<Scalars['String']['output']>;
+  projectId?: Maybe<Scalars['String']['output']>;
+  projectName?: Maybe<Scalars['String']['output']>;
+  projectType?: Maybe<Scalars['String']['output']>;
 };
 
 export enum HmisRaceEnum {
@@ -1736,6 +1786,7 @@ export type Query = {
   featureControls: FeatureControlData;
   hmisGetClient: HmisClientTypeHmisGetClientError;
   hmisListClients: HmisClientListTypeHmisListClientsError;
+  hmisListEnrollments: HmisEnrollmentListTypeHmisListEnrollmentsError;
   hmisProfile: HmisProfileType;
   hmisProfiles: HmisProfileTypeOffsetPaginated;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
@@ -1819,6 +1870,13 @@ export type QueryHmisGetClientArgs = {
 export type QueryHmisListClientsArgs = {
   filter?: InputMaybe<HmisClientFilterInput>;
   pagination?: InputMaybe<HmisPaginationInput>;
+};
+
+
+export type QueryHmisListEnrollmentsArgs = {
+  dynamicFields: Array<InputMaybe<Scalars['String']['input']>>;
+  pagination?: InputMaybe<HmisPaginationInput>;
+  personalId: Scalars['ID']['input'];
 };
 
 
