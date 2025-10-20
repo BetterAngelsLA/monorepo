@@ -1,3 +1,4 @@
+import os
 from unittest.mock import patch
 
 from common.tests.utils import GraphQLBaseTestCase
@@ -11,6 +12,8 @@ from hmis.enums import (
     HmisVeteranStatusEnum,
 )
 from test_utils.vcr_config import scrubbed_vcr
+
+os.environ.setdefault("HMIS_GRAPHQL_URL", "https://betterangels.la")
 
 GET_CLIENT_QUERY = """
     query ($personalId: ID!) {
@@ -456,4 +459,5 @@ class HmisEnrollmentQueryTests(GraphQLBaseTestCase, TestCase):
         pagination_info = payload["meta"]
 
         self.assertEqual(enrollments, expected_enrollments)
+        self.assertEqual(pagination_info, expected_pagination_info)
         self.assertEqual(pagination_info, expected_pagination_info)
