@@ -8,16 +8,15 @@ import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
-import React, { forwardRef } from 'react';
-import type { MapPressEvent, PoiClickEvent } from 'react-native-maps';
+import { forwardRef } from 'react';
 
 interface IMapProps {
-  currentLocation?:
-    | { longitude: number; latitude: number; name?: string }
+  currentLocation:
+    | { longitude: number; latitude: number; name: string | undefined }
     | undefined;
   setCurrentLocation: (
-    currentLocation?:
-      | { longitude: number; latitude: number; name?: string }
+    currentLocation:
+      | { longitude: number; latitude: number; name: string | undefined }
       | undefined
   ) => void;
   setInitialLocation: (initialLocation: {
@@ -28,7 +27,7 @@ interface IMapProps {
   setMinimizeModal: (minimizeModal: boolean) => void;
   setSelected: (selected: boolean) => void;
   setAddress: (
-    address?:
+    address:
       | { full: string; short: string; addressComponents: any[] }
       | undefined
   ) => void;
@@ -52,20 +51,18 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
     chooseDirections,
     userLocation,
   } = props;
-
   const { baseUrl } = useApiConfig();
 
-  async function placePin(e: MapPressEvent | PoiClickEvent, isId: boolean) {
+  async function placePin(e: any, isId: boolean) {
     if (chooseDirections) {
       setChooseDirections(false);
       return;
     }
-
-    const { latitude, longitude } = e.nativeEvent.coordinate;
-    const rawName = 'name' in e.nativeEvent ? e.nativeEvent.name : undefined;
-    const placeId =
-      'placeId' in e.nativeEvent ? e.nativeEvent.placeId : undefined;
-    const name = rawName?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
+    const latitude = e.nativeEvent.coordinate.latitude;
+    const longitude = e.nativeEvent.coordinate.longitude;
+    const name =
+      e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
+    const placeId = e.nativeEvent.placeId || undefined;
 
     setCurrentLocation({ longitude, latitude, name });
     setInitialLocation({ longitude, latitude });
@@ -73,37 +70,36 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
     setSelected(true);
 
     const url = isId
-      ? `${baseUrl}/proxy/maps/api/place/details/json?place_id=${encodeURIComponent(
-          placeId ?? ''
-        )}&fields=formatted_address,address_components&key=${apiKey}`
+      ? `${baseUrl}/proxy/maps/api/place/details/json?place_id=${placeId}&fields=formatted_address,address_components&key=${apiKey}`
       : `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
-
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const { data } = await axios.get(url, {
         withCredentials: true,
+        signal: controller.signal,
         timeout: 8000,
       });
 
-      const result = isId ? data?.result : data?.results?.[0];
-      const googleAddress: string | undefined = result?.formatted_address;
-      const addressComponents: any[] | undefined = result?.address_components;
+      clearTimeout(timeoutId);
 
-      if (!googleAddress || !addressComponents) {
-        setAddress({
-          short: name || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
-          full: name || `${latitude}, ${longitude}`,
-          addressComponents: [],
-        });
-        return;
-      }
+      const googleAddress = isId
+        ? data.result.formatted_address
+        : data.results[0].formatted_address;
+      const addressComponents = isId
+        ? data.result.address_components
+        : data.results[0].address_components;
 
-      const shortAddress = isId && name ? name : googleAddress.split(', ')[0];
+      const shortAddress = isId ? name : googleAddress.split(', ')[0];
 
       setAddress({
         short: shortAddress,
         full: googleAddress,
         addressComponents,
       });
+      setMinimizeModal(false);
+      setSelected(true);
     } catch (err) {
       setAddress({
         short: name || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
@@ -114,41 +110,46 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
     }
   }
 
-  const initialRegion = {
-    longitudeDelta: 0.005,
-    latitudeDelta: 0.005,
-    longitude:
-      currentLocation?.longitude ??
-      userLocation?.coords.longitude ??
-      initialLocation.longitude,
-    latitude:
-      currentLocation?.latitude ??
-      userLocation?.coords.latitude ??
-      initialLocation.latitude,
-  };
-
   return (
     <MapView
       ref={ref}
-      showsUserLocation={!!userLocation}
+      showsUserLocation={userLocation ? true : false}
       showsMyLocationButton={false}
       mapType="standard"
       onPoiClick={(e) => placePin(e, true)}
       zoomEnabled
       scrollEnabled
       onPress={(e) => placePin(e, false)}
-      onPanDrag={() => setMinimizeModal(true)}
+      onPanDrag={() => {
+        setMinimizeModal(true);
+      }}
       onDoublePress={() => setMinimizeModal(true)}
       provider={PROVIDER_GOOGLE}
-      initialRegion={initialRegion}
-      style={{ height: '100%', width: '100%' }}
+      initialRegion={{
+        longitudeDelta: 0.005,
+        latitudeDelta: 0.005,
+        longitude: currentLocation
+          ? currentLocation.longitude
+          : userLocation
+          ? userLocation.coords.longitude
+          : initialLocation.longitude,
+        latitude: currentLocation
+          ? currentLocation.latitude
+          : userLocation
+          ? userLocation.coords.latitude
+          : initialLocation.latitude,
+      }}
+      style={{
+        height: '100%',
+        width: '100%',
+      }}
       userInterfaceStyle="light"
     >
       {currentLocation && (
         <Marker
           coordinate={{
             latitude: currentLocation.latitude,
-            longitude: currentLocation.longitude,
+            longitude: currentLocation?.longitude,
           }}
         >
           <LocationPinIcon size="2xl" />
