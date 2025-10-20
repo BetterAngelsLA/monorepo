@@ -1,71 +1,3 @@
-name: 'Check and Start Build'
-description: 'Check for existing builds or start a new one if needed'
-
-inputs:
-  project:
-    required: true
-    type: string
-  profile:
-    required: true
-    type: string
-  runtime-version:
-    required: true
-    type: string
-  platforms:
-    required: false
-    type: string
-    default: 'android ios'
-
-outputs:
-  android-build-id:
-    description: 'Android build ID for tracking the build.'
-    value: ${{ steps.check-builds.outputs.android-build-id }}
-  android-build-link:
-    description: 'Link to the Android build.'
-    value: ${{ steps.check-builds.outputs.android-build-link }}
-  android-distribution:
-    description: 'Distribution channel for the Android build.'
-    value: ${{ steps.check-builds.outputs.android-distribution }}
-  android-build-profile:
-    description: 'Build profile used for Android.'
-    value: ${{ steps.check-builds.outputs.android-build-profile }}
-  android-runtime-version:
-    description: 'Runtime version for Android build.'
-    value: ${{ steps.check-builds.outputs.android-runtime-version }}
-  android-app-version:
-    description: 'App version for Android.'
-    value: ${{ steps.check-builds.outputs.android-app-version }}
-  android-git-commit:
-    description: 'Git commit hash for the Android build.'
-    value: ${{ steps.check-builds.outputs.android-git-commit }}
-  ios-build-id:
-    description: 'iOS build ID for tracking the build.'
-    value: ${{ steps.check-builds.outputs.ios-build-id }}
-  ios-build-link:
-    description: 'Link to the iOS build.'
-    value: ${{ steps.check-builds.outputs.ios-build-link }}
-  ios-distribution:
-    description: 'Distribution channel for the iOS build.'
-    value: ${{ steps.check-builds.outputs.ios-distribution }}
-  ios-build-profile:
-    description: 'Build profile used for iOS.'
-    value: ${{ steps.check-builds.outputs.ios-build-profile }}
-  ios-runtime-version:
-    description: 'Runtime version for iOS build.'
-    value: ${{ steps.check-builds.outputs.ios-runtime-version }}
-  ios-app-version:
-    description: 'App version for iOS.'
-    value: ${{ steps.check-builds.outputs.ios-app-version }}
-  ios-git-commit:
-    description: 'Git commit hash for the iOS build.'
-    value: ${{ steps.check-builds.outputs.ios-git-commit }}
-  slug:
-    description: 'Project slug for Expo tracking.'
-    value: ${{ steps.check-builds.outputs.slug }}
-  project-id:
-    description: 'Project ID for tracking purposes.'
-    value: ${{ steps.check-builds.outputs.project-id }}
-
 runs:
   using: 'composite'
   steps:
@@ -80,29 +12,40 @@ runs:
         slugs=()
         project_ids=()
 
-        extract_array_json() {
-          local raw="$1"
-          local arr
-          arr=$(printf '%s' "$raw" | perl -0777 -ne 'print $1 if /(\[[\s\S]*\])\s*$/s') || true
-          if [ -z "${arr:-}" ]; then
-            arr=$(printf '%s' "$raw" | sed ':a;N;$!ba;s/.*\(\[[^]]*\]\).*/\1/') || true
-          fi
-          printf '%s' "${arr:-}"
+        # --- Helpers ---
+        # Extract *all* JSON arrays from noisy output, one per line
+        extract_all_arrays() {
+          perl -0777 -ne '
+            while (/\[ (?: [^\[\]] | (?R) )* \]/gsx) {
+              print "$&\n";
+            }
+          '
         }
 
+        # Return the first candidate array whose first element is an object
+        pick_objects_array() {
+          while IFS= read -r arr; do
+            # validate json
+            echo "$arr" | jq empty >/dev/null 2>&1 || continue
+            # must be array, non-empty, first element is object
+            if echo "$arr" | jq -e 'type=="array" and length>0 and (.[0]|type)=="object"' >/dev/null; then
+              echo "$arr"
+              return 0
+            fi
+          done
+          return 1
+        }
+
+        # Normalize a possibly double-encoded array (string -> fromjson)
         normalize_array_json() {
           local candidate="$1"
-          echo "$candidate" | jq empty >/dev/null 2>&1 || {
-            echo "Error: Invalid JSON candidate:"
-            echo "$candidate"
-            exit 1
-          }
           echo "$candidate" | jq 'if type=="string" then fromjson else . end'
         }
 
         for platform in "${platforms[@]}"; do
           echo "=== Checking builds for platform: $platform ==="
 
+          # 1) Query existing builds
           build_output=$(yarn nx run ${{ inputs.project }}:build-list \
             --platform "$platform" \
             --buildProfile "${{ inputs.profile }}" \
@@ -111,11 +54,14 @@ runs:
             --json \
             --interactive false 2>&1) || true
 
-          candidate=$(extract_array_json "$build_output")
+          # Try to find the correct array among all arrays in the output
+          candidate=$(printf '%s' "$build_output" | extract_all_arrays | pick_objects_array || echo '')
           if [ -z "$candidate" ]; then
+            # Fallback: maybe the entire output is just the array or a stringified array
             candidate="$build_output"
           fi
 
+          # Validate + normalize (handles double-encoded)
           if ! echo "$candidate" | jq empty >/dev/null 2>&1; then
             echo "Error: Received invalid JSON from build-list for $platform"
             echo "Raw (visible):"; echo "$build_output" | cat -v
@@ -124,6 +70,7 @@ runs:
           fi
           normalized=$(normalize_array_json "$candidate")
 
+          # 2) If no builds, start a new one
           if [[ "$(echo "$normalized" | jq 'length')" -eq 0 ]]; then
             echo "No existing $platform build found for runtime version ${{ inputs.runtime-version }}. Starting a new build."
             build_output=$(yarn nx run ${{ inputs.project }}:build \
@@ -136,20 +83,22 @@ runs:
                 exit 1
               }
 
-            candidate=$(extract_array_json "$build_output")
+            candidate=$(printf '%s' "$build_output" | extract_all_arrays | pick_objects_array || echo '')
             if [ -z "$candidate" ]; then
               candidate="$build_output"
             fi
-            echo "$candidate" | jq empty >/dev/null 2>&1 || {
+
+            if ! echo "$candidate" | jq empty >/dev/null 2>&1; then
               echo "Error: Invalid JSON from build command for $platform"
               echo "Candidate:"; echo "$candidate"
               exit 1
-            }
+            fi
             normalized=$(normalize_array_json "$candidate")
           else
             echo "$platform build found for runtime version ${{ inputs.runtime-version }}."
           fi
 
+          # 3) Ensure first element is an object (if present)
           first_type=$(echo "$normalized" | jq -r '.[0] | type? // "null"')
           if [[ "$first_type" != "object" ]]; then
             echo "Error: Expected array of objects; got array of '$first_type' for $platform"
@@ -157,6 +106,7 @@ runs:
             exit 1
           fi
 
+          # 4) Extract fields
           slug=$(echo "$normalized" | jq -r '.[0].project.slug')
           project_id=$(echo "$normalized" | jq -r '.[0].project.id')
           build_id=$(echo "$normalized" | jq -r '.[0].id')
@@ -182,17 +132,13 @@ runs:
           project_ids+=("$project_id")
         done
 
+        # Cross-platform consistency
         unique_slugs=($(printf '%s\n' "${slugs[@]}" | sort -u))
         unique_project_ids=($(printf '%s\n' "${project_ids[@]}" | sort -u))
-
         if [ ${#unique_slugs[@]} -ne 1 ]; then
-          echo "Error: Different slugs found for platforms: ${slugs[*]}"
-          exit 1
-        fi
+          echo "Error: Different slugs found for platforms: ${slugs[*]}"; exit 1; fi
         if [ ${#unique_project_ids[@]} -ne 1 ]; then
-          echo "Error: Different project IDs found for platforms: ${project_ids[*]}"
-          exit 1
-        fi
+          echo "Error: Different project IDs found for platforms: ${project_ids[*]}"; exit 1; fi
 
         commit_message=$(git log -1 --pretty=format:"%s" HEAD || echo "")
         {
