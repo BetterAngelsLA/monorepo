@@ -22,9 +22,6 @@ class HmisLoginError:
     field: Optional[str] = None
 
 
-HmisLoginResult = Union[UserType, HmisLoginError]
-
-
 @strawberry.input
 class HmisCreateClientInput:
     first_name: str
@@ -204,8 +201,25 @@ class HmisEnrollmentType:
 
 
 @strawberry.type
+class HmisClientNoteType:
+    id: Optional[str]
+    title: Optional[str]
+    note: Optional[str]
+    date: Optional[str]
+    category: Optional[str]
+    client: Optional[HmisClientType]
+    enrollment: Optional[HmisEnrollmentType]
+
+
+@strawberry.type
 class HmisClientListType:
     items: list[HmisClientType]
+    meta: Optional[HmisListMetaType]
+
+
+@strawberry.type
+class HmisClientNoteListType:
+    items: list[HmisClientNoteType]
     meta: Optional[HmisListMetaType]
 
 
@@ -240,13 +254,28 @@ class HmisListClientsError:
 
 
 @strawberry.type
+class HmisListClientNotesError:
+    message: str
+    field: Optional[str] = None
+
+
+@strawberry.type
+class HmisGetClientNoteError:
+    message: str
+    field: Optional[str] = None
+
+
+@strawberry.type
 class HmisListEnrollmentsError:
     message: str
     field: Optional[str] = None
 
 
-HmisGetClientResult = Union[HmisClientType, HmisGetClientError]
 HmisCreateClientResult = Union[HmisClientType, HmisCreateClientError]
-HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]
+HmisGetClientNoteResult = Union[HmisClientNoteType, HmisGetClientNoteError]
+HmisGetClientResult = Union[HmisClientType, HmisGetClientError]
 HmisListClientsResult = Union[HmisClientListType, HmisListClientsError]
+HmisListClientNotesResult = Union[HmisClientNoteListType, HmisListClientNotesError]
 HmisListEnrollmentsResult = Union[HmisEnrollmentListType, HmisListEnrollmentsError]
+HmisLoginResult = Union[UserType, HmisLoginError]
+HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]

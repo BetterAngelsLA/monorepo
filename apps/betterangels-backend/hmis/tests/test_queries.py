@@ -12,6 +12,7 @@ from hmis.enums import (
 )
 from test_utils.vcr_config import scrubbed_vcr
 
+
 GET_CLIENT_QUERY = """
     query ($personalId: ID!) {
         hmisGetClient(personalId: $personalId) {
@@ -85,7 +86,6 @@ LIST_CLIENTS_QUERY = """
     }
 """
 
-
 LIST_ENROLLMENTS_QUERY = """
     query ($personalId: ID!, $dynamicFields: [String]!, $pagination: HmisPaginationInput) {
         hmisListEnrollments(personalId: $personalId, dynamicFields: $dynamicFields, pagination: $pagination) {
@@ -123,6 +123,54 @@ LIST_ENROLLMENTS_QUERY = """
             }
             ... on HmisListEnrollmentsError {
                 message
+            }
+        }
+    }
+"""
+
+GET_CLIENT_NOTE_QUERY = """
+    query ($personalId: ID!, $enrollmentId: ID!, $id: ID!) {
+        hmisGetClientNote (personalId: $personalId, enrollmentId: $enrollmentId, id: $id) {
+            ... on HmisClientNoteType {
+                id
+                title
+                note
+                date
+                category
+                client { personalId }
+                enrollment { enrollmentId }
+            }
+            ... on HmisGetClientNoteError {
+                message
+                field
+            }
+        }
+    }
+"""
+
+LIST_CLIENT_NOTES_QUERY = """
+    query ($personalId: ID!, $enrollmentId: ID!, $pagination: HmisPaginationInput) {
+        hmisListClientNotes (personalId: $personalId, enrollmentId: $enrollmentId, pagination: $pagination) {
+            ... on HmisClientNoteListType {
+                items {
+                    id
+                    title
+                    note
+                    date
+                    category
+                    client { personalId }
+                    enrollment { enrollmentId }
+                }
+                meta {
+                    currentPage
+                    pageCount
+                    perPage
+                    totalCount
+                }
+            }
+            ... on HmisListClientNotesError {
+                message
+                field
             }
         }
     }
@@ -456,4 +504,70 @@ class HmisEnrollmentQueryTests(GraphQLBaseTestCase, TestCase):
         pagination_info = payload["meta"]
 
         self.assertEqual(enrollments, expected_enrollments)
+        self.assertEqual(pagination_info, expected_pagination_info)
+
+
+class HmisClientNoteQueryTests(GraphQLBaseTestCase, TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    @scrubbed_vcr.use_cassette("apps/betterangels-backend/hmis/tests/cassettes/test_hmis_get_client_note_success.yaml")
+    def test_hmis_get_client_note_success(self) -> None:
+        resp = self.execute_graphql(
+            GET_CLIENT_NOTE_QUERY,
+            variables={"personalId": "1", "enrollmentId": "517", "id": "413"},
+        )
+
+        expected_client_note = {
+            "id": "413",
+            "title": "first last housing note",
+            "note": "<p>take note</p>",
+            "date": "2025-10-16",
+            "category": None,
+            "client": {"personalId": "1"},
+            "enrollment": {"enrollmentId": "517"},
+        }
+
+        self.assertIsNone(resp.get("errors"))
+
+        client_note = resp["data"]["hmisGetClientNote"]
+        self.assertEqual(client_note, expected_client_note)
+
+    @scrubbed_vcr.use_cassette(
+        "apps/betterangels-backend/hmis/tests/cassettes/test_hmis_list_client_notes_success.yaml"
+    )
+    def test_hmis_list_client_notes_success(self) -> None:
+        resp = self.execute_graphql(
+            LIST_CLIENT_NOTES_QUERY,
+            variables={
+                "personalId": "1",
+                "enrollmentId": "517",
+                "pagination": {"page": 1, "perPage": 10},
+            },
+        )
+        self.assertIsNone(resp.get("errors"))
+
+        payload = resp["data"]["hmisListClientNotes"]
+        client_notes = payload["items"]
+        pagination_info = payload["meta"]
+
+        expected_client_notes = [
+            {
+                "id": "413",
+                "title": "first last housing note",
+                "note": "<p>take note</p>",
+                "date": "2025-10-16",
+                "category": None,
+                "client": {"personalId": "1"},
+                "enrollment": {"enrollmentId": "517"},
+            }
+        ]
+        expected_pagination_info = {
+            "perPage": 10,
+            "currentPage": 1,
+            "pageCount": 1,
+            "totalCount": 1,
+        }
+
+        self.assertEqual(client_notes, expected_client_notes)
         self.assertEqual(pagination_info, expected_pagination_info)

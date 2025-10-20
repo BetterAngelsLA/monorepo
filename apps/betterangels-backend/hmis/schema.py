@@ -13,6 +13,8 @@ from .types import (
     HmisClientDataType,
     HmisClientFilterInput,
     HmisClientListType,
+    HmisClientNoteListType,
+    HmisClientNoteType,
     HmisClientType,
     HmisCreateClientError,
     HmisCreateClientInput,
@@ -23,7 +25,11 @@ from .types import (
     HmisEnrollmentListType,
     HmisEnrollmentType,
     HmisGetClientError,
+    HmisGetClientNoteError,
+    HmisGetClientNoteResult,
     HmisGetClientResult,
+    HmisListClientNotesError,
+    HmisListClientNotesResult,
     HmisListClientsError,
     HmisListClientsResult,
     HmisListEnrollmentsError,
@@ -130,6 +136,24 @@ def get_enrollment_from_response(enrollment_response: dict[str, Any]) -> HmisEnr
     )
 
 
+def get_client_note_from_response(client_note_response: dict[str, Any]) -> HmisClientNoteType:
+    if client_data := client_note_response.get("client"):
+        client = get_client_from_response(client_data)
+
+    if enrollment_data := client_note_response.get("enrollment"):
+        enrollment = get_enrollment_from_response(enrollment_data)
+
+    return HmisClientNoteType(
+        id=client_note_response.get("id"),
+        title=client_note_response.get("title"),
+        note=client_note_response.get("note"),
+        date=client_note_response.get("date"),
+        category=client_note_response.get("category"),
+        client=client,
+        enrollment=enrollment,
+    )
+
+
 @strawberry.type
 class Query:
     @strawberry.field()
@@ -170,7 +194,6 @@ class Query:
 
         clients = [get_client_from_response(c) for c in client_items]
 
-        # if client_meta:
         pagination_info = HmisListMetaType(
             current_page=client_meta.get("current_page"),
             per_page=client_meta.get("per_page"),
@@ -179,6 +202,60 @@ class Query:
         )
 
         return HmisClientListType(items=clients, meta=pagination_info)
+
+    @strawberry.field()
+    def hmis_get_client_note(
+        self, info: Info, personal_id: strawberry.ID, enrollment_id: strawberry.ID, id: strawberry.ID
+    ) -> HmisGetClientNoteResult:
+        request = info.context["request"]
+        hmis_api_bridge = HmisApiBridge(request=request)
+
+        response = hmis_api_bridge.get_client_note(personal_id=personal_id, enrollment_id=enrollment_id, id=id)
+
+        if not response:
+            return HmisGetClientNoteError(message="Something went wrong")
+
+        if errors := response.get("errors"):
+            return HmisGetClientNoteError(message=errors[0]["message"])
+
+        return get_client_note_from_response(response)
+
+    @strawberry.field()
+    def hmis_list_client_notes(
+        self,
+        info: Info,
+        personal_id: strawberry.ID,
+        enrollment_id: strawberry.ID,
+        pagination: Optional[HmisPaginationInput] = None,
+    ) -> HmisListClientNotesResult:
+        request = info.context["request"]
+        hmis_api_bridge = HmisApiBridge(request=request)
+
+        response = hmis_api_bridge.list_client_notes(
+            personal_id=personal_id,
+            enrollment_id=enrollment_id,
+            pagination=pagination,
+        )
+
+        if not response:
+            return HmisListClientNotesError(message="Something went wrong")
+
+        if errors := response.get("errors"):
+            return HmisListClientNotesError(message=errors[0]["message"])
+
+        client_note_items = response.get("items", []) or []
+        client_note_meta = response.get("meta", {}) or {}
+
+        client_notes = [get_client_note_from_response(e) for e in client_note_items]
+
+        pagination_info = HmisListMetaType(
+            current_page=client_note_meta.get("current_page"),
+            per_page=client_note_meta.get("per_page"),
+            page_count=client_note_meta.get("page_count"),
+            total_count=client_note_meta.get("total_count"),
+        )
+
+        return HmisClientNoteListType(items=client_notes, meta=pagination_info)
 
     @strawberry.field()
     def hmis_list_enrollments(
@@ -283,5 +360,7 @@ class Mutation:
 
         if errors := response.get("errors"):
             return HmisUpdateClientError(message=errors[0]["message"])
+
+        return get_client_from_response(response)
 
         return get_client_from_response(response)
