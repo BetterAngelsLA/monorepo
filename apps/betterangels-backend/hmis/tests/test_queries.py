@@ -12,7 +12,6 @@ from hmis.enums import (
 )
 from test_utils.vcr_config import scrubbed_vcr
 
-
 GET_CLIENT_QUERY = """
     query ($personalId: ID!) {
         hmisGetClient(personalId: $personalId) {

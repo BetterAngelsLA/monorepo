@@ -778,6 +778,8 @@ type HmisClientNoteType {
   enrollment: HmisEnrollmentType
 }
 
+union HmisClientNoteTypeHmisCreateClientNoteError = HmisClientNoteType | HmisCreateClientNoteError
+
 union HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | HmisGetClientNoteError
 
 type HmisClientType {
@@ -816,6 +818,20 @@ input HmisCreateClientInput {
   ssnDataQuality: Int = 99
   dob: String = ""
   dobDataQuality: Int = 99
+}
+
+type HmisCreateClientNoteError {
+  message: String!
+  field: String
+}
+
+input HmisCreateClientNoteInput {
+  personalId: String!
+  enrollmentId: String!
+  title: String!
+  note: String!
+  date: String!
+  category: String = "1"
 }
 
 input HmisCreateClientSubItemsInput {
@@ -1222,6 +1238,7 @@ type Mutation {
   hmisLogin(email: String!, password: String!): UserTypeHmisLoginError!
   hmisCreateClient(clientInput: HmisCreateClientInput!, clientSubItemsInput: HmisCreateClientSubItemsInput!): HmisClientTypeHmisCreateClientError!
   hmisUpdateClient(clientInput: HmisUpdateClientInput!, clientSubItemsInput: HmisUpdateClientSubItemsInput!): HmisClientTypeHmisUpdateClientError!
+  hmisCreateClientNote(clientNoteInput: HmisCreateClientNoteInput!): HmisClientNoteTypeHmisCreateClientNoteError!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)

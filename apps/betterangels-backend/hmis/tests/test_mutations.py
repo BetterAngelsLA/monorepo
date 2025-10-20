@@ -13,6 +13,7 @@ from hmis.enums import (
     HmisVeteranStatusEnum,
 )
 from model_bakery import baker
+from test_utils.vcr_config import scrubbed_vcr
 
 LOGIN_MUTATION = """
     mutation ($email: String!, $password: String!) {
@@ -94,6 +95,26 @@ UPDATE_CLIENT_MUTATION = """
                 }
             }
             ... on HmisUpdateClientError { message field }
+        }
+    }
+"""
+
+CREATE_CLIENT_NOTE_MUTATION = """
+    mutation hmisCreateClientNote($clientNoteInput: HmisCreateClientNoteInput!) {
+        hmisCreateClientNote(clientNoteInput: $clientNoteInput) {
+            ... on HmisClientNoteType {
+                id
+                title
+                note
+                date
+                category
+                client { personalId }
+                enrollment { enrollmentId }
+            }
+            ... on HmisCreateClientNoteError {
+                message
+                field
+            }
         }
     }
 """
@@ -419,3 +440,41 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
         }
 
         self.assertEqual(payload, expected_client)
+
+
+class HmisCreateClientNoteMutationTests(GraphQLBaseTestCase, TestCase):
+    @scrubbed_vcr.use_cassette(
+        "apps/betterangels-backend/hmis/tests/cassettes/test_hmis_create_client_note_success.yaml"
+    )
+    def test_hmis_create_client_note_success(self) -> None:
+        client_note_input = {
+            "personalId": "1",
+            "enrollmentId": "517",
+            "title": "api test note",
+            "note": "duly noted",
+            "date": "2025-10-17",
+            "category": "1",
+        }
+
+        resp = self.execute_graphql(
+            CREATE_CLIENT_NOTE_MUTATION,
+            variables={
+                "clientNoteInput": client_note_input,
+            },
+        )
+
+        self.assertIsNone(resp.get("errors"))
+
+        client_note = resp["data"]["hmisCreateClientNote"]
+
+        expected_client_note = {
+            "id": "418",
+            "title": "api test note",
+            "note": "duly noted",
+            "date": "2025-10-17",
+            "category": None,
+            "client": {"personalId": "1"},
+            "enrollment": {"enrollmentId": "517"},
+        }
+
+        self.assertEqual(client_note, expected_client_note)
