@@ -73,102 +73,144 @@ runs:
       id: check-builds
       shell: bash
       run: |
-        # Convert platforms input into an array
-        platforms=(${{ inputs.platforms }})
+        set -euo pipefail
+
+        # Parse platforms into an array safely
+        IFS=' ' read -r -a platforms <<< "${{ inputs.platforms }}"
         slugs=()
         project_ids=()
 
+        extract_array_json() {
+          # Try to capture the last JSON array block [...] from noisy output
+          local raw="$1"
+          local arr
+          arr=$(printf '%s' "$raw" | perl -0777 -ne 'print $1 if /(\[[\s\S]*\])\s*$/s') || true
+          if [ -z "${arr:-}" ]; then
+            # Fallback: naive sed from first '[' to last ']'
+            arr=$(printf '%s' "$raw" | sed ':a;N;$!ba;s/.*\(\[[^]]*\]\).*/\1/') || true
+          fi
+          printf '%s' "${arr:-}"
+        }
+
+        normalize_array_json() {
+          # Accept either an array or a stringified array and return a real array
+          local candidate="$1"
+          echo "$candidate" | jq empty >/dev/null 2>&1 || {
+            echo "Error: Invalid JSON candidate:"
+            echo "$candidate"
+            exit 1
+          }
+          echo "$candidate" | jq 'if type=="string" then fromjson else . end'
+        }
+
         for platform in "${platforms[@]}"; do
           echo "=== Checking builds for platform: $platform ==="
-          # Run the build-list command to check for existing builds
+
+          # 1) Ask for existing builds
           build_output=$(yarn nx run ${{ inputs.project }}:build-list \
             --platform "$platform" \
             --buildProfile "${{ inputs.profile }}" \
-            --runtimeVersion "${{ inputs.runtime-version }}" \
-            --limit 1 --json --interactive false 2>/dev/null)
+            --runtimeVersion "${{ inputs["runtime-version"] }}" \
+            --limit 1 \
+            --json \
+            --interactive false 2>&1) || true
 
-          # Extract only the JSON portion (from the first "[" to the last "]").
-          cleaned_output=$(echo "$build_output" | sed ':a;N;$!ba;s/.*\(\[[^]]*\]\).*/\1/')
-
-          # Use jq empty to validate the JSON. If it fails, the JSON is invalid.
-          if ! echo "$cleaned_output" | jq empty >/dev/null 2>&1; then
-            echo "Error: Received invalid JSON from build-list command for platform: $platform"
-            echo "Raw output was:"
-            echo "$build_output" | cat -v
-            echo "Cleaned output was:"
-            echo "$cleaned_output"
-            exit 1
+          candidate=$(extract_array_json "$build_output")
+          if [ -z "$candidate" ]; then
+            # As a fallback, try to treat the whole output as JSON (some CLIs return pure JSON)
+            candidate="$build_output"
           fi
 
-          # If no builds are found, trigger a new build.
-          if [[ "$(echo "$cleaned_output" | jq length)" -eq 0 ]]; then
-            echo "No existing $platform build found for runtime version ${{ inputs.runtime-version }}. Starting a new build."
+          # Validate + normalize array (handles double-encoded JSON)
+          if ! echo "$candidate" | jq empty >/dev/null 2>&1; then
+            echo "Error: Received invalid JSON from build-list for $platform"
+            echo "Raw (visible):"; echo "$build_output" | cat -v
+            echo "Candidate:"; echo "$candidate"
+            exit 1
+          fi
+          normalized=$(normalize_array_json "$candidate")
+
+          # 2) If no builds, start a new one
+          if [[ "$(echo "$normalized" | jq 'length')" -eq 0 ]]; then
+            echo "No existing $platform build found for runtime version ${{ inputs["runtime-version"] }}. Starting a new build."
             build_output=$(yarn nx run ${{ inputs.project }}:build \
               --profile "${{ inputs.profile }}" \
               --platform "$platform" \
               --freeze-credentials \
-              --interactive false --wait false --json 2>/dev/null)
+              --interactive false --wait false --json 2>&1) || {
+                echo "Error: build command failed for $platform"
+                echo "$build_output"
+                exit 1
+              }
 
-            # Extract JSON from the new build command output.
-            cleaned_output=$(echo "$build_output" | sed -n '/^\[/,/\]$/p')
-            if [ -z "$cleaned_output" ]; then
-              echo "Error: Could not extract JSON from build command for platform: $platform"
-              echo "Full output was:"
-              echo "$build_output"
-              exit 1
+            candidate=$(extract_array_json "$build_output")
+            if [ -z "$candidate" ]; then
+              candidate="$build_output"
             fi
-
-            if ! echo "$cleaned_output" | jq empty >/dev/null 2>&1; then
-              echo "Error: Received invalid JSON from the build command for platform: $platform"
-              echo "Cleaned output was:"
-              echo "$cleaned_output"
+            echo "$candidate" | jq empty >/dev/null 2>&1 || {
+              echo "Error: Invalid JSON from build command for $platform"
+              echo "Candidate:"; echo "$candidate"
               exit 1
-            fi
+            }
+            normalized=$(normalize_array_json "$candidate")
           else
-            echo "$platform build found for runtime version ${{ inputs.runtime-version }}."
+            echo "$platform build found for runtime version ${{ inputs["runtime-version"] }}."
           fi
 
-          # Extract values using jq from the cleaned JSON
-          slug=$(echo "$cleaned_output" | jq -r '.[0].project.slug')
-          project_id=$(echo "$cleaned_output" | jq -r '.[0].project.id')
-          build_id=$(echo "$cleaned_output" | jq -r '.[0].id')
-          distribution=$(echo "$cleaned_output" | jq -r '.[0].distribution')
-          build_profile=$(echo "$cleaned_output" | jq -r '.[0].buildProfile')
-          runtime_version_from_build=$(echo "$cleaned_output" | jq -r '.[0].runtimeVersion')
-          app_version=$(echo "$cleaned_output" | jq -r '.[0].appVersion')
-          git_commit=$(echo "$cleaned_output" | jq -r '.[0].gitCommitHash')
+          # 3) Ensure first element is an object
+          first_type=$(echo "$normalized" | jq -r '.[0] | type? // "null"')
+          if [[ "$first_type" != "object" ]]; then
+            echo "Error: Expected array of objects; got array of '$first_type' for $platform"
+            echo "$normalized" | jq .
+            exit 1
+          fi
+
+          # 4) Extract fields
+          slug=$(echo "$normalized" | jq -r '.[0].project.slug')
+          project_id=$(echo "$normalized" | jq -r '.[0].project.id')
+          build_id=$(echo "$normalized" | jq -r '.[0].id')
+          distribution=$(echo "$normalized" | jq -r '.[0].distribution')
+          build_profile=$(echo "$normalized" | jq -r '.[0].buildProfile')
+          runtime_version_from_build=$(echo "$normalized" | jq -r '.[0].runtimeVersion')
+          app_version=$(echo "$normalized" | jq -r '.[0].appVersion')
+          git_commit=$(echo "$normalized" | jq -r '.[0].gitCommitHash')
+
+          # Link (adjust account if needed)
           build_link="https://expo.dev/accounts/better-angels/projects/${slug}/builds/${build_id}"
 
-          # Set outputs for the current platform
-          echo "${platform}-build-id=$build_id" >> $GITHUB_OUTPUT
-          echo "${platform}-build-link=$build_link" >> $GITHUB_OUTPUT
-          echo "${platform}-distribution=$distribution" >> $GITHUB_OUTPUT
-          echo "${platform}-build-profile=$build_profile" >> $GITHUB_OUTPUT
-          echo "${platform}-runtime-version=$runtime_version_from_build" >> $GITHUB_OUTPUT
-          echo "${platform}-app-version=$app_version" >> $GITHUB_OUTPUT
-          echo "${platform}-git-commit=$git_commit" >> $GITHUB_OUTPUT
+          # 5) Emit per-platform outputs
+          {
+            echo "${platform}-build-id=${build_id}"
+            echo "${platform}-build-link=${build_link}"
+            echo "${platform}-distribution=${distribution}"
+            echo "${platform}-build-profile=${build_profile}"
+            echo "${platform}-runtime-version=${runtime_version_from_build}"
+            echo "${platform}-app-version=${app_version}"
+            echo "${platform}-git-commit=${git_commit}"
+          } >> "$GITHUB_OUTPUT"
 
-          # Store slug and project_id for consistency checks
+          # Track for cross-platform consistency
           slugs+=("$slug")
           project_ids+=("$project_id")
         done
 
-        # Ensure slugs and project IDs are consistent across platforms
-        unique_slugs=($(echo "${slugs[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
-        unique_project_ids=($(echo "${project_ids[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '))
+        # 6) Ensure slugs & project IDs consistent across platforms
+        unique_slugs=($(printf '%s\n' "${slugs[@]}" | sort -u))
+        unique_project_ids=($(printf '%s\n' "${project_ids[@]}" | sort -u))
 
         if [ ${#unique_slugs[@]} -ne 1 ]; then
           echo "Error: Different slugs found for platforms: ${slugs[*]}"
           exit 1
         fi
-
         if [ ${#unique_project_ids[@]} -ne 1 ]; then
           echo "Error: Different project IDs found for platforms: ${project_ids[*]}"
           exit 1
         fi
 
-        # Set common outputs
-        commit_message=$(git log -1 --pretty=format:"%s" HEAD)
-        echo "commit-message=${commit_message}" >> $GITHUB_OUTPUT
-        echo "slug=${unique_slugs[0]}" >> $GITHUB_OUTPUT
-        echo "project-id=${unique_project_ids[0]}" >> $GITHUB_OUTPUT
+        # 7) Common outputs
+        commit_message=$(git log -1 --pretty=format:"%s" HEAD || echo "")
+        {
+          echo "commit-message=${commit_message}"
+          echo "slug=${unique_slugs[0]}"
+          echo "project-id=${unique_project_ids[0]}"
+        } >> "$GITHUB_OUTPUT"
