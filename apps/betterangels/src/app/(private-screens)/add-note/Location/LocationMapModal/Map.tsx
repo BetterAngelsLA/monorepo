@@ -74,15 +74,12 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
       : `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
       // TODO: DEV-446 - Transition to react-native-google-places-autocomplete
       const { data } = await axios.get(url, {
         withCredentials: true,
         signal: controller.signal,
         timeout: 8000,
       });
-
-      clearTimeout(timeoutId);
 
       const googleAddress = isId
         ? data.result.formatted_address
