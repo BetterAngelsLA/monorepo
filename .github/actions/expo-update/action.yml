@@ -61,44 +61,135 @@ runs:
   steps:
     - name: Perform EAS Update
       id: perform-eas-update
+      shell: bash
       run: |
+        set -euo pipefail
+
         platforms=("android" "ios")
-        # Capture the raw output from the EAS update command.
-        eas_update_raw=$(yarn nx run ${{ inputs.project }}:eas-update --branch "${{ inputs.branch }}" --auto --json --interactive false 2>&1) || {
-          echo "Error running the EAS update command:"
-          echo "$eas_update_raw"
+
+        extract_array_json() {
+          local raw="$1"
+          local arr
+          # Try to grab the last JSON block that looks like an array [...]
+          arr=$(printf '%s' "$raw" | perl -0777 -ne 'print $1 if /(\[[\s\S]*\])\s*$/s') || true
+          if [ -z "${arr:-}" ]; then
+            # Fallback: naive sed from first '[' to last ']'
+            arr=$(printf '%s' "$raw" | sed ':a;N;$!ba;s/.*\(\[[^]]*\]\).*/\1/') || true
+          fi
+          printf '%s' "${arr:-}"
+        }
+
+        normalize_top() {
+          # Accept either an array, a stringified array, or an object with .updates array.
+          local candidate="$1"
+
+          # If it's valid JSON, continue; otherwise fail.
+          echo "$candidate" | jq empty >/dev/null 2>&1 || {
+            echo "Error: Invalid JSON candidate:"
+            echo "$candidate"
+            exit 1
+          }
+
+          # If it's a string, try fromjson
+          local normalized
+          normalized=$(echo "$candidate" | jq 'if type=="string" then fromjson else . end')
+
+          # If it’s an object with "updates" array, use that
+          if echo "$normalized" | jq -e 'type=="object" and (.updates|type=="array")' >/dev/null; then
+            echo "$normalized" | jq '.updates'
+            return
+          fi
+
+          # If it’s an array, use as-is; otherwise fail
+          if echo "$normalized" | jq -e 'type=="array"' >/dev/null; then
+            echo "$normalized"
+            return
+          fi
+
+          echo "Error: Expected an array or an object with .updates array; got:"
+          echo "$normalized" | jq -r 'type'
+          echo "$normalized"
           exit 1
         }
 
-        # Extract only the JSON portion (from the first "[" to the last "]").
-        eas_update_output=$(echo "$eas_update_raw" | sed ':a;N;$!ba;s/.*\(\[[^]]*\]\).*/\1/')
+        echo "🟦 Running EAS Update (project=${{ inputs.project }}, branch=${{ inputs.branch }})..."
+        eas_update_raw=$(yarn nx run ${{ inputs.project }}:eas-update \
+          --branch "${{ inputs.branch }}" \
+          --auto \
+          --json \
+          --interactive false 2>&1) || {
+            echo "Error running the EAS update command:"
+            echo "$eas_update_raw"
+            exit 1
+          }
 
+        # Prefer a clean array slice; if not found, fall back to raw (normalize_top can handle objects too)
+        eas_candidate=$(extract_array_json "$eas_update_raw")
+        if [ -z "$eas_candidate" ]; then
+          eas_candidate="$eas_update_raw"
+        fi
+
+        updates_json=$(normalize_top "$eas_candidate")
+
+        # Ensure we have updates for both platforms and set outputs
+        group_set="false"
         for platform in "${platforms[@]}"; do
-          update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
-          branch=$(echo "$update_info" | jq -r '.branch')
-          update_id=$(echo "$update_info" | jq -r '.id')
-          group_id=$(echo "$update_info" | jq -r '.group')
-          update_commit=$(echo "$update_info" | jq -r '.gitCommitHash')
-          runtime_version=$(echo "$update_info" | jq -r '.runtimeVersion')
+          update_info=$(echo "$updates_json" | jq -c --arg p "$platform" '.[] | select(.platform == $p)')
+          if [ -z "$update_info" ]; then
+            echo "Error: No update found for platform: $platform"
+            echo "All updates JSON:"
+            echo "$updates_json" | jq .
+            exit 1
+          fi
+
+          # Validate we got an object
+          if ! echo "$update_info" | jq -e 'type=="object"' >/dev/null; then
+            echo "Error: Update entry for $platform is not an object:"
+            echo "$update_info"
+            exit 1
+          fi
+
+          branch=$(echo "$update_info" | jq -r '.branch // empty')
+          update_id=$(echo "$update_info" | jq -r '.id // empty')
+          group_id=$(echo "$update_info" | jq -r '.group // empty')
+          update_commit=$(echo "$update_info" | jq -r '.gitCommitHash // empty')
+          runtime_version=$(echo "$update_info" | jq -r '.runtimeVersion // empty')
+
+          if [ -z "$update_id" ] || [ -z "$group_id" ]; then
+            echo "Error: Missing required fields for $platform (id/group). Entry was:"
+            echo "$update_info" | jq .
+            exit 1
+          fi
+
+          # Permalink / QR
           update_permalink="https://expo.dev/projects/${{ inputs.project-id }}/updates/${update_id}"
           update_qr_url="https://qr.expo.dev/eas-update?appScheme=${{ inputs.slug }}&projectId=${{ inputs.project-id }}&groupId=${group_id}"
 
-          # Set platform-specific outputs
-          echo "${platform}-branch=$branch" >> $GITHUB_OUTPUT
-          echo "${platform}-update-id=$update_id" >> $GITHUB_OUTPUT
-          echo "${platform}-update-permalink=$update_permalink" >> $GITHUB_OUTPUT
-          echo "${platform}-update-qr-url=$update_qr_url" >> $GITHUB_OUTPUT
-          echo "${platform}-update-commit=$update_commit" >> $GITHUB_OUTPUT
-          echo "${platform}-runtime-version=$runtime_version" >> $GITHUB_OUTPUT
-          echo "group-id=$group_id" >> $GITHUB_OUTPUT
+          {
+            echo "${platform}-branch=${branch}"
+            echo "${platform}-update-id=${update_id}"
+            echo "${platform}-update-permalink=${update_permalink}"
+            echo "${platform}-update-qr-url=${update_qr_url}"
+            echo "${platform}-update-commit=${update_commit}"
+            echo "${platform}-runtime-version=${runtime_version}"
+          } >> "$GITHUB_OUTPUT"
+
+          if [ "$group_set" = "false" ]; then
+            echo "group-id=${group_id}" >> "$GITHUB_OUTPUT"
+            group_set="true"
+          fi
         done
-      shell: bash
 
     - name: Set Project and Group ID
-      run: |
-        project_id="${{ inputs.project-id }}"
-        group_id="${{ steps.perform-eas-update.outputs.group-id }}"
-        echo "PROJECT_ID=$project_id" >> .env
-        echo "GROUP_ID=$group_id" >> .env
       shell: bash
       working-directory: apps/${{ inputs.project }}
+      run: |
+        set -euo pipefail
+        project_id="${{ inputs.project-id }}"
+        group_id="${{ steps.perform-eas-update.outputs.group-id }}"
+        : "${project_id:?project-id missing}"
+        : "${group_id:?group-id missing}"
+        {
+          echo "PROJECT_ID=${project_id}"
+          echo "GROUP_ID=${group_id}"
+        } >> .env
