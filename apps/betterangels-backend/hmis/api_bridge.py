@@ -1,5 +1,6 @@
 import json
 import re
+from enum import Enum
 from typing import Any, Optional
 
 import jwt
@@ -21,6 +22,15 @@ from graphql import (
     validate,
 )
 from graphql.type import GraphQLObjectType as _GraphQLObjectType
+from hmis.enums import (
+    HmisDobQualityEnum,
+    HmisGenderEnum,
+    HmisNameQualityEnum,
+    HmisRaceEnum,
+    HmisSsnQualityEnum,
+    HmisSuffixEnum,
+    HmisVeteranStatusEnum,
+)
 from hmis.errors import is_hmis_unauthenticated
 from hmis.types import HmisClientFilterInput, HmisPaginationInput
 
@@ -51,6 +61,16 @@ class HmisApiBridge:
             "Content-Type": "application/json",
             "x-api-key": self.api_key,
             **auth_header,
+        }
+
+        self.field_to_enum_map = {
+            "ssn_data_quality": HmisSsnQualityEnum,
+            "name_data_quality": HmisNameQualityEnum,
+            "dob_data_quality": HmisDobQualityEnum,
+            "name_suffix": HmisSuffixEnum,
+            "gender": HmisGenderEnum,
+            "race_enthnicity": HmisRaceEnum,
+            "veteran_status": HmisVeteranStatusEnum,
         }
 
     def _load_graphql_schema(self) -> GraphQLSchema:
@@ -101,6 +121,18 @@ class HmisApiBridge:
 
         return selection
 
+    def _convert_enums_to_ints(self, input_vars: dict[str, Any]) -> dict[str, Any]:
+        for k, v in input_vars.items():
+            if k not in self.field_to_enum_map:
+                continue
+
+            if isinstance(v, Enum):
+                input_vars[k] = str(v.value)
+            elif isinstance(v, list):
+                input_vars[k] = [str(val.value) if isinstance(val, Enum) else val for val in v]
+
+        return input_vars
+
     def _build_client_mutation(self, operation: str, response_fields: str, expected_type: str) -> str:
         operation_cap = operation.capitalize()
         cleaned_fields = re.sub(r"\\n", "", response_fields)
@@ -130,8 +162,8 @@ class HmisApiBridge:
         response_fields = self._extract_response_fields(raw_query)
 
         variables = {
-            "clientInput": dict_keys_to_camel(client_input),
-            "clientSubItemsInput": dict_keys_to_camel(client_sub_items_input),
+            "clientInput": dict_keys_to_camel(self._convert_enums_to_ints(client_input)),
+            "clientSubItemsInput": dict_keys_to_camel(self._convert_enums_to_ints(client_sub_items_input)),
         }
 
         data = self._make_request(
