@@ -26,7 +26,6 @@ from strawberry_django.utils.query import filter_for_user
 
 from .models import PermissionGroup, User
 from .types import (
-    AuthInput,
     AuthResponse,
     LoginInput,
     OrganizationMemberType,
@@ -127,16 +126,6 @@ class Mutation:
 
     @strawberry.mutation
     def login(self, input: LoginInput) -> AuthResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
-
-    @strawberry.mutation
-    def google_auth(self, input: AuthInput) -> AuthResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
-
-    @strawberry.mutation
-    def apple_auth(self, input: AuthInput) -> AuthResponse:
         # The is a stub and logic is handled client-side by Apollo
         return AuthResponse(status_code="")
 
