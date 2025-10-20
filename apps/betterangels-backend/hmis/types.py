@@ -26,25 +26,27 @@ class HmisLoginError:
 class HmisCreateClientInput:
     first_name: str
     last_name: str
-    name_data_quality: Optional[int] = 99
+    name_data_quality: Optional[HmisNameQualityEnum] = HmisNameQualityEnum.PARTIAL
     ssn1: Optional[str] = ""
     ssn2: Optional[str] = ""
     ssn3: Optional[str] = "xxxx"
-    ssn_data_quality: Optional[int] = 99
+    ssn_data_quality: Optional[HmisSsnQualityEnum] = HmisSsnQualityEnum.NOT_COLLECTED
     dob: Optional[str] = ""
-    dob_data_quality: Optional[int] = 99
+    dob_data_quality: Optional[HmisDobQualityEnum] = HmisDobQualityEnum.NOT_COLLECTED
 
 
 @strawberry.input
 class HmisCreateClientSubItemsInput:
     middle_name: Optional[str] = ""
-    name_suffix: Optional[int] = 9
+    name_suffix: Optional[HmisSuffixEnum] = HmisSuffixEnum.NO_ANSWER
     alias: Optional[str] = ""
     additional_race_ethnicity: Optional[str] = ""
     different_identity_text: Optional[str] = ""
-    race_ethnicity: Optional[list[int]] = strawberry.field(default_factory=lambda: [99])
-    gender: Optional[list[int]] = strawberry.field(default_factory=lambda: [99])
-    veteran_status: Optional[int] = 99
+    race_ethnicity: Optional[list[HmisRaceEnum]] = strawberry.field(
+        default_factory=lambda: [HmisRaceEnum.NOT_COLLECTED]
+    )
+    gender: Optional[list[HmisGenderEnum]] = strawberry.field(default_factory=lambda: [HmisGenderEnum.NOT_COLLECTED])
+    veteran_status: Optional[HmisVeteranStatusEnum] = HmisVeteranStatusEnum.NOT_COLLECTED
 
 
 @strawberry.input
@@ -52,25 +54,25 @@ class HmisUpdateClientInput:
     personal_id: str
     first_name: str
     last_name: str
-    name_data_quality: int
+    name_data_quality: HmisNameQualityEnum
     ssn1: str
     ssn2: str
     ssn3: str
-    ssn_data_quality: int
+    ssn_data_quality: HmisSsnQualityEnum
     dob: str
-    dob_data_quality: int
+    dob_data_quality: HmisDobQualityEnum
 
 
 @strawberry.input
 class HmisUpdateClientSubItemsInput:
     middle_name: str
-    name_suffix: int
+    name_suffix: HmisSuffixEnum
     alias: str
     additional_race_ethnicity: str
     different_identity_text: str
-    race_ethnicity: list[int]
-    gender: list[int]
-    veteran_status: int
+    race_ethnicity: list[HmisRaceEnum]
+    gender: list[HmisGenderEnum]
+    veteran_status: HmisVeteranStatusEnum
 
 
 @strawberry.input

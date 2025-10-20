@@ -179,8 +179,30 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         self.assertIn("Invalid credentials or HMIS login failed", payload["message"])
 
 
-class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
+class HmisClientMutationTests(GraphQLBaseTestCase, TestCase):
     def test_hmis_create_client_success(self) -> None:
+        client_input = {
+            "firstName": "Firsty",
+            "lastName": "Lasty",
+            "nameDataQuality": HmisNameQualityEnum.PARTIAL.name,
+            "ssn1": "***",
+            "ssn2": "**",
+            "ssn3": "xxxx",
+            "ssnDataQuality": HmisSsnQualityEnum.NOT_COLLECTED.name,
+            "dob": None,
+            "dobDataQuality": HmisDobQualityEnum.NOT_COLLECTED.name,
+        }
+        client_sub_items_input = {
+            "middleName": None,
+            "nameSuffix": HmisSuffixEnum.NO_ANSWER.name,
+            "alias": None,
+            "additionalRaceEthnicity": None,
+            "differentIdentityText": None,
+            "raceEthnicity": [HmisRaceEnum.NOT_COLLECTED.name],
+            "gender": [HmisGenderEnum.NOT_COLLECTED.name],
+            "veteranStatus": HmisVeteranStatusEnum.NOT_COLLECTED.name,
+        }
+
         return_value = {
             "data": {
                 "createClient": {
@@ -188,47 +210,25 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
                     "uniqueIdentifier": "123AB456C",
                     "firstName": "Firsty",
                     "lastName": "Lasty",
-                    "nameDataQuality": 1,
+                    "nameDataQuality": HmisNameQualityEnum.PARTIAL.value,
                     "ssn1": "***",
                     "ssn2": "**",
                     "ssn3": "xxxx",
-                    "ssnDataQuality": 99,
+                    "ssnDataQuality": HmisSsnQualityEnum.NOT_COLLECTED.value,
                     "dob": None,
-                    "dobDataQuality": 99,
+                    "dobDataQuality": HmisDobQualityEnum.NOT_COLLECTED.value,
                     "data": {
                         "middleName": None,
-                        "nameSuffix": 9,
+                        "nameSuffix": HmisSuffixEnum.NO_ANSWER.value,
                         "alias": None,
-                        "raceEthnicity": [99],
+                        "raceEthnicity": [HmisRaceEnum.NOT_COLLECTED.value],
                         "additionalRaceEthnicity": None,
                         "differentIdentityText": None,
-                        "gender": [99],
-                        "veteranStatus": 99,
+                        "gender": [HmisGenderEnum.NOT_COLLECTED.value],
+                        "veteranStatus": HmisVeteranStatusEnum.NOT_COLLECTED.value,
                     },
                 }
             }
-        }
-
-        client_input = {
-            "firstName": "Firsty",
-            "lastName": "Lasty",
-            "nameDataQuality": 1,
-            "ssn1": "***",
-            "ssn2": "**",
-            "ssn3": "xxxx",
-            "ssnDataQuality": 99,
-            "dob": None,
-            "dobDataQuality": 99,
-        }
-        client_sub_items_input = {
-            "middleName": None,
-            "nameSuffix": 9,
-            "alias": None,
-            "additionalRaceEthnicity": None,
-            "differentIdentityText": None,
-            "raceEthnicity": [99],
-            "gender": [99],
-            "veteranStatus": 99,
         }
 
         with patch(
@@ -262,7 +262,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
             "uniqueIdentifier": "123AB456C",
             "firstName": "Firsty",
             "lastName": "Lasty",
-            "nameDataQuality": HmisNameQualityEnum.FULL.name,
+            "nameDataQuality": HmisNameQualityEnum.PARTIAL.name,
             "ssn1": "***",
             "ssn2": "**",
             "ssn3": "xxxx",
@@ -274,83 +274,28 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
 
         self.assertEqual(payload, expected_client)
 
-    def test_hmis_create_client_invalid_input(self) -> None:
-        return_value = {
-            "data": {"createClient": None},
-            "errors": [
-                {
-                    "path": ["createClient"],
-                    "data": None,
-                    "errorType": "422",
-                    "errorInfo": None,
-                    "locations": [{"line": 6, "column": 17, "sourceName": None}],
-                    "message": '{"name":"Unprocessable entity","message":"{\\"ssnQuality\\":[\\"Quality of SSN is invalid.\\"],\\"nameQuality\\":[\\"Quality of Name is invalid.\\"],\\"dobQuality\\":[\\"Quality of DOB is invalid.\\"],\\"ssn_quality\\":[\\"Quality of SSN is invalid.\\"],\\"name_quality\\":[\\"Quality of Name is invalid.\\"],\\"dob_quality\\":[\\"Quality of DOB is invalid.\\"]}","code":0,"status":422,"messages":{"ssnQuality":["Quality of SSN is invalid."],"nameQuality":["Quality of Name is invalid."],"dobQuality":["Quality of DOB is invalid."],"ssn_quality":["Quality of SSN is invalid."],"name_quality":["Quality of Name is invalid."],"dob_quality":["Quality of DOB is invalid."]}}',
-                },
-                {
-                    "path": ["createClient", "personalId"],
-                    "locations": None,
-                    "message": "Cannot return null for non-nullable type: 'ID' within parent 'Client' (/createClient/personalId)",
-                },
-            ],
-        }
-
-        client_input = {
-            "firstName": "Firsty",
-            "lastName": "Lasty",
-            "nameDataQuality": 22,
-            "ssn3": "xxxx",
-            "ssnDataQuality": 22,
-            "dob": "2001-01-01",
-            "dobDataQuality": 22,
-        }
-        client_sub_items_input = {
-            "raceEthnicity": [22],
-            "gender": [22],
-            "veteranStatus": 22,
-        }
-
-        with patch(
-            "hmis.api_bridge.HmisApiBridge._make_request",
-            return_value=return_value,
-        ):
-            resp = self.execute_graphql(
-                CREATE_CLIENT_MUTATION,
-                variables={
-                    "clientInput": client_input,
-                    "clientSubItemsInput": client_sub_items_input,
-                },
-            )
-
-        self.assertIsNone(resp.get("errors"))
-
-        payload = resp["data"]["hmisCreateClient"]
-
-        self.assertIsNone(resp.get("errors"))
-        payload = resp["data"]["hmisCreateClient"]
-        self.assertIn("Quality of SSN is invalid.", payload["message"])
-
     def test_hmis_update_client_success(self) -> None:
         client_input = {
             "personalId": "1",
             "firstName": "Firsty",
             "lastName": "Lasty",
-            "nameDataQuality": 1,
+            "nameDataQuality": HmisNameQualityEnum.FULL.name,
             "ssn1": "123",
             "ssn2": "45",
             "ssn3": "6789",
-            "ssnDataQuality": 2,
+            "ssnDataQuality": HmisSsnQualityEnum.PARTIAL.name,
             "dob": "2002-02-02",
-            "dobDataQuality": 2,
+            "dobDataQuality": HmisDobQualityEnum.PARTIAL.name,
         }
         client_sub_items_input = {
             "middleName": "Middly",
-            "nameSuffix": 2,
+            "nameSuffix": HmisSuffixEnum.JR.name,
             "alias": "Nicky",
             "additionalRaceEthnicity": "add re",
             "differentIdentityText": "diff id",
-            "raceEthnicity": [2],
-            "gender": [2],
-            "veteranStatus": 0,
+            "raceEthnicity": [HmisRaceEnum.INDIGENOUS.name],
+            "gender": [HmisGenderEnum.WOMAN_GIRL.name],
+            "veteranStatus": HmisVeteranStatusEnum.NO.name,
         }
 
         return_value = {
@@ -358,22 +303,22 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
             "uniqueIdentifier": "981C4E53A",
             "firstName": "Firsty",
             "lastName": "Lasty",
-            "nameDataQuality": 1,
+            "nameDataQuality": HmisNameQualityEnum.FULL.value,
             "ssn1": "***",
             "ssn2": "**",
             "ssn3": "6789",
-            "ssnDataQuality": 2,
+            "ssnDataQuality": HmisSsnQualityEnum.PARTIAL.value,
             "dob": "2002-02-02",
-            "dobDataQuality": 2,
+            "dobDataQuality": HmisDobQualityEnum.PARTIAL.value,
             "data": {
                 "middleName": "Middly",
-                "nameSuffix": 2,
+                "nameSuffix": HmisSuffixEnum.JR.value,
                 "alias": "Nicky",
                 "additionalRaceEthnicity": "add re",
                 "differentIdentityText": "diff id",
-                "raceEthnicity": [2],
-                "gender": [2],
-                "veteranStatus": 0,
+                "raceEthnicity": [HmisRaceEnum.INDIGENOUS.value],
+                "gender": [HmisGenderEnum.WOMAN_GIRL.value],
+                "veteranStatus": HmisVeteranStatusEnum.NO.value,
             },
         }
 
@@ -395,12 +340,12 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
 
         expected_data = {
             "middleName": "Middly",
-            "nameSuffix": "SR",
+            "nameSuffix": HmisSuffixEnum.JR.name,
             "alias": "Nicky",
             "additionalRaceEthnicity": "add re",
             "differentIdentityText": "diff id",
-            "raceEthnicity": [HmisRaceEnum.ASIAN.name],
-            "gender": [HmisGenderEnum.SPECIFIC.name],
+            "raceEthnicity": [HmisRaceEnum.INDIGENOUS.name],
+            "gender": [HmisGenderEnum.WOMAN_GIRL.name],
             "veteranStatus": HmisVeteranStatusEnum.NO.name,
         }
         expected_client = {
