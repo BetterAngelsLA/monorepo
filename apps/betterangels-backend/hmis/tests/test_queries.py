@@ -91,31 +91,35 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
 
     def test_hmis_get_client_success(self) -> None:
         return_value = {
-            "personalId": "1",
-            "uniqueIdentifier": "981C4E53A",
-            "firstName": "Firsty",
-            "lastName": "Lasty",
-            "nameDataQuality": 1,
-            "ssn1": "***",
-            "ssn2": "**",
-            "ssn3": "xxxx",
-            "ssnDataQuality": 99,
-            "dob": "2001-01-01",
-            "dobDataQuality": 1,
             "data": {
-                "middleName": "Middly",
-                "nameSuffix": 1,
-                "alias": "Nicky",
-                "raceEthnicity": [1],
-                "additionalRaceEthnicity": "add re",
-                "differentIdentityText": "diff id",
-                "gender": [1],
-                "veteranStatus": 1,
-            },
+                "getClient": {
+                    "personalId": "1",
+                    "uniqueIdentifier": "123AB456C",
+                    "firstName": "Firsty",
+                    "lastName": "Lasty",
+                    "nameDataQuality": 1,
+                    "ssn1": "***",
+                    "ssn2": "**",
+                    "ssn3": "xxxx",
+                    "ssnDataQuality": 99,
+                    "dob": "2001-01-01",
+                    "dobDataQuality": 1,
+                    "data": {
+                        "middleName": "Middly",
+                        "nameSuffix": 1,
+                        "alias": "Nicky",
+                        "raceEthnicity": [1],
+                        "additionalRaceEthnicity": "add re",
+                        "differentIdentityText": "diff id",
+                        "gender": [1],
+                        "veteranStatus": 1,
+                    },
+                }
+            }
         }
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge.get_client",
+            "hmis.api_bridge.HmisApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -141,7 +145,7 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
         expected_client = {
             "__typename": "HmisClientType",
             "personalId": "1",
-            "uniqueIdentifier": "981C4E53A",
+            "uniqueIdentifier": "123AB456C",
             "firstName": "Firsty",
             "lastName": "Lasty",
             "nameDataQuality": HmisNameQualityEnum.FULL.name,
@@ -158,6 +162,7 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
 
     def test_hmis_get_client_does_not_exist(self) -> None:
         return_value = {
+            "data": {"getClient": None},
             "errors": [
                 {
                     "path": ["getClient"],
@@ -172,11 +177,11 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
                     "locations": None,
                     "message": "Cannot return null for non-nullable type: 'ID' within parent 'Client' (/getClient/personalId)",
                 },
-            ]
+            ],
         }
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge.get_client",
+            "hmis.api_bridge.HmisApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -191,69 +196,80 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
 
     def test_hmis_list_clients_success(self) -> None:
         return_value = {
-            "items": [
-                {
-                    "personalId": "1",
-                    "uniqueIdentifier": "11111111A",
-                    "firstName": "f1",
-                    "lastName": "l1",
-                    "nameDataQuality": 1,
-                    "ssn1": "***",
-                    "ssn2": "**",
-                    "ssn3": "xxxx",
-                    "ssnDataQuality": 99,
-                    "dob": "2001-01-01",
-                    "dobDataQuality": 1,
-                    "data": {
-                        "middleName": "m1",
-                        "nameSuffix": 1,
-                        "alias": "n1",
-                        "raceEthnicity": [1],
-                        "additionalRaceEthnicity": "add re",
-                        "differentIdentityText": "diff id",
-                        "gender": [1],
-                        "veteranStatus": 1,
+            "data": {
+                "listClients": {
+                    "items": [
+                        {
+                            "personalId": "1",
+                            "uniqueIdentifier": "11111111A",
+                            "firstName": "f1",
+                            "lastName": "l1",
+                            "nameDataQuality": 1,
+                            "ssn1": "***",
+                            "ssn2": "**",
+                            "ssn3": "xxxx",
+                            "ssnDataQuality": 99,
+                            "dob": "2001-01-01",
+                            "dobDataQuality": 1,
+                            "data": {
+                                "middleName": "m1",
+                                "nameSuffix": 1,
+                                "alias": "n1",
+                                "raceEthnicity": [1],
+                                "additionalRaceEthnicity": "add re",
+                                "differentIdentityText": "diff id",
+                                "gender": [1],
+                                "veteranStatus": 1,
+                            },
+                        },
+                        {
+                            "personalId": "2",
+                            "uniqueIdentifier": "22222222B",
+                            "firstName": "f2",
+                            "lastName": "l2",
+                            "nameDataQuality": 2,
+                            "ssn1": "***",
+                            "ssn2": "**",
+                            "ssn3": "xxxx",
+                            "ssnDataQuality": 99,
+                            "dob": "2002-02-02",
+                            "dobDataQuality": 2,
+                            "data": {
+                                "middleName": "m2",
+                                "nameSuffix": 2,
+                                "alias": "n2",
+                                "raceEthnicity": [2],
+                                "additionalRaceEthnicity": "add re",
+                                "differentIdentityText": "diff id",
+                                "gender": [2],
+                                "veteranStatus": 8,
+                            },
+                        },
+                    ],
+                    "meta": {
+                        "per_page": 10,
+                        "current_page": 1,
+                        "page_count": 1,
+                        "total_count": 2,
                     },
-                },
-                {
-                    "personalId": "2",
-                    "uniqueIdentifier": "22222222B",
-                    "firstName": "f2",
-                    "lastName": "l2",
-                    "nameDataQuality": 2,
-                    "ssn1": "***",
-                    "ssn2": "**",
-                    "ssn3": "xxxx",
-                    "ssnDataQuality": 99,
-                    "dob": "2002-02-02",
-                    "dobDataQuality": 2,
-                    "data": {
-                        "middleName": "m2",
-                        "nameSuffix": 2,
-                        "alias": "n2",
-                        "raceEthnicity": [2],
-                        "additionalRaceEthnicity": "add re",
-                        "differentIdentityText": "diff id",
-                        "gender": [2],
-                        "veteranStatus": 8,
-                    },
-                },
-            ],
-            "meta": {
-                "per_page": 10,
-                "current_page": 1,
-                "page_count": 1,
-                "total_count": 2,
-            },
+                }
+            }
         }
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge.list_clients",
+            "hmis.api_bridge.HmisApiBridge._make_request",
             return_value=return_value,
         ):
-            resp = self.execute_graphql(LIST_CLIENTS_QUERY)
+            resp = self.execute_graphql(
+                LIST_CLIENTS_QUERY,
+                variables={
+                    "pagination": {"page": 1, "perPage": 10},
+                    "filter": {"search": ""},
+                },
+            )
 
         self.assertIsNone(resp.get("errors"))
+
         payload = resp["data"]["hmisListClients"]
         clients = payload["items"]
         pagination_info = payload["meta"]

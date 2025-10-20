@@ -9,6 +9,7 @@ import { resizeImage } from '@monorepo/expo/shared/utils';
 import { CameraType, CameraView, FlashMode } from 'expo-camera';
 import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import IconButton from '../IconButton';
 import TextButton from '../TextButton';
 import TextMedium from '../TextMedium';
@@ -25,18 +26,13 @@ export default function Camera(props: ICameraProps) {
   const [flash, setFlash] = useState<FlashMode>('off');
 
   const cameraRef = useRef<CameraView | null>(null);
+  const insets = useSafeAreaInsets();
 
-  const toggleFlashLight = () => {
-    setFlash((current) => (current === 'off' ? 'on' : 'off'));
-  };
-
-  const toggleCameraType = () => {
-    setType((current) => (current === 'back' ? 'front' : 'back'));
-  };
-
-  const closeCamera = () => {
-    setIsCameraOpen(false);
-  };
+  const toggleFlashLight = () =>
+    setFlash((cur) => (cur === 'off' ? 'on' : 'off'));
+  const toggleCameraType = () =>
+    setType((cur) => (cur === 'back' ? 'front' : 'back'));
+  const closeCamera = () => setIsCameraOpen(false);
 
   const captureImage = async () => {
     if (!cameraRef.current) return;
@@ -60,60 +56,50 @@ export default function Camera(props: ICameraProps) {
   };
 
   return (
-    <>
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: Colors.BLACK,
-          justifyContent: 'center',
-        }}
-      >
-        {flash === 'off' ? (
-          <IconButton
-            onPress={toggleFlashLight}
-            accessibilityLabel="flash"
-            accessibilityHint="enables flash"
-            variant="transparent"
-          >
+    <View style={styles.root}>
+      {/* Full-bleed camera preview (cover) */}
+      <CameraView
+        ref={cameraRef}
+        style={[StyleSheet.absoluteFillObject]}
+        // If some Android devices still show thin bars, uncomment:
+        // style={[StyleSheet.absoluteFillObject, { transform: [{ scaleX: 1.06 }, { scaleY: 1.06 }] }]}
+        facing={type}
+        flash={flash}
+      />
+
+      {/* Top overlay (flash) */}
+      <View style={[styles.topBar, { paddingTop: insets.top + Spacings.xs }]}>
+        <IconButton
+          onPress={toggleFlashLight}
+          accessibilityLabel="flash"
+          accessibilityHint={
+            flash === 'off' ? 'enables flash' : 'disables flash'
+          }
+          variant="transparent"
+        >
+          {flash === 'off' ? (
             <BoltSlashIcon size="md" color={Colors.WHITE} />
-          </IconButton>
-        ) : (
-          <IconButton
-            onPress={toggleFlashLight}
-            accessibilityLabel="flash"
-            accessibilityHint="disables flash"
-            variant="transparent"
-          >
+          ) : (
             <BoltIcon size="md" color={Colors.WHITE} />
-          </IconButton>
-        )}
+          )}
+        </IconButton>
       </View>
-      <View style={{ flex: 5 }}>
-        <CameraView
-          style={styles.camera}
-          facing={type}
-          flash={flash}
-          ref={cameraRef}
-        />
-      </View>
+
+      {/* Bottom overlay (controls) */}
       <View
-        style={{
-          flex: 2,
-          backgroundColor: Colors.BLACK,
-          paddingTop: Spacings.xs,
-          paddingHorizontal: Spacings.md,
-        }}
+        style={[
+          styles.bottomBar,
+          {
+            paddingBottom: insets.bottom + Spacings.xs,
+            paddingHorizontal: Spacings.md,
+          },
+        ]}
       >
         <TextMedium textAlign="center" mb="md" size="sm" color={Colors.WARNING}>
           PHOTO
         </TextMedium>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
+
+        <View style={styles.controlsRow}>
           <TextButton
             style={{ flex: 1 }}
             color={Colors.WHITE}
@@ -121,6 +107,7 @@ export default function Camera(props: ICameraProps) {
             accessibilityHint="closes camera"
             title="Cancel"
           />
+
           <Pressable
             onPress={captureImage}
             style={{ flex: 2, alignItems: 'center' }}
@@ -130,40 +117,19 @@ export default function Camera(props: ICameraProps) {
             accessibilityHint="captures image"
           >
             {({ pressed }) => (
-              <View
-                style={{
-                  backgroundColor: Colors.BLACK,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: Radiuses.xxxl,
-                  borderWidth: 5,
-                  borderColor: Colors.WHITE,
-                  height: 60,
-                  width: 60,
-                }}
-              >
+              <View style={styles.shutterOuter}>
                 <View
-                  style={{
-                    backgroundColor: Colors.WHITE,
-                    borderRadius: Radiuses.xxxl,
-                    height: pressed ? 38 : 45,
-                    width: pressed ? 38 : 45,
-                  }}
+                  style={[
+                    styles.shutterInner,
+                    { height: pressed ? 38 : 45, width: pressed ? 38 : 45 },
+                  ]}
                 />
               </View>
             )}
           </Pressable>
+
           <View style={{ flex: 1, alignItems: 'flex-end' }}>
-            <View
-              style={{
-                backgroundColor: '#1C1C1C',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: Radiuses.xxxl,
-                height: 41,
-                width: 41,
-              }}
-            >
+            <View style={styles.swapWrap}>
               <IconButton
                 onPress={toggleCameraType}
                 accessibilityLabel="change camera"
@@ -176,13 +142,55 @@ export default function Camera(props: ICameraProps) {
           </View>
         </View>
       </View>
-    </>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  camera: {
+  root: {
     flex: 1,
-    width: '100%',
+    backgroundColor: Colors.BLACK, // avoids gutters behind preview
+  },
+  topBar: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'flex-start',
+    paddingHorizontal: Spacings.md,
+  },
+  bottomBar: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: Colors.BLACK,
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  shutterOuter: {
+    backgroundColor: Colors.BLACK,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radiuses.xxxl,
+    borderWidth: 5,
+    borderColor: Colors.WHITE,
+    height: 60,
+    width: 60,
+  },
+  shutterInner: {
+    backgroundColor: Colors.WHITE,
+    borderRadius: Radiuses.xxxl,
+  },
+  swapWrap: {
+    backgroundColor: '#1C1C1C',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radiuses.xxxl,
+    height: 41,
+    width: 41,
   },
 });
