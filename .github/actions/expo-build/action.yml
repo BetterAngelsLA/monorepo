@@ -87,6 +87,9 @@ runs:
             --runtimeVersion "${{ inputs.runtime-version }}" \
             --limit 1 --json --interactive false 2>/dev/null)
 
+          echo $build_output
+          echo $platform ${{ inputs.project }} ${{ inputs.profile }}
+
           # Extract only the JSON portion (from the first "[" to the last "]").
           cleaned_output=$(echo "$build_output" | sed ':a;N;$!ba;s/.*\(\[[^]]*\]\).*/\1/')
 
