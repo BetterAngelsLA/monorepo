@@ -119,6 +119,26 @@ CREATE_CLIENT_NOTE_MUTATION = """
     }
 """
 
+UPDATE_CLIENT_NOTE_MUTATION = """
+    mutation hmisUpdateClientNote($clientNoteInput: HmisUpdateClientNoteInput!) {
+        hmisUpdateClientNote(clientNoteInput: $clientNoteInput) {
+            ... on HmisClientNoteType {
+                id
+                title
+                note
+                date
+                category
+                client { personalId }
+                enrollment { enrollmentId }
+            }
+            ... on HmisUpdateClientNoteError {
+                message
+                field
+            }
+        }
+    }
+"""
+
 
 @override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
 class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
@@ -472,6 +492,43 @@ class HmisCreateClientNoteMutationTests(GraphQLBaseTestCase, TestCase):
             "title": "api test note",
             "note": "duly noted",
             "date": "2025-10-17",
+            "category": None,
+            "client": {"personalId": "1"},
+            "enrollment": {"enrollmentId": "517"},
+        }
+
+        self.assertEqual(client_note, expected_client_note)
+
+    @scrubbed_vcr.use_cassette(
+        "apps/betterangels-backend/hmis/tests/cassettes/test_hmis_update_client_note_success.yaml"
+    )
+    def test_hmis_update_client_note_success(self) -> None:
+        client_note_input = {
+            "id": "418",
+            "personalId": "1",
+            "enrollmentId": "517",
+            "title": "api test note update",
+            "note": "duly updated",
+            "date": "2024-09-16",
+            "category": "1",
+        }
+
+        resp = self.execute_graphql(
+            UPDATE_CLIENT_NOTE_MUTATION,
+            variables={
+                "clientNoteInput": client_note_input,
+            },
+        )
+
+        self.assertIsNone(resp.get("errors"))
+
+        client_note = resp["data"]["hmisUpdateClientNote"]
+
+        expected_client_note = {
+            "id": "418",
+            "title": "api test note update",
+            "note": "duly updated",
+            "date": "2024-09-16",
             "category": None,
             "client": {"personalId": "1"},
             "enrollment": {"enrollmentId": "517"},

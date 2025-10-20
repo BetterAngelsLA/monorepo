@@ -464,3 +464,9 @@ class HmisApiBridge:
         client_note_input: dict[str, Any],
     ) -> Optional[dict[str, Any]]:
         return self._run_client_note_mutation("create", client_note_input)
+
+    def update_client_note(
+        self,
+        client_note_input: dict[str, Any],
+    ) -> Optional[dict[str, Any]]:
+        return self._run_client_note_mutation("update", client_note_input)
