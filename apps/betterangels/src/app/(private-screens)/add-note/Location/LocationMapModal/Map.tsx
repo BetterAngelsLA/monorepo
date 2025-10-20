@@ -8,7 +8,13 @@ import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
-import React, { forwardRef, useCallback, useMemo } from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useMemo,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import type { MapPressEvent, PoiClickEvent } from 'react-native-maps';
 
 type GoogleAddressComponent = {
@@ -17,7 +23,26 @@ type GoogleAddressComponent = {
   types: string[];
 };
 
-type LatLngName = { longitude: number; latitude: number; name?: string };
+type PlaceDetailsResponse = {
+  result?: {
+    formatted_address?: string;
+    address_components?: GoogleAddressComponent[];
+  };
+};
+
+type GeocodeResponse = {
+  results?: Array<{
+    formatted_address?: string;
+    address_components?: GoogleAddressComponent[];
+  }>;
+};
+
+type LatLngName = {
+  longitude: number;
+  latitude: number;
+  name: string | undefined;
+};
+
 type Address = {
   full: string;
   short: string;
@@ -26,7 +51,7 @@ type Address = {
 
 interface IMapProps {
   currentLocation?: LatLngName;
-  setCurrentLocation: (v?: LatLngName) => void;
+  setCurrentLocation: Dispatch<SetStateAction<LatLngName | undefined>>;
   setInitialLocation: (v: { longitude: number; latitude: number }) => void;
   initialLocation: { longitude: number; latitude: number };
   setMinimizeModal: (v: boolean) => void;
@@ -96,16 +121,19 @@ const Map = forwardRef<TMapView, IMapProps>((props, ref) => {
             )}&fields=formatted_address,address_components&key=${apiKey}`
           : `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
 
-        const { data } = await axios.get(url, {
+        const { data } = await axios.get<
+          PlaceDetailsResponse | GeocodeResponse
+        >(url, {
           withCredentials: true,
           timeout: 8000,
         });
 
-        // Inline the tiny parsing:
-        const result = isId ? data?.result : data?.results?.[0];
-        const full: string | undefined = result?.formatted_address;
-        const comps: GoogleAddressComponent[] | undefined =
-          result?.address_components;
+        const result = isId
+          ? (data as PlaceDetailsResponse).result
+          : (data as GeocodeResponse).results?.[0];
+
+        const full = result?.formatted_address;
+        const comps = result?.address_components;
 
         if (!full || !comps) {
           setAddress({
@@ -118,7 +146,7 @@ const Map = forwardRef<TMapView, IMapProps>((props, ref) => {
           const short = isId && name ? name : baseShort;
           setAddress({ short, full, addressComponents: comps });
         }
-      } catch (err) {
+      } catch (err: unknown) {
         setAddress({
           short: name || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
           full: name || `${latitude}, ${longitude}`,
