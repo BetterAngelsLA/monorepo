@@ -1,7 +1,7 @@
 from unittest.mock import patch
-from django.conf import settings
 
 from common.tests.utils import GraphQLBaseTestCase
+from django.conf import settings
 from django.test import TestCase, override_settings
 from hmis.enums import (
     HmisDobQualityEnum,
