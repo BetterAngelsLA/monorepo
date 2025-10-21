@@ -5,7 +5,7 @@
  *   - "2025-10-20T00:00:00Z"
  *   - "2025-10-20T00:00:00.000Z"
  */
-export function isIsoDateString(value?: unknown): boolean {
+export function isValidIsoDate(value?: unknown): boolean {
   if (typeof value !== 'string') {
     return false;
   }

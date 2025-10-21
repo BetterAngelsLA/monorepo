@@ -1,18 +1,19 @@
 import { isValid, parseISO } from 'date-fns';
-import { isIsoDateString } from './isIsoDateString';
+import { isValidIsoDate } from './isValidIsoDate';
 
 /**
  * Parses an ISO-like date string safely.
- * Returns undefined if the input is not valid or not an ISO date.
+ * If valid input: returns Date
+ * If not valid input: returns undefined
  */
-export function toDateIsoSafe(value?: string | null): Date | undefined {
+export function isoToDateSafe(value?: string | null): Date | undefined {
   if (typeof value !== 'string') {
     return undefined;
   }
 
   const trimmed = value.trim();
 
-  if (!isIsoDateString(trimmed)) {
+  if (!isValidIsoDate(trimmed)) {
     return undefined;
   }
 
