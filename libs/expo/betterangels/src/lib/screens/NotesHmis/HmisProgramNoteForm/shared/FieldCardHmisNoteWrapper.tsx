@@ -34,7 +34,7 @@ export function FieldCardHmisNoteWrapper(props: IFieldCardProps) {
       accessible
       accessibilityRole="button"
       accessibilityHint={`expands ${title} field`}
-      style={({ pressed }) => [
+      style={[
         styles.container,
         {
           overflow,

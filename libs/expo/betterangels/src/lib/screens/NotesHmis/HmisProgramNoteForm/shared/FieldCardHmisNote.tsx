@@ -35,7 +35,7 @@ export function FieldCardHmisNote(props: IFieldCardProps) {
   const {
     children,
     value,
-    valueType,
+    // valueType,
     title,
     actionName,
     required,
