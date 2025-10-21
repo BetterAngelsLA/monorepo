@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from django.conf import settings
 
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import TestCase, override_settings
@@ -385,6 +386,8 @@ class HmisEnrollmentQueryTests(GraphQLBaseTestCase, TestCase):
 
     @scrubbed_vcr.use_cassette("hmis/tests/cassettes/test_hmis_list_enrollments_success.yaml")
     def test_hmis_list_enrollments_success(self) -> None:
+        HMIS_GRAPHQL_ENDPOINT = getattr(settings, "HMIS_GRAPHQL_URL", None)
+        print("2" * 50, HMIS_GRAPHQL_ENDPOINT)
         resp = self.execute_graphql(
             LIST_ENROLLMENTS_QUERY,
             variables={
