@@ -4,7 +4,6 @@ from typing import Dict, List, Optional, cast
 import strawberry
 import strawberry_django
 from django.db import transaction
-from graphql import GraphQLError
 from places import Places
 from shelters.enums import (
     AccessibilityChoices,
@@ -155,60 +154,35 @@ class Mutation:
             "funders": Funder,
         }
 
-        required_enum_lists = set(enum_field_model_map.keys())
+        data = {key: value for key, value in strawberry.asdict(input).items() if value is not UNSET}
+
+        m2m_values = {
+            field: [getattr(option, "value", option) for option in data.pop(field, []) or []]
+            for field in enum_field_model_map
+        }
+
+        organization = data.pop("organization", None)
+        if organization is not None:
+            data["organization_id"] = organization
+
+        if "status" in data and data["status"] is not None:
+            data["status"] = getattr(data["status"], "value", data["status"])
+
+        location = data.pop("location", None)
+        if location:
+            latitude = location.get("latitude")
+            longitude = location.get("longitude")
+            data["location"] = Places(
+                place=location.get("place"),
+                latitude=str(latitude) if latitude is not None else None,
+                longitude=str(longitude) if longitude is not None else None,
+            )
 
         with transaction.atomic():
-            incoming_data = strawberry.asdict(input)
+            shelter = resolvers.create(info, Shelter, data)
 
-            shelter_data: Dict[str, object] = {}
-            for key, value in incoming_data.items():
-                if value is UNSET:
-                    continue
-                shelter_data[key] = value
-
-            enum_values: Dict[str, List[object]] = {}
-            for field in enum_field_model_map.keys():
-                value = shelter_data.pop(field, None)
-                value_list = list(value) if value is not None else []
-                if field in required_enum_lists and len(value_list) == 0:
-                    raise GraphQLError(f"'{field}' must contain at least one value.")
-                enum_values[field] = value_list
-
-            location_input = shelter_data.pop("location", None)
-            if location_input:
-                place = location_input.get("place")
-                if not place:
-                    raise GraphQLError("'location.place' is required when providing a location.")
-
-                latitude = location_input.get("latitude")
-                longitude = location_input.get("longitude")
-
-                shelter_data["location"] = Places(
-                    place=place,
-                    latitude=str(latitude) if latitude is not None else None,
-                    longitude=str(longitude) if longitude is not None else None,
-                )
-
-            organization = shelter_data.pop("organization", None)
-            if organization is not None:
-                shelter_data["organization_id"] = organization
-
-            status = shelter_data.pop("status", None)
-            if status is not None:
-                shelter_data["status"] = status.value if hasattr(status, "value") else status
-
-            m2m_instances: Dict[str, List[object]] = {}
             for field, model_cls in enum_field_model_map.items():
-                instances: List[object] = []
-                for enum_option in enum_values[field]:
-                    enum_value = enum_option.value if hasattr(enum_option, "value") else enum_option
-                    instance, _created = model_cls.objects.get_or_create(name=enum_value)
-                    instances.append(instance)
-                m2m_instances[field] = instances
-
-            shelter = resolvers.create(info, Shelter, shelter_data)
-
-            for field, instances in m2m_instances.items():
+                instances = [model_cls.objects.get_or_create(name=value)[0] for value in m2m_values[field]]
                 getattr(shelter, field).set(instances)
 
         return cast(ShelterType, shelter)
