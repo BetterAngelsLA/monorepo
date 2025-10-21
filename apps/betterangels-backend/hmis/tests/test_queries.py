@@ -1,8 +1,7 @@
-import os
 from unittest.mock import patch
 
 from common.tests.utils import GraphQLBaseTestCase
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -12,8 +11,6 @@ from hmis.enums import (
     HmisVeteranStatusEnum,
 )
 from test_utils.vcr_config import scrubbed_vcr
-
-os.environ.setdefault("HMIS_GRAPHQL_URL", "https://betterangels.la")
 
 GET_CLIENT_QUERY = """
     query ($personalId: ID!) {
@@ -381,6 +378,7 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
         self.assertEqual(pagination_info, expected_pagination_info)
 
 
+@override_settings(HMIS_GRAPHQL_URL="https://betterangels.la")
 class HmisEnrollmentQueryTests(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
