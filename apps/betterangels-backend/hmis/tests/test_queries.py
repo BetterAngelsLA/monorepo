@@ -1,8 +1,7 @@
 from unittest.mock import patch
 
 from common.tests.utils import GraphQLBaseTestCase
-from django.conf import settings
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -379,15 +378,12 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
         self.assertEqual(pagination_info, expected_pagination_info)
 
 
-@override_settings(HMIS_GRAPHQL_URL="https://betterangels.la")
 class HmisEnrollmentQueryTests(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-    @scrubbed_vcr.use_cassette("hmis/tests/cassettes/test_hmis_list_enrollments_success.yaml")
+    @scrubbed_vcr.use_cassette("test_hmis_list_enrollments_success.yaml")
     def test_hmis_list_enrollments_success(self) -> None:
-        HMIS_GRAPHQL_ENDPOINT = getattr(settings, "HMIS_GRAPHQL_URL", None)
-        print("2" * 50, HMIS_GRAPHQL_ENDPOINT)
         resp = self.execute_graphql(
             LIST_ENROLLMENTS_QUERY,
             variables={

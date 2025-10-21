@@ -59,7 +59,6 @@ class HmisApiBridge:
         return getattr(obj, "_schema", obj)  # type: ignore
 
     def _make_request(self, body: dict[str, Any], timeout: Optional[float] = None) -> dict[str, Any]:
-        print("1" * 50, self.endpoint)
         resp = requests.post(
             self.endpoint,
             headers=self.headers,
