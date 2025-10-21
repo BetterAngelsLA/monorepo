@@ -378,12 +378,11 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
         self.assertEqual(pagination_info, expected_pagination_info)
 
 
-@override_settings(HMIS_GRAPHQL_URL="https://betterangels.la")
 class HmisEnrollmentQueryTests(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-    @scrubbed_vcr.use_cassette("apps/betterangels-backend/hmis/tests/cassettes/test_hmis_list_enrollments_success.yaml")
+    @scrubbed_vcr.use_cassette("hmis/tests/cassettes/test_hmis_list_enrollments_success.yaml")
     def test_hmis_list_enrollments_success(self) -> None:
         resp = self.execute_graphql(
             LIST_ENROLLMENTS_QUERY,
@@ -457,5 +456,4 @@ class HmisEnrollmentQueryTests(GraphQLBaseTestCase, TestCase):
         pagination_info = payload["meta"]
 
         self.assertEqual(enrollments, expected_enrollments)
-        self.assertEqual(pagination_info, expected_pagination_info)
         self.assertEqual(pagination_info, expected_pagination_info)
