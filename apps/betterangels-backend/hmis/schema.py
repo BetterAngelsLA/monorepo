@@ -50,8 +50,10 @@ def get_client_from_response(client_response: dict[str, Any]) -> HmisClientType:
             additional_race_ethnicity=data_response.get("additionalRaceEthnicity", None),
             gender=[HmisGenderEnum(g) for g in gender_data],
             different_identity_text=data_response.get("differentIdentityText", None),
-            veteran_status=HmisVeteranStatusEnum(
-                data_response.get("veteranStatus") or HmisVeteranStatusEnum.NOT_COLLECTED
+            veteran_status=(
+                HmisVeteranStatusEnum(data_response.get("veteranStatus"))
+                if data_response.get("veteranStatus") is not None
+                else HmisVeteranStatusEnum.NOT_COLLECTED
             ),
         )
 
