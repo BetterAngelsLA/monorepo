@@ -1,3 +1,4 @@
+import { format } from 'date-fns';
 import { z } from 'zod';
 
 export type THmisProgramNoteFormSchema = z.infer<
@@ -5,20 +6,32 @@ export type THmisProgramNoteFormSchema = z.infer<
 >;
 
 export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormSchema = {
-  personalId: '',
   title: '',
-  date: '',
+  date: undefined,
   program: '',
   note: '',
 };
 
 export const HmisProgramNoteFormSchema = z.object({
-  personalId: z.string().min(1, 'PersonalId is required.'),
   title: z.string().min(1, 'Purpose is required.'),
-  //   date: z.string().min(1, 'Date is required.'),
-  //   program: z.string().min(1, 'Program is required.'),
-  //   note: z.string().min(1, 'Note is required.'),
-  date: z.string(),
+  date: z
+    .date()
+    .optional()
+    .refine(
+      (val) => val instanceof Date && !Number.isNaN(val.getTime()), // not using isValid as it allows integer dates
+      'Date is required.'
+    ),
   program: z.string(),
   note: z.string(),
 });
+
+export const HmisProgramNoteFormtSchemaOutput =
+  HmisProgramNoteFormSchema.extend({
+    date: z.date(), // required
+  }).transform(({ date, ...rest }) => ({
+    ...rest,
+    date: format(date, 'yyyy-MM-dd'),
+  }));
+
+export type TFormInput = z.input<typeof HmisProgramNoteFormSchema>;
+export type TFormOutput = z.output<typeof HmisProgramNoteFormtSchemaOutput>;

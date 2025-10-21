@@ -5412,7 +5412,7 @@ __metadata:
     "@types/apollo-upload-client": "npm:^18.0.0"
     "@types/google.maps": "npm:^3.58.1"
     "@types/jest": "npm:29.5.14"
-    "@types/node": "npm:^20.0.0"
+    "@types/node": "npm:20.19.9"
     "@types/react": "npm:~19.1.10"
     "@types/react-dom": "npm:~19.1.7"
     "@types/react-mailchimp-subscribe": "npm:^2.1.4"
@@ -5479,6 +5479,7 @@ __metadata:
     jest-environment-jsdom: "npm:29.7.0"
     jest-environment-node: "npm:^29.4.1"
     jest-expo: "npm:~54.0.12"
+    jest-util: "npm:^29.7.0"
     jiti: "npm:2.4.2"
     jotai: "npm:^2.12.5"
     jsdom: "npm:~22.1.0"
@@ -9462,12 +9463,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:^20.0.0":
-  version: 20.19.17
-  resolution: "@types/node@npm:20.19.17"
+"@types/node@npm:20.19.9":
+  version: 20.19.9
+  resolution: "@types/node@npm:20.19.9"
   dependencies:
     undici-types: "npm:~6.21.0"
-  checksum: 10/66e240c06a94859d0e1dce76b2055501cb9ec386c0028e687479625a2f1cd3dda0b089278b2767044dff51b07beaf439df6b8b3ce99d5cbeacf243988bd7aa86
+  checksum: 10/7631e541fb3cdef57d73b626cbcf4365ae5979345ee920429f0de0acceff69dbf843d4815404b58eb3957bace3f825d0ea38889051d2d218301c5dc48ada6cff
   languageName: node
   linkType: hard
 
