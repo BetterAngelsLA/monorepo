@@ -367,5 +367,3 @@ class Mutation:
             return HmisUpdateClientError(message=errors[0]["message"])
 
         return get_client_from_response(response)
-
-        return get_client_from_response(response)
