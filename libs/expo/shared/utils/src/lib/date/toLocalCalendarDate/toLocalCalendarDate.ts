@@ -18,7 +18,7 @@
  */
 
 import { isValid, parse } from 'date-fns';
-import { isoToDateSafe } from './isoToDateSafe';
+import { isoToDateSafe } from '../isoToDateSafe';
 
 export function toLocalCalendarDate(
   value?: string | Date | null,
