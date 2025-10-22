@@ -55,6 +55,13 @@ def get_client_data_from_response(client_data_response: Optional[dict[str, Any]]
     race_ethnicity_data = client_data_response.get("raceEthnicity") or []
     gender_data = client_data_response.get("gender") or []
 
+    veteran_status_data = client_data_response.get("gender")
+    veteran_status = (
+        HmisVeteranStatusEnum(veteran_status_data)
+        if veteran_status_data is not None
+        else HmisVeteranStatusEnum.NOT_COLLECTED
+    )
+
     return HmisClientDataType(
         middle_name=client_data_response.get("middleName", None),
         name_suffix=client_data_response.get("nameSuffix", None),
@@ -63,9 +70,7 @@ def get_client_data_from_response(client_data_response: Optional[dict[str, Any]]
         additional_race_ethnicity=client_data_response.get("additionalRaceEthnicity", None),
         gender=[HmisGenderEnum(g) for g in gender_data],
         different_identity_text=client_data_response.get("differentIdentityText", None),
-        veteran_status=HmisVeteranStatusEnum(
-            client_data_response.get("veteranStatus") or HmisVeteranStatusEnum.NOT_COLLECTED
-        ),
+        veteran_status=veteran_status,
     )
 
 

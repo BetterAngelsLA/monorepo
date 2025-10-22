@@ -68,10 +68,7 @@ export function ClientProfileHMISView(props: TProps) {
           card={ClientProfileSectionEnum.PersonalInfo}
           openCard={expandedCard}
           onOpenCloseClick={onOpenCloseClick}
-          // onEditClick={onClickEdit}
-          onEditClick={() => {
-            alert('Page not yet implemented.');
-          }}
+          onEditClick={onClickEdit}
         >
           <PersonalInfoCardHmis client={client} />
         </ExpandableProfileContainer>
