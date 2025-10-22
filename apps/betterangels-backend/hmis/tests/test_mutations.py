@@ -350,7 +350,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
             "differentIdentityText": "diff id",
             "raceEthnicity": [2],
             "gender": [2],
-            "veteranStatus": 8,
+            "veteranStatus": 0,
         }
 
         return_value = {
@@ -373,7 +373,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
                 "differentIdentityText": "diff id",
                 "raceEthnicity": [2],
                 "gender": [2],
-                "veteranStatus": 8,
+                "veteranStatus": 0,
             },
         }
 
@@ -401,7 +401,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
             "differentIdentityText": "diff id",
             "raceEthnicity": [HmisRaceEnum.ASIAN.name],
             "gender": [HmisGenderEnum.SPECIFIC.name],
-            "veteranStatus": HmisVeteranStatusEnum.DONT_KNOW.name,
+            "veteranStatus": HmisVeteranStatusEnum.NO.name,
         }
         expected_client = {
             "personalId": "1",
