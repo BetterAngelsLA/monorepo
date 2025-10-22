@@ -514,6 +514,7 @@ class HmisClientNoteQueryTests(GraphQLBaseTestCase, TestCase):
         super().setUp()
 
     @scrubbed_vcr.use_cassette("apps/betterangels-backend/hmis/tests/cassettes/test_hmis_get_client_note_success.yaml")
+    @skip("need to fix vcrpy in ci")
     def test_hmis_get_client_note_success(self) -> None:
         resp = self.execute_graphql(
             GET_CLIENT_NOTE_QUERY,
@@ -538,6 +539,7 @@ class HmisClientNoteQueryTests(GraphQLBaseTestCase, TestCase):
     @scrubbed_vcr.use_cassette(
         "apps/betterangels-backend/hmis/tests/cassettes/test_hmis_list_client_notes_success.yaml"
     )
+    @skip("need to fix vcrpy in ci")
     def test_hmis_list_client_notes_success(self) -> None:
         resp = self.execute_graphql(
             LIST_CLIENT_NOTES_QUERY,
