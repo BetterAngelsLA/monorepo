@@ -5,6 +5,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { HmisNoteProgramPicker } from './HmisNoteProgramPicker';
 import { TFormInput, hmisProgramNoteFormEmptyState } from './formSchema';
 import { FieldCardHmisNote } from './shared/FieldCardHmisNote';
 import { renderValue } from './shared/renderValue';
@@ -35,6 +36,13 @@ export function HmisProgramNoteForm() {
   useEffect(() => {
     console.log('*******  FORM input DATE VALUE dateYmd CHANGE: ', dateYmd);
   }, [dateYmd]);
+
+  useEffect(() => {
+    console.log(
+      '*******  FORM input DATE VALUE programValue CHANGE: ',
+      programValue
+    );
+  }, [programValue]);
 
   function toggleFieldExpanded(key: TFormKeys) {
     const value = key === expandedField ? null : key;
@@ -89,16 +97,7 @@ export function HmisProgramNoteForm() {
         error={errors.program?.message}
         mb="xs"
       >
-        <ControlledInput
-          name="program"
-          required
-          control={control}
-          disabled={isSubmitting}
-          placeholder="Enter program"
-          onDelete={() => {
-            setValue('program', hmisProgramNoteFormEmptyState.program);
-          }}
-        />
+        <HmisNoteProgramPicker hmisClientId="asdf" control={control} />
       </FieldCardHmisNote>
     </Form>
   );

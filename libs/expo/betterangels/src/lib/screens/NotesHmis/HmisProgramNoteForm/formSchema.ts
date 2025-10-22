@@ -21,7 +21,7 @@ export const HmisProgramNoteFormSchema = z.object({
       (val) => val instanceof Date && !Number.isNaN(val.getTime()), // not using isValid as it allows integer dates
       'Date is required.'
     ),
-  program: z.string(),
+  program: z.string().min(1, 'Program is required.'),
   note: z.string(),
 });
 
