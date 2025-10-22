@@ -770,6 +770,27 @@ export type HmisClientListType = {
 
 export type HmisClientListTypeHmisListClientsError = HmisClientListType | HmisListClientsError;
 
+export type HmisClientNoteListType = {
+  __typename?: 'HmisClientNoteListType';
+  items: Array<HmisClientNoteType>;
+  meta?: Maybe<HmisListMetaType>;
+};
+
+export type HmisClientNoteListTypeHmisListClientNotesError = HmisClientNoteListType | HmisListClientNotesError;
+
+export type HmisClientNoteType = {
+  __typename?: 'HmisClientNoteType';
+  category?: Maybe<Scalars['String']['output']>;
+  client?: Maybe<HmisClientType>;
+  date?: Maybe<Scalars['String']['output']>;
+  enrollment?: Maybe<HmisEnrollmentType>;
+  id?: Maybe<Scalars['String']['output']>;
+  note?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+export type HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | HmisGetClientNoteError;
+
 export type HmisClientType = {
   __typename?: 'HmisClientType';
   data?: Maybe<HmisClientDataType>;
@@ -878,6 +899,18 @@ export enum HmisGenderEnum {
 
 export type HmisGetClientError = {
   __typename?: 'HmisGetClientError';
+  field?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+};
+
+export type HmisGetClientNoteError = {
+  __typename?: 'HmisGetClientNoteError';
+  field?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+};
+
+export type HmisListClientNotesError = {
+  __typename?: 'HmisListClientNotesError';
   field?: Maybe<Scalars['String']['output']>;
   message: Scalars['String']['output'];
 };
@@ -1785,6 +1818,8 @@ export type Query = {
   currentUser: UserType;
   featureControls: FeatureControlData;
   hmisGetClient: HmisClientTypeHmisGetClientError;
+  hmisGetClientNote: HmisClientNoteTypeHmisGetClientNoteError;
+  hmisListClientNotes: HmisClientNoteListTypeHmisListClientNotesError;
   hmisListClients: HmisClientListTypeHmisListClientsError;
   hmisListEnrollments: HmisEnrollmentListTypeHmisListEnrollmentsError;
   hmisProfile: HmisProfileType;
@@ -1863,6 +1898,20 @@ export type QueryClientProfilesArgs = {
 
 
 export type QueryHmisGetClientArgs = {
+  personalId: Scalars['ID']['input'];
+};
+
+
+export type QueryHmisGetClientNoteArgs = {
+  enrollmentId: Scalars['ID']['input'];
+  id: Scalars['ID']['input'];
+  personalId: Scalars['ID']['input'];
+};
+
+
+export type QueryHmisListClientNotesArgs = {
+  enrollmentId: Scalars['ID']['input'];
+  pagination?: InputMaybe<HmisPaginationInput>;
   personalId: Scalars['ID']['input'];
 };
 
