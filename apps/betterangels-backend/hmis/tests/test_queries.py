@@ -1,4 +1,5 @@
-from unittest.mock import patch, skip
+from unittest import skip
+from unittest.mock import patch
 
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import TestCase
