@@ -13,6 +13,12 @@ import {
   fullNameFormEmptyState,
   mapClientToFullNameSchema,
 } from './FullName';
+import {
+  PersonalInfoFormHmis,
+  PersonalInfoFormSchema,
+  mapClientToPersonalInfoSchema,
+  personalInfoFormEmptyState,
+} from './PersonalInfo';
 
 export const hmisFormConfig = {
   [ClientProfileSectionEnum.FullName]: {
@@ -28,6 +34,13 @@ export const hmisFormConfig = {
     schema: DemographicInfoFormSchema,
     emptyState: demographicInfoFormEmptyState,
     dataMapper: mapClientToDemographicSchema,
+  },
+  [ClientProfileSectionEnum.PersonalInfo]: {
+    title: 'Edit Personal Info',
+    Form: PersonalInfoFormHmis,
+    schema: PersonalInfoFormSchema,
+    emptyState: personalInfoFormEmptyState,
+    dataMapper: mapClientToPersonalInfoSchema,
   },
 } as const satisfies Partial<
   Record<ClientProfileSectionEnum, TSectionConfig<ZodType<any, any, any>>>
