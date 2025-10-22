@@ -49,7 +49,7 @@ def get_client_data_from_response(client_data_response: Optional[dict[str, Any]]
     race_ethnicity_data = client_data_response.get("raceEthnicity") or []
     gender_data = client_data_response.get("gender") or []
 
-    veteran_status_data = client_data_response.get("gender")
+    veteran_status_data = client_data_response.get("veteranStatus")
     veteran_status = (
         HmisVeteranStatusEnum(veteran_status_data)
         if veteran_status_data is not None
