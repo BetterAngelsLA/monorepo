@@ -177,6 +177,49 @@ LIST_CLIENT_NOTES_QUERY = """
 """
 
 
+LIST_ENROLLMENTS_QUERY = """
+    query ($personalId: ID!, $dynamicFields: [String]!, $pagination: HmisPaginationInput) {
+        hmisListEnrollments(personalId: $personalId, dynamicFields: $dynamicFields, pagination: $pagination) {
+            ... on HmisEnrollmentListType {
+                items {
+                    personalId
+                    dateCreated
+                    dateUpdated
+                    enrollmentId
+                    entryDate
+                    exitDate
+                    householdId
+                    data {
+                        field
+                        value
+                    }
+                    enrollmentHouseholdMembers {
+                        personalId
+                        enrollmentId
+                    }
+                    project {
+                        projectId
+                        projectName
+                        projectType
+                        dateCreated
+                        dateUpdated
+                    }
+                }
+                meta {
+                    currentPage
+                    pageCount
+                    perPage
+                    totalCount
+                }
+            }
+            ... on HmisListEnrollmentsError {
+                message
+            }
+        }
+    }
+"""
+
+
 class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
