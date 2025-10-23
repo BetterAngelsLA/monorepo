@@ -3,8 +3,11 @@ import {
   DatePicker,
   Form,
 } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useModalScreen } from '../../../providers';
+import { GirpNoteForm } from '../../../ui-components';
 import { HmisNoteProgramPicker } from './HmisNoteProgramPicker';
 import { TFormInput, hmisProgramNoteFormEmptyState } from './formSchema';
 import { FieldCardHmisNote } from './shared/FieldCardHmisNote';
@@ -19,7 +22,13 @@ export const FORM_KEYS = {
   note: 'note',
 } as const satisfies { [K in TFormKeys]: K };
 
-export function HmisProgramNoteForm() {
+type TProps = {
+  disabled?: boolean;
+};
+
+export function HmisProgramNoteForm(props: TProps) {
+  const { disabled } = props;
+
   const {
     control,
     watch,
@@ -27,22 +36,43 @@ export function HmisProgramNoteForm() {
     formState: { errors, isSubmitting },
   } = useFormContext<TFormInput>();
 
+  const router = useRouter();
+  const { showModalScreen } = useModalScreen();
   const [expandedField, setExpandedField] = useState<TFormKeys | null>(null);
 
   const titleValue = watch('title') || '';
   const programValue = watch('program') || '';
   const dateYmd = watch('date') || '';
+  const noteValue = watch('note') || '';
 
-  useEffect(() => {
-    console.log('*******  FORM input DATE VALUE dateYmd CHANGE: ', dateYmd);
-  }, [dateYmd]);
+  function handleGirpFormOpen() {
+    if (expandedField === FORM_KEYS.note) {
+      setExpandedField(null);
 
-  useEffect(() => {
-    console.log(
-      '*******  FORM input DATE VALUE programValue CHANGE: ',
-      programValue
-    );
-  }, [programValue]);
+      return;
+    }
+
+    showModalScreen({
+      presentation: 'card',
+      title: 'Note',
+      content: () => (
+        <GirpNoteForm
+          note={noteValue}
+          disabled={disabled}
+          purpose={titleValue}
+          onDone={(newNote) => {
+            setValue('note', newNote, {
+              shouldDirty: true,
+              shouldValidate: true,
+              shouldTouch: true,
+            });
+
+            router.back();
+          }}
+        />
+      ),
+    });
+  }
 
   function toggleFieldExpanded(key: TFormKeys) {
     const value = key === expandedField ? null : key;
@@ -63,7 +93,7 @@ export function HmisProgramNoteForm() {
         mb="xs"
       >
         <ControlledInput
-          name="title"
+          name="title" // purpose field is named `title` in schema
           required
           control={control}
           disabled={isSubmitting}
@@ -99,6 +129,17 @@ export function HmisProgramNoteForm() {
       >
         <HmisNoteProgramPicker hmisClientId="asdf" control={control} />
       </FieldCardHmisNote>
+
+      <FieldCardHmisNote
+        required
+        title="Note"
+        value={noteValue}
+        actionName="Add Note"
+        onPress={handleGirpFormOpen}
+        expanded={false} // never expands on click but opens form
+        error={errors.note?.message}
+        mb="xs"
+      />
     </Form>
   );
 }

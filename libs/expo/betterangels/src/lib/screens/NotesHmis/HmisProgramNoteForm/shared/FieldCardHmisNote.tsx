@@ -18,7 +18,7 @@ function renderActionName(val: string | ReactNode) {
 }
 
 interface IFieldCardProps extends TMarginProps {
-  children: ReactNode;
+  children?: ReactNode;
   title: string;
   actionName: string | ReactNode;
   value?: string;

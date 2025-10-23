@@ -22,7 +22,7 @@ export const HmisProgramNoteFormSchema = z.object({
       'Date is required.'
     ),
   program: z.string().min(1, 'Program is required.'),
-  note: z.string(),
+  note: z.string().min(1, 'Note is required.'),
 });
 
 export const HmisProgramNoteFormtSchemaOutput =
