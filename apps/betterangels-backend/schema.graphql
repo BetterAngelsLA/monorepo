@@ -809,24 +809,24 @@ type HmisCreateClientError {
 input HmisCreateClientInput {
   firstName: String!
   lastName: String!
-  nameDataQuality: Int = 99
+  nameDataQuality: HmisNameQualityEnum = PARTIAL
   ssn1: String = ""
   ssn2: String = ""
   ssn3: String = "xxxx"
-  ssnDataQuality: Int = 99
+  ssnDataQuality: HmisSsnQualityEnum = NOT_COLLECTED
   dob: String = ""
-  dobDataQuality: Int = 99
+  dobDataQuality: HmisDobQualityEnum = NOT_COLLECTED
 }
 
 input HmisCreateClientSubItemsInput {
   middleName: String = ""
-  nameSuffix: Int = 9
+  nameSuffix: HmisSuffixEnum = NO_ANSWER
   alias: String = ""
   additionalRaceEthnicity: String = ""
   differentIdentityText: String = ""
-  raceEthnicity: [Int!] = [99]
-  gender: [Int!] = [99]
-  veteranStatus: Int = 99
+  raceEthnicity: [HmisRaceEnum!] = [NOT_COLLECTED]
+  gender: [HmisGenderEnum!] = [NOT_COLLECTED]
+  veteranStatus: HmisVeteranStatusEnum = NOT_COLLECTED
 }
 
 enum HmisDobQualityEnum {
@@ -1005,24 +1005,24 @@ input HmisUpdateClientInput {
   personalId: String!
   firstName: String!
   lastName: String!
-  nameDataQuality: Int!
+  nameDataQuality: HmisNameQualityEnum!
   ssn1: String!
   ssn2: String!
   ssn3: String!
-  ssnDataQuality: Int!
+  ssnDataQuality: HmisSsnQualityEnum!
   dob: String!
-  dobDataQuality: Int!
+  dobDataQuality: HmisDobQualityEnum!
 }
 
 input HmisUpdateClientSubItemsInput {
   middleName: String!
-  nameSuffix: Int!
+  nameSuffix: HmisSuffixEnum!
   alias: String!
   additionalRaceEthnicity: String!
   differentIdentityText: String!
-  raceEthnicity: [Int!]!
-  gender: [Int!]!
-  veteranStatus: Int!
+  raceEthnicity: [HmisRaceEnum!]!
+  gender: [HmisGenderEnum!]!
+  veteranStatus: HmisVeteranStatusEnum!
 }
 
 enum HmisVeteranStatusEnum {

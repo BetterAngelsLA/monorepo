@@ -821,25 +821,25 @@ export type HmisCreateClientError = {
 
 export type HmisCreateClientInput = {
   dob?: InputMaybe<Scalars['String']['input']>;
-  dobDataQuality?: InputMaybe<Scalars['Int']['input']>;
+  dobDataQuality?: InputMaybe<HmisDobQualityEnum>;
   firstName: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
-  nameDataQuality?: InputMaybe<Scalars['Int']['input']>;
+  nameDataQuality?: InputMaybe<HmisNameQualityEnum>;
   ssn1?: InputMaybe<Scalars['String']['input']>;
   ssn2?: InputMaybe<Scalars['String']['input']>;
   ssn3?: InputMaybe<Scalars['String']['input']>;
-  ssnDataQuality?: InputMaybe<Scalars['Int']['input']>;
+  ssnDataQuality?: InputMaybe<HmisSsnQualityEnum>;
 };
 
 export type HmisCreateClientSubItemsInput = {
   additionalRaceEthnicity?: InputMaybe<Scalars['String']['input']>;
   alias?: InputMaybe<Scalars['String']['input']>;
   differentIdentityText?: InputMaybe<Scalars['String']['input']>;
-  gender?: InputMaybe<Array<Scalars['Int']['input']>>;
+  gender?: InputMaybe<Array<HmisGenderEnum>>;
   middleName?: InputMaybe<Scalars['String']['input']>;
-  nameSuffix?: InputMaybe<Scalars['Int']['input']>;
-  raceEthnicity?: InputMaybe<Array<Scalars['Int']['input']>>;
-  veteranStatus?: InputMaybe<Scalars['Int']['input']>;
+  nameSuffix?: InputMaybe<HmisSuffixEnum>;
+  raceEthnicity?: InputMaybe<Array<HmisRaceEnum>>;
+  veteranStatus?: InputMaybe<HmisVeteranStatusEnum>;
 };
 
 export enum HmisDobQualityEnum {
@@ -1029,26 +1029,26 @@ export type HmisUpdateClientError = {
 
 export type HmisUpdateClientInput = {
   dob: Scalars['String']['input'];
-  dobDataQuality: Scalars['Int']['input'];
+  dobDataQuality: HmisDobQualityEnum;
   firstName: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
-  nameDataQuality: Scalars['Int']['input'];
+  nameDataQuality: HmisNameQualityEnum;
   personalId: Scalars['String']['input'];
   ssn1: Scalars['String']['input'];
   ssn2: Scalars['String']['input'];
   ssn3: Scalars['String']['input'];
-  ssnDataQuality: Scalars['Int']['input'];
+  ssnDataQuality: HmisSsnQualityEnum;
 };
 
 export type HmisUpdateClientSubItemsInput = {
   additionalRaceEthnicity: Scalars['String']['input'];
   alias: Scalars['String']['input'];
   differentIdentityText: Scalars['String']['input'];
-  gender: Array<Scalars['Int']['input']>;
+  gender: Array<HmisGenderEnum>;
   middleName: Scalars['String']['input'];
-  nameSuffix: Scalars['Int']['input'];
-  raceEthnicity: Array<Scalars['Int']['input']>;
-  veteranStatus: Scalars['Int']['input'];
+  nameSuffix: HmisSuffixEnum;
+  raceEthnicity: Array<HmisRaceEnum>;
+  veteranStatus: HmisVeteranStatusEnum;
 };
 
 export enum HmisVeteranStatusEnum {
