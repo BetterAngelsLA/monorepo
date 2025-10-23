@@ -1,0 +1,1 @@
+export { GirpNoteForm } from './GirpNoteForm';
