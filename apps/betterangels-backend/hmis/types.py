@@ -163,8 +163,55 @@ class HmisClientType:
 
 
 @strawberry.type
+class HmisEnrollmentDataType:
+    field: Optional[str]
+    value: Optional[str]
+
+
+@strawberry.type
+class HmisEnrollmentHouseholdMemberType:
+    personal_id: Optional[str]
+    enrollment_id: Optional[str]
+
+
+@strawberry.type
+class HmisProjectType:
+    date_created: Optional[str]
+    date_updated: Optional[str]
+    organization_id: Optional[str]
+    project_id: Optional[str]
+    project_name: Optional[str]
+    project_type: Optional[str]
+
+
+@strawberry.input
+class HmisEnrollmentDynamicFieldsInput:
+    dynamic_fields: Optional[list[str]]
+
+
+@strawberry.type
+class HmisEnrollmentType:
+    personal_id: Optional[str]
+    date_created: Optional[str]
+    date_updated: Optional[str]
+    enrollment_id: Optional[str]
+    entry_date: Optional[str]
+    exit_date: Optional[str]
+    household_id: Optional[str]
+    project: Optional[HmisProjectType]
+    data: Optional[list[HmisEnrollmentDataType]]
+    enrollment_household_members: Optional[list[HmisEnrollmentHouseholdMemberType]]
+
+
+@strawberry.type
 class HmisClientListType:
     items: list[HmisClientType]
+    meta: Optional[HmisListMetaType]
+
+
+@strawberry.type
+class HmisEnrollmentListType:
+    items: list[HmisEnrollmentType]
     meta: Optional[HmisListMetaType]
 
 
@@ -192,7 +239,14 @@ class HmisListClientsError:
     field: Optional[str] = None
 
 
+@strawberry.type
+class HmisListEnrollmentsError:
+    message: str
+    field: Optional[str] = None
+
+
 HmisGetClientResult = Union[HmisClientType, HmisGetClientError]
 HmisCreateClientResult = Union[HmisClientType, HmisCreateClientError]
 HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]
 HmisListClientsResult = Union[HmisClientListType, HmisListClientsError]
+HmisListEnrollmentsResult = Union[HmisEnrollmentListType, HmisListEnrollmentsError]

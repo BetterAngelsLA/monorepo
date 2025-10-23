@@ -200,6 +200,12 @@ class HmisApiBridge:
 
         return query
 
+    def _format_enrollments_query(self, original_query: str) -> str:
+        # move personalId into filter arg
+        query = re.sub(r"personalId:\s*\$personalId", r"filter: {personalId: $personalId}", original_query)
+
+        return query
+
     def _fernet(self) -> Fernet:
         key = getattr(settings, "HMIS_TOKEN_KEY", None)
         if not key:
@@ -311,6 +317,35 @@ class HmisApiBridge:
             return {"errors": errors}
 
         return data.get("data", {}).get("listClients") or {}
+
+    def list_enrollments(
+        self,
+        dynamic_fields: list[Optional[str]],
+        personal_id: strawberry.ID,
+        pagination: Optional[HmisPaginationInput],
+    ) -> Optional[dict[str, Any]]:
+        query = self._format_query(
+            original_query=self.request.body, expected_type="HmisEnrollmentListType", is_list_query=True
+        )
+        query = self._format_enrollments_query(original_query=query)
+
+        pagination_vars = {"pagination": strawberry.asdict(pagination)} if pagination else {}
+
+        data = self._make_request(
+            body={
+                "query": query,
+                "variables": {
+                    "dynamicFields": dynamic_fields,
+                    "personalId": personal_id,
+                    **pagination_vars,
+                },
+            }
+        )
+
+        if errors := data.get("errors"):
+            return {"errors": errors}
+
+        return data.get("data", {}).get("listEnrollments") or {}
 
     def create_client(
         self,
