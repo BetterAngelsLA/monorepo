@@ -202,9 +202,15 @@ class HmisApiBridge:
 
     def _format_enrollments_query(self, original_query: str) -> str:
         # move personalId into filter arg
-        query = re.sub(r"personalId:\s*\$personalId", r"filter: {personalId: $personalId}", original_query)
+        return re.sub(r"personalId:\s*\$personalId", r"filter: {personalId: $personalId}", original_query)
 
-        return query
+    def _format_client_notes_query(self, original_query: str) -> str:
+        # move ids into filter arg
+        return re.sub(
+            r"personalId:\s*\$personalId\s*,\s*enrollmentId:\s*\$enrollmentId",
+            r"filter: {personalId: $personalId, enrollmentId: $enrollmentId}",
+            original_query,
+        )
 
     def _fernet(self) -> Fernet:
         key = getattr(settings, "HMIS_TOKEN_KEY", None)
@@ -294,6 +300,27 @@ class HmisApiBridge:
 
         return data.get("data", {}).get("getClient") or {}
 
+    def get_client_note(
+        self, personal_id: strawberry.ID, enrollment_id: strawberry.ID, id: strawberry.ID
+    ) -> Optional[dict[str, Any]]:
+        query = self._format_query(original_query=self.request.body, expected_type="HmisClientNoteType")
+
+        data = self._make_request(
+            body={
+                "query": query,
+                "variables": {
+                    "id": id,
+                    "personalId": personal_id,
+                    "enrollmentId": enrollment_id,
+                },
+            }
+        )
+
+        if errors := data.get("errors"):
+            return {"errors": errors}
+
+        return data.get("data", {}).get("getClientNote") or {}
+
     def list_clients(
         self,
         pagination: Optional[HmisPaginationInput],
@@ -317,6 +344,36 @@ class HmisApiBridge:
             return {"errors": errors}
 
         return data.get("data", {}).get("listClients") or {}
+
+    def list_client_notes(
+        self,
+        personal_id: strawberry.ID,
+        enrollment_id: strawberry.ID,
+        pagination: Optional[HmisPaginationInput],
+    ) -> Optional[dict[str, Any]]:
+        query = self._format_query(
+            original_query=self.request.body, expected_type="HmisClientNoteListType", is_list_query=True
+        )
+
+        query = self._format_client_notes_query(query)
+
+        pagination_vars = {"pagination": strawberry.asdict(pagination)} if pagination else {}
+
+        data = self._make_request(
+            body={
+                "query": query,
+                "variables": {
+                    "personalId": personal_id,
+                    "enrollmentId": enrollment_id,
+                    **pagination_vars,
+                },
+            }
+        )
+
+        if errors := data.get("errors"):
+            return {"errors": errors}
+
+        return data.get("data", {}).get("listClientNotes") or {}
 
     def list_enrollments(
         self,
