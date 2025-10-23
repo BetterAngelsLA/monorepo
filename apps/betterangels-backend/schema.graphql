@@ -761,6 +761,25 @@ type HmisClientListType {
 
 union HmisClientListTypeHmisListClientsError = HmisClientListType | HmisListClientsError
 
+type HmisClientNoteListType {
+  items: [HmisClientNoteType!]!
+  meta: HmisListMetaType
+}
+
+union HmisClientNoteListTypeHmisListClientNotesError = HmisClientNoteListType | HmisListClientNotesError
+
+type HmisClientNoteType {
+  id: String
+  title: String
+  note: String
+  date: String
+  category: String
+  client: HmisClientType
+  enrollment: HmisEnrollmentType
+}
+
+union HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | HmisGetClientNoteError
+
 type HmisClientType {
   personalId: String
   uniqueIdentifier: String
@@ -862,6 +881,16 @@ enum HmisGenderEnum {
 }
 
 type HmisGetClientError {
+  message: String!
+  field: String
+}
+
+type HmisGetClientNoteError {
+  message: String!
+  field: String
+}
+
+type HmisListClientNotesError {
   message: String!
   field: String
 }
@@ -1523,6 +1552,8 @@ type Query {
   featureControls: FeatureControlData!
   hmisGetClient(personalId: ID!): HmisClientTypeHmisGetClientError!
   hmisListClients(pagination: HmisPaginationInput = null, filter: HmisClientFilterInput = null): HmisClientListTypeHmisListClientsError!
+  hmisGetClientNote(personalId: ID!, enrollmentId: ID!, id: ID!): HmisClientNoteTypeHmisGetClientNoteError!
+  hmisListClientNotes(personalId: ID!, enrollmentId: ID!, pagination: HmisPaginationInput = null): HmisClientNoteListTypeHmisListClientNotesError!
   hmisListEnrollments(dynamicFields: [String]!, personalId: ID!, pagination: HmisPaginationInput = null): HmisEnrollmentListTypeHmisListEnrollmentsError!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
