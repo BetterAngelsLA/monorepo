@@ -789,7 +789,11 @@ export type HmisClientNoteType = {
   title?: Maybe<Scalars['String']['output']>;
 };
 
+export type HmisClientNoteTypeHmisCreateClientNoteError = HmisClientNoteType | HmisCreateClientNoteError;
+
 export type HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | HmisGetClientNoteError;
+
+export type HmisClientNoteTypeHmisUpdateClientNoteError = HmisClientNoteType | HmisUpdateClientNoteError;
 
 export type HmisClientType = {
   __typename?: 'HmisClientType';
@@ -829,6 +833,21 @@ export type HmisCreateClientInput = {
   ssn2?: InputMaybe<Scalars['String']['input']>;
   ssn3?: InputMaybe<Scalars['String']['input']>;
   ssnDataQuality?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type HmisCreateClientNoteError = {
+  __typename?: 'HmisCreateClientNoteError';
+  field?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+};
+
+export type HmisCreateClientNoteInput = {
+  category?: InputMaybe<Scalars['String']['input']>;
+  date: Scalars['String']['input'];
+  enrollmentId: Scalars['String']['input'];
+  note: Scalars['String']['input'];
+  personalId: Scalars['String']['input'];
+  title: Scalars['String']['input'];
 };
 
 export type HmisCreateClientSubItemsInput = {
@@ -1040,6 +1059,22 @@ export type HmisUpdateClientInput = {
   ssnDataQuality: Scalars['Int']['input'];
 };
 
+export type HmisUpdateClientNoteError = {
+  __typename?: 'HmisUpdateClientNoteError';
+  field?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+};
+
+export type HmisUpdateClientNoteInput = {
+  category?: InputMaybe<Scalars['String']['input']>;
+  date: Scalars['String']['input'];
+  enrollmentId: Scalars['String']['input'];
+  id: Scalars['String']['input'];
+  note: Scalars['String']['input'];
+  personalId: Scalars['String']['input'];
+  title: Scalars['String']['input'];
+};
+
 export type HmisUpdateClientSubItemsInput = {
   additionalRaceEthnicity: Scalars['String']['input'];
   alias: Scalars['String']['input'];
@@ -1240,8 +1275,10 @@ export type Mutation = {
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
   hmisCreateClient: HmisClientTypeHmisCreateClientError;
+  hmisCreateClientNote: HmisClientNoteTypeHmisCreateClientNoteError;
   hmisLogin: UserTypeHmisLoginError;
   hmisUpdateClient: HmisClientTypeHmisUpdateClientError;
+  hmisUpdateClientNote: HmisClientNoteTypeHmisUpdateClientNoteError;
   importClientProfile: ImportClientProfilePayload;
   importNote: ImportNotePayload;
   login: AuthResponse;
@@ -1389,6 +1426,11 @@ export type MutationHmisCreateClientArgs = {
 };
 
 
+export type MutationHmisCreateClientNoteArgs = {
+  clientNoteInput: HmisCreateClientNoteInput;
+};
+
+
 export type MutationHmisLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -1398,6 +1440,11 @@ export type MutationHmisLoginArgs = {
 export type MutationHmisUpdateClientArgs = {
   clientInput: HmisUpdateClientInput;
   clientSubItemsInput: HmisUpdateClientSubItemsInput;
+};
+
+
+export type MutationHmisUpdateClientNoteArgs = {
+  clientNoteInput: HmisUpdateClientNoteInput;
 };
 
 

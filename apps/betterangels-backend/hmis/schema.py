@@ -18,6 +18,9 @@ from .types import (
     HmisClientType,
     HmisCreateClientError,
     HmisCreateClientInput,
+    HmisCreateClientNoteError,
+    HmisCreateClientNoteInput,
+    HmisCreateClientNoteResult,
     HmisCreateClientResult,
     HmisCreateClientSubItemsInput,
     HmisEnrollmentDataType,
@@ -41,6 +44,9 @@ from .types import (
     HmisProjectType,
     HmisUpdateClientError,
     HmisUpdateClientInput,
+    HmisUpdateClientNoteError,
+    HmisUpdateClientNoteInput,
+    HmisUpdateClientNoteResult,
     HmisUpdateClientResult,
     HmisUpdateClientSubItemsInput,
 )
@@ -367,3 +373,45 @@ class Mutation:
             return HmisUpdateClientError(message=errors[0]["message"])
 
         return get_client_from_response(response)
+
+    @strawberry.mutation
+    def hmis_create_client_note(
+        self,
+        info: Info,
+        client_note_input: HmisCreateClientNoteInput,
+    ) -> HmisCreateClientNoteResult:
+        request = info.context["request"]
+        hmis_api_bridge = HmisApiBridge(request=request)
+
+        response = hmis_api_bridge.create_client_note(
+            client_note_input=strawberry.asdict(client_note_input),
+        )
+
+        if not response:
+            return HmisCreateClientNoteError(message="Something went wrong")
+
+        if errors := response.get("errors"):
+            return HmisCreateClientNoteError(message=errors[0]["message"])
+
+        return get_client_note_from_response(response)
+
+    @strawberry.mutation
+    def hmis_update_client_note(
+        self,
+        info: Info,
+        client_note_input: HmisUpdateClientNoteInput,
+    ) -> HmisUpdateClientNoteResult:
+        request = info.context["request"]
+        hmis_api_bridge = HmisApiBridge(request=request)
+
+        response = hmis_api_bridge.update_client_note(
+            client_note_input=strawberry.asdict(client_note_input),
+        )
+
+        if not response:
+            return HmisUpdateClientNoteError(message="Something went wrong")
+
+        if errors := response.get("errors"):
+            return HmisUpdateClientNoteError(message=errors[0]["message"])
+
+        return get_client_note_from_response(response)

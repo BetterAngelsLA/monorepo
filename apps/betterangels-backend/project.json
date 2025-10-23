@@ -143,7 +143,7 @@
         "{workspaceRoot}/coverage/apps/betterangels-backend"
       ],
       "options": {
-        "command": "poetry run pytest",
+        "command": "poetry run python manage.py test",
         "cwd": "apps/betterangels-backend"
       }
     },
