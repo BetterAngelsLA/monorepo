@@ -1,0 +1,21 @@
+interactions:
+- request:
+    body: '{"query": "\n            mutation (\n                $clientNoteInput:
+      CreateClientNoteInput!,\n            ) {\n                createClientNote(\n                    data:
+      $clientNoteInput,\n                ) {\n                                    id                title                note                date                category                client
+      { personalId }                enrollment { enrollmentId }\n                }\n            }\n        ",
+      "variables": {"clientNoteInput": {"personalId": "1", "enrollmentId": "517",
+      "title": "api test note", "note": "duly noted", "date": "2025-10-17", "category":
+      "1"}}}'
+    headers: {}
+    method: POST
+    uri: ''
+  response:
+    body:
+      string: '{"data":{"createClientNote":{"id":"418","title":"api test note","note":"duly
+        noted","date":"2025-10-17","category":null,"client":{"personalId":"1"},"enrollment":{"enrollmentId":"517"}}}}'
+    headers: {}
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -36,6 +36,27 @@ class HmisCreateClientInput:
 
 
 @strawberry.input
+class HmisCreateClientNoteInput:
+    personal_id: str
+    enrollment_id: str
+    title: str
+    note: str
+    date: str
+    category: Optional[str] = "1"
+
+
+@strawberry.input
+class HmisUpdateClientNoteInput:
+    id: str
+    personal_id: str
+    enrollment_id: str
+    title: str
+    note: str
+    date: str
+    category: Optional[str] = "1"
+
+
+@strawberry.input
 class HmisCreateClientSubItemsInput:
     middle_name: Optional[str] = ""
     name_suffix: Optional[int] = 9
@@ -236,6 +257,18 @@ class HmisCreateClientError:
 
 
 @strawberry.type
+class HmisCreateClientNoteError:
+    message: str
+    field: Optional[str] = None
+
+
+@strawberry.type
+class HmisUpdateClientNoteError:
+    message: str
+    field: Optional[str] = None
+
+
+@strawberry.type
 class HmisUpdateClientError:
     message: str
     field: Optional[str] = None
@@ -271,6 +304,7 @@ class HmisListEnrollmentsError:
     field: Optional[str] = None
 
 
+HmisCreateClientNoteResult = Union[HmisClientNoteType, HmisCreateClientNoteError]
 HmisCreateClientResult = Union[HmisClientType, HmisCreateClientError]
 HmisGetClientNoteResult = Union[HmisClientNoteType, HmisGetClientNoteError]
 HmisGetClientResult = Union[HmisClientType, HmisGetClientError]
@@ -278,4 +312,5 @@ HmisListClientNotesResult = Union[HmisClientNoteListType, HmisListClientNotesErr
 HmisListClientsResult = Union[HmisClientListType, HmisListClientsError]
 HmisListEnrollmentsResult = Union[HmisEnrollmentListType, HmisListEnrollmentsError]
 HmisLoginResult = Union[UserType, HmisLoginError]
+HmisUpdateClientNoteResult = Union[HmisClientNoteType, HmisUpdateClientNoteError]
 HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]
