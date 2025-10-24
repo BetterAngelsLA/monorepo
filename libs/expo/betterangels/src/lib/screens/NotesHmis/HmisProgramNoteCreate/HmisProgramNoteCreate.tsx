@@ -59,7 +59,7 @@ export function HmisProgramNoteCreate(props: TProps) {
           disabled: isSubmitting,
         }}
       >
-        <HmisProgramNoteForm />
+        <HmisProgramNoteForm hmisClientId={hmisClientId} />
       </Form.Page>
     </FormProvider>
   );

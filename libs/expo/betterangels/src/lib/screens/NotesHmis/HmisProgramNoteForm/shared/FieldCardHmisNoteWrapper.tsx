@@ -13,6 +13,7 @@ interface IFieldCardProps extends TMarginProps {
   error?: string | undefined;
   expanded?: boolean;
   onPress: () => void;
+  disabled?: boolean;
   overflow?: 'hidden' | 'visible' | 'scroll' | undefined;
   style?: ViewStyle;
 }
@@ -24,6 +25,7 @@ export function FieldCardHmisNoteWrapper(props: IFieldCardProps) {
     error,
     expanded,
     onPress,
+    disabled,
     overflow = 'hidden',
     style,
   } = props;
@@ -31,6 +33,7 @@ export function FieldCardHmisNoteWrapper(props: IFieldCardProps) {
   return (
     <Pressable
       onPress={onPress}
+      disabled={disabled}
       accessible
       accessibilityRole="button"
       accessibilityHint={`expands ${title} field`}

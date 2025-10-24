@@ -22,7 +22,7 @@ interface IFieldCardProps extends TMarginProps {
   title: string;
   actionName: string | ReactNode;
   value?: string;
-  valueType?: 'string' | 'date';
+  disabled?: boolean;
   required?: boolean;
   error?: string | undefined;
   expanded?: boolean;
@@ -35,9 +35,9 @@ export function FieldCardHmisNote(props: IFieldCardProps) {
   const {
     children,
     value,
-    // valueType,
     title,
     actionName,
+    disabled,
     required,
     error,
     expanded,
@@ -46,23 +46,16 @@ export function FieldCardHmisNote(props: IFieldCardProps) {
     overflow = 'hidden',
   } = props;
 
-  // if (title === 'Date') {
-  //   console.log();
-  //   console.log('| -------------  FieldCardHmisNote: ', title);
-  //   console.log('*****************  value:', value);
-  //   console.log('*************  valueType:', valueType);
-  //   console.log();
-  // }
-
-  // const visibleValue = valueType
-
   return (
     <FieldCardHmisNoteWrapper
       expanded={expanded}
       onPress={onPress}
       title={title}
       error={error}
-      style={getMarginStyles(props)}
+      style={{
+        ...getMarginStyles(props),
+        opacity: disabled ? 0.5 : 1,
+      }}
     >
       <View style={[styles.header]}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
