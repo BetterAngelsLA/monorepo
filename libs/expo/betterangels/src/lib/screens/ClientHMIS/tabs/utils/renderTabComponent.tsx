@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import { HmisClientType } from '../../../../apollo';
 import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { ClientViewTabEnum } from '../../../Client/ClientTabs';
-import { HMISClientHeader } from '../../HMISClientHeader';
+import { ClientInteractionsHmisView } from '../ClientInteractionsHmisView';
 import { ClientProfileHMISView } from '../ClientProfileHMISView';
 
 type RenderArgs = {
@@ -17,7 +17,7 @@ const tabRendererMap: Partial<
     <ClientProfileHMISView client={client} openCard={openCard} />
   ),
   [ClientViewTabEnum.Interactions]: ({ client }) => (
-    <HMISClientHeader client={client} />
+    <ClientInteractionsHmisView client={client} />
   ),
 };
 
