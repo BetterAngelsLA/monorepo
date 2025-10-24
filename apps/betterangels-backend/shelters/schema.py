@@ -174,9 +174,11 @@ class Mutation:
         if organization is not None:
             data["organization_id"] = organization
 
-        if "status" in data and data["status"] is not None:
-            data["status"] = getattr(data["status"], "value", data["status"])
-
+        if "status" in data:
+            if data["status"] is not None:
+                data["status"] = getattr(data["status"], "value", data["status"])
+            else:
+                del data["status"]
         location = data.pop("location", None)
         if location:
             try:
