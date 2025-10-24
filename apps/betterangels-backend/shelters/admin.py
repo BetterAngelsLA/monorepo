@@ -56,6 +56,7 @@ from .enums import (
 from .models import (
     SPA,
     Accessibility,
+    Bed,
     City,
     ContactInfo,
     Demographic,
@@ -985,3 +986,10 @@ class ShelterAdmin(ImportExportModelAdmin):
             )
 
         return "No updates yet"
+
+
+@admin.register(Bed)
+class BedAdmin(admin.ModelAdmin):
+    list_display = ("id", "shelter_id", "status", "created_at", "updated_at")
+    list_filter = ("status",)
+    search_fields = ("shelter_id__name",)

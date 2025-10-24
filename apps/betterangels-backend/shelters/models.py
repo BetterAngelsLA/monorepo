@@ -41,6 +41,7 @@ from .enums import (
     StatusChoices,
     StorageChoices,
     TrainingServiceChoices,
+    BedStatusChoices,
 )
 from .widgets import TimeRangeField
 
@@ -73,6 +74,19 @@ class RoomStyle(models.Model):
 
     def __str__(self) -> str:
         return str(self.name)
+
+
+class Bed(models.Model):
+    shelter_id = models.ForeignKey("Shelter", on_delete=models.CASCADE)
+    status = TextChoicesField(choices_enum=BedStatusChoices, unique=True, blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["shelter_id", "status"]),
+        ]
 
 
 # Shelter Details
