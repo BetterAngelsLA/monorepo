@@ -3,7 +3,9 @@ from typing import Dict, List, Optional, cast
 
 import strawberry
 import strawberry_django
+from django.core.exceptions import ValidationError
 from django.db import transaction
+from graphql import GraphQLError
 from places import Places
 from shelters.enums import (
     AccessibilityChoices,
@@ -56,6 +58,13 @@ from strawberry import ID, UNSET
 from strawberry.types import Info
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
+
+
+def format_validation_errors(exc: ValidationError) -> List[Dict[str, object]]:
+    if hasattr(exc, "message_dict"):
+        return [{"field": field, "messages": messages} for field, messages in exc.message_dict.items()]
+
+    return [{"field": None, "messages": exc.messages}]
 
 
 @strawberry.type
@@ -170,19 +179,47 @@ class Mutation:
 
         location = data.pop("location", None)
         if location:
-            latitude = location.get("latitude")
-            longitude = location.get("longitude")
-            data["location"] = Places(
-                place=location.get("place"),
-                latitude=str(latitude) if latitude is not None else None,
-                longitude=str(longitude) if longitude is not None else None,
-            )
+            try:
+                latitude = location.get("latitude")
+                longitude = location.get("longitude")
+                data["location"] = Places(
+                    place=location.get("place"),
+                    latitude=str(latitude) if latitude is not None else None,
+                    longitude=str(longitude) if longitude is not None else None,
+                )
+            except (TypeError, ValueError) as exc:
+                message = str(exc) or "Invalid location provided."
+                raise GraphQLError(
+                    "Invalid location data.",
+                    extensions={"errors": [{"field": "location", "messages": [message]}]},
+                ) from exc
 
-        with transaction.atomic():
-            shelter = resolvers.create(info, Shelter, data)
+        try:
+            with transaction.atomic():
+                shelter = resolvers.create(info, Shelter, data)
 
-            for field, model_cls in enum_field_model_map.items():
-                instances = [model_cls.objects.get_or_create(name=value)[0] for value in m2m_values[field]]
-                getattr(shelter, field).set(instances)
+                for field, model_cls in enum_field_model_map.items():
+                    try:
+                        instances = [model_cls.objects.get_or_create(name=value)[0] for value in m2m_values[field]]
+                    except ValidationError as exc:
+                        raise GraphQLError(
+                            "Validation Errors",
+                            extensions={
+                                "errors": [
+                                    {
+                                        "field": field,
+                                        "messages": exc.messages,
+                                    }
+                                ]
+                            },
+                        ) from exc
+
+                    getattr(shelter, field).set(instances)
+
+        except ValidationError as exc:
+            raise GraphQLError(
+                "Validation Errors",
+                extensions={"errors": format_validation_errors(exc)},
+            ) from exc
 
         return cast(ShelterType, shelter)
