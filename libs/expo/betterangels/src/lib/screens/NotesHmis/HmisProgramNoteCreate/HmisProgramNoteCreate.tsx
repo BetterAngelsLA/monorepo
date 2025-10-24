@@ -11,6 +11,7 @@ import {
   TFormOutput,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm/formSchema';
+import { useHmisCreateClientNoteMutation } from './__generated__/hmisCreateClientNote.generated';
 
 type TProps = {
   hmisClientId: string;
@@ -20,6 +21,7 @@ export function HmisProgramNoteCreate(props: TProps) {
   const { hmisClientId } = props;
 
   const router = useRouter();
+  const [createHmisClientNoteMutation] = useHmisCreateClientNoteMutation();
 
   type TFormValues = z.input<typeof HmisProgramNoteFormSchema>;
 
@@ -27,21 +29,28 @@ export function HmisProgramNoteCreate(props: TProps) {
     resolver: zodResolver(HmisProgramNoteFormSchema),
     defaultValues: {
       ...hmisProgramNoteFormEmptyState,
-      // date: toCalendarDate('2026-10-21', 'yyyy-MM-dd'),
+      // date: toLocalCalendarDate('2026-10-21', 'yyyy-MM-dd'),
     },
   });
 
   const onSubmit: SubmitHandler<TFormValues> = async (values) => {
     const payload: TFormOutput = HmisProgramNoteFormtSchemaOutput.parse(values);
 
-    const personalId = hmisClientId;
+    const { data } = await createHmisClientNoteMutation({
+      variables: {
+        clientNoteInput: {
+          personalId: hmisClientId,
+          ...payload,
+        },
+      },
+
+      errorPolicy: 'all',
+    });
+
     console.log();
-    console.log('| -----  hmis create ON SUBMIT - values ---------- |');
-    console.log('*********  personalId:', personalId);
-    console.log(values);
-    console.log('');
-    console.log('payload');
-    console.log(JSON.stringify(payload, null, 2));
+    console.log('| -------------  ON SUBMIT RESULT  ------------- |');
+    console.log('data');
+    console.log(JSON.stringify(data, null, 2));
     console.log();
   };
 

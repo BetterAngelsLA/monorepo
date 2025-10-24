@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { useHmisClientProgramEnrollmentsQuery } from './__generated__/hmisClientProgramEnrollments.generated';
 
 type THmisClientProgram = {
-  value: string;
-  displayValue: string;
+  id: string;
+  name: string;
 };
 
 type TProps = {
@@ -63,8 +63,8 @@ export function useHmisClientPrograms(props: TProps) {
       }
 
       validPrograms.push({
-        value: enrollmentId,
-        displayValue: projectName,
+        id: enrollmentId,
+        name: projectName,
       });
     }
 

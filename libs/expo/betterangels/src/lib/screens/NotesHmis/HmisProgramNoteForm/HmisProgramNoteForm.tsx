@@ -37,7 +37,7 @@ export function HmisProgramNoteForm(props: TProps) {
   const [expandedField, setExpandedField] = useState<TFormKeys | null>(null);
 
   const titleValue = watch('title') || '';
-  const programValue = watch('program') || '';
+  const enrollmentIdValue = watch('enrollmentId') || '';
   const dateYmd = watch('date') || '';
   const noteValue = watch('note') || '';
 
@@ -96,16 +96,16 @@ export function HmisProgramNoteForm(props: TProps) {
   }
 
   const selectedProgramLabel = useMemo(() => {
-    if (!programValue || !programs.length) {
+    if (!enrollmentIdValue || !programs.length) {
       return '';
     }
 
     const selectedProgram = programs.find((program) => {
-      return program.value === programValue;
+      return program.id === enrollmentIdValue;
     });
 
-    return selectedProgram?.displayValue || '';
-  }, [programValue, programs]);
+    return selectedProgram?.name || '';
+  }, [enrollmentIdValue, programs]);
 
   return (
     <Form style={{ gap: Spacings.xs }}>
@@ -120,7 +120,7 @@ export function HmisProgramNoteForm(props: TProps) {
         error={errors.title?.message}
       >
         <ControlledInput
-          name="title" // purpose field is named `title` in schema
+          name="title"
           required
           control={control}
           disabled={formDisabled}
@@ -155,12 +155,12 @@ export function HmisProgramNoteForm(props: TProps) {
         title="Program"
         value={selectedProgramLabel}
         actionName="Add Program"
-        onPress={() => toggleFieldExpanded(FORM_KEYS.program)}
-        expanded={expandedField === FORM_KEYS.program}
-        error={errors.program?.message}
+        onPress={() => toggleFieldExpanded(FORM_KEYS.enrollmentId)}
+        expanded={expandedField === FORM_KEYS.enrollmentId}
+        error={errors.enrollmentId?.message}
       >
         <Controller
-          name="program"
+          name="enrollmentId"
           control={control}
           render={({ field: { value, onChange } }) => {
             return (
@@ -169,10 +169,10 @@ export function HmisProgramNoteForm(props: TProps) {
                 maxRadioItems={0}
                 placeholder="Select a program"
                 selectedValue={value}
-                items={(programs || []).map(({ value, displayValue }) => {
+                items={(programs || []).map(({ id, name }) => {
                   return {
-                    value,
-                    displayValue,
+                    value: id,
+                    displayValue: name,
                   };
                 })}
                 onChange={onChange}
@@ -189,7 +189,7 @@ export function HmisProgramNoteForm(props: TProps) {
         value={noteValue}
         actionName="Add Note"
         onPress={handleGirpFormOpen}
-        expanded={false} // never expands on click but opens form
+        expanded={false} // never expands on click; opens form instead
         error={errors.note?.message}
       />
     </Form>
