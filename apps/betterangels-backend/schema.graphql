@@ -1598,7 +1598,7 @@ type Query {
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(pagination: OffsetPaginationInput, filters: TaskFilter, ordering: [TaskOrder!]! = []): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
+  shelters(filters: ShelterFilter, order: ShelterOrder, pagination: OffsetPaginationInput): ShelterTypeOffsetPaginated!
 }
 
 enum RaceEnum {
