@@ -312,7 +312,10 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
     def test_shelters_query(self) -> None:
         shelter_count = 2
-        shelters = shelter_recipe.make(_quantity=shelter_count)
+        shelters = shelter_recipe.make(_quantity=shelter_count, status=StatusChoices.APPROVED)
+
+        # create shelter in draft state that should not be included in query results
+        shelter_recipe.make(status=StatusChoices.DRAFT)
 
         exterior_photo_0 = ExteriorPhoto.objects.create(shelter=shelters[0], file=self.file)
         InteriorPhoto.objects.create(shelter=shelters[0], file=self.file)
@@ -343,6 +346,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         shelters = response["data"]["shelters"]["results"]
         self.assertEqual(len(shelters), shelter_count)
+        self.assertEqual(Shelter.objects.count(), shelter_count + 1)
         self.assertEqual(shelters[0]["heroImage"], exterior_photo_0.file.url)
         self.assertEqual(shelters[1]["heroImage"], interior_photo_1.file.url)
 
