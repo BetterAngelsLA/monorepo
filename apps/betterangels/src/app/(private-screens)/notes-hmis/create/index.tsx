@@ -7,11 +7,16 @@ type TSearchParams = {
 };
 
 export default function InteractionsHmisCreateScreen() {
-  const { hmisClientId } = useLocalSearchParams<TSearchParams>();
+  const { hmisClientId, arrivedFrom } = useLocalSearchParams<TSearchParams>();
 
   if (!hmisClientId) {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  return <HmisProgramNoteCreate hmisClientId={hmisClientId} />;
+  return (
+    <HmisProgramNoteCreate
+      hmisClientId={hmisClientId}
+      arrivedFrom={arrivedFrom}
+    />
+  );
 }

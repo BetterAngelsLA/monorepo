@@ -1,6 +1,11 @@
 import { useMemo } from 'react';
 import { useHmisClientProgramEnrollmentsQuery } from './__generated__/hmisClientProgramEnrollments.generated';
 
+// Per hmis api:: Per Page must be no greater than 1000
+// if as_array=1 and no greater than 50 otherwise
+// Not paginating for now, assume some max number
+const MAX_PROGRAMS_TO_FETCH = 50;
+
 type THmisClientProgram = {
   id: string;
   name: string;
@@ -17,10 +22,7 @@ export function useHmisClientPrograms(props: TProps) {
     skip: !hmisClientId,
     variables: {
       personalId: hmisClientId,
-      // Per hmis api:: Per Page must be no greater than 1000
-      // if as_array=1 and no greater than 50 otherwise
-      // Not paginating for now, assume some max number
-      pagination: { page: 1, perPage: 50 },
+      pagination: { page: 1, perPage: MAX_PROGRAMS_TO_FETCH },
       dynamicFields: [],
     },
     fetchPolicy: 'cache-and-network',

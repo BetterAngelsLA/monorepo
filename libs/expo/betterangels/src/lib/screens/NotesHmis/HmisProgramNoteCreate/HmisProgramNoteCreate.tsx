@@ -3,6 +3,10 @@ import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
+import { extractHMISErrors } from '../../../apollo';
+import { applyOperationFieldErrors } from '../../../errors';
+import { useSnackbar } from '../../../hooks';
+import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import { HmisProgramNoteForm } from '../HmisProgramNoteForm';
 import {
   HmisProgramNoteFormSchema,
@@ -15,43 +19,90 @@ import { useHmisCreateClientNoteMutation } from './__generated__/hmisCreateClien
 
 type TProps = {
   hmisClientId: string;
+  arrivedFrom?: string;
 };
 
 export function HmisProgramNoteCreate(props: TProps) {
   const { hmisClientId } = props;
 
   const router = useRouter();
+  const { showSnackbar } = useSnackbar();
   const [createHmisClientNoteMutation] = useHmisCreateClientNoteMutation();
 
   type TFormValues = z.input<typeof HmisProgramNoteFormSchema>;
 
+  const formKeys = Object.keys(hmisProgramNoteFormEmptyState);
+
   const formMethods = useForm<TFormInput>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
-    defaultValues: {
-      ...hmisProgramNoteFormEmptyState,
-      // date: toLocalCalendarDate('2026-10-21', 'yyyy-MM-dd'),
-    },
+    defaultValues: hmisProgramNoteFormEmptyState,
   });
 
+  const { setError } = formMethods;
+
   const onSubmit: SubmitHandler<TFormValues> = async (values) => {
-    const payload: TFormOutput = HmisProgramNoteFormtSchemaOutput.parse(values);
+    try {
+      const payload: TFormOutput =
+        HmisProgramNoteFormtSchemaOutput.parse(values);
 
-    const { data } = await createHmisClientNoteMutation({
-      variables: {
-        clientNoteInput: {
-          personalId: hmisClientId,
-          ...payload,
+      const { data } = await createHmisClientNoteMutation({
+        variables: {
+          clientNoteInput: {
+            personalId: hmisClientId,
+            ...payload,
+          },
         },
-      },
 
-      errorPolicy: 'all',
-    });
+        errorPolicy: 'all',
+      });
 
-    console.log();
-    console.log('| -------------  ON SUBMIT RESULT  ------------- |');
-    console.log('data');
-    console.log(JSON.stringify(data, null, 2));
-    console.log();
+      const result = data?.hmisCreateClientNote;
+
+      if (!result) {
+        throw new Error('missing hmisCreateClientNote response');
+      }
+
+      if (result?.__typename === 'HmisCreateClientNoteError') {
+        const { message: hmisErrorMessage } = result;
+
+        const { status, fieldErrors = [] } =
+          extractHMISErrors(hmisErrorMessage) || {};
+
+        // handle unprocessable_entity errors and exit
+        if (status === 422) {
+          const formFieldErrors = fieldErrors.filter(({ field }) =>
+            formKeys.includes(field)
+          );
+
+          applyOperationFieldErrors(formFieldErrors, setError);
+
+          return;
+        }
+
+        if (status === 404) {
+          throw new Error('could not find Client of Program Enrollment');
+        }
+
+        // HmisCreateClientError exists but not 422 | 404
+        // throw generic error
+        throw new Error(hmisErrorMessage);
+      }
+
+      if (result?.__typename !== 'HmisClientNoteType') {
+        throw new Error('invalid HmisClientNoteType response');
+      }
+
+      router.replace(
+        `/client/${hmisClientId}?activeTab=${ClientViewTabEnum.Interactions}`
+      );
+    } catch (error) {
+      console.error('createHmisClientNoteMutation error:', error);
+
+      showSnackbar({
+        message: 'Something went wrong. Please try again.',
+        type: 'error',
+      });
+    }
   };
 
   const {
