@@ -364,7 +364,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     # Each subsequent shelter is ~9 miles further from the reference point.
                     latitude=f"{reference_point["latitude"]}.{i}",
                     longitude=f"{reference_point["longitude"]}.{i}",
-                )
+                ),
+                status=StatusChoices.APPROVED,
             )
             for i in range(3, 0, -1)
         ]
@@ -442,7 +443,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     # Each subsequent shelter is two degrees further from the reference point
                     latitude=f"{reference_point["latitude"] - i}",
                     longitude=f"{reference_point["longitude"] - i}",
-                )
+                ),
+                status=StatusChoices.APPROVED,
             )
             for i in range(8, -2, -2)
         ]
@@ -490,7 +492,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     # Each subsequent shelter is two degrees further from the reference point
                     latitude=f"{reference_point["latitude"] - i}",
                     longitude=f"{reference_point["longitude"] - i}",
-                )
+                ),
+                status=StatusChoices.APPROVED,
             )
             for i in range(8, -2, -2)
         ]
@@ -584,14 +587,17 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 Pet.objects.get_or_create(name=PetChoices.CATS)[0],
                 Pet.objects.get_or_create(name=PetChoices.SERVICE_ANIMALS)[0],
             ],
+            status=StatusChoices.APPROVED,
         )
         shelter_recipe.make(
             parking=[Parking.objects.get_or_create(name=ParkingChoices.BICYCLE)[0]],
             pets=[Pet.objects.get_or_create(name=PetChoices.CATS)[0]],
+            status=StatusChoices.APPROVED,
         )
         shelter_recipe.make(
             parking=[Parking.objects.get_or_create(name=ParkingChoices.RV)[0]],
             pets=[Pet.objects.get_or_create(name=PetChoices.DOGS_UNDER_25_LBS)[0]],
+            status=StatusChoices.APPROVED,
         )
 
         query = """
