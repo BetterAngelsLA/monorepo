@@ -1694,6 +1694,15 @@ export type OrganizationForUserType = {
   userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
 };
 
+export type OrganizationMemberOrdering = {
+  email?: InputMaybe<Ordering>;
+  firstName?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  lastLogin?: InputMaybe<Ordering>;
+  lastName?: InputMaybe<Ordering>;
+  memberRole?: InputMaybe<Ordering>;
+};
+
 export type OrganizationMemberType = {
   __typename?: 'OrganizationMemberType';
   email?: Maybe<Scalars['NonBlankString']['output']>;
@@ -2013,6 +2022,7 @@ export type QueryOrganizationMemberArgs = {
 
 
 export type QueryOrganizationMembersArgs = {
+  ordering?: InputMaybe<Array<OrganizationMemberOrdering>>;
   organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
