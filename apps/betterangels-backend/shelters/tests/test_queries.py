@@ -611,3 +611,27 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         results = response["data"]["shelters"]["results"]
 
         self.assertEqual(len(results), expected_result_count)
+
+    def test_shelters_by_org_filter(self) -> None:
+
+        query = """
+            query SheltersByOrg($orgId: ID!, $limit: Int, $offset: Int) {
+                sheltersByOrganization(organizationId: $orgId, limit: $limit, offset: $offset) {
+                    totalCount
+                        results {
+                            id
+                            name
+                        }
+                    }
+                }
+            """
+
+        expected_query_count = 1
+        expected_result_count = 1
+
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(query, variables={"organizationId": organizationId})
+
+        results = response["data"]["shelters"]["results"]
+
+        self.assertEqual(len(results), expected_result_count)
