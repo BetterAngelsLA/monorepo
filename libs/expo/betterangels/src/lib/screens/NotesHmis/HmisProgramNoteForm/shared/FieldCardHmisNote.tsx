@@ -49,7 +49,7 @@ export function FieldCardHmisNote(props: IFieldCardProps) {
   return (
     <FieldCardHmisNoteWrapper
       expanded={expanded}
-      onPress={onPress}
+      onPress={() => !disabled && onPress()}
       title={title}
       error={error}
       style={{
