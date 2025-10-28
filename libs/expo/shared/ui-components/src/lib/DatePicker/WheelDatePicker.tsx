@@ -3,39 +3,16 @@ import {
   Colors,
   Radiuses,
   Spacings,
-  TMarginProps,
   getMarginStyles,
   omitMarginProps,
 } from '@monorepo/expo/shared/static';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format as dateFnsFormat } from 'date-fns';
 import { useState } from 'react';
-import {
-  Keyboard,
-  Platform,
-  StyleProp,
-  StyleSheet,
-  View,
-  ViewStyle,
-} from 'react-native';
+import { Keyboard, Platform, StyleSheet, View } from 'react-native';
 import Button from '../Button';
 import { Input } from '../Input';
-
-export interface IWheelDatePickerProps extends TMarginProps {
-  mode: 'date' | 'time';
-  onChange: (date: Date) => void;
-  style?: StyleProp<ViewStyle>;
-  label?: string;
-  placeholder?: string;
-  required?: boolean;
-  disabled?: boolean;
-  error?: string;
-  format: string;
-  onBlur?: () => void;
-  minDate?: Date;
-  maxDate?: Date;
-  value?: Date | null;
-}
+import { IWheelDatePickerProps } from './types';
 
 export function WheelDatePicker(props: IWheelDatePickerProps) {
   const {

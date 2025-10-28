@@ -22,9 +22,6 @@ class HmisLoginError:
     field: Optional[str] = None
 
 
-HmisLoginResult = Union[UserType, HmisLoginError]
-
-
 @strawberry.input
 class HmisCreateClientInput:
     first_name: str
@@ -36,6 +33,27 @@ class HmisCreateClientInput:
     ssn_data_quality: Optional[int] = 99
     dob: Optional[str] = ""
     dob_data_quality: Optional[int] = 99
+
+
+@strawberry.input
+class HmisCreateClientNoteInput:
+    personal_id: str
+    enrollment_id: str
+    title: str
+    note: str
+    date: str
+    category: Optional[str] = "1"
+
+
+@strawberry.input
+class HmisUpdateClientNoteInput:
+    id: str
+    personal_id: str
+    enrollment_id: str
+    title: str
+    note: str
+    date: str
+    category: Optional[str] = "1"
 
 
 @strawberry.input
@@ -163,13 +181,89 @@ class HmisClientType:
 
 
 @strawberry.type
+class HmisEnrollmentDataType:
+    field: Optional[str]
+    value: Optional[str]
+
+
+@strawberry.type
+class HmisEnrollmentHouseholdMemberType:
+    personal_id: Optional[str]
+    enrollment_id: Optional[str]
+
+
+@strawberry.type
+class HmisProjectType:
+    date_created: Optional[str]
+    date_updated: Optional[str]
+    organization_id: Optional[str]
+    project_id: Optional[str]
+    project_name: Optional[str]
+    project_type: Optional[str]
+
+
+@strawberry.input
+class HmisEnrollmentDynamicFieldsInput:
+    dynamic_fields: Optional[list[str]]
+
+
+@strawberry.type
+class HmisEnrollmentType:
+    personal_id: Optional[str]
+    date_created: Optional[str]
+    date_updated: Optional[str]
+    enrollment_id: Optional[str]
+    entry_date: Optional[str]
+    exit_date: Optional[str]
+    household_id: Optional[str]
+    project: Optional[HmisProjectType]
+    data: Optional[list[HmisEnrollmentDataType]]
+    enrollment_household_members: Optional[list[HmisEnrollmentHouseholdMemberType]]
+
+
+@strawberry.type
+class HmisClientNoteType:
+    id: Optional[str]
+    title: Optional[str]
+    note: Optional[str]
+    date: Optional[str]
+    category: Optional[str]
+    client: Optional[HmisClientType]
+    enrollment: Optional[HmisEnrollmentType]
+
+
+@strawberry.type
 class HmisClientListType:
     items: list[HmisClientType]
     meta: Optional[HmisListMetaType]
 
 
 @strawberry.type
+class HmisClientNoteListType:
+    items: list[HmisClientNoteType]
+    meta: Optional[HmisListMetaType]
+
+
+@strawberry.type
+class HmisEnrollmentListType:
+    items: list[HmisEnrollmentType]
+    meta: Optional[HmisListMetaType]
+
+
+@strawberry.type
 class HmisCreateClientError:
+    message: str
+    field: Optional[str] = None
+
+
+@strawberry.type
+class HmisCreateClientNoteError:
+    message: str
+    field: Optional[str] = None
+
+
+@strawberry.type
+class HmisUpdateClientNoteError:
     message: str
     field: Optional[str] = None
 
@@ -192,7 +286,31 @@ class HmisListClientsError:
     field: Optional[str] = None
 
 
-HmisGetClientResult = Union[HmisClientType, HmisGetClientError]
+@strawberry.type
+class HmisListClientNotesError:
+    message: str
+    field: Optional[str] = None
+
+
+@strawberry.type
+class HmisGetClientNoteError:
+    message: str
+    field: Optional[str] = None
+
+
+@strawberry.type
+class HmisListEnrollmentsError:
+    message: str
+    field: Optional[str] = None
+
+
+HmisCreateClientNoteResult = Union[HmisClientNoteType, HmisCreateClientNoteError]
 HmisCreateClientResult = Union[HmisClientType, HmisCreateClientError]
-HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]
+HmisGetClientNoteResult = Union[HmisClientNoteType, HmisGetClientNoteError]
+HmisGetClientResult = Union[HmisClientType, HmisGetClientError]
+HmisListClientNotesResult = Union[HmisClientNoteListType, HmisListClientNotesError]
 HmisListClientsResult = Union[HmisClientListType, HmisListClientsError]
+HmisListEnrollmentsResult = Union[HmisEnrollmentListType, HmisListEnrollmentsError]
+HmisLoginResult = Union[UserType, HmisLoginError]
+HmisUpdateClientNoteResult = Union[HmisClientNoteType, HmisUpdateClientNoteError]
+HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]

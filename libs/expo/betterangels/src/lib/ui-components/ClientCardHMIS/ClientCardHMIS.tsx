@@ -4,23 +4,33 @@ import {
   TextRegular,
   formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { HmisClientType } from '../../apollo';
 import { NameSuffixHMIS } from './NameSuffixHMIS';
 
 export interface IClientCardProps {
   client: HmisClientType;
+  onPress?: () => void;
 }
 
 export function ClientCardHMIS(props: IClientCardProps) {
   const {
     client: { firstName, lastName, dob, data: metadata },
+    onPress,
   } = props;
 
   const { alias, middleName, nameSuffix } = metadata || {};
 
   return (
-    <View style={styles.container}>
+    <Pressable
+      onPress={onPress}
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      style={({ pressed }) => [
+        styles.container,
+        pressed && onPress && styles.pressed,
+      ]}
+    >
       <View style={[styles.row, { gap: 2 }]}>
         <TextBold size="sm">{firstName}</TextBold>
         {!!middleName && <TextBold size="sm">{middleName}</TextBold>}
@@ -40,7 +50,7 @@ export function ClientCardHMIS(props: IClientCardProps) {
           </TextRegular>
         </View>
       )}
-    </View>
+    </Pressable>
   );
 }
 
@@ -51,6 +61,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacings.xs,
     backgroundColor: Colors.WHITE,
     gap: Spacings.xxs,
+  },
+  pressed: {
+    backgroundColor: Colors.GRAY_PRESSED,
   },
   row: {
     flexDirection: 'row',

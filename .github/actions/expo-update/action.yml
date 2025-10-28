@@ -61,8 +61,15 @@ runs:
   steps:
     - name: Perform EAS Update
       id: perform-eas-update
+      shell: bash
       run: |
         platforms=("android" "ios")
+
+        # Helper: emit only the first complete JSON value (object/array), then stop.
+        extract_first_json() {
+          awk 'BEGIN{p=0;d=0} /^[[:space:]]*[\[{]/{p=1} p{print; d+=gsub(/\[/,"[")+gsub(/\{/,"{"); d-=gsub(/\]/,"]")+gsub(/\}/,"}"); if(p&&d==0) exit}'
+        }
+
         # Capture the raw output from the EAS update command.
         eas_update_raw=$(yarn nx run ${{ inputs.project }}:eas-update --branch "${{ inputs.branch }}" --auto --json --interactive false 2>&1) || {
           echo "Error running the EAS update command:"
@@ -70,8 +77,16 @@ runs:
           exit 1
         }
 
-        # Extract only the JSON portion (from the first "[" to the last "]").
-        eas_update_output=$(echo "$eas_update_raw" | sed ':a;N;$!ba;s/.*\(\[[^]]*\]\).*/\1/')
+        # Extract only the first complete JSON block (handles pre/post noise)
+        eas_update_output=$(echo "$eas_update_raw" | extract_first_json)
+
+        # Validate JSON before proceeding
+        if ! echo "$eas_update_output" | jq empty >/dev/null 2>&1; then
+          echo "Error: Invalid JSON from EAS Update command"
+          echo "Raw output was:"; echo "$eas_update_raw" | cat -v
+          echo "Cleaned output was:"; echo "$eas_update_output"
+          exit 1
+        fi
 
         for platform in "${platforms[@]}"; do
           update_info=$(echo "$eas_update_output" | jq -r ".[] | select(.platform == \"$platform\")")
@@ -92,13 +107,12 @@ runs:
           echo "${platform}-runtime-version=$runtime_version" >> $GITHUB_OUTPUT
           echo "group-id=$group_id" >> $GITHUB_OUTPUT
         done
-      shell: bash
 
     - name: Set Project and Group ID
+      shell: bash
+      working-directory: apps/${{ inputs.project }}
       run: |
         project_id="${{ inputs.project-id }}"
         group_id="${{ steps.perform-eas-update.outputs.group-id }}"
         echo "PROJECT_ID=$project_id" >> .env
         echo "GROUP_ID=$group_id" >> .env
-      shell: bash
-      working-directory: apps/${{ inputs.project }}

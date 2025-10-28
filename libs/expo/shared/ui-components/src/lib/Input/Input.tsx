@@ -59,24 +59,25 @@ export function Input(props: IInputProps) {
     borderRadius = Radiuses.xs,
     errorMessage,
     asSelect,
+    placeholderTextColor = Colors.NEUTRAL,
     ...rest
   } = props;
+
+  // Pull out multiline before we strip margin props (used to center text)
+  const { multiline = false } = rest as TextInputProps;
 
   const inputRef = useRef<TextInput>(null);
   const nonMarginOtherProps = omitMarginProps(rest);
   const asSelectProps = asSelect ? defaultAsSelectProps : {};
 
+  const isEmpty = (value ?? '') === '';
+  const color = disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK;
+  const showClear = !!onDelete && !isEmpty;
+
   return (
-    <View
-      style={[
-        styles.container,
-        style,
-        {
-          ...getMarginStyles(props),
-        },
-      ]}
-    >
+    <View style={[styles.container, style, getMarginStyles(props)]}>
       {label && <FormFieldLabel label={label} required={required} />}
+
       <View
         style={[
           styles.input,
@@ -98,33 +99,20 @@ export function Input(props: IInputProps) {
         <TextInput
           ref={inputRef}
           style={[
-            {
-              color: disabled
-                ? Colors.NEUTRAL_LIGHT
-                : Colors.PRIMARY_EXTRA_DARK,
-              paddingHorizontal: Spacings.sm,
-              flex: 1,
-              fontFamily: 'Poppins-Regular',
-              fontSize: FontSizes.md.fontSize,
-              paddingVertical: Spacings.sm,
-              textAlignVertical: 'top',
-              ...Platform.select({
-                web: {
-                  outline: 'none',
-                },
-              }),
-            },
+            styles.inputText,
+            { color, textAlignVertical: multiline ? 'top' : 'center' },
             inputStyle,
           ]}
           editable={!disabled}
           autoCorrect={autoCorrect}
           autoCapitalize={autoCapitalize}
+          placeholderTextColor={placeholderTextColor}
+          value={value ?? ''}
           {...asSelectProps}
           {...nonMarginOtherProps}
-          value={value}
         />
 
-        {value && onDelete && (
+        {showClear && (
           <InputSlot
             placement="right"
             disabled={disabled}
@@ -154,28 +142,20 @@ const styles = StyleSheet.create({
   container: {
     position: 'relative',
     width: '100%',
-    display: 'flex',
   },
   input: {
     position: 'relative',
-    fontFamily: 'Poppins-Regular',
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
     flexDirection: 'row',
   },
-  label: {
-    flexDirection: 'row',
-    marginBottom: Spacings.xs,
-  },
-  labelText: {
-    fontSize: FontSizes.sm.fontSize,
-    lineHeight: FontSizes.sm.lineHeight,
-    color: Colors.PRIMARY_EXTRA_DARK,
-    textTransform: 'capitalize',
+  inputText: {
+    paddingHorizontal: Spacings.sm,
+    paddingVertical: Spacings.sm,
+    flex: 1,
     fontFamily: 'Poppins-Regular',
-  },
-  required: {
-    marginLeft: 2,
-    color: Colors.ERROR_DARK,
+    fontSize: FontSizes.md.fontSize,
+    includeFontPadding: false,
+    ...Platform.select({ web: { outline: 'none' as const } }),
   },
 });

@@ -5,6 +5,7 @@ from typing import Any, Optional
 import jwt
 import requests
 import strawberry
+from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
 from common.utils import dict_keys_to_camel
 from cryptography.fernet import Fernet, InvalidToken
@@ -23,7 +24,6 @@ from graphql.type import GraphQLObjectType as _GraphQLObjectType
 from hmis.errors import is_hmis_unauthenticated
 from hmis.types import HmisClientFilterInput, HmisPaginationInput
 
-_SESSION_KEY = "hmis_auth_token"
 HMIS_GRAPHQL_ENDPOINT = getattr(settings, "HMIS_GRAPHQL_URL", None)
 HMIS_GRAPHQL_API_KEY = getattr(settings, "HMIS_API_KEY", None)
 GRAPHQL_SCHEMA_PATH = "betterangels_backend.schema.schema"
@@ -36,12 +36,13 @@ class HmisApiBridge:
         self.request = request
         self.session = request.session
 
-        if HMIS_GRAPHQL_ENDPOINT is None or HMIS_GRAPHQL_API_KEY is None:
+        if HMIS_GRAPHQL_ENDPOINT is None or HMIS_GRAPHQL_API_KEY is None or HMIS_SESSION_KEY_NAME is None:
             raise Exception("HMIS not configured")
 
         self.endpoint = HMIS_GRAPHQL_ENDPOINT
         self.api_key = HMIS_GRAPHQL_API_KEY
         self.schema = self._load_graphql_schema()
+        self.session_key = HMIS_SESSION_KEY_NAME
 
         token = self._get_auth_token()
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
@@ -119,6 +120,23 @@ class HmisApiBridge:
             }}
         """
 
+    def _build_client_note_mutation(self, operation: str, response_fields: str, expected_type: str) -> str:
+        operation_cap = operation.capitalize()
+        cleaned_fields = re.sub(r"\\n", "", response_fields)
+        safe_selection = self._validate_selection_for_type(expected_type, cleaned_fields)
+
+        return f"""
+            mutation (
+                $clientNoteInput: {operation_cap}ClientNoteInput!,
+            ) {{
+                {operation}ClientNote(
+                    data: $clientNoteInput,
+                ) {{
+                    {safe_selection}
+                }}
+            }}
+        """
+
     def _run_client_mutation(
         self,
         operation: str,
@@ -144,6 +162,30 @@ class HmisApiBridge:
             return {"errors": errors}
 
         return data.get("data", {}).get(f"{operation}Client") or {}
+
+    def _run_client_note_mutation(
+        self,
+        operation: str,
+        client_note_input: dict[str, Any],
+    ) -> dict[str, Any]:
+        raw_query = self.request.body.decode("utf-8")
+        response_fields = self._extract_response_fields(raw_query)
+
+        variables = {
+            "clientNoteInput": dict_keys_to_camel(client_note_input),
+        }
+
+        data = self._make_request(
+            {
+                "query": self._build_client_note_mutation(operation, response_fields, "HmisClientNoteType"),
+                "variables": variables,
+            }
+        )
+
+        if errors := data.get("errors"):
+            return {"errors": errors}
+
+        return data.get("data", {}).get(f"{operation}ClientNote") or {}
 
     def _extract_response_fields(
         self,
@@ -181,7 +223,7 @@ class HmisApiBridge:
         query = re.sub(r"hmis([A-Z])", lambda m: m.group(1).lower(), query)
 
         # remove our error type definition
-        query = re.sub(r"\.\.\.\s+on\s+Hmis\w*Error\s*{\s*message\s*}", "", query)
+        query = re.sub(r"\.\.\.\s*on\s+Hmis\w*Error\s*{[^}]*}", "", query)
 
         # convert HmisObjectType -> Object
         query = re.sub(r"\bHmis(\w+)Type\b", r"\1", query)
@@ -199,6 +241,18 @@ class HmisApiBridge:
 
         return query
 
+    def _format_enrollments_query(self, original_query: str) -> str:
+        # move personalId into filter arg
+        return re.sub(r"personalId:\s*\$personalId", r"filter: {personalId: $personalId}", original_query)
+
+    def _format_client_notes_query(self, original_query: str) -> str:
+        # move ids into filter arg
+        return re.sub(
+            r"personalId:\s*\$personalId\s*,\s*enrollmentId:\s*\$enrollmentId",
+            r"filter: {personalId: $personalId, enrollmentId: $enrollmentId}",
+            original_query,
+        )
+
     def _fernet(self) -> Fernet:
         key = getattr(settings, "HMIS_TOKEN_KEY", None)
         if not key:
@@ -209,14 +263,15 @@ class HmisApiBridge:
     def _set_auth_token(self, token: str) -> None:
         """"""
         decoded = jwt.decode(token, options={"verify_signature": False})
-        self.session.set_expiry(decoded["exp"] - 1)
+        self.session.set_expiry(decoded["exp"] - decoded["iat"] - 1)
 
         f = self._fernet()
-        self.session[_SESSION_KEY] = f.encrypt(token.encode("utf-8")).decode("utf-8")
+        self.session[self.session_key] = f.encrypt(token.encode("utf-8")).decode("utf-8")
+
         self.session.modified = True
 
     def _get_auth_token(self) -> Optional[str]:
-        enc = self.session.get(_SESSION_KEY)
+        enc = self.session.get(self.session_key)
 
         if not enc:
             return None
@@ -230,8 +285,8 @@ class HmisApiBridge:
             return None
 
     def _clear_auth_token(self) -> None:
-        if _SESSION_KEY in self.session:
-            del self.session[_SESSION_KEY]
+        if self.session_key in self.session:
+            del self.session[self.session_key]
 
         self.session.modified = True
 
@@ -254,7 +309,6 @@ class HmisApiBridge:
             },
             timeout=5.0,
         )
-
         # GraphQL errors OR missing token → failure
         if data.get("errors"):
             return None
@@ -287,6 +341,27 @@ class HmisApiBridge:
 
         return data.get("data", {}).get("getClient") or {}
 
+    def get_client_note(
+        self, personal_id: strawberry.ID, enrollment_id: strawberry.ID, id: strawberry.ID
+    ) -> Optional[dict[str, Any]]:
+        query = self._format_query(original_query=self.request.body, expected_type="HmisClientNoteType")
+
+        data = self._make_request(
+            body={
+                "query": query,
+                "variables": {
+                    "id": id,
+                    "personalId": personal_id,
+                    "enrollmentId": enrollment_id,
+                },
+            }
+        )
+
+        if errors := data.get("errors"):
+            return {"errors": errors}
+
+        return data.get("data", {}).get("getClientNote") or {}
+
     def list_clients(
         self,
         pagination: Optional[HmisPaginationInput],
@@ -296,13 +371,13 @@ class HmisApiBridge:
             original_query=self.request.body, expected_type="HmisClientListType", is_list_query=True
         )
 
+        filter_vars = {"filter": strawberry.asdict(filter)} if filter else {}
+        pagination_vars = {"pagination": strawberry.asdict(pagination)} if pagination else {}
+
         data = self._make_request(
             body={
                 "query": query,
-                "variables": {
-                    "pagination": strawberry.asdict(pagination),
-                    "filter": strawberry.asdict(filter),
-                },
+                "variables": {**filter_vars, **pagination_vars},
             }
         )
 
@@ -310,6 +385,65 @@ class HmisApiBridge:
             return {"errors": errors}
 
         return data.get("data", {}).get("listClients") or {}
+
+    def list_client_notes(
+        self,
+        personal_id: strawberry.ID,
+        enrollment_id: strawberry.ID,
+        pagination: Optional[HmisPaginationInput],
+    ) -> Optional[dict[str, Any]]:
+        query = self._format_query(
+            original_query=self.request.body, expected_type="HmisClientNoteListType", is_list_query=True
+        )
+
+        query = self._format_client_notes_query(query)
+
+        pagination_vars = {"pagination": strawberry.asdict(pagination)} if pagination else {}
+
+        data = self._make_request(
+            body={
+                "query": query,
+                "variables": {
+                    "personalId": personal_id,
+                    "enrollmentId": enrollment_id,
+                    **pagination_vars,
+                },
+            }
+        )
+
+        if errors := data.get("errors"):
+            return {"errors": errors}
+
+        return data.get("data", {}).get("listClientNotes") or {}
+
+    def list_enrollments(
+        self,
+        dynamic_fields: list[Optional[str]],
+        personal_id: strawberry.ID,
+        pagination: Optional[HmisPaginationInput],
+    ) -> Optional[dict[str, Any]]:
+        query = self._format_query(
+            original_query=self.request.body, expected_type="HmisEnrollmentListType", is_list_query=True
+        )
+        query = self._format_enrollments_query(original_query=query)
+
+        pagination_vars = {"pagination": strawberry.asdict(pagination)} if pagination else {}
+
+        data = self._make_request(
+            body={
+                "query": query,
+                "variables": {
+                    "dynamicFields": dynamic_fields,
+                    "personalId": personal_id,
+                    **pagination_vars,
+                },
+            }
+        )
+
+        if errors := data.get("errors"):
+            return {"errors": errors}
+
+        return data.get("data", {}).get("listEnrollments") or {}
 
     def create_client(
         self,
@@ -324,3 +458,15 @@ class HmisApiBridge:
         client_sub_items_input: dict[str, Any],
     ) -> Optional[dict[str, Any]]:
         return self._run_client_mutation("update", client_input, client_sub_items_input)
+
+    def create_client_note(
+        self,
+        client_note_input: dict[str, Any],
+    ) -> Optional[dict[str, Any]]:
+        return self._run_client_note_mutation("create", client_note_input)
+
+    def update_client_note(
+        self,
+        client_note_input: dict[str, Any],
+    ) -> Optional[dict[str, Any]]:
+        return self._run_client_note_mutation("update", client_note_input)

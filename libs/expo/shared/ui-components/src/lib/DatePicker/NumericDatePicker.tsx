@@ -1,20 +1,8 @@
 import { Colors, Radiuses } from '@monorepo/expo/shared/static';
-import { ComponentProps } from 'react';
 import { View } from 'react-native';
 import { DatePickerInput } from 'react-native-paper-dates';
 import FormFieldLabel from '../FormFieldLabel';
-
-export type INumericDatePickerProps = Omit<
-  ComponentProps<typeof DatePickerInput>,
-  | 'locale'
-  | 'inputMode'
-  | 'mode'
-  | 'iconColor'
-  | 'textColor'
-  | 'outlineColor'
-  | 'outlineStyle'
-  | 'withDateFormatInLabel'
->;
+import { INumericDatePickerProps } from './types';
 
 export function NumericDatePicker(props: INumericDatePickerProps) {
   const { label, ...rest } = props;

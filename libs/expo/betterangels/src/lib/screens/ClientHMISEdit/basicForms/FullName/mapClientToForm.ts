@@ -1,7 +1,12 @@
 import { HmisClientType } from '../../../../apollo';
-import { emptyState, type TFormSchema } from './formSchema';
+import {
+  fullNameFormEmptyState as emptyState,
+  type TFullNameFormSchema,
+} from './formSchema';
 
-export function mapClientToFullNameSchema(client: HmisClientType): TFormSchema {
+export function mapClientToFullNameSchema(
+  client: HmisClientType
+): TFullNameFormSchema {
   const { firstName, lastName, nameDataQuality, data } = client;
   const { middleName, alias, nameSuffix } = data || {};
 
