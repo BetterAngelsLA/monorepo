@@ -613,25 +613,49 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         self.assertEqual(len(results), expected_result_count)
 
     def test_shelters_by_org_filter(self) -> None:
+        # Inline imports to avoid changing file headers
+        from django.contrib.auth import get_user_model
+        from django.contrib.auth.models import Permission
+        from notes.permissions import NotePermissions
+
+        org = organization_recipe.make()
+        other_org = organization_recipe.make()
+        s_older = shelter_recipe.make(organization=org)
+        s_newer = shelter_recipe.make(organization=org)
+        shelter_recipe.make(organization=other_org)  # should be excluded
+
+        User = get_user_model()
+        user = User.objects.create_user("orgtest@example.com", password="pw")
+        perm_str = getattr(NotePermissions.ADD, "value", NotePermissions.ADD)
+        app_label, codename = perm_str.split(".")
+        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
+        user.user_permissions.add(perm)
+        user.refresh_from_db()
 
         query = """
-            query SheltersByOrg($orgId: ID!, $limit: Int, $offset: Int) {
-                sheltersByOrganization(organizationId: $orgId, limit: $limit, offset: $offset) {
-                    totalCount
-                        results {
-                            id
-                            name
-                        }
-                    }
-                }
-            """
+            query SheltersByOrg($orgId: ID!, $offset: Int, $limit: Int) {
+            sheltersByOrganization(
+                organizationId: $orgId
+                pagination: { offset: $offset, limit: $limit }
+            ) {
+                totalCount
+                pageInfo { offset limit }
+                results { id name }
+            }
+            }
+        """
 
-        expected_query_count = 1
-        expected_result_count = 1
+        variables = {"orgId": str(org.id), "offset": 0, "limit": 10}
 
-        with self.assertNumQueries(expected_query_count):
-            response = self.execute_graphql(query, variables={"organizationId": organizationId})
+        response = self.execute_graphql(query, variables=variables, user=user)
 
-        results = response["data"]["shelters"]["results"]
+        payload = response["data"]["sheltersByOrganization"]
+        results = payload["results"]
 
-        self.assertEqual(len(results), expected_result_count)
+        # Only shelters from target org, newest first
+        self.assertEqual(payload["totalCount"], 2)
+        self.assertEqual(len(results), 2)
+        self.assertEqual(results[0]["id"], str(s_newer.id))
+        self.assertEqual(results[1]["id"], str(s_older.id))
+        self.assertEqual(payload["pageInfo"]["offset"], 0)
+        self.assertEqual(payload["pageInfo"]["limit"], 10)
