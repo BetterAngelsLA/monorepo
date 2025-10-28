@@ -92,7 +92,7 @@ export function HmisProgramNoteCreate(props: TProps) {
         throw new Error('invalid HmisClientNoteType response');
       }
 
-      router.replace(
+      router.dismissTo(
         `/client/${hmisClientId}?activeTab=${ClientViewTabEnum.Interactions}`
       );
     } catch (error) {
