@@ -58,6 +58,7 @@ from .enums import (
 from .models import (
     SPA,
     Accessibility,
+    Bed,
     City,
     ContactInfo,
     Demographic,
@@ -1005,3 +1006,10 @@ class ShelterAdmin(ImportExportModelAdmin):
         label = name or (data.get("username") or f"User {uid}")
         url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
         return format_html('<a href="{}">{}</a>', url, label)
+
+
+@admin.register(Bed)
+class BedAdmin(admin.ModelAdmin):
+    list_display = ("id", "shelter_id", "status", "created_at", "updated_at")
+    list_filter = ("status",)
+    search_fields = ("shelter_id__name",)
