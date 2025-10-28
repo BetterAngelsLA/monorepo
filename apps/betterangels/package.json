@@ -91,9 +91,6 @@
     "@nx/detox": "*",
     "@nx/rollup": "*",
     "@types/geojson": "*",
-    "@nx/detox": "*",
-    "@nx/rollup": "*",
-    "@types/geojson": "*",
     "expo-crypto": "*",
     "expo-image": "*"
   },
@@ -105,3 +102,4 @@
   },
   "devDependencies": {}
 }
+
