@@ -1,16 +1,18 @@
 import type { FieldFunctionOptions, FieldMergeFunction } from '@apollo/client';
-import type { AdaptArgs } from '../types';
+import type { ResolveMergePagination } from '../types';
 
 /**
  * Options for customizing item-level behavior.
  * For example, you can override how we compute an item's identity.
  */
-export type MergeOpts<TItem> = {
+// asdf
+// export type MergeOpts<TItem> = {
+export type MergeItemOptions<TItem> = {
   /**
    * Extract a stable identifier for an item.
    * Defaults to reading the `id` field from Apollo's cache (via `readField('id', item)`).
    */
-  getId?: (
+  getItemId?: (
     item: TItem,
     readField: FieldFunctionOptions['readField']
   ) => string | number | null | undefined;
@@ -33,8 +35,8 @@ export type MergeOpts<TItem> = {
  */
 export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
   keys: { resultsKey: string; totalKey: string; pageInfoKey: string },
-  adapt: AdaptArgs<TVars>, // function that extracts { offset, limit } from query variables
-  opts?: MergeOpts<TItem>
+  adapt: ResolveMergePagination<TVars>, // function that extracts { offset, limit } from query variables
+  opts?: MergeItemOptions<TItem>
 ): FieldMergeFunction<
   unknown, // existing value in the cache
   unknown, // incoming value from the server
@@ -61,18 +63,21 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
     const merged = prev.slice() as (TItem | undefined)[];
 
     // 3. Choose ID extractor: custom or default (`id` via readField).
-    const getId =
-      opts?.getId ??
+    const getItemId =
+      opts?.getItemId ??
       ((item: TItem, rf: FieldFunctionOptions['readField']) =>
         (rf && rf('id', item as any)) as string | number | null | undefined);
 
     // 4. Build an index of existing items by ID → position.
     //    This lets us detect duplicates and remove old copies later.
     const posById = new Map<string | number, number>();
+
     for (let i = 0; i < merged.length; i++) {
       const it = merged[i];
+
       if (it !== undefined) {
-        const id = getId(it, readField);
+        const id = getItemId(it, readField);
+
         if (id !== null && id !== undefined && !posById.has(id)) {
           posById.set(id, i);
         }
@@ -84,7 +89,8 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
       const item = next[i] as TItem;
       const targetIndex = offset + i;
 
-      const id = getId(item, readField);
+      const id = getItemId(item, readField);
+
       if (id !== null && id !== undefined) {
         const existingAt = posById.get(id);
 
@@ -108,6 +114,11 @@ export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
     const out: Record<string, unknown> = { ...inObj, [resultsKey]: merged };
     out[totalKey] = inObj[totalKey] ?? exObj?.[totalKey];
     out[pageInfoKey] = inObj[pageInfoKey] ?? exObj?.[pageInfoKey];
+
+    console.log();
+    console.log('| ------ mergeObjectPayload MERGED DATA - out  ------ |');
+    console.log(JSON.stringify(out, null, 2));
+    console.log();
 
     return out;
   };

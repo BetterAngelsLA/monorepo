@@ -1,6 +1,6 @@
 import { InMemoryCache, useApolloClient } from '@apollo/client';
 import { useMemo } from 'react';
-import { assertQueryFieldHasMerge } from '../cachePolicy/utils/assertQueryFieldHasMerge';
+import { assertQueryFieldHasMerge } from '../../cachePolicy/utils/assertQueryFieldHasMerge';
 
 export function useAssertQueryFieldHasMerge(
   fieldName: string,

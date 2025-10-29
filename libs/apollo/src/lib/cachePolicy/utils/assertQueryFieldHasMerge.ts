@@ -7,7 +7,7 @@ import {
 import { TYPE_POLICIES_SYM } from '../constants';
 import { TCacheWithPolicies } from '../types';
 
-export function getTypePoliciesFromCache(cache: InMemoryCache): TypePolicies {
+function getTypePoliciesFromCache(cache: InMemoryCache): TypePolicies {
   if (!(TYPE_POLICIES_SYM in cache)) {
     throw new Error(
       `Active cache has no attached typePolicies. To validate cache policies, must attach them to cacheStore via TYPE_POLICIES_SYM: cache[${String(

@@ -1,17 +1,35 @@
 import type { FieldFunctionOptions, FieldMergeFunction } from '@apollo/client';
-import { mergeArrayPayload } from './mergeFunctions/mergeArrayPayload';
-import { mergeObjectPayload } from './mergeFunctions/mergeObjectPayload';
+import { extractPagination } from '../utils';
+import { mergeArrayPayload, mergeObjectPayload } from './mergeFunctions';
+import { resolveOffsetPagination, resolvePerPagePagination } from './resolvers';
 import type {
-  AdaptArgs,
-  PageVars,
+  MergePaginationArgs,
+  ResolveMergePagination,
   TCacheMergeOpts,
   WrapperMode,
 } from './types';
 
-function defaultAdapt<TVars = unknown>(vars: TVars | undefined): PageVars {
-  return (
-    (vars as unknown as { pagination?: PageVars } | undefined)?.pagination ?? {}
-  );
+function toNumber(value: unknown, fallback: number): number {
+  const n = Number(value);
+  if (Number.isFinite(n)) {
+    return n;
+  }
+  return fallback;
+}
+
+function defaultResolvePaginationFn<TVars = unknown>(
+  variables: TVars | undefined
+): MergePaginationArgs {
+  const pagination = extractPagination(variables);
+
+  const resolveUsingOffset = resolveOffsetPagination<TVars>();
+  const resolveUsingPerPage = resolvePerPagePagination<TVars>();
+
+  if (pagination?.type === 'perPage') {
+    return resolveUsingPerPage(variables);
+  }
+
+  return resolveUsingOffset(variables);
 }
 
 type TResult = FieldMergeFunction<
@@ -21,24 +39,66 @@ type TResult = FieldMergeFunction<
 >;
 
 export function generateMergeFn<TItem = unknown, TVars = unknown>(
-  opts?: TCacheMergeOpts<TItem, TVars>
+  options?: TCacheMergeOpts<TItem, TVars>
 ): TResult {
-  const adapt = (opts?.adaptArgs ?? defaultAdapt) as AdaptArgs<TVars>;
+  const mergeOptions = (options ?? {}) as
+    | WrapperMode<TItem, TVars>
+    | { mode: 'array' };
 
-  if (opts?.mode === 'array') {
-    return mergeArrayPayload<TItem, TVars>(adapt) as unknown as TResult; // <-- pass TVars
+  const resolvePaginationFn: ResolveMergePagination<TVars> =
+    (mergeOptions as WrapperMode<TItem, TVars>).resolvePaginationFn ??
+    (defaultResolvePaginationFn as ResolveMergePagination<TVars>);
+
+  const itemsFieldName =
+    (mergeOptions as WrapperMode<TItem, TVars>).itemsFieldName ?? 'results';
+  const totalFieldName =
+    (mergeOptions as WrapperMode<TItem, TVars>).totalFieldName ?? 'totalCount';
+  const pageInfoFieldName =
+    (mergeOptions as WrapperMode<TItem, TVars>).pageInfoFieldName ?? 'pageInfo';
+
+  // merge-item options (top-level getId still supported if you kept it in your types)
+  const mergeItemOpts =
+    (mergeOptions as WrapperMode<TItem, TVars>).mergeItemOpts ?? {};
+  if (
+    (mergeOptions as WrapperMode<TItem, TVars>).getItemId &&
+    !mergeItemOpts.getItemId
+  ) {
+    mergeItemOpts.getItemId = (
+      mergeOptions as WrapperMode<TItem, TVars>
+    ).getItemId;
   }
 
-  const {
-    resultsKey = 'results',
-    totalKey = 'totalCount',
-    pageInfoKey = 'pageInfo',
-    mergeItemOpts,
-  } = (opts ?? {}) as WrapperMode<TItem, TVars>;
+  // array mode
+  if ((mergeOptions as any).mode === 'array') {
+    const base = mergeArrayPayload<TItem, TVars>(
+      resolvePaginationFn
+    ) as unknown as TResult;
 
-  return mergeObjectPayload<TItem, TVars>(
-    { resultsKey, totalKey, pageInfoKey },
-    adapt,
+    return function mergeArrayWithTransform(existing, incoming, fieldOpts) {
+      const transformer = (options as any)?.transformIncoming;
+      const normalizedIncoming =
+        typeof transformer === 'function' ? transformer(incoming) : incoming;
+
+      return base(existing, normalizedIncoming, fieldOpts);
+    };
+  }
+
+  // wrapper mode (default)
+  const base = mergeObjectPayload<TItem, TVars>(
+    {
+      resultsKey: itemsFieldName,
+      totalKey: totalFieldName,
+      pageInfoKey: pageInfoFieldName,
+    },
+    resolvePaginationFn,
     mergeItemOpts
   ) as unknown as TResult;
+
+  return function mergeObjectWithTransform(existing, incoming, fieldOpts) {
+    const transformer = (options as any)?.transformIncoming;
+    const normalizedIncoming =
+      typeof transformer === 'function' ? transformer(incoming) : incoming;
+
+    return base(existing, normalizedIncoming, fieldOpts);
+  };
 }

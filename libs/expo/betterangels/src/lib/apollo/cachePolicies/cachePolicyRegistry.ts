@@ -67,7 +67,12 @@ import {
   TCachePolicyConfig,
   buildPolicyConfig,
   queryPolicyRecord,
+  resolvePerPagePagination,
 } from '@monorepo/apollo';
+import {
+  HmisListClientsQuery,
+  HmisListClientsQueryVariables,
+} from '../../ui-components/ClientProfileList/__generated__/HmisListClients.generated';
 import {
   FilterClientProfilesQuery,
   FilterClientProfilesQueryVariables,
@@ -80,17 +85,102 @@ import {
   FilterUsersQuery,
   FilterUsersQueryVariables,
 } from '../../ui-components/Filters/FilterUsers/__generated__/filterUsers.generated';
-import {
-  TasksQuery,
-  TasksQueryVariables,
-} from '../../ui-components/TaskList/__generated__/Tasks.generated';
+
+// const { data, loading } = useHmisListClientsQuery({
+//   variables: { filter, pagination: { page, perPage: paginationLimit } },
+//   fetchPolicy: 'cache-and-network',
+//   nextFetchPolicy: 'cache-first',
+// });
+
+// queryPolicyRecord<HmisListClientsQuery, HmisListClientsQueryVariables>({
+//   key: 'hmisListClients',
+//   entityTypename: 'HmisClientType',
+//   keyArgs: ['filter', ['pagination', 'perPage']] as const, // include perPage
+// }),
 
 const policyConfig = [
-  queryPolicyRecord<TasksQuery, TasksQueryVariables>({
-    key: 'tasks',
-    entityTypename: 'TaskType',
-    keyArgs: ['filters', 'ordering'] as const,
+  // queryPolicyRecord<
+  //   HmisListClientsQuery,
+  //   HmisListClientsQueryVariables,
+  //   'items'
+  // >({
+  //   key: 'hmisListClients',
+  //   resultsKey: 'items',
+  //   entityTypename: 'HmisClientType',
+  //   keyArgs: ['filter', ['pagination', 'perPage']] as const,
+  //   keyFields: ['personalId'], // query does not use ID but personalId
+  //   mergeOpts: {
+  //     itemsFieldName: 'items',
+  //     totalFieldName: 'total',
+
+  //     // adapter: read { page, perPage } → { offset, limit }
+  //     resolvePagination: resolvePerPagePagination(),
+
+  //     // normalize: lift meta.totalCount to top-level total (keep meta intact)
+  //     transformIncoming(incomingValue) {
+  //       if (!incomingValue || typeof incomingValue !== 'object') {
+  //         return incomingValue;
+  //       }
+
+  //       const objectValue = incomingValue as any;
+  //       const totalCount = objectValue?.meta?.totalCount;
+
+  //       if (typeof totalCount !== 'number') {
+  //         return incomingValue;
+  //       }
+
+  //       return { ...objectValue, total: totalCount };
+  //     },
+  //     getId(item, readField) {
+  //       return (
+  //         (readField('uniqueIdentifier', item as any) as
+  //           | string
+  //           | null
+  //           | undefined) ??
+  //         (readField('personalId', item as any) as string | null | undefined) ??
+  //         null
+  //       );
+  //     },
+  //   },
+  // }),
+
+  queryPolicyRecord<
+    HmisListClientsQuery,
+    HmisListClientsQueryVariables,
+    'items'
+  >({
+    key: 'hmisListClients',
+    resultsKey: 'items',
+    entityTypename: 'HmisClientType',
+    keyArgs: ['filter', ['pagination', 'perPage']] as const,
+    keyFields: ['personalId'],
+    mergeOpts: {
+      itemsFieldName: 'items',
+      totalFieldName: 'total',
+      resolvePaginationFn: resolvePerPagePagination(),
+      // resolvePagination:
+      // resolvePerPagePagination<HmisListClientsQueryVariables>(),
+      transformIncoming(incomingValue) {
+        if (!incomingValue || typeof incomingValue !== 'object') {
+          return incomingValue;
+        }
+        const v: any = incomingValue;
+        const tc = v?.meta?.totalCount;
+        return typeof tc === 'number' ? { ...v, total: tc } : incomingValue;
+      },
+    },
   }),
+
+  // Optional: if items don’t expose `id`, provide a custom identity
+  // mergeItemOpts: {
+  //   getId(item, readField) {
+  //     return readField('personalId', item as any)
+  //       ?? readField('id', item as any)
+  //       ?? null;
+  //   },
+  // },
+
+  // Existing: ok
   queryPolicyRecord<
     FilterClientProfilesQuery,
     FilterClientProfilesQueryVariables
