@@ -50,8 +50,6 @@ export function ClientInteractionsHmisView(props: TProps) {
     const res = data?.hmisListClientNotes;
     if (!res) return;
 
-    console.log('Fetched notes page:', page, res);
-
     if (res.__typename === 'HmisClientNoteListType') {
       const { items, meta } = res;
 
