@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import { HmisClientType } from '../../../../apollo';
 import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { ClientViewTabEnum } from '../../../Client/ClientTabs';
+import { ClientInteractionsHmisView } from '../ClientInteractionsHmisView';
 import { ClientProfileHMISView } from '../ClientProfileHMISView';
 import { ProgramNotes } from '../ProgramNotes';
 
