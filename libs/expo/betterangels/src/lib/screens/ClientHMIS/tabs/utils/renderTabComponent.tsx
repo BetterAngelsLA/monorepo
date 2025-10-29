@@ -18,7 +18,6 @@ const tabRendererMap: Partial<
   ),
   [ClientViewTabEnum.Interactions]: ({ client }) => (
     <ClientInteractionsHmisView client={client} />
-    // <ProgramNotes client={client} />
   ),
 };
 
