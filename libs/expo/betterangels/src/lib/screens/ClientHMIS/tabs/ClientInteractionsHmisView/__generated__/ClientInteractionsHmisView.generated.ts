@@ -10,7 +10,7 @@ export type HmisListClientNotesQueryVariables = Types.Exact<{
 }>;
 
 
-export type HmisListClientNotesQuery = { __typename?: 'Query', hmisListClientNotes: { __typename: 'HmisClientNoteListType', items: Array<{ __typename?: 'HmisClientNoteType', category?: string | null, date?: string | null, id?: string | null, note?: string | null, title?: string | null }>, meta?: { __typename?: 'HmisListMetaType', currentPage?: number | null, pageCount?: number | null, perPage?: number | null, totalCount?: number | null } | null } | { __typename?: 'HmisListClientNotesError' } };
+export type HmisListClientNotesQuery = { __typename?: 'Query', hmisListClientNotes: { __typename: 'HmisClientNoteListType', items: Array<{ __typename?: 'HmisClientNoteType', category?: string | null, date?: string | null, id?: string | null, note?: string | null, title?: string | null }>, meta?: { __typename?: 'HmisListMetaType', currentPage?: number | null, pageCount?: number | null, perPage?: number | null, totalCount?: number | null } | null } | { __typename?: 'HmisListClientNotesError', field?: string | null, message: string } };
 
 
 export const HmisListClientNotesDocument = gql`
@@ -35,6 +35,10 @@ export const HmisListClientNotesDocument = gql`
         perPage
         totalCount
       }
+    }
+    ... on HmisListClientNotesError {
+      field
+      message
     }
   }
 }

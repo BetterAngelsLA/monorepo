@@ -24,5 +24,10 @@ query HmisListClientNotes(
         totalCount
       }
     }
+
+    ... on HmisListClientNotesError {
+      field
+      message
+    }
   }
 }
