@@ -1,4 +1,4 @@
-query ListClientProgramNotes(
+query HmisListClientNotes(
   $enrollmentId: ID!
   $pagination: HmisPaginationInput = null
   $personalId: ID!
@@ -8,7 +8,6 @@ query ListClientProgramNotes(
     personalId: $personalId
     pagination: $pagination
   ) {
-    __typename
     ... on HmisClientNoteListType {
       __typename
       items {

@@ -1,6 +1,6 @@
 import { UserSearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
+import { TextBold } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 
 type TProps = {
@@ -28,7 +28,6 @@ export function ListEmptyState(props: TProps) {
       <TextBold mb="xs" size="sm">
         No results
       </TextBold>
-      <TextRegular size="sm">Try searching for something else.</TextRegular>
     </View>
   );
 }

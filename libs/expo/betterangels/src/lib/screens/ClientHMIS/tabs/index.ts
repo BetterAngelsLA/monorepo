@@ -1,2 +1,2 @@
+export { ClientInteractionsHmisView } from './ClientInteractionsHmisView';
 export { ClientProfileHMISView } from './ClientProfileHMISView';
-export { ProgramNotes } from './ProgramNotes';
