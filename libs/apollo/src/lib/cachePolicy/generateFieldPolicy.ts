@@ -69,19 +69,23 @@
 import type { FieldPolicy } from '@apollo/client';
 import { TCacheMergeOpts, generateMergeFn } from './merge';
 
-type TPolicyOpts<TItem, TVars> = {
+export function generateFieldPolicy<TItem = unknown, TVars = unknown>(opts: {
   keyArgs: ReadonlyArray<string> | false;
   mergeOpts?: TCacheMergeOpts<TItem, TVars>;
-};
-
-export function generateFieldPolicy<
-  TItem = unknown,
-  TVars = { pagination?: { offset?: number; limit?: number } }
->(
-  opts: TPolicyOpts<TItem, TVars>
-): FieldPolicy<Record<string, unknown>, Record<string, unknown>> {
+  // mergeOpts?: {
+  //   itemsFieldName?: string; // defaults to 'results'
+  //   totalFieldName?: string; // defaults to 'totalCount'
+  //   resolvePagination?: (
+  //     vars: TVars | undefined
+  //   ) => { offset: number; limit: number } | undefined;
+  //   transformIncoming?: (incoming: any) => any; // ← NEW
+  //   getId?: (
+  //     item: TItem,
+  //     readField: FieldFunctionOptions['readField']
+  //   ) => string | number | null | undefined;
+  // };
+}): FieldPolicy<Record<string, unknown>, Record<string, unknown>> {
   const { keyArgs, mergeOpts } = opts;
-
   return {
     keyArgs,
     merge: generateMergeFn<TItem, TVars>(mergeOpts) as FieldPolicy<

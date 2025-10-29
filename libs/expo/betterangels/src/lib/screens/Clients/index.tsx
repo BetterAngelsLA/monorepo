@@ -5,6 +5,7 @@ import { ElementType, useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { HmisClientListType } from '../../apollo';
 import { useUser } from '../../hooks';
+import { pagePaddingHorizontal } from '../../static';
 import {
   ClientCard,
   ClientCardHMIS,
@@ -78,6 +79,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
           <HmisListClients
             filter={{ search }}
             renderItem={renderHmisClientItem}
+            style={{ paddingHorizontal: pagePaddingHorizontal }}
           />
         ) : (
           <ClientProfileList

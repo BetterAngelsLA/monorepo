@@ -1,2 +1,1 @@
-export { useAssertQueryFieldHasMerge } from './useAssertQueryFieldHasMerge';
-export { useInfiniteScrollQuery } from './useInfiniteScrollQuery';
+export * from './useInfiniteScrollQuery';

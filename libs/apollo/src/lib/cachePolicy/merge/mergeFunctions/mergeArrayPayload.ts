@@ -1,8 +1,8 @@
 import type { FieldFunctionOptions, FieldMergeFunction } from '@apollo/client';
-import type { AdaptArgs } from '../types';
+import type { ResolveMergePagination } from '../types';
 
 export function mergeArrayPayload<TItem = unknown, TVars = unknown>(
-  adapt: AdaptArgs<TVars>
+  adapt: ResolveMergePagination<TVars>
 ): FieldMergeFunction<
   readonly TItem[] | undefined,
   readonly TItem[] | undefined,
