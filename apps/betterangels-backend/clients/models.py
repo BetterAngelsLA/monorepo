@@ -92,12 +92,7 @@ class HmisProfile(BaseModel):
         constraints = [models.UniqueConstraint(Lower("hmis_id"), "agency", name="unique_hmis_id_agency")]
 
 
-@pghistory.track(
-    pghistory.InsertEvent("client_profile.add"),
-    pghistory.UpdateEvent("client_profile.update"),
-    pghistory.DeleteEvent("client_profile.remove"),
-)
-class ClientProfile(BaseModel):
+class AbstractClientProfile(BaseModel):
     ada_accommodation = ArrayField(
         base_field=TextChoicesField(choices_enum=AdaAccommodationEnum), blank=True, null=True
     )
@@ -144,6 +139,16 @@ class ClientProfile(BaseModel):
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
     veteran_status = TextChoicesField(choices_enum=VeteranStatusEnum, blank=True, null=True)
 
+    class Meta:
+        abstract = True
+
+
+@pghistory.track(
+    pghistory.InsertEvent("client_profile.add"),
+    pghistory.UpdateEvent("client_profile.update"),
+    pghistory.DeleteEvent("client_profile.remove"),
+)
+class ClientProfile(AbstractClientProfile):
     @model_property
     def doc_ready_documents(self: "ClientProfile") -> List[Attachment]:
         return self.documents.filter(namespace__in=DOC_READY_NAMESPACES) or []

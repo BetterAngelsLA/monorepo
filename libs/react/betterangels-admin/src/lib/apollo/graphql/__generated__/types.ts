@@ -795,6 +795,61 @@ export type HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | Hmis
 
 export type HmisClientNoteTypeHmisUpdateClientNoteError = HmisClientNoteType | HmisUpdateClientNoteError;
 
+export type HmisClientProfileType = {
+  __typename?: 'HmisClientProfileType';
+  adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
+  additionalRaceEthnicity?: Maybe<Scalars['String']['output']>;
+  address?: Maybe<Scalars['String']['output']>;
+  age?: Maybe<Scalars['Int']['output']>;
+  californiaId?: Maybe<Scalars['String']['output']>;
+  differentIdentityText?: Maybe<Scalars['String']['output']>;
+  dob?: Maybe<Scalars['String']['output']>;
+  dobDataQuality?: Maybe<HmisDobQualityEnum>;
+  email?: Maybe<Scalars['NonBlankString']['output']>;
+  eyeColor?: Maybe<EyeColorEnum>;
+  firstName?: Maybe<Scalars['NonBlankString']['output']>;
+  gender: Array<HmisGenderEnum>;
+  hairColor?: Maybe<HairColorEnum>;
+  heightInInches?: Maybe<Scalars['Float']['output']>;
+  importantNotes?: Maybe<Scalars['String']['output']>;
+  lastName?: Maybe<Scalars['NonBlankString']['output']>;
+  livingSituation?: Maybe<LivingSituationEnum>;
+  mailingAddress?: Maybe<Scalars['String']['output']>;
+  maritalStatus?: Maybe<MaritalStatusEnum>;
+  middleName?: Maybe<Scalars['NonBlankString']['output']>;
+  nameDataQuality?: Maybe<HmisNameQualityEnum>;
+  nameSuffix?: Maybe<HmisSuffixEnum>;
+  nickname?: Maybe<Scalars['NonBlankString']['output']>;
+  personalId?: Maybe<Scalars['String']['output']>;
+  phoneNumber?: Maybe<Scalars['PhoneNumber']['output']>;
+  physicalDescription?: Maybe<Scalars['String']['output']>;
+  placeOfBirth?: Maybe<Scalars['String']['output']>;
+  preferredCommunication?: Maybe<Array<PreferredCommunicationEnum>>;
+  preferredLanguage?: Maybe<LanguageEnum>;
+  profilePhoto?: Maybe<DjangoImageType>;
+  pronouns?: Maybe<PronounEnum>;
+  pronounsOther?: Maybe<Scalars['String']['output']>;
+  raceEthnicity: Array<HmisRaceEnum>;
+  residenceAddress?: Maybe<Scalars['String']['output']>;
+  residenceGeolocation?: Maybe<Scalars['Point']['output']>;
+  spokenLanguages?: Maybe<Array<LanguageEnum>>;
+  ssn1?: Maybe<Scalars['String']['output']>;
+  ssn2?: Maybe<Scalars['String']['output']>;
+  ssn3?: Maybe<Scalars['String']['output']>;
+  ssnDataQuality?: Maybe<HmisSsnQualityEnum>;
+  uniqueIdentifier?: Maybe<Scalars['String']['output']>;
+  veteranStatus: HmisVeteranStatusEnum;
+};
+
+export type HmisClientProfileTypeOffsetPaginated = {
+  __typename?: 'HmisClientProfileTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<HmisClientProfileType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
+
 export type HmisClientType = {
   __typename?: 'HmisClientType';
   data?: Maybe<HmisClientDataType>;
@@ -1864,6 +1919,8 @@ export type Query = {
   clientProfiles: ClientProfileTypeOffsetPaginated;
   currentUser: UserType;
   featureControls: FeatureControlData;
+  hmisClientProfile: HmisClientProfileType;
+  hmisClientProfiles: HmisClientProfileTypeOffsetPaginated;
   hmisGetClient: HmisClientTypeHmisGetClientError;
   hmisGetClientNote: HmisClientNoteTypeHmisGetClientNoteError;
   hmisListClientNotes: HmisClientNoteListTypeHmisListClientNotesError;
@@ -1940,6 +1997,16 @@ export type QueryClientProfileArgs = {
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryHmisClientProfileArgs = {
+  personalId: Scalars['ID']['input'];
+};
+
+
+export type QueryHmisClientProfilesArgs = {
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
