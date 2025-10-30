@@ -248,7 +248,8 @@ class HmisApiBridge:
     def _format_client_notes_query(self, original_query: str) -> str:
         # move ids into filter arg
         return re.sub(
-            r"personalId:\s*\$personalId\s*,\s*enrollmentId:\s*\$enrollmentId",
+            r"(?:personalId:\s*\$personalId\s*,?\s*enrollmentId:\s*\$enrollmentId|"
+            r"enrollmentId:\s*\$enrollmentId\s*,?\s*personalId:\s*\$personalId)",
             r"filter: {personalId: $personalId, enrollmentId: $enrollmentId}",
             original_query,
         )

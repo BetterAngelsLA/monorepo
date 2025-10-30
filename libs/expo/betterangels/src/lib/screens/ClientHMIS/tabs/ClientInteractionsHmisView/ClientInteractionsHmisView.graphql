@@ -1,0 +1,33 @@
+query HmisListClientNotes(
+  $enrollmentId: ID!
+  $pagination: HmisPaginationInput = null
+  $personalId: ID!
+) {
+  hmisListClientNotes(
+    enrollmentId: $enrollmentId
+    personalId: $personalId
+    pagination: $pagination
+  ) {
+    ... on HmisClientNoteListType {
+      __typename
+      items {
+        category
+        date
+        id
+        note
+        title
+      }
+      meta {
+        currentPage
+        pageCount
+        perPage
+        totalCount
+      }
+    }
+
+    ... on HmisListClientNotesError {
+      field
+      message
+    }
+  }
+}
