@@ -1,10 +1,22 @@
-import { TextBold } from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
+import { HmisProgramNoteView } from '@monorepo/expo/betterangels';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function InteractionsHmisiew() {
+  const { id, personalId, enrollmentId } = useLocalSearchParams<{
+    personalId: string;
+    enrollmentId: string;
+    id: string;
+  }>();
+
+  if (!id || !personalId || !enrollmentId) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
   return (
-    <View>
-      <TextBold>VIEW NOTE</TextBold>
-    </View>
+    <HmisProgramNoteView
+      id={id}
+      personalId={personalId}
+      enrollmentId={enrollmentId}
+    />
   );
 }
