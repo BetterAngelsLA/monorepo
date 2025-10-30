@@ -16,6 +16,9 @@ query HmisListClientNotes(
         id
         note
         title
+        enrollment {
+          enrollmentId
+        }
       }
       meta {
         currentPage

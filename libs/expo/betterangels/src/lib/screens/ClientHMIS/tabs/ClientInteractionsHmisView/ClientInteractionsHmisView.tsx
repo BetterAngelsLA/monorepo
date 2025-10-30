@@ -100,7 +100,19 @@ export function ClientInteractionsHmisView(props: TProps) {
         data={programNotes}
         keyExtractor={(item) => item.id ?? ''}
         renderItem={({ item }) => (
-          <ProgramNoteCard variant="clientProfile" note={item} />
+          <ProgramNoteCard
+            onPress={() => {
+              router.navigate({
+                pathname: `/notes-hmis/${item.id}/index`,
+                params: {
+                  personalId: client.personalId,
+                  enrollmentId: item.enrollment?.enrollmentId,
+                },
+              });
+            }}
+            variant="clientProfile"
+            note={item}
+          />
         )}
         onEndReached={loadMore}
         onEndReachedThreshold={0.05}
