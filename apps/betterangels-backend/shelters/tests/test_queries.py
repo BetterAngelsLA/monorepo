@@ -614,24 +614,11 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
     def test_shelters_by_org_filter(self) -> None:
 
-        # imports to avoid changing file headers
-        from django.contrib.auth import get_user_model
-        from django.contrib.auth.models import Permission
-        from notes.permissions import NotePermissions
-
         org = organization_recipe.make()
         other_org = organization_recipe.make()
         s_older = shelter_recipe.make(organization=org)
         s_newer = shelter_recipe.make(organization=org)
         shelter_recipe.make(organization=other_org)  # should be excluded
-
-        User = get_user_model()
-        user = User.objects.create_user("orgtest@example.com", password="pw")
-        perm_str = getattr(NotePermissions.ADD, "value", NotePermissions.ADD)
-        app_label, codename = perm_str.split(".")
-        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
-        user.user_permissions.add(perm)
-        user.refresh_from_db()
 
         query = """
             query SheltersByOrg($orgId: ID!, $offset: Int, $limit: Int) {
