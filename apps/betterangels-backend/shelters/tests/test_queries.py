@@ -648,9 +648,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         variables = {"orgId": str(org.id), "offset": 0, "limit": 10}
 
-        response = self.execute_graphql(query, variables=variables, user=user)  # error showing up: fix
+        response = self.execute_graphql(query, variables=variables)  # error showing up: fix
 
-        # payload = response["data"]["sheltersByOrganization"]
+        payload = response["data"]["sheltersByOrganization"]
         results = payload["results"]
 
         # Only shelters from target org, newest first
@@ -663,10 +663,10 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         # test for invalid organization ids
         invalid_org_id = "999999"  # or use a UUID that doesn’t exist
-        # invalid_variables = {"orgId": invalid_org_id, "offset": 0, "limit": 10}
+        invalid_variables = {"orgId": invalid_org_id, "offset": 0, "limit": 10}
 
-        # invalid_response = self.execute_graphql(query, variables=invalid_variables, user=user)  # error showing up, fix
-        # invalid_payload = invalid_response["data"]["sheltersByOrganization"]
+        invalid_response = self.execute_graphql(query, variables=invalid_variables)  # error showing up, fix
+        invalid_payload = invalid_response["data"]["sheltersByOrganization"]
 
         self.assertEqual(invalid_payload["totalCount"], 0)
         self.assertEqual(len(invalid_payload["results"]), 0)
