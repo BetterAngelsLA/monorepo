@@ -613,7 +613,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         self.assertEqual(len(results), expected_result_count)
 
     def test_shelters_by_org_filter(self) -> None:
-        # Inline imports to avoid changing file headers
+
+        # imports to avoid changing file headers
         from django.contrib.auth import get_user_model
         from django.contrib.auth.models import Permission
         from notes.permissions import NotePermissions
@@ -647,9 +648,9 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         variables = {"orgId": str(org.id), "offset": 0, "limit": 10}
 
-        response = self.execute_graphql(query, variables=variables, user=user)
+        response = self.execute_graphql(query, variables=variables, user=user)  # error showing up: fix
 
-        payload = response["data"]["sheltersByOrganization"]
+        # payload = response["data"]["sheltersByOrganization"]
         results = payload["results"]
 
         # Only shelters from target org, newest first
@@ -659,3 +660,13 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         self.assertEqual(results[1]["id"], str(s_older.id))
         self.assertEqual(payload["pageInfo"]["offset"], 0)
         self.assertEqual(payload["pageInfo"]["limit"], 10)
+
+        # test for invalid organization ids
+        invalid_org_id = "999999"  # or use a UUID that doesn’t exist
+        # invalid_variables = {"orgId": invalid_org_id, "offset": 0, "limit": 10}
+
+        # invalid_response = self.execute_graphql(query, variables=invalid_variables, user=user)  # error showing up, fix
+        # invalid_payload = invalid_response["data"]["sheltersByOrganization"]
+
+        self.assertEqual(invalid_payload["totalCount"], 0)
+        self.assertEqual(len(invalid_payload["results"]), 0)
