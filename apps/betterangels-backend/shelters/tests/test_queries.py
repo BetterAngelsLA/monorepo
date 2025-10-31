@@ -1,10 +1,12 @@
 import datetime
+from datetime import timedelta
 from typing import Any
 from unittest.mock import ANY
 
 from accounts.tests.baker_recipes import organization_recipe
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.utils import timezone
 from model_bakery.recipe import seq
 from places import Places
 from shelters.enums import (
@@ -613,47 +615,63 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         self.assertEqual(len(results), expected_result_count)
 
     def test_shelters_by_org_filter(self) -> None:
+        import json
 
+        from django.contrib.auth import get_user_model
+        from django.contrib.auth.models import Permission
+        from notes.permissions import NotePermissions
+
+        # Arrange: orgs + shelters
         org = organization_recipe.make()
         other_org = organization_recipe.make()
-        s_older = shelter_recipe.make(organization=org)
-        s_newer = shelter_recipe.make(organization=org)
+        s_older = shelter_recipe.make(organization=org, created_at=timezone.now() - timedelta(minutes=1))
+        s_newer = shelter_recipe.make(organization=org, created_at=timezone.now())
         shelter_recipe.make(organization=other_org)  # should be excluded
-
+        # Auth user + perm
+        User = get_user_model()
+        user = User.objects.create_user("orgtest@example.com", password="pw")
+        app_label, codename = getattr(NotePermissions.ADD, "value", NotePermissions.ADD).split(".")
+        perm = Permission.objects.get(codename=codename, content_type__app_label=app_label)
+        user.user_permissions.add(perm)
+        self.client.force_login(user)
         query = """
-            query SheltersByOrg($orgId: ID!, $offset: Int, $limit: Int) {
+        query SheltersByOrg($orgId: ID!, $offset: Int, $limit: Int) {
             sheltersByOrganization(
-                organizationId: $orgId
-                pagination: { offset: $offset, limit: $limit }
+            organizationId: $orgId
+            pagination: { offset: $offset, limit: $limit }
             ) {
-                totalCount
-                pageInfo { offset limit }
-                results { id name }
+            totalCount
+            pageInfo { offset limit }
+            results { id name }
             }
-            }
+        }
         """
-
         variables = {"orgId": str(org.id), "offset": 0, "limit": 10}
-
-        response = self.execute_graphql(query, variables=variables)  # error showing up: fix
-
+        # Use the real HTTP endpoint so request.user is populated from the session
+        GRAPHQL_URL = "/graphql"
+        resp = self.client.post(
+            GRAPHQL_URL,
+            data=json.dumps({"query": query, "variables": variables}),
+            content_type="application/json",
+        )
+        response = resp.json()
+        if response.get("errors"):
+            self.fail(f"GQL errors: {response['errors']}")
         payload = response["data"]["sheltersByOrganization"]
         results = payload["results"]
-
-        # Only shelters from target org, newest first
         self.assertEqual(payload["totalCount"], 2)
         self.assertEqual(len(results), 2)
         self.assertEqual(results[0]["id"], str(s_newer.id))
         self.assertEqual(results[1]["id"], str(s_older.id))
         self.assertEqual(payload["pageInfo"]["offset"], 0)
         self.assertEqual(payload["pageInfo"]["limit"], 10)
-
-        # test for invalid organization ids
-        invalid_org_id = "999999"  # or use a UUID that doesn’t exist
-        invalid_variables = {"orgId": invalid_org_id, "offset": 0, "limit": 10}
-
-        invalid_response = self.execute_graphql(query, variables=invalid_variables)  # error showing up, fix
-        invalid_payload = invalid_response["data"]["sheltersByOrganization"]
-
+        invalid_resp = self.client.post(
+            GRAPHQL_URL,
+            data=json.dumps({"query": query, "variables": {"orgId": "999999", "offset": 0, "limit": 10}}),
+            content_type="application/json",
+        ).json()
+        if invalid_resp.get("errors"):
+            self.fail(f"GQL errors (invalid org): {invalid_resp['errors']}")
+        invalid_payload = invalid_resp["data"]["sheltersByOrganization"]
         self.assertEqual(invalid_payload["totalCount"], 0)
         self.assertEqual(len(invalid_payload["results"]), 0)
