@@ -9,6 +9,7 @@ import {
   HmisSuffixEnum,
   HmisUpdateClientInput,
   HmisUpdateClientSubItemsInput,
+  HmisVeteranStatusEnum,
   Maybe,
 } from '../../apollo';
 import {
@@ -17,6 +18,7 @@ import {
   toHmisNameQualityInt,
   toHmisSsnQualityEnumInt,
   toHmisSuffixEnumInt,
+  toHmisVeteranStatusEnumInt,
   toRaceEnumInt,
 } from '../../static';
 import {
@@ -52,6 +54,12 @@ function toNameSuffixInput(value?: HmisSuffixEnum | null | ''): number {
 
 function toSsnDataQualityInput(value?: HmisSsnQualityEnum | null | ''): number {
   return toHmisSsnQualityEnumInt(value) ?? FALLBACK_SSN_DATA_QUALITY_INT;
+}
+
+function toHmisVeteranStatusInput(
+  value?: Maybe<HmisVeteranStatusEnum> | ''
+): number {
+  return toHmisVeteranStatusEnumInt(value) ?? FALLBACK_VETERAN_STATUS_INT;
 }
 
 function toGenderInput(values?: HmisGenderEnum[]): number[] {
@@ -153,6 +161,12 @@ export function toHmisUpdateClientSubItemsInput(
       continue;
     }
 
+    if (key === 'veteranStatus') {
+      inputs.veteranStatus = toHmisVeteranStatusInput(values.veteranStatus);
+
+      continue;
+    }
+
     // ... update for future Form fields
   }
 
@@ -197,6 +211,17 @@ export function toHmisUpdateClientInput(
       continue;
     }
 
+    if (key === 'dobDataQuality') {
+      inputs.dobDataQuality = toDobDataQualityInput(values.dobDataQuality);
+
+      continue;
+    }
+
+    if (key === 'dob') {
+      inputs.dob = values.dob || '';
+
+      continue;
+    }
     // ... update for future Form fields
   }
 
