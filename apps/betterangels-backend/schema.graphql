@@ -537,6 +537,63 @@ input CreateServiceRequestInput {
 
 union CreateServiceRequestPayload = ServiceRequestType | OperationInfo
 
+input CreateShelterInput {
+  name: String!
+  description: String!
+  organization: ID = null
+  location: ShelterLocationInput = null
+  email: String = null
+  phone: String = null
+  website: String = null
+  instagram: String = null
+  accessibility: [AccessibilityChoices!]!
+  demographics: [DemographicChoices!]!
+  specialSituationRestrictions: [SpecialSituationRestrictionChoices!]!
+  shelterTypes: [ShelterChoices!]!
+  roomStyles: [RoomStyleChoices!]!
+  storage: [StorageChoices!]!
+  pets: [PetChoices!]!
+  parking: [ParkingChoices!]!
+  immediateNeeds: [ImmediateNeedChoices!]!
+  generalServices: [GeneralServiceChoices!]!
+  healthServices: [HealthServiceChoices!]!
+  trainingServices: [TrainingServiceChoices!]!
+  mealServices: [MealServiceChoices!]!
+  entryRequirements: [EntryRequirementChoices!]!
+  referralRequirement: [ReferralRequirementChoices!]!
+  exitPolicy: [ExitPolicyChoices!]!
+  cities: [CityChoices!]!
+  spa: [SPAChoices!]!
+  shelterPrograms: [ShelterProgramChoices!]!
+  funders: [FunderChoices!]!
+  status: StatusChoices = null
+  demographicsOther: String = null
+  shelterTypesOther: String = null
+  totalBeds: Int = null
+  roomStylesOther: String = null
+  addNotesSleepingDetails: String = null
+  addNotesShelterDetails: String = null
+  maxStay: Int = null
+  curfew: Time = null
+  onSiteSecurity: Boolean = null
+  visitorsAllowed: Boolean = null
+  exitPolicyOther: String = null
+  emergencySurge: Boolean = null
+  otherRules: String = null
+  otherServices: String = null
+  entryInfo: String = null
+  bedFees: String = null
+  programFees: String = null
+  shelterProgramsOther: String = null
+  fundersOther: String = null
+  subjectiveReview: String = null
+  cityCouncilDistrict: Int = null
+  supervisorialDistrict: Int = null
+  overallRating: Int = null
+}
+
+union CreateShelterPayload = ShelterType | OperationInfo
+
 union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 input CreateTaskInput {
@@ -636,6 +693,13 @@ enum EntryRequirementChoices {
 
 type EntryRequirementType {
   name: EntryRequirementChoices
+}
+
+enum ExitPolicyChoices {
+  MIA
+  VIOLENCE
+  MITIGATION
+  OTHER
 }
 
 enum EyeColorEnum {
@@ -1197,6 +1261,12 @@ enum MaritalStatusEnum {
   WIDOWED
 }
 
+enum MealServiceChoices {
+  BREAKFAST
+  LUNCH
+  DINNER
+}
+
 enum MoodEnum {
   AGITATED
   AGREEABLE
@@ -1274,6 +1344,7 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
+  createShelter(input: CreateShelterInput!): CreateShelterPayload!
 }
 
 scalar NonBlankString
@@ -1598,7 +1669,7 @@ type Query {
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(pagination: OffsetPaginationInput, filters: TaskFilter, ordering: [TaskOrder!]! = []): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
-  shelters(filters: ShelterFilter, order: ShelterOrder, pagination: OffsetPaginationInput): ShelterTypeOffsetPaginated!
+  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
 }
 
 enum RaceEnum {
@@ -1609,6 +1680,14 @@ enum RaceEnum {
   NATIVE_HAWAIIAN_PACIFIC_ISLANDER
   WHITE_CAUCASIAN
   OTHER
+}
+
+enum ReferralRequirementChoices {
+  REFERRAL_MATCHED
+  REFERRAL_NONMATCHED
+  SERVICE_PROVIDER_SUBMISSION
+  SELF_REFERRAL
+  SAME_DAY_INTAKE
 }
 
 enum RelationshipTypeEnum {
@@ -1794,6 +1873,12 @@ input ShelterFilter {
   properties: ShelterPropertyInput
   mapBounds: MapBoundsInput
   geolocation: GeolocationInput
+}
+
+input ShelterLocationInput {
+  place: String!
+  latitude: Float = null
+  longitude: Float = null
 }
 
 type ShelterLocationType {
