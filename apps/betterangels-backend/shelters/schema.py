@@ -22,7 +22,9 @@ from shelters.enums import (
     PetChoices,
     ReferralRequirementChoices,
     RoomStyleChoices,
-    ShelterChoices as ShelterTypeChoices,
+)
+from shelters.enums import ShelterChoices as ShelterTypeChoices
+from shelters.enums import (
     ShelterProgramChoices,
     SPAChoices,
     SpecialSituationRestrictionChoices,
@@ -48,7 +50,9 @@ from shelters.models import (
     RoomStyle,
     Shelter,
     ShelterProgram,
-    ShelterType as ShelterKind,
+)
+from shelters.models import ShelterType as ShelterKind
+from shelters.models import (
     SpecialSituationRestriction,
     Storage,
     TrainingService,
