@@ -1,37 +1,3 @@
-# type HmisClientNoteType {
-#   id: String
-#   title: String
-#   note: String
-#   date: String
-#   category: String
-#   client: HmisClientType
-#   enrollment: HmisEnrollmentType
-# }
-
-# type HmisEnrollmentType {
-#   personalId: String
-#   dateCreated: String
-#   dateUpdated: String
-#   enrollmentId: String
-#   entryDate: String
-#   exitDate: String
-#   householdId: String
-#   project: HmisProjectType
-#   data: [HmisEnrollmentDataType!]
-#   enrollmentHouseholdMembers: [HmisEnrollmentHouseholdMemberType!]
-# }
-
-# type HmisProjectType {
-#   dateCreated: String
-#   dateUpdated: String
-#   organizationId: String
-#   projectId: String
-#   projectName: String
-#   projectType: String
-# }
-
-# union HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | HmisGetClientNoteError
-
 query HmisGetClientNote($id: ID!, $personalId: ID!, $enrollmentId: ID!) {
   hmisGetClientNote(
     id: $id
