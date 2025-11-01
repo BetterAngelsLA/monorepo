@@ -2,19 +2,18 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { extractHMISErrors } from '../../../apollo';
 import { applyOperationFieldErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
-import { HmisProgramNoteForm } from '../HmisProgramNoteForm';
 import {
+  HmisProgramNoteForm,
   HmisProgramNoteFormSchema,
-  HmisProgramNoteFormtSchemaOutput,
-  TFormInput,
-  TFormOutput,
+  HmisProgramNoteFormSchemaOutput,
+  THmisProgramNoteFormInputs,
+  THmisProgramNoteFormOutputs,
   hmisProgramNoteFormEmptyState,
-} from '../HmisProgramNoteForm/formSchema';
+} from '../HmisProgramNoteForm';
 import { useHmisCreateClientNoteMutation } from './__generated__/hmisCreateClientNote.generated';
 
 type TProps = {
@@ -29,21 +28,21 @@ export function HmisProgramNoteCreate(props: TProps) {
   const { showSnackbar } = useSnackbar();
   const [createHmisClientNoteMutation] = useHmisCreateClientNoteMutation();
 
-  type TFormValues = z.input<typeof HmisProgramNoteFormSchema>;
-
   const formKeys = Object.keys(hmisProgramNoteFormEmptyState);
 
-  const formMethods = useForm<TFormInput>({
+  const formMethods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
     defaultValues: hmisProgramNoteFormEmptyState,
   });
 
   const { setError } = formMethods;
 
-  const onSubmit: SubmitHandler<TFormValues> = async (values) => {
+  const onSubmit: SubmitHandler<THmisProgramNoteFormInputs> = async (
+    values
+  ) => {
     try {
-      const payload: TFormOutput =
-        HmisProgramNoteFormtSchemaOutput.parse(values);
+      const payload: THmisProgramNoteFormOutputs =
+        HmisProgramNoteFormSchemaOutput.parse(values);
 
       const { data } = await createHmisClientNoteMutation({
         variables: {

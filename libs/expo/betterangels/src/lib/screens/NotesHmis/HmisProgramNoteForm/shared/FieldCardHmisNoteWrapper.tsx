@@ -4,8 +4,9 @@ import {
   Spacings,
   TMarginProps,
 } from '@monorepo/expo/shared/static';
+import { Loading } from '@monorepo/expo/shared/ui-components';
 import { ReactNode } from 'react';
-import { Pressable, StyleSheet, ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
 
 interface IFieldCardProps extends TMarginProps {
   children: ReactNode;
@@ -14,6 +15,7 @@ interface IFieldCardProps extends TMarginProps {
   expanded?: boolean;
   onPress: () => void;
   disabled?: boolean;
+  loading?: boolean;
   overflow?: 'hidden' | 'visible' | 'scroll' | undefined;
   style?: ViewStyle;
 }
@@ -26,6 +28,7 @@ export function FieldCardHmisNoteWrapper(props: IFieldCardProps) {
     expanded,
     onPress,
     disabled,
+    loading,
     overflow = 'hidden',
     style,
   } = props;
@@ -47,6 +50,15 @@ export function FieldCardHmisNoteWrapper(props: IFieldCardProps) {
         style,
       ]}
     >
+      {loading && (
+        <View
+          pointerEvents="none"
+          style={[StyleSheet.absoluteFillObject, styles.loading]}
+        >
+          <Loading />
+        </View>
+      )}
+
       {children}
     </Pressable>
   );
@@ -59,5 +71,10 @@ const styles = StyleSheet.create({
     borderRadius: Radiuses.xs,
     backgroundColor: Colors.WHITE,
     borderWidth: 1,
+  },
+  loading: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.02)',
   },
 });
