@@ -14,6 +14,7 @@ import {
   SnackbarProvider,
   useNewRelic,
   UserProvider,
+  useUser,
 } from '@monorepo/expo/betterangels';
 import {
   ApiConfigProvider,
@@ -23,6 +24,7 @@ import { StatusBar } from 'expo-status-bar';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { apiUrl, demoApiUrl } from '../../config';
 
+import CookieManager from '@react-native-cookies/cookies';
 import { type ErrorBoundaryProps } from 'expo-router';
 import { Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -40,12 +42,26 @@ export function ErrorBoundary(props: ErrorBoundaryProps) {
 
 export default function RootLayout() {
   useNewRelic();
+  const { setUser } = useUser();
+
+  const handleUnauthenticated = async () => {
+    try {
+      // wipe session cookies so subsequent requests are truly unauthenticated
+      await CookieManager.clearAll();
+    } finally {
+      // reset local user state and take user to Auth
+      setUser(undefined);
+    }
+  };
 
   return (
     <GestureHandlerRootView style={styles.root}>
       <NativePaperProvider>
         <ApiConfigProvider productionUrl={apiUrl} demoUrl={demoApiUrl}>
-          <ApolloClientProvider policyConfig={cachePolicyRegistry}>
+          <ApolloClientProvider
+            policyConfig={cachePolicyRegistry}
+            onUnauthenticated={handleUnauthenticated}
+          >
             <FeatureControlProvider>
               <KeyboardProvider>
                 <KeyboardToolbarProvider>
