@@ -6,7 +6,7 @@ import {
 } from '@monorepo/expo/betterangels';
 import { Button } from '@monorepo/expo/shared/ui-components';
 import CookieManager from '@react-native-cookies/cookies';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Logo from './assets/images/logo.svg';
@@ -14,14 +14,18 @@ import Logo from './assets/images/logo.svg';
 export default function Auth() {
   const router = useRouter();
   const { setUser } = useUser();
+  const { clearSession } = useLocalSearchParams<{ clearSession?: string }>();
 
   // make sure local user data is cleared when landing on this screen
   // apolloProvider has no access to UserProvider so cannot really reset
   // user on 401 errors
   useEffect(() => {
-    setUser(undefined);
-    CookieManager.clearAll();
-  }, []);
+    if (clearSession === '1') {
+      setUser(undefined);
+      CookieManager.clearAll();
+      router.replace('/auth');
+    }
+  }, [clearSession, router, setUser]);
 
   return (
     <AuthContainer Logo={Logo}>

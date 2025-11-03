@@ -11,7 +11,7 @@ type TProps = {
 
 export const createErrorLink = ({
   onUnauthenticated,
-  authPath = '/auth',
+  authPath = '/auth?clearSession=1',
   safeOperations = ['CurrentUser', 'currentUser'],
 }: TProps): ApolloLink => {
   const redirectToAuth = createRedirectHandler({
