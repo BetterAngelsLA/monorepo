@@ -84,13 +84,6 @@ enum AttachmentType {
   UNKNOWN
 }
 
-input AuthInput {
-  code: String
-  code_verifier: String
-  id_token: String
-  redirect_uri: String
-}
-
 type AuthResponse {
   status_code: String!
 }
@@ -768,6 +761,29 @@ type HmisClientListType {
 
 union HmisClientListTypeHmisListClientsError = HmisClientListType | HmisListClientsError
 
+type HmisClientNoteListType {
+  items: [HmisClientNoteType!]!
+  meta: HmisListMetaType
+}
+
+union HmisClientNoteListTypeHmisListClientNotesError = HmisClientNoteListType | HmisListClientNotesError
+
+type HmisClientNoteType {
+  id: String
+  title: String
+  note: String
+  date: String
+  category: String
+  client: HmisClientType
+  enrollment: HmisEnrollmentType
+}
+
+union HmisClientNoteTypeHmisCreateClientNoteError = HmisClientNoteType | HmisCreateClientNoteError
+
+union HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | HmisGetClientNoteError
+
+union HmisClientNoteTypeHmisUpdateClientNoteError = HmisClientNoteType | HmisUpdateClientNoteError
+
 type HmisClientType {
   personalId: String
   uniqueIdentifier: String
@@ -806,6 +822,20 @@ input HmisCreateClientInput {
   dobDataQuality: Int = 99
 }
 
+type HmisCreateClientNoteError {
+  message: String!
+  field: String
+}
+
+input HmisCreateClientNoteInput {
+  personalId: String!
+  enrollmentId: String!
+  title: String!
+  note: String!
+  date: String!
+  category: String = "1"
+}
+
 input HmisCreateClientSubItemsInput {
   middleName: String = ""
   nameSuffix: Int = 9
@@ -823,6 +853,36 @@ enum HmisDobQualityEnum {
   DONT_KNOW
   NO_ANSWER
   NOT_COLLECTED
+}
+
+type HmisEnrollmentDataType {
+  field: String
+  value: String
+}
+
+type HmisEnrollmentHouseholdMemberType {
+  personalId: String
+  enrollmentId: String
+}
+
+type HmisEnrollmentListType {
+  items: [HmisEnrollmentType!]!
+  meta: HmisListMetaType
+}
+
+union HmisEnrollmentListTypeHmisListEnrollmentsError = HmisEnrollmentListType | HmisListEnrollmentsError
+
+type HmisEnrollmentType {
+  personalId: String
+  dateCreated: String
+  dateUpdated: String
+  enrollmentId: String
+  entryDate: String
+  exitDate: String
+  householdId: String
+  project: HmisProjectType
+  data: [HmisEnrollmentDataType!]
+  enrollmentHouseholdMembers: [HmisEnrollmentHouseholdMemberType!]
 }
 
 enum HmisGenderEnum {
@@ -843,7 +903,22 @@ type HmisGetClientError {
   field: String
 }
 
+type HmisGetClientNoteError {
+  message: String!
+  field: String
+}
+
+type HmisListClientNotesError {
+  message: String!
+  field: String
+}
+
 type HmisListClientsError {
+  message: String!
+  field: String
+}
+
+type HmisListEnrollmentsError {
   message: String!
   field: String
 }
@@ -896,6 +971,15 @@ type HmisProfileTypeOffsetPaginated {
   results: [HmisProfileType!]!
 }
 
+type HmisProjectType {
+  dateCreated: String
+  dateUpdated: String
+  organizationId: String
+  projectId: String
+  projectName: String
+  projectType: String
+}
+
 enum HmisRaceEnum {
   INDIGENOUS
   ASIAN
@@ -946,6 +1030,21 @@ input HmisUpdateClientInput {
   ssnDataQuality: Int!
   dob: String!
   dobDataQuality: Int!
+}
+
+type HmisUpdateClientNoteError {
+  message: String!
+  field: String
+}
+
+input HmisUpdateClientNoteInput {
+  id: String!
+  personalId: String!
+  enrollmentId: String!
+  title: String!
+  note: String!
+  date: String!
+  category: String = "1"
 }
 
 input HmisUpdateClientSubItemsInput {
@@ -1129,8 +1228,6 @@ type MoodType {
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
-  googleAuth(input: AuthInput!): AuthResponse!
-  appleAuth(input: AuthInput!): AuthResponse!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
   addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
@@ -1158,6 +1255,8 @@ type Mutation {
   hmisLogin(email: String!, password: String!): UserTypeHmisLoginError!
   hmisCreateClient(clientInput: HmisCreateClientInput!, clientSubItemsInput: HmisCreateClientSubItemsInput!): HmisClientTypeHmisCreateClientError!
   hmisUpdateClient(clientInput: HmisUpdateClientInput!, clientSubItemsInput: HmisUpdateClientSubItemsInput!): HmisClientTypeHmisUpdateClientError!
+  hmisCreateClientNote(clientNoteInput: HmisCreateClientNoteInput!): HmisClientNoteTypeHmisCreateClientNoteError!
+  hmisUpdateClientNote(clientNoteInput: HmisUpdateClientNoteInput!): HmisClientNoteTypeHmisUpdateClientNoteError!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
@@ -1488,6 +1587,9 @@ type Query {
   featureControls: FeatureControlData!
   hmisGetClient(personalId: ID!): HmisClientTypeHmisGetClientError!
   hmisListClients(pagination: HmisPaginationInput = null, filter: HmisClientFilterInput = null): HmisClientListTypeHmisListClientsError!
+  hmisGetClientNote(personalId: ID!, enrollmentId: ID!, id: ID!): HmisClientNoteTypeHmisGetClientNoteError!
+  hmisListClientNotes(personalId: ID!, enrollmentId: ID!, pagination: HmisPaginationInput = null): HmisClientNoteListTypeHmisListClientNotesError!
+  hmisListEnrollments(dynamicFields: [String]!, personalId: ID!, pagination: HmisPaginationInput = null): HmisEnrollmentListTypeHmisListEnrollmentsError!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
@@ -1496,7 +1598,7 @@ type Query {
   task(pk: ID!): TaskType! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   tasks(pagination: OffsetPaginationInput, filters: TaskFilter, ordering: [TaskOrder!]! = []): TaskTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "tasks", permission: "view_task"}], any: true)
   shelter(pk: ID!): ShelterType!
-  shelters(pagination: OffsetPaginationInput, filters: ShelterFilter, order: ShelterOrder): ShelterTypeOffsetPaginated!
+  shelters(filters: ShelterFilter, order: ShelterOrder, pagination: OffsetPaginationInput): ShelterTypeOffsetPaginated!
 }
 
 enum RaceEnum {

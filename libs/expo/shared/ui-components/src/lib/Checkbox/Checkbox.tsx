@@ -9,6 +9,7 @@ import {
 import { ReactNode } from 'react';
 import { DimensionValue, Pressable, StyleSheet } from 'react-native';
 import { CheckboxCheck } from './CheckboxCheck';
+import { CheckboxLabel } from './CheckboxLabel';
 
 interface ICheckboxProps extends TMarginProps {
   label?: ReactNode;
@@ -63,9 +64,9 @@ export function Checkbox(props: ICheckboxProps) {
       ]}
       onPress={onCheck}
     >
-      {!!labelFirst && label}
+      {!!labelFirst && <CheckboxLabel label={label} />}
       <CheckboxCheck isChecked={isChecked} size={size} testId={testId} />
-      {!labelFirst && label}
+      {!labelFirst && <CheckboxLabel label={label} />}
     </Pressable>
   );
 }

@@ -7,7 +7,11 @@ import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { MainScrollContainer } from '../../../../ui-components';
 import { ExpandableProfileContainer } from '../../../Client/ClientProfile/ExpandableProfileContainer';
 import { getHMISEditButtonRoute } from '../../../Client/ClientProfile/utils/getHMISEditButtonRoute';
-import { FullNameCardHmis, PersonalInfoCardHmis } from './ClientCardsHMIS';
+import {
+  DemographicInfoCardHmis,
+  FullNameCardHmis,
+  PersonalInfoCardHmis,
+} from './ClientCardsHMIS';
 
 type TProps = {
   client?: HmisClientType;
@@ -64,12 +68,17 @@ export function ClientProfileHMISView(props: TProps) {
           card={ClientProfileSectionEnum.PersonalInfo}
           openCard={expandedCard}
           onOpenCloseClick={onOpenCloseClick}
-          // onEditClick={onClickEdit}
-          onEditClick={() => {
-            alert('Page not yet implemented.');
-          }}
+          onEditClick={onClickEdit}
         >
           <PersonalInfoCardHmis client={client} />
+        </ExpandableProfileContainer>
+        <ExpandableProfileContainer
+          card={ClientProfileSectionEnum.Demographic}
+          openCard={expandedCard}
+          onOpenCloseClick={onOpenCloseClick}
+          onEditClick={onClickEdit}
+        >
+          <DemographicInfoCardHmis client={client} />
         </ExpandableProfileContainer>
       </View>
     </MainScrollContainer>

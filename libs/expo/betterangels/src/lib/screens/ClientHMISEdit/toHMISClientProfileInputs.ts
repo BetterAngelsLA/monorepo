@@ -2,18 +2,24 @@ import {
   HmisClientDataType,
   HmisClientType,
   HmisDobQualityEnum,
+  HmisGenderEnum,
   HmisNameQualityEnum,
+  HmisRaceEnum,
   HmisSsnQualityEnum,
   HmisSuffixEnum,
   HmisUpdateClientInput,
   HmisUpdateClientSubItemsInput,
+  HmisVeteranStatusEnum,
   Maybe,
 } from '../../apollo';
 import {
+  toGenderEnumInt,
   toHmisDobQualityEnumInt,
   toHmisNameQualityInt,
   toHmisSsnQualityEnumInt,
   toHmisSuffixEnumInt,
+  toHmisVeteranStatusEnumInt,
+  toRaceEnumInt,
 } from '../../static';
 import {
   FALLBACK_DOB_DATA_QUALITY_INT,
@@ -50,6 +56,43 @@ function toSsnDataQualityInput(value?: HmisSsnQualityEnum | null | ''): number {
   return toHmisSsnQualityEnumInt(value) ?? FALLBACK_SSN_DATA_QUALITY_INT;
 }
 
+function toHmisVeteranStatusInput(
+  value?: Maybe<HmisVeteranStatusEnum> | ''
+): number {
+  return toHmisVeteranStatusEnumInt(value) ?? FALLBACK_VETERAN_STATUS_INT;
+}
+
+function toGenderInput(values?: HmisGenderEnum[]): number[] {
+  const out = (values || [])
+    .map((val) => {
+      return toGenderEnumInt(val);
+    })
+    .filter((v) => v !== null);
+
+  if (out.length) {
+    return out as number[];
+  }
+
+  return [FALLBACK_GENDER_INT];
+}
+
+function toRaceEthnicityInput(values?: HmisRaceEnum[]): number[] {
+  const out = (values || [])
+    .map((val) => {
+      return toRaceEnumInt(val);
+    })
+    .filter((v) => v !== null);
+
+  console.log('out 1');
+  console.log(out);
+
+  if (out.length) {
+    return out as number[];
+  }
+
+  return [FALLBACK_RACE_ETHNICITY_INT];
+}
+
 function toStringInput(value?: string | null): string {
   return value || '';
 }
@@ -65,8 +108,8 @@ export function toHmisUpdateClientSubItemsInput(
     alias: values.alias || '',
     additionalRaceEthnicity: values.additionalRaceEthnicity || '',
     differentIdentityText: values.differentIdentityText || '',
-    gender: [FALLBACK_GENDER_INT],
-    raceEthnicity: [FALLBACK_RACE_ETHNICITY_INT],
+    gender: toGenderInput(values.gender),
+    raceEthnicity: toRaceEthnicityInput(values.raceEthnicity),
     veteranStatus: FALLBACK_VETERAN_STATUS_INT,
   };
 
@@ -86,6 +129,40 @@ export function toHmisUpdateClientSubItemsInput(
 
     if (key === 'nameSuffix') {
       inputs.nameSuffix = toNameSuffixInput(values.nameSuffix);
+
+      continue;
+    }
+
+    if (key === 'gender') {
+      inputs.gender = toGenderInput(values.gender);
+
+      continue;
+    }
+
+    if (key === 'raceEthnicity') {
+      inputs.raceEthnicity = toRaceEthnicityInput(values.raceEthnicity);
+
+      continue;
+    }
+
+    if (key === 'additionalRaceEthnicity') {
+      inputs.additionalRaceEthnicity = toStringInput(
+        values.additionalRaceEthnicity
+      );
+
+      continue;
+    }
+
+    if (key === 'differentIdentityText') {
+      inputs.differentIdentityText = toStringInput(
+        values.differentIdentityText
+      );
+
+      continue;
+    }
+
+    if (key === 'veteranStatus') {
+      inputs.veteranStatus = toHmisVeteranStatusInput(values.veteranStatus);
 
       continue;
     }
@@ -134,6 +211,17 @@ export function toHmisUpdateClientInput(
       continue;
     }
 
+    if (key === 'dobDataQuality') {
+      inputs.dobDataQuality = toDobDataQualityInput(values.dobDataQuality);
+
+      continue;
+    }
+
+    if (key === 'dob') {
+      inputs.dob = values.dob || '';
+
+      continue;
+    }
     // ... update for future Form fields
   }
 

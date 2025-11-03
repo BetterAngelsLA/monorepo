@@ -26,9 +26,9 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
   const [search, setSearch] = useState('');
   const { isHmisUser } = useUser();
 
-  const handleClientPress = useCallback((client: TClientProfile) => {
+  const handleClientPress = useCallback((id: string) => {
     router.navigate({
-      pathname: `/client/${client.id}`,
+      pathname: `/client/${id}`,
       params: { arrivedFrom: '/' },
     });
   }, []);
@@ -38,15 +38,25 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
       <ClientCard
         client={client}
         onMenuPress={setCurrentClient}
-        onPress={handleClientPress}
+        onPress={() => handleClientPress(client.id)}
       />
     ),
     [setCurrentClient, handleClientPress]
   );
 
   const renderHmisClientItem = useCallback(
-    (client: THmisClient) => <ClientCardHMIS client={client} />,
-    []
+    (client: THmisClient) => {
+      const id = client.personalId;
+
+      if (!id) {
+        return null;
+      }
+
+      return (
+        <ClientCardHMIS client={client} onPress={() => handleClientPress(id)} />
+      );
+    },
+    [handleClientPress]
   );
 
   return (

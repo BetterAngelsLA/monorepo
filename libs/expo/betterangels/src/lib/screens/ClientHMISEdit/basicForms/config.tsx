@@ -1,55 +1,57 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { HmisClientType } from '../../../apollo';
+import { ZodType } from 'zod';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
-import { TSectionKey } from '../types';
+import { THmisFormSectionKey, TSectionConfig } from '../types';
+import {
+  DemographicInfoFormHmis,
+  DemographicInfoFormSchema,
+  demographicInfoFormEmptyState,
+  mapClientToDemographicSchema,
+} from './DemographicInfo';
 import {
   FullNameFormHmis,
   FullNameFormSchema,
   fullNameFormEmptyState,
   mapClientToFullNameSchema,
 } from './FullName';
+import {
+  PersonalInfoFormHmis,
+  PersonalInfoFormSchema,
+  mapClientToPersonalInfoSchema,
+  personalInfoFormEmptyState,
+} from './PersonalInfo';
 
-// titles
-export const SectionTitle: Partial<Record<ClientProfileSectionEnum, string>> = {
-  [ClientProfileSectionEnum.FullName]: 'Edit Full Name',
-} as const;
+export const hmisFormConfig = {
+  [ClientProfileSectionEnum.FullName]: {
+    title: 'Edit Full Name',
+    Form: FullNameFormHmis,
+    schema: FullNameFormSchema,
+    emptyState: fullNameFormEmptyState,
+    dataMapper: mapClientToFullNameSchema,
+  },
+  [ClientProfileSectionEnum.Demographic]: {
+    title: 'Edit Demographic Info',
+    Form: DemographicInfoFormHmis,
+    schema: DemographicInfoFormSchema,
+    emptyState: demographicInfoFormEmptyState,
+    dataMapper: mapClientToDemographicSchema,
+  },
+  [ClientProfileSectionEnum.PersonalInfo]: {
+    title: 'Edit Personal Info',
+    Form: PersonalInfoFormHmis,
+    schema: PersonalInfoFormSchema,
+    emptyState: personalInfoFormEmptyState,
+    dataMapper: mapClientToPersonalInfoSchema,
+  },
+} as const satisfies Partial<
+  Record<ClientProfileSectionEnum, TSectionConfig<ZodType<any, any, any>>>
+>;
 
-// forms
-export const SectionForms = {
-  [ClientProfileSectionEnum.FullName]: FullNameFormHmis,
-} as const;
-
-// schemas
-export const SectionSchemas = {
-  [ClientProfileSectionEnum.FullName]: FullNameFormSchema,
-} as const;
-
-// defaults
-export const SectionDefaults = {
-  [ClientProfileSectionEnum.FullName]: fullNameFormEmptyState,
-} as const;
-
-export function parseAsSectionKeyHMIS(value: unknown): TSectionKey | null {
-  if (typeof value === 'string' && value in SectionSchemas) {
-    return value as TSectionKey;
+export function parseAsSectionKeyHMIS(
+  value: unknown
+): THmisFormSectionKey | null {
+  if (typeof value === 'string' && value in hmisFormConfig) {
+    return value as THmisFormSectionKey;
   }
 
   return null;
-}
-
-export function makeResolver(section: TSectionKey) {
-  return zodResolver(SectionSchemas[section]);
-}
-
-const SectionMappingFnMap = {
-  [ClientProfileSectionEnum.FullName]: mapClientToFullNameSchema,
-} as const;
-
-export function mapClientToForm<K extends TSectionKey>(
-  section: K,
-  client: HmisClientType
-) {
-  const mapperFn = SectionMappingFnMap[section];
-
-  return mapperFn(client);
 }
