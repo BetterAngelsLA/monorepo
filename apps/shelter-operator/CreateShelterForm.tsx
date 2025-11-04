@@ -1,8 +1,38 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
+import {
+  ShelterFormData,
+  DEMOGRAPHICS_OPTIONS,
+  SPECIAL_SITUATION_OPTIONS,
+  SHELTER_TYPES_OPTIONS,
+  ROOM_STYLES_OPTIONS,
+  ACCESSIBILITY_OPTIONS,
+  STORAGE_OPTIONS,
+  PETS_OPTIONS,
+  PARKING_OPTIONS,
+  BOOLEAN_OPTIONS,
+  EXIT_POLICY_OPTIONS,
+  IMMEDIATE_NEEDS_OPTIONS,
+  GENERAL_SERVICES_OPTIONS,
+  HEALTH_SERVICES_OPTIONS,
+  TRAINING_SERVICES_OPTIONS,
+  MEAL_SERVICES_OPTIONS,
+  ENTRY_REQUIREMENTS_OPTIONS,
+  REFERRAL_REQUIREMENT_OPTIONS,
+  SPA_OPTIONS,
+  CITY_COUNCIL_DISTRICT_OPTIONS,
+  SUPERVISORIAL_DISTRICT_OPTIONS,
+  SHELTER_PROGRAMS_OPTIONS,
+  FUNDERS_OPTIONS,
+  OVERALL_RATING_OPTIONS,
+  STATUS_OPTIONS,
+  LA_CITIES_OPTIONS,
+} from './types';
+
 export default function CreateShelterForm() {
 
   const [formData, setFormData] = useState({
+        // Basic Information
     name: '',
     organization: '',
     location: '',
@@ -10,53 +40,127 @@ export default function CreateShelterForm() {
     phone: '',
     website: '',
     instagram: '',
-    operatingHours: '',
-    demographics: '',
-    specialSituation: '',
-    shelterTypes: '',
-    description: '',
-    totalBeds: '',
-    roomStyles: '',
-    sleepingNotes: '',
-    accessibility: '',
-    storage: '',
-    pets: '',
-    parking: '',
-    featuresNotes: '',
-    maxStay: '',
-    intakeHours: '',
-    curfew: '',
-    onSiteSecurity: '',
-    visitorsAllowed: '',
-    exitPolicy: '',
-    emergencyCapacity: '',
-    otherRules: '',
-    immediateNeeds: '',
-    generalServices: '',
-    healthServices: '',
-    trainingServices: '',
-    mealServices: '',
-    servicesNotes: '',
-    entryRequirements: '',
-    referralRequirement: '',
-    bedFees: '',
-    programFees: '',
-    entryInfo: '',
-    cities: '',
-    spa: '',
-    laCityCouncilDistrict: '',
-    supervisorialDistrict: '',
-    shelterPrograms: '',
-    funders: '',
-    overallRating: '',
-    subjectiveReview: '',
-  });
+    facebook: '',
+    other_social_media: '',
+    operating_hours: '',
 
+    // Summary Information
+    demographics: [],
+    demographics_other: '',
+    special_situation_restrictions: [],
+    shelter_types: [],
+    shelter_types_other: '',
+    description: '',
+
+    // Sleeping Details
+    total_beds: 0,
+    room_styles: [],
+    room_styles_other: '',
+    add_notes_sleeping_details: '',
+
+    // Shelter Details
+    accessibility: [],
+    storage: [],
+    pets: [],
+    parking: [],
+    add_notes_shelter_details: '',
+
+    // Policies
+    max_stay: 0,
+    intake_hours: '',
+    curfew: '',
+    on_site_security: null,
+    visitors_allowed: null,
+    exit_policy: [],
+    exit_policy_other: '',
+    emergency_surge: null,
+    other_rules: '',
+    agreement_form: null,
+
+    // Services Offered
+    immediate_needs: [],
+    general_services: [],
+    health_services: [],
+    training_services: [],
+    meal_services: [],
+    other_services: '',
+
+    // Entry Requirements
+    entry_requirements: [],
+    referral_requirement: [],
+    bed_fees: '',
+    program_fees: '',
+    entry_info: '',
+
+    // Ecosystem Information
+    cities: [],
+    spa: [],
+    city_council_district: null,
+    supervisorial_district: null,
+    shelter_programs: [],
+    shelter_programs_other: '',
+    funders: [],
+    funders_other: '',
+
+    // Better Angels Review
+    overall_rating: null,
+    subjective_review: '',
+
+    // Better Angels Administration
+    status: 'Draft',
+
+    // Media
+    hero_image: null,
+    exterior_photos: [],
+    interior_photos: [],
+    videos: [],
+  });
+  // Handler for text inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  // Handler for number inputs
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value === '' ? 0 : parseInt(value, 10)
+    }));
+  };
+
+  // Handler for multi-select checkboxes
+  const handleMultiSelectChange = (field: keyof ShelterFormData, value: string) => {
+    setFormData(prev => {
+      const currentValues = prev[field] as string[];
+      const newValues = currentValues.includes(value)
+        ? currentValues.filter(v => v !== value)
+        : [...currentValues, value];
+
+      return {
+        ...prev,
+        [field]: newValues
+      };
+    });
+  };
+
+  // Handler for boolean/nullable fields
+  const handleBooleanChange = (field: keyof ShelterFormData, value: boolean | null) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // Handler for nullable number fields
+  const handleNullableNumberChange = (field: keyof ShelterFormData, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value === '' ? null : parseInt(value, 10)
     }));
   };
 
