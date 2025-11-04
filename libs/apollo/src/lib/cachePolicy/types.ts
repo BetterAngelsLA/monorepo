@@ -1,5 +1,32 @@
 import { FieldPolicy, InMemoryCache, TypePolicies } from '@apollo/client';
-import { DEFAULT_QUERY_RESULTS_KEY, TYPE_POLICIES_SYM } from './constants';
+import {
+  DEFAULT_QUERY_RESULTS_KEY,
+  DEFAULT_QUERY_TOTAL_COUNT_KEY,
+  TYPE_POLICIES_SYM,
+} from './constants';
+
+// -------------------- Pagination -------------------- //
+export type TPaginationType = 'perPage' | 'offset';
+
+export type PerPagePaginationVariables = {
+  mode: Extract<TPaginationType, 'perPage'>;
+  // path to page, e.g. 'pagination.page' → ['pagination', 'page']
+  pagePath?: string | ReadonlyArray<string>;
+  // path to perPage from, e.g. 'pagination.pageSize' → ['pagination', 'pageSize']
+  perPagePath?: string | ReadonlyArray<string>;
+};
+
+export type OffsetPaginationVariables = {
+  mode: Extract<TPaginationType, 'offset'>;
+  offsetPath?: string | ReadonlyArray<string>;
+  limitPath?: string | ReadonlyArray<string>;
+};
+
+export type TPaginationVariables =
+  | PerPagePaginationVariables
+  | OffsetPaginationVariables;
+
+// -------------------- CachePolicy -------------------- //
 
 export type TCachePolicyEntry = {
   entityTypename: string;
@@ -25,6 +52,7 @@ export type VarKeys<V> = Extract<keyof V, string>;
 export type AllowedKeys<V> = Exclude<VarKeys<V>, 'pagination'>;
 
 export type TDefaultResultsKey = typeof DEFAULT_QUERY_RESULTS_KEY;
+export type TDefaultTotalKey = typeof DEFAULT_QUERY_TOTAL_COUNT_KEY;
 
 /** Helper: item type if a container has RK as an array, else never */
 type ItemFromContainer<C, RK extends string> = C extends Record<

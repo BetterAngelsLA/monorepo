@@ -1,16 +1,14 @@
-import type { FieldFunctionOptions } from '@apollo/client';
-
 // -------------------- Pagination -------------------- //
 export type OffsetPaginationVars = {
   type: 'offset';
-  offset: number | string | null | undefined;
-  limit: number | string | null | undefined;
+  offset: number;
+  limit: number;
 };
 
 export type PerPagePaginationVars = {
   type: 'perPage';
-  page: number | string | null | undefined;
-  perPage: number | string | null | undefined;
+  page: number;
+  perPage: number;
 };
 
 export type PaginationVars = PerPagePaginationVars | OffsetPaginationVars;
@@ -35,33 +33,20 @@ export type BaseMergeOpts<TVars> = {
   transformIncoming?: TransformIncoming;
 };
 
-export type WrapperMode<TItem, TVars> = BaseMergeOpts<TVars> & {
+export type WrapperMode<TVars> = BaseMergeOpts<TVars> & {
   mode?: 'wrapper';
 
-  // Pagination fields
-  itemsFieldName?: string;
-  totalFieldName?: string;
-  pageInfoFieldName?: string;
+  // data paths
+  itemsPath?: string | ReadonlyArray<string>;
+  totalCountPath?: string | ReadonlyArray<string>;
+  itemIdPath?: string | ReadonlyArray<string>;
 
-  // Item-level merge behavior
-  mergeItemOpts?: {
-    getItemId?: (
-      item: TItem,
-      readField: FieldFunctionOptions['readField']
-    ) => string | number | null | undefined;
-  };
-
-  // Top-level alias for convenience — hoisted internally into mergeItemOpts
-  getItemId?: (
-    item: TItem,
-    readField: FieldFunctionOptions['readField']
-  ) => string | number | null | undefined;
+  // pagination
+  resolvePaginationFn?: ResolveMergePagination<TVars>;
 };
 
 export type ArrayMode<TVars> = BaseMergeOpts<TVars> & {
   mode: 'array';
 };
 
-export type TCacheMergeOpts<TItem, TVars> =
-  | WrapperMode<TItem, TVars>
-  | ArrayMode<TVars>;
+export type TCacheMergeOpts<TVars> = WrapperMode<TVars> | ArrayMode<TVars>;

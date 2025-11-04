@@ -1,0 +1,1 @@
+export { generateMergeFn } from './generateMergeFn';

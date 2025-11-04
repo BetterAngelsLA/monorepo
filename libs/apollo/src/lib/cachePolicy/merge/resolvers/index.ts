@@ -1,2 +1,2 @@
-export { resolveOffsetPagination } from './resolveOffsetPagination';
-export { resolvePerPagePagination } from './resolvePerPagePagination';
+export * from './offsetPaginationResolver';
+export * from './perPagePaginationResolver';

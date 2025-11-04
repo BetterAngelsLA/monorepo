@@ -66,8 +66,7 @@
 import {
   TCachePolicyConfig,
   buildPolicyConfig,
-  queryPolicyRecord,
-  resolvePerPagePagination,
+  generateQueryPolicyConf,
 } from '@monorepo/apollo';
 import {
   HmisListClientsQuery,
@@ -111,7 +110,7 @@ const policyConfig = [
   //   keyFields: ['personalId'], // query does not use ID but personalId
   //   mergeOpts: {
   //     itemsFieldName: 'items',
-  //     totalFieldName: 'total',
+  //     totalCountFieldName: 'total',
 
   //     // adapter: read { page, perPage } → { offset, limit }
   //     resolvePagination: resolvePerPagePagination(),
@@ -144,63 +143,60 @@ const policyConfig = [
   //   },
   // }),
 
-  queryPolicyRecord<
-    HmisListClientsQuery,
-    HmisListClientsQueryVariables,
-    'items'
-  >({
+  // totalCount
+  // pageInfo {
+  //   limit
+  //   offset
+  // }
+
+  // meta {
+  //   currentPage
+  //   pageCount
+  //   perPage
+  //   totalCount
+  // }
+
+  // export type HmisPaginationInput = {
+  //   page?: InputMaybe<Scalars['Int']['input']>;
+  //   perPage?: InputMaybe<Scalars['Int']['input']>;
+  // };
+
+  generateQueryPolicyConf<HmisListClientsQuery, HmisListClientsQueryVariables>({
     key: 'hmisListClients',
-    resultsKey: 'items',
     entityTypename: 'HmisClientType',
-    keyArgs: ['filter', ['pagination', 'perPage']] as const,
-    keyFields: ['personalId'],
-    mergeOpts: {
-      itemsFieldName: 'items',
-      totalFieldName: 'total',
-      resolvePaginationFn: resolvePerPagePagination(),
-      // resolvePagination:
-      // resolvePerPagePagination<HmisListClientsQueryVariables>(),
-      transformIncoming(incomingValue) {
-        if (!incomingValue || typeof incomingValue !== 'object') {
-          return incomingValue;
-        }
-        const v: any = incomingValue;
-        const tc = v?.meta?.totalCount;
-        return typeof tc === 'number' ? { ...v, total: tc } : incomingValue;
-      },
+    // including perPage so different page sizes are cached separately
+    cacheKeyVariables: ['filter', ['pagination', 'perPage']] as const,
+    itemIdPath: 'personalId',
+    itemsPath: 'items',
+    totalCountPath: ['meta', 'totalCount'],
+    paginationVariables: {
+      mode: 'perPage',
+      pagePath: ['pagination', 'page'], // variables.pagination.page //
+      perPagePath: ['pagination', 'perPage'], // variables.pagination.perPage
     },
   }),
 
-  // Optional: if items don’t expose `id`, provide a custom identity
-  // mergeItemOpts: {
-  //   getId(item, readField) {
-  //     return readField('personalId', item as any)
-  //       ?? readField('id', item as any)
-  //       ?? null;
-  //   },
-  // },
-
   // Existing: ok
-  queryPolicyRecord<
+  generateQueryPolicyConf<
     FilterClientProfilesQuery,
     FilterClientProfilesQueryVariables
   >({
     key: 'clientProfiles',
     entityTypename: 'ClientProfileType',
-    keyArgs: ['filters', 'order'] as const,
+    cacheKeyVariables: ['filters', 'order'] as const,
   }),
-  queryPolicyRecord<FilterUsersQuery, FilterUsersQueryVariables>({
+  generateQueryPolicyConf<FilterUsersQuery, FilterUsersQueryVariables>({
     key: 'interactionAuthors',
     entityTypename: 'InteractionAuthorType',
-    keyArgs: ['filters', 'order'] as const,
+    cacheKeyVariables: ['filters', 'order'] as const,
   }),
-  queryPolicyRecord<
+  generateQueryPolicyConf<
     FilterOrganizationsQuery,
     FilterOrganizationsQueryVariables
   >({
     key: 'caseworkerOrganizations',
     entityTypename: 'OrganizationType',
-    keyArgs: ['filters', 'order'] as const,
+    cacheKeyVariables: ['filters', 'order'] as const,
   }),
 ] as const;
 

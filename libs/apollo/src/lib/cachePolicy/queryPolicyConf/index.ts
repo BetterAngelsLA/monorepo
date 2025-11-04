@@ -1,0 +1,1 @@
+export { generateQueryPolicyConf } from './generateQueryPolicyConf';

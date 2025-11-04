@@ -1,1 +1,0 @@
-export { queryPolicyRecord } from './queryPolicyRecord';

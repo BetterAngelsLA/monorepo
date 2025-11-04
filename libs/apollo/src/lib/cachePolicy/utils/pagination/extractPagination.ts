@@ -1,63 +1,28 @@
+import { DEFAULT_OFFSET_PAGINATION } from '../../constants';
 import { PaginationVars } from '../../merge/types';
+import { TPaginationVariables } from '../../types';
+import { extractOffsetPagination } from './extractOffsetPagination';
+import { extractPerPagePagination } from './extractPerPagePagination';
 
-export function extractPagination<TVars>(
-  value: TVars | undefined
+export function extractPagination<T = string>(
+  variables: unknown,
+  paginationVars?: TPaginationVariables
 ): PaginationVars | undefined {
-  let pagination = extractPaginationObject(value);
-
-  if (!pagination) {
+  if (!variables) {
     return undefined;
   }
 
-  const page = pagination['page'];
-  const perPage = pagination['perPage'];
+  const pagination = paginationVars || DEFAULT_OFFSET_PAGINATION;
 
-  if (page !== undefined || perPage !== undefined) {
-    return {
-      type: 'perPage',
-      page: page as number | string | null,
-      perPage: perPage as number | string | null,
-    };
+  const { mode } = pagination;
+
+  if (mode === 'perPage') {
+    const { pagePath, perPagePath } = pagination;
+
+    return extractPerPagePagination<T>({ variables, pagePath, perPagePath });
   }
 
-  const offset = pagination['offset'];
-  const limit = pagination['limit'];
+  const { offsetPath, limitPath } = pagination;
 
-  if (offset !== undefined || limit !== undefined) {
-    return {
-      type: 'offset',
-      offset: offset as number | string | null,
-      limit: limit as number | string | null,
-    };
-  }
-
-  return undefined;
-}
-
-function extractPaginationObject<T>(
-  value: T | undefined
-): Record<string, unknown> | undefined {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-
-  // If value has a `pagination` key, use that
-  if (
-    typeof value === 'object' &&
-    value !== null &&
-    'pagination' in (value as object)
-  ) {
-    const inner = (value as Record<string, unknown>)['pagination'];
-
-    if (typeof inner === 'object' && inner !== null) {
-      return inner as Record<string, unknown>;
-    }
-  }
-
-  // If the top-level value itself looks like a pagination object
-  if (typeof value === 'object' && value !== null) {
-    return value as Record<string, unknown>;
-  }
-
-  return undefined;
+  return extractOffsetPagination<T>({ variables, offsetPath, limitPath });
 }
