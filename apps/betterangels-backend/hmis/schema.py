@@ -462,4 +462,3 @@ class Mutation:
             return HmisUpdateClientNoteError(message=errors[0]["message"])
 
         return get_client_note_from_response(response)
-        return get_client_note_from_response(response)
