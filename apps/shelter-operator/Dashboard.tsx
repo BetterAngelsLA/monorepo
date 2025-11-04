@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import CreateShelterForm from './CreateShelterForm';
 
 export default function Dashboard() {
   return (
