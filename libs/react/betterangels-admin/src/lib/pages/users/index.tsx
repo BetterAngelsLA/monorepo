@@ -1,7 +1,7 @@
 import { Table, useAppDrawer } from '@monorepo/react/components';
 import { PlusIcon } from '@monorepo/react/icons';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
 import { AddUserFormDrawer } from '../../components';
 import { useUser } from '../../hooks';
@@ -13,9 +13,31 @@ const TABLE_HEADER = [
   'Job Role',
   'Email',
   'Last Login',
-];
+] as const;
 
 const PAGE_SIZE = 25;
+
+type SortDirection = 'ASC' | 'DESC';
+
+type MemberSortField =
+  | 'FIRST_NAME'
+  | 'LAST_NAME'
+  | 'ROLE'
+  | 'EMAIL'
+  | 'LAST_LOGIN';
+
+interface SortState {
+  field: MemberSortField;
+  direction: SortDirection;
+}
+
+const SORT_FIELD_BY_COL: Record<number, MemberSortField> = {
+  0: 'FIRST_NAME',
+  1: 'LAST_NAME',
+  2: 'ROLE',
+  3: 'EMAIL',
+  4: 'LAST_LOGIN',
+};
 
 export default function Users() {
   const { user } = useUser();
@@ -30,12 +52,63 @@ export default function Users() {
   }
   const organizationId = user.organizations[0].id;
 
+  const [sort, setSort] = useState<SortState>({
+    field: 'LAST_NAME',
+    direction: 'ASC',
+  });
+
   function handleShowDrawer() {
     showDrawer({
       content: <AddUserFormDrawer />,
       contentClassName: 'p-0',
     });
   }
+
+  function handleHeaderClick(colIndex: number): void {
+    const field = SORT_FIELD_BY_COL[colIndex];
+    if (!field) return;
+
+    setPage(1);
+
+    setSort((prev) => {
+      if (prev.field === field) {
+        const nextDirection: SortDirection =
+          prev.direction === 'ASC' ? 'DESC' : 'ASC';
+        return {
+          field,
+          direction: nextDirection,
+        };
+      }
+
+      return {
+        field,
+        direction: 'ASC',
+      };
+    });
+  }
+
+  const sortableHeader: React.ReactNode[] = useMemo(() => {
+    return TABLE_HEADER.map((label, idx) => {
+      const active = sort.field === SORT_FIELD_BY_COL[idx];
+      const direction = active ? sort.direction : null;
+
+      return (
+        <button
+          key={label}
+          type="button"
+          onClick={() => handleHeaderClick(idx)}
+          className="flex items-center gap-1"
+        >
+          <span>{label}</span>
+          {active && (
+            <span className="text-xs text-primary-20">
+              {direction === 'ASC' ? '▲' : '▼'}
+            </span>
+          )}
+        </button>
+      );
+    });
+  }, [sort]);
 
   const { data, loading } = useOrganizationMembersQuery({
     variables: {
@@ -84,8 +157,8 @@ export default function Users() {
         )}
       </div>
       {user.canViewOrgMembers && (
-        <Table<(typeof members)[number]>
-          header={TABLE_HEADER}
+        <Table<OrganizationMemberType>
+          header={sortableHeader}
           data={members}
           renderCell={(member, colIndex) => {
             switch (colIndex) {
