@@ -1,7 +1,15 @@
 from typing import Optional, Union
 
 import strawberry
+import strawberry_django
 from accounts.types import UserType
+from clients.enums import (
+    AdaAccommodationEnum,
+    LanguageEnum,
+    LivingSituationEnum,
+    PreferredCommunicationEnum,
+)
+from common.graphql.types import NonBlankString, PhoneNumberScalar
 from hmis.enums import (
     HmisBranchEnum,
     HmisDischargeEnum,
@@ -14,6 +22,8 @@ from hmis.enums import (
     HmisVeteranStatusEnum,
     HmisVeteranTheaterEnum,
 )
+from hmis.models import HmisClientProfile
+from strawberry import auto
 
 
 @strawberry.type
@@ -314,3 +324,57 @@ HmisListEnrollmentsResult = Union[HmisEnrollmentListType, HmisListEnrollmentsErr
 HmisLoginResult = Union[UserType, HmisLoginError]
 HmisUpdateClientNoteResult = Union[HmisClientNoteType, HmisUpdateClientNoteError]
 HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]
+
+
+@strawberry_django.type(
+    HmisClientProfile,
+    pagination=True,
+)
+class HmisClientProfileType:
+    # HMIS Fields
+    personal_id: Optional[str]
+    unique_identifier: Optional[str]
+    name_data_quality: Optional[HmisNameQualityEnum]
+    ssn_data_quality: Optional[HmisSsnQualityEnum]
+    dob_data_quality: Optional[HmisDobQualityEnum]
+    name_suffix: Optional[HmisSuffixEnum]
+    race_ethnicity: Optional[list[HmisRaceEnum]]
+    additional_race_ethnicity: Optional[str]
+    different_identity_text: Optional[str]
+    ssn1: Optional[str]
+    ssn2: Optional[str]
+    ssn3: Optional[str]
+
+    # Overlap Fields
+    birth_date: Optional[str]
+    first_name: Optional[NonBlankString]
+    last_name: Optional[NonBlankString]
+    middle_name: Optional[NonBlankString]
+    gender: Optional[list[HmisGenderEnum]]
+    veteran_status: Optional[HmisVeteranStatusEnum]
+
+    # BA Fields
+    ada_accommodation: Optional[list[AdaAccommodationEnum]]
+    address: auto
+    age: auto
+    california_id: auto
+    email: Optional[NonBlankString]
+    eye_color: auto
+    hair_color: auto
+    height_in_inches: auto
+    important_notes: auto
+    living_situation: Optional[LivingSituationEnum]
+    mailing_address: auto
+    marital_status: auto
+    nickname: Optional[NonBlankString]
+    phone_number: Optional[PhoneNumberScalar]  # type: ignore
+    physical_description: auto
+    place_of_birth: auto
+    preferred_communication: Optional[list[PreferredCommunicationEnum]]
+    preferred_language: auto
+    profile_photo: auto
+    pronouns: auto
+    pronouns_other: auto
+    residence_address: auto
+    residence_geolocation: auto
+    spoken_languages: Optional[list[LanguageEnum]]
