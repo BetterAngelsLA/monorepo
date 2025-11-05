@@ -25,13 +25,18 @@ export const HmisProgramNoteFormSchema = z.object({
   note: z.string().min(1, 'Note is required.'),
 });
 
-export const HmisProgramNoteFormtSchemaOutput =
-  HmisProgramNoteFormSchema.extend({
+export const HmisProgramNoteFormSchemaOutput = HmisProgramNoteFormSchema.extend(
+  {
     date: z.date(), // required
-  }).transform(({ date, ...rest }) => ({
-    ...rest,
-    date: format(date, 'yyyy-MM-dd'),
-  }));
+  }
+).transform(({ date, ...rest }) => ({
+  ...rest,
+  date: format(date, 'yyyy-MM-dd'),
+}));
 
-export type TFormInput = z.input<typeof HmisProgramNoteFormSchema>;
-export type TFormOutput = z.output<typeof HmisProgramNoteFormtSchemaOutput>;
+export type THmisProgramNoteFormInputs = z.input<
+  typeof HmisProgramNoteFormSchema
+>;
+export type THmisProgramNoteFormOutputs = z.output<
+  typeof HmisProgramNoteFormSchemaOutput
+>;
