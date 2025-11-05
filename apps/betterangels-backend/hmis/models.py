@@ -53,20 +53,26 @@ class HmisClientProfile(AbstractClientProfile):
         IntegerChoicesField(
             choices_enum=HmisRaceEnum,
             default=HmisRaceEnum.NOT_COLLECTED,
-        )
+        ),
+        blank=True,
+        null=True,
     )
     additional_race_ethnicity = models.CharField(max_length=100, blank=True, null=True)
     gender = ArrayField(
         IntegerChoicesField(
             choices_enum=HmisGenderEnum,
             default=HmisGenderEnum.NOT_COLLECTED,
-        )
+        ),
+        blank=True,
+        null=True,
     )  # type: ignore
     different_identity_text = models.CharField(max_length=100, blank=True, null=True)
     veteran_status = IntegerChoicesField(
         choices_enum=HmisVeteranStatusEnum,
         default=HmisVeteranStatusEnum.NOT_COLLECTED,
     )  # type: ignore
+    added_date = models.DateTimeField(blank=True, null=True)
+    last_updated = models.DateTimeField(blank=True, null=True)
 
     objects = models.Manager()
 
@@ -91,14 +97,13 @@ class HmisClientProfile(AbstractClientProfile):
         return force_str(self.pronouns.label)
 
     @model_property
-    def display_gender(self) -> Optional[str]:
+    def display_gender(self) -> list[str]:
         if not self.gender:
-            return None
+            return []
 
-        if self.gender == HmisGenderEnum.DIFFERENT:
-            return self.different_identity_text
-
-        return force_str(self.gender.label)
+        return [force_str(g.label) for g in self.gender if g is not HmisGenderEnum.DIFFERENT] + [
+            self.different_identity_text
+        ]
 
     def save(self, *args: Any, **kwargs: Any) -> None:
         if self.california_id:

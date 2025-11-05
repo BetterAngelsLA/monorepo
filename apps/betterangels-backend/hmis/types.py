@@ -338,7 +338,7 @@ class HmisClientProfileType:
     ssn_data_quality: Optional[HmisSsnQualityEnum]
     dob_data_quality: Optional[HmisDobQualityEnum]
     name_suffix: Optional[HmisSuffixEnum]
-    race_ethnicity: list[HmisRaceEnum]
+    race_ethnicity: Optional[list[HmisRaceEnum]]
     additional_race_ethnicity: Optional[str]
     different_identity_text: Optional[str]
     ssn1: Optional[str]
@@ -350,8 +350,8 @@ class HmisClientProfileType:
     first_name: Optional[NonBlankString]
     last_name: Optional[NonBlankString]
     middle_name: Optional[NonBlankString]
-    gender: list[HmisGenderEnum]
-    veteran_status: HmisVeteranStatusEnum
+    gender: Optional[list[HmisGenderEnum]]
+    veteran_status: Optional[HmisVeteranStatusEnum]
 
     # BA Fields
     ada_accommodation: Optional[list[AdaAccommodationEnum]]

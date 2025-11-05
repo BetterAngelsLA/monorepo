@@ -9,7 +9,6 @@ from common.permissions.utils import IsAuthenticated
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as django_login
-from django.db import IntegrityError, transaction
 from hmis.enums import HmisGenderEnum, HmisRaceEnum, HmisVeteranStatusEnum
 from hmis.models import HmisClientProfile
 from strawberry.types import Info
@@ -189,26 +188,26 @@ class Query:
             raise
 
         dob = datetime.date.fromisoformat(client_data.pop("dob")) if client_data.get("dob") else None
-        updated_at = datetime.datetime.strptime(client_data.pop("last_updated"), "%Y-%m-%d %H:%M:%S")
-        created_at = datetime.datetime.strptime(client_data.pop("added_date"), "%Y-%m-%d %H:%M:%S")
+        added_date = datetime.datetime.strptime(client_data.pop("added_date"), "%Y-%m-%d %H:%M:%S")
+        last_updated = datetime.datetime.strptime(client_data.pop("last_updated"), "%Y-%m-%d %H:%M:%S")
 
         data = {
             **client_data,
             "dob": dob,
-            "created_at": created_at,
-            "updated_at": updated_at,
+            "added_date": added_date,
+            "last_updated": last_updated,
         }
 
-        with transaction.atomic():
-            updated = HmisClientProfile.objects.filter(personal_id=personal_id).update(**data)
-            if updated:
-                return cast(HmisClientProfileType, HmisClientProfile.objects.get(personal_id=personal_id))
+        personal_id = data.pop("personal_id")
+        unique_identifier = data.pop("unique_identifier")
 
-            try:
-                return cast(HmisClientProfileType, HmisClientProfile.objects.create(**data))
+        client, _ = HmisClientProfile.objects.filter(personal_id=personal_id).update_or_create(
+            personal_id=personal_id,
+            unique_identifier=unique_identifier,
+            defaults={**data},
+        )
 
-            except IntegrityError:
-                raise IntegrityError("Client with this personal_id already exists")
+        return cast(HmisClientProfileType, client)
 
     hmis_client_profiles: OffsetPaginated[HmisClientProfileType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],

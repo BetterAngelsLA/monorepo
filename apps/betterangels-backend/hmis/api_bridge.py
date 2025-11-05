@@ -11,6 +11,7 @@ from common.errors import UnauthenticatedGQLError
 from common.utils import dict_keys_to_camel, dict_keys_to_snake
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from django.utils.module_loading import import_string
 from graphql import (
@@ -526,10 +527,10 @@ class HmisApiRestBridge:
         }
 
         if method is HTTPMethod.POST:
-            resp = requests.post(**request_args)
+            resp = requests.post(**request_args)  # type: ignore
 
         else:
-            resp = requests.get(**request_args)
+            resp = requests.get(**request_args)  # type: ignore
 
         response = resp.json() or {}
 
@@ -587,48 +588,64 @@ class HmisApiRestBridge:
         """Accesses selected query fields from operation info and returns a set of dot paths.
 
         e.g.,
-        query {
-            first_name
-            last_name
-            address {
-                city
-                state
-                zip
+        ```
+            query {
+                first_name
+                last_name
+                address {
+                    city
+                    state
+                    zip
+                }
             }
-        }
+        ```
 
-        will return
+        returns
 
-        {"first_name", "last_name", "address.number", "address.city", "address.state", "address.zip"}
+        `{"first_name", "last_name", "address.number", "address.city", "address.state", "address.zip"}`
         """
 
         sel = selection_set or info.operation.selection_set
-        results = default_fields or []
-        fragments = info._raw_info.fragments
+        out = set(default_fields or [])
+        frags = info._raw_info.fragments
+        seen = set()
 
-        def walk(selection_set: SelectionSetNode, prefix: list[str]) -> None:
-            for node in selection_set.selections:
-                if isinstance(node, FieldNode):
-                    name = node.alias.value if node.alias else node.name.value
-                    path = prefix + [name]
+        def fname(n: FieldNode) -> str:
+            return n.alias.value if n.alias else n.name.value
 
-                    if node.selection_set:
-                        walk(node.selection_set, path)
+        stack: list[tuple[tuple[str, ...], SelectionSetNode]] = []
+
+        # seed from top-level
+        for n in sel.selections:
+            if isinstance(n, FieldNode) and n.selection_set:
+                stack.append(((), n.selection_set))
+            elif isinstance(n, FragmentSpreadNode):
+                name = n.name.value
+                if name not in seen:
+                    seen.add(name)
+                    stack.append(((), frags[name].selection_set))
+            elif isinstance(n, InlineFragmentNode) and n.selection_set:
+                stack.append(((), n.selection_set))
+
+        # DFS
+        while stack:
+            prefix, sset = stack.pop()
+            for n in sset.selections:
+                if isinstance(n, FieldNode):
+                    path = (*prefix, fname(n))
+                    if n.selection_set:
+                        stack.append((path, n.selection_set))
                     else:
-                        results.append(".".join(path))
+                        out.add(".".join(path))
+                elif isinstance(n, FragmentSpreadNode):
+                    name = n.name.value
+                    if name not in seen:
+                        seen.add(name)
+                        stack.append((prefix, frags[name].selection_set))
+                elif isinstance(n, InlineFragmentNode) and n.selection_set:
+                    stack.append((prefix, n.selection_set))
 
-                elif isinstance(node, FragmentSpreadNode):
-                    frag = fragments[node.name.value]
-                    walk(frag.selection_set, prefix)
-
-                elif isinstance(node, InlineFragmentNode) and node.selection_set:
-                    walk(node.selection_set, prefix)
-
-        for top in sel.selections:
-            if isinstance(top, FieldNode) and top.selection_set:
-                walk(top.selection_set, [])
-
-        return set(results)
+        return out
 
     def get_client(self, personal_id: str) -> Optional[dict[str, Any]]:
         fields = self._get_field_dot_paths(
@@ -643,7 +660,7 @@ class HmisApiRestBridge:
             body={"fields": fields_str},
         )
 
-        if errors := data.get("errors"):
-            return {"errors": errors}
+        if "status" in data.keys() and data["status"] == 404:
+            raise ObjectDoesNotExist("The requested Client does not exist.")
 
         return dict_keys_to_snake(data)
