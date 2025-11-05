@@ -1,5 +1,6 @@
 import json
 import re
+from http import HTTPMethod
 from typing import Any, Optional
 
 import jwt
@@ -7,15 +8,20 @@ import requests
 import strawberry
 from common.constants import HMIS_SESSION_KEY_NAME
 from common.errors import UnauthenticatedGQLError
-from common.utils import dict_keys_to_camel
+from common.utils import dict_keys_to_camel, dict_keys_to_snake
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from django.utils.module_loading import import_string
 from graphql import (
+    FieldNode,
+    FragmentSpreadNode,
     GraphQLField,
     GraphQLObjectType,
     GraphQLSchema,
+    InlineFragmentNode,
+    SelectionSetNode,
     parse,
     specified_rules,
     validate,
@@ -23,8 +29,11 @@ from graphql import (
 from graphql.type import GraphQLObjectType as _GraphQLObjectType
 from hmis.errors import is_hmis_unauthenticated
 from hmis.types import HmisClientFilterInput, HmisPaginationInput
+from strawberry import Info
 
 HMIS_GRAPHQL_ENDPOINT = getattr(settings, "HMIS_GRAPHQL_URL", None)
+HMIS_REST_ENDPOINT = getattr(settings, "HMIS_REST_URL", None)
+HMIS_HOST = getattr(settings, "HMIS_HOST", None)
 HMIS_GRAPHQL_API_KEY = getattr(settings, "HMIS_API_KEY", None)
 GRAPHQL_SCHEMA_PATH = "betterangels_backend.schema.schema"
 
@@ -470,3 +479,157 @@ class HmisApiBridge:
         client_note_input: dict[str, Any],
     ) -> Optional[dict[str, Any]]:
         return self._run_client_note_mutation("update", client_note_input)
+
+
+class HmisApiRestBridge:
+    """Utility class for interfacing with HMIS REST API."""
+
+    def __init__(self, info: strawberry.Info) -> None:
+        self.info = info
+        self.request = self.info.context["request"]
+        self.session = self.request.session
+
+        if HMIS_REST_ENDPOINT is None or HMIS_SESSION_KEY_NAME is None or HMIS_HOST is None:
+            raise Exception("HMIS not configured")
+
+        self.endpoint = HMIS_REST_ENDPOINT
+        self.session_key = HMIS_SESSION_KEY_NAME
+
+        token = self._get_auth_token()
+        auth_header = {"Authorization": f"Bearer {token}"} if token else {}
+
+        self.headers = {
+            "Accept": "application/json, text/plain, */*",
+            "Host": HMIS_HOST,
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:144.0) Gecko/20100101 Firefox/144.0",
+            **auth_header,
+        }
+
+    def _make_request(
+        self,
+        path: str,
+        body: dict[str, Any],
+        method: HTTPMethod = HTTPMethod.GET,
+        timeout: Optional[float] = None,
+    ) -> requests.Response:
+        request_args = {
+            "url": f"{self.endpoint}{path}",
+            "headers": self.headers,
+            "json": body,
+            "timeout": timeout,
+        }
+
+        return requests.request(method, **request_args)  # type: ignore
+
+    def _fernet(self) -> Fernet:
+        key = getattr(settings, "HMIS_TOKEN_KEY", None)
+        if not key:
+            raise RuntimeError("HMIS_TOKEN_KEY is not configured")
+
+        return Fernet(key)
+
+    def _get_auth_token(self) -> Optional[str]:
+        enc = self.session.get(self.session_key)
+
+        if not enc:
+            return None
+
+        try:
+            f = self._fernet()
+            return f.decrypt(enc.encode("utf-8")).decode("utf-8")
+        except (InvalidToken, ValueError):
+            self._clear_auth_token()
+
+            return None
+
+    def _clear_auth_token(self) -> None:
+        if self.session_key in self.session:
+            del self.session[self.session_key]
+
+        self.session.modified = True
+
+    def _get_field_dot_paths(
+        self,
+        info: Info,
+        default_fields: Optional[list[str]],
+        selection_set: Optional[SelectionSetNode] = None,
+    ) -> set[str]:
+        """Accesses selected query fields from operation info and returns a set of dot paths.
+
+        e.g.,
+        ```
+            query {
+                first_name
+                last_name
+                address {
+                    city
+                    state
+                    zip
+                }
+            }
+        ```
+
+        returns
+
+        `{"first_name", "last_name", "address.number", "address.city", "address.state", "address.zip"}`
+        """
+
+        sel = selection_set or info.operation.selection_set
+        out = set(default_fields or [])
+        frags = info._raw_info.fragments
+        seen = set()
+
+        def fname(n: FieldNode) -> str:
+            return n.alias.value if n.alias else n.name.value
+
+        stack: list[tuple[tuple[str, ...], SelectionSetNode]] = []
+
+        # seed from top-level
+        for n in sel.selections:
+            if isinstance(n, FieldNode) and n.selection_set:
+                stack.append(((), n.selection_set))
+            elif isinstance(n, FragmentSpreadNode):
+                name = n.name.value
+                if name not in seen:
+                    seen.add(name)
+                    stack.append(((), frags[name].selection_set))
+            elif isinstance(n, InlineFragmentNode) and n.selection_set:
+                stack.append(((), n.selection_set))
+
+        # DFS
+        while stack:
+            prefix, sset = stack.pop()
+            for n in sset.selections:
+                if isinstance(n, FieldNode):
+                    path = (*prefix, fname(n))
+                    if n.selection_set:
+                        stack.append((path, n.selection_set))
+                    else:
+                        out.add(".".join(path))
+                elif isinstance(n, FragmentSpreadNode):
+                    name = n.name.value
+                    if name not in seen:
+                        seen.add(name)
+                        stack.append((prefix, frags[name].selection_set))
+                elif isinstance(n, InlineFragmentNode) and n.selection_set:
+                    stack.append((prefix, n.selection_set))
+
+        return out
+
+    def get_client(self, personal_id: str) -> Optional[dict[str, Any]]:
+        fields = self._get_field_dot_paths(
+            info=self.info,
+            default_fields=["last_updated", "added_date"],
+        )
+
+        fields_str = ", ".join(fields)
+
+        resp = self._make_request(
+            path=f"/clients/{personal_id}",
+            body={"fields": fields_str},
+        )
+
+        if resp.status_code == 404:
+            raise ObjectDoesNotExist("The requested Client does not exist.")
+
+        return dict_keys_to_snake(resp.json())
