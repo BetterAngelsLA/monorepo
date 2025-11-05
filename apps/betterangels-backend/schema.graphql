@@ -797,7 +797,7 @@ type HmisClientProfileType {
   ssn1: String
   ssn2: String
   ssn3: String
-  dob: String
+  birthDate: String
   firstName: NonBlankString
   lastName: NonBlankString
   middleName: NonBlankString

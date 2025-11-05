@@ -801,9 +801,9 @@ export type HmisClientProfileType = {
   additionalRaceEthnicity?: Maybe<Scalars['String']['output']>;
   address?: Maybe<Scalars['String']['output']>;
   age?: Maybe<Scalars['Int']['output']>;
+  birthDate?: Maybe<Scalars['String']['output']>;
   californiaId?: Maybe<Scalars['String']['output']>;
   differentIdentityText?: Maybe<Scalars['String']['output']>;
-  dob?: Maybe<Scalars['String']['output']>;
   dobDataQuality?: Maybe<HmisDobQualityEnum>;
   email?: Maybe<Scalars['NonBlankString']['output']>;
   eyeColor?: Maybe<EyeColorEnum>;
