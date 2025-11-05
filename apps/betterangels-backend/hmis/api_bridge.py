@@ -11,7 +11,7 @@ from common.errors import UnauthenticatedGQLError
 from common.utils import dict_keys_to_camel, dict_keys_to_snake
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.http import HttpRequest
 from django.utils.module_loading import import_string
 from graphql import (
@@ -493,7 +493,6 @@ class HmisApiRestBridge:
             raise Exception("HMIS not configured")
 
         self.endpoint = HMIS_REST_ENDPOINT
-        self.schema = self._load_graphql_schema()
         self.session_key = HMIS_SESSION_KEY_NAME
 
         token = self._get_auth_token()
@@ -501,16 +500,10 @@ class HmisApiRestBridge:
 
         self.headers = {
             "Accept": "application/json, text/plain, */*",
-            "Connection": "keep-alive",
             "Host": HMIS_HOST,
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:144.0) Gecko/20100101 Firefox/144.0",
             **auth_header,
         }
-
-    def _load_graphql_schema(self) -> GraphQLSchema:
-        obj = import_string(GRAPHQL_SCHEMA_PATH)
-
-        return getattr(obj, "_schema", obj)  # type: ignore
 
     def _make_request(
         self,
@@ -518,7 +511,7 @@ class HmisApiRestBridge:
         body: dict[str, Any],
         method: HTTPMethod = HTTPMethod.GET,
         timeout: Optional[float] = None,
-    ) -> dict[str, Any]:
+    ) -> requests.Response:
         request_args = {
             "url": f"{self.endpoint}{path}",
             "headers": self.headers,
@@ -526,21 +519,7 @@ class HmisApiRestBridge:
             "timeout": timeout,
         }
 
-        if method is HTTPMethod.POST:
-            resp = requests.post(**request_args)  # type: ignore
-
-        else:
-            resp = requests.get(**request_args)  # type: ignore
-
-        response = resp.json() or {}
-
-        if errors := response.get("errors"):
-            if is_hmis_unauthenticated(errors):
-                # TODO: destroy session here?
-                raise UnauthenticatedGQLError()
-
-        # If server replies non-JSON on error, .json() will raise — we treat as failure.
-        return response
+        return requests.request(method, **request_args)  # type: ignore
 
     def _fernet(self) -> Fernet:
         key = getattr(settings, "HMIS_TOKEN_KEY", None)
@@ -548,16 +527,6 @@ class HmisApiRestBridge:
             raise RuntimeError("HMIS_TOKEN_KEY is not configured")
 
         return Fernet(key)
-
-    def _set_auth_token(self, token: str) -> None:
-        """"""
-        decoded = jwt.decode(token, options={"verify_signature": False})
-        self.session.set_expiry(decoded["exp"] - decoded["iat"] - 1)
-
-        f = self._fernet()
-        self.session[self.session_key] = f.encrypt(token.encode("utf-8")).decode("utf-8")
-
-        self.session.modified = True
 
     def _get_auth_token(self) -> Optional[str]:
         enc = self.session.get(self.session_key)
@@ -655,12 +624,12 @@ class HmisApiRestBridge:
 
         fields_str = ", ".join(fields)
 
-        data = self._make_request(
+        resp = self._make_request(
             path=f"/clients/{personal_id}",
             body={"fields": fields_str},
         )
 
-        if "status" in data.keys() and data["status"] == 404:
+        if resp.status_code == 404:
             raise ObjectDoesNotExist("The requested Client does not exist.")
 
-        return dict_keys_to_snake(data)
+        return dict_keys_to_snake(resp.json())
