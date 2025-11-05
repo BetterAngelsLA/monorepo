@@ -11,7 +11,7 @@ from common.errors import UnauthenticatedGQLError
 from common.utils import dict_keys_to_camel, dict_keys_to_snake
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpRequest
 from django.utils.module_loading import import_string
 from graphql import (
