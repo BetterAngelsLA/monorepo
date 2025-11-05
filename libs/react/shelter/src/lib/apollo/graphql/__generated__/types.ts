@@ -808,7 +808,7 @@ export type HmisClientProfileType = {
   email?: Maybe<Scalars['NonBlankString']['output']>;
   eyeColor?: Maybe<EyeColorEnum>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
-  gender: Array<HmisGenderEnum>;
+  gender?: Maybe<Array<HmisGenderEnum>>;
   hairColor?: Maybe<HairColorEnum>;
   heightInInches?: Maybe<Scalars['Float']['output']>;
   importantNotes?: Maybe<Scalars['String']['output']>;
@@ -829,7 +829,7 @@ export type HmisClientProfileType = {
   profilePhoto?: Maybe<DjangoImageType>;
   pronouns?: Maybe<PronounEnum>;
   pronounsOther?: Maybe<Scalars['String']['output']>;
-  raceEthnicity: Array<HmisRaceEnum>;
+  raceEthnicity?: Maybe<Array<HmisRaceEnum>>;
   residenceAddress?: Maybe<Scalars['String']['output']>;
   residenceGeolocation?: Maybe<Scalars['Point']['output']>;
   spokenLanguages?: Maybe<Array<LanguageEnum>>;
@@ -838,7 +838,7 @@ export type HmisClientProfileType = {
   ssn3?: Maybe<Scalars['String']['output']>;
   ssnDataQuality?: Maybe<HmisSsnQualityEnum>;
   uniqueIdentifier?: Maybe<Scalars['String']['output']>;
-  veteranStatus: HmisVeteranStatusEnum;
+  veteranStatus?: Maybe<HmisVeteranStatusEnum>;
 };
 
 export type HmisClientProfileTypeOffsetPaginated = {

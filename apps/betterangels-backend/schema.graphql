@@ -791,7 +791,7 @@ type HmisClientProfileType {
   ssnDataQuality: HmisSsnQualityEnum
   dobDataQuality: HmisDobQualityEnum
   nameSuffix: HmisSuffixEnum
-  raceEthnicity: [HmisRaceEnum!]!
+  raceEthnicity: [HmisRaceEnum!]
   additionalRaceEthnicity: String
   differentIdentityText: String
   ssn1: String
@@ -801,8 +801,8 @@ type HmisClientProfileType {
   firstName: NonBlankString
   lastName: NonBlankString
   middleName: NonBlankString
-  gender: [HmisGenderEnum!]!
-  veteranStatus: HmisVeteranStatusEnum!
+  gender: [HmisGenderEnum!]
+  veteranStatus: HmisVeteranStatusEnum
   adaAccommodation: [AdaAccommodationEnum!]
   address: String
   age: Int
