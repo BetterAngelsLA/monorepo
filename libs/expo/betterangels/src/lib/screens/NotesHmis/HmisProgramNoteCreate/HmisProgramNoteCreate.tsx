@@ -36,7 +36,6 @@ export function HmisProgramNoteCreate(props: TProps) {
   const formMethods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
     defaultValues: getHmisProgramNoteFormEmptyState(),
-    mode: 'onChange',
   });
 
   const { setError } = formMethods;
