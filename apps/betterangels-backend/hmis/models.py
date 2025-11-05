@@ -40,7 +40,7 @@ class HmisClientProfile(AbstractClientProfile):
         choices_enum=HmisSsnQualityEnum,
         default=HmisSsnQualityEnum.NOT_COLLECTED,
     )
-    dob = models.DateField(blank=True, null=True)
+    birth_date = models.DateField(blank=True, null=True)
     dob_data_quality = IntegerChoicesField(
         choices_enum=HmisDobQualityEnum,
         default=HmisDobQualityEnum.NOT_COLLECTED,

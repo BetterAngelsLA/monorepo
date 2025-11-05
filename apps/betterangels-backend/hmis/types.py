@@ -346,7 +346,7 @@ class HmisClientProfileType:
     ssn3: Optional[str]
 
     # Overlap Fields
-    dob: Optional[str]
+    birth_date: Optional[str]
     first_name: Optional[NonBlankString]
     last_name: Optional[NonBlankString]
     middle_name: Optional[NonBlankString]

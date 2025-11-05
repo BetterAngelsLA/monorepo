@@ -187,13 +187,15 @@ class Query:
         if not client_data:
             raise
 
-        dob = datetime.date.fromisoformat(client_data.pop("dob")) if client_data.get("dob") else None
+        birth_date = (
+            datetime.date.fromisoformat(client_data.pop("birth_date")) if client_data.get("birth_date") else None
+        )
         added_date = datetime.datetime.strptime(client_data.pop("added_date"), "%Y-%m-%d %H:%M:%S")
         last_updated = datetime.datetime.strptime(client_data.pop("last_updated"), "%Y-%m-%d %H:%M:%S")
 
         data = {
             **client_data,
-            "dob": dob,
+            "birth_date": birth_date,
             "added_date": added_date,
             "last_updated": last_updated,
         }
