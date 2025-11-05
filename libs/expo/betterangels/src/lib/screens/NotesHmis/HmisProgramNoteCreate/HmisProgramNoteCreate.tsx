@@ -12,8 +12,11 @@ import {
   HmisProgramNoteFormSchemaOutput,
   THmisProgramNoteFormInputs,
   THmisProgramNoteFormOutputs,
-  hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm';
+import {
+  getHmisProgramNoteFormEmptyState,
+  hmisProgramNoteFormEmptyState,
+} from '../HmisProgramNoteForm/formSchema';
 import { useHmisCreateClientNoteMutation } from './__generated__/hmisCreateClientNote.generated';
 
 type TProps = {
@@ -32,7 +35,8 @@ export function HmisProgramNoteCreate(props: TProps) {
 
   const formMethods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
-    defaultValues: hmisProgramNoteFormEmptyState,
+    defaultValues: getHmisProgramNoteFormEmptyState(),
+    mode: 'onChange',
   });
 
   const { setError } = formMethods;
@@ -51,7 +55,6 @@ export function HmisProgramNoteCreate(props: TProps) {
             ...payload,
           },
         },
-
         errorPolicy: 'all',
       });
 
@@ -63,7 +66,6 @@ export function HmisProgramNoteCreate(props: TProps) {
 
       if (result?.__typename === 'HmisCreateClientNoteError') {
         const { message: hmisErrorMessage } = result;
-
         const { status, fieldErrors = [] } =
           extractHMISErrors(hmisErrorMessage) || {};
 
@@ -72,16 +74,13 @@ export function HmisProgramNoteCreate(props: TProps) {
           const formFieldErrors = fieldErrors.filter(({ field }) =>
             formKeys.includes(field)
           );
-
           applyOperationFieldErrors(formFieldErrors, setError);
-
           return;
         }
 
         if (status === 404) {
           throw new Error('could not find Client of Program Enrollment');
         }
-
         // HmisCreateClientError exists but not 422 | 404
         // throw generic error
         throw new Error(hmisErrorMessage);
@@ -96,7 +95,6 @@ export function HmisProgramNoteCreate(props: TProps) {
       );
     } catch (error) {
       console.error('createHmisClientNoteMutation error:', error);
-
       showSnackbar({
         message: 'Something went wrong. Please try again.',
         type: 'error',
