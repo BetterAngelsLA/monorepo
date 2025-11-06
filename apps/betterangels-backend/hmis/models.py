@@ -27,7 +27,8 @@ from strawberry_django.descriptors import model_property
     pghistory.DeleteEvent("hmisclientprofile.remove"),
 )
 class HmisClientProfile(AbstractClientProfile):
-    personal_id = models.CharField(unique=True, max_length=50, db_index=True)
+    hmis_id = models.CharField(unique=True, max_length=50, db_index=True)
+    personal_id = models.CharField(max_length=50, blank=True, null=True)
     unique_identifier = models.CharField(unique=True, max_length=50, db_index=True)
     name_data_quality = IntegerChoicesField(
         choices_enum=HmisNameQualityEnum,
