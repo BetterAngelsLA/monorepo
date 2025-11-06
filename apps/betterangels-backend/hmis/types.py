@@ -326,14 +326,9 @@ HmisUpdateClientNoteResult = Union[HmisClientNoteType, HmisUpdateClientNoteError
 HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]
 
 
-@strawberry_django.type(
-    HmisClientProfile,
-    pagination=True,
-)
-class HmisClientProfileType:
+@strawberry_django.type(HmisClientProfile)
+class HmisClientProfileBaseType:
     # HMIS Fields
-    personal_id: Optional[str]
-    unique_identifier: Optional[str]
     name_data_quality: Optional[HmisNameQualityEnum]
     ssn_data_quality: Optional[HmisSsnQualityEnum]
     dob_data_quality: Optional[HmisDobQualityEnum]
@@ -378,3 +373,28 @@ class HmisClientProfileType:
     residence_address: auto
     residence_geolocation: auto
     spoken_languages: Optional[list[LanguageEnum]]
+
+
+@strawberry_django.type(
+    HmisClientProfile,
+    pagination=True,
+)
+class HmisClientProfileType(HmisClientProfileBaseType):
+    # HMIS Fields
+    hmis_id: Optional[str]
+    personal_id: Optional[str]
+    unique_identifier: Optional[str]
+
+
+@strawberry_django.input(HmisClientProfile, partial=True)
+class CreateHmisClientProfileInput(HmisClientProfileBaseType):
+    first_name: NonBlankString
+    last_name: NonBlankString
+    name_data_quality: HmisNameQualityEnum
+
+
+@strawberry_django.input(HmisClientProfile, partial=True)
+class UpdateHmisClientProfileInput(HmisClientProfileBaseType):
+    hmis_id: str
+    gender: list[HmisGenderEnum]
+    race_ethnicity: list[HmisRaceEnum]

@@ -12,11 +12,14 @@ from django.contrib.auth import login as django_login
 from hmis.enums import HmisGenderEnum, HmisRaceEnum, HmisVeteranStatusEnum
 from hmis.models import HmisClientProfile
 from strawberry.types import Info
+from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasRetvalPerm
 
-from .api_bridge import HmisApiBridge, HmisApiRestBridge
+from .api_bridge import HmisApiRestBridge
+from .api_bridge_gql import HmisApiBridge
 from .types import (
+    CreateHmisClientProfileInput,
     HmisClientDataType,
     HmisClientFilterInput,
     HmisClientListType,
@@ -57,6 +60,7 @@ from .types import (
     HmisUpdateClientNoteResult,
     HmisUpdateClientResult,
     HmisUpdateClientSubItemsInput,
+    UpdateHmisClientProfileInput,
 )
 
 User = get_user_model()
@@ -463,3 +467,46 @@ class Mutation:
             return HmisUpdateClientNoteError(message=errors[0]["message"])
 
         return get_client_note_from_response(response)
+
+    @strawberry.mutation
+    def create_hmis_client_profile(self, info: Info, data: CreateHmisClientProfileInput) -> HmisClientProfileType:
+        hmis_api_bridge = HmisApiRestBridge(info=info)
+
+        client_data = hmis_api_bridge.create_client(data)
+
+        hmis_id = client_data.pop("id")
+        added_date = datetime.datetime.strptime(client_data.pop("added_date"), "%Y-%m-%d %H:%M:%S")
+        last_updated = datetime.datetime.strptime(client_data.pop("last_updated"), "%Y-%m-%d %H:%M:%S")
+
+        data = {
+            **client_data,
+            "hmis_id": hmis_id,
+            "added_date": added_date,
+            "last_updated": last_updated,
+        }
+
+        hmis_client_profile = resolvers.create(info, HmisClientProfile, {**data})
+
+        return cast(HmisClientProfileType, hmis_client_profile)
+
+    @strawberry.mutation
+    def update_hmis_client_profile(self, info: Info, data: UpdateHmisClientProfileInput) -> HmisClientProfileType:
+        hmis_api_bridge = HmisApiRestBridge(info=info)
+
+        client_data = hmis_api_bridge.update_client(data)
+
+        hmis_id = client_data.pop("id")
+        added_date = datetime.datetime.strptime(client_data.pop("added_date"), "%Y-%m-%d %H:%M:%S")
+        last_updated = datetime.datetime.strptime(client_data.pop("last_updated"), "%Y-%m-%d %H:%M:%S")
+
+        data = {
+            **client_data,
+            "added_date": added_date,
+            "last_updated": last_updated,
+        }
+
+        hmis_client_profile = HmisClientProfile.objects.get(hmis_id=hmis_id)
+
+        hmis_client_profile = resolvers.update(info, hmis_client_profile, {**data})
+
+        return cast(HmisClientProfileType, hmis_client_profile)

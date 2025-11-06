@@ -486,6 +486,49 @@ export type CreateClientProfileInput = {
 
 export type CreateClientProfilePayload = ClientProfileType | OperationInfo;
 
+export type CreateHmisClientProfileInput = {
+  adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
+  additionalRaceEthnicity?: InputMaybe<Scalars['String']['input']>;
+  address?: InputMaybe<Scalars['String']['input']>;
+  age?: InputMaybe<Scalars['Int']['input']>;
+  birthDate?: InputMaybe<Scalars['String']['input']>;
+  californiaId?: InputMaybe<Scalars['String']['input']>;
+  differentIdentityText?: InputMaybe<Scalars['String']['input']>;
+  dobDataQuality?: InputMaybe<HmisDobQualityEnum>;
+  email?: InputMaybe<Scalars['NonBlankString']['input']>;
+  eyeColor?: InputMaybe<EyeColorEnum>;
+  firstName: Scalars['NonBlankString']['input'];
+  gender?: InputMaybe<Array<HmisGenderEnum>>;
+  hairColor?: InputMaybe<HairColorEnum>;
+  heightInInches?: InputMaybe<Scalars['Float']['input']>;
+  importantNotes?: InputMaybe<Scalars['String']['input']>;
+  lastName: Scalars['NonBlankString']['input'];
+  livingSituation?: InputMaybe<LivingSituationEnum>;
+  mailingAddress?: InputMaybe<Scalars['String']['input']>;
+  maritalStatus?: InputMaybe<MaritalStatusEnum>;
+  middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
+  nameDataQuality: HmisNameQualityEnum;
+  nameSuffix?: InputMaybe<HmisSuffixEnum>;
+  nickname?: InputMaybe<Scalars['NonBlankString']['input']>;
+  phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  physicalDescription?: InputMaybe<Scalars['String']['input']>;
+  placeOfBirth?: InputMaybe<Scalars['String']['input']>;
+  preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
+  preferredLanguage?: InputMaybe<LanguageEnum>;
+  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
+  pronouns?: InputMaybe<PronounEnum>;
+  pronounsOther?: InputMaybe<Scalars['String']['input']>;
+  raceEthnicity?: InputMaybe<Array<HmisRaceEnum>>;
+  residenceAddress?: InputMaybe<Scalars['String']['input']>;
+  residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
+  spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
+  ssn1?: InputMaybe<Scalars['String']['input']>;
+  ssn2?: InputMaybe<Scalars['String']['input']>;
+  ssn3?: InputMaybe<Scalars['String']['input']>;
+  ssnDataQuality?: InputMaybe<HmisSsnQualityEnum>;
+  veteranStatus?: InputMaybe<HmisVeteranStatusEnum>;
+};
+
 export type CreateHmisProfilePayload = HmisProfileType | OperationInfo;
 
 export type CreateNoteDataImportInput = {
@@ -811,6 +854,7 @@ export type HmisClientProfileType = {
   gender?: Maybe<Array<HmisGenderEnum>>;
   hairColor?: Maybe<HairColorEnum>;
   heightInInches?: Maybe<Scalars['Float']['output']>;
+  hmisId?: Maybe<Scalars['String']['output']>;
   importantNotes?: Maybe<Scalars['String']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   livingSituation?: Maybe<LivingSituationEnum>;
@@ -1310,6 +1354,7 @@ export type Mutation = {
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
+  createHmisClientProfile: HmisClientProfileType;
   createHmisProfile: CreateHmisProfilePayload;
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
@@ -1346,6 +1391,7 @@ export type Mutation = {
   updateClientProfile: UpdateClientProfilePayload;
   updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
+  updateHmisClientProfile: HmisClientProfileType;
   updateHmisProfile: UpdateHmisProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
@@ -1382,6 +1428,11 @@ export type MutationCreateClientProfileArgs = {
 
 export type MutationCreateClientProfileDataImportArgs = {
   data: CreateProfileDataImportInput;
+};
+
+
+export type MutationCreateHmisClientProfileArgs = {
+  data: CreateHmisClientProfileInput;
 };
 
 
@@ -1555,6 +1606,11 @@ export type MutationUpdateClientProfilePhotoArgs = {
 
 export type MutationUpdateCurrentUserArgs = {
   data: UpdateUserInput;
+};
+
+
+export type MutationUpdateHmisClientProfileArgs = {
+  data: UpdateHmisClientProfileInput;
 };
 
 
@@ -2654,6 +2710,50 @@ export type UpdateClientProfilePayload = ClientProfileType | OperationInfo;
 export type UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo;
 
 export type UpdateCurrentUserPayload = OperationInfo | UserType;
+
+export type UpdateHmisClientProfileInput = {
+  adaAccommodation?: InputMaybe<Array<AdaAccommodationEnum>>;
+  additionalRaceEthnicity?: InputMaybe<Scalars['String']['input']>;
+  address?: InputMaybe<Scalars['String']['input']>;
+  age?: InputMaybe<Scalars['Int']['input']>;
+  birthDate?: InputMaybe<Scalars['String']['input']>;
+  californiaId?: InputMaybe<Scalars['String']['input']>;
+  differentIdentityText?: InputMaybe<Scalars['String']['input']>;
+  dobDataQuality?: InputMaybe<HmisDobQualityEnum>;
+  email?: InputMaybe<Scalars['NonBlankString']['input']>;
+  eyeColor?: InputMaybe<EyeColorEnum>;
+  firstName?: InputMaybe<Scalars['NonBlankString']['input']>;
+  gender: Array<HmisGenderEnum>;
+  hairColor?: InputMaybe<HairColorEnum>;
+  heightInInches?: InputMaybe<Scalars['Float']['input']>;
+  hmisId: Scalars['String']['input'];
+  importantNotes?: InputMaybe<Scalars['String']['input']>;
+  lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
+  livingSituation?: InputMaybe<LivingSituationEnum>;
+  mailingAddress?: InputMaybe<Scalars['String']['input']>;
+  maritalStatus?: InputMaybe<MaritalStatusEnum>;
+  middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
+  nameDataQuality?: InputMaybe<HmisNameQualityEnum>;
+  nameSuffix?: InputMaybe<HmisSuffixEnum>;
+  nickname?: InputMaybe<Scalars['NonBlankString']['input']>;
+  phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
+  physicalDescription?: InputMaybe<Scalars['String']['input']>;
+  placeOfBirth?: InputMaybe<Scalars['String']['input']>;
+  preferredCommunication?: InputMaybe<Array<PreferredCommunicationEnum>>;
+  preferredLanguage?: InputMaybe<LanguageEnum>;
+  profilePhoto?: InputMaybe<Scalars['Upload']['input']>;
+  pronouns?: InputMaybe<PronounEnum>;
+  pronounsOther?: InputMaybe<Scalars['String']['input']>;
+  raceEthnicity: Array<HmisRaceEnum>;
+  residenceAddress?: InputMaybe<Scalars['String']['input']>;
+  residenceGeolocation?: InputMaybe<Scalars['Point']['input']>;
+  spokenLanguages?: InputMaybe<Array<LanguageEnum>>;
+  ssn1?: InputMaybe<Scalars['String']['input']>;
+  ssn2?: InputMaybe<Scalars['String']['input']>;
+  ssn3?: InputMaybe<Scalars['String']['input']>;
+  ssnDataQuality?: InputMaybe<HmisSsnQualityEnum>;
+  veteranStatus?: InputMaybe<HmisVeteranStatusEnum>;
+};
 
 export type UpdateHmisProfilePayload = HmisProfileType | OperationInfo;
 

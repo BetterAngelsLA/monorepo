@@ -484,6 +484,49 @@ input CreateClientProfileInput {
 
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
 
+input CreateHmisClientProfileInput {
+  nameDataQuality: HmisNameQualityEnum!
+  ssnDataQuality: HmisSsnQualityEnum
+  dobDataQuality: HmisDobQualityEnum
+  nameSuffix: HmisSuffixEnum
+  raceEthnicity: [HmisRaceEnum!]
+  additionalRaceEthnicity: String
+  differentIdentityText: String
+  ssn1: String
+  ssn2: String
+  ssn3: String
+  birthDate: String
+  firstName: NonBlankString!
+  lastName: NonBlankString!
+  middleName: NonBlankString
+  gender: [HmisGenderEnum!]
+  veteranStatus: HmisVeteranStatusEnum
+  adaAccommodation: [AdaAccommodationEnum!]
+  address: String
+  age: Int
+  californiaId: String
+  email: NonBlankString
+  eyeColor: EyeColorEnum
+  hairColor: HairColorEnum
+  heightInInches: Float
+  importantNotes: String
+  livingSituation: LivingSituationEnum
+  mailingAddress: String
+  maritalStatus: MaritalStatusEnum
+  nickname: NonBlankString
+  phoneNumber: PhoneNumber
+  physicalDescription: String
+  placeOfBirth: String
+  preferredCommunication: [PreferredCommunicationEnum!]
+  preferredLanguage: LanguageEnum
+  profilePhoto: Upload
+  pronouns: PronounEnum
+  pronounsOther: String
+  residenceAddress: String
+  residenceGeolocation: Point
+  spokenLanguages: [LanguageEnum!]
+}
+
 union CreateHmisProfilePayload = HmisProfileType | OperationInfo
 
 input CreateNoteDataImportInput {
@@ -785,8 +828,6 @@ union HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | HmisGetCli
 union HmisClientNoteTypeHmisUpdateClientNoteError = HmisClientNoteType | HmisUpdateClientNoteError
 
 type HmisClientProfileType {
-  personalId: String
-  uniqueIdentifier: String
   nameDataQuality: HmisNameQualityEnum
   ssnDataQuality: HmisSsnQualityEnum
   dobDataQuality: HmisDobQualityEnum
@@ -827,6 +868,9 @@ type HmisClientProfileType {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  hmisId: String
+  personalId: String
+  uniqueIdentifier: String
 }
 
 type HmisClientProfileTypeOffsetPaginated {
@@ -1312,6 +1356,8 @@ type Mutation {
   hmisUpdateClient(clientInput: HmisUpdateClientInput!, clientSubItemsInput: HmisUpdateClientSubItemsInput!): HmisClientTypeHmisUpdateClientError!
   hmisCreateClientNote(clientNoteInput: HmisCreateClientNoteInput!): HmisClientNoteTypeHmisCreateClientNoteError!
   hmisUpdateClientNote(clientNoteInput: HmisUpdateClientNoteInput!): HmisClientNoteTypeHmisUpdateClientNoteError!
+  createHmisClientProfile(data: CreateHmisClientProfileInput!): HmisClientProfileType!
+  updateHmisClientProfile(data: UpdateHmisClientProfileInput!): HmisClientProfileType!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
@@ -2174,6 +2220,50 @@ union UpdateClientProfilePayload = ClientProfileType | OperationInfo
 union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 
 union UpdateCurrentUserPayload = UserType | OperationInfo
+
+input UpdateHmisClientProfileInput {
+  nameDataQuality: HmisNameQualityEnum
+  ssnDataQuality: HmisSsnQualityEnum
+  dobDataQuality: HmisDobQualityEnum
+  nameSuffix: HmisSuffixEnum
+  raceEthnicity: [HmisRaceEnum!]!
+  additionalRaceEthnicity: String
+  differentIdentityText: String
+  ssn1: String
+  ssn2: String
+  ssn3: String
+  birthDate: String
+  firstName: NonBlankString
+  lastName: NonBlankString
+  middleName: NonBlankString
+  gender: [HmisGenderEnum!]!
+  veteranStatus: HmisVeteranStatusEnum
+  adaAccommodation: [AdaAccommodationEnum!]
+  address: String
+  age: Int
+  californiaId: String
+  email: NonBlankString
+  eyeColor: EyeColorEnum
+  hairColor: HairColorEnum
+  heightInInches: Float
+  importantNotes: String
+  livingSituation: LivingSituationEnum
+  mailingAddress: String
+  maritalStatus: MaritalStatusEnum
+  nickname: NonBlankString
+  phoneNumber: PhoneNumber
+  physicalDescription: String
+  placeOfBirth: String
+  preferredCommunication: [PreferredCommunicationEnum!]
+  preferredLanguage: LanguageEnum
+  profilePhoto: Upload
+  pronouns: PronounEnum
+  pronounsOther: String
+  residenceAddress: String
+  residenceGeolocation: Point
+  spokenLanguages: [LanguageEnum!]
+  hmisId: String!
+}
 
 union UpdateHmisProfilePayload = HmisProfileType | OperationInfo
 
