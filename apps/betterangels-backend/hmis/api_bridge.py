@@ -230,7 +230,7 @@ class HmisApiRestBridge:
         data_dict = strawberry.asdict(data)
         hmis_id = data_dict.pop("hmis_id")
 
-        client_keys = {"first_name", "last_name", "ssn3", "name_quality", "dob_quality", "ssn_quality"}
+        client_keys = {"first_name", "last_name", "ssn3", "birth_date", "name_quality", "dob_quality", "ssn_quality"}
         screen_keys = {"alias", "gender", "middle_name", "name_suffix", "race_ethnicity", "veteran"}
 
         cleaned_client_input = self._clean(data=data_dict, keys=client_keys)

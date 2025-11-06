@@ -499,7 +499,10 @@ class Mutation:
         added_date = datetime.datetime.strptime(client_data.pop("added_date"), "%Y-%m-%d %H:%M:%S")
         last_updated = datetime.datetime.strptime(client_data.pop("last_updated"), "%Y-%m-%d %H:%M:%S")
 
-        data = {
+        data_dict = strawberry.asdict(data)
+
+        update_data = {
+            **data_dict,
             **client_data,
             "added_date": added_date,
             "last_updated": last_updated,
@@ -507,6 +510,6 @@ class Mutation:
 
         hmis_client_profile = HmisClientProfile.objects.get(hmis_id=hmis_id)
 
-        hmis_client_profile = resolvers.update(info, hmis_client_profile, {**data})
+        hmis_client_profile = resolvers.update(info, hmis_client_profile, {**update_data})
 
         return cast(HmisClientProfileType, hmis_client_profile)
