@@ -17,6 +17,33 @@ from strawberry.utils.str_converters import to_snake_case
 HMIS_REST_ENDPOINT = getattr(settings, "HMIS_REST_URL", None)
 HMIS_HOST = getattr(settings, "HMIS_HOST", None)
 
+EXCLUDED_BA_FIELDS = {
+    "ada_accommodation",
+    "address",
+    "age",
+    "california_id",
+    "email",
+    "eye_color",
+    "hair_color",
+    "height_in_inches",
+    "important_notes",
+    "living_situation",
+    "mailing_address",
+    "marital_status",
+    "nickname",
+    "phone_number",
+    "physical_description",
+    "place_of_birth",
+    "preferred_communication",
+    "preferred_language",
+    "profile_photo",
+    "pronouns",
+    "pronouns_other",
+    "residence_address",
+    "residence_geolocation",
+    "spoken_languages",
+}
+
 
 class HmisApiRestBridge:
     """Utility class for interfacing with HMIS REST API."""
@@ -158,7 +185,7 @@ class HmisApiRestBridge:
             info=self.info,
             default_fields=("id", "last_updated", "added_date"),
         )
-        fields_str = ", ".join(fields)
+        fields_str = ", ".join(fields - EXCLUDED_BA_FIELDS)
 
         resp = self._make_request(
             path=f"/clients/{hmis_id}",
@@ -240,8 +267,9 @@ class HmisApiRestBridge:
             info=self.info,
             default_fields=("id", "last_updated", "added_date"),
         )
+
         combined_fields = fields | {*cleaned_client_input.keys()} | {*cleaned_screen_input.keys()}
-        fields_str = ", ".join(combined_fields)
+        fields_str = ", ".join(combined_fields - EXCLUDED_BA_FIELDS)
 
         body = {
             k: v
