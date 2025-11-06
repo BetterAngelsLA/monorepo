@@ -493,13 +493,12 @@ class Mutation:
     def update_hmis_client_profile(self, info: Info, data: UpdateHmisClientProfileInput) -> HmisClientProfileType:
         hmis_api_bridge = HmisApiRestBridge(info=info)
 
-        client_data = hmis_api_bridge.update_client(data)
+        data_dict = strawberry.asdict(data)
+        client_data = hmis_api_bridge.update_client(data_dict)
 
         hmis_id = client_data.pop("id")
         added_date = datetime.datetime.strptime(client_data.pop("added_date"), "%Y-%m-%d %H:%M:%S")
         last_updated = datetime.datetime.strptime(client_data.pop("last_updated"), "%Y-%m-%d %H:%M:%S")
-
-        data_dict = strawberry.asdict(data)
 
         update_data = {
             **data_dict,

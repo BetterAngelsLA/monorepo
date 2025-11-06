@@ -253,15 +253,14 @@ class HmisApiRestBridge:
 
         return cleaned
 
-    def update_client(self, data: UpdateHmisClientProfileInput) -> dict[str, Any]:
-        data_dict = strawberry.asdict(data)
-        hmis_id = data_dict.pop("hmis_id")
+    def update_client(self, data: dict[str, Any]) -> dict[str, Any]:
+        hmis_id = data.pop("hmis_id")
 
         client_keys = {"first_name", "last_name", "ssn3", "birth_date", "name_quality", "dob_quality", "ssn_quality"}
         screen_keys = {"alias", "gender", "middle_name", "name_suffix", "race_ethnicity", "veteran"}
 
-        cleaned_client_input = self._clean(data=data_dict, keys=client_keys)
-        cleaned_screen_input = self._clean(data=data_dict, keys=screen_keys, enum_keys=("gender", "race_ethnicity"))
+        cleaned_client_input = self._clean(data=data, keys=client_keys)
+        cleaned_screen_input = self._clean(data=data, keys=screen_keys, enum_keys=("gender", "race_ethnicity"))
 
         fields = self._get_field_dot_paths(
             info=self.info,
