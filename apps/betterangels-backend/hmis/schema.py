@@ -7,7 +7,7 @@ from common.models import PhoneNumber
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
-from hmis.models import HmisClientProfile
+from hmis.models import HmisClientProfile, HmisNote
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
@@ -18,6 +18,7 @@ from .rest_api_bridge import HmisRestApiBridge
 from .types import (
     CreateHmisClientProfileInput,
     HmisClientProfileType,
+    HmisNoteType,
     UpdateHmisClientProfileInput,
 )
 
@@ -49,6 +50,36 @@ class Query:
     hmis_client_profiles: OffsetPaginated[HmisClientProfileType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
     )
+
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    def hmis_note(self, info: Info, client_id: str, note_id: str) -> HmisNoteType:
+        hmis_api_bridge = HmisRestApiBridge(info=info)
+
+        note_data = hmis_api_bridge.get_note(client_id, note_id)
+
+        returned_hmis_id = str(note_data.pop("hmis_id"))
+
+        try:
+            hmis_client_profile_id = HmisClientProfile.objects.get(hmis_id=client_id).pk
+
+        except HmisClientProfile.DoesNotExist:
+            raise ValidationError("Client does not exist")
+
+        if note_id != returned_hmis_id:
+            raise ValidationError("Note ID mismatch")
+
+        hmis_note, _ = HmisNote.objects.filter(
+            hmis_id=note_id,
+            hmis_client_profile_id=hmis_client_profile_id,
+        ).update_or_create(
+            hmis_id=note_id,
+            hmis_client_profile_id=hmis_client_profile_id,
+            defaults={**note_data},
+        )
+
+        return cast(HmisNoteType, hmis_note)
+
+    hmis_notes: OffsetPaginated[HmisNoteType] = strawberry_django.offset_paginated(permission_classes=[IsAuthenticated])
 
 
 @strawberry.type

@@ -229,20 +229,24 @@ class HmisRestApiBridge:
 
         return {f"screenValues.{k}" if k in CLIENT_SUB_FIELDS else k for k in snake_out}
 
-    def _format_timestamp_fields(self, client_data: dict[str, Any]) -> dict[str, Any]:
-        return {
-            **client_data,
-            "added_date": datetime.datetime.strptime(client_data["added_date"], DATETIME_FORMAT),
-            "last_updated": datetime.datetime.strptime(client_data["last_updated"], DATETIME_FORMAT),
-            "birth_date": (
-                datetime.date.fromisoformat(client_data["birth_date"]) if client_data.get("birth_date") else None
-            ),
+    def _format_timestamp_fields(self, data: dict[str, Any]) -> dict[str, Any]:
+        formatted_data = {
+            **data,
+            "added_date": datetime.datetime.strptime(data["added_date"], DATETIME_FORMAT),
+            "last_updated": datetime.datetime.strptime(data["last_updated"], DATETIME_FORMAT),
         }
+
+        if date := data.get("date"):
+            formatted_data["date"] = datetime.date.fromisoformat(date)
+        if birth_date := data.get("birth_date"):
+            formatted_data["birth_date"] = datetime.date.fromisoformat(birth_date)
+
+        return formatted_data
 
     def _enum_value(self, v: Any) -> Any:
         return v.value if isinstance(v, Enum) else v
 
-    def _clean(
+    def _clean_client(
         self,
         data: Mapping[str, Any],
         keys: Collection[str],
@@ -333,12 +337,12 @@ class HmisRestApiBridge:
 
         hmis_data = {k: v for k, v in data.items() if k not in EXCLUDED_BA_FIELDS}
 
-        cleaned_client_field_input = self._clean(
+        cleaned_client_field_input = self._clean_client(
             data=hmis_data,
             keys=CLIENT_FIELDS,
             date_keys=("birth_date"),
         )
-        cleaned_client_sub_field_input = self._clean(
+        cleaned_client_sub_field_input = self._clean_client(
             data=hmis_data,
             keys=CLIENT_SUB_FIELDS,
             enum_list_keys=("gender", "race_ethnicity"),
@@ -369,3 +373,35 @@ class HmisRestApiBridge:
         )
 
         return self._format_client_data(resp.json())
+
+    def get_note(self, client_id: str, note_id: str) -> dict[str, Any]:
+        fields = self._get_field_dot_paths(
+            info=self.info,
+            default_fields=("id", "last_updated", "added_date"),
+        )
+
+        fields_str = ", ".join(fields - EXCLUDED_BA_FIELDS)
+
+        resp = self._make_request(
+            path=f"/clients/{client_id}/client-notes/{note_id}",
+            body={"fields": fields_str},
+        )
+
+        return self._format_client_data(resp.json())
+
+    def create_note(self, data: dict[str, Any]) -> dict[str, Any]:
+
+        return {
+            "clientNote": {
+                "id": None,
+                "title": "house note",
+                "category": {"code": None},
+                "ref_category": "1",
+                "ref_client_program": 517,
+                "date": "2025-11-11",
+                "tracking_hour": None,
+                "tracking_minute": None,
+                "note": "<p>note my house</p>",
+                "private": "0",
+            }
+        }

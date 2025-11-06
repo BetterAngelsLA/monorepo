@@ -6,6 +6,7 @@ import pghistory
 from accounts.models import User
 from clients.enums import PronounEnum
 from clients.models import AbstractClientProfile
+from common.models import BaseModel
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Model
@@ -111,3 +112,24 @@ class HmisClientProfile(AbstractClientProfile):
             self.email = None
 
         super().save(*args, **kwargs)
+
+
+@pghistory.track(
+    pghistory.InsertEvent("hmisnote.add"),
+    pghistory.UpdateEvent("hmisnote.update"),
+    pghistory.DeleteEvent("hmisnote.remove"),
+)
+class HmisNote(BaseModel):
+    hmis_id = models.CharField(unique=True, max_length=50, db_index=True, null=True)
+    added_date = models.DateTimeField(blank=True, null=True)
+    last_updated = models.DateTimeField(blank=True, null=True)
+    date = models.DateField(blank=True, null=True)
+    ref_client_program = models.CharField(max_length=50, blank=True, null=True)
+    hmis_client_profile = models.ForeignKey(
+        HmisClientProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="notes"
+    )
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="hmis_notes")
+    title = models.CharField(max_length=100, null=True, blank=True)
+    note = models.TextField(blank=True)
+
+    objects = models.Manager()
