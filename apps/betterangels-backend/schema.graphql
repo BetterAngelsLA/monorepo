@@ -485,9 +485,9 @@ input CreateClientProfileInput {
 union CreateClientProfilePayload = ClientProfileType | OperationInfo
 
 input CreateHmisClientProfileInput {
-  nameDataQuality: HmisNameQualityEnum!
-  ssnDataQuality: HmisSsnQualityEnum
-  dobDataQuality: HmisDobQualityEnum
+  nameQuality: HmisNameQualityEnum
+  ssnQuality: HmisSsnQualityEnum
+  dobQuality: HmisDobQualityEnum
   nameSuffix: HmisSuffixEnum
   raceEthnicity: [HmisRaceEnum!]
   additionalRaceEthnicity: String
@@ -525,6 +525,7 @@ input CreateHmisClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
+  nameDataQuality: HmisNameQualityEnum!
 }
 
 union CreateHmisProfilePayload = HmisProfileType | OperationInfo
@@ -828,9 +829,9 @@ union HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | HmisGetCli
 union HmisClientNoteTypeHmisUpdateClientNoteError = HmisClientNoteType | HmisUpdateClientNoteError
 
 type HmisClientProfileType {
-  nameDataQuality: HmisNameQualityEnum
-  ssnDataQuality: HmisSsnQualityEnum
-  dobDataQuality: HmisDobQualityEnum
+  nameQuality: HmisNameQualityEnum
+  ssnQuality: HmisSsnQualityEnum
+  dobQuality: HmisDobQualityEnum
   nameSuffix: HmisSuffixEnum
   raceEthnicity: [HmisRaceEnum!]
   additionalRaceEthnicity: String
@@ -1687,7 +1688,7 @@ type Query {
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
   hmisClientProfiles(pagination: OffsetPaginationInput): HmisClientProfileTypeOffsetPaginated!
-  hmisClientProfile(personalId: ID!): HmisClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
+  hmisClientProfile(hmisId: ID!): HmisClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   hmisGetClient(personalId: ID!): HmisClientTypeHmisGetClientError!
   hmisListClients(pagination: HmisPaginationInput = null, filter: HmisClientFilterInput = null): HmisClientListTypeHmisListClientsError!
   hmisGetClientNote(personalId: ID!, enrollmentId: ID!, id: ID!): HmisClientNoteTypeHmisGetClientNoteError!
@@ -2222,9 +2223,9 @@ union UpdateClientProfilePhotoPayload = ClientProfileType | OperationInfo
 union UpdateCurrentUserPayload = UserType | OperationInfo
 
 input UpdateHmisClientProfileInput {
-  nameDataQuality: HmisNameQualityEnum
-  ssnDataQuality: HmisSsnQualityEnum
-  dobDataQuality: HmisDobQualityEnum
+  nameQuality: HmisNameQualityEnum
+  ssnQuality: HmisSsnQualityEnum
+  dobQuality: HmisDobQualityEnum
   nameSuffix: HmisSuffixEnum
   raceEthnicity: [HmisRaceEnum!]!
   additionalRaceEthnicity: String

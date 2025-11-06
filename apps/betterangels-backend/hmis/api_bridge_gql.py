@@ -314,7 +314,6 @@ class HmisApiBridge:
             return None
 
         token = (data.get("data", {}).get("createAuthToken") or {}).get("authToken")
-        print(token)
 
         if not token:
             return None

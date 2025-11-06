@@ -494,7 +494,7 @@ export type CreateHmisClientProfileInput = {
   birthDate?: InputMaybe<Scalars['String']['input']>;
   californiaId?: InputMaybe<Scalars['String']['input']>;
   differentIdentityText?: InputMaybe<Scalars['String']['input']>;
-  dobDataQuality?: InputMaybe<HmisDobQualityEnum>;
+  dobQuality?: InputMaybe<HmisDobQualityEnum>;
   email?: InputMaybe<Scalars['NonBlankString']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
   firstName: Scalars['NonBlankString']['input'];
@@ -508,6 +508,7 @@ export type CreateHmisClientProfileInput = {
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
   nameDataQuality: HmisNameQualityEnum;
+  nameQuality?: InputMaybe<HmisNameQualityEnum>;
   nameSuffix?: InputMaybe<HmisSuffixEnum>;
   nickname?: InputMaybe<Scalars['NonBlankString']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
@@ -525,7 +526,7 @@ export type CreateHmisClientProfileInput = {
   ssn1?: InputMaybe<Scalars['String']['input']>;
   ssn2?: InputMaybe<Scalars['String']['input']>;
   ssn3?: InputMaybe<Scalars['String']['input']>;
-  ssnDataQuality?: InputMaybe<HmisSsnQualityEnum>;
+  ssnQuality?: InputMaybe<HmisSsnQualityEnum>;
   veteranStatus?: InputMaybe<HmisVeteranStatusEnum>;
 };
 
@@ -847,7 +848,7 @@ export type HmisClientProfileType = {
   birthDate?: Maybe<Scalars['String']['output']>;
   californiaId?: Maybe<Scalars['String']['output']>;
   differentIdentityText?: Maybe<Scalars['String']['output']>;
-  dobDataQuality?: Maybe<HmisDobQualityEnum>;
+  dobQuality?: Maybe<HmisDobQualityEnum>;
   email?: Maybe<Scalars['NonBlankString']['output']>;
   eyeColor?: Maybe<EyeColorEnum>;
   firstName?: Maybe<Scalars['NonBlankString']['output']>;
@@ -861,7 +862,7 @@ export type HmisClientProfileType = {
   mailingAddress?: Maybe<Scalars['String']['output']>;
   maritalStatus?: Maybe<MaritalStatusEnum>;
   middleName?: Maybe<Scalars['NonBlankString']['output']>;
-  nameDataQuality?: Maybe<HmisNameQualityEnum>;
+  nameQuality?: Maybe<HmisNameQualityEnum>;
   nameSuffix?: Maybe<HmisSuffixEnum>;
   nickname?: Maybe<Scalars['NonBlankString']['output']>;
   personalId?: Maybe<Scalars['String']['output']>;
@@ -880,7 +881,7 @@ export type HmisClientProfileType = {
   ssn1?: Maybe<Scalars['String']['output']>;
   ssn2?: Maybe<Scalars['String']['output']>;
   ssn3?: Maybe<Scalars['String']['output']>;
-  ssnDataQuality?: Maybe<HmisSsnQualityEnum>;
+  ssnQuality?: Maybe<HmisSsnQualityEnum>;
   uniqueIdentifier?: Maybe<Scalars['String']['output']>;
   veteranStatus?: Maybe<HmisVeteranStatusEnum>;
 };
@@ -2058,7 +2059,7 @@ export type QueryClientProfilesArgs = {
 
 
 export type QueryHmisClientProfileArgs = {
-  personalId: Scalars['ID']['input'];
+  hmisId: Scalars['ID']['input'];
 };
 
 
@@ -2719,7 +2720,7 @@ export type UpdateHmisClientProfileInput = {
   birthDate?: InputMaybe<Scalars['String']['input']>;
   californiaId?: InputMaybe<Scalars['String']['input']>;
   differentIdentityText?: InputMaybe<Scalars['String']['input']>;
-  dobDataQuality?: InputMaybe<HmisDobQualityEnum>;
+  dobQuality?: InputMaybe<HmisDobQualityEnum>;
   email?: InputMaybe<Scalars['NonBlankString']['input']>;
   eyeColor?: InputMaybe<EyeColorEnum>;
   firstName?: InputMaybe<Scalars['NonBlankString']['input']>;
@@ -2733,7 +2734,7 @@ export type UpdateHmisClientProfileInput = {
   mailingAddress?: InputMaybe<Scalars['String']['input']>;
   maritalStatus?: InputMaybe<MaritalStatusEnum>;
   middleName?: InputMaybe<Scalars['NonBlankString']['input']>;
-  nameDataQuality?: InputMaybe<HmisNameQualityEnum>;
+  nameQuality?: InputMaybe<HmisNameQualityEnum>;
   nameSuffix?: InputMaybe<HmisSuffixEnum>;
   nickname?: InputMaybe<Scalars['NonBlankString']['input']>;
   phoneNumber?: InputMaybe<Scalars['PhoneNumber']['input']>;
@@ -2751,7 +2752,7 @@ export type UpdateHmisClientProfileInput = {
   ssn1?: InputMaybe<Scalars['String']['input']>;
   ssn2?: InputMaybe<Scalars['String']['input']>;
   ssn3?: InputMaybe<Scalars['String']['input']>;
-  ssnDataQuality?: InputMaybe<HmisSsnQualityEnum>;
+  ssnQuality?: InputMaybe<HmisSsnQualityEnum>;
   veteranStatus?: InputMaybe<HmisVeteranStatusEnum>;
 };
 
