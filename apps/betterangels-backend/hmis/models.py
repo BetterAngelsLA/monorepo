@@ -30,19 +30,19 @@ class HmisClientProfile(AbstractClientProfile):
     hmis_id = models.CharField(unique=True, max_length=50, db_index=True)
     personal_id = models.CharField(max_length=50, blank=True, null=True)
     unique_identifier = models.CharField(unique=True, max_length=50, db_index=True)
-    name_data_quality = IntegerChoicesField(
+    name_quality = IntegerChoicesField(
         choices_enum=HmisNameQualityEnum,
         default=HmisNameQualityEnum.NOT_COLLECTED,
     )
     ssn1 = models.CharField(max_length=3, blank=True, null=True)
     ssn2 = models.CharField(max_length=2, blank=True, null=True)
     ssn3 = models.CharField(max_length=4, blank=True, null=True)
-    ssn_data_quality = IntegerChoicesField(
+    ssn_quality = IntegerChoicesField(
         choices_enum=HmisSsnQualityEnum,
         default=HmisSsnQualityEnum.NOT_COLLECTED,
     )
     birth_date = models.DateField(blank=True, null=True)
-    dob_data_quality = IntegerChoicesField(
+    dob_quality = IntegerChoicesField(
         choices_enum=HmisDobQualityEnum,
         default=HmisDobQualityEnum.NOT_COLLECTED,
     )

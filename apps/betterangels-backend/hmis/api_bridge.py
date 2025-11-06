@@ -96,8 +96,8 @@ class HmisApiRestBridge:
         e.g.,
         ```
             query {
-                first_name
-                last_name
+                firstName
+                lastName
                 address {
                     city
                     state
@@ -151,24 +151,24 @@ class HmisApiRestBridge:
                 elif isinstance(n, InlineFragmentNode) and n.selection_set:
                     stack.append((prefix, n.selection_set))
 
-        return out
+        return {to_snake_case(k) for k in out}
 
-    def get_client(self, personal_id: str) -> Optional[dict[str, Any]]:
+    def get_client(self, hmis_id: str) -> Optional[dict[str, Any]]:
         fields = self._get_field_dot_paths(
             info=self.info,
-            default_fields=("last_updated", "added_date"),
+            default_fields=("id", "last_updated", "added_date"),
         )
-
         fields_str = ", ".join(fields)
+
         resp = self._make_request(
-            path=f"/clients/{personal_id}",
+            path=f"/clients/{hmis_id}",
             body={"fields": fields_str},
         )
 
         if resp.status_code == 404:
             raise ObjectDoesNotExist("The requested Client does not exist.")
 
-        return dict_keys_to_snake(resp.json())
+        return dict(resp.json())
 
     def create_client(self, data: CreateHmisClientProfileInput) -> dict[str, Any]:
         data_dict = strawberry.asdict(data)
@@ -179,7 +179,7 @@ class HmisApiRestBridge:
                 "first_name": cleaned_data.get("first_name", None),
                 "last_name": cleaned_data.get("last_name", None),
                 "ssn3": "xxxx",
-                "name_quality": cleaned_data.get("name_data_quality", 99),
+                "name_quality": cleaned_data.get("name_quality", 99),
                 "dob_quality": 99,
                 "ssn_quality": 99,
             },
@@ -193,7 +193,7 @@ class HmisApiRestBridge:
             },
             "fields": (
                 "id, personal_id, unique_identifier, added_date, last_updated, "
-                "first_name, last_name, ssn3, name_data_quality, dob_data_quality, ssn_data_quality, "
+                "first_name, last_name, ssn3, name_quality, dob_quality, ssn_quality, "
                 "middle_name, name_suffix, gender, race_ethnicity, veteran_status, "
             ),
         }
@@ -236,14 +236,12 @@ class HmisApiRestBridge:
         cleaned_client_input = self._clean(data=data_dict, keys=client_keys)
         cleaned_screen_input = self._clean(data=data_dict, keys=screen_keys, enum_keys=("gender", "race_ethnicity"))
 
-        queried_fields = self._get_field_dot_paths(
+        fields = self._get_field_dot_paths(
             info=self.info,
-            default_fields=["id", "last_updated", "added_date"],
+            default_fields=("id", "last_updated", "added_date"),
         )
-        fields = (
-            {to_snake_case(f) for f in queried_fields} | {*cleaned_client_input.keys()} | {*cleaned_screen_input.keys()}
-        )
-        fields_str = ", ".join(fields)
+        combined_fields = fields | {*cleaned_client_input.keys()} | {*cleaned_screen_input.keys()}
+        fields_str = ", ".join(combined_fields)
 
         body = {
             k: v

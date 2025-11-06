@@ -329,9 +329,9 @@ HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]
 @strawberry_django.type(HmisClientProfile)
 class HmisClientProfileBaseType:
     # HMIS Fields
-    name_data_quality: Optional[HmisNameQualityEnum]
-    ssn_data_quality: Optional[HmisSsnQualityEnum]
-    dob_data_quality: Optional[HmisDobQualityEnum]
+    name_quality: Optional[HmisNameQualityEnum]
+    ssn_quality: Optional[HmisSsnQualityEnum]
+    dob_quality: Optional[HmisDobQualityEnum]
     name_suffix: Optional[HmisSuffixEnum]
     race_ethnicity: Optional[list[HmisRaceEnum]]
     additional_race_ethnicity: Optional[str]

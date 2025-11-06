@@ -182,10 +182,10 @@ class Query:
     @strawberry_django.field(
         permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])]
     )
-    def hmis_client_profile(self, info: Info, personal_id: strawberry.ID) -> HmisClientProfileType:
+    def hmis_client_profile(self, info: Info, hmis_id: strawberry.ID) -> HmisClientProfileType:
         hmis_api_bridge = HmisApiRestBridge(info=info)
 
-        client_data = hmis_api_bridge.get_client(personal_id)
+        client_data = hmis_api_bridge.get_client(hmis_id)
 
         # TODO: add real error handling
         if not client_data:
@@ -204,11 +204,11 @@ class Query:
             "last_updated": last_updated,
         }
 
-        personal_id = data.pop("personal_id")
+        hmis_id = data.pop("id")
         unique_identifier = data.pop("unique_identifier")
 
-        client, _ = HmisClientProfile.objects.filter(personal_id=personal_id).update_or_create(
-            personal_id=personal_id,
+        client, _ = HmisClientProfile.objects.filter(hmis_id=hmis_id).update_or_create(
+            hmis_id=hmis_id,
             unique_identifier=unique_identifier,
             defaults={**data},
         )
