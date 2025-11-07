@@ -1,6 +1,6 @@
 import { Flex, Text } from '@chakra-ui/react';
+import { Link } from 'react-router-dom';
 import type { Shelter } from './Dashboard';
-
 
 type TShelterCard = {
   shelter: Shelter;
@@ -40,6 +40,10 @@ export function ShelterCard({
       </Text> : <Text textStyle="bodySm" color="gray.700" m={0}>
         Beds Availiable: Data Not Availiable
       </Text>}
+
+      <Link to="/operator/dashboard/#">
+        <button>See More</button>
+      </Link>
 
     </Flex>
   );
