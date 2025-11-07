@@ -3,6 +3,7 @@ export type Shelter = {
   name: string;
   address?: string;
   image?: { file: { url: string; name: string } };
+  bedsAvailiable: number;
 };
 
 type TShelterCard = {
@@ -10,14 +11,14 @@ type TShelterCard = {
 };
 
 export function ShelterCard({
-  shelter: { name, image, address },
+  shelter: { name, image, address, bedsAvailiable },
 }: TShelterCard) {
   return (
     <div className="bg-white text-black rounded-2xl shadow-md p-4 hover:shadow-lg transition">
       {image ? (
         <img
           src={image.file.url}
-          alt={name}
+          alt={image.file.name}
           className="w-full h-48 object-cover rounded-xl mb-4"
         />
       ) : (
@@ -26,7 +27,12 @@ export function ShelterCard({
         </div>
       )}
 
-      <h2 className="text-xl font-semibold">{name}</h2>
+      <h1 className="text-xl font-semibold">{name}</h1>
+      {address && <h2 className="text-gray-700">{address}</h2>}
+      <p className="mt-2 text-gray-800">
+        Beds Available:{' '}
+        <span className="font-semibold text-green-700">{bedsAvailiable}</span>
+      </p>
     </div>
   );
 }
