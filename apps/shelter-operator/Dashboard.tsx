@@ -2,30 +2,26 @@ import { Link } from 'react-router-dom';
 import { ShelterCard, TShelter } from './ShelterCard';
 
 type TShelterList = {
-  className?: string;
   shelters: TShelter[];
 };
-export default function Dashboard(props: TShelterList) {
-  const { shelters, className = '' } = props;
 
-  if (!shelters.length) {
-    return null;
-  }
-
+export default function Dashboard({ shelters }: TShelterList) {
   return (
     <div>
       <Link to="/operator">
-        <button>Back</button>
+        <button className="mb-4">Back</button>
       </Link>
-      <div>Welcome to the Operator Dashboard</div>
-      <div className={className}>
-        {shelters.map((shelter, index) => {
-          return (
-            <div key={index} className="mb-6 last:mb-0">
-              <ShelterCard key={index} shelter={shelter} />
-            </div>
-          );
-        })}
+
+      <h1 className="text-xl font-semibold mb-6">
+        Welcome to the Operator Dashboard
+      </h1>
+
+      <div>
+        {shelters.map((shelter) => (
+          <div key={shelter.id ?? shelter.name} className="mb-6 last:mb-0">
+            <ShelterCard shelter={shelter} />
+          </div>
+        ))}
       </div>
     </div>
   );
