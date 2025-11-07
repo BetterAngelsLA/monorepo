@@ -21,16 +21,26 @@ export function ShelterCard({
       gap="0.5rem"
       flex="0 0 16rem"
     >
-      <Flex bg="gray.100" borderRadius="0.5rem" h="8rem" />
+      <Flex bg="gray.100" borderRadius="0.5rem" h="8rem">
+         <img
+          src={image?.file.url}
+          alt={image?.file.name}
+          className="w-full h-48 object-cover rounded-xl mb-4"
+        />
+      </Flex>
       <Text textStyle="headingMd" m={0}>
         {name}
       </Text>
       <Text textStyle="bodySm" color="gray.600" m={0}>
         {address}
       </Text>
-      <Text textStyle="bodySm" color="gray.700" m={0}>
+
+      {capacity ? <Text textStyle="bodySm" color="gray.700" m={0}>
         Beds Availiable: {capacity}
-      </Text>
+      </Text> : <Text textStyle="bodySm" color="gray.700" m={0}>
+        Beds Availiable: Data Not Availiable
+      </Text>}
+
     </Flex>
   );
 }
