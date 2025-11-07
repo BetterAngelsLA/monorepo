@@ -23,7 +23,6 @@ export default function Dashboard(props: TShelterList) {
           return (
             <div key={index} className="mb-6 last:mb-0">
               <ShelterCard key={index} shelter={shelter} />
-
             </div>
           );
         })}
