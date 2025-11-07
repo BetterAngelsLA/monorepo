@@ -9,7 +9,9 @@ type TShelterCard = {
   shelter: Shelter;
 };
 
-export function ShelterCard({ shelter: { name, image } }: TShelterCard) {
+export function ShelterCard({
+  shelter: { name, image, address },
+}: TShelterCard) {
   return (
     <div className="bg-white text-black rounded-2xl shadow-md p-4 hover:shadow-lg transition">
       {image ? (

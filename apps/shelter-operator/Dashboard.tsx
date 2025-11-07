@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Shelter } from './ShelterCard';
+import { ShelterCard } from './ShelterCard';
 
 type TShelterList = {
   shelters?: Shelter[];
@@ -51,9 +52,10 @@ export default function Dashboard({
 
       <div>
         {shelters.map((shelter) => (
-          <p key={shelter.id}>
-            {shelter.id} — {shelter.name}
-          </p>
+          <ShelterCard key={shelter.id} shelter={shelter} />
+          // <p key={shelter.id}>
+          //   {shelter.id} — {shelter.name}
+          // </p>
         ))}
       </div>
     </div>
