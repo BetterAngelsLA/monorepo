@@ -1,47 +1,30 @@
-import { ReactNode } from 'react';
-
-export type TShelter = {
+export type Shelter = {
   id: string;
   name: string;
-  heroImage?: string | null;
-  exteriorPhotos?: Array<{ file: { url: string; name: string } }> | null;
-  interiorPhotos?: Array<{ file: { url: string; name: string } }> | null;
+  address?: string;
+  image?: { file: { url: string; name: string } };
 };
 
 type TShelterCard = {
-  className?: string;
-  shelter: TShelter;
-  footer?: ReactNode | null;
-  footerClassName?: string;
+  shelter: Shelter;
 };
 
-export function ShelterCard(props: TShelterCard) {
-  const {
-    shelter: { id, name, heroImage },
-    className,
-    footer,
-    footerClassName,
-  } = props;
-
+export function ShelterCard({ shelter: { name, image } }: TShelterCard) {
   return (
-    <div
-      key={id}
-      className={`bg-white text-black rounded-2xl shadow-md p-4 hover:shadow-lg transition ${
-        className ?? ''
-      }`}
-    >
-      {heroImage && (
+    <div className="bg-white text-black rounded-2xl shadow-md p-4 hover:shadow-lg transition">
+      {image ? (
         <img
-          src={heroImage}
+          src={image.file.url}
           alt={name}
           className="w-full h-48 object-cover rounded-xl mb-4"
         />
+      ) : (
+        <div className="w-full h-48 bg-gray-200 rounded-xl mb-4 flex items-center justify-center text-gray-500">
+          No Image Available
+        </div>
       )}
-      <h1 className="text-xl font-semibold">{name}</h1>
 
-      {footer && (
-        <div className={`mt-4 ${footerClassName ?? ''}`}>{footer}</div>
-      )}
+      <h2 className="text-xl font-semibold">{name}</h2>
     </div>
   );
 }
