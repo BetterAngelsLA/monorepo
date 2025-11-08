@@ -36,9 +36,9 @@ export function ShelterCard({
       </Text>
 
       {capacity ? <Text textStyle="bodySm" color="gray.700" m={0}>
-        Beds Availiable: {capacity}
+        Beds Available: {capacity}
       </Text> : <Text textStyle="bodySm" color="gray.700" m={0}>
-        Beds Availiable: Data Not Availiable
+        Beds Available: Data Not Available
       </Text>}
 
       <Link to="/operator/dashboard/#">
