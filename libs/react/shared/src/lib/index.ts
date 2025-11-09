@@ -1,3 +1,6 @@
+export * from './auth';
+export { Input } from './components/Input';
+export type { InputProps } from './components/Input';
 export { createApolloClient } from './clients/apollo/client';
 export * from './featureControls';
 export * from './observers';
