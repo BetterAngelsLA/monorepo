@@ -16,8 +16,6 @@ export const loggerLink = new ApolloLink((operation, forward) => {
       operation.operationName || '(anonymous)',
       result
     );
-    console.log('[GraphQL resp pretty]');
-    console.log(JSON.stringify(result, null, 2));
 
     return result;
   });

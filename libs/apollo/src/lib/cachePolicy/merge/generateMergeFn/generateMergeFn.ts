@@ -1,67 +1,41 @@
 import type { FieldFunctionOptions, FieldMergeFunction } from '@apollo/client';
-import { TPaginationVariables } from '../../types';
-import {
-  createOffsetPaginationResolver,
-  createPerPagePaginationResolver,
-} from '../resolvers';
-import type {
-  ResolveMergePagination,
-  TCacheMergeOpts,
-  WrapperMode,
-} from '../types';
-import {
-  arrayMergeFn,
-  defaultPaginationResolverFn,
-  wrapperMergeFn,
-} from './generators';
+import { MergeModeEnum } from '../../constants';
+import type { TPaginationVariables } from '../../types';
+import { mergeArrayPayload, mergeObjectPayload } from '../mergeFunctions';
+import type { TCacheMergeOpts } from '../types';
+import { generatePaginationResolver } from './utils';
 
 export function generateMergeFn<TItem = unknown, TVars = unknown>(
-  mergeOpts?: TCacheMergeOpts<TVars>,
+  mergeOptions?: TCacheMergeOpts,
   paginationVariables?: TPaginationVariables
 ): FieldMergeFunction<
   unknown,
   unknown,
   FieldFunctionOptions<Record<string, unknown>, Record<string, unknown>>
 > {
-  const effectiveMergeOpts = (mergeOpts ?? {}) as
-    | WrapperMode<TVars>
-    | { mode: 'array' };
+  const resolvedMergeOpts = mergeOptions ?? {
+    mode: MergeModeEnum.Object,
+  };
 
-  const resolvePaginationFn = getPaginationResolver<TVars>(
-    effectiveMergeOpts,
-    paginationVariables
-  );
+  const resolvePaginationFn =
+    generatePaginationResolver<TVars>(paginationVariables);
 
-  if ((effectiveMergeOpts as any).mode === 'array') {
-    return arrayMergeFn<TItem, TVars>(resolvePaginationFn, mergeOpts);
+  if (resolvedMergeOpts.mode === MergeModeEnum.Array) {
+    return mergeArrayPayload<TItem, TVars>(
+      resolvePaginationFn
+    ) as FieldMergeFunction<
+      unknown,
+      unknown,
+      FieldFunctionOptions<Record<string, unknown>, Record<string, unknown>>
+    >;
   }
 
-  return wrapperMergeFn<TItem, TVars>(
-    effectiveMergeOpts as WrapperMode<TVars>,
+  const { itemIdPath, totalCountPath, itemsPath } = resolvedMergeOpts;
+
+  return mergeObjectPayload<TItem, TVars>({
     resolvePaginationFn,
-    mergeOpts
-  );
-}
-
-function getPaginationResolver<TVars>(
-  mergeOpts: WrapperMode<TVars> | { mode: 'array' },
-  paginationVariables?: TPaginationVariables
-): ResolveMergePagination<TVars> {
-  const hasUserResolver =
-    'resolvePaginationFn' in mergeOpts &&
-    typeof mergeOpts.resolvePaginationFn === 'function';
-
-  if (hasUserResolver) {
-    return mergeOpts.resolvePaginationFn as ResolveMergePagination<TVars>;
-  }
-
-  if (paginationVariables) {
-    if (paginationVariables.mode === 'perPage') {
-      return createPerPagePaginationResolver<TVars>(paginationVariables);
-    }
-
-    return createOffsetPaginationResolver<TVars>(paginationVariables);
-  }
-
-  return defaultPaginationResolverFn as ResolveMergePagination<TVars>;
+    itemIdPath,
+    itemsPath,
+    totalCountPath,
+  });
 }

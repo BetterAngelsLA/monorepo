@@ -1,4 +1,3 @@
-import type { FieldPolicy } from '@apollo/client';
 import {
   afterEach,
   beforeEach,
@@ -8,127 +7,149 @@ import {
   vi,
   type MockInstance,
 } from 'vitest';
+import { PaginationModeEnum } from './constants';
 import { generateFieldPolicy } from './generateFieldPolicy';
-import { generateMergeFn } from './merge';
+import type { QueryPolicyConfig } from './types';
 
-// 🔁 Mock BEFORE importing the SUT. Define mocks INSIDE the factory (no top-level refs).
+// mock the module we delegate to
 vi.mock('./merge', () => {
-  // create a mock factory that returns a merge function mock
-  const generateMergeFn = vi.fn((opts?: any) => {
-    // merge function that exercises readExisting/mergeResults if provided
-    const mergeFn = vi.fn((existing: any, incoming: any, context: any) => {
-      if (opts && (opts.readExisting || opts.mergeResults)) {
-        const readExisting = opts.readExisting ?? ((ex: any) => ex ?? []);
-        const existingList = readExisting(existing);
-
-        const offset =
-          context?.offset ??
-          context?.args?.pagination?.offset ??
-          context?.args?.offset ??
-          0;
-
-        const mergeResults =
-          opts.mergeResults ?? ((_ex: any[], inc: any[]) => inc);
-        return mergeResults(existingList, incoming, { offset });
-      }
-      // default passthrough
-      return incoming;
+  const generateMergeFn = vi.fn((_mergeOpts?: any, _paginationVars?: any) => {
+    // return a dummy merge function Apollo would call
+    return vi.fn((existing: any, incoming: any) => {
+      return incoming ?? existing;
     });
-    return mergeFn;
   });
 
   return { generateMergeFn };
 });
 
-function narrowMerge(p: FieldPolicy) {
-  expect(typeof p.merge).toBe('function');
-  return p.merge as (existing: any, incoming: any, context: any) => any;
-}
-
 describe('generateFieldPolicy', () => {
-  let warnSpy: MockInstance<[message?: any, ...optionalParams: any[]], void>;
+  let warnSpy: MockInstance;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    warnSpy = vi
-      .spyOn(console, 'warn')
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      .mockImplementation(() => {}) as unknown as MockInstance<
-      [message?: any, ...optionalParams: any[]],
-      void
-    >;
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
 
   afterEach(() => {
     warnSpy.mockRestore();
   });
 
-  it('passes keyArgs through (array) and wires merge from generateMergeFn', () => {
-    const policy = generateFieldPolicy<
-      { id: number },
-      { pagination?: { offset?: number; limit?: number } }
-    >({
+  const offsetQueryPolicy: QueryPolicyConfig = {
+    paginationMode: PaginationModeEnum.Offset,
+    itemsPath: ['results'],
+    totalCountPath: ['totalCount'],
+    paginationOffsetPath: ['pagination', 'offset'],
+    paginationLimitPath: ['pagination', 'limit'],
+  };
+
+  const perPageQueryPolicy: QueryPolicyConfig = {
+    paginationMode: PaginationModeEnum.PerPage,
+    itemsPath: ['results'],
+    totalCountPath: ['totalCount'],
+    paginationPagePath: ['pagination', 'page'],
+    paginationPerPagePath: ['pagination', 'perPage'],
+  };
+
+  it('keeps keyArgs (array) and wires merge with offset pagination', async () => {
+    const policy = generateFieldPolicy({
       keyArgs: ['filters', 'order'],
+      queryPolicyConfig: offsetQueryPolicy,
     });
 
     expect(policy.keyArgs).toEqual(['filters', 'order']);
-    expect(typeof policy.merge).toBe('function');
-
-    // first call without mergeOpts -> undefined
     expect(
-      (generateMergeFn as unknown as MockInstance).mock.calls[0][0]
-    ).toBeUndefined();
+      typeof policy.merge === 'function' || typeof policy.merge === 'boolean'
+    ).toBe(true);
+
+    // ✅ use dynamic import so ESM/vitest is happy
+    const mockedModule = await import('./merge');
+    const mockedGenerateMergeFn =
+      mockedModule.generateMergeFn as unknown as MockInstance;
+
+    // first call should have derived offset vars
+    expect(mockedGenerateMergeFn.mock.calls[0][0]).toBeUndefined();
+    expect(mockedGenerateMergeFn.mock.calls[0][1]).toEqual({
+      mode: PaginationModeEnum.Offset,
+      offsetPath: ['pagination', 'offset'],
+      limitPath: ['pagination', 'limit'],
+    });
   });
 
-  it('passes keyArgs through (false)', () => {
-    const policy = generateFieldPolicy({ keyArgs: false });
+  it('keeps keyArgs (false) and wires merge with per-page pagination', async () => {
+    const policy = generateFieldPolicy({
+      keyArgs: false,
+      queryPolicyConfig: perPageQueryPolicy,
+    });
+
     expect(policy.keyArgs).toBe(false);
-    expect(typeof policy.merge).toBe('function');
+    expect(
+      typeof policy.merge === 'function' || typeof policy.merge === 'boolean'
+    ).toBe(true);
+
+    const mockedModule = await import('./merge');
+    const mockedGenerateMergeFn =
+      mockedModule.generateMergeFn as unknown as MockInstance;
+
+    expect(mockedGenerateMergeFn.mock.calls[0][1]).toEqual({
+      mode: PaginationModeEnum.PerPage,
+      pagePath: ['pagination', 'page'],
+      perPagePath: ['pagination', 'perPage'],
+    });
   });
 
-  it('integration: merge uses provided readExisting + mergeResults', () => {
-    // Cast for convenience in tests (we’re already mocking internals)
+  it('forwards mergeOpts and uses pagination derived from queryPolicyConfig', async () => {
     const mergeOpts = {
-      readExisting: (existing: any) => existing?.results ?? [],
-      mergeResults: (
-        existing: string[],
-        incoming: string[],
-        { offset }: { offset: number }
-      ) => {
-        const merged = existing.slice();
-        for (let i = 0; i < incoming.length; i++) {
-          merged[offset + i] = incoming[i];
-        }
-        return merged;
-      },
+      mode: 'ARRAY',
     } as any;
 
-    const policy = generateFieldPolicy<
-      string,
-      { pagination?: { offset?: number; limit?: number } }
-    >({
+    const policy = generateFieldPolicy({
       keyArgs: ['filters'],
       mergeOpts,
+      queryPolicyConfig: offsetQueryPolicy,
     });
 
-    // ensure mocked generateMergeFn received our options
-    const calls = (generateMergeFn as unknown as MockInstance).mock.calls;
-    expect(calls[calls.length - 1][0]).toBe(mergeOpts);
+    const mergeFn = policy.merge;
 
-    const existing = { results: ['A', 'B'] };
-    const incoming = ['C', 'D'];
-    const context = { args: { pagination: { offset: 1, limit: 2 } } };
+    // narrow to callable (Apollo types allow true/false)
+    if (typeof mergeFn === 'function') {
+      mergeFn({ results: [1] }, { results: [2] }, {} as any);
+    } else {
+      throw new Error('mergeFn was not a function');
+    }
 
-    const result = narrowMerge(policy)(existing, incoming, context);
-    expect(result).toEqual(['A', 'C', 'D']);
+    const mockedModule = await import('./merge');
+    const mockedGenerateMergeFn =
+      mockedModule.generateMergeFn as unknown as MockInstance;
+    const lastCall =
+      mockedGenerateMergeFn.mock.calls[
+        mockedGenerateMergeFn.mock.calls.length - 1
+      ];
+
+    expect(lastCall[0]).toBe(mergeOpts);
+    expect(lastCall[1]).toEqual({
+      mode: PaginationModeEnum.Offset,
+      offsetPath: ['pagination', 'offset'],
+      limitPath: ['pagination', 'limit'],
+    });
   });
 
-  it('merge falls back to passthrough when no mergeOpts provided', () => {
-    const policy = generateFieldPolicy<number>({ keyArgs: ['filters'] });
-    const result = narrowMerge(policy)({ results: [1, 2, 3] }, [9, 8], {
-      args: { offset: 0 },
+  it('uses the mocked merge fn to return incoming', async () => {
+    const policy = generateFieldPolicy<number>({
+      keyArgs: ['filters'],
+      queryPolicyConfig: offsetQueryPolicy,
     });
 
-    expect(result).toEqual([9, 8]);
+    const mergeFn = policy.merge;
+
+    if (typeof mergeFn === 'function') {
+      const result = mergeFn({ results: [1, 2, 3] }, [9, 8], {
+        args: { offset: 0 },
+      } as any);
+
+      expect(result).toEqual([9, 8]);
+    } else {
+      throw new Error('mergeFn was not a function');
+    }
   });
 });

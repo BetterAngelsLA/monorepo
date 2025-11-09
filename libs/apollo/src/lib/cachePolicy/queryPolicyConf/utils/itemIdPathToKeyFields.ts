@@ -1,4 +1,4 @@
-import { toPathArray } from '../../utils/toPathArray';
+import { toPathArray } from '../../../utils';
 
 /**
  * Convert an itemIdPath (string or path array) to Apollo keyFields.

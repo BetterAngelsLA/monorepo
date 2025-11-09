@@ -1,3 +1,4 @@
+export * from './constants';
 export { generateCachePolicies } from './generateCachePolicies';
 export { generateFieldPolicy } from './generateFieldPolicy';
 export * from './merge';

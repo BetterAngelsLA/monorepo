@@ -1,6 +1,10 @@
+import { readAtPath, toNonNegativeIntegerOrFallback } from '../../../utils';
+import {
+  DEFAULT_PAGINATION_PAGE_PATH,
+  DEFAULT_PAGINATION_PER_PAGE_PATH,
+  PaginationModeEnum,
+} from '../../constants';
 import { PaginationVars } from '../../merge/types';
-import { toNonNegativeIntegerOrFallback } from '../number';
-import { readAtPath } from '../readAtPath';
 
 type TExtractPerPagePagination = {
   variables: unknown;
@@ -8,7 +12,7 @@ type TExtractPerPagePagination = {
   perPagePath?: string | ReadonlyArray<string>;
 };
 
-export function extractPerPagePagination<T = string>(
+export function extractPerPagePagination(
   opts: TExtractPerPagePagination
 ): PaginationVars | undefined {
   const { variables, pagePath, perPagePath } = opts;
@@ -17,11 +21,14 @@ export function extractPerPagePagination<T = string>(
     return undefined;
   }
 
-  const page = readAtPath(variables, pagePath || 'pagination.page');
-  const perPage = readAtPath(variables, perPagePath || 'pagination.perPage');
+  const page = readAtPath(variables, pagePath || DEFAULT_PAGINATION_PAGE_PATH);
+  const perPage = readAtPath(
+    variables,
+    perPagePath || DEFAULT_PAGINATION_PER_PAGE_PATH
+  );
 
   return {
-    type: 'perPage',
+    mode: PaginationModeEnum.PerPage,
     page: toNonNegativeIntegerOrFallback(page, 1),
     perPage: toNonNegativeIntegerOrFallback(perPage, 0),
   };

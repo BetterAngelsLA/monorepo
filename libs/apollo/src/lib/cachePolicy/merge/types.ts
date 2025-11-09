@@ -1,12 +1,14 @@
+import { MergeModeEnum, PaginationModeEnum } from '../constants';
+
 // -------------------- Pagination -------------------- //
 export type OffsetPaginationVars = {
-  type: 'offset';
+  mode: PaginationModeEnum.Offset;
   offset: number;
   limit: number;
 };
 
 export type PerPagePaginationVars = {
-  type: 'perPage';
+  mode: PaginationModeEnum.PerPage;
   page: number;
   perPage: number;
 };
@@ -15,38 +17,29 @@ export type PaginationVars = PerPagePaginationVars | OffsetPaginationVars;
 
 export type MergePaginationArgs = { offset: number; limit: number };
 
-// -------------------- Other -------------------- //
-
 /** Read variables and return the effective { offset, limit } for merging. */
 export type ResolveMergePagination<TVars> = (
   variables: TVars | undefined
 ) => MergePaginationArgs;
 
-/** Normalize the incoming payload before merging (e.g., lift meta.totalCount → total). */
-export type TransformIncoming = (incomingValue: unknown) => unknown;
+// -------------------- Merge -------------------- //
 
-export type BaseMergeOpts<TVars> = {
-  /** Adapter to extract { offset, limit } from query variables. */
-  resolvePaginationFn?: ResolveMergePagination<TVars>;
+/** Merge mode for object-shaped payloads */
+export type ObjectMergeMode = {
+  mode?: MergeModeEnum.Object;
 
-  /** Optional normalizer to reshape the incoming payload prior to merging. */
-  transformIncoming?: TransformIncoming;
-};
-
-export type WrapperMode<TVars> = BaseMergeOpts<TVars> & {
-  mode?: 'wrapper';
-
-  // data paths
-  itemsPath?: string | ReadonlyArray<string>;
-  totalCountPath?: string | ReadonlyArray<string>;
+  /** where the item has its id, e.g. "personalId" */
   itemIdPath?: string | ReadonlyArray<string>;
 
-  // pagination
-  resolvePaginationFn?: ResolveMergePagination<TVars>;
+  /** where the server puts the array, e.g. "items" or ["data", "items"] */
+  itemsPath?: string | ReadonlyArray<string>;
+
+  /** where the server puts total, e.g. ["meta", "totalCount"] */
+  totalCountPath?: string | ReadonlyArray<string>;
 };
 
-export type ArrayMode<TVars> = BaseMergeOpts<TVars> & {
-  mode: 'array';
+export type ArrayMergeMode = {
+  mode: MergeModeEnum.Array;
 };
 
-export type TCacheMergeOpts<TVars> = WrapperMode<TVars> | ArrayMode<TVars>;
+export type TCacheMergeOpts = ObjectMergeMode | ArrayMergeMode;

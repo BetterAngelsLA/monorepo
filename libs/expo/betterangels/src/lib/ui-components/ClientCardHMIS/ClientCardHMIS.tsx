@@ -15,7 +15,7 @@ export interface IClientCardProps {
 
 export function ClientCardHMIS(props: IClientCardProps) {
   const {
-    client: { firstName, lastName, dob, data: metadata, personalId },
+    client: { firstName, lastName, dob, data: metadata },
     onPress,
   } = props;
 
@@ -37,9 +37,6 @@ export function ClientCardHMIS(props: IClientCardProps) {
         <TextBold size="sm">{lastName}</TextBold>
         <NameSuffixHMIS suffix={nameSuffix} />
         {!!alias && <TextBold size="sm">({alias})</TextBold>}
-      </View>
-      <View>
-        <TextBold size="sm">personalId: {personalId}</TextBold>
       </View>
 
       {!!dob && (

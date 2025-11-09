@@ -1,10 +1,13 @@
-import { DEFAULT_OFFSET_PAGINATION } from '../../constants';
+import {
+  DEFAULT_OFFSET_PAGINATION_VARS,
+  PaginationModeEnum,
+} from '../../constants';
 import { PaginationVars } from '../../merge/types';
 import { TPaginationVariables } from '../../types';
 import { extractOffsetPagination } from './extractOffsetPagination';
 import { extractPerPagePagination } from './extractPerPagePagination';
 
-export function extractPagination<T = string>(
+export function extractPagination(
   variables: unknown,
   paginationVars?: TPaginationVariables
 ): PaginationVars | undefined {
@@ -12,17 +15,17 @@ export function extractPagination<T = string>(
     return undefined;
   }
 
-  const pagination = paginationVars || DEFAULT_OFFSET_PAGINATION;
+  const pagination = paginationVars || DEFAULT_OFFSET_PAGINATION_VARS;
 
   const { mode } = pagination;
 
-  if (mode === 'perPage') {
+  if (mode === PaginationModeEnum.PerPage) {
     const { pagePath, perPagePath } = pagination;
 
-    return extractPerPagePagination<T>({ variables, pagePath, perPagePath });
+    return extractPerPagePagination({ variables, pagePath, perPagePath });
   }
 
   const { offsetPath, limitPath } = pagination;
 
-  return extractOffsetPagination<T>({ variables, offsetPath, limitPath });
+  return extractOffsetPagination({ variables, offsetPath, limitPath });
 }

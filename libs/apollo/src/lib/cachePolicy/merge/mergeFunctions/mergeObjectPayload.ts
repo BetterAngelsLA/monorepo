@@ -1,134 +1,132 @@
 import type { FieldFunctionOptions, FieldMergeFunction } from '@apollo/client';
+import { deepCloneWeak, writeAtPath } from '../../../utils';
+import {
+  DEFAULT_QUERY_ID_KEY,
+  DEFAULT_QUERY_RESULTS_KEY,
+  DEFAULT_QUERY_TOTAL_COUNT_KEY,
+} from '../../constants';
+import { defaultGetItemId, defaultGetItems } from '../../utils';
 import type { ResolveMergePagination } from '../types';
+import {
+  buildPositionByIdMap,
+  extractTotalCount,
+  getItemIdFromPathFn,
+  getItemsFromPathFn,
+} from './utils';
 
-export type MergeObjectOptions<TItem> = {
-  /**
-   * Read the list of items from the incoming server payload.
-   * If not provided, we fall back to `incoming[resultsKey]`.
-   */
-  getItems?: (incoming: unknown) => ReadonlyArray<TItem> | undefined;
+type TMergeObjectPayloadArgs<TVars> = {
+  /** where the item has its id, e.g. "personalId" */
+  itemIdPath?: string | ReadonlyArray<string>;
 
-  /**
-   * Read the total count from the incoming server payload.
-   * If not provided, we fall back to `incoming[totalKey]` or existing total.
-   */
-  getTotalCount?: (incoming: unknown) => number | undefined;
+  /** where the server puts the array, e.g. "items" or ["data", "items"] */
+  itemsPath?: string | ReadonlyArray<string>;
 
-  /**
-   * Extract a stable identifier for an item.
-   * Defaults to reading the `id` field from Apollo's cache (via `readField('id', item)`).
-   */
-  getItemId?: (
-    item: TItem,
-    readField: FieldFunctionOptions['readField']
-  ) => string | number | null | undefined;
+  /** where the server puts total, e.g. ["meta", "totalCount"] */
+  totalCountPath?: string | ReadonlyArray<string>;
+
+  resolvePaginationFn: ResolveMergePagination<TVars>;
 };
 
-/**
- * Merge function for paginated "wrapper" fields like:
- *
- * {
- *   items: [ ... ],
- *   totalCount: number,
- *   pageInfo: { ... }
- * }
- *
- * - places new items at offset
- * - de-dupes by id
- * - preserves total/pageInfo if missing
- */
 export function mergeObjectPayload<TItem = unknown, TVars = unknown>(
-  keys: { resultsKey: string; totalKey: string; pageInfoKey: string },
-  resolvePagination: ResolveMergePagination<TVars>,
-  opts?: MergeObjectOptions<TItem>
+  args: TMergeObjectPayloadArgs<TVars>
 ): FieldMergeFunction<
   unknown,
   unknown,
   FieldFunctionOptions<Record<string, unknown>, Record<string, unknown>>
 > {
-  const { resultsKey, totalKey, pageInfoKey } = keys;
+  const {
+    resolvePaginationFn,
+    itemIdPath = [DEFAULT_QUERY_ID_KEY],
+    itemsPath = [DEFAULT_QUERY_RESULTS_KEY],
+    totalCountPath = [DEFAULT_QUERY_TOTAL_COUNT_KEY],
+  } = args;
 
-  return (existing, incoming, fieldOptions) => {
+  const readItems = getItemsFromPathFn<TItem>(itemsPath) ?? defaultGetItems;
+  const readItemId = getItemIdFromPathFn<TItem>(itemIdPath) ?? defaultGetItemId;
+
+  return function mergeObject(
+    existingValue,
+    incomingValue,
+    fieldOptions
+  ): Record<string, unknown> {
     const { readField, args } = fieldOptions;
 
-    // 1. figure out where to insert this page
-    const { offset = 0 } = resolvePagination(args as TVars) || ({} as any);
+    const { offset } = resolvePaginationFn(args as TVars);
 
-    // 2. normalize existing/incoming to objects
-    const existingObject = existing as Record<string, unknown> | undefined;
-    const incomingObject = (incoming as Record<string, unknown>) ?? {};
+    const existingObject = (existingValue as Record<string, unknown>) ?? {};
+    const incomingObject = (incomingValue as Record<string, unknown>) ?? {};
 
-    // 3. read previous merged list
-    const previousList =
-      (existingObject?.[resultsKey] as ReadonlyArray<TItem> | undefined) ?? [];
+    const existingItems = readItems(existingObject) ?? [];
+    const newItems = readItems(incomingObject) ?? [];
 
-    // 4. read incoming list — prefer accessor
-    const incomingListFromAccessor = opts?.getItems?.(incoming);
-    const incomingList =
-      incomingListFromAccessor ??
-      (incomingObject[resultsKey] as ReadonlyArray<TItem> | undefined) ??
-      [];
+    const mergedItems = existingItems.slice() as (TItem | undefined)[];
 
-    // make a mutable copy; Apollo accepts sparse arrays
-    const merged = previousList.slice() as (TItem | undefined)[];
+    const positionById = buildPositionByIdMap(
+      mergedItems,
+      readItemId,
+      readField
+    );
 
-    // 5. pick ID function
-    const getItemId =
-      opts?.getItemId ??
-      ((item: TItem, rf: FieldFunctionOptions['readField']) =>
-        (rf && rf('id', item as any)) as string | number | null | undefined);
-
-    // 6. index existing items by id → position
-    const positionById = new Map<string | number, number>();
-
-    for (let i = 0; i < merged.length; i++) {
-      const existingItem = merged[i];
-      if (existingItem !== undefined) {
-        const id = getItemId(existingItem, readField);
-
-        if (id !== null && id !== undefined && !positionById.has(id)) {
-          positionById.set(id, i);
-        }
+    for (let i = 0; i < newItems.length; i = i + 1) {
+      const newItem = newItems[i] as TItem;
+      if (newItem === undefined) {
+        continue;
       }
-    }
 
-    // 7. insert incoming items at the right offset
-    for (let i = 0; i < incomingList.length; i++) {
-      const item = incomingList[i] as TItem;
       const targetIndex = offset + i;
-
-      const id = getItemId(item, readField);
+      const id = readItemId(newItem, readField);
 
       if (id !== null && id !== undefined) {
         const existingAt = positionById.get(id);
 
         if (existingAt !== undefined && existingAt !== targetIndex) {
-          merged[existingAt] = undefined;
+          mergedItems[existingAt] = undefined;
         }
 
         positionById.set(id, targetIndex);
       }
 
-      merged[targetIndex] = item;
+      mergedItems[targetIndex] = newItem;
     }
 
-    // 8. build final object
-    const result: Record<string, unknown> = {
-      ...incomingObject,
-      [resultsKey]: merged,
-    };
+    // make a deep, writable copy as incomingObject can be Frozen by Apollo
+    const result = deepCloneWeak(incomingObject);
 
-    // total: accessor → incoming → existing
-    const totalFromAccessor = opts?.getTotalCount?.(incoming);
+    // write merged items back where they came from
+    const writeItemsResult = writeAtPath(result, itemsPath, mergedItems);
 
-    result[totalKey] =
-      totalFromAccessor ??
-      (incomingObject[totalKey] as number | undefined) ??
-      (existingObject?.[totalKey] as number | undefined);
+    if (!writeItemsResult) {
+      console.error(
+        '[mergeObjectPayload] failed to write items at path',
+        itemsPath,
+        writeItemsResult
+      );
+    }
 
-    // pageInfo: incoming → existing
-    result[pageInfoKey] =
-      incomingObject[pageInfoKey] ?? existingObject?.[pageInfoKey];
+    const totalCount = extractTotalCount({
+      primaryObject: incomingObject,
+      fallbackObject: existingObject,
+      totalCountPath,
+    });
+
+    if (totalCount === undefined) {
+      console.warn(
+        '[mergeObjectPayload] expected totalCount to be defined for totalCountPath: ',
+        totalCountPath
+      );
+    }
+
+    if (totalCount !== undefined) {
+      const writeTotalResult = writeAtPath(result, totalCountPath, totalCount);
+
+      if (!writeTotalResult) {
+        console.error(
+          '[mergeObjectPayload] failed to write totalCount at path',
+          totalCountPath,
+          writeTotalResult
+        );
+      }
+    }
 
     return result;
   };

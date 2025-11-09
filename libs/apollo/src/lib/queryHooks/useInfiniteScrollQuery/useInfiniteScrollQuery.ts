@@ -1,97 +1,124 @@
 /**
  * useInfiniteScrollQuery
  *
- * A React hook that wraps a generated Apollo query hook and adds
- * pagination plus a consistent return shape.
+ * A generic React hook for executing **infinite scroll** or **paginated list**
+ * queries that respect the cache policies registered via `getQueryPolicyFactory`.
  *
- * It auto-detects whether your variables use:
- *   - { pagination: { page, perPage } }  OR
- *   - { pagination: { offset, limit } }
- * and composes subsequent fetchMore variables appropriately.
+ * It automatically reads the `QueryPolicyConfig` for the given query field from
+ * Apollo’s cache (using `getQueryPolicyConfigFromCache`), interprets the
+ * pagination mode (Offset or PerPage), and handles incremental fetching with
+ * Apollo’s `fetchMore`.
  *
- * It also ensures your Apollo cache has a merge policy for the target field,
- * so infinite scrolling works without data duplication.
+ * This hook standardizes infinite scrolling for all list-style queries, so you
+ * don’t have to hand-manage pagination logic for each API field.
  *
- * --------------------------------------------------------------------
- * Usage
- * --------------------------------------------------------------------
+ * -------------------------------------------------------------
+ * Responsibilities
+ * -------------------------------------------------------------
+ * - Reads and validates `queryPolicyConfig` for the query field
+ * - Builds normalized initial variables using the configured pagination mode
+ * - Executes the provided Apollo `useQuery` hook
+ * - Derives items and total count from the result via `itemsPath` and `totalCountPath`
+ * - Exposes a `loadMore()` callback for fetching the next page
+ * - Tracks loading state and prevents overlapping `fetchMore` calls
+ * - Refetches automatically when variable dependencies change
  *
+ * -------------------------------------------------------------
+ * Example
+ * -------------------------------------------------------------
  * const {
- *   items,     // list of TItem, [] until first data
- *   total,     // total number of items
- *   loading,   // true while fetching/refetching
- *   hasMore,   // true if items.length < total
- *   loadMore,  // function to fetch the next page
- *   error,     // ApolloError if present
- * } = useInfiniteScrollQuery<UserRow, typeof useFilterClientProfilesQuery>({
- *   useQueryHook: useFilterClientProfilesQuery,
- *   queryFieldName: 'clientProfiles',
- *   variables: { filters: { search }, order: { id: Ordering.Asc } },
- *   pageSize: 25,
+ *   items: clients,
+ *   total,
+ *   loading,
+ *   hasMore,
+ *   loadMore,
+ *   error,
+ * } = useInfiniteScrollQuery<HmisClientType, typeof useHmisListClientsQuery>({
+ *   useQueryHook: useHmisListClientsQuery,
+ *   queryFieldName: 'hmisListClients',
+ *   variables: { filter },
+ *   pageSize: 20,
+ *   fetchPolicy: 'cache-and-network',
+ *   nextFetchPolicy: 'cache-first',
  * });
+ *
+ * -------------------------------------------------------------
+ * Behavior
+ * -------------------------------------------------------------
+ * - Uses the `QueryPolicyConfig` (retrieved from cache) to know how to:
+ *   - read items (`itemsPath`)
+ *   - read total (`totalCountPath`)
+ *   - read pagination variables (`paginationMode`, `paginationLimitPath`, etc.)
+ *
+ * - On first render, runs `useQueryHook` with initial pagination variables.
+ * - When `loadMore()` is called:
+ *   - Computes the next page’s variables using `buildVariablesForPage`.
+ *   - Calls Apollo’s `fetchMore()` with those variables.
+ *   - Updates the internal reference (`lastVariablesRef`) so subsequent calls
+ *     increment correctly.
+ *
+ * - The hook determines `hasMore` based on the ratio of items fetched to total.
+ * - It avoids double-fetching by tracking in-flight state (`inFlightRef`).
+ * - In development, it validates that `itemsPath` actually exists in data.
+ *
+ * -------------------------------------------------------------
+ * Returns
+ * -------------------------------------------------------------
+ * {
+ *   items: TItem[],      // list of normalized items
+ *   total: number,       // total count from response
+ *   loading: boolean,    // true while loading or fetching
+ *   hasMore: boolean,    // true if more pages exist
+ *   loadMore: () => void,// fetches next page
+ *   error?: ApolloError, // query or network error
+ * }
+ *
+ * -------------------------------------------------------------
+ * Notes
+ * -------------------------------------------------------------
+ * - Requires that `getQueryPolicyFactory` has been used to register a
+ *   corresponding `QueryPolicyConfig` for the given `queryFieldName`.
+ * - Relies on Apollo Client’s cache policies to merge new pages correctly.
+ * - This hook is pagination-mode agnostic — works for both Offset/Limit
+ *   and Page/PerPage shapes.
+ * - If no `queryPolicyConfig` is found, an error is thrown to help catch
+ *   misconfigured cache setups early.
  */
 
-import type {
-  OperationVariables,
-  QueryHookOptions,
-  QueryResult,
+import {
+  NetworkStatus,
+  useApolloClient,
+  type QueryHookOptions,
 } from '@apollo/client';
-import { NetworkStatus } from '@apollo/client';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { useAssertQueryFieldHasMerge } from './useAssertQueryFieldHasMerge';
-import { buildVariablesForOffsetAndLimit } from './utils/buildVariablesForOffsetAndLimit';
-import { detectPaginationShape } from './utils/detectPaginationShape';
+import { useDeepCompareMemoize } from 'use-deep-compare-effect';
+import { DEFAULT_QUERY_PAGE_SIZE } from '../../cachePolicy/constants';
+import { getQueryPolicyConfigFromCache } from '../../cacheStore/utils/getQueryPolicyConfigFromCache';
 
-const DEFAULT_PAGE_SIZE = 25;
+import {
+  buildInitialVariables,
+  buildVariablesForPage,
+  extractItemsAndTotalFromData,
+  getPageSizeFromVars,
+  validatePathOrThrow,
+} from './utils';
 
-/** Infer data/vars from a generated Apollo hook */
-type HookData<H> = H extends (
-  options?: QueryHookOptions<infer D, any>
-) => QueryResult<infer D2, any>
-  ? D & D2
-  : never;
+import { AnyGeneratedHook, HookData, HookVars } from './types';
 
-type HookVars<H> = H extends (
-  options?: QueryHookOptions<any, infer V>
-) => QueryResult<any, infer V2>
-  ? V & V2
-  : OperationVariables;
-
-/** The shape we expect for the hook argument */
-type AnyGeneratedHook = (
-  options: QueryHookOptions<any, any>
-) => QueryResult<any, any>;
-
-type Selector<TData, TItem> = (data: TData | undefined) => {
-  /** Keep undefined until first data arrives to avoid empty-state flash */
-  items: TItem[] | undefined;
-  total: number;
-};
-
-/** Compose final variables for a request (optional override) */
-type ComposeVars<TVars extends OperationVariables> = (
-  baseVariables: TVars | undefined,
-  page: { offset: number; limit: number }
-) => TVars;
-
-type TProps<TItem, H> = {
+type TProps<H extends AnyGeneratedHook> = {
   useQueryHook: H;
   queryFieldName: string;
-  pageSize?: number;
   variables?: HookVars<H>;
-  composeVars?: ComposeVars<HookVars<H>>;
-  select?: Selector<HookData<H>, TItem>;
-  resetOn?: Array<unknown>;
+  pageSize?: number;
   fetchPolicy?: QueryHookOptions<HookData<H>, HookVars<H>>['fetchPolicy'];
   nextFetchPolicy?: QueryHookOptions<
     HookData<H>,
     HookVars<H>
   >['nextFetchPolicy'];
-  silencePolicyCheck?: boolean;
 };
 
 export function useInfiniteScrollQuery<TItem, H extends AnyGeneratedHook>(
-  args: TProps<TItem, H>
+  props: TProps<H>
 ) {
   type TData = HookData<H>;
   type TVars = HookVars<H>;
@@ -99,186 +126,145 @@ export function useInfiniteScrollQuery<TItem, H extends AnyGeneratedHook>(
   const {
     useQueryHook,
     queryFieldName,
-    pageSize = DEFAULT_PAGE_SIZE,
     variables,
-    composeVars,
-    select,
-    silencePolicyCheck,
+    pageSize = DEFAULT_QUERY_PAGE_SIZE,
     fetchPolicy = 'cache-and-network',
     nextFetchPolicy = 'cache-first',
-    resetOn = [],
-  } = args;
+  } = props;
 
-  // Ensure the merge policy exists for this field
-  useAssertQueryFieldHasMerge(queryFieldName, !!silencePolicyCheck);
+  const apolloClient = useApolloClient();
 
-  // Default selector: supports both wrapper shapes:
-  // - generic: { results, totalCount }
-  // - HMIS-like: { items, meta.totalCount } (optionally { total })
-  const defaultSelect: Selector<any, any> = (data) => {
-    const field = (data as any)?.[queryFieldName];
+  // pull the normalized policy config from cache; throw if missing
+  const queryPolicyConfig = useMemo(() => {
+    const cfg = getQueryPolicyConfigFromCache(
+      apolloClient.cache,
+      queryFieldName
+    );
 
-    if (!field) {
-      return { items: undefined, total: 0 };
-    }
-
-    if (typeof field === 'object' && 'items' in field) {
-      const meta = (field as any).meta;
-      const totalFromMeta =
-        meta && typeof meta.totalCount === 'number'
-          ? meta.totalCount
-          : undefined;
-      const total =
-        typeof (field as any).total === 'number'
-          ? (field as any).total
-          : totalFromMeta ?? 0;
-
-      return {
-        items: (field as any).items ?? undefined,
-        total,
-      };
-    }
-
-    return {
-      items: (field as any).results ?? undefined,
-      total: (field as any).totalCount ?? 0,
-    };
-  };
-
-  const effectiveSelect = (select ?? defaultSelect) as Selector<TData, TItem>;
-
-  // Stabilize incoming variables (identity-insensitive)
-  const varsKey = useMemo(() => JSON.stringify(variables ?? {}), [variables]);
-
-  const stableVars = useMemo(() => {
-    return variables as TVars | undefined;
-  }, [varsKey]);
-
-  // Detect pagination shape from provided variables (page/perPage vs offset/limit)
-  const paginationShape = useMemo(() => {
-    return detectPaginationShape(stableVars as OperationVariables | undefined);
-  }, [stableVars]);
-
-  // Build variables for a given { offset, limit } using detected shape,
-  // unless a custom composeVars is provided (which takes precedence).
-  const makeVariablesForPage = useCallback(
-    (offset: number, limit: number): TVars => {
-      if (composeVars) {
-        return composeVars(stableVars, { offset, limit });
-      }
-
-      return buildVariablesForOffsetAndLimit<TVars>(
-        stableVars,
-        paginationShape,
-        { offset, limit }
+    if (!cfg) {
+      throw new Error(
+        `[useInfiniteScrollQuery] No queryPolicyConfig found for Query.${queryFieldName}. ` +
+          `Make sure this field was registered via getQueryPolicyFactory and attached to the cache.`
       );
-    },
-    [composeVars, stableVars, paginationShape]
-  );
-
-  // Initial variables: if caller passed perPage, respect it; otherwise use pageSize
-  const initialVars = useMemo(() => {
-    if (paginationShape === 'pagePerPage') {
-      const perPageFromCaller = Number(
-        (stableVars as any)?.pagination?.perPage
-      );
-
-      const initialLimit =
-        Number.isFinite(perPageFromCaller) && perPageFromCaller > 0
-          ? perPageFromCaller
-          : pageSize;
-
-      return makeVariablesForPage(0, initialLimit);
     }
 
-    // offset/limit or unknown → start with offset=0, limit=pageSize
-    return makeVariablesForPage(0, pageSize);
-  }, [makeVariablesForPage, pageSize, paginationShape, stableVars]);
+    return cfg;
+  }, [apolloClient.cache, queryFieldName]);
 
-  // Run the query
+  // stabilize incoming vars
+  const memoizedVariables = useDeepCompareMemoize(
+    (variables ?? {}) as TVars
+  ) as TVars;
+
+  // build initial variables
+  const initialVariables = useMemo(() => {
+    return buildInitialVariables<TVars>({
+      baseVariables: memoizedVariables,
+      pageSize,
+      ...queryPolicyConfig,
+    });
+  }, [memoizedVariables, pageSize, queryPolicyConfig]);
+
+  const lastVariablesRef = useRef<TVars>(initialVariables);
+
+  useEffect(() => {
+    lastVariablesRef.current = initialVariables;
+  }, [initialVariables]);
+
+  // run the actual query
   const { data, fetchMore, refetch, networkStatus, error } = useQueryHook({
-    variables: initialVars,
+    variables: initialVariables,
     notifyOnNetworkStatusChange: true,
     fetchPolicy,
     nextFetchPolicy,
   } as QueryHookOptions<TData, TVars>);
 
-  // Shape data into the stable return format
-  const { items, total } = useMemo(
-    () => effectiveSelect(data as TData | undefined),
-    [data, effectiveSelect]
-  );
+  // DEV: itemsPath exists
+  if (process.env.NODE_ENV !== 'production' && data) {
+    validatePathOrThrow(
+      (data as any)[queryFieldName],
+      queryPolicyConfig.itemsPath
+    );
+  }
 
-  const safeLength = items?.length ?? 0;
-  const hasMore = safeLength < total;
+  // normalize items/total using policy paths
+  const { items, total } = useMemo(() => {
+    return extractItemsAndTotalFromData<TData, TItem>({
+      data: data as TData | undefined,
+      queryFieldName,
+      itemsPath: queryPolicyConfig.itemsPath,
+      totalCountPath: queryPolicyConfig.totalCountPath,
+    });
+  }, [data, queryFieldName, queryPolicyConfig]);
 
-  // Unified loading (initial or any in-flight)
-  const loading =
+  const currentItemCount = items?.length ?? 0;
+  const hasMore = currentItemCount < total;
+
+  const isLoading =
     items === undefined ||
     (networkStatus !== NetworkStatus.ready &&
       networkStatus !== NetworkStatus.setVariables);
 
-  // Prevent overlapping fetchMore calls
+  // avoid overlapping fetchMore
   const inFlightRef = useRef(false);
   useEffect(() => {
-    if (!loading) {
+    if (!isLoading) {
       inFlightRef.current = false;
     }
-  }, [loading]);
+  }, [isLoading]);
 
-  // Refetch when semantic inputs change (stable variables) or when resetOn triggers
+  // refetch when deps change
   useEffect(() => {
-    refetch(initialVars as Partial<TVars>).catch((err) => {
+    refetch(initialVariables as Partial<TVars>).catch((err) => {
       console.error('[useInfiniteScrollQuery] Refetch failed:', err);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [varsKey, ...resetOn]);
+  }, [memoizedVariables]);
 
-  // Pagination
+  // load more using policy paths
   const loadMore = useCallback(() => {
-    if (!hasMore || loading || inFlightRef.current) {
+    if (!hasMore || isLoading || inFlightRef.current) {
       return;
     }
 
     inFlightRef.current = true;
 
-    const nextVars = makeVariablesForPage(
-      safeLength,
-      (() => {
-        // Use the same chunk size the list started with.
-        // For page/perPage, honor caller's perPage if provided; otherwise pageSize.
-        if (paginationShape === 'pagePerPage') {
-          const perPageFromCaller = Number(
-            (stableVars as any)?.pagination?.perPage
-          );
+    const { paginationMode, paginationPerPagePath, paginationLimitPath } =
+      queryPolicyConfig;
 
-          if (Number.isFinite(perPageFromCaller) && perPageFromCaller > 0) {
-            return perPageFromCaller;
-          }
-        }
-
-        return pageSize;
-      })()
-    );
-
-    fetchMore({ variables: nextVars }).catch(() => {
-      inFlightRef.current = false;
+    const nextPageSize = getPageSizeFromVars({
+      baseVariables: lastVariablesRef.current,
+      paginationMode: paginationMode,
+      paginationPerPagePath: paginationPerPagePath,
+      paginationLimitPath: paginationLimitPath,
+      fallback: pageSize,
     });
+
+    const nextVariables = buildVariablesForPage<TVars>({
+      previousVariables: lastVariablesRef.current,
+      incrementBy: nextPageSize,
+      ...queryPolicyConfig,
+    });
+
+    fetchMore({ variables: nextVariables })
+      .then(() => {
+        lastVariablesRef.current = nextVariables;
+      })
+      .catch(() => {
+        inFlightRef.current = false;
+      });
   }, [
     hasMore,
-    loading,
-    makeVariablesForPage,
+    isLoading,
+    queryPolicyConfig,
+    memoizedVariables,
     pageSize,
-    paginationShape,
-    safeLength,
     fetchMore,
-    stableVars,
   ]);
 
   return {
     items: items ?? [],
     total,
-    loading,
+    loading: isLoading,
     hasMore,
     loadMore,
     error,

@@ -8,7 +8,6 @@ import {
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { InputMaybe, TaskFilter, TaskOrder } from '../../apollo';
-import { ListLoadingView } from './ListLoadingView';
 import { TasksQuery, useTasksQuery } from './__generated__/Tasks.generated';
 import {
   DEFAULT_ITEM_GAP,
@@ -79,7 +78,6 @@ export function TaskList(props: TProps) {
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="task"
-        LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
         renderResultsHeader={renderHeader}
       />
     </View>

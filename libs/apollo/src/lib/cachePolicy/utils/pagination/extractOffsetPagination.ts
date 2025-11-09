@@ -1,6 +1,10 @@
+import { readAtPath, toNonNegativeIntegerOrFallback } from '../../../utils';
+import {
+  DEFAULT_PAGINATION_LIMIT_PATH,
+  DEFAULT_PAGINATION_OFFSET_PATH,
+  PaginationModeEnum,
+} from '../../constants';
 import { PaginationVars } from '../../merge/types';
-import { toNonNegativeIntegerOrFallback } from '../number';
-import { readAtPath } from '../readAtPath';
 
 type TExtractOffsetPagination = {
   variables: unknown;
@@ -13,11 +17,17 @@ export function extractOffsetPagination<T = string>(
 ): PaginationVars | undefined {
   const { variables, offsetPath, limitPath } = opts;
 
-  const offset = readAtPath(variables, offsetPath || 'pagination.offset');
-  const limit = readAtPath(variables, limitPath || 'pagination.limit');
+  const offset = readAtPath(
+    variables,
+    offsetPath || DEFAULT_PAGINATION_OFFSET_PATH
+  );
+  const limit = readAtPath(
+    variables,
+    limitPath || DEFAULT_PAGINATION_LIMIT_PATH
+  );
 
   return {
-    type: 'offset',
+    mode: PaginationModeEnum.Offset,
     offset: toNonNegativeIntegerOrFallback(offset, 0),
     limit: toNonNegativeIntegerOrFallback(limit, 0),
   };

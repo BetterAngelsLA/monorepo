@@ -11,7 +11,6 @@ import {
 } from '../../apollo';
 import { pagePaddingHorizontal } from '../../static';
 import { ClientProfileListHeader } from './ClientProfileListHeader';
-import { ListLoadingView } from './ListLoadingView';
 import {
   ClientProfilesQuery,
   useClientProfilesQuery,
@@ -77,7 +76,6 @@ export function ClientProfileList({
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="client"
-        LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
         renderResultsHeader={(visible, totalItems) => (
           <View
             style={[

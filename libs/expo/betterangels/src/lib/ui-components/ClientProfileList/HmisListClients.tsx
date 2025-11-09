@@ -45,27 +45,14 @@ export function HmisListClients(props: TProps) {
   } = useInfiniteScrollQuery<HmisClientType, typeof useHmisListClientsQuery>({
     useQueryHook: useHmisListClientsQuery,
     queryFieldName: 'hmisListClients',
-    variables: { filter, pagination: { page: 1, perPage: paginationLimit } },
     pageSize: paginationLimit,
+    variables: { filter },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
 
-  console.log();
-  console.log(
-    '| ------------- useInfiniteScrollQuery clients  ------------- |'
-  );
-  console.log('*****************  totalCount:', totalCount);
-  console.log();
-
-  // useEffect(() => {
-  //   console.log('');
-  //   console.log('***************** clients.length :', clients.length);
-  // }, [clients.length]);
-
   if (error) {
-    // optional: keep your existing error UI pattern
-    // console.error(error);
+    console.error(error);
   }
 
   const renderItemFn = useCallback(
