@@ -784,6 +784,61 @@ union HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | HmisGetCli
 
 union HmisClientNoteTypeHmisUpdateClientNoteError = HmisClientNoteType | HmisUpdateClientNoteError
 
+type HmisClientProfileType {
+  personalId: String
+  uniqueIdentifier: String
+  nameDataQuality: HmisNameQualityEnum
+  ssnDataQuality: HmisSsnQualityEnum
+  dobDataQuality: HmisDobQualityEnum
+  nameSuffix: HmisSuffixEnum
+  raceEthnicity: [HmisRaceEnum!]
+  additionalRaceEthnicity: String
+  differentIdentityText: String
+  ssn1: String
+  ssn2: String
+  ssn3: String
+  birthDate: String
+  firstName: NonBlankString
+  lastName: NonBlankString
+  middleName: NonBlankString
+  gender: [HmisGenderEnum!]
+  veteranStatus: HmisVeteranStatusEnum
+  adaAccommodation: [AdaAccommodationEnum!]
+  address: String
+  age: Int
+  californiaId: String
+  email: NonBlankString
+  eyeColor: EyeColorEnum
+  hairColor: HairColorEnum
+  heightInInches: Float
+  importantNotes: String
+  livingSituation: LivingSituationEnum
+  mailingAddress: String
+  maritalStatus: MaritalStatusEnum
+  nickname: NonBlankString
+  phoneNumber: PhoneNumber
+  physicalDescription: String
+  placeOfBirth: String
+  preferredCommunication: [PreferredCommunicationEnum!]
+  preferredLanguage: LanguageEnum
+  profilePhoto: DjangoImageType
+  pronouns: PronounEnum
+  pronounsOther: String
+  residenceAddress: String
+  residenceGeolocation: Point
+  spokenLanguages: [LanguageEnum!]
+}
+
+type HmisClientProfileTypeOffsetPaginated {
+  pageInfo: OffsetPaginationInfo!
+
+  """Total count of existing results."""
+  totalCount: Int!
+
+  """List of paginated results."""
+  results: [HmisClientProfileType!]!
+}
+
 type HmisClientType {
   personalId: String
   uniqueIdentifier: String
@@ -1585,6 +1640,8 @@ type Query {
   clientDocuments(clientId: String!, filters: ClientDocumentFilter, pagination: OffsetPaginationInput): ClientDocumentTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   bulkClientProfileImportRecords(data: ClientProfileImportRecordsBulkInput!, pagination: OffsetPaginationInput): ClientProfileImportRecordTypeOffsetPaginated! @hasPerm(permissions: [{app: "clients", permission: "view_clientprofileimportrecord"}], any: true)
   featureControls: FeatureControlData!
+  hmisClientProfiles(pagination: OffsetPaginationInput): HmisClientProfileTypeOffsetPaginated!
+  hmisClientProfile(personalId: ID!): HmisClientProfileType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   hmisGetClient(personalId: ID!): HmisClientTypeHmisGetClientError!
   hmisListClients(pagination: HmisPaginationInput = null, filter: HmisClientFilterInput = null): HmisClientListTypeHmisListClientsError!
   hmisGetClientNote(personalId: ID!, enrollmentId: ID!, id: ID!): HmisClientNoteTypeHmisGetClientNoteError!

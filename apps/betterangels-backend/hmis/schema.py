@@ -1,20 +1,28 @@
+import datetime
 from typing import Any, Optional, cast
 
 import strawberry
+import strawberry_django
 from accounts.types import UserType
+from clients.permissions import ClientProfilePermissions
+from common.permissions.utils import IsAuthenticated
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth import login as django_login
 from hmis.enums import HmisGenderEnum, HmisRaceEnum, HmisVeteranStatusEnum
+from hmis.models import HmisClientProfile
 from strawberry.types import Info
+from strawberry_django.pagination import OffsetPaginated
+from strawberry_django.permissions import HasRetvalPerm
 
-from .api_bridge import HmisApiBridge
+from .api_bridge import HmisApiBridge, HmisApiRestBridge
 from .types import (
     HmisClientDataType,
     HmisClientFilterInput,
     HmisClientListType,
     HmisClientNoteListType,
     HmisClientNoteType,
+    HmisClientProfileType,
     HmisClientType,
     HmisCreateClientError,
     HmisCreateClientInput,
@@ -170,6 +178,46 @@ def get_client_note_from_response(client_note_response: dict[str, Any]) -> HmisC
 
 @strawberry.type
 class Query:
+    @strawberry_django.field(
+        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.VIEW])]
+    )
+    def hmis_client_profile(self, info: Info, personal_id: strawberry.ID) -> HmisClientProfileType:
+        hmis_api_bridge = HmisApiRestBridge(info=info)
+
+        client_data = hmis_api_bridge.get_client(personal_id)
+
+        # TODO: add real error handling
+        if not client_data:
+            raise
+
+        birth_date = (
+            datetime.date.fromisoformat(client_data.pop("birth_date")) if client_data.get("birth_date") else None
+        )
+        added_date = datetime.datetime.strptime(client_data.pop("added_date"), "%Y-%m-%d %H:%M:%S")
+        last_updated = datetime.datetime.strptime(client_data.pop("last_updated"), "%Y-%m-%d %H:%M:%S")
+
+        data = {
+            **client_data,
+            "birth_date": birth_date,
+            "added_date": added_date,
+            "last_updated": last_updated,
+        }
+
+        personal_id = data.pop("personal_id")
+        unique_identifier = data.pop("unique_identifier")
+
+        client, _ = HmisClientProfile.objects.filter(personal_id=personal_id).update_or_create(
+            personal_id=personal_id,
+            unique_identifier=unique_identifier,
+            defaults={**data},
+        )
+
+        return cast(HmisClientProfileType, client)
+
+    hmis_client_profiles: OffsetPaginated[HmisClientProfileType] = strawberry_django.offset_paginated(
+        permission_classes=[IsAuthenticated],
+    )
+
     @strawberry.field()
     def hmis_get_client(self, info: Info, personal_id: strawberry.ID) -> HmisGetClientResult:
         request = info.context["request"]
