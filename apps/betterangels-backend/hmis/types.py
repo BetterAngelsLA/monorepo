@@ -341,7 +341,7 @@ class HmisClientProfileBaseType:
     ssn3: Optional[str]
     ssn_quality: Optional[HmisSsnQualityEnum]
 
-    # SV Fields
+    # Client Sub Fields
     gender: Optional[list[HmisGenderEnum]]  # different options from BA `gender`
     gender_identity_text: Optional[str]
     name_middle: Optional[NonBlankString]

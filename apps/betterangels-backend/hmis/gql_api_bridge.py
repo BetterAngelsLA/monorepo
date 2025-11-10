@@ -29,7 +29,7 @@ HMIS_GRAPHQL_API_KEY = getattr(settings, "HMIS_API_KEY", None)
 GRAPHQL_SCHEMA_PATH = "betterangels_backend.schema.schema"
 
 
-class HmisApiBridge:
+class HmisGraphQLApiBridge:
     """Utility class for interfacing with HMIS GraphQL API."""
 
     def __init__(self, request: HttpRequest) -> None:

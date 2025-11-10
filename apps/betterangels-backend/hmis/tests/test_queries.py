@@ -255,7 +255,6 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             alias=None,
             birth_date=datetime.date.fromisoformat("2001-01-01"),
             dob_quality=HmisDobQualityEnum.FULL,
-            gender=[HmisGenderEnum.WOMAN_GIRL, HmisGenderEnum.DIFFERENT],
             first_name="John",
             last_name="Smith",
             name_quality=HmisNameQualityEnum.FULL,
@@ -263,8 +262,9 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             ssn2="**",
             ssn3="4321",
             ssn_quality=HmisSsnQualityEnum.FULL,
-            # SV Fields
+            # Client Sub Fields
             age=24,
+            gender=[HmisGenderEnum.WOMAN_GIRL, HmisGenderEnum.DIFFERENT],
             gender_identity_text="Gen Id",
             name_middle="B",
             name_suffix=HmisSuffixEnum.JR,
@@ -403,7 +403,7 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge_gql.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -465,7 +465,7 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge_gql.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -541,7 +541,7 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge_gql.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(

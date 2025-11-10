@@ -8,7 +8,7 @@ from django.contrib.auth import login as django_login
 from hmis.enums import HmisGenderEnum, HmisRaceEnum, HmisVeteranStatusEnum
 from strawberry.types import Info
 
-from .api_bridge_gql import HmisApiBridge
+from .gql_api_bridge import HmisGraphQLApiBridge
 from .types import (
     HmisClientDataType,
     HmisClientFilterInput,
@@ -170,7 +170,7 @@ class Query:
     @strawberry.field()
     def hmis_get_client(self, info: Info, personal_id: strawberry.ID) -> HmisGetClientResult:
         request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+        hmis_api_bridge = HmisGraphQLApiBridge(request=request)
 
         client_response = hmis_api_bridge.get_client(personal_id)
 
@@ -190,7 +190,7 @@ class Query:
         filter: Optional[HmisClientFilterInput] = None,
     ) -> HmisListClientsResult:
         request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+        hmis_api_bridge = HmisGraphQLApiBridge(request=request)
 
         response = hmis_api_bridge.list_clients(pagination, filter)
 
@@ -219,7 +219,7 @@ class Query:
         self, info: Info, personal_id: strawberry.ID, enrollment_id: strawberry.ID, id: strawberry.ID
     ) -> HmisGetClientNoteResult:
         request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+        hmis_api_bridge = HmisGraphQLApiBridge(request=request)
 
         response = hmis_api_bridge.get_client_note(personal_id=personal_id, enrollment_id=enrollment_id, id=id)
 
@@ -240,7 +240,7 @@ class Query:
         pagination: Optional[HmisPaginationInput] = None,
     ) -> HmisListClientNotesResult:
         request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+        hmis_api_bridge = HmisGraphQLApiBridge(request=request)
 
         response = hmis_api_bridge.list_client_notes(
             personal_id=personal_id,
@@ -277,7 +277,7 @@ class Query:
         pagination: Optional[HmisPaginationInput] = None,
     ) -> HmisListEnrollmentsResult:
         request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+        hmis_api_bridge = HmisGraphQLApiBridge(request=request)
 
         response = hmis_api_bridge.list_enrollments(
             personal_id=personal_id, dynamic_fields=dynamic_fields, pagination=pagination
@@ -309,7 +309,7 @@ class Mutation:
     @strawberry.mutation
     def hmis_login(self, info: Info, email: str, password: str) -> HmisLoginResult:
         request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+        hmis_api_bridge = HmisGraphQLApiBridge(request=request)
 
         token = hmis_api_bridge.create_auth_token(email, password)
         if not token:
@@ -336,7 +336,7 @@ class Mutation:
         client_sub_items_input: HmisCreateClientSubItemsInput,
     ) -> HmisCreateClientResult:
         request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+        hmis_api_bridge = HmisGraphQLApiBridge(request=request)
 
         response = hmis_api_bridge.create_client(
             client_input=strawberry.asdict(client_input),
@@ -359,7 +359,7 @@ class Mutation:
         client_sub_items_input: HmisUpdateClientSubItemsInput,
     ) -> HmisUpdateClientResult:
         request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+        hmis_api_bridge = HmisGraphQLApiBridge(request=request)
 
         response = hmis_api_bridge.update_client(
             client_input=strawberry.asdict(client_input),
@@ -381,7 +381,7 @@ class Mutation:
         client_note_input: HmisCreateClientNoteInput,
     ) -> HmisCreateClientNoteResult:
         request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+        hmis_api_bridge = HmisGraphQLApiBridge(request=request)
 
         response = hmis_api_bridge.create_client_note(
             client_note_input=strawberry.asdict(client_note_input),
@@ -402,7 +402,7 @@ class Mutation:
         client_note_input: HmisUpdateClientNoteInput,
     ) -> HmisUpdateClientNoteResult:
         request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+        hmis_api_bridge = HmisGraphQLApiBridge(request=request)
 
         response = hmis_api_bridge.update_client_note(
             client_note_input=strawberry.asdict(client_note_input),

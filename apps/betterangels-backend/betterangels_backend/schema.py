@@ -3,10 +3,10 @@ from accounts.schema import Query as AccountsQuery
 from clients.schema import Mutation as ClientsMutation
 from clients.schema import Query as ClientsQuery
 from common.graphql.schema import Query as CommonQuery
+from hmis.gql_schema import Mutation as HmisGqlMutation
+from hmis.gql_schema import Query as HmisGqlQuery
 from hmis.schema import Mutation as HmisMutation
 from hmis.schema import Query as HmisQuery
-from hmis.schema_gql import Mutation as HmisGqlMutation
-from hmis.schema_gql import Query as HmisGqlQuery
 from notes.schema import Mutation as NotesMutation
 from notes.schema import Query as NotesQuery
 from shelters.schema import Query as SheltersQuery

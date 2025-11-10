@@ -18,6 +18,8 @@ from strawberry.utils.str_converters import to_snake_case
 HMIS_REST_ENDPOINT = getattr(settings, "HMIS_REST_URL", None)
 HMIS_HOST = getattr(settings, "HMIS_HOST", None)
 
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+
 METADATA_FIELDS = {
     "id",
     "unique_identifier",
@@ -26,23 +28,23 @@ METADATA_FIELDS = {
     "last_updated",
 }
 CLIENT_FIELDS = {
-    "first_name",
-    "last_name",
     "alias",
     "birth_date",
     "dob_quality",
+    "first_name",
+    "last_name",
     "name_quality",
     "ssn1",
     "ssn2",
     "ssn3",
     "ssn_quality",
 }
-SV_FIELDS = {
-    "name_middle",
-    "name_suffix",
+CLIENT_SUB_FIELDS = {
     "age",
     "gender",
     "gender_identity_text",
+    "name_middle",
+    "name_suffix",
     "race_ethnicity",
     "additional_race_ethnicity_detail",
     "veteran",
@@ -73,7 +75,7 @@ EXCLUDED_BA_FIELDS = {
 }
 
 
-class HmisApiRestBridge:
+class HmisRestApiBridge:
     """Utility class for interfacing with HMIS REST API."""
 
     def __init__(self, info: strawberry.Info) -> None:
@@ -97,6 +99,21 @@ class HmisApiRestBridge:
             **auth_header,
         }
 
+    def _handle_error_response(self, resp: requests.Response) -> None:
+        if resp.status_code == 200:
+            return
+
+        if resp.status_code == 401:
+            raise PermissionError("Session expired. Please login again.")
+
+        if resp.status_code == 404:
+            raise ObjectDoesNotExist("The requested Object does not exist.")
+
+        if resp.status_code == 422:
+            raise ValidationError("Something went wrong.")
+
+        raise ValidationError("Something went wrong.")
+
     def _make_request(
         self,
         path: str,
@@ -111,7 +128,11 @@ class HmisApiRestBridge:
             "timeout": timeout,
         }
 
-        return requests.request(method, **request_args)  # type: ignore
+        resp = requests.request(method, **request_args)  # type: ignore
+
+        self._handle_error_response(resp)
+
+        return resp
 
     def _fernet(self) -> Fernet:
         key = getattr(settings, "HMIS_TOKEN_KEY", None)
@@ -208,60 +229,17 @@ class HmisApiRestBridge:
 
         snake_out = {to_snake_case(k) for k in out}
 
-        return {f"screenValues.{k}" if k in SV_FIELDS else k for k in snake_out}
+        return {f"screenValues.{k}" if k in CLIENT_SUB_FIELDS else k for k in snake_out}
 
-    def get_client(self, hmis_id: str) -> dict[str, Any]:
-        fields = self._get_field_dot_paths(
-            info=self.info,
-            default_fields=("id", "last_updated", "added_date"),
-        )
-
-        fields_str = ", ".join(fields - EXCLUDED_BA_FIELDS)
-
-        resp = self._make_request(
-            path=f"/clients/{hmis_id}",
-            body={"fields": fields_str},
-        )
-
-        if resp.status_code == 404:
-            raise ObjectDoesNotExist("The requested Client does not exist.")
-
-        return dict_keys_to_snake(resp.json())
-
-    def create_client(self, data: CreateHmisClientProfileInput) -> dict[str, Any]:
-        data_dict = strawberry.asdict(data)
-        cleaned_data = {k: (v.value if isinstance(v, Enum) else v) for k, v in data_dict.items() if v is not UNSET}
-
-        body = {
-            "client": {
-                "first_name": cleaned_data.get("first_name", None),
-                "last_name": cleaned_data.get("last_name", None),
-                "ssn3": "xxxx",
-                "name_quality": cleaned_data.get("name_quality", 99),
-                "dob_quality": 99,
-                "ssn_quality": 99,
-            },
-            "screenValues": {
-                "alias": cleaned_data.get("nickname", None),
-                "gender": [99],
-                "name_middle": cleaned_data.get("name_middle", None),
-                "name_suffix": cleaned_data.get("name_suffix", None),
-                "race_ethnicity": [99],
-                "veteran": 99,
-            },
-            "fields": ", ".join(METADATA_FIELDS | CLIENT_FIELDS | {f"screenValues.{k}" for k in SV_FIELDS}),
+    def _format_timestamp_fields(self, client_data: dict[str, Any]) -> dict[str, Any]:
+        return {
+            **client_data,
+            "added_date": datetime.datetime.strptime(client_data["added_date"], DATETIME_FORMAT),
+            "last_updated": datetime.datetime.strptime(client_data["last_updated"], DATETIME_FORMAT),
+            "birth_date": (
+                datetime.date.fromisoformat(client_data["birth_date"]) if client_data.get("birth_date") else None
+            ),
         }
-
-        resp = self._make_request(
-            method=HTTPMethod.POST,
-            path="/clients",
-            body=body,
-        )
-
-        if resp.status_code != 200:
-            raise ValidationError("Something went wrong.")
-
-        return dict_keys_to_snake(resp.json())
 
     def _enum_value(self, v: Any) -> Any:
         return v.value if isinstance(v, Enum) else v
@@ -294,17 +272,77 @@ class HmisApiRestBridge:
 
         return cleaned
 
+    def _format_client_data(self, client_data: dict[str, Any]) -> dict[str, Any]:
+        client_data = self._format_timestamp_fields(dict_keys_to_snake(client_data))
+        client_sub_field_data = {**client_data.pop("screen_values", {})}
+        hmis_id = client_data.pop("id")
+
+        return {
+            "hmis_id": hmis_id,
+            **client_data,
+            **client_sub_field_data,
+        }
+
+    def get_client(self, hmis_id: str) -> dict[str, Any]:
+        fields = self._get_field_dot_paths(
+            info=self.info,
+            default_fields=("id", "last_updated", "added_date"),
+        )
+
+        fields_str = ", ".join(fields - EXCLUDED_BA_FIELDS)
+
+        resp = self._make_request(
+            path=f"/clients/{hmis_id}",
+            body={"fields": fields_str},
+        )
+
+        return self._format_client_data(resp.json())
+
+    def create_client(self, data: CreateHmisClientProfileInput) -> dict[str, Any]:
+        data_dict = strawberry.asdict(data)
+        cleaned_data = {k: (v.value if isinstance(v, Enum) else v) for k, v in data_dict.items() if v is not UNSET}
+
+        body = {
+            "client": {
+                "first_name": cleaned_data.get("first_name", None),
+                "last_name": cleaned_data.get("last_name", None),
+                "ssn3": "xxxx",
+                "name_quality": cleaned_data.get("name_quality", 99),
+                "dob_quality": 99,
+                "ssn_quality": 99,
+            },
+            "screenValues": {
+                "alias": cleaned_data.get("nickname", None),
+                "gender": [99],
+                "name_middle": cleaned_data.get("name_middle", None),
+                "name_suffix": cleaned_data.get("name_suffix", None),
+                "race_ethnicity": [99],
+                "veteran": 99,
+            },
+            "fields": ", ".join(METADATA_FIELDS | CLIENT_FIELDS | {f"screenValues.{k}" for k in CLIENT_SUB_FIELDS}),
+        }
+
+        resp = self._make_request(
+            method=HTTPMethod.POST,
+            path="/clients",
+            body=body,
+        )
+
+        return self._format_client_data(resp.json())
+
     def update_client(self, data: dict[str, Any]) -> dict[str, Any]:
         hmis_id = data.pop("hmis_id")
 
-        cleaned_client_input = self._clean(
-            data=data,
+        hmis_data = {k: v for k, v in data.items() if k not in EXCLUDED_BA_FIELDS}
+
+        cleaned_client_field_input = self._clean(
+            data=hmis_data,
             keys=CLIENT_FIELDS,
             date_keys=("birth_date"),
         )
-        cleaned_screen_input = self._clean(
-            data=data,
-            keys=SV_FIELDS,
+        cleaned_client_sub_field_input = self._clean(
+            data=hmis_data,
+            keys=CLIENT_SUB_FIELDS,
             enum_list_keys=("gender", "race_ethnicity"),
         )
 
@@ -313,14 +351,14 @@ class HmisApiRestBridge:
             default_fields=("id", "last_updated", "added_date"),
         )
 
-        combined_fields = fields | {*cleaned_client_input.keys()} | {*cleaned_screen_input.keys()}
+        combined_fields = fields | {*cleaned_client_field_input.keys()} | {*cleaned_client_sub_field_input.keys()}
         fields_str = ", ".join(combined_fields - EXCLUDED_BA_FIELDS)
 
         body = {
             k: v
             for k, v in {
-                "client": cleaned_client_input,
-                "screenValues": cleaned_screen_input,
+                "client": cleaned_client_field_input,
+                "screenValues": cleaned_client_sub_field_input,
                 "fields": fields_str,
             }.items()
             if v
@@ -332,7 +370,4 @@ class HmisApiRestBridge:
             body=body,
         )
 
-        if resp.status_code != 200:
-            raise ValidationError("Something went wrong.")
-
-        return dict_keys_to_snake(resp.json())
+        return self._format_client_data(resp.json())

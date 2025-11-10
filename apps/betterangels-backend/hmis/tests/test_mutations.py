@@ -182,7 +182,7 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             ssn2="**",
             ssn3="4321",
             ssn_quality=HmisSsnQualityEnum.FULL,
-            # SV Fields
+            # Client Sub Fields
             age=24,
             gender=[HmisGenderEnum.WOMAN_GIRL, HmisGenderEnum.DIFFERENT],
             gender_identity_text="Gen Id",
@@ -249,7 +249,7 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             "ssn2": "**",
             "ssn3": "xxxx",
             "ssnQuality": HmisSsnQualityEnum.NOT_COLLECTED.name,
-            # SV Fields
+            # Client Sub Fields
             "age": 0,
             "gender": [HmisGenderEnum.NOT_COLLECTED.name],
             "genderIdentityText": None,
@@ -298,7 +298,7 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             name_quality=HmisNameQualityEnum.FULL,
             ssn3="xxxx",
             ssn_quality=HmisSsnQualityEnum.NOT_COLLECTED,
-            # SV Fields
+            # Client Sub Fields
             gender=[HmisGenderEnum.NOT_COLLECTED],
             race_ethnicity=[HmisRaceEnum.NOT_COLLECTED],
             veteran=HmisVeteranStatusEnum.NOT_COLLECTED,
@@ -418,7 +418,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
     @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_hmis_login_success(self) -> None:
         with patch(
-            "hmis.api_bridge_gql.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=self.success_response,
         ):
             resp = self.execute_graphql(
@@ -457,7 +457,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge_gql.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -472,7 +472,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
     def test_hmis_login_unknown_email_no_autocreate(self) -> None:
         with patch(
-            "hmis.api_bridge_gql.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=self.success_response,
         ):
             resp = self.execute_graphql(
@@ -539,7 +539,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge_gql.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -617,7 +617,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge_gql.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -685,7 +685,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge_gql.HmisApiBridge.update_client",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge.update_client",
             return_value=return_value,
         ):
             resp = self.execute_graphql(

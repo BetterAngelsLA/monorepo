@@ -14,26 +14,25 @@ class HmisClientProfileBaseTestCase(GraphQLBaseTestCase):
             addedDate
             lastUpdated
 
-            age
             alias
             birthDate
             dobQuality
+            firstName
+            lastName
             nameQuality
             ssn1
             ssn2
             ssn3
             ssnQuality
-            gender
 
+            age
+            gender
             genderIdentityText
             nameMiddle
             nameSuffix
             raceEthnicity
             additionalRaceEthnicityDetail
             veteran
-
-            firstName
-            lastName
 
             adaAccommodation
             address
