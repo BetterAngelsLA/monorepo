@@ -6,7 +6,7 @@ import { mapToCheckboxOptions } from '../utils/formUtils';
 
 const statusOptions = mapToCheckboxOptions(STATUS_OPTIONS);
 
-export function AdministrationSection({ data, onChange }: SectionProps) {
+export function AdministrationSection({ data, onChange, errors }: SectionProps) {
   return (
     <FormSection title="Administration">
       <SelectField
@@ -16,6 +16,7 @@ export function AdministrationSection({ data, onChange }: SectionProps) {
         options={statusOptions}
         value={data.status}
         onChange={value => onChange('status', value)}
+        error={errors.status}
       />
     </FormSection>
   );

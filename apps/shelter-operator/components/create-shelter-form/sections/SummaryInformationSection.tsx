@@ -14,7 +14,7 @@ const demographicsOptions = mapToCheckboxOptions(DEMOGRAPHICS_OPTIONS);
 const specialSituationOptions = mapToCheckboxOptions(SPECIAL_SITUATION_OPTIONS);
 const shelterTypeOptions = mapToCheckboxOptions(SHELTER_TYPES_OPTIONS);
 
-export function SummaryInformationSection({ data, onChange }: SectionProps) {
+export function SummaryInformationSection({ data, onChange, errors }: SectionProps) {
   return (
     <FormSection title="Summary Information">
       <CheckboxGroup
@@ -23,6 +23,7 @@ export function SummaryInformationSection({ data, onChange }: SectionProps) {
         options={demographicsOptions}
         values={data.demographics}
         onChange={values => onChange('demographics', values)}
+        error={errors.demographics}
       />
       <TextField
         id="demographics-other"
@@ -44,6 +45,7 @@ export function SummaryInformationSection({ data, onChange }: SectionProps) {
         options={shelterTypeOptions}
         values={data.shelter_types}
         onChange={values => onChange('shelter_types', values)}
+        error={errors.shelter_types}
       />
       <TextField
         id="shelter-types-other"

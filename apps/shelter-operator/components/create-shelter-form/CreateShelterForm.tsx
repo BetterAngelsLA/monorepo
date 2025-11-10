@@ -1,6 +1,7 @@
-import { FormEvent } from 'react';
+import { FormEvent, useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCreateShelterForm } from './hooks/useCreateShelterForm';
+import { validateField, validateShelterForm, type FormErrors } from './constants/validation';
 import { AdministrationSection } from './sections/AdministrationSection';
 import { BasicInformationSection } from './sections/BasicInformationSection';
 import { BetterAngelsReviewSection } from './sections/BetterAngelsReviewSection';
@@ -12,12 +13,40 @@ import { ServicesOfferedSection } from './sections/ServicesOfferedSection';
 import { ShelterDetailsSection } from './sections/ShelterDetailsSection';
 import { SleepingDetailsSection } from './sections/SleepingDetailsSection';
 import { SummaryInformationSection } from './sections/SummaryInformationSection';
+import type { ShelterFormData } from '../../types';
 
 export default function CreateShelterForm() {
   const { formData, updateField } = useCreateShelterForm();
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const handleFieldChange = useCallback(
+    <K extends keyof ShelterFormData>(field: K, value: ShelterFormData[K]) => {
+      updateField(field, value);
+      const fieldError = validateField(field, value);
+      setErrors(prev => {
+        if (fieldError) {
+          return {
+            ...prev,
+            [field]: fieldError,
+          };
+        }
+        if (prev[field]) {
+          const { [field]: _omit, ...rest } = prev;
+          return rest;
+        }
+        return prev;
+      });
+    },
+    [updateField]
+  );
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const validation = validateShelterForm(formData);
+    setErrors(validation.errors);
+    if (!validation.isValid) {
+      return;
+    }
     // TODO: Replace with GraphQL mutation once API is ready.
   };
 
@@ -40,17 +69,17 @@ export default function CreateShelterForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <BasicInformationSection data={formData} onChange={updateField} />
-        <SummaryInformationSection data={formData} onChange={updateField} />
-        <SleepingDetailsSection data={formData} onChange={updateField} />
-        <ShelterDetailsSection data={formData} onChange={updateField} />
-        <PoliciesSection data={formData} onChange={updateField} />
-        <ServicesOfferedSection data={formData} onChange={updateField} />
-        <EntryRequirementsSection data={formData} onChange={updateField} />
-        <EcosystemInformationSection data={formData} onChange={updateField} />
-        <BetterAngelsReviewSection data={formData} onChange={updateField} />
-        <AdministrationSection data={formData} onChange={updateField} />
-        <MediaSection data={formData} onChange={updateField} />
+        <BasicInformationSection data={formData} onChange={handleFieldChange} errors={errors} />
+        <SummaryInformationSection data={formData} onChange={handleFieldChange} errors={errors} />
+        <SleepingDetailsSection data={formData} onChange={handleFieldChange} errors={errors} />
+        <ShelterDetailsSection data={formData} onChange={handleFieldChange} errors={errors} />
+        <PoliciesSection data={formData} onChange={handleFieldChange} errors={errors} />
+        <ServicesOfferedSection data={formData} onChange={handleFieldChange} errors={errors} />
+        <EntryRequirementsSection data={formData} onChange={handleFieldChange} errors={errors} />
+        <EcosystemInformationSection data={formData} onChange={handleFieldChange} errors={errors} />
+        <BetterAngelsReviewSection data={formData} onChange={handleFieldChange} errors={errors} />
+        <AdministrationSection data={formData} onChange={handleFieldChange} errors={errors} />
+        <MediaSection data={formData} onChange={handleFieldChange} errors={errors} />
 
         <div className="flex justify-end gap-3">
           <button

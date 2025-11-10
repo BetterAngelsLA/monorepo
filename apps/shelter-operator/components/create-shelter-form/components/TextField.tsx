@@ -1,5 +1,6 @@
+import clsx from 'clsx';
 import type { HTMLInputTypeAttribute } from 'react';
-import { INPUT_CLASS } from '../constants/styles';
+import { INPUT_CLASS, INPUT_ERROR_CLASS } from '../constants/styles';
 import { FieldWrapper } from './FieldWrapper';
 
 interface TextFieldProps {
@@ -13,6 +14,8 @@ interface TextFieldProps {
   helperText?: string;
   required?: boolean;
   autoComplete?: string;
+  error?: string;
+  onBlur?: () => void;
 }
 
 export function TextField({
@@ -26,9 +29,19 @@ export function TextField({
   helperText,
   required,
   autoComplete,
+  error,
+  onBlur,
 }: TextFieldProps) {
+  const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
+
   return (
-    <FieldWrapper label={label} htmlFor={id} helperText={helperText}>
+    <FieldWrapper
+      label={label}
+      htmlFor={id}
+      helperText={helperText}
+      error={error}
+      messageId={messageId}
+    >
       <input
         id={id}
         name={name}
@@ -36,7 +49,10 @@ export function TextField({
         value={value}
         placeholder={placeholder}
         onChange={event => onChange(event.target.value)}
-        className={INPUT_CLASS}
+        onBlur={onBlur}
+        className={clsx(INPUT_CLASS, error && INPUT_ERROR_CLASS)}
+        aria-invalid={Boolean(error)}
+        aria-describedby={messageId}
         required={required}
         autoComplete={autoComplete}
       />

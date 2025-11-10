@@ -13,6 +13,7 @@ interface RadioGroupProps<T> {
   value: T;
   onChange: (value: T) => void;
   helperText?: string;
+  error?: string;
 }
 
 export function RadioGroup<T>({
@@ -22,10 +23,18 @@ export function RadioGroup<T>({
   value,
   onChange,
   helperText,
+  error,
 }: RadioGroupProps<T>) {
+  const messageId = error ? `${name}-error` : helperText ? `${name}-helper` : undefined;
+
   return (
-    <FieldWrapper label={label} helperText={helperText}>
-      <div className={OPTION_LIST_CLASS}>
+    <FieldWrapper label={label} helperText={helperText} error={error} messageId={messageId}>
+      <div
+        className={OPTION_LIST_CLASS}
+        role="radiogroup"
+        aria-invalid={Boolean(error)}
+        aria-describedby={messageId}
+      >
         {options.map(option => {
           const id = `${name}-${String(option.value)}`;
           return (

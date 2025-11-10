@@ -1,4 +1,5 @@
-import { INPUT_CLASS } from '../constants/styles';
+import clsx from 'clsx';
+import { INPUT_CLASS, INPUT_ERROR_CLASS } from '../constants/styles';
 import { FieldWrapper } from './FieldWrapper';
 
 interface NumberFieldProps {
@@ -13,6 +14,8 @@ interface NumberFieldProps {
   step?: number;
   helperText?: string;
   required?: boolean;
+  error?: string;
+  onBlur?: () => void;
 }
 
 export function NumberField({
@@ -27,9 +30,19 @@ export function NumberField({
   step,
   helperText,
   required,
+  error,
+  onBlur,
 }: NumberFieldProps) {
+  const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
+
   return (
-    <FieldWrapper label={label} htmlFor={id} helperText={helperText}>
+    <FieldWrapper
+      label={label}
+      htmlFor={id}
+      helperText={helperText}
+      error={error}
+      messageId={messageId}
+    >
       <input
         id={id}
         name={name}
@@ -43,7 +56,10 @@ export function NumberField({
           const next = event.target.value;
           onChange(next === '' ? 0 : Number(next));
         }}
-        className={INPUT_CLASS}
+        onBlur={onBlur}
+        className={clsx(INPUT_CLASS, error && INPUT_ERROR_CLASS)}
+        aria-invalid={Boolean(error)}
+        aria-describedby={messageId}
         required={required}
       />
     </FieldWrapper>

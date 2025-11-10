@@ -9,7 +9,7 @@ import { mapToCheckboxOptions } from '../utils/formUtils';
 
 const roomStyleOptions = mapToCheckboxOptions(ROOM_STYLES_OPTIONS);
 
-export function SleepingDetailsSection({ data, onChange }: SectionProps) {
+export function SleepingDetailsSection({ data, onChange, errors }: SectionProps) {
   return (
     <FormSection title="Sleeping Details">
       <NumberField
@@ -19,6 +19,7 @@ export function SleepingDetailsSection({ data, onChange }: SectionProps) {
         value={data.total_beds}
         onChange={value => onChange('total_beds', value)}
         min={0}
+        error={errors.total_beds}
       />
       <CheckboxGroup
         name="room-styles"
@@ -26,6 +27,7 @@ export function SleepingDetailsSection({ data, onChange }: SectionProps) {
         options={roomStyleOptions}
         values={data.room_styles}
         onChange={values => onChange('room_styles', values)}
+        error={errors.room_styles}
       />
       <TextField
         id="room-styles-other"

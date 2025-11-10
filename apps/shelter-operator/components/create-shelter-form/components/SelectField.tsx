@@ -1,4 +1,5 @@
-import { INPUT_CLASS } from '../constants/styles';
+import clsx from 'clsx';
+import { INPUT_CLASS, INPUT_ERROR_CLASS } from '../constants/styles';
 import { FieldWrapper } from './FieldWrapper';
 import type { SelectOption } from '../../../types';
 
@@ -11,6 +12,7 @@ interface SelectFieldProps<T extends string | number | null> {
   onChange: (value: T) => void;
   placeholder?: string;
   helperText?: string;
+  error?: string;
 }
 
 export function SelectField<T extends string | number | null>({
@@ -22,13 +24,22 @@ export function SelectField<T extends string | number | null>({
   onChange,
   placeholder,
   helperText,
+  error,
 }: SelectFieldProps<T>) {
+  const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
+
   return (
-    <FieldWrapper label={label} htmlFor={id} helperText={helperText}>
+    <FieldWrapper
+      label={label}
+      htmlFor={id}
+      helperText={helperText}
+      error={error}
+      messageId={messageId}
+    >
       <select
         id={id}
         name={name}
-        className={INPUT_CLASS}
+        className={clsx(INPUT_CLASS, error && INPUT_ERROR_CLASS)}
         value={value === null ? '' : (value as string | number)}
         onChange={event => {
           const raw = event.target.value;
@@ -42,6 +53,8 @@ export function SelectField<T extends string | number | null>({
             onChange(match.value);
           }
         }}
+        aria-invalid={Boolean(error)}
+        aria-describedby={messageId}
       >
         {placeholder ? (
           <option value="" disabled={value !== null && value !== undefined}>

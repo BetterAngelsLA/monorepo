@@ -12,7 +12,7 @@ import { mapToCheckboxOptions } from '../utils/formUtils';
 const entryRequirementOptions = mapToCheckboxOptions(ENTRY_REQUIREMENTS_OPTIONS);
 const referralRequirementOptions = mapToCheckboxOptions(REFERRAL_REQUIREMENT_OPTIONS);
 
-export function EntryRequirementsSection({ data, onChange }: SectionProps) {
+export function EntryRequirementsSection({ data, onChange, errors }: SectionProps) {
   return (
     <FormSection title="Entry Requirements">
       <CheckboxGroup
@@ -21,6 +21,7 @@ export function EntryRequirementsSection({ data, onChange }: SectionProps) {
         options={entryRequirementOptions}
         values={data.entry_requirements}
         onChange={values => onChange('entry_requirements', values)}
+        error={errors.entry_requirements}
       />
       <CheckboxGroup
         name="referral-requirement"
@@ -28,6 +29,7 @@ export function EntryRequirementsSection({ data, onChange }: SectionProps) {
         options={referralRequirementOptions}
         values={data.referral_requirement}
         onChange={values => onChange('referral_requirement', values)}
+        error={errors.referral_requirement}
       />
       <TextField
         id="bed-fees"

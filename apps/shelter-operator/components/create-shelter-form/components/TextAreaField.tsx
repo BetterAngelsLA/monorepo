@@ -1,4 +1,5 @@
-import { TEXTAREA_CLASS } from '../constants/styles';
+import clsx from 'clsx';
+import { INPUT_ERROR_CLASS, TEXTAREA_CLASS } from '../constants/styles';
 import { FieldWrapper } from './FieldWrapper';
 
 interface TextAreaFieldProps {
@@ -10,6 +11,8 @@ interface TextAreaFieldProps {
   placeholder?: string;
   rows?: number;
   helperText?: string;
+  error?: string;
+  onBlur?: () => void;
 }
 
 export function TextAreaField({
@@ -21,9 +24,19 @@ export function TextAreaField({
   placeholder,
   rows = 4,
   helperText,
+  error,
+  onBlur,
 }: TextAreaFieldProps) {
+  const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
+
   return (
-    <FieldWrapper label={label} htmlFor={id} helperText={helperText}>
+    <FieldWrapper
+      label={label}
+      htmlFor={id}
+      helperText={helperText}
+      error={error}
+      messageId={messageId}
+    >
       <textarea
         id={id}
         name={name}
@@ -31,7 +44,10 @@ export function TextAreaField({
         value={value}
         placeholder={placeholder}
         onChange={event => onChange(event.target.value)}
-        className={TEXTAREA_CLASS}
+        onBlur={onBlur}
+        className={clsx(TEXTAREA_CLASS, error && INPUT_ERROR_CLASS)}
+        aria-invalid={Boolean(error)}
+        aria-describedby={messageId}
       />
     </FieldWrapper>
   );

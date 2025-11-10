@@ -14,7 +14,7 @@ import { mapToCheckboxOptions } from '../utils/formUtils';
 
 const exitPolicyOptions = mapToCheckboxOptions(EXIT_POLICY_OPTIONS);
 
-export function PoliciesSection({ data, onChange }: SectionProps) {
+export function PoliciesSection({ data, onChange, errors }: SectionProps) {
   return (
     <FormSection title="Policies">
       <NumberField
@@ -32,6 +32,7 @@ export function PoliciesSection({ data, onChange }: SectionProps) {
         value={data.intake_hours}
         onChange={value => onChange('intake_hours', value)}
         helperText='Use the format: "HH:MM:SS-HH:MM:SS,..."'
+        error={errors.intake_hours}
       />
       <TextField
         id="curfew"
@@ -40,6 +41,7 @@ export function PoliciesSection({ data, onChange }: SectionProps) {
         value={data.curfew}
         onChange={value => onChange('curfew', value)}
         helperText='Use the format: "HH:MM:SS-HH:MM:SS,..."'
+        error={errors.curfew}
       />
       <RadioGroup
         name="on-site-security"
@@ -47,6 +49,7 @@ export function PoliciesSection({ data, onChange }: SectionProps) {
         options={BOOLEAN_OPTIONS}
         value={data.on_site_security}
         onChange={value => onChange('on_site_security', value)}
+        error={errors.on_site_security}
       />
       <RadioGroup
         name="visitors-allowed"
@@ -54,6 +57,7 @@ export function PoliciesSection({ data, onChange }: SectionProps) {
         options={BOOLEAN_OPTIONS}
         value={data.visitors_allowed}
         onChange={value => onChange('visitors_allowed', value)}
+        error={errors.visitors_allowed}
       />
       <CheckboxGroup
         name="exit-policy"
@@ -61,6 +65,7 @@ export function PoliciesSection({ data, onChange }: SectionProps) {
         options={exitPolicyOptions}
         values={data.exit_policy}
         onChange={values => onChange('exit_policy', values)}
+        error={errors.exit_policy}
       />
       <TextField
         id="exit-policy-other"
@@ -75,6 +80,7 @@ export function PoliciesSection({ data, onChange }: SectionProps) {
         options={BOOLEAN_OPTIONS}
         value={data.emergency_surge}
         onChange={value => onChange('emergency_surge', value)}
+        error={errors.emergency_surge}
       />
       <TextAreaField
         id="other-rules"

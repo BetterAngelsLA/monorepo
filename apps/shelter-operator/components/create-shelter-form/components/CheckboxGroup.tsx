@@ -13,6 +13,7 @@ interface CheckboxGroupProps {
   values: readonly string[];
   onChange: (values: string[]) => void;
   helperText?: string;
+  error?: string;
 }
 
 export function CheckboxGroup({
@@ -22,10 +23,18 @@ export function CheckboxGroup({
   values,
   onChange,
   helperText,
+  error,
 }: CheckboxGroupProps) {
+  const messageId = error ? `${name}-error` : helperText ? `${name}-helper` : undefined;
+
   return (
-    <FieldWrapper label={label} helperText={helperText}>
-      <div className={OPTION_LIST_CLASS}>
+    <FieldWrapper label={label} helperText={helperText} error={error} messageId={messageId}>
+      <div
+        className={OPTION_LIST_CLASS}
+        role="group"
+        aria-invalid={Boolean(error)}
+        aria-describedby={messageId}
+      >
         {options.map(option => {
           const checked = values.includes(option.value);
           const id = `${name}-${option.value}`;

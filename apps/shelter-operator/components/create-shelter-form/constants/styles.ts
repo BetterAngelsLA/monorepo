@@ -8,3 +8,6 @@ export const TEXTAREA_CLASS = `${INPUT_CLASS} resize-y`;
 export const HELPER_TEXT_CLASS = 'text-xs text-gray-500';
 export const OPTION_LIST_CLASS = 'space-y-2';
 export const OPTION_ITEM_CLASS = 'flex items-center space-x-2';
+export const ERROR_TEXT_CLASS = 'text-sm text-red-600';
+export const INPUT_ERROR_CLASS =
+  'border-red-500 focus:ring-red-500 focus:border-red-500';

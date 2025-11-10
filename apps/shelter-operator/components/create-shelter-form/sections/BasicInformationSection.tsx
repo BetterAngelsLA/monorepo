@@ -2,7 +2,7 @@ import { FormSection } from '../components/FormSection';
 import { TextField } from '../components/TextField';
 import type { SectionProps } from '../types';
 
-export function BasicInformationSection({ data, onChange }: SectionProps) {
+export function BasicInformationSection({ data, onChange, errors }: SectionProps) {
   return (
     <FormSection title="Basic Information">
       <TextField
@@ -12,6 +12,7 @@ export function BasicInformationSection({ data, onChange }: SectionProps) {
         value={data.name}
         onChange={value => onChange('name', value)}
         required
+        error={errors.name}
       />
       <TextField
         id="shelter-organization"
@@ -20,6 +21,7 @@ export function BasicInformationSection({ data, onChange }: SectionProps) {
         value={data.organization}
         onChange={value => onChange('organization', value)}
         helperText="Select from existing organizations or type to add a new one."
+        error={errors.organization}
       />
       <TextField
         id="shelter-location"
@@ -28,6 +30,7 @@ export function BasicInformationSection({ data, onChange }: SectionProps) {
         value={data.location}
         onChange={value => onChange('location', value)}
         helperText='Use the format: "search query, latitude, longitude".'
+        error={errors.location}
       />
       <TextField
         id="shelter-email"
@@ -36,6 +39,7 @@ export function BasicInformationSection({ data, onChange }: SectionProps) {
         type="email"
         value={data.email}
         onChange={value => onChange('email', value)}
+        error={errors.email}
       />
       <TextField
         id="shelter-phone"
@@ -44,6 +48,7 @@ export function BasicInformationSection({ data, onChange }: SectionProps) {
         type="tel"
         value={data.phone}
         onChange={value => onChange('phone', value)}
+        error={errors.phone}
       />
       <TextField
         id="shelter-website"
@@ -52,6 +57,7 @@ export function BasicInformationSection({ data, onChange }: SectionProps) {
         type="url"
         value={data.website}
         onChange={value => onChange('website', value)}
+        error={errors.website}
       />
       <TextField
         id="shelter-instagram"
