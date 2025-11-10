@@ -91,7 +91,7 @@ describe('getQueryPolicyFactory', () => {
   let warnSpy: MockInstance;
 
   beforeEach(() => {
-    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
   });
 
   afterEach(() => {

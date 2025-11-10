@@ -12,7 +12,7 @@ type TExtractOffsetPagination = {
   limitPath?: string | ReadonlyArray<string>;
 };
 
-export function extractOffsetPagination<T = string>(
+export function extractOffsetPagination(
   opts: TExtractOffsetPagination
 ): PaginationVars | undefined {
   const { variables, offsetPath, limitPath } = opts;

@@ -180,7 +180,7 @@ export function useInfiniteScrollQuery<TItem, H extends AnyGeneratedHook>(
   } as QueryHookOptions<TData, TVars>);
 
   // DEV: itemsPath exists
-  if (process.env.NODE_ENV !== 'production' && data) {
+  if (process.env['NODE_ENV'] !== 'production' && data) {
     validatePathOrThrow(
       (data as any)[queryFieldName],
       queryPolicyConfig.itemsPath

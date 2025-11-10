@@ -14,7 +14,7 @@ export function getPaginationVarsPerMode(
   paginationVariables?: Partial<TPaginationVariables>
 ): TPaginationVariables {
   if (paginationMode === PaginationModeEnum.PerPage) {
-    const { pagePath, perPagePath } = (paginationVariables ||
+    const { pagePath } = (paginationVariables ||
       {}) as PerPagePaginationVariables;
 
     return {

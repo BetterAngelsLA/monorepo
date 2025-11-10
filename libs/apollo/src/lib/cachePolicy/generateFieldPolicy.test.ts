@@ -28,7 +28,7 @@ describe('generateFieldPolicy', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
   });
 
   afterEach(() => {
