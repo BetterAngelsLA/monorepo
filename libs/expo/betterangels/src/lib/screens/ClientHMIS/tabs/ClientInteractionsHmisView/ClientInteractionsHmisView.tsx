@@ -1,9 +1,8 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
-import { IconButton } from '@monorepo/expo/shared/ui-components';
-import { FlashList } from '@shopify/flash-list';
+import { IconButton, InfiniteList } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { uniqueBy } from 'remeda';
 import { HmisClientNoteListType, HmisClientType } from '../../../../apollo';
@@ -11,9 +10,8 @@ import {
   MainScrollContainer,
   ProgramNoteCard,
 } from '../../../../ui-components';
-import { ListEmptyState } from './ListEmptyState';
-import { ListLoadingView } from './ListLoadingView';
 import { useHmisListClientNotesQuery } from './__generated__/ClientInteractionsHmisView.generated';
+import { ListLoadingView } from './ListLoadingView';
 
 export const DEFAULT_PAGINATION_LIMIT = 20;
 
@@ -31,7 +29,7 @@ export function ClientInteractionsHmisView(props: TProps) {
 
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [_totalCount, setTotalCount] = useState<number>(0);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [programNotes, setProgramNotes] = useState<TProgramNote[] | undefined>(
     undefined
   );
@@ -68,12 +66,24 @@ export function ClientInteractionsHmisView(props: TProps) {
     if (hasMore && !loading) setPage((p) => p + 1);
   };
 
-  const renderFooter = () =>
-    loading ? <ListLoadingView style={{ paddingVertical: 40 }} /> : null;
-
-  if (programNotes === undefined && loading) {
-    return <ListLoadingView fullScreen />;
-  }
+  const renderItemFn = useCallback(
+    (item: TProgramNote) => (
+      <ProgramNoteCard
+        onPress={() => {
+          router.navigate({
+            pathname: `/notes-hmis/${item.id}/index`,
+            params: {
+              personalId: client?.personalId,
+              enrollmentId: item.enrollment?.enrollmentId,
+            },
+          });
+        }}
+        variant="clientProfile"
+        note={item}
+      />
+    ),
+    [client]
+  );
 
   if (!client) {
     return null;
@@ -96,34 +106,17 @@ export function ClientInteractionsHmisView(props: TProps) {
           <PlusIcon />
         </IconButton>
       </View>
-      <FlashList<TProgramNote>
-        data={programNotes}
+      <InfiniteList<TProgramNote>
+        data={programNotes || []}
         keyExtractor={(item) => item.id ?? ''}
-        renderItem={({ item }) => (
-          <ProgramNoteCard
-            onPress={() => {
-              router.navigate({
-                pathname: `/notes-hmis/${item.id}/index`,
-                params: {
-                  personalId: client.personalId,
-                  enrollmentId: item.enrollment?.enrollmentId,
-                },
-              });
-            }}
-            variant="clientProfile"
-            note={item}
-          />
-        )}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.05}
-        ItemSeparatorComponent={() => <View style={{ height: Spacings.xs }} />}
-        extraData={programNotes?.length}
-        ListEmptyComponent={<ListEmptyState />}
-        ListFooterComponent={renderFooter}
-        contentContainerStyle={{
-          paddingBottom: 60,
-          paddingHorizontal: Spacings.sm,
-        }}
+        totalItems={totalCount}
+        renderItem={renderItemFn}
+        itemGap={Spacings.xs}
+        loading={loading}
+        loadMore={loadMore}
+        hasMore={hasMore}
+        modelName="note"
+        LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
       />
     </MainScrollContainer>
   );
