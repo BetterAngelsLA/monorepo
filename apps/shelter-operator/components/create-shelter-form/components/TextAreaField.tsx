@@ -46,7 +46,7 @@ export function TextAreaField({
         onChange={event => onChange(event.target.value)}
         onBlur={onBlur}
         className={clsx(TEXTAREA_CLASS, error && INPUT_ERROR_CLASS)}
-        aria-invalid={Boolean(error)}
+        aria-invalid={error ? 'true' : undefined}
         aria-describedby={messageId}
       />
     </FieldWrapper>

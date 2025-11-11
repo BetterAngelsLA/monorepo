@@ -53,7 +53,7 @@ export function SelectField<T extends string | number | null>({
             onChange(match.value);
           }
         }}
-        aria-invalid={Boolean(error)}
+        aria-invalid={error ? 'true' : undefined}
         aria-describedby={messageId}
       >
         {placeholder ? (

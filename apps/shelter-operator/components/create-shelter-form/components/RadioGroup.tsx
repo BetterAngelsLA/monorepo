@@ -32,7 +32,7 @@ export function RadioGroup<T>({
       <div
         className={OPTION_LIST_CLASS}
         role="radiogroup"
-        aria-invalid={Boolean(error)}
+        aria-invalid={error ? 'true' : undefined}
         aria-describedby={messageId}
       >
         {options.map(option => {

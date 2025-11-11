@@ -51,7 +51,7 @@ export function TextField({
         onChange={event => onChange(event.target.value)}
         onBlur={onBlur}
         className={clsx(INPUT_CLASS, error && INPUT_ERROR_CLASS)}
-        aria-invalid={Boolean(error)}
+        aria-invalid={error ? 'true' : undefined}
         aria-describedby={messageId}
         required={required}
         autoComplete={autoComplete}

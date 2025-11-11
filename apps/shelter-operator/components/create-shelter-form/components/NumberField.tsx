@@ -58,7 +58,7 @@ export function NumberField({
         }}
         onBlur={onBlur}
         className={clsx(INPUT_CLASS, error && INPUT_ERROR_CLASS)}
-        aria-invalid={Boolean(error)}
+        aria-invalid={error ? 'true' : undefined}
         aria-describedby={messageId}
         required={required}
       />

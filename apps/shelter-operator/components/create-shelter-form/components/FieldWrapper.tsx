@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
-import { FIELD_WRAPPER_CLASS, HELPER_TEXT_CLASS, LABEL_CLASS } from '../constants/styles';
-
-import { ERROR_TEXT_CLASS, FIELD_WRAPPER_CLASS, HELPER_TEXT_CLASS, LABEL_CLASS } from '../constants/styles';
+import {
+  ERROR_TEXT_CLASS,
+  FIELD_WRAPPER_CLASS,
+  HELPER_TEXT_CLASS,
+  LABEL_CLASS,
+} from '../constants/styles';
 
 interface FieldWrapperProps {
   label: string;
@@ -27,7 +30,7 @@ export function FieldWrapper({
       </label>
       {children}
       {error ? (
-        <p id={messageId} className={ERROR_TEXT_CLASS}>
+        <p id={messageId} className={ERROR_TEXT_CLASS} data-testid="field-error">
           {error}
         </p>
       ) : helperText ? (

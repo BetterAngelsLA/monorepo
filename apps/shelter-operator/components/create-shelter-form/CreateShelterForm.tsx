@@ -68,7 +68,7 @@ export default function CreateShelterForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" data-testid="create-shelter-form">
         <BasicInformationSection data={formData} onChange={handleFieldChange} errors={errors} />
         <SummaryInformationSection data={formData} onChange={handleFieldChange} errors={errors} />
         <SleepingDetailsSection data={formData} onChange={handleFieldChange} errors={errors} />

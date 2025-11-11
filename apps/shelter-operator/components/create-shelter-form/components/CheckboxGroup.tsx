@@ -32,7 +32,7 @@ export function CheckboxGroup({
       <div
         className={OPTION_LIST_CLASS}
         role="group"
-        aria-invalid={Boolean(error)}
+        aria-invalid={error ? 'true' : undefined}
         aria-describedby={messageId}
       >
         {options.map(option => {
