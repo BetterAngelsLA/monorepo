@@ -111,8 +111,6 @@ class AbstractClientProfile(BaseModel):
     email = models.EmailField(unique=True, null=True, blank=True)
     eye_color = TextChoicesField(choices_enum=EyeColorEnum, blank=True, null=True)
     first_name = models.CharField(max_length=50, blank=True, null=True, db_index=True)
-    gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
-    gender_other = models.CharField(max_length=100, null=True, blank=True)
     hair_color = TextChoicesField(choices_enum=HairColorEnum, blank=True, null=True)
     height_in_inches = models.FloatField(blank=True, null=True)
     important_notes = models.TextField(blank=True, null=True)
@@ -120,8 +118,6 @@ class AbstractClientProfile(BaseModel):
     living_situation = TextChoicesField(choices_enum=LivingSituationEnum, blank=True, null=True)
     mailing_address = models.TextField(blank=True, null=True)
     marital_status = TextChoicesField(choices_enum=MaritalStatusEnum, blank=True, null=True)
-    middle_name = models.CharField(max_length=50, blank=True, null=True)
-    nickname = models.CharField(max_length=50, blank=True, null=True)
     phone_number = PhoneNumberField(region="US", blank=True, null=True)
     phone_numbers = GenericRelation(PhoneNumber)
     physical_description = models.TextField(blank=True, null=True)
@@ -130,14 +126,11 @@ class AbstractClientProfile(BaseModel):
         base_field=TextChoicesField(choices_enum=PreferredCommunicationEnum), blank=True, null=True
     )
     preferred_language = TextChoicesField(choices_enum=LanguageEnum, blank=True, null=True)
-    profile_photo = models.ImageField(upload_to=get_client_profile_photo_file_path, blank=True, null=True)
     pronouns = TextChoicesField(choices_enum=PronounEnum, blank=True, null=True)
     pronouns_other = models.CharField(max_length=100, null=True, blank=True)
-    race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
     residence_address = models.TextField(blank=True, null=True)
     residence_geolocation = PointField(srid=4326, geography=True, blank=True, null=True)
     spoken_languages = ArrayField(base_field=TextChoicesField(choices_enum=LanguageEnum), blank=True, null=True)
-    veteran_status = TextChoicesField(choices_enum=VeteranStatusEnum, blank=True, null=True)
 
     class Meta:
         abstract = True
@@ -149,6 +142,14 @@ class AbstractClientProfile(BaseModel):
     pghistory.DeleteEvent("client_profile.remove"),
 )
 class ClientProfile(AbstractClientProfile):
+    gender = TextChoicesField(choices_enum=GenderEnum, blank=True, null=True)
+    gender_other = models.CharField(max_length=100, null=True, blank=True)
+    middle_name = models.CharField(max_length=50, blank=True, null=True)
+    nickname = models.CharField(max_length=50, blank=True, null=True)
+    profile_photo = models.ImageField(upload_to=get_client_profile_photo_file_path, blank=True, null=True)
+    race = TextChoicesField(choices_enum=RaceEnum, blank=True, null=True)
+    veteran_status = TextChoicesField(choices_enum=VeteranStatusEnum, blank=True, null=True)
+
     @model_property
     def doc_ready_documents(self: "ClientProfile") -> List[Attachment]:
         return self.documents.filter(namespace__in=DOC_READY_NAMESPACES) or []

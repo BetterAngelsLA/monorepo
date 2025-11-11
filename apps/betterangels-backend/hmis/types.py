@@ -1,3 +1,4 @@
+import datetime
 from typing import Optional, Union
 
 import strawberry
@@ -9,7 +10,7 @@ from clients.enums import (
     LivingSituationEnum,
     PreferredCommunicationEnum,
 )
-from common.graphql.types import NonBlankString, PhoneNumberScalar
+from common.graphql.types import NonBlankString, PhoneNumberInput, PhoneNumberType
 from hmis.enums import (
     HmisBranchEnum,
     HmisDischargeEnum,
@@ -326,37 +327,32 @@ HmisUpdateClientNoteResult = Union[HmisClientNoteType, HmisUpdateClientNoteError
 HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]
 
 
-@strawberry_django.type(
-    HmisClientProfile,
-    pagination=True,
-)
-class HmisClientProfileType:
-    # HMIS Fields
-    personal_id: Optional[str]
-    unique_identifier: Optional[str]
-    name_data_quality: Optional[HmisNameQualityEnum]
-    ssn_data_quality: Optional[HmisSsnQualityEnum]
-    dob_data_quality: Optional[HmisDobQualityEnum]
-    name_suffix: Optional[HmisSuffixEnum]
-    race_ethnicity: Optional[list[HmisRaceEnum]]
-    additional_race_ethnicity: Optional[str]
-    different_identity_text: Optional[str]
+@strawberry_django.type(HmisClientProfile)
+class HmisClientProfileBaseType:
+    # Client Fields
+    alias: Optional[str]  # equivalent to BA `nickname``
+    birth_date: Optional[datetime.date]  # equivalent to BA `date_of_birth`
+    dob_quality: Optional[HmisDobQualityEnum]
+    first_name: Optional[NonBlankString]
+    last_name: Optional[NonBlankString]
+    name_quality: Optional[HmisNameQualityEnum]
     ssn1: Optional[str]
     ssn2: Optional[str]
     ssn3: Optional[str]
+    ssn_quality: Optional[HmisSsnQualityEnum]
 
-    # Overlap Fields
-    birth_date: Optional[str]
-    first_name: Optional[NonBlankString]
-    last_name: Optional[NonBlankString]
-    middle_name: Optional[NonBlankString]
-    gender: Optional[list[HmisGenderEnum]]
-    veteran_status: Optional[HmisVeteranStatusEnum]
+    # Client Sub Fields
+    gender: Optional[list[HmisGenderEnum]]  # different options from BA `gender`
+    gender_identity_text: Optional[str]
+    name_middle: Optional[NonBlankString]
+    name_suffix: Optional[HmisSuffixEnum]
+    race_ethnicity: Optional[list[HmisRaceEnum]]
+    additional_race_ethnicity_detail: Optional[str]
+    veteran: Optional[HmisVeteranStatusEnum]  # different options from BA `veteran_status`
 
     # BA Fields
     ada_accommodation: Optional[list[AdaAccommodationEnum]]
     address: auto
-    age: auto
     california_id: auto
     email: Optional[NonBlankString]
     eye_color: auto
@@ -366,8 +362,6 @@ class HmisClientProfileType:
     living_situation: Optional[LivingSituationEnum]
     mailing_address: auto
     marital_status: auto
-    nickname: Optional[NonBlankString]
-    phone_number: Optional[PhoneNumberScalar]  # type: ignore
     physical_description: auto
     place_of_birth: auto
     preferred_communication: Optional[list[PreferredCommunicationEnum]]
@@ -378,3 +372,35 @@ class HmisClientProfileType:
     residence_address: auto
     residence_geolocation: auto
     spoken_languages: Optional[list[LanguageEnum]]
+
+
+@strawberry_django.type(
+    HmisClientProfile,
+    pagination=True,
+)
+class HmisClientProfileType(HmisClientProfileBaseType):
+    # HMIS Fields
+    hmis_id: Optional[str]
+    personal_id: Optional[str]
+    unique_identifier: Optional[str]
+    added_date: Optional[datetime.datetime]
+    last_updated: Optional[datetime.datetime]
+    age: Optional[int]
+    phone_numbers: Optional[list[PhoneNumberType]]  # type: ignore
+    created_by: Optional[UserType]
+
+
+@strawberry_django.input(HmisClientProfile, partial=True)
+class CreateHmisClientProfileInput(HmisClientProfileBaseType):
+    first_name: NonBlankString
+    last_name: NonBlankString
+    name_quality: HmisNameQualityEnum
+
+
+@strawberry_django.input(HmisClientProfile, partial=True)
+class UpdateHmisClientProfileInput(HmisClientProfileBaseType):
+    hmis_id: str
+    gender: list[HmisGenderEnum]
+    race_ethnicity: list[HmisRaceEnum]
+    veteran: Optional[HmisVeteranStatusEnum]
+    phone_numbers: Optional[list[PhoneNumberInput]]

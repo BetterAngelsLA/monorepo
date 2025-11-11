@@ -1,7 +1,21 @@
+import datetime
 from unittest import skip
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
+from clients.enums import (
+    AdaAccommodationEnum,
+    EyeColorEnum,
+    HairColorEnum,
+    LanguageEnum,
+    LivingSituationEnum,
+    MaritalStatusEnum,
+    PreferredCommunicationEnum,
+    PronounEnum,
+)
+from common.models import PhoneNumber
 from common.tests.utils import GraphQLBaseTestCase
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Point
 from django.test import TestCase
 from hmis.enums import (
     HmisDobQualityEnum,
@@ -9,8 +23,11 @@ from hmis.enums import (
     HmisNameQualityEnum,
     HmisRaceEnum,
     HmisSsnQualityEnum,
+    HmisSuffixEnum,
     HmisVeteranStatusEnum,
 )
+from hmis.models import HmisClientProfile
+from hmis.tests.utils import HmisClientProfileBaseTestCase
 from test_utils.vcr_config import scrubbed_vcr
 
 GET_CLIENT_QUERY = """
@@ -220,6 +237,140 @@ LIST_ENROLLMENTS_QUERY = """
 """
 
 
+class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.residence_geolocation = [-118.2437207, 34.0521723]
+
+        self.hmis_client_profile = HmisClientProfile.objects.create(
+            # ID & Metadata Fields
+            hmis_id="1",
+            personal_id="7e401eed7ee14c36a7641ef44626695c",
+            unique_identifier="69E44770D",
+            added_date=datetime.datetime.strptime("2025-08-06 13:43:43", "%Y-%m-%d %H:%M:%S"),
+            last_updated=datetime.datetime.strptime("2025-11-06 11:14:54", "%Y-%m-%d %H:%M:%S"),
+            # Client Fields
+            alias=None,
+            birth_date=datetime.date.fromisoformat("2001-01-01"),
+            dob_quality=HmisDobQualityEnum.FULL,
+            first_name="John",
+            last_name="Smith",
+            name_quality=HmisNameQualityEnum.FULL,
+            ssn1="***",
+            ssn2="**",
+            ssn3="4321",
+            ssn_quality=HmisSsnQualityEnum.FULL,
+            # Client Sub Fields
+            age=24,
+            gender=[HmisGenderEnum.WOMAN_GIRL, HmisGenderEnum.DIFFERENT],
+            gender_identity_text="Gen Id",
+            name_middle="B",
+            name_suffix=HmisSuffixEnum.JR,
+            race_ethnicity=[HmisRaceEnum.INDIGENOUS, HmisRaceEnum.ASIAN],
+            additional_race_ethnicity_detail="AddlRace",
+            veteran=HmisVeteranStatusEnum.YES,
+            # BA Fields
+            ada_accommodation=[AdaAccommodationEnum.HEARING, AdaAccommodationEnum.MOBILITY],
+            address="123 Main St",
+            california_id="A1357246",
+            email="jbs@example.com",
+            eye_color=EyeColorEnum.BLUE,
+            hair_color=HairColorEnum.BLACK,
+            height_in_inches=72,
+            important_notes="important notes",
+            living_situation=LivingSituationEnum.OPEN_AIR,
+            mailing_address="123 Mail St",
+            marital_status=MaritalStatusEnum.DIVORCED,
+            physical_description="physdesc",
+            place_of_birth="Los Angeles",
+            preferred_communication=[PreferredCommunicationEnum.CALL],
+            preferred_language=LanguageEnum.ARABIC,
+            pronouns=PronounEnum.OTHER,
+            pronouns_other="pronouns",
+            residence_address="123 Res St",
+            residence_geolocation=Point(self.residence_geolocation),
+            spoken_languages=[LanguageEnum.ENGLISH, LanguageEnum.SPANISH],
+            created_by=self.org_1_case_manager_1,
+        )
+        content_type = ContentType.objects.get_for_model(HmisClientProfile)
+        PhoneNumber.objects.create(
+            content_type=content_type,
+            object_id=self.hmis_client_profile.pk,
+            number="2125551212",
+            is_primary=True,
+        )
+
+    @scrubbed_vcr.use_cassette("test_hmis_client_profile_query.yaml")
+    def test_hmis_client_profile_query(self) -> None:
+        query = f"""
+            query ($hmis_id: String!) {{
+                hmisClientProfile(hmisId: $hmis_id) {{
+                    {self.hmis_client_profile_fields}
+                }}
+            }}
+        """
+        variables = {"hmis_id": self.hmis_client_profile.hmis_id}
+        response = self.execute_graphql(query, variables)
+
+        hmis_client_profile = response["data"]["hmisClientProfile"]
+        expected = {
+            # ID & metadata fields
+            "hmisId": "1",
+            "personalId": "7e401eed7ee14c36a7641ef44626695c",
+            "uniqueIdentifier": "69E44770D",
+            "addedDate": "2025-08-06T13:43:43",
+            "lastUpdated": "2025-11-06T11:14:54",
+            # Client fields
+            "alias": None,
+            "birthDate": "2001-01-01",
+            "dobQuality": HmisDobQualityEnum.FULL.name,
+            "firstName": "John",
+            "lastName": "Smith",
+            "nameQuality": HmisNameQualityEnum.FULL.name,
+            "ssn1": "***",
+            "ssn2": "**",
+            "ssn3": "4321",
+            "ssnQuality": HmisSsnQualityEnum.FULL.name,
+            # SV fields
+            "age": 24,
+            "gender": [HmisGenderEnum.WOMAN_GIRL.name, HmisGenderEnum.DIFFERENT.name],
+            "genderIdentityText": "Gen Id",
+            "nameMiddle": "B",
+            "nameSuffix": HmisSuffixEnum.JR.name,
+            "raceEthnicity": [HmisRaceEnum.INDIGENOUS.name, HmisRaceEnum.ASIAN.name],
+            "additionalRaceEthnicityDetail": "AddlRace",
+            "veteran": HmisVeteranStatusEnum.YES.name,
+            # BA fields
+            "adaAccommodation": [AdaAccommodationEnum.HEARING.name, AdaAccommodationEnum.MOBILITY.name],
+            "address": "123 Main St",
+            "californiaId": "A1357246",
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "email": "jbs@example.com",
+            "eyeColor": EyeColorEnum.BLUE.name,
+            "hairColor": HairColorEnum.BLACK.name,
+            "heightInInches": 72.0,
+            "importantNotes": "important notes",
+            "livingSituation": LivingSituationEnum.OPEN_AIR.name,
+            "mailingAddress": "123 Mail St",
+            "maritalStatus": MaritalStatusEnum.DIVORCED.name,
+            "phoneNumbers": [{"id": ANY, "number": "2125551212", "isPrimary": True}],
+            "physicalDescription": "physdesc",
+            "placeOfBirth": "Los Angeles",
+            "preferredCommunication": [PreferredCommunicationEnum.CALL.name],
+            "preferredLanguage": LanguageEnum.ARABIC.name,
+            "profilePhoto": None,
+            "pronouns": PronounEnum.OTHER.name,
+            "pronounsOther": "pronouns",
+            "residenceAddress": "123 Res St",
+            "residenceGeolocation": self.residence_geolocation,
+            "spokenLanguages": [LanguageEnum.ENGLISH.name, LanguageEnum.SPANISH.name],
+        }
+
+        self.assertEqual(expected, hmis_client_profile)
+
+
 class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -254,7 +405,7 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -316,7 +467,7 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -392,7 +543,7 @@ class HmisClientQueryTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(

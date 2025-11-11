@@ -1,8 +1,22 @@
+import datetime
 from unittest import skip
-from unittest.mock import patch
+from unittest.mock import ANY, patch
 
+from clients.enums import (
+    AdaAccommodationEnum,
+    EyeColorEnum,
+    HairColorEnum,
+    LanguageEnum,
+    LivingSituationEnum,
+    MaritalStatusEnum,
+    PreferredCommunicationEnum,
+    PronounEnum,
+)
+from common.models import PhoneNumber
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Point
 from django.test import TestCase, override_settings
 from hmis.enums import (
     HmisDobQualityEnum,
@@ -13,6 +27,8 @@ from hmis.enums import (
     HmisSuffixEnum,
     HmisVeteranStatusEnum,
 )
+from hmis.models import HmisClientProfile
+from hmis.tests.utils import HmisClientProfileBaseTestCase
 from model_bakery import baker
 from test_utils.vcr_config import scrubbed_vcr
 
@@ -141,6 +157,259 @@ UPDATE_CLIENT_NOTE_MUTATION = """
 """
 
 
+class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.residence_geolocation = [-118.2437207, 34.0521723]
+
+        self.hmis_client_profile = HmisClientProfile.objects.create(
+            # ID & Metadata Fields
+            hmis_id="1",
+            personal_id="7e401eed7ee14c36a7641ef44626695c",
+            unique_identifier="69E44770D",
+            added_date=datetime.datetime.strptime("2025-08-06 13:43:43", "%Y-%m-%d %H:%M:%S"),
+            last_updated=datetime.datetime.strptime("2025-11-06 11:14:54", "%Y-%m-%d %H:%M:%S"),
+            # Client Fields
+            alias=None,
+            birth_date=datetime.date.fromisoformat("2001-01-01"),
+            dob_quality=HmisDobQualityEnum.FULL,
+            first_name="John",
+            last_name="Smith",
+            name_quality=HmisNameQualityEnum.FULL,
+            ssn1="***",
+            ssn2="**",
+            ssn3="4321",
+            ssn_quality=HmisSsnQualityEnum.FULL,
+            # Client Sub Fields
+            age=24,
+            gender=[HmisGenderEnum.WOMAN_GIRL, HmisGenderEnum.DIFFERENT],
+            gender_identity_text="Gen Id",
+            name_middle="B",
+            name_suffix=HmisSuffixEnum.JR,
+            race_ethnicity=[HmisRaceEnum.INDIGENOUS, HmisRaceEnum.ASIAN],
+            additional_race_ethnicity_detail="AddlRace",
+            veteran=HmisVeteranStatusEnum.YES,
+            # BA Fields
+            ada_accommodation=[AdaAccommodationEnum.HEARING, AdaAccommodationEnum.MOBILITY],
+            address="123 Main St",
+            california_id="A1357246",
+            email="jbs@example.com",
+            eye_color=EyeColorEnum.BLUE,
+            hair_color=HairColorEnum.BLACK,
+            height_in_inches=72,
+            important_notes="important notes",
+            living_situation=LivingSituationEnum.OPEN_AIR,
+            mailing_address="123 Mail St",
+            marital_status=MaritalStatusEnum.DIVORCED,
+            physical_description="physdesc",
+            place_of_birth="Los Angeles",
+            preferred_communication=[PreferredCommunicationEnum.CALL],
+            preferred_language=LanguageEnum.ARABIC,
+            pronouns=PronounEnum.OTHER,
+            pronouns_other="pronouns",
+            residence_address="123 Res St",
+            residence_geolocation=Point(self.residence_geolocation),
+            spoken_languages=[LanguageEnum.ENGLISH, LanguageEnum.SPANISH],
+            created_by=self.org_1_case_manager_1,
+        )
+        content_type = ContentType.objects.get_for_model(HmisClientProfile)
+        PhoneNumber.objects.create(
+            content_type=content_type,
+            object_id=self.hmis_client_profile.pk,
+            number="2125551212",
+            is_primary=True,
+        )
+
+    @scrubbed_vcr.use_cassette("test_create_hmis_client_profile_mutation_minimal.yaml")
+    def test_create_hmis_client_profile_mutation_minimal(self) -> None:
+        variables = {
+            "firstName": "Edgar",
+            "lastName": "Poe",
+            "nameQuality": HmisNameQualityEnum.FULL.name,
+        }
+        response = self._create_hmis_client_profile_fixture(variables)
+        client = response["data"]["createHmisClientProfile"]
+
+        expected = {
+            # ID & Metadata Fields
+            "hmisId": ANY,
+            "uniqueIdentifier": ANY,
+            "personalId": None,
+            "addedDate": ANY,
+            "lastUpdated": ANY,
+            # Client Fields
+            "alias": None,
+            "birthDate": None,
+            "dobQuality": HmisDobQualityEnum.NOT_COLLECTED.name,
+            "firstName": "Edgar",
+            "lastName": "Poe",
+            "nameQuality": HmisNameQualityEnum.FULL.name,
+            "ssn1": "***",
+            "ssn2": "**",
+            "ssn3": "xxxx",
+            "ssnQuality": HmisSsnQualityEnum.NOT_COLLECTED.name,
+            # Client Sub Fields
+            "age": 0,
+            "gender": [HmisGenderEnum.NOT_COLLECTED.name],
+            "genderIdentityText": None,
+            "nameMiddle": None,
+            "nameSuffix": None,
+            "raceEthnicity": [HmisRaceEnum.NOT_COLLECTED.name],
+            "additionalRaceEthnicityDetail": None,
+            "veteran": HmisVeteranStatusEnum.NOT_COLLECTED.name,
+            # BA Fields
+            "adaAccommodation": None,
+            "address": None,
+            "californiaId": None,
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "email": None,
+            "eyeColor": None,
+            "hairColor": None,
+            "heightInInches": None,
+            "importantNotes": None,
+            "livingSituation": None,
+            "mailingAddress": None,
+            "maritalStatus": None,
+            "phoneNumbers": [],
+            "physicalDescription": None,
+            "placeOfBirth": None,
+            "preferredCommunication": None,
+            "preferredLanguage": None,
+            "profilePhoto": None,
+            "pronouns": None,
+            "pronounsOther": None,
+            "residenceAddress": None,
+            "residenceGeolocation": None,
+            "spokenLanguages": None,
+        }
+
+        self.assertEqual(expected, client)
+
+    @scrubbed_vcr.use_cassette("test_update_hmis_client_profile_mutation.yaml")
+    def test_update_hmis_client_profile_mutation(self) -> None:
+        hmis_client_profile = HmisClientProfile.objects.create(
+            # ID Fields
+            hmis_id="384",
+            unique_identifier="9AD65C3CF",
+            # Client Fields
+            dob_quality=HmisDobQualityEnum.NOT_COLLECTED,
+            first_name="Edgar",
+            last_name="Poe",
+            name_quality=HmisNameQualityEnum.FULL,
+            ssn3="xxxx",
+            ssn_quality=HmisSsnQualityEnum.NOT_COLLECTED,
+            # Client Sub Fields
+            gender=[HmisGenderEnum.NOT_COLLECTED],
+            race_ethnicity=[HmisRaceEnum.NOT_COLLECTED],
+            veteran=HmisVeteranStatusEnum.NOT_COLLECTED,
+            created_by=self.org_1_case_manager_1,
+        )
+
+        variables = {
+            "hmisId": str(hmis_client_profile.hmis_id),
+            #
+            "alias": "the raven",
+            "birthDate": datetime.date.fromisoformat("1909-01-19"),
+            "dobQuality": HmisDobQualityEnum.FULL.name,
+            "firstName": "Eddie",
+            "lastName": "Po",
+            "nameQuality": HmisNameQualityEnum.FULL.name,
+            "ssn1": "13",
+            "ssn2": "57",
+            "ssn3": "9246",
+            "ssnQuality": HmisSsnQualityEnum.FULL.name,
+            #
+            "gender": [HmisGenderEnum.MAN_BOY.name],
+            "genderIdentityText": "genid",
+            "nameMiddle": "Allen",
+            "nameSuffix": HmisSuffixEnum.FIRST.name,
+            "raceEthnicity": [HmisRaceEnum.WHITE.name],
+            "additionalRaceEthnicityDetail": None,
+            "veteran": HmisVeteranStatusEnum.NO.name,
+            #
+            "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
+            "address": "3 Amity St.",
+            "californiaId": "R0192837",
+            "email": "ed@example.com",
+            "eyeColor": EyeColorEnum.BROWN.name,
+            "hairColor": HairColorEnum.BROWN.name,
+            "heightInInches": 68.0,
+            "importantNotes": "spooky",
+            "livingSituation": LivingSituationEnum.HOUSING.name,
+            "mailingAddress": "3 Amity Mail St.",
+            "maritalStatus": MaritalStatusEnum.SINGLE.name,
+            "phoneNumbers": [{"number": "6175551212", "isPrimary": True}],
+            "physicalDescription": "tall",
+            "placeOfBirth": "Boston",
+            "preferredCommunication": [PreferredCommunicationEnum.CALL.name],
+            "preferredLanguage": LanguageEnum.ENGLISH.name,
+            "profilePhoto": None,
+            "pronouns": PronounEnum.HE_HIM_HIS.name,
+            "pronounsOther": None,
+            "residenceAddress": "3 Amity Res St.",
+            "residenceGeolocation": self.residence_geolocation,
+            "spokenLanguages": [LanguageEnum.ENGLISH.name],
+        }
+        response = self._update_hmis_client_profile_fixture(variables)
+        client = response["data"]["updateHmisClientProfile"]
+
+        expected = {
+            "hmisId": ANY,
+            "uniqueIdentifier": ANY,
+            "personalId": ANY,
+            "addedDate": ANY,
+            "lastUpdated": ANY,
+            #
+            "alias": "the raven",
+            "birthDate": "1909-01-19",
+            "dobQuality": HmisDobQualityEnum.FULL.name,
+            "firstName": "Eddie",
+            "lastName": "Po",
+            "nameQuality": HmisNameQualityEnum.FULL.name,
+            "ssn1": "***",
+            "ssn2": "**",
+            "ssn3": "9246",
+            "ssnQuality": HmisSsnQualityEnum.FULL.name,
+            #
+            "age": 116,
+            "gender": [HmisGenderEnum.MAN_BOY.name],
+            "genderIdentityText": "genid",
+            "nameMiddle": "Allen",
+            "nameSuffix": HmisSuffixEnum.FIRST.name,
+            "raceEthnicity": [HmisRaceEnum.WHITE.name],
+            "additionalRaceEthnicityDetail": None,
+            "veteran": HmisVeteranStatusEnum.NO.name,
+            #
+            "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
+            "address": "3 Amity St.",
+            "californiaId": "R0192837",
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+            "email": "ed@example.com",
+            "eyeColor": EyeColorEnum.BROWN.name,
+            "hairColor": HairColorEnum.BROWN.name,
+            "heightInInches": 68.0,
+            "importantNotes": "spooky",
+            "livingSituation": LivingSituationEnum.HOUSING.name,
+            "mailingAddress": "3 Amity Mail St.",
+            "maritalStatus": MaritalStatusEnum.SINGLE.name,
+            "phoneNumbers": [{"id": ANY, "number": "6175551212", "isPrimary": True}],
+            "physicalDescription": "tall",
+            "placeOfBirth": "Boston",
+            "preferredCommunication": [PreferredCommunicationEnum.CALL.name],
+            "preferredLanguage": LanguageEnum.ENGLISH.name,
+            "profilePhoto": None,
+            "pronouns": PronounEnum.HE_HIM_HIS.name,
+            "pronounsOther": None,
+            "residenceAddress": "3 Amity Res St.",
+            "residenceGeolocation": self.residence_geolocation,
+            "spokenLanguages": [LanguageEnum.ENGLISH.name],
+        }
+
+        self.assertEqual(expected, client)
+
+
 @override_settings(AUTHENTICATION_BACKENDS=["django.contrib.auth.backends.ModelBackend"])
 class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
     def setUp(self) -> None:
@@ -153,7 +422,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
     @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_hmis_login_success(self) -> None:
         with patch(
-            "hmis.api_bridge.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=self.success_response,
         ):
             resp = self.execute_graphql(
@@ -192,7 +461,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -207,7 +476,7 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
 
     def test_hmis_login_unknown_email_no_autocreate(self) -> None:
         with patch(
-            "hmis.api_bridge.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=self.success_response,
         ):
             resp = self.execute_graphql(
@@ -274,7 +543,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -352,7 +621,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
@@ -420,7 +689,7 @@ class HmisCreateClientMutationTests(GraphQLBaseTestCase, TestCase):
         }
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge.update_client",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge.update_client",
             return_value=return_value,
         ):
             resp = self.execute_graphql(
