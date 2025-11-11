@@ -157,6 +157,7 @@ UPDATE_CLIENT_NOTE_MUTATION = """
 """
 
 
+@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
 class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -222,7 +223,6 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             is_primary=True,
         )
 
-    @override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
     @scrubbed_vcr.use_cassette("test_create_hmis_client_profile_mutation_minimal.yaml")
     def test_create_hmis_client_profile_mutation_minimal(self) -> None:
         variables = {
@@ -288,7 +288,6 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
 
         self.assertEqual(expected, client)
 
-    @override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
     @scrubbed_vcr.use_cassette("test_update_hmis_client_profile_mutation.yaml")
     def test_update_hmis_client_profile_mutation(self) -> None:
         hmis_client_profile = HmisClientProfile.objects.create(

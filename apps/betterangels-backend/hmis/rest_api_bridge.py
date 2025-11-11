@@ -15,9 +15,6 @@ from hmis.types import CreateHmisClientProfileInput
 from strawberry import UNSET, Info
 from strawberry.utils.str_converters import to_snake_case
 
-HMIS_REST_ENDPOINT = getattr(settings, "HMIS_REST_URL", None)
-HMIS_HOST = getattr(settings, "HMIS_HOST", None)
-
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 METADATA_FIELDS = {
@@ -82,7 +79,8 @@ class HmisRestApiBridge:
         self.info = info
         self.request = self.info.context["request"]
         self.session = self.request.session
-
+        HMIS_REST_ENDPOINT = getattr(settings, "HMIS_REST_URL", None)
+        HMIS_HOST = getattr(settings, "HMIS_HOST", None)
         if not all([HMIS_REST_ENDPOINT, HMIS_SESSION_KEY_NAME, HMIS_HOST]):
             raise Exception("HMIS not configured")
 
