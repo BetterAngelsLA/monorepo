@@ -2,8 +2,8 @@ import os
 import uuid
 from typing import Any, Optional
 
-from accounts.models import User
 import pghistory
+from accounts.models import User
 from clients.enums import PronounEnum
 from clients.models import AbstractClientProfile
 from django.contrib.postgres.fields import ArrayField

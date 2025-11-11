@@ -27,5 +27,7 @@ services:
       - AWS_SECRET_ACCESS_KEY
       - AWS_SESSION_TOKEN
       - INPUT_GITHUB_TOKEN
+      - HMIS_REST_URL
+      - HMIS_HOST
       # App Secrets
       - VITE_SHELTER_GOOGLE_MAPS_API_KEY
