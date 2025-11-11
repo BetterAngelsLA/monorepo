@@ -586,6 +586,10 @@ type DeletedObjectType {
   id: Int!
 }
 
+type DeleteShelterPayload {
+    success: Boolean!
+}
+
 enum DemographicChoices {
   ALL
   SINGLE_MEN
@@ -1274,6 +1278,7 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
+  deleteShelter(id: ID!): DeleteShelterPayload!
 }
 
 scalar NonBlankString

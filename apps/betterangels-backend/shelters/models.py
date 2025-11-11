@@ -10,6 +10,7 @@ from django.contrib.gis.db.models import PointField
 from django.contrib.gis.geos import Point
 from django.core.files.storage import default_storage
 from django.db import models
+from django.utils import timezone
 from django_choices_field import IntegerChoicesField, TextChoicesField
 from django_ckeditor_5.fields import CKEditor5Field
 from organizations.models import Organization
@@ -302,6 +303,7 @@ class Shelter(BaseModel):
 
     # Better Angels Admin
     status = TextChoicesField(choices_enum=StatusChoices, default=StatusChoices.DRAFT)
+    deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
 
     class Meta:
         permissions = permission_enums_to_django_meta_permissions([ShelterFieldPermissions])
@@ -319,6 +321,10 @@ class Shelter(BaseModel):
             self.geolocation = None
 
         super().save(*args, **kwargs)
+
+    def delete_shelter(self) -> None:
+        self.deleted_at = timezone.now()
+        self.save(update_fields=["deleted_at"])
 
 
 @pghistory.track(
