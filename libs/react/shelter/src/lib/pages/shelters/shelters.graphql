@@ -30,3 +30,12 @@ query ViewShelters(
     }
   }
 }
+
+query ViewSheltersByOrganization{
+  sheltersByOrganization(organizationId: 1) {
+    results {
+      id
+      name
+    }
+  }
+}

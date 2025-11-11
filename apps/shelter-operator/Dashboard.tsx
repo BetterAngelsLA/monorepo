@@ -1,4 +1,4 @@
-import { Button, Flex } from '@chakra-ui/react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShelterCard } from './ShelterCard';
 
@@ -7,7 +7,7 @@ export type Shelter = {
   name: string;
   address: string;
   image?: { file: { url: string; name: string } };
-  capacity: number;
+  capacity: number | null;
 };
 
 const shelters: Shelter[] = [
@@ -30,7 +30,7 @@ const shelters: Shelter[] = [
     image: {
       file: {
         url: 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png',
-        name: 'img-1',
+        name: 'img-2',
       },
     },
     capacity: 30,
@@ -42,7 +42,7 @@ const shelters: Shelter[] = [
     image: {
       file: {
         url: 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png',
-        name: 'img-1',
+        name: 'img-3',
       },
     },
     capacity: 60,
@@ -60,7 +60,7 @@ const shelters: Shelter[] = [
     image: {
       file: {
         url: 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png',
-        name: 'img-1',
+        name: 'img-4',
       },
     },
     capacity: null,
@@ -72,7 +72,7 @@ const shelters: Shelter[] = [
     image: {
       file: {
         url: 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png',
-        name: 'img-1',
+        name: 'img-5',
       },
     },
     capacity: 35,
@@ -81,26 +81,26 @@ const shelters: Shelter[] = [
 
 export default function Dashboard() {
   return (
-    <Flex direction="column" p="2rem" gap="2rem">
-      {/* Top row with Back and another button */}
-      <Flex align="center" justify="space-between">
+    <div className="flex flex-col p-8 gap-8">
+      {/* Top row with Back and Add Shelter buttons */}
+      <div className="flex items-center justify-between">
         <Link to="/operator">
-          <Button variant="outline" size="sm">
+          <button className="px-4 py-2 border border-gray-400 rounded hover:bg-gray-100 text-sm">
             Back
-          </Button>
+          </button>
         </Link>
 
-        <Button variant="solid" size="sm" colorScheme="blue">
+        <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
           Add Shelter
-        </Button>
-      </Flex>
+        </button>
+      </div>
 
       {/* Grid of shelter cards */}
-      <Flex flexWrap="wrap" gap="1.5rem">
+      <div className="grid grid-cols-2 xl:grid-cols-4 gap-6">
         {shelters.map((shelter) => (
           <ShelterCard key={shelter.id} shelter={shelter} />
         ))}
-      </Flex>
-    </Flex>
+      </div>
+    </div>
   );
 }

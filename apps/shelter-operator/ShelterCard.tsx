@@ -1,4 +1,4 @@
-import { Flex, Text } from '@chakra-ui/react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Shelter } from './Dashboard';
 
@@ -10,41 +10,33 @@ export function ShelterCard({
   shelter: { name, image, address, capacity },
 }: TShelterCard) {
   return (
-    <Flex
-      direction="column"
-      borderWidth="0.0625rem"
-      borderRadius="0.75rem"
-      p="1.5rem"
-      bg="gray.50"
-      borderColor="gray.200"
-      boxShadow="sm"
-      gap="0.5rem"
-      flex="0 0 16rem"
-    >
-      <Flex bg="gray.100" borderRadius="0.5rem" h="8rem">
-         <img
-          src={image?.file.url}
-          alt={image?.file.name}
-          className="w-full h-48 object-cover rounded-xl mb-4"
+    <div className="flex flex-col border border-gray-200 rounded-xl p-6 bg-gray-50 shadow-sm gap-2 w-full">
+      <div className="bg-gray-100 rounded-lg h-32 overflow-hidden">
+        <img
+          src={
+            image?.file.url ??
+            'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png'
+          }
+          alt={image?.file.name ?? name}
+          className="w-full h-full object-cover rounded-lg"
         />
-      </Flex>
-      <Text textStyle="headingMd" m={0}>
-        {name}
-      </Text>
-      <Text textStyle="bodySm" color="gray.600" m={0}>
-        {address}
-      </Text>
+      </div>
 
-      {capacity ? <Text textStyle="bodySm" color="gray.700" m={0}>
-        Beds Available: {capacity}
-      </Text> : <Text textStyle="bodySm" color="gray.700" m={0}>
-        Beds Available: Data Not Available
-      </Text>}
+      <h3 className="text-lg font-semibold m-0">{name}</h3>
+      <p className="text-sm text-gray-600 m-0">{address}</p>
 
-      <Link to="/operator/dashboard/#">
-        <button>See More</button>
+      <p className="text-sm text-gray-700 m-0">
+        Beds Available:{' '}
+        {capacity !== null && capacity !== undefined
+          ? capacity
+          : 'Data Not Available'}
+      </p>
+
+      <Link to="/operator/dashboard/#" className="mt-2">
+        <button className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition">
+          See More
+        </button>
       </Link>
-
-    </Flex>
+    </div>
   );
 }
