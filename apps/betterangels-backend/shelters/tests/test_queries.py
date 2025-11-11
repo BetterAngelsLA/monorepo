@@ -621,3 +621,42 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         results = response["data"]["shelters"]["results"]
 
         self.assertEqual(len(results), expected_result_count)
+
+    def test_shelter_soft_delete(self) -> None:
+        shelter = shelter_recipe.make()
+
+        mutation = """
+            mutation DeleteShelter($id: ID!) {
+                deleteShelter(id: $id) {
+                    success
+                }
+            }
+        """
+        variables = {"id": shelter.pk}
+
+        expected_query_count = 9
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(mutation, variables)
+
+        self.assertTrue(response["data"]["deleteShelter"]["success"])
+
+        shelter.refresh_from_db()
+        self.assertIsNotNone(shelter.deleted_at)
+
+    def test_delete_shelter_not_found(self) -> None:
+        mutation = """
+            mutation DeleteShelter($id: ID!) {
+                deleteShelter(id: $id) {
+                    success
+                }
+            }
+        """
+        variables = {"id": 999999}  # Non-existent shelter ID
+
+        expected_query_count = 1
+        with self.assertNumQueries(expected_query_count):
+            response = self.execute_graphql(mutation, variables)
+
+        self.assertIsNone(response["data"])
+        self.assertEqual(len(response["errors"]), 1)
+        self.assertEqual(response["errors"][0]["message"], "Shelter not found.")
