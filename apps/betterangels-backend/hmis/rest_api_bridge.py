@@ -83,7 +83,7 @@ class HmisRestApiBridge:
         self.request = self.info.context["request"]
         self.session = self.request.session
 
-        if HMIS_REST_ENDPOINT is None or HMIS_SESSION_KEY_NAME is None or HMIS_HOST is None:
+        if not all([HMIS_REST_ENDPOINT, HMIS_SESSION_KEY_NAME, HMIS_HOST]):
             raise Exception("HMIS not configured")
 
         self.endpoint = HMIS_REST_ENDPOINT
