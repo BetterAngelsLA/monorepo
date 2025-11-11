@@ -7,6 +7,10 @@ export default function Dashboard() {
         <button>Back</button>
       </Link>
       <div>Welcome to the Operator Dashboard</div>
+
+      <Link to="/operator/dashboard/create">
+        <button>Add Shelter</button>
+      </Link>
     </div>
   );
 }

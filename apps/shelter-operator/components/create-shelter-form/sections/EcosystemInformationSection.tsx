@@ -1,0 +1,83 @@
+import {
+  CITY_COUNCIL_DISTRICT_OPTIONS,
+  FUNDERS_OPTIONS,
+  LA_CITIES_OPTIONS,
+  SHELTER_PROGRAMS_OPTIONS,
+  SPA_OPTIONS,
+  SUPERVISORIAL_DISTRICT_OPTIONS,
+} from '../../../types';
+import { CheckboxGroup } from '../components/CheckboxGroup';
+import { FormSection } from '../components/FormSection';
+import { SelectField } from '../components/SelectField';
+import { TextField } from '../components/TextField';
+import type { SectionProps } from '../types';
+import { mapToCheckboxOptions } from '../utils/formUtils';
+
+const cityOptions = mapToCheckboxOptions(LA_CITIES_OPTIONS);
+const shelterProgramOptions = mapToCheckboxOptions(SHELTER_PROGRAMS_OPTIONS);
+const funderOptions = mapToCheckboxOptions(FUNDERS_OPTIONS);
+
+export function EcosystemInformationSection({ data, onChange }: SectionProps) {
+  return (
+    <FormSection title="Ecosystem Information">
+      <CheckboxGroup
+        name="cities"
+        label="Cities Served"
+        options={cityOptions}
+        values={data.cities}
+        onChange={values => onChange('cities', values)}
+      />
+      <CheckboxGroup
+        name="spa"
+        label="SPA (Service Planning Area)"
+        options={SPA_OPTIONS}
+        values={data.spa}
+        onChange={values => onChange('spa', values)}
+      />
+      <SelectField
+        id="city-council-district"
+        name="city_council_district"
+        label="City Council District"
+        options={CITY_COUNCIL_DISTRICT_OPTIONS}
+        value={data.city_council_district}
+        onChange={value => onChange('city_council_district', value)}
+      />
+      <SelectField
+        id="supervisorial-district"
+        name="supervisorial_district"
+        label="Supervisorial District"
+        options={SUPERVISORIAL_DISTRICT_OPTIONS}
+        value={data.supervisorial_district}
+        onChange={value => onChange('supervisorial_district', value)}
+      />
+      <CheckboxGroup
+        name="shelter-programs"
+        label="Shelter Programs"
+        options={shelterProgramOptions}
+        values={data.shelter_programs}
+        onChange={values => onChange('shelter_programs', values)}
+      />
+      <TextField
+        id="shelter-programs-other"
+        name="shelter_programs_other"
+        label="Other Shelter Programs"
+        value={data.shelter_programs_other}
+        onChange={value => onChange('shelter_programs_other', value)}
+      />
+      <CheckboxGroup
+        name="funders"
+        label="Funders"
+        options={funderOptions}
+        values={data.funders}
+        onChange={values => onChange('funders', values)}
+      />
+      <TextField
+        id="funders-other"
+        name="funders_other"
+        label="Other Funders"
+        value={data.funders_other}
+        onChange={value => onChange('funders_other', value)}
+      />
+    </FormSection>
+  );
+}
