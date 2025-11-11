@@ -1,12 +1,12 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { usePathname, useRouter } from 'expo-router';
 import { Pressable, StyleSheet } from 'react-native';
-import { HmisClientNoteListType } from '../../apollo';
+import { HmisClientNoteType } from '../../apollo';
 import ProgramNoteCardClient from './ProgramNoteCardClient';
 import ProgramNoteCardHeader from './ProgramNoteCardHeader';
 
 interface INoteCardProps {
-  note: HmisClientNoteListType['items'][number];
+  note: HmisClientNoteType;
   variant: 'interactions' | 'clientProfile';
   hasBorder?: boolean;
   onPress?: () => void;

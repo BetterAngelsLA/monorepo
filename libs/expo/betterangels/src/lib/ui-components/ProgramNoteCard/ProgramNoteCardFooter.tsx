@@ -1,17 +1,16 @@
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { View } from 'react-native';
 
 interface IProgramNoteCardFooterProps {
-  isSubmitted: boolean;
   interactedAt: string;
 }
 
 export default function ProgramNoteCardFooter(
   props: IProgramNoteCardFooterProps
 ) {
-  const { isSubmitted, interactedAt } = props;
+  const { interactedAt } = props;
   return (
     <View
       style={{
@@ -25,19 +24,6 @@ export default function ProgramNoteCardFooter(
           {format(new Date(interactedAt), 'MM/dd/yyyy')}
         </TextRegular>
       </View>
-      {!isSubmitted && (
-        <View
-          style={{
-            backgroundColor: Colors.PRIMARY_EXTRA_LIGHT,
-            paddingHorizontal: Spacings.xxs,
-            borderRadius: 20,
-          }}
-        >
-          <TextRegular size="xs" color={Colors.NEUTRAL_EXTRA_DARK}>
-            Draft
-          </TextRegular>
-        </View>
-      )}
     </View>
   );
 }
