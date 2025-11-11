@@ -9,6 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from hmis.models import HmisClientProfile
 from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasRetvalPerm
@@ -57,8 +58,9 @@ class Mutation:
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
         client_data = hmis_api_bridge.create_client(data)
+        current_user = get_current_user(info)
 
-        hmis_client_profile = resolvers.create(info, HmisClientProfile, client_data)
+        hmis_client_profile = resolvers.create(info, HmisClientProfile, {**client_data, "created_by": current_user})
 
         return cast(HmisClientProfileType, hmis_client_profile)
 

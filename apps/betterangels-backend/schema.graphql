@@ -873,6 +873,7 @@ type HmisClientProfileType {
   lastUpdated: DateTime
   age: Int
   phoneNumbers: [PhoneNumberType!]
+  createdBy: UserType
 }
 
 type HmisClientProfileTypeOffsetPaginated {

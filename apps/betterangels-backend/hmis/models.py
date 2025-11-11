@@ -2,6 +2,7 @@ import os
 import uuid
 from typing import Any, Optional
 
+from accounts.models import User
 import pghistory
 from clients.enums import PronounEnum
 from clients.models import AbstractClientProfile
@@ -83,6 +84,7 @@ class HmisClientProfile(AbstractClientProfile):
     veteran = IntegerChoicesField(choices_enum=HmisVeteranStatusEnum, default=HmisVeteranStatusEnum.NOT_COLLECTED)
     added_date = models.DateTimeField(blank=True, null=True)
     last_updated = models.DateTimeField(blank=True, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     objects = models.Manager()
 

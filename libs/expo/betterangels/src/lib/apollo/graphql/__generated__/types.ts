@@ -848,6 +848,7 @@ export type HmisClientProfileType = {
   alias?: Maybe<Scalars['String']['output']>;
   birthDate?: Maybe<Scalars['Date']['output']>;
   californiaId?: Maybe<Scalars['String']['output']>;
+  createdBy?: Maybe<UserType>;
   dobQuality?: Maybe<HmisDobQualityEnum>;
   email?: Maybe<Scalars['NonBlankString']['output']>;
   eyeColor?: Maybe<EyeColorEnum>;

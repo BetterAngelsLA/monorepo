@@ -56,6 +56,8 @@ class HmisClientProfileBaseTestCase(GraphQLBaseTestCase):
             residenceAddress
             residenceGeolocation
             spokenLanguages
+
+            createdBy { id }
         """
 
     def _create_hmis_client_profile_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:

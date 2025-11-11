@@ -212,6 +212,7 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             residence_address="123 Res St",
             residence_geolocation=Point(self.residence_geolocation),
             spoken_languages=[LanguageEnum.ENGLISH, LanguageEnum.SPANISH],
+            created_by=self.org_1_case_manager_1,
         )
         content_type = ContentType.objects.get_for_model(HmisClientProfile)
         PhoneNumber.objects.create(
@@ -262,6 +263,7 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             "adaAccommodation": None,
             "address": None,
             "californiaId": None,
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "email": None,
             "eyeColor": None,
             "hairColor": None,
@@ -302,6 +304,7 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             gender=[HmisGenderEnum.NOT_COLLECTED],
             race_ethnicity=[HmisRaceEnum.NOT_COLLECTED],
             veteran=HmisVeteranStatusEnum.NOT_COLLECTED,
+            created_by=self.org_1_case_manager_1,
         )
 
         variables = {
@@ -382,6 +385,7 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             "adaAccommodation": [AdaAccommodationEnum.HEARING.name],
             "address": "3 Amity St.",
             "californiaId": "R0192837",
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "email": "ed@example.com",
             "eyeColor": EyeColorEnum.BROWN.name,
             "hairColor": HairColorEnum.BROWN.name,

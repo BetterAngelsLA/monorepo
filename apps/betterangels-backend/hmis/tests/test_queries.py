@@ -292,6 +292,7 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             residence_address="123 Res St",
             residence_geolocation=Point(self.residence_geolocation),
             spoken_languages=[LanguageEnum.ENGLISH, LanguageEnum.SPANISH],
+            created_by=self.org_1_case_manager_1,
         )
         content_type = ContentType.objects.get_for_model(HmisClientProfile)
         PhoneNumber.objects.create(
@@ -345,6 +346,7 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             "adaAccommodation": [AdaAccommodationEnum.HEARING.name, AdaAccommodationEnum.MOBILITY.name],
             "address": "123 Main St",
             "californiaId": "A1357246",
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
             "email": "jbs@example.com",
             "eyeColor": EyeColorEnum.BLUE.name,
             "hairColor": HairColorEnum.BLACK.name,

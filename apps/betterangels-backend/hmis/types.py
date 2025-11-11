@@ -387,6 +387,7 @@ class HmisClientProfileType(HmisClientProfileBaseType):
     last_updated: Optional[datetime.datetime]
     age: Optional[int]
     phone_numbers: Optional[list[PhoneNumberType]]  # type: ignore
+    created_by: Optional[UserType]
 
 
 @strawberry_django.input(HmisClientProfile, partial=True)
