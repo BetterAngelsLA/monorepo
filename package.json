@@ -15,8 +15,11 @@
   },
   "dependencies": {
     "@apollo/client": "^3.11.1",
+    "@chakra-ui/react": "^3.29.0",
     "@config-plugins/react-native-blob-util": "^9.0.0",
     "@config-plugins/react-native-pdf": "^9.0.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@gorhom/bottom-sheet": "^5",
     "@hookform/resolvers": "^5.2.1",
     "@likashefqet/react-native-image-zoom": "^4.2.1",
