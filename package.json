@@ -210,9 +210,6 @@
     "vitest": "^1.6.1"
   },
   "resolutions": {
-    "cookie": ">=0.7.0",
-    "cross-spawn": ">=7.0.5",
-    "micromatch": ">=4.0.8",
     "react-native-maps": "^1.26.17",
     "react-native-keyboard-controller": "1.19.1",
     "ws": ">=8.17.1",
