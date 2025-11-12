@@ -1,7 +1,15 @@
-import { FetchResult } from '@apollo/client';
+import { ApolloLink } from '@apollo/client';
 import { TApiValidationError } from './types';
 
-export function extractExtensionErrors(response: FetchResult) {
+type MinimalResult = {
+  errors?: readonly {
+    extensions?: Record<string, unknown>;
+  }[];
+};
+
+export function extractExtensionErrors(
+  response: ApolloLink.Result | MinimalResult
+) {
   const errors = response.errors?.[0];
 
   return errors?.extensions?.['errors'] as TApiValidationError[] | undefined;

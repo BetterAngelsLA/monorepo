@@ -1,3 +1,4 @@
+import { useMutation } from '@apollo/client/react';
 import {
   DeleteIcon,
   DownloadIcon,
@@ -13,7 +14,7 @@ import { ClientDocumentType } from '../apollo';
 import { useSnackbar } from '../hooks';
 import {
   ClientProfileDocument,
-  useDeleteClientDocumentMutation,
+  DeleteClientDocumentDocument,
 } from '../screens/Client/__generated__/Client.generated';
 import { MainModal } from './MainModal';
 
@@ -33,7 +34,7 @@ export default function DocumentModal({
   const { showSnackbar } = useSnackbar();
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  const [deleteDocument] = useDeleteClientDocumentMutation({
+  const [deleteDocument] = useMutation(DeleteClientDocumentDocument, {
     refetchQueries: [
       { query: ClientProfileDocument, variables: { id: clientId } },
     ],

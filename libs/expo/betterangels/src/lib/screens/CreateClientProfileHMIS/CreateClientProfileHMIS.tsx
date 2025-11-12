@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
@@ -16,12 +17,14 @@ import {
   FALLBACK_NAME_DATA_QUALITY_INT,
   FALLBACK_NAME_SUFFIX_INT,
 } from '../ClientHMISEdit/constants';
-import { useCreateHmisClientMutation } from './__generated__/createHmisClient.generated';
+import { CreateHmisClientDocument } from './__generated__/createHmisClient.generated';
 
 export function CreateClientProfileHMIS() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [createHMISClientMutation] = useCreateHmisClientMutation();
+  const [createHMISClientMutation] = useMutationWithErrors(
+    CreateHmisClientDocument
+  );
 
   const formMethods = useForm<TFullNameFormSchema>({
     resolver: zodResolver(FullNameFormSchema),

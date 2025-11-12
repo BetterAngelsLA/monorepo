@@ -1,4 +1,5 @@
-import { InMemoryCache, useApolloClient } from '@apollo/client';
+import { InMemoryCache } from '@apollo/client';
+import { useApolloClient } from '@apollo/client/react';
 import { useMemo } from 'react';
 import { assertQueryFieldHasMerge } from '../cachePolicy/utils/assertQueryFieldHasMerge';
 

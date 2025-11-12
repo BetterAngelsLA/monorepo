@@ -1,6 +1,7 @@
+import { useMutation } from '@apollo/client/react';
 import { useRouter } from 'expo-router';
 import { useSnackbar } from '../../../../hooks';
-import { useDeleteClientProfileMutation } from '../../../ClientProfileForms/ClientProfileForm/__generated__/clientProfile.generated';
+import { DeleteClientProfileDocument } from '../../../ClientProfileForms/ClientProfileForm/__generated__/clientProfile.generated';
 
 type TProps = {
   clientProfileId?: string;
@@ -12,8 +13,9 @@ export function useDeleteClientProfile(props: TProps) {
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [deleteClientProfile, { loading, error }] =
-    useDeleteClientProfileMutation();
+  const [deleteClientProfile, { loading, error }] = useMutation(
+    DeleteClientProfileDocument
+  );
 
   const deleteProfile = async (id: string) => {
     try {

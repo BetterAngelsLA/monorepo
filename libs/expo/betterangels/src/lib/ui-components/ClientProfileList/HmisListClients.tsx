@@ -1,3 +1,4 @@
+import { useQuery } from '@apollo/client/react';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { FlashList } from '@shopify/flash-list';
 import { ReactElement, useCallback, useEffect, useState } from 'react';
@@ -13,7 +14,7 @@ import { pagePaddingHorizontal } from '../../static';
 import { ClientProfileListHeader } from './ClientProfileListHeader';
 import { ListEmptyState } from './ListEmptyState';
 import { ListLoadingView } from './ListLoadingView';
-import { useHmisListClientsQuery } from './__generated__/HmisListClients.generated';
+import { HmisListClientsDocument } from './__generated__/HmisListClients.generated';
 import { DEFAULT_ITEM_GAP, DEFAULT_PAGINATION_LIMIT } from './constants';
 import { ListHeaderProps } from './types';
 
@@ -49,7 +50,7 @@ export function HmisListClients(props: TProps) {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [clients, setClients] = useState<TClient[] | undefined>(undefined);
 
-  const { data, loading } = useHmisListClientsQuery({
+  const { data, loading } = useQuery(HmisListClientsDocument, {
     variables: { filter, pagination: { page, perPage: paginationLimit } },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',

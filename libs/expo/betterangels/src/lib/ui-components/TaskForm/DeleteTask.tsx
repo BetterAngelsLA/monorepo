@@ -1,9 +1,10 @@
+import { useMutation } from '@apollo/client/react';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { DeleteModal, TextBold } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSnackbar } from '../../hooks';
-import { useDeleteTaskMutation } from './__generated__/deleteTask.generated';
+import { DeleteTaskDocument } from './__generated__/deleteTask.generated';
 
 type TDeleteTaskProps = {
   id?: string;
@@ -17,28 +18,31 @@ export default function DeleteTask(props: TDeleteTaskProps) {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-  const [deleteTask, { loading: isDeleting }] = useDeleteTaskMutation({
-    update(cache, { data }) {
-      if (data?.deleteTask?.__typename !== 'DeletedObjectType') {
-        console.error(
-          `[DeleteTask] failed to delete Task id [${id}]. __typename DeletedObjectType missing from response.`
-        );
+  const [deleteTask, { loading: isDeleting }] = useMutation(
+    DeleteTaskDocument,
+    {
+      update(cache, { data }) {
+        if (data?.deleteTask?.__typename !== 'DeletedObjectType') {
+          console.error(
+            `[DeleteTask] failed to delete Task id [${id}]. __typename DeletedObjectType missing from response.`
+          );
 
-        return;
-      }
+          return;
+        }
 
-      // Cache store ID is a string, so must convert
-      const deletedId = String(data.deleteTask.id);
+        // Cache store ID is a string, so must convert
+        const deletedId = String(data.deleteTask.id);
 
-      cache.evict({
-        // Note `__typename: 'TaskType'` is not in the response payload. It uses a generic `DeletedObjectType`.
-        id: cache.identify({ __typename: 'TaskType', id: deletedId }),
-      });
+        cache.evict({
+          // Note `__typename: 'TaskType'` is not in the response payload. It uses a generic `DeletedObjectType`.
+          id: cache.identify({ __typename: 'TaskType', id: deletedId }),
+        });
 
-      // clean up
-      cache.gc();
-    },
-  });
+        // clean up
+        cache.gc();
+      },
+    }
+  );
 
   if (!id) {
     return null;
