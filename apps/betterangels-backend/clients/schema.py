@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import Any, Dict, List, Optional, cast
 
@@ -469,7 +470,6 @@ class Mutation:
                     try:
                         client_profile.profile_photo.delete(save=False)
                     except Exception as e:
-                        import logging
                         logger = logging.getLogger(__name__)
                         logger.error(f"Error deleting profile photo: {e}")
                 client_profile.profile_photo = None
