@@ -466,7 +466,12 @@ class Mutation:
             # Handle profile_photo deletion: if profilePhoto is explicitly None/null, clear it
             if "profile_photo" in client_profile_data and client_profile_data["profile_photo"] is None:
                 if client_profile.profile_photo:
-                    client_profile.profile_photo.delete(save=False)
+                    try:
+                        client_profile.profile_photo.delete(save=False)
+                    except Exception as e:
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.error(f"Error deleting profile photo: {e}")
                 client_profile.profile_photo = None
                 client_profile_data.pop("profile_photo", None)
 

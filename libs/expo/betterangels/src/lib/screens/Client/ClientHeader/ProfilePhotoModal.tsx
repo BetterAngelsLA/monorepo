@@ -21,28 +21,29 @@ export function ProfilePhotoModal({
   clientId,
 }: IProfilePhotoModalProps) {
   const { showSnackbar } = useSnackbar();
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [shouldShowDeleteModal, setShouldShowDeleteModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(false);
 
-  // Reset deleteModalVisible when the main modal closes
+  // Show delete modal after main modal closes (when pendingDelete is true)
   useEffect(() => {
-    if (!isModalVisible) {
-      setDeleteModalVisible(false);
-      setShouldShowDeleteModal(false);
-    }
-  }, [isModalVisible]);
-
-  // Delay mounting DeleteModal to allow MainModal to fully close
-  useEffect(() => {
-    if (deleteModalVisible) {
+    if (!isModalVisible && pendingDelete) {
+      // Delay to ensure MainModal animation completes (DUR_OUT is 200ms, adding buffer)
       const timer = setTimeout(() => {
-        setShouldShowDeleteModal(true);
+        setShowDeleteModal(true);
+        setPendingDelete(false);
       }, 350);
       return () => clearTimeout(timer);
     }
-    setShouldShowDeleteModal(false);
     return undefined;
-  }, [deleteModalVisible]);
+  }, [isModalVisible, pendingDelete]);
+
+  // Reset state when modal is closed and we're not showing delete modal
+  useEffect(() => {
+    if (!isModalVisible && !pendingDelete && !showDeleteModal) {
+      setShowDeleteModal(false);
+      setPendingDelete(false);
+    }
+  }, [isModalVisible, pendingDelete, showDeleteModal]);
 
   const [updateClientProfile] = useUpdateClientProfileMutation({
     refetchQueries: [
@@ -51,7 +52,7 @@ export function ProfilePhotoModal({
   });
 
   const deleteFile = async () => {
-    setDeleteModalVisible(false);
+    setShowDeleteModal(false);
     closeModal();
     try {
       await updateClientProfile({
@@ -71,29 +72,38 @@ export function ProfilePhotoModal({
     }
   };
 
+  const handleDeletePress = () => {
+    setPendingDelete(true);
+    closeModal();
+  };
+
   const ACTIONS = [
     {
       title: 'Delete image',
       Icon: DeleteIcon,
-      onPress: () => setDeleteModalVisible(true),
+      onPress: handleDeletePress,
     },
   ];
 
-  return shouldShowDeleteModal ? (
-    <DeleteModal
-      body="All data associated with this image will be deleted."
-      title="Delete image?"
-      onDelete={deleteFile}
-      onCancel={() => setDeleteModalVisible(false)}
-      isVisible
-      deleteableItemName="profile photo"
-    />
-  ) : (
+  if (showDeleteModal) {
+    return (
+      <DeleteModal
+        body="All data associated with this image will be deleted."
+        title="Delete image?"
+        onDelete={deleteFile}
+        onCancel={() => setShowDeleteModal(false)}
+        isVisible
+        deleteableItemName="profile photo"
+      />
+    );
+  }
+
+  return (
     <MainModal
       closeButton
       vertical
       actions={ACTIONS}
-      isModalVisible={isModalVisible && !deleteModalVisible}
+      isModalVisible={isModalVisible && !pendingDelete}
       closeModal={closeModal}
       opacity={0.5}
     />

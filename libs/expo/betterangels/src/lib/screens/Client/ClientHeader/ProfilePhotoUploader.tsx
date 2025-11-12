@@ -14,9 +14,10 @@ interface Props {
   imageUrl?: string;
 }
 
+type ModalType = 'picker' | 'profile' | null;
+
 export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
-  const [isModalVisible, setModalVisible] = useState(false);
-  const [isProfilePhotoModalVisible, setProfilePhotoModalVisible] = useState(false);
+  const [modalType, setModalType] = useState<ModalType>(null);
   const { showSnackbar } = useSnackbar();
 
   const [updatePhoto, { loading }] = useUpdateClientProfilePhotoMutation({
@@ -36,27 +37,34 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
         type: 'error',
       });
     } finally {
-      setModalVisible(false);
+      setModalType(null);
     }
   };
 
+  const isPickerOpen = modalType === 'picker';
+  const isProfileOpen = modalType === 'profile';
+
   return (
     <>
-      {!imageUrl ? (
-        <Pressable
-          onPress={() => setModalVisible(true)}
-          accessibilityRole="button"
-          accessibilityHint="update profile photo"
-        >
-          <View style={{ position: 'relative' }}>
-            <Avatar
-              loading={loading}
-              size="xl"
-              mr="xs"
-              imageUrl={imageUrl}
-              accessibilityLabel="client's profile photo"
-              accessibilityHint="update profile photo"
-            />
+      <Pressable
+        onPress={() => setModalType(imageUrl ? 'profile' : 'picker')}
+        accessibilityRole="button"
+        accessibilityHint={
+          imageUrl ? 'view profile photo options' : 'update profile photo'
+        }
+      >
+        <View style={{ position: 'relative' }}>
+          <Avatar
+            loading={loading}
+            size="xl"
+            mr="xs"
+            imageUrl={imageUrl}
+            accessibilityLabel="client's profile photo"
+            accessibilityHint={
+              imageUrl ? 'view profile photo options' : 'update profile photo'
+            }
+          />
+          {!imageUrl && (
             <View
               style={{
                 position: 'absolute',
@@ -67,28 +75,13 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
             >
               <WFEdit />
             </View>
-          </View>
-        </Pressable>
-      ) : (
-        <Pressable
-          onPress={() => setProfilePhotoModalVisible(true)}
-          accessibilityRole="button"
-          accessibilityHint="view profile photo options"
-        >
-          <Avatar
-            loading={loading}
-            size="xl"
-            mr="xs"
-            imageUrl={imageUrl}
-            accessibilityLabel="client's profile photo"
-            accessibilityHint="view profile photo options"
-          />
-        </Pressable>
-      )}
+          )}
+        </View>
+      </Pressable>
 
       <MediaPickerModal
-        isModalVisible={isModalVisible}
-        setModalVisible={setModalVisible}
+        isModalVisible={isPickerOpen}
+        setModalVisible={(v) => setModalType(v ? 'picker' : null)}
         allowMultiple={false}
         onCapture={handleUpload}
         setFiles={(files) => handleUpload(files[0])}
@@ -96,8 +89,8 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
 
       {imageUrl && (
         <ProfilePhotoModal
-          isModalVisible={isProfilePhotoModalVisible}
-          closeModal={() => setProfilePhotoModalVisible(false)}
+          isModalVisible={isProfileOpen}
+          closeModal={() => setModalType(null)}
           imageUrl={imageUrl}
           clientId={clientId}
         />
