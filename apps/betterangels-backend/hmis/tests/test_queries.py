@@ -16,7 +16,7 @@ from common.models import PhoneNumber
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -237,6 +237,7 @@ LIST_ENROLLMENTS_QUERY = """
 """
 
 
+@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
 class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()

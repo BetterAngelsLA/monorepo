@@ -157,6 +157,7 @@ UPDATE_CLIENT_NOTE_MUTATION = """
 """
 
 
+@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
 class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()

@@ -177,9 +177,6 @@ jobs:
           # Exclude Betterangels Frontend Given its CI is not setup yet
           yarn nx affected -t test
           EOF
-        env:
-          HMIS_REST_URL: ${{ secrets.HMIS_REST_URL }}
-          HMIS_HOST: ${{ secrets.HMIS_HOST }}
 
       - name: 🛠️ Build and Push Artifacts
         run: |
