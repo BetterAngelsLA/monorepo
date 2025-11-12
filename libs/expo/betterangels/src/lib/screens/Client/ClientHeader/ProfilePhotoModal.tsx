@@ -18,7 +18,6 @@ interface IProfilePhotoModalProps {
 export function ProfilePhotoModal({
   isModalVisible,
   closeModal,
-  imageUrl,
   clientId,
 }: IProfilePhotoModalProps) {
   const { showSnackbar } = useSnackbar();
