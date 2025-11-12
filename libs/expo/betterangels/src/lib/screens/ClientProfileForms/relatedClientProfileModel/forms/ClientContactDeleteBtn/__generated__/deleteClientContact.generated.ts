@@ -1,55 +1,15 @@
-import * as Types from '../../../../../../apollo/graphql/__generated__/types';
+import type * as Types from '../../../../../../apollo/graphql/__generated__/types';
 
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
-const defaultOptions = {} as const;
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type DeleteClientContactMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type DeleteClientContactMutation = { __typename?: 'Mutation', deleteClientContact: { __typename?: 'ClientContactType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+export type DeleteClientContactMutation = { __typename?: 'Mutation', deleteClientContact:
+    | { __typename?: 'ClientContactType', id: string }
+    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+   };
 
 
-export const DeleteClientContactDocument = gql`
-    mutation DeleteClientContact($id: ID!) {
-  deleteClientContact(data: {id: $id}) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-    ... on ClientContactType {
-      id
-    }
-  }
-}
-    `;
-export type DeleteClientContactMutationFn = Apollo.MutationFunction<DeleteClientContactMutation, DeleteClientContactMutationVariables>;
-
-/**
- * __useDeleteClientContactMutation__
- *
- * To run a mutation, you first call `useDeleteClientContactMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useDeleteClientContactMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [deleteClientContactMutation, { data, loading, error }] = useDeleteClientContactMutation({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useDeleteClientContactMutation(baseOptions?: Apollo.MutationHookOptions<DeleteClientContactMutation, DeleteClientContactMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<DeleteClientContactMutation, DeleteClientContactMutationVariables>(DeleteClientContactDocument, options);
-      }
-export type DeleteClientContactMutationHookResult = ReturnType<typeof useDeleteClientContactMutation>;
-export type DeleteClientContactMutationResult = Apollo.MutationResult<DeleteClientContactMutation>;
-export type DeleteClientContactMutationOptions = Apollo.BaseMutationOptions<DeleteClientContactMutation, DeleteClientContactMutationVariables>;
+export const DeleteClientContactDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteClientContact"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteClientContact"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"OperationInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"messages"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ClientContactType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<DeleteClientContactMutation, DeleteClientContactMutationVariables>;
