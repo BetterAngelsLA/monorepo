@@ -2,7 +2,7 @@ import type { ApolloCache, FieldPolicy } from '@apollo/client';
 import { getTypePolicyFromCache } from './getTypePolicyFromCache';
 
 export function getTypeFieldPolicyFromCache(
-  cache: ApolloCache<unknown>,
+  cache: ApolloCache,
   typename: string,
   fieldName: string
 ): FieldPolicy | undefined {

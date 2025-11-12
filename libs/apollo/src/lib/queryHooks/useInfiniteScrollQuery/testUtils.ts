@@ -1,67 +1,78 @@
-import {
-  NetworkStatus,
-  type ApolloClient,
-  type OperationVariables,
-  type QueryHookOptions,
-  type QueryResult,
-} from '@apollo/client';
+import { ErrorLike, NetworkStatus } from '@apollo/client'; // ✅ correct in v4
 import { vi } from 'vitest';
 
+// import type { ApolloLink, ErrorLike } from '@apollo/client';
 /**
- * Create a mock generated Apollo query hook:
- *   (options: QueryHookOptions<D, V>) => QueryResult<D, V>
- *
- * - refetch/fetchMore return Promises, because the hook under test does `.catch(...)`
- * - we build first, then patch, to avoid duplicate keys and to set deprecated fields
+ * Minimal useQuery result shape for mocking in tests.
+ * We avoid importing Apollo's internal types to keep v4-compatible.
  */
-export function createQueryHookMock<
-  TData,
-  TVars extends OperationVariables = OperationVariables
->(
-  partial: Partial<QueryResult<TData, TVars>>
-): (options: QueryHookOptions<TData, TVars>) => QueryResult<TData, TVars> {
-  const hook = vi.fn(
-    (options: QueryHookOptions<TData, TVars>): QueryResult<TData, TVars> => {
-      // promise-based defaults
-      const refetch =
-        partial.refetch ?? vi.fn().mockResolvedValue({ data: partial.data });
-      const fetchMore =
-        partial.fetchMore ??
-        vi.fn().mockResolvedValue({
-          data: partial.data,
-        });
+export interface MockUseQueryResult<TData, TVars> {
+  data?: TData;
+  loading: boolean;
+  networkStatus: NetworkStatus;
+  error?: ErrorLike;
+  called: boolean;
+  client: unknown;
+  variables?: TVars;
 
-      // base shape
-      const base: QueryResult<TData, TVars> = {
-        data: undefined,
-        loading: false,
-        networkStatus: NetworkStatus.ready,
-        error: undefined,
-        called: true,
-        client: {} as ApolloClient<any>,
-        variables: (options?.variables ?? {}) as TVars,
-        refetch, // provisional
-        fetchMore, // provisional
-        startPolling: vi.fn(),
-        stopPolling: vi.fn(),
-        updateQuery: vi.fn(),
-        subscribeToMore: vi.fn(),
-        observable: {} as any,
-        // user overrides
-        ...(partial as any),
-      };
+  // methods the hook under test calls
+  refetch: (vars?: Partial<TVars>) => Promise<{ data?: TData }>;
+  fetchMore: (opts: {
+    variables?: Partial<TVars>;
+  }) => Promise<{ data?: TData }>;
 
-      // always ensure these two are the promise-returning ones
-      base.refetch = refetch;
-      base.fetchMore = fetchMore;
+  // unused but present on real objects
+  startPolling: (interval: number) => void;
+  stopPolling: () => void;
+  updateQuery: unknown;
+  subscribeToMore: unknown;
+  observable: unknown;
 
-      // add deprecated reobserve to satisfy stricter Apollo typings
-      // (TS will mark it deprecated, which is fine for tests)
-      (base as any).reobserve = vi.fn().mockResolvedValue(undefined);
+  // optional internal used by Apollo; keep harmless
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  [key: string]: any;
+}
 
-      return base;
-    }
-  );
+/**
+ * Build a mock value that looks like useQuery’s return object.
+ * `refetch` and `fetchMore` are Promise-based by default.
+ */
+export function createUseQueryReturn<TData, TVars>(
+  partial: Partial<MockUseQueryResult<TData, TVars>>
+): MockUseQueryResult<TData, TVars> {
+  const refetch =
+    partial.refetch ?? vi.fn().mockResolvedValue({ data: partial.data });
 
-  return hook;
+  const fetchMore =
+    partial.fetchMore ?? vi.fn().mockResolvedValue({ data: partial.data });
+
+  const result: MockUseQueryResult<TData, TVars> = {
+    data: undefined,
+    loading: false,
+    networkStatus: NetworkStatus.ready,
+    error: undefined,
+    called: true,
+    client: {},
+    variables: (partial.variables as TVars) ?? ({} as TVars),
+
+    refetch,
+    fetchMore,
+
+    startPolling: vi.fn(),
+    stopPolling: vi.fn(),
+    updateQuery: vi.fn(),
+    subscribeToMore: vi.fn(),
+    observable: {},
+
+    ...partial,
+  };
+
+  // Ensure the promise-based implementations remain
+  result.refetch = refetch;
+  result.fetchMore = fetchMore;
+
+  // Some Apollo internals reference this; keep it as a resolved promise
+  result['reobserve'] = vi.fn().mockResolvedValue(undefined);
+
+  return result;
 }

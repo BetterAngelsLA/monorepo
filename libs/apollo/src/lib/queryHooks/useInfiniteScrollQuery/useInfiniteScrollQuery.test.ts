@@ -1,20 +1,28 @@
 /**
  * @vitest-environment jsdom
  */
-import {
-  ApolloClient,
-  ApolloProvider,
-  InMemoryCache,
-  type NormalizedCacheObject,
-} from '@apollo/client';
-import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
-import { PaginationModeEnum } from '../../cachePolicy/constants';
-import { createQueryHookMock } from './testUtils';
-import { useInfiniteScrollQuery } from './useInfiniteScrollQuery';
 import React = require('react');
 
-// mock getQueryPolicyConfigFromCache — define the mock function INSIDE the factory
+import {
+  ApolloClient,
+  HttpLink,
+  InMemoryCache,
+  type TypedDocumentNode,
+} from '@apollo/client';
+import { ApolloProvider, useQuery } from '@apollo/client/react';
+import { act, renderHook } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { PaginationModeEnum } from '../../cachePolicy/constants';
+import { createUseQueryReturn } from './testUtils';
+import { useInfiniteScrollQuery } from './useInfiniteScrollQuery';
+
+// Mock only useQuery
+vi.mock('@apollo/client/react', async () => {
+  const actual = await vi.importActual<any>('@apollo/client/react');
+  return { ...actual, useQuery: vi.fn() };
+});
+
+// Mock policy reader stays the same...
 vi.mock('../../cacheStore/utils/getQueryPolicyConfigFromCache', () => {
   return {
     getQueryPolicyConfigFromCache: (_cache: unknown, fieldName: string) => {
@@ -27,7 +35,6 @@ vi.mock('../../cacheStore/utils/getQueryPolicyConfigFromCache', () => {
           paginationLimitPath: ['pagination', 'limit'],
         } as const;
       }
-
       if (fieldName === 'records') {
         return {
           paginationMode: PaginationModeEnum.PerPage,
@@ -37,7 +44,6 @@ vi.mock('../../cacheStore/utils/getQueryPolicyConfigFromCache', () => {
           paginationPerPagePath: ['pagination', 'perPage'],
         } as const;
       }
-
       throw new Error(
         `[test] no queryPolicyConfig mock for Query.${fieldName}`
       );
@@ -45,53 +51,57 @@ vi.mock('../../cacheStore/utils/getQueryPolicyConfigFromCache', () => {
   };
 });
 
-// helper: create client
 function createTestApolloClient() {
   const cache = new InMemoryCache();
-  return new ApolloClient<NormalizedCacheObject>({
-    cache,
-    uri: '/graphql',
-  });
+  const link = new HttpLink({ uri: '/graphql' });
+  return new ApolloClient({ cache, link });
 }
 
-// helper: render hook with ApolloProvider, no JSX in .ts
 function renderHookWithApollo<T>(callback: () => T) {
   const client = createTestApolloClient();
-
-  const Wrapper = ({ children }: { children: React.ReactNode }) => {
-    return React.createElement(ApolloProvider as any, { client }, children);
-  };
-
-  return renderHook(callback, {
-    wrapper: Wrapper,
-  });
+  const Wrapper = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(ApolloProvider as any, { client }, children);
+  return renderHook(callback, { wrapper: Wrapper });
 }
 
-describe('useInfiniteScrollQuery', () => {
-  it('calls provided query hook with initial offset/limit variables', () => {
-    const useQueryHookMock = createQueryHookMock<
-      {
-        tasks: {
-          results: Array<{ id: number }>;
-          totalCount: number;
-        };
-      },
-      {
-        filters?: { q?: string };
-        pagination?: { offset?: number; limit?: number };
-      }
-    >({
-      data: {
-        tasks: {
-          results: [],
-          totalCount: 0,
+// Typed-only placeholder documents
+type TasksData = {
+  tasks: { results: Array<{ id: number }>; totalCount: number };
+};
+type TasksVars = {
+  filters?: { q?: string };
+  pagination?: { offset?: number; limit?: number };
+};
+const TasksDocument = {} as unknown as TypedDocumentNode<TasksData, TasksVars>;
+
+type RecordsData = {
+  records: { results: Array<{ id: number }>; totalCount: number };
+};
+type RecordsVars = { pagination?: { page?: number; perPage?: number } };
+const RecordsDocument = {} as unknown as TypedDocumentNode<
+  RecordsData,
+  RecordsVars
+>;
+
+describe('useInfiniteScrollQuery (Apollo v4)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('calls useQuery with initial offset/limit variables', () => {
+    (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createUseQueryReturn<TasksData, TasksVars>({
+        data: { tasks: { results: [], totalCount: 0 } },
+        variables: {
+          filters: { q: 'hello' },
+          pagination: { offset: 0, limit: 25 },
         },
-      },
-    });
+      })
+    );
 
     renderHookWithApollo(() =>
-      useInfiniteScrollQuery<{ id: number }, typeof useQueryHookMock>({
-        useQueryHook: useQueryHookMock,
+      useInfiniteScrollQuery<{ id: number }, TasksData, TasksVars>({
+        document: TasksDocument,
         queryFieldName: 'tasks',
         variables: {
           filters: { q: 'hello' },
@@ -101,7 +111,8 @@ describe('useInfiniteScrollQuery', () => {
       })
     );
 
-    expect(useQueryHookMock).toHaveBeenCalledWith(
+    expect(useQuery).toHaveBeenCalledWith(
+      TasksDocument,
       expect.objectContaining({
         variables: {
           filters: { q: 'hello' },
@@ -114,33 +125,21 @@ describe('useInfiniteScrollQuery', () => {
   it('loadMore uses fetchMore with next offset based on previous request vars', async () => {
     const fetchMore = vi.fn().mockResolvedValue(undefined);
 
-    const useQueryHookMock = createQueryHookMock<
-      {
-        tasks: {
-          results: Array<{ id: number }>;
-          totalCount: number;
-        };
-      },
-      {
-        pagination?: { offset?: number; limit?: number };
-      }
-    >({
-      data: {
-        tasks: {
-          results: [{ id: 1 }, { id: 2 }, { id: 3 }],
-          totalCount: 6,
+    (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createUseQueryReturn<TasksData, TasksVars>({
+        data: {
+          tasks: { results: [{ id: 1 }, { id: 2 }, { id: 3 }], totalCount: 6 },
         },
-      },
-      fetchMore,
-    });
+        variables: { pagination: { offset: 0, limit: 3 } },
+        fetchMore,
+      })
+    );
 
     const { result } = renderHookWithApollo(() =>
-      useInfiniteScrollQuery<{ id: number }, typeof useQueryHookMock>({
-        useQueryHook: useQueryHookMock,
+      useInfiniteScrollQuery<{ id: number }, TasksData, TasksVars>({
+        document: TasksDocument,
         queryFieldName: 'tasks',
-        variables: {
-          pagination: { offset: 0, limit: 3 },
-        },
+        variables: { pagination: { offset: 0, limit: 3 } },
         pageSize: 3,
       })
     );
@@ -150,40 +149,23 @@ describe('useInfiniteScrollQuery', () => {
     });
 
     expect(fetchMore).toHaveBeenCalledWith({
-      variables: {
-        pagination: {
-          offset: 3,
-          limit: 3,
-        },
-      },
+      variables: { pagination: { offset: 3, limit: 3 } },
     });
   });
 
   it('computes hasMore from items vs total', () => {
-    const useQueryHookMock = createQueryHookMock<
-      {
-        tasks: {
-          results: Array<{ id: number }>;
-          totalCount: number;
-        };
-      },
-      Record<string, never>
-    >({
-      data: {
-        tasks: {
-          results: [{ id: 1 }],
-          totalCount: 2,
-        },
-      },
-    });
+    (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createUseQueryReturn<TasksData, TasksVars>({
+        data: { tasks: { results: [{ id: 1 }], totalCount: 2 } },
+        variables: { pagination: { offset: 0, limit: 1 } },
+      })
+    );
 
     const { result } = renderHookWithApollo(() =>
-      useInfiniteScrollQuery<{ id: number }, typeof useQueryHookMock>({
-        useQueryHook: useQueryHookMock,
+      useInfiniteScrollQuery<{ id: number }, TasksData, TasksVars>({
+        document: TasksDocument,
         queryFieldName: 'tasks',
-        variables: {
-          pagination: { offset: 0, limit: 1 },
-        },
+        variables: { pagination: { offset: 0, limit: 1 } },
         pageSize: 1,
       })
     );
@@ -193,39 +175,22 @@ describe('useInfiniteScrollQuery', () => {
     expect(result.current.hasMore).toBe(true);
   });
 
-  it('respects page/perPage shape and fetches next page using the same perPage', async () => {
+  it('respects page/perPage and fetches the next page with same perPage', async () => {
     const fetchMore = vi.fn().mockResolvedValue(undefined);
 
-    const useQueryHookMock = createQueryHookMock<
-      {
-        records: {
-          results: Array<{ id: number }>;
-          totalCount: number;
-        };
-      },
-      {
-        pagination?: { page?: number; perPage?: number };
-      }
-    >({
-      data: {
-        records: {
-          results: [{ id: 1 }, { id: 2 }],
-          totalCount: 4,
-        },
-      },
-      fetchMore,
-    });
+    (useQuery as unknown as ReturnType<typeof vi.fn>).mockReturnValue(
+      createUseQueryReturn<RecordsData, RecordsVars>({
+        data: { records: { results: [{ id: 1 }, { id: 2 }], totalCount: 4 } },
+        variables: { pagination: { page: 1, perPage: 2 } },
+        fetchMore,
+      })
+    );
 
     const { result } = renderHookWithApollo(() =>
-      useInfiniteScrollQuery<{ id: number }, typeof useQueryHookMock>({
-        useQueryHook: useQueryHookMock,
+      useInfiniteScrollQuery<{ id: number }, RecordsData, RecordsVars>({
+        document: RecordsDocument,
         queryFieldName: 'records',
-        variables: {
-          pagination: {
-            page: 1,
-            perPage: 2,
-          },
-        },
+        variables: { pagination: { page: 1, perPage: 2 } },
       })
     );
 
@@ -234,12 +199,7 @@ describe('useInfiniteScrollQuery', () => {
     });
 
     expect(fetchMore).toHaveBeenCalledWith({
-      variables: {
-        pagination: {
-          page: 2,
-          perPage: 2,
-        },
-      },
+      variables: { pagination: { page: 2, perPage: 2 } },
     });
   });
 });
