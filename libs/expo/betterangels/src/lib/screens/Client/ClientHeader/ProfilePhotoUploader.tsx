@@ -7,6 +7,7 @@ import { Pressable, View } from 'react-native';
 import { useSnackbar } from '../../../hooks';
 import { useUpdateClientProfilePhotoMutation } from '../../ClientProfileForms/ClientProfileForm/PersonalInfoForm/ProfilePhotoField/__generated__/updateClientProfilePhoto.generated';
 import { ClientProfileDocument } from '../__generated__/Client.generated';
+import { ProfilePhotoModal } from './ProfilePhotoModal';
 
 interface Props {
   clientId: string;
@@ -15,6 +16,7 @@ interface Props {
 
 export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
   const [isModalVisible, setModalVisible] = useState(false);
+  const [isProfilePhotoModalVisible, setProfilePhotoModalVisible] = useState(false);
   const { showSnackbar } = useSnackbar();
 
   const [updatePhoto, { loading }] = useUpdateClientProfilePhotoMutation({
@@ -40,32 +42,49 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
 
   return (
     <>
-      <Pressable
-        onPress={() => setModalVisible(true)}
-        accessibilityRole="button"
-        accessibilityHint="update profile photo"
-      >
-        <View style={{ position: 'relative' }}>
+      {!imageUrl ? (
+        <Pressable
+          onPress={() => setModalVisible(true)}
+          accessibilityRole="button"
+          accessibilityHint="update profile photo"
+        >
+          <View style={{ position: 'relative' }}>
+            <Avatar
+              loading={loading}
+              size="xl"
+              mr="xs"
+              imageUrl={imageUrl}
+              accessibilityLabel="client's profile photo"
+              accessibilityHint="update profile photo"
+            />
+            <View
+              style={{
+                position: 'absolute',
+                bottom: 0,
+                right: Spacings.xs,
+                backgroundColor: 'white',
+              }}
+            >
+              <WFEdit />
+            </View>
+          </View>
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={() => setProfilePhotoModalVisible(true)}
+          accessibilityRole="button"
+          accessibilityHint="view profile photo options"
+        >
           <Avatar
             loading={loading}
             size="xl"
             mr="xs"
             imageUrl={imageUrl}
             accessibilityLabel="client's profile photo"
-            accessibilityHint="update profile photo"
+            accessibilityHint="view profile photo options"
           />
-          <View
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              right: Spacings.xs,
-              backgroundColor: 'white',
-            }}
-          >
-            <WFEdit />
-          </View>
-        </View>
-      </Pressable>
+        </Pressable>
+      )}
 
       <MediaPickerModal
         isModalVisible={isModalVisible}
@@ -74,6 +93,15 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
         onCapture={handleUpload}
         setFiles={(files) => handleUpload(files[0])}
       />
+
+      {imageUrl && (
+        <ProfilePhotoModal
+          isModalVisible={isProfilePhotoModalVisible}
+          closeModal={() => setProfilePhotoModalVisible(false)}
+          imageUrl={imageUrl}
+          clientId={clientId}
+        />
+      )}
     </>
   );
 }
