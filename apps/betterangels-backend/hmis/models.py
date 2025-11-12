@@ -120,11 +120,12 @@ class HmisClientProfile(AbstractClientProfile):
     pghistory.DeleteEvent("hmisnote.remove"),
 )
 class HmisNote(BaseModel):
-    hmis_id = models.CharField(unique=True, max_length=50, db_index=True, null=True)
+    hmis_id = models.CharField(unique=True, max_length=50, db_index=True, blank=True, null=True)
     added_date = models.DateTimeField(blank=True, null=True)
     last_updated = models.DateTimeField(blank=True, null=True)
     date = models.DateField(blank=True, null=True)
     ref_client_program = models.CharField(max_length=50, blank=True, null=True)
+    client_hmis_id = models.CharField(max_length=50, db_index=True, blank=True, null=True)
     hmis_client_profile = models.ForeignKey(
         HmisClientProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="notes"
     )

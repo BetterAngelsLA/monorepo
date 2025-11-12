@@ -280,13 +280,17 @@ class HmisRestApiBridge:
     def _format_client_data(self, client_data: dict[str, Any]) -> dict[str, Any]:
         client_data = self._format_timestamp_fields(dict_keys_to_snake(client_data))
         client_sub_field_data = {**client_data.pop("screen_values", {})}
-        hmis_id = client_data.pop("id")
 
         return {
-            "hmis_id": hmis_id,
+            "hmis_id": client_data.pop("id"),
             **client_data,
             **client_sub_field_data,
         }
+
+    def _format_note_data(self, note_data: dict[str, Any]) -> dict[str, Any]:
+        note_data = self._format_timestamp_fields(dict_keys_to_snake(note_data))
+
+        return {"hmis_id": note_data.pop("id"), **note_data}
 
     def get_client(self, hmis_id: str) -> dict[str, Any]:
         fields = self._get_field_dot_paths(
@@ -377,20 +381,20 @@ class HmisRestApiBridge:
 
         return self._format_client_data(resp.json())
 
-    def get_note(self, client_hmis_id: str, note_id: str) -> dict[str, Any]:
+    def get_note(self, client_hmis_id: str, note_hmis_id: str) -> dict[str, Any]:
         fields = self._get_field_dot_paths(
             info=self.info,
-            default_fields=METADATA_FIELDS,
+            default_fields=METADATA_FIELDS | {"client.id"},
         )
 
-        fields_str = ", ".join(fields - BA_CLIENT_FIELDS)
+        fields_str = ", ".join(fields)
 
         resp = self._make_request(
-            path=f"/clients/{client_hmis_id}/client-notes/{note_id}",
+            path=f"/clients/{client_hmis_id}/client-notes/{note_hmis_id}",
             body={"fields": fields_str},
         )
 
-        return self._format_client_data(resp.json())
+        return self._format_note_data(resp.json())
 
     def create_note(self, data: CreateHmisNoteInput) -> dict[str, Any]:
         body = {
@@ -405,7 +409,7 @@ class HmisRestApiBridge:
                 "tracking_hour": None,
                 "tracking_minute": None,
             },
-            "fields": ", ".join(METADATA_FIELDS | NOTE_FIELDS),
+            "fields": ", ".join(METADATA_FIELDS | NOTE_FIELDS | {"client.id"}),
         }
 
         resp = self._make_request(
@@ -414,7 +418,7 @@ class HmisRestApiBridge:
             body=body,
         )
 
-        return self._format_client_data(resp.json())
+        return self._format_note_data(resp.json())
 
     def update_note(self, data: UpdateHmisNoteInput) -> dict[str, Any]:
         note_data = {
@@ -425,7 +429,7 @@ class HmisRestApiBridge:
 
         fields = self._get_field_dot_paths(
             info=self.info,
-            default_fields=METADATA_FIELDS,
+            default_fields=METADATA_FIELDS | {"client.id"},
         )
 
         body = {
@@ -439,4 +443,4 @@ class HmisRestApiBridge:
             body=body,
         )
 
-        return self._format_client_data(resp.json())
+        return self._format_note_data(resp.json())

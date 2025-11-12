@@ -53,9 +53,16 @@ class Query:
     def hmis_note(self, info: Info, client_hmis_id: str, note_hmis_id: str) -> HmisNoteType:
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        note_data = hmis_api_bridge.get_note(client_hmis_id, note_hmis_id)
+        note_data = hmis_api_bridge.get_note(
+            client_hmis_id=client_hmis_id,
+            note_hmis_id=note_hmis_id,
+        )
 
         returned_hmis_id = str(note_data.pop("hmis_id"))
+        returned_client = note_data.pop("client")
+
+        if str(returned_client["id"]) != client_hmis_id:
+            raise ValidationError("Client ID mismatch")
 
         try:
             hmis_client_profile_id = HmisClientProfile.objects.get(hmis_id=client_hmis_id).pk
@@ -69,9 +76,11 @@ class Query:
         hmis_note, _ = HmisNote.objects.filter(
             hmis_id=note_hmis_id,
             hmis_client_profile_id=hmis_client_profile_id,
+            client_hmis_id=client_hmis_id,
         ).update_or_create(
             hmis_id=note_hmis_id,
             hmis_client_profile_id=hmis_client_profile_id,
+            client_hmis_id=client_hmis_id,
             defaults={**note_data},
         )
 
@@ -123,9 +132,7 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_hmis_note(self, info: Info, data: CreateHmisNoteInput) -> HmisNoteType:
-        client_id = data.hmis_client_profile_id
-
-        hmis_client_profile = HmisClientProfile.objects.get(pk=client_id)
+        hmis_client_profile = HmisClientProfile.objects.get(pk=data.hmis_client_profile_id)
 
         if str(hmis_client_profile.hmis_id) != data.client_hmis_id:
             raise ValidationError("Client ID mismatch")
@@ -141,18 +148,20 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_hmis_note(self, info: Info, data: UpdateHmisNoteInput) -> HmisNoteType:
-        client_id = data.hmis_client_profile_id
+        hmis_note = HmisNote.objects.get(hmis_id=data.hmis_id)
 
-        hmis_client_profile = HmisClientProfile.objects.get(pk=client_id)
-
-        if str(hmis_client_profile.hmis_id) != data.client_hmis_id:
+        if any(
+            (
+                str(hmis_note.client_hmis_id) != data.client_hmis_id,
+                str(hmis_note.hmis_client_profile_id) != data.hmis_client_profile_id,
+            )
+        ):
             raise ValidationError("Client ID mismatch")
 
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
         note_data = hmis_api_bridge.update_note(data)
 
-        hmis_note = HmisNote.objects.get(hmis_id=data.hmis_id)
         hmis_note = resolvers.update(info, hmis_note, {**note_data})
 
         return cast(HmisNoteType, hmis_note)
