@@ -5824,7 +5824,6 @@ __metadata:
     expo-status-bar: "npm:~3.0.8"
     expo-updates: "npm:~29.0.12"
     expo-web-browser: "npm:~15.0.8"
-    graphql: "npm:^16.12.0"
     haversine-distance: "npm:^1.2.3"
     i: "npm:^0.3.7"
     jest: "npm:29.7.0"
@@ -17455,7 +17454,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graphql@npm:14 - 16, graphql@npm:^16.12.0":
+"graphql@npm:14 - 16":
   version: 16.12.0
   resolution: "graphql@npm:16.12.0"
   checksum: 10/e299bc97cca178e549c8c1ed4cb164f631f07be987d3657f76cdf18c0250040cc0d456d4b6d41c87b855cac97b15a62ed345557527efcb0546492895a893bb87
