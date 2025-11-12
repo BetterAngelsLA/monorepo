@@ -1,13 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildPolicyConfig } from './buildPolicyConfig';
-
-describe('buildPolicyConfig', () => {
+import { assemblePolicyRegistry } from './assemblePolicyRegistry';
+describe('assemblePolicyRegistry', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
   it('builds an object from key/buildFn pairs', () => {
-    const config = buildPolicyConfig([
+    const config = assemblePolicyRegistry([
       { key: 'a', buildFn: () => ({ foo: 1 }) },
       { key: 'b', buildFn: () => ({ bar: 2 }) },
     ] as const);
@@ -21,13 +20,13 @@ describe('buildPolicyConfig', () => {
   it('logs a warning for duplicate keys in non-production', () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(vi.fn());
 
-    buildPolicyConfig([
+    assemblePolicyRegistry([
       { key: 'dup', buildFn: () => ({ one: 1 }) },
       { key: 'dup', buildFn: () => ({ two: 2 }) },
     ] as const);
 
     expect(spy).toHaveBeenCalledWith(
-      '[apollo buildPolicyConfig] Duplicate key "dup" – later one will override.'
+      '[apollo assemblePolicyRegistry] Duplicate key "dup" – later one will override.'
     );
   });
 });

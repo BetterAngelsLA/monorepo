@@ -1,35 +1,33 @@
-import { useQuery } from '@apollo/client/react';
+import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { FlashList } from '@shopify/flash-list';
-import { ReactElement, useCallback, useEffect, useState } from 'react';
+import {
+  InfiniteList,
+  TRenderListResultsHeader,
+} from '@monorepo/expo/shared/ui-components';
+import { ReactElement, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { uniqueBy } from 'remeda';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
   HmisClientFilterInput,
-  HmisClientListType,
+  HmisClientType,
   InputMaybe,
 } from '../../apollo';
-import { pagePaddingHorizontal } from '../../static';
-import { ClientProfileListHeader } from './ClientProfileListHeader';
-import { ListEmptyState } from './ListEmptyState';
 import { ListLoadingView } from './ListLoadingView';
-import { HmisListClientsDocument } from './__generated__/HmisListClients.generated';
+import {
+  HmisListClientsDocument,
+  HmisListClientsQuery,
+  HmisListClientsQueryVariables,
+} from './__generated__/HmisListClients.generated';
 import { DEFAULT_ITEM_GAP, DEFAULT_PAGINATION_LIMIT } from './constants';
-import { ListHeaderProps } from './types';
-
-type TClient = HmisClientListType['items'][number];
 
 type TProps = {
-  renderItem: (client: TClient) => ReactElement | null;
+  renderItem: (client: HmisClientType) => ReactElement | null;
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filter?: InputMaybe<HmisClientFilterInput>;
   paginationLimit?: number;
   showAllClientsLink?: boolean;
-  renderHeaderText?: (props: ListHeaderProps) => string;
+  renderHeaderText?: (props: TRenderListResultsHeader) => string;
   headerStyle?: ViewStyle;
-  horizontalPadding?: number;
 };
 
 export function HmisListClients(props: TProps) {
@@ -38,111 +36,69 @@ export function HmisListClients(props: TProps) {
     itemGap = DEFAULT_ITEM_GAP,
     paginationLimit = DEFAULT_PAGINATION_LIMIT,
     renderItem,
-    renderHeaderText,
-    headerStyle,
-    showAllClientsLink,
     style,
-    horizontalPadding = pagePaddingHorizontal,
   } = props;
 
-  const [page, setPage] = useState<number>(1);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [clients, setClients] = useState<TClient[] | undefined>(undefined);
-
-  const { data, loading } = useQuery(HmisListClientsDocument, {
-    variables: { filter, pagination: { page, perPage: paginationLimit } },
+  const {
+    items: clients,
+    total: totalCount,
+    loading,
+    hasMore,
+    loadMore,
+    error,
+  } = useInfiniteScrollQuery<
+    HmisClientType,
+    HmisListClientsQuery,
+    HmisListClientsQueryVariables
+  >({
+    document: HmisListClientsDocument,
+    queryFieldName: 'hmisListClients',
+    pageSize: paginationLimit,
+    variables: { filter },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
 
-  useDeepCompareEffect(() => {
-    setPage(1);
-    setClients(undefined);
-    setHasMore(true);
-    setTotalCount(0);
-  }, [filter]);
-
-  useEffect(() => {
-    const res = data?.hmisListClients;
-    if (!res) return;
-
-    if (res.__typename === 'HmisClientListType') {
-      const { items, meta } = res;
-
-      setTotalCount(meta?.totalCount ?? 0);
-      setHasMore((meta?.currentPage ?? 1) < (meta?.pageCount ?? 1));
-
-      setClients((prev) => {
-        if (page === 1 || !prev) return items;
-
-        return uniqueBy(
-          [...prev, ...items],
-          (c) => c.uniqueIdentifier ?? c.personalId ?? ''
-        );
-      });
-    } else if (res.__typename === 'HmisListClientsError') {
-      setHasMore(false);
-    }
-  }, [data, page]);
-
-  const loadMore = () => {
-    if (hasMore && !loading) setPage((p) => p + 1);
-  };
+  if (error) {
+    console.error(error);
+  }
 
   const renderItemFn = useCallback(
-    ({ item }: { item: TClient }) => renderItem(item),
+    (item: HmisClientType) => {
+      return renderItem(item);
+    },
     [renderItem]
   );
 
-  const renderFooter = () =>
-    loading ? <ListLoadingView style={{ paddingVertical: 40 }} /> : null;
-
-  if (clients === undefined && loading) {
+  if (clients.length === 0 && loading) {
     return <ListLoadingView fullScreen />;
   }
 
-  if (!clients) return null;
-
   return (
     <View style={[styles.container, style]}>
-      <ClientProfileListHeader
-        style={[
-          styles.header,
-          { paddingHorizontal: horizontalPadding },
-          headerStyle,
-        ]}
-        totalClients={totalCount}
-        visibleClients={clients.length}
-        showAllClientsLink={showAllClientsLink}
-        renderHeaderText={renderHeaderText}
-      />
-
-      <FlashList<TClient>
+      <InfiniteList<HmisClientType>
+        modelName="client"
         data={clients}
-        keyExtractor={(item) =>
-          item.uniqueIdentifier ??
-          item.personalId ??
-          `${item.firstName ?? ''}-${item.lastName ?? ''}-${item.dob ?? ''}`
-        }
+        keyExtractor={(item) => item.personalId!}
+        totalItems={totalCount}
         renderItem={renderItemFn}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.05}
-        ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
-        extraData={clients.length}
-        ListEmptyComponent={<ListEmptyState />}
-        ListFooterComponent={renderFooter}
-        contentContainerStyle={{
-          paddingBottom: 60,
-          paddingHorizontal: horizontalPadding,
-        }}
+        itemGap={itemGap}
+        loading={loading}
+        loadMore={loadMore}
+        hasMore={hasMore}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { marginBottom: Spacings.xs },
-  listContent: { paddingBottom: 60 },
+  container: {
+    flex: 1,
+  },
+  header: {
+    marginBottom: Spacings.xs,
+  },
+  listContent: {
+    paddingBottom: 60,
+  },
 });
