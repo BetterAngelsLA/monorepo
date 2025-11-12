@@ -529,6 +529,17 @@ export type CreateHmisClientProfileInput = {
 
 export type CreateHmisClientProfilePayload = HmisClientProfileType | OperationInfo;
 
+export type CreateHmisNoteInput = {
+  clientHmisId: Scalars['String']['input'];
+  date: Scalars['Date']['input'];
+  hmisClientProfileId: Scalars['String']['input'];
+  note?: InputMaybe<Scalars['String']['input']>;
+  refClientProgram?: InputMaybe<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type CreateHmisNotePayload = HmisNoteType | OperationInfo;
+
 export type CreateHmisProfilePayload = HmisProfileType | OperationInfo;
 
 export type CreateNoteDataImportInput = {
@@ -858,6 +869,7 @@ export type HmisClientProfileType = {
   hairColor?: Maybe<HairColorEnum>;
   heightInInches?: Maybe<Scalars['Float']['output']>;
   hmisId?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
   importantNotes?: Maybe<Scalars['String']['output']>;
   lastName?: Maybe<Scalars['NonBlankString']['output']>;
   lastUpdated?: Maybe<Scalars['DateTime']['output']>;
@@ -1069,6 +1081,27 @@ export enum HmisNameQualityEnum {
   NoAnswer = 'NO_ANSWER',
   Partial = 'PARTIAL'
 }
+
+export type HmisNoteType = {
+  __typename?: 'HmisNoteType';
+  addedDate?: Maybe<Scalars['DateTime']['output']>;
+  createdBy?: Maybe<UserType>;
+  date?: Maybe<Scalars['Date']['output']>;
+  hmisId: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  lastUpdated?: Maybe<Scalars['DateTime']['output']>;
+  note: Scalars['String']['output'];
+  title?: Maybe<Scalars['String']['output']>;
+};
+
+export type HmisNoteTypeOffsetPaginated = {
+  __typename?: 'HmisNoteTypeOffsetPaginated';
+  pageInfo: OffsetPaginationInfo;
+  /** List of paginated results. */
+  results: Array<HmisNoteType>;
+  /** Total count of existing results. */
+  totalCount: Scalars['Int']['output'];
+};
 
 export type HmisPaginationInput = {
   page?: InputMaybe<Scalars['Int']['input']>;
@@ -1358,6 +1391,7 @@ export type Mutation = {
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
   createHmisClientProfile: CreateHmisClientProfilePayload;
+  createHmisNote: CreateHmisNotePayload;
   createHmisProfile: CreateHmisProfilePayload;
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
@@ -1395,6 +1429,7 @@ export type Mutation = {
   updateClientProfilePhoto: UpdateClientProfilePhotoPayload;
   updateCurrentUser: UpdateCurrentUserPayload;
   updateHmisClientProfile: UpdateHmisClientProfilePayload;
+  updateHmisNote: UpdateHmisNotePayload;
   updateHmisProfile: UpdateHmisProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
@@ -1436,6 +1471,11 @@ export type MutationCreateClientProfileDataImportArgs = {
 
 export type MutationCreateHmisClientProfileArgs = {
   data: CreateHmisClientProfileInput;
+};
+
+
+export type MutationCreateHmisNoteArgs = {
+  data: CreateHmisNoteInput;
 };
 
 
@@ -1614,6 +1654,11 @@ export type MutationUpdateCurrentUserArgs = {
 
 export type MutationUpdateHmisClientProfileArgs = {
   data: UpdateHmisClientProfileInput;
+};
+
+
+export type MutationUpdateHmisNoteArgs = {
+  data: UpdateHmisNoteInput;
 };
 
 
@@ -1985,6 +2030,8 @@ export type Query = {
   hmisListClientNotes: HmisClientNoteListTypeHmisListClientNotesError;
   hmisListClients: HmisClientListTypeHmisListClientsError;
   hmisListEnrollments: HmisEnrollmentListTypeHmisListEnrollmentsError;
+  hmisNote: HmisNoteType;
+  hmisNotes: HmisNoteTypeOffsetPaginated;
   hmisProfile: HmisProfileType;
   hmisProfiles: HmisProfileTypeOffsetPaginated;
   interactionAuthors: InteractionAuthorTypeOffsetPaginated;
@@ -2099,6 +2146,17 @@ export type QueryHmisListEnrollmentsArgs = {
   dynamicFields: Array<InputMaybe<Scalars['String']['input']>>;
   pagination?: InputMaybe<HmisPaginationInput>;
   personalId: Scalars['ID']['input'];
+};
+
+
+export type QueryHmisNoteArgs = {
+  clientHmisId: Scalars['String']['input'];
+  noteHmisId: Scalars['String']['input'];
+};
+
+
+export type QueryHmisNotesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 
@@ -2758,6 +2816,18 @@ export type UpdateHmisClientProfileInput = {
 };
 
 export type UpdateHmisClientProfilePayload = HmisClientProfileType | OperationInfo;
+
+export type UpdateHmisNoteInput = {
+  clientHmisId: Scalars['String']['input'];
+  date?: InputMaybe<Scalars['Date']['input']>;
+  hmisClientProfileId: Scalars['String']['input'];
+  hmisId: Scalars['String']['input'];
+  id: Scalars['ID']['input'];
+  note?: InputMaybe<Scalars['String']['input']>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateHmisNotePayload = HmisNoteType | OperationInfo;
 
 export type UpdateHmisProfilePayload = HmisProfileType | OperationInfo;
 

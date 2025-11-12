@@ -11,20 +11,23 @@ from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from graphql import FieldNode, FragmentSpreadNode, InlineFragmentNode, SelectionSetNode
-from hmis.types import CreateHmisClientProfileInput
+from hmis.types import (
+    CreateHmisClientProfileInput,
+    CreateHmisNoteInput,
+    UpdateHmisNoteInput,
+)
 from strawberry import UNSET, Info
 from strawberry.utils.str_converters import to_snake_case
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+CLIENT_DATE_FORMAT = "%Y-%m-%d"
+NOTE_DATE_FORMAT = "%m/%d/%Y"
 
-METADATA_FIELDS = {
-    "id",
+METADATA_FIELDS = {"id", "added_date", "last_updated"}
+NOTE_FIELDS = {"title", "note", "date"}
+CLIENT_FIELDS = {
     "unique_identifier",
     "personal_id",
-    "added_date",
-    "last_updated",
-}
-CLIENT_FIELDS = {
     "alias",
     "birth_date",
     "dob_quality",
@@ -46,7 +49,7 @@ CLIENT_SUB_FIELDS = {
     "additional_race_ethnicity_detail",
     "veteran",
 }
-EXCLUDED_BA_FIELDS = {
+BA_CLIENT_FIELDS = {
     "ada_accommodation",
     "address",
     "california_id",
@@ -108,7 +111,7 @@ class HmisRestApiBridge:
             raise ObjectDoesNotExist("The requested Object does not exist.")
 
         if resp.status_code == 422:
-            raise ValidationError("Something went wrong.")
+            raise ValidationError(resp.text)
 
         raise ValidationError("Something went wrong.")
 
@@ -246,7 +249,7 @@ class HmisRestApiBridge:
     def _enum_value(self, v: Any) -> Any:
         return v.value if isinstance(v, Enum) else v
 
-    def _clean_client(
+    def _clean_client_input(
         self,
         data: Mapping[str, Any],
         keys: Collection[str],
@@ -265,7 +268,7 @@ class HmisRestApiBridge:
 
             if k in date_keys and v is not None:
                 if isinstance(v, (datetime.date)):
-                    cleaned[k] = v.strftime("%Y-%m-%d")
+                    cleaned[k] = v.strftime(CLIENT_DATE_FORMAT)
                 else:
                     cleaned[k] = str(v)
                 continue
@@ -288,10 +291,10 @@ class HmisRestApiBridge:
     def get_client(self, hmis_id: str) -> dict[str, Any]:
         fields = self._get_field_dot_paths(
             info=self.info,
-            default_fields=("id", "last_updated", "added_date"),
+            default_fields=METADATA_FIELDS,
         )
 
-        fields_str = ", ".join(fields - EXCLUDED_BA_FIELDS)
+        fields_str = ", ".join(fields - BA_CLIENT_FIELDS)
 
         resp = self._make_request(
             path=f"/clients/{hmis_id}",
@@ -335,14 +338,14 @@ class HmisRestApiBridge:
     def update_client(self, data: dict[str, Any]) -> dict[str, Any]:
         hmis_id = data.pop("hmis_id")
 
-        hmis_data = {k: v for k, v in data.items() if k not in EXCLUDED_BA_FIELDS}
+        hmis_data = {k: v for k, v in data.items() if k not in BA_CLIENT_FIELDS}
 
-        cleaned_client_field_input = self._clean_client(
+        cleaned_client_field_input = self._clean_client_input(
             data=hmis_data,
             keys=CLIENT_FIELDS,
             date_keys=("birth_date"),
         )
-        cleaned_client_sub_field_input = self._clean_client(
+        cleaned_client_sub_field_input = self._clean_client_input(
             data=hmis_data,
             keys=CLIENT_SUB_FIELDS,
             enum_list_keys=("gender", "race_ethnicity"),
@@ -350,11 +353,11 @@ class HmisRestApiBridge:
 
         fields = self._get_field_dot_paths(
             info=self.info,
-            default_fields=("id", "last_updated", "added_date"),
+            default_fields=METADATA_FIELDS,
         )
 
         combined_fields = fields | {*cleaned_client_field_input.keys()} | {*cleaned_client_sub_field_input.keys()}
-        fields_str = ", ".join(combined_fields - EXCLUDED_BA_FIELDS)
+        fields_str = ", ".join(combined_fields - BA_CLIENT_FIELDS)
 
         body = {
             k: v
@@ -374,34 +377,66 @@ class HmisRestApiBridge:
 
         return self._format_client_data(resp.json())
 
-    def get_note(self, client_id: str, note_id: str) -> dict[str, Any]:
+    def get_note(self, client_hmis_id: str, note_id: str) -> dict[str, Any]:
         fields = self._get_field_dot_paths(
             info=self.info,
-            default_fields=("id", "last_updated", "added_date"),
+            default_fields=METADATA_FIELDS,
         )
 
-        fields_str = ", ".join(fields - EXCLUDED_BA_FIELDS)
+        fields_str = ", ".join(fields - BA_CLIENT_FIELDS)
 
         resp = self._make_request(
-            path=f"/clients/{client_id}/client-notes/{note_id}",
+            path=f"/clients/{client_hmis_id}/client-notes/{note_id}",
             body={"fields": fields_str},
         )
 
         return self._format_client_data(resp.json())
 
-    def create_note(self, data: dict[str, Any]) -> dict[str, Any]:
-
-        return {
+    def create_note(self, data: CreateHmisNoteInput) -> dict[str, Any]:
+        body = {
             "clientNote": {
-                "id": None,
-                "title": "house note",
-                "category": {"code": None},
+                "title": data.title,
+                "ref_client_program": data.ref_client_program or None,
+                "date": data.date.strftime(NOTE_DATE_FORMAT),
+                "note": data.note,
+                "category": {"code": 1},
                 "ref_category": "1",
-                "ref_client_program": 517,
-                "date": "2025-11-11",
+                "private": "0",
                 "tracking_hour": None,
                 "tracking_minute": None,
-                "note": "<p>note my house</p>",
-                "private": "0",
-            }
+            },
+            "fields": ", ".join(METADATA_FIELDS | NOTE_FIELDS),
         }
+
+        resp = self._make_request(
+            method=HTTPMethod.POST,
+            path=f"/clients/{data.client_hmis_id}/client-notes",
+            body=body,
+        )
+
+        return self._format_client_data(resp.json())
+
+    def update_note(self, data: UpdateHmisNoteInput) -> dict[str, Any]:
+        note_data = {
+            k: (v.strftime(NOTE_DATE_FORMAT) if isinstance(v, datetime.date) else v)
+            for k, v in strawberry.asdict(data).items()
+            if v is not UNSET
+        }
+
+        fields = self._get_field_dot_paths(
+            info=self.info,
+            default_fields=METADATA_FIELDS,
+        )
+
+        body = {
+            "clientNote": note_data,
+            "fields": ", ".join(fields | {*note_data.keys()}),
+        }
+
+        resp = self._make_request(
+            method=HTTPMethod.PUT,
+            path=f"/clients/{data.client_hmis_id}/client-notes/{data.hmis_id}",
+            body=body,
+        )
+
+        return self._format_client_data(resp.json())
