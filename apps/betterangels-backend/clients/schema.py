@@ -462,6 +462,14 @@ class Mutation:
                 raise PermissionError("You do not have permission to modify this client.")
 
             client_profile_data: dict = strawberry.asdict(data)
+
+            # Handle profile_photo deletion: if profilePhoto is explicitly None/null, clear it
+            if "profile_photo" in client_profile_data and client_profile_data["profile_photo"] is None:
+                if client_profile.profile_photo:
+                    client_profile.profile_photo.delete(save=False)
+                client_profile.profile_photo = None
+                client_profile_data.pop("profile_photo", None)
+
             validate_client_profile_data(client_profile_data)
 
             related_classes = [
