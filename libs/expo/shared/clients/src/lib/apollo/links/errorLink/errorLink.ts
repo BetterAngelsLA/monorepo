@@ -1,7 +1,6 @@
 import type { ApolloLink, ErrorLike } from '@apollo/client';
 import { CombinedGraphQLErrors } from '@apollo/client/errors';
 import { ErrorLink } from '@apollo/client/link/error';
-// import { GraphQLFormattedError } from 'graphql/error';
 import { GraphQLFormattedError } from 'graphql';
 import { isUnauthorizedError } from './utils/isUnauthorizedError';
 import { createRedirectHandler } from './utils/redirectHandler';

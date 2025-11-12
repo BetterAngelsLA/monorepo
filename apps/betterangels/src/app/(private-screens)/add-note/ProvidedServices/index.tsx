@@ -1,4 +1,4 @@
-import { useQuery } from '@apollo/client/react';
+import { ApolloClient } from '@apollo/client';
 import {
   RequestedProvidedServices,
   ServiceRequestTypeEnum,
@@ -12,7 +12,9 @@ interface IProvidedServicesProps {
   noteId: string;
   scrollRef: RefObject<ScrollView | null>;
   services: ViewNoteQuery['note']['providedServices'];
-  refetch: useQuery.Result<ViewNoteQuery, ViewNoteQueryVariables>['refetch'];
+  refetch: (
+    variables?: Partial<ViewNoteQueryVariables>
+  ) => Promise<ApolloClient.QueryResult<ViewNoteQuery>>;
 }
 
 export default function ProvidedServices(props: IProvidedServicesProps) {

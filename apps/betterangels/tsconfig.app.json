@@ -11,5 +11,5 @@
     "test-setup.ts"
   ],
   "files": ["../../node_modules/@nx/expo/typings/svg.d.ts"],
-  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
 }
