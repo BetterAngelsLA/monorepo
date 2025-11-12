@@ -24,6 +24,6 @@
     "src/**/*.test.jsx",
     "src/**/*.spec.jsx",
     "src/**/*.d.ts",
-    "src/**/testUtils.ts" // include any testUtils.ts from current lib src
+    "src/**/testUtils.ts"
   ]
 }

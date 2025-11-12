@@ -28,7 +28,7 @@ describe('mergeObjectPayload – paginated (sparse) jumps with offsets', () => {
     >({
       resolvePaginationFn: resolvePaginationStrict,
       // the rest can be omitted because mergeObjectPayload has defaults,
-      // but we can leave it explicit to match your payload shape:
+      // but could also be explicit to match payload shape:
       // itemsPath: ['results'],
       // totalCountPath: ['totalCount'],
       // itemIdPath: ['id'],

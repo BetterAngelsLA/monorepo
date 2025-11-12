@@ -62,7 +62,7 @@ describe('generateFieldPolicy', () => {
       typeof policy.merge === 'function' || typeof policy.merge === 'boolean'
     ).toBe(true);
 
-    // ✅ use dynamic import so ESM/vitest is happy
+    // use dynamic import so ESM/vitest is happy
     const mockedModule = await import('./merge');
     const mockedGenerateMergeFn =
       mockedModule.generateMergeFn as unknown as MockInstance;

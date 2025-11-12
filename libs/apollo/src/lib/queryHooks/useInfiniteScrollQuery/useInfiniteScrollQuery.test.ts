@@ -1,28 +1,24 @@
 /**
  * @vitest-environment jsdom
  */
-import React = require('react');
-
-import {
-  ApolloClient,
-  HttpLink,
-  InMemoryCache,
-  type TypedDocumentNode,
-} from '@apollo/client';
-import { ApolloProvider, useQuery } from '@apollo/client/react';
-import { act, renderHook } from '@testing-library/react';
+import { type TypedDocumentNode } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
+import { act } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PaginationModeEnum } from '../../cachePolicy/constants';
-import { createUseQueryReturn } from './testUtils';
+import { createUseQueryReturn, renderHookWithApollo } from './testUtils';
 import { useInfiniteScrollQuery } from './useInfiniteScrollQuery';
 
-// Mock only useQuery
+// Mock useQuery
 vi.mock('@apollo/client/react', async () => {
   const actual = await vi.importActual<any>('@apollo/client/react');
-  return { ...actual, useQuery: vi.fn() };
+  return {
+    ...actual,
+    useQuery: vi.fn(),
+  };
 });
 
-// Mock policy reader stays the same...
+// Mock policy reader
 vi.mock('../../cacheStore/utils/getQueryPolicyConfigFromCache', () => {
   return {
     getQueryPolicyConfigFromCache: (_cache: unknown, fieldName: string) => {
@@ -50,19 +46,6 @@ vi.mock('../../cacheStore/utils/getQueryPolicyConfigFromCache', () => {
     },
   };
 });
-
-function createTestApolloClient() {
-  const cache = new InMemoryCache();
-  const link = new HttpLink({ uri: '/graphql' });
-  return new ApolloClient({ cache, link });
-}
-
-function renderHookWithApollo<T>(callback: () => T) {
-  const client = createTestApolloClient();
-  const Wrapper = ({ children }: { children: React.ReactNode }) =>
-    React.createElement(ApolloProvider as any, { client }, children);
-  return renderHook(callback, { wrapper: Wrapper });
-}
 
 // Typed-only placeholder documents
 type TasksData = {

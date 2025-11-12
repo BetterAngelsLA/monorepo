@@ -132,8 +132,7 @@ export function useInfiniteScrollQuery<
 
     if (!cfg) {
       throw new Error(
-        `[useInfiniteScrollQuery] No queryPolicyConfig found for Query.${queryFieldName}. ` +
-          `Ensure this field is registered via getQueryPolicyFactory and attached to the cache.`
+        `[useInfiniteScrollQuery] No queryPolicyConfig found for Query.${queryFieldName}. Ensure this field is registered via getQueryPolicyFactory and attached to the cache.`
       );
     }
 
@@ -169,7 +168,7 @@ export function useInfiniteScrollQuery<
     nextFetchPolicy,
   });
 
-  // Validate structure in development
+  // Validate structure in DEV env
   if (process.env['NODE_ENV'] !== 'production' && data) {
     validatePathOrThrow(
       (data as any)[queryFieldName],
@@ -209,7 +208,7 @@ export function useInfiniteScrollQuery<
     refetch(initialVariables as Partial<TVars>).catch((err) => {
       console.error('[useInfiniteScrollQuery] Refetch failed:', err);
     });
-  }, [memoizedVariables]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [memoizedVariables]);
 
   // Load more handler
   const loadMore = useCallback(() => {

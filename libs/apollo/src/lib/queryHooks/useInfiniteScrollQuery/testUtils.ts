@@ -1,7 +1,15 @@
-import { ErrorLike, NetworkStatus } from '@apollo/client'; // ✅ correct in v4
+import {
+  ApolloClient,
+  ErrorLike,
+  HttpLink,
+  InMemoryCache,
+  NetworkStatus,
+} from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
+import { renderHook } from '@testing-library/react';
 import { vi } from 'vitest';
+import React = require('react');
 
-// import type { ApolloLink, ErrorLike } from '@apollo/client';
 /**
  * Minimal useQuery result shape for mocking in tests.
  * We avoid importing Apollo's internal types to keep v4-compatible.
@@ -75,4 +83,19 @@ export function createUseQueryReturn<TData, TVars>(
   result['reobserve'] = vi.fn().mockResolvedValue(undefined);
 
   return result;
+}
+
+export function createTestApolloClient() {
+  const cache = new InMemoryCache();
+  const link = new HttpLink({ uri: '/graphql' });
+
+  return new ApolloClient({ cache, link });
+}
+
+export function renderHookWithApollo<T>(callback: () => T) {
+  const client = createTestApolloClient();
+  const Wrapper = ({ children }: { children: React.ReactNode }) =>
+    React.createElement(ApolloProvider as any, { client }, children);
+
+  return renderHook(callback, { wrapper: Wrapper });
 }
