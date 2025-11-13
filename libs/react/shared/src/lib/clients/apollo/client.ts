@@ -28,5 +28,13 @@ export const createApolloClient = ({
       uploadHttpLink,
     ]),
     cache: new InMemoryCache(),
+    // NOTE: in v4 the notifyOnNetworkStatusChange default value changed to `true`.
+    // Resetting default to false to mimic earlier (v3) behavior until we make
+    // necessary updates to switch to the new default.
+    defaultOptions: {
+      watchQuery: {
+        notifyOnNetworkStatusChange: false,
+      },
+    },
   });
 };
