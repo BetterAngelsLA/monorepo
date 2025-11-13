@@ -95,7 +95,7 @@ export default function LoginForm() {
     } finally {
       setConfirming(false);
     }
-  }, [otp, fetchClient, refetchUser]);
+  }, [otp, email, fetchClient, refetchUser, persistOnSuccessfulSignIn]);
 
   const handlePasswordLogin = useCallback(async () => {
     setLoading(true);

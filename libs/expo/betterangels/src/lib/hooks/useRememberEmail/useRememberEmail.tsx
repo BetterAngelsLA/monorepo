@@ -1,64 +1,33 @@
 import * as SecureStore from 'expo-secure-store';
 import { useCallback, useEffect, useState } from 'react';
 
-const KEYS = {
-  EMAIL: 'login.email',
-  REMEMBER: 'login.remember',
-} as const;
+const EMAIL_KEY = 'login.email';
 
 export function useRememberedEmail() {
   const [email, setEmail] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
 
+  // Load once
   useEffect(() => {
     (async () => {
-      try {
-        const [savedRemember, savedEmail] = await Promise.all([
-          SecureStore.getItemAsync(KEYS.REMEMBER),
-          SecureStore.getItemAsync(KEYS.EMAIL),
-        ]);
-        const remember = savedRemember === 'true';
-        setRememberMe(remember);
-        if (remember && savedEmail) setEmail(savedEmail);
-      } finally {
-        setHydrated(true);
+      const savedEmail = await SecureStore.getItemAsync(EMAIL_KEY);
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
       }
     })();
   }, []);
 
-  useEffect(() => {
-    (async () => {
-      if (!hydrated) return;
-      if (rememberMe) {
-        await SecureStore.setItemAsync(KEYS.REMEMBER, 'true', {
+  const persistOnSuccessfulSignIn = useCallback(
+    async (finalEmail: string) => {
+      const trimmed = finalEmail.trim();
+
+      if (rememberMe && trimmed) {
+        await SecureStore.setItemAsync(EMAIL_KEY, trimmed, {
           keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
         });
       } else {
-        await Promise.all([
-          SecureStore.deleteItemAsync(KEYS.REMEMBER),
-          SecureStore.deleteItemAsync(KEYS.EMAIL),
-        ]);
-      }
-    })();
-  }, [rememberMe, hydrated]);
-
-  const persistOnSuccessfulSignIn = useCallback(
-    async (finalEmail: string) => {
-      if (rememberMe && finalEmail.trim()) {
-        await Promise.all([
-          SecureStore.setItemAsync(KEYS.REMEMBER, 'true', {
-            keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
-          }),
-          SecureStore.setItemAsync(KEYS.EMAIL, finalEmail.trim(), {
-            keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
-          }),
-        ]);
-      } else {
-        await Promise.all([
-          SecureStore.deleteItemAsync(KEYS.REMEMBER),
-          SecureStore.deleteItemAsync(KEYS.EMAIL),
-        ]);
+        await SecureStore.deleteItemAsync(EMAIL_KEY);
       }
     },
     [rememberMe]
@@ -69,7 +38,6 @@ export function useRememberedEmail() {
     setEmail,
     rememberMe,
     setRememberMe,
-    hydrated,
     persistOnSuccessfulSignIn,
   };
 }
