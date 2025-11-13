@@ -1,6 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useQuery } from '@apollo/client/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { HmisEnrollmentType } from '../../apollo';
-import { useHmisClientProgramEnrollmentsQuery } from './__generated__/hmisClientProgramEnrollments.generated';
+import { HmisClientProgramEnrollmentsDocument } from './__generated__/hmisClientProgramEnrollments.generated';
 import { parseError } from './utils/parseError';
 
 const MAX_PROGRAMS_TO_FETCH = 50;
@@ -22,7 +23,11 @@ export function useHmisClientPrograms(props: TProps) {
     number | undefined
   >(undefined);
 
-  const { data, loading } = useHmisClientProgramEnrollmentsQuery({
+  const {
+    data,
+    loading,
+    error: queryError,
+  } = useQuery(HmisClientProgramEnrollmentsDocument, {
     skip: !hmisClientId,
     variables: {
       personalId: hmisClientId,
@@ -32,21 +37,30 @@ export function useHmisClientPrograms(props: TProps) {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
     notifyOnNetworkStatusChange: true,
-    onCompleted: (freshData) => {
-      const list = freshData?.hmisListEnrollments;
-
-      if (list?.__typename === 'HmisEnrollmentListType') {
-        const total = list.meta?.totalCount;
-        const newTotal = typeof total === 'number' ? total : undefined;
-
-        setTotalProgramsFromNetwork(newTotal);
-      }
-    },
-    onError: () => {
-      // If the network failed, we don't trust cached total; keep undefined
-      setTotalProgramsFromNetwork(undefined);
-    },
   });
+
+  // update totalProgramsFromNetwork onComplete
+  useEffect(() => {
+    if (!data) {
+      return;
+    }
+
+    const list = data.hmisListEnrollments;
+
+    if (list?.__typename === 'HmisEnrollmentListType') {
+      const total = list.meta?.totalCount;
+      const newTotal = typeof total === 'number' ? total : undefined;
+
+      setTotalProgramsFromNetwork(newTotal);
+    }
+  }, [data, setTotalProgramsFromNetwork]);
+
+  // update totalProgramsFromNetwork onError
+  useEffect(() => {
+    if (queryError) {
+      setTotalProgramsFromNetwork(undefined);
+    }
+  }, [queryError, setTotalProgramsFromNetwork]);
 
   const { programs, error } = useMemo<TProgramsBase>(() => {
     // handle errors

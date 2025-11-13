@@ -1,4 +1,4 @@
-import { ApolloQueryResult } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
 import {
   NoteTasks,
   SelahTeamEnum,
@@ -14,10 +14,7 @@ interface ITasksProps {
   scrollRef: RefObject<ScrollView | null>;
   tasks: ViewNoteQuery['note']['tasks'];
   team?: SelahTeamEnum | null;
-
-  refetch: (
-    variables?: Partial<ViewNoteQueryVariables>
-  ) => Promise<ApolloQueryResult<ViewNoteQuery>>;
+  refetch: useQuery.Result<ViewNoteQuery, ViewNoteQueryVariables>['refetch'];
 }
 
 export default function Tasks(props: ITasksProps) {

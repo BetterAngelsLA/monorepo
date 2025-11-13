@@ -1,10 +1,11 @@
-import { ApolloClient, InMemoryCache, from } from '@apollo/client';
+import { ApolloClient, ApolloLink, InMemoryCache } from '@apollo/client';
 import { RestLink } from 'apollo-link-rest';
-import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { isReactNativeFileInstance } from './ReactNativeFile';
 import { createAuthLink } from './links/authLink';
 import { createErrorLink } from './links/errorLink';
 import { loggerLink } from './links/loggerLink';
+import { hasRestDirective } from './links/utils';
 
 type TArgs = {
   apiUrl: string;
@@ -25,9 +26,12 @@ export const createApolloClient = (args: TArgs) => {
 
   const authLink = createAuthLink({ apiUrl, csrfUrl });
 
-  const restLink = new RestLink({ uri: apiUrl, credentials: 'include' });
+  const restLink = new RestLink({
+    uri: apiUrl,
+    credentials: 'include',
+  });
 
-  const uploadLink = createUploadLink({
+  const uploadHttpLink = new UploadHttpLink({
     uri: `${apiUrl}/graphql`,
     credentials: 'include',
     isExtractableFile: isReactNativeFileInstance,
@@ -38,18 +42,25 @@ export const createApolloClient = (args: TArgs) => {
     onUnauthenticated,
   });
 
-  const links = [errorLink, authLink, restLink, uploadLink];
+  // Split between REST operations and GraphQL operations
+  const restOrUploadLink = ApolloLink.split(
+    (operation) => hasRestDirective(operation.query),
+    restLink as unknown as ApolloLink, // if hasRestDirective=true
+    uploadHttpLink as unknown as ApolloLink // if hasRestDirective=false
+  );
 
-  // debug only: logs gql req/resp
+  const composedLinks: ApolloLink[] = [errorLink, authLink, restOrUploadLink];
+
+  // Debug only: logs GraphQL requests/responses
   if (
     process.env['EXPO_PUBLIC_GQL_DEBUG'] === 'true' &&
-    process.env.NODE_ENV !== 'production'
+    process.env['NODE_ENV'] !== 'production'
   ) {
-    links.unshift(loggerLink);
+    composedLinks.unshift(loggerLink);
   }
 
   return new ApolloClient({
-    link: from(links),
-    cache: cacheStore || new InMemoryCache(),
+    link: ApolloLink.from(composedLinks),
+    cache: cacheStore ?? new InMemoryCache(),
   });
 };

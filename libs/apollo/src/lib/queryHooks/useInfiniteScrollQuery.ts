@@ -73,78 +73,53 @@
  * }
  */
 
-import type {
-  OperationVariables,
-  QueryHookOptions,
-  QueryResult,
+import {
+  NetworkStatus,
+  type FetchPolicy,
+  type OperationVariables,
+  type TypedDocumentNode,
+  type WatchQueryFetchPolicy,
 } from '@apollo/client';
-import { NetworkStatus } from '@apollo/client';
+import { useQuery } from '@apollo/client/react';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAssertQueryFieldHasMerge } from './useAssertQueryFieldHasMerge';
 
 const DEFAULT_PAGE_SIZE = 25;
 
-/** Infer data/vars from a generated Apollo hook */
-type HookData<H> = H extends (
-  options?: QueryHookOptions<infer D, any>
-) => QueryResult<infer D2, any>
-  ? D & D2
-  : never;
-
-type HookVars<H> = H extends (
-  options?: QueryHookOptions<any, infer V>
-) => QueryResult<any, infer V2>
-  ? V & V2
-  : OperationVariables;
-
-/** The shape we expect for the hook argument */
-type AnyGeneratedHook = (
-  options: QueryHookOptions<any, any>
-) => QueryResult<any, any>;
-
 type Selector<TData, TItem> = (data: TData | undefined) => {
-  /** Keep undefined until first data arrives to avoid empty-state flash */
   items: TItem[] | undefined;
   total: number;
 };
 
-/** Compose final variables for a request (override only if your shape differs) */
 type ComposeVars<TVars extends OperationVariables> = (
   base: TVars | undefined,
   p: { offset: number; limit: number }
 ) => TVars;
 
-type TProps<TItem, H> = {
-  useQueryHook: H;
-  queryFieldName: string;
+type TProps<
+  TItem,
+  TData extends Record<string, any>,
+  TVars extends OperationVariables
+> = {
+  document: TypedDocumentNode<TData, TVars>;
+  queryFieldName: Extract<keyof TData, string>;
   pageSize?: number;
-  variables?: HookVars<H>;
-  composeVars?: ComposeVars<HookVars<H>>;
-  select?: Selector<HookData<H>, TItem>;
+  variables?: TVars;
+  composeVars?: ComposeVars<TVars>;
+  select?: Selector<TData, TItem>;
   resetOn?: Array<unknown>;
-  fetchPolicy?: QueryHookOptions<HookData<H>, HookVars<H>>['fetchPolicy'];
-  nextFetchPolicy?: QueryHookOptions<
-    HookData<H>,
-    HookVars<H>
-  >['nextFetchPolicy'];
+  fetchPolicy?: WatchQueryFetchPolicy;
+  nextFetchPolicy?: FetchPolicy;
   silencePolicyCheck?: boolean;
-
-  /* TODO: implement `resultsMode` or `includeUndefined` option?
-   * Merged results can possibly include `undefined` values in list
-   * sparse: include undefined
-   * dense: exclude undefined
-   * resultsMode?: 'dense' | 'sparse';
-   */
 };
 
-export function useInfiniteScrollQuery<TItem, H extends AnyGeneratedHook>(
-  args: TProps<TItem, H>
-) {
-  type TData = HookData<H>;
-  type TVars = HookVars<H>;
-
+export function useInfiniteScrollQuery<
+  TItem,
+  TData extends Record<string, any>,
+  TVars extends OperationVariables = OperationVariables
+>(args: TProps<TItem, TData, TVars>) {
   const {
-    useQueryHook,
+    document,
     queryFieldName,
     pageSize = DEFAULT_PAGE_SIZE,
     variables,
@@ -162,11 +137,13 @@ export function useInfiniteScrollQuery<TItem, H extends AnyGeneratedHook>(
   // Default selector
   const defaultSelect: Selector<any, any> = (d) => {
     const field = (d as any)?.[queryFieldName] ?? {};
+
     return {
       items: field.results ?? undefined,
       total: field.totalCount ?? 0,
     };
   };
+
   const effectiveSelect = (select ?? defaultSelect) as Selector<TData, TItem>;
 
   // Make `variables` stable **inside** the hook (identity-insensitive)
@@ -192,12 +169,15 @@ export function useInfiniteScrollQuery<TItem, H extends AnyGeneratedHook>(
   );
 
   // Run query
-  const { data, fetchMore, refetch, networkStatus, error } = useQueryHook({
+  const { data, fetchMore, refetch, networkStatus, error } = useQuery<
+    TData,
+    TVars
+  >(document, {
     variables: initialVars,
     notifyOnNetworkStatusChange: true,
     fetchPolicy,
     nextFetchPolicy,
-  } as QueryHookOptions<TData, TVars>);
+  });
 
   // Shape data
   const { items, total } = useMemo(
@@ -217,7 +197,9 @@ export function useInfiniteScrollQuery<TItem, H extends AnyGeneratedHook>(
   // Prevent overlapping fetchMore calls
   const inFlight = useRef(false);
   useEffect(() => {
-    if (!loading) inFlight.current = false;
+    if (!loading) {
+      inFlight.current = false;
+    }
   }, [loading]);
 
   // Refetch when **semantic inputs** change (stable variables) or resetOn
@@ -225,12 +207,14 @@ export function useInfiniteScrollQuery<TItem, H extends AnyGeneratedHook>(
     refetch(initialVars as Partial<TVars>).catch((err) => {
       console.error('[useInfiniteScrollQuery] Refetch failed:', err);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [varsKey, ...resetOn]);
 
   // Pagination
   const loadMore = useCallback(() => {
-    if (!hasMore || loading || inFlight.current) return;
+    if (!hasMore || loading || inFlight.current) {
+      return;
+    }
+
     inFlight.current = true;
 
     const nextVars = makeVars(safeLen, pageSize);

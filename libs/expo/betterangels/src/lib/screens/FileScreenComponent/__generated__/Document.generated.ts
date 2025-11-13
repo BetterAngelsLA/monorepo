@@ -1,8 +1,6 @@
-import * as Types from '../../../apollo/graphql/__generated__/types';
+import type * as Types from '../../../apollo/graphql/__generated__/types';
 
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
-const defaultOptions = {} as const;
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type ClientDocumentQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
@@ -11,54 +9,4 @@ export type ClientDocumentQueryVariables = Types.Exact<{
 export type ClientDocumentQuery = { __typename?: 'Query', clientDocument: { __typename?: 'ClientDocumentType', id: string, createdAt: any, namespace: Types.ClientDocumentNamespaceEnum, originalFilename?: string | null, attachmentType: Types.AttachmentType, mimeType: string, file: { __typename?: 'DjangoFileType', url: string, name: string } } };
 
 
-export const ClientDocumentDocument = gql`
-    query ClientDocument($id: ID!) {
-  clientDocument(pk: $id) {
-    ... on ClientDocumentType {
-      id
-      createdAt
-      namespace
-      originalFilename
-      attachmentType
-      mimeType
-      file {
-        url
-        name
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useClientDocumentQuery__
- *
- * To run a query within a React component, call `useClientDocumentQuery` and pass it any options that fit your needs.
- * When your component renders, `useClientDocumentQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useClientDocumentQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useClientDocumentQuery(baseOptions: Apollo.QueryHookOptions<ClientDocumentQuery, ClientDocumentQueryVariables> & ({ variables: ClientDocumentQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<ClientDocumentQuery, ClientDocumentQueryVariables>(ClientDocumentDocument, options);
-      }
-export function useClientDocumentLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ClientDocumentQuery, ClientDocumentQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<ClientDocumentQuery, ClientDocumentQueryVariables>(ClientDocumentDocument, options);
-        }
-export function useClientDocumentSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ClientDocumentQuery, ClientDocumentQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<ClientDocumentQuery, ClientDocumentQueryVariables>(ClientDocumentDocument, options);
-        }
-export type ClientDocumentQueryHookResult = ReturnType<typeof useClientDocumentQuery>;
-export type ClientDocumentLazyQueryHookResult = ReturnType<typeof useClientDocumentLazyQuery>;
-export type ClientDocumentSuspenseQueryHookResult = ReturnType<typeof useClientDocumentSuspenseQuery>;
-export type ClientDocumentQueryResult = Apollo.QueryResult<ClientDocumentQuery, ClientDocumentQueryVariables>;
+export const ClientDocumentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ClientDocument"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"clientDocument"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"ClientDocumentType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"namespace"}},{"kind":"Field","name":{"kind":"Name","value":"originalFilename"}},{"kind":"Field","name":{"kind":"Name","value":"attachmentType"}},{"kind":"Field","name":{"kind":"Name","value":"mimeType"}},{"kind":"Field","name":{"kind":"Name","value":"file"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]} as unknown as DocumentNode<ClientDocumentQuery, ClientDocumentQueryVariables>;

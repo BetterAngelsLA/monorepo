@@ -1,4 +1,6 @@
-import { FetchResult } from '@apollo/client';
+import { ApolloLink } from '@apollo/client';
+import { useLazyQuery } from '@apollo/client/react';
+import { useMutationWithErrors } from '@monorepo/apollo';
 import {
   ControlledInput,
   Form,
@@ -20,13 +22,13 @@ import {
 } from '../../../../../screenRouting';
 import { enumDisplayHmisAgency } from '../../../../../static';
 import { TClientProfile } from '../../../../Client/ClientProfile/types';
-import { useGetClientProfileLazyQuery } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
+import { GetClientProfileDocument } from '../../../ClientProfileForm/__generated__/clientProfile.generated';
 import { HmisProfileDeleteBtn } from '../HmisProfileDeleteBtn';
 import {
+  CreateHmisProfileDocument,
   CreateHmisProfileMutation,
+  UpdateHmisProfileDocument,
   UpdateHmisProfileMutation,
-  useCreateHmisProfileMutation,
-  useUpdateHmisProfileMutation,
 } from './__generated__/hmisProfile.generated';
 import { defaultFormState, toFormState } from './toFormState';
 import { THmisProfileFormState } from './types';
@@ -43,8 +45,8 @@ export function HmisProfileForm(props: TProps) {
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [updateHmisProfile] = useUpdateHmisProfileMutation();
-  const [createHmisProfile] = useCreateHmisProfileMutation();
+  const [updateHmisProfile] = useMutationWithErrors(UpdateHmisProfileDocument);
+  const [createHmisProfile] = useMutationWithErrors(CreateHmisProfileDocument);
 
   const {
     control,
@@ -57,7 +59,7 @@ export function HmisProfileForm(props: TProps) {
     defaultValues: defaultFormState,
   });
 
-  const [reFetchClientProfile] = useGetClientProfileLazyQuery({
+  const [reFetchClientProfile] = useLazyQuery(GetClientProfileDocument, {
     fetchPolicy: 'network-only',
   });
 
@@ -86,25 +88,31 @@ export function HmisProfileForm(props: TProps) {
     try {
       setIsLoading(true);
 
-      const mutationVariables = {
-        variables: {
-          data: {
-            clientProfile: clientProfile.id,
-            ...validFormState,
-            ...(isEditMode ? { id: relationId } : {}),
-          },
-        },
+      const baseInput = {
+        clientProfile: clientProfile.id,
+        ...validFormState,
       };
 
-      const mutation = isEditMode ? updateHmisProfile : createHmisProfile;
-      const mutationKey = isEditMode
-        ? 'updateHmisProfile'
-        : 'createHmisProfile';
+      let response;
 
-      const response = await mutation({
-        ...mutationVariables,
-        errorPolicy: 'all',
-      });
+      if (isEditMode) {
+        response = await updateHmisProfile({
+          variables: {
+            data: {
+              id: relationId,
+              ...baseInput,
+            },
+          },
+          errorPolicy: 'all',
+        });
+      } else {
+        response = await createHmisProfile({
+          variables: {
+            data: baseInput,
+          },
+          errorPolicy: 'all',
+        });
+      }
 
       const extensionErrors = extractExtensionErrors(response);
 
@@ -119,6 +127,10 @@ export function HmisProfileForm(props: TProps) {
       if (!responseData) {
         throw new Error('Missing HMIS mutation response data');
       }
+
+      const mutationKey = isEditMode
+        ? 'updateHmisProfile'
+        : 'createHmisProfile';
 
       const uniquenessError = hasUniquenessError(response, mutationKey);
 
@@ -241,7 +253,9 @@ function isSuccessMutationResponse(
 }
 
 function hasUniquenessError(
-  response: FetchResult<UpdateHmisProfileMutation | CreateHmisProfileMutation>,
+  response: ApolloLink.Result<
+    UpdateHmisProfileMutation | CreateHmisProfileMutation
+  >,
   key: 'updateHmisProfile' | 'createHmisProfile'
 ): string | null {
   const operationInfo = extractOperationInfo(response, key);

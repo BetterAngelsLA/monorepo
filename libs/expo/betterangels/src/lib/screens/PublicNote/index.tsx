@@ -1,3 +1,5 @@
+import { useQuery } from '@apollo/client/react';
+import { useMutationWithErrors } from '@monorepo/apollo';
 import {
   Colors,
   FontSizes,
@@ -16,15 +18,15 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useUpdateNoteMutation, useViewNoteQuery } from '../../apollo';
+import { UpdateNoteDocument, ViewNoteDocument } from '../../apollo';
 import { generatePublicNote } from '../../helpers';
 
 export default function PublicNote({ noteId }: { noteId: string }) {
-  const { data, loading: isLoading } = useViewNoteQuery({
+  const { data, loading: isLoading } = useQuery(ViewNoteDocument, {
     variables: { id: noteId },
     fetchPolicy: 'network-only',
   });
-  const [updateNote, { error }] = useUpdateNoteMutation();
+  const [updateNote, { error }] = useMutationWithErrors(UpdateNoteDocument);
   const [autoNote, setAutoNote] = useState<string>('');
   const [publicNote, setPublicNote] = useState<string>('');
   const [userChange, setUserChange] = useState(false);

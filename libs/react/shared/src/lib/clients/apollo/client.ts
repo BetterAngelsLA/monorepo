@@ -1,12 +1,5 @@
-import {
-  ApolloClient,
-  from,
-  InMemoryCache,
-  NormalizedCacheObject,
-} from '@apollo/client';
-
-import { RestLink } from 'apollo-link-rest';
-import createUploadLink from 'apollo-upload-client/createUploadLink.mjs';
+import { ApolloClient, ApolloLink, InMemoryCache } from '@apollo/client';
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 import { csrfLink } from './csrf';
 
 type IApolloClient = {
@@ -19,26 +12,20 @@ export const createApolloClient = ({
   apiUrl,
   csrfCookieName,
   csrfHeaderName,
-}: IApolloClient): ApolloClient<NormalizedCacheObject> => {
-  const uploadLink = createUploadLink({
+}: IApolloClient): ApolloClient => {
+  const uploadHttpLink = new UploadHttpLink({
     uri: `${apiUrl}/graphql`,
     credentials: 'include',
   });
 
-  const restLink = new RestLink({
-    uri: apiUrl,
-    credentials: 'include',
-  });
-
   return new ApolloClient({
-    link: from([
+    link: ApolloLink.from([
       csrfLink({
         apiUrl: `${apiUrl}/admin/login/`,
         cookieName: csrfCookieName,
         headerName: csrfHeaderName,
       }),
-      restLink,
-      uploadLink,
+      uploadHttpLink,
     ]),
     cache: new InMemoryCache(),
   });
