@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useState } from 'react';
+import { ApolloError, useMutation } from '@apollo/client';
 import { Link } from 'react-router-dom';
 import { useCreateShelterForm } from './hooks/useCreateShelterForm';
 import { validateField, validateShelterForm, type FormErrors } from './constants/validation';
@@ -14,10 +15,17 @@ import { ShelterDetailsSection } from './sections/ShelterDetailsSection';
 import { SleepingDetailsSection } from './sections/SleepingDetailsSection';
 import { SummaryInformationSection } from './sections/SummaryInformationSection';
 import type { ShelterFormData } from '../../types';
+import {
+  CREATE_SHELTER_MUTATION,
+  buildCreateShelterInput,
+} from './api/createShelterMutation';
 
 export default function CreateShelterForm() {
-  const { formData, updateField } = useCreateShelterForm();
+  const { formData, updateField, resetForm } = useCreateShelterForm();
   const [errors, setErrors] = useState<FormErrors>({});
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null);
+  const [createShelter, { loading: isSubmitting }] = useMutation(CREATE_SHELTER_MUTATION);
 
   const handleFieldChange = useCallback(
     <K extends keyof ShelterFormData>(field: K, value: ShelterFormData[K]) => {
@@ -40,14 +48,30 @@ export default function CreateShelterForm() {
     [updateField]
   );
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSubmissionError(null);
+    setSubmissionSuccess(null);
     const validation = validateShelterForm(formData);
     setErrors(validation.errors);
     if (!validation.isValid) {
       return;
     }
-    // TODO: Replace with GraphQL mutation once API is ready.
+
+    try {
+      const response = await createShelter({
+        variables: {
+          input: buildCreateShelterInput(formData),
+        },
+      });
+      console.log('Shelter submission successful', response.data?.createShelter);
+      setSubmissionSuccess('Shelter submitted successfully.');
+      resetForm();
+      setErrors({});
+    } catch (error) {
+      console.error('Shelter submission failed', error);
+      setSubmissionError(extractApolloError(error));
+    }
   };
 
   return (
@@ -68,6 +92,17 @@ export default function CreateShelterForm() {
         </p>
       </div>
 
+      {submissionError ? (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+          {submissionError}
+        </div>
+      ) : null}
+      {submissionSuccess ? (
+        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800" role="status">
+          {submissionSuccess}
+        </div>
+      ) : null}
+
       <form onSubmit={handleSubmit} className="space-y-6" data-testid="create-shelter-form">
         <BasicInformationSection data={formData} onChange={handleFieldChange} errors={errors} />
         <SummaryInformationSection data={formData} onChange={handleFieldChange} errors={errors} />
@@ -84,12 +119,40 @@ export default function CreateShelterForm() {
         <div className="flex justify-end gap-3">
           <button
             type="submit"
-            className="bg-green-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-green-700 transition-colors"
+            className="bg-green-600 text-black px-6 py-3 rounded-md font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+            disabled={isSubmitting}
           >
-            Create Shelter
+            {isSubmitting ? 'Submitting…' : 'Create Shelter'}
           </button>
         </div>
       </form>
     </div>
   );
 }
+
+const extractApolloError = (error: unknown) => {
+  if (error instanceof ApolloError) {
+    const graphQLErrorMessages = error.graphQLErrors
+      .map(graphQLError => {
+        const formattedErrors = graphQLError.extensions?.errors;
+        if (Array.isArray(formattedErrors) && formattedErrors.length) {
+          const first = formattedErrors[0];
+          if (first?.messages?.length) {
+            return first.messages.join(', ');
+          }
+        }
+        return graphQLError.message;
+      })
+      .filter(Boolean);
+
+    if (graphQLErrorMessages.length) {
+      return graphQLErrorMessages[0] as string;
+    }
+
+    if (error.networkError) {
+      return 'Network error while submitting shelter. Please try again.';
+    }
+  }
+
+  return 'Unable to submit shelter. Please try again.';
+};

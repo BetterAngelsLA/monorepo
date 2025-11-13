@@ -12,6 +12,7 @@ const fieldSchemas: FieldSchemaMap = {
   name: z.string().min(1, 'Shelter name is required'),
   organization: z.string().min(1, 'Organization is required'),
   location: z.string().min(1, 'Location is required'),
+  description: z.string().min(1, 'Description is required'),
   email: z
     .string()
     .min(1, 'Email is required')
@@ -28,7 +29,18 @@ const fieldSchemas: FieldSchemaMap = {
     }),
   demographics: z.array(z.string()).min(1, 'Select at least one demographic'),
   shelter_types: z.array(z.string()).min(1, 'Select at least one shelter type'),
-  total_beds: z.number().int('Total beds must be a whole number').min(0, 'Total beds must be zero or greater'),
+  total_beds: z
+    .number()
+    .int('Total beds must be a whole number')
+    .min(0, 'Total beds must be zero or greater')
+    .optional()
+    .nullable(),
+  max_stay: z
+    .number()
+    .int('Max stay must be a whole number')
+    .min(0, 'Max stay must be zero or greater')
+    .optional()
+    .nullable(),
   room_styles: z.array(z.string()).min(1, 'Select at least one room style'),
   intake_hours: z.string().min(1, 'Intake hours are required'),
   curfew: z.string().min(1, 'Curfew is required'),

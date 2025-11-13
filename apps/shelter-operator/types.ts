@@ -20,7 +20,7 @@ export interface ShelterFormData {
   description: string;
 
   // Sleeping Details
-  total_beds: number;
+  total_beds: number | null;
   room_styles: string[];
   room_styles_other: string;
   add_notes_sleeping_details: string;
@@ -33,7 +33,7 @@ export interface ShelterFormData {
   add_notes_shelter_details: string;
 
   // Policies
-  max_stay: number;
+  max_stay: number | null;
   intake_hours: string; // Format: "HH:MM:SS-HH:MM:SS,HH:MM:SS-HH:MM:SS,..."
   curfew: string; // Format: "HH:MM:SS-HH:MM:SS,HH:MM:SS-HH:MM:SS,..."
   on_site_security: boolean | null;

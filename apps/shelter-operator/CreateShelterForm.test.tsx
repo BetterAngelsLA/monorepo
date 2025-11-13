@@ -1,14 +1,19 @@
+import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import CreateShelterForm from './components/create-shelter-form';
+import { CREATE_SHELTER_MUTATION, buildCreateShelterInput } from './components/create-shelter-form/api/createShelterMutation';
 import { validateShelterForm } from './components/create-shelter-form/constants/validation';
 import { createEmptyShelterFormData } from './components/create-shelter-form/constants/defaultShelterFormData';
+import type { ShelterFormData } from './types';
 
-const renderForm = () =>
+const renderForm = (mocks: MockedResponse[] = []) =>
   render(
-    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <CreateShelterForm />
-    </MemoryRouter>
+    <MockedProvider mocks={mocks} addTypename={false}>
+      <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <CreateShelterForm />
+      </MemoryRouter>
+    </MockedProvider>
   );
 
 const clickCheckbox = (name: string, value: string) => {
@@ -47,12 +52,52 @@ describe('CreateShelterForm', () => {
   it(
     'submits successfully when required fields are populated',
     async () => {
-      renderForm();
+      const formDataForMutation: ShelterFormData = {
+        ...createEmptyShelterFormData(),
+        name: 'Safe Haven',
+        organization: 'Hope Org',
+        location: 'Los Angeles, 34.05, -118.24',
+        email: 'contact@hope.org',
+        description: 'Safe haven description',
+        intake_hours: '08:00-17:00',
+        curfew: '21:00-06:00',
+        total_beds: 20,
+        demographics: ['All'],
+        shelter_types: ['Building'],
+        room_styles: ['Congregate (Open)'],
+        exit_policy: ['Exit after 72 hours of being MIA'],
+        entry_requirements: ['Medicaid or Medicare'],
+        referral_requirement: ['Matched Referral'],
+      };
+
+      const mocks: MockedResponse[] = [
+        {
+          request: {
+            query: CREATE_SHELTER_MUTATION,
+            variables: {
+              input: buildCreateShelterInput(formDataForMutation),
+            },
+          },
+          result: {
+            data: {
+              createShelter: {
+                __typename: 'ShelterType',
+                id: '1',
+                name: 'Safe Haven',
+                status: 'DRAFT',
+              },
+            },
+          },
+        },
+      ];
+
+      renderForm(mocks);
 
       fireEvent.change(screen.getByLabelText(/shelter name/i), { target: { value: 'Safe Haven' } });
       fireEvent.change(screen.getByLabelText(/organization/i), { target: { value: 'Hope Org' } });
       fireEvent.change(screen.getByLabelText(/location/i), { target: { value: 'Los Angeles, 34.05, -118.24' } });
       fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'contact@hope.org' } });
+      fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'Safe haven description' } });
       fireEvent.change(screen.getByLabelText(/intake hours/i), { target: { value: '08:00-17:00' } });
       fireEvent.change(screen.getByLabelText(/curfew/i), { target: { value: '21:00-06:00' } });
       fireEvent.change(screen.getByLabelText(/total beds/i), { target: { value: '20' } });

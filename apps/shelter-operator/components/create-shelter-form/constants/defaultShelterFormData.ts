@@ -26,7 +26,7 @@ export const createEmptyShelterFormData = (): ShelterFormData => ({
   description: '',
 
   // Sleeping Details
-  total_beds: 0,
+  total_beds: null,
   room_styles: [],
   room_styles_other: '',
   add_notes_sleeping_details: '',
@@ -39,7 +39,7 @@ export const createEmptyShelterFormData = (): ShelterFormData => ({
   add_notes_shelter_details: '',
 
   // Policies
-  max_stay: 0,
+  max_stay: null,
   intake_hours: '',
   curfew: '',
   on_site_security: null,

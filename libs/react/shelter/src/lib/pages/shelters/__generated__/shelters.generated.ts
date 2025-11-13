@@ -12,6 +12,13 @@ export type ViewSheltersQueryVariables = Types.Exact<{
 
 export type ViewSheltersQuery = { __typename?: 'Query', shelters: { __typename?: 'ShelterTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'ShelterType', id: string, name: string, heroImage?: string | null, distanceInMiles?: number | null, exteriorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', url: string, name: string } }>, interiorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', url: string, name: string } }>, location?: { __typename?: 'ShelterLocationType', latitude: number, longitude: number, place: string } | null }> } };
 
+export type CreateShelterMutationVariables = Types.Exact<{
+  input: Types.CreateShelterInput;
+}>;
+
+
+export type CreateShelterMutation = { __typename?: 'Mutation', createShelter: { __typename?: 'OperationInfo' } | { __typename?: 'ShelterType', id: string, name: string, status: Types.StatusChoices } };
+
 
 export const ViewSheltersDocument = gql`
     query ViewShelters($filters: ShelterFilter, $pagination: OffsetPaginationInput, $order: ShelterOrder) {
@@ -78,3 +85,40 @@ export type ViewSheltersQueryHookResult = ReturnType<typeof useViewSheltersQuery
 export type ViewSheltersLazyQueryHookResult = ReturnType<typeof useViewSheltersLazyQuery>;
 export type ViewSheltersSuspenseQueryHookResult = ReturnType<typeof useViewSheltersSuspenseQuery>;
 export type ViewSheltersQueryResult = Apollo.QueryResult<ViewSheltersQuery, ViewSheltersQueryVariables>;
+export const CreateShelterDocument = gql`
+    mutation CreateShelter($input: CreateShelterInput!) {
+  createShelter(input: $input) {
+    ... on ShelterType {
+      id
+      name
+      status
+    }
+  }
+}
+    `;
+export type CreateShelterMutationFn = Apollo.MutationFunction<CreateShelterMutation, CreateShelterMutationVariables>;
+
+/**
+ * __useCreateShelterMutation__
+ *
+ * To run a mutation, you first call `useCreateShelterMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateShelterMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createShelterMutation, { data, loading, error }] = useCreateShelterMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateShelterMutation(baseOptions?: Apollo.MutationHookOptions<CreateShelterMutation, CreateShelterMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateShelterMutation, CreateShelterMutationVariables>(CreateShelterDocument, options);
+      }
+export type CreateShelterMutationHookResult = ReturnType<typeof useCreateShelterMutation>;
+export type CreateShelterMutationResult = Apollo.MutationResult<CreateShelterMutation>;
+export type CreateShelterMutationOptions = Apollo.BaseMutationOptions<CreateShelterMutation, CreateShelterMutationVariables>;

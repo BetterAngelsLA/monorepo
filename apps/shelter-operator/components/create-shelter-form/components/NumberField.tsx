@@ -6,8 +6,8 @@ interface NumberFieldProps {
   id: string;
   name: string;
   label: string;
-  value: number;
-  onChange: (value: number) => void;
+  value: number | null;
+  onChange: (value: number | null) => void;
   placeholder?: string;
   min?: number;
   max?: number;
@@ -47,14 +47,14 @@ export function NumberField({
         id={id}
         name={name}
         type="number"
-        value={Number.isNaN(value) ? '' : value}
+        value={value ?? ''}
         placeholder={placeholder}
         min={min}
         max={max}
         step={step}
         onChange={event => {
           const next = event.target.value;
-          onChange(next === '' ? 0 : Number(next));
+          onChange(next === '' ? null : Number(next));
         }}
         onBlur={onBlur}
         className={clsx(INPUT_CLASS, error && INPUT_ERROR_CLASS)}
