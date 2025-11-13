@@ -656,23 +656,8 @@ class Mutation:
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
 
-            photo = data.photo
-
-            if photo is UNSET:
-                return cast(ClientProfileType, client_profile)
-
-            if client_profile.profile_photo:
-                try:
-                    client_profile.profile_photo.delete(save=False)
-                except Exception as e:
-                    logger.error(f"Error deleting profile photo: {e}")
-
-            if photo is None:
-                client_profile.profile_photo = None
-            else:
-                client_profile.profile_photo = photo
-
-            client_profile.save()
+            client_profile.profile_photo = data.photo
+            client_profile.save(update_fields=["profile_photo"])
             return cast(ClientProfileType, client_profile)
 
     # Data Import
