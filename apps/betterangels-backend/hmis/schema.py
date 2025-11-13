@@ -58,20 +58,7 @@ class Query:
             note_hmis_id=note_hmis_id,
         )
 
-        returned_hmis_id = str(note_data.pop("hmis_id"))
-        returned_client = note_data.pop("client")
-
-        if str(returned_client["id"]) != client_hmis_id:
-            raise ValidationError("Client ID mismatch")
-
-        try:
-            hmis_client_profile_id = HmisClientProfile.objects.get(hmis_id=client_hmis_id).pk
-
-        except HmisClientProfile.DoesNotExist:
-            raise ValidationError("Client does not exist")
-
-        if note_hmis_id != returned_hmis_id:
-            raise ValidationError("Note ID mismatch")
+        hmis_client_profile_id = HmisClientProfile.objects.get(hmis_id=client_hmis_id).pk
 
         hmis_note, _ = HmisNote.objects.filter(
             hmis_id=note_hmis_id,
@@ -157,7 +144,10 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_hmis_note(self, info: Info, data: UpdateHmisNoteInput) -> HmisNoteType:
-        hmis_note = HmisNote.objects.get(hmis_id=data.hmis_id)
+        hmis_note = HmisNote.objects.get(id=data.id)
+
+        if hmis_note.hmis_id != data.hmis_id:
+            raise ValidationError("Note ID mismatch")
 
         if any(
             (
