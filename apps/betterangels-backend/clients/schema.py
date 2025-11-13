@@ -1,4 +1,3 @@
-import logging
 import re
 from typing import Any, Dict, List, Optional, cast
 
@@ -35,7 +34,6 @@ from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
 from guardian.shortcuts import assign_perm
 from phonenumber_field.validators import validate_international_phonenumber
-from strawberry import UNSET
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -67,8 +65,6 @@ from .types import (
     UpdateClientDocumentInput,
     UpdateClientProfileInput,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def _format_graphql_error(error: Exception) -> str:
@@ -635,15 +631,6 @@ class Mutation:
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])],
     )
     def update_client_profile_photo(self, info: Info, data: ClientProfilePhotoInput) -> ClientProfileType:
-        """
-        Updates or clears a client's profile photo.
-
-        Semantics:
-        - data.photo is UNSET  -> do not modify profile_photo
-        - data.photo is None   -> clear/delete profile_photo
-        - data.photo is Upload -> set/replace profile_photo
-        """
-
         with transaction.atomic():
             user = get_current_user(info)
 
@@ -659,23 +646,6 @@ class Mutation:
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
 
-            photo = data.photo
-
-            if photo is UNSET:
-                return cast(ClientProfileType, client_profile)
-
-            if client_profile.profile_photo:
-                try:
-                    client_profile.profile_photo.delete(save=False)
-                except Exception as e:
-                    logger.error(f"Error deleting profile photo: {e}")
-
-            if photo is None:
-                client_profile.profile_photo = None
-            else:
-                client_profile.profile_photo = photo
-
-            client_profile.save()
             return cast(ClientProfileType, client_profile)
 
     # Data Import
