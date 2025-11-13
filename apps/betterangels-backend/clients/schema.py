@@ -653,11 +653,11 @@ class Mutation:
                     user,
                     [ClientProfilePermissions.CHANGE],
                 ).get(id=data.client_profile)
+                client_profile.profile_photo = data.photo
+                client_profile.save(update_fields=["profile_photo"])
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
 
-            client_profile.profile_photo = data.photo
-            client_profile.save(update_fields=["profile_photo"])
             return cast(ClientProfileType, client_profile)
 
     # Data Import
