@@ -67,6 +67,8 @@ from .types import (
     UpdateClientProfileInput,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def _format_graphql_error(error: Exception) -> str:
     # Use error.message if available; otherwise, fallback to error.args[0] or str(error)
@@ -464,17 +466,6 @@ class Mutation:
 
             client_profile_data: dict = strawberry.asdict(data)
 
-            # Handle profile_photo deletion: if profilePhoto is explicitly None/null, clear it
-            if "profile_photo" in client_profile_data and client_profile_data["profile_photo"] is None:
-                if client_profile.profile_photo:
-                    try:
-                        client_profile.profile_photo.delete(save=False)
-                    except Exception as e:
-                        logger = logging.getLogger(__name__)
-                        logger.error(f"Error deleting profile photo: {e}")
-                client_profile.profile_photo = None
-                client_profile_data.pop("profile_photo", None)
-
             validate_client_profile_data(client_profile_data)
 
             related_classes = [
@@ -639,24 +630,58 @@ class Mutation:
     )
 
     @strawberry_django.mutation(
-        permission_classes=[IsAuthenticated], extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])]
+        permission_classes=[IsAuthenticated],
+        extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])],
     )
     def update_client_profile_photo(self, info: Info, data: ClientProfilePhotoInput) -> ClientProfileType:
+        """
+        Updates or clears a client's profile photo.
+
+        Semantics:
+        - data.photo is UNSET  -> do not modify profile_photo
+        - data.photo is None   -> clear/delete profile_photo
+        - data.photo is Upload -> set/replace profile_photo
+        """
+        from strawberry import UNSET
+
         with transaction.atomic():
             user = get_current_user(info)
+
             try:
                 client_profile = filter_for_user(
                     ClientProfile.objects.all(),
                     user,
                     [ClientProfilePermissions.CHANGE],
                 ).get(id=data.client_profile)
-
-                client_profile.profile_photo = data.photo
-                client_profile.save()
-
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
 
+            photo = data.photo  # simpler and always defined
+
+            # If photo is not provided at all, do nothing
+            if photo is UNSET:
+                return cast(ClientProfileType, client_profile)
+
+            # If photo is explicitly null -> clear existing photo
+            if photo is None:
+                if client_profile.profile_photo:
+                    try:
+                        client_profile.profile_photo.delete(save=False)
+                    except Exception as e:
+                        logger.error(f"Error deleting profile photo: {e}")
+                client_profile.profile_photo = None
+
+            # Otherwise, set/replace with the new uploaded file
+            else:
+                if client_profile.profile_photo:
+                    try:
+                        client_profile.profile_photo.delete(save=False)
+                    except Exception as e:
+                        logger.error(f"Error deleting previous profile photo: {e}")
+
+                client_profile.profile_photo = photo
+
+            client_profile.save()
             return cast(ClientProfileType, client_profile)
 
     # Data Import
