@@ -7,17 +7,14 @@ import { Pressable, View } from 'react-native';
 import { useSnackbar } from '../../../hooks';
 import { useUpdateClientProfilePhotoMutation } from '../../ClientProfileForms/ClientProfileForm/PersonalInfoForm/ProfilePhotoField/__generated__/updateClientProfilePhoto.generated';
 import { ClientProfileDocument } from '../__generated__/Client.generated';
-import { ProfilePhotoModal } from './ProfilePhotoModal';
 
 interface Props {
   clientId: string;
   imageUrl?: string;
 }
 
-type ModalType = 'picker' | 'profile' | null;
-
 export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
-  const [modalType, setModalType] = useState<ModalType>(null);
+  const [isModalVisible, setModalVisible] = useState(false);
   const { showSnackbar } = useSnackbar();
 
   const [updatePhoto, { loading }] = useUpdateClientProfilePhotoMutation({
@@ -37,21 +34,16 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
         type: 'error',
       });
     } finally {
-      setModalType(null);
+      setModalVisible(false);
     }
   };
-
-  const isPickerOpen = modalType === 'picker';
-  const isProfileOpen = modalType === 'profile';
 
   return (
     <>
       <Pressable
-        onPress={() => setModalType(imageUrl ? 'profile' : 'picker')}
+        onPress={() => setModalVisible(true)}
         accessibilityRole="button"
-        accessibilityHint={
-          imageUrl ? 'view profile photo options' : 'update profile photo'
-        }
+        accessibilityHint="update profile photo"
       >
         <View style={{ position: 'relative' }}>
           <Avatar
@@ -60,41 +52,28 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
             mr="xs"
             imageUrl={imageUrl}
             accessibilityLabel="client's profile photo"
-            accessibilityHint={
-              imageUrl ? 'view profile photo options' : 'update profile photo'
-            }
+            accessibilityHint="update profile photo"
           />
-          {!imageUrl && (
-            <View
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                right: Spacings.xs,
-                backgroundColor: 'white',
-              }}
-            >
-              <WFEdit />
-            </View>
-          )}
+          <View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              right: Spacings.xs,
+              backgroundColor: 'white',
+            }}
+          >
+            <WFEdit />
+          </View>
         </View>
       </Pressable>
 
       <MediaPickerModal
-        isModalVisible={isPickerOpen}
-        setModalVisible={(v) => setModalType(v ? 'picker' : null)}
+        isModalVisible={isModalVisible}
+        setModalVisible={setModalVisible}
         allowMultiple={false}
         onCapture={handleUpload}
         setFiles={(files) => handleUpload(files[0])}
       />
-
-      {imageUrl && (
-        <ProfilePhotoModal
-          isModalVisible={isProfileOpen}
-          closeModal={() => setModalType(null)}
-          imageUrl={imageUrl}
-          clientId={clientId}
-        />
-      )}
     </>
   );
 }
