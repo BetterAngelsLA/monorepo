@@ -54,7 +54,6 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
     def test_create_hmis_note_mutation(self) -> None:
         variables = {
             "hmisClientProfileId": str(self.hmis_client_profile.pk),
-            "clientHmisId": "388",
             "title": "pitle",
             "note": "pote",
             "date": "2010-10-10",
@@ -65,13 +64,12 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         expected = {
             "id": ANY,
             "hmisId": "471",
-            "clientHmisId": "388",
             "hmisClientProfileId": str(self.hmis_client_profile.pk),
             "title": "pitle",
             "note": "pote",
             "date": "2010-10-10",
-            "addedDate": "2025-11-12T23:58:27",
-            "lastUpdated": "2025-11-12T23:58:27",
+            "addedDate": "2025-11-13T07:58:27+00:00",
+            "lastUpdated": "2025-11-13T07:58:27+00:00",
             "refClientProgram": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
@@ -82,11 +80,10 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
     def test_create_hmis_program_note_mutation(self) -> None:
         variables = {
             "hmisClientProfileId": str(self.hmis_client_profile.pk),
-            "clientHmisId": "388",
             "title": "prog note title",
             "note": "prog note note",
             "date": "2011-11-11",
-            "refClientProgram": "525",
+            "refClientProgram": 525,
         }
         response = self._create_hmis_note_fixture(variables)
         note = response["data"]["createHmisNote"]
@@ -94,14 +91,13 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         expected = {
             "id": ANY,
             "hmisId": "480",
-            "clientHmisId": "388",
             "hmisClientProfileId": str(self.hmis_client_profile.pk),
             "title": "prog note title",
             "note": "prog note note",
             "date": "2011-11-11",
-            "addedDate": "2025-11-13T00:35:34",
-            "lastUpdated": "2025-11-13T00:35:34",
-            "refClientProgram": "525",
+            "addedDate": "2025-11-13T08:35:34+00:00",
+            "lastUpdated": "2025-11-13T08:35:34+00:00",
+            "refClientProgram": 525,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
 
@@ -112,7 +108,6 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         hmis_note = baker.make(
             HmisNote,
             hmis_id="479",
-            client_hmis_id="388",
             hmis_client_profile_id=self.hmis_client_profile.pk,
             title="prog note title",
             note="prog note note",
@@ -122,13 +117,10 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
 
         variables = {
             "id": str(hmis_note.pk),
-            "hmisId": "479",
             "hmisClientProfileId": str(self.hmis_client_profile.pk),
-            "clientHmisId": "388",
             "title": "updated note title",
             "note": "updated note note",
             "date": "2012-12-12",
-            "refClientProgram": "525",
         }
         response = self._update_hmis_note_fixture(variables)
         note = response["data"]["updateHmisNote"]
@@ -136,107 +128,17 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         expected = {
             "id": ANY,
             "hmisId": "479",
-            "clientHmisId": "388",
             "hmisClientProfileId": str(self.hmis_client_profile.pk),
             "title": "updated note title",
             "note": "updated note note",
             "date": "2012-12-12",
-            "addedDate": "2025-11-13T00:34:40",
-            "lastUpdated": "2025-11-13T00:58:42",
-            "refClientProgram": "525",
+            "addedDate": "2025-11-13T08:34:40+00:00",
+            "lastUpdated": "2025-11-13T08:58:42+00:00",
+            "refClientProgram": 525,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
 
         self.assertEqual(expected, note)
-
-    def test_create_hmis_note_mutation_client_id_mismatch(self) -> None:
-        variables = {
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
-            "clientHmisId": "389",
-            "title": "title",
-            "note": "note",
-            "date": "2025-11-13",
-        }
-        response = self._create_hmis_note_fixture(variables)
-        messages = response["data"]["createHmisNote"]["messages"]
-
-        self.assertEqual(len(messages), 1)
-        self.assertEqual(
-            messages[0],
-            {
-                "kind": "VALIDATION",
-                "field": None,
-                "message": "Client ID mismatch",
-            },
-        )
-
-    def test_update_hmis_note_mutation_client_id_mismatch(self) -> None:
-        hmis_note = baker.make(
-            HmisNote,
-            hmis_id="480",
-            client_hmis_id="388",
-            hmis_client_profile_id=self.hmis_client_profile.pk,
-            title="prog note title",
-            note="prog note note",
-            date="2011-11-11",
-            created_by=self.org_1_case_manager_1,
-        )
-
-        variables = {
-            "id": str(hmis_note.pk),
-            "hmisId": "480",
-            "clientHmisId": "389",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
-            "title": "title",
-            "note": "note",
-            "date": "2025-11-13",
-        }
-        response = self._update_hmis_note_fixture(variables)
-        messages = response["data"]["updateHmisNote"]["messages"]
-
-        self.assertEqual(len(messages), 1)
-        self.assertEqual(
-            messages[0],
-            {
-                "kind": "VALIDATION",
-                "field": None,
-                "message": "Client ID mismatch",
-            },
-        )
-
-    def test_update_hmis_note_mutation_note_id_mismatch(self) -> None:
-        hmis_note = baker.make(
-            HmisNote,
-            hmis_id="480",
-            client_hmis_id="388",
-            hmis_client_profile_id=self.hmis_client_profile.pk,
-            title="prog note title",
-            note="prog note note",
-            date="2011-11-11",
-            created_by=self.org_1_case_manager_1,
-        )
-
-        variables = {
-            "id": str(hmis_note.pk),
-            "hmisId": "481",
-            "clientHmisId": "389",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
-            "title": "title",
-            "note": "note",
-            "date": "2025-11-13",
-        }
-        response = self._update_hmis_note_fixture(variables)
-        messages = response["data"]["updateHmisNote"]["messages"]
-
-        self.assertEqual(len(messages), 1)
-        self.assertEqual(
-            messages[0],
-            {
-                "kind": "VALIDATION",
-                "field": None,
-                "message": "Note ID mismatch",
-            },
-        )
 
 
 @override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
@@ -249,8 +151,8 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
 
         self.hmis_client_profile = baker.make(
             HmisClientProfile,
+            _fill_optional=["hmis_id"],
             # ID & Metadata Fields
-            hmis_id=self._get_random_id(),
             added_date=datetime.datetime.strptime("2025-08-06 13:43:43", "%Y-%m-%d %H:%M:%S"),
             last_updated=datetime.datetime.strptime("2025-11-06 11:14:54", "%Y-%m-%d %H:%M:%S"),
             # Client Fields

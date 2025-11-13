@@ -63,11 +63,9 @@ class Query:
         hmis_note, _ = HmisNote.objects.filter(
             hmis_id=note_hmis_id,
             hmis_client_profile_id=hmis_client_profile_id,
-            client_hmis_id=client_hmis_id,
         ).update_or_create(
             hmis_id=note_hmis_id,
             hmis_client_profile_id=hmis_client_profile_id,
-            client_hmis_id=client_hmis_id,
             defaults={**note_data},
         )
 
@@ -121,12 +119,9 @@ class Mutation:
     def create_hmis_note(self, info: Info, data: CreateHmisNoteInput) -> HmisNoteType:
         hmis_client_profile = HmisClientProfile.objects.get(pk=data.hmis_client_profile_id)
 
-        if str(hmis_client_profile.hmis_id) != data.client_hmis_id:
-            raise ValidationError("Client ID mismatch")
-
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        note_data = hmis_api_bridge.create_note(data)
+        note_data = hmis_api_bridge.create_note(client_hmis_id=hmis_client_profile.pk, data=data)
         current_user = get_current_user(info)
 
         hmis_note = resolvers.create(
@@ -136,7 +131,6 @@ class Mutation:
                 **note_data,
                 "created_by": current_user,
                 "hmis_client_profile": hmis_client_profile,
-                "client_hmis_id": hmis_client_profile.hmis_id,
             },
         )
 
@@ -145,21 +139,13 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_hmis_note(self, info: Info, data: UpdateHmisNoteInput) -> HmisNoteType:
         hmis_note = HmisNote.objects.get(id=data.id)
-
-        if hmis_note.hmis_id != data.hmis_id:
-            raise ValidationError("Note ID mismatch")
-
-        if any(
-            (
-                str(hmis_note.client_hmis_id) != data.client_hmis_id,
-                str(hmis_note.hmis_client_profile_id) != data.hmis_client_profile_id,
-            )
-        ):
-            raise ValidationError("Client ID mismatch")
+        hmis_client_profile_id = HmisClientProfile.objects.get(pk=data.hmis_client_profile_id).pk
 
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        note_data = hmis_api_bridge.update_note(data)
+        note_data = hmis_api_bridge.update_note(
+            client_hmis_id=hmis_client_profile_id, note_hmis_id=hmis_note.pk, data=data
+        )
 
         hmis_note = resolvers.update(info, hmis_note, {**note_data})
 

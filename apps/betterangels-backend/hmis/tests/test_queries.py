@@ -41,7 +41,6 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
         self.hmis_note = baker.make(
             HmisNote,
             hmis_id="467",
-            client_hmis_id=self.hmis_client_profile.hmis_id,
             hmis_client_profile_id=self.hmis_client_profile.pk,
         )
 
@@ -55,7 +54,7 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
             }}
         """
         variables = {
-            "client_hmis_id": self.hmis_note.client_hmis_id,
+            "client_hmis_id": self.hmis_client_profile.hmis_id,
             "note_hmis_id": self.hmis_note.hmis_id,
         }
         response = self.execute_graphql(query, variables)
@@ -65,13 +64,12 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
         expected = {
             "id": ANY,
             "hmisId": "467",
-            "clientHmisId": "388",
             "hmisClientProfileId": str(self.hmis_client_profile.pk),
             "title": "poet",
             "note": "<p>poen</p>",
             "date": "2025-11-12",
-            "addedDate": "2025-11-12T17:40:39",
-            "lastUpdated": "2025-11-12T17:40:39",
+            "addedDate": "2025-11-13T01:40:39+00:00",
+            "lastUpdated": "2025-11-13T01:40:39+00:00",
             "refClientProgram": None,
             "createdBy": None,
         }
@@ -164,8 +162,8 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
             "hmisId": "1",
             "personalId": "7e401eed7ee14c36a7641ef44626695c",
             "uniqueIdentifier": "69E44770D",
-            "addedDate": "2025-08-06T13:43:43",
-            "lastUpdated": "2025-11-06T11:14:54",
+            "addedDate": "2025-08-06T20:43:43+00:00",
+            "lastUpdated": "2025-11-06T19:14:54+00:00",
             # Client fields
             "alias": None,
             "birthDate": "2001-01-01",

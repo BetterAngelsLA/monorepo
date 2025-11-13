@@ -530,11 +530,10 @@ export type CreateHmisClientProfileInput = {
 export type CreateHmisClientProfilePayload = HmisClientProfileType | OperationInfo;
 
 export type CreateHmisNoteInput = {
-  clientHmisId: Scalars['String']['input'];
   date: Scalars['Date']['input'];
   hmisClientProfileId: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
-  refClientProgram?: InputMaybe<Scalars['String']['input']>;
+  refClientProgram?: InputMaybe<Scalars['Int']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1085,7 +1084,6 @@ export enum HmisNameQualityEnum {
 export type HmisNoteType = {
   __typename?: 'HmisNoteType';
   addedDate?: Maybe<Scalars['DateTime']['output']>;
-  clientHmisId: Scalars['String']['output'];
   createdBy?: Maybe<UserType>;
   date?: Maybe<Scalars['Date']['output']>;
   hmisClientProfileId: Scalars['String']['output'];
@@ -1093,7 +1091,7 @@ export type HmisNoteType = {
   id: Scalars['ID']['output'];
   lastUpdated?: Maybe<Scalars['DateTime']['output']>;
   note: Scalars['String']['output'];
-  refClientProgram?: Maybe<Scalars['String']['output']>;
+  refClientProgram?: Maybe<Scalars['Int']['output']>;
   title?: Maybe<Scalars['String']['output']>;
 };
 
@@ -2821,13 +2819,10 @@ export type UpdateHmisClientProfileInput = {
 export type UpdateHmisClientProfilePayload = HmisClientProfileType | OperationInfo;
 
 export type UpdateHmisNoteInput = {
-  clientHmisId: Scalars['String']['input'];
   date?: InputMaybe<Scalars['Date']['input']>;
   hmisClientProfileId: Scalars['String']['input'];
-  hmisId: Scalars['String']['input'];
   id: Scalars['ID']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
-  refClientProgram?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 

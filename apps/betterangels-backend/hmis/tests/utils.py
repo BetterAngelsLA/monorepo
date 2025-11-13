@@ -1,4 +1,3 @@
-import random
 from typing import Any, Dict
 
 from common.tests.utils import GraphQLBaseTestCase
@@ -89,9 +88,6 @@ class HmisClientProfileBaseTestCase(GraphQLBaseTestCase):
         """
         return self.execute_graphql(mutation, {"data": variables})
 
-    def _get_random_id(self) -> str:
-        return str(random.randint(1, 1000000))
-
 
 class HmisNoteBaseTestCase(GraphQLBaseTestCase):
     def setUp(self) -> None:
@@ -100,7 +96,6 @@ class HmisNoteBaseTestCase(GraphQLBaseTestCase):
         self.hmis_note_fields = """
             id
             hmisId
-            clientHmisId
             hmisClientProfileId
 
             addedDate

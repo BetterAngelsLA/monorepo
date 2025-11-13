@@ -1,7 +1,9 @@
 import datetime
+from datetime import timezone
 from enum import Enum
 from http import HTTPMethod
 from typing import Any, Collection, Iterable, Mapping, Optional
+from zoneinfo import ZoneInfo
 
 import requests
 import strawberry
@@ -20,6 +22,7 @@ from strawberry import UNSET, Info
 from strawberry.utils.str_converters import to_snake_case
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+LOS_ANGELES_TZ = "America/Los_Angeles"
 CLIENT_DATE_FORMAT = "%Y-%m-%d"
 PROGRAM_NOTE_DATE_FORMAT = "%Y-%m-%d"
 NOTE_DATE_FORMAT = "%m/%d/%Y"
@@ -233,11 +236,23 @@ class HmisRestApiBridge:
 
         return {f"screenValues.{k}" if k in CLIENT_SUB_FIELDS else k for k in snake_out}
 
+    def _convert_to_utc(
+        self, dt_str: str, dt_format: str = DATETIME_FORMAT, tz: str = LOS_ANGELES_TZ
+    ) -> datetime.datetime:
+        """Converts naive local datetime string to aware UTC datetime.
+
+        dt_str: datetime string
+        dt_format: datetime string format
+        tz: local timezone
+        """
+
+        return datetime.datetime.strptime(dt_str, dt_format).replace(tzinfo=ZoneInfo(tz)).astimezone(timezone.utc)
+
     def _format_timestamp_fields(self, data: dict[str, Any]) -> dict[str, Any]:
         formatted_data = {
             **data,
-            "added_date": datetime.datetime.strptime(data["added_date"], DATETIME_FORMAT),
-            "last_updated": datetime.datetime.strptime(data["last_updated"], DATETIME_FORMAT),
+            "added_date": self._convert_to_utc(data["added_date"]),
+            "last_updated": self._convert_to_utc(data["last_updated"]),
         }
 
         if date := data.get("date"):
@@ -293,13 +308,16 @@ class HmisRestApiBridge:
 
         return {"hmis_id": note_data.pop("id"), **note_data}
 
+    def _get_field_str(self, fields: Iterable[str]) -> str:
+        return ",".join(fields)
+
     def get_client(self, hmis_id: str) -> dict[str, Any]:
         fields = self._get_field_dot_paths(
             info=self.info,
             default_fields=METADATA_FIELDS,
         )
 
-        fields_str = ", ".join(fields - BA_CLIENT_FIELDS)
+        fields_str = self._get_field_str(fields - BA_CLIENT_FIELDS)
 
         resp = self._make_request(
             path=f"/clients/{hmis_id}",
@@ -329,7 +347,9 @@ class HmisRestApiBridge:
                 "race_ethnicity": [99],
                 "veteran": 99,
             },
-            "fields": ", ".join(METADATA_FIELDS | CLIENT_FIELDS | {f"screenValues.{k}" for k in CLIENT_SUB_FIELDS}),
+            "fields": self._get_field_str(
+                METADATA_FIELDS | CLIENT_FIELDS | {f"screenValues.{k}" for k in CLIENT_SUB_FIELDS}
+            ),
         }
 
         resp = self._make_request(
@@ -397,12 +417,12 @@ class HmisRestApiBridge:
 
         return self._format_note_data(resp.json())
 
-    def create_note(self, data: CreateHmisNoteInput) -> dict[str, Any]:
-        path = f"/clients/{data.client_hmis_id}/client-notes"
+    def create_note(self, client_hmis_id: int, data: CreateHmisNoteInput) -> dict[str, Any]:
+        path = f"/clients/{client_hmis_id}/client-notes"
         date = data.date.strftime(NOTE_DATE_FORMAT)
 
         if client_program_id := data.ref_client_program:
-            path = f"/clients/{data.client_hmis_id}/client-programs/{client_program_id}/client-notes"
+            path = f"/clients/{client_hmis_id}/client-programs/{client_program_id}/client-notes"
             date = data.date.strftime(PROGRAM_NOTE_DATE_FORMAT)
 
         body = {
@@ -417,14 +437,19 @@ class HmisRestApiBridge:
                 "tracking_hour": None,
                 "tracking_minute": None,
             },
-            "fields": ", ".join(METADATA_FIELDS | NOTE_FIELDS | {"client.id"}),
+            "fields": self._get_field_str(METADATA_FIELDS | NOTE_FIELDS | {"client.id"}),
         }
 
         resp = self._make_request(method=HTTPMethod.POST, path=path, body=body)
 
         return self._format_note_data(resp.json())
 
-    def update_note(self, data: UpdateHmisNoteInput) -> dict[str, Any]:
+    def update_note(
+        self,
+        client_hmis_id: int,
+        note_hmis_id: int,
+        data: UpdateHmisNoteInput,
+    ) -> dict[str, Any]:
         note_data = {
             k: (v.strftime(NOTE_DATE_FORMAT) if isinstance(v, datetime.date) else v)
             for k, v in strawberry.asdict(data).items()
@@ -438,12 +463,12 @@ class HmisRestApiBridge:
 
         body = {
             "clientNote": note_data,
-            "fields": ", ".join(fields | {*note_data.keys()}),
+            "fields": self._get_field_str(fields | {*note_data.keys()}),
         }
 
         resp = self._make_request(
             method=HTTPMethod.PUT,
-            path=f"/clients/{data.client_hmis_id}/client-notes/{data.hmis_id}",
+            path=f"/clients/{client_hmis_id}/client-notes/{note_hmis_id}",
             body=body,
         )
 

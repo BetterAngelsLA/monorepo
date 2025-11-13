@@ -132,13 +132,10 @@ class HmisNote(BaseModel):
     added_date = models.DateTimeField(blank=True, null=True)
     last_updated = models.DateTimeField(blank=True, null=True)
     date = models.DateField(blank=True, null=True)
-    ref_client_program = models.CharField(max_length=50, blank=True, null=True)
-    client_hmis_id = models.CharField(max_length=50, db_index=True)
-    hmis_client_profile = models.ForeignKey(
-        HmisClientProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="notes"
-    )
+    ref_client_program = models.BigIntegerField(blank=True, null=True)
+    hmis_client_profile = models.ForeignKey(HmisClientProfile, on_delete=models.CASCADE, related_name="notes")
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="hmis_notes")
-    title = models.CharField(max_length=100, null=True, blank=True)
+    title = models.CharField(max_length=255, null=True, blank=True)
     note = models.TextField(blank=True)
 
     objects = models.Manager()
