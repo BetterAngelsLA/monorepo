@@ -6,11 +6,19 @@ import {
   Loading,
 } from '@monorepo/expo/shared/ui-components';
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import useUser from '../../hooks/user/useUser';
+import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
 
 export default function LoginForm() {
-  const [email, setEmail] = useState('');
+  const {
+    email,
+    setEmail,
+    rememberMe,
+    setRememberMe,
+    persistOnSuccessfulSignIn,
+  } = useRememberedEmail();
+
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'initial' | 'otp'>('initial');
@@ -76,6 +84,7 @@ export default function LoginForm() {
       const data = await res.json();
 
       if (res.ok && data?.meta?.is_authenticated) {
+        await persistOnSuccessfulSignIn(email);
         await refetchUser();
       } else {
         handleError('Invalid code. Please try again.');
@@ -165,6 +174,28 @@ export default function LoginForm() {
               (isPasswordLogin && !password)
             }
           />
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.rememberRow,
+              pressed && { opacity: 0.7 },
+            ]}
+            onPress={() => setRememberMe((prev) => !prev)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: rememberMe }}
+            hitSlop={8}
+          >
+            <View
+              style={[
+                styles.checkboxBox,
+                rememberMe && styles.checkboxBoxChecked,
+              ]}
+            >
+              {rememberMe && <Text style={styles.checkboxTick}>✓</Text>}
+            </View>
+
+            <Text style={styles.rememberLabel}>Remember me</Text>
+          </Pressable>
         </>
       )}
 
@@ -227,13 +258,58 @@ export default function LoginForm() {
   );
 }
 
+const CHECKBOX_SIZE = 18;
+
 const styles = StyleSheet.create({
   container: { width: '100%' },
-  error: { color: Colors.ERROR, marginTop: 10 },
+
+  error: {
+    color: Colors.ERROR,
+    marginTop: 10,
+  },
+
   info: {
     color: '#555',
     marginTop: 4,
     marginBottom: 10,
     textAlign: 'center',
+  },
+
+  rememberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 45,
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+  },
+
+  checkboxBox: {
+    width: CHECKBOX_SIZE,
+    height: CHECKBOX_SIZE,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: '#D0D5DD',
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  checkboxBoxChecked: {
+    borderColor: Colors.PRIMARY_EXTRA_DARK,
+    backgroundColor: Colors.PRIMARY_EXTRA_DARK,
+  },
+
+  checkboxTick: {
+    color: 'white',
+    fontSize: 12,
+    lineHeight: 12,
+    fontWeight: '700',
+  },
+
+  rememberLabel: {
+    marginLeft: 12,
+    fontSize: 14,
+    color: '#052B73',
+    fontFamily: 'Poppins-Medium',
   },
 });
