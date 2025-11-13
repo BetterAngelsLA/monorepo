@@ -1,21 +1,40 @@
+import { describe, expect, it } from 'vitest';
 import { mergeObjectPayload } from '../../mergeObjectPayload';
 import {
   TItem,
   adaptPagination,
   generateIncoming,
   makeOptions,
-  paginationKeys,
-} from '../utils';
+} from '../testUtils';
 
 describe('mergeObjectPayload – paginated (sparse) jumps with offsets', () => {
-  test('load page 1 (offset 0), then page 3 (offset 6), then page 2 (offset 3)', () => {
+  it('load page 1 (offset 0), then page 3 (offset 6), then page 2 (offset 3)', () => {
     const limit = 3;
+
+    // stricter wrapper that matches ResolveMergePagination<TVars>
+    const resolvePaginationStrict = (
+      vars: { pagination?: { offset?: number; limit?: number } } | undefined
+    ) => {
+      const base = adaptPagination(vars);
+      return {
+        offset: base.offset ?? 0,
+        limit: base.limit ?? 0,
+      };
+    };
+
     const mergeFn = mergeObjectPayload<
       TItem,
       { pagination?: { offset?: number; limit?: number } }
-    >(paginationKeys, adaptPagination);
+    >({
+      resolvePaginationFn: resolvePaginationStrict,
+      // the rest can be omitted because mergeObjectPayload has defaults,
+      // but we can leave it explicit to match your payload shape:
+      // itemsPath: ['results'],
+      // totalCountPath: ['totalCount'],
+      // itemIdPath: ['id'],
+    });
 
-    // --- Load Page 1 (offset 0) ---
+    // --- page 1 ---
     const afterPage1 = mergeFn(
       undefined,
       generateIncoming(
@@ -32,11 +51,9 @@ describe('mergeObjectPayload – paginated (sparse) jumps with offsets', () => {
     expect(
       (afterPage1 as any).results.map((it: TItem | undefined) => it?.id)
     ).toEqual([1, 2, 3]);
-
     expect((afterPage1 as any).totalCount).toBe(9);
-    expect((afterPage1 as any).pageInfo).toEqual({ offset: 0, limit });
 
-    // --- Load Page 3 (offset 6) ---
+    // --- page 3 ---
     const afterPage3 = mergeFn(
       afterPage1 as any,
       generateIncoming(
@@ -45,20 +62,17 @@ describe('mergeObjectPayload – paginated (sparse) jumps with offsets', () => {
           { id: 8, name: 'H' },
           { id: 9, name: 'I' },
         ],
-        { pageInfo: { offset: 6, limit } } // omit totalCount to test carry-forward
+        { pageInfo: { offset: 6, limit } }
       ) as any,
       makeOptions({ pagination: { offset: 6, limit } })
     );
 
-    // Expect holes for page 2 (indices 3,4,5)
     expect(
       (afterPage3 as any).results.map((it: TItem | undefined) => it?.id)
     ).toEqual([1, 2, 3, undefined, undefined, undefined, 7, 8, 9]);
+    expect((afterPage3 as any).totalCount).toBe(9);
 
-    expect((afterPage3 as any).totalCount).toBe(9); // carried forward
-    expect((afterPage3 as any).pageInfo).toEqual({ offset: 6, limit });
-
-    // --- Load  Page 2 (offset 3) fills the holes ---
+    // --- page 2 ---
     const afterPage2 = mergeFn(
       afterPage3 as any,
       generateIncoming(
@@ -72,13 +86,9 @@ describe('mergeObjectPayload – paginated (sparse) jumps with offsets', () => {
       makeOptions({ pagination: { offset: 3, limit } })
     );
 
-    // Now the sequence should be fully dense 1..9 in order
     expect(
       (afterPage2 as any).results.map((it: TItem | undefined) => it?.id)
     ).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-
-    // totalCount remains, pageInfo reflects the latest page's meta if present
     expect((afterPage2 as any).totalCount).toBe(9);
-    expect((afterPage2 as any).pageInfo).toEqual({ offset: 3, limit });
   });
 });

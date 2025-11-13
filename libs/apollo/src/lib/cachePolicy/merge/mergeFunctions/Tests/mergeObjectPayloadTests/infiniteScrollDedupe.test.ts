@@ -1,18 +1,31 @@
+import { describe, expect, it } from 'vitest';
 import { mergeObjectPayload } from '../../mergeObjectPayload';
 import {
   TItem,
   adaptPagination,
   generateIncoming,
   makeOptions,
-  paginationKeys,
-} from '../utils';
+} from '../testUtils';
 
 describe('mergeObjectPayload – wrapper strategy (infinite scroll)', () => {
-  test('merges sequential pages at offsets and preserves metadata', () => {
+  it('dedupes when a later page reuses an earlier id', () => {
+    // strict resolver to match ResolveMergePagination<TVars>
+    const resolvePaginationStrict = (
+      vars: { pagination?: { offset?: number; limit?: number } } | undefined
+    ) => {
+      const base = adaptPagination(vars);
+      return {
+        offset: base.offset ?? 0,
+        limit: base.limit ?? 0,
+      };
+    };
+
     const mergeFn = mergeObjectPayload<
       TItem,
       { pagination?: { offset?: number; limit?: number } }
-    >(paginationKeys, adaptPagination);
+    >({
+      resolvePaginationFn: resolvePaginationStrict,
+    });
 
     // Page 1 (offset 0)
     const afterPage1 = mergeFn(
@@ -34,7 +47,7 @@ describe('mergeObjectPayload – wrapper strategy (infinite scroll)', () => {
     expect((afterPage1 as any).totalCount).toBe(6);
     expect((afterPage1 as any).pageInfo).toEqual({ offset: 0, limit: 3 });
 
-    // Page 2 (offset 3), omit totalCount to verify carry-forward
+    // Page 2 (offset 3), but second item is a DUPE of id=2
     const afterPage2 = mergeFn(
       afterPage1 as any,
       generateIncoming(
@@ -48,12 +61,12 @@ describe('mergeObjectPayload – wrapper strategy (infinite scroll)', () => {
       makeOptions({ pagination: { offset: 3, limit: 3 } })
     );
 
-    // last write wins, so initial ID 2 is replaced with `undefined`
+    // your mergeObjectPayload removes the earlier occurrence when the same id
+    // appears again at a different index, so index 1 becomes undefined
     expect(
       (afterPage2 as any).results.map((it: TItem | undefined) => it?.id)
     ).toEqual([1, undefined, 3, 4, 2, 6]);
-
-    expect((afterPage2 as any).totalCount).toBe(6); // carried forward
+    expect((afterPage2 as any).totalCount).toBe(6);
     expect((afterPage2 as any).pageInfo).toEqual({ offset: 3, limit: 3 });
   });
 });

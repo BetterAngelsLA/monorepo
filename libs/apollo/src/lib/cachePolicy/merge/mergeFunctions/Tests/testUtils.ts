@@ -13,21 +13,37 @@ export const paginationKeys = {
   pageInfoKey: 'pageInfo',
 };
 
-const readFieldFn: any = (fieldName: string, item: any) => item?.[fieldName];
+// infer the type Apollo expects for readField
+type TestReadField = FieldFunctionOptions<
+  Record<string, unknown>,
+  Record<string, unknown>
+>['readField'];
 
-// Minimal FieldNode to satisfy FieldFunctionOptions.field
+const readFieldFn: TestReadField = (fieldNameOrOpts: any, from?: any) => {
+  const fieldName =
+    typeof fieldNameOrOpts === 'string'
+      ? fieldNameOrOpts
+      : fieldNameOrOpts?.fieldName;
+
+  if (!fieldName) {
+    return undefined;
+  }
+
+  return from?.[fieldName];
+};
+
+// Minimal FieldNode
 export const testFieldNode: FieldNode = {
   kind: Kind.FIELD,
   name: { kind: Kind.NAME, value: 'testField' },
 };
 
-// Build a full FieldFunctionOptions object with safe dummies for unused members
 export function makeOptions(
   args: any
 ): FieldFunctionOptions<Record<string, unknown>, Record<string, unknown>> {
   return {
-    args, // used by your adapt()
-    readField: readFieldFn, // used by default getId
+    args,
+    readField: readFieldFn,
     fieldName: 'testField',
     field: testFieldNode,
     storeFieldName: 'testField',

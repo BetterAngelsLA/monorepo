@@ -1,0 +1,1 @@
+export { useInfiniteScrollQuery } from './useInfiniteScrollQuery';
