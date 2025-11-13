@@ -35,15 +35,15 @@ export function useDebugPropUpdates(
   componentName: string,
   props: Record<string, unknown>
 ): void {
-  if (!isDev) {
-    return;
-  }
+  const previousPropsRef = useRef<Record<string, any> | null>(null);
 
   console.info('[debug] running debug util: useDebugPropUpdates');
 
-  const previousPropsRef = useRef<Record<string, any> | null>(null);
-
   useEffect(() => {
+    if (!isDev) {
+      return;
+    }
+
     if (previousPropsRef.current === null) {
       previousPropsRef.current = props;
       return;
