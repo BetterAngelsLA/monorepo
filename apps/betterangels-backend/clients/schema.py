@@ -35,6 +35,7 @@ from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
 from guardian.shortcuts import assign_perm
 from phonenumber_field.validators import validate_international_phonenumber
+from strawberry import UNSET
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -642,7 +643,6 @@ class Mutation:
         - data.photo is None   -> clear/delete profile_photo
         - data.photo is Upload -> set/replace profile_photo
         """
-        from strawberry import UNSET
 
         with transaction.atomic():
             user = get_current_user(info)
@@ -656,29 +656,20 @@ class Mutation:
             except ClientProfile.DoesNotExist:
                 raise PermissionError("You do not have permission to modify this client.")
 
-            photo = data.photo  # simpler and always defined
+            photo = data.photo
 
-            # If photo is not provided at all, do nothing
             if photo is UNSET:
                 return cast(ClientProfileType, client_profile)
 
-            # If photo is explicitly null -> clear existing photo
+            if client_profile.profile_photo:
+                try:
+                    client_profile.profile_photo.delete(save=False)
+                except Exception as e:
+                    logger.error(f"Error deleting profile photo: {e}")
+
             if photo is None:
-                if client_profile.profile_photo:
-                    try:
-                        client_profile.profile_photo.delete(save=False)
-                    except Exception as e:
-                        logger.error(f"Error deleting profile photo: {e}")
                 client_profile.profile_photo = None
-
-            # Otherwise, set/replace with the new uploaded file
             else:
-                if client_profile.profile_photo:
-                    try:
-                        client_profile.profile_photo.delete(save=False)
-                    except Exception as e:
-                        logger.error(f"Error deleting previous profile photo: {e}")
-
                 client_profile.profile_photo = photo
 
             client_profile.save()
