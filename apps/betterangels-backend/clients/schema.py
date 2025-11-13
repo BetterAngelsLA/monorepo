@@ -635,15 +635,6 @@ class Mutation:
         extensions=[HasRetvalPerm(perms=[ClientProfilePermissions.CHANGE])],
     )
     def update_client_profile_photo(self, info: Info, data: ClientProfilePhotoInput) -> ClientProfileType:
-        """
-        Updates or clears a client's profile photo.
-
-        Semantics:
-        - data.photo is UNSET  -> do not modify profile_photo
-        - data.photo is None   -> clear/delete profile_photo
-        - data.photo is Upload -> set/replace profile_photo
-        """
-
         with transaction.atomic():
             user = get_current_user(info)
 
@@ -653,6 +644,7 @@ class Mutation:
                     user,
                     [ClientProfilePermissions.CHANGE],
                 ).get(id=data.client_profile)
+
                 client_profile.profile_photo = data.photo
                 client_profile.save(update_fields=["profile_photo"])
             except ClientProfile.DoesNotExist:
