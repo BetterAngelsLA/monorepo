@@ -142,7 +142,16 @@ class Mutation:
         note_data = hmis_api_bridge.create_note(data)
         current_user = get_current_user(info)
 
-        hmis_note = resolvers.create(info, HmisNote, {**note_data, "created_by": current_user})
+        hmis_note = resolvers.create(
+            info,
+            HmisNote,
+            {
+                **note_data,
+                "created_by": current_user,
+                "hmis_client_profile": hmis_client_profile,
+                "client_hmis_id": hmis_client_profile.hmis_id,
+            },
+        )
 
         return cast(HmisNoteType, hmis_note)
 

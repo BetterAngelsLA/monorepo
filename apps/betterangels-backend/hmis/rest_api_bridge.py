@@ -25,7 +25,7 @@ PROGRAM_NOTE_DATE_FORMAT = "%Y-%m-%d"
 NOTE_DATE_FORMAT = "%m/%d/%Y"
 
 METADATA_FIELDS = {"id", "added_date", "last_updated"}
-NOTE_FIELDS = {"title", "note", "date"}
+NOTE_FIELDS = {"title", "note", "date", "ref_client_program"}
 CLIENT_FIELDS = {
     "unique_identifier",
     "personal_id",

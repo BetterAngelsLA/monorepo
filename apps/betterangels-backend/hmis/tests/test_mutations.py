@@ -27,8 +27,8 @@ from hmis.enums import (
     HmisSuffixEnum,
     HmisVeteranStatusEnum,
 )
-from hmis.models import HmisClientProfile
-from hmis.tests.utils import HmisClientProfileBaseTestCase
+from hmis.models import HmisClientProfile, HmisNote
+from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
 from model_bakery import baker
 from test_utils.vcr_config import scrubbed_vcr
 
@@ -157,8 +157,115 @@ UPDATE_CLIENT_NOTE_MUTATION = """
 """
 
 
+class HmisNoteMutationTests(HmisNoteBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+        self.hmis_client_profile = baker.make(HmisClientProfile, hmis_id="388")
+
+    @scrubbed_vcr.use_cassette("test_create_hmis_note_mutation.yaml")
+    def test_create_hmis_note_mutation(self) -> None:
+        variables = {
+            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "clientHmisId": "388",
+            "title": "pitle",
+            "note": "pote",
+            "date": "2010-10-10",
+        }
+        response = self._create_hmis_note_fixture(variables)
+        note = response["data"]["createHmisNote"]
+
+        expected = {
+            "id": ANY,
+            "hmisId": "471",
+            "clientHmisId": "388",
+            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "title": "pitle",
+            "note": "pote",
+            "date": "2010-10-10",
+            "addedDate": "2025-11-12T23:58:27",
+            "lastUpdated": "2025-11-12T23:58:27",
+            "refClientProgram": None,
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+        }
+
+        self.assertEqual(expected, note)
+
+    @scrubbed_vcr.use_cassette("test_create_hmis_program_note_mutation.yaml")
+    def test_create_hmis_program_note_mutation(self) -> None:
+        variables = {
+            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "clientHmisId": "388",
+            "title": "prog note title",
+            "note": "prog note note",
+            "date": "2011-11-11",
+            "refClientProgram": "525",
+        }
+        response = self._create_hmis_note_fixture(variables)
+        note = response["data"]["createHmisNote"]
+
+        expected = {
+            "id": ANY,
+            "hmisId": "480",
+            "clientHmisId": "388",
+            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "title": "prog note title",
+            "note": "prog note note",
+            "date": "2011-11-11",
+            "addedDate": "2025-11-13T00:35:34",
+            "lastUpdated": "2025-11-13T00:35:34",
+            "refClientProgram": "525",
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+        }
+
+        self.assertEqual(expected, note)
+
+    @scrubbed_vcr.use_cassette("test_update_hmis_note_mutation.yaml")
+    def test_update_hmis_note_mutation(self) -> None:
+        hmis_note = baker.make(
+            HmisNote,
+            hmis_id="479",
+            client_hmis_id="388",
+            hmis_client_profile_id=self.hmis_client_profile.pk,
+            title="prog note title",
+            note="prog note note",
+            date="2011-11-11",
+            created_by=self.org_1_case_manager_1,
+        )
+
+        variables = {
+            "id": str(hmis_note.pk),
+            "hmisId": "479",
+            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "clientHmisId": "388",
+            "title": "updated note title",
+            "note": "updated note note",
+            "date": "2012-12-12",
+            "refClientProgram": "525",
+        }
+        response = self._update_hmis_note_fixture(variables)
+        note = response["data"]["updateHmisNote"]
+
+        expected = {
+            "id": ANY,
+            "hmisId": "479",
+            "clientHmisId": "388",
+            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "title": "updated note title",
+            "note": "updated note note",
+            "date": "2012-12-12",
+            "addedDate": "2025-11-13T00:34:40",
+            "lastUpdated": "2025-11-13T00:58:42",
+            "refClientProgram": "525",
+            "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
+        }
+
+        self.assertEqual(expected, note)
+
+
 @override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
-class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
+class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
 

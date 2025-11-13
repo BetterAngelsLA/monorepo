@@ -26,7 +26,7 @@ from hmis.enums import (
     HmisSuffixEnum,
     HmisVeteranStatusEnum,
 )
-from hmis.models import HmisClientProfile
+from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
 from model_bakery import baker
 from test_utils.vcr_config import scrubbed_vcr
@@ -245,7 +245,46 @@ class HmisHmisNoteQueryTests(HmisNoteBaseTestCase):
 
         self.graphql_client.force_login(self.org_1_case_manager_1)
 
-        self.hmis_note = baker.make
+        self.hmis_client_profile = baker.make(HmisClientProfile, hmis_id="388")
+        self.hmis_note = baker.make(
+            HmisNote,
+            hmis_id="467",
+            client_hmis_id=self.hmis_client_profile.hmis_id,
+            hmis_client_profile_id=self.hmis_client_profile.pk,
+        )
+
+    @scrubbed_vcr.use_cassette("test_hmis_note_query.yaml")
+    def test_hmis_note_query(self) -> None:
+        query = f"""
+            query ($client_hmis_id: String!, $note_hmis_id: String!) {{
+                hmisNote(clientHmisId: $client_hmis_id, noteHmisId: $note_hmis_id) {{
+                    {self.hmis_note_fields}
+                }}
+            }}
+        """
+        variables = {
+            "client_hmis_id": self.hmis_note.client_hmis_id,
+            "note_hmis_id": self.hmis_note.hmis_id,
+        }
+        response = self.execute_graphql(query, variables)
+
+        hmis_note = response["data"]["hmisNote"]
+
+        expected = {
+            "id": ANY,
+            "hmisId": "467",
+            "clientHmisId": "388",
+            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "title": "poet",
+            "note": "<p>poen</p>",
+            "date": "2025-11-12",
+            "addedDate": "2025-11-12T17:40:39",
+            "lastUpdated": "2025-11-12T17:40:39",
+            "refClientProgram": None,
+            "createdBy": None,
+        }
+
+        self.assertEqual(expected, hmis_note)
 
 
 @override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
