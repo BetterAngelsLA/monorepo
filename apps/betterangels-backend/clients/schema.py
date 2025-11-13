@@ -35,7 +35,6 @@ from django.db.models import ForeignKey, Prefetch
 from graphql import GraphQLError
 from guardian.shortcuts import assign_perm
 from phonenumber_field.validators import validate_international_phonenumber
-from strawberry import UNSET
 from strawberry.types import Info
 from strawberry_django import mutations
 from strawberry_django.auth.utils import get_current_user
@@ -67,8 +66,6 @@ from .types import (
     UpdateClientDocumentInput,
     UpdateClientProfileInput,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def _format_graphql_error(error: Exception) -> str:
