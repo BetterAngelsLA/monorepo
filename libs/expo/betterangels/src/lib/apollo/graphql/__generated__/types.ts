@@ -1085,12 +1085,15 @@ export enum HmisNameQualityEnum {
 export type HmisNoteType = {
   __typename?: 'HmisNoteType';
   addedDate?: Maybe<Scalars['DateTime']['output']>;
+  clientHmisId: Scalars['String']['output'];
   createdBy?: Maybe<UserType>;
   date?: Maybe<Scalars['Date']['output']>;
+  hmisClientProfileId: Scalars['String']['output'];
   hmisId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   lastUpdated?: Maybe<Scalars['DateTime']['output']>;
   note: Scalars['String']['output'];
+  refClientProgram?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
 };
 
@@ -2824,6 +2827,7 @@ export type UpdateHmisNoteInput = {
   hmisId: Scalars['String']['input'];
   id: Scalars['ID']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
+  refClientProgram?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 

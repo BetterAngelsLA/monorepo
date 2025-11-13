@@ -45,7 +45,6 @@ class HmisGraphQLApiBridge:
         self.session_key = HMIS_SESSION_KEY_NAME
 
         token = self._get_auth_token()
-        print(token)
         auth_header = {"Authorization": f"Bearer {token}"} if token else {}
 
         self.headers = {

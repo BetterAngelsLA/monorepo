@@ -165,11 +165,10 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.residence_geolocation = [-118.2437207, 34.0521723]
 
-        self.hmis_client_profile = HmisClientProfile.objects.create(
+        self.hmis_client_profile = baker.make(
+            HmisClientProfile,
             # ID & Metadata Fields
-            hmis_id="1",
-            personal_id="7e401eed7ee14c36a7641ef44626695c",
-            unique_identifier="69E44770D",
+            hmis_id=self._get_random_id(),
             added_date=datetime.datetime.strptime("2025-08-06 13:43:43", "%Y-%m-%d %H:%M:%S"),
             last_updated=datetime.datetime.strptime("2025-11-06 11:14:54", "%Y-%m-%d %H:%M:%S"),
             # Client Fields
@@ -290,7 +289,8 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
 
     @scrubbed_vcr.use_cassette("test_update_hmis_client_profile_mutation.yaml")
     def test_update_hmis_client_profile_mutation(self) -> None:
-        hmis_client_profile = HmisClientProfile.objects.create(
+        hmis_client_profile = baker.make(
+            HmisClientProfile,
             # ID Fields
             hmis_id="384",
             unique_identifier="9AD65C3CF",

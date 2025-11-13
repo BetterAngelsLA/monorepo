@@ -408,32 +408,41 @@ class UpdateHmisClientProfileInput(HmisClientProfileBaseType):
 
 
 @strawberry_django.type(HmisNote)
-class HmisNoteBaseType:
+class HmisNoteType:
+    id: ID
+    hmis_id: str
+    client_hmis_id: str
+    hmis_client_profile_id: str
+
+    added_date: Optional[datetime.datetime]
+    last_updated: Optional[datetime.datetime]
+
     title: auto
     note: auto
     date: Optional[datetime.date]
-
-
-@strawberry_django.type(HmisNote)
-class HmisNoteType(HmisNoteBaseType):
-    id: ID
-    hmis_id: str
-    added_date: Optional[datetime.datetime]
-    last_updated: Optional[datetime.datetime]
+    ref_client_program: auto
     created_by: Optional[UserType]
 
 
 @strawberry_django.input(HmisNote)
-class CreateHmisNoteInput(HmisNoteBaseType):
-    hmis_client_profile_id: str
+class CreateHmisNoteInput:
     client_hmis_id: str
-    ref_client_program: auto
+    hmis_client_profile_id: str
+
+    title: auto
+    note: auto
     date: datetime.date
+    ref_client_program: auto
 
 
 @strawberry_django.input(HmisNote)
-class UpdateHmisNoteInput(HmisNoteBaseType):
+class UpdateHmisNoteInput:
     id: ID
     hmis_id: str
     client_hmis_id: str
     hmis_client_profile_id: str
+
+    title: Optional[str]
+    note: Optional[str]
+    date: Optional[datetime.date]
+    ref_client_program: auto

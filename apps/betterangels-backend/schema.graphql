@@ -528,11 +528,11 @@ input CreateHmisClientProfileInput {
 union CreateHmisClientProfilePayload = HmisClientProfileType | OperationInfo
 
 input CreateHmisNoteInput {
+  clientHmisId: String!
+  hmisClientProfileId: String!
   title: String
   note: String
   date: Date!
-  hmisClientProfileId: String!
-  clientHmisId: String!
   refClientProgram: String
 }
 
@@ -1058,13 +1058,16 @@ enum HmisNameQualityEnum {
 }
 
 type HmisNoteType {
+  id: ID!
+  hmisId: String!
+  clientHmisId: String!
+  hmisClientProfileId: String!
+  addedDate: DateTime
+  lastUpdated: DateTime
   title: String
   note: String!
   date: Date
-  id: ID!
-  hmisId: String!
-  addedDate: DateTime
-  lastUpdated: DateTime
+  refClientProgram: String
   createdBy: UserType
 }
 
@@ -2307,13 +2310,14 @@ input UpdateHmisClientProfileInput {
 union UpdateHmisClientProfilePayload = HmisClientProfileType | OperationInfo
 
 input UpdateHmisNoteInput {
-  title: String
-  note: String
-  date: Date
   id: ID!
   hmisId: String!
   clientHmisId: String!
   hmisClientProfileId: String!
+  title: String
+  note: String
+  date: Date
+  refClientProgram: String
 }
 
 union UpdateHmisNotePayload = HmisNoteType | OperationInfo

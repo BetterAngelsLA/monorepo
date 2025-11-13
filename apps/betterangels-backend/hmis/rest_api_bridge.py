@@ -21,6 +21,7 @@ from strawberry.utils.str_converters import to_snake_case
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 CLIENT_DATE_FORMAT = "%Y-%m-%d"
+PROGRAM_NOTE_DATE_FORMAT = "%Y-%m-%d"
 NOTE_DATE_FORMAT = "%m/%d/%Y"
 
 METADATA_FIELDS = {"id", "added_date", "last_updated"}
@@ -397,11 +398,18 @@ class HmisRestApiBridge:
         return self._format_note_data(resp.json())
 
     def create_note(self, data: CreateHmisNoteInput) -> dict[str, Any]:
+        path = f"/clients/{data.client_hmis_id}/client-notes"
+        date = data.date.strftime(NOTE_DATE_FORMAT)
+
+        if client_program_id := data.ref_client_program:
+            path = f"/clients/{data.client_hmis_id}/client-programs/{client_program_id}/client-notes"
+            date = data.date.strftime(PROGRAM_NOTE_DATE_FORMAT)
+
         body = {
             "clientNote": {
                 "title": data.title,
                 "ref_client_program": data.ref_client_program or None,
-                "date": data.date.strftime(NOTE_DATE_FORMAT),
+                "date": date,
                 "note": data.note,
                 "category": {"code": 1},
                 "ref_category": "1",
@@ -412,11 +420,7 @@ class HmisRestApiBridge:
             "fields": ", ".join(METADATA_FIELDS | NOTE_FIELDS | {"client.id"}),
         }
 
-        resp = self._make_request(
-            method=HTTPMethod.POST,
-            path=f"/clients/{data.client_hmis_id}/client-notes",
-            body=body,
-        )
+        resp = self._make_request(method=HTTPMethod.POST, path=path, body=body)
 
         return self._format_note_data(resp.json())
 

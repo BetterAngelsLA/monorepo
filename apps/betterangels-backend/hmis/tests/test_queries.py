@@ -27,7 +27,8 @@ from hmis.enums import (
     HmisVeteranStatusEnum,
 )
 from hmis.models import HmisClientProfile
-from hmis.tests.utils import HmisClientProfileBaseTestCase
+from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
+from model_bakery import baker
 from test_utils.vcr_config import scrubbed_vcr
 
 GET_CLIENT_QUERY = """
@@ -238,6 +239,16 @@ LIST_ENROLLMENTS_QUERY = """
 
 
 @override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
+class HmisHmisNoteQueryTests(HmisNoteBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.graphql_client.force_login(self.org_1_case_manager_1)
+
+        self.hmis_note = baker.make
+
+
+@override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
 class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
     def setUp(self) -> None:
         super().setUp()
@@ -245,7 +256,8 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.residence_geolocation = [-118.2437207, 34.0521723]
 
-        self.hmis_client_profile = HmisClientProfile.objects.create(
+        self.hmis_client_profile = baker.make(
+            HmisClientProfile,
             # ID & Metadata Fields
             hmis_id="1",
             personal_id="7e401eed7ee14c36a7641ef44626695c",
@@ -768,4 +780,5 @@ class HmisClientNoteQueryTests(GraphQLBaseTestCase, TestCase):
         }
 
         self.assertEqual(client_notes, expected_client_notes)
+        self.assertEqual(pagination_info, expected_pagination_info)
         self.assertEqual(pagination_info, expected_pagination_info)
