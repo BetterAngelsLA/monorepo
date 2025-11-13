@@ -89,3 +89,4 @@ vitest.config.*.timestamp*
 # storybook
 debug-storybook.log
 storybook-static
+.cache/

@@ -133,6 +133,8 @@ INSTALLED_APPS = [
     "proxy",
     "shelters",
     "tasks",
+    # Must be at the end
+    "django_cleanup.apps.CleanupConfig",
 ]
 
 MIDDLEWARE = [
