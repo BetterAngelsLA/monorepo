@@ -163,3 +163,13 @@ class OrgInvitationInput:
     middle_name: Optional[str] = None
     last_name: str
     organization_id: ID
+
+
+@strawberry.type
+class RequestOtpResult:
+    success: bool
+
+
+@strawberry.type
+class AuthPayload:
+    token: str
