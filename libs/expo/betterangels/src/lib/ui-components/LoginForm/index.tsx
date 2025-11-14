@@ -193,7 +193,22 @@ export default function LoginForm() {
 
           <Button
             mt="md"
-            mb="xs"
+            height="lg"
+            mb="md"
+            borderRadius={50}
+            size="full"
+            variant="primary"
+            accessibilityHint="Confirm OTP and sign in"
+            title="Confirm OTP"
+            icon={
+              confirming ? <Loading size="small" color="white" /> : undefined
+            }
+            onPress={handleConfirmCode}
+            disabled={confirming || !otp.trim()}
+          />
+
+          <Button
+            mt="xl"
             height="lg"
             borderRadius={50}
             size="full"
@@ -205,21 +220,6 @@ export default function LoginForm() {
             }
             onPress={handleSendCode}
             disabled={sendingCode}
-          />
-
-          <Button
-            mt="md"
-            height="lg"
-            borderRadius={50}
-            size="full"
-            variant="primary"
-            accessibilityHint="Confirm OTP and sign in"
-            title="Confirm OTP"
-            icon={
-              confirming ? <Loading size="small" color="white" /> : undefined
-            }
-            onPress={handleConfirmCode}
-            disabled={confirming || !otp.trim()}
           />
         </>
       )}
