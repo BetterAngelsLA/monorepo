@@ -1,1 +1,1 @@
-export * from './user';
+export { useUser } from '@monorepo/react/shared';
