@@ -12,8 +12,9 @@ export type ViewSheltersQueryVariables = Types.Exact<{
 
 export type ViewSheltersQuery = { __typename?: 'Query', shelters: { __typename?: 'ShelterTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'ShelterType', id: string, name: string, heroImage?: string | null, distanceInMiles?: number | null, exteriorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', url: string, name: string } }>, interiorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', url: string, name: string } }>, location?: { __typename?: 'ShelterLocationType', latitude: number, longitude: number, place: string } | null }> } };
 
-export type ViewSheltersByOrganizationQueryVariables = Types.Exact<{ [key: string]: never; }>;
-
+export type ViewSheltersByOrganizationQueryVariables = Types.Exact<{
+  organizationId: Types.Scalars['Int']['input'];
+}>;
 
 export type ViewSheltersByOrganizationQuery = { __typename?: 'Query', sheltersByOrganization: { __typename?: 'ShelterTypeOffsetPaginated', results: Array<{ __typename?: 'ShelterType', id: string, name: string }> } };
 
@@ -84,15 +85,15 @@ export type ViewSheltersLazyQueryHookResult = ReturnType<typeof useViewSheltersL
 export type ViewSheltersSuspenseQueryHookResult = ReturnType<typeof useViewSheltersSuspenseQuery>;
 export type ViewSheltersQueryResult = Apollo.QueryResult<ViewSheltersQuery, ViewSheltersQueryVariables>;
 export const ViewSheltersByOrganizationDocument = gql`
-    query ViewSheltersByOrganization {
-  sheltersByOrganization(organizationId: 1) {
-    results {
-      id
-      name
+  query ViewSheltersByOrganization($organizationId: Int!) {
+    sheltersByOrganization(organizationId: $organizationId) {
+      results {
+        id
+        name
+      }
     }
   }
-}
-    `;
+`;
 
 /**
  * __useViewSheltersByOrganizationQuery__
