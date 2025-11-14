@@ -101,7 +101,10 @@ export default function ClientProfileForm(props: IClientProfileForms) {
         throw otherErrors.message;
       }
 
-      refetch();
+      // Ensure the refetch completes before navigating away.
+      // In apollo client v4, if we navigate immediately,
+      // the query unmounts and refetch is cancelled.
+      await refetch();
 
       router.replace(`/client/${id}?openCard=${validComponentName}`);
     } catch (err) {
