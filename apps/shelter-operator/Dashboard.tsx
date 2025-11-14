@@ -1,78 +1,33 @@
-import { ViewSheltersByOrganizationQueryVariables } from '@monorepo/react/shelter';
-import { useAtom } from 'jotai';
-import { useViewShelterLazyQuery } from 'libs/react/shelter/src/lib/pages/shelter/__generated__/shelter.generated';
-import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ShelterCard } from './ShelterCard';
-import { sheltersAtom } from './atoms'; // make sure this is defined somewhere
+import React from 'react';
+import { useViewSheltersByOrganizationQuery } from '../../libs/react/shelter/src';
 
-export type Shelter = {
-  id?: number;
-  name?: string;
-  address?: string;
-  image?: { file: { url: string; name: string } };
-  capacity?: number | null;
-};
-
-export default function Dashboard({ id }: { id?: number }) {
-  const [getShelters, { loading, data, error }] = useViewShelterLazyQuery();
-  const [shelters, setShelters] = useAtom(sheltersAtom);
-
-  useEffect(() => {
-      let queryVariables: ViewSheltersByOrganizationQueryVariables | undefined;
-
-      if (id) {
-          queryVariables = {
-              organizationId: id,
-          };
-      }
-
-       if (!queryVariables) {
-      return;
-    }
-
-      getShelters({ variables: queryVariables });
-
-  }, [data, setShelters]);
-
-  useEffect(() => {
-    setShelters(shelters || []);
-  }, [shelters]);
-
-  if (loading) return <div className="mt-4">Loading...</div>;
-
+export default function Dashboard() {
+  const { data, loading, error } = useViewSheltersByOrganizationQuery({
+    variables: { organizationId: '1' },
+  });
   if (error) {
-    console.error(`[Dashboard] ${error}`);
-    return (
-      <div className="mt-4">
-        Sorry, there was an issue fetching the data. Please try again.
-      </div>
-    );
+    console.error('[Dashboard GraphQL error]', error);
   }
-
-  if (!shelters) {
-    return null;
-  }
+  if (loading) return <div className="mt-4">Loading...</div>;
+  if (error) return <div className="mt-4">Error loading shelters.</div>;
+  const shelters = data?.sheltersByOrganization?.results ?? [];
 
   return (
-    <div className="flex flex-col p-8 gap-8 w-full">
-      {/* Top row with Back and Add Shelter buttons */}
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col p-8 w-full">
+      <div className="mb-6">
         <Link to="/operator">
           <button className="px-4 py-2 border border-gray-400 rounded hover:bg-gray-100 text-sm">
             Back
           </button>
         </Link>
-
-        <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm">
-          Add Shelter
-        </button>
       </div>
 
-      {/* Grid of shelter cards */}
-      <div className="grid grid-cols-2 gap-6 w-full">
-        {shelters?.map((shelter) => (
-          <ShelterCard key={shelter.id} shelter={shelter} />
+      <div className="flex flex-col gap-2">
+        {shelters.map((shelter) => (
+          <div key={shelter.id} className="text-sm">
+            {shelter.name}
+          </div>
         ))}
       </div>
     </div>
