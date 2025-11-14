@@ -22,8 +22,18 @@ export function extractHMISErrors(hmisError?: string): THMISErrors | null {
     // hmis can send message, messages or both (with same data)
     const errMessages = messages || message;
 
+    // errMessages is a string, return w/o fieldErrors
+    if (typeof errMessages === 'string') {
+      return {
+        code,
+        status,
+        name,
+        message: { message: errMessages },
+      };
+    }
+
     const fieldErrors = Object.entries(errMessages || {}).map(
-      ([field, fieldMessages]) => {
+      ([field, fieldMessages = []]) => {
         // NOTE: field names returned with update mutation can be inconsistent with inputs.
         const fieldName = field === 'nameQuality' ? 'nameDataQuality' : field;
 

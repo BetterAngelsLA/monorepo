@@ -1,7 +1,16 @@
+import datetime
 from typing import Optional, Union
 
 import strawberry
+import strawberry_django
 from accounts.types import UserType
+from clients.enums import (
+    AdaAccommodationEnum,
+    LanguageEnum,
+    LivingSituationEnum,
+    PreferredCommunicationEnum,
+)
+from common.graphql.types import NonBlankString, PhoneNumberInput, PhoneNumberType
 from hmis.enums import (
     HmisBranchEnum,
     HmisDischargeEnum,
@@ -14,6 +23,8 @@ from hmis.enums import (
     HmisVeteranStatusEnum,
     HmisVeteranTheaterEnum,
 )
+from hmis.models import HmisClientProfile
+from strawberry import auto
 
 
 @strawberry.type
@@ -314,3 +325,82 @@ HmisListEnrollmentsResult = Union[HmisEnrollmentListType, HmisListEnrollmentsErr
 HmisLoginResult = Union[UserType, HmisLoginError]
 HmisUpdateClientNoteResult = Union[HmisClientNoteType, HmisUpdateClientNoteError]
 HmisUpdateClientResult = Union[HmisClientType, HmisUpdateClientError]
+
+
+@strawberry_django.type(HmisClientProfile)
+class HmisClientProfileBaseType:
+    # Client Fields
+    alias: Optional[str]  # equivalent to BA `nickname``
+    birth_date: Optional[datetime.date]  # equivalent to BA `date_of_birth`
+    dob_quality: Optional[HmisDobQualityEnum]
+    first_name: Optional[NonBlankString]
+    last_name: Optional[NonBlankString]
+    name_quality: Optional[HmisNameQualityEnum]
+    ssn1: Optional[str]
+    ssn2: Optional[str]
+    ssn3: Optional[str]
+    ssn_quality: Optional[HmisSsnQualityEnum]
+
+    # Client Sub Fields
+    gender: Optional[list[HmisGenderEnum]]  # different options from BA `gender`
+    gender_identity_text: Optional[str]
+    name_middle: Optional[NonBlankString]
+    name_suffix: Optional[HmisSuffixEnum]
+    race_ethnicity: Optional[list[HmisRaceEnum]]
+    additional_race_ethnicity_detail: Optional[str]
+    veteran: Optional[HmisVeteranStatusEnum]  # different options from BA `veteran_status`
+
+    # BA Fields
+    ada_accommodation: Optional[list[AdaAccommodationEnum]]
+    address: auto
+    california_id: auto
+    email: Optional[NonBlankString]
+    eye_color: auto
+    hair_color: auto
+    height_in_inches: auto
+    important_notes: auto
+    living_situation: Optional[LivingSituationEnum]
+    mailing_address: auto
+    marital_status: auto
+    physical_description: auto
+    place_of_birth: auto
+    preferred_communication: Optional[list[PreferredCommunicationEnum]]
+    preferred_language: auto
+    profile_photo: auto
+    pronouns: auto
+    pronouns_other: auto
+    residence_address: auto
+    residence_geolocation: auto
+    spoken_languages: Optional[list[LanguageEnum]]
+
+
+@strawberry_django.type(
+    HmisClientProfile,
+    pagination=True,
+)
+class HmisClientProfileType(HmisClientProfileBaseType):
+    # HMIS Fields
+    hmis_id: Optional[str]
+    personal_id: Optional[str]
+    unique_identifier: Optional[str]
+    added_date: Optional[datetime.datetime]
+    last_updated: Optional[datetime.datetime]
+    age: Optional[int]
+    phone_numbers: Optional[list[PhoneNumberType]]  # type: ignore
+    created_by: Optional[UserType]
+
+
+@strawberry_django.input(HmisClientProfile, partial=True)
+class CreateHmisClientProfileInput(HmisClientProfileBaseType):
+    first_name: NonBlankString
+    last_name: NonBlankString
+    name_quality: HmisNameQualityEnum
+
+
+@strawberry_django.input(HmisClientProfile, partial=True)
+class UpdateHmisClientProfileInput(HmisClientProfileBaseType):
+    hmis_id: str
+    gender: list[HmisGenderEnum]
+    race_ethnicity: list[HmisRaceEnum]
+    veteran: Optional[HmisVeteranStatusEnum]
+    phone_numbers: Optional[list[PhoneNumberInput]]

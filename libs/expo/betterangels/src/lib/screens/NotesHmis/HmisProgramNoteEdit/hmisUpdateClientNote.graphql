@@ -1,0 +1,21 @@
+mutation HmisUpdateClientNote($clientNoteInput: HmisUpdateClientNoteInput!) {
+  hmisUpdateClientNote(clientNoteInput: $clientNoteInput) {
+    ... on HmisClientNoteType {
+      id
+      title
+      note
+      date
+      category
+      client {
+        personalId
+      }
+      enrollment {
+        enrollmentId
+      }
+    }
+    ... on HmisUpdateClientNoteError {
+      message
+      field
+    }
+  }
+}

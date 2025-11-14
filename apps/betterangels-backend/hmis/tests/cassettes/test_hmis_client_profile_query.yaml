@@ -1,0 +1,22 @@
+interactions:
+  - request:
+      body:
+        '{"fields": "personal_id, hmis_id, screenValues.name_suffix, unique_identifier,
+        screenValues.additional_race_ethnicity_detail, alias, first_name, name_quality,
+        screenValues.name_middle, ssn2, id, screenValues.gender_identity_text, ssn_quality,
+        last_name, birth_date, last_updated, screenValues.race_ethnicity, dob_quality,
+        screenValues.age, ssn3, gender, added_date, ssn1, screenValues.veteran"}'
+      headers: {}
+      method: GET
+      uri: ''
+    response:
+      body:
+        string:
+          '{"id":1,"ssn1":"***","ssn2":"**","ssn3":"4321","first_name":"John","last_name":"Smith","alias":null,"name_quality":1,"ssn_quality":1,"birth_date":"2001-01-01","dob_quality":1,"unique_identifier":"69E44770D","added_date":"2025-08-06
+          13:43:43","last_updated":"2025-11-06 11:14:54","gender":[0,3],"screenValues":{"name_middle":"B","name_suffix":1,"age":24,"gender_identity_text":"Gen
+          Id","race_ethnicity":[1,2],"additional_race_ethnicity_detail":"AddlRace","veteran":1},"personal_id":"7e401eed7ee14c36a7641ef44626695c"}'
+      headers: {}
+      status:
+        code: 200
+        message: OK
+version: 1

@@ -7,6 +7,7 @@ export { default as useNewRelic } from './newRelic/useNewRelic';
 export { default as useInfiniteScroll } from './scroll/useInfiniteScroll';
 export { default as useScrollToScreenTop } from './scroll/useScrollToScreenTop';
 export { default as useSnackbar } from './snackbar/useSnackbar';
+export * from './useHmisClientPrograms';
 // user
 export { default as useSignOut } from './user/useSignOut';
 export { default as useUser } from './user/useUser';
