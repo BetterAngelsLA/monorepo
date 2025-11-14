@@ -12,8 +12,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       isLoading={isLoading}
       config={{
         routeAccess,
-        signInRoute: '/sign-in',
-        defaultAuthenticatedRoute: '/users',
+        signInRoute: '/operator/sign-in',
+        defaultAuthenticatedRoute: '/operator',
       }}
     >
       {children}
