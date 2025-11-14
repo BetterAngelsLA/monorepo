@@ -70,7 +70,7 @@ export default function Dashboard({ id }: { id?: number }) {
       </div>
 
       {/* Grid of shelter cards */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6 w-full">
+      <div className="grid grid-cols-2 gap-6 w-full">
         {shelters?.map((shelter) => (
           <ShelterCard key={shelter.id} shelter={shelter} />
         ))}

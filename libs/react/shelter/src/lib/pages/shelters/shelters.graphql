@@ -31,8 +31,8 @@ query ViewShelters(
   }
 }
 
-query ViewSheltersByOrganization{
-  sheltersByOrganization(organizationId: 1) {
+query ViewSheltersByOrganization($id: Int!) {
+  sheltersByOrganization(id: $id) {
     results {
       id
       name

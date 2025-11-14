@@ -1,7 +1,7 @@
 import * as Types from '../../../apollo/graphql/__generated__/types';
 
-import { gql } from '@apollo/client';
 import * as Apollo from '@apollo/client';
+import { gql } from '@apollo/client';
 const defaultOptions = {} as const;
 export type ViewSheltersQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.ShelterFilter>;
