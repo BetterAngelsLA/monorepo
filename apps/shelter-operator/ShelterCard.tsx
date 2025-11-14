@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Shelter } from './Dashboard';
 
@@ -7,36 +6,33 @@ type TShelterCard = {
 };
 
 export function ShelterCard({
-  shelter: { name, image, address, capacity },
-}: TShelterCard) {
+  shelter: { name, image, address, capacity },}: TShelterCard) {
   return (
-    <div className="flex flex-col border border-gray-200 rounded-xl p-6 bg-gray-50 shadow-sm gap-2 w-full">
-      <div className="bg-gray-100 rounded-lg h-32 overflow-hidden">
+
+   <div className="bg-white text-black rounded-2xl shadow-md p-4 hover:shadow-lg transition-shadow duration-300">
+      {image ? (
         <img
-          src={
-            image?.file.url ??
-            'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png'
-          }
-          alt={image?.file.name ?? name}
-          className="w-full h-full object-cover rounded-lg"
+          src={image.file.url}
+          alt={image.file.name}
+          className="w-full h-48 object-cover rounded-xl mb-4"
         />
-      </div>
+      ) : (
+        <div className="w-full h-48 bg-gray-200 rounded-xl mb-4 flex items-center justify-center text-gray-500">
+          No Image Available
+        </div>
+      )}
 
-      <h3 className="text-lg font-semibold m-0">{name}</h3>
-      <p className="text-sm text-gray-600 m-0">{address}</p>
-
-      <p className="text-sm text-gray-700 m-0">
+      <h1 className="text-xl font-semibold">{name}</h1>
+      {address && <h2 className="text-gray-700">{address}</h2>}
+      <p className="mt-2 text-gray-800">
         Beds Available:{' '}
-        {capacity !== null && capacity !== undefined
-          ? capacity
-          : 'Data Not Available'}
+        {capacity ? (
+        <span className="font-semibold">{capacity}</span>
+      ) : (
+        <span className="font-semibold">No Data Found</span>
+      )}
       </p>
-
-      <Link to="/operator/dashboard/#" className="mt-2">
-        <button className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition">
-          See More
-        </button>
-      </Link>
+      <Link to="/operator/dashboard/#"><button >See More</button></Link>
     </div>
   );
 }

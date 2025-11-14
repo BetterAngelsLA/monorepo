@@ -1,87 +1,61 @@
-import React from 'react';
+import { ViewSheltersByOrganizationQueryVariables } from '@monorepo/react/shelter';
+import { useAtom } from 'jotai';
+import { useViewShelterLazyQuery } from 'libs/react/shelter/src/lib/pages/shelter/__generated__/shelter.generated';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ShelterCard } from './ShelterCard';
+import { sheltersAtom } from './atoms'; // make sure this is defined somewhere
 
 export type Shelter = {
-  id: number;
-  name: string;
-  address: string;
+  id?: number;
+  name?: string;
+  address?: string;
   image?: { file: { url: string; name: string } };
-  capacity: number | null;
+  capacity?: number | null;
 };
 
-const shelters: Shelter[] = [
-  {
-    id: 1,
-    name: 'Downtown Community Shelter',
-    address: '123 Main St, Toronto, ON',
-    image: {
-      file: {
-        url: 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png',
-        name: 'img-1',
-      },
-    },
-    capacity: 45,
-  },
-  {
-    id: 2,
-    name: 'Lakeside Women’s Shelter',
-    address: '456 Lakeview Rd, Toronto, ON',
-    image: {
-      file: {
-        url: 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png',
-        name: 'img-2',
-      },
-    },
-    capacity: 30,
-  },
-  {
-    id: 3,
-    name: 'North End Family Shelter',
-    address: '789 North Ave, Toronto, ON',
-    image: {
-      file: {
-        url: 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png',
-        name: 'img-3',
-      },
-    },
-    capacity: 60,
-  },
-  {
-    id: 4,
-    name: 'West End Youth Shelter',
-    address: '12 Queen St W, Toronto, ON',
-    capacity: 25,
-  },
-  {
-    id: 5,
-    name: 'Harbour Light Shelter',
-    address: '95 Front St E, Toronto, ON',
-    image: {
-      file: {
-        url: 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png',
-        name: 'img-4',
-      },
-    },
-    capacity: null,
-  },
-  {
-    id: 6,
-    name: 'Downtown Women’s Centre',
-    address: '210 King St W, Toronto, ON',
-    image: {
-      file: {
-        url: 'https://developers.elementor.com/docs/assets/img/elementor-placeholder-image.png',
-        name: 'img-5',
-      },
-    },
-    capacity: 35,
-  },
-];
+export default function Dashboard({ id }: { id?: number }) {
+  const [getShelters, { loading, data, error }] = useViewShelterLazyQuery();
+  const [shelters, setShelters] = useAtom(sheltersAtom);
 
-export default function Dashboard() {
+  useEffect(() => {
+      let queryVariables: ViewSheltersByOrganizationQueryVariables | undefined;
+
+      if (id) {
+          queryVariables = {
+              organizationId: id,
+          };
+      }
+
+       if (!queryVariables) {
+      return;
+    }
+
+      getShelters({ variables: queryVariables });
+
+  }, [data, setShelters]);
+
+  useEffect(() => {
+    setShelters(shelters || []);
+  }, [shelters]);
+
+  if (loading) return <div className="mt-4">Loading...</div>;
+
+  if (error) {
+    console.error(`[Dashboard] ${error}`);
+    return (
+      <div className="mt-4">
+        Sorry, there was an issue fetching the data. Please try again.
+      </div>
+    );
+  }
+
+  if (!shelters) {
+    return null;
+  }
+
   return (
-    <div className="flex flex-col p-8 gap-8">
+    <div className="flex flex-col p-8 gap-8 w-full">
       {/* Top row with Back and Add Shelter buttons */}
       <div className="flex items-center justify-between">
         <Link to="/operator">
@@ -96,8 +70,8 @@ export default function Dashboard() {
       </div>
 
       {/* Grid of shelter cards */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-6">
-        {shelters.map((shelter) => (
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6 w-full">
+        {shelters?.map((shelter) => (
           <ShelterCard key={shelter.id} shelter={shelter} />
         ))}
       </div>
