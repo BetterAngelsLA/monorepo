@@ -13,7 +13,7 @@ export function useDeleteClientProfile(props: TProps) {
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [deleteClientProfile, { loading, error }] = useMutation(
+  const [deleteClientProfile, { loading }] = useMutation(
     DeleteClientProfileDocument
   );
 
@@ -22,19 +22,31 @@ export function useDeleteClientProfile(props: TProps) {
       await deleteClientProfile({
         variables: { id },
         update(cache) {
-          if (!id) return;
-          const storeId = cache.identify({ __typename: 'ClientProfile', id });
+          if (!id) {
+            return;
+          }
 
-          if (storeId) cache.evict({ id: storeId });
+          // Remove from all clientProfiles list entries
           cache.modify({
             id: 'ROOT_QUERY',
             fields: {
               clientProfiles(existing, { readField }) {
-                if (!existing) return existing;
+                if (!existing) {
+                  return existing;
+                }
 
-                const nextResults = (existing.results ?? []).filter(
-                  (ref: any) => readField('id', ref) !== id
-                );
+                const existingResults = existing.results ?? [];
+
+                const nextResults = existingResults.filter((ref: any) => {
+                  const refId = readField('id', ref);
+
+                  // remove any dangling refs
+                  if (refId === null || refId === undefined) {
+                    return false;
+                  }
+
+                  return refId !== id;
+                });
 
                 const nextTotal =
                   typeof existing.totalCount === 'number'
@@ -50,13 +62,19 @@ export function useDeleteClientProfile(props: TProps) {
             },
           });
 
+          // Evict after
+          const storeId = cache.identify({
+            __typename: 'ClientProfileType',
+            id,
+          });
+
+          if (storeId) {
+            cache.evict({ id: storeId });
+          }
+
           cache.gc();
         },
       });
-
-      if (error) {
-        throw error;
-      }
 
       if (returnPath) {
         router.replace({
