@@ -56,8 +56,10 @@ const policyFactoryList = [
   getQueryPolicyFactory<HmisListClientsQuery, HmisListClientsQueryVariables>({
     key: 'hmisListClients',
     entityTypename: 'HmisClientType',
-    // including perPage so different page sizes are cached separately
-    cacheKeyVariables: ['filter', ['pagination', 'perPage']] as const,
+    // To set cacheKeyVariables/keyArgs like ['filter', 'pagination.perPage']
+    // may need to use KeyArgsFunction (not yet supported by getQueryPolicyFactory)
+    // may be necessary if allow user to switch perPage in UI
+    cacheKeyVariables: ['filter'] as const,
     itemIdPath: 'personalId',
     itemsPath: 'items',
     totalCountPath: ['meta', 'totalCount'],

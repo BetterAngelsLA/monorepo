@@ -93,7 +93,7 @@ import {
 import { generateFieldPolicy } from '../generateFieldPolicy';
 import type { TCacheMergeOpts } from '../merge';
 import type {
-  KeyArgSpec,
+  KeyArgsFor,
   ResultItemOf,
   TPaginationVariables,
   TypenameOf,
@@ -119,7 +119,7 @@ type TgetQueryPolicyFactory<
   entityTypename: [TItem] extends [never] ? string : TypenameOf<TItem>;
 
   /** variables that affect cache key */
-  cacheKeyVariables: readonly KeyArgSpec<TVariables>[];
+  cacheKeyVariables: KeyArgsFor<TVariables>;
 
   /** optional: tell Apollo how to identify the item type itself */
   entityIdFields?: TypePolicy['keyFields'];
