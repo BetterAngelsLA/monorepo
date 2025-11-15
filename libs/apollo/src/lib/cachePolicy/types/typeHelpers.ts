@@ -26,7 +26,7 @@ export type TypenameOf<T> = T extends { __typename?: infer N }
   : never;
 
 // Top-level variable names for a query's variables
-type AllowedKey<V> = Extract<keyof V, string>;
+export type AllowedKey<V> = Extract<keyof V, string>;
 
 // Apollo-style keyArgs:
 //

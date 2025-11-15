@@ -83,6 +83,7 @@
  */
 
 import type { FieldPolicy, TypePolicy } from '@apollo/client';
+import { KeyArgsFunction } from '@apollo/client/cache/inmemory/policies';
 import {
   DEFAULT_QUERY_ID_KEY,
   DEFAULT_QUERY_RESULTS_KEY,
@@ -118,8 +119,11 @@ type TgetQueryPolicyFactory<
    */
   entityTypename: [TItem] extends [never] ? string : TypenameOf<TItem>;
 
-  /** variables that affect cache key */
-  cacheKeyVariables: KeyArgsFor<TVariables>;
+  /**
+   * variables that affect cache key
+   * can accept KeyArgsFunction, but not fully tested here
+   */
+  cacheKeyVariables: KeyArgsFor<TVariables> | KeyArgsFunction | false;
 
   /** optional: tell Apollo how to identify the item type itself */
   entityIdFields?: TypePolicy['keyFields'];
