@@ -1,4 +1,5 @@
-import { useUpdateNoteLocationMutation } from '@monorepo/expo/betterangels';
+import { useMutation } from '@apollo/client/react';
+import { UpdateNoteLocationDocument } from '@monorepo/expo/betterangels';
 import { TargetIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -49,7 +50,9 @@ export default function Selected(props: ISelectedProps) {
     minimizeModal,
   } = props;
   const [copy, setCopy] = useState<string | null>();
-  const [updateNoteLocation, { error }] = useUpdateNoteLocationMutation();
+  const [updateNoteLocation, { error }] = useMutation(
+    UpdateNoteLocationDocument
+  );
 
   const handleIosDirections = () => {
     setChooseDirections(true);

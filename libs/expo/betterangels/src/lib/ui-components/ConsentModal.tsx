@@ -16,9 +16,10 @@ import { Link } from 'expo-router';
 import { useState } from 'react';
 import { DimensionValue, Dimensions, StyleSheet, View } from 'react-native';
 
+import { useMutationWithErrors } from '@monorepo/apollo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSignOut } from '../hooks';
-import { useUpdateCurrentUserMutation } from '../providers';
+import { UpdateCurrentUserDocument } from '../providers';
 import { TUser } from '../providers/user/UserContext';
 
 interface IConsentModalProps {
@@ -55,7 +56,9 @@ export default function ConsentModal({
   user,
   height = 'auto',
 }: IConsentModalProps) {
-  const [updateCurrentUser, { error }] = useUpdateCurrentUserMutation();
+  const [updateCurrentUser, { error }] = useMutationWithErrors(
+    UpdateCurrentUserDocument
+  );
   const [checkedItems, setCheckedItems] = useState<CheckedItems>({
     isTosChecked: false,
     isPrivacyPolicyChecked: false,

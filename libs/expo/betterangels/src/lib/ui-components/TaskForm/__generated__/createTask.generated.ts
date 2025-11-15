@@ -1,74 +1,15 @@
-import * as Types from '../../../apollo/graphql/__generated__/types';
+import type * as Types from '../../../apollo/graphql/__generated__/types';
 
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
-const defaultOptions = {} as const;
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type CreateTaskMutationVariables = Types.Exact<{
   data: Types.CreateTaskInput;
 }>;
 
 
-export type CreateTaskMutation = { __typename?: 'Mutation', createTask: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'TaskType', id: string, createdAt: any, description?: string | null, status?: Types.TaskStatusEnum | null, summary?: string | null, team?: Types.SelahTeamEnum | null, updatedAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string }, note?: { __typename?: 'DjangoModelType', pk: string } | null, organization?: { __typename?: 'OrganizationType', id: string, name: string } | null } };
+export type CreateTaskMutation = { __typename?: 'Mutation', createTask:
+    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+    | { __typename?: 'TaskType', id: string, createdAt: any, description?: string | null, status?: Types.TaskStatusEnum | null, summary?: string | null, team?: Types.SelahTeamEnum | null, updatedAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string }, note?: { __typename?: 'DjangoModelType', pk: string } | null, organization?: { __typename?: 'OrganizationType', id: string, name: string } | null }
+   };
 
 
-export const CreateTaskDocument = gql`
-    mutation CreateTask($data: CreateTaskInput!) {
-  createTask(data: $data) {
-    ... on OperationInfo {
-      messages {
-        kind
-        field
-        message
-      }
-    }
-    ... on TaskType {
-      id
-      clientProfile {
-        id
-      }
-      createdAt
-      createdBy {
-        id
-      }
-      description
-      note {
-        pk
-      }
-      organization {
-        id
-        name
-      }
-      status
-      summary
-      team
-      updatedAt
-    }
-  }
-}
-    `;
-export type CreateTaskMutationFn = Apollo.MutationFunction<CreateTaskMutation, CreateTaskMutationVariables>;
-
-/**
- * __useCreateTaskMutation__
- *
- * To run a mutation, you first call `useCreateTaskMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useCreateTaskMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [createTaskMutation, { data, loading, error }] = useCreateTaskMutation({
- *   variables: {
- *      data: // value for 'data'
- *   },
- * });
- */
-export function useCreateTaskMutation(baseOptions?: Apollo.MutationHookOptions<CreateTaskMutation, CreateTaskMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<CreateTaskMutation, CreateTaskMutationVariables>(CreateTaskDocument, options);
-      }
-export type CreateTaskMutationHookResult = ReturnType<typeof useCreateTaskMutation>;
-export type CreateTaskMutationResult = Apollo.MutationResult<CreateTaskMutation>;
-export type CreateTaskMutationOptions = Apollo.BaseMutationOptions<CreateTaskMutation, CreateTaskMutationVariables>;
+export const CreateTaskDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateTask"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"data"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateTaskInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createTask"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"data"},"value":{"kind":"Variable","name":{"kind":"Name","value":"data"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"OperationInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"messages"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"TaskType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"clientProfile"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"note"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"pk"}}]}},{"kind":"Field","name":{"kind":"Name","value":"organization"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"summary"}},{"kind":"Field","name":{"kind":"Name","value":"team"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]}}]}}]} as unknown as DocumentNode<CreateTaskMutation, CreateTaskMutationVariables>;

@@ -1,3 +1,5 @@
+import { useQuery } from '@apollo/client/react';
+import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect } from 'react';
@@ -10,8 +12,8 @@ import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { isValidClientProfileSectionEnum } from '../../../screenRouting';
 import {
-  useGetClientProfileQuery,
-  useUpdateClientProfileMutation,
+  GetClientProfileDocument,
+  UpdateClientProfileDocument,
 } from './__generated__/clientProfile.generated';
 import { config } from './config';
 import { extractClientFormData } from './extractClientFormData';
@@ -25,12 +27,13 @@ export default function ClientProfileForm(props: IClientProfileForms) {
     error: fetchProfileError,
     loading: isFetchingProfile,
     refetch,
-  } = useGetClientProfileQuery({
+  } = useQuery(GetClientProfileDocument, {
     variables: { id },
   });
 
-  const [updateClientProfile, { loading: isUpdating }] =
-    useUpdateClientProfileMutation();
+  const [updateClientProfile, { loading: isUpdating }] = useMutationWithErrors(
+    UpdateClientProfileDocument
+  );
 
   const methods = useForm<FormValues>({
     defaultValues: {
@@ -98,7 +101,10 @@ export default function ClientProfileForm(props: IClientProfileForms) {
         throw otherErrors.message;
       }
 
-      refetch();
+      // Ensure the refetch completes before navigating away.
+      // In apollo client v4, if we navigate immediately,
+      // the query unmounts and refetch is cancelled.
+      await refetch();
 
       router.replace(`/client/${id}?openCard=${validComponentName}`);
     } catch (err) {

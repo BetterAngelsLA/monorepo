@@ -1,4 +1,6 @@
+import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
@@ -15,8 +17,8 @@ import {
   THmisProgramNoteFormOutputs,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm';
-import { useHmisGetClientNoteQuery } from './__generated__/hmisGetClientNote.generated';
-import { useHmisUpdateClientNoteMutation } from './__generated__/hmisUpdateClientNote.generated';
+import { HmisGetClientNoteDocument } from './__generated__/hmisGetClientNote.generated';
+import { HmisUpdateClientNoteDocument } from './__generated__/hmisUpdateClientNote.generated';
 
 type TProps = {
   hmisNoteId: string;
@@ -32,7 +34,9 @@ export function HmisProgramNoteEdit(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [existingNote, setExistingNote] = useState<HmisClientNoteType>();
-  const [updateHmisClientNoteMutation] = useHmisUpdateClientNoteMutation();
+  const [updateHmisClientNoteMutation] = useMutationWithErrors(
+    HmisUpdateClientNoteDocument
+  );
 
   const formMethods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
@@ -41,19 +45,19 @@ export function HmisProgramNoteEdit(props: TProps) {
 
   // Note: we assume cached note is valid and refetch only on missing fields.
   // fetchPolicy=cache-first: use cache unless missing fields in cache
-  // partialRefetch=true: refetch if any requested field is missing
+  // returnPartialData=true: allow incomplete data from cache
   const {
     data: noteData,
     loading: noteDataLoading,
     error: getNoteNetworkError,
-  } = useHmisGetClientNoteQuery({
+  } = useQuery(HmisGetClientNoteDocument, {
     variables: {
       id: hmisNoteId,
       personalId: hmisClientId,
       enrollmentId: hmisNoteEnrollmentId,
     },
     fetchPolicy: 'cache-first',
-    partialRefetch: true,
+    returnPartialData: true,
   });
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import { ApolloQueryResult } from '@apollo/client';
+import { ApolloClient } from '@apollo/client';
 import {
   RequestedProvidedServices,
   ServiceRequestTypeEnum,
@@ -14,7 +14,7 @@ interface IProvidedServicesProps {
   services: ViewNoteQuery['note']['providedServices'];
   refetch: (
     variables?: Partial<ViewNoteQueryVariables>
-  ) => Promise<ApolloQueryResult<ViewNoteQuery>>;
+  ) => Promise<ApolloClient.QueryResult<ViewNoteQuery>>;
 }
 
 export default function ProvidedServices(props: IProvidedServicesProps) {

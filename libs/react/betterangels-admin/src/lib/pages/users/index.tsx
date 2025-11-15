@@ -1,3 +1,4 @@
+import { useQuery } from '@apollo/client/react';
 import { Table, useAppDrawer } from '@monorepo/react/components';
 import { PlusIcon } from '@monorepo/react/icons';
 import { formatDistanceToNow, parseISO } from 'date-fns';
@@ -5,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
 import { AddUserFormDrawer } from '../../components';
 import { useUser } from '../../hooks';
-import { useOrganizationMembersQuery } from './__generated__/users.generated';
+import { OrganizationMembersDocument } from './__generated__/users.generated';
 
 const TABLE_HEADER = [
   'First Name',
@@ -37,7 +38,7 @@ export default function Users() {
     });
   }
 
-  const { data, loading } = useOrganizationMembersQuery({
+  const { data, loading } = useQuery(OrganizationMembersDocument, {
     variables: {
       organizationId,
       pagination: {

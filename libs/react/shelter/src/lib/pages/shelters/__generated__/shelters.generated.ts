@@ -1,8 +1,6 @@
-import * as Types from '../../../apollo/graphql/__generated__/types';
+import type * as Types from '../../../apollo/graphql/__generated__/types';
 
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
-const defaultOptions = {} as const;
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type ViewSheltersQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.ShelterFilter>;
   pagination?: Types.InputMaybe<Types.OffsetPaginationInput>;
@@ -13,68 +11,4 @@ export type ViewSheltersQueryVariables = Types.Exact<{
 export type ViewSheltersQuery = { __typename?: 'Query', shelters: { __typename?: 'ShelterTypeOffsetPaginated', totalCount: number, results: Array<{ __typename?: 'ShelterType', id: string, name: string, heroImage?: string | null, distanceInMiles?: number | null, exteriorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', url: string, name: string } }>, interiorPhotos: Array<{ __typename?: 'ShelterPhotoType', file: { __typename?: 'DjangoFileType', url: string, name: string } }>, location?: { __typename?: 'ShelterLocationType', latitude: number, longitude: number, place: string } | null }> } };
 
 
-export const ViewSheltersDocument = gql`
-    query ViewShelters($filters: ShelterFilter, $pagination: OffsetPaginationInput, $order: ShelterOrder) {
-  shelters(filters: $filters, pagination: $pagination, order: $order) {
-    totalCount
-    results {
-      id
-      name
-      heroImage
-      exteriorPhotos {
-        file {
-          url
-          name
-        }
-      }
-      interiorPhotos {
-        file {
-          url
-          name
-        }
-      }
-      distanceInMiles
-      location {
-        latitude
-        longitude
-        place
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useViewSheltersQuery__
- *
- * To run a query within a React component, call `useViewSheltersQuery` and pass it any options that fit your needs.
- * When your component renders, `useViewSheltersQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useViewSheltersQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *      order: // value for 'order'
- *   },
- * });
- */
-export function useViewSheltersQuery(baseOptions?: Apollo.QueryHookOptions<ViewSheltersQuery, ViewSheltersQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<ViewSheltersQuery, ViewSheltersQueryVariables>(ViewSheltersDocument, options);
-      }
-export function useViewSheltersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<ViewSheltersQuery, ViewSheltersQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<ViewSheltersQuery, ViewSheltersQueryVariables>(ViewSheltersDocument, options);
-        }
-export function useViewSheltersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<ViewSheltersQuery, ViewSheltersQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<ViewSheltersQuery, ViewSheltersQueryVariables>(ViewSheltersDocument, options);
-        }
-export type ViewSheltersQueryHookResult = ReturnType<typeof useViewSheltersQuery>;
-export type ViewSheltersLazyQueryHookResult = ReturnType<typeof useViewSheltersLazyQuery>;
-export type ViewSheltersSuspenseQueryHookResult = ReturnType<typeof useViewSheltersSuspenseQuery>;
-export type ViewSheltersQueryResult = Apollo.QueryResult<ViewSheltersQuery, ViewSheltersQueryVariables>;
+export const ViewSheltersDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ViewShelters"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filters"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ShelterFilter"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"pagination"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"OffsetPaginationInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"order"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ShelterOrder"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"shelters"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}},{"kind":"Argument","name":{"kind":"Name","value":"pagination"},"value":{"kind":"Variable","name":{"kind":"Name","value":"pagination"}}},{"kind":"Argument","name":{"kind":"Name","value":"order"},"value":{"kind":"Variable","name":{"kind":"Name","value":"order"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"results"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"heroImage"}},{"kind":"Field","name":{"kind":"Name","value":"exteriorPhotos"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"file"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"interiorPhotos"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"file"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"distanceInMiles"}},{"kind":"Field","name":{"kind":"Name","value":"location"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"latitude"}},{"kind":"Field","name":{"kind":"Name","value":"longitude"}},{"kind":"Field","name":{"kind":"Name","value":"place"}}]}}]}}]}}]}}]} as unknown as DocumentNode<ViewSheltersQuery, ViewSheltersQueryVariables>;

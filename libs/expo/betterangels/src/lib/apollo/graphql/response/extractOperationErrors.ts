@@ -1,4 +1,4 @@
-import { FetchResult } from '@apollo/client';
+import { ApolloLink } from '@apollo/client';
 import {
   OperationInfo,
   OperationMessage,
@@ -14,7 +14,7 @@ type TOperationErrorsResponse = {
 };
 
 type TProps = {
-  response: FetchResult;
+  response: ApolloLink.Result;
   queryKey: string;
   fields: string[];
   resultTypename: string;

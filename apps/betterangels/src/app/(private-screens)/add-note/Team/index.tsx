@@ -1,8 +1,9 @@
+import { useMutation } from '@apollo/client/react';
 import {
   SelahTeamEnum,
+  UpdateNoteDocument,
   enumDisplaySelahTeam,
   useSnackbar,
-  useUpdateNoteMutation,
 } from '@monorepo/expo/betterangels';
 import { Spacings } from '@monorepo/expo/shared/static';
 import { Picker } from '@monorepo/expo/shared/ui-components';
@@ -20,7 +21,7 @@ export default function Team(props: ITeamProps) {
     team
   );
 
-  const [updateNote] = useUpdateNoteMutation();
+  const [updateNote] = useMutation(UpdateNoteDocument);
   const { showSnackbar } = useSnackbar();
 
   const updateNoteFunction = async (selectedTeam: SelahTeamEnum | null) => {
