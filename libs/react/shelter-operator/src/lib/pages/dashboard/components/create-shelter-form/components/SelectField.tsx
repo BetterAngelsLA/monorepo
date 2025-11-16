@@ -13,6 +13,7 @@ interface SelectFieldProps<T extends string | number | null> {
   placeholder?: string;
   helperText?: string;
   error?: string;
+  required?: boolean;
 }
 
 export function SelectField<T extends string | number | null>({
@@ -25,6 +26,7 @@ export function SelectField<T extends string | number | null>({
   placeholder,
   helperText,
   error,
+  required,
 }: SelectFieldProps<T>) {
   const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
 
@@ -35,6 +37,7 @@ export function SelectField<T extends string | number | null>({
       helperText={helperText}
       error={error}
       messageId={messageId}
+      required={required}
     >
       <select
         id={id}
@@ -55,6 +58,7 @@ export function SelectField<T extends string | number | null>({
         }}
         aria-invalid={error ? 'true' : undefined}
         aria-describedby={messageId}
+        required={required}
       >
         {placeholder ? (
           <option value="" disabled={value !== null && value !== undefined}>

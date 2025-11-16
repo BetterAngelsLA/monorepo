@@ -13,6 +13,7 @@ interface FieldWrapperProps {
   error?: string;
   children: ReactNode;
   messageId?: string;
+  required?: boolean;
 }
 
 export function FieldWrapper({
@@ -22,11 +23,17 @@ export function FieldWrapper({
   error,
   children,
   messageId,
+  required,
 }: FieldWrapperProps) {
   return (
     <div className={FIELD_WRAPPER_CLASS}>
       <label htmlFor={htmlFor} className={LABEL_CLASS}>
         {label}
+        {required ? (
+          <span className="ml-1 text-red-600" aria-hidden="true">
+            *
+          </span>
+        ) : null}
       </label>
       {children}
       {error ? (

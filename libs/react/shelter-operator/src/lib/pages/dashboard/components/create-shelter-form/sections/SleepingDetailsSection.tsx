@@ -28,6 +28,7 @@ export function SleepingDetailsSection({ data, onChange, errors }: SectionProps)
         values={data.room_styles}
         onChange={values => onChange('room_styles', values)}
         error={errors.room_styles}
+        required
       />
       <TextField
         id="room-styles-other"

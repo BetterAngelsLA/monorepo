@@ -1,12 +1,19 @@
-import { CreateShelterDocument } from '@monorepo/react/shelter';
+import {
+  CreateShelterDocument,
+  type CreateShelterMutation,
+  type CreateShelterMutationVariables,
+} from '@monorepo/react/shelter';
 import type { ShelterFormData } from '../../../types';
 import {
   normalizeCityValues,
   normalizeEnumValues,
+  normalizeSpaValues,
   normalizeStatusValue,
 } from '../utils/enumMappings';
 
 export const CREATE_SHELTER_MUTATION = CreateShelterDocument;
+export type CreateShelterMutationResult = CreateShelterMutation;
+export type CreateShelterMutationVariables = CreateShelterMutationVariables;
 
 export type CreateShelterInput = ReturnType<typeof buildCreateShelterInput>;
 
@@ -70,7 +77,7 @@ export const buildCreateShelterInput = (formData: ShelterFormData) => {
     referralRequirement: normalizeEnumValues(formData.referral_requirement),
     exitPolicy: normalizeEnumValues(formData.exit_policy),
     cities: normalizeCityValues(formData.cities),
-    spa: mapSpaValues(formData.spa),
+    spa: normalizeSpaValues(formData.spa),
     shelterPrograms: normalizeEnumValues(formData.shelter_programs),
     funders: normalizeEnumValues(formData.funders),
   } as Record<string, unknown>;

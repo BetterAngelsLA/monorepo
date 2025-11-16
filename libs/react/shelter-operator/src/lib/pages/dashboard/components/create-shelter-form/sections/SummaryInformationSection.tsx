@@ -24,6 +24,7 @@ export function SummaryInformationSection({ data, onChange, errors }: SectionPro
         values={data.demographics}
         onChange={values => onChange('demographics', values)}
         error={errors.demographics}
+        required
       />
       <TextField
         id="demographics-other"
@@ -46,6 +47,7 @@ export function SummaryInformationSection({ data, onChange, errors }: SectionPro
         values={data.shelter_types}
         onChange={values => onChange('shelter_types', values)}
         error={errors.shelter_types}
+        required
       />
       <TextField
         id="shelter-types-other"
@@ -61,6 +63,8 @@ export function SummaryInformationSection({ data, onChange, errors }: SectionPro
         value={data.description}
         onChange={value => onChange('description', value)}
         rows={4}
+        required
+        error={errors.description}
       />
     </FormSection>
   );

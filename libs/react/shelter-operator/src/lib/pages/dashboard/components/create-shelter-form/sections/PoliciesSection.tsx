@@ -33,6 +33,7 @@ export function PoliciesSection({ data, onChange, errors }: SectionProps) {
         onChange={value => onChange('intake_hours', value)}
         helperText='Use the format: "HH:MM:SS-HH:MM:SS,..."'
         error={errors.intake_hours}
+        required
       />
       <TextField
         id="curfew"
@@ -42,6 +43,7 @@ export function PoliciesSection({ data, onChange, errors }: SectionProps) {
         onChange={value => onChange('curfew', value)}
         helperText='Use the format: "HH:MM:SS-HH:MM:SS,..."'
         error={errors.curfew}
+        required
       />
       <RadioGroup
         name="on-site-security"
@@ -66,6 +68,7 @@ export function PoliciesSection({ data, onChange, errors }: SectionProps) {
         values={data.exit_policy}
         onChange={values => onChange('exit_policy', values)}
         error={errors.exit_policy}
+        required
       />
       <TextField
         id="exit-policy-other"

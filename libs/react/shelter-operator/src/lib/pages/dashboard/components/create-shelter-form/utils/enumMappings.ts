@@ -42,7 +42,8 @@ export const normalizeEnumValue = (rawValue: string | null | undefined): string 
     return undefined;
   }
 
-  return SPECIAL_CASES[value] ?? slugify(value);
+  const slug = SPECIAL_CASES[value] ?? slugify(value);
+  return slug.toUpperCase();
 };
 
 export const normalizeEnumValues = (values: readonly string[] | undefined): string[] => {
@@ -62,8 +63,33 @@ export const normalizeCityValues = (values: readonly string[] | undefined): stri
     return [];
   }
 
-  return Array.from(new Set(values.map(value => slugify(value))));
+  return Array.from(new Set(values.map(value => slugify(value).toUpperCase())));
 };
 
 export const normalizeStatusValue = (value: string | null | undefined) =>
-  normalizeEnumValue(value) ?? 'draft';
+  normalizeEnumValue(value) ?? 'DRAFT';
+
+const SPA_MAP: Record<string, string> = {
+  '1': 'ONE',
+  '2': 'TWO',
+  '3': 'THREE',
+  '4': 'FOUR',
+  '5': 'FIVE',
+  '6': 'SIX',
+  '7': 'SEVEN',
+  '8': 'EIGHT',
+};
+
+export const normalizeSpaValues = (values: readonly string[] | undefined): string[] => {
+  if (!values?.length) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      values
+        .map(spa => SPA_MAP[spa] ?? SPA_MAP[String(spa)])
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+};

@@ -41,6 +41,7 @@ export function TextField({
       helperText={helperText}
       error={error}
       messageId={messageId}
+      required={required}
     >
       <input
         id={id}

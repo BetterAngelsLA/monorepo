@@ -13,6 +13,7 @@ interface TextAreaFieldProps {
   helperText?: string;
   error?: string;
   onBlur?: () => void;
+  required?: boolean;
 }
 
 export function TextAreaField({
@@ -26,6 +27,7 @@ export function TextAreaField({
   helperText,
   error,
   onBlur,
+  required,
 }: TextAreaFieldProps) {
   const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
 
@@ -36,6 +38,7 @@ export function TextAreaField({
       helperText={helperText}
       error={error}
       messageId={messageId}
+      required={required}
     >
       <textarea
         id={id}
@@ -48,6 +51,7 @@ export function TextAreaField({
         className={clsx(TEXTAREA_CLASS, error && INPUT_ERROR_CLASS)}
         aria-invalid={error ? 'true' : undefined}
         aria-describedby={messageId}
+        required={required}
       />
     </FieldWrapper>
   );

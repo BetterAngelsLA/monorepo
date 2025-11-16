@@ -42,6 +42,7 @@ export function NumberField({
       helperText={helperText}
       error={error}
       messageId={messageId}
+      required={required}
     >
       <input
         id={id}

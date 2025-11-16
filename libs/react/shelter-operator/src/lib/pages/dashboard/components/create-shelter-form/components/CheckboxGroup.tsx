@@ -14,6 +14,7 @@ interface CheckboxGroupProps {
   onChange: (values: string[]) => void;
   helperText?: string;
   error?: string;
+  required?: boolean;
 }
 
 export function CheckboxGroup({
@@ -24,16 +25,24 @@ export function CheckboxGroup({
   onChange,
   helperText,
   error,
+  required,
 }: CheckboxGroupProps) {
   const messageId = error ? `${name}-error` : helperText ? `${name}-helper` : undefined;
 
   return (
-    <FieldWrapper label={label} helperText={helperText} error={error} messageId={messageId}>
+    <FieldWrapper
+      label={label}
+      helperText={helperText}
+      error={error}
+      messageId={messageId}
+      required={required}
+    >
       <div
         className={OPTION_LIST_CLASS}
         role="group"
         aria-invalid={error ? 'true' : undefined}
         aria-describedby={messageId}
+        aria-required={required ? 'true' : undefined}
       >
         {options.map(option => {
           const checked = values.includes(option.value);

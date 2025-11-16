@@ -22,6 +22,7 @@ export function EntryRequirementsSection({ data, onChange, errors }: SectionProp
         values={data.entry_requirements}
         onChange={values => onChange('entry_requirements', values)}
         error={errors.entry_requirements}
+        required
       />
       <CheckboxGroup
         name="referral-requirement"
@@ -30,6 +31,7 @@ export function EntryRequirementsSection({ data, onChange, errors }: SectionProp
         values={data.referral_requirement}
         onChange={values => onChange('referral_requirement', values)}
         error={errors.referral_requirement}
+        required
       />
       <TextField
         id="bed-fees"

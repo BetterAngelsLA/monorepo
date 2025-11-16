@@ -17,6 +17,7 @@ export function AdministrationSection({ data, onChange, errors }: SectionProps) 
         value={data.status}
         onChange={value => onChange('status', value)}
         error={errors.status}
+        required
       />
     </FormSection>
   );

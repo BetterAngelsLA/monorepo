@@ -22,7 +22,15 @@ from tasks.schema import Query as TasksQuery
 queries = (AccountsQuery, ClientsQuery, CommonQuery, HmisGqlQuery, HmisQuery, NotesQuery, TasksQuery, SheltersQuery)
 Query = merge_types("Query", queries)
 
-mutations = (AccountsMutation, ClientsMutation, HmisGqlMutation, HmisMutation, NotesMutation, TasksMutation)
+mutations = (
+    AccountsMutation,
+    ClientsMutation,
+    HmisGqlMutation,
+    HmisMutation,
+    NotesMutation,
+    TasksMutation,
+    SheltersMutation,
+)
 Mutation = merge_types("Mutation", mutations)
 
 schema = Schema(

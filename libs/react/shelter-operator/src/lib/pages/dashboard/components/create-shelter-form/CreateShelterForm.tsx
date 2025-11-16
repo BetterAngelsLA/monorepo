@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useState } from 'react';
 import { ApolloError, useMutation } from '@apollo/client';
 import { Link } from 'react-router-dom';
+import { Button } from '@monorepo/react/components';
 import { useCreateShelterForm } from './hooks/useCreateShelterForm';
 import { validateField, validateShelterForm, type FormErrors } from './constants/validation';
 import { AdministrationSection } from './sections/AdministrationSection';
@@ -18,6 +19,8 @@ import type { ShelterFormData } from '../../types';
 import {
   CREATE_SHELTER_MUTATION,
   buildCreateShelterInput,
+  type CreateShelterMutationResult,
+  type CreateShelterMutationVariables,
 } from './api/createShelterMutation';
 
 export default function CreateShelterForm() {
@@ -25,7 +28,10 @@ export default function CreateShelterForm() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState<string | null>(null);
-  const [createShelter, { loading: isSubmitting }] = useMutation(CREATE_SHELTER_MUTATION);
+  const [createShelter, { loading: isSubmitting }] = useMutation<
+    CreateShelterMutationResult,
+    CreateShelterMutationVariables
+  >(CREATE_SHELTER_MUTATION);
 
   const handleFieldChange = useCallback(
     <K extends keyof ShelterFormData>(field: K, value: ShelterFormData[K]) => {
@@ -116,14 +122,15 @@ export default function CreateShelterForm() {
         <AdministrationSection data={formData} onChange={handleFieldChange} errors={errors} />
         <MediaSection data={formData} onChange={handleFieldChange} errors={errors} />
 
-        <div className="flex justify-end gap-3">
-          <button
+        <div className="flex justify-center">
+          <Button
+            size="xl"
             type="submit"
-            className="bg-green-600 text-black px-6 py-3 rounded-md font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+            className="!h-auto !bg-green-600 !text-black px-6 py-3 hover:!bg-green-700 transition-colors disabled:opacity-50"
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Submitting…' : 'Create Shelter'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>
