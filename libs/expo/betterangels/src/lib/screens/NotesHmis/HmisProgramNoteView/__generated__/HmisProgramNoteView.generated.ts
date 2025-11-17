@@ -10,7 +10,7 @@ export type HmisProgramNoteViewQueryVariables = Types.Exact<{
 }>;
 
 
-export type HmisProgramNoteViewQuery = { __typename?: 'Query', hmisGetClientNote: { __typename?: 'HmisClientNoteType', id?: string | null, category?: string | null, date?: string | null, note?: string | null, title?: string | null } | { __typename?: 'HmisGetClientNoteError', field?: string | null, message: string } };
+export type HmisProgramNoteViewQuery = { __typename?: 'Query', hmisGetClientNote: { __typename?: 'HmisClientNoteType', id?: string | null, category?: string | null, date?: string | null, note?: string | null, title?: string | null, client?: { __typename?: 'HmisClientType', personalId?: string | null, firstName?: string | null, lastName?: string | null } | null, enrollment?: { __typename?: 'HmisEnrollmentType', enrollmentId?: string | null, project?: { __typename?: 'HmisProjectType', projectId?: string | null, projectName?: string | null } | null } | null } | { __typename?: 'HmisGetClientNoteError', field?: string | null, message: string } };
 
 
 export const HmisProgramNoteViewDocument = gql`
@@ -22,6 +22,18 @@ export const HmisProgramNoteViewDocument = gql`
       date
       note
       title
+      client {
+        personalId
+        firstName
+        lastName
+      }
+      enrollment {
+        enrollmentId
+        project {
+          projectId
+          projectName
+        }
+      }
     }
     ... on HmisGetClientNoteError {
       field

@@ -10,8 +10,8 @@ import {
   MainScrollContainer,
   ProgramNoteCard,
 } from '../../../../ui-components';
-import { useHmisListClientNotesQuery } from './__generated__/ClientInteractionsHmisView.generated';
 import { ListLoadingView } from './ListLoadingView';
+import { useHmisListClientNotesQuery } from './__generated__/ClientInteractionsHmisView.generated';
 
 export const DEFAULT_PAGINATION_LIMIT = 20;
 
@@ -69,7 +69,7 @@ export function ClientInteractionsHmisView(props: TProps) {
       <ProgramNoteCard
         onPress={() => {
           router.navigate({
-            pathname: `/notes-hmis/${item.id}/index`,
+            pathname: `/notes-hmis/${item.id}`,
             params: {
               personalId: client?.personalId,
               enrollmentId: item.enrollment?.enrollmentId,
@@ -89,7 +89,7 @@ export function ClientInteractionsHmisView(props: TProps) {
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <View>
+      <View style={{ marginBottom: Spacings.md }}>
         <IconButton
           variant="secondary"
           borderColor={Colors.WHITE}

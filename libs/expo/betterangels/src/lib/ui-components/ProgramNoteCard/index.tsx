@@ -1,5 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
-import { usePathname, useRouter } from 'expo-router';
+import { TextRegular } from '@monorepo/expo/shared/ui-components';
+import { format } from 'date-fns';
 import { Pressable, StyleSheet } from 'react-native';
 import { HmisClientNoteType } from '../../apollo';
 import ProgramNoteCardClient from './ProgramNoteCardClient';
@@ -14,25 +15,18 @@ interface INoteCardProps {
 
 export default function ProgramNoteCard(props: INoteCardProps) {
   const { note, variant, hasBorder, onPress } = props;
-  const pathname = usePathname();
-  const router = useRouter();
 
   return (
     <Pressable
       accessibilityRole="button"
       onPress={() => {
-        if (onPress) {
-          onPress();
-        }
-        router.navigate({
-          pathname: `/note/${note.id}`,
-          params: { arrivedFrom: pathname },
-        });
+        onPress?.();
       }}
       style={({ pressed }) => [
         styles.container,
         {
-          backgroundColor: pressed ? Colors.GRAY_PRESSED : Colors.WHITE,
+          backgroundColor:
+            pressed && onPress ? Colors.GRAY_PRESSED : Colors.WHITE,
           borderColor: Colors.NEUTRAL_LIGHT,
           borderWidth: hasBorder ? 1 : 0,
         },
@@ -41,6 +35,13 @@ export default function ProgramNoteCard(props: INoteCardProps) {
       {!!note.title && <ProgramNoteCardHeader purpose={note.title} />}
       {variant === 'interactions' && (
         <ProgramNoteCardClient clientProfile={note.client} />
+      )}
+      {note.date && (
+        <TextRegular size="sm">
+          {format(new Date(note.date), 'MM/dd/yyyy')}
+          {' @ '}
+          {format(new Date(note?.date), 'hh:mm a')}
+        </TextRegular>
       )}
 
       {/* TODO: ADD AFTER BA INTEGRATION
