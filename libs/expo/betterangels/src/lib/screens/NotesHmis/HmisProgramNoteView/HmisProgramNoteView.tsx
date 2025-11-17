@@ -4,6 +4,7 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { sanitizeHtmlString } from '@monorepo/expo/shared/utils';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import HmisProgramNoteTitle from './HmisProgramNoteTitle';
@@ -48,8 +49,7 @@ export function HmisProgramNoteView(props: TProps) {
 
   const programName = project?.projectName;
   const clientName = buildFullName(firstName, lastName);
-  const sanitizedNote = (note || '').replace(/<[^>]+>/g, '');
-  const sanitizedNoteTrimmed = sanitizedNote.trim();
+  const sanitizedNote = sanitizeHtmlString(note);
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
@@ -65,11 +65,11 @@ export function HmisProgramNoteView(props: TProps) {
           </View>
         )}
 
-        {!!sanitizedNoteTrimmed.length && (
+        {!!sanitizedNote.length && (
           <View>
             <TextBold mb="xs">Note</TextBold>
             <View style={styles.noteContainer}>
-              <TextRegular>{sanitizedNoteTrimmed}</TextRegular>
+              <TextRegular>{sanitizedNote}</TextRegular>
             </View>
           </View>
         )}
