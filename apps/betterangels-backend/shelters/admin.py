@@ -86,7 +86,7 @@ User = get_user_model()
 
 
 class ShelterForm(forms.ModelForm):
-    template_name = "admin/shelters/change_form.html"  # Specify your custom template path
+    template_name = "admin/shelters/shelter_change_form.html"  # Specify your custom template path
 
     clear_hero_image = forms.BooleanField(
         required=False,
