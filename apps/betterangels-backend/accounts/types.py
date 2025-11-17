@@ -2,7 +2,7 @@ from typing import List, Optional, Tuple
 
 import strawberry
 import strawberry_django
-from accounts.enums import OrgRoleEnum
+from accounts.enums import Ordering, OrganizationMemberOrderField, OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
 from common.constants import HMIS_SESSION_KEY_NAME
@@ -163,3 +163,9 @@ class OrgInvitationInput:
     middle_name: Optional[str] = None
     last_name: str
     organization_id: ID
+
+
+@strawberry.input
+class OrganizationMemberOrderingInput:
+    field: OrganizationMemberOrderField = OrganizationMemberOrderField.LAST_NAME
+    direction: Ordering = Ordering.ASC

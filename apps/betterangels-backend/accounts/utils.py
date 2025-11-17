@@ -1,12 +1,14 @@
 from functools import cached_property
-from typing import Union
+from typing import Optional, Union
 
-from accounts.enums import OrgRoleEnum
+from accounts.enums import Ordering, OrganizationMemberOrderField, OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from django.apps.registry import Apps
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
 from django.db import transaction
-from django.db.models import Exists, OuterRef, QuerySet
+from django.db.models import Exists, F, OuterRef, QuerySet
+from django.db.models.expressions import Expression, OrderBy
+from django.db.models.functions import Lower
 from organizations.models import Organization
 
 from .models import PermissionGroup, PermissionGroupTemplate, User
@@ -168,3 +170,46 @@ def create_missing_groups_for_org(
             PermissionGroup.objects.get_or_create(
                 organization=org, template=perm_group_template, group=group, name=template
             )
+
+
+def _apply_direction(expr: Expression | F, direction: Ordering) -> OrderBy:
+    if direction == Ordering.ASC:
+        return expr.asc()
+    if direction == Ordering.DESC:
+        return expr.desc()
+    if direction == Ordering.ASC_NULLS_FIRST:
+        return expr.asc(nulls_first=True)
+    if direction == Ordering.ASC_NULLS_LAST:
+        return expr.asc(nulls_last=True)
+    if direction == Ordering.DESC_NULLS_FIRST:
+        return expr.desc(nulls_first=True)
+    return expr.desc(nulls_last=True)
+
+
+def order_org_members(
+    qs: QuerySet["User"],
+    *,
+    field: Optional[OrganizationMemberOrderField] = None,
+    direction: Optional[Ordering] = None,
+) -> QuerySet["User"]:
+    """
+    Single-column ordering for organization members.
+    - Text fields: case-insensitive via Lower(...)
+    - Datetime: honors ASC/DESC and NULLS FIRST/LAST
+    - Stable secondary key on id for deterministic pagination
+    """
+    field = field or OrganizationMemberOrderField.LAST_NAME
+    direction = direction or Ordering.ASC_NULLS_LAST
+
+    if field == OrganizationMemberOrderField.LAST_LOGIN:
+        ordered = _apply_direction(F("last_login"), direction)
+    elif field == OrganizationMemberOrderField.FIRST_NAME:
+        ordered = _apply_direction(Lower("first_name"), direction)
+    elif field == OrganizationMemberOrderField.LAST_NAME:
+        ordered = _apply_direction(Lower("last_name"), direction)
+    elif field == OrganizationMemberOrderField.EMAIL:
+        ordered = _apply_direction(Lower("email"), direction)
+    else:
+        ordered = _apply_direction(Lower("_member_role"), direction)
+
+    return qs.order_by(ordered, F("id").asc())

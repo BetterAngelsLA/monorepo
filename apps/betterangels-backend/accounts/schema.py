@@ -1,11 +1,12 @@
 import uuid
-from typing import cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
+from accounts.utils import order_org_members
 from common.graphql.types import DeletedObjectType
 from common.permissions.utils import IsAuthenticated
 from django.conf import settings
@@ -28,6 +29,7 @@ from .models import PermissionGroup, User
 from .types import (
     AuthResponse,
     LoginInput,
+    OrganizationMemberOrderingInput,
     OrganizationMemberType,
     OrganizationType,
     OrgInvitationInput,
@@ -104,7 +106,12 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
-    def organization_members(self, info: Info, organization_id: str) -> QuerySet[User]:
+    def organization_members(
+        self,
+        info: Info,
+        organization_id: str,
+        ordering: Optional[OrganizationMemberOrderingInput] = None,
+    ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
         try:
             organization = filter_for_user(
@@ -115,9 +122,13 @@ class Query:
         except Organization.DoesNotExist:
             raise PermissionError("You do not have permission to view this organization's members.")
 
-        queryset: QuerySet[User] = organization.users.all()
+        qs: QuerySet[User] = organization.users.all().annotate(_member_role=annotate_member_role(organization_id))
 
-        return queryset.annotate(_member_role=annotate_member_role(organization_id))
+        if ordering is not None:
+            ordered_qs: QuerySet[User] = order_org_members(qs, field=ordering.field, direction=ordering.direction)
+            return ordered_qs
+
+        return order_org_members(qs)
 
 
 @strawberry.type
