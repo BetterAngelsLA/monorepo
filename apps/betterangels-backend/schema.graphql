@@ -1498,6 +1498,15 @@ enum Ordering {
   DESC_NULLS_LAST
 }
 
+enum OrderingPy {
+  ASC
+  ASC_NULLS_FIRST
+  ASC_NULLS_LAST
+  DESC
+  DESC_NULLS_FIRST
+  DESC_NULLS_LAST
+}
+
 input OrgInvitationInput {
   email: String!
   firstName: String!
@@ -1524,6 +1533,19 @@ type OrganizationForUserType {
   id: ID!
   name: String!
   userPermissions: [UserOrganizationPermissions!]
+}
+
+enum OrganizationMemberOrderingField {
+  FIRST_NAME
+  LAST_NAME
+  EMAIL
+  LAST_LOGIN
+  ROLE
+}
+
+input OrganizationMemberOrderingInput {
+  field: OrganizationMemberOrderingField! = LAST_NAME
+  direction: OrderingPy! = ASC_NULLS_LAST
 }
 
 type OrganizationMemberType {
@@ -1670,24 +1692,11 @@ enum PronounEnum {
   OTHER
 }
 
-enum OrganizationMemberOrderingField {
-  FIRST_NAME
-  LAST_NAME
-  EMAIL
-  LAST_LOGIN
-  ROLE
-}
-
-input OrganizationMemberOrderingInput {
-  field: OrganizationMemberOrderingField!
-  direction: Ordering!
-}
-
 type Query {
   currentUser: UserType!
   caseworkerOrganizations(filters: OrganizationFilter, order: OrganizationOrder, pagination: OffsetPaginationInput): OrganizationTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   organizationMember(organizationId: String!, userId: String!): OrganizationMemberType! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
-  organizationMembers(organizationId: String!, pagination: OffsetPaginationInput, ordering: OrganizationMemberOrderingInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
+  organizationMembers(organizationId: String!, ordering: OrganizationMemberOrderingInput = null, pagination: OffsetPaginationInput): OrganizationMemberTypeOffsetPaginated! @hasPerm(permissions: [{app: "organizations", permission: "view_org_members"}], any: true)
   clientProfiles(pagination: OffsetPaginationInput, filters: ClientProfileFilter, order: ClientProfileOrder): ClientProfileTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientprofile"}], any: true)
   clientDocument(pk: ID!): ClientDocumentType! @hasRetvalPerm(permissions: [{app: "common", permission: "view_attachment"}], any: true)
   clientContact(pk: ID!): ClientContactType! @hasRetvalPerm(permissions: [{app: "clients", permission: "view_clientcontact"}], any: true)

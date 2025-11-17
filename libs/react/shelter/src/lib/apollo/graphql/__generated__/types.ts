@@ -1779,6 +1779,15 @@ export enum Ordering {
   DescNullsLast = 'DESC_NULLS_LAST'
 }
 
+export enum OrderingPy {
+  Asc = 'ASC',
+  AscNullsFirst = 'ASC_NULLS_FIRST',
+  AscNullsLast = 'ASC_NULLS_LAST',
+  Desc = 'DESC',
+  DescNullsFirst = 'DESC_NULLS_FIRST',
+  DescNullsLast = 'DESC_NULLS_LAST'
+}
+
 export type OrgInvitationInput = {
   email: Scalars['String']['input'];
   firstName: Scalars['String']['input'];
@@ -1806,6 +1815,19 @@ export type OrganizationForUserType = {
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
+};
+
+export enum OrganizationMemberOrderingField {
+  Email = 'EMAIL',
+  FirstName = 'FIRST_NAME',
+  LastLogin = 'LAST_LOGIN',
+  LastName = 'LAST_NAME',
+  Role = 'ROLE'
+}
+
+export type OrganizationMemberOrderingInput = {
+  direction?: OrderingPy;
+  field?: OrganizationMemberOrderingField;
 };
 
 export type OrganizationMemberType = {
@@ -2139,6 +2161,7 @@ export type QueryOrganizationMemberArgs = {
 
 
 export type QueryOrganizationMembersArgs = {
+  ordering?: InputMaybe<OrganizationMemberOrderingInput>;
   organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
