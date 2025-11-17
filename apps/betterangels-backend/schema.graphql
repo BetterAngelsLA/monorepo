@@ -1670,7 +1670,7 @@ enum PronounEnum {
   OTHER
 }
 
-enum OrganizationMemberOrderField {
+enum OrganizationMemberOrderingField {
   FIRST_NAME
   LAST_NAME
   EMAIL

@@ -10,7 +10,7 @@ class OrgRoleEnum(models.TextChoices):
     SUPERUSER = "superuser", _("Superuser")
 
 
-class OrganizationMemberOrderField(str, enum.Enum):
+class OrganizationMemberOrderingField(str, enum.Enum):
     FIRST_NAME = "FIRST_NAME"
     LAST_NAME = "LAST_NAME"
     EMAIL = "EMAIL"

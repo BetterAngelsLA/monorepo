@@ -1,7 +1,7 @@
 from functools import cached_property
-from typing import Optional, Union
+from typing import Mapping, Optional, Union
 
-from accounts.enums import Ordering, OrganizationMemberOrderField, OrgRoleEnum
+from accounts.enums import Ordering, OrganizationMemberOrderingField, OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from django.apps.registry import Apps
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
@@ -172,44 +172,62 @@ def create_missing_groups_for_org(
             )
 
 
-def _apply_direction(expr: Expression | F, direction: Ordering) -> OrderBy:
+Expr = Expression | F
+
+
+def _direction_flags(direction: Ordering) -> tuple[bool, Optional[bool], Optional[bool]]:
+    """Translate Ordering -> (descending, nulls_first, nulls_last)."""
     if direction == Ordering.ASC:
-        return expr.asc()
+        return (False, None, None)
     if direction == Ordering.DESC:
-        return expr.desc()
+        return (True, None, None)
     if direction == Ordering.ASC_NULLS_FIRST:
-        return expr.asc(nulls_first=True)
+        return (False, True, None)
     if direction == Ordering.ASC_NULLS_LAST:
-        return expr.asc(nulls_last=True)
+        return (False, None, True)
     if direction == Ordering.DESC_NULLS_FIRST:
-        return expr.desc(nulls_first=True)
-    return expr.desc(nulls_last=True)
+        return (True, True, None)
+    # Ordering.DESC_NULLS_LAST
+    return (True, None, True)
+
+
+def _order_by(expr: Expr, direction: Ordering) -> OrderBy:
+    descending, nulls_first, nulls_last = _direction_flags(direction)
+    return OrderBy(
+        expression=expr,
+        descending=descending,
+        nulls_first=nulls_first,
+        nulls_last=nulls_last,
+    )
+
+
+FIELD_TO_EXPR: Mapping[OrganizationMemberOrderingField, Expr] = {
+    OrganizationMemberOrderingField.FIRST_NAME: Lower("first_name"),
+    OrganizationMemberOrderingField.LAST_NAME: Lower("last_name"),
+    OrganizationMemberOrderingField.EMAIL: Lower("email"),
+    OrganizationMemberOrderingField.ROLE: Lower("_member_role"),
+    OrganizationMemberOrderingField.LAST_LOGIN: F("last_login"),
+}
 
 
 def order_org_members(
     qs: QuerySet["User"],
     *,
-    field: Optional[OrganizationMemberOrderField] = None,
+    field: Optional[OrganizationMemberOrderingField] = None,
     direction: Optional[Ordering] = None,
 ) -> QuerySet["User"]:
     """
     Single-column ordering for organization members.
-    - Text fields: case-insensitive via Lower(...)
-    - Datetime: honors ASC/DESC and NULLS FIRST/LAST
-    - Stable secondary key on id for deterministic pagination
+
+    - Text fields ordered case-insensitively via Lower(...)
+    - last_login respects ASC/DESC and NULLS FIRST/LAST
+    - Stable tie-break on id for deterministic pagination
     """
-    field = field or OrganizationMemberOrderField.LAST_NAME
+    field = field or OrganizationMemberOrderingField.LAST_NAME
     direction = direction or Ordering.ASC_NULLS_LAST
 
-    if field == OrganizationMemberOrderField.LAST_LOGIN:
-        ordered = _apply_direction(F("last_login"), direction)
-    elif field == OrganizationMemberOrderField.FIRST_NAME:
-        ordered = _apply_direction(Lower("first_name"), direction)
-    elif field == OrganizationMemberOrderField.LAST_NAME:
-        ordered = _apply_direction(Lower("last_name"), direction)
-    elif field == OrganizationMemberOrderField.EMAIL:
-        ordered = _apply_direction(Lower("email"), direction)
-    else:
-        ordered = _apply_direction(Lower("_member_role"), direction)
+    expr = FIELD_TO_EXPR.get(field, Lower("last_name"))
+    primary = _order_by(expr, direction)
+    tie_break = OrderBy(F("id"))
 
-    return qs.order_by(ordered, F("id").asc())
+    return qs.order_by(primary, tie_break)
