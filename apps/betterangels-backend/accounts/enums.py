@@ -18,7 +18,7 @@ class OrganizationMemberOrderingField(str, enum.Enum):
     ROLE = "ROLE"
 
 
-class Ordering(str, enum.Enum):
+class OrderingPy(str, enum.Enum):
     ASC = "ASC"
     ASC_NULLS_FIRST = "ASC_NULLS_FIRST"
     ASC_NULLS_LAST = "ASC_NULLS_LAST"

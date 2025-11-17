@@ -1,7 +1,7 @@
 from functools import cached_property
 from typing import Mapping, Optional, Union
 
-from accounts.enums import Ordering, OrganizationMemberOrderingField, OrgRoleEnum
+from accounts.enums import OrderingPy, OrganizationMemberOrderingField, OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from django.apps.registry import Apps
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser, Group
@@ -175,23 +175,22 @@ def create_missing_groups_for_org(
 Expr = Expression | F
 
 
-def _direction_flags(direction: Ordering) -> tuple[bool, Optional[bool], Optional[bool]]:
-    """Translate Ordering -> (descending, nulls_first, nulls_last)."""
-    if direction == Ordering.ASC:
+def _direction_flags(direction: OrderingPy) -> tuple[bool, Optional[bool], Optional[bool]]:
+    """Translate OrderingPy -> (descending, nulls_first, nulls_last)."""
+    if direction == OrderingPy.ASC:
         return (False, None, None)
-    if direction == Ordering.DESC:
+    if direction == OrderingPy.DESC:
         return (True, None, None)
-    if direction == Ordering.ASC_NULLS_FIRST:
+    if direction == OrderingPy.ASC_NULLS_FIRST:
         return (False, True, None)
-    if direction == Ordering.ASC_NULLS_LAST:
+    if direction == OrderingPy.ASC_NULLS_LAST:
         return (False, None, True)
-    if direction == Ordering.DESC_NULLS_FIRST:
+    if direction == OrderingPy.DESC_NULLS_FIRST:
         return (True, True, None)
-    # Ordering.DESC_NULLS_LAST
     return (True, None, True)
 
 
-def _order_by(expr: Expr, direction: Ordering) -> OrderBy:
+def _order_by(expr: Expr, direction: OrderingPy) -> OrderBy:
     descending, nulls_first, nulls_last = _direction_flags(direction)
     return OrderBy(
         expression=expr,
@@ -214,7 +213,7 @@ def order_org_members(
     qs: QuerySet["User"],
     *,
     field: Optional[OrganizationMemberOrderingField] = None,
-    direction: Optional[Ordering] = None,
+    direction: Optional[OrderingPy] = None,
 ) -> QuerySet["User"]:
     """
     Single-column ordering for organization members.
@@ -224,7 +223,7 @@ def order_org_members(
     - Stable tie-break on id for deterministic pagination
     """
     field = field or OrganizationMemberOrderingField.LAST_NAME
-    direction = direction or Ordering.ASC_NULLS_LAST
+    direction = direction or OrderingPy.ASC_NULLS_LAST
 
     expr = FIELD_TO_EXPR.get(field, Lower("last_name"))
     primary = _order_by(expr, direction)
