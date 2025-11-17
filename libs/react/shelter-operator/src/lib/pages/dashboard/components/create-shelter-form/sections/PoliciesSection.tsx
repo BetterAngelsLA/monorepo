@@ -1,7 +1,4 @@
-import {
-  BOOLEAN_OPTIONS,
-  EXIT_POLICY_OPTIONS,
-} from '../../../types';
+import { BOOLEAN_OPTIONS, EXIT_POLICY_OPTIONS } from '../../../types';
 import { CheckboxGroup } from '../components/CheckboxGroup';
 import { FormSection } from '../components/FormSection';
 import { NumberField } from '../components/NumberField';
@@ -9,10 +6,8 @@ import { RadioGroup } from '../components/RadioGroup';
 import { SingleFileField } from '../components/SingleFileField';
 import { TextAreaField } from '../components/TextAreaField';
 import { TextField } from '../components/TextField';
+import { TimeRangeField } from '../components/TimeRangeField';
 import type { SectionProps } from '../types';
-import { mapToCheckboxOptions } from '../utils/formUtils';
-
-const exitPolicyOptions = mapToCheckboxOptions(EXIT_POLICY_OPTIONS);
 
 export function PoliciesSection({ data, onChange, errors }: SectionProps) {
   return (
@@ -25,25 +20,23 @@ export function PoliciesSection({ data, onChange, errors }: SectionProps) {
         onChange={value => onChange('max_stay', value)}
         min={0}
       />
-      <TextField
+      <TimeRangeField
         id="intake-hours"
         name="intake_hours"
         label="Intake Hours"
         value={data.intake_hours}
         onChange={value => onChange('intake_hours', value)}
-        helperText='Use the format: "HH:MM:SS-HH:MM:SS,..."'
+        helperText="Add intake time windows"
         error={errors.intake_hours}
-        required
       />
-      <TextField
+      <TimeRangeField
         id="curfew"
         name="curfew"
         label="Curfew"
         value={data.curfew}
         onChange={value => onChange('curfew', value)}
-        helperText='Use the format: "HH:MM:SS-HH:MM:SS,..."'
+        helperText="Add curfew windows"
         error={errors.curfew}
-        required
       />
       <RadioGroup
         name="on-site-security"
@@ -64,7 +57,7 @@ export function PoliciesSection({ data, onChange, errors }: SectionProps) {
       <CheckboxGroup
         name="exit-policy"
         label="Exit Policy"
-        options={exitPolicyOptions}
+        options={EXIT_POLICY_OPTIONS}
         values={data.exit_policy}
         onChange={values => onChange('exit_policy', values)}
         error={errors.exit_policy}

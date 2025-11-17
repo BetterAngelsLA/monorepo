@@ -1,23 +1,23 @@
 import { OPTION_ITEM_CLASS, OPTION_LIST_CLASS } from '../constants/styles';
 import { FieldWrapper } from './FieldWrapper';
 
-export interface CheckboxOption {
-  value: string;
+export interface CheckboxOption<T extends string = string> {
+  value: T;
   label: string;
 }
 
-interface CheckboxGroupProps {
+interface CheckboxGroupProps<T extends string = string> {
   name: string;
   label: string;
-  options: readonly CheckboxOption[];
-  values: readonly string[];
-  onChange: (values: string[]) => void;
+  options: readonly CheckboxOption<T>[];
+  values: readonly T[];
+  onChange: (values: T[]) => void;
   helperText?: string;
   error?: string;
   required?: boolean;
 }
 
-export function CheckboxGroup({
+export function CheckboxGroup<Choice extends string = string>({
   name,
   label,
   options,
@@ -26,7 +26,7 @@ export function CheckboxGroup({
   helperText,
   error,
   required,
-}: CheckboxGroupProps) {
+}: CheckboxGroupProps<Choice>) {
   const messageId = error ? `${name}-error` : helperText ? `${name}-helper` : undefined;
 
   return (

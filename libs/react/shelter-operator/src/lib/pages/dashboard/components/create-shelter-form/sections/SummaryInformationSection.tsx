@@ -8,11 +8,6 @@ import { FormSection } from '../components/FormSection';
 import { TextAreaField } from '../components/TextAreaField';
 import { TextField } from '../components/TextField';
 import type { SectionProps } from '../types';
-import { mapToCheckboxOptions } from '../utils/formUtils';
-
-const demographicsOptions = mapToCheckboxOptions(DEMOGRAPHICS_OPTIONS);
-const specialSituationOptions = mapToCheckboxOptions(SPECIAL_SITUATION_OPTIONS);
-const shelterTypeOptions = mapToCheckboxOptions(SHELTER_TYPES_OPTIONS);
 
 export function SummaryInformationSection({ data, onChange, errors }: SectionProps) {
   return (
@@ -20,7 +15,7 @@ export function SummaryInformationSection({ data, onChange, errors }: SectionPro
       <CheckboxGroup
         name="demographics"
         label="Demographics Served"
-        options={demographicsOptions}
+        options={DEMOGRAPHICS_OPTIONS}
         values={data.demographics}
         onChange={values => onChange('demographics', values)}
         error={errors.demographics}
@@ -36,14 +31,14 @@ export function SummaryInformationSection({ data, onChange, errors }: SectionPro
       <CheckboxGroup
         name="special-situation"
         label="Special Situation Restrictions"
-        options={specialSituationOptions}
+        options={SPECIAL_SITUATION_OPTIONS}
         values={data.special_situation_restrictions}
         onChange={values => onChange('special_situation_restrictions', values)}
       />
       <CheckboxGroup
         name="shelter-types"
         label="Shelter Types"
-        options={shelterTypeOptions}
+        options={SHELTER_TYPES_OPTIONS}
         values={data.shelter_types}
         onChange={values => onChange('shelter_types', values)}
         error={errors.shelter_types}

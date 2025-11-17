@@ -3,12 +3,6 @@ import { CheckboxGroup } from '../components/CheckboxGroup';
 import { FormSection } from '../components/FormSection';
 import { TextAreaField } from '../components/TextAreaField';
 import type { SectionProps } from '../types';
-import { mapToCheckboxOptions } from '../utils/formUtils';
-
-const accessibilityOptions = mapToCheckboxOptions(ACCESSIBILITY_OPTIONS);
-const storageOptions = mapToCheckboxOptions(STORAGE_OPTIONS);
-const petsOptions = mapToCheckboxOptions(PETS_OPTIONS);
-const parkingOptions = mapToCheckboxOptions(PARKING_OPTIONS);
 
 export function ShelterDetailsSection({ data, onChange }: SectionProps) {
   return (
@@ -16,28 +10,28 @@ export function ShelterDetailsSection({ data, onChange }: SectionProps) {
       <CheckboxGroup
         name="accessibility"
         label="Accessibility"
-        options={accessibilityOptions}
+        options={ACCESSIBILITY_OPTIONS}
         values={data.accessibility}
         onChange={values => onChange('accessibility', values)}
       />
       <CheckboxGroup
         name="storage"
         label="Storage"
-        options={storageOptions}
+        options={STORAGE_OPTIONS}
         values={data.storage}
         onChange={values => onChange('storage', values)}
       />
       <CheckboxGroup
         name="pets"
         label="Pets"
-        options={petsOptions}
+        options={PETS_OPTIONS}
         values={data.pets}
         onChange={values => onChange('pets', values)}
       />
       <CheckboxGroup
         name="parking"
         label="Parking"
-        options={parkingOptions}
+        options={PARKING_OPTIONS}
         values={data.parking}
         onChange={values => onChange('parking', values)}
       />

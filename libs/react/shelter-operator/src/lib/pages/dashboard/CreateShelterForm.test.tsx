@@ -6,6 +6,14 @@ import { CREATE_SHELTER_MUTATION, buildCreateShelterInput } from './components/c
 import { validateShelterForm } from './components/create-shelter-form/constants/validation';
 import { createEmptyShelterFormData } from './components/create-shelter-form/constants/defaultShelterFormData';
 import type { ShelterFormData } from './types';
+import {
+  DemographicChoices,
+  EntryRequirementChoices,
+  ExitPolicyChoices,
+  ReferralRequirementChoices,
+  RoomStyleChoices,
+  ShelterChoices,
+} from '@monorepo/react/shelter';
 
 const renderForm = (mocks: MockedResponse[] = []) =>
   render(
@@ -62,12 +70,12 @@ describe('CreateShelterForm', () => {
         intake_hours: '08:00-17:00',
         curfew: '21:00-06:00',
         total_beds: 20,
-        demographics: ['All'],
-        shelter_types: ['Building'],
-        room_styles: ['Congregate (Open)'],
-        exit_policy: ['Exit after 72 hours of being MIA'],
-        entry_requirements: ['Medicaid or Medicare'],
-        referral_requirement: ['Matched Referral'],
+        demographics: [DemographicChoices.All],
+        shelter_types: [ShelterChoices.Building],
+        room_styles: [RoomStyleChoices.Congregate],
+        exit_policy: [ExitPolicyChoices.Mia],
+        entry_requirements: [EntryRequirementChoices.MedicaidOrMedicare],
+        referral_requirement: [ReferralRequirementChoices.ReferralMatched],
       };
 
       const mocks: MockedResponse[] = [
@@ -102,12 +110,12 @@ describe('CreateShelterForm', () => {
       fireEvent.change(screen.getByLabelText(/curfew/i), { target: { value: '21:00-06:00' } });
       fireEvent.change(screen.getByLabelText(/total beds/i), { target: { value: '20' } });
 
-      clickCheckbox('demographics', 'All');
-      clickCheckbox('shelter-types', 'Building');
-      clickCheckbox('room-styles', 'Congregate (Open)');
-      clickCheckbox('exit-policy', 'Exit after 72 hours of being MIA');
-      clickCheckbox('entry-requirements', 'Medicaid or Medicare');
-      clickCheckbox('referral-requirement', 'Matched Referral');
+      clickCheckbox('demographics', DemographicChoices.All);
+      clickCheckbox('shelter-types', ShelterChoices.Building);
+      clickCheckbox('room-styles', RoomStyleChoices.Congregate);
+      clickCheckbox('exit-policy', ExitPolicyChoices.Mia);
+      clickCheckbox('entry-requirements', EntryRequirementChoices.MedicaidOrMedicare);
+      clickCheckbox('referral-requirement', ReferralRequirementChoices.ReferralMatched);
 
       fireEvent.submit(screen.getByTestId('create-shelter-form'));
 

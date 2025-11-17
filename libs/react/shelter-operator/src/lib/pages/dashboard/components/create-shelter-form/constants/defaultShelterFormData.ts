@@ -1,4 +1,5 @@
-import { ShelterFormData, STATUS_OPTIONS } from '../../../types';
+import { ShelterFormData } from '../../../types';
+import { StatusChoices } from '@monorepo/react/shelter';
 
 /**
  * Provide a fresh copy of the shelter form defaults so callers avoid
@@ -80,7 +81,7 @@ export const createEmptyShelterFormData = (): ShelterFormData => ({
   subjective_review: '',
 
   // Better Angels Administration
-  status: STATUS_OPTIONS[0] ?? 'Draft',
+  status: StatusChoices.Draft,
 
   // Media
   hero_image: null,

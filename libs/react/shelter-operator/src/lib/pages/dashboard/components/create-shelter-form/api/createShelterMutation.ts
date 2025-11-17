@@ -4,12 +4,7 @@ import {
   type CreateShelterMutationVariables,
 } from '@monorepo/react/shelter';
 import type { ShelterFormData } from '../../../types';
-import {
-  normalizeCityValues,
-  normalizeEnumValues,
-  normalizeSpaValues,
-  normalizeStatusValue,
-} from '../utils/enumMappings';
+import { compactEnumValues } from '../utils/enumMappings';
 
 export const CREATE_SHELTER_MUTATION = CreateShelterDocument;
 export type CreateShelterMutationResult = CreateShelterMutation;
@@ -48,11 +43,6 @@ const parseLocation = (value: string) => {
   };
 };
 
-const mapSpaValues = (values: readonly string[]) =>
-  values
-    .map(spa => Number(spa))
-    .filter((spa): spa is number => Number.isFinite(spa));
-
 const numberOrUndefined = (value: number | null | undefined) =>
   typeof value === 'number' && !Number.isNaN(value) ? value : undefined;
 
@@ -60,26 +50,26 @@ export const buildCreateShelterInput = (formData: ShelterFormData) => {
   const input = {
     name: formData.name.trim(),
     description: formData.description.trim(),
-    accessibility: normalizeEnumValues(formData.accessibility),
-    demographics: normalizeEnumValues(formData.demographics),
-    specialSituationRestrictions: normalizeEnumValues(formData.special_situation_restrictions),
-    shelterTypes: normalizeEnumValues(formData.shelter_types),
-    roomStyles: normalizeEnumValues(formData.room_styles),
-    storage: normalizeEnumValues(formData.storage),
-    pets: normalizeEnumValues(formData.pets),
-    parking: normalizeEnumValues(formData.parking),
-    immediateNeeds: normalizeEnumValues(formData.immediate_needs),
-    generalServices: normalizeEnumValues(formData.general_services),
-    healthServices: normalizeEnumValues(formData.health_services),
-    trainingServices: normalizeEnumValues(formData.training_services),
-    mealServices: normalizeEnumValues(formData.meal_services),
-    entryRequirements: normalizeEnumValues(formData.entry_requirements),
-    referralRequirement: normalizeEnumValues(formData.referral_requirement),
-    exitPolicy: normalizeEnumValues(formData.exit_policy),
-    cities: normalizeCityValues(formData.cities),
-    spa: normalizeSpaValues(formData.spa),
-    shelterPrograms: normalizeEnumValues(formData.shelter_programs),
-    funders: normalizeEnumValues(formData.funders),
+    accessibility: compactEnumValues(formData.accessibility),
+    demographics: compactEnumValues(formData.demographics),
+    specialSituationRestrictions: compactEnumValues(formData.special_situation_restrictions),
+    shelterTypes: compactEnumValues(formData.shelter_types),
+    roomStyles: compactEnumValues(formData.room_styles),
+    storage: compactEnumValues(formData.storage),
+    pets: compactEnumValues(formData.pets),
+    parking: compactEnumValues(formData.parking),
+    immediateNeeds: compactEnumValues(formData.immediate_needs),
+    generalServices: compactEnumValues(formData.general_services),
+    healthServices: compactEnumValues(formData.health_services),
+    trainingServices: compactEnumValues(formData.training_services),
+    mealServices: compactEnumValues(formData.meal_services),
+    entryRequirements: compactEnumValues(formData.entry_requirements),
+    referralRequirement: compactEnumValues(formData.referral_requirement),
+    exitPolicy: compactEnumValues(formData.exit_policy),
+    cities: compactEnumValues(formData.cities),
+    spa: compactEnumValues(formData.spa),
+    shelterPrograms: compactEnumValues(formData.shelter_programs),
+    funders: compactEnumValues(formData.funders),
   } as Record<string, unknown>;
 
   const stringFields: Record<string, string | undefined> = {
@@ -109,9 +99,8 @@ export const buildCreateShelterInput = (formData: ShelterFormData) => {
     }
   });
 
-  const status = normalizeStatusValue(formData.status);
-  if (status) {
-    input.status = status;
+  if (formData.status) {
+    input.status = formData.status;
   }
 
   const location = parseLocation(formData.location);

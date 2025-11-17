@@ -9,13 +9,6 @@ import { CheckboxGroup } from '../components/CheckboxGroup';
 import { FormSection } from '../components/FormSection';
 import { TextAreaField } from '../components/TextAreaField';
 import type { SectionProps } from '../types';
-import { mapToCheckboxOptions } from '../utils/formUtils';
-
-const immediateNeedsOptions = mapToCheckboxOptions(IMMEDIATE_NEEDS_OPTIONS);
-const generalServicesOptions = mapToCheckboxOptions(GENERAL_SERVICES_OPTIONS);
-const healthServicesOptions = mapToCheckboxOptions(HEALTH_SERVICES_OPTIONS);
-const trainingServicesOptions = mapToCheckboxOptions(TRAINING_SERVICES_OPTIONS);
-const mealServicesOptions = mapToCheckboxOptions(MEAL_SERVICES_OPTIONS);
 
 export function ServicesOfferedSection({ data, onChange }: SectionProps) {
   return (
@@ -23,35 +16,35 @@ export function ServicesOfferedSection({ data, onChange }: SectionProps) {
       <CheckboxGroup
         name="immediate-needs"
         label="Immediate Needs"
-        options={immediateNeedsOptions}
+        options={IMMEDIATE_NEEDS_OPTIONS}
         values={data.immediate_needs}
         onChange={values => onChange('immediate_needs', values)}
       />
       <CheckboxGroup
         name="general-services"
         label="General Services"
-        options={generalServicesOptions}
+        options={GENERAL_SERVICES_OPTIONS}
         values={data.general_services}
         onChange={values => onChange('general_services', values)}
       />
       <CheckboxGroup
         name="health-services"
         label="Health Services"
-        options={healthServicesOptions}
+        options={HEALTH_SERVICES_OPTIONS}
         values={data.health_services}
         onChange={values => onChange('health_services', values)}
       />
       <CheckboxGroup
         name="training-services"
         label="Training Services"
-        options={trainingServicesOptions}
+        options={TRAINING_SERVICES_OPTIONS}
         values={data.training_services}
         onChange={values => onChange('training_services', values)}
       />
       <CheckboxGroup
         name="meal-services"
         label="Meal Services"
-        options={mealServicesOptions}
+        options={MEAL_SERVICES_OPTIONS}
         values={data.meal_services}
         onChange={values => onChange('meal_services', values)}
       />

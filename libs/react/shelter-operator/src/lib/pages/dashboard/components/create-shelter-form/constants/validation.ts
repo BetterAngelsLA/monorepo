@@ -1,4 +1,13 @@
 import { z, type ZodRawShape } from 'zod';
+import {
+  DemographicChoices,
+  EntryRequirementChoices,
+  ExitPolicyChoices,
+  ReferralRequirementChoices,
+  RoomStyleChoices,
+  ShelterChoices,
+  StatusChoices,
+} from '@monorepo/react/shelter';
 import type { ShelterFormData } from '../../../types';
 
 const phoneRegex = /^\+?[\d\s().-]{7,20}$/;
@@ -27,8 +36,12 @@ const fieldSchemas: FieldSchemaMap = {
     .refine(value => value === '' || urlRegex.test(value), {
       message: 'Enter a valid URL',
     }),
-  demographics: z.array(z.string()).min(1, 'Select at least one demographic'),
-  shelter_types: z.array(z.string()).min(1, 'Select at least one shelter type'),
+  demographics: z
+    .array(z.nativeEnum(DemographicChoices))
+    .min(1, 'Select at least one demographic'),
+  shelter_types: z
+    .array(z.nativeEnum(ShelterChoices))
+    .min(1, 'Select at least one shelter type'),
   total_beds: z
     .number()
     .int('Total beds must be a whole number')
@@ -41,17 +54,23 @@ const fieldSchemas: FieldSchemaMap = {
     .min(0, 'Max stay must be zero or greater')
     .optional()
     .nullable(),
-  room_styles: z.array(z.string()).min(1, 'Select at least one room style'),
+  room_styles: z
+    .array(z.nativeEnum(RoomStyleChoices))
+    .min(1, 'Select at least one room style'),
   intake_hours: z.string().min(1, 'Intake hours are required'),
   curfew: z.string().min(1, 'Curfew is required'),
-  exit_policy: z.array(z.string()).min(1, 'Select at least one exit policy'),
+  exit_policy: z
+    .array(z.nativeEnum(ExitPolicyChoices))
+    .min(1, 'Select at least one exit policy'),
   entry_requirements: z
-    .array(z.string())
+    .array(z.nativeEnum(EntryRequirementChoices))
     .min(1, 'Select at least one entry requirement'),
   referral_requirement: z
-    .array(z.string())
+    .array(z.nativeEnum(ReferralRequirementChoices))
     .min(1, 'Select at least one referral requirement'),
-  status: z.string().min(1, 'Status is required'),
+  status: z.nativeEnum(StatusChoices, {
+    required_error: 'Status is required',
+  }),
 };
 
 const formSchema = z.object(fieldSchemas as ZodRawShape).passthrough();

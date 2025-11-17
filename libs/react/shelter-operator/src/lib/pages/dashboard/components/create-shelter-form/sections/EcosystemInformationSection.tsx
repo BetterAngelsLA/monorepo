@@ -11,11 +11,6 @@ import { FormSection } from '../components/FormSection';
 import { SelectField } from '../components/SelectField';
 import { TextField } from '../components/TextField';
 import type { SectionProps } from '../types';
-import { mapToCheckboxOptions } from '../utils/formUtils';
-
-const cityOptions = mapToCheckboxOptions(LA_CITIES_OPTIONS);
-const shelterProgramOptions = mapToCheckboxOptions(SHELTER_PROGRAMS_OPTIONS);
-const funderOptions = mapToCheckboxOptions(FUNDERS_OPTIONS);
 
 export function EcosystemInformationSection({ data, onChange }: SectionProps) {
   return (
@@ -23,7 +18,7 @@ export function EcosystemInformationSection({ data, onChange }: SectionProps) {
       <CheckboxGroup
         name="cities"
         label="Cities Served"
-        options={cityOptions}
+        options={LA_CITIES_OPTIONS}
         values={data.cities}
         onChange={values => onChange('cities', values)}
       />
@@ -53,7 +48,7 @@ export function EcosystemInformationSection({ data, onChange }: SectionProps) {
       <CheckboxGroup
         name="shelter-programs"
         label="Shelter Programs"
-        options={shelterProgramOptions}
+        options={SHELTER_PROGRAMS_OPTIONS}
         values={data.shelter_programs}
         onChange={values => onChange('shelter_programs', values)}
       />
@@ -67,7 +62,7 @@ export function EcosystemInformationSection({ data, onChange }: SectionProps) {
       <CheckboxGroup
         name="funders"
         label="Funders"
-        options={funderOptions}
+        options={FUNDERS_OPTIONS}
         values={data.funders}
         onChange={values => onChange('funders', values)}
       />

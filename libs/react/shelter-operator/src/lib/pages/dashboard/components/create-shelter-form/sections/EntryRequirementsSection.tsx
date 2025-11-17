@@ -7,10 +7,6 @@ import { FormSection } from '../components/FormSection';
 import { TextAreaField } from '../components/TextAreaField';
 import { TextField } from '../components/TextField';
 import type { SectionProps } from '../types';
-import { mapToCheckboxOptions } from '../utils/formUtils';
-
-const entryRequirementOptions = mapToCheckboxOptions(ENTRY_REQUIREMENTS_OPTIONS);
-const referralRequirementOptions = mapToCheckboxOptions(REFERRAL_REQUIREMENT_OPTIONS);
 
 export function EntryRequirementsSection({ data, onChange, errors }: SectionProps) {
   return (
@@ -18,7 +14,7 @@ export function EntryRequirementsSection({ data, onChange, errors }: SectionProp
       <CheckboxGroup
         name="entry-requirements"
         label="Entry Requirements"
-        options={entryRequirementOptions}
+        options={ENTRY_REQUIREMENTS_OPTIONS}
         values={data.entry_requirements}
         onChange={values => onChange('entry_requirements', values)}
         error={errors.entry_requirements}
@@ -27,7 +23,7 @@ export function EntryRequirementsSection({ data, onChange, errors }: SectionProp
       <CheckboxGroup
         name="referral-requirement"
         label="Referral Requirement"
-        options={referralRequirementOptions}
+        options={REFERRAL_REQUIREMENT_OPTIONS}
         values={data.referral_requirement}
         onChange={values => onChange('referral_requirement', values)}
         error={errors.referral_requirement}

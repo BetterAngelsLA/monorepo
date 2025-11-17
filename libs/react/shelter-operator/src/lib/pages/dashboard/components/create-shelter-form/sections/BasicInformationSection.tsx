@@ -1,5 +1,6 @@
 import { FormSection } from '../components/FormSection';
 import { TextField } from '../components/TextField';
+import { TimeRangeField } from '../components/TimeRangeField';
 import type { SectionProps } from '../types';
 
 export function BasicInformationSection({ data, onChange, errors }: SectionProps) {
@@ -83,13 +84,13 @@ export function BasicInformationSection({ data, onChange, errors }: SectionProps
         value={data.other_social_media}
         onChange={value => onChange('other_social_media', value)}
       />
-      <TextField
+      <TimeRangeField
         id="shelter-hours"
         name="operating_hours"
         label="Operating Hours"
         value={data.operating_hours}
         onChange={value => onChange('operating_hours', value)}
-        helperText='Use the format: "HH:MM:SS-HH:MM:SS,HH:MM:SS-HH:MM:SS,..."'
+        helperText="Add one or more time ranges"
       />
     </FormSection>
   );

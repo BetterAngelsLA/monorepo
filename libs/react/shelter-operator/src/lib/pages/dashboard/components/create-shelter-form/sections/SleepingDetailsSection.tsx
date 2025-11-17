@@ -5,9 +5,6 @@ import { NumberField } from '../components/NumberField';
 import { TextAreaField } from '../components/TextAreaField';
 import { TextField } from '../components/TextField';
 import type { SectionProps } from '../types';
-import { mapToCheckboxOptions } from '../utils/formUtils';
-
-const roomStyleOptions = mapToCheckboxOptions(ROOM_STYLES_OPTIONS);
 
 export function SleepingDetailsSection({ data, onChange, errors }: SectionProps) {
   return (
@@ -24,7 +21,7 @@ export function SleepingDetailsSection({ data, onChange, errors }: SectionProps)
       <CheckboxGroup
         name="room-styles"
         label="Room Styles"
-        options={roomStyleOptions}
+        options={ROOM_STYLES_OPTIONS}
         values={data.room_styles}
         onChange={values => onChange('room_styles', values)}
         error={errors.room_styles}
