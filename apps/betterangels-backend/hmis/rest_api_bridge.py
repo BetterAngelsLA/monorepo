@@ -115,7 +115,8 @@ class HmisRestApiBridge:
             raise ObjectDoesNotExist("The requested Object does not exist.")
 
         if resp.status_code == 422:
-            raise ValidationError(resp.text)
+            # TODO: Sanitize resp.text and return detailed error message.
+            raise ValidationError("Invalid input")
 
         raise ValidationError("Something went wrong.")
 
@@ -246,7 +247,10 @@ class HmisRestApiBridge:
         tz: local timezone
         """
 
-        return datetime.datetime.strptime(dt_str, dt_format).replace(tzinfo=ZoneInfo(tz)).astimezone(timezone.utc)
+        try:
+            return datetime.datetime.strptime(dt_str, dt_format).replace(tzinfo=ZoneInfo(tz)).astimezone(timezone.utc)
+        except ValueError as e:
+            raise ValueError(f"Failed to parse datetime string '{dt_str}' with format '{dt_format}': {e}") from e
 
     def _format_timestamp_fields(self, data: dict[str, Any]) -> dict[str, Any]:
         formatted_data = {

@@ -116,7 +116,7 @@ class HmisNoteBaseTestCase(GraphQLBaseTestCase):
         return self._create_or_update_hmis_note_fixture("update", variables)
 
     def _create_or_update_hmis_note_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
-        assert operation in ["create", "update"], "Invalid operation specified."
+        assert operation in {"create", "update"}, "Invalid operation specified."
         mutation: str = f"""
             mutation ($data: {operation.capitalize()}HmisNoteInput!) {{ # noqa: B950
                 {operation}HmisNote(data: $data) {{
