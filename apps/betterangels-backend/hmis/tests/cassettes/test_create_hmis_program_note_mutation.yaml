@@ -1,0 +1,18 @@
+interactions:
+- request:
+    body: '{"clientNote": {"title": "prog note title", "ref_client_program": "525",
+      "date": "2011-11-11", "note": "prog note note", "category": {"code": 1}, "ref_category":
+      "1", "private": "0", "tracking_hour": null, "tracking_minute": null}, "fields":
+      "note, date, title, client.id, id, last_updated, added_date, ref_client_program"}'
+    headers: {}
+    method: POST
+    uri: ''
+  response:
+    body:
+      string: '{"id":480,"title":"prog note title","note":"prog note note","added_date":"2025-11-13
+        00:35:34","last_updated":"2025-11-13 00:35:34","ref_client_program":525,"date":"2011-11-11","client":{"id":388}}'
+    headers: {}
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -6,6 +6,7 @@ import pghistory
 from accounts.models import User
 from clients.enums import PronounEnum
 from clients.models import AbstractClientProfile
+from common.models import BaseModel
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Model
@@ -48,6 +49,14 @@ def get_hmis_client_profile_photo_file_path(instance: Model, filename: str) -> s
     return os.path.join("hmis_client_profile_photos/", unique_filename)
 
 
+def get_default_race_list() -> list[HmisRaceEnum]:
+    return [HmisRaceEnum.NOT_COLLECTED]
+
+
+def get_default_gender_list() -> list[HmisGenderEnum]:
+    return [HmisGenderEnum.NOT_COLLECTED]
+
+
 @pghistory.track(
     pghistory.InsertEvent("hmisclientprofile.add"),
     pghistory.UpdateEvent("hmisclientprofile.update"),
@@ -68,10 +77,10 @@ class HmisClientProfile(AbstractClientProfile):
     birth_date = models.DateField(blank=True, null=True)
     dob_quality = IntegerChoicesField(choices_enum=HmisDobQualityEnum, default=HmisDobQualityEnum.NOT_COLLECTED)
     name_suffix = IntegerChoicesField(choices_enum=HmisSuffixEnum, blank=True, null=True)
-    race_ethnicity = ArrayField(IntegerChoicesField(choices_enum=HmisRaceEnum), default=[HmisRaceEnum.NOT_COLLECTED])
+    race_ethnicity = ArrayField(IntegerChoicesField(choices_enum=HmisRaceEnum), default=get_default_race_list)
     profile_photo = models.ImageField(upload_to=get_hmis_client_profile_photo_file_path, blank=True, null=True)
     additional_race_ethnicity_detail = models.CharField(max_length=100, blank=True, null=True)
-    gender = ArrayField(IntegerChoicesField(choices_enum=HmisGenderEnum), default=[HmisGenderEnum.NOT_COLLECTED])
+    gender = ArrayField(IntegerChoicesField(choices_enum=HmisGenderEnum), default=get_default_gender_list)
     gender_identity_text = models.CharField(max_length=100, blank=True, null=True)
     veteran = IntegerChoicesField(choices_enum=HmisVeteranStatusEnum, default=HmisVeteranStatusEnum.NOT_COLLECTED)
     added_date = models.DateTimeField(blank=True, null=True)
@@ -111,3 +120,22 @@ class HmisClientProfile(AbstractClientProfile):
             self.email = None
 
         super().save(*args, **kwargs)
+
+
+@pghistory.track(
+    pghistory.InsertEvent("hmisnote.add"),
+    pghistory.UpdateEvent("hmisnote.update"),
+    pghistory.DeleteEvent("hmisnote.remove"),
+)
+class HmisNote(BaseModel):
+    hmis_id = models.CharField(unique=True, max_length=50, db_index=True)
+    added_date = models.DateTimeField(blank=True, null=True)
+    last_updated = models.DateTimeField(blank=True, null=True)
+    date = models.DateField(blank=True, null=True)
+    ref_client_program = models.BigIntegerField(blank=True, null=True)
+    hmis_client_profile = models.ForeignKey(HmisClientProfile, on_delete=models.CASCADE, related_name="notes")
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="hmis_notes")
+    title = models.CharField(max_length=255, null=True, blank=True)
+    note = models.TextField(blank=True)
+
+    objects = models.Manager()

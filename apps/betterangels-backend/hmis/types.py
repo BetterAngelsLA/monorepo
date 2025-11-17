@@ -23,8 +23,8 @@ from hmis.enums import (
     HmisVeteranStatusEnum,
     HmisVeteranTheaterEnum,
 )
-from hmis.models import HmisClientProfile
-from strawberry import auto
+from hmis.models import HmisClientProfile, HmisNote
+from strawberry import ID, auto
 
 
 @strawberry.type
@@ -379,6 +379,7 @@ class HmisClientProfileBaseType:
     pagination=True,
 )
 class HmisClientProfileType(HmisClientProfileBaseType):
+    id: ID
     # HMIS Fields
     hmis_id: Optional[str]
     personal_id: Optional[str]
@@ -404,3 +405,38 @@ class UpdateHmisClientProfileInput(HmisClientProfileBaseType):
     race_ethnicity: list[HmisRaceEnum]
     veteran: Optional[HmisVeteranStatusEnum]
     phone_numbers: Optional[list[PhoneNumberInput]]
+
+
+@strawberry_django.type(HmisNote)
+class HmisNoteType:
+    id: ID
+    hmis_id: str
+    hmis_client_profile_id: str
+
+    added_date: Optional[datetime.datetime]
+    last_updated: Optional[datetime.datetime]
+
+    title: auto
+    note: auto
+    date: Optional[datetime.date]
+    ref_client_program: auto
+    created_by: Optional[UserType]
+
+
+@strawberry_django.input(HmisNote)
+class CreateHmisNoteInput:
+    hmis_client_profile_id: str
+    title: auto
+    note: auto
+    date: datetime.date
+    ref_client_program: auto
+
+
+@strawberry_django.input(HmisNote)
+class UpdateHmisNoteInput:
+    id: ID
+    hmis_client_profile_id: str
+
+    title: Optional[str]
+    note: Optional[str]
+    date: Optional[datetime.date]
