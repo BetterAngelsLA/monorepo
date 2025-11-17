@@ -1,12 +1,14 @@
+import os
+import uuid
 from typing import Any, Optional
 
 import pghistory
+from accounts.models import User
 from clients.enums import PronounEnum
 from clients.models import AbstractClientProfile
-from dateutil.relativedelta import relativedelta
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.utils import timezone
+from django.db.models import Model
 from django.utils.encoding import force_str
 from django_choices_field import IntegerChoicesField
 from hmis.enums import (
@@ -21,70 +23,62 @@ from hmis.enums import (
 from strawberry_django.descriptors import model_property
 
 
+def get_hmis_client_profile_photo_file_path(instance: Model, filename: str) -> str:
+    """
+    Generates a unique path for storing an uploaded file by appending a UUID to the
+    file's original name, preserving its extension. Designed for use in Django's
+    FileField or ImageField 'upload_to' parameter, it ensures each file has a unique
+    name and organizes files in the 'client_profile_photos/' directory.
+
+    Parameters:
+    - instance (models.Model): The model instance the file is attached to. Not used in
+      this function, but required for 'upload_to'.
+    - filename (str): The original filename, used to keep the file extension.
+
+    Returns:
+    - str: The unique file storage path, combining 'client_profile_photos/' and the UUID-named
+      file.
+
+    Example:
+        Use in a Django model to ensure uploaded files are uniquely named and organized.
+        file = models.FileField(upload_to=get_client_profile_photo_file_path)
+    """
+    ext = filename.split(".")[-1]
+    unique_filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join("hmis_client_profile_photos/", unique_filename)
+
+
 @pghistory.track(
     pghistory.InsertEvent("hmisclientprofile.add"),
     pghistory.UpdateEvent("hmisclientprofile.update"),
     pghistory.DeleteEvent("hmisclientprofile.remove"),
 )
 class HmisClientProfile(AbstractClientProfile):
-    personal_id = models.CharField(unique=True, max_length=50, db_index=True)
+    hmis_id = models.CharField(unique=True, max_length=50, db_index=True, null=True)
+    personal_id = models.CharField(max_length=50, blank=True, null=True)
     unique_identifier = models.CharField(unique=True, max_length=50, db_index=True)
-    name_data_quality = IntegerChoicesField(
-        choices_enum=HmisNameQualityEnum,
-        default=HmisNameQualityEnum.NOT_COLLECTED,
-    )
+    age = models.PositiveIntegerField(blank=True, null=True)
+    name_middle = models.CharField(max_length=50, blank=True, null=True)
+    name_quality = IntegerChoicesField(choices_enum=HmisNameQualityEnum, default=HmisNameQualityEnum.PARTIAL)
+    alias = models.CharField(max_length=100, blank=True, null=True)
     ssn1 = models.CharField(max_length=3, blank=True, null=True)
     ssn2 = models.CharField(max_length=2, blank=True, null=True)
     ssn3 = models.CharField(max_length=4, blank=True, null=True)
-    ssn_data_quality = IntegerChoicesField(
-        choices_enum=HmisSsnQualityEnum,
-        default=HmisSsnQualityEnum.NOT_COLLECTED,
-    )
+    ssn_quality = IntegerChoicesField(choices_enum=HmisSsnQualityEnum, default=HmisSsnQualityEnum.NOT_COLLECTED)
     birth_date = models.DateField(blank=True, null=True)
-    dob_data_quality = IntegerChoicesField(
-        choices_enum=HmisDobQualityEnum,
-        default=HmisDobQualityEnum.NOT_COLLECTED,
-    )
-    name_suffix = IntegerChoicesField(
-        choices_enum=HmisSuffixEnum,
-        default=HmisSuffixEnum.NO_ANSWER,
-    )
-    race_ethnicity = ArrayField(
-        IntegerChoicesField(
-            choices_enum=HmisRaceEnum,
-            default=HmisRaceEnum.NOT_COLLECTED,
-        ),
-        blank=True,
-        null=True,
-    )
-    additional_race_ethnicity = models.CharField(max_length=100, blank=True, null=True)
-    gender = ArrayField(
-        IntegerChoicesField(
-            choices_enum=HmisGenderEnum,
-            default=HmisGenderEnum.NOT_COLLECTED,
-        ),
-        blank=True,
-        null=True,
-    )  # type: ignore
-    different_identity_text = models.CharField(max_length=100, blank=True, null=True)
-    veteran_status = IntegerChoicesField(
-        choices_enum=HmisVeteranStatusEnum,
-        default=HmisVeteranStatusEnum.NOT_COLLECTED,
-    )  # type: ignore
+    dob_quality = IntegerChoicesField(choices_enum=HmisDobQualityEnum, default=HmisDobQualityEnum.NOT_COLLECTED)
+    name_suffix = IntegerChoicesField(choices_enum=HmisSuffixEnum, blank=True, null=True)
+    race_ethnicity = ArrayField(IntegerChoicesField(choices_enum=HmisRaceEnum), default=[HmisRaceEnum.NOT_COLLECTED])
+    profile_photo = models.ImageField(upload_to=get_hmis_client_profile_photo_file_path, blank=True, null=True)
+    additional_race_ethnicity_detail = models.CharField(max_length=100, blank=True, null=True)
+    gender = ArrayField(IntegerChoicesField(choices_enum=HmisGenderEnum), default=[HmisGenderEnum.NOT_COLLECTED])
+    gender_identity_text = models.CharField(max_length=100, blank=True, null=True)
+    veteran = IntegerChoicesField(choices_enum=HmisVeteranStatusEnum, default=HmisVeteranStatusEnum.NOT_COLLECTED)
     added_date = models.DateTimeField(blank=True, null=True)
     last_updated = models.DateTimeField(blank=True, null=True)
+    created_by = models.ForeignKey(User, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     objects = models.Manager()
-
-    @model_property
-    def age(self) -> Optional[int]:
-        if not self.date_of_birth:
-            return None
-
-        today = timezone.now().date()
-        age = relativedelta(today, self.date_of_birth).years
-
-        return age
 
     @model_property
     def display_pronouns(self) -> Optional[str]:
@@ -102,7 +96,7 @@ class HmisClientProfile(AbstractClientProfile):
             return []
 
         return [force_str(g.label) for g in self.gender if g is not HmisGenderEnum.DIFFERENT] + [
-            self.different_identity_text
+            self.gender_identity_text
         ]
 
     def save(self, *args: Any, **kwargs: Any) -> None:
