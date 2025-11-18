@@ -6,14 +6,20 @@ export type UpdateClientProfileMutationVariables = Types.Exact<{
 }>;
 
 
-export type UpdateClientProfileMutation = { __typename?: 'Mutation', updateClientProfile: { __typename?: 'ClientProfileType', id: string } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+export type UpdateClientProfileMutation = { __typename?: 'Mutation', updateClientProfile:
+    | { __typename?: 'ClientProfileType', id: string }
+    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+   };
 
 export type DeleteClientProfileMutationVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
 
 
-export type DeleteClientProfileMutation = { __typename?: 'Mutation', deleteClientProfile: { __typename?: 'DeletedObjectType', id: number } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
+export type DeleteClientProfileMutation = { __typename?: 'Mutation', deleteClientProfile:
+    | { __typename?: 'DeletedObjectType', id: number }
+    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
+   };
 
 export type GetClientProfileQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];

@@ -23,7 +23,7 @@ type TProps = {
   renderItem: (client: HmisClientProfileType) => ReactElement | null;
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
-  filter?: InputMaybe<HmisClientFilterInput>;
+  filters?: InputMaybe<HmisClientFilterInput>;
   paginationLimit?: number;
   showAllClientsLink?: boolean;
   renderHeaderText?: (props: TRenderListResultsHeader) => string;
@@ -32,7 +32,7 @@ type TProps = {
 
 export function HmisListClients(props: TProps) {
   const {
-    filter,
+    filters,
     itemGap = DEFAULT_ITEM_GAP,
     paginationLimit = DEFAULT_PAGINATION_LIMIT,
     renderItem,
@@ -52,9 +52,9 @@ export function HmisListClients(props: TProps) {
     HmisClientProfilesQueryVariables
   >({
     document: HmisClientProfilesDocument,
-    queryFieldName: 'hmisListClients',
+    queryFieldName: 'hmisClientProfiles',
     pageSize: paginationLimit,
-    variables: { filter },
+    variables: { filters },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
