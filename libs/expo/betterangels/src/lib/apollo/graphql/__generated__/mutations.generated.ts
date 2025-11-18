@@ -4,70 +4,49 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
 export type DeleteCurrentUserMutationVariables = Types.Exact<{ [key: string]: never; }>;
 
 
-export type DeleteCurrentUserMutation = { __typename?: 'Mutation', deleteCurrentUser:
-    | { __typename?: 'DeletedObjectType', id: number }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-   };
+export type DeleteCurrentUserMutation = { __typename?: 'Mutation', deleteCurrentUser: { __typename?: 'DeletedObjectType', id: number } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 export type UpdateNoteMutationVariables = Types.Exact<{
   data: Types.UpdateNoteInput;
 }>;
 
 
-export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote:
-    | { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, createdAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email?: string | null } }
-    | { __typename?: 'OperationInfo' }
-   };
+export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote: { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, createdAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy: { __typename?: 'UserType', id: string, username: string, email?: string | null } } | { __typename?: 'OperationInfo' } };
 
 export type RevertNoteMutationVariables = Types.Exact<{
   data: Types.RevertNoteInput;
 }>;
 
 
-export type RevertNoteMutation = { __typename?: 'Mutation', revertNote:
-    | { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } }
-    | { __typename?: 'OperationInfo' }
-   };
+export type RevertNoteMutation = { __typename?: 'Mutation', revertNote: { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } } | { __typename?: 'OperationInfo' } };
 
 export type DeleteNoteMutationVariables = Types.Exact<{
   data: Types.DeleteDjangoObjectInput;
 }>;
 
 
-export type DeleteNoteMutation = { __typename?: 'Mutation', deleteNote:
-    | { __typename?: 'NoteType', id: string }
-    | { __typename?: 'OperationInfo' }
-   };
+export type DeleteNoteMutation = { __typename?: 'Mutation', deleteNote: { __typename?: 'NoteType', id: string } | { __typename?: 'OperationInfo' } };
 
 export type CreateNoteServiceRequestMutationVariables = Types.Exact<{
   data: Types.CreateNoteServiceRequestInput;
 }>;
 
 
-export type CreateNoteServiceRequestMutation = { __typename?: 'Mutation', createNoteServiceRequest:
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-    | { __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null }
-   };
+export type CreateNoteServiceRequestMutation = { __typename?: 'Mutation', createNoteServiceRequest: { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } | { __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null } };
 
 export type DeleteServiceRequestMutationVariables = Types.Exact<{
   data: Types.DeleteDjangoObjectInput;
 }>;
 
 
-export type DeleteServiceRequestMutation = { __typename?: 'Mutation', deleteServiceRequest:
-    | { __typename?: 'DeletedObjectType', id: number }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-   };
+export type DeleteServiceRequestMutation = { __typename?: 'Mutation', deleteServiceRequest: { __typename?: 'DeletedObjectType', id: number } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 export type UpdateNoteLocationMutationVariables = Types.Exact<{
   data: Types.UpdateNoteLocationInput;
 }>;
 
 
-export type UpdateNoteLocationMutation = { __typename?: 'Mutation', updateNoteLocation:
-    | { __typename?: 'NoteType', id: string, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null }
-    | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
-   };
+export type UpdateNoteLocationMutation = { __typename?: 'Mutation', updateNoteLocation: { __typename?: 'NoteType', id: string, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null } | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> } };
 
 
 export const DeleteCurrentUserDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"DeleteCurrentUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"deleteCurrentUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"OperationInfo"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"messages"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"kind"}},{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"DeletedObjectType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<DeleteCurrentUserMutation, DeleteCurrentUserMutationVariables>;

@@ -27,7 +27,67 @@ query GetHMISClient($personalId: ID!) {
   }
 }
 
-# ... on HmisGetClientError {
-#   message
-#   field
-# }
+query hmisClientProfile($hmisId: String!) {
+  hmisClientProfile(hmisId: $hmisId) {
+    ... on HmisClientProfileType {
+      id
+      hmisId
+      personalId
+      uniqueIdentifier
+      adaAccommodation
+      addedDate
+      additionalRaceEthnicityDetail
+      address
+      age
+      alias
+      birthDate
+      californiaId
+      dobQuality
+      email
+      eyeColor
+      firstName
+      gender
+      genderIdentityText
+      hairColor
+      heightInInches
+      importantNotes
+      lastName
+      lastUpdated
+      livingSituation
+      mailingAddress
+      maritalStatus
+      nameMiddle
+      nameQuality
+      nameSuffix
+      physicalDescription
+      placeOfBirth
+      preferredCommunication
+      preferredLanguage
+      pronouns
+      pronounsOther
+      raceEthnicity
+      residenceAddress
+      residenceGeolocation
+      spokenLanguages
+      ssn1
+      ssn2
+      ssn3
+      ssnQuality
+      veteran
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
+      profilePhoto {
+        name
+        url
+      }
+    }
+  }
+}

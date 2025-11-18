@@ -36,3 +36,76 @@ query HmisListClients(
     }
   }
 }
+
+query hmisClientProfiles(
+  $ordering: [HmisClientProfileOrdering!]! = []
+  $pagination: OffsetPaginationInput
+) {
+  hmisClientProfiles(ordering: $ordering, pagination: $pagination) {
+    totalCount
+    pageInfo {
+      limit
+      offset
+    }
+    results {
+      id
+      hmisId
+      personalId
+      uniqueIdentifier
+      adaAccommodation
+      addedDate
+      additionalRaceEthnicityDetail
+      address
+      age
+      alias
+      birthDate
+      californiaId
+      dobQuality
+      email
+      eyeColor
+      firstName
+      gender
+      genderIdentityText
+      hairColor
+      heightInInches
+      importantNotes
+      lastName
+      lastUpdated
+      livingSituation
+      mailingAddress
+      maritalStatus
+      nameMiddle
+      nameQuality
+      nameSuffix
+      physicalDescription
+      placeOfBirth
+      preferredCommunication
+      preferredLanguage
+      pronouns
+      pronounsOther
+      raceEthnicity
+      residenceAddress
+      residenceGeolocation
+      spokenLanguages
+      ssn1
+      ssn2
+      ssn3
+      ssnQuality
+      veteran
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+      phoneNumbers {
+        id
+        number
+        isPrimary
+      }
+      profilePhoto {
+        name
+        url
+      }
+    }
+  }
+}

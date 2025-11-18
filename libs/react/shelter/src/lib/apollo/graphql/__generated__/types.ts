@@ -848,6 +848,14 @@ export type HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | Hmis
 
 export type HmisClientNoteTypeHmisUpdateClientNoteError = HmisClientNoteType | HmisUpdateClientNoteError;
 
+export type HmisClientProfileOrdering = {
+  addedDate?: InputMaybe<Ordering>;
+  firstName?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  lastName?: InputMaybe<Ordering>;
+  lastUpdated?: InputMaybe<Ordering>;
+};
+
 export type HmisClientProfileType = {
   __typename?: 'HmisClientProfileType';
   adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
@@ -2123,6 +2131,7 @@ export type QueryHmisClientProfileArgs = {
 
 
 export type QueryHmisClientProfilesArgs = {
+  ordering?: Array<HmisClientProfileOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

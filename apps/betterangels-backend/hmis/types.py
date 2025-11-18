@@ -374,8 +374,18 @@ class HmisClientProfileBaseType:
     spoken_languages: Optional[list[LanguageEnum]]
 
 
+@strawberry_django.order_type(HmisClientProfile, one_of=False)
+class HmisClientProfileOrdering:
+    id: auto
+    first_name: auto
+    last_name: auto
+    added_date: auto
+    last_updated: auto
+
+
 @strawberry_django.type(
     HmisClientProfile,
+    ordering=HmisClientProfileOrdering,
     pagination=True,
 )
 class HmisClientProfileType(HmisClientProfileBaseType):
