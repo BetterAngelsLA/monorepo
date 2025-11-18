@@ -1,37 +1,97 @@
-mutation HmisUpdateClient(
-  $clientInput: HmisUpdateClientInput!
-  $clientSubItemsInput: HmisUpdateClientSubItemsInput!
-) {
-  hmisUpdateClient(
-    clientInput: $clientInput
-    clientSubItemsInput: $clientSubItemsInput
-  ) {
-    ... on HmisClientType {
+# mutation HmisUpdateClient(
+#   $clientInput: HmisUpdateClientInput!
+#   $clientSubItemsInput: HmisUpdateClientSubItemsInput!
+# ) {
+#   hmisUpdateClient(
+#     clientInput: $clientInput
+#     clientSubItemsInput: $clientSubItemsInput
+#   ) {
+#     ... on HmisClientType {
+#       personalId
+#       uniqueIdentifier
+#       firstName
+#       lastName
+#       nameDataQuality
+#       ssn1
+#       ssn2
+#       ssn3
+#       ssnDataQuality
+#       dob
+#       dobDataQuality
+#       data {
+#         middleName
+#         nameSuffix
+#         alias
+#         raceEthnicity
+#         additionalRaceEthnicity
+#         differentIdentityText
+#         gender
+#         veteranStatus
+#       }
+#     }
+#     ... on HmisUpdateClientError {
+#       message
+#       field
+#     }
+#   }
+# }
+
+mutation updateHmisClientProfile($data: UpdateHmisClientProfileInput!) {
+  updateHmisClientProfile(data: $data) {
+    ... on HmisClientProfileType {
+      id
+      hmisId
       personalId
       uniqueIdentifier
+      addedDate
+      lastUpdated
+
+      alias
+      birthDate
+
+      dobQuality
       firstName
       lastName
-      nameDataQuality
+      nameQuality
       ssn1
       ssn2
       ssn3
-      ssnDataQuality
-      dob
-      dobDataQuality
-      data {
-        middleName
-        nameSuffix
-        alias
-        raceEthnicity
-        additionalRaceEthnicity
-        differentIdentityText
-        gender
-        veteranStatus
+      ssnQuality
+
+      age
+      gender
+      genderIdentityText
+      nameMiddle
+      nameSuffix
+      raceEthnicity
+      additionalRaceEthnicityDetail
+      veteran
+
+      adaAccommodation
+      address
+      californiaId
+      email
+      eyeColor
+      hairColor
+      heightInInches
+      importantNotes
+      livingSituation
+      mailingAddress
+      maritalStatus
+      physicalDescription
+      placeOfBirth
+      preferredCommunication
+      preferredLanguage
+      pronouns
+      pronounsOther
+      residenceAddress
+      residenceGeolocation
+      spokenLanguages
+      phoneNumbers {
+        id
+        number
+        isPrimary
       }
-    }
-    ... on HmisUpdateClientError {
-      message
-      field
     }
   }
 }

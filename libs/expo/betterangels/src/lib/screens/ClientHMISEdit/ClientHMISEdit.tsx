@@ -11,8 +11,8 @@ import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { HmisClientProfileDocument } from '../ClientHMIS/__generated__/getHMISClient.generated';
 import {
-  HmisUpdateClientDocument,
-  HmisUpdateClientMutation,
+  UpdateHmisClientProfileDocument,
+  UpdateHmisClientProfileMutation,
 } from './__generated__/updateHmisClient.generated';
 import { hmisFormConfig, parseAsSectionKeyHMIS } from './basicForms/config';
 import {
@@ -31,7 +31,7 @@ type TProps = {
 };
 
 export function ClientHMISEdit(props: TProps) {
-  const { componentName, id: personalId } = props;
+  const { componentName, id: hmisId } = props;
 
   const router = useRouter();
   const navigation = useNavigation();
@@ -55,9 +55,8 @@ export function ClientHMISEdit(props: TProps) {
 
   type TFormValues = z.input<typeof sectionSchema>;
 
-  const [updateHmisClientMutation, { loading: isUpdating }] = useMutation(
-    HmisUpdateClientDocument
-  );
+  const [updateHmisClientProfileMutation, { loading: isUpdating }] =
+    useMutation(UpdateHmisClientProfileDocument);
 
   const debugMode = process.env['EXPO_PUBLIC_GQL_DEBUG'] === 'true';
 
@@ -75,7 +74,7 @@ export function ClientHMISEdit(props: TProps) {
   const { data: clientData, loading: clientDataLoading } = useQuery(
     HmisClientProfileDocument,
     {
-      variables: { personalId },
+      variables: { hmisId },
     }
   );
 
@@ -100,7 +99,7 @@ export function ClientHMISEdit(props: TProps) {
     formMethods.reset({
       ...mappedValues,
     });
-  }, [clientData, personalId]);
+  }, [clientData, hmisId]);
 
   if (clientDataLoading) {
     return <LoadingView />;
@@ -119,17 +118,18 @@ export function ClientHMISEdit(props: TProps) {
         values as TUpdateClientInputsUnion
       );
 
-      const { data: updateData, errors } = (await updateHmisClientMutation({
-        variables: {
-          clientInput,
-          clientSubItemsInput,
-        },
-        errorPolicy: 'all',
-        refetchQueries: [
-          { query: HmisClientProfileDocument, variables: { personalId } },
-        ],
-        awaitRefetchQueries: true,
-      })) as MutationExecResult<HmisUpdateClientMutation>;
+      const { data: updateData, errors } =
+        (await updateHmisClientProfileMutation({
+          variables: {
+            clientInput,
+            clientSubItemsInput,
+          },
+          errorPolicy: 'all',
+          refetchQueries: [
+            { query: HmisClientProfileDocument, variables: { hmisId } },
+          ],
+          awaitRefetchQueries: true,
+        })) as MutationExecResult<UpdateHmisClientProfileMutation>;
 
       if (debugMode && errors) {
         console.error(errors); // raw error
@@ -177,11 +177,11 @@ export function ClientHMISEdit(props: TProps) {
         throw new Error('invalid hmisUpdateClient response');
       }
 
-      const { personalId: returnedId } = updatedClient;
+      const { hmisId: returnedId } = updatedClient;
 
       router.dismissTo(`/client/${returnedId}`);
     } catch (error) {
-      console.error('updateHmisClientMutation error:', error);
+      console.error('updateHmisClientProfileMutation error:', error);
 
       showSnackbar({
         message: 'Something went wrong. Please try again.',

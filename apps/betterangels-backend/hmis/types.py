@@ -1,7 +1,7 @@
 import datetime
 from functools import reduce
 from operator import and_, or_
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Union
 
 import strawberry
 import strawberry_django
@@ -13,7 +13,7 @@ from clients.enums import (
     PreferredCommunicationEnum,
 )
 from common.graphql.types import NonBlankString, PhoneNumberInput, PhoneNumberType
-from django.db.models import Exists, Max, OuterRef, Q, QuerySet
+from django.db.models import Q, QuerySet
 from hmis.enums import (
     HmisBranchEnum,
     HmisDischargeEnum,
