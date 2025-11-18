@@ -354,7 +354,7 @@ input ClientProfileOrder {
 
 input ClientProfilePhotoInput {
   clientProfile: ID!
-  photo: Upload!
+  photo: Upload
 }
 
 type ClientProfileType {
