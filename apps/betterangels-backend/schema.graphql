@@ -837,6 +837,14 @@ union HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | HmisGetCli
 
 union HmisClientNoteTypeHmisUpdateClientNoteError = HmisClientNoteType | HmisUpdateClientNoteError
 
+input HmisClientProfileFilter {
+  AND: HmisClientProfileFilter
+  OR: HmisClientProfileFilter
+  NOT: HmisClientProfileFilter
+  DISTINCT: Boolean
+  search: String
+}
+
 input HmisClientProfileOrdering {
   id: Ordering
   firstName: Ordering
@@ -1747,7 +1755,7 @@ type Query {
   hmisGetClientNote(personalId: ID!, enrollmentId: ID!, id: ID!): HmisClientNoteTypeHmisGetClientNoteError!
   hmisListClientNotes(personalId: ID!, enrollmentId: ID!, pagination: HmisPaginationInput = null): HmisClientNoteListTypeHmisListClientNotesError!
   hmisListEnrollments(dynamicFields: [String]!, personalId: ID!, pagination: HmisPaginationInput = null): HmisEnrollmentListTypeHmisListEnrollmentsError!
-  hmisClientProfiles(pagination: OffsetPaginationInput, ordering: [HmisClientProfileOrdering!]! = []): HmisClientProfileTypeOffsetPaginated!
+  hmisClientProfiles(pagination: OffsetPaginationInput, filters: HmisClientProfileFilter, ordering: [HmisClientProfileOrdering!]! = []): HmisClientProfileTypeOffsetPaginated!
   hmisNotes(pagination: OffsetPaginationInput): HmisNoteTypeOffsetPaginated!
   hmisClientProfile(hmisId: String!): HmisClientProfileType!
   hmisNote(clientHmisId: String!, noteHmisId: String!): HmisNoteType!

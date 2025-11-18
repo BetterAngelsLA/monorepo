@@ -848,6 +848,14 @@ export type HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | Hmis
 
 export type HmisClientNoteTypeHmisUpdateClientNoteError = HmisClientNoteType | HmisUpdateClientNoteError;
 
+export type HmisClientProfileFilter = {
+  AND?: InputMaybe<HmisClientProfileFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<HmisClientProfileFilter>;
+  OR?: InputMaybe<HmisClientProfileFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type HmisClientProfileOrdering = {
   addedDate?: InputMaybe<Ordering>;
   firstName?: InputMaybe<Ordering>;
@@ -2131,6 +2139,7 @@ export type QueryHmisClientProfileArgs = {
 
 
 export type QueryHmisClientProfilesArgs = {
+  filters?: InputMaybe<HmisClientProfileFilter>;
   ordering?: Array<HmisClientProfileOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };

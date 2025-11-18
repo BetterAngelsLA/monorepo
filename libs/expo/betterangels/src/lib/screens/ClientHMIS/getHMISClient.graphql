@@ -34,46 +34,50 @@ query hmisClientProfile($hmisId: String!) {
       hmisId
       personalId
       uniqueIdentifier
-      adaAccommodation
       addedDate
-      additionalRaceEthnicityDetail
-      address
-      age
+      lastUpdated
+
       alias
       birthDate
-      californiaId
+
       dobQuality
-      email
-      eyeColor
       firstName
+      lastName
+      nameQuality
+      ssn1
+      ssn2
+      ssn3
+      ssnQuality
+
+      age
       gender
       genderIdentityText
+      nameMiddle
+      nameSuffix
+      raceEthnicity
+      additionalRaceEthnicityDetail
+      veteran
+
+      adaAccommodation
+      address
+      californiaId
+      email
+      eyeColor
       hairColor
       heightInInches
       importantNotes
-      lastName
-      lastUpdated
       livingSituation
       mailingAddress
       maritalStatus
-      nameMiddle
-      nameQuality
-      nameSuffix
       physicalDescription
       placeOfBirth
       preferredCommunication
       preferredLanguage
       pronouns
       pronounsOther
-      raceEthnicity
       residenceAddress
       residenceGeolocation
       spokenLanguages
-      ssn1
-      ssn2
-      ssn3
-      ssnQuality
-      veteran
       createdBy {
         id
         firstName

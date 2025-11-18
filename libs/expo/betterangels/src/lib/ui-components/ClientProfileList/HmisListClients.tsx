@@ -8,19 +8,19 @@ import { ReactElement, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
   HmisClientFilterInput,
-  HmisClientType,
+  HmisClientProfileType,
   InputMaybe,
 } from '../../apollo';
 import { ListLoadingView } from './ListLoadingView';
 import {
-  HmisListClientsDocument,
-  HmisListClientsQuery,
-  HmisListClientsQueryVariables,
+  HmisClientProfilesDocument,
+  HmisClientProfilesQuery,
+  HmisClientProfilesQueryVariables,
 } from './__generated__/HmisListClients.generated';
 import { DEFAULT_ITEM_GAP, DEFAULT_PAGINATION_LIMIT } from './constants';
 
 type TProps = {
-  renderItem: (client: HmisClientType) => ReactElement | null;
+  renderItem: (client: HmisClientProfileType) => ReactElement | null;
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filter?: InputMaybe<HmisClientFilterInput>;
@@ -47,11 +47,11 @@ export function HmisListClients(props: TProps) {
     loadMore,
     error,
   } = useInfiniteScrollQuery<
-    HmisClientType,
-    HmisListClientsQuery,
-    HmisListClientsQueryVariables
+    HmisClientProfileType,
+    HmisClientProfilesQuery,
+    HmisClientProfilesQueryVariables
   >({
-    document: HmisListClientsDocument,
+    document: HmisClientProfilesDocument,
     queryFieldName: 'hmisListClients',
     pageSize: paginationLimit,
     variables: { filter },
@@ -64,7 +64,7 @@ export function HmisListClients(props: TProps) {
   }
 
   const renderItemFn = useCallback(
-    (item: HmisClientType) => {
+    (item: HmisClientProfileType) => {
       return renderItem(item);
     },
     [renderItem]
@@ -76,7 +76,7 @@ export function HmisListClients(props: TProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<HmisClientType>
+      <InfiniteList<HmisClientProfileType>
         modelName="client"
         data={clients}
         keyExtractor={(item) => item.personalId!}
