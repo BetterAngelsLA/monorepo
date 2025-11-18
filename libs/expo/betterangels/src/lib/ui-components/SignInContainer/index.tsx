@@ -58,7 +58,7 @@ export default function SignInContainer({
       </TextRegular>
       {children}
       {termsOfServiceUrl && privacyPolicyUrl ? (
-        <TextRegular textAlign="center" size="sm" color={Colors.BLACK} mt="xl">
+        <TextRegular textAlign="center" size="sm" color={Colors.PRIMARY_EXTRA_DARK} mt="lg">
           By continuing, you agree to our{' '}
           <Link
             style={{ textDecorationLine: 'underline' }}

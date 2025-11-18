@@ -46,6 +46,7 @@ export function TextRegular(props: ITextRegularProps) {
   return (
     <Text
       style={[
+        styles.legalWrapper,
         styles.text,
         style,
         {
@@ -72,6 +73,10 @@ export function TextRegular(props: ITextRegularProps) {
 }
 
 const styles = StyleSheet.create({
+  legalWrapper: {
+    maxWidth: 350,
+    alignSelf: 'center',
+  },
   text: {
     fontFamily: 'Poppins-Regular',
   },

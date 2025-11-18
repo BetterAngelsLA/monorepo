@@ -1,5 +1,5 @@
 import { useApiConfig } from '@monorepo/expo/shared/clients';
-import { Colors, Regex } from '@monorepo/expo/shared/static';
+import { Colors, Regex, Spacings, Radiuses } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
@@ -258,8 +258,6 @@ export default function LoginForm() {
   );
 }
 
-const CHECKBOX_SIZE = 18;
-
 const styles = StyleSheet.create({
   container: { width: '100%' },
 
@@ -284,14 +282,13 @@ const styles = StyleSheet.create({
   },
 
   checkboxBox: {
-    width: CHECKBOX_SIZE,
-    height: CHECKBOX_SIZE,
-    borderRadius: 4,
-    borderWidth: 2,
-    borderColor: '#D0D5DD',
-    backgroundColor: 'white',
-    alignItems: 'center',
+    width: Spacings.sm,
+    height: Spacings.sm,
     justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: Radiuses.xxxs,
+    borderColor: Colors.NEUTRAL_LIGHT,
   },
 
   checkboxBoxChecked: {
@@ -300,16 +297,15 @@ const styles = StyleSheet.create({
   },
 
   checkboxTick: {
-    color: 'white',
-    fontSize: 12,
-    lineHeight: 12,
-    fontWeight: '700',
+    color: Colors.WHITE,
+    position: 'absolute',
   },
 
   rememberLabel: {
     marginLeft: 12,
-    fontSize: 14,
-    color: '#052B73',
-    fontFamily: 'Poppins-Medium',
+    fontSize: 14.5,
+    color: Colors.PRIMARY_EXTRA_DARK,
+    fontFamily: 'Poppins',
+    fontWeight: 400
   },
 });
