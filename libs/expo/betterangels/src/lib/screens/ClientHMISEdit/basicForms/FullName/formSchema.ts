@@ -13,8 +13,8 @@ export const fullNameFormEmptyState: TFullNameFormSchema = {
   lastName: '',
   nameMiddle: '',
   alias: '',
-  nameQuality: '',
-  nameSuffix: '',
+  nameQuality: undefined,
+  nameSuffix: undefined,
 };
 
 export const FullNameFormSchema = z
@@ -24,8 +24,8 @@ export const FullNameFormSchema = z
     nameMiddle: z.string(),
     alias: z.string(),
     // form uses string Enum while api requires an integer - converted onSubmit
-    nameQuality: z.enum(HmisNameQualityEnum).or(z.literal('')),
-    nameSuffix: z.enum(HmisSuffixEnum).or(z.literal('')),
+    nameQuality: z.enum(HmisNameQualityEnum).or(z.literal(undefined)),
+    nameSuffix: z.enum(HmisSuffixEnum).or(z.literal(undefined)),
   })
   // validate nameQuality values
   .superRefine((data, ctx) => {

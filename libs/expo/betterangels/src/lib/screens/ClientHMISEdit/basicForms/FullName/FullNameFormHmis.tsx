@@ -56,7 +56,7 @@ export function FullNameFormHmis() {
         />
 
         <Controller
-          name="nameDataQuality"
+          name="nameQuality"
           control={control}
           render={({ field: { value, onChange } }) => (
             <SingleSelect
@@ -70,7 +70,7 @@ export function FullNameFormHmis() {
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}
-              error={errors.nameDataQuality?.message}
+              error={errors.nameQuality?.message}
             />
           )}
         />

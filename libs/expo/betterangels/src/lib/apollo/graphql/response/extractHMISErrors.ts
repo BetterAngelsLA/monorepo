@@ -35,10 +35,10 @@ export function extractHMISErrors(hmisError?: string): THMISErrors | null {
     const fieldErrors = Object.entries(errMessages || {}).map(
       ([field, fieldMessages = []]) => {
         // NOTE: field names returned with update mutation can be inconsistent with inputs.
-        const fieldName = field === 'nameQuality' ? 'nameDataQuality' : field;
+        // const fieldName = field === 'nameQuality' ? 'nameDataQuality' : field;
 
         return {
-          field: fieldName,
+          field,
           message: fieldMessages.join(', '),
         };
       }

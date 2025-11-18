@@ -4,7 +4,6 @@ import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useSnackbar } from '../../hooks';
-import { toHmisNameQualityInt, toHmisSuffixEnumInt } from '../../static';
 import {
   FullNameFormHmis,
   FullNameFormSchema,
@@ -12,8 +11,8 @@ import {
   fullNameFormEmptyState,
 } from '../ClientHMISEdit/basicForms';
 import {
-  FALLBACK_NAME_DATA_QUALITY_INT,
-  FALLBACK_NAME_SUFFIX_INT,
+  FALLBACK_NAME_DATA_QUALITY,
+  FALLBACK_NAME_SUFFIX,
 } from '../ClientHMISEdit/constants';
 import { CreateHmisClientProfileDocument } from './__generated__/createHmisClient.generated';
 
@@ -50,18 +49,13 @@ export function CreateClientProfileHMIS() {
 
       const { data } = await createHmisClientProfileMutation({
         variables: {
-          clientInput: {
+          data: {
             firstName,
             lastName,
-            nameQuality:
-              toHmisNameQualityInt(nameQuality) ??
-              FALLBACK_NAME_DATA_QUALITY_INT,
-          },
-          clientSubItemsInput: {
             nameMiddle,
             alias,
-            nameSuffix:
-              toHmisSuffixEnumInt(nameSuffix) ?? FALLBACK_NAME_SUFFIX_INT,
+            nameSuffix: nameSuffix ?? FALLBACK_NAME_SUFFIX,
+            nameQuality: nameQuality ?? FALLBACK_NAME_DATA_QUALITY,
           },
         },
         errorPolicy: 'all',
