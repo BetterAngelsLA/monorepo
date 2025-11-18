@@ -3,6 +3,7 @@ import { FlashList } from '@shopify/flash-list';
 import { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { EmptyListView } from './EmptyListView';
+import { ErrorListView } from './ErrorListView';
 import { ItemSeparator as DefaultItemSeparator } from './ItemSeparator';
 import { LoadingListView } from './LoadingListView';
 import { ResultsHeader } from './ResultsHeader';
@@ -13,6 +14,9 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     style,
     contentContainerStyle,
     data,
+    error,
+    errorTitle,
+    errorMessage,
     keyExtractor,
     renderItem,
     loadMore,
@@ -30,6 +34,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     itemGap = Spacings.xs,
     showScrollIndicator = false,
     ItemSeparatorComponent,
+    ErrorViewComponent,
     ...rest
   } = props;
 
@@ -52,7 +57,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     return () => <DefaultItemSeparator height={itemGap} />;
   }, [ItemSeparatorComponent, itemGap]);
 
-  const footerComponent = useMemo(() => {
+  const FooterComponent = useMemo(() => {
     if (ListFooterComponent) {
       return ListFooterComponent;
     }
@@ -65,9 +70,21 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     return <View style={{ height: Spacings.sm }} />;
   }, [ListFooterComponent, loading, LoadingViewContent]);
 
-  const emptyComponent = useMemo(() => {
+  const ErrorView = useMemo(() => {
+    if (ErrorViewComponent) {
+      return ErrorViewComponent;
+    }
+
+    return <ErrorListView title={errorTitle} bodyText={errorMessage} />;
+  }, [error, ErrorViewComponent]);
+
+  const EmptyView = useMemo(() => {
     if (loading) {
       return null;
+    }
+
+    if (error) {
+      return ErrorView;
     }
 
     return ListEmptyComponent ?? <EmptyListView />;
@@ -86,14 +103,16 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
 
   return (
     <View style={[styles.container, style]}>
-      <ResultsHeader
-        visibleCount={data.length}
-        totalCount={totalItems}
-        modelName={modelName}
-        modelNamePlural={modelNamePlural}
-        renderResultsHeader={renderResultsHeader}
-        style={styles.resultsHeader}
-      />
+      {!error && (
+        <ResultsHeader
+          visibleCount={data.length}
+          totalCount={totalItems}
+          modelName={modelName}
+          modelNamePlural={modelNamePlural}
+          renderResultsHeader={renderResultsHeader}
+          style={styles.resultsHeader}
+        />
+      )}
 
       <FlashList<T>
         data={data}
@@ -102,8 +121,8 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
         onEndReachedThreshold={onEndReachedThreshold}
         ItemSeparatorComponent={ItemSeparator}
         extraData={stableExtraData}
-        ListEmptyComponent={emptyComponent}
-        ListFooterComponent={footerComponent}
+        ListEmptyComponent={EmptyView}
+        ListFooterComponent={FooterComponent}
         contentContainerStyle={mergedContentContainerStyle}
         showsVerticalScrollIndicator={showScrollIndicator}
         {...rest}
