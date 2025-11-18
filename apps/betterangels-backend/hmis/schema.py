@@ -18,6 +18,7 @@ from .types import (
     CreateHmisNoteInput,
     HmisClientProfileType,
     HmisNoteType,
+    ProgramEnrollmentType,
     UpdateHmisClientProfileInput,
     UpdateHmisNoteInput,
 )
@@ -85,6 +86,8 @@ class Mutation:
 
         hmis_client_profile = resolvers.create(info, HmisClientProfile, {**client_data, "created_by": current_user})
 
+        hmis_api_bridge.create_program_enrollment(client_hmis_id=hmis_client_profile.pk)
+
         return cast(HmisClientProfileType, hmis_client_profile)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
@@ -150,3 +153,17 @@ class Mutation:
         hmis_note = resolvers.update(info, hmis_note, {**note_data})
 
         return cast(HmisNoteType, hmis_note)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def create_program_enrollment(self, info: Info, client_hmis_id: int, program_hmis_id: int) -> ProgramEnrollmentType:
+        hmis_api_bridge = HmisRestApiBridge(info=info)
+
+        enrollment_data = hmis_api_bridge.create_program_enrollment(
+            client_hmis_id=client_hmis_id, program_hmis_id=program_hmis_id
+        )
+
+        return ProgramEnrollmentType(
+            id=enrollment_data["id"],
+            client_id=enrollment_data["ref_client"],
+            ref_client_program=enrollment_data["ref_program"],
+        )
