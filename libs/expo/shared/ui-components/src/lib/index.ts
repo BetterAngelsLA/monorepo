@@ -24,7 +24,7 @@ export {
   DateLocal,
   formatDateLocal,
   formatDateStatic,
-  parseToDate,
+  parseToDate
 } from './Date';
 export { default as DatePicker } from './DatePicker';
 export { default as DeleteModal } from './DeleteModal';
@@ -51,7 +51,7 @@ export {
   getFormattedLength,
   inchesToFeetInches,
   Length,
-  TLengthUnit,
+  TLengthUnit
 } from './Length';
 export { default as Loading } from './Loading';
 export { default as LoadingView } from './LoadingView';
@@ -59,7 +59,7 @@ export { default as LocateMeButton } from './LocateMeButton';
 export * from './Map';
 export { default as MapClusterMarker } from './MapClusterMarker';
 export { default as MediaPickerModal } from './MediaPickerModal';
-export { BaseModal } from './Modal';
+export { BaseModal, DUR_OUT } from './Modal';
 export { default as MultiSelect, MultiSelect_V2 } from './MultiSelect';
 export { default as PdfViewer } from './PdfViewer';
 export { default as PhoneNumberBtn } from './PhoneNumberBtn';
@@ -69,7 +69,7 @@ export { default as Pill } from './Pill';
 export { default as PillContainer } from './PillContainer';
 export {
   PreferrredCommunicationIcon,
-  TPreferredCommunication,
+  TPreferredCommunication
 } from './PreferrredCommunicationIcon';
 export { default as Radio } from './Radio';
 export { default as RevertModal } from './RevertModal';
