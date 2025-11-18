@@ -148,6 +148,9 @@ def get_enrollment_from_response(enrollment_response: dict[str, Any]) -> HmisEnr
 
 
 def get_client_note_from_response(client_note_response: dict[str, Any]) -> HmisClientNoteType:
+    client = None
+    enrollment = None
+
     if client_data := client_note_response.get("client"):
         client = get_client_from_response(client_data)
 

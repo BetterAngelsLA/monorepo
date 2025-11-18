@@ -1,17 +1,91 @@
 import { PlusIcon } from '@monorepo/expo/shared/icons';
-import { Colors } from '@monorepo/expo/shared/static';
-import { IconButton } from '@monorepo/expo/shared/ui-components';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { IconButton, InfiniteList } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { HmisClientType } from '../../../../apollo';
-import { MainScrollContainer } from '../../../../ui-components';
+import { uniqueBy } from 'remeda';
+import { HmisClientNoteType, HmisClientType } from '../../../../apollo';
+import {
+  MainScrollContainer,
+  ProgramNoteCard,
+} from '../../../../ui-components';
+import { ListLoadingView } from './ListLoadingView';
+import { useHmisListClientNotesQuery } from './__generated__/ClientInteractionsHmisView.generated';
+
+export const DEFAULT_PAGINATION_LIMIT = 20;
 
 type TProps = {
   client?: HmisClientType;
 };
 
+// TODO: Needs to be dynamic
+const ENROLLMENT_ID = '517';
+
 export function ClientInteractionsHmisView(props: TProps) {
   const { client } = props;
+
+  const [page, setPage] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [programNotes, setProgramNotes] = useState<
+    HmisClientNoteType[] | undefined
+  >(undefined);
+
+  const { data, loading, error } = useHmisListClientNotesQuery({
+    skip: !client?.personalId,
+    variables: {
+      enrollmentId: ENROLLMENT_ID,
+      personalId: client?.personalId || '',
+      pagination: { page, perPage: DEFAULT_PAGINATION_LIMIT },
+    },
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
+  });
+
+  useEffect(() => {
+    const notesData = data?.hmisListClientNotes;
+
+    if (!notesData) {
+      return;
+    }
+
+    if (notesData.__typename === 'HmisClientNoteListType') {
+      const { items, meta } = notesData;
+
+      setTotalCount(meta?.totalCount ?? 0);
+      setHasMore((meta?.currentPage ?? 1) < (meta?.pageCount ?? 1));
+
+      setProgramNotes((prev) => {
+        if (page === 1 || !prev) return items;
+
+        return uniqueBy([...prev, ...items], (c) => c.id ?? '');
+      });
+    }
+  }, [data, page, error]);
+
+  const loadMore = () => {
+    if (hasMore && !loading) setPage((p) => p + 1);
+  };
+
+  const renderItemFn = useCallback(
+    (item: HmisClientNoteType) => (
+      <ProgramNoteCard
+        onPress={() => {
+          router.navigate({
+            pathname: `/notes-hmis/${item.id}`,
+            params: {
+              personalId: client?.personalId,
+              enrollmentId: item.enrollment?.enrollmentId,
+            },
+          });
+        }}
+        variant="clientProfile"
+        note={item}
+      />
+    ),
+    [client]
+  );
 
   if (!client) {
     return null;
@@ -19,7 +93,7 @@ export function ClientInteractionsHmisView(props: TProps) {
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <View>
+      <View style={{ marginBottom: Spacings.md }}>
         <IconButton
           variant="secondary"
           borderColor={Colors.WHITE}
@@ -34,6 +108,19 @@ export function ClientInteractionsHmisView(props: TProps) {
           <PlusIcon />
         </IconButton>
       </View>
+      <InfiniteList<HmisClientNoteType>
+        data={programNotes || []}
+        keyExtractor={(item) => item.id ?? ''}
+        totalItems={totalCount}
+        renderItem={renderItemFn}
+        itemGap={Spacings.xs}
+        loading={loading}
+        loadMore={loadMore}
+        hasMore={hasMore}
+        modelName="note"
+        LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
+        error={!!error}
+      />
     </MainScrollContainer>
   );
 }
