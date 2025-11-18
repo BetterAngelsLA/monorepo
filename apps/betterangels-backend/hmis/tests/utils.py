@@ -87,3 +87,50 @@ class HmisClientProfileBaseTestCase(GraphQLBaseTestCase):
             }}
         """
         return self.execute_graphql(mutation, {"data": variables})
+
+
+class HmisNoteBaseTestCase(GraphQLBaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.hmis_note_fields = """
+            id
+            hmisId
+            hmisClientProfileId
+
+            addedDate
+            lastUpdated
+
+            title
+            note
+            date
+            refClientProgram
+
+            createdBy { id }
+        """
+
+    def _create_hmis_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_hmis_note_fixture("create", variables)
+
+    def _update_hmis_note_fixture(self, variables: Dict[str, Any]) -> Dict[str, Any]:
+        return self._create_or_update_hmis_note_fixture("update", variables)
+
+    def _create_or_update_hmis_note_fixture(self, operation: str, variables: Dict[str, Any]) -> Dict[str, Any]:
+        assert operation in {"create", "update"}, "Invalid operation specified."
+        mutation: str = f"""
+            mutation ($data: {operation.capitalize()}HmisNoteInput!) {{ # noqa: B950
+                {operation}HmisNote(data: $data) {{
+                    ... on OperationInfo {{
+                        messages {{
+                            kind
+                            field
+                            message
+                        }}
+                    }}
+                    ... on HmisNoteType {{
+                        {self.hmis_note_fields}
+                    }}
+                }}
+            }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})

@@ -1,0 +1,16 @@
+interactions:
+- request:
+    body: '{"fields": "id, note, date, client_hmis_id, last_updated, hmis_id, client.id,
+      created_by.id, ref_client_program, added_date, hmis_client_profile_id, title"}'
+    headers: {}
+    method: GET
+    uri: ''
+  response:
+    body:
+      string: '{"id":467,"title":"poet","note":"<p>poen</p>","added_date":"2025-11-12
+        17:40:39","last_updated":"2025-11-12 17:40:39","ref_client_program":null,"date":"2025-11-12","client":{"id":388}}'
+    headers: {}
+    status:
+      code: 200
+      message: OK
+version: 1
