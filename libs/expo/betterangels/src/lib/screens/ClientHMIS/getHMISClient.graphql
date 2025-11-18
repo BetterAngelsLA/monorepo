@@ -1,31 +1,31 @@
-query GetHMISClient($personalId: ID!) {
-  hmisGetClient(personalId: $personalId) {
-    __typename
-    ... on HmisClientType {
-      personalId
-      uniqueIdentifier
-      firstName
-      lastName
-      nameDataQuality
-      ssn1
-      ssn2
-      ssn3
-      ssnDataQuality
-      dob
-      dobDataQuality
-      data {
-        middleName
-        nameSuffix
-        alias
-        raceEthnicity
-        additionalRaceEthnicity
-        differentIdentityText
-        gender
-        veteranStatus
-      }
-    }
-  }
-}
+# query GetHMISClient($personalId: ID!) {
+#   hmisGetClient(personalId: $personalId) {
+#     __typename
+#     ... on HmisClientType {
+#       personalId
+#       uniqueIdentifier
+#       firstName
+#       lastName
+#       nameDataQuality
+#       ssn1
+#       ssn2
+#       ssn3
+#       ssnDataQuality
+#       dob
+#       dobDataQuality
+#       data {
+#         middleName
+#         nameSuffix
+#         alias
+#         raceEthnicity
+#         additionalRaceEthnicity
+#         differentIdentityText
+#         gender
+#         veteranStatus
+#       }
+#     }
+#   }
+# }
 
 query hmisClientProfile($hmisId: String!) {
   hmisClientProfile(hmisId: $hmisId) {
