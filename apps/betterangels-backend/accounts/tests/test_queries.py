@@ -1,5 +1,5 @@
 from typing import Any
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
 import time_machine
 from accounts.enums import OrgRoleEnum
@@ -8,7 +8,9 @@ from accounts.models import User
 from accounts.permissions import UserOrganizationPermissions
 from accounts.utils import OrgPermissionManager
 from common.tests.utils import GraphQLBaseTestCase
-from django.test import ignore_warnings
+from django.contrib.auth import get_user_model
+from django.test import ignore_warnings, override_settings
+from hmis.tests.test_mutations import LOGIN_MUTATION
 from model_bakery import baker
 from organizations.models import Organization, OrganizationUser
 from unittest_parametrize import ParametrizedTestCase, parametrize
@@ -35,9 +37,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
 
         response = self.execute_graphql(query)
 
-        self.assertEqual(len(response["errors"]), 1, "Expected exactly one error")
-        self.assertEqual(response["errors"][0]["message"], "User is not logged in.")
-        self.assertIsNone(response["data"])
+        self.assertGraphQLUnauthenticated(response)
 
     @parametrize(
         ("organization_count, is_outreach_authorized, expected_query_count"),
@@ -77,23 +77,24 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             )
 
         query = """
-        query {
-            currentUser {
-                username
-                firstName
-                lastName
-                middleName
-                email
-                hasAcceptedTos
-                hasAcceptedPrivacyPolicy
-                isOutreachAuthorized
-                organizations: organizationsOrganization {
-                    id
-                    name
-                    userPermissions
+            query {
+                currentUser {
+                    username
+                    firstName
+                    lastName
+                    middleName
+                    email
+                    hasAcceptedTos
+                    hasAcceptedPrivacyPolicy
+                    isHmisUser
+                    isOutreachAuthorized
+                    organizations: organizationsOrganization {
+                        id
+                        name
+                        userPermissions
+                    }
                 }
             }
-        }
         """
 
         with self.assertNumQueriesWithoutCache(expected_query_count):
@@ -132,6 +133,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             response["data"]["currentUser"]["isOutreachAuthorized"],
             is_outreach_authorized,
         )
+        self.assertFalse(response["data"]["currentUser"]["isHmisUser"])
         self.assertEqual(
             response["data"]["currentUser"]["hasAcceptedTos"],
             user.has_accepted_tos,
@@ -145,6 +147,33 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
             organization_count,
         )
         self.assertCountEqual(response["data"]["currentUser"]["organizations"], expected_organizations)
+
+    @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
+    def test_logged_in_hmis_user_query(self) -> None:
+        hmis_user = baker.make(get_user_model(), _fill_optional=["email"])
+
+        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
+        success_response = {"data": {"createAuthToken": {"authToken": token}}}
+
+        with patch(
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
+            return_value=success_response,
+        ):
+            self.execute_graphql(
+                LOGIN_MUTATION,
+                variables={"email": hmis_user.email, "password": "anything"},
+            )
+
+        query = """
+            query {
+                currentUser {
+                    isHmisUser
+                }
+            }
+        """
+
+        response = self.execute_graphql(query)
+        self.assertTrue(response["data"]["currentUser"]["isHmisUser"])
 
     @parametrize(
         ("user_role, expected_permissions"),

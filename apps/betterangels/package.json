@@ -58,7 +58,6 @@
     "expo-location": "*",
     "expo-document-picker": "*",
     "expo-image-picker": "*",
-    "react-native-modal": "*",
     "expo-file-system": "*",
     "react-native-pdf": "*",
     "@react-native-picker/picker": "*",
@@ -85,7 +84,18 @@
     "@swc/helpers": "*",
     "graphql": "*",
     "vite": "*",
-    "@nx/vite": "*"
+    "@nx/vite": "*",
+    "ts-essentials": "*",
+    "vitest": "*",
+    "@storybook/react-native-web-vite": "*",
+    "@nx/detox": "*",
+    "@nx/rollup": "*",
+    "@types/geojson": "*",
+    "expo-crypto": "*",
+    "expo-image": "*",
+    "@graphql-typed-document-node/core": "*",
+    "fast-deep-equal": "*",
+    "@testing-library/react": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

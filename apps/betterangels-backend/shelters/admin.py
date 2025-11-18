@@ -14,6 +14,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import F, OuterRef, QuerySet, Subquery
+from django.db.models.functions import Cast, JSONObject
 from django.forms import BaseFormSet, TimeInput
 from django.http import HttpRequest
 from django.urls import reverse
@@ -84,7 +86,7 @@ User = get_user_model()
 
 
 class ShelterForm(forms.ModelForm):
-    template_name = "admin/shelters/change_form.html"  # Specify your custom template path
+    template_name = "admin/shelters/shelter_change_form.html"  # Specify your custom template path
 
     clear_hero_image = forms.BooleanField(
         required=False,
@@ -701,44 +703,7 @@ class ShelterResource(resources.ModelResource):
 @admin.register(Shelter)
 class ShelterAdmin(ImportExportModelAdmin):
     form = ShelterForm
-
-    def _get_selected_hero(self, formsets: list[BaseFormSet]) -> Optional[Union[Type[models.Model], models.Model]]:
-        return next(
-            (
-                f.instance
-                for fs in formsets
-                for f in fs.forms
-                if f.cleaned_data and not f.cleaned_data.get("DELETE") and f.cleaned_data.get("make_hero_image")
-            ),
-            None,
-        )
-
-    def save_related(
-        self,
-        request: HttpRequest,
-        form: ShelterForm,
-        formsets: list[BaseFormSet],
-        change: bool,
-    ) -> None:
-        super().save_related(request, form, formsets, change)
-
-        if form.cleaned_data.get("clear_hero_image"):
-            form.instance.hero_image_content_type = None
-            form.instance.hero_image_object_id = None
-            form.instance.save()
-
-        if hero := self._get_selected_hero(formsets):
-            ct = ContentType.objects.get_for_model(hero)
-            form.instance.hero_image_content_type = ct
-            form.instance.hero_image_object_id = hero.pk
-            form.instance.save()
-
-    @admin.display(description="Current Hero Image")
-    def display_hero_image(self, obj: Shelter) -> str:
-        if obj.hero_image and obj.hero_image.file:
-            return mark_safe(f'<img src="{obj.hero_image.file.url}" style="max-height: 200px;" />')
-
-        return "No hero image selected"
+    list_select_related = ("organization",)
 
     inlines = [ContactInfoInline, ExteriorPhotoInline, InterPhotoInline, VideoInline]
     fieldsets = (
@@ -923,6 +888,17 @@ class ShelterAdmin(ImportExportModelAdmin):
     search_fields = ("name", "organization__name", "description", "subjective_review")
     resource_class = ShelterResource
 
+    def _get_selected_hero(self, formsets: list[BaseFormSet]) -> Optional[Union[Type[models.Model], models.Model]]:
+        return next(
+            (
+                f.instance
+                for fs in formsets
+                for f in fs.forms
+                if f.cleaned_data and not f.cleaned_data.get("DELETE") and f.cleaned_data.get("make_hero_image")
+            ),
+            None,
+        )
+
     def _get_m2m_permissions(self, action: str = "change") -> dict[str, str]:
         """
         Generates a dict of permission names by related_name key for all ManyToManyFields on the Shelter model.
@@ -936,6 +912,18 @@ class ShelterAdmin(ImportExportModelAdmin):
                 permissions_map[field.name] = f"shelters.{permission_codename}"
 
         return permissions_map
+
+    def _create_log_entries(self, user_pk, rows):  # type: ignore
+        logentry_map = {
+            RowResult.IMPORT_TYPE_NEW: ADDITION,
+            RowResult.IMPORT_TYPE_UPDATE: CHANGE,
+            RowResult.IMPORT_TYPE_DELETE: DELETION,
+        }
+        for import_type, _instances in rows.items():
+            if import_type not in logentry_map:
+                continue
+            action_flag = logentry_map[import_type]
+            self._create_log_entry(user_pk, rows[import_type], import_type, action_flag)
 
     def get_readonly_fields(
         self, request: HttpRequest, obj: Optional[Shelter] = None
@@ -954,34 +942,66 @@ class ShelterAdmin(ImportExportModelAdmin):
 
         return readonly_fields
 
-    def _create_log_entries(self, user_pk, rows):  # type: ignore
-        logentry_map = {
-            RowResult.IMPORT_TYPE_NEW: ADDITION,
-            RowResult.IMPORT_TYPE_UPDATE: CHANGE,
-            RowResult.IMPORT_TYPE_DELETE: DELETION,
-        }
-        for import_type, _instances in rows.items():
-            if import_type not in logentry_map:
-                continue
-            action_flag = logentry_map[import_type]
-            self._create_log_entry(user_pk, rows[import_type], import_type, action_flag)
+    def get_queryset(self, request: HttpRequest) -> QuerySet[Shelter]:
+        qs: QuerySet[Shelter] = super().get_queryset(request)
 
-    def updated_by(self, obj: Shelter) -> str:
-        last_event = (
-            MiddlewareEvents.objects.filter(
-                pgh_obj_id=obj.id,
+        # Limit events to just the objects in *this* queryset (admin page w/ filters)
+        # This uses pghistory's optimized aggregator instead of scanning all events.
+        scoped_events = (
+            MiddlewareEvents.objects.tracks(qs)
+            .exclude(user__isnull=True)
+            .order_by("pgh_obj_id", "-pgh_created_at")
+            .distinct("pgh_obj_id")
+            .annotate(
+                obj=JSONObject(
+                    user_id=F("user_id"),
+                    created=F("pgh_created_at"),
+                    first=F("user__first_name"),
+                    last=F("user__last_name"),
+                    username=F("user__username"),
+                )
             )
-            .select_related("user")
-            .order_by("-pgh_created_at")
-            .first()
         )
 
-        if last_event and last_event.user:
-            user_admin_url = reverse(
-                f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[last_event.user.id]
+        return qs.annotate(
+            last_event=Subquery(
+                scoped_events.filter(pgh_obj_id=Cast(OuterRef("pk"), output_field=models.TextField())).values("obj")[:1]
             )
-            return format_html(
-                '<a href="{}">{}</a>', user_admin_url, last_event.user.full_name or last_event.user.username
-            )
+        )
 
-        return "No updates yet"
+    def save_related(
+        self,
+        request: HttpRequest,
+        form: ShelterForm,
+        formsets: list[BaseFormSet],
+        change: bool,
+    ) -> None:
+        super().save_related(request, form, formsets, change)
+
+        if form.cleaned_data.get("clear_hero_image"):
+            form.instance.hero_image_content_type = None
+            form.instance.hero_image_object_id = None
+            form.instance.save()
+
+        if hero := self._get_selected_hero(formsets):
+            ct = ContentType.objects.get_for_model(hero)
+            form.instance.hero_image_content_type = ct
+            form.instance.hero_image_object_id = hero.pk
+            form.instance.save()
+
+    @admin.display(description="Current Hero Image")
+    def display_hero_image(self, obj: Shelter) -> str:
+        if obj.hero_image and obj.hero_image.file:
+            return mark_safe(f'<img src="{obj.hero_image.file.url}" style="max-height: 200px;" />')
+
+        return "No hero image selected"
+
+    def updated_by(self, obj: Shelter) -> str:
+        data = getattr(obj, "last_event", None) or {}
+        uid = data.get("user_id")
+        if not uid:
+            return "No updates yet"
+        name = f'{(data.get("first") or "").strip()} {(data.get("last") or "").strip()}'.strip()
+        label = name or (data.get("username") or f"User {uid}")
+        url = reverse(f"admin:{User._meta.app_label}_{User._meta.model_name}_change", args=[uid])
+        return format_html('<a href="{}">{}</a>', url, label)

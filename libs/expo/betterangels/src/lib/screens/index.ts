@@ -1,13 +1,17 @@
 export * from './AppSettings';
 export { default as Client } from './Client';
+export * from './ClientHMIS';
+export * from './ClientHMISEdit';
 export * from './ClientProfileForms';
 export { default as Clients } from './Clients';
 export * from './ClientsAddInteraction';
 export { default as CreateClientProfile } from './CreateClientProfile';
+export * from './CreateClientProfileHMIS';
 export { default as FileScreenComponent } from './FileScreenComponent';
-export { default as Home } from './Home';
 export { default as Interactions } from './Interactions';
 export { default as Note } from './Note';
+export * from './NotesHmis';
 export { default as PublicNote } from './PublicNote';
+export { default as Task } from './Task';
 export { default as Tasks } from './Tasks';
 export { default as UserProfile } from './UserProfile';

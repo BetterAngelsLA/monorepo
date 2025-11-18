@@ -30,7 +30,13 @@
     "@vitejs/plugin-react": "*",
     "vite": "*",
     "react-fast-compare": "*",
-    "react-native": "*"
+    "react-native": "*",
+    "@storybook/react": "*",
+    "@apollo/client": "*",
+    "apollo-link-rest": "*",
+    "apollo-upload-client": "*",
+    "embla-carousel-react": "*",
+    "validator": "*"
   },
   "devDependencies": {}
 }

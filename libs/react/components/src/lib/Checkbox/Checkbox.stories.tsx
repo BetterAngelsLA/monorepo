@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ICheckbox, Checkbox as StoryComponent } from './Checkbox';
 
 const meta: Meta<typeof StoryComponent> = {
-  title: 'Components/Form-Ui/Checkbox',
+  title: 'Form-Ui/Checkbox',
   component: StoryComponent,
   argTypes: {
     ...disableControls(['onChange']),
@@ -29,6 +29,6 @@ export const Checkbox: Story = {
       onChange: setChecked,
     };
 
-    return <StoryComponent {...baseArgs} className="w-[300px]" />;
+    return <StoryComponent {...baseArgs} />;
   },
 };

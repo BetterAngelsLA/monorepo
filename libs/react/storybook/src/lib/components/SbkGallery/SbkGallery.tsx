@@ -44,7 +44,7 @@ function SbkGallery<T>(props: TGalleryProps) {
   const listItemCss = ['border', listItemClassname];
 
   return (
-    <SbkPanel className={mergeCss(parentCss)}>
+    <SbkPanel variant="basic" className={mergeCss(parentCss)}>
       {searchable && (
         <div className="mb-8 w-96">
           <SbkGallerySearch<TGalleryItem>

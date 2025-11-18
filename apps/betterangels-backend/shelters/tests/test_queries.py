@@ -312,7 +312,10 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
     def test_shelters_query(self) -> None:
         shelter_count = 2
-        shelters = shelter_recipe.make(_quantity=shelter_count)
+        shelters = shelter_recipe.make(_quantity=shelter_count, status=StatusChoices.APPROVED)
+
+        # create shelter in draft state that should not be included in query results
+        shelter_recipe.make(status=StatusChoices.DRAFT)
 
         exterior_photo_0 = ExteriorPhoto.objects.create(shelter=shelters[0], file=self.file)
         InteriorPhoto.objects.create(shelter=shelters[0], file=self.file)
@@ -334,7 +337,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
             }}
         """
 
-        expected_query_count = 24
+        expected_query_count = 28
 
         variables = {"order": {"name": "ASC"}}
 
@@ -343,6 +346,7 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
 
         shelters = response["data"]["shelters"]["results"]
         self.assertEqual(len(shelters), shelter_count)
+        self.assertEqual(Shelter.objects.count(), shelter_count + 1)
         self.assertEqual(shelters[0]["heroImage"], exterior_photo_0.file.url)
         self.assertEqual(shelters[1]["heroImage"], interior_photo_1.file.url)
 
@@ -360,7 +364,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     # Each subsequent shelter is ~9 miles further from the reference point.
                     latitude=f"{reference_point["latitude"]}.{i}",
                     longitude=f"{reference_point["longitude"]}.{i}",
-                )
+                ),
+                status=StatusChoices.APPROVED,
             )
             for i in range(3, 0, -1)
         ]
@@ -438,7 +443,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     # Each subsequent shelter is two degrees further from the reference point
                     latitude=f"{reference_point["latitude"] - i}",
                     longitude=f"{reference_point["longitude"] - i}",
-                )
+                ),
+                status=StatusChoices.APPROVED,
             )
             for i in range(8, -2, -2)
         ]
@@ -486,7 +492,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                     # Each subsequent shelter is two degrees further from the reference point
                     latitude=f"{reference_point["latitude"] - i}",
                     longitude=f"{reference_point["longitude"] - i}",
-                )
+                ),
+                status=StatusChoices.APPROVED,
             )
             for i in range(8, -2, -2)
         ]
@@ -580,14 +587,17 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
                 Pet.objects.get_or_create(name=PetChoices.CATS)[0],
                 Pet.objects.get_or_create(name=PetChoices.SERVICE_ANIMALS)[0],
             ],
+            status=StatusChoices.APPROVED,
         )
         shelter_recipe.make(
             parking=[Parking.objects.get_or_create(name=ParkingChoices.BICYCLE)[0]],
             pets=[Pet.objects.get_or_create(name=PetChoices.CATS)[0]],
+            status=StatusChoices.APPROVED,
         )
         shelter_recipe.make(
             parking=[Parking.objects.get_or_create(name=ParkingChoices.RV)[0]],
             pets=[Pet.objects.get_or_create(name=PetChoices.DOGS_UNDER_25_LBS)[0]],
+            status=StatusChoices.APPROVED,
         )
 
         query = """

@@ -1,9 +1,9 @@
+import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { Spacings } from '@monorepo/expo/shared/static';
-import { FlashList } from '@shopify/flash-list';
-import { ReactElement, useCallback, useEffect, useState } from 'react';
+import { InfiniteList } from '@monorepo/expo/shared/ui-components';
+import { ReactElement, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { uniqueBy } from 'remeda';
-import useDeepCompareEffect from 'use-deep-compare-effect';
+
 import {
   ClientProfileFilter,
   ClientProfileOrder,
@@ -11,11 +11,10 @@ import {
 } from '../../apollo';
 import { pagePaddingHorizontal } from '../../static';
 import { ClientProfileListHeader } from './ClientProfileListHeader';
-import { ListEmptyState } from './ListEmptyState';
-import { ListLoadingView } from './ListLoadingView';
 import {
+  ClientProfilesDocument,
   ClientProfilesQuery,
-  useClientProfilesQuery,
+  ClientProfilesQueryVariables,
 } from './__generated__/ClientProfiles.generated';
 import {
   DEFAULT_ITEM_GAP,
@@ -39,136 +38,78 @@ type TProps = {
   horizontalPadding?: number;
 };
 
-export function ClientProfileList(props: TProps) {
-  const {
-    filters,
-    order = DEFAULT_QUERY_ORDER,
-    itemGap = DEFAULT_ITEM_GAP,
-    paginationLimit = DEFAULT_PAGINATION_LIMIT,
-    renderItem,
-    renderHeaderText,
-    headerStyle,
-    showAllClientsLink,
-    style,
-    horizontalPadding = pagePaddingHorizontal,
-  } = props;
-
-  const [offset, setOffset] = useState<number>(0);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [clients, setClients] = useState<TClientProfile[] | undefined>(
-    undefined
-  );
-
-  const { data, loading } = useClientProfilesQuery({
-    variables: {
-      filters,
-      order,
-      pagination: { limit: paginationLimit, offset: offset },
-    },
-    fetchPolicy: 'cache-and-network',
-    nextFetchPolicy: 'cache-first',
-  });
-
-  // reset on actual filter value changes
-  useDeepCompareEffect(() => {
-    setOffset(0);
-    setClients(undefined);
-  }, [filters]);
-
-  useEffect(() => {
-    if (!data || !('clientProfiles' in data)) {
-      return;
-    }
-
-    const { results, totalCount: newTotalCount } = data.clientProfiles;
-
-    setTotalCount(newTotalCount);
-
-    setClients((prevClients) => {
-      if (offset === 0 || prevClients === undefined) {
-        return results;
-      }
-
-      return uniqueBy([...prevClients, ...results], (client) => client.id);
+export function ClientProfileList({
+  filters,
+  order = DEFAULT_QUERY_ORDER,
+  itemGap = DEFAULT_ITEM_GAP,
+  paginationLimit = DEFAULT_PAGINATION_LIMIT,
+  renderItem,
+  renderHeaderText,
+  headerStyle,
+  showAllClientsLink,
+  style,
+  horizontalPadding = pagePaddingHorizontal,
+}: TProps) {
+  const { items, total, loading, loadMore, hasMore, error } =
+    useInfiniteScrollQuery<
+      TClientProfile,
+      ClientProfilesQuery,
+      ClientProfilesQueryVariables
+    >({
+      document: ClientProfilesDocument,
+      queryFieldName: 'clientProfiles',
+      variables: { filters, order: order || undefined },
+      pageSize: paginationLimit,
     });
 
-    setHasMore(offset + paginationLimit < newTotalCount);
-  }, [data, offset]);
-
-  function loadMoreClients() {
-    if (hasMore && !loading) {
-      setOffset((prevOffset) => prevOffset + paginationLimit);
-    }
-  }
+  if (error) console.error(error);
 
   const renderItemFn = useCallback(
-    ({ item }: { item: TClientProfile }) => renderItem(item),
+    (item: TClientProfile) => renderItem(item),
     [renderItem]
   );
 
-  const renderFooter = () => {
-    if (!loading) {
-      return null;
-    }
-
-    return <ListLoadingView style={{ paddingVertical: 40 }} />;
-  };
-
-  // initial query hasn't run yet
-  if (clients === undefined && loading) {
-    return <ListLoadingView fullScreen={true} />;
-  }
-
-  if (!clients) {
-    return null;
-  }
-
   return (
     <View style={[styles.container, style]}>
-      <ClientProfileListHeader
-        style={[
-          styles.header,
-          { paddingHorizontal: horizontalPadding },
-          headerStyle,
-        ]}
-        totalClients={totalCount}
-        visibleClients={clients.length}
-        showAllClientsLink={showAllClientsLink}
-        renderHeaderText={renderHeaderText}
-      />
-
-      <FlashList<TClientProfile>
-        estimatedItemSize={95}
-        data={clients}
+      <InfiniteList<TClientProfile>
+        data={items}
         keyExtractor={(item) => item.id}
+        totalItems={total}
         renderItem={renderItemFn}
-        onEndReached={loadMoreClients}
-        onEndReachedThreshold={0.05}
-        // ItemSeparatorComponent renders only between items in a batch
-        ItemSeparatorComponent={() => <View style={{ height: itemGap }} />}
-        // set extraData to force re-render when data is appended, else
-        // newly loaded batch won't be separated by ItemSeparatorComponent
-        extraData={clients.length}
-        ListEmptyComponent={<ListEmptyState />}
-        ListFooterComponent={renderFooter}
-        contentContainerStyle={{
-          paddingBottom: 60,
-          paddingHorizontal: horizontalPadding,
-        }}
+        itemGap={itemGap}
+        loading={loading}
+        loadMore={loadMore}
+        hasMore={hasMore}
+        modelName="client"
+        renderResultsHeader={(visible, totalItems) => (
+          <View
+            style={[
+              styles.headerWrap,
+              { paddingHorizontal: horizontalPadding },
+            ]}
+          >
+            <ClientProfileListHeader
+              style={headerStyle}
+              totalClients={totalItems ?? 0}
+              visibleClients={visible}
+              showAllClientsLink={showAllClientsLink}
+              renderHeaderText={renderHeaderText}
+            />
+          </View>
+        )}
+        style={styles.list}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingHorizontal: horizontalPadding },
+        ]}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    marginBottom: Spacings.xs,
-  },
-  listContent: {
-    paddingBottom: 60,
-  },
+  container: { flex: 1 },
+  list: { backgroundColor: 'transparent' },
+  listContent: { paddingBottom: 60 },
+  headerWrap: { marginBottom: Spacings.xs },
 });

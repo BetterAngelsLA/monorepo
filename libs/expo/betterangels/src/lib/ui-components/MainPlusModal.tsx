@@ -6,7 +6,8 @@ import {
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { MainModal } from './MainModal';
+import { useUser } from '../hooks';
+import { MainModal, TMainModalAction } from './MainModal';
 
 interface IMainPlusModalProps {
   closeModal: () => void;
@@ -16,15 +17,10 @@ interface IMainPlusModalProps {
 export default function MainPlusModal(props: IMainPlusModalProps) {
   const { isModalVisible, closeModal } = props;
 
-  const ACTIONS = [
-    {
-      title: 'Add interaction',
-      Icon: FilePlusIcon,
-      route: '/clients',
-      params: {
-        createInteraction: 'true',
-      },
-    },
+  const { isHmisUser } = useUser();
+
+  // shared actions
+  const ACTIONS: TMainModalAction[] = [
     {
       title: 'Add client',
       Icon: UserAddIcon,
@@ -32,9 +28,21 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
     },
   ];
 
+  // non-hmis actions
+  if (!isHmisUser) {
+    ACTIONS.unshift({
+      title: 'Add interaction',
+      Icon: FilePlusIcon,
+      route: '/',
+      params: {
+        createInteraction: 'true',
+      },
+    });
+  }
+
   return (
     <MainModal
-      vertical
+      vertical={true}
       actions={ACTIONS}
       isModalVisible={isModalVisible}
       closeModal={closeModal}

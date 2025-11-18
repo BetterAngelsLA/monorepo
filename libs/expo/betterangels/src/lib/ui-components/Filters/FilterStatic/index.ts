@@ -1,0 +1,1 @@
+export { FilterStatic } from './FilterStatic';

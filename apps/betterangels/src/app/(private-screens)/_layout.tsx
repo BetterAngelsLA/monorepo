@@ -43,26 +43,7 @@ export default function PrivateLayout() {
           headerTitleAlign: 'center',
         }}
       />
-      <Stack.Screen
-        name="interactions"
-        options={{
-          title: 'Interactions',
-          headerTitleAlign: 'center',
-          headerStyle: {
-            backgroundColor: Colors.BRAND_DARK_BLUE,
-          },
-          headerLeft: () => (
-            <TextButton
-              regular
-              color={Colors.WHITE}
-              fontSize="md"
-              accessibilityHint="goes to previous screen"
-              title="Back"
-              onPress={router.back}
-            />
-          ),
-        }}
-      />
+
       <Stack.Screen
         name="note/[id]"
         options={{
@@ -166,6 +147,30 @@ export default function PrivateLayout() {
         options={getDefaultStackNavOptions()}
       />
       <Stack.Screen
+        name="notes-hmis/index"
+        options={getDefaultStackNavOptions({
+          title: 'Interactions',
+        })}
+      />
+      <Stack.Screen
+        name="notes-hmis/create/index"
+        options={getDefaultStackNavOptions({
+          title: 'Add Interaction',
+        })}
+      />
+      <Stack.Screen
+        name="notes-hmis/[id]/index"
+        options={getDefaultStackNavOptions({
+          title: 'Interaction',
+        })}
+      />
+      <Stack.Screen
+        name="notes-hmis/[id]/edit"
+        options={getDefaultStackNavOptions({
+          title: 'Edit Interaction',
+        })}
+      />
+      <Stack.Screen
         name="file/[id]"
         options={{
           headerTitleAlign: 'center',
@@ -200,6 +205,13 @@ export default function PrivateLayout() {
         name="tasks"
         options={getDefaultStackNavOptions({
           title: 'Tasks',
+        })}
+      />
+
+      <Stack.Screen
+        name="task/[id]"
+        options={getDefaultStackNavOptions({
+          title: 'Task',
         })}
       />
     </Stack>

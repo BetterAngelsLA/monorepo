@@ -21,9 +21,10 @@ import Interactions from './Interactions';
 import { InteractionLocations } from './Locations';
 import { TasksTab } from './Tasks';
 
+import { useQuery } from '@apollo/client/react';
 import {
+  ClientProfileDocument,
   ClientProfileQuery,
-  useClientProfileQuery,
 } from './__generated__/Client.generated';
 
 const getTabComponent = (
@@ -62,7 +63,7 @@ export default function Client({
   arrivedFrom?: string;
   openCard?: ClientProfileSectionEnum;
 }) {
-  const { data, loading, error } = useClientProfileQuery({
+  const { data, loading, error } = useQuery(ClientProfileDocument, {
     variables: { id: clientProfileId },
   });
   const [tab, setTab] = useState(ClientViewTabEnum.Profile);

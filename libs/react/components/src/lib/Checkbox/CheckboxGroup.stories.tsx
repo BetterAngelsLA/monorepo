@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { CheckboxGroup as StoryComponent, TProps } from './CheckboxGroup';
 
 const meta: Meta<typeof StoryComponent> = {
-  title: 'Components/Form-Ui/Checkbox',
+  title: 'Form-Ui/Checkbox',
   component: StoryComponent,
   argTypes: {
     ...disableControls(['onClick']),

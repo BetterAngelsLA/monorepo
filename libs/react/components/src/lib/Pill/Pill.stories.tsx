@@ -3,7 +3,7 @@ import { IPillProps, Pill as StoryComponent } from './Pill';
 
 const meta: Meta<typeof StoryComponent> = {
   component: StoryComponent,
-  title: 'Components/Pill',
+  title: 'Pill',
 };
 export default meta;
 
@@ -16,8 +16,8 @@ const defaultArgs: IPillProps = {
 
 export const Pill: Story = {
   render: (args) => {
-    const baseArgs = { ...defaultArgs, ...args };
+    const storyArgs = { ...defaultArgs, ...args };
 
-    return <StoryComponent {...baseArgs} />;
+    return <StoryComponent {...storyArgs} />;
   },
 };

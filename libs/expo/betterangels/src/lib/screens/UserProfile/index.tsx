@@ -1,5 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 
+import { useMutationWithErrors } from '@monorepo/apollo';
 import {
   Avatar,
   Button,
@@ -8,16 +9,23 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { useDeleteCurrentUserMutation } from '../../apollo';
-import { useSignOut, useSnackbar, useUser } from '../../hooks';
+import { DeleteCurrentUserDocument } from '../../apollo';
+import {
+  useFeatureFlagActive,
+  useSignOut,
+  useSnackbar,
+  useUser,
+} from '../../hooks';
+import { FeatureFlags } from '../../providers';
 import InfoCard from './InfoCard';
 
 export default function UserProfile() {
   const { user } = useUser();
   const { showSnackbar } = useSnackbar();
+  const hmisFeatureOn = useFeatureFlagActive(FeatureFlags.HMIS_FF);
 
   if (!user) throw new Error('Something went wrong');
-  const [deleteCurrentUser] = useDeleteCurrentUserMutation();
+  const [deleteCurrentUser] = useMutationWithErrors(DeleteCurrentUserDocument);
   const userInfo = [
     { title: 'Email', value: user.email },
     {
@@ -28,6 +36,14 @@ export default function UserProfile() {
           : 'None',
     },
   ];
+
+  if (hmisFeatureOn) {
+    userInfo.push({
+      title: 'Login method',
+      value: user.isHmisUser ? 'HMIS' : 'BetterAngels',
+    });
+  }
+
   const { signOut } = useSignOut();
 
   async function deleteCurrentUserFunction() {
@@ -70,6 +86,7 @@ export default function UserProfile() {
         {userInfo.map((item, index) => (
           <InfoCard key={index} title={item.title} value={item.value} />
         ))}
+
         <DeleteModal
           body={`All data associated with your account will be deleted. This action cannot be undone.`}
           title={`Permanently delete your account?`}

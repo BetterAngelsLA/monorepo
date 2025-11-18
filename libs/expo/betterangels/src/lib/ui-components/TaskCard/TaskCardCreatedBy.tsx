@@ -27,8 +27,8 @@ export default function TaskCardCreatedBy(props: TaskCardCreatedByProps) {
       <Avatar
         mr="xs"
         size="sm"
-        accessibilityLabel={`creater's profile photo`}
-        accessibilityHint={`creater's profile photo`}
+        accessibilityLabel={`creator's profile photo`}
+        accessibilityHint={`creator's profile photo`}
         imageUrl={''}
       />
       <View>

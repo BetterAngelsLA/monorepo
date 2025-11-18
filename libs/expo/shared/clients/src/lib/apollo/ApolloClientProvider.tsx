@@ -1,4 +1,5 @@
-import { ApolloProvider, InMemoryCache } from '@apollo/client';
+import { InMemoryCache } from '@apollo/client';
+import { ApolloProvider } from '@apollo/client/react';
 import { TCachePolicyConfig, createApolloCache } from '@monorepo/apollo';
 import React, { ReactNode, useMemo } from 'react';
 import { useApiConfig } from '../http';
@@ -17,18 +18,29 @@ type TProps = {
   children: ReactNode;
   cacheStore?: InMemoryCache;
   policyConfig?: TCachePolicyConfig;
+  onUnauthenticated?: () => void;
+  authPath?: string;
 };
 
 export const ApolloClientProvider = (props: TProps) => {
-  const { policyConfig, cacheStore, children } = props;
+  const { policyConfig, cacheStore, children, authPath, onUnauthenticated } =
+    props;
 
   const { baseUrl } = useApiConfig();
 
-  const cache = cacheStore || createApolloCache({ policyConfig });
+  const cache = useMemo(
+    () => cacheStore || createApolloCache({ policyConfig }),
+    [cacheStore, policyConfig]
+  );
 
   const apolloClient = useMemo(() => {
-    return createApolloClient({ apiUrl: baseUrl, cacheStore: cache });
-  }, [baseUrl]);
+    return createApolloClient({
+      apiUrl: baseUrl,
+      cacheStore: cache,
+      onUnauthenticated,
+      authPath,
+    });
+  }, [baseUrl, cache, onUnauthenticated, authPath]);
 
   if (!apolloClient) {
     return null;

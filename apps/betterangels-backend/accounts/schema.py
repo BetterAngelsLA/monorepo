@@ -26,7 +26,6 @@ from strawberry_django.utils.query import filter_for_user
 
 from .models import PermissionGroup, User
 from .types import (
-    AuthInput,
     AuthResponse,
     LoginInput,
     OrganizationMemberType,
@@ -63,16 +62,24 @@ def annotate_member_role(org_id: str) -> Case:
 
 @strawberry.type
 class Query:
-    current_user: UserType = auth.current_user()  # type: ignore
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    def current_user(self, info: Info) -> UserType:
+        return get_current_user(info)  # type: ignore
 
-    @strawberry_django.offset_paginated(OffsetPaginated[OrganizationType], extensions=[HasPerm(NotePermissions.ADD)])
+    @strawberry_django.offset_paginated(
+        OffsetPaginated[OrganizationType],
+        permission_classes=[IsAuthenticated],
+        extensions=[HasPerm(NotePermissions.ADD)],
+    )
     def caseworker_organizations(self) -> QuerySet[Organization]:
         queryset: QuerySet[Organization] = Organization.objects.filter(
             permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
         )
         return queryset
 
-    @strawberry_django.field(extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)])
+    @strawberry_django.field(
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)]
+    )
     def organization_member(self, info: Info, organization_id: str, user_id: str) -> OrganizationMemberType:
         current_user = cast(User, get_current_user(info))
         try:
@@ -94,6 +101,7 @@ class Query:
 
     @strawberry_django.offset_paginated(
         OffsetPaginated[OrganizationMemberType],
+        permission_classes=[IsAuthenticated],
         extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
     def organization_members(self, info: Info, organization_id: str) -> QuerySet[User]:
@@ -118,16 +126,6 @@ class Mutation:
 
     @strawberry.mutation
     def login(self, input: LoginInput) -> AuthResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
-
-    @strawberry.mutation
-    def google_auth(self, input: AuthInput) -> AuthResponse:
-        # The is a stub and logic is handled client-side by Apollo
-        return AuthResponse(status_code="")
-
-    @strawberry.mutation
-    def apple_auth(self, input: AuthInput) -> AuthResponse:
         # The is a stub and logic is handled client-side by Apollo
         return AuthResponse(status_code="")
 
@@ -163,7 +161,9 @@ class Mutation:
 
         return DeletedObjectType(id=user_id)
 
-    @strawberry_django.mutation(extensions=[HasPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)])
+    @strawberry_django.mutation(
+        permission_classes=[IsAuthenticated], extensions=[HasPerm(UserOrganizationPermissions.ADD_ORG_MEMBER)]
+    )
     def add_organization_member(self, info: Info, data: OrgInvitationInput) -> OrganizationMemberType:
         current_user = get_current_user(info)
 

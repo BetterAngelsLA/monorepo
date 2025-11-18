@@ -5,6 +5,7 @@ import strawberry_django
 from accounts.enums import OrgRoleEnum
 from accounts.groups import GroupTemplateNames
 from accounts.permissions import UserOrganizationPermissions
+from common.constants import HMIS_SESSION_KEY_NAME
 from common.graphql.types import NonBlankString
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import CharField, F, Q, QuerySet, Value
@@ -118,14 +119,19 @@ class UserBaseType:
 
 @strawberry_django.type(User)
 class UserType(UserBaseType):
-    # TODO: has_accepted_tos, has_accepted_privacy_policy, is_outreach_authorized shouldn't be optional.
-    # Temporary fix while we figure out type generation
     id: ID
+    organizations_organization: Optional[List[OrganizationForUserType]]
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]
-    organizations_organization: Optional[List[OrganizationForUserType]]
     username: auto
+
+    @strawberry_django.field
+    def is_hmis_user(self, info: Info) -> Optional[bool]:
+        request = info.context["request"]
+        session = request.session
+
+        return bool(session.get(HMIS_SESSION_KEY_NAME, None))
 
 
 @strawberry_django.type(User)

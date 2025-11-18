@@ -1,23 +1,25 @@
-export default { title: 'Disabled until Expo storybook fixed' };
-export const Placeholder = () => null;
+import type { Meta, StoryObj } from '@storybook/react-native-web-vite';
+import { Pill, type IPillProps } from './Pill';
 
-// import type { Meta, StoryObj } from '@storybook/react';
-// import { Pill } from './Pill';
+const meta: Meta<IPillProps> = {
+  title: 'Pill',
+  component: Pill,
+  args: {
+    label: 'Hello',
+    variant: 'success',
+  },
+  argTypes: {
+    variant: {
+      control: { type: 'inline-radio' },
+      options: ['primary', 'success', 'warning'],
+    },
+    label: { control: 'text' },
+  },
+};
+export default meta;
 
-// const meta: Meta<typeof Pill> = {
-//   title: 'Pill',
-//   component: Pill,
-//   args: {
-//     type: 'success',
-//   },
-// };
+type Story = StoryObj<IPillProps>;
 
-// export default meta;
-
-// type PillStory = StoryObj<typeof Pill>;
-
-// export const Basic: PillStory = {
-//   args: {
-//     type: 'success',
-//   },
-// };
+export const Success: Story = {
+  args: { label: 'Saved', variant: 'success' },
+};

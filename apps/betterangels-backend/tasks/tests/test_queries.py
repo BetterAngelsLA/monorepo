@@ -6,6 +6,7 @@ from common.tests.utils import GraphQLBaseTestCase
 from model_bakery import baker
 from notes.models import Note
 from tasks.enums import TaskStatusEnum
+from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 
 
@@ -129,6 +130,28 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
+
+    def test_tasks_query_client_profiles_filter(self) -> None:
+        client_profile_2 = baker.make(ClientProfile)
+
+        task_2 = self.create_task_fixture({"summary": "task 2 summary", "clientProfile": str(client_profile_2.pk)})[
+            "data"
+        ]["createTask"]
+        self.create_task_fixture({"summary": "task 3 summary"})["data"]["createTask"]["id"]
+
+        filters = {"clientProfiles": [str(self.client_profile.pk), str(client_profile_2.pk)]}
+        variables = {"filters": filters}
+
+        task_count = Task.objects.count()
+        self.assertEqual(task_count, 3)
+
+        expected_query_count = 4
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self.execute_graphql(self.get_tasks_query("id"), variables)
+
+        expected_task_ids = [self.task["id"], task_2["id"]]
+        actual_task_ids = [t["id"] for t in response["data"]["tasks"]["results"]]
+        self.assertCountEqual(expected_task_ids, actual_task_ids)
 
     def test_tasks_query_organizations_filter(self) -> None:
         self.graphql_client.force_login(self.org_2_case_manager_1)

@@ -1,3 +1,4 @@
+import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ControlledInput,
@@ -15,31 +16,42 @@ import {
 import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
-import { useCreateTaskMutation } from './__generated__/createTask.generated';
-import { useUpdateTaskMutation } from './__generated__/updateTask.generated';
+import DeleteTask from './DeleteTask';
+import { CreateTaskDocument } from './__generated__/createTask.generated';
+import { UpdateTaskDocument } from './__generated__/updateTask.generated';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
+type TActionType = 'update' | 'delete';
+
 type TProps = {
-  clientProfileId?: string;
+  clientProfileId?: string | null;
   team?: SelahTeamEnum | null;
   noteId?: string;
   onCancel?: () => void;
-  onSuccess?: (taskId: string) => void;
+  onSuccess?: (taskId: string, action: TActionType) => void;
   task?: UpdateTaskInput | null;
+  arrivedFrom?: string;
 };
 
 export function TaskForm(props: TProps) {
-  const { clientProfileId, team, onSuccess, onCancel, noteId, task } = props;
+  const {
+    clientProfileId,
+    team,
+    onSuccess,
+    onCancel,
+    noteId,
+    task,
+    arrivedFrom,
+  } = props;
 
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
-  const [createTaskMutation] = useCreateTaskMutation();
-  const [updateTaskMutation] = useUpdateTaskMutation();
+  const [createTaskMutation] = useMutation(CreateTaskDocument);
+  const [updateTaskMutation] = useMutation(UpdateTaskDocument);
   const {
     control,
     handleSubmit,
     formState: { errors },
-    resetField,
     reset: resetForm,
     setError,
     setValue,
@@ -185,7 +197,7 @@ export function TaskForm(props: TProps) {
       }
 
       resetForm();
-      onSuccess?.((newTask as TaskType).id);
+      onSuccess?.((newTask as TaskType).id, 'update');
     } catch (error) {
       console.error('Task mutation error:', error);
 
@@ -221,6 +233,7 @@ export function TaskForm(props: TProps) {
       <Form>
         <Form.Fieldset>
           <ControlledInput
+            required
             control={control}
             disabled={disabled}
             label={'Title'}
@@ -261,7 +274,7 @@ export function TaskForm(props: TProps) {
             placeholder={'Enter description'}
             inputStyle={{ minHeight: 150 }}
             onDelete={() => {
-              resetField('description');
+              setValue('description', emptyState.description);
             }}
             errorMessage={errors.description?.message}
           />
@@ -286,6 +299,12 @@ export function TaskForm(props: TProps) {
           />
         </Form.Fieldset>
       </Form>
+
+      <DeleteTask
+        id={task?.id}
+        onSuccess={(id) => onSuccess?.(id, 'delete')}
+        arrivedFrom={arrivedFrom}
+      />
     </Form.Page>
   );
 }
