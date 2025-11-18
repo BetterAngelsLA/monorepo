@@ -355,7 +355,7 @@ export type ClientProfileOrder = {
 
 export type ClientProfilePhotoInput = {
   clientProfile: Scalars['ID']['input'];
-  photo: Scalars['Upload']['input'];
+  photo?: InputMaybe<Scalars['Upload']['input']>;
 };
 
 export type ClientProfileType = {

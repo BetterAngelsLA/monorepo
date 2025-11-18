@@ -156,3 +156,5 @@ mutation DeleteClientDocument($id: ID!) {
     }
   }
 }
+
+mutation UpdateClientProfilePhoto()

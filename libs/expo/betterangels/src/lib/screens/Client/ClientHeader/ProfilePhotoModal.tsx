@@ -1,11 +1,10 @@
+import { useMutation } from '@apollo/client/react';
 import { DeleteIcon } from '@monorepo/expo/shared/icons';
 import { DeleteModal, DUR_OUT } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { useSnackbar } from '../../../hooks';
 import { MainModal } from '../../../ui-components/MainModal';
-import {
-  useUpdateClientProfileMutation,
-} from '../../ClientProfileForms/ClientProfileForm/__generated__/clientProfile.generated';
+import { UpdateClientProfilePhotoDocument } from '../../ClientProfileForms/ClientProfileForm/PersonalInfoForm/ProfilePhotoField/__generated__/updateClientProfilePhoto.generated';
 import { ClientProfileDocument } from '../__generated__/Client.generated';
 
 interface IProfilePhotoModalProps {
@@ -45,21 +44,24 @@ export function ProfilePhotoModal({
     }
   }, [isModalVisible, pendingDelete, showDeleteModal]);
 
-  const [updateClientProfile] = useUpdateClientProfileMutation({
-    refetchQueries: [
-      { query: ClientProfileDocument, variables: { id: clientId } },
-    ],
-  });
+  const [updateClientProfilePhoto] = useMutation(
+    UpdateClientProfilePhotoDocument,
+    {
+      refetchQueries: [
+        { query: ClientProfileDocument, variables: { id: clientId } },
+      ],
+    }
+  );
 
   const deleteFile = async () => {
     setShowDeleteModal(false);
     closeModal();
     try {
-      await updateClientProfile({
+      await updateClientProfilePhoto({
         variables: {
           data: {
-            id: clientId,
-            profilePhoto: null,
+            clientProfile: clientId,
+            photo: null,
           },
         },
       });
