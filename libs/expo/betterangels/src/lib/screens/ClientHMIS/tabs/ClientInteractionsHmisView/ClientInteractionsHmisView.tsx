@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { uniqueBy } from 'remeda';
-import { HmisClientNoteType, HmisClientType } from '../../../../apollo';
+import { HmisNoteType, HmisClientType } from '../../../../apollo';
 import {
   MainScrollContainer,
   ProgramNoteCard,
@@ -28,12 +28,18 @@ export function ClientInteractionsHmisView(props: TProps) {
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [totalCount, setTotalCount] = useState<number>(0);
-  const [programNotes, setProgramNotes] = useState<
-    HmisClientNoteType[] | undefined
-  >(undefined);
+  const [programNotes, setProgramNotes] = useState<HmisNoteType[] | undefined>(
+    undefined
+  );
 
   const { data, loading, error } = useHmisListClientNotesQuery({
     skip: !client?.personalId,
+    variables: {
+      pagination: { limit: 10 + 1, offset: 0 },
+      ordering: [{ interactedAt: Ordering.Desc }, { id: Ordering.Desc }],
+      filters: { authors: [user?.id], search: '' },
+    },
+
     variables: {
       enrollmentId: ENROLLMENT_ID,
       personalId: client?.personalId || '',
@@ -69,7 +75,7 @@ export function ClientInteractionsHmisView(props: TProps) {
   };
 
   const renderItemFn = useCallback(
-    (item: HmisClientNoteType) => (
+    (item: HmisNoteType) => (
       <ProgramNoteCard
         onPress={() => {
           router.navigate({
@@ -108,7 +114,7 @@ export function ClientInteractionsHmisView(props: TProps) {
           <PlusIcon />
         </IconButton>
       </View>
-      <InfiniteList<HmisClientNoteType>
+      <InfiniteList<HmisNoteType>
         data={programNotes || []}
         keyExtractor={(item) => item.id ?? ''}
         totalItems={totalCount}
