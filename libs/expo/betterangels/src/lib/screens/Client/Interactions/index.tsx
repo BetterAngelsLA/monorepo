@@ -1,10 +1,11 @@
+import { useQuery } from '@apollo/client/react';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Loading } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, View } from 'react-native';
 import { uniqueBy } from 'remeda';
-import { NotesQuery, Ordering, useNotesQuery } from '../../../apollo';
+import { NotesDocument, NotesQuery, Ordering } from '../../../apollo';
 import { MainContainer, NoteCard } from '../../../ui-components';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 import InteractionsHeader from './InteractionsHeader';
@@ -22,7 +23,7 @@ export default function Interactions({
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
-  const { data, loading, error, refetch } = useNotesQuery({
+  const { data, loading, error, refetch } = useQuery(NotesDocument, {
     variables: {
       pagination: { limit: paginationLimit, offset: offset },
       ordering: [{ interactedAt: Ordering.Desc }, { id: Ordering.Desc }],

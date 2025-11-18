@@ -1,22 +1,29 @@
+import { useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
+import { GraphQLError } from 'graphql';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { HmisClientType, extractHMISErrors } from '../../apollo';
 import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
+import { GetHmisClientDocument } from '../ClientHMIS/__generated__/getHMISClient.generated';
 import {
-  GetHmisClientDocument,
-  useGetHmisClientQuery,
-} from '../ClientHMIS/__generated__/getHMISClient.generated';
-import { useHmisUpdateClientMutation } from './__generated__/updateHmisClient.generated';
+  HmisUpdateClientDocument,
+  HmisUpdateClientMutation,
+} from './__generated__/updateHmisClient.generated';
 import { hmisFormConfig, parseAsSectionKeyHMIS } from './basicForms/config';
 import {
   TUpdateClientInputsUnion,
   toHMISClientProfileInputs,
 } from './toHMISClientProfileInputs';
+
+type MutationExecResult<TData> = {
+  data?: TData | null;
+  errors?: readonly GraphQLError[];
+};
 
 type TProps = {
   id: string;
@@ -48,8 +55,9 @@ export function ClientHMISEdit(props: TProps) {
 
   type TFormValues = z.input<typeof sectionSchema>;
 
-  const [updateHmisClientMutation, { loading: isUpdating }] =
-    useHmisUpdateClientMutation();
+  const [updateHmisClientMutation, { loading: isUpdating }] = useMutation(
+    HmisUpdateClientDocument
+  );
 
   const debugMode = process.env['EXPO_PUBLIC_GQL_DEBUG'] === 'true';
 
@@ -64,10 +72,12 @@ export function ClientHMISEdit(props: TProps) {
     defaultValues: emptyState,
   });
 
-  const { data: clientData, loading: clientDataLoading } =
-    useGetHmisClientQuery({
+  const { data: clientData, loading: clientDataLoading } = useQuery(
+    GetHmisClientDocument,
+    {
       variables: { personalId },
-    });
+    }
+  );
 
   useEffect(() => {
     const client = clientData?.hmisGetClient;
@@ -108,18 +118,17 @@ export function ClientHMISEdit(props: TProps) {
         values as TUpdateClientInputsUnion
       );
 
-      const { data: updateData, errors } = await updateHmisClientMutation({
+      const { data: updateData, errors } = (await updateHmisClientMutation({
         variables: {
           clientInput,
           clientSubItemsInput,
         },
         errorPolicy: 'all',
-        // TODO: replace with cache typePolicy or push directly to cache
         refetchQueries: [
           { query: GetHmisClientDocument, variables: { personalId } },
         ],
         awaitRefetchQueries: true,
-      });
+      })) as MutationExecResult<HmisUpdateClientMutation>;
 
       if (debugMode && errors) {
         console.error(errors); // raw error

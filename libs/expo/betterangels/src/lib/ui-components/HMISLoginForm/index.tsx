@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { useMutationWithErrors } from '@monorepo/apollo';
 import { Colors } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -8,7 +9,7 @@ import {
   Loading,
 } from '@monorepo/expo/shared/ui-components';
 import { useUser } from '../../hooks';
-import { useHmisLoginMutation } from './__generated__/HMISLogin.generated';
+import { HmisLoginDocument } from './__generated__/HMISLogin.generated';
 
 export default function HMISLoginForm() {
   const [email, setEmail] = useState('');
@@ -16,7 +17,7 @@ export default function HMISLoginForm() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const [hmisLogin] = useHmisLoginMutation();
+  const [hmisLogin] = useMutationWithErrors(HmisLoginDocument);
   const { refetchUser } = useUser();
 
   const onSubmit = useCallback(async () => {

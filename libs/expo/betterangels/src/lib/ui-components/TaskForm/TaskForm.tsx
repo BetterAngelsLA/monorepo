@@ -1,3 +1,4 @@
+import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   ControlledInput,
@@ -16,8 +17,8 @@ import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
 import DeleteTask from './DeleteTask';
-import { useCreateTaskMutation } from './__generated__/createTask.generated';
-import { useUpdateTaskMutation } from './__generated__/updateTask.generated';
+import { CreateTaskDocument } from './__generated__/createTask.generated';
+import { UpdateTaskDocument } from './__generated__/updateTask.generated';
 import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
 type TActionType = 'update' | 'delete';
@@ -45,8 +46,8 @@ export function TaskForm(props: TProps) {
 
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
-  const [createTaskMutation] = useCreateTaskMutation();
-  const [updateTaskMutation] = useUpdateTaskMutation();
+  const [createTaskMutation] = useMutation(CreateTaskDocument);
+  const [updateTaskMutation] = useMutation(UpdateTaskDocument);
   const {
     control,
     handleSubmit,

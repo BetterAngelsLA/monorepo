@@ -1,3 +1,4 @@
+import { useMutation } from '@apollo/client/react';
 import { ReactNativeFile } from '@monorepo/expo/shared/clients';
 import { WFEdit } from '@monorepo/expo/shared/icons';
 import { Spacings } from '@monorepo/expo/shared/static';
@@ -5,7 +6,7 @@ import { Avatar, MediaPickerModal } from '@monorepo/expo/shared/ui-components';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useSnackbar } from '../../../hooks';
-import { useUpdateClientProfilePhotoMutation } from '../../ClientProfileForms/ClientProfileForm/PersonalInfoForm/ProfilePhotoField/__generated__/updateClientProfilePhoto.generated';
+import { UpdateClientProfilePhotoDocument } from '../../ClientProfileForms/ClientProfileForm/PersonalInfoForm/ProfilePhotoField/__generated__/updateClientProfilePhoto.generated';
 import { ClientProfileDocument } from '../__generated__/Client.generated';
 import { ProfilePhotoModal } from './ProfilePhotoModal';
 
@@ -20,11 +21,14 @@ export function ProfilePhotoUploader({ clientId, imageUrl }: Props) {
   const [modalType, setModalType] = useState<ModalType>(null);
   const { showSnackbar } = useSnackbar();
 
-  const [updatePhoto, { loading }] = useUpdateClientProfilePhotoMutation({
-    refetchQueries: [
-      { query: ClientProfileDocument, variables: { id: clientId } },
-    ],
-  });
+  const [updatePhoto, { loading }] = useMutation(
+    UpdateClientProfilePhotoDocument,
+    {
+      refetchQueries: [
+        { query: ClientProfileDocument, variables: { id: clientId } },
+      ],
+    }
+  );
 
   const handleUpload = async (file: ReactNativeFile) => {
     try {
