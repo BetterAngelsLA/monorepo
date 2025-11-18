@@ -32,7 +32,8 @@ export function ClientInteractionsHmisView(props: TProps) {
     HmisClientNoteType[] | undefined
   >(undefined);
 
-  const { data, loading } = useHmisListClientNotesQuery({
+  const { data, loading, error } = useHmisListClientNotesQuery({
+    skip: !client?.personalId,
     variables: {
       enrollmentId: ENROLLMENT_ID,
       personalId: client?.personalId || '',
@@ -43,11 +44,14 @@ export function ClientInteractionsHmisView(props: TProps) {
   });
 
   useEffect(() => {
-    const res = data?.hmisListClientNotes;
-    if (!res) return;
+    const notesData = data?.hmisListClientNotes;
 
-    if (res.__typename === 'HmisClientNoteListType') {
-      const { items, meta } = res;
+    if (!notesData) {
+      return;
+    }
+
+    if (notesData.__typename === 'HmisClientNoteListType') {
+      const { items, meta } = notesData;
 
       setTotalCount(meta?.totalCount ?? 0);
       setHasMore((meta?.currentPage ?? 1) < (meta?.pageCount ?? 1));
@@ -58,7 +62,7 @@ export function ClientInteractionsHmisView(props: TProps) {
         return uniqueBy([...prev, ...items], (c) => c.id ?? '');
       });
     }
-  }, [data, page]);
+  }, [data, page, error]);
 
   const loadMore = () => {
     if (hasMore && !loading) setPage((p) => p + 1);
@@ -115,6 +119,7 @@ export function ClientInteractionsHmisView(props: TProps) {
         hasMore={hasMore}
         modelName="note"
         LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
+        error={!!error}
       />
     </MainScrollContainer>
   );

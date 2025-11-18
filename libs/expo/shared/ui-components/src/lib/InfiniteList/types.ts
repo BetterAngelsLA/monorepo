@@ -6,30 +6,8 @@ import { TRenderListResultsHeader } from './ResultsHeader';
 // FlashListProps to pass thru
 type ExtraFlashListProps<T> = Omit<
   Partial<FlashListProps<T>>,
-  | 'data'
-  | 'renderItem'
-  // | 'keyExtractor'
-  | 'ItemSeparatorComponent'
-  | 'onEndReached'
+  'data' | 'renderItem' | 'ItemSeparatorComponent' | 'onEndReached'
 >;
-
-// FlashList keyExtractor strategy
-// pass either idKey or custom keyExtractor fn
-// type ExtractKeyProps<T> = XOR<
-//   { idKey: Extract<keyof T, string | number> },
-//   { keyExtractor: (item: T, index: number) => string }
-// >;
-// pass either idKey or custom keyExtractor fn
-// type ExtractKeyProps<T> = XOR<
-//   { idKey: keyof T },
-//   { keyExtractor: (item: T, index: number) => string }
-// >;
-
-// for infinite scroll
-// type LoadMorePair = { loadMore: () => void; hasMore: boolean };
-// type LoadMoreNever = { loadMore?: never; hasMore?: never };
-
-// type LoadMoreProps = XOR<LoadMorePair, LoadMoreNever>;
 
 type LoadMoreProps = {
   loadMore?: () => void;
@@ -42,9 +20,6 @@ type InfiniteListBaseProps<T> = {
   data: T[];
   renderItem: (item: T) => ReactElement | null;
   estimatedItemSize?: number; // rendering optimization. see console message if undefined
-  // idKey: Extract<keyof T, string | number>;
-  // idKey: Extract<keyof T, string>;
-  // idKey: keyof T;
   loading?: boolean;
   itemGap?: number;
   totalItems?: number;
@@ -54,6 +29,10 @@ type InfiniteListBaseProps<T> = {
   LoadingViewContent?: ReactNode | null;
   showScrollIndicator?: boolean;
   ItemSeparatorComponent?: ComponentType<any> | null;
+  error?: boolean; // determines whether to show ErrorView
+  errorTitle?: string;
+  errorMessage?: string;
+  ErrorViewComponent?: ComponentType<any> | ReactElement | null;
 };
 
 export type TInfiniteListProps<T> = InfiniteListBaseProps<T> &
