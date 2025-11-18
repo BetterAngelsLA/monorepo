@@ -6,6 +6,7 @@ import {
   SPA_OPTIONS,
   SUPERVISORIAL_DISTRICT_OPTIONS,
 } from '../../../types';
+import { FunderChoices, ShelterProgramChoices } from '@monorepo/react/shelter';
 import { CheckboxGroup } from '../components/CheckboxGroup';
 import { FormSection } from '../components/FormSection';
 import { SelectField } from '../components/SelectField';
@@ -50,29 +51,43 @@ export function EcosystemInformationSection({ data, onChange }: SectionProps) {
         label="Shelter Programs"
         options={SHELTER_PROGRAMS_OPTIONS}
         values={data.shelter_programs}
-        onChange={values => onChange('shelter_programs', values)}
+        onChange={values => {
+          onChange('shelter_programs', values);
+          if (!values.includes(ShelterProgramChoices.Other) && data.shelter_programs_other) {
+            onChange('shelter_programs_other', '');
+          }
+        }}
       />
-      <TextField
-        id="shelter-programs-other"
-        name="shelter_programs_other"
-        label="Other Shelter Programs"
-        value={data.shelter_programs_other}
-        onChange={value => onChange('shelter_programs_other', value)}
-      />
+      {data.shelter_programs.includes(ShelterProgramChoices.Other) ? (
+        <TextField
+          id="shelter-programs-other"
+          name="shelter_programs_other"
+          label="Other Shelter Programs"
+          value={data.shelter_programs_other}
+          onChange={value => onChange('shelter_programs_other', value)}
+        />
+      ) : null}
       <CheckboxGroup
         name="funders"
         label="Funders"
         options={FUNDERS_OPTIONS}
         values={data.funders}
-        onChange={values => onChange('funders', values)}
+        onChange={values => {
+          onChange('funders', values);
+          if (!values.includes(FunderChoices.Other) && data.funders_other) {
+            onChange('funders_other', '');
+          }
+        }}
       />
-      <TextField
-        id="funders-other"
-        name="funders_other"
-        label="Other Funders"
-        value={data.funders_other}
-        onChange={value => onChange('funders_other', value)}
-      />
+      {data.funders.includes(FunderChoices.Other) ? (
+        <TextField
+          id="funders-other"
+          name="funders_other"
+          label="Other Funders"
+          value={data.funders_other}
+          onChange={value => onChange('funders_other', value)}
+        />
+      ) : null}
     </FormSection>
   );
 }

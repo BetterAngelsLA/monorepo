@@ -131,11 +131,13 @@ export type SelectOption<T = string> = {
 
 export type CheckboxOption<T extends string = string> = SelectOption<T>;
 
-const toOptions = <T extends string>(labels: Record<T, string>): CheckboxOption<T>[] =>
-  Object.entries(labels).map(([value, label]) => ({
-    value: value as T,
-    label,
-  }));
+const toOptions = <T extends string>(labels: Record<T, string>, lastValues: T[] = []): CheckboxOption<T>[] => {
+  const entries = Object.entries(labels) as [T, string][];
+  const tail = new Set(lastValues);
+  const main = entries.filter(([value]) => !tail.has(value));
+  const end = entries.filter(([value]) => tail.has(value));
+  return [...main, ...end].map(([value, label]) => ({ value, label }));
+};
 
 const DEMOGRAPHIC_LABELS: Record<DemographicChoices, string> = {
   ...enumDisplayDemographics,
@@ -217,15 +219,15 @@ const STATUS_LABELS: Record<StatusChoices, string> = {
   [StatusChoices.Inactive]: 'Inactive',
 };
 
-export const DEMOGRAPHICS_OPTIONS = toOptions(DEMOGRAPHIC_LABELS);
+export const DEMOGRAPHICS_OPTIONS = toOptions(DEMOGRAPHIC_LABELS, [DemographicChoices.Other]);
 export const SPECIAL_SITUATION_OPTIONS = toOptions(SPECIAL_SITUATION_LABELS);
-export const SHELTER_TYPES_OPTIONS = toOptions(enumDisplayShelterChoices);
-export const ROOM_STYLES_OPTIONS = toOptions(ROOM_STYLE_LABELS);
+export const SHELTER_TYPES_OPTIONS = toOptions(enumDisplayShelterChoices, [ShelterChoices.Other]);
+export const ROOM_STYLES_OPTIONS = toOptions(ROOM_STYLE_LABELS, [RoomStyleChoices.Other]);
 export const ACCESSIBILITY_OPTIONS = toOptions(enumDisplayAccessibilityChoices);
 export const STORAGE_OPTIONS = toOptions(enumDisplayStorageChoices);
 export const PETS_OPTIONS = toOptions(enumDisplayPetChoices);
 export const PARKING_OPTIONS = toOptions(enumDisplayParkingChoices);
-export const EXIT_POLICY_OPTIONS = toOptions(EXIT_POLICY_LABELS);
+export const EXIT_POLICY_OPTIONS = toOptions(EXIT_POLICY_LABELS, [ExitPolicyChoices.Other]);
 export const IMMEDIATE_NEEDS_OPTIONS = toOptions(IMMEDIATE_NEEDS_LABELS);
 export const GENERAL_SERVICES_OPTIONS = toOptions(enumDisplayGeneralServiceChoices);
 export const HEALTH_SERVICES_OPTIONS = toOptions(HEALTH_SERVICES_LABELS);
@@ -235,8 +237,8 @@ export const ENTRY_REQUIREMENTS_OPTIONS = toOptions(enumDisplayEntryRequirementC
 export const REFERRAL_REQUIREMENT_OPTIONS = toOptions(REFERRAL_REQUIREMENT_LABELS);
 export const SPA_OPTIONS = toOptions(SPA_LABELS);
 export const LA_CITIES_OPTIONS = toOptions(enumDisplayCityChoices);
-export const SHELTER_PROGRAMS_OPTIONS = toOptions(enumDisplayShelterProgramChoices);
-export const FUNDERS_OPTIONS = toOptions(enumDisplayFunderChoices);
+export const SHELTER_PROGRAMS_OPTIONS = toOptions(enumDisplayShelterProgramChoices, [ShelterProgramChoices.Other]);
+export const FUNDERS_OPTIONS = toOptions(enumDisplayFunderChoices, [FunderChoices.Other]);
 export const STATUS_OPTIONS = toOptions(STATUS_LABELS);
 
 export const BOOLEAN_OPTIONS = [

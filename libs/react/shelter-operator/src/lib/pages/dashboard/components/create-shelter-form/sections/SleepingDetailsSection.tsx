@@ -1,4 +1,5 @@
 import { ROOM_STYLES_OPTIONS } from '../../../types';
+import { RoomStyleChoices } from '@monorepo/react/shelter';
 import { CheckboxGroup } from '../components/CheckboxGroup';
 import { FormSection } from '../components/FormSection';
 import { NumberField } from '../components/NumberField';
@@ -23,17 +24,22 @@ export function SleepingDetailsSection({ data, onChange, errors }: SectionProps)
         label="Room Styles"
         options={ROOM_STYLES_OPTIONS}
         values={data.room_styles}
-        onChange={values => onChange('room_styles', values)}
-        error={errors.room_styles}
-        required
+        onChange={values => {
+          onChange('room_styles', values);
+          if (!values.includes(RoomStyleChoices.Other) && data.room_styles_other) {
+            onChange('room_styles_other', '');
+          }
+        }}
       />
-      <TextField
-        id="room-styles-other"
-        name="room_styles_other"
-        label="Other Room Styles"
-        value={data.room_styles_other}
-        onChange={value => onChange('room_styles_other', value)}
-      />
+      {data.room_styles.includes(RoomStyleChoices.Other) ? (
+        <TextField
+          id="room-styles-other"
+          name="room_styles_other"
+          label="Other Room Styles"
+          value={data.room_styles_other}
+          onChange={value => onChange('room_styles_other', value)}
+        />
+      ) : null}
       <TextAreaField
         id="sleeping-notes"
         name="add_notes_sleeping_details"

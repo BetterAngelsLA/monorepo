@@ -8,11 +8,12 @@ import { createEmptyShelterFormData } from './components/create-shelter-form/con
 import type { ShelterFormData } from './types';
 import {
   DemographicChoices,
-  EntryRequirementChoices,
-  ExitPolicyChoices,
-  ReferralRequirementChoices,
-  RoomStyleChoices,
+  ParkingChoices,
+  PetChoices,
   ShelterChoices,
+  SpecialSituationRestrictionChoices,
+  StorageChoices,
+  StatusChoices,
 } from '@monorepo/react/shelter';
 
 const renderForm = (mocks: MockedResponse[] = []) =>
@@ -63,19 +64,13 @@ describe('CreateShelterForm', () => {
       const formDataForMutation: ShelterFormData = {
         ...createEmptyShelterFormData(),
         name: 'Safe Haven',
-        organization: 'Hope Org',
-        location: 'Los Angeles, 34.05, -118.24',
-        email: 'contact@hope.org',
         description: 'Safe haven description',
-        intake_hours: '08:00-17:00',
-        curfew: '21:00-06:00',
-        total_beds: 20,
         demographics: [DemographicChoices.All],
-        shelter_types: [ShelterChoices.Building],
-        room_styles: [RoomStyleChoices.Congregate],
-        exit_policy: [ExitPolicyChoices.Mia],
-        entry_requirements: [EntryRequirementChoices.MedicaidOrMedicare],
-        referral_requirement: [ReferralRequirementChoices.ReferralMatched],
+        special_situation_restrictions: [SpecialSituationRestrictionChoices.None],
+        storage: [StorageChoices.SharedStorage],
+        pets: [PetChoices.Cats],
+        parking: [ParkingChoices.Automobile],
+        status: StatusChoices.Draft,
       };
 
       const mocks: MockedResponse[] = [
@@ -102,20 +97,13 @@ describe('CreateShelterForm', () => {
       renderForm(mocks);
 
       fireEvent.change(screen.getByLabelText(/shelter name/i), { target: { value: 'Safe Haven' } });
-      fireEvent.change(screen.getByLabelText(/organization/i), { target: { value: 'Hope Org' } });
-      fireEvent.change(screen.getByLabelText(/location/i), { target: { value: 'Los Angeles, 34.05, -118.24' } });
-      fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'contact@hope.org' } });
       fireEvent.change(screen.getByLabelText(/description/i), { target: { value: 'Safe haven description' } });
-      fireEvent.change(screen.getByLabelText(/intake hours/i), { target: { value: '08:00-17:00' } });
-      fireEvent.change(screen.getByLabelText(/curfew/i), { target: { value: '21:00-06:00' } });
-      fireEvent.change(screen.getByLabelText(/total beds/i), { target: { value: '20' } });
 
       clickCheckbox('demographics', DemographicChoices.All);
-      clickCheckbox('shelter-types', ShelterChoices.Building);
-      clickCheckbox('room-styles', RoomStyleChoices.Congregate);
-      clickCheckbox('exit-policy', ExitPolicyChoices.Mia);
-      clickCheckbox('entry-requirements', EntryRequirementChoices.MedicaidOrMedicare);
-      clickCheckbox('referral-requirement', ReferralRequirementChoices.ReferralMatched);
+      clickCheckbox('special-situation', SpecialSituationRestrictionChoices.None);
+      clickCheckbox('storage', StorageChoices.SharedStorage);
+      clickCheckbox('pets', PetChoices.Cats);
+      clickCheckbox('parking', ParkingChoices.Automobile);
 
       fireEvent.submit(screen.getByTestId('create-shelter-form'));
 

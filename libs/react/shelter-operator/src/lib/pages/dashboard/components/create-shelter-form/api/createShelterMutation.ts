@@ -1,16 +1,17 @@
 import {
   CreateShelterDocument,
+  type CreateShelterInput as GeneratedCreateShelterInput,
   type CreateShelterMutation,
-  type CreateShelterMutationVariables,
+  type CreateShelterMutationVariables as GeneratedCreateShelterMutationVariables,
 } from '@monorepo/react/shelter';
 import type { ShelterFormData } from '../../../types';
 import { compactEnumValues } from '../utils/enumMappings';
 
 export const CREATE_SHELTER_MUTATION = CreateShelterDocument;
 export type CreateShelterMutationResult = CreateShelterMutation;
-export type CreateShelterMutationVariables = CreateShelterMutationVariables;
+export type CreateShelterMutationVariables = GeneratedCreateShelterMutationVariables;
 
-export type CreateShelterInput = ReturnType<typeof buildCreateShelterInput>;
+export type CreateShelterInput = GeneratedCreateShelterInput;
 
 const sanitizeString = (value?: string | null) => {
   if (!value) {
@@ -46,8 +47,8 @@ const parseLocation = (value: string) => {
 const numberOrUndefined = (value: number | null | undefined) =>
   typeof value === 'number' && !Number.isNaN(value) ? value : undefined;
 
-export const buildCreateShelterInput = (formData: ShelterFormData) => {
-  const input = {
+export const buildCreateShelterInput = (formData: ShelterFormData): GeneratedCreateShelterInput => {
+  const input: Partial<GeneratedCreateShelterInput> = {
     name: formData.name.trim(),
     description: formData.description.trim(),
     accessibility: compactEnumValues(formData.accessibility),
@@ -70,7 +71,7 @@ export const buildCreateShelterInput = (formData: ShelterFormData) => {
     spa: compactEnumValues(formData.spa),
     shelterPrograms: compactEnumValues(formData.shelter_programs),
     funders: compactEnumValues(formData.funders),
-  } as Record<string, unknown>;
+  };
 
   const stringFields: Record<string, string | undefined> = {
     email: sanitizeString(formData.email),
@@ -95,7 +96,7 @@ export const buildCreateShelterInput = (formData: ShelterFormData) => {
 
   Object.entries(stringFields).forEach(([key, value]) => {
     if (value) {
-      input[key] = value;
+      input[key as keyof GeneratedCreateShelterInput] = value as GeneratedCreateShelterInput[keyof GeneratedCreateShelterInput];
     }
   });
 
@@ -116,7 +117,7 @@ export const buildCreateShelterInput = (formData: ShelterFormData) => {
 
   Object.entries(booleanFields).forEach(([key, value]) => {
     if (value !== null && value !== undefined) {
-      input[key] = value;
+      input[key as keyof GeneratedCreateShelterInput] = value as GeneratedCreateShelterInput[keyof GeneratedCreateShelterInput];
     }
   });
 
@@ -130,9 +131,9 @@ export const buildCreateShelterInput = (formData: ShelterFormData) => {
 
   Object.entries(numericFields).forEach(([key, value]) => {
     if (value !== undefined) {
-      input[key] = value;
+      input[key as keyof GeneratedCreateShelterInput] = value as GeneratedCreateShelterInput[keyof GeneratedCreateShelterInput];
     }
   });
 
-  return input;
+  return input as GeneratedCreateShelterInput;
 };

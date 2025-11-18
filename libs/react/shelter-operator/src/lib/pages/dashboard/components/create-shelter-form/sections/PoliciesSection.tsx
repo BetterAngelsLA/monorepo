@@ -8,6 +8,7 @@ import { TextAreaField } from '../components/TextAreaField';
 import { TextField } from '../components/TextField';
 import { TimeRangeField } from '../components/TimeRangeField';
 import type { SectionProps } from '../types';
+import { ExitPolicyChoices } from '@monorepo/react/shelter';
 
 export function PoliciesSection({ data, onChange, errors }: SectionProps) {
   return (
@@ -28,6 +29,7 @@ export function PoliciesSection({ data, onChange, errors }: SectionProps) {
         onChange={value => onChange('intake_hours', value)}
         helperText="Add intake time windows"
         error={errors.intake_hours}
+        required={false}
       />
       <TimeRangeField
         id="curfew"
@@ -37,6 +39,7 @@ export function PoliciesSection({ data, onChange, errors }: SectionProps) {
         onChange={value => onChange('curfew', value)}
         helperText="Add curfew windows"
         error={errors.curfew}
+        required={false}
       />
       <RadioGroup
         name="on-site-security"
@@ -59,17 +62,22 @@ export function PoliciesSection({ data, onChange, errors }: SectionProps) {
         label="Exit Policy"
         options={EXIT_POLICY_OPTIONS}
         values={data.exit_policy}
-        onChange={values => onChange('exit_policy', values)}
-        error={errors.exit_policy}
-        required
+        onChange={values => {
+          onChange('exit_policy', values);
+          if (!values.includes(ExitPolicyChoices.Other) && data.exit_policy_other) {
+            onChange('exit_policy_other', '');
+          }
+        }}
       />
-      <TextField
-        id="exit-policy-other"
-        name="exit_policy_other"
-        label="Other Exit Policy"
-        value={data.exit_policy_other}
-        onChange={value => onChange('exit_policy_other', value)}
-      />
+      {data.exit_policy.includes(ExitPolicyChoices.Other) ? (
+        <TextField
+          id="exit-policy-other"
+          name="exit_policy_other"
+          label="Other Exit Policy"
+          value={data.exit_policy_other}
+          onChange={value => onChange('exit_policy_other', value)}
+        />
+      ) : null}
       <RadioGroup
         name="emergency-surge"
         label="Emergency Surge Options"

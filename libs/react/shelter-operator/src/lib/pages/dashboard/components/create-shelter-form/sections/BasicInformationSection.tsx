@@ -23,7 +23,6 @@ export function BasicInformationSection({ data, onChange, errors }: SectionProps
         onChange={value => onChange('organization', value)}
         helperText="Select from existing organizations or type to add a new one."
         error={errors.organization}
-        required
       />
       <TextField
         id="shelter-location"
@@ -33,7 +32,6 @@ export function BasicInformationSection({ data, onChange, errors }: SectionProps
         onChange={value => onChange('location', value)}
         helperText='Use the format: "search query, latitude, longitude".'
         error={errors.location}
-        required
       />
       <TextField
         id="shelter-email"
@@ -43,7 +41,6 @@ export function BasicInformationSection({ data, onChange, errors }: SectionProps
         value={data.email}
         onChange={value => onChange('email', value)}
         error={errors.email}
-        required
       />
       <TextField
         id="shelter-phone"

@@ -1,12 +1,11 @@
 import { z, type ZodRawShape } from 'zod';
 import {
   DemographicChoices,
-  EntryRequirementChoices,
-  ExitPolicyChoices,
-  ReferralRequirementChoices,
-  RoomStyleChoices,
-  ShelterChoices,
+  ParkingChoices,
+  PetChoices,
+  SpecialSituationRestrictionChoices,
   StatusChoices,
+  StorageChoices,
 } from '@monorepo/react/shelter';
 import type { ShelterFormData } from '../../../types';
 
@@ -14,18 +13,15 @@ const phoneRegex = /^\+?[\d\s().-]{7,20}$/;
 const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/i;
 
 type FieldSchemaMap = {
-  [K in keyof ShelterFormData]?: z.ZodType<ShelterFormData[K]>;
+  [K in keyof ShelterFormData]?: z.ZodTypeAny;
 };
 
 const fieldSchemas: FieldSchemaMap = {
   name: z.string().min(1, 'Shelter name is required'),
-  organization: z.string().min(1, 'Organization is required'),
-  location: z.string().min(1, 'Location is required'),
+  organization: z.string().optional(),
+  location: z.string().optional(),
   description: z.string().min(1, 'Description is required'),
-  email: z
-    .string()
-    .min(1, 'Email is required')
-    .email('Enter a valid email address'),
+  email: z.union([z.string().email('Enter a valid email address'), z.literal('')]).optional(),
   phone: z
     .string()
     .refine(value => value === '' || phoneRegex.test(value), {
@@ -39,9 +35,18 @@ const fieldSchemas: FieldSchemaMap = {
   demographics: z
     .array(z.nativeEnum(DemographicChoices))
     .min(1, 'Select at least one demographic'),
-  shelter_types: z
-    .array(z.nativeEnum(ShelterChoices))
-    .min(1, 'Select at least one shelter type'),
+  special_situation_restrictions: z
+    .array(z.nativeEnum(SpecialSituationRestrictionChoices))
+    .min(1, 'Select at least one special situation'),
+  storage: z
+    .array(z.nativeEnum(StorageChoices))
+    .min(1, 'Select at least one storage option'),
+  pets: z
+    .array(z.nativeEnum(PetChoices))
+    .min(1, 'Select at least one pet option'),
+  parking: z
+    .array(z.nativeEnum(ParkingChoices))
+    .min(1, 'Select at least one parking option'),
   total_beds: z
     .number()
     .int('Total beds must be a whole number')
@@ -54,23 +59,14 @@ const fieldSchemas: FieldSchemaMap = {
     .min(0, 'Max stay must be zero or greater')
     .optional()
     .nullable(),
-  room_styles: z
-    .array(z.nativeEnum(RoomStyleChoices))
-    .min(1, 'Select at least one room style'),
-  intake_hours: z.string().min(1, 'Intake hours are required'),
-  curfew: z.string().min(1, 'Curfew is required'),
-  exit_policy: z
-    .array(z.nativeEnum(ExitPolicyChoices))
-    .min(1, 'Select at least one exit policy'),
-  entry_requirements: z
-    .array(z.nativeEnum(EntryRequirementChoices))
-    .min(1, 'Select at least one entry requirement'),
-  referral_requirement: z
-    .array(z.nativeEnum(ReferralRequirementChoices))
-    .min(1, 'Select at least one referral requirement'),
-  status: z.nativeEnum(StatusChoices, {
-    required_error: 'Status is required',
-  }),
+  room_styles: z.array(z.string()),
+  shelter_types: z.array(z.string()),
+  intake_hours: z.string().optional(),
+  curfew: z.string().optional(),
+  exit_policy: z.array(z.string()),
+  entry_requirements: z.array(z.string()).optional(),
+  referral_requirement: z.array(z.string()).optional(),
+  status: z.nativeEnum(StatusChoices).refine(Boolean, 'Status is required'),
 };
 
 const formSchema = z.object(fieldSchemas as ZodRawShape).passthrough();

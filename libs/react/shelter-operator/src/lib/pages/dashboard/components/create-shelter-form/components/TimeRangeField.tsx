@@ -23,6 +23,7 @@ interface TimeRangeFieldProps {
   onChange: (value: string) => void;
   helperText?: string;
   error?: string;
+  required?: boolean;
 }
 
 const normalizeHour = (value: string): string => {
@@ -79,75 +80,41 @@ const to24Hour = (parts: TimeParts): string => {
   return `${paddedHour}:${paddedMinute}:00`;
 };
 
-const parseRanges = (value: string): TimeRange[] => {
-  if (!value) {
-    return [];
-  }
-
-  return value
-    .split(',')
-    .map(token => token.trim())
-    .filter(Boolean)
-    .map(token => {
-      const [startRaw = '', endRaw = ''] = token.split('-');
-      return {
-        start: toParts(startRaw),
-        end: toParts(endRaw),
-      };
-    });
+const parseRange = (value: string): TimeRange => {
+  const [startRaw = '', endRaw = ''] = (value ?? '').split('-');
+  return {
+    start: toParts(startRaw.trim()),
+    end: toParts(endRaw.trim()),
+  };
 };
 
-const serializeRanges = (ranges: TimeRange[]) =>
-  ranges
-    .map(range => ({
-      start: to24Hour(range.start),
-      end: to24Hour(range.end),
-    }))
-    .filter(range => range.start && range.end)
-    .map(range => `${range.start}-${range.end}`)
-    .join(',');
+const serializeRange = (range: TimeRange) => {
+  const start = to24Hour(range.start);
+  const end = to24Hour(range.end);
+  if (!start || !end) {
+    return '';
+  }
+  return `${start}-${end}`;
+};
 
-export function TimeRangeField({ id, name, label, value, onChange, helperText, error }: TimeRangeFieldProps) {
-  const ranges = useMemo(() => {
-    const parsed = parseRanges(value);
-    return parsed.length ? parsed : [{ start: '', end: '' }];
-  }, [value]);
+export function TimeRangeField({ id, name, label, value, onChange, helperText, error, required }: TimeRangeFieldProps) {
+  const range = useMemo(() => parseRange(value), [value]);
 
   const messageId = error ? `${id}-error` : helperText ? `${id}-helper` : undefined;
 
-  const updateRange = (
-    index: number,
-    key: keyof TimeRange,
-    part: keyof TimeParts,
-    rawValue: string
-  ) => {
-    const nextRanges = ranges.map((range, idx) => {
-      if (idx !== index) {
-        return range;
-      }
+  const updateRange = (key: keyof TimeRange, part: keyof TimeParts, rawValue: string) => {
+    const updater = part === 'hour' ? normalizeHour : part === 'minute' ? normalizeMinute : undefined;
+    const nextValue = updater ? updater(rawValue) : rawValue;
 
-      const updater = part === 'hour' ? normalizeHour : part === 'minute' ? normalizeMinute : undefined;
-      const nextValue = updater ? updater(rawValue) : rawValue;
+    const nextRange: TimeRange = {
+      ...range,
+      [key]: {
+        ...range[key],
+        [part]: nextValue,
+      },
+    };
 
-      return {
-        ...range,
-        [key]: {
-          ...range[key],
-          [part]: nextValue,
-        },
-      };
-    });
-
-    onChange(serializeRanges(nextRanges));
-  };
-
-  const addRange = () => {
-    onChange(serializeRanges([...ranges, { start: '', end: '' }]));
-  };
-
-  const removeRange = (index: number) => {
-    const nextRanges = ranges.filter((_, idx) => idx !== index);
-    onChange(serializeRanges(nextRanges.length ? nextRanges : [{ start: '', end: '' }]));
+    onChange(serializeRange(nextRange));
   };
 
   return (
@@ -157,106 +124,115 @@ export function TimeRangeField({ id, name, label, value, onChange, helperText, e
       helperText={helperText}
       error={error}
       messageId={messageId}
+      required={required}
     >
-      <div className="flex flex-col gap-3">
-        {ranges.map((range, index) => {
-          const startHourId = `${id}-start-hour-${index}`;
-          const startMinuteId = `${id}-start-minute-${index}`;
-          const startMeridiemId = `${id}-start-meridiem-${index}`;
-          const endHourId = `${id}-end-hour-${index}`;
-          const endMinuteId = `${id}-end-minute-${index}`;
-          const endMeridiemId = `${id}-end-meridiem-${index}`;
-
-          const buildInputs = (
-            label: string,
-            baseName: keyof TimeRange,
-            current: TimeParts,
-            ids: { hour: string; minute: string; meridiem: string }
-          ) => (
-            <div className="flex flex-col gap-1">
-              <span className="text-sm text-gray-700">{label}</span>
-              <div className="flex items-center gap-2">
-                <input
-                  id={ids.hour}
-                  name={`${name}-${baseName}-hour-${index}`}
-                  type="number"
-                  min={1}
-                  max={12}
-                  className={`${INPUT_CLASS} w-20 ${error ? INPUT_ERROR_CLASS : ''}`}
-                  value={current.hour}
-                  onChange={event => updateRange(index, baseName, 'hour', event.target.value)}
-                  placeholder="HH"
-                  aria-invalid={error ? 'true' : undefined}
-                  aria-describedby={messageId}
-                />
-                <span className="text-gray-700">:</span>
-                <input
-                  id={ids.minute}
-                  name={`${name}-${baseName}-minute-${index}`}
-                  type="number"
-                  min={0}
-                  max={59}
-                  className={`${INPUT_CLASS} w-20 ${error ? INPUT_ERROR_CLASS : ''}`}
-                  value={current.minute}
-                  onChange={event => updateRange(index, baseName, 'minute', event.target.value)}
-                  placeholder="MM"
-                  aria-invalid={error ? 'true' : undefined}
-                  aria-describedby={messageId}
-                />
-                <select
-                  id={ids.meridiem}
-                  name={`${name}-${baseName}-meridiem-${index}`}
-                  className={`${INPUT_CLASS} w-24 ${error ? INPUT_ERROR_CLASS : ''}`}
-                  value={current.meridiem}
-                  onChange={event =>
-                    updateRange(index, baseName, 'meridiem', event.target.value as Meridiem)
-                  }
-                  aria-invalid={error ? 'true' : undefined}
-                  aria-describedby={messageId}
-                >
-                  <option value="AM">AM</option>
-                  <option value="PM">PM</option>
-                </select>
+      <div className="flex flex-col gap-2 border border-gray-200 rounded-md p-3">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          {(() => {
+            const startHourId = `${id}-start-hour`;
+            const startMinuteId = `${id}-start-minute`;
+            const startMeridiemId = `${id}-start-meridiem`;
+            return (
+              <div className="flex flex-col gap-1">
+                <span className="text-sm text-gray-700">Start</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    id={startHourId}
+                    name={`${name}-start-hour`}
+                    type="number"
+                    min={1}
+                    max={12}
+                    className={`${INPUT_CLASS} w-20 ${error ? INPUT_ERROR_CLASS : ''}`}
+                    value={range.start.hour}
+                    onChange={event => updateRange('start', 'hour', event.target.value)}
+                    placeholder="HH"
+                    aria-invalid={error ? 'true' : undefined}
+                    aria-describedby={messageId}
+                  />
+                  <span className="text-gray-700">:</span>
+                  <input
+                    id={startMinuteId}
+                    name={`${name}-start-minute`}
+                    type="number"
+                    min={0}
+                    max={59}
+                    className={`${INPUT_CLASS} w-20 ${error ? INPUT_ERROR_CLASS : ''}`}
+                    value={range.start.minute}
+                    onChange={event => updateRange('start', 'minute', event.target.value)}
+                    placeholder="MM"
+                    aria-invalid={error ? 'true' : undefined}
+                    aria-describedby={messageId}
+                  />
+                  <select
+                    id={startMeridiemId}
+                    name={`${name}-start-meridiem`}
+                    className={`${INPUT_CLASS} w-24 ${error ? INPUT_ERROR_CLASS : ''}`}
+                    value={range.start.meridiem}
+                    onChange={event => updateRange('start', 'meridiem', event.target.value as Meridiem)}
+                    aria-invalid={error ? 'true' : undefined}
+                    aria-describedby={messageId}
+                  >
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                  </select>
+                </div>
               </div>
-            </div>
-          );
-
-          return (
-            <div key={index} className="flex flex-col gap-2 border border-gray-200 rounded-md p-3">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                {buildInputs('Start', 'start', range.start, {
-                  hour: startHourId,
-                  minute: startMinuteId,
-                  meridiem: startMeridiemId,
-                })}
-                {buildInputs('End', 'end', range.end, {
-                  hour: endHourId,
-                  minute: endMinuteId,
-                  meridiem: endMeridiemId,
-                })}
-                <button
-                  type="button"
-                  className="text-sm text-red-600 hover:underline self-start"
-                  onClick={() => removeRange(index)}
-                  aria-label={`Remove time range ${index + 1}`}
-                >
-                  Remove
-                </button>
+            );
+          })()}
+          {(() => {
+            const endHourId = `${id}-end-hour`;
+            const endMinuteId = `${id}-end-minute`;
+            const endMeridiemId = `${id}-end-meridiem`;
+            return (
+              <div className="flex flex-col gap-1">
+                <span className="text-sm text-gray-700">End</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    id={endHourId}
+                    name={`${name}-end-hour`}
+                    type="number"
+                    min={1}
+                    max={12}
+                    className={`${INPUT_CLASS} w-20 ${error ? INPUT_ERROR_CLASS : ''}`}
+                    value={range.end.hour}
+                    onChange={event => updateRange('end', 'hour', event.target.value)}
+                    placeholder="HH"
+                    aria-invalid={error ? 'true' : undefined}
+                    aria-describedby={messageId}
+                  />
+                  <span className="text-gray-700">:</span>
+                  <input
+                    id={endMinuteId}
+                    name={`${name}-end-minute`}
+                    type="number"
+                    min={0}
+                    max={59}
+                    className={`${INPUT_CLASS} w-20 ${error ? INPUT_ERROR_CLASS : ''}`}
+                    value={range.end.minute}
+                    onChange={event => updateRange('end', 'minute', event.target.value)}
+                    placeholder="MM"
+                    aria-invalid={error ? 'true' : undefined}
+                    aria-describedby={messageId}
+                  />
+                  <select
+                    id={endMeridiemId}
+                    name={`${name}-end-meridiem`}
+                    className={`${INPUT_CLASS} w-24 ${error ? INPUT_ERROR_CLASS : ''}`}
+                    value={range.end.meridiem}
+                    onChange={event => updateRange('end', 'meridiem', event.target.value as Meridiem)}
+                    aria-invalid={error ? 'true' : undefined}
+                    aria-describedby={messageId}
+                  >
+                    <option value="AM">AM</option>
+                    <option value="PM">PM</option>
+                  </select>
+                </div>
               </div>
-            </div>
-          );
-        })}
-        <div>
-          <button
-            type="button"
-            className="text-sm text-blue-600 hover:underline"
-            onClick={addRange}
-          >
-            Add Hours
-          </button>
+            );
+          })()}
         </div>
         <div className="text-xs text-gray-500" aria-hidden>
-          Saved as "HH:MM:SS-HH:MM:SS" ranges automatically
+          Saved as "HH:MM:SS-HH:MM:SS" automatically
         </div>
       </div>
     </FieldWrapper>

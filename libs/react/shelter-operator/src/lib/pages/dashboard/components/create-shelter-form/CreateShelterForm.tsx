@@ -141,7 +141,7 @@ const extractApolloError = (error: unknown) => {
   if (error instanceof ApolloError) {
     const graphQLErrorMessages = error.graphQLErrors
       .map(graphQLError => {
-        const formattedErrors = graphQLError.extensions?.errors;
+        const formattedErrors = graphQLError.extensions?.['errors'];
         if (Array.isArray(formattedErrors) && formattedErrors.length) {
           const first = formattedErrors[0];
           if (first?.messages?.length) {

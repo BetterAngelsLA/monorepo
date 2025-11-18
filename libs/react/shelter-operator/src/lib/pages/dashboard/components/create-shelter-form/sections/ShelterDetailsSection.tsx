@@ -4,7 +4,7 @@ import { FormSection } from '../components/FormSection';
 import { TextAreaField } from '../components/TextAreaField';
 import type { SectionProps } from '../types';
 
-export function ShelterDetailsSection({ data, onChange }: SectionProps) {
+export function ShelterDetailsSection({ data, onChange, errors }: SectionProps) {
   return (
     <FormSection title="Shelter Details">
       <CheckboxGroup
@@ -20,6 +20,8 @@ export function ShelterDetailsSection({ data, onChange }: SectionProps) {
         options={STORAGE_OPTIONS}
         values={data.storage}
         onChange={values => onChange('storage', values)}
+        error={errors.storage}
+        required
       />
       <CheckboxGroup
         name="pets"
@@ -27,6 +29,8 @@ export function ShelterDetailsSection({ data, onChange }: SectionProps) {
         options={PETS_OPTIONS}
         values={data.pets}
         onChange={values => onChange('pets', values)}
+        error={errors.pets}
+        required
       />
       <CheckboxGroup
         name="parking"
@@ -34,6 +38,8 @@ export function ShelterDetailsSection({ data, onChange }: SectionProps) {
         options={PARKING_OPTIONS}
         values={data.parking}
         onChange={values => onChange('parking', values)}
+        error={errors.parking}
+        required
       />
       <TextAreaField
         id="shelter-details-notes"
