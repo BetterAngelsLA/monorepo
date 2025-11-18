@@ -30,6 +30,9 @@ type TProps = {
   headerStyle?: ViewStyle;
 };
 
+type THmisClientProfileResult =
+  HmisClientProfilesQuery['hmisClientProfiles']['results'][number];
+
 export function HmisListClients(props: TProps) {
   const {
     filters,
@@ -38,26 +41,19 @@ export function HmisListClients(props: TProps) {
     renderItem,
     style,
   } = props;
-
-  const {
-    items: clients,
-    total: totalCount,
-    loading,
-    hasMore,
-    loadMore,
-    error,
-  } = useInfiniteScrollQuery<
-    HmisClientProfileType,
-    HmisClientProfilesQuery,
-    HmisClientProfilesQueryVariables
-  >({
-    document: HmisClientProfilesDocument,
-    queryFieldName: 'hmisClientProfiles',
-    pageSize: paginationLimit,
-    variables: { filters },
-    fetchPolicy: 'cache-and-network',
-    nextFetchPolicy: 'cache-first',
-  });
+  const { items, total, loading, hasMore, loadMore, error } =
+    useInfiniteScrollQuery<
+      THmisClientProfileResult,
+      HmisClientProfilesQuery,
+      HmisClientProfilesQueryVariables
+    >({
+      document: HmisClientProfilesDocument,
+      queryFieldName: 'hmisClientProfiles',
+      pageSize: paginationLimit,
+      variables: { filters },
+      fetchPolicy: 'cache-and-network',
+      nextFetchPolicy: 'cache-first',
+    });
 
   if (error) {
     console.error(error);
@@ -70,7 +66,7 @@ export function HmisListClients(props: TProps) {
     [renderItem]
   );
 
-  if (clients.length === 0 && loading) {
+  if (items.length === 0 && loading) {
     return <ListLoadingView fullScreen />;
   }
 
@@ -78,9 +74,9 @@ export function HmisListClients(props: TProps) {
     <View style={[styles.container, style]}>
       <InfiniteList<HmisClientProfileType>
         modelName="client"
-        data={clients}
-        keyExtractor={(item) => item.personalId!}
-        totalItems={totalCount}
+        data={items}
+        keyExtractor={(item) => item.hmisId!}
+        totalItems={total}
         renderItem={renderItemFn}
         itemGap={itemGap}
         loading={loading}

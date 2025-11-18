@@ -60,10 +60,6 @@ const policyFactoryList = [
     key: 'hmisClientProfiles',
     entityTypename: 'HmisClientProfileType',
     cacheKeyVariables: ['filters', 'ordering'] as const,
-    itemIdPath: 'id',
-    itemsPath: 'items',
-    totalCountPath: ['totalCount'],
-    paginationMode: PaginationModeEnum.PerPage,
   }),
 ] as const;
 

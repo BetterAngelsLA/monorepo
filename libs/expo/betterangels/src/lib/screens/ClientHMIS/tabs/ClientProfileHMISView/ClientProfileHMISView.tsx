@@ -25,7 +25,7 @@ export function ClientProfileHMISView(props: TProps) {
   const scrollRef = useRef<ScrollView>(null);
   const router = useRouter();
 
-  const { personalId } = client || {};
+  const { hmisId } = client || {};
 
   const [expandedCard, setExpandedCard] =
     useState<ClientProfileSectionEnum | null>(openCard || DEFAULT_OPEN_CARD);
@@ -41,12 +41,12 @@ export function ClientProfileHMISView(props: TProps) {
   }
 
   function onClickEdit(card: ClientProfileSectionEnum) {
-    if (!personalId) {
+    if (!hmisId) {
       return;
     }
 
     const route = getHMISEditButtonRoute({
-      profileId: personalId,
+      profileId: hmisId,
       section: card,
     });
 
