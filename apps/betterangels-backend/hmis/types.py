@@ -407,7 +407,20 @@ class UpdateHmisClientProfileInput(HmisClientProfileBaseType):
     phone_numbers: Optional[list[PhoneNumberInput]]
 
 
-@strawberry_django.type(HmisNote)
+@strawberry_django.filter_type(HmisNote, lookups=True)
+class HmisNoteFilter:
+    hmis_client_profile_id: Optional[ID]
+    created_by: Optional[ID]
+
+
+@strawberry_django.order_type(HmisNote, one_of=False)
+class HmisNoteOrdering:
+    id: auto
+    added_date: auto
+    last_updated: auto
+
+
+@strawberry_django.type(HmisNote, filters=HmisNoteFilter, ordering=HmisNoteOrdering)
 class HmisNoteType:
     id: ID
     hmis_id: str

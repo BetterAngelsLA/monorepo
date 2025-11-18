@@ -1081,6 +1081,21 @@ export enum HmisNameQualityEnum {
   Partial = 'PARTIAL'
 }
 
+export type HmisNoteFilter = {
+  AND?: InputMaybe<HmisNoteFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<HmisNoteFilter>;
+  OR?: InputMaybe<HmisNoteFilter>;
+  createdBy?: InputMaybe<Scalars['ID']['input']>;
+  hmisClientProfileId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type HmisNoteOrdering = {
+  addedDate?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  lastUpdated?: InputMaybe<Ordering>;
+};
+
 export type HmisNoteType = {
   __typename?: 'HmisNoteType';
   addedDate?: Maybe<Scalars['DateTime']['output']>;
@@ -2157,6 +2172,8 @@ export type QueryHmisNoteArgs = {
 
 
 export type QueryHmisNotesArgs = {
+  filters?: InputMaybe<HmisNoteFilter>;
+  ordering?: Array<HmisNoteOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

@@ -1056,6 +1056,21 @@ enum HmisNameQualityEnum {
   NOT_COLLECTED
 }
 
+input HmisNoteFilter {
+  hmisClientProfileId: ID
+  createdBy: ID
+  AND: HmisNoteFilter
+  OR: HmisNoteFilter
+  NOT: HmisNoteFilter
+  DISTINCT: Boolean
+}
+
+input HmisNoteOrdering {
+  id: Ordering
+  addedDate: Ordering
+  lastUpdated: Ordering
+}
+
 type HmisNoteType {
   id: ID!
   hmisId: String!
@@ -1731,7 +1746,7 @@ type Query {
   hmisListClientNotes(personalId: ID!, enrollmentId: ID!, pagination: HmisPaginationInput = null): HmisClientNoteListTypeHmisListClientNotesError!
   hmisListEnrollments(dynamicFields: [String]!, personalId: ID!, pagination: HmisPaginationInput = null): HmisEnrollmentListTypeHmisListEnrollmentsError!
   hmisClientProfiles(pagination: OffsetPaginationInput): HmisClientProfileTypeOffsetPaginated!
-  hmisNotes(pagination: OffsetPaginationInput): HmisNoteTypeOffsetPaginated!
+  hmisNotes(pagination: OffsetPaginationInput, filters: HmisNoteFilter, ordering: [HmisNoteOrdering!]! = []): HmisNoteTypeOffsetPaginated!
   hmisClientProfile(hmisId: String!): HmisClientProfileType!
   hmisNote(clientHmisId: String!, noteHmisId: String!): HmisNoteType!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)

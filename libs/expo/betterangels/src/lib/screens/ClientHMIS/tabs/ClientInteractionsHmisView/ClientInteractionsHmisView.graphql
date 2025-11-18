@@ -34,3 +34,33 @@ query HmisListClientNotes(
     }
   }
 }
+
+query HmisNotes(
+  $filters: HmisNoteFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [HmisNoteOrdering!]! = []
+) {
+  hmisNotes(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    totalCount
+    pageInfo {
+      limit
+      offset
+    }
+    results {
+      id
+      hmisId
+      hmisClientProfileId
+      addedDate
+      lastUpdated
+      title
+      note
+      date
+      refClientProgram
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+}
