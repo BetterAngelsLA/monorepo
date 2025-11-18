@@ -25,7 +25,6 @@ import {
   enumDisplayLivingSituation,
   enumDisplayVeteranStatus,
 } from '../../../../static';
-import { ProfilePhotoField } from './ProfilePhotoField/ProfilePhotoField';
 
 const languageOptions = Object.entries(enumDisplayLanguage).map(
   ([enumValue, displayValue]) => {
