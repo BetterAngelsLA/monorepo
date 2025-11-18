@@ -6,10 +6,10 @@ import { GraphQLError } from 'graphql';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { HmisClientType, extractHMISErrors } from '../../apollo';
+import { HmisClientProfileType, extractHMISErrors } from '../../apollo';
 import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
-import { GetHmisClientDocument } from '../ClientHMIS/__generated__/getHMISClient.generated';
+import { HmisClientProfileDocument } from '../ClientHMIS/__generated__/getHMISClient.generated';
 import {
   HmisUpdateClientDocument,
   HmisUpdateClientMutation,
@@ -37,7 +37,7 @@ export function ClientHMISEdit(props: TProps) {
   const navigation = useNavigation();
   const { showSnackbar } = useSnackbar();
 
-  const [client, setClient] = useState<HmisClientType>();
+  const [client, setClient] = useState<HmisClientProfileType>();
 
   const sectionName = parseAsSectionKeyHMIS(componentName);
 
@@ -73,20 +73,21 @@ export function ClientHMISEdit(props: TProps) {
   });
 
   const { data: clientData, loading: clientDataLoading } = useQuery(
-    GetHmisClientDocument,
+    HmisClientProfileDocument,
     {
       variables: { personalId },
     }
   );
 
   useEffect(() => {
-    const client = clientData?.hmisGetClient;
+    const client = clientData?.hmisClientProfile;
 
-    if (client?.__typename !== 'HmisClientType') {
+    if (client?.__typename !== 'HmisClientProfileType') {
       return;
     }
 
-    const valid = clientData?.hmisGetClient.__typename === 'HmisClientType';
+    const valid =
+      clientData?.hmisClientProfile.__typename === 'HmisClientProfileType';
 
     if (!valid) {
       return;
@@ -125,7 +126,7 @@ export function ClientHMISEdit(props: TProps) {
         },
         errorPolicy: 'all',
         refetchQueries: [
-          { query: GetHmisClientDocument, variables: { personalId } },
+          { query: HmisClientProfileDocument, variables: { personalId } },
         ],
         awaitRefetchQueries: true,
       })) as MutationExecResult<HmisUpdateClientMutation>;
@@ -172,7 +173,7 @@ export function ClientHMISEdit(props: TProps) {
         throw new Error(hmisErrorMessage);
       }
 
-      if (updatedClient.__typename !== 'HmisClientType') {
+      if (updatedClient.__typename !== 'HmisClientProfileType') {
         throw new Error('invalid hmisUpdateClient response');
       }
 

@@ -7,7 +7,7 @@ import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import { ClientViewTabEnum } from '../Client/ClientTabs';
 import { HMISClientHeader } from './HMISClientHeader';
-import { GetHmisClientDocument } from './__generated__/getHMISClient.generated';
+import { HmisClientProfileDocument } from './__generated__/getHMISClient.generated';
 import { renderTabComponent } from './tabs/utils/renderTabComponent';
 
 const hmisTabs: ClientViewTabEnum[] = [
@@ -16,13 +16,13 @@ const hmisTabs: ClientViewTabEnum[] = [
 ];
 
 type TProps = {
-  id: string;
+  hmisId: string;
   arrivedFrom?: string;
   openCard?: ClientProfileSectionEnum | null;
 };
 
 export function ClientHMIS(props: TProps) {
-  const { id: personalId, openCard } = props;
+  const { hmisId, openCard } = props;
 
   const { activeTab } = useLocalSearchParams<{
     activeTab?: ClientViewTabEnum;
@@ -36,17 +36,17 @@ export function ClientHMIS(props: TProps) {
     }
   }, [activeTab]);
 
-  const { data, loading } = useQuery(GetHmisClientDocument, {
-    variables: { personalId },
+  const { data, loading } = useQuery(HmisClientProfileDocument, {
+    variables: { hmisId },
   });
 
   if (loading) {
     return <LoadingView />;
   }
 
-  const client = data?.hmisGetClient;
+  const client = data?.hmisClientProfile;
 
-  if (client?.__typename !== 'HmisClientType') {
+  if (client?.__typename !== 'HmisClientProfileType') {
     return null;
   }
 

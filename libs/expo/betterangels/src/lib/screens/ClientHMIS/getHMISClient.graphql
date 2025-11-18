@@ -78,19 +78,10 @@ query hmisClientProfile($hmisId: String!) {
       residenceAddress
       residenceGeolocation
       spokenLanguages
-      createdBy {
-        id
-        firstName
-        lastName
-      }
       phoneNumbers {
         id
         number
         isPrimary
-      }
-      profilePhoto {
-        name
-        url
       }
     }
   }

@@ -2,7 +2,7 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { HmisClientType } from '../../../../apollo';
+import { HmisClientProfileType } from '../../../../apollo';
 import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { MainScrollContainer } from '../../../../ui-components';
 import { ExpandableProfileContainer } from '../../../Client/ClientProfile/ExpandableProfileContainer';
@@ -14,7 +14,7 @@ import {
 } from './ClientCardsHMIS';
 
 type TProps = {
-  client?: HmisClientType;
+  client?: HmisClientProfileType;
   openCard?: ClientProfileSectionEnum | null;
 };
 

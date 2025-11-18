@@ -7,8 +7,6 @@ import {
 import {
   HmisClientProfilesQuery,
   HmisClientProfilesQueryVariables,
-  HmisListClientsQuery,
-  HmisListClientsQueryVariables,
 } from '../../ui-components/ClientProfileList/__generated__/HmisListClients.generated';
 import {
   FilterClientProfilesQuery,
@@ -55,15 +53,6 @@ const policyFactoryList = [
     cacheKeyVariables: ['filters', 'ordering'] as const,
   }),
 
-  getQueryPolicyFactory<HmisListClientsQuery, HmisListClientsQueryVariables>({
-    key: 'hmisListClients',
-    entityTypename: 'HmisClientType',
-    cacheKeyVariables: ['filter', 'pagination', ['perPage']] as const, // sets keyArgs for: 'filter', 'pagination.perPage'
-    itemIdPath: 'personalId',
-    itemsPath: 'items',
-    totalCountPath: ['meta', 'totalCount'],
-    paginationMode: PaginationModeEnum.PerPage,
-  }),
   getQueryPolicyFactory<
     HmisClientProfilesQuery,
     HmisClientProfilesQueryVariables

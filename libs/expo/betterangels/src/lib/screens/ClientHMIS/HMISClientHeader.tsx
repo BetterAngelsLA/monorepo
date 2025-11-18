@@ -1,20 +1,19 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextMedium } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { HmisClientType, HmisSuffixEnum } from '../../apollo';
+import { HmisClientProfileType, HmisSuffixEnum } from '../../apollo';
 import { getExistingHmisSuffix } from '../../static';
 
 interface IClientHeaderProps {
-  client?: HmisClientType;
+  client?: HmisClientProfileType;
 }
 
 export function HMISClientHeader(props: IClientHeaderProps) {
   const { client } = props;
 
-  const { firstName, lastName, data } = client || {};
-  const { middleName, alias, nameSuffix } = data || {};
+  const { firstName, lastName, nameMiddle, alias, nameSuffix } = client || {};
 
-  const nameParts = [firstName, middleName, lastName].filter((s) => !!s);
+  const nameParts = [firstName, nameMiddle, lastName].filter((s) => !!s);
 
   const visibleSuffix = getExistingHmisSuffix(nameSuffix as HmisSuffixEnum);
 
