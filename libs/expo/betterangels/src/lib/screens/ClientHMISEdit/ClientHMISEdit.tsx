@@ -6,8 +6,10 @@ import { GraphQLError } from 'graphql';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { HmisClientProfileType, extractHMISErrors } from '../../apollo';
-import { applyOperationFieldErrors } from '../../errors';
+import {
+  HmisClientProfileType,
+  UpdateHmisClientProfileInput,
+} from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { HmisClientProfileDocument } from '../ClientHMIS/__generated__/getHMISClient.generated';
 import {
@@ -15,10 +17,7 @@ import {
   UpdateHmisClientProfileMutation,
 } from './__generated__/updateHmisClient.generated';
 import { hmisFormConfig, parseAsSectionKeyHMIS } from './basicForms/config';
-import {
-  TUpdateClientInputsUnion,
-  toHMISClientProfileInputs,
-} from './toHMISClientProfileInputs';
+import { toUpdateHmisClientProfileInput } from './toHMISClientProfileInputs';
 
 type MutationExecResult<TData> = {
   data?: TData | null;
@@ -110,19 +109,21 @@ export function ClientHMISEdit(props: TProps) {
         return;
       }
 
-      const currentFormKeys = sectionSchema.keyof().options as string[];
+      // const currentFormKeys = sectionSchema.keyof().options as string[];
 
-      const { clientInput, clientSubItemsInput } = toHMISClientProfileInputs(
-        client,
-        currentFormKeys,
-        values as TUpdateClientInputsUnion
+      const inputs = toUpdateHmisClientProfileInput(
+        hmisId,
+        values as UpdateHmisClientProfileInput
       );
+
+      if (!inputs) {
+        return;
+      }
 
       const { data: updateData, errors } =
         (await updateHmisClientProfileMutation({
           variables: {
-            clientInput,
-            clientSubItemsInput,
+            data: inputs,
           },
           errorPolicy: 'all',
           refetchQueries: [
@@ -136,45 +137,45 @@ export function ClientHMISEdit(props: TProps) {
         console.log(JSON.stringify(errors, null, 2)); // parsed error
       }
 
-      const updatedClient = updateData?.hmisUpdateClient;
+      const updatedClient = updateData?.updateHmisClientProfile;
 
       if (!updatedClient) {
-        throw new Error('missing hmisUpdateClient response');
+        throw new Error('missing updateHmisClientProfile response');
       }
 
-      if (updatedClient.__typename === 'HmisUpdateClientError') {
-        const { message: hmisErrorMessage } = updatedClient;
+      // if (updatedClient.__typename === 'HmisUpdateClientError') {
+      //   const { message: hmisErrorMessage } = updatedClient;
 
-        const parsedErr = extractHMISErrors(hmisErrorMessage) || {};
+      //   const parsedErr = extractHMISErrors(hmisErrorMessage) || {};
 
-        const { status, fieldErrors = [] } = parsedErr;
+      //   const { status, fieldErrors = [] } = parsedErr;
 
-        if (debugMode) {
-          console.error(updatedClient); // raw error
-          console.log(JSON.stringify(parsedErr, null, 2)); // parsed error
-        }
+      //   if (debugMode) {
+      //     console.error(updatedClient); // raw error
+      //     console.log(JSON.stringify(parsedErr, null, 2)); // parsed error
+      //   }
 
-        if (status === 422) {
-          const formFieldErrors = fieldErrors.filter(({ field }) =>
-            currentFormKeys.includes(field)
-          );
+      //   if (status === 422) {
+      //     const formFieldErrors = fieldErrors.filter(({ field }) =>
+      //       currentFormKeys.includes(field)
+      //     );
 
-          applyOperationFieldErrors(formFieldErrors, formMethods.setError);
+      //     applyOperationFieldErrors(formFieldErrors, formMethods.setError);
 
-          // Note:
-          // 1. returned field keys are returned in multiple formats (snake + camel)
-          // 2. returned keys may be inconsistent with form (nameQuality vs nameDataQuality)
-          // 3. perhaps may receive 422 errors for fields not in form (not currentFormKeys)
-          return;
-        }
+      //     // Note:
+      //     // 1. returned field keys are returned in multiple formats (snake + camel)
+      //     // 2. returned keys may be inconsistent with form (nameQuality vs nameDataQuality)
+      //     // 3. perhaps may receive 422 errors for fields not in form (not currentFormKeys)
+      //     return;
+      //   }
 
-        // HmisUpdateClientError exists but not 422
-        // throw generic error
-        throw new Error(hmisErrorMessage);
-      }
+      //   // HmisUpdateClientError exists but not 422
+      //   // throw generic error
+      //   throw new Error(hmisErrorMessage);
+      // }
 
       if (updatedClient.__typename !== 'HmisClientProfileType') {
-        throw new Error('invalid hmisUpdateClient response');
+        throw new Error('invalid updateHmisClientProfile response');
       }
 
       const { hmisId: returnedId } = updatedClient;

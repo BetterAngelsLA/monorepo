@@ -7,7 +7,6 @@ import {
   HmisRaceEnum,
   HmisSsnQualityEnum,
   HmisSuffixEnum,
-  HmisUpdateClientSubItemsInput,
   HmisVeteranStatusEnum,
   Maybe,
   UpdateHmisClientProfileInput,
@@ -223,54 +222,80 @@ function toStringInput(value?: string | null): string {
 //   return inputs;
 // }
 export function toUpdateHmisClientProfileInput(
-  client: HmisClientProfileType
-): UpdateHmisClientProfileInput {
-  const inputs: UpdateHmisClientProfileInput = {
-    hmisId: client.hmisId || '',
+  hmisId: string,
+  values: Partial<UpdateHmisClientProfileInput>
+): UpdateHmisClientProfileInput | null {
+  if (!values || !hmisId) {
+    return null;
+  }
 
-    alias: client.alias,
-    birthDate: client.birthDate,
-
-    dobQuality: client.dobQuality,
-    firstName: client.firstName,
-    lastName: client.lastName,
-    nameQuality: client.nameQuality,
-    ssn1: client.ssn1,
-    ssn2: client.ssn2,
-    ssn3: client.ssn3,
-    ssnQuality: client.ssnQuality,
-
-    gender: client.gender || [HmisGenderEnum.NotCollected],
-    genderIdentityText: client.genderIdentityText,
-    nameMiddle: client.nameMiddle,
-    nameSuffix: client.nameSuffix,
-    raceEthnicity: client.raceEthnicity || [HmisRaceEnum.NotCollected],
-    additionalRaceEthnicityDetail: client.additionalRaceEthnicityDetail,
-    veteran: client.veteran,
-
-    adaAccommodation: client.adaAccommodation,
-    address: client.address,
-    californiaId: client.californiaId,
-    email: client.email,
-    eyeColor: client.eyeColor,
-    hairColor: client.hairColor,
-    heightInInches: client.heightInInches,
-    importantNotes: client.importantNotes,
-    livingSituation: client.livingSituation,
-    mailingAddress: client.mailingAddress,
-    maritalStatus: client.maritalStatus,
-    physicalDescription: client.physicalDescription,
-    placeOfBirth: client.placeOfBirth,
-    preferredCommunication: client.preferredCommunication,
-    preferredLanguage: client.preferredLanguage,
-    pronouns: client.pronouns,
-    pronounsOther: client.pronounsOther,
-    residenceAddress: client.residenceAddress,
-    residenceGeolocation: client.residenceGeolocation,
-    spokenLanguages: client.spokenLanguages,
+  const updatedInputs: UpdateHmisClientProfileInput = {
+    hmisId,
+    gender: values.gender || [HmisGenderEnum.NotCollected],
+    raceEthnicity: values.raceEthnicity || [HmisRaceEnum.NotCollected],
   };
 
-  return inputs;
+  if ('birthDate' in values && values.birthDate) {
+    updatedInputs.birthDate = values.birthDate
+      .toISOString()
+      .split('T')[0] as unknown as Date;
+  }
+
+  if ('profilePhoto' in values) {
+    delete values.profilePhoto;
+  }
+
+  return {
+    ...values,
+    ...updatedInputs,
+  };
+
+  // const inputs: UpdateHmisClientProfileInput = {
+  //   hmisId: hmisId,
+
+  //   alias: values.alias,
+  //   birthDate: values.birthDate,
+
+  //   dobQuality: values.dobQuality,
+  //   firstName: values.firstName,
+  //   lastName: values.lastName,
+  //   nameQuality: values.nameQuality,
+  //   ssn1: values.ssn1,
+  //   ssn2: values.ssn2,
+  //   ssn3: values.ssn3,
+  //   ssnQuality: values.ssnQuality,
+
+  //   gender: values.gender || [HmisGenderEnum.NotCollected],
+  //   genderIdentityText: values.genderIdentityText,
+  //   nameMiddle: values.nameMiddle,
+  //   nameSuffix: values.nameSuffix,
+  //   raceEthnicity: values.raceEthnicity || [HmisRaceEnum.NotCollected],
+  //   additionalRaceEthnicityDetail: values.additionalRaceEthnicityDetail,
+  //   veteran: values.veteran,
+
+  //   adaAccommodation: values.adaAccommodation,
+  //   address: values.address,
+  //   californiaId: values.californiaId,
+  //   email: values.email,
+  //   eyeColor: values.eyeColor,
+  //   hairColor: values.hairColor,
+  //   heightInInches: values.heightInInches,
+  //   importantNotes: values.importantNotes,
+  //   livingSituation: values.livingSituation,
+  //   mailingAddress: values.mailingAddress,
+  //   maritalStatus: values.maritalStatus,
+  //   physicalDescription: values.physicalDescription,
+  //   placeOfBirth: values.placeOfBirth,
+  //   preferredCommunication: values.preferredCommunication,
+  //   preferredLanguage: values.preferredLanguage,
+  //   pronouns: values.pronouns,
+  //   pronounsOther: values.pronounsOther,
+  //   residenceAddress: values.residenceAddress,
+  //   residenceGeolocation: values.residenceGeolocation,
+  //   spokenLanguages: values.spokenLanguages,
+  // };
+
+  // return inputs;
 }
 
 // type THMISClienProfileInputs = {
@@ -278,10 +303,10 @@ export function toUpdateHmisClientProfileInput(
 //   clientSubItemsInput: HmisUpdateClientSubItemsInput;
 // };
 
-export function toHMISClientProfileInputs(
-  client: HmisClientProfileType
-): UpdateHmisClientProfileInput {
-  const clientInput = toUpdateHmisClientProfileInput(client);
+// export function toHMISClientProfileInputs(
+//   client: HmisClientProfileType
+// ): UpdateHmisClientProfileInput {
+//   const clientInput = toUpdateHmisClientProfileInput(client);
 
-  return clientInput;
-}
+//   return clientInput;
+// }

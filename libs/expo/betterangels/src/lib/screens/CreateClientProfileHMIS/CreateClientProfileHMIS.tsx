@@ -3,8 +3,6 @@ import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { extractHMISErrors } from '../../apollo';
-import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { toHmisNameQualityInt, toHmisSuffixEnumInt } from '../../static';
 import {
@@ -17,13 +15,13 @@ import {
   FALLBACK_NAME_DATA_QUALITY_INT,
   FALLBACK_NAME_SUFFIX_INT,
 } from '../ClientHMISEdit/constants';
-import { CreateHmisClientDocument } from './__generated__/createHmisClient.generated';
+import { CreateHmisClientProfileDocument } from './__generated__/createHmisClient.generated';
 
 export function CreateClientProfileHMIS() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [createHMISClientMutation] = useMutationWithErrors(
-    CreateHmisClientDocument
+  const [createHmisClientProfileMutation] = useMutationWithErrors(
+    CreateHmisClientProfileDocument
   );
 
   const formMethods = useForm<TFullNameFormSchema>({
@@ -33,34 +31,34 @@ export function CreateClientProfileHMIS() {
 
   const {
     handleSubmit,
-    setError,
+    // setError,
     formState: { isSubmitting },
   } = formMethods;
 
-  const formKeys = Object.keys(fullNameFormEmptyState);
+  // const formKeys = Object.keys(fullNameFormEmptyState);
 
   const onSubmit: SubmitHandler<TFullNameFormSchema> = async (formData) => {
     try {
       const {
         firstName,
         lastName,
-        middleName,
-        nameDataQuality,
+        nameMiddle,
+        nameQuality,
         alias,
         nameSuffix,
       } = formData;
 
-      const { data } = await createHMISClientMutation({
+      const { data } = await createHmisClientProfileMutation({
         variables: {
           clientInput: {
             firstName,
             lastName,
-            nameDataQuality:
-              toHmisNameQualityInt(nameDataQuality) ??
+            nameQuality:
+              toHmisNameQualityInt(nameQuality) ??
               FALLBACK_NAME_DATA_QUALITY_INT,
           },
           clientSubItemsInput: {
-            middleName,
+            nameMiddle,
             alias,
             nameSuffix:
               toHmisSuffixEnumInt(nameSuffix) ?? FALLBACK_NAME_SUFFIX_INT,
@@ -69,43 +67,43 @@ export function CreateClientProfileHMIS() {
         errorPolicy: 'all',
       });
 
-      const result = data?.hmisCreateClient;
+      const result = data?.createHmisClientProfile;
 
       if (!result) {
-        throw new Error('missing hmisCreateClient response');
+        throw new Error('missing createHmisClientProfile response');
       }
 
-      if (result?.__typename === 'HmisCreateClientError') {
-        const { message: hmisErrorMessage } = result;
+      // if (result?.__typename === 'HmisCreateClientError') {
+      //   const { message: hmisErrorMessage } = result;
 
-        const { status, fieldErrors = [] } =
-          extractHMISErrors(hmisErrorMessage) || {};
+      //   const { status, fieldErrors = [] } =
+      //     extractHMISErrors(hmisErrorMessage) || {};
 
-        // handle unprocessable_entity errors and exit
-        if (status === 422) {
-          const formFieldErrors = fieldErrors.filter(({ field }) =>
-            formKeys.includes(field)
-          );
+      //   // handle unprocessable_entity errors and exit
+      //   if (status === 422) {
+      //     const formFieldErrors = fieldErrors.filter(({ field }) =>
+      //       formKeys.includes(field)
+      //     );
 
-          applyOperationFieldErrors(formFieldErrors, setError);
+      //     applyOperationFieldErrors(formFieldErrors, setError);
 
-          return;
-        }
+      //     return;
+      //   }
 
-        // HmisCreateClientError exists but not 422
-        // throw generic error
-        throw new Error(hmisErrorMessage);
+      //   // HmisCreateClientError exists but not 422
+      //   // throw generic error
+      //   throw new Error(hmisErrorMessage);
+      // }
+
+      if (result?.__typename !== 'HmisClientProfileType') {
+        throw new Error('invalid createHmisClientProfile response');
       }
 
-      if (result?.__typename !== 'HmisClientType') {
-        throw new Error('invalid hmisCreateClient response');
-      }
+      const { hmisId } = result;
 
-      const { personalId } = result;
-
-      router.replace(`/client/${personalId}`);
+      router.replace(`/client/${hmisId}`);
     } catch (error) {
-      console.error('createHMISClientMutation error:', error);
+      console.error('createHmisClientProfileMutation error:', error);
 
       showSnackbar({
         message: 'Something went wrong. Please try again.',

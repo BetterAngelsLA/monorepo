@@ -31,15 +31,15 @@ export function FullNameFormHmis() {
         />
 
         <ControlledInput
-          name="middleName"
+          name="nameMiddle"
           control={control}
           disabled={isSubmitting}
           label="Middle Name"
           placeholder="Enter middle name"
           onDelete={() => {
-            setValue('middleName', fullNameFormEmptyState.middleName);
+            setValue('nameMiddle', fullNameFormEmptyState.nameMiddle);
           }}
-          errorMessage={errors.middleName?.message}
+          errorMessage={errors.nameMiddle?.message}
         />
 
         <ControlledInput

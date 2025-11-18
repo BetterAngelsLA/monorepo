@@ -1,6 +1,6 @@
 import { formatDateStatic } from '@monorepo/expo/shared/ui-components';
 import {
-  HmisClientType,
+  HmisClientProfileType,
   HmisDobQualityEnum,
   HmisVeteranStatusEnum,
 } from '../../../../../apollo';
@@ -15,19 +15,18 @@ import {
 } from '../../../../../ui-components';
 
 type TProps = {
-  client?: HmisClientType;
+  client?: HmisClientProfileType;
 };
 
 export function PersonalInfoCardHmis(props: TProps) {
   const { client } = props;
 
-  const { dob, dobDataQuality, data } = client || {};
-  const { veteranStatus } = data || {};
+  const { birthDate, dobQuality, veteran } = client || {};
 
   const formattedDob =
-    dob &&
+    birthDate &&
     formatDateStatic({
-      date: dob,
+      date: birthDate,
       inputFormat: 'yyyy-MM-dd',
     });
 
@@ -38,13 +37,11 @@ export function PersonalInfoCardHmis(props: TProps) {
     },
     {
       header: ['Quality of DOB'],
-      rows: [[enumHmisDobQuality[dobDataQuality as HmisDobQualityEnum]]],
+      rows: [[enumHmisDobQuality[dobQuality as HmisDobQualityEnum]]],
     },
     {
       header: ['Veteran Status'],
-      rows: [
-        [enumHmisVeteranStatusEnum[veteranStatus as HmisVeteranStatusEnum]],
-      ],
+      rows: [[enumHmisVeteranStatusEnum[veteran as HmisVeteranStatusEnum]]],
     },
   ];
 

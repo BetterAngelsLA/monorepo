@@ -46,14 +46,14 @@ export function DemographicInfoFormHmis() {
 
       <Form.Field title="Different Identity Text">
         <ControlledInput
-          name="differentIdentityText"
+          name="genderIdentityText"
           control={control}
           disabled={isSubmitting}
-          placeholder="Enter different identity text"
+          placeholder="Enter gender identity text"
           onDelete={() => {
-            setValue('differentIdentityText', emptyState.differentIdentityText);
+            setValue('genderIdentityText', emptyState.genderIdentityText);
           }}
-          errorMessage={errors.differentIdentityText?.message}
+          errorMessage={errors.genderIdentityText?.message}
         />
       </Form.Field>
 
@@ -77,19 +77,19 @@ export function DemographicInfoFormHmis() {
         />
       </Form.Field>
 
-      <Form.Field title="Additional Race and Ethnicity">
+      <Form.Field title="Additional Race and Ethnicity Detail">
         <ControlledInput
-          name="additionalRaceEthnicity"
+          name="additionalRaceEthnicityDetail"
           control={control}
           disabled={isSubmitting}
-          placeholder="Enter additional race and ethnicity"
+          placeholder="Enter additional race and ethnicity detail"
           onDelete={() => {
             setValue(
-              'additionalRaceEthnicity',
-              emptyState.additionalRaceEthnicity
+              'additionalRaceEthnicityDetail',
+              emptyState.additionalRaceEthnicityDetail
             );
           }}
-          errorMessage={errors.additionalRaceEthnicity?.message}
+          errorMessage={errors.additionalRaceEthnicityDetail?.message}
         />
       </Form.Field>
     </Form>
