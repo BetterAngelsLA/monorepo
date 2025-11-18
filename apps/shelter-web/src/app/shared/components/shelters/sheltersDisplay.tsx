@@ -1,3 +1,4 @@
+import { useLazyQuery } from '@apollo/client/react';
 import {
   DemographicChoices,
   ParkingChoices,
@@ -5,8 +6,8 @@ import {
   RoomStyleChoices,
   ShelterChoices,
   SpecialSituationRestrictionChoices,
+  ViewSheltersDocument,
   ViewSheltersQueryVariables,
-  useViewSheltersLazyQuery,
 } from '@monorepo/react/shelter';
 import { useAtom } from 'jotai';
 import { useEffect } from 'react';
@@ -45,7 +46,8 @@ export function SheltersDisplay(props: TProps) {
     rangeInMiles = SEARCH_RANGE_MILES,
     className = '',
   } = props;
-  const [getShelters, { loading, data, error }] = useViewSheltersLazyQuery();
+  const [getShelters, { loading, data, error }] =
+    useLazyQuery(ViewSheltersDocument);
 
   // Temporary suppression to allow incremental cleanup without regressions.
   // ⚠️ If you're modifying this file, please remove this ignore and fix the issue.

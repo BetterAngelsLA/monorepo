@@ -11,10 +11,10 @@ import {
 } from '../../apollo';
 import { pagePaddingHorizontal } from '../../static';
 import { ClientProfileListHeader } from './ClientProfileListHeader';
-import { ListLoadingView } from './ListLoadingView';
 import {
+  ClientProfilesDocument,
   ClientProfilesQuery,
-  useClientProfilesQuery,
+  ClientProfilesQueryVariables,
 } from './__generated__/ClientProfiles.generated';
 import {
   DEFAULT_ITEM_GAP,
@@ -51,8 +51,12 @@ export function ClientProfileList({
   horizontalPadding = pagePaddingHorizontal,
 }: TProps) {
   const { items, total, loading, loadMore, hasMore, error } =
-    useInfiniteScrollQuery<TClientProfile, typeof useClientProfilesQuery>({
-      useQueryHook: useClientProfilesQuery,
+    useInfiniteScrollQuery<
+      TClientProfile,
+      ClientProfilesQuery,
+      ClientProfilesQueryVariables
+    >({
+      document: ClientProfilesDocument,
       queryFieldName: 'clientProfiles',
       variables: { filters, order: order || undefined },
       pageSize: paginationLimit,
@@ -77,7 +81,6 @@ export function ClientProfileList({
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="client"
-        LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
         renderResultsHeader={(visible, totalItems) => (
           <View
             style={[

@@ -1,10 +1,11 @@
+import { useMutation } from '@apollo/client/react';
 import {
   TMapView,
   TPlaceLatLng,
   TPlacesPrediction,
+  UpdateNoteLocationDocument,
   getPlaceAutocomplete,
   getPlaceDetailsById,
-  useUpdateNoteLocationMutation,
 } from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
@@ -74,8 +75,9 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [currentLocation, setCurrentLocation] = useState<
     locationLongLat | undefined
   >(undefined);
-  const [updateNoteLocation, { error: updateError }] =
-    useUpdateNoteLocationMutation();
+  const [updateNoteLocation, { error: updateError }] = useMutation(
+    UpdateNoteLocationDocument
+  );
 
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
