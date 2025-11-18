@@ -1,5 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 
+import { useMutationWithErrors } from '@monorepo/apollo';
 import {
   Avatar,
   Button,
@@ -8,7 +9,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { useDeleteCurrentUserMutation } from '../../apollo';
+import { DeleteCurrentUserDocument } from '../../apollo';
 import {
   useFeatureFlagActive,
   useSignOut,
@@ -24,7 +25,7 @@ export default function UserProfile() {
   const hmisFeatureOn = useFeatureFlagActive(FeatureFlags.HMIS_FF);
 
   if (!user) throw new Error('Something went wrong');
-  const [deleteCurrentUser] = useDeleteCurrentUserMutation();
+  const [deleteCurrentUser] = useMutationWithErrors(DeleteCurrentUserDocument);
   const userInfo = [
     { title: 'Email', value: user.email },
     {

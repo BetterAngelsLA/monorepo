@@ -1,3 +1,4 @@
+import { useMutationWithErrors } from '@monorepo/apollo';
 import { useRouter } from 'expo-router';
 import { Dispatch, SetStateAction } from 'react';
 import {
@@ -7,7 +8,7 @@ import {
 import { useSnackbar } from '../../../../../hooks';
 import { ClientProfileDocument } from '../../../../Client/__generated__/Client.generated';
 import { DeleteButton } from '../DeleteButton';
-import { useDeleteClientContactMutation } from './__generated__/deleteClientContact.generated';
+import { DeleteClientContactDocument } from './__generated__/deleteClientContact.generated';
 
 const deleteableItemName = 'Relevant Contact';
 
@@ -24,7 +25,9 @@ export function ClientContactDeleteBtn(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const [deleteClientContact, { loading }] = useDeleteClientContactMutation();
+  const [deleteClientContact, { loading }] = useMutationWithErrors(
+    DeleteClientContactDocument
+  );
 
   const onDelete = async () => {
     try {

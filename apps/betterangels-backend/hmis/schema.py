@@ -1,417 +1,152 @@
-from typing import Any, Optional, cast
+from typing import Iterable, cast
 
 import strawberry
-from accounts.types import UserType
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.contrib.auth import login as django_login
-from hmis.enums import HmisGenderEnum, HmisRaceEnum, HmisVeteranStatusEnum
+import strawberry_django
+from common.models import PhoneNumber
+from common.permissions.utils import IsAuthenticated
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError
+from hmis.models import HmisClientProfile, HmisNote
 from strawberry.types import Info
+from strawberry_django.auth.utils import get_current_user
+from strawberry_django.mutations import resolvers
+from strawberry_django.pagination import OffsetPaginated
 
-from .api_bridge import HmisApiBridge
+from .rest_api_bridge import HmisRestApiBridge
 from .types import (
-    HmisClientDataType,
-    HmisClientFilterInput,
-    HmisClientListType,
-    HmisClientNoteListType,
-    HmisClientNoteType,
-    HmisClientType,
-    HmisCreateClientError,
-    HmisCreateClientInput,
-    HmisCreateClientNoteError,
-    HmisCreateClientNoteInput,
-    HmisCreateClientNoteResult,
-    HmisCreateClientResult,
-    HmisCreateClientSubItemsInput,
-    HmisEnrollmentDataType,
-    HmisEnrollmentHouseholdMemberType,
-    HmisEnrollmentListType,
-    HmisEnrollmentType,
-    HmisGetClientError,
-    HmisGetClientNoteError,
-    HmisGetClientNoteResult,
-    HmisGetClientResult,
-    HmisListClientNotesError,
-    HmisListClientNotesResult,
-    HmisListClientsError,
-    HmisListClientsResult,
-    HmisListEnrollmentsError,
-    HmisListEnrollmentsResult,
-    HmisListMetaType,
-    HmisLoginError,
-    HmisLoginResult,
-    HmisPaginationInput,
-    HmisProjectType,
-    HmisUpdateClientError,
-    HmisUpdateClientInput,
-    HmisUpdateClientNoteError,
-    HmisUpdateClientNoteInput,
-    HmisUpdateClientNoteResult,
-    HmisUpdateClientResult,
-    HmisUpdateClientSubItemsInput,
+    CreateHmisClientProfileInput,
+    CreateHmisNoteInput,
+    HmisClientProfileType,
+    HmisNoteType,
+    UpdateHmisClientProfileInput,
+    UpdateHmisNoteInput,
 )
-
-User = get_user_model()
-
-
-def get_client_data_from_response(client_data_response: Optional[dict[str, Any]]) -> Optional[HmisClientDataType]:
-    if not client_data_response:
-        return None
-
-    race_ethnicity_data = client_data_response.get("raceEthnicity") or []
-    gender_data = client_data_response.get("gender") or []
-
-    veteran_status_data = client_data_response.get("veteranStatus")
-    veteran_status = (
-        HmisVeteranStatusEnum(veteran_status_data)
-        if veteran_status_data is not None
-        else HmisVeteranStatusEnum.NOT_COLLECTED
-    )
-
-    return HmisClientDataType(
-        middle_name=client_data_response.get("middleName", None),
-        name_suffix=client_data_response.get("nameSuffix", None),
-        alias=client_data_response.get("alias", None),
-        race_ethnicity=[HmisRaceEnum(r) for r in race_ethnicity_data],
-        additional_race_ethnicity=client_data_response.get("additionalRaceEthnicity", None),
-        gender=[HmisGenderEnum(g) for g in gender_data],
-        different_identity_text=client_data_response.get("differentIdentityText", None),
-        veteran_status=veteran_status,
-    )
-
-
-def get_client_from_response(client_response: dict[str, Any]) -> HmisClientType:
-    return HmisClientType(
-        personal_id=client_response.get("personalId"),
-        unique_identifier=client_response.get("uniqueIdentifier"),
-        first_name=client_response.get("firstName"),
-        last_name=client_response.get("lastName"),
-        name_data_quality=client_response.get("nameDataQuality"),
-        ssn1=client_response.get("ssn1"),
-        ssn2=client_response.get("ssn2"),
-        ssn3=client_response.get("ssn3"),
-        ssn_data_quality=client_response.get("ssnDataQuality"),
-        dob=client_response.get("dob"),
-        dob_data_quality=client_response.get("dobDataQuality"),
-        data=get_client_data_from_response(client_response.get("data")),
-    )
-
-
-def get_project_from_response(project_response: Optional[dict[str, Any]]) -> Optional[HmisProjectType]:
-    if not project_response:
-        return None
-
-    return HmisProjectType(
-        date_created=project_response.get("dateCreated"),
-        date_updated=project_response.get("dateUpdated"),
-        organization_id=project_response.get("organizationId"),
-        project_id=project_response.get("projectId"),
-        project_name=project_response.get("projectName"),
-        project_type=project_response.get("projectType"),
-    )
-
-
-def get_enrollment_from_response(enrollment_response: dict[str, Any]) -> HmisEnrollmentType:
-    data = []
-    household_members = []
-
-    if data_response := enrollment_response.get("data"):
-        data = [
-            HmisEnrollmentDataType(
-                field=d.get("field", None),
-                value=d.get("value", None),
-            )
-            for d in data_response
-        ]
-
-    if household_member_response := enrollment_response.get("enrollmentHouseholdMembers"):
-        household_members = [
-            HmisEnrollmentHouseholdMemberType(
-                personal_id=m.get("personalId", None),
-                enrollment_id=m.get("enrollmentId", None),
-            )
-            for m in household_member_response
-        ]
-
-    return HmisEnrollmentType(
-        personal_id=enrollment_response.get("personalId"),
-        date_created=enrollment_response.get("dateCreated"),
-        date_updated=enrollment_response.get("dateUpdated"),
-        enrollment_id=enrollment_response.get("enrollmentId"),
-        entry_date=enrollment_response.get("entryDate"),
-        exit_date=enrollment_response.get("exitDate"),
-        household_id=enrollment_response.get("householdId"),
-        project=get_project_from_response(enrollment_response.get("project")),
-        enrollment_household_members=household_members,
-        data=data,
-    )
-
-
-def get_client_note_from_response(client_note_response: dict[str, Any]) -> HmisClientNoteType:
-    if client_data := client_note_response.get("client"):
-        client = get_client_from_response(client_data)
-
-    if enrollment_data := client_note_response.get("enrollment"):
-        enrollment = get_enrollment_from_response(enrollment_data)
-
-    return HmisClientNoteType(
-        id=client_note_response.get("id"),
-        title=client_note_response.get("title"),
-        note=client_note_response.get("note"),
-        date=client_note_response.get("date"),
-        category=client_note_response.get("category"),
-        client=client,
-        enrollment=enrollment,
-    )
 
 
 @strawberry.type
 class Query:
-    @strawberry.field()
-    def hmis_get_client(self, info: Info, personal_id: strawberry.ID) -> HmisGetClientResult:
-        request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    def hmis_client_profile(self, info: Info, hmis_id: str) -> HmisClientProfileType:
+        hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        client_response = hmis_api_bridge.get_client(personal_id)
+        client_data = hmis_api_bridge.get_client(hmis_id)
 
-        if not client_response:
-            return HmisGetClientError(message="Something went wrong")
+        unique_identifier = client_data.pop("unique_identifier")
+        returned_hmis_id = str(client_data.pop("hmis_id"))
 
-        if errors := client_response.get("errors"):
-            return HmisGetClientError(message=errors[0]["message"])
+        if hmis_id != returned_hmis_id:
+            raise ValidationError("Client ID mismatch")
 
-        return get_client_from_response(client_response)
-
-    @strawberry.field()
-    def hmis_list_clients(
-        self,
-        info: Info,
-        pagination: Optional[HmisPaginationInput] = None,
-        filter: Optional[HmisClientFilterInput] = None,
-    ) -> HmisListClientsResult:
-        request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
-
-        response = hmis_api_bridge.list_clients(pagination, filter)
-
-        if not response:
-            return HmisListClientsError(message="Something went wrong")
-
-        if errors := response.get("errors"):
-            return HmisListClientsError(message=errors[0]["message"])
-
-        client_items = response.get("items", []) or []
-        client_meta = response.get("meta", {}) or {}
-
-        clients = [get_client_from_response(c) for c in client_items]
-
-        pagination_info = HmisListMetaType(
-            current_page=client_meta.get("current_page"),
-            per_page=client_meta.get("per_page"),
-            page_count=client_meta.get("page_count"),
-            total_count=client_meta.get("total_count"),
+        hmis_client_profile, _ = HmisClientProfile.objects.filter(hmis_id=hmis_id).update_or_create(
+            hmis_id=hmis_id,
+            unique_identifier=unique_identifier,
+            defaults={**client_data},
         )
 
-        return HmisClientListType(items=clients, meta=pagination_info)
+        return cast(HmisClientProfileType, hmis_client_profile)
 
-    @strawberry.field()
-    def hmis_get_client_note(
-        self, info: Info, personal_id: strawberry.ID, enrollment_id: strawberry.ID, id: strawberry.ID
-    ) -> HmisGetClientNoteResult:
-        request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+    hmis_client_profiles: OffsetPaginated[HmisClientProfileType] = strawberry_django.offset_paginated(
+        permission_classes=[IsAuthenticated],
+    )
 
-        response = hmis_api_bridge.get_client_note(personal_id=personal_id, enrollment_id=enrollment_id, id=id)
+    @strawberry_django.field(permission_classes=[IsAuthenticated])
+    def hmis_note(self, info: Info, client_hmis_id: str, note_hmis_id: str) -> HmisNoteType:
+        hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        if not response:
-            return HmisGetClientNoteError(message="Something went wrong")
-
-        if errors := response.get("errors"):
-            return HmisGetClientNoteError(message=errors[0]["message"])
-
-        return get_client_note_from_response(response)
-
-    @strawberry.field()
-    def hmis_list_client_notes(
-        self,
-        info: Info,
-        personal_id: strawberry.ID,
-        enrollment_id: strawberry.ID,
-        pagination: Optional[HmisPaginationInput] = None,
-    ) -> HmisListClientNotesResult:
-        request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
-
-        response = hmis_api_bridge.list_client_notes(
-            personal_id=personal_id,
-            enrollment_id=enrollment_id,
-            pagination=pagination,
+        note_data = hmis_api_bridge.get_note(
+            client_hmis_id=client_hmis_id,
+            note_hmis_id=note_hmis_id,
         )
 
-        if not response:
-            return HmisListClientNotesError(message="Something went wrong")
+        hmis_client_profile_id = HmisClientProfile.objects.get(hmis_id=client_hmis_id).pk
 
-        if errors := response.get("errors"):
-            return HmisListClientNotesError(message=errors[0]["message"])
-
-        client_note_items = response.get("items", []) or []
-        client_note_meta = response.get("meta", {}) or {}
-
-        client_notes = [get_client_note_from_response(e) for e in client_note_items]
-
-        pagination_info = HmisListMetaType(
-            current_page=client_note_meta.get("current_page"),
-            per_page=client_note_meta.get("per_page"),
-            page_count=client_note_meta.get("page_count"),
-            total_count=client_note_meta.get("total_count"),
+        hmis_note, _ = HmisNote.objects.filter(
+            hmis_id=note_hmis_id,
+            hmis_client_profile_id=hmis_client_profile_id,
+        ).update_or_create(
+            hmis_id=note_hmis_id,
+            hmis_client_profile_id=hmis_client_profile_id,
+            defaults={**note_data},
         )
 
-        return HmisClientNoteListType(items=client_notes, meta=pagination_info)
+        return cast(HmisNoteType, hmis_note)
 
-    @strawberry.field()
-    def hmis_list_enrollments(
-        self,
-        info: Info,
-        dynamic_fields: list[Optional[str]],
-        personal_id: strawberry.ID,
-        pagination: Optional[HmisPaginationInput] = None,
-    ) -> HmisListEnrollmentsResult:
-        request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
-
-        response = hmis_api_bridge.list_enrollments(
-            personal_id=personal_id, dynamic_fields=dynamic_fields, pagination=pagination
-        )
-
-        if not response:
-            return HmisListEnrollmentsError(message="Something went wrong")
-
-        if errors := response.get("errors"):
-            return HmisListEnrollmentsError(message=errors[0]["message"])
-
-        enrollment_items = response.get("items", []) or []
-        enrollment_meta = response.get("meta", {}) or {}
-
-        enrollments = [get_enrollment_from_response(e) for e in enrollment_items]
-
-        pagination_info = HmisListMetaType(
-            current_page=enrollment_meta.get("current_page"),
-            per_page=enrollment_meta.get("per_page"),
-            page_count=enrollment_meta.get("page_count"),
-            total_count=enrollment_meta.get("total_count"),
-        )
-
-        return HmisEnrollmentListType(items=enrollments, meta=pagination_info)
+    hmis_notes: OffsetPaginated[HmisNoteType] = strawberry_django.offset_paginated(permission_classes=[IsAuthenticated])
 
 
 @strawberry.type
 class Mutation:
-    @strawberry.mutation
-    def hmis_login(self, info: Info, email: str, password: str) -> HmisLoginResult:
-        request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def create_hmis_client_profile(self, info: Info, data: CreateHmisClientProfileInput) -> HmisClientProfileType:
+        hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        token = hmis_api_bridge.create_auth_token(email, password)
-        if not token:
-            return HmisLoginError(message="Invalid credentials or HMIS login failed")
+        client_data = hmis_api_bridge.create_client(data)
+        current_user = get_current_user(info)
 
-        # Require an existing user record.
-        # We never auto-create accounts here — users must be pre-invited
-        # into an organization that is linked to HMIS.
-        try:
-            user = User.objects.get(email__iexact=email)
-        except User.DoesNotExist:
-            return HmisLoginError(message="Invalid credentials or HMIS login failed")
+        hmis_client_profile = resolvers.create(info, HmisClientProfile, {**client_data, "created_by": current_user})
 
-        backend = settings.AUTHENTICATION_BACKENDS[0]
-        django_login(request, user, backend=backend)
+        return cast(HmisClientProfileType, hmis_client_profile)
 
-        return cast(UserType, user)
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_hmis_client_profile(self, info: Info, data: UpdateHmisClientProfileInput) -> HmisClientProfileType:
+        hmis_api_bridge = HmisRestApiBridge(info=info)
 
-    @strawberry.mutation
-    def hmis_create_client(
-        self,
-        info: Info,
-        client_input: HmisCreateClientInput,
-        client_sub_items_input: HmisCreateClientSubItemsInput,
-    ) -> HmisCreateClientResult:
-        request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
+        data_dict = strawberry.asdict(data)
+        phone_numbers = data_dict.pop("phone_numbers", []) or []
+        assert isinstance(phone_numbers, Iterable)
 
-        response = hmis_api_bridge.create_client(
-            client_input=strawberry.asdict(client_input),
-            client_sub_items_input=strawberry.asdict(client_sub_items_input),
+        client_data = hmis_api_bridge.update_client(data_dict)
+
+        hmis_id = client_data.pop("hmis_id")
+        client_data.pop("alias")  # TODO: API currently returning null for `alias`. Remove this once fixed.
+
+        hmis_client_profile = HmisClientProfile.objects.get(hmis_id=hmis_id)
+
+        content_type = ContentType.objects.get_for_model(HmisClientProfile)
+        for phone_number in phone_numbers:
+            PhoneNumber.objects.create(
+                content_type=content_type,
+                object_id=hmis_client_profile.id,
+                number=phone_number["number"],
+                is_primary=phone_number["is_primary"],
+            )
+
+        hmis_client_profile = resolvers.update(info, hmis_client_profile, {**data_dict, **client_data})
+
+        return cast(HmisClientProfileType, hmis_client_profile)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def create_hmis_note(self, info: Info, data: CreateHmisNoteInput) -> HmisNoteType:
+        hmis_client_profile = HmisClientProfile.objects.get(pk=data.hmis_client_profile_id)
+
+        hmis_api_bridge = HmisRestApiBridge(info=info)
+
+        note_data = hmis_api_bridge.create_note(client_hmis_id=hmis_client_profile.pk, data=data)
+        current_user = get_current_user(info)
+
+        hmis_note = resolvers.create(
+            info,
+            HmisNote,
+            {
+                **note_data,
+                "created_by": current_user,
+                "hmis_client_profile": hmis_client_profile,
+            },
         )
 
-        if not response:
-            return HmisCreateClientError(message="Something went wrong")
+        return cast(HmisNoteType, hmis_note)
 
-        if errors := response.get("errors"):
-            return HmisCreateClientError(message=errors[0]["message"])
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_hmis_note(self, info: Info, data: UpdateHmisNoteInput) -> HmisNoteType:
+        hmis_note = HmisNote.objects.get(id=data.id)
+        hmis_client_profile_id = HmisClientProfile.objects.get(pk=data.hmis_client_profile_id).pk
 
-        return get_client_from_response(response)
+        hmis_api_bridge = HmisRestApiBridge(info=info)
 
-    @strawberry.mutation
-    def hmis_update_client(
-        self,
-        info: Info,
-        client_input: HmisUpdateClientInput,
-        client_sub_items_input: HmisUpdateClientSubItemsInput,
-    ) -> HmisUpdateClientResult:
-        request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
-
-        response = hmis_api_bridge.update_client(
-            client_input=strawberry.asdict(client_input),
-            client_sub_items_input=strawberry.asdict(client_sub_items_input),
+        note_data = hmis_api_bridge.update_note(
+            client_hmis_id=hmis_client_profile_id, note_hmis_id=hmis_note.pk, data=data
         )
 
-        if not response:
-            return HmisUpdateClientError(message="Something went wrong")
+        hmis_note = resolvers.update(info, hmis_note, {**note_data})
 
-        if errors := response.get("errors"):
-            return HmisUpdateClientError(message=errors[0]["message"])
-
-        return get_client_from_response(response)
-
-    @strawberry.mutation
-    def hmis_create_client_note(
-        self,
-        info: Info,
-        client_note_input: HmisCreateClientNoteInput,
-    ) -> HmisCreateClientNoteResult:
-        request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
-
-        response = hmis_api_bridge.create_client_note(
-            client_note_input=strawberry.asdict(client_note_input),
-        )
-
-        if not response:
-            return HmisCreateClientNoteError(message="Something went wrong")
-
-        if errors := response.get("errors"):
-            return HmisCreateClientNoteError(message=errors[0]["message"])
-
-        return get_client_note_from_response(response)
-
-    @strawberry.mutation
-    def hmis_update_client_note(
-        self,
-        info: Info,
-        client_note_input: HmisUpdateClientNoteInput,
-    ) -> HmisUpdateClientNoteResult:
-        request = info.context["request"]
-        hmis_api_bridge = HmisApiBridge(request=request)
-
-        response = hmis_api_bridge.update_client_note(
-            client_note_input=strawberry.asdict(client_note_input),
-        )
-
-        if not response:
-            return HmisUpdateClientNoteError(message="Something went wrong")
-
-        if errors := response.get("errors"):
-            return HmisUpdateClientNoteError(message=errors[0]["message"])
-
-        return get_client_note_from_response(response)
+        return cast(HmisNoteType, hmis_note)

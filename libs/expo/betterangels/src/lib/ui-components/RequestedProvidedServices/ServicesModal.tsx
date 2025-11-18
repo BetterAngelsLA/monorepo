@@ -17,9 +17,9 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 
 import {
+  CreateNoteServiceRequestDocument,
+  DeleteServiceRequestDocument,
   ServiceRequestTypeEnum,
-  useCreateNoteServiceRequestMutation,
-  useDeleteServiceRequestMutation,
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
@@ -28,9 +28,10 @@ import MainScrollContainer from '../MainScrollContainer';
 import OtherCategory from './OtherCategory';
 import ServiceCheckbox from './ServiceCheckbox';
 
+import { useMutation, useQuery } from '@apollo/client/react';
 import {
+  ServiceCategoriesDocument,
   ServiceCategoriesQuery,
-  useServiceCategoriesQuery,
 } from './__generated__/services.generated';
 
 type ApiCategory =
@@ -64,7 +65,7 @@ interface IServicesModalProps {
 export default function ServicesModal(props: IServicesModalProps) {
   const { initialServiceRequests, noteId, refetch, type } = props;
 
-  const { data: availableCategories } = useServiceCategoriesQuery();
+  const { data: availableCategories } = useQuery(ServiceCategoriesDocument);
   const { closeModalScreen } = useModalScreen();
   const { showSnackbar } = useSnackbar();
   const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
@@ -80,8 +81,8 @@ export default function ServicesModal(props: IServicesModalProps) {
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
 
-  const [deleteService] = useDeleteServiceRequestMutation();
-  const [createServiceRequest] = useCreateNoteServiceRequestMutation();
+  const [deleteService] = useMutation(DeleteServiceRequestDocument);
+  const [createServiceRequest] = useMutation(CreateNoteServiceRequestDocument);
 
   // ---------- Pure helpers (native sort + Remeda for map/filter/find) ----------
   const sortCategories = (arr: ApiCategory[]) =>

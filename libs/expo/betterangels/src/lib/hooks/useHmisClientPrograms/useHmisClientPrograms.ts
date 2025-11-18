@@ -1,18 +1,14 @@
-import { useMemo, useState } from 'react';
-import { useHmisClientProgramEnrollmentsQuery } from './__generated__/hmisClientProgramEnrollments.generated';
+import { useQuery } from '@apollo/client/react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { HmisEnrollmentType } from '../../apollo';
+import { HmisClientProgramEnrollmentsDocument } from './__generated__/hmisClientProgramEnrollments.generated';
 import { parseError } from './utils/parseError';
 
 const MAX_PROGRAMS_TO_FETCH = 50;
 
-type UseHmisClientProgramsResult = {
-  programs?: THmisClientProgram[];
+type TProgramsBase = {
+  programs?: HmisEnrollmentType[];
   error?: string;
-  totalPrograms?: number | null;
-};
-
-type THmisClientProgram = {
-  id: string;
-  name: string;
 };
 
 type TProps = {
@@ -27,7 +23,11 @@ export function useHmisClientPrograms(props: TProps) {
     number | undefined
   >(undefined);
 
-  const { data, loading } = useHmisClientProgramEnrollmentsQuery({
+  const {
+    data,
+    loading,
+    error: queryError,
+  } = useQuery(HmisClientProgramEnrollmentsDocument, {
     skip: !hmisClientId,
     variables: {
       personalId: hmisClientId,
@@ -37,23 +37,32 @@ export function useHmisClientPrograms(props: TProps) {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
     notifyOnNetworkStatusChange: true,
-    onCompleted: (freshData) => {
-      const list = freshData?.hmisListEnrollments;
-
-      if (list?.__typename === 'HmisEnrollmentListType') {
-        const total = list.meta?.totalCount;
-        const newTotal = typeof total === 'number' ? total : undefined;
-
-        setTotalProgramsFromNetwork(newTotal);
-      }
-    },
-    onError: () => {
-      // If the network failed, we don't trust cached total; keep undefined
-      setTotalProgramsFromNetwork(undefined);
-    },
   });
 
-  const { programs, error } = useMemo<UseHmisClientProgramsResult>(() => {
+  // update totalProgramsFromNetwork onComplete
+  useEffect(() => {
+    if (!data) {
+      return;
+    }
+
+    const list = data.hmisListEnrollments;
+
+    if (list?.__typename === 'HmisEnrollmentListType') {
+      const total = list.meta?.totalCount;
+      const newTotal = typeof total === 'number' ? total : undefined;
+
+      setTotalProgramsFromNetwork(newTotal);
+    }
+  }, [data, setTotalProgramsFromNetwork]);
+
+  // update totalProgramsFromNetwork onError
+  useEffect(() => {
+    if (queryError) {
+      setTotalProgramsFromNetwork(undefined);
+    }
+  }, [queryError, setTotalProgramsFromNetwork]);
+
+  const { programs, error } = useMemo<TProgramsBase>(() => {
     // handle errors
     if (!hmisClientId) {
       console.error('useHmisClientPrograms: missing hmisClientId');
@@ -63,7 +72,7 @@ export function useHmisClientPrograms(props: TProps) {
 
     const list = data?.hmisListEnrollments;
 
-    if (list && list.__typename === 'HmisListEnrollmentsError') {
+    if (list?.__typename === 'HmisListEnrollmentsError') {
       const { message } = parseError(list.message);
       const errMsg = message || 'unknown HmisListEnrollmentsError error';
 
@@ -73,7 +82,7 @@ export function useHmisClientPrograms(props: TProps) {
     }
 
     if (list && list.__typename !== 'HmisEnrollmentListType') {
-      const errMsg = `invalid query result __typename: ${list?.__typename}`;
+      const errMsg = `invalid query result __typename: ${list.__typename}`;
 
       console.error(`useHmisClientPrograms: ${errMsg}`);
 
@@ -92,43 +101,69 @@ export function useHmisClientPrograms(props: TProps) {
       );
     }
 
-    // // success
-    const programs: THmisClientProgram[] = [];
+    const programs: HmisEnrollmentType[] = [];
 
     const listItems = list?.items || [];
 
-    for (const item of listItems) {
-      if (item.__typename !== 'HmisEnrollmentType') {
+    for (const program of listItems) {
+      if (program.__typename !== 'HmisEnrollmentType') {
         console.warn(
           `[useHmisClientPrograms]: invalid program for hmisClientId [${hmisClientId}]`,
-          item
+          program
         );
 
         continue;
       }
 
-      const { enrollmentId, project } = item;
-      const projectName = project?.projectName;
-
-      if (!enrollmentId || !projectName) {
-        console.warn(
-          `[useHmisClientPrograms] Skipping enrollment for hmisClientId [${hmisClientId}] with missing data`,
-          { enrollmentId, projectName, item }
-        );
-
-        continue;
-      }
-
-      programs.push({ id: enrollmentId, name: projectName });
+      programs.push(program);
     }
 
     return { programs };
-  }, [data, hmisClientId]);
+  }, [data, hmisClientId, totalProgramsFromNetwork]);
+
+  // map Program project names for easy access
+  const programIdToProjectNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+
+    if (!programs || programs?.length === 0) {
+      return map;
+    }
+
+    for (const program of programs) {
+      const enrollmentId = program.enrollmentId;
+      if (!enrollmentId) {
+        continue;
+      }
+
+      const projectName = program.project?.projectName;
+      if (!projectName) {
+        continue;
+      }
+
+      map.set(enrollmentId, projectName);
+    }
+
+    return map;
+  }, [programs]);
+
+  // utility fn to return program name
+  const getProgramNameByEnrollmentId = useCallback(
+    (enrollmentId?: string | null) => {
+      if (!enrollmentId) {
+        return undefined;
+      }
+
+      return programIdToProjectNameMap.get(enrollmentId);
+    },
+    [programIdToProjectNameMap]
+  );
 
   return {
     programs,
     totalPrograms: totalProgramsFromNetwork,
     loading,
     error,
+    programIdToProjectNameMap,
+    getProgramNameByEnrollmentId,
   };
 }

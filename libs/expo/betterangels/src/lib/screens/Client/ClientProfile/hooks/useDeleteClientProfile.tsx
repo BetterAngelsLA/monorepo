@@ -1,6 +1,7 @@
+import { useMutation } from '@apollo/client/react';
 import { useRouter } from 'expo-router';
 import { useSnackbar } from '../../../../hooks';
-import { useDeleteClientProfileMutation } from '../../../ClientProfileForms/ClientProfileForm/__generated__/clientProfile.generated';
+import { DeleteClientProfileDocument } from '../../../ClientProfileForms/ClientProfileForm/__generated__/clientProfile.generated';
 
 type TProps = {
   clientProfileId?: string;
@@ -12,27 +13,40 @@ export function useDeleteClientProfile(props: TProps) {
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [deleteClientProfile, { loading, error }] =
-    useDeleteClientProfileMutation();
+  const [deleteClientProfile, { loading }] = useMutation(
+    DeleteClientProfileDocument
+  );
 
   const deleteProfile = async (id: string) => {
     try {
       await deleteClientProfile({
         variables: { id },
         update(cache) {
-          if (!id) return;
-          const storeId = cache.identify({ __typename: 'ClientProfile', id });
+          if (!id) {
+            return;
+          }
 
-          if (storeId) cache.evict({ id: storeId });
+          // Remove from all clientProfiles list entries
           cache.modify({
             id: 'ROOT_QUERY',
             fields: {
               clientProfiles(existing, { readField }) {
-                if (!existing) return existing;
+                if (!existing) {
+                  return existing;
+                }
 
-                const nextResults = (existing.results ?? []).filter(
-                  (ref: any) => readField('id', ref) !== id
-                );
+                const existingResults = existing.results ?? [];
+
+                const nextResults = existingResults.filter((ref: any) => {
+                  const refId = readField('id', ref);
+
+                  // remove any dangling refs
+                  if (refId === null || refId === undefined) {
+                    return false;
+                  }
+
+                  return refId !== id;
+                });
 
                 const nextTotal =
                   typeof existing.totalCount === 'number'
@@ -48,13 +62,19 @@ export function useDeleteClientProfile(props: TProps) {
             },
           });
 
+          // Evict after
+          const storeId = cache.identify({
+            __typename: 'ClientProfileType',
+            id,
+          });
+
+          if (storeId) {
+            cache.evict({ id: storeId });
+          }
+
           cache.gc();
         },
       });
-
-      if (error) {
-        throw error;
-      }
 
       if (returnPath) {
         router.replace({

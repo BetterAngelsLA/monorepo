@@ -1,21 +1,24 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { extractHMISErrors } from '../../../apollo';
 import { applyOperationFieldErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
-import { HmisProgramNoteForm } from '../HmisProgramNoteForm';
 import {
+  HmisProgramNoteForm,
   HmisProgramNoteFormSchema,
-  HmisProgramNoteFormtSchemaOutput,
-  TFormInput,
-  TFormOutput,
+  HmisProgramNoteFormSchemaOutput,
+  THmisProgramNoteFormInputs,
+  THmisProgramNoteFormOutputs,
+} from '../HmisProgramNoteForm';
+import {
+  getHmisProgramNoteFormEmptyState,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm/formSchema';
-import { useHmisCreateClientNoteMutation } from './__generated__/hmisCreateClientNote.generated';
+import { HmisCreateClientNoteDocument } from './__generated__/hmisCreateClientNote.generated';
 
 type TProps = {
   hmisClientId: string;
@@ -27,23 +30,25 @@ export function HmisProgramNoteCreate(props: TProps) {
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [createHmisClientNoteMutation] = useHmisCreateClientNoteMutation();
-
-  type TFormValues = z.input<typeof HmisProgramNoteFormSchema>;
+  const [createHmisClientNoteMutation] = useMutationWithErrors(
+    HmisCreateClientNoteDocument
+  );
 
   const formKeys = Object.keys(hmisProgramNoteFormEmptyState);
 
-  const formMethods = useForm<TFormInput>({
+  const formMethods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
-    defaultValues: hmisProgramNoteFormEmptyState,
+    defaultValues: getHmisProgramNoteFormEmptyState(),
   });
 
   const { setError } = formMethods;
 
-  const onSubmit: SubmitHandler<TFormValues> = async (values) => {
+  const onSubmit: SubmitHandler<THmisProgramNoteFormInputs> = async (
+    values
+  ) => {
     try {
-      const payload: TFormOutput =
-        HmisProgramNoteFormtSchemaOutput.parse(values);
+      const payload: THmisProgramNoteFormOutputs =
+        HmisProgramNoteFormSchemaOutput.parse(values);
 
       const { data } = await createHmisClientNoteMutation({
         variables: {
@@ -52,7 +57,6 @@ export function HmisProgramNoteCreate(props: TProps) {
             ...payload,
           },
         },
-
         errorPolicy: 'all',
       });
 
@@ -64,7 +68,6 @@ export function HmisProgramNoteCreate(props: TProps) {
 
       if (result?.__typename === 'HmisCreateClientNoteError') {
         const { message: hmisErrorMessage } = result;
-
         const { status, fieldErrors = [] } =
           extractHMISErrors(hmisErrorMessage) || {};
 
@@ -73,16 +76,13 @@ export function HmisProgramNoteCreate(props: TProps) {
           const formFieldErrors = fieldErrors.filter(({ field }) =>
             formKeys.includes(field)
           );
-
           applyOperationFieldErrors(formFieldErrors, setError);
-
           return;
         }
 
         if (status === 404) {
           throw new Error('could not find Client of Program Enrollment');
         }
-
         // HmisCreateClientError exists but not 422 | 404
         // throw generic error
         throw new Error(hmisErrorMessage);
@@ -97,7 +97,6 @@ export function HmisProgramNoteCreate(props: TProps) {
       );
     } catch (error) {
       console.error('createHmisClientNoteMutation error:', error);
-
       showSnackbar({
         message: 'Something went wrong. Please try again.',
         type: 'error',
