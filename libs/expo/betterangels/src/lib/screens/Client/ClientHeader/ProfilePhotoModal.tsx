@@ -1,5 +1,5 @@
 import { DeleteIcon } from '@monorepo/expo/shared/icons';
-import { DeleteModal } from '@monorepo/expo/shared/ui-components';
+import { DeleteModal, DUR_OUT } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { useSnackbar } from '../../../hooks';
 import { MainModal } from '../../../ui-components/MainModal';
@@ -27,11 +27,11 @@ export function ProfilePhotoModal({
   // Show delete modal after main modal closes (when pendingDelete is true)
   useEffect(() => {
     if (!isModalVisible && pendingDelete) {
-      // Delay to ensure MainModal animation completes (DUR_OUT is 200ms, adding buffer)
+      // Delay to ensure MainModal animation completes (DUR_OUT + buffer)
       const timer = setTimeout(() => {
         setShowDeleteModal(true);
         setPendingDelete(false);
-      }, 350);
+      }, DUR_OUT + 150);
       return () => clearTimeout(timer);
     }
     return undefined;
