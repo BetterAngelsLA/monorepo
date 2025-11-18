@@ -48,7 +48,7 @@ export default function Clients({ Logo }: { Logo: ElementType }) {
 
   const renderHmisClientItem = useCallback(
     (client: THmisClientProfile) => {
-      const id = client.id;
+      const id = client.hmisId;
 
       if (!id) {
         return null;
