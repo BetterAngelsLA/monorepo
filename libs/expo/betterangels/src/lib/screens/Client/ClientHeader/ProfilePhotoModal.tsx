@@ -24,28 +24,30 @@ export function ProfilePhotoModal({
   clientId,
 }: IProfilePhotoModalProps) {
   const { showSnackbar } = useSnackbar();
-  const [activeModal, setActiveModal] = useState<ModalType | null>(null);
-  const [pendingModal, setPendingModal] = useState<ModalType | null>(null);
+  const [currentModal, setCurrentModal] = useState<ModalType | null>(null);
+  const [nextModal, setNextModal] = useState<ModalType | null>(null);
 
-  // Show modal after main modal closes (when pendingModal is set)
+  // Handle modal state transitions and resets
   useEffect(() => {
-    if (!isModalVisible && pendingModal) {
+    if (isModalVisible) {
+      // Reset state when main modal opens
+      setCurrentModal(null);
+      setNextModal(null);
+      return undefined;
+    }
+
+    // Handle transition when main modal closes and we have a next modal queued
+    if (nextModal) {
       // Delay to ensure MainModal animation completes (DUR_OUT + buffer)
       const timer = setTimeout(() => {
-        setActiveModal(pendingModal);
-        setPendingModal(null);
+        setCurrentModal(nextModal);
+        setNextModal(null);
       }, DUR_OUT + 150);
       return () => clearTimeout(timer);
     }
-    return undefined;
-  }, [isModalVisible, pendingModal]);
 
-  // Reset state when modal is closed and we're not showing another modal
-  useEffect(() => {
-    if (!isModalVisible && !pendingModal && !activeModal) {
-      setActiveModal(null);
-    }
-  }, [isModalVisible, pendingModal, activeModal]);
+    return undefined;
+  }, [isModalVisible, nextModal]);
 
   const [updateClientProfilePhoto] = useMutation(
     UpdateClientProfilePhotoDocument,
@@ -57,7 +59,7 @@ export function ProfilePhotoModal({
   );
 
   const deleteFile = async () => {
-    setActiveModal(null);
+    setCurrentModal(null);
     closeModal();
     try {
       await updateClientProfilePhoto({
@@ -78,12 +80,12 @@ export function ProfilePhotoModal({
   };
 
   const handleDeletePress = () => {
-    setPendingModal('delete');
+    setNextModal('delete');
     closeModal();
   };
 
   const handleViewImagePress = () => {
-    setPendingModal('viewer');
+    setNextModal('viewer');
     closeModal();
   };
 
@@ -100,26 +102,30 @@ export function ProfilePhotoModal({
     },
   ];
 
-  if (activeModal === 'delete') {
+  if (currentModal === 'delete') {
     return (
       <DeleteModal
         body="All data associated with this image will be deleted."
         title="Delete image?"
         onDelete={deleteFile}
-        onCancel={() => setActiveModal(null)}
+        onCancel={() => setCurrentModal(null)}
         isVisible
         deleteableItemName="profile photo"
       />
     );
   }
 
-  if (activeModal === 'viewer') {
+  if (currentModal === 'viewer') {
+    if (!imageUrl) {
+      return null;
+    }
+
     return (
       <BaseModal
         title="Profile Photo"
         isOpen={true}
         onClose={() => {
-          setActiveModal(null);
+          setCurrentModal(null);
           closeModal();
         }}
         variant="fullscreen"
@@ -136,7 +142,7 @@ export function ProfilePhotoModal({
       closeButton
       vertical
       actions={ACTIONS}
-      isModalVisible={isModalVisible && !pendingModal}
+      isModalVisible={isModalVisible && !nextModal}
       closeModal={closeModal}
       opacity={0.5}
     />
