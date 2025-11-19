@@ -113,6 +113,7 @@ export function ClientHMISEdit(props: TProps) {
 
       const inputs = toUpdateHmisClientProfileInput(
         hmisId,
+        client,
         values as UpdateHmisClientProfileInput
       );
 
