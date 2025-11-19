@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from '../../../components/Input';
 import { Regex } from '../../../static';
+import './SignIn.css';
 
 export interface SignInProps {
   /** Path to redirect to after successful login */
