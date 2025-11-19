@@ -8,8 +8,11 @@ import {
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { InputMaybe, TaskFilter, TaskOrder } from '../../apollo';
-import { ListLoadingView } from './ListLoadingView';
-import { TasksQuery, useTasksQuery } from './__generated__/Tasks.generated';
+import {
+  TasksDocument,
+  TasksQuery,
+  TasksQueryVariables,
+} from './__generated__/Tasks.generated';
 import {
   DEFAULT_ITEM_GAP,
   DEFAULT_PAGINATION_LIMIT,
@@ -42,8 +45,8 @@ export function TaskList(props: TProps) {
   } = props;
 
   const { items, total, loading, loadMore, hasMore, error } =
-    useInfiniteScrollQuery<TTask, typeof useTasksQuery>({
-      useQueryHook: useTasksQuery,
+    useInfiniteScrollQuery<TTask, TasksQuery, TasksQueryVariables>({
+      document: TasksDocument,
       queryFieldName: 'tasks',
       variables: {
         filters,
@@ -79,7 +82,6 @@ export function TaskList(props: TProps) {
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="task"
-        LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
         renderResultsHeader={renderHeader}
       />
     </View>

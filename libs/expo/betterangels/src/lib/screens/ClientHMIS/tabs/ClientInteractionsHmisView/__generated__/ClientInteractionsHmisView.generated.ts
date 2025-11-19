@@ -1,8 +1,6 @@
-import * as Types from '../../../../../apollo/graphql/__generated__/types';
+import type * as Types from '../../../../../apollo/graphql/__generated__/types';
 
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
-const defaultOptions = {} as const;
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type HmisListClientNotesQueryVariables = Types.Exact<{
   enrollmentId: Types.Scalars['ID']['input'];
   pagination?: Types.InputMaybe<Types.HmisPaginationInput>;
@@ -10,7 +8,10 @@ export type HmisListClientNotesQueryVariables = Types.Exact<{
 }>;
 
 
-export type HmisListClientNotesQuery = { __typename?: 'Query', hmisListClientNotes: { __typename: 'HmisClientNoteListType', items: Array<{ __typename?: 'HmisClientNoteType', category?: string | null, date?: string | null, id?: string | null, note?: string | null, title?: string | null, enrollment?: { __typename?: 'HmisEnrollmentType', enrollmentId?: string | null } | null }>, meta?: { __typename?: 'HmisListMetaType', currentPage?: number | null, pageCount?: number | null, perPage?: number | null, totalCount?: number | null } | null } | { __typename?: 'HmisListClientNotesError', field?: string | null, message: string } };
+export type HmisListClientNotesQuery = { __typename?: 'Query', hmisListClientNotes:
+    | { __typename: 'HmisClientNoteListType', items: Array<{ __typename?: 'HmisClientNoteType', category?: string | null, date?: string | null, id?: string | null, note?: string | null, title?: string | null, enrollment?: { __typename?: 'HmisEnrollmentType', enrollmentId?: string | null } | null }>, meta?: { __typename?: 'HmisListMetaType', currentPage?: number | null, pageCount?: number | null, perPage?: number | null, totalCount?: number | null } | null }
+    | { __typename?: 'HmisListClientNotesError', field?: string | null, message: string }
+   };
 
 export type HmisNotesQueryVariables = Types.Exact<{
   filters?: Types.InputMaybe<Types.HmisNoteFilter>;
@@ -22,133 +23,5 @@ export type HmisNotesQueryVariables = Types.Exact<{
 export type HmisNotesQuery = { __typename?: 'Query', hmisNotes: { __typename?: 'HmisNoteTypeOffsetPaginated', totalCount: number, pageInfo: { __typename?: 'OffsetPaginationInfo', limit?: number | null, offset: number }, results: Array<{ __typename?: 'HmisNoteType', id: string, hmisId: string, hmisClientProfileId: string, addedDate?: any | null, lastUpdated?: any | null, title?: string | null, note: string, date?: any | null, refClientProgram?: number | null, createdBy?: { __typename?: 'UserType', id: string, firstName?: string | null, lastName?: string | null } | null }> } };
 
 
-export const HmisListClientNotesDocument = gql`
-    query HmisListClientNotes($enrollmentId: ID!, $pagination: HmisPaginationInput = null, $personalId: ID!) {
-  hmisListClientNotes(
-    enrollmentId: $enrollmentId
-    personalId: $personalId
-    pagination: $pagination
-  ) {
-    ... on HmisClientNoteListType {
-      __typename
-      items {
-        category
-        date
-        id
-        note
-        title
-        enrollment {
-          enrollmentId
-        }
-      }
-      meta {
-        currentPage
-        pageCount
-        perPage
-        totalCount
-      }
-    }
-    ... on HmisListClientNotesError {
-      field
-      message
-    }
-  }
-}
-    `;
-
-/**
- * __useHmisListClientNotesQuery__
- *
- * To run a query within a React component, call `useHmisListClientNotesQuery` and pass it any options that fit your needs.
- * When your component renders, `useHmisListClientNotesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useHmisListClientNotesQuery({
- *   variables: {
- *      enrollmentId: // value for 'enrollmentId'
- *      pagination: // value for 'pagination'
- *      personalId: // value for 'personalId'
- *   },
- * });
- */
-export function useHmisListClientNotesQuery(baseOptions: Apollo.QueryHookOptions<HmisListClientNotesQuery, HmisListClientNotesQueryVariables> & ({ variables: HmisListClientNotesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<HmisListClientNotesQuery, HmisListClientNotesQueryVariables>(HmisListClientNotesDocument, options);
-      }
-export function useHmisListClientNotesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HmisListClientNotesQuery, HmisListClientNotesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<HmisListClientNotesQuery, HmisListClientNotesQueryVariables>(HmisListClientNotesDocument, options);
-        }
-export function useHmisListClientNotesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HmisListClientNotesQuery, HmisListClientNotesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<HmisListClientNotesQuery, HmisListClientNotesQueryVariables>(HmisListClientNotesDocument, options);
-        }
-export type HmisListClientNotesQueryHookResult = ReturnType<typeof useHmisListClientNotesQuery>;
-export type HmisListClientNotesLazyQueryHookResult = ReturnType<typeof useHmisListClientNotesLazyQuery>;
-export type HmisListClientNotesSuspenseQueryHookResult = ReturnType<typeof useHmisListClientNotesSuspenseQuery>;
-export type HmisListClientNotesQueryResult = Apollo.QueryResult<HmisListClientNotesQuery, HmisListClientNotesQueryVariables>;
-export const HmisNotesDocument = gql`
-    query HmisNotes($filters: HmisNoteFilter, $pagination: OffsetPaginationInput, $ordering: [HmisNoteOrdering!]! = []) {
-  hmisNotes(filters: $filters, pagination: $pagination, ordering: $ordering) {
-    totalCount
-    pageInfo {
-      limit
-      offset
-    }
-    results {
-      id
-      hmisId
-      hmisClientProfileId
-      addedDate
-      lastUpdated
-      title
-      note
-      date
-      refClientProgram
-      createdBy {
-        id
-        firstName
-        lastName
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useHmisNotesQuery__
- *
- * To run a query within a React component, call `useHmisNotesQuery` and pass it any options that fit your needs.
- * When your component renders, `useHmisNotesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useHmisNotesQuery({
- *   variables: {
- *      filters: // value for 'filters'
- *      pagination: // value for 'pagination'
- *      ordering: // value for 'ordering'
- *   },
- * });
- */
-export function useHmisNotesQuery(baseOptions?: Apollo.QueryHookOptions<HmisNotesQuery, HmisNotesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<HmisNotesQuery, HmisNotesQueryVariables>(HmisNotesDocument, options);
-      }
-export function useHmisNotesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HmisNotesQuery, HmisNotesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<HmisNotesQuery, HmisNotesQueryVariables>(HmisNotesDocument, options);
-        }
-export function useHmisNotesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HmisNotesQuery, HmisNotesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<HmisNotesQuery, HmisNotesQueryVariables>(HmisNotesDocument, options);
-        }
-export type HmisNotesQueryHookResult = ReturnType<typeof useHmisNotesQuery>;
-export type HmisNotesLazyQueryHookResult = ReturnType<typeof useHmisNotesLazyQuery>;
-export type HmisNotesSuspenseQueryHookResult = ReturnType<typeof useHmisNotesSuspenseQuery>;
-export type HmisNotesQueryResult = Apollo.QueryResult<HmisNotesQuery, HmisNotesQueryVariables>;
+export const HmisListClientNotesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"HmisListClientNotes"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"enrollmentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"pagination"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"HmisPaginationInput"}},"defaultValue":{"kind":"NullValue"}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"personalId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hmisListClientNotes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"enrollmentId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"enrollmentId"}}},{"kind":"Argument","name":{"kind":"Name","value":"personalId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"personalId"}}},{"kind":"Argument","name":{"kind":"Name","value":"pagination"},"value":{"kind":"Variable","name":{"kind":"Name","value":"pagination"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"HmisClientNoteListType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"__typename"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"date"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"note"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"enrollment"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"enrollmentId"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"meta"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"currentPage"}},{"kind":"Field","name":{"kind":"Name","value":"pageCount"}},{"kind":"Field","name":{"kind":"Name","value":"perPage"}},{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"HmisListClientNotesError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<HmisListClientNotesQuery, HmisListClientNotesQueryVariables>;
+export const HmisNotesDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"HmisNotes"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filters"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"HmisNoteFilter"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"pagination"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"OffsetPaginationInput"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"ordering"}},"type":{"kind":"NonNullType","type":{"kind":"ListType","type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"HmisNoteOrdering"}}}}},"defaultValue":{"kind":"ListValue","values":[]}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hmisNotes"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"filters"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filters"}}},{"kind":"Argument","name":{"kind":"Name","value":"pagination"},"value":{"kind":"Variable","name":{"kind":"Name","value":"pagination"}}},{"kind":"Argument","name":{"kind":"Name","value":"ordering"},"value":{"kind":"Variable","name":{"kind":"Name","value":"ordering"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"pageInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"limit"}},{"kind":"Field","name":{"kind":"Name","value":"offset"}}]}},{"kind":"Field","name":{"kind":"Name","value":"results"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"hmisId"}},{"kind":"Field","name":{"kind":"Name","value":"hmisClientProfileId"}},{"kind":"Field","name":{"kind":"Name","value":"addedDate"}},{"kind":"Field","name":{"kind":"Name","value":"lastUpdated"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"note"}},{"kind":"Field","name":{"kind":"Name","value":"date"}},{"kind":"Field","name":{"kind":"Name","value":"refClientProgram"}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}}]}}]}}]}}]}}]} as unknown as DocumentNode<HmisNotesQuery, HmisNotesQueryVariables>;

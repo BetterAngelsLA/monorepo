@@ -1,3 +1,4 @@
+import { useQuery } from '@apollo/client/react';
 import { Colors } from '@monorepo/expo/shared/static';
 import { LoadingView, Tabs } from '@monorepo/expo/shared/ui-components';
 import { useLocalSearchParams } from 'expo-router';
@@ -6,7 +7,7 @@ import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import { ClientViewTabEnum } from '../Client/ClientTabs';
 import { HMISClientHeader } from './HMISClientHeader';
-import { useGetHmisClientQuery } from './__generated__/getHMISClient.generated';
+import { HmisClientProfileDocument } from './__generated__/getHMISClient.generated';
 import { renderTabComponent } from './tabs/utils/renderTabComponent';
 
 const hmisTabs: ClientViewTabEnum[] = [
@@ -15,13 +16,13 @@ const hmisTabs: ClientViewTabEnum[] = [
 ];
 
 type TProps = {
-  id: string;
+  hmisId: string;
   arrivedFrom?: string;
   openCard?: ClientProfileSectionEnum | null;
 };
 
 export function ClientHMIS(props: TProps) {
-  const { id: personalId, openCard } = props;
+  const { hmisId, openCard } = props;
 
   const { activeTab } = useLocalSearchParams<{
     activeTab?: ClientViewTabEnum;
@@ -35,17 +36,17 @@ export function ClientHMIS(props: TProps) {
     }
   }, [activeTab]);
 
-  const { data, loading } = useGetHmisClientQuery({
-    variables: { personalId },
+  const { data, loading } = useQuery(HmisClientProfileDocument, {
+    variables: { hmisId },
   });
 
   if (loading) {
     return <LoadingView />;
   }
 
-  const client = data?.hmisGetClient;
+  const client = data?.hmisClientProfile;
 
-  if (client?.__typename !== 'HmisClientType') {
+  if (client?.__typename !== 'HmisClientProfileType') {
     return null;
   }
 

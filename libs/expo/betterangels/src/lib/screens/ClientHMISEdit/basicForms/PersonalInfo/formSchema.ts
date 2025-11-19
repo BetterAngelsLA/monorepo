@@ -4,13 +4,13 @@ import { HmisDobQualityEnum, HmisVeteranStatusEnum } from '../../../../apollo';
 export type TPersonalInfoFormSchema = z.infer<typeof PersonalInfoFormSchema>;
 
 export const personalInfoFormEmptyState: TPersonalInfoFormSchema = {
-  veteranStatus: '',
-  dob: '',
-  dobDataQuality: '',
+  veteran: '',
+  birthDate: '',
+  dobQuality: '',
 };
 
 export const PersonalInfoFormSchema = z.object({
-  veteranStatus: z.enum(HmisVeteranStatusEnum).or(z.literal('')),
-  dob: z.string(),
-  dobDataQuality: z.enum(HmisDobQualityEnum).or(z.literal('')),
+  veteran: z.enum(HmisVeteranStatusEnum).or(z.literal('')),
+  birthDate: z.string(),
+  dobQuality: z.enum(HmisDobQualityEnum).or(z.literal('')),
 });

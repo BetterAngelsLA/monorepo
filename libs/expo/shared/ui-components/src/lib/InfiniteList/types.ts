@@ -1,6 +1,7 @@
 import { type FlashListProps } from '@shopify/flash-list';
-import type { ComponentType, ReactElement, ReactNode } from 'react';
+import type { ComponentType, ReactElement } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
+import { TLoadingListView } from './LoadingListView';
 import { TRenderListResultsHeader } from './ResultsHeader';
 
 // FlashListProps to pass thru
@@ -26,7 +27,7 @@ type InfiniteListBaseProps<T> = {
   modelName?: string; // singular model name to render in ResultsHeader
   modelNamePlural?: string; // plural model name to render in ResultsHeader
   renderResultsHeader?: TRenderListResultsHeader | null;
-  LoadingViewContent?: ReactNode | null;
+  loadingViewOptions?: TLoadingListView;
   showScrollIndicator?: boolean;
   ItemSeparatorComponent?: ComponentType<any> | null;
   error?: boolean; // determines whether to show ErrorView
@@ -37,5 +38,4 @@ type InfiniteListBaseProps<T> = {
 
 export type TInfiniteListProps<T> = InfiniteListBaseProps<T> &
   ExtraFlashListProps<T> &
-  // ExtractKeyProps<T> &
   LoadMoreProps;

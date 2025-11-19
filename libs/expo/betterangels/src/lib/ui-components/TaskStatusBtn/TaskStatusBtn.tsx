@@ -1,11 +1,11 @@
-import { useApolloClient } from '@apollo/client';
+import { useApolloClient, useMutation } from '@apollo/client/react';
 import { Colors } from '@monorepo/expo/shared/static';
 import { useEffect, useState } from 'react';
 import { TaskStatusEnum, TaskType } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { enumDisplayTaskStatus } from '../../static';
 import SelectStatus from '../SelectStatus';
-import { useUpdateTaskStatusMutation } from './__generated__/updateTaskStatus.generated';
+import { UpdateTaskStatusDocument } from './__generated__/updateTaskStatus.generated';
 
 const OPTIONS = [
   {
@@ -36,7 +36,7 @@ type TaskStatusBtnProps = {
 export function TaskStatusBtn(props: TaskStatusBtnProps) {
   const { id, status } = props;
 
-  const [updateTaskMutation] = useUpdateTaskStatusMutation();
+  const [updateTaskMutation] = useMutation(UpdateTaskStatusDocument);
   const [disabled, setDisabled] = useState(false);
   const { showSnackbar } = useSnackbar();
   const client = useApolloClient();

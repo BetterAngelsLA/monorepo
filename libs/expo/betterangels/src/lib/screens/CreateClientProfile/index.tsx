@@ -1,3 +1,4 @@
+import { useMutationWithErrors } from '@monorepo/apollo';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   BottomActions,
@@ -12,7 +13,11 @@ import { StyleSheet, View } from 'react-native';
 import { CreateClientProfileInput, extractExtensionErrors } from '../../apollo';
 import { applyManualFormErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
-import { useCreateClientProfileMutation } from './__generated__/createClientProfile.generated';
+import {
+  CreateClientProfileDocument,
+  CreateClientProfileMutation,
+  CreateClientProfileMutationVariables,
+} from './__generated__/createClientProfile.generated';
 
 type AllowedFieldNames = 'firstName' | 'middleName' | 'lastName' | 'nickname';
 
@@ -45,8 +50,10 @@ export default function CreateClientProfile() {
     formState: { isSubmitted },
     setValue,
   } = useForm<CreateClientProfileInput>();
-  const [createClientProfile, { loading: isCreating }] =
-    useCreateClientProfileMutation();
+  const [createClientProfile, { loading: isCreating }] = useMutationWithErrors<
+    CreateClientProfileMutation,
+    CreateClientProfileMutationVariables
+  >(CreateClientProfileDocument);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();

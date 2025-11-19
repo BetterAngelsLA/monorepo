@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
     ...(isDev && {
       server: {
         port: SERVER_PORT,
-        host: 'localhost',
+        host: true,
         proxy: devServerProxy,
       },
     }),

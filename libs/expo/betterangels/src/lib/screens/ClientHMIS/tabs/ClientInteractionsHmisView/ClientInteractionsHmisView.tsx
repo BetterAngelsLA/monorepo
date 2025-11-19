@@ -5,7 +5,7 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { uniqueBy } from 'remeda';
-import { HmisNoteType, HmisClientType } from '../../../../apollo';
+import { HmisClientProfileType, HmisNoteType } from '../../../../apollo';
 import {
   MainScrollContainer,
   ProgramNoteCard,
@@ -16,7 +16,7 @@ import { useHmisListClientNotesQuery } from './__generated__/ClientInteractionsH
 export const DEFAULT_PAGINATION_LIMIT = 20;
 
 type TProps = {
-  client?: HmisClientType;
+  client?: HmisClientProfileType;
 };
 
 // TODO: Needs to be dynamic

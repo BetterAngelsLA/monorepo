@@ -1,3 +1,4 @@
+import { useQuery } from '@apollo/client/react';
 import { FileSearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -10,10 +11,10 @@ import { ElementType, useEffect, useMemo, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { uniqueBy } from 'remeda';
 import {
+  NotesDocument,
   NotesQuery,
   Ordering,
   SelahTeamEnum,
-  useNotesQuery,
 } from '../../apollo';
 import useUser from '../../hooks/user/useUser';
 import { Header, HorizontalContainer, NoteCard } from '../../ui-components';
@@ -41,7 +42,7 @@ export default function Interactions({ Logo }: { Logo: ElementType }) {
   });
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { data, loading, error, refetch } = useNotesQuery({
+  const { data, loading, error, refetch } = useQuery(NotesDocument, {
     variables: {
       pagination: { limit: paginationLimit, offset: offset },
       ordering: [{ interactedAt: Ordering.Desc }, { id: Ordering.Desc }],

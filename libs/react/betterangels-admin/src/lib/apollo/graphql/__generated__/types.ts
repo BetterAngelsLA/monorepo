@@ -355,7 +355,7 @@ export type ClientProfileOrder = {
 
 export type ClientProfilePhotoInput = {
   clientProfile: Scalars['ID']['input'];
-  photo: Scalars['Upload']['input'];
+  photo?: InputMaybe<Scalars['Upload']['input']>;
 };
 
 export type ClientProfileType = {
@@ -847,6 +847,22 @@ export type HmisClientNoteTypeHmisCreateClientNoteError = HmisClientNoteType | H
 export type HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | HmisGetClientNoteError;
 
 export type HmisClientNoteTypeHmisUpdateClientNoteError = HmisClientNoteType | HmisUpdateClientNoteError;
+
+export type HmisClientProfileFilter = {
+  AND?: InputMaybe<HmisClientProfileFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<HmisClientProfileFilter>;
+  OR?: InputMaybe<HmisClientProfileFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type HmisClientProfileOrdering = {
+  addedDate?: InputMaybe<Ordering>;
+  firstName?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  lastName?: InputMaybe<Ordering>;
+  lastUpdated?: InputMaybe<Ordering>;
+};
 
 export type HmisClientProfileType = {
   __typename?: 'HmisClientProfileType';
@@ -1869,6 +1885,15 @@ export type OrganizationForUserType = {
   userPermissions?: Maybe<Array<UserOrganizationPermissions>>;
 };
 
+export type OrganizationMemberOrdering = {
+  email?: InputMaybe<Ordering>;
+  firstName?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  lastLogin?: InputMaybe<Ordering>;
+  lastName?: InputMaybe<Ordering>;
+  memberRole?: InputMaybe<Ordering>;
+};
+
 export type OrganizationMemberType = {
   __typename?: 'OrganizationMemberType';
   email?: Maybe<Scalars['NonBlankString']['output']>;
@@ -2129,6 +2154,8 @@ export type QueryHmisClientProfileArgs = {
 
 
 export type QueryHmisClientProfilesArgs = {
+  filters?: InputMaybe<HmisClientProfileFilter>;
+  ordering?: Array<HmisClientProfileOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2215,6 +2242,7 @@ export type QueryOrganizationMemberArgs = {
 
 
 export type QueryOrganizationMembersArgs = {
+  ordering?: InputMaybe<Array<OrganizationMemberOrdering>>;
   organizationId: Scalars['String']['input'];
   pagination?: InputMaybe<OffsetPaginationInput>;
 };

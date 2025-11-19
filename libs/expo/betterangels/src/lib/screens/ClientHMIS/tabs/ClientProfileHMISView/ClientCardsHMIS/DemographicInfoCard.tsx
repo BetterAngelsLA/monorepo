@@ -1,4 +1,4 @@
-import { HmisClientType } from '../../../../../apollo';
+import { HmisClientProfileType } from '../../../../../apollo';
 import { enumHmisGender, enumHmisRace } from '../../../../../static';
 import {
   ClientProfileCard,
@@ -7,19 +7,17 @@ import {
 } from '../../../../../ui-components';
 
 type TProps = {
-  client?: HmisClientType;
+  client?: HmisClientProfileType;
 };
 
 export function DemographicInfoCardHmis(props: TProps) {
   const { client } = props;
-
-  const { data } = client || {};
   const {
     gender,
     raceEthnicity,
-    additionalRaceEthnicity,
-    differentIdentityText,
-  } = data || {};
+    additionalRaceEthnicityDetail,
+    genderIdentityText,
+  } = client || {};
 
   const genderValues = (gender || [])
     .filter((key) => !!key)
@@ -42,11 +40,11 @@ export function DemographicInfoCardHmis(props: TProps) {
     },
     {
       header: ['Additional Race and Ethnicity'],
-      rows: [[additionalRaceEthnicity]],
+      rows: [[additionalRaceEthnicityDetail]],
     },
     {
       header: ['Different Identity Text'],
-      rows: [[differentIdentityText]],
+      rows: [[genderIdentityText]],
     },
   ];
 

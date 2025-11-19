@@ -2,6 +2,7 @@ export { default as hexToRGBA } from './HexToRGBA';
 export * from './array';
 export * from './date';
 export { default as debounce } from './debounce';
+export * from './debugUtils';
 export * from './format';
 export * from './html';
 export * from './image';

@@ -1,9 +1,5 @@
-import { useMutation } from '@apollo/client';
-import {
-  UPDATE_NOTE,
-  UpdateNoteMutation,
-  UpdateNoteMutationVariables,
-} from '@monorepo/expo/betterangels';
+import { useMutation } from '@apollo/client/react';
+import { UpdateNoteDocument } from '@monorepo/expo/betterangels';
 import {
   DatePicker,
   FieldCard,
@@ -32,10 +28,7 @@ const endOfDay = new Date(new Date().setHours(23, 59, 59, 999));
 export default function DateAndTime(props: IDateAndTimeProps) {
   const { expanded, setExpanded, scrollRef, interactedAt, noteId } = props;
 
-  const [updateNote] = useMutation<
-    UpdateNoteMutation,
-    UpdateNoteMutationVariables
-  >(UPDATE_NOTE);
+  const [updateNote] = useMutation(UpdateNoteDocument);
 
   const [dateTime, setDateTime] = useState<TDateAndTime>({
     date: interactedAt,

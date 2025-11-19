@@ -1,8 +1,6 @@
-import * as Types from '../../../apollo/graphql/__generated__/types';
+import type * as Types from '../../../apollo/graphql/__generated__/types';
 
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
-const defaultOptions = {} as const;
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type NoteSummaryQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
 }>;
@@ -11,96 +9,4 @@ export type NoteSummaryQueryVariables = Types.Exact<{
 export type NoteSummaryQuery = { __typename?: 'Query', note: { __typename?: 'NoteType', id: string, createdAt: any, interactedAt: any, isSubmitted: boolean, publicDetails: string, purpose?: string | null, team?: Types.SelahTeamEnum | null, userCanEdit: boolean, clientProfile?: { __typename?: 'ClientProfileType', id: string, email?: string | null, firstName?: string | null, lastName?: string | null, profilePhoto?: { __typename?: 'DjangoImageType', url: string } | null } | null, createdBy: { __typename?: 'UserType', id: string, firstName?: string | null, lastName?: string | null, email?: string | null }, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, moods: Array<{ __typename?: 'MoodType', id: string, descriptor: Types.MoodEnum }>, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, organization: { __typename?: 'OrganizationType', id: string, name: string } } };
 
 
-export const NoteSummaryDocument = gql`
-    query NoteSummary($id: ID!) {
-  note(pk: $id) {
-    ... on NoteType {
-      id
-      createdAt
-      interactedAt
-      isSubmitted
-      publicDetails
-      purpose
-      team
-      clientProfile {
-        id
-        email
-        firstName
-        lastName
-        profilePhoto {
-          url
-        }
-      }
-      createdBy {
-        id
-        firstName
-        lastName
-        email
-      }
-      location {
-        address {
-          id
-          street
-          city
-          state
-          zipCode
-        }
-        point
-        pointOfInterest
-      }
-      moods {
-        id
-        descriptor
-      }
-      providedServices {
-        id
-        serviceEnum
-        serviceOther
-      }
-      requestedServices {
-        id
-        serviceEnum
-        serviceOther
-      }
-      organization {
-        id
-        name
-      }
-    }
-    userCanEdit
-  }
-}
-    `;
-
-/**
- * __useNoteSummaryQuery__
- *
- * To run a query within a React component, call `useNoteSummaryQuery` and pass it any options that fit your needs.
- * When your component renders, `useNoteSummaryQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useNoteSummaryQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useNoteSummaryQuery(baseOptions: Apollo.QueryHookOptions<NoteSummaryQuery, NoteSummaryQueryVariables> & ({ variables: NoteSummaryQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<NoteSummaryQuery, NoteSummaryQueryVariables>(NoteSummaryDocument, options);
-      }
-export function useNoteSummaryLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<NoteSummaryQuery, NoteSummaryQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<NoteSummaryQuery, NoteSummaryQueryVariables>(NoteSummaryDocument, options);
-        }
-export function useNoteSummarySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<NoteSummaryQuery, NoteSummaryQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<NoteSummaryQuery, NoteSummaryQueryVariables>(NoteSummaryDocument, options);
-        }
-export type NoteSummaryQueryHookResult = ReturnType<typeof useNoteSummaryQuery>;
-export type NoteSummaryLazyQueryHookResult = ReturnType<typeof useNoteSummaryLazyQuery>;
-export type NoteSummarySuspenseQueryHookResult = ReturnType<typeof useNoteSummarySuspenseQuery>;
-export type NoteSummaryQueryResult = Apollo.QueryResult<NoteSummaryQuery, NoteSummaryQueryVariables>;
+export const NoteSummaryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"NoteSummary"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"note"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"pk"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"NoteType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"interactedAt"}},{"kind":"Field","name":{"kind":"Name","value":"isSubmitted"}},{"kind":"Field","name":{"kind":"Name","value":"publicDetails"}},{"kind":"Field","name":{"kind":"Name","value":"purpose"}},{"kind":"Field","name":{"kind":"Name","value":"team"}},{"kind":"Field","name":{"kind":"Name","value":"clientProfile"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"profilePhoto"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"url"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdBy"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}},{"kind":"Field","name":{"kind":"Name","value":"location"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"address"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"street"}},{"kind":"Field","name":{"kind":"Name","value":"city"}},{"kind":"Field","name":{"kind":"Name","value":"state"}},{"kind":"Field","name":{"kind":"Name","value":"zipCode"}}]}},{"kind":"Field","name":{"kind":"Name","value":"point"}},{"kind":"Field","name":{"kind":"Name","value":"pointOfInterest"}}]}},{"kind":"Field","name":{"kind":"Name","value":"moods"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"descriptor"}}]}},{"kind":"Field","name":{"kind":"Name","value":"providedServices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"serviceEnum"}},{"kind":"Field","name":{"kind":"Name","value":"serviceOther"}}]}},{"kind":"Field","name":{"kind":"Name","value":"requestedServices"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"serviceEnum"}},{"kind":"Field","name":{"kind":"Name","value":"serviceOther"}}]}},{"kind":"Field","name":{"kind":"Name","value":"organization"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"userCanEdit"}}]}}]}}]} as unknown as DocumentNode<NoteSummaryQuery, NoteSummaryQueryVariables>;

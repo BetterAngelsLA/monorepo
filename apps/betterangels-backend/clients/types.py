@@ -237,7 +237,7 @@ class SocialMediaProfileInput(SocialMediaProfileBaseType):
 @strawberry.input
 class ClientProfilePhotoInput:
     client_profile: ID
-    photo: Upload
+    photo: Optional[Upload]
 
 
 @strawberry_django.type(ClientContact)

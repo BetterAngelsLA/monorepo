@@ -1,3 +1,4 @@
+import { useQuery } from '@apollo/client/react';
 import { Button, Card } from '@monorepo/react/components';
 import parsePhoneNumber from 'libphonenumber-js';
 import { useNavigate } from 'react-router-dom';
@@ -13,11 +14,11 @@ import RoomStyles from './RoomStyles';
 import ShelterDetail from './ShelterDetail';
 import ShelterTypes from './ShelterTypes';
 import SpecialRestrictions from './SpecialRestrictions';
-import { useViewShelterQuery } from './__generated__/shelter.generated';
+import { ViewShelterDocument } from './__generated__/shelter.generated';
 import { WysiwygSection } from './shared/WysiwygSection';
 
 export default function ShelterPage({ id }: { id: string }) {
-  const { loading, data } = useViewShelterQuery({
+  const { loading, data } = useQuery(ViewShelterDocument, {
     variables: {
       id,
     },

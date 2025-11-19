@@ -26,7 +26,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     extraData,
     ListEmptyComponent,
     ListFooterComponent,
-    LoadingViewContent,
+    loadingViewOptions,
     onEndReachedThreshold = 0.05,
     renderResultsHeader,
     modelName,
@@ -63,12 +63,12 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     }
 
     if (loading) {
-      return <LoadingListView content={LoadingViewContent} />;
+      return <LoadingListView {...loadingViewOptions} />;
     }
 
     // small footer helps ensure there’s space to hit the end
     return <View style={{ height: Spacings.sm }} />;
-  }, [ListFooterComponent, loading, LoadingViewContent]);
+  }, [ListFooterComponent, loading, loadingViewOptions]);
 
   const ErrorView = useMemo(() => {
     if (ErrorViewComponent) {

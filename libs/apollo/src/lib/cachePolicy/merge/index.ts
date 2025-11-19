@@ -1,2 +1,2 @@
-export { generateMergeFn } from './generateMergeFn';
+export * from './generateMergeFn';
 export { type TCacheMergeOpts } from './types';

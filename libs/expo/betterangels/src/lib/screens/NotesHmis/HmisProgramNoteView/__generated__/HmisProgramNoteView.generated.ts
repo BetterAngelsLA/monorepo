@@ -1,8 +1,6 @@
-import * as Types from '../../../../apollo/graphql/__generated__/types';
+import type * as Types from '../../../../apollo/graphql/__generated__/types';
 
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
-const defaultOptions = {} as const;
+import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type HmisProgramNoteViewQueryVariables = Types.Exact<{
   id: Types.Scalars['ID']['input'];
   personalId: Types.Scalars['ID']['input'];
@@ -10,70 +8,10 @@ export type HmisProgramNoteViewQueryVariables = Types.Exact<{
 }>;
 
 
-export type HmisProgramNoteViewQuery = { __typename?: 'Query', hmisGetClientNote: { __typename?: 'HmisClientNoteType', id?: string | null, category?: string | null, date?: string | null, note?: string | null, title?: string | null, client?: { __typename?: 'HmisClientType', personalId?: string | null, firstName?: string | null, lastName?: string | null } | null, enrollment?: { __typename?: 'HmisEnrollmentType', enrollmentId?: string | null, project?: { __typename?: 'HmisProjectType', projectId?: string | null, projectName?: string | null } | null } | null } | { __typename?: 'HmisGetClientNoteError', field?: string | null, message: string } };
+export type HmisProgramNoteViewQuery = { __typename?: 'Query', hmisGetClientNote:
+    | { __typename?: 'HmisClientNoteType', id?: string | null, category?: string | null, date?: string | null, note?: string | null, title?: string | null, client?: { __typename?: 'HmisClientType', personalId?: string | null, firstName?: string | null, lastName?: string | null } | null, enrollment?: { __typename?: 'HmisEnrollmentType', enrollmentId?: string | null, project?: { __typename?: 'HmisProjectType', projectId?: string | null, projectName?: string | null } | null } | null }
+    | { __typename?: 'HmisGetClientNoteError', field?: string | null, message: string }
+   };
 
 
-export const HmisProgramNoteViewDocument = gql`
-    query HmisProgramNoteView($id: ID!, $personalId: ID!, $enrollmentId: ID!) {
-  hmisGetClientNote(id: $id, personalId: $personalId, enrollmentId: $enrollmentId) {
-    ... on HmisClientNoteType {
-      id
-      category
-      date
-      note
-      title
-      client {
-        personalId
-        firstName
-        lastName
-      }
-      enrollment {
-        enrollmentId
-        project {
-          projectId
-          projectName
-        }
-      }
-    }
-    ... on HmisGetClientNoteError {
-      field
-      message
-    }
-  }
-}
-    `;
-
-/**
- * __useHmisProgramNoteViewQuery__
- *
- * To run a query within a React component, call `useHmisProgramNoteViewQuery` and pass it any options that fit your needs.
- * When your component renders, `useHmisProgramNoteViewQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useHmisProgramNoteViewQuery({
- *   variables: {
- *      id: // value for 'id'
- *      personalId: // value for 'personalId'
- *      enrollmentId: // value for 'enrollmentId'
- *   },
- * });
- */
-export function useHmisProgramNoteViewQuery(baseOptions: Apollo.QueryHookOptions<HmisProgramNoteViewQuery, HmisProgramNoteViewQueryVariables> & ({ variables: HmisProgramNoteViewQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<HmisProgramNoteViewQuery, HmisProgramNoteViewQueryVariables>(HmisProgramNoteViewDocument, options);
-      }
-export function useHmisProgramNoteViewLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HmisProgramNoteViewQuery, HmisProgramNoteViewQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<HmisProgramNoteViewQuery, HmisProgramNoteViewQueryVariables>(HmisProgramNoteViewDocument, options);
-        }
-export function useHmisProgramNoteViewSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HmisProgramNoteViewQuery, HmisProgramNoteViewQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<HmisProgramNoteViewQuery, HmisProgramNoteViewQueryVariables>(HmisProgramNoteViewDocument, options);
-        }
-export type HmisProgramNoteViewQueryHookResult = ReturnType<typeof useHmisProgramNoteViewQuery>;
-export type HmisProgramNoteViewLazyQueryHookResult = ReturnType<typeof useHmisProgramNoteViewLazyQuery>;
-export type HmisProgramNoteViewSuspenseQueryHookResult = ReturnType<typeof useHmisProgramNoteViewSuspenseQuery>;
-export type HmisProgramNoteViewQueryResult = Apollo.QueryResult<HmisProgramNoteViewQuery, HmisProgramNoteViewQueryVariables>;
+export const HmisProgramNoteViewDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"HmisProgramNoteView"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"personalId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"enrollmentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hmisGetClientNote"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"personalId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"personalId"}}},{"kind":"Argument","name":{"kind":"Name","value":"enrollmentId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"enrollmentId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"HmisClientNoteType"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"category"}},{"kind":"Field","name":{"kind":"Name","value":"date"}},{"kind":"Field","name":{"kind":"Name","value":"note"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"client"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"personalId"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}}]}},{"kind":"Field","name":{"kind":"Name","value":"enrollment"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"enrollmentId"}},{"kind":"Field","name":{"kind":"Name","value":"project"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectId"}},{"kind":"Field","name":{"kind":"Name","value":"projectName"}}]}}]}}]}},{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"HmisGetClientNoteError"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"field"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]}}]}}]} as unknown as DocumentNode<HmisProgramNoteViewQuery, HmisProgramNoteViewQueryVariables>;

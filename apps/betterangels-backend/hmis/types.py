@@ -1,4 +1,6 @@
 import datetime
+from functools import reduce
+from operator import and_, or_
 from typing import Optional, Union
 
 import strawberry
@@ -11,6 +13,7 @@ from clients.enums import (
     PreferredCommunicationEnum,
 )
 from common.graphql.types import NonBlankString, PhoneNumberInput, PhoneNumberType
+from django.db.models import Q, QuerySet
 from hmis.enums import (
     HmisBranchEnum,
     HmisDischargeEnum,
@@ -24,7 +27,7 @@ from hmis.enums import (
     HmisVeteranTheaterEnum,
 )
 from hmis.models import HmisClientProfile, HmisNote
-from strawberry import ID, auto
+from strawberry import ID, Info, auto
 
 
 @strawberry.type
@@ -374,8 +377,55 @@ class HmisClientProfileBaseType:
     spoken_languages: Optional[list[LanguageEnum]]
 
 
+@strawberry_django.filter_type(HmisClientProfile, lookups=True)
+class HmisClientProfileFilter:
+    @strawberry_django.filter_field
+    def search(
+        self,
+        queryset: QuerySet,
+        info: Info,
+        value: Optional[str],
+        prefix: str,
+    ) -> tuple[QuerySet[HmisClientProfile], Q]:
+        if value is None:
+            return queryset, Q()
+
+        search_terms = value.split()
+
+        searchable_fields = [
+            "alias",
+            "first_name",
+            "hmis_id",
+            "last_name",
+            "name_middle",
+            "personal_id",
+            "unique_identifier",
+        ]
+
+        # Build queries for direct fields
+        direct_queries = [
+            reduce(or_, [Q(**{f"{field}__istartswith": term}) for field in searchable_fields]) for term in search_terms
+        ]
+        direct_query = reduce(and_, direct_queries) if direct_queries else Q()
+
+        combined_query = direct_query
+
+        return queryset.filter(combined_query), Q()
+
+
+@strawberry_django.order_type(HmisClientProfile, one_of=False)
+class HmisClientProfileOrdering:
+    id: auto
+    first_name: auto
+    last_name: auto
+    added_date: auto
+    last_updated: auto
+
+
 @strawberry_django.type(
     HmisClientProfile,
+    filters=HmisClientProfileFilter,
+    ordering=HmisClientProfileOrdering,
     pagination=True,
 )
 class HmisClientProfileType(HmisClientProfileBaseType):

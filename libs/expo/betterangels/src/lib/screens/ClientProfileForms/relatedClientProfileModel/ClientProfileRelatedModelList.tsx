@@ -1,3 +1,4 @@
+import { useQuery } from '@apollo/client/react';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation } from 'expo-router';
@@ -9,7 +10,7 @@ import {
   isValidClientProfileSectionEnum,
 } from '../../../screenRouting';
 import { MainScrollContainer } from '../../../ui-components';
-import { useGetClientProfileQuery } from '../ClientProfileForm/__generated__/clientProfile.generated';
+import { GetClientProfileDocument } from '../ClientProfileForm/__generated__/clientProfile.generated';
 import { clientRelatedModelConfig } from './config';
 
 type TProps = {
@@ -34,7 +35,7 @@ export function ClientProfileRelatedModelList(props: TProps) {
     data,
     error: fetchError,
     loading,
-  } = useGetClientProfileQuery({
+  } = useQuery(GetClientProfileDocument, {
     variables: { id: clientId },
   });
 

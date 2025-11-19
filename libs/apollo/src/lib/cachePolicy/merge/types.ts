@@ -1,30 +1,45 @@
-import type { FieldFunctionOptions } from '@apollo/client';
+import { MergeModeEnum, PaginationModeEnum } from '../constants';
 
-export type PageVars = { offset?: number; limit?: number };
-export type AdaptArgs<TVars> = (vars: TVars | undefined) => PageVars;
-
-export type BaseMergeOpts<TVars> = {
-  /** Optional adapter to extract { offset, limit } from your query variables */
-  adaptArgs?: AdaptArgs<TVars>;
+// -------------------- Pagination -------------------- //
+export type OffsetPaginationVars = {
+  mode: PaginationModeEnum.Offset;
+  offset: number;
+  limit: number;
 };
 
-export type WrapperMode<TItem, TVars> = BaseMergeOpts<TVars> & {
-  mode?: 'wrapper';
-  resultsKey?: string;
-  totalKey?: string;
-  pageInfoKey?: string;
-  mergeItemOpts?: {
-    getId?: (
-      item: TItem,
-      readField: FieldFunctionOptions['readField']
-    ) => string | number | null | undefined;
-  };
+export type PerPagePaginationVars = {
+  mode: PaginationModeEnum.PerPage;
+  page: number;
+  perPage: number;
 };
 
-export type ArrayMode<TVars> = BaseMergeOpts<TVars> & {
-  mode: 'array';
+export type PaginationVars = PerPagePaginationVars | OffsetPaginationVars;
+
+export type MergePaginationArgs = { offset: number; limit: number };
+
+/** Read variables and return the effective { offset, limit } for merging. */
+export type ResolveMergePagination<TVars> = (
+  variables: TVars | undefined
+) => MergePaginationArgs;
+
+// -------------------- Merge -------------------- //
+
+/** Merge mode for object-shaped payloads */
+export type ObjectMergeMode = {
+  mode?: MergeModeEnum.Object;
+
+  /** where the item has its id, e.g. "personalId" */
+  itemIdPath?: string | ReadonlyArray<string>;
+
+  /** where the server puts the array, e.g. "items" or ["data", "items"] */
+  itemsPath?: string | ReadonlyArray<string>;
+
+  /** where the server puts total, e.g. ["meta", "totalCount"] */
+  totalCountPath?: string | ReadonlyArray<string>;
 };
 
-export type TCacheMergeOpts<TItem, TVars> =
-  | WrapperMode<TItem, TVars>
-  | ArrayMode<TVars>;
+export type ArrayMergeMode = {
+  mode: MergeModeEnum.Array;
+};
+
+export type TCacheMergeOpts = ObjectMergeMode | ArrayMergeMode;
