@@ -1,6 +1,7 @@
 import { BaShelterLogoIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
 import { MenuBtnMobile } from '../shared/components/navBar/MenuBtnMobile';
+import { ProfileDropdown } from '../shared/components/navBar/ProfileDropdown';
 
 type IParams = {
   className?: string;
@@ -17,6 +18,7 @@ export function Header(props: IParams): ReactElement {
     'justify-between',
     'h-[42px]',
     'text-white',
+    'overflow-visible',
   ].join(' ');
 
   return (
@@ -28,7 +30,10 @@ export function Header(props: IParams): ReactElement {
           <div className="font-semibold">LA</div>
         </div>
       </div>
-      <MenuBtnMobile />
+      <div className="flex items-center gap-4 overflow-visible">
+        <ProfileDropdown />
+        <MenuBtnMobile />
+      </div>
     </header>
   );
 }
