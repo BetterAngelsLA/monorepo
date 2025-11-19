@@ -17,7 +17,7 @@ export default function LoginForm() {
     rememberMe,
     setRememberMe,
     persistOnSuccessfulSignIn,
-  } = useRememberedEmail();
+  } = useRememberedEmail('loginA.email');
 
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
