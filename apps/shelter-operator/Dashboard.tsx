@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import React from 'react';
 import { useViewSheltersByOrganizationQuery } from '../../libs/react/shelter/src';
 
 export default function Dashboard() {
@@ -13,6 +12,7 @@ export default function Dashboard() {
   if (error) return <div className="mt-4">Error loading shelters.</div>;
   const shelters = data?.sheltersByOrganization?.results ?? [];
 
+  console.log(shelters)
   return (
     <div className="flex flex-col p-8 w-full">
       <div className="mb-6">
@@ -27,6 +27,8 @@ export default function Dashboard() {
         {shelters.map((shelter) => (
           <div key={shelter.id} className="text-sm">
             {shelter.name}
+            {shelter.totalBeds}
+            {shelter.location?.place}
           </div>
         ))}
       </div>
