@@ -4,6 +4,9 @@ import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useSnackbar } from '../../hooks';
+
+import { extractExtensionErrors } from '../../apollo';
+import { applyManualFormErrors } from '../../errors';
 import {
   FullNameFormHmis,
   FullNameFormSchema,
@@ -23,18 +26,16 @@ export function CreateClientProfileHMIS() {
     CreateHmisClientProfileDocument
   );
 
-  const formMethods = useForm<TFullNameFormSchema>({
+  const methods = useForm<TFullNameFormSchema>({
     resolver: zodResolver(FullNameFormSchema),
     defaultValues: fullNameFormEmptyState,
   });
 
   const {
     handleSubmit,
-    // setError,
+    setError,
     formState: { isSubmitting },
-  } = formMethods;
-
-  // const formKeys = Object.keys(fullNameFormEmptyState);
+  } = methods;
 
   const onSubmit: SubmitHandler<TFullNameFormSchema> = async (formData) => {
     try {
@@ -47,7 +48,7 @@ export function CreateClientProfileHMIS() {
         nameSuffix,
       } = formData;
 
-      const { data } = await createHmisClientProfileMutation({
+      const createResponse = await createHmisClientProfileMutation({
         variables: {
           data: {
             firstName,
@@ -61,41 +62,36 @@ export function CreateClientProfileHMIS() {
         errorPolicy: 'all',
       });
 
-      const result = data?.createHmisClientProfile;
-
-      if (!result) {
+      if (!createResponse) {
         throw new Error('missing createHmisClientProfile response');
       }
 
-      // if (result?.__typename === 'HmisCreateClientError') {
-      //   const { message: hmisErrorMessage } = result;
+      const errorViaExtensions = extractExtensionErrors(createResponse);
 
-      //   const { status, fieldErrors = [] } =
-      //     extractHMISErrors(hmisErrorMessage) || {};
+      if (errorViaExtensions) {
+        applyManualFormErrors(errorViaExtensions, setError);
 
-      //   // handle unprocessable_entity errors and exit
-      //   if (status === 422) {
-      //     const formFieldErrors = fieldErrors.filter(({ field }) =>
-      //       formKeys.includes(field)
-      //     );
-
-      //     applyOperationFieldErrors(formFieldErrors, setError);
-
-      //     return;
-      //   }
-
-      //   // HmisCreateClientError exists but not 422
-      //   // throw generic error
-      //   throw new Error(hmisErrorMessage);
-      // }
-
-      if (result?.__typename !== 'HmisClientProfileType') {
-        throw new Error('invalid createHmisClientProfile response');
+        return;
       }
 
-      const { hmisId } = result;
+      const otherErrors = createResponse.errors?.[0];
 
-      router.replace(`/client/${hmisId}`);
+      if (otherErrors) {
+        throw otherErrors.message;
+      }
+
+      const result = createResponse.data?.createHmisClientProfile;
+
+      if (result?.__typename === 'HmisClientProfileType') {
+        router.replace(`/client/${result.hmisId}`);
+      } else {
+        console.log('Unexpected result: ', result);
+        showSnackbar({
+          message: `Something went wrong!`,
+          type: 'error',
+        });
+        router.replace(`/clients`);
+      }
     } catch (error) {
       console.error('createHmisClientProfileMutation error:', error);
 
@@ -107,7 +103,7 @@ export function CreateClientProfileHMIS() {
   };
 
   return (
-    <FormProvider {...formMethods}>
+    <FormProvider {...methods}>
       <Form.Page
         actionProps={{
           onSubmit: handleSubmit(onSubmit),

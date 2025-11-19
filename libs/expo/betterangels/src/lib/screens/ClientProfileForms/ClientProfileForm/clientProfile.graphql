@@ -104,5 +104,11 @@ query GetClientProfile($id: ID!) {
         platformUserId
       }
     }
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
   }
 }
