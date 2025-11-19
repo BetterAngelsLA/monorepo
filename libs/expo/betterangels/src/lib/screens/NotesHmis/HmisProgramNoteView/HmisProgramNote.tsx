@@ -1,14 +1,14 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { HmisProgramNoteViewQuery } from './__generated__/HmisProgramNoteView.generated';
+import { HmisNoteQuery } from './__generated__/HmisProgramNoteView.generated';
 
 export default function HmisProgramNote({
-  programNote,
+  hmisNote,
 }: {
-  programNote: HmisProgramNoteViewQuery['hmisGetClientNote'] | undefined;
+  hmisNote: HmisNoteQuery['hmisNote'] | undefined;
 }) {
-  if (programNote?.__typename !== 'HmisClientNoteType') return null;
+  if (hmisNote?.__typename !== 'HmisNoteType') return null;
   return (
     <View>
       <TextBold mb="xs" size="sm">
@@ -21,7 +21,7 @@ export default function HmisProgramNote({
           borderRadius: Radiuses.xxs,
         }}
       >
-        <TextRegular size="sm">{programNote?.note}</TextRegular>
+        <TextRegular size="sm">{hmisNote?.note}</TextRegular>
       </View>
     </View>
   );

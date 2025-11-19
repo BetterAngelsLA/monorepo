@@ -1073,7 +1073,7 @@ enum HmisNameQualityEnum {
 }
 
 input HmisNoteFilter {
-  hmisClientProfileId: ID
+  hmisClientProfile: ID
   createdBy: ID
   AND: HmisNoteFilter
   OR: HmisNoteFilter
@@ -1085,12 +1085,13 @@ input HmisNoteOrdering {
   id: Ordering
   addedDate: Ordering
   lastUpdated: Ordering
+  date: Ordering
 }
 
 type HmisNoteType {
   id: ID!
   hmisId: String!
-  hmisClientProfileId: String!
+  hmisClientProfile: HmisClientProfileType!
   addedDate: DateTime
   lastUpdated: DateTime
   title: String

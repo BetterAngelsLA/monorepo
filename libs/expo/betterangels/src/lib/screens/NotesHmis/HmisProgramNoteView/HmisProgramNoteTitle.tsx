@@ -1,35 +1,35 @@
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { View } from 'react-native';
-import { HmisProgramNoteViewQuery } from './__generated__/HmisProgramNoteView.generated';
+import { HmisNoteQuery } from './__generated__/HmisProgramNoteView.generated';
 
 export default function HmisProgramNoteTitle({
-  programNote,
+  hmisNote,
 }: {
-  programNote: HmisProgramNoteViewQuery['hmisGetClientNote'] | undefined;
+  hmisNote: HmisNoteQuery['hmisNote'] | undefined;
 }) {
-  if (programNote?.__typename !== 'HmisClientNoteType') return null;
+  if (hmisNote?.__typename !== 'HmisNoteType') return null;
 
   return (
     <View>
-      {programNote?.title && (
+      {hmisNote?.title && (
         <TextBold size="lg" mb="xs">
-          {programNote?.title}
+          {hmisNote?.title}
         </TextBold>
       )}
-      {programNote.date && (
+      {hmisNote.date && (
         <TextRegular mb="sm" size="sm">
-          {format(new Date(programNote.date), 'MM/dd/yyyy')}
+          {format(new Date(hmisNote.date), 'MM/dd/yyyy')}
           {' @ '}
-          {format(new Date(programNote?.date), 'hh:mm a')}
+          {format(new Date(hmisNote?.date), 'hh:mm a')}
         </TextRegular>
       )}
-      {programNote.category && (
+      {/* {hmisNote.category && (
         <>
           <TextBold size="sm">Category</TextBold>
-          <TextRegular size="sm">{programNote.category}</TextRegular>
+          <TextRegular size="sm">{hmisNote.category}</TextRegular>
         </>
-      )}
+      )} */}
     </View>
   );
 }

@@ -2,21 +2,16 @@ import { HmisProgramNoteView } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
 export default function InteractionsHmisiew() {
-  const { id, personalId, enrollmentId } = useLocalSearchParams<{
-    personalId: string;
-    enrollmentId: string;
+  const { id: noteHmisId, personalId: clientHmisId } = useLocalSearchParams<{
     id: string;
+    personalId: string;
   }>();
 
-  if (!id || !personalId || !enrollmentId) {
+  if (!noteHmisId || !clientHmisId) {
     throw new Error('Something went wrong. Please try again.');
   }
 
   return (
-    <HmisProgramNoteView
-      id={id}
-      personalId={personalId}
-      enrollmentId={enrollmentId}
-    />
+    <HmisProgramNoteView noteHmisId={noteHmisId} clientHmisId={clientHmisId} />
   );
 }

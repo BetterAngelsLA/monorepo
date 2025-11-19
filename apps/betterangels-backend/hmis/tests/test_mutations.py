@@ -53,7 +53,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
     @scrubbed_vcr.use_cassette("test_create_hmis_note_mutation.yaml")
     def test_create_hmis_note_mutation(self) -> None:
         variables = {
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisClientProfile": self.hmis_client_profile,
             "title": "pitle",
             "note": "pote",
             "date": "2010-10-10",
@@ -64,7 +64,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         expected = {
             "id": ANY,
             "hmisId": "471",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisClientProfile": self.hmis_client_profile,
             "title": "pitle",
             "note": "pote",
             "date": "2010-10-10",
@@ -79,7 +79,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
     @scrubbed_vcr.use_cassette("test_create_hmis_program_note_mutation.yaml")
     def test_create_hmis_program_note_mutation(self) -> None:
         variables = {
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisClientProfile": self.hmis_client_profile,
             "title": "prog note title",
             "note": "prog note note",
             "date": "2011-11-11",
@@ -91,7 +91,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         expected = {
             "id": ANY,
             "hmisId": "480",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisClientProfile": self.hmis_client_profile,
             "title": "prog note title",
             "note": "prog note note",
             "date": "2011-11-11",
@@ -117,7 +117,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
 
         variables = {
             "id": str(hmis_note.pk),
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisClientProfile": self.hmis_client_profile,
             "title": "updated note title",
             "note": "updated note note",
             "date": "2012-12-12",
@@ -128,7 +128,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         expected = {
             "id": ANY,
             "hmisId": "479",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisClientProfile": self.hmis_client_profile,
             "title": "updated note title",
             "note": "updated note note",
             "date": "2012-12-12",

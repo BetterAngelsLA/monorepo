@@ -1103,11 +1103,12 @@ export type HmisNoteFilter = {
   NOT?: InputMaybe<HmisNoteFilter>;
   OR?: InputMaybe<HmisNoteFilter>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
-  hmisClientProfileId?: InputMaybe<Scalars['ID']['input']>;
+  hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type HmisNoteOrdering = {
   addedDate?: InputMaybe<Ordering>;
+  date?: InputMaybe<Ordering>;
   id?: InputMaybe<Ordering>;
   lastUpdated?: InputMaybe<Ordering>;
 };
@@ -1117,7 +1118,7 @@ export type HmisNoteType = {
   addedDate?: Maybe<Scalars['DateTime']['output']>;
   createdBy?: Maybe<UserType>;
   date?: Maybe<Scalars['Date']['output']>;
-  hmisClientProfileId: Scalars['String']['output'];
+  hmisClientProfile: HmisClientProfileType;
   hmisId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   lastUpdated?: Maybe<Scalars['DateTime']['output']>;

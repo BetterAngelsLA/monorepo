@@ -41,7 +41,7 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
         self.hmis_note = baker.make(
             HmisNote,
             hmis_id="467",
-            hmis_client_profile_id=self.hmis_client_profile.pk,
+            hmis_client_profile=self.hmis_client_profile,
         )
 
     @scrubbed_vcr.use_cassette("test_hmis_note_query.yaml")
@@ -64,7 +64,12 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
         expected = {
             "id": ANY,
             "hmisId": "467",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisClientProfile": {
+                "id": str(self.hmis_client_profile.pk),
+                "hmisId": str(self.hmis_client_profile.hmis_id),
+                "firstName": str(self.hmis_client_profile.first_name),
+                "lastName": str(self.hmis_client_profile.last_name),
+            },
             "title": "poet",
             "note": "<p>poen</p>",
             "date": "2025-11-12",

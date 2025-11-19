@@ -1,3 +1,4 @@
+import { useQuery } from '@apollo/client/react';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   LoadingView,
@@ -8,28 +9,27 @@ import { sanitizeHtmlString } from '@monorepo/expo/shared/utils';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import HmisProgramNoteTitle from './HmisProgramNoteTitle';
-import { useHmisProgramNoteViewQuery } from './__generated__/HmisProgramNoteView.generated';
+import { HmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
 
 type TProps = {
-  id: string;
-  personalId: string;
-  enrollmentId: string;
+  clientHmisId: string;
+  noteHmisId: string;
 };
 
 export function HmisProgramNoteView(props: TProps) {
-  const { id, personalId, enrollmentId } = props;
+  const { clientHmisId, noteHmisId } = props;
 
-  const { data, error, loading } = useHmisProgramNoteViewQuery({
+  const { data, error, loading } = useQuery(HmisNoteDocument, {
     variables: {
-      id,
-      personalId,
-      enrollmentId,
+      clientHmisId,
+      noteHmisId,
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-
-  const programNote = data?.hmisGetClientNote;
+  console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+  console.log(data);
+  const hmisNote = data?.hmisNote;
 
   if (loading) {
     return <LoadingView />;
@@ -39,11 +39,11 @@ export function HmisProgramNoteView(props: TProps) {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  if (programNote?.__typename !== 'HmisClientNoteType') {
+  if (hmisNote?.__typename !== 'HmisClientNoteType') {
     return null;
   }
 
-  const { note, client, enrollment } = programNote;
+  const { note, client, enrollment } = hmisNote;
   const { firstName, lastName } = client || {};
   const { project } = enrollment || {};
 
@@ -54,7 +54,7 @@ export function HmisProgramNoteView(props: TProps) {
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
       <View style={styles.container}>
-        <HmisProgramNoteTitle programNote={programNote} />
+        <HmisProgramNoteTitle hmisNote={hmisNote} />
 
         {!!clientName && <TextBold>{clientName}</TextBold>}
 

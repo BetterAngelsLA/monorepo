@@ -1,31 +1,25 @@
-query HmisProgramNoteView($id: ID!, $personalId: ID!, $enrollmentId: ID!) {
-  hmisGetClientNote(
-    id: $id
-    personalId: $personalId
-    enrollmentId: $enrollmentId
-  ) {
-    ... on HmisClientNoteType {
+query HmisNote($clientHmisId: String!, $noteHmisId: String!) {
+  hmisNote(clientHmisId: $clientHmisId, noteHmisId: $noteHmisId) {
+    ... on HmisNoteType {
       id
-      category
-      date
-      note
+      hmisId
+      addedDate
+      lastUpdated
       title
-      client {
-        personalId
+      note
+      date
+      refClientProgram
+      hmisClientProfile {
+        id
+        hmisId
         firstName
         lastName
       }
-      enrollment {
-        enrollmentId
-        project {
-          projectId
-          projectName
-        }
+      createdBy {
+        id
+        firstName
+        lastName
       }
-    }
-    ... on HmisGetClientNoteError {
-      field
-      message
     }
   }
 }

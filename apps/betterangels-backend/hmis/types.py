@@ -459,7 +459,7 @@ class UpdateHmisClientProfileInput(HmisClientProfileBaseType):
 
 @strawberry_django.filter_type(HmisNote, lookups=True)
 class HmisNoteFilter:
-    hmis_client_profile_id: Optional[ID]
+    hmis_client_profile: Optional[ID]
     created_by: Optional[ID]
 
 
@@ -468,13 +468,14 @@ class HmisNoteOrdering:
     id: auto
     added_date: auto
     last_updated: auto
+    date: auto
 
 
 @strawberry_django.type(HmisNote, filters=HmisNoteFilter, ordering=HmisNoteOrdering)
 class HmisNoteType:
     id: ID
     hmis_id: str
-    hmis_client_profile_id: str
+    hmis_client_profile: HmisClientProfileType
 
     added_date: Optional[datetime.datetime]
     last_updated: Optional[datetime.datetime]
