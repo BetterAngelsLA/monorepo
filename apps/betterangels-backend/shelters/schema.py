@@ -87,6 +87,12 @@ class ShelterLocationInput:
 
 
 @strawberry.input
+class TimeRangeInput:
+    start: Optional[time] = None
+    end: Optional[time] = None
+
+
+@strawberry.input
 class CreateShelterInput:
     name: str
     description: str
@@ -140,6 +146,8 @@ class CreateShelterInput:
     city_council_district: Optional[int] = None
     supervisorial_district: Optional[int] = None
     overall_rating: Optional[int] = None
+    operating_hours: Optional[List[TimeRangeInput]] = None
+    intake_hours: Optional[List[TimeRangeInput]] = None
 
 
 @strawberry.type
@@ -185,6 +193,26 @@ class Mutation:
                 data["status"] = getattr(data["status"], "value", data["status"])
             else:
                 del data["status"]
+        operating_hours = data.pop("operating_hours", None)
+        if operating_hours is not None:
+            try:
+                data["operating_hours"] = [
+                    (slot.get("start"), slot.get("end")) for slot in operating_hours if slot is not None
+                ]
+            except Exception as exc:
+                raise GraphQLError(
+                    "Invalid operating hours data.",
+                    extensions={"errors": [{"field": "operating_hours", "messages": [str(exc) or "Invalid format"]}]},
+                ) from exc
+        intake_hours = data.pop("intake_hours", None)
+        if intake_hours is not None:
+            try:
+                data["intake_hours"] = [(slot.get("start"), slot.get("end")) for slot in intake_hours if slot is not None]
+            except Exception as exc:
+                raise GraphQLError(
+                    "Invalid intake hours data.",
+                    extensions={"errors": [{"field": "intake_hours", "messages": [str(exc) or "Invalid format"]}]},
+                ) from exc
         location = data.pop("location", None)
         if location:
             try:

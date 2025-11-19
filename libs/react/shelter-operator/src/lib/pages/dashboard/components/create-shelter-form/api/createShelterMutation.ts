@@ -11,7 +11,12 @@ export const CREATE_SHELTER_MUTATION = CreateShelterDocument;
 export type CreateShelterMutationResult = CreateShelterMutation;
 export type CreateShelterMutationVariables = GeneratedCreateShelterMutationVariables;
 
-export type CreateShelterInput = GeneratedCreateShelterInput;
+type ExtendedCreateShelterInput = GeneratedCreateShelterInput & {
+  operatingHours?: { start?: string | null; end?: string | null }[];
+  intakeHours?: { start?: string | null; end?: string | null }[];
+};
+
+export type CreateShelterInput = ExtendedCreateShelterInput;
 
 const sanitizeString = (value?: string | null) => {
   if (!value) {
@@ -47,8 +52,21 @@ const parseLocation = (value: string) => {
 const numberOrUndefined = (value: number | null | undefined) =>
   typeof value === 'number' && !Number.isNaN(value) ? value : undefined;
 
-export const buildCreateShelterInput = (formData: ShelterFormData): GeneratedCreateShelterInput => {
-  const input: Partial<GeneratedCreateShelterInput> = {
+const parseOperatingHours = (value: string): { start: string; end: string }[] => {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map(range => range.trim())
+    .filter(Boolean)
+    .map(range => {
+      const [start, end] = range.split('-').map(part => part.trim());
+      return { start, end };
+    })
+    .filter(item => item.start && item.end);
+};
+
+export const buildCreateShelterInput = (formData: ShelterFormData): ExtendedCreateShelterInput => {
+  const input: Partial<ExtendedCreateShelterInput> = {
     name: formData.name.trim(),
     description: formData.description.trim(),
     accessibility: compactEnumValues(formData.accessibility),
@@ -109,6 +127,15 @@ export const buildCreateShelterInput = (formData: ShelterFormData): GeneratedCre
     input.location = location;
   }
 
+  const operatingHours = parseOperatingHours(formData.operating_hours);
+  if (operatingHours.length) {
+    input.operatingHours = operatingHours;
+  }
+  const intakeHours = parseOperatingHours(formData.intake_hours);
+  if (intakeHours.length) {
+    input.intakeHours = intakeHours;
+  }
+
   const booleanFields: Record<string, boolean | null> = {
     onSiteSecurity: formData.on_site_security,
     visitorsAllowed: formData.visitors_allowed,
@@ -135,5 +162,5 @@ export const buildCreateShelterInput = (formData: ShelterFormData): GeneratedCre
     }
   });
 
-  return input as GeneratedCreateShelterInput;
+  return input as ExtendedCreateShelterInput;
 };

@@ -107,10 +107,9 @@ describe('CreateShelterForm', () => {
 
       fireEvent.submit(screen.getByTestId('create-shelter-form'));
 
-      await waitFor(() => {
-        expect(screen.queryAllByTestId('field-error')).toHaveLength(0);
-      });
+      await screen.findByText(/Shelter submitted successfully/i, undefined, { timeout: 20000 });
+      expect(screen.queryAllByTestId('field-error')).toHaveLength(0);
     },
-    15000
+    30000
   );
 });
