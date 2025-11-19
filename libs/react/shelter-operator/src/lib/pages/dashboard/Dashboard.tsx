@@ -2,9 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useViewSheltersByOrganizationQuery } from '../../libs/react/shelter/src';
-import { ShelterRow } from './ShelterRow';
-
+import { useViewSheltersByOrganizationQuery } from '../../graphql/__generated__/shelters.generated';
+import { ShelterRow } from '../../components/ShelterRow';
 export type Shelter = {
   id: string;
   name: string | null;
@@ -12,6 +11,7 @@ export type Shelter = {
   totalBeds: number | null;
   tags: string[] | null;
 };
+
 
 const PAGE_SIZE = 8;
 
@@ -38,8 +38,7 @@ export default function Dashboard() {
       tags: null,
     })) ?? [];
 
-  // 🔥 NO MOCK DATA — ONLY BACKEND DATA
-  const allShelters: Shelter[] = backendShelters;
+  const allShelters: Shelter[] = [...backendShelters];
 
   const [page, setPage] = useState(1);
 
@@ -102,18 +101,6 @@ export default function Dashboard() {
         {paginatedShelters.map((shelter) => (
           <ShelterRow key={shelter.id} shelter={shelter} />
         ))}
-
-        {/* Show empty state if backend has NO shelters */}
-        {paginatedShelters.length === 0 && !loading && (
-          <div style={{
-            padding: '24px',
-            textAlign: 'center',
-            color: '#6b7280',
-            fontSize: '14px'
-          }}>
-            No shelters found.
-          </div>
-        )}
       </div>
 
       {/* PAGINATION */}
@@ -139,7 +126,7 @@ export default function Dashboard() {
               cursor: page === 1 ? 'not-allowed' : 'pointer',
               opacity: page === 1 ? 0.4 : 1
             }}
-            onClick={() => setPage(p => Math.max(1, p - 1))}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
           >
             Prev
@@ -154,7 +141,7 @@ export default function Dashboard() {
               cursor: page === totalPages ? 'not-allowed' : 'pointer',
               opacity: page === totalPages ? 0.4 : 1
             }}
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
           >
             Next
@@ -167,10 +154,9 @@ export default function Dashboard() {
           Loading backend shelters…
         </div>
       )}
-
       {error && (
         <div style={{ marginTop: '8px', fontSize: '12px', color: '#ef4444' }}>
-          Backend error. No shelter data available.
+          Backend error. Mock data shown as well.
         </div>
       )}
     </div>

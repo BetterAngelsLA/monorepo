@@ -31,15 +31,4 @@ query ViewShelters(
   }
 }
 
-query ViewSheltersByOrganization($organizationId: ID!) {
-  sheltersByOrganization(organizationId: $organizationId) {
-    results {
-      id
-      name
-      location {
-        place
-      }
-      totalBeds
-    }
-  }
-}
+
