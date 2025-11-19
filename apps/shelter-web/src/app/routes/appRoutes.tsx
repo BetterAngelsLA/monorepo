@@ -1,8 +1,8 @@
-import { OperatorApp } from '@monorepo/react/shelter-operator';
+import { CreateShelterForm, OperatorDashboard, OperatorLogin, OperatorPortal } from '@monorepo/react/shelter-operator';
 import { Link, RouteObject } from 'react-router-dom';
-import { Policy } from '../pages/Policy';
 import Gallery from '../pages/gallery/gallery';
 import { Home } from '../pages/home/home';
+import { Policy } from '../pages/Policy';
 import Shelter from '../pages/shelter/shelter';
 
 export const routeChildren: RouteObject[] = [
@@ -23,8 +23,20 @@ export const routeChildren: RouteObject[] = [
     element: <Policy />,
   },
   {
-    path: '/operator/*',
-    element: <OperatorApp />,
+    path: '/operator',
+    element: <OperatorPortal />,
+  },
+  {
+    path: '/operator/login',
+    element: <OperatorLogin />,
+  },
+  {
+    path: '/operator/dashboard',
+    element: <OperatorDashboard />,
+  },
+  {
+    path: '/operator/dashboard/create',
+    element: <CreateShelterForm />,
   },
   {
     path: '/page-2',
