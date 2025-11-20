@@ -344,7 +344,7 @@ class HmisRestApiBridge:
                 "ssn_quality": 99,
             },
             "screenValues": {
-                "alias": cleaned_data.get("nickname", None),
+                "alias": cleaned_data.get("alias", None),
                 "gender": [99],
                 "name_middle": cleaned_data.get("name_middle", None),
                 "name_suffix": cleaned_data.get("name_suffix", None),

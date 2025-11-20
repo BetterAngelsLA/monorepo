@@ -7,6 +7,7 @@ from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 from hmis.models import HmisClientProfile, HmisNote
+from strawberry import ID
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
@@ -26,22 +27,20 @@ from .types import (
 @strawberry.type
 class Query:
     @strawberry_django.field(permission_classes=[IsAuthenticated])
-    def hmis_client_profile(self, info: Info, hmis_id: str) -> HmisClientProfileType:
+    def hmis_client_profile(self, info: Info, id: ID) -> HmisClientProfileType:
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        client_data = hmis_api_bridge.get_client(hmis_id)
+        hmis_client_profile = HmisClientProfile.objects.get(pk=id)
 
-        unique_identifier = client_data.pop("unique_identifier")
-        returned_hmis_id = str(client_data.pop("hmis_id"))
+        if not hmis_client_profile.hmis_id:
+            raise ValidationError("Missing Client hmis_id")
 
-        if hmis_id != returned_hmis_id:
-            raise ValidationError("Client ID mismatch")
+        client_data = hmis_api_bridge.get_client(hmis_client_profile.hmis_id)
 
-        hmis_client_profile, _ = HmisClientProfile.objects.filter(hmis_id=hmis_id).update_or_create(
-            hmis_id=hmis_id,
-            unique_identifier=unique_identifier,
-            defaults={**client_data},
-        )
+        client_data.pop("unique_identifier")
+        client_data.pop("hmis_id")
+
+        hmis_client_profile = resolvers.update(info, hmis_client_profile, {**client_data})
 
         return cast(HmisClientProfileType, hmis_client_profile)
 
@@ -50,24 +49,20 @@ class Query:
     )
 
     @strawberry_django.field(permission_classes=[IsAuthenticated])
-    def hmis_note(self, info: Info, client_hmis_id: str, note_hmis_id: str) -> HmisNoteType:
+    def hmis_note(self, info: Info, id: ID) -> HmisNoteType:
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
+        hmis_note = HmisNote.objects.get(pk=id)
+
+        if not hmis_note.hmis_client_profile.hmis_id:
+            raise ValidationError("Missing Client hmis_id")
+
         note_data = hmis_api_bridge.get_note(
-            client_hmis_id=client_hmis_id,
-            note_hmis_id=note_hmis_id,
+            client_hmis_id=hmis_note.hmis_client_profile.hmis_id,
+            note_hmis_id=hmis_note.hmis_id,
         )
 
-        hmis_client_profile_id = HmisClientProfile.objects.get(hmis_id=client_hmis_id).pk
-
-        hmis_note, _ = HmisNote.objects.filter(
-            hmis_id=note_hmis_id,
-            hmis_client_profile_id=hmis_client_profile_id,
-        ).update_or_create(
-            hmis_id=note_hmis_id,
-            hmis_client_profile_id=hmis_client_profile_id,
-            defaults={**note_data},
-        )
+        hmis_note = resolvers.update(info, hmis_note, {**note_data})
 
         return cast(HmisNoteType, hmis_note)
 
@@ -91,16 +86,17 @@ class Mutation:
     def update_hmis_client_profile(self, info: Info, data: UpdateHmisClientProfileInput) -> HmisClientProfileType:
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
+        hmis_client_profile = HmisClientProfile.objects.get(pk=data.id)
+
         data_dict = strawberry.asdict(data)
         phone_numbers = data_dict.pop("phone_numbers", []) or []
         assert isinstance(phone_numbers, Iterable)
 
+        data_dict["hmis_id"] = hmis_client_profile.hmis_id
+
         client_data = hmis_api_bridge.update_client(data_dict)
-
-        hmis_id = client_data.pop("hmis_id")
+        client_data.pop("hmis_id")
         client_data.pop("alias")  # TODO: API currently returning null for `alias`. Remove this once fixed.
-
-        hmis_client_profile = HmisClientProfile.objects.get(hmis_id=hmis_id)
 
         content_type = ContentType.objects.get_for_model(HmisClientProfile)
         for phone_number in phone_numbers:

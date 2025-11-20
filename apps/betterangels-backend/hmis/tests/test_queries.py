@@ -47,22 +47,19 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
     @scrubbed_vcr.use_cassette("test_hmis_note_query.yaml")
     def test_hmis_note_query(self) -> None:
         query = f"""
-            query ($client_hmis_id: String!, $note_hmis_id: String!) {{
-                hmisNote(clientHmisId: $client_hmis_id, noteHmisId: $note_hmis_id) {{
+            query ($id: ID!) {{
+                hmisNote(id: $id) {{
                     {self.hmis_note_fields}
                 }}
             }}
         """
-        variables = {
-            "client_hmis_id": self.hmis_client_profile.hmis_id,
-            "note_hmis_id": self.hmis_note.hmis_id,
-        }
+        variables = {"id": str(self.hmis_note.pk)}
         response = self.execute_graphql(query, variables)
 
         hmis_note = response["data"]["hmisNote"]
 
         expected = {
-            "id": ANY,
+            "id": str(self.hmis_note.pk),
             "hmisId": "467",
             "hmisClientProfileId": str(self.hmis_client_profile.pk),
             "title": "poet",
@@ -147,18 +144,19 @@ class HmisClientProfileQueryTests(HmisClientProfileBaseTestCase):
     @scrubbed_vcr.use_cassette("test_hmis_client_profile_query.yaml")
     def test_hmis_client_profile_query(self) -> None:
         query = f"""
-            query ($hmis_id: String!) {{
-                hmisClientProfile(hmisId: $hmis_id) {{
+            query ($id: ID!) {{
+                hmisClientProfile(id: $id) {{
                     {self.hmis_client_profile_fields}
                 }}
             }}
         """
-        variables = {"hmis_id": self.hmis_client_profile.hmis_id}
+        variables = {"id": str(self.hmis_client_profile.pk)}
         response = self.execute_graphql(query, variables)
 
         hmis_client_profile = response["data"]["hmisClientProfile"]
         expected = {
             # ID & metadata fields
+            "id": str(self.hmis_client_profile.pk),
             "hmisId": "1",
             "personalId": "7e401eed7ee14c36a7641ef44626695c",
             "uniqueIdentifier": "69E44770D",
