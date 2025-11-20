@@ -1,1 +1,1 @@
-export { BaseModal, DUR_OUT } from './BaseModal';
+export { BaseModal } from './BaseModal';
