@@ -48,7 +48,7 @@ export interface IFileViewerModal extends PropsWithChildren {
 }
 
 const DUR_IN = 260;
-export const DUR_OUT = 200;
+const DUR_OUT = 200;
 
 export function BaseModal({
   title,

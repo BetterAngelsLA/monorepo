@@ -1,10 +1,17 @@
 import { useMutation } from '@apollo/client/react';
 import { DeleteIcon, ViewIcon } from '@monorepo/expo/shared/icons';
-import { BaseModal, DeleteModal, DUR_OUT, ImageViewer } from '@monorepo/expo/shared/ui-components';
+import {
+  BaseModal,
+  DeleteModal,
+  ImageViewer,
+} from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSnackbar } from '../../../hooks';
-import { MainModal } from '../../../ui-components/MainModal';
+import {
+  MainModal,
+  MainModalActionBtn,
+} from '../../../ui-components/MainModal';
 import { UpdateClientProfilePhotoDocument } from '../../ClientProfileForms/ClientProfileForm/PersonalInfoForm/ProfilePhotoField/__generated__/updateClientProfilePhoto.generated';
 import { ClientProfileDocument } from '../__generated__/Client.generated';
 
@@ -15,8 +22,6 @@ interface IProfilePhotoModalProps {
   clientId: string;
 }
 
-type ModalType = 'viewer' | 'delete';
-
 export function ProfilePhotoModal({
   isModalVisible,
   closeModal,
@@ -24,30 +29,16 @@ export function ProfilePhotoModal({
   clientId,
 }: IProfilePhotoModalProps) {
   const { showSnackbar } = useSnackbar();
-  const [currentModal, setCurrentModal] = useState<ModalType | null>(null);
-  const [nextModal, setNextModal] = useState<ModalType | null>(null);
 
-  // Handle modal state transitions and resets
+  // Local state for fullscreen viewer
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+
+  // When parent closes the whole flow, also close the viewer
   useEffect(() => {
-    if (isModalVisible) {
-      // Reset state when main modal opens
-      setCurrentModal(null);
-      setNextModal(null);
-      return undefined;
+    if (!isModalVisible) {
+      setIsViewerOpen(false);
     }
-
-    // Handle transition when main modal closes and we have a next modal queued
-    if (nextModal) {
-      // Delay to ensure MainModal animation completes (DUR_OUT + buffer)
-      const timer = setTimeout(() => {
-        setCurrentModal(nextModal);
-        setNextModal(null);
-      }, DUR_OUT + 150);
-      return () => clearTimeout(timer);
-    }
-
-    return undefined;
-  }, [isModalVisible, nextModal]);
+  }, [isModalVisible]);
 
   const [updateClientProfilePhoto] = useMutation(
     UpdateClientProfilePhotoDocument,
@@ -59,8 +50,6 @@ export function ProfilePhotoModal({
   );
 
   const deleteFile = async () => {
-    setCurrentModal(null);
-    closeModal();
     try {
       await updateClientProfilePhoto({
         variables: {
@@ -76,81 +65,88 @@ export function ProfilePhotoModal({
         message: 'An error occurred while deleting the profile photo',
         type: 'error',
       });
+    } finally {
+      // Close viewer (if open) and whole profile-photo flow after delete
+      setIsViewerOpen(false);
+      closeModal();
     }
-  };
-
-  const handleDeletePress = () => {
-    setNextModal('delete');
-    closeModal();
   };
 
   const handleViewImagePress = () => {
-    setNextModal('viewer');
-    closeModal();
+    setIsViewerOpen(true);
   };
 
-  const ACTIONS = [
-    {
-      title: 'View image',
-      Icon: ViewIcon,
-      onPress: handleViewImagePress,
-    },
-    {
-      title: 'Delete image',
-      Icon: DeleteIcon,
-      onPress: handleDeletePress,
-    },
-  ];
+  // Actions as explicit React nodes
+  const viewActionNode = (
+    <MainModalActionBtn
+      key="view-action"
+      title="View image"
+      Icon={ViewIcon}
+      onPress={handleViewImagePress}
+    />
+  );
 
-  if (currentModal === 'delete') {
-    return (
-      <DeleteModal
-        body="All data associated with this image will be deleted."
-        title="Delete image?"
-        onDelete={deleteFile}
-        onCancel={() => setCurrentModal(null)}
-        isVisible
-        deleteableItemName="profile photo"
-      />
-    );
-  }
+  const deleteActionNode = (
+    <DeleteModal
+      key="delete-action"
+      title="Delete image?"
+      body="All data associated with this image will be deleted."
+      deleteableItemName="profile photo"
+      onDelete={deleteFile}
+      onCancel={() => {
+        // nothing needed on cancel
+      }}
+      button={
+        <MainModalActionBtn
+          title="Delete image"
+          Icon={DeleteIcon}
+          // Non-empty no-op: satisfies TS + eslint but does nothing.
+          onPress={() => undefined}
+        />
+      }
+    />
+  );
 
-  if (currentModal === 'viewer') {
-    if (!imageUrl) {
-      return null;
-    }
+  const ACTIONS = [viewActionNode, deleteActionNode];
 
-    return (
+  return (
+    <>
+      {/* Hide sheet while viewer is open to avoid overlay/z-index issues */}
+      {!isViewerOpen && (
+        <MainModal
+          closeButton
+          vertical
+          actions={ACTIONS}
+          isModalVisible={isModalVisible}
+          closeModal={() => {
+            setIsViewerOpen(false);
+            closeModal();
+          }}
+          opacity={0.5}
+        />
+      )}
+
+      {/* Fullscreen viewer using BaseModal (original implementation) */}
       <BaseModal
         title="Profile Photo"
-        isOpen={true}
+        isOpen={isViewerOpen}
         onClose={() => {
-          setCurrentModal(null);
+          // Close viewer AND whole flow
+          setIsViewerOpen(false);
           closeModal();
         }}
         variant="fullscreen"
       >
-        <View style={styles.container}>
-          <ImageViewer url={imageUrl} />
+        <View style={styles.viewerContainer}>
+          {imageUrl ? <ImageViewer url={imageUrl} /> : null}
         </View>
       </BaseModal>
-    );
-  }
-
-  return (
-    <MainModal
-      closeButton
-      vertical
-      actions={ACTIONS}
-      isModalVisible={isModalVisible && !nextModal}
-      closeModal={closeModal}
-      opacity={0.5}
-    />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  viewerContainer: {
     flex: 1,
   },
 });
