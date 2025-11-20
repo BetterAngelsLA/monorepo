@@ -11,7 +11,7 @@ from common.constants import HMIS_SESSION_KEY_NAME
 from common.utils import dict_keys_to_snake
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from graphql import (
     FieldNode,
     FragmentSpreadNode,
