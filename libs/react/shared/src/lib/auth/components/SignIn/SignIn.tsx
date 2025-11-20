@@ -77,7 +77,9 @@ export default function SignIn({
       });
       const data = await res.json();
 
-      if (res.ok && data?.meta?.is_authenticated) {
+
+      // Success (200) or already authenticated (409) - both mean user is authenticated
+      if ((res.ok && data?.meta?.is_authenticated) || res.status === 409) {
         await refetchUser();
         navigate(onSuccessRedirect);
       } else {

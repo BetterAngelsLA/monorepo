@@ -56,7 +56,8 @@ type UserResponse = {
 
 export default function UserProvider({ children }: UserProviderProps) {
   const [user, setUser] = useState<TUser | undefined>();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRefetching, setIsRefetching] = useState(false);
 
   const { data, loading, error, refetch } = useCurrentOrgUserQuery({
     fetchPolicy: 'network-only',
@@ -74,12 +75,12 @@ export default function UserProvider({ children }: UserProviderProps) {
   useEffect(() => {
     if (!loading) {
       updateUser({ data, errors: error ? [error] : undefined });
-      setIsLoading(false);
+      setIsInitialLoading(false);
     }
   }, [loading, data, error, updateUser]);
 
   const refetchUser = useCallback(async () => {
-    setIsLoading(true);
+    setIsRefetching(true);
     try {
       const res = await refetch();
       updateUser(res);
@@ -87,16 +88,17 @@ export default function UserProvider({ children }: UserProviderProps) {
       console.error('Error refetching user data:', err);
       setUser(undefined);
     } finally {
-      setIsLoading(false);
+      setIsRefetching(false);
     }
   }, [refetch, updateUser]);
 
   const contextValue = useMemo(
-    () => ({ user, setUser, isLoading, refetchUser }),
-    [user, isLoading, refetchUser]
+    () => ({ user, setUser, isLoading: isInitialLoading || isRefetching, refetchUser }),
+    [user, isInitialLoading, isRefetching, refetchUser]
   );
 
-  if (isLoading) {
+  // Only block rendering on initial load, not on refetch
+  if (isInitialLoading) {
     return null;
   }
 
