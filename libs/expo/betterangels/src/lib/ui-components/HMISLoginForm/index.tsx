@@ -1,18 +1,25 @@
-import { useCallback, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-
 import { useMutationWithErrors } from '@monorepo/apollo';
-import { Colors } from '@monorepo/expo/shared/static';
+import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
   Button,
   Loading,
 } from '@monorepo/expo/shared/ui-components';
+import { useCallback, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useUser } from '../../hooks';
+import { useRememberedEmail } from '../../hooks/useRememberEmail/useRememberEmail';
 import { HmisLoginDocument } from './__generated__/HMISLogin.generated';
 
 export default function HMISLoginForm() {
-  const [email, setEmail] = useState('');
+  const {
+    email,
+    setEmail,
+    rememberMe,
+    setRememberMe,
+    persistOnSuccessfulSignIn,
+  } = useRememberedEmail('hmis.email');
+
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -40,7 +47,8 @@ export default function HMISLoginForm() {
         return;
       }
       if (res.__typename === 'UserType') {
-        refetchUser();
+        await refetchUser();
+        await persistOnSuccessfulSignIn(email);
         return;
       }
     } catch (e) {
@@ -48,7 +56,7 @@ export default function HMISLoginForm() {
     } finally {
       setSubmitting(false);
     }
-  }, [email, password, hmisLogin, refetchUser]);
+  }, [email, password, hmisLogin, refetchUser, persistOnSuccessfulSignIn]);
 
   return (
     <View style={styles.container}>
@@ -95,11 +103,67 @@ export default function HMISLoginForm() {
         disabled={submitting}
         testID="hmis-submit"
       />
+
+      <Pressable
+        style={({ pressed }) => [
+          styles.rememberRow,
+          pressed && { opacity: 0.7 },
+        ]}
+        onPress={() => setRememberMe((prev) => !prev)}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: rememberMe }}
+        hitSlop={8}
+      >
+        <View
+          style={[styles.checkboxBox, rememberMe && styles.checkboxBoxChecked]}
+        >
+          {rememberMe && <Text style={styles.checkboxTick}>✓</Text>}
+        </View>
+
+        <Text style={styles.rememberLabel}>Remember me</Text>
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { width: '100%' },
+
   error: { color: Colors.ERROR, marginTop: 10 },
+
+  rememberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 45,
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+  },
+
+  checkboxBox: {
+    width: Spacings.sm,
+    height: Spacings.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: Radiuses.xxxs,
+    borderColor: Colors.NEUTRAL_LIGHT,
+  },
+
+  checkboxBoxChecked: {
+    borderColor: Colors.PRIMARY_EXTRA_DARK,
+    backgroundColor: Colors.PRIMARY_EXTRA_DARK,
+  },
+
+  checkboxTick: {
+    color: Colors.WHITE,
+    position: 'absolute',
+  },
+
+  rememberLabel: {
+    marginLeft: 12,
+    fontSize: 14.5,
+    color: Colors.PRIMARY_EXTRA_DARK,
+    fontFamily: 'Poppins',
+    fontWeight: 400,
+  },
 });
