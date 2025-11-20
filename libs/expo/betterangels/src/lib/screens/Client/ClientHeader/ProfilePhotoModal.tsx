@@ -29,11 +29,8 @@ export function ProfilePhotoModal({
   clientId,
 }: IProfilePhotoModalProps) {
   const { showSnackbar } = useSnackbar();
-
-  // Local state for fullscreen viewer
   const [isViewerOpen, setIsViewerOpen] = useState(false);
 
-  // When parent closes the whole flow, also close the viewer
   useEffect(() => {
     if (!isModalVisible) {
       setIsViewerOpen(false);
@@ -66,7 +63,6 @@ export function ProfilePhotoModal({
         type: 'error',
       });
     } finally {
-      // Close viewer (if open) and whole profile-photo flow after delete
       setIsViewerOpen(false);
       closeModal();
     }
@@ -93,14 +89,11 @@ export function ProfilePhotoModal({
       body="All data associated with this image will be deleted."
       deleteableItemName="profile photo"
       onDelete={deleteFile}
-      onCancel={() => {
-        // nothing needed on cancel
-      }}
+      onCancel={() => undefined}
       button={
         <MainModalActionBtn
           title="Delete image"
           Icon={DeleteIcon}
-          // Non-empty no-op: satisfies TS + eslint but does nothing.
           onPress={() => undefined}
         />
       }
@@ -131,7 +124,6 @@ export function ProfilePhotoModal({
         title="Profile Photo"
         isOpen={isViewerOpen}
         onClose={() => {
-          // Close viewer AND whole flow
           setIsViewerOpen(false);
           closeModal();
         }}
