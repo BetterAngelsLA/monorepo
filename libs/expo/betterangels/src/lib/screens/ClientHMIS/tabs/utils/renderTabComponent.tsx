@@ -3,7 +3,7 @@ import { HmisClientProfileType } from '../../../../apollo';
 import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { ClientViewTabEnum } from '../../../Client/ClientTabs';
 import { ClientInteractionsHmisView } from '../ClientInteractionsHmisView';
-import { ClientProfileHMISView } from '../HmisClientProfile';
+import { ClientProfileHMISView } from '../ClientProfileHMISView';
 // import { ClientProfileHMISView } from '../ClientProfileHMISView';
 
 type RenderArgs = {

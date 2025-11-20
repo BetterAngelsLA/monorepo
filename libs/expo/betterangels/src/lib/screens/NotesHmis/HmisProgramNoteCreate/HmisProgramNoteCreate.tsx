@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
@@ -18,21 +17,19 @@ import {
   getHmisProgramNoteFormEmptyState,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm/formSchema';
-import { CreateHmisNoteDocument } from './__generated__/hmisCreateClientNote.generated';
+import { useHmisCreateClientNoteMutation } from './__generated__/hmisCreateClientNote.generated';
 
 type TProps = {
-  clientHmisId: string;
+  hmisClientId: string;
   arrivedFrom?: string;
 };
 
 export function HmisProgramNoteCreate(props: TProps) {
-  const { clientHmisId } = props;
+  const { hmisClientId } = props;
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [createHmisClientNoteMutation] = useMutationWithErrors(
-    CreateHmisNoteDocument
-  );
+  const [createHmisClientNoteMutation] = useHmisCreateClientNoteMutation();
 
   const formKeys = Object.keys(hmisProgramNoteFormEmptyState);
 
@@ -52,18 +49,18 @@ export function HmisProgramNoteCreate(props: TProps) {
 
       const { data } = await createHmisClientNoteMutation({
         variables: {
-          data: {
-            clientHmisId,
+          clientNoteInput: {
+            personalId: hmisClientId,
             ...payload,
           },
         },
         errorPolicy: 'all',
       });
 
-      const result = data?.createHmisClientNote;
+      const result = data?.hmisCreateClientNote;
 
       if (!result) {
-        throw new Error('missing createHmisClientNote response');
+        throw new Error('missing hmisCreateClientNote response');
       }
 
       if (result?.__typename === 'HmisCreateClientNoteError') {
@@ -88,12 +85,12 @@ export function HmisProgramNoteCreate(props: TProps) {
         throw new Error(hmisErrorMessage);
       }
 
-      if (result?.__typename !== 'HmisNoteType') {
-        throw new Error('invalid HmisNoteType response');
+      if (result?.__typename !== 'HmisClientNoteType') {
+        throw new Error('invalid HmisClientNoteType response');
       }
 
       router.dismissTo(
-        `/client/${clientHmisId}?activeTab=${ClientViewTabEnum.Interactions}`
+        `/client/${hmisClientId}?activeTab=${ClientViewTabEnum.Interactions}`
       );
     } catch (error) {
       console.error('createHmisClientNoteMutation error:', error);
@@ -118,7 +115,7 @@ export function HmisProgramNoteCreate(props: TProps) {
           disabled: isSubmitting,
         }}
       >
-        <HmisProgramNoteForm clientHmisId={clientHmisId} />
+        <HmisProgramNoteForm hmisClientId={hmisClientId} />
       </Form.Page>
     </FormProvider>
   );

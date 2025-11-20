@@ -1,6 +1,6 @@
 export type TApiValidationError = {
   field: string;
   location: string | undefined;
-  errorCode: string | number;
+  errorCode: string;
   message: string | undefined;
 };

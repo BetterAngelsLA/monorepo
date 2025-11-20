@@ -24,7 +24,7 @@ from hmis.types import (
     CreateHmisNoteInput,
     UpdateHmisNoteInput,
 )
-from strawberry import UNSET, Info
+from strawberry import ID, UNSET, Info
 from strawberry.utils.str_converters import to_snake_case
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -466,7 +466,7 @@ class HmisRestApiBridge:
 
     def update_note(
         self,
-        client_hmis_id: int,
+        client_hmis_id: str,
         note_hmis_id: int,
         data: UpdateHmisNoteInput,
     ) -> dict[str, Any]:

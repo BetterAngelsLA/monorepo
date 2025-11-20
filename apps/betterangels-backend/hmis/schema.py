@@ -135,11 +135,16 @@ class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_hmis_note(self, info: Info, data: UpdateHmisNoteInput) -> HmisNoteType:
         hmis_note = HmisNote.objects.get(hmis_id=data.hmis_id)
-        client_hmis_id = HmisClientProfile.objects.get(pk=data.hmis_client_profile_id).hmis_id
-
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        note_data = hmis_api_bridge.update_note(client_hmis_id=client_hmis_id, note_hmis_id=hmis_note.pk, data=data)
+        if not hmis_note.hmis_client_profile.hmis_id:
+            raise ValidationError("Missing Client hmis_id")
+
+        note_data = hmis_api_bridge.update_note(
+            client_hmis_id=hmis_note.hmis_client_profile.hmis_id,
+            note_hmis_id=hmis_note.pk,
+            data=data,
+        )
 
         hmis_note = resolvers.update(info, hmis_note, {**note_data})
 

@@ -3,15 +3,29 @@ import { useLocalSearchParams } from 'expo-router';
 
 type TSearchParams = {
   id: string;
+  hmisClientId: string;
+  hmisNoteEnrollmentId: string;
   arrivedFrom?: string;
 };
 
 export default function InteractionsHmisEdit() {
-  const { id, arrivedFrom } = useLocalSearchParams<TSearchParams>();
+  const {
+    id: hmisNoteId,
+    hmisClientId,
+    hmisNoteEnrollmentId,
+    arrivedFrom,
+  } = useLocalSearchParams<TSearchParams>();
 
-  if (!id) {
+  if (!hmisNoteId || !hmisClientId || !hmisNoteEnrollmentId) {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  return <HmisProgramNoteEdit id={id} arrivedFrom={arrivedFrom} />;
+  return (
+    <HmisProgramNoteEdit
+      hmisNoteId={hmisNoteId}
+      hmisClientId={hmisClientId}
+      hmisNoteEnrollmentId={hmisNoteEnrollmentId}
+      arrivedFrom={arrivedFrom}
+    />
+  );
 }

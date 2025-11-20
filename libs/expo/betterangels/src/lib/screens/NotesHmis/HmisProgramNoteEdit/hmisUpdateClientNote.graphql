@@ -19,35 +19,3 @@ mutation HmisUpdateClientNote($clientNoteInput: HmisUpdateClientNoteInput!) {
     }
   }
 }
-
-# mutation UpdateHmisNote($data: UpdateHmisNoteInput!) {
-#   updateHmisNote(data: $data) {
-#     ... on HmisNoteType {
-#       hmisId
-#       addedDate
-#       lastUpdated
-#       title
-#       note
-#       date
-#       refClientProgram
-#       hmisClientProfile {
-#         id
-#         hmisId
-#         firstName
-#         lastName
-#       }
-#       createdBy {
-#         id
-#         firstName
-#         lastName
-#       }
-#     }
-#     ... on OperationInfo {
-#       messages {
-#         kind
-#         field
-#         message
-#       }
-#     }
-#   }
-# }
