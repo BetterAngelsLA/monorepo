@@ -1,5 +1,5 @@
-query HmisNote($clientHmisId: String!, $noteHmisId: String!) {
-  hmisNote(clientHmisId: $clientHmisId, noteHmisId: $noteHmisId) {
+query HmisNote($id: ID!) {
+  hmisNote(id: $id) {
     ... on HmisNoteType {
       id
       hmisId

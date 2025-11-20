@@ -11,19 +11,13 @@ import { MainScrollContainer } from '../../../ui-components';
 import HmisProgramNoteTitle from './HmisProgramNoteTitle';
 import { HmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
 
-type TProps = {
-  clientHmisId: string;
-  noteHmisId: string;
-};
+type TProps = { id: string };
 
 export function HmisProgramNoteView(props: TProps) {
-  const { clientHmisId, noteHmisId } = props;
+  const { id } = props;
 
   const { data, error, loading } = useQuery(HmisNoteDocument, {
-    variables: {
-      clientHmisId,
-      noteHmisId,
-    },
+    variables: { id },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
