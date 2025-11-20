@@ -3,10 +3,10 @@ import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { extractHMISErrors } from '../../apollo';
-import { applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
-import { toHmisNameQualityInt, toHmisSuffixEnumInt } from '../../static';
+
+import { extractExtensionErrors } from '../../apollo';
+import { applyManualFormErrors } from '../../errors';
 import {
   FullNameFormHmis,
   FullNameFormSchema,
@@ -14,19 +14,19 @@ import {
   fullNameFormEmptyState,
 } from '../ClientHMISEdit/basicForms';
 import {
-  FALLBACK_NAME_DATA_QUALITY_INT,
-  FALLBACK_NAME_SUFFIX_INT,
+  FALLBACK_NAME_DATA_QUALITY,
+  FALLBACK_NAME_SUFFIX,
 } from '../ClientHMISEdit/constants';
-import { CreateHmisClientDocument } from './__generated__/createHmisClient.generated';
+import { CreateHmisClientProfileDocument } from './__generated__/createHmisClient.generated';
 
 export function CreateClientProfileHMIS() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [createHMISClientMutation] = useMutationWithErrors(
-    CreateHmisClientDocument
+  const [createHmisClientProfileMutation] = useMutationWithErrors(
+    CreateHmisClientProfileDocument
   );
 
-  const formMethods = useForm<TFullNameFormSchema>({
+  const methods = useForm<TFullNameFormSchema>({
     resolver: zodResolver(FullNameFormSchema),
     defaultValues: fullNameFormEmptyState,
   });
@@ -35,77 +35,65 @@ export function CreateClientProfileHMIS() {
     handleSubmit,
     setError,
     formState: { isSubmitting },
-  } = formMethods;
-
-  const formKeys = Object.keys(fullNameFormEmptyState);
+  } = methods;
 
   const onSubmit: SubmitHandler<TFullNameFormSchema> = async (formData) => {
     try {
       const {
         firstName,
         lastName,
-        middleName,
-        nameDataQuality,
+        nameMiddle,
+        nameQuality,
         alias,
         nameSuffix,
       } = formData;
 
-      const { data } = await createHMISClientMutation({
+      const createResponse = await createHmisClientProfileMutation({
         variables: {
-          clientInput: {
+          data: {
             firstName,
             lastName,
-            nameDataQuality:
-              toHmisNameQualityInt(nameDataQuality) ??
-              FALLBACK_NAME_DATA_QUALITY_INT,
-          },
-          clientSubItemsInput: {
-            middleName,
+            nameMiddle,
             alias,
-            nameSuffix:
-              toHmisSuffixEnumInt(nameSuffix) ?? FALLBACK_NAME_SUFFIX_INT,
+            nameSuffix: nameSuffix ?? FALLBACK_NAME_SUFFIX,
+            nameQuality: nameQuality ?? FALLBACK_NAME_DATA_QUALITY,
           },
         },
         errorPolicy: 'all',
       });
 
-      const result = data?.hmisCreateClient;
-
-      if (!result) {
-        throw new Error('missing hmisCreateClient response');
+      if (!createResponse) {
+        throw new Error('missing createHmisClientProfile response');
       }
 
-      if (result?.__typename === 'HmisCreateClientError') {
-        const { message: hmisErrorMessage } = result;
+      const errorViaExtensions = extractExtensionErrors(createResponse);
 
-        const { status, fieldErrors = [] } =
-          extractHMISErrors(hmisErrorMessage) || {};
+      if (errorViaExtensions) {
+        applyManualFormErrors(errorViaExtensions, setError);
 
-        // handle unprocessable_entity errors and exit
-        if (status === 422) {
-          const formFieldErrors = fieldErrors.filter(({ field }) =>
-            formKeys.includes(field)
-          );
-
-          applyOperationFieldErrors(formFieldErrors, setError);
-
-          return;
-        }
-
-        // HmisCreateClientError exists but not 422
-        // throw generic error
-        throw new Error(hmisErrorMessage);
+        return;
       }
 
-      if (result?.__typename !== 'HmisClientType') {
-        throw new Error('invalid hmisCreateClient response');
+      const otherErrors = createResponse.errors?.[0];
+
+      if (otherErrors) {
+        throw otherErrors.message;
       }
 
-      const { personalId } = result;
+      const result = createResponse.data?.createHmisClientProfile;
 
-      router.replace(`/client/${personalId}`);
+      if (result?.__typename === 'HmisClientProfileType') {
+        router.replace(`/client/${result.id}`);
+      } else {
+        console.log('Unexpected result: ', result);
+        showSnackbar({
+          message: `Something went wrong!`,
+          type: 'error',
+        });
+        router.replace(`/clients`);
+      }
     } catch (error) {
-      console.error('createHMISClientMutation error:', error);
+      console.error('createHmisClientProfileMutation error:', error);
 
       showSnackbar({
         message: 'Something went wrong. Please try again.',
@@ -115,7 +103,7 @@ export function CreateClientProfileHMIS() {
   };
 
   return (
-    <FormProvider {...formMethods}>
+    <FormProvider {...methods}>
       <Form.Page
         actionProps={{
           onSubmit: handleSubmit(onSubmit),

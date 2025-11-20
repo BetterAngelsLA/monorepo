@@ -5,21 +5,19 @@ import {
   formatDateStatic,
 } from '@monorepo/expo/shared/ui-components';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { HmisClientType } from '../../apollo';
+import { HmisClientProfileType } from '../../apollo';
 import { NameSuffixHMIS } from './NameSuffixHMIS';
 
 export interface IClientCardProps {
-  client: HmisClientType;
+  client: HmisClientProfileType;
   onPress?: () => void;
 }
 
 export function ClientCardHMIS(props: IClientCardProps) {
   const {
-    client: { firstName, lastName, dob, data: metadata },
+    client: { firstName, lastName, birthDate, alias, nameMiddle, nameSuffix },
     onPress,
   } = props;
-
-  const { alias, middleName, nameSuffix } = metadata || {};
 
   return (
     <Pressable
@@ -33,17 +31,17 @@ export function ClientCardHMIS(props: IClientCardProps) {
     >
       <View style={[styles.row, { gap: 2 }]}>
         <TextBold size="sm">{firstName}</TextBold>
-        {!!middleName && <TextBold size="sm">{middleName}</TextBold>}
+        {!!nameMiddle && <TextBold size="sm">{nameMiddle}</TextBold>}
         <TextBold size="sm">{lastName}</TextBold>
         <NameSuffixHMIS suffix={nameSuffix} />
         {!!alias && <TextBold size="sm">({alias})</TextBold>}
       </View>
 
-      {!!dob && (
+      {!!birthDate && (
         <View style={styles.row}>
           <TextRegular size="xs">
             {formatDateStatic({
-              date: dob,
+              date: birthDate,
               inputFormat: 'yyyy-MM-dd',
               outputFormat: 'MM/dd/yyyy',
             })}

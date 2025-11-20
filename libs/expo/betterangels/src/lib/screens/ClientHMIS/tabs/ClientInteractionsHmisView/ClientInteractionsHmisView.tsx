@@ -3,11 +3,11 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
 import { View } from 'react-native';
-import { HmisClientType } from '../../../../apollo';
+import { HmisClientProfileType } from '../../../../apollo';
 import { MainScrollContainer } from '../../../../ui-components';
 
 type TProps = {
-  client?: HmisClientType;
+  client?: HmisClientProfileType;
 };
 
 export function ClientInteractionsHmisView(props: TProps) {

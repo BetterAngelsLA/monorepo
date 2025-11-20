@@ -8,6 +8,7 @@ class HmisClientProfileBaseTestCase(GraphQLBaseTestCase):
         super().setUp()
 
         self.hmis_client_profile_fields = """
+            id
             hmisId
             personalId
             uniqueIdentifier

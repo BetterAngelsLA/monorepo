@@ -1,12 +1,12 @@
 import type { ReactElement } from 'react';
-import { HmisClientType } from '../../../../apollo';
+import { HmisClientProfileType } from '../../../../apollo';
 import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { ClientViewTabEnum } from '../../../Client/ClientTabs';
 import { ClientInteractionsHmisView } from '../ClientInteractionsHmisView';
 import { ClientProfileHMISView } from '../ClientProfileHMISView';
 
 type RenderArgs = {
-  client?: HmisClientType;
+  client?: HmisClientProfileType;
   openCard?: ClientProfileSectionEnum | null;
 };
 

@@ -11,32 +11,32 @@ export type TFullNameFormSchema = z.infer<typeof FullNameFormSchema>;
 export const fullNameFormEmptyState: TFullNameFormSchema = {
   firstName: '',
   lastName: '',
-  middleName: '',
+  nameMiddle: '',
   alias: '',
-  nameDataQuality: '',
-  nameSuffix: '',
+  nameQuality: undefined,
+  nameSuffix: undefined,
 };
 
 export const FullNameFormSchema = z
   .object({
     firstName: z.string().min(1, 'First Name is required.'),
     lastName: z.string().min(1, 'Last Name is required.'),
-    middleName: z.string(),
+    nameMiddle: z.string(),
     alias: z.string(),
     // form uses string Enum while api requires an integer - converted onSubmit
-    nameDataQuality: z.enum(HmisNameQualityEnum).or(z.literal('')),
-    nameSuffix: z.enum(HmisSuffixEnum).or(z.literal('')),
+    nameQuality: z.enum(HmisNameQualityEnum).or(z.literal(undefined)),
+    nameSuffix: z.enum(HmisSuffixEnum).or(z.literal(undefined)),
   })
-  // validate nameDataQuality values
+  // validate nameQuality values
   .superRefine((data, ctx) => {
     const invalidNDQ = invalidNameDataQuality.includes(
-      data.nameDataQuality as HmisNameQualityEnum
+      data.nameQuality as HmisNameQualityEnum
     );
 
     if (invalidNDQ) {
       ctx.addIssue({
         code: 'custom',
-        path: ['nameDataQuality'],
+        path: ['nameQuality'],
         message: 'Please select a valid Name Data Quality.',
       });
     }

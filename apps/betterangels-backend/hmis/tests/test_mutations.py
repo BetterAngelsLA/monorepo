@@ -218,6 +218,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
 
         expected = {
             # ID & Metadata Fields
+            "id": ANY,
             "hmisId": ANY,
             "uniqueIdentifier": ANY,
             "personalId": None,
@@ -293,7 +294,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
         )
 
         variables = {
-            "hmisId": str(hmis_client_profile.hmis_id),
+            "id": str(hmis_client_profile.pk),
             #
             "alias": "the raven",
             "birthDate": datetime.date.fromisoformat("1909-01-19"),
@@ -341,6 +342,7 @@ class HmisClientProfileMutationTests(HmisClientProfileBaseTestCase):
         client = response["data"]["updateHmisClientProfile"]
 
         expected = {
+            "id": str(hmis_client_profile.pk),
             "hmisId": ANY,
             "uniqueIdentifier": ANY,
             "personalId": ANY,
