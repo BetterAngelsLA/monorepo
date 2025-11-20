@@ -57,7 +57,6 @@ class Query:
             client_hmis_id=client_hmis_id,
             note_hmis_id=note_hmis_id,
         )
-
         hmis_client_profile_id = HmisClientProfile.objects.get(hmis_id=client_hmis_id).pk
 
         hmis_note, _ = HmisNote.objects.filter(

@@ -39,15 +39,15 @@ export function HmisProgramNoteView(props: TProps) {
     throw new Error('Something went wrong. Please try again.');
   }
 
-  if (hmisNote?.__typename !== 'HmisClientNoteType') {
+  if (hmisNote?.__typename !== 'HmisNoteType') {
     return null;
   }
 
-  const { note, client, enrollment } = hmisNote;
-  const { firstName, lastName } = client || {};
-  const { project } = enrollment || {};
+  const { note, hmisClientProfile } = hmisNote;
+  const { firstName, lastName } = hmisClientProfile || {};
+  // const { project } = enrollment || {};
 
-  const programName = project?.projectName;
+  // const programName = project?.projectName;
   const clientName = buildFullName(firstName, lastName);
   const sanitizedNote = sanitizeHtmlString(note);
 
@@ -58,12 +58,12 @@ export function HmisProgramNoteView(props: TProps) {
 
         {!!clientName && <TextBold>{clientName}</TextBold>}
 
-        {programName && (
+        {/* {programName && (
           <View>
             <TextBold mb="xs">Program</TextBold>
             <TextRegular>{programName}</TextRegular>
           </View>
-        )}
+        )} */}
 
         {!!sanitizedNote.length && (
           <View>

@@ -1,10 +1,10 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { TextMedium } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
-import { HmisClientNoteType } from '../../apollo';
+import { HmisNoteType } from '../../apollo';
 
 interface IProgramNoteCardClientProps {
-  clientProfile?: HmisClientNoteType['client'];
+  clientProfile?: HmisNoteType['hmisClientProfile'];
 }
 
 export default function ProgramNoteCardClient(

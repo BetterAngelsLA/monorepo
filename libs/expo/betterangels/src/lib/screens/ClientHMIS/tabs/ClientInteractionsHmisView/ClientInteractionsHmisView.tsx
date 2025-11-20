@@ -1,3 +1,4 @@
+import { useQuery } from '@apollo/client/react';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { IconButton, InfiniteList } from '@monorepo/expo/shared/ui-components';
@@ -5,89 +6,88 @@ import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { uniqueBy } from 'remeda';
-import { HmisClientProfileType, HmisNoteType } from '../../../../apollo';
+import {
+  HmisClientProfileType,
+  HmisNoteType,
+  Ordering,
+} from '../../../../apollo';
 import {
   MainScrollContainer,
   ProgramNoteCard,
 } from '../../../../ui-components';
 import { ListLoadingView } from './ListLoadingView';
-import { useHmisListClientNotesQuery } from './__generated__/ClientInteractionsHmisView.generated';
+import {
+  HmisNotesDocument,
+  HmisNotesQuery,
+} from './__generated__/ClientInteractionsHmisView.generated';
 
-export const DEFAULT_PAGINATION_LIMIT = 20;
+const paginationLimit = 10;
 
-type TProps = {
-  client?: HmisClientProfileType;
-};
+type THmisNote = HmisNotesQuery['hmisNotes']['results'][number];
 
-// TODO: Needs to be dynamic
-const ENROLLMENT_ID = '517';
+type TProps = { client?: HmisClientProfileType };
 
 export function ClientInteractionsHmisView(props: TProps) {
   const { client } = props;
-
-  const [page, setPage] = useState<number>(1);
+  const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [totalCount, setTotalCount] = useState<number>(0);
-  const [programNotes, setProgramNotes] = useState<HmisNoteType[] | undefined>(
-    undefined
-  );
-
-  const { data, loading, error } = useHmisListClientNotesQuery({
-    skip: !client?.personalId,
+  const { data, loading, error } = useQuery(HmisNotesDocument, {
+    skip: !client?.id,
     variables: {
       pagination: { limit: 10 + 1, offset: 0 },
-      ordering: [{ interactedAt: Ordering.Desc }, { id: Ordering.Desc }],
-      filters: { authors: [user?.id], search: '' },
-    },
-
-    variables: {
-      enrollmentId: ENROLLMENT_ID,
-      personalId: client?.personalId || '',
-      pagination: { page, perPage: DEFAULT_PAGINATION_LIMIT },
+      ordering: [{ date: Ordering.Desc }, { id: Ordering.Desc }],
+      filters: { hmisClientProfile: client?.id },
     },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
+  console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+  console.log(data);
+  const [hmisNotes, setHmisNotes] = useState<
+    HmisNotesQuery['hmisNotes']['results']
+  >([]);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  console.log('#######################################');
+  console.log(hmisNotes);
+
+  function loadMoreHmisNotes() {
+    if (hasMore && !loading) {
+      setOffset((prevOffset) => prevOffset + paginationLimit);
+    }
+  }
 
   useEffect(() => {
-    const notesData = data?.hmisListClientNotes;
-
-    if (!notesData) {
+    if (!data || !('hmisNotes' in data)) {
       return;
     }
 
-    if (notesData.__typename === 'HmisClientNoteListType') {
-      const { items, meta } = notesData;
+    const { results, totalCount } = data.hmisNotes;
+    setTotalCount(totalCount);
 
-      setTotalCount(meta?.totalCount ?? 0);
-      setHasMore((meta?.currentPage ?? 1) < (meta?.pageCount ?? 1));
-
-      setProgramNotes((prev) => {
-        if (page === 1 || !prev) return items;
-
-        return uniqueBy([...prev, ...items], (c) => c.id ?? '');
-      });
+    if (offset === 0) {
+      setHmisNotes(results);
+    } else {
+      setHmisNotes((prevNotes) =>
+        uniqueBy([...prevNotes, ...results], (note) => note.id)
+      );
     }
-  }, [data, page, error]);
 
-  const loadMore = () => {
-    if (hasMore && !loading) setPage((p) => p + 1);
-  };
+    setHasMore(offset + paginationLimit < totalCount);
+  }, [data, offset]);
 
   const renderItemFn = useCallback(
-    (item: HmisNoteType) => (
+    (item: THmisNote) => (
       <ProgramNoteCard
         onPress={() => {
           router.navigate({
             pathname: `/notes-hmis/${item.id}`,
             params: {
-              personalId: client?.personalId,
-              enrollmentId: item.enrollment?.enrollmentId,
+              clientHmisId: client?.hmisId,
             },
           });
         }}
         variant="clientProfile"
-        note={item}
+        hmisNote={item}
       />
     ),
     [client]
@@ -115,13 +115,13 @@ export function ClientInteractionsHmisView(props: TProps) {
         </IconButton>
       </View>
       <InfiniteList<HmisNoteType>
-        data={programNotes || []}
+        data={hmisNotes || []}
         keyExtractor={(item) => item.id ?? ''}
         totalItems={totalCount}
         renderItem={renderItemFn}
         itemGap={Spacings.xs}
         loading={loading}
-        loadMore={loadMore}
+        loadMore={loadMoreHmisNotes}
         hasMore={hasMore}
         modelName="note"
         LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}

@@ -88,8 +88,8 @@ export function HmisProgramNoteCreate(props: TProps) {
         throw new Error(hmisErrorMessage);
       }
 
-      if (result?.__typename !== 'HmisClientNoteType') {
-        throw new Error('invalid HmisClientNoteType response');
+      if (result?.__typename !== 'HmisNoteType') {
+        throw new Error('invalid HmisNoteType response');
       }
 
       router.dismissTo(

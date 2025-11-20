@@ -409,7 +409,7 @@ class HmisRestApiBridge:
     def get_note(self, client_hmis_id: str, note_hmis_id: str) -> dict[str, Any]:
         fields = self._get_field_dot_paths(
             info=self.info,
-            default_fields=METADATA_FIELDS | {"client.id"},
+            default_fields=METADATA_FIELDS,
         )
 
         fields_str = ", ".join(fields)

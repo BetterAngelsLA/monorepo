@@ -2,12 +2,12 @@ import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { Pressable, StyleSheet } from 'react-native';
-import { HmisClientNoteType } from '../../apollo';
+import { HmisNoteType } from '../../apollo';
 import ProgramNoteCardClient from './ProgramNoteCardClient';
 import ProgramNoteCardHeader from './ProgramNoteCardHeader';
 
 interface INoteCardProps {
-  note: HmisClientNoteType;
+  note: HmisNoteType;
   variant: 'interactions' | 'clientProfile';
   hasBorder?: boolean;
   onPress?: () => void;
@@ -15,7 +15,8 @@ interface INoteCardProps {
 
 export default function ProgramNoteCard(props: INoteCardProps) {
   const { note, variant, hasBorder, onPress } = props;
-
+  console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
+  console.log(note);
   return (
     <Pressable
       accessibilityRole="button"
@@ -34,7 +35,7 @@ export default function ProgramNoteCard(props: INoteCardProps) {
     >
       {!!note.title && <ProgramNoteCardHeader purpose={note.title} />}
       {variant === 'interactions' && (
-        <ProgramNoteCardClient clientProfile={note.client} />
+        <ProgramNoteCardClient clientProfile={note.hmisClientProfile} />
       )}
       {note.date && (
         <TextRegular size="sm">
