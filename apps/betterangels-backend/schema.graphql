@@ -2349,7 +2349,7 @@ input UpdateHmisClientProfileInput {
 union UpdateHmisClientProfilePayload = HmisClientProfileType | OperationInfo
 
 input UpdateHmisNoteInput {
-  id: ID!
+  hmisId: String!
   hmisClientProfileId: String!
   title: String
   note: String

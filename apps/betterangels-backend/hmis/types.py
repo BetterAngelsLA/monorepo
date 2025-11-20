@@ -498,7 +498,7 @@ class CreateHmisNoteInput:
 
 @strawberry_django.input(HmisNote)
 class UpdateHmisNoteInput:
-    id: ID
+    hmis_id: str
     hmis_client_profile_id: str
 
     title: Optional[str]

@@ -138,7 +138,7 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_hmis_note(self, info: Info, data: UpdateHmisNoteInput) -> HmisNoteType:
-        hmis_note = HmisNote.objects.get(id=data.id)
+        hmis_note = HmisNote.objects.get(hmis_id=data.hmis_id)
         hmis_client_profile_id = HmisClientProfile.objects.get(pk=data.hmis_client_profile_id).pk
 
         hmis_api_bridge = HmisRestApiBridge(info=info)

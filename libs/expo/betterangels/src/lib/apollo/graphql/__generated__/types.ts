@@ -2867,7 +2867,7 @@ export type UpdateHmisClientProfilePayload = HmisClientProfileType | OperationIn
 export type UpdateHmisNoteInput = {
   date?: InputMaybe<Scalars['Date']['input']>;
   hmisClientProfileId: Scalars['String']['input'];
-  id: Scalars['ID']['input'];
+  hmisId: Scalars['String']['input'];
   note?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
