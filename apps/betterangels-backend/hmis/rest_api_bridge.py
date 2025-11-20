@@ -477,3 +477,32 @@ class HmisRestApiBridge:
         )
 
         return self._format_note_data(resp.json())
+
+    def create_program_enrollment(
+        self,
+        client_hmis_id: int,
+        program_hmis_id: int = 1,
+    ) -> dict[str, Any]:
+        DEFAULT_ENROLLMENT_DATA = {
+            "programId": program_hmis_id,
+            "screenValues": {
+                "disabled": 99,
+                "enrollment_coc": "Default",
+                "health_chronic": 99,
+                "health_dev_disability": 99,
+                "health_hiv": 99,
+                "health_insurance": 99,
+                "health_mental": 99,
+                "health_phys_disability": 99,
+                "health_substance_abuse": 99,
+                "program_date": "2001-01-01",
+            },
+        }
+        fields = {"id", "ref_client", "ref_program"}
+        resp = self._make_request(
+            method=HTTPMethod.POST,
+            path=f"/clients/{client_hmis_id}/client-programs/enroll",
+            body={**DEFAULT_ENROLLMENT_DATA, "fields": self._get_field_str(fields)},
+        )
+
+        return dict_keys_to_snake(resp.json())

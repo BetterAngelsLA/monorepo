@@ -582,6 +582,8 @@ export type CreateProfileDataImportInput = {
   sourceFile: Scalars['String']['input'];
 };
 
+export type CreateProgramEnrollmentPayload = OperationInfo | ProgramEnrollmentType;
+
 export type CreateServiceRequestInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   serviceEnum?: InputMaybe<ServiceEnum>;
@@ -1398,6 +1400,7 @@ export type Mutation = {
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteMood: CreateNoteMoodPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
+  createProgramEnrollment: CreateProgramEnrollmentPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
@@ -1502,6 +1505,12 @@ export type MutationCreateNoteMoodArgs = {
 
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
+};
+
+
+export type MutationCreateProgramEnrollmentArgs = {
+  clientHmisId: Scalars['Int']['input'];
+  programHmisId: Scalars['Int']['input'];
 };
 
 
@@ -2011,6 +2020,13 @@ export enum PreferredCommunicationEnum {
   Text = 'TEXT',
   Whatsapp = 'WHATSAPP'
 }
+
+export type ProgramEnrollmentType = {
+  __typename?: 'ProgramEnrollmentType';
+  clientId: Scalars['String']['output'];
+  id: Scalars['String']['output'];
+  refClientProgram: Scalars['String']['output'];
+};
 
 export enum PronounEnum {
   HeHimHis = 'HE_HIM_HIS',

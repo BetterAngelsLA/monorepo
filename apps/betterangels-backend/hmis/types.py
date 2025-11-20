@@ -432,6 +432,13 @@ class CreateHmisNoteInput:
     ref_client_program: auto
 
 
+@strawberry.type
+class ProgramEnrollmentType:
+    id: str
+    client_id: str
+    ref_client_program: str
+
+
 @strawberry_django.input(HmisNote)
 class UpdateHmisNoteInput:
     id: ID
