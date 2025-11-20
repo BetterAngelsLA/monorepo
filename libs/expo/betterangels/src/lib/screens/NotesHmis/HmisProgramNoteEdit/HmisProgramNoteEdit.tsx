@@ -1,4 +1,6 @@
+import { useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
@@ -15,24 +17,26 @@ import {
   THmisProgramNoteFormOutputs,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm';
-import { useHmisGetClientNoteQuery } from './__generated__/hmisGetClientNote.generated';
-import { useHmisUpdateClientNoteMutation } from './__generated__/hmisUpdateClientNote.generated';
+import { HmisGetClientNoteDocument } from './__generated__/hmisGetClientNote.generated';
+import { HmisUpdateClientNoteDocument } from './__generated__/hmisUpdateClientNote.generated';
 
 type TProps = {
-  hmisNoteId: string;
-  hmisClientId: string;
+  noteHmisId: string;
+  clientHmisId: string;
   hmisNoteEnrollmentId: string;
   arrivedFrom?: string;
   onSuccess?: () => void;
 };
 
 export function HmisProgramNoteEdit(props: TProps) {
-  const { hmisClientId, hmisNoteEnrollmentId, hmisNoteId, onSuccess } = props;
+  const { clientHmisId, hmisNoteEnrollmentId, noteHmisId, onSuccess } = props;
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [existingNote, setExistingNote] = useState<HmisClientNoteType>();
-  const [updateHmisClientNoteMutation] = useHmisUpdateClientNoteMutation();
+  const [updateHmisClientNoteMutation] = useMutationWithErrors(
+    HmisUpdateClientNoteDocument
+  );
 
   const formMethods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
@@ -46,14 +50,13 @@ export function HmisProgramNoteEdit(props: TProps) {
     data: noteData,
     loading: noteDataLoading,
     error: getNoteNetworkError,
-  } = useHmisGetClientNoteQuery({
+  } = useQuery(HmisGetClientNoteDocument, {
     variables: {
-      id: hmisNoteId,
-      personalId: hmisClientId,
+      id: noteHmisId,
+      personalId: clientHmisId,
       enrollmentId: hmisNoteEnrollmentId,
     },
     fetchPolicy: 'cache-first',
-    partialRefetch: true,
   });
 
   useEffect(() => {
@@ -103,8 +106,8 @@ export function HmisProgramNoteEdit(props: TProps) {
       const { data } = await updateHmisClientNoteMutation({
         variables: {
           clientNoteInput: {
-            id: hmisNoteId,
-            personalId: hmisClientId,
+            id: noteHmisId,
+            personalId: clientHmisId,
             ...payload,
           },
         },
@@ -150,7 +153,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         return onSuccess();
       }
 
-      router.dismissTo(`notes-hmis/${hmisNoteId}/index`);
+      router.dismissTo(`notes-hmis/${noteHmisId}/index`);
     } catch (error) {
       console.error('updateHmisClientNoteMutation error:', error);
 
@@ -179,7 +182,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         }}
       >
         <HmisProgramNoteForm
-          hmisClientId={hmisClientId}
+          clientHmisId={clientHmisId}
           disabled={formDisabled}
         />
       </Form.Page>

@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
@@ -17,20 +18,21 @@ import {
   getHmisProgramNoteFormEmptyState,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm/formSchema';
-import { useHmisCreateClientNoteMutation } from './__generated__/hmisCreateClientNote.generated';
+import { HmisCreateClientNoteDocument } from './__generated__/hmisCreateClientNote.generated';
 
 type TProps = {
-  hmisClientId: string;
+  clientHmisId: string;
   arrivedFrom?: string;
 };
 
 export function HmisProgramNoteCreate(props: TProps) {
-  const { hmisClientId } = props;
+  const { clientHmisId } = props;
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [createHmisClientNoteMutation] = useHmisCreateClientNoteMutation();
-
+  const [createHmisClientNoteMutation] = useMutationWithErrors(
+    HmisCreateClientNoteDocument
+  );
   const formKeys = Object.keys(hmisProgramNoteFormEmptyState);
 
   const formMethods = useForm<THmisProgramNoteFormInputs>({
@@ -50,7 +52,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       const { data } = await createHmisClientNoteMutation({
         variables: {
           clientNoteInput: {
-            personalId: hmisClientId,
+            personalId: clientHmisId,
             ...payload,
           },
         },
@@ -90,7 +92,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       }
 
       router.dismissTo(
-        `/client/${hmisClientId}?activeTab=${ClientViewTabEnum.Interactions}`
+        `/client/${clientHmisId}?activeTab=${ClientViewTabEnum.Interactions}`
       );
     } catch (error) {
       console.error('createHmisClientNoteMutation error:', error);
@@ -115,7 +117,7 @@ export function HmisProgramNoteCreate(props: TProps) {
           disabled: isSubmitting,
         }}
       >
-        <HmisProgramNoteForm hmisClientId={hmisClientId} />
+        <HmisProgramNoteForm clientHmisId={clientHmisId} />
       </Form.Page>
     </FormProvider>
   );

@@ -15,8 +15,6 @@ interface INoteCardProps {
 
 export default function ProgramNoteCard(props: INoteCardProps) {
   const { hmisNote, variant, hasBorder, onPress } = props;
-  console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
-  console.log(hmisNote);
   return (
     <Pressable
       accessibilityRole="button"

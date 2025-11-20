@@ -21,8 +21,6 @@ export function HmisProgramNoteView(props: TProps) {
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
   });
-  console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-  console.log(data);
   const hmisNote = data?.hmisNote;
 
   if (loading) {
