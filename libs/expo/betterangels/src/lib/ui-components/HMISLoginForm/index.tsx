@@ -47,8 +47,8 @@ export default function HMISLoginForm() {
         return;
       }
       if (res.__typename === 'UserType') {
-        await persistOnSuccessfulSignIn(email);
         await refetchUser();
+        await persistOnSuccessfulSignIn(email);
         return;
       }
     } catch (e) {
