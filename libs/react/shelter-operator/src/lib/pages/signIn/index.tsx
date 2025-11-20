@@ -16,6 +16,7 @@ export default function SignIn(props: SignInProps) {
   const { refetchUser } = useUser();
 
   const sharedProps: SharedSignInProps = {
+    onSuccessRedirect: '/operator',
     ...props,
     apiUrl,
     fetchClient,
