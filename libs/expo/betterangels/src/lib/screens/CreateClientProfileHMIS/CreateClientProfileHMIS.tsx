@@ -83,7 +83,7 @@ export function CreateClientProfileHMIS() {
       const result = createResponse.data?.createHmisClientProfile;
 
       if (result?.__typename === 'HmisClientProfileType') {
-        router.replace(`/client/${result.hmisId}`);
+        router.replace(`/client/${result.id}`);
       } else {
         console.log('Unexpected result: ', result);
         showSnackbar({

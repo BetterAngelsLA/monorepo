@@ -1,5 +1,5 @@
-query hmisClientProfile($hmisId: String!) {
-  hmisClientProfile(hmisId: $hmisId) {
+query hmisClientProfile($id: ID!) {
+  hmisClientProfile(id: $id) {
     ... on HmisClientProfileType {
       id
       hmisId

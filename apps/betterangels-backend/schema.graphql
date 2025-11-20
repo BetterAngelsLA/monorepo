@@ -1773,8 +1773,8 @@ type Query {
   hmisListEnrollments(dynamicFields: [String]!, personalId: ID!, pagination: HmisPaginationInput = null): HmisEnrollmentListTypeHmisListEnrollmentsError!
   hmisClientProfiles(pagination: OffsetPaginationInput, filters: HmisClientProfileFilter, ordering: [HmisClientProfileOrdering!]! = []): HmisClientProfileTypeOffsetPaginated!
   hmisNotes(pagination: OffsetPaginationInput, filters: HmisNoteFilter, ordering: [HmisNoteOrdering!]! = []): HmisNoteTypeOffsetPaginated!
-  hmisClientProfile(hmisId: String!): HmisClientProfileType!
-  hmisNote(clientHmisId: String!, noteHmisId: String!): HmisNoteType!
+  hmisClientProfile(id: ID!): HmisClientProfileType!
+  hmisNote(id: ID!): HmisNoteType!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
@@ -2342,7 +2342,7 @@ input UpdateHmisClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
-  hmisId: String!
+  id: String!
   phoneNumbers: [PhoneNumberInput!]
 }
 

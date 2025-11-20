@@ -32,7 +32,7 @@ type TProps = {
 };
 
 export function ClientHMISEdit(props: TProps) {
-  const { componentName, id: hmisId } = props;
+  const { componentName, id } = props;
 
   const router = useRouter();
   const navigation = useNavigation();
@@ -75,7 +75,7 @@ export function ClientHMISEdit(props: TProps) {
     loading: clientDataLoading,
     refetch,
   } = useQuery(HmisClientProfileDocument, {
-    variables: { hmisId },
+    variables: { id },
   });
 
   useEffect(() => {
@@ -99,7 +99,7 @@ export function ClientHMISEdit(props: TProps) {
     methods.reset({
       ...mappedValues,
     });
-  }, [clientData, hmisId]);
+  }, [clientData, id]);
 
   if (clientDataLoading) {
     return <LoadingView />;
@@ -111,7 +111,6 @@ export function ClientHMISEdit(props: TProps) {
       }
 
       const inputs = toUpdateHmisClientProfileInput(
-        hmisId,
         client,
         values as UpdateHmisClientProfileInput
       );
@@ -126,7 +125,7 @@ export function ClientHMISEdit(props: TProps) {
         },
         errorPolicy: 'all',
         refetchQueries: [
-          { query: HmisClientProfileDocument, variables: { hmisId } },
+          { query: HmisClientProfileDocument, variables: { id } },
         ],
         awaitRefetchQueries: true,
       })) as MutationExecResult<UpdateHmisClientProfileMutation>;
@@ -153,7 +152,7 @@ export function ClientHMISEdit(props: TProps) {
 
       if (result?.__typename === 'HmisClientProfileType') {
         await refetch();
-        router.dismissTo(`/client/${result.hmisId}`);
+        router.dismissTo(`/client/${result.id}`);
       } else {
         console.log('Unexpected result: ', result);
         showSnackbar({

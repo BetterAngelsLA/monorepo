@@ -16,13 +16,13 @@ const hmisTabs: ClientViewTabEnum[] = [
 ];
 
 type TProps = {
-  hmisId: string;
+  id: string;
   arrivedFrom?: string;
   openCard?: ClientProfileSectionEnum | null;
 };
 
 export function ClientHMIS(props: TProps) {
-  const { hmisId, openCard } = props;
+  const { id, openCard } = props;
 
   const { activeTab } = useLocalSearchParams<{
     activeTab?: ClientViewTabEnum;
@@ -37,7 +37,7 @@ export function ClientHMIS(props: TProps) {
   }, [activeTab]);
 
   const { data, loading } = useQuery(HmisClientProfileDocument, {
-    variables: { hmisId },
+    variables: { id },
   });
 
   if (loading) {

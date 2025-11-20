@@ -10,16 +10,15 @@ export type TUpdateHmisClientProfileInputsUnion = Partial<
   HmisClientProfileType & HmisClientDataType
 >;
 export function toUpdateHmisClientProfileInput(
-  hmisId: string,
   client: HmisClientProfileType,
   values: Partial<UpdateHmisClientProfileInput>
 ): UpdateHmisClientProfileInput | null {
-  if (!values || !hmisId) {
+  if (!values || !client) {
     return null;
   }
 
   const updatedInputs: UpdateHmisClientProfileInput = {
-    hmisId,
+    id: client.id,
     gender: values.gender || [HmisGenderEnum.NotCollected],
     raceEthnicity: values.raceEthnicity || [HmisRaceEnum.NotCollected],
     veteran: values.veteran || client.veteran,
