@@ -124,7 +124,7 @@ class UserType(UserBaseType):
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]
-    username: auto
+    username: Optional[str]
 
     @strawberry_django.field
     def is_hmis_user(self, info: Info) -> Optional[bool]:

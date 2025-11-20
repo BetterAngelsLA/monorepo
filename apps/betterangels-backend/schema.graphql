@@ -2431,7 +2431,7 @@ type UserType {
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean
-  username: String!
+  username: String
   isHmisUser: Boolean
 }
 

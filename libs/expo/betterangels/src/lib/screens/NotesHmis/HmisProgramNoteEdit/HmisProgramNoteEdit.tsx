@@ -6,15 +6,8 @@ import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import {
-  HmisNoteType,
-  extractExtensionErrors,
-  extractHMISErrors,
-} from '../../../apollo';
-import {
-  applyManualFormErrors,
-  applyOperationFieldErrors,
-} from '../../../errors';
+import { HmisNoteType, extractExtensionErrors } from '../../../apollo';
+import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import {
   HmisProgramNoteForm,
@@ -28,14 +21,14 @@ import { HmisNoteDocument } from '../HmisProgramNoteView/__generated__/HmisProgr
 import { UpdateHmisNoteDocument } from './__generated__/hmisUpdateClientNote.generated';
 
 type TProps = {
-  hmisNoteId: string;
-  hmisClientId: string;
+  noteHmisId: string;
+  clientHmisId: string;
   arrivedFrom?: string;
   onSuccess?: () => void;
 };
 
 export function HmisProgramNoteEdit(props: TProps) {
-  const { hmisClientId, hmisNoteId, onSuccess } = props;
+  const { clientHmisId, noteHmisId, onSuccess } = props;
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -56,14 +49,15 @@ export function HmisProgramNoteEdit(props: TProps) {
     data: noteData,
     loading: noteDataLoading,
     error: getNoteNetworkError,
+    refetch,
   } = useQuery(HmisNoteDocument, {
-    variables: { hmisClientId, hmisNoteId },
+    variables: { clientHmisId, noteHmisId },
     fetchPolicy: 'cache-first',
     returnPartialData: true,
   });
 
   useEffect(() => {
-    const noteResult = noteData?.hmisGetClientNote;
+    const noteResult = noteData?.hmisNote;
 
     if (noteResult?.__typename !== 'HmisNoteType') {
       return;
@@ -108,8 +102,8 @@ export function HmisProgramNoteEdit(props: TProps) {
       const updateResponse = await updateHmisNoteMutation({
         variables: {
           data: {
-            id: hmisNoteId,
-            personalId: hmisClientId,
+            hmisId: noteHmisId,
+            hmisClientProfileId: clientHmisId,
             ...payload,
           },
         },
@@ -137,43 +131,21 @@ export function HmisProgramNoteEdit(props: TProps) {
 
       const result = updateResponse.data?.updateHmisNote;
 
-      if (!result) {
-        throw new Error('missing hmisUpdateClientNote response');
-      }
-
-      if (result?.__typename === 'HmisUpdateClientNoteError') {
-        const { message: hmisErrorMessage } = result;
-
-        const { status, fieldErrors = [] } =
-          extractHMISErrors(hmisErrorMessage) || {};
-
-        // handle unprocessable_entity errors and exit
-        if (status === 422) {
-          const formKeys = Object.keys(hmisProgramNoteFormEmptyState);
-
-          const formFieldErrors = fieldErrors.filter(({ field }) =>
-            formKeys.includes(field)
-          );
-
-          applyOperationFieldErrors(formFieldErrors, setError);
-
-          return;
-        }
-
-        // HmisCreateClientError exists but not 422 | 404
-        // throw generic error
-        throw new Error(hmisErrorMessage);
-      }
-
-      if (result?.__typename !== 'HmisNoteType') {
-        throw new Error('invalid HmisNoteType response');
+      if (result?.__typename === 'HmisNoteType') {
+        await refetch();
+        router.dismissTo(`notes-hmis/${noteHmisId}/index`);
+      } else {
+        console.log('Unexpected result: ', result);
+        showSnackbar({
+          message: `Something went wrong!`,
+          type: 'error',
+        });
+        router.replace(`/notes-hmis`);
       }
 
       if (onSuccess) {
         return onSuccess();
       }
-
-      router.dismissTo(`notes-hmis/${hmisNoteId}/index`);
     } catch (error) {
       console.error('updateHmisNoteMutation error:', error);
 
@@ -202,7 +174,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         }}
       >
         <HmisProgramNoteForm
-          hmisClientId={hmisClientId}
+          clientHmisId={clientHmisId}
           disabled={formDisabled}
         />
       </Form.Page>

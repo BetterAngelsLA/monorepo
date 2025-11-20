@@ -4,6 +4,10 @@ import {
   getQueryPolicyFactory,
 } from '@monorepo/apollo';
 import {
+  HmisNotesQuery,
+  HmisNotesQueryVariables,
+} from '../../screens/ClientHMIS/tabs/ClientInteractionsHmisView/__generated__/ClientInteractionsHmisView.generated';
+import {
   HmisClientProfilesQuery,
   HmisClientProfilesQueryVariables,
 } from '../../ui-components/ClientProfileList/__generated__/HmisListClients.generated';
@@ -58,6 +62,12 @@ const policyFactoryList = [
   >({
     key: 'hmisClientProfiles',
     entityTypename: 'HmisClientProfileType',
+    cacheKeyVariables: ['filters', 'ordering'] as const,
+  }),
+
+  getQueryPolicyFactory<HmisNotesQuery, HmisNotesQueryVariables>({
+    key: 'hmisNotes',
+    entityTypename: 'HmisNoteType',
     cacheKeyVariables: ['filters', 'ordering'] as const,
   }),
 ] as const;

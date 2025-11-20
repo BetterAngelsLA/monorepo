@@ -18,20 +18,20 @@ import {
   getHmisProgramNoteFormEmptyState,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm/formSchema';
-import { HmisCreateClientNoteDocument } from './__generated__/hmisCreateClientNote.generated';
+import { CreateHmisNoteDocument } from './__generated__/hmisCreateClientNote.generated';
 
 type TProps = {
-  hmisClientId: string;
+  clientHmisId: string;
   arrivedFrom?: string;
 };
 
 export function HmisProgramNoteCreate(props: TProps) {
-  const { hmisClientId } = props;
+  const { clientHmisId } = props;
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [createHmisClientNoteMutation] = useMutationWithErrors(
-    HmisCreateClientNoteDocument
+    CreateHmisNoteDocument
   );
 
   const formKeys = Object.keys(hmisProgramNoteFormEmptyState);
@@ -52,18 +52,18 @@ export function HmisProgramNoteCreate(props: TProps) {
 
       const { data } = await createHmisClientNoteMutation({
         variables: {
-          clientNoteInput: {
-            personalId: hmisClientId,
+          data: {
+            clientHmisId,
             ...payload,
           },
         },
         errorPolicy: 'all',
       });
 
-      const result = data?.hmisCreateClientNote;
+      const result = data?.createHmisClientNote;
 
       if (!result) {
-        throw new Error('missing hmisCreateClientNote response');
+        throw new Error('missing createHmisClientNote response');
       }
 
       if (result?.__typename === 'HmisCreateClientNoteError') {
@@ -93,7 +93,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       }
 
       router.dismissTo(
-        `/client/${hmisClientId}?activeTab=${ClientViewTabEnum.Interactions}`
+        `/client/${clientHmisId}?activeTab=${ClientViewTabEnum.Interactions}`
       );
     } catch (error) {
       console.error('createHmisClientNoteMutation error:', error);
@@ -118,7 +118,7 @@ export function HmisProgramNoteCreate(props: TProps) {
           disabled: isSubmitting,
         }}
       >
-        <HmisProgramNoteForm hmisClientId={hmisClientId} />
+        <HmisProgramNoteForm clientHmisId={clientHmisId} />
       </Form.Page>
     </FormProvider>
   );

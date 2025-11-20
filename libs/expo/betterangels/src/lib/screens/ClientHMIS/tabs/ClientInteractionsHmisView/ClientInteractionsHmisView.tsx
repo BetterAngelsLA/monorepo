@@ -1,82 +1,45 @@
-import { useQuery } from '@apollo/client/react';
+import { useInfiniteScrollQuery } from '@monorepo/apollo';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { IconButton, InfiniteList } from '@monorepo/expo/shared/ui-components';
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { View } from 'react-native';
-import { uniqueBy } from 'remeda';
-import {
-  HmisClientProfileType,
-  HmisNoteType,
-  Ordering,
-} from '../../../../apollo';
+import { HmisClientProfileType, HmisNoteType } from '../../../../apollo';
 import {
   MainScrollContainer,
   ProgramNoteCard,
 } from '../../../../ui-components';
-import { ListLoadingView } from './ListLoadingView';
 import {
   HmisNotesDocument,
   HmisNotesQuery,
+  HmisNotesQueryVariables,
 } from './__generated__/ClientInteractionsHmisView.generated';
-
-const paginationLimit = 10;
-
-type THmisNote = HmisNotesQuery['hmisNotes']['results'][number];
+import { DEFAULT_PAGINATION_LIMIT } from './constants';
 
 type TProps = { client?: HmisClientProfileType };
 
 export function ClientInteractionsHmisView(props: TProps) {
   const { client } = props;
-  const [offset, setOffset] = useState<number>(0);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const { data, loading, error } = useQuery(HmisNotesDocument, {
-    skip: !client?.id,
-    variables: {
-      pagination: { limit: 10 + 1, offset: 0 },
-      ordering: [{ date: Ordering.Desc }, { id: Ordering.Desc }],
-      filters: { hmisClientProfile: client?.id },
-    },
-    fetchPolicy: 'cache-and-network',
-    nextFetchPolicy: 'cache-first',
-  });
-  console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-  console.log(data);
-  const [hmisNotes, setHmisNotes] = useState<
-    HmisNotesQuery['hmisNotes']['results']
-  >([]);
-  const [totalCount, setTotalCount] = useState<number>(0);
-  console.log('#######################################');
-  console.log(hmisNotes);
-
-  function loadMoreHmisNotes() {
-    if (hasMore && !loading) {
-      setOffset((prevOffset) => prevOffset + paginationLimit);
-    }
+  const { items, total, loading, hasMore, loadMore, error } =
+    useInfiniteScrollQuery<
+      HmisNoteType,
+      HmisNotesQuery,
+      HmisNotesQueryVariables
+    >({
+      document: HmisNotesDocument,
+      queryFieldName: 'hmisNotes',
+      pageSize: DEFAULT_PAGINATION_LIMIT,
+      variables: { filters: { hmisClientProfile: client?.id } },
+      fetchPolicy: 'cache-and-network',
+      nextFetchPolicy: 'cache-first',
+    });
+  if (error) {
+    console.error(error);
   }
 
-  useEffect(() => {
-    if (!data || !('hmisNotes' in data)) {
-      return;
-    }
-
-    const { results, totalCount } = data.hmisNotes;
-    setTotalCount(totalCount);
-
-    if (offset === 0) {
-      setHmisNotes(results);
-    } else {
-      setHmisNotes((prevNotes) =>
-        uniqueBy([...prevNotes, ...results], (note) => note.id)
-      );
-    }
-
-    setHasMore(offset + paginationLimit < totalCount);
-  }, [data, offset]);
-
   const renderItemFn = useCallback(
-    (item: THmisNote) => (
+    (item: HmisNoteType) => (
       <ProgramNoteCard
         onPress={() => {
           router.navigate({
@@ -106,25 +69,21 @@ export function ClientInteractionsHmisView(props: TProps) {
           accessibilityLabel="create an interaction"
           accessibilityHint="create new interaction"
           onPress={() =>
-            router.navigate(
-              `/notes-hmis/create?hmisClientId=${client.personalId}`
-            )
+            router.navigate(`/notes-hmis/create?clientHmisId=${client.hmisId}`)
           }
         >
           <PlusIcon />
         </IconButton>
       </View>
       <InfiniteList<HmisNoteType>
-        data={hmisNotes || []}
+        data={items}
         keyExtractor={(item) => item.id ?? ''}
-        totalItems={totalCount}
+        totalItems={total}
         renderItem={renderItemFn}
-        itemGap={Spacings.xs}
         loading={loading}
-        loadMore={loadMoreHmisNotes}
+        loadMore={loadMore}
         hasMore={hasMore}
         modelName="note"
-        LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
         error={!!error}
       />
     </MainScrollContainer>

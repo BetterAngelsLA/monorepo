@@ -21,12 +21,12 @@ import { renderValue } from './shared/renderValue';
 import { TFormKeys } from './types';
 
 type TProps = {
-  hmisClientId: string;
+  clientHmisId: string;
   disabled?: boolean;
 };
 
 export function HmisProgramNoteForm(props: TProps) {
-  const { hmisClientId, disabled } = props;
+  const { clientHmisId, disabled } = props;
 
   const {
     control,
@@ -56,7 +56,7 @@ export function HmisProgramNoteForm(props: TProps) {
     loading: programsLoading,
     error: programEnrollmentError,
   } = useHmisClientPrograms({
-    hmisClientId,
+    clientHmisId,
   });
 
   // NOTE: client program options required to process form

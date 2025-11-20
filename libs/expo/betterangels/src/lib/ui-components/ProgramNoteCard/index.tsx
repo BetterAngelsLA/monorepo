@@ -7,16 +7,16 @@ import ProgramNoteCardClient from './ProgramNoteCardClient';
 import ProgramNoteCardHeader from './ProgramNoteCardHeader';
 
 interface INoteCardProps {
-  note: HmisNoteType;
+  hmisNote: HmisNoteType;
   variant: 'interactions' | 'clientProfile';
   hasBorder?: boolean;
   onPress?: () => void;
 }
 
 export default function ProgramNoteCard(props: INoteCardProps) {
-  const { note, variant, hasBorder, onPress } = props;
+  const { hmisNote, variant, hasBorder, onPress } = props;
   console.log('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@');
-  console.log(note);
+  console.log(hmisNote);
   return (
     <Pressable
       accessibilityRole="button"
@@ -33,15 +33,15 @@ export default function ProgramNoteCard(props: INoteCardProps) {
         },
       ]}
     >
-      {!!note.title && <ProgramNoteCardHeader purpose={note.title} />}
+      {!!hmisNote.title && <ProgramNoteCardHeader purpose={hmisNote.title} />}
       {variant === 'interactions' && (
-        <ProgramNoteCardClient clientProfile={note.hmisClientProfile} />
+        <ProgramNoteCardClient clientProfile={hmisNote.hmisClientProfile} />
       )}
-      {note.date && (
+      {hmisNote.date && (
         <TextRegular size="sm">
-          {format(new Date(note.date), 'MM/dd/yyyy')}
+          {format(new Date(hmisNote.date), 'MM/dd/yyyy')}
           {' @ '}
-          {format(new Date(note?.date), 'hh:mm a')}
+          {format(new Date(hmisNote?.date), 'hh:mm a')}
         </TextRegular>
       )}
 

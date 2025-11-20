@@ -12,11 +12,11 @@ type TProgramsBase = {
 };
 
 type TProps = {
-  hmisClientId: string;
+  clientHmisId: string;
 };
 
 export function useHmisClientPrograms(props: TProps) {
-  const { hmisClientId } = props;
+  const { clientHmisId } = props;
 
   // track only fresh value from network (not cache) to prevent stale error messaging
   const [totalProgramsFromNetwork, setTotalProgramsFromNetwork] = useState<
@@ -28,9 +28,9 @@ export function useHmisClientPrograms(props: TProps) {
     loading,
     error: queryError,
   } = useQuery(HmisClientProgramEnrollmentsDocument, {
-    skip: !hmisClientId,
+    skip: !clientHmisId,
     variables: {
-      personalId: hmisClientId,
+      personalId: clientHmisId,
       pagination: { page: 1, perPage: MAX_PROGRAMS_TO_FETCH },
       dynamicFields: [],
     },
@@ -64,10 +64,10 @@ export function useHmisClientPrograms(props: TProps) {
 
   const { programs, error } = useMemo<TProgramsBase>(() => {
     // handle errors
-    if (!hmisClientId) {
-      console.error('useHmisClientPrograms: missing hmisClientId');
+    if (!clientHmisId) {
+      console.error('useHmisClientPrograms: missing clientHmisId');
 
-      return { error: 'missing hmisClientId' };
+      return { error: 'missing clientHmisId' };
     }
 
     const list = data?.hmisListEnrollments;
@@ -97,7 +97,7 @@ export function useHmisClientPrograms(props: TProps) {
       totalProgramsFromNetwork > MAX_PROGRAMS_TO_FETCH
     ) {
       console.warn(
-        `useHmisClientPrograms: hmis client [${hmisClientId}] has ${totalProgramsFromNetwork} program enrollments (exceeds ${MAX_PROGRAMS_TO_FETCH})`
+        `useHmisClientPrograms: hmis client [${clientHmisId}] has ${totalProgramsFromNetwork} program enrollments (exceeds ${MAX_PROGRAMS_TO_FETCH})`
       );
     }
 
@@ -108,7 +108,7 @@ export function useHmisClientPrograms(props: TProps) {
     for (const program of listItems) {
       if (program.__typename !== 'HmisEnrollmentType') {
         console.warn(
-          `[useHmisClientPrograms]: invalid program for hmisClientId [${hmisClientId}]`,
+          `[useHmisClientPrograms]: invalid program for clientHmisId [${clientHmisId}]`,
           program
         );
 
@@ -119,7 +119,7 @@ export function useHmisClientPrograms(props: TProps) {
     }
 
     return { programs };
-  }, [data, hmisClientId, totalProgramsFromNetwork]);
+  }, [data, clientHmisId, totalProgramsFromNetwork]);
 
   // map Program project names for easy access
   const programIdToProjectNameMap = useMemo(() => {

@@ -1,10 +1,10 @@
 import { HmisProgramNoteView } from '@monorepo/expo/betterangels';
 import { useLocalSearchParams } from 'expo-router';
 
-export default function InteractionsHmisiew() {
-  const { id: noteHmisId, personalId: clientHmisId } = useLocalSearchParams<{
+export default function InteractionsHmisView() {
+  const { id: noteHmisId, clientHmisId } = useLocalSearchParams<{
     id: string;
-    personalId: string;
+    clientHmisId: string;
   }>();
 
   if (!noteHmisId || !clientHmisId) {

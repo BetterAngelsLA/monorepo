@@ -17,7 +17,7 @@ const parseUser = (user?: CurrentUserQuery['currentUser']): TUser | undefined =>
   user
     ? {
         id: user.id,
-        username: user.username,
+        username: user.username ?? undefined,
         firstName: user.firstName ?? undefined,
         lastName: user.lastName ?? undefined,
         email: user.email,
