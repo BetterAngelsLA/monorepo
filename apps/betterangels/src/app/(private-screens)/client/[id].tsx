@@ -35,7 +35,7 @@ export default function ClientScreen() {
   if (isHmisUser) {
     return (
       <ClientHMIS
-        hmisId={id}
+        id={id}
         arrivedFrom={arrivedFrom}
         openCard={openCardName}
       />
