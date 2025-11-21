@@ -37,6 +37,10 @@ export const routeChildren: RouteObject[] = [
     element: <Dashboard />,
   },
   {
+    path: '/operator/shelter/:id',
+    element: <Shelter />,
+  },
+  {
     path: '/page-2',
     element: (
       <div>
