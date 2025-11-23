@@ -1,6 +1,7 @@
 import { Colors } from '@monorepo/expo/shared/static';
 import { LoadingView, Tabs } from '@monorepo/expo/shared/ui-components';
-import { useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import { ClientViewTabEnum } from '../Client/ClientTabs';
@@ -8,7 +9,10 @@ import { HMISClientHeader } from './HMISClientHeader';
 import { useGetHmisClientQuery } from './__generated__/getHMISClient.generated';
 import { renderTabComponent } from './tabs/utils/renderTabComponent';
 
-const hmisTabs: ClientViewTabEnum[] = [ClientViewTabEnum.Profile];
+const hmisTabs: ClientViewTabEnum[] = [
+  ClientViewTabEnum.Profile,
+  ClientViewTabEnum.Interactions,
+];
 
 type TProps = {
   id: string;
@@ -19,7 +23,17 @@ type TProps = {
 export function ClientHMIS(props: TProps) {
   const { id: personalId, openCard } = props;
 
+  const { activeTab } = useLocalSearchParams<{
+    activeTab?: ClientViewTabEnum;
+  }>();
+
   const [currentTab, setCurrentTab] = useState(ClientViewTabEnum.Profile);
+
+  useEffect(() => {
+    if (activeTab) {
+      setCurrentTab(activeTab);
+    }
+  }, [activeTab]);
 
   const { data, loading } = useGetHmisClientQuery({
     variables: { personalId },

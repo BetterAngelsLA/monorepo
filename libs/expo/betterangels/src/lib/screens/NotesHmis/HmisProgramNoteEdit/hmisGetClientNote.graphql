@@ -1,0 +1,29 @@
+query HmisGetClientNote($id: ID!, $personalId: ID!, $enrollmentId: ID!) {
+  hmisGetClientNote(
+    id: $id
+    personalId: $personalId
+    enrollmentId: $enrollmentId
+  ) {
+    ... on HmisClientNoteType {
+      id
+      title
+      note
+      date
+      category
+      client {
+        personalId
+      }
+      enrollment {
+        enrollmentId
+        project {
+          projectId
+          projectName
+        }
+      }
+    }
+    ... on HmisGetClientNoteError {
+      field
+      message
+    }
+  }
+}
