@@ -2,6 +2,7 @@ import { Link, RouteObject } from 'react-router-dom';
 import Dashboard from '../../../../shelter-operator/Dashboard';
 import Login from '../../../../shelter-operator/Login';
 import OperatorPortal from '../../../../shelter-operator/OperatorPortal';
+import ShelterDashboardPage from '../../../../shelter-operator/ShelterDashboardPage';
 import Gallery from '../pages/gallery/gallery';
 import { Home } from '../pages/home/home';
 import { Policy } from '../pages/Policy';
@@ -38,7 +39,7 @@ export const routeChildren: RouteObject[] = [
   },
   {
     path: '/operator/shelter/:id',
-    element: <Shelter />,
+    element: <ShelterDashboardPage />,
   },
   {
     path: '/page-2',
