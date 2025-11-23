@@ -6,7 +6,7 @@ import { useEffect, useLayoutEffect } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
   UpdateClientProfileInput,
-  extractExtensionErrors,
+  extractResponseExtensions,
 } from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
@@ -87,7 +87,7 @@ export default function ClientProfileForm(props: IClientProfileForms) {
         errorPolicy: 'all',
       });
 
-      const errorViaExtensions = extractExtensionErrors(updateResponse);
+      const errorViaExtensions = extractResponseExtensions(updateResponse);
 
       if (errorViaExtensions) {
         applyManualFormErrors(errorViaExtensions, methods.setError);

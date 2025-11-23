@@ -11,8 +11,8 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
 import {
-  extractExtensionErrors,
   extractOperationInfo,
+  extractResponseExtensions,
 } from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
 import { useSnackbar } from '../../../../../hooks';
@@ -114,10 +114,10 @@ export function HmisProfileForm(props: TProps) {
         });
       }
 
-      const extensionErrors = extractExtensionErrors(response);
+      const responseExtensions = extractResponseExtensions(response);
 
-      if (extensionErrors) {
-        applyManualFormErrors(extensionErrors, setError);
+      if (responseExtensions) {
+        applyManualFormErrors(responseExtensions, setError);
 
         return;
       }

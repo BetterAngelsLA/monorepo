@@ -1,13 +1,15 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { useSnackbar } from '../../hooks';
 
-import { extractExtensionErrors } from '../../apollo';
+import { CombinedGraphQLErrors } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
+import { extractExtensionFieldErrors } from '../../apollo/graphql/response/extractExtensionFieldErrors';
 import { applyManualFormErrors } from '../../errors';
 import {
+  FullNameFormFieldNames,
   FullNameFormHmis,
   FullNameFormSchema,
   TFullNameFormSchema,
@@ -22,7 +24,7 @@ import { CreateHmisClientProfileDocument } from './__generated__/createHmisClien
 export function CreateClientProfileHMIS() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [createHmisClientProfileMutation] = useMutationWithErrors(
+  const [createHmisClientProfileMutation] = useMutation(
     CreateHmisClientProfileDocument
   );
 
@@ -62,38 +64,36 @@ export function CreateClientProfileHMIS() {
         errorPolicy: 'all',
       });
 
-      if (!createResponse) {
-        throw new Error('missing createHmisClientProfile response');
+      const { data, error } = createResponse;
+
+      // if form field errors: handle and exit
+      if (CombinedGraphQLErrors.is(error)) {
+        const fieldErrors = extractExtensionFieldErrors(
+          error,
+          FullNameFormFieldNames
+        );
+
+        if (fieldErrors.length) {
+          applyManualFormErrors(fieldErrors, setError);
+
+          return;
+        }
       }
 
-      const errorViaExtensions = extractExtensionErrors(createResponse);
-
-      if (errorViaExtensions) {
-        applyManualFormErrors(errorViaExtensions, setError);
-
-        return;
+      // non-validation error: throw
+      if (error) {
+        throw new Error(error.message);
       }
 
-      const otherErrors = createResponse.errors?.[0];
+      const result = data?.createHmisClientProfile;
 
-      if (otherErrors) {
-        throw otherErrors.message;
+      if (result?.__typename !== 'HmisClientProfileType') {
+        throw new Error('typename is not HmisClientProfileType');
       }
 
-      const result = createResponse.data?.createHmisClientProfile;
-
-      if (result?.__typename === 'HmisClientProfileType') {
-        router.replace(`/client/${result.id}`);
-      } else {
-        console.log('Unexpected result: ', result);
-        showSnackbar({
-          message: `Something went wrong!`,
-          type: 'error',
-        });
-        router.replace(`/clients`);
-      }
+      router.replace(`/client/${result.id}`);
     } catch (error) {
-      console.error('createHmisClientProfileMutation error:', error);
+      console.error('[createHmisClientProfileMutation] error:', error);
 
       showSnackbar({
         message: 'Something went wrong. Please try again.',

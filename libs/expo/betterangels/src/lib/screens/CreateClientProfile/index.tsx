@@ -10,7 +10,10 @@ import {
 import { useRouter } from 'expo-router';
 import { SubmitHandler, useForm, useWatch } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
-import { CreateClientProfileInput, extractExtensionErrors } from '../../apollo';
+import {
+  CreateClientProfileInput,
+  extractResponseExtensions,
+} from '../../apollo';
 import { applyManualFormErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import {
@@ -74,10 +77,10 @@ export default function CreateClientProfile() {
         errorPolicy: 'all',
       });
 
-      const extensionErrors = extractExtensionErrors(createResponse);
+      const responseExtensions = extractResponseExtensions(createResponse);
 
-      if (extensionErrors) {
-        applyManualFormErrors(extensionErrors, setError);
+      if (responseExtensions) {
+        applyManualFormErrors(responseExtensions, setError);
 
         return;
       }

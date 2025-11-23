@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 import requests
 import strawberry
 from common.constants import HMIS_SESSION_KEY_NAME
+from common.errors import UnauthenticatedGQLError
 from common.utils import dict_keys_to_snake
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
@@ -115,7 +116,7 @@ class HmisRestApiBridge:
             return
 
         if resp.status_code == 401:
-            raise PermissionDenied("Session expired. Please login again.")
+            raise UnauthenticatedGQLError()
 
         if resp.status_code == 403:
             raise PermissionDenied("Unauthorized.")
