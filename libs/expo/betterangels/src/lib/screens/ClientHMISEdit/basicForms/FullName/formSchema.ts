@@ -23,9 +23,8 @@ export const FullNameFormSchema = z
     lastName: z.string().min(1, 'Last Name is required.'),
     nameMiddle: z.string(),
     alias: z.string(),
-    // form uses string Enum while api requires an integer - converted onSubmit
-    nameQuality: z.enum(HmisNameQualityEnum).or(z.literal(undefined)),
-    nameSuffix: z.enum(HmisSuffixEnum).or(z.literal(undefined)),
+    nameQuality: z.enum(HmisNameQualityEnum).optional(),
+    nameSuffix: z.enum(HmisSuffixEnum).optional(),
   })
   // validate nameQuality values
   .superRefine((data, ctx) => {
@@ -41,3 +40,9 @@ export const FullNameFormSchema = z
       });
     }
   });
+
+type FullNameFormFieldName = keyof typeof FullNameFormSchema.shape;
+
+export const FullNameFormFieldNames = Object.keys(
+  FullNameFormSchema.shape
+) as FullNameFormFieldName[];

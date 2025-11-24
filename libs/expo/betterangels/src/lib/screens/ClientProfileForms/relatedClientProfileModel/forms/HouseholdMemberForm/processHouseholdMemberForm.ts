@@ -1,6 +1,6 @@
 import type { GraphQLError } from 'graphql';
 import type { UseFormSetError } from 'react-hook-form';
-import { extractExtensionErrors } from '../../../../../apollo';
+import { extractResponseExtensions } from '../../../../../apollo';
 import { applyManualFormErrors } from '../../../../../errors';
 import {
   CreateClientHouseholdMemberMutation,
@@ -79,9 +79,11 @@ export async function processHouseholdMemberForm(
   }
 
   // same error handling as before
-  const extensionErrors = extractExtensionErrors(response);
-  if (extensionErrors) {
-    applyManualFormErrors(extensionErrors, setError);
+  const responseExtensions = extractResponseExtensions(response);
+
+  if (responseExtensions) {
+    applyManualFormErrors(responseExtensions, setError);
+
     return false;
   }
 
@@ -117,6 +119,7 @@ function isSuccessMutationResponse(
     | ExecutedMutationResult<UpdateClientHouseholdMemberMutation>
 ): boolean {
   const data = response.data;
+
   if (!data) {
     return false;
   }

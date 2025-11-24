@@ -7,9 +7,9 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
-  extractExtensionErrors,
   HmisClientProfileType,
   UpdateHmisClientProfileInput,
+  extractResponseExtensions,
 } from '../../apollo';
 import { applyManualFormErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
@@ -134,7 +134,7 @@ export function ClientHMISEdit(props: TProps) {
         throw new Error('missing updateHmisClientProfile response');
       }
 
-      const errorViaExtensions = extractExtensionErrors(updateResponse);
+      const errorViaExtensions = extractResponseExtensions(updateResponse);
 
       if (errorViaExtensions) {
         applyManualFormErrors(errorViaExtensions, methods.setError);
