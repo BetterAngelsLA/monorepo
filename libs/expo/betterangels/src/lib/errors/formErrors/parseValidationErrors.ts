@@ -1,3 +1,4 @@
+import { toErrorMessage } from '../../apollo/graphql/response';
 import { API_FORM_ERRORS } from './constants';
 import { TFormValidationError } from './types';
 
@@ -5,8 +6,9 @@ export function parseValidationErrors(
   errors: TFormValidationError[]
 ): Record<string, string> {
   const formErrors: Record<string, string> = {};
+
   errors.forEach((error) => {
-    const message = API_FORM_ERRORS[error.errorCode];
+    const message = API_FORM_ERRORS[error.errorCode] || error.message || '';
 
     let fieldKey = error.field;
 
@@ -20,7 +22,7 @@ export function parseValidationErrors(
       }
     }
 
-    formErrors[fieldKey] = message;
+    formErrors[fieldKey] = toErrorMessage(message) || '';
   });
 
   return formErrors;

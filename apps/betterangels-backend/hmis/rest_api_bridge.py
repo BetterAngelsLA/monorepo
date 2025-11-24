@@ -8,11 +8,18 @@ from zoneinfo import ZoneInfo
 import requests
 import strawberry
 from common.constants import HMIS_SESSION_KEY_NAME
+from common.errors import UnauthenticatedGQLError
 from common.utils import dict_keys_to_snake
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from graphql import FieldNode, FragmentSpreadNode, InlineFragmentNode, SelectionSetNode
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from graphql import (
+    FieldNode,
+    FragmentSpreadNode,
+    GraphQLError,
+    InlineFragmentNode,
+    SelectionSetNode,
+)
 from hmis.types import (
     CreateHmisClientProfileInput,
     CreateHmisNoteInput,
@@ -109,16 +116,26 @@ class HmisRestApiBridge:
             return
 
         if resp.status_code == 401:
-            raise PermissionError("Session expired. Please login again.")
+            raise UnauthenticatedGQLError()
+
+        if resp.status_code == 403:
+            raise PermissionDenied("Unauthorized.")
 
         if resp.status_code == 404:
             raise ObjectDoesNotExist("The requested Object does not exist.")
 
         if resp.status_code == 422:
-            # TODO: Sanitize resp.text and return detailed error message.
-            raise ValidationError("Invalid input")
+            errors = [
+                {
+                    "field": f"{k}",
+                    "location": None,
+                    "errorCode": "422",
+                    "message": f"{v}",
+                }
+                for k, v in resp.json()["messages"].items()
+            ]
 
-        raise ValidationError("Something went wrong.")
+            raise GraphQLError("Validation Errors", extensions={"errors": errors})
 
     def _make_request(
         self,
@@ -344,7 +361,7 @@ class HmisRestApiBridge:
                 "ssn_quality": 99,
             },
             "screenValues": {
-                "alias": cleaned_data.get("nickname", None),
+                "alias": cleaned_data.get("alias", None),
                 "gender": [99],
                 "name_middle": cleaned_data.get("name_middle", None),
                 "name_suffix": cleaned_data.get("name_suffix", None),

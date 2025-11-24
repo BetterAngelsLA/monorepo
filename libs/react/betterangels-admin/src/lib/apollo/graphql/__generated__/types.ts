@@ -850,6 +850,22 @@ export type HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | Hmis
 
 export type HmisClientNoteTypeHmisUpdateClientNoteError = HmisClientNoteType | HmisUpdateClientNoteError;
 
+export type HmisClientProfileFilter = {
+  AND?: InputMaybe<HmisClientProfileFilter>;
+  DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
+  NOT?: InputMaybe<HmisClientProfileFilter>;
+  OR?: InputMaybe<HmisClientProfileFilter>;
+  search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type HmisClientProfileOrdering = {
+  addedDate?: InputMaybe<Ordering>;
+  firstName?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  lastName?: InputMaybe<Ordering>;
+  lastUpdated?: InputMaybe<Ordering>;
+};
+
 export type HmisClientProfileType = {
   __typename?: 'HmisClientProfileType';
   adaAccommodation?: Maybe<Array<AdaAccommodationEnum>>;
@@ -2134,11 +2150,13 @@ export type QueryClientProfilesArgs = {
 
 
 export type QueryHmisClientProfileArgs = {
-  hmisId: Scalars['String']['input'];
+  id: Scalars['ID']['input'];
 };
 
 
 export type QueryHmisClientProfilesArgs = {
+  filters?: InputMaybe<HmisClientProfileFilter>;
+  ordering?: Array<HmisClientProfileOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2176,8 +2194,7 @@ export type QueryHmisListEnrollmentsArgs = {
 
 
 export type QueryHmisNoteArgs = {
-  clientHmisId: Scalars['String']['input'];
-  noteHmisId: Scalars['String']['input'];
+  id: Scalars['ID']['input'];
 };
 
 
@@ -2814,7 +2831,7 @@ export type UpdateHmisClientProfileInput = {
   genderIdentityText?: InputMaybe<Scalars['String']['input']>;
   hairColor?: InputMaybe<HairColorEnum>;
   heightInInches?: InputMaybe<Scalars['Float']['input']>;
-  hmisId: Scalars['String']['input'];
+  id: Scalars['String']['input'];
   importantNotes?: InputMaybe<Scalars['String']['input']>;
   lastName?: InputMaybe<Scalars['NonBlankString']['input']>;
   livingSituation?: InputMaybe<LivingSituationEnum>;

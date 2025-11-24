@@ -95,7 +95,8 @@
     "expo-image": "*",
     "@graphql-typed-document-node/core": "*",
     "fast-deep-equal": "*",
-    "@testing-library/react": "*"
+    "@testing-library/react": "*",
+    "@jest/globals": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

@@ -839,6 +839,22 @@ union HmisClientNoteTypeHmisGetClientNoteError = HmisClientNoteType | HmisGetCli
 
 union HmisClientNoteTypeHmisUpdateClientNoteError = HmisClientNoteType | HmisUpdateClientNoteError
 
+input HmisClientProfileFilter {
+  AND: HmisClientProfileFilter
+  OR: HmisClientProfileFilter
+  NOT: HmisClientProfileFilter
+  DISTINCT: Boolean
+  search: String
+}
+
+input HmisClientProfileOrdering {
+  id: Ordering
+  firstName: Ordering
+  lastName: Ordering
+  addedDate: Ordering
+  lastUpdated: Ordering
+}
+
 type HmisClientProfileType {
   alias: String
   birthDate: Date
@@ -1748,10 +1764,10 @@ type Query {
   hmisGetClientNote(personalId: ID!, enrollmentId: ID!, id: ID!): HmisClientNoteTypeHmisGetClientNoteError!
   hmisListClientNotes(personalId: ID!, enrollmentId: ID!, pagination: HmisPaginationInput = null): HmisClientNoteListTypeHmisListClientNotesError!
   hmisListEnrollments(dynamicFields: [String]!, personalId: ID!, pagination: HmisPaginationInput = null): HmisEnrollmentListTypeHmisListEnrollmentsError!
-  hmisClientProfiles(pagination: OffsetPaginationInput): HmisClientProfileTypeOffsetPaginated!
+  hmisClientProfiles(pagination: OffsetPaginationInput, filters: HmisClientProfileFilter, ordering: [HmisClientProfileOrdering!]! = []): HmisClientProfileTypeOffsetPaginated!
   hmisNotes(pagination: OffsetPaginationInput): HmisNoteTypeOffsetPaginated!
-  hmisClientProfile(hmisId: String!): HmisClientProfileType!
-  hmisNote(clientHmisId: String!, noteHmisId: String!): HmisNoteType!
+  hmisClientProfile(id: ID!): HmisClientProfileType!
+  hmisNote(id: ID!): HmisNoteType!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
@@ -2319,7 +2335,7 @@ input UpdateHmisClientProfileInput {
   residenceAddress: String
   residenceGeolocation: Point
   spokenLanguages: [LanguageEnum!]
-  hmisId: String!
+  id: String!
   phoneNumbers: [PhoneNumberInput!]
 }
 

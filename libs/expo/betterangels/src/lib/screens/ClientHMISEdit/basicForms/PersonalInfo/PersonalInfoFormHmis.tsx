@@ -37,9 +37,12 @@ export function PersonalInfoFormHmis() {
     formState: { errors, isSubmitting },
   } = useFormContext<TPersonalInfoFormSchema>();
 
-  const dobStr = (watch('dob') as string | undefined) || '';
+  const birthDateStr = (watch('birthDate') as string | undefined) || '';
 
-  const dob = useMemo(() => coerceDobToDate(dobStr), [dobStr]);
+  const birthDate = useMemo(
+    () => coerceDobToDate(birthDateStr),
+    [birthDateStr]
+  );
 
   return (
     <Form>
@@ -51,14 +54,17 @@ export function PersonalInfoFormHmis() {
             endDate: new Date(),
             startDate: new Date('1900-01-01'),
           }}
-          value={dob}
+          value={birthDate}
           onChange={(date) => {
             const next = date && isValid(date) ? format(date, YMD) : '';
-            setValue('dob', next, { shouldDirty: true, shouldValidate: true });
+            setValue('birthDate', next, {
+              shouldDirty: true,
+              shouldValidate: true,
+            });
           }}
         />
         <Controller
-          name="dobDataQuality"
+          name="dobQuality"
           control={control}
           render={({ field: { value, onChange } }) => (
             <SingleSelect
@@ -72,13 +78,13 @@ export function PersonalInfoFormHmis() {
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}
-              error={errors.dobDataQuality?.message}
+              error={errors.dobQuality?.message}
             />
           )}
         />
 
         <Controller
-          name="veteranStatus"
+          name="veteran"
           control={control}
           render={({ field: { value, onChange } }) => (
             <SingleSelect
@@ -92,7 +98,7 @@ export function PersonalInfoFormHmis() {
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}
-              error={errors.veteranStatus?.message}
+              error={errors.veteran?.message}
             />
           )}
         />
