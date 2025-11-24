@@ -1,3 +1,4 @@
+export { extractExtensionFieldErrors } from './extractExtensionFieldErrors';
 export { extractHMISErrors } from './extractHMISErrors';
 export { extractOperationErrors } from './extractOperationErrors';
 export { extractOperationInfo } from './extractOperationInfo';
