@@ -4,11 +4,13 @@ import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
+import { GraphQLError } from 'graphql';
 import { useEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { HmisClientNoteType, extractHMISErrors } from '../../../apollo';
-import { applyOperationFieldErrors } from '../../../errors';
+import { HmisNoteType, extractExtensionErrors } from '../../../apollo';
+import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
+import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
   HmisProgramNoteForm,
   HmisProgramNoteFormSchema,
@@ -17,25 +19,32 @@ import {
   THmisProgramNoteFormOutputs,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm';
-import { HmisGetClientNoteDocument } from './__generated__/hmisGetClientNote.generated';
-import { HmisUpdateClientNoteDocument } from './__generated__/hmisUpdateClientNote.generated';
+import { HmisNoteDocument } from './__generated__/hmisGetClientNote.generated';
+import {
+  UpdateHmisNoteDocument,
+  UpdateHmisNoteMutation,
+} from './__generated__/hmisUpdateClientNote.generated';
+
+type MutationExecResult<TData> = {
+  data?: TData | null;
+  errors?: readonly GraphQLError[];
+};
 
 type TProps = {
-  hmisNoteId: string;
-  hmisClientId: string;
-  hmisNoteEnrollmentId: string;
+  id: string;
+  clientId: string;
   arrivedFrom?: string;
   onSuccess?: () => void;
 };
 
 export function HmisProgramNoteEdit(props: TProps) {
-  const { hmisClientId, hmisNoteEnrollmentId, hmisNoteId, onSuccess } = props;
+  const { id, clientId } = props;
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [existingNote, setExistingNote] = useState<HmisClientNoteType>();
-  const [updateHmisClientNoteMutation] = useMutationWithErrors(
-    HmisUpdateClientNoteDocument
+  const [existingNote, setExistingNote] = useState<HmisNoteType>();
+  const [updateHmisNoteMutation] = useMutationWithErrors(
+    UpdateHmisNoteDocument
   );
 
   const formMethods = useForm<THmisProgramNoteFormInputs>({
@@ -45,25 +54,21 @@ export function HmisProgramNoteEdit(props: TProps) {
 
   // Note: we assume cached note is valid and refetch only on missing fields.
   // fetchPolicy=cache-first: use cache unless missing fields in cache
-  // returnPartialData=true: allow incomplete data from cache
+  // partialRefetch=true: refetch if any requested field is missing
   const {
     data: noteData,
     loading: noteDataLoading,
     error: getNoteNetworkError,
-  } = useQuery(HmisGetClientNoteDocument, {
-    variables: {
-      id: hmisNoteId,
-      personalId: hmisClientId,
-      enrollmentId: hmisNoteEnrollmentId,
-    },
+    refetch,
+  } = useQuery(HmisNoteDocument, {
+    variables: { id },
     fetchPolicy: 'cache-first',
-    returnPartialData: true,
   });
 
   useEffect(() => {
-    const noteResult = noteData?.hmisGetClientNote;
+    const noteResult = noteData?.hmisNote;
 
-    if (noteResult?.__typename !== 'HmisClientNoteType') {
+    if (noteResult?.__typename !== 'HmisNoteType') {
       return;
     }
 
@@ -79,7 +84,6 @@ export function HmisProgramNoteEdit(props: TProps) {
       ...hmisProgramNoteFormEmptyState,
       title: existingNote.title ?? '',
       date: toLocalCalendarDate(existingNote.date),
-      enrollmentId: existingNote.enrollment?.enrollmentId ?? '',
       note: existingNote.note ?? '',
     });
   }, [existingNote, formMethods]);
@@ -90,8 +94,6 @@ export function HmisProgramNoteEdit(props: TProps) {
   } = formMethods;
 
   const formDisabled = !existingNote || isSubmitting;
-
-  const { setError } = formMethods;
 
   const onSubmit: SubmitHandler<THmisProgramNoteFormInputs> = async (
     values
@@ -104,57 +106,53 @@ export function HmisProgramNoteEdit(props: TProps) {
       const payload: THmisProgramNoteFormOutputs =
         HmisProgramNoteFormSchemaOutput.parse(values);
 
-      const { data } = await updateHmisClientNoteMutation({
+      const updateResponse = (await updateHmisNoteMutation({
         variables: {
-          clientNoteInput: {
-            id: hmisNoteId,
-            personalId: hmisClientId,
+          data: {
+            id,
             ...payload,
           },
         },
-
         errorPolicy: 'all',
-      });
+        refetchQueries: [{ query: HmisNoteDocument, variables: { id } }],
+        awaitRefetchQueries: true,
+      })) as MutationExecResult<UpdateHmisNoteMutation>;
 
-      const result = data?.hmisUpdateClientNote;
-
-      if (!result) {
-        throw new Error('missing hmisUpdateClientNote response');
+      if (!updateResponse) {
+        throw new Error('missing updateHmisNote response');
       }
 
-      if (result?.__typename === 'HmisUpdateClientNoteError') {
-        const { message: hmisErrorMessage } = result;
+      const errorViaExtensions = extractExtensionErrors(updateResponse);
 
-        const { status, fieldErrors = [] } =
-          extractHMISErrors(hmisErrorMessage) || {};
+      if (errorViaExtensions) {
+        applyManualFormErrors(errorViaExtensions, formMethods.setError);
 
-        // handle unprocessable_entity errors and exit
-        if (status === 422) {
-          const formKeys = Object.keys(hmisProgramNoteFormEmptyState);
-
-          const formFieldErrors = fieldErrors.filter(({ field }) =>
-            formKeys.includes(field)
-          );
-
-          applyOperationFieldErrors(formFieldErrors, setError);
-
-          return;
-        }
-
-        // HmisCreateClientError exists but not 422 | 404
-        // throw generic error
-        throw new Error(hmisErrorMessage);
+        return;
       }
 
-      if (result?.__typename !== 'HmisClientNoteType') {
-        throw new Error('invalid HmisClientNoteType response');
+      const otherErrors = updateResponse.errors?.[0];
+
+      if (otherErrors) {
+        throw otherErrors.message;
       }
 
-      if (onSuccess) {
-        return onSuccess();
-      }
+      const result = updateResponse.data?.updateHmisNote;
 
-      router.dismissTo(`notes-hmis/${hmisNoteId}/index`);
+      if (result?.__typename === 'HmisNoteType') {
+        await refetch();
+        router.replace(
+          `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
+        );
+      } else {
+        console.log('Unexpected result: ', result);
+        showSnackbar({
+          message: `Something went wrong!`,
+          type: 'error',
+        });
+        router.dismissTo(
+          `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
+        );
+      }
     } catch (error) {
       console.error('updateHmisClientNoteMutation error:', error);
 
@@ -183,8 +181,9 @@ export function HmisProgramNoteEdit(props: TProps) {
         }}
       >
         <HmisProgramNoteForm
-          hmisClientId={hmisClientId}
+          clientId={clientId}
           disabled={formDisabled}
+          editing={true}
         />
       </Form.Page>
     </FormProvider>

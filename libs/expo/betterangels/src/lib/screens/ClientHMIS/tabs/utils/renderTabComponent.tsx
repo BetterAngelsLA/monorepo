@@ -4,6 +4,7 @@ import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { ClientViewTabEnum } from '../../../Client/ClientTabs';
 import { ClientInteractionsHmisView } from '../ClientInteractionsHmisView';
 import { ClientProfileHMISView } from '../ClientProfileHMISView';
+// import { ClientProfileHMISView } from '../ClientProfileHMISView';
 
 type RenderArgs = {
   client?: HmisClientProfileType;

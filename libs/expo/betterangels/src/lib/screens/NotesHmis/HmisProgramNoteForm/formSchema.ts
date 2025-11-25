@@ -10,7 +10,7 @@ export const HmisProgramNoteFormSchema = z.object({
       (val) => val instanceof Date && !Number.isNaN(val.getTime()), // not using isValid as it allows integer dates
       'Date is required.'
     ),
-  enrollmentId: z.string().min(1, 'Program is required.'),
+  refClientProgram: z.string(),
   note: z.string().min(1, 'Note is required.'),
 });
 
@@ -26,7 +26,7 @@ export type THmisProgramNoteFormSchema = z.infer<
 export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormSchema = {
   title: '',
   date: undefined,
-  enrollmentId: '',
+  refClientProgram: '',
   note: '',
 };
 

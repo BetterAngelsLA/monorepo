@@ -30,6 +30,10 @@ type InfiniteListBaseProps<T> = {
   loadingViewOptions?: TLoadingListView;
   showScrollIndicator?: boolean;
   ItemSeparatorComponent?: ComponentType<any> | null;
+  error?: boolean; // determines whether to show ErrorView
+  errorTitle?: string;
+  errorMessage?: string;
+  ErrorViewComponent?: ComponentType<any> | ReactElement | null;
 };
 
 export type TInfiniteListProps<T> = InfiniteListBaseProps<T> &

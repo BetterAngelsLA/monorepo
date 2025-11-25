@@ -21,12 +21,13 @@ import { renderValue } from './shared/renderValue';
 import { TFormKeys } from './types';
 
 type TProps = {
-  hmisClientId: string;
+  clientId: string;
   disabled?: boolean;
+  editing?: boolean;
 };
 
 export function HmisProgramNoteForm(props: TProps) {
-  const { hmisClientId, disabled } = props;
+  const { clientId, disabled, editing } = props;
 
   const {
     control,
@@ -40,29 +41,31 @@ export function HmisProgramNoteForm(props: TProps) {
   const router = useRouter();
   const { showModalScreen } = useModalScreen();
   const [expandedField, setExpandedField] = useState<TFormKeys | null>(null);
-  const [programsError, setProgramsError] = useState<string | undefined>(
+  const [enrollmentsError, setProgramsError] = useState<string | undefined>(
     undefined
   );
 
   const titleValue = watch('title') || '';
-  const enrollmentIdValue = watch('enrollmentId') || '';
+  const refClientProgramValue = watch('refClientProgram') || '';
   const dateYmd = watch('date') || '';
   const noteValue = watch('note') || '';
 
   const {
-    programs,
+    enrollments,
     totalPrograms,
     getProgramNameByEnrollmentId,
     loading: programsLoading,
     error: programEnrollmentError,
-  } = useHmisClientPrograms({
-    hmisClientId,
-  });
+  } = useHmisClientPrograms({ clientId });
 
-  // NOTE: client program options required to process form
-  const formDisabled = disabled || !!programsError || isSubmitting;
+  // NOTE: client enrollment options required to process form
+  const formDisabled = disabled || !!enrollmentsError || isSubmitting;
 
   useEffect(() => {
+    if (editing) {
+      return;
+    }
+
     if (programEnrollmentError) {
       setProgramsError('Sorry, something went wrong. Please try again.');
 
@@ -70,22 +73,22 @@ export function HmisProgramNoteForm(props: TProps) {
     }
 
     if (totalPrograms === 0) {
-      setProgramsError('The user is not enrolled in any programs.');
+      setProgramsError('The user is not enrolled in any enrollments.');
 
       return;
     }
 
     setProgramsError(undefined);
-  }, [programEnrollmentError, totalPrograms]);
+  }, [programEnrollmentError, totalPrograms, editing]);
 
-  // Clear selected enrollmentId if not found in programs
+  // Clear selected refClientProgram if not found in enrollments
   useEffect(() => {
-    if (!enrollmentIdValue || !programs?.length) {
+    if (!refClientProgramValue || !enrollments?.length) {
       return;
     }
 
-    const optionExists = programs.some(
-      (p) => p.enrollmentId === enrollmentIdValue
+    const optionExists = enrollments.some(
+      (p) => p.enrollmentId === refClientProgramValue
     );
 
     // all ok
@@ -93,44 +96,45 @@ export function HmisProgramNoteForm(props: TProps) {
       return;
     }
 
-    const optionNames = programs.map((p) => p.project?.projectName).join(', ');
+    const optionNames = enrollments
+      .map((p) => p.project?.projectName)
+      .join(', ');
 
     console.warn(
-      `HmisProgramNoteForm: selected program enrollmentId [${enrollmentIdValue}] does not exist in options: ${optionNames}`
+      `HmisProgramNoteForm: selected enrollment refClientProgram [${refClientProgramValue}] does not exist in options: ${optionNames}`
     );
 
-    const { isDirty, isTouched } = getFieldState('enrollmentId');
+    const { isDirty, isTouched } = getFieldState('refClientProgram');
 
     const userHasInteracted = isDirty || isTouched || submitCount > 0;
 
     if (!userHasInteracted) {
       // Silent reset if user hasn't touched the field
-      setValue('enrollmentId', '', {
+      setValue('refClientProgram', '', {
         shouldDirty: false,
         shouldTouch: false,
         shouldValidate: false,
       });
 
-      clearErrors('enrollmentId');
+      clearErrors('refClientProgram');
 
       return;
     }
 
     // User has interacted (or tried to submit) so revalidate to show error
-    setValue('enrollmentId', '', {
+    setValue('refClientProgram', '', {
       shouldDirty: true,
       shouldTouch: true,
       shouldValidate: true,
     });
   }, [
-    programs,
-    enrollmentIdValue,
+    enrollments,
+    refClientProgramValue,
     setValue,
     clearErrors,
     getFieldState,
     submitCount,
   ]);
-
   function handleGirpFormOpen() {
     if (formDisabled) {
       return;
@@ -174,14 +178,17 @@ export function HmisProgramNoteForm(props: TProps) {
     setExpandedField(value);
   }
 
+  // const hideProgram =
+  //   editing && !getProgramNameByEnrollmentId(refClientProgramValue);
+
   return (
     <Form style={{ gap: Spacings.xs }}>
       <FieldCardHmisNote
         required
         disabled={formDisabled}
-        title="Purpose"
+        title="Title"
         value={titleValue}
-        actionName="Add Purpose"
+        actionName="Add Title"
         onPress={() => toggleFieldExpanded(FORM_KEYS.title)}
         expanded={expandedField === FORM_KEYS.title}
         error={errors.title?.message}
@@ -191,7 +198,7 @@ export function HmisProgramNoteForm(props: TProps) {
           required
           control={control}
           disabled={formDisabled}
-          placeholder="Enter purpose"
+          placeholder="Enter title"
           onDelete={() => {
             setValue('title', hmisProgramNoteFormEmptyState.title);
           }}
@@ -216,28 +223,28 @@ export function HmisProgramNoteForm(props: TProps) {
         />
       </FieldCardHmisNote>
 
+      {/* {!hideProgram && ( */}
       <FieldCardHmisNote
-        required
-        disabled={formDisabled || !programs?.length}
+        disabled={formDisabled || !enrollments?.length || editing}
         loading={programsLoading}
         title="Program"
-        value={getProgramNameByEnrollmentId(enrollmentIdValue) || ''}
+        value={getProgramNameByEnrollmentId(refClientProgramValue) || ''}
         actionName="Add Program"
-        onPress={() => toggleFieldExpanded(FORM_KEYS.enrollmentId)}
-        expanded={expandedField === FORM_KEYS.enrollmentId}
-        error={errors.enrollmentId?.message || programsError}
+        onPress={() => toggleFieldExpanded(FORM_KEYS.refClientProgram)}
+        expanded={expandedField === FORM_KEYS.refClientProgram}
+        error={errors.refClientProgram?.message || enrollmentsError}
       >
         <Controller
-          name="enrollmentId"
+          name="refClientProgram"
           control={control}
           render={({ field: { value, onChange } }) => {
             return (
               <SingleSelect
-                disabled={formDisabled || !programs?.length}
+                disabled={formDisabled || !enrollments?.length}
                 maxRadioItems={0}
                 placeholder="Select a program"
                 selectedValue={value}
-                items={(programs || []).map(({ enrollmentId, project }) => {
+                items={(enrollments || []).map(({ enrollmentId, project }) => {
                   return {
                     value: enrollmentId!,
                     displayValue:
@@ -250,7 +257,7 @@ export function HmisProgramNoteForm(props: TProps) {
           }}
         />
       </FieldCardHmisNote>
-
+      {/* )} */}
       <FieldCardHmisNote
         required
         disabled={formDisabled}
