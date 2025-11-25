@@ -36,6 +36,7 @@ NOTE_DATE_FORMAT = "%m/%d/%Y"
 
 METADATA_FIELDS = {"id", "added_date", "last_updated"}
 NOTE_FIELDS = {"title", "note", "date", "ref_client_program"}
+CLIENT_PROGRAM_FIELDS = {"clientProgram.id", "clientProgram.program.name", "clientProgram.program.id"}
 CLIENT_FIELDS = {
     "unique_identifier",
     "personal_id",
@@ -61,29 +62,31 @@ CLIENT_SUB_FIELDS = {
     "veteran",
 }
 BA_CLIENT_FIELDS = {
-    "ada_accommodation",
+    "hmisId",
+    "adaAccommodation",
     "address",
-    "california_id",
+    "californiaId",
     "email",
-    "eye_color",
-    "hair_color",
-    "height_in_inches",
-    "important_notes",
-    "living_situation",
-    "mailing_address",
-    "marital_status",
+    "eyeColor",
+    "hairColor",
+    "heightInInches",
+    "importantNotes",
+    "livingSituation",
+    "mailingAddress",
+    "maritalStatus",
     "nickname",
-    "phone_number",
-    "physical_description",
-    "place_of_birth",
-    "preferred_communication",
-    "preferred_language",
+    "phoneNumber",
+    "physicalDescription",
+    "placeOfBirth",
+    "preferredCommunication",
+    "preferredLanguage",
     "pronouns",
-    "pronouns_other",
-    "residence_address",
-    "residence_geolocation",
-    "spoken_languages",
+    "pronounsOther",
+    "residenceAddress",
+    "residenceGeolocation",
+    "spokenLanguages",
 }
+BA_NOTE_FIELDS = {"hmisId", "createdBy", "hmisClientProfile"}
 
 
 class HmisRestApiBridge:
@@ -188,6 +191,7 @@ class HmisRestApiBridge:
         self,
         info: Info,
         default_fields: Optional[Iterable[str]],
+        ignored_fields: Optional[Iterable[str]] = None,
         selection_set: Optional[SelectionSetNode] = None,
     ) -> set[str]:
         """Accesses selected query fields from operation info and returns a set of dot paths.
@@ -215,6 +219,8 @@ class HmisRestApiBridge:
         frags = info._raw_info.fragments
         seen = set()
 
+        ignored = {f for f in (ignored_fields or [])}
+
         def fname(n: FieldNode) -> str:
             return n.alias.value if n.alias else n.name.value
 
@@ -237,11 +243,17 @@ class HmisRestApiBridge:
             prefix, sset = stack.pop()
             for n in sset.selections:
                 if isinstance(n, FieldNode):
-                    path = (*prefix, fname(n))
+                    field_name = fname(n)
+                    path_tuple = (*prefix, field_name)
+                    dot_path = ".".join(path_tuple)
+
+                    if dot_path in ignored or field_name in ignored:
+                        continue
+
                     if n.selection_set:
-                        stack.append((path, n.selection_set))
+                        stack.append((path_tuple, n.selection_set))
                     else:
-                        out.add(".".join(path))
+                        out.add(".".join(path_tuple))
                 elif isinstance(n, FragmentSpreadNode):
                     name = n.name.value
                     if name not in seen:
@@ -336,6 +348,7 @@ class HmisRestApiBridge:
         fields = self._get_field_dot_paths(
             info=self.info,
             default_fields=METADATA_FIELDS,
+            ignored_fields=BA_CLIENT_FIELDS,
         )
 
         fields_str = self._get_field_str(fields - BA_CLIENT_FIELDS)
@@ -398,12 +411,11 @@ class HmisRestApiBridge:
         )
 
         fields = self._get_field_dot_paths(
-            info=self.info,
-            default_fields=METADATA_FIELDS,
+            info=self.info, default_fields=METADATA_FIELDS, ignored_fields=BA_CLIENT_FIELDS
         )
 
         combined_fields = fields | {*cleaned_client_field_input.keys()} | {*cleaned_client_sub_field_input.keys()}
-        fields_str = ", ".join(combined_fields - BA_CLIENT_FIELDS)
+        fields_str = ", ".join(combined_fields)
 
         body = {
             k: v
@@ -426,10 +438,11 @@ class HmisRestApiBridge:
     def get_note(self, client_hmis_id: str, note_hmis_id: str) -> dict[str, Any]:
         fields = self._get_field_dot_paths(
             info=self.info,
-            default_fields=METADATA_FIELDS | {"client.id"},
+            default_fields=METADATA_FIELDS,
+            ignored_fields=BA_NOTE_FIELDS,
         )
 
-        fields_str = ", ".join(fields)
+        fields_str = ", ".join(fields | CLIENT_PROGRAM_FIELDS)
 
         resp = self._make_request(
             path=f"/clients/{client_hmis_id}/client-notes/{note_hmis_id}",
@@ -441,6 +454,7 @@ class HmisRestApiBridge:
     def create_note(self, client_hmis_id: int, data: CreateHmisNoteInput) -> dict[str, Any]:
         path = f"/clients/{client_hmis_id}/client-notes"
         date = data.date.strftime(NOTE_DATE_FORMAT)
+        fields = METADATA_FIELDS | NOTE_FIELDS
 
         if client_program_id := data.ref_client_program:
             path = f"/clients/{client_hmis_id}/client-programs/{client_program_id}/client-notes"
@@ -458,7 +472,7 @@ class HmisRestApiBridge:
                 "tracking_hour": None,
                 "tracking_minute": None,
             },
-            "fields": self._get_field_str(METADATA_FIELDS | NOTE_FIELDS | {"client.id"}),
+            "fields": self._get_field_str(fields),
         }
 
         resp = self._make_request(method=HTTPMethod.POST, path=path, body=body)
@@ -467,8 +481,8 @@ class HmisRestApiBridge:
 
     def update_note(
         self,
-        client_hmis_id: int,
-        note_hmis_id: int,
+        client_hmis_id: str,
+        note_hmis_id: str,
         data: UpdateHmisNoteInput,
     ) -> dict[str, Any]:
         note_data = {
@@ -479,7 +493,8 @@ class HmisRestApiBridge:
 
         fields = self._get_field_dot_paths(
             info=self.info,
-            default_fields=METADATA_FIELDS | {"client.id"},
+            default_fields=METADATA_FIELDS | NOTE_FIELDS,
+            ignored_fields=BA_NOTE_FIELDS,
         )
 
         body = {
@@ -497,7 +512,7 @@ class HmisRestApiBridge:
 
     def create_program_enrollment(
         self,
-        client_hmis_id: int,
+        client_hmis_id: str,
         program_hmis_id: int = 1,
     ) -> dict[str, Any]:
         DEFAULT_ENROLLMENT_DATA = {

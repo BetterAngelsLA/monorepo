@@ -97,7 +97,12 @@ class HmisNoteBaseTestCase(GraphQLBaseTestCase):
         self.hmis_note_fields = """
             id
             hmisId
-            hmisClientProfileId
+            hmisClientProfile {
+                id
+                hmisId
+                firstName
+                lastName
+            }
 
             addedDate
             lastUpdated
@@ -106,6 +111,14 @@ class HmisNoteBaseTestCase(GraphQLBaseTestCase):
             note
             date
             refClientProgram
+
+            clientProgram {
+                id
+                program {
+                    id
+                    name
+                }
+            }
 
             createdBy { id }
         """

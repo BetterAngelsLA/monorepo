@@ -40,8 +40,8 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
         self.hmis_client_profile = baker.make(HmisClientProfile, hmis_id="388")
         self.hmis_note = baker.make(
             HmisNote,
-            hmis_id="467",
-            hmis_client_profile_id=self.hmis_client_profile.pk,
+            hmis_id="480",
+            hmis_client_profile=self.hmis_client_profile,
         )
 
     @scrubbed_vcr.use_cassette("test_hmis_note_query.yaml")
@@ -60,14 +60,26 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
 
         expected = {
             "id": str(self.hmis_note.pk),
-            "hmisId": "467",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
-            "title": "poet",
-            "note": "<p>poen</p>",
-            "date": "2025-11-12",
-            "addedDate": "2025-11-13T01:40:39+00:00",
-            "lastUpdated": "2025-11-13T01:40:39+00:00",
-            "refClientProgram": None,
+            "hmisId": "480",
+            "hmisClientProfile": {
+                "id": str(self.hmis_client_profile.pk),
+                "hmisId": self.hmis_client_profile.hmis_id,
+                "firstName": self.hmis_client_profile.first_name,
+                "lastName": self.hmis_client_profile.last_name,
+            },
+            "title": "prog note title",
+            "note": "prog note note",
+            "date": "2011-11-11",
+            "addedDate": "2025-11-13T08:35:34+00:00",
+            "lastUpdated": "2025-11-13T08:35:34+00:00",
+            "refClientProgram": "525",
+            "clientProgram": {
+                "id": "525",
+                "program": {
+                    "id": "2",
+                    "name": "Housing Program 01",
+                },
+            },
             "createdBy": None,
         }
 

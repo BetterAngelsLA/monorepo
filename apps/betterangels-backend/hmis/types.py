@@ -450,18 +450,44 @@ class CreateHmisClientProfileInput(HmisClientProfileBaseType):
 
 @strawberry_django.input(HmisClientProfile, partial=True)
 class UpdateHmisClientProfileInput(HmisClientProfileBaseType):
-    id: str
+    id: ID
     gender: list[HmisGenderEnum]
     race_ethnicity: list[HmisRaceEnum]
     veteran: Optional[HmisVeteranStatusEnum]
     phone_numbers: Optional[list[PhoneNumberInput]]
 
 
-@strawberry_django.type(HmisNote)
+@strawberry_django.filter_type(HmisNote, lookups=True)
+class HmisNoteFilter:
+    hmis_client_profile: Optional[ID]
+    created_by: Optional[ID]
+
+
+@strawberry_django.order_type(HmisNote, one_of=False)
+class HmisNoteOrdering:
+    id: auto
+    added_date: auto
+    last_updated: auto
+    date: auto
+
+
+@strawberry.type
+class HmisProgramType:
+    id: str
+    name: str
+
+
+@strawberry.type
+class HmisClientProgramType:
+    id: str
+    program: HmisProgramType
+
+
+@strawberry_django.type(HmisNote, filters=HmisNoteFilter, ordering=HmisNoteOrdering)
 class HmisNoteType:
     id: ID
     hmis_id: str
-    hmis_client_profile_id: str
+    hmis_client_profile: HmisClientProfileType
 
     added_date: Optional[datetime.datetime]
     last_updated: Optional[datetime.datetime]
@@ -469,7 +495,8 @@ class HmisNoteType:
     title: auto
     note: auto
     date: Optional[datetime.date]
-    ref_client_program: auto
+    client_program: Optional[HmisClientProgramType]
+    ref_client_program: Optional[str]
     created_by: Optional[UserType]
 
 
@@ -479,7 +506,7 @@ class CreateHmisNoteInput:
     title: auto
     note: auto
     date: datetime.date
-    ref_client_program: auto
+    ref_client_program: Optional[str]
 
 
 @strawberry.type
@@ -492,8 +519,7 @@ class ProgramEnrollmentType:
 @strawberry_django.input(HmisNote)
 class UpdateHmisNoteInput:
     id: ID
-    hmis_client_profile_id: str
-
     title: Optional[str]
     note: Optional[str]
     date: Optional[datetime.date]
+    ref_client_program: Optional[str]

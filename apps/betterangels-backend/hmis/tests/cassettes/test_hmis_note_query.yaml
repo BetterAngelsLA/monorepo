@@ -1,14 +1,16 @@
 interactions:
 - request:
-    body: '{"fields": "id, note, date, client_hmis_id, last_updated, hmis_id, client.id,
-      created_by.id, ref_client_program, added_date, hmis_client_profile_id, title"}'
+    body: '{"fields": "title, note, date, client_program.id, clientProgram.program.id,
+      client_program.program.name, client_program.program.id, clientProgram.program.name,
+      id, added_date, clientProgram.id, last_updated, ref_client_program"}'
     headers: {}
     method: GET
     uri: ''
   response:
     body:
-      string: '{"id":467,"title":"poet","note":"<p>poen</p>","added_date":"2025-11-12
-        17:40:39","last_updated":"2025-11-12 17:40:39","ref_client_program":null,"date":"2025-11-12","client":{"id":388}}'
+      string: '{"id":480,"title":"prog note title","note":"prog note note","added_date":"2025-11-13
+        00:35:34","last_updated":"2025-11-13 00:35:34","ref_client_program":525,"date":"2011-11-11","clientProgram":{"id":525,"program":{"id":2,"name":"Housing
+        Program 01"}}}'
     headers: {}
     status:
       code: 200
