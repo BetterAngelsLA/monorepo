@@ -1,3 +1,5 @@
+import operator
+from functools import reduce
 from typing import Optional
 
 import strawberry_django
@@ -7,7 +9,7 @@ from common.enums import SelahTeamEnum
 from common.graphql.types import make_in_filter
 from django.db.models import Q
 from strawberry import ID, Info, auto
-from tasks.enums import TaskStatusEnum
+from tasks.enums import TaskScopeEnum, TaskStatusEnum
 
 from . import models
 
@@ -43,6 +45,27 @@ class TaskFilter:
             query &= q_search
 
         return Q(query)
+
+    @strawberry_django.filter_field
+    def scopes(self, info: Info, value: list[TaskScopeEnum], prefix: str) -> Q:
+        if TaskScopeEnum.ALL in value:
+            return Q()
+
+        conditions = []
+
+        if TaskScopeEnum.HMIS_NOTE in value:
+            conditions.append(Q(hmis_note__isnull=False))
+
+        if TaskScopeEnum.STANDARD_NOTE in value:
+            conditions.append(Q(note__isnull=False))
+
+        if TaskScopeEnum.GENERAL in value:
+            conditions.append(Q(note__isnull=True, hmis_note__isnull=True))
+
+        if not conditions:
+            return Q(pk__in=[])
+
+        return reduce(operator.or_, conditions)
 
 
 @strawberry_django.order_type(models.Task, one_of=False)
