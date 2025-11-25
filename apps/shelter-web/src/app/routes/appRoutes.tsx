@@ -1,8 +1,5 @@
 import { OperatorApp } from '@monorepo/react/shelter-operator';
 import { Link, RouteObject } from 'react-router-dom';
-import Dashboard from '../../../../shelter-operator/Dashboard';
-import Login from '../../../../shelter-operator/Login';
-import OperatorPortal from '../../../../shelter-operator/OperatorPortal';
 import ShelterDashboardPage from '../../../../shelter-operator/ShelterDashboardPage';
 import { Policy } from '../pages/Policy';
 import Gallery from '../pages/gallery/gallery';
