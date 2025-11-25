@@ -1,4 +1,4 @@
-from typing import Iterable, cast
+from typing import Any, Iterable, Optional, cast
 
 import strawberry
 import strawberry_django
@@ -25,6 +25,10 @@ from .types import (
     UpdateHmisClientProfileInput,
     UpdateHmisNoteInput,
 )
+
+
+def _get_client_program(program_data: dict[str, Any]) -> HmisClientProgramType:
+    return HmisClientProgramType(id=program_data["id"], program=HmisProgramType(**program_data["program"]))
 
 
 @strawberry.type
@@ -66,8 +70,7 @@ class Query:
         )
 
         if program_data := note_data.pop("client_program", None):
-            program = HmisProgramType(**program_data["program"])
-            client_program = HmisClientProgramType(id=program_data["id"], program=program)
+            client_program = _get_client_program(program_data)
 
         hmis_note = resolvers.update(info, hmis_note, {**note_data})
 
@@ -134,6 +137,9 @@ class Mutation:
         note_data = hmis_api_bridge.create_note(client_hmis_id=hmis_client_profile.pk, data=data)
         current_user = get_current_user(info)
 
+        if program_data := note_data.pop("client_program", None):
+            client_program = _get_client_program(program_data)
+
         hmis_note = resolvers.create(
             info,
             HmisNote,
@@ -143,6 +149,8 @@ class Mutation:
                 "hmis_client_profile": hmis_client_profile,
             },
         )
+
+        hmis_note.client_program = client_program  # type: ignore
 
         return cast(HmisNoteType, hmis_note)
 
@@ -160,7 +168,12 @@ class Mutation:
             data=data,
         )
 
+        if program_data := note_data.pop("client_program", None):
+            client_program = _get_client_program(program_data)
+
         hmis_note = resolvers.update(info, hmis_note, {**note_data})
+
+        hmis_note.client_program = client_program  # type: ignore
 
         return cast(HmisNoteType, hmis_note)
 

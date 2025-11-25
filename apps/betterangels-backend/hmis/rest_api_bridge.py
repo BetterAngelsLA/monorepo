@@ -459,6 +459,7 @@ class HmisRestApiBridge:
         if client_program_id := data.ref_client_program:
             path = f"/clients/{client_hmis_id}/client-programs/{client_program_id}/client-notes"
             date = data.date.strftime(PROGRAM_NOTE_DATE_FORMAT)
+            fields |= CLIENT_PROGRAM_FIELDS
 
         body = {
             "clientNote": {
@@ -499,7 +500,7 @@ class HmisRestApiBridge:
 
         body = {
             "clientNote": note_data,
-            "fields": self._get_field_str(fields | {*note_data.keys()}),
+            "fields": self._get_field_str(fields | {*note_data.keys()} | CLIENT_PROGRAM_FIELDS),
         }
 
         resp = self._make_request(
