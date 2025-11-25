@@ -55,3 +55,9 @@ export type THmisProgramNoteFormInputs = z.input<
 export type THmisProgramNoteFormOutputs = z.output<
   typeof HmisProgramNoteFormSchemaOutput
 >;
+
+type HmisNoteFormFieldName = keyof typeof HmisProgramNoteFormSchema.shape;
+
+export const HmisNoteFormFieldNames = Object.keys(
+  HmisProgramNoteFormSchema.shape
+) as HmisNoteFormFieldName[];
