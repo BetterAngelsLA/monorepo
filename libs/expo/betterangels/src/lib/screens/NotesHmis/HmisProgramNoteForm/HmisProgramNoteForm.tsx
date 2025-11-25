@@ -51,7 +51,7 @@ export function HmisProgramNoteForm(props: TProps) {
   const noteValue = watch('note') || '';
 
   const {
-    enrollments,
+    clientPrograms,
     totalPrograms,
     getProgramNameByEnrollmentId,
     loading: programsLoading,
@@ -73,7 +73,7 @@ export function HmisProgramNoteForm(props: TProps) {
     }
 
     if (totalPrograms === 0) {
-      setProgramsError('The user is not enrolled in any enrollments.');
+      setProgramsError('The user is not enrolled in any clientPrograms.');
 
       return;
     }
@@ -81,14 +81,14 @@ export function HmisProgramNoteForm(props: TProps) {
     setProgramsError(undefined);
   }, [programEnrollmentError, totalPrograms, editing]);
 
-  // Clear selected refClientProgram if not found in enrollments
+  // Clear selected refClientProgram if not found in clientPrograms
   useEffect(() => {
-    if (!refClientProgramValue || !enrollments?.length) {
+    if (!refClientProgramValue || !clientPrograms?.length) {
       return;
     }
 
-    const optionExists = enrollments.some(
-      (p) => p.enrollmentId === refClientProgramValue
+    const optionExists = clientPrograms.some(
+      (p) => p.id === refClientProgramValue
     );
 
     // all ok
@@ -96,12 +96,10 @@ export function HmisProgramNoteForm(props: TProps) {
       return;
     }
 
-    const optionNames = enrollments
-      .map((p) => p.project?.projectName)
-      .join(', ');
+    const optionNames = clientPrograms.map((p) => p.program.name).join(', ');
 
     console.warn(
-      `HmisProgramNoteForm: selected enrollment refClientProgram [${refClientProgramValue}] does not exist in options: ${optionNames}`
+      `HmisProgramNoteForm: selected client program [${refClientProgramValue}] does not exist in options: ${optionNames}`
     );
 
     const { isDirty, isTouched } = getFieldState('refClientProgram');
@@ -128,7 +126,7 @@ export function HmisProgramNoteForm(props: TProps) {
       shouldValidate: true,
     });
   }, [
-    enrollments,
+    clientPrograms,
     refClientProgramValue,
     setValue,
     clearErrors,
@@ -225,7 +223,7 @@ export function HmisProgramNoteForm(props: TProps) {
 
       {/* {!hideProgram && ( */}
       <FieldCardHmisNote
-        disabled={formDisabled || !enrollments?.length || editing}
+        disabled={formDisabled || !clientPrograms?.length || editing}
         loading={programsLoading}
         title="Program"
         value={getProgramNameByEnrollmentId(refClientProgramValue) || ''}
@@ -240,15 +238,14 @@ export function HmisProgramNoteForm(props: TProps) {
           render={({ field: { value, onChange } }) => {
             return (
               <SingleSelect
-                disabled={formDisabled || !enrollments?.length}
+                disabled={formDisabled || !clientPrograms?.length}
                 maxRadioItems={0}
                 placeholder="Select a program"
                 selectedValue={value}
-                items={(enrollments || []).map(({ enrollmentId, project }) => {
+                items={(clientPrograms || []).map(({ id, program }) => {
                   return {
-                    value: enrollmentId!,
-                    displayValue:
-                      project?.projectName || `Project ${enrollmentId}`,
+                    value: id!,
+                    displayValue: program?.name || `Program ${id}`,
                   };
                 })}
                 onChange={onChange}

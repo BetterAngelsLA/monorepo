@@ -1,13 +1,12 @@
 import { useQuery } from '@apollo/client/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { HmisEnrollmentType } from '../../apollo';
-import { HmisClientProgramEnrollmentsDocument } from './__generated__/hmisClientProgramEnrollments.generated';
-import { parseError } from './utils/parseError';
+import { HmisClientProgramType } from '../../apollo';
+import { HmisClientProgramsDocument } from './__generated__/hmisClientPrograms.generated';
 
 const MAX_PROGRAMS_TO_FETCH = 50;
 
 type TProgramsBase = {
-  enrollments?: HmisEnrollmentType[];
+  clientPrograms?: HmisClientProgramType[];
   error?: string;
 };
 
@@ -27,13 +26,9 @@ export function useHmisClientPrograms(props: TProps) {
     data,
     loading,
     error: queryError,
-  } = useQuery(HmisClientProgramEnrollmentsDocument, {
+  } = useQuery(HmisClientProgramsDocument, {
     skip: !clientId,
-    variables: {
-      personalId: clientId,
-      pagination: { page: 1, perPage: MAX_PROGRAMS_TO_FETCH },
-      dynamicFields: [],
-    },
+    variables: { clientId },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
     notifyOnNetworkStatusChange: true,
@@ -45,10 +40,14 @@ export function useHmisClientPrograms(props: TProps) {
       return;
     }
 
-    const list = data.hmisListEnrollments;
+    const list = data.hmisClientPrograms;
 
-    if (list?.__typename === 'HmisEnrollmentListType') {
-      const total = list.meta?.totalCount;
+    if (list?.length === 0) {
+      return;
+    }
+
+    if (list[0].__typename === 'HmisClientProgramType') {
+      const total = list.length;
       const newTotal = typeof total === 'number' ? total : undefined;
 
       setTotalProgramsFromNetwork(newTotal);
@@ -62,7 +61,7 @@ export function useHmisClientPrograms(props: TProps) {
     }
   }, [queryError, setTotalProgramsFromNetwork]);
 
-  const { enrollments, error } = useMemo<TProgramsBase>(() => {
+  const { clientPrograms, error } = useMemo<TProgramsBase>(() => {
     // handle errors
     if (!clientId) {
       console.error('useHmisClientPrograms: missing clientId');
@@ -70,25 +69,10 @@ export function useHmisClientPrograms(props: TProps) {
       return { error: 'missing clientId' };
     }
 
-    const list = data?.hmisListEnrollments;
+    const list = data?.hmisClientPrograms;
 
-    if (list?.__typename === 'HmisListEnrollmentsError') {
-      const { message } = parseError(list.message);
-      const errMsg = message || 'unknown HmisListEnrollmentsError error';
-
-      console.error(`useHmisClientPrograms: ${errMsg}`);
-
-      return { error: errMsg };
-    }
-
-    if (list && list.__typename !== 'HmisEnrollmentListType') {
-      const errMsg = `invalid query result __typename: ${list.__typename}`;
-
-      console.error(`useHmisClientPrograms: ${errMsg}`);
-
-      return {
-        error: errMsg,
-      };
+    if (!list || list?.length === 0) {
+      return;
     }
 
     // warn if we did not fetch all resutls
@@ -97,45 +81,43 @@ export function useHmisClientPrograms(props: TProps) {
       totalProgramsFromNetwork > MAX_PROGRAMS_TO_FETCH
     ) {
       console.warn(
-        `useHmisClientPrograms: hmis client [${clientId}] has ${totalProgramsFromNetwork} enrollment enrollments (exceeds ${MAX_PROGRAMS_TO_FETCH})`
+        `useHmisClientPrograms: hmis client [${clientId}] has ${totalProgramsFromNetwork} clientProgram clientPrograms (exceeds ${MAX_PROGRAMS_TO_FETCH})`
       );
     }
 
-    const enrollments: HmisEnrollmentType[] = [];
+    const clientPrograms: HmisClientProgramType[] = [];
 
-    const listItems = list?.items || [];
-
-    for (const enrollment of listItems) {
-      if (enrollment.__typename !== 'HmisEnrollmentType') {
+    for (const clientProgram of list) {
+      if (clientProgram.__typename !== 'HmisClientProgramType') {
         console.warn(
-          `[useHmisClientPrograms]: invalid enrollment for clientId [${clientId}]`,
-          enrollment
+          `[useHmisClientPrograms]: invalid clientProgram for clientId [${clientId}]`,
+          clientProgram
         );
 
         continue;
       }
 
-      enrollments.push(enrollment);
+      clientPrograms.push(clientProgram);
     }
 
-    return { enrollments };
+    return { clientPrograms };
   }, [data, clientId, totalProgramsFromNetwork]);
 
   // map Program project names for easy access
   const enrollmentIdToProjectNameMap = useMemo(() => {
     const map = new Map<string, string>();
 
-    if (!enrollments || enrollments?.length === 0) {
+    if (!clientPrograms || clientPrograms?.length === 0) {
       return map;
     }
 
-    for (const enrollment of enrollments) {
-      const refClientProgram = enrollment.enrollmentId;
+    for (const clientProgram of clientPrograms) {
+      const refClientProgram = clientProgram.id;
       if (!refClientProgram) {
         continue;
       }
 
-      const projectName = enrollment.project?.projectName;
+      const projectName = clientProgram.program?.name;
       if (!projectName) {
         continue;
       }
@@ -144,9 +126,9 @@ export function useHmisClientPrograms(props: TProps) {
     }
 
     return map;
-  }, [enrollments]);
+  }, [clientPrograms]);
 
-  // utility fn to return enrollment name
+  // utility fn to return clientProgram name
   const getProgramNameByEnrollmentId = useCallback(
     (refClientProgram?: string | null) => {
       if (!refClientProgram) {
@@ -158,8 +140,19 @@ export function useHmisClientPrograms(props: TProps) {
     [enrollmentIdToProjectNameMap]
   );
 
+  console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&clientPrograms');
+  console.log(clientPrograms);
+  console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&totalProgramsFromNetwork');
+  console.log(totalProgramsFromNetwork);
+  console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&loading');
+  console.log(loading);
+  console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&error');
+  console.log(error);
+  console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&enrollmentIdToProjectNameMap');
+  console.log(enrollmentIdToProjectNameMap);
+
   return {
-    enrollments,
+    clientPrograms,
     totalPrograms: totalProgramsFromNetwork,
     loading,
     error,
