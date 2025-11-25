@@ -1,5 +1,5 @@
+import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod'; // Install this resolver
-import { useMutationWithErrors } from '@monorepo/apollo';
 import { Button, mergeCss, useAlert } from '@monorepo/react/components';
 import { toError } from '@monorepo/react/shared';
 import { useState } from 'react';
@@ -38,9 +38,7 @@ export function AddUserForm(props: TProps) {
 
   const organizationId = user?.organization?.id;
 
-  const [addOrganizationMember] = useMutationWithErrors(
-    AddOrganizationMemberDocument
-  );
+  const [addOrganizationMember] = useMutation(AddOrganizationMemberDocument);
 
   const onSubmit: SubmitHandler<TFormSchema> = async (values) => {
     if (!organizationId) {

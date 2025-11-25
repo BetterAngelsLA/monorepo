@@ -24,7 +24,6 @@ type TProps = {
 };
 
 export function ClientContactDeleteBtn(props: TProps) {
-  console.log('################################### ClientContactDeleteBtn');
   const { clientProfileId, disabled, relationId, setIsLoading } = props;
 
   const router = useRouter();
