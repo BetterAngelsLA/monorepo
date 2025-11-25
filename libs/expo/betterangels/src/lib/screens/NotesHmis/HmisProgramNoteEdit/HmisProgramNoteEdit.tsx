@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
-import { GraphQLError } from 'graphql';
 import { useEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { HmisNoteType } from '../../../apollo';
@@ -22,15 +21,7 @@ import {
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm';
 import { HmisNoteDocument } from './__generated__/hmisGetClientNote.generated';
-import {
-  UpdateHmisNoteDocument,
-  UpdateHmisNoteMutation,
-} from './__generated__/hmisUpdateClientNote.generated';
-
-type MutationExecResult<TData> = {
-  data?: TData | null;
-  errors?: readonly GraphQLError[];
-};
+import { UpdateHmisNoteDocument } from './__generated__/hmisUpdateClientNote.generated';
 
 type TProps = {
   id: string;
@@ -84,6 +75,7 @@ export function HmisProgramNoteEdit(props: TProps) {
       title: existingNote.title ?? '',
       date: toLocalCalendarDate(existingNote.date),
       note: existingNote.note ?? '',
+      refClientProgram: existingNote.refClientProgram ?? '',
     });
   }, [existingNote, methods]);
 
@@ -105,7 +97,7 @@ export function HmisProgramNoteEdit(props: TProps) {
       const payload: THmisProgramNoteFormOutputs =
         HmisProgramNoteFormSchemaOutput.parse(values);
 
-      const updateResponse = (await updateHmisNoteMutation({
+      const updateResponse = await updateHmisNoteMutation({
         variables: {
           data: {
             id,
@@ -115,7 +107,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         errorPolicy: 'all',
         refetchQueries: [{ query: HmisNoteDocument, variables: { id } }],
         awaitRefetchQueries: true,
-      })) as MutationExecResult<UpdateHmisNoteMutation>;
+      });
 
       const { data, error } = updateResponse;
 

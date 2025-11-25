@@ -5,7 +5,7 @@ import { HmisClientProgramsDocument } from './__generated__/hmisClientPrograms.g
 
 const MAX_PROGRAMS_TO_FETCH = 50;
 
-type TProgramsBase = {
+type TClientProgramsBase = {
   clientPrograms?: HmisClientProgramType[];
   error?: string;
 };
@@ -61,21 +61,22 @@ export function useHmisClientPrograms(props: TProps) {
     }
   }, [queryError, setTotalProgramsFromNetwork]);
 
-  const { clientPrograms, error } = useMemo<TProgramsBase>(() => {
+  const { clientPrograms, error } = useMemo<TClientProgramsBase>(() => {
     // handle errors
     if (!clientId) {
       console.error('useHmisClientPrograms: missing clientId');
 
-      return { error: 'missing clientId' };
+      return { clientPrograms: undefined, error: 'missing clientId' };
     }
 
     const list = data?.hmisClientPrograms;
 
-    if (!list || list?.length === 0) {
-      return;
+    // nothing fetched yet / empty result
+    if (!list || list.length === 0) {
+      return { clientPrograms: undefined, error: undefined };
     }
 
-    // warn if we did not fetch all resutls
+    // warn if we did not fetch all results
     if (
       totalProgramsFromNetwork &&
       totalProgramsFromNetwork > MAX_PROGRAMS_TO_FETCH
@@ -93,14 +94,13 @@ export function useHmisClientPrograms(props: TProps) {
           `[useHmisClientPrograms]: invalid clientProgram for clientId [${clientId}]`,
           clientProgram
         );
-
         continue;
       }
 
       clientPrograms.push(clientProgram);
     }
 
-    return { clientPrograms };
+    return { clientPrograms, error: undefined };
   }, [data, clientId, totalProgramsFromNetwork]);
 
   // map Program project names for easy access
@@ -139,17 +139,6 @@ export function useHmisClientPrograms(props: TProps) {
     },
     [enrollmentIdToProjectNameMap]
   );
-
-  console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&clientPrograms');
-  console.log(clientPrograms);
-  console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&totalProgramsFromNetwork');
-  console.log(totalProgramsFromNetwork);
-  console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&loading');
-  console.log(loading);
-  console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&error');
-  console.log(error);
-  console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&enrollmentIdToProjectNameMap');
-  console.log(enrollmentIdToProjectNameMap);
 
   return {
     clientPrograms,

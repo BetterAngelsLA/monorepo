@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Optional, cast
+from typing import Any, Iterable, cast
 
 import strawberry
 import strawberry_django

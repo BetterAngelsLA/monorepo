@@ -176,8 +176,8 @@ export function HmisProgramNoteForm(props: TProps) {
     setExpandedField(value);
   }
 
-  // const hideProgram =
-  //   editing && !getProgramNameByEnrollmentId(refClientProgramValue);
+  const hideProgram =
+    editing && !getProgramNameByEnrollmentId(refClientProgramValue);
 
   return (
     <Form style={{ gap: Spacings.xs }}>
@@ -221,40 +221,40 @@ export function HmisProgramNoteForm(props: TProps) {
         />
       </FieldCardHmisNote>
 
-      {/* {!hideProgram && ( */}
-      <FieldCardHmisNote
-        disabled={formDisabled || !clientPrograms?.length || editing}
-        loading={programsLoading}
-        title="Program"
-        value={getProgramNameByEnrollmentId(refClientProgramValue) || ''}
-        actionName="Add Program"
-        onPress={() => toggleFieldExpanded(FORM_KEYS.refClientProgram)}
-        expanded={expandedField === FORM_KEYS.refClientProgram}
-        error={errors.refClientProgram?.message || enrollmentsError}
-      >
-        <Controller
-          name="refClientProgram"
-          control={control}
-          render={({ field: { value, onChange } }) => {
-            return (
-              <SingleSelect
-                disabled={formDisabled || !clientPrograms?.length}
-                maxRadioItems={0}
-                placeholder="Select a program"
-                selectedValue={value}
-                items={(clientPrograms || []).map(({ id, program }) => {
-                  return {
-                    value: id!,
-                    displayValue: program?.name || `Program ${id}`,
-                  };
-                })}
-                onChange={onChange}
-              />
-            );
-          }}
-        />
-      </FieldCardHmisNote>
-      {/* )} */}
+      {!hideProgram && (
+        <FieldCardHmisNote
+          disabled={formDisabled || !clientPrograms?.length || editing}
+          loading={programsLoading}
+          title="Program"
+          value={getProgramNameByEnrollmentId(refClientProgramValue) || ''}
+          actionName="Add Program"
+          onPress={() => toggleFieldExpanded(FORM_KEYS.refClientProgram)}
+          expanded={expandedField === FORM_KEYS.refClientProgram}
+          error={errors.refClientProgram?.message || enrollmentsError}
+        >
+          <Controller
+            name="refClientProgram"
+            control={control}
+            render={({ field: { value, onChange } }) => {
+              return (
+                <SingleSelect
+                  disabled={formDisabled || !clientPrograms?.length}
+                  maxRadioItems={0}
+                  placeholder="Select a program"
+                  selectedValue={value}
+                  items={(clientPrograms || []).map(({ id, program }) => {
+                    return {
+                      value: id!,
+                      displayValue: program?.name || `Program ${id}`,
+                    };
+                  })}
+                  onChange={onChange}
+                />
+              );
+            }}
+          />
+        </FieldCardHmisNote>
+      )}
       <FieldCardHmisNote
         required
         disabled={formDisabled}

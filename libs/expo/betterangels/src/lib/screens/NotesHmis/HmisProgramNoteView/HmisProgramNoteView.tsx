@@ -64,7 +64,6 @@ export function HmisProgramNoteView(props: TProps) {
   const { note, hmisClientProfile, clientProgram } = hmisNote;
   const { firstName, lastName } = hmisClientProfile || {};
   const { program } = clientProgram || {};
-
   const programName = program?.name;
   const clientName = buildFullName(firstName, lastName);
   const sanitizedNote = sanitizeHtmlString(note);
