@@ -2096,6 +2096,7 @@ export type Query = {
   featureControls: FeatureControlData;
   hmisClientProfile: HmisClientProfileType;
   hmisClientProfiles: HmisClientProfileTypeOffsetPaginated;
+  hmisClientPrograms: Array<HmisClientProgramType>;
   hmisGetClient: HmisClientTypeHmisGetClientError;
   hmisGetClientNote: HmisClientNoteTypeHmisGetClientNoteError;
   hmisListClientNotes: HmisClientNoteListTypeHmisListClientNotesError;
@@ -2187,6 +2188,11 @@ export type QueryHmisClientProfilesArgs = {
   filters?: InputMaybe<HmisClientProfileFilter>;
   ordering?: Array<HmisClientProfileOrdering>;
   pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type QueryHmisClientProgramsArgs = {
+  clientId: Scalars['ID']['input'];
 };
 
 

@@ -1795,6 +1795,7 @@ type Query {
   hmisNotes(pagination: OffsetPaginationInput, filters: HmisNoteFilter, ordering: [HmisNoteOrdering!]! = []): HmisNoteTypeOffsetPaginated!
   hmisClientProfile(id: ID!): HmisClientProfileType!
   hmisNote(id: ID!): HmisNoteType!
+  hmisClientPrograms(clientId: ID!): [HmisClientProgramType!]!
   note(pk: ID!): NoteType! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   notes(pagination: OffsetPaginationInput, filters: NoteFilter, order: NoteOrder, ordering: [NoteOrder!]! = []): NoteTypeOffsetPaginated! @hasRetvalPerm(permissions: [{app: "notes", permission: "view_note"}], any: true)
   services(pagination: OffsetPaginationInput, ordering: [OrganizationServiceOrdering!]! = []): OrganizationServiceTypeOffsetPaginated! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)

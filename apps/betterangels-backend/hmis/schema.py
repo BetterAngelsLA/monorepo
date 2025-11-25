@@ -80,6 +80,23 @@ class Query:
 
     hmis_notes: OffsetPaginated[HmisNoteType] = strawberry_django.offset_paginated(permission_classes=[IsAuthenticated])
 
+    @strawberry.field()
+    def hmis_client_programs(
+        self,
+        info: Info,
+        client_id: ID,
+    ) -> list[HmisClientProgramType]:
+        hmis_api_bridge = HmisRestApiBridge(info=info)
+
+        client_hmis_id = HmisClientProfile.objects.get(pk=client_id).hmis_id
+
+        if not client_hmis_id:
+            raise ValidationError("Missing Client hmis_id")
+
+        client_programs = hmis_api_bridge.get_client_programs(client_hmis_id=client_hmis_id)
+
+        return [_get_client_program(p) for p in client_programs["items"]]
+
 
 @strawberry.type
 class Mutation:

@@ -511,6 +511,16 @@ class HmisRestApiBridge:
 
         return self._format_note_data(resp.json())
 
+    def get_client_programs(self, client_hmis_id: str) -> dict[str, Any]:
+        fields = {"id", "program.id", "program.name"}
+        body = {"fields": self._get_field_str(fields)}
+        resp = self._make_request(
+            path=f"/clients/{client_hmis_id}/client-programs",
+            body=body,
+        )
+
+        return dict_keys_to_snake(resp.json())
+
     def create_program_enrollment(
         self,
         client_hmis_id: str,
