@@ -27,6 +27,9 @@ class Task(BaseModel):
     note = models.ForeignKey(
         "notes.Note", on_delete=models.CASCADE, blank=True, null=True, related_name="tasks", db_index=True
     )
+    hmis_note = models.ForeignKey(
+        "hmis.HmisNote", null=True, blank=True, on_delete=models.CASCADE, related_name="tasks"
+    )
     organization = models.ForeignKey(
         Organization, on_delete=models.SET_NULL, null=True, related_name="tasks", db_index=True
     )
@@ -50,6 +53,12 @@ class Task(BaseModel):
                 fields=["summary"],
                 opclasses=["gin_trgm_ops"],
             ),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(note__isnull=True) | models.Q(hmis_note__isnull=True),
+                name="task_single_parent_check",
+            )
         ]
 
     objects = models.Manager()

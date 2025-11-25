@@ -61,6 +61,7 @@ class TaskType:
     created_by: UserType
     description: auto
     note: auto
+    hmis_note: auto
     organization: Optional[OrganizationType]
     status: Optional[TaskStatusEnum]
     summary: Optional[str]
@@ -72,7 +73,8 @@ class TaskType:
 class CreateTaskInput:
     client_profile: Optional[ID]
     description: auto
-    note: Optional[ID]
+    note: Optional[ID] = None
+    hmis_note: Optional[ID] = None
     summary: str
     team: Optional[SelahTeamEnum]
     status: Optional[TaskStatusEnum]
