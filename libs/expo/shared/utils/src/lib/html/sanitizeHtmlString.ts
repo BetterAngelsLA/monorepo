@@ -27,7 +27,5 @@ export function sanitizeHtmlString(
 
   const cleanedHtml = sanitizeHtml(trimmedHtmlInput, mergedOptions);
 
-  const finalOutput = cleanedHtml.trim();
-
-  return finalOutput;
+  return cleanedHtml.trim();
 }

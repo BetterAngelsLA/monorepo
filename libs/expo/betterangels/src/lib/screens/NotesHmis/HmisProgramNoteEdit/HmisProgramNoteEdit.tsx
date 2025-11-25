@@ -140,7 +140,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
       );
     } catch (error) {
-      console.error('[createHmisNoteMutation] error:', error);
+      console.error('[updateHmisNoteMutation] error:', error);
 
       showSnackbar({
         message: 'Something went wrong. Please try again.',

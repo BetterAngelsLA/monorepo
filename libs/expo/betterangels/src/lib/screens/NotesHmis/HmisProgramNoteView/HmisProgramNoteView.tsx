@@ -47,7 +47,7 @@ export function HmisProgramNoteView(props: TProps) {
         />
       ),
     });
-  }, [id]);
+  }, [id, clientId, navigation, router]);
 
   if (loading) {
     return <LoadingView />;

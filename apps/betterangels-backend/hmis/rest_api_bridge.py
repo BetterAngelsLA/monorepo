@@ -219,7 +219,7 @@ class HmisRestApiBridge:
         frags = info._raw_info.fragments
         seen = set()
 
-        ignored = {f for f in (ignored_fields or [])}
+        ignored = set((ignored_fields or []))
 
         def fname(n: FieldNode) -> str:
             return n.alias.value if n.alias else n.name.value
