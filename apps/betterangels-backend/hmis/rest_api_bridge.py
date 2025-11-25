@@ -521,7 +521,7 @@ class HmisRestApiBridge:
 
         return dict_keys_to_snake(resp.json())
 
-    def create_program_enrollment(
+    def create_client_program(
         self,
         client_hmis_id: str,
         program_hmis_id: int = 1,

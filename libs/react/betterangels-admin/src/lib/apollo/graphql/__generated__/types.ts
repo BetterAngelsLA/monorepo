@@ -529,6 +529,8 @@ export type CreateHmisClientProfileInput = {
 
 export type CreateHmisClientProfilePayload = HmisClientProfileType | OperationInfo;
 
+export type CreateHmisClientProgramPayload = OperationInfo | ProgramEnrollmentType;
+
 export type CreateHmisNoteInput = {
   date: Scalars['Date']['input'];
   hmisClientProfileId: Scalars['String']['input'];
@@ -581,8 +583,6 @@ export type CreateProfileDataImportInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
   sourceFile: Scalars['String']['input'];
 };
-
-export type CreateProgramEnrollmentPayload = OperationInfo | ProgramEnrollmentType;
 
 export type CreateServiceRequestInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
@@ -1439,13 +1439,13 @@ export type Mutation = {
   createClientProfile: CreateClientProfilePayload;
   createClientProfileDataImport: CreateClientProfileDataImportPayload;
   createHmisClientProfile: CreateHmisClientProfilePayload;
+  createHmisClientProgram: CreateHmisClientProgramPayload;
   createHmisNote: CreateHmisNotePayload;
   createHmisProfile: CreateHmisProfilePayload;
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
   createNoteMood: CreateNoteMoodPayload;
   createNoteServiceRequest: CreateNoteServiceRequestPayload;
-  createProgramEnrollment: CreateProgramEnrollmentPayload;
   createServiceRequest: CreateServiceRequestPayload;
   createSocialMediaProfile: CreateSocialMediaProfilePayload;
   createTask: CreateTaskPayload;
@@ -1523,6 +1523,12 @@ export type MutationCreateHmisClientProfileArgs = {
 };
 
 
+export type MutationCreateHmisClientProgramArgs = {
+  clientId: Scalars['Int']['input'];
+  programHmisId: Scalars['Int']['input'];
+};
+
+
 export type MutationCreateHmisNoteArgs = {
   data: CreateHmisNoteInput;
 };
@@ -1550,12 +1556,6 @@ export type MutationCreateNoteMoodArgs = {
 
 export type MutationCreateNoteServiceRequestArgs = {
   data: CreateNoteServiceRequestInput;
-};
-
-
-export type MutationCreateProgramEnrollmentArgs = {
-  clientId: Scalars['Int']['input'];
-  programHmisId: Scalars['Int']['input'];
 };
 
 

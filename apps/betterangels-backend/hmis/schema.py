@@ -69,8 +69,9 @@ class Query:
             note_hmis_id=hmis_note.hmis_id,
         )
 
-        if program_data := note_data.pop("client_program", None):
-            client_program = _get_client_program(program_data)
+        client_program = (
+            _get_client_program(program_data) if (program_data := note_data.pop("client_program", None)) else None
+        )
 
         hmis_note = resolvers.update(info, hmis_note, {**note_data})
 
@@ -112,7 +113,7 @@ class Mutation:
         if not hmis_client_profile.hmis_id:
             raise ValidationError("Missing Client hmis_id")
 
-        hmis_api_bridge.create_program_enrollment(client_hmis_id=hmis_client_profile.hmis_id)
+        hmis_api_bridge.create_client_program(client_hmis_id=hmis_client_profile.hmis_id)
 
         return cast(HmisClientProfileType, hmis_client_profile)
 
@@ -154,8 +155,9 @@ class Mutation:
         note_data = hmis_api_bridge.create_note(client_hmis_id=hmis_client_profile.pk, data=data)
         current_user = get_current_user(info)
 
-        if program_data := note_data.pop("client_program", None):
-            client_program = _get_client_program(program_data)
+        client_program = (
+            _get_client_program(program_data) if (program_data := note_data.pop("client_program", None)) else None
+        )
 
         hmis_note = resolvers.create(
             info,
@@ -185,8 +187,9 @@ class Mutation:
             data=data,
         )
 
-        if program_data := note_data.pop("client_program", None):
-            client_program = _get_client_program(program_data)
+        client_program = (
+            _get_client_program(program_data) if (program_data := note_data.pop("client_program", None)) else None
+        )
 
         hmis_note = resolvers.update(info, hmis_note, {**note_data})
 
@@ -195,7 +198,7 @@ class Mutation:
         return cast(HmisNoteType, hmis_note)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def create_program_enrollment(self, info: Info, client_id: int, program_hmis_id: int) -> ProgramEnrollmentType:
+    def create_hmis_client_program(self, info: Info, client_id: int, program_hmis_id: int) -> ProgramEnrollmentType:
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
         hmis_client_profile = HmisClientProfile.objects.get(pk=client_id)
@@ -203,7 +206,7 @@ class Mutation:
         if not hmis_client_profile.hmis_id:
             raise ValidationError("Missing Client hmis_id")
 
-        enrollment_data = hmis_api_bridge.create_program_enrollment(
+        enrollment_data = hmis_api_bridge.create_client_program(
             client_hmis_id=hmis_client_profile.hmis_id,
             program_hmis_id=program_hmis_id,
         )

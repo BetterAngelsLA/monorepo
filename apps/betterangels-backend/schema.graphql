@@ -527,6 +527,8 @@ input CreateHmisClientProfileInput {
 
 union CreateHmisClientProfilePayload = HmisClientProfileType | OperationInfo
 
+union CreateHmisClientProgramPayload = ProgramEnrollmentType | OperationInfo
+
 input CreateHmisNoteInput {
   hmisClientProfileId: String!
   title: String
@@ -579,8 +581,6 @@ input CreateProfileDataImportInput {
   sourceFile: String!
   notes: String
 }
-
-union CreateProgramEnrollmentPayload = ProgramEnrollmentType | OperationInfo
 
 input CreateServiceRequestInput {
   serviceId: ID
@@ -1442,7 +1442,7 @@ type Mutation {
   updateHmisClientProfile(data: UpdateHmisClientProfileInput!): UpdateHmisClientProfilePayload!
   createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload!
   updateHmisNote(data: UpdateHmisNoteInput!): UpdateHmisNotePayload!
-  createProgramEnrollment(clientId: Int!, programHmisId: Int!): CreateProgramEnrollmentPayload!
+  createHmisClientProgram(clientId: Int!, programHmisId: Int!): CreateHmisClientProgramPayload!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
