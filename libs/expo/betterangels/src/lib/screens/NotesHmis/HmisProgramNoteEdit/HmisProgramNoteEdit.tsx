@@ -1,6 +1,5 @@
-import { useQuery } from '@apollo/client/react';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
@@ -34,7 +33,7 @@ export function HmisProgramNoteEdit(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [existingNote, setExistingNote] = useState<HmisClientNoteType>();
-  const [updateHmisClientNoteMutation] = useMutationWithErrors(
+  const [updateHmisClientNoteMutation] = useMutation(
     HmisUpdateClientNoteDocument
   );
 

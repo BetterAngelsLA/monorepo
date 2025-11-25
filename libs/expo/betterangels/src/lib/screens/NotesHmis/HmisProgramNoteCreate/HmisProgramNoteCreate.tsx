@@ -1,5 +1,5 @@
+import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutationWithErrors } from '@monorepo/apollo';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
@@ -30,7 +30,7 @@ export function HmisProgramNoteCreate(props: TProps) {
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [createHmisClientNoteMutation] = useMutationWithErrors(
+  const [createHmisClientNoteMutation] = useMutation(
     HmisCreateClientNoteDocument
   );
 
