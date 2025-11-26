@@ -132,7 +132,6 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         response = self.create_task_fixture(variables)
         created_task = response["data"]["createTask"]
 
-        # 1. Assert Response Structure
         self.assertEqual(created_task["summary"], "hmis task summary")
         self.assertEqual(created_task["description"], "hmis task description")
         self.assertEqual(created_task["team"], SelahTeamEnum.WDI_ON_SITE.name)
