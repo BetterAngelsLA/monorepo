@@ -126,7 +126,6 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             "description": "hmis task description",
             "hmisNote": str(self.hmis_note.pk),
             "summary": "hmis task summary",
-            "team": SelahTeamEnum.WDI_ON_SITE.name,
         }
 
         response = self.create_task_fixture(variables)
