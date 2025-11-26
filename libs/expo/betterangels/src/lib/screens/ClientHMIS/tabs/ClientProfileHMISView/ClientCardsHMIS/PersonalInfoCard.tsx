@@ -5,6 +5,8 @@ import {
   HmisVeteranStatusEnum,
 } from '../../../../../apollo';
 import {
+  enumDisplayLanguage,
+  enumDisplayLivingSituation,
   enumHmisDobQuality,
   enumHmisVeteranStatusEnum,
 } from '../../../../../static';
@@ -21,7 +23,14 @@ type TProps = {
 export function PersonalInfoCardHmis(props: TProps) {
   const { client } = props;
 
-  const { birthDate, dobQuality, veteran } = client || {};
+  const {
+    birthDate,
+    dobQuality,
+    veteran,
+    californiaId,
+    preferredLanguage,
+    livingSituation,
+  } = client || {};
 
   const formattedDob =
     birthDate &&
@@ -42,6 +51,18 @@ export function PersonalInfoCardHmis(props: TProps) {
     {
       header: ['Veteran Status'],
       rows: [[enumHmisVeteranStatusEnum[veteran as HmisVeteranStatusEnum]]],
+    },
+    {
+      header: ['CA ID#'],
+      rows: [[californiaId]],
+    },
+    {
+      header: ['Preferred Language'],
+      rows: [[preferredLanguage && enumDisplayLanguage[preferredLanguage]]],
+    },
+    {
+      header: ['Living Situation'],
+      rows: [[livingSituation && enumDisplayLivingSituation[livingSituation]]],
     },
   ];
 
