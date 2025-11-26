@@ -5,6 +5,7 @@ import {
   enumDisplayEyeColor,
   enumDisplayHairColor,
   enumDisplayMaritalStatus,
+  enumDisplayPronoun,
   enumHmisGender,
   enumHmisRace,
 } from '../../../../../static';
@@ -76,7 +77,7 @@ export function DemographicInfoCardHmis(props: TProps) {
     },
     {
       header: ['Pronouns'],
-      rows: [[pronouns]],
+      rows: [[pronouns && enumDisplayPronoun[pronouns]]],
     },
     {
       header: ['Place of Birth'],
