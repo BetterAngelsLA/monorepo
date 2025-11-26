@@ -24,12 +24,6 @@ export function toUpdateHmisClientProfileInput(
     veteran: values.veteran || client.veteran,
   };
 
-  if ('birthDate' in values && values.birthDate) {
-    updatedInputs.birthDate = values.birthDate
-      .toISOString()
-      .split('T')[0] as unknown as Date;
-  }
-
   if ('profilePhoto' in values) {
     delete values.profilePhoto;
   }

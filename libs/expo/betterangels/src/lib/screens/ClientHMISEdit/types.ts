@@ -7,6 +7,7 @@ export type TSectionConfig<S extends ZodType<any, any, any>> = {
   title: string;
   Form: ComponentType<any>;
   schema: S;
+  schemaOutput: S | undefined;
   emptyState: z.input<S>;
   dataMapper: (client: HmisClientProfileType) => z.input<S>;
 };

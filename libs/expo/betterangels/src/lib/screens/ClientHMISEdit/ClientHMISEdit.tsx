@@ -50,6 +50,7 @@ export function ClientHMISEdit(props: TProps) {
     title: screenTitle,
     Form: SectionForm,
     schema: sectionSchema,
+    schemaOutput,
     emptyState,
     dataMapper,
   } = hmisFormConfig[sectionName];
@@ -85,13 +86,6 @@ export function ClientHMISEdit(props: TProps) {
       return;
     }
 
-    const valid =
-      clientData?.hmisClientProfile.__typename === 'HmisClientProfileType';
-
-    if (!valid) {
-      return;
-    }
-
     setClient(client);
 
     const mappedValues = dataMapper(client);
@@ -104,15 +98,18 @@ export function ClientHMISEdit(props: TProps) {
   if (clientDataLoading) {
     return <LoadingView />;
   }
+
   const onSubmit: SubmitHandler<TFormValues> = async (values) => {
     try {
       if (!client) {
         return;
       }
 
+      const formValues = schemaOutput ? schemaOutput.parse(values) : values;
+
       const inputs = toUpdateHmisClientProfileInput(
         client,
-        values as UpdateHmisClientProfileInput
+        formValues as UpdateHmisClientProfileInput
       );
 
       if (!inputs) {
@@ -152,6 +149,7 @@ export function ClientHMISEdit(props: TProps) {
 
       if (result?.__typename === 'HmisClientProfileType') {
         await refetch();
+
         router.dismissTo(`/client/${result.id}`);
       } else {
         console.log('Unexpected result: ', result);
@@ -159,7 +157,6 @@ export function ClientHMISEdit(props: TProps) {
           message: `Something went wrong!`,
           type: 'error',
         });
-        router.replace(`/clients`);
       }
     } catch (error) {
       console.error('updateHmisClientProfileMutation error:', error);
