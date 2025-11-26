@@ -4,7 +4,6 @@ from clients.schema import Mutation as ClientsMutation
 from clients.schema import Query as ClientsQuery
 from common.graphql.schema import Query as CommonQuery
 from hmis.gql_schema import Mutation as HmisGqlMutation
-from hmis.gql_schema import Query as HmisGqlQuery
 from hmis.schema import Mutation as HmisMutation
 from hmis.schema import Query as HmisQuery
 from notes.schema import Mutation as NotesMutation
@@ -18,7 +17,7 @@ from tasks.schema import Query as TasksQuery
 
 # Schema Stiching
 # https://github.com/strawberry-graphql/strawberry/issues/566#issuecomment-1346660629
-queries = (AccountsQuery, ClientsQuery, CommonQuery, HmisGqlQuery, HmisQuery, NotesQuery, TasksQuery, SheltersQuery)
+queries = (AccountsQuery, ClientsQuery, CommonQuery, HmisQuery, NotesQuery, TasksQuery, SheltersQuery)
 Query = merge_types("Query", queries)
 
 mutations = (AccountsMutation, ClientsMutation, HmisGqlMutation, HmisMutation, NotesMutation, TasksMutation)
