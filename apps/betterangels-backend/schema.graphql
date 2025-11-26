@@ -597,7 +597,8 @@ union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 input CreateTaskInput {
   clientProfile: ID
   description: String
-  note: ID
+  note: ID = null
+  hmisNote: ID = null
   summary: String!
   team: SelahTeamEnum
   status: TaskStatusEnum
@@ -2179,6 +2180,7 @@ input TaskFilter {
   status: [TaskStatusEnum!]
   teams: [SelahTeamEnum!]
   search: String
+  scopes: [TaskScopeEnum!]
 }
 
 input TaskOrder {
@@ -2186,6 +2188,12 @@ input TaskOrder {
   createdAt: Ordering
   updatedAt: Ordering
   status: Ordering
+}
+
+enum TaskScopeEnum {
+  HMIS_NOTE
+  STANDARD_NOTE
+  GENERAL
 }
 
 enum TaskStatusEnum {
@@ -2201,6 +2209,7 @@ type TaskType {
   createdBy: UserType!
   description: String
   note: DjangoModelType
+  hmisNote: DjangoModelType
   organization: OrganizationType
   status: TaskStatusEnum
   summary: String

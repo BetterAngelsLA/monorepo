@@ -599,6 +599,7 @@ export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfile
 export type CreateTaskInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  hmisNote?: InputMaybe<Scalars['ID']['input']>;
   note?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
   summary: Scalars['String']['input'];
@@ -2699,6 +2700,7 @@ export type TaskFilter = {
   clientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
+  scopes?: InputMaybe<Array<TaskScopeEnum>>;
   search?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Array<TaskStatusEnum>>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
@@ -2710,6 +2712,12 @@ export type TaskOrder = {
   status?: InputMaybe<Ordering>;
   updatedAt?: InputMaybe<Ordering>;
 };
+
+export enum TaskScopeEnum {
+  General = 'GENERAL',
+  HmisNote = 'HMIS_NOTE',
+  StandardNote = 'STANDARD_NOTE'
+}
 
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
@@ -2723,6 +2731,7 @@ export type TaskType = {
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   description?: Maybe<Scalars['String']['output']>;
+  hmisNote?: Maybe<DjangoModelType>;
   id: Scalars['ID']['output'];
   note?: Maybe<DjangoModelType>;
   organization?: Maybe<OrganizationType>;
