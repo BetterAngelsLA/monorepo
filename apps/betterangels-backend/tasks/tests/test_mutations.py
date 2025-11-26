@@ -157,19 +157,3 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         error_message = payload["messages"][0]["message"]
         self.assertIn("task_single_parent_check", error_message)
         self.assertIn("violated", error_message)
-
-    def test_create_general_task_unlinked(self) -> None:
-        """
-        Verify we can still create a general task (linked to neither).
-        """
-        variables = {
-            "summary": "General To-Do",
-            # No note, No hmisNote
-        }
-
-        response = self.create_task_fixture(variables)
-        created_task = response["data"]["createTask"]
-
-        task_db = Task.objects.get(id=created_task["id"])
-        self.assertIsNone(task_db.note)
-        self.assertIsNone(task_db.hmis_note)

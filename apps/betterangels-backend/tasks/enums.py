@@ -4,13 +4,6 @@ import strawberry
 
 
 @strawberry.enum
-class TaskScopeEnum(enum.StrEnum):
-    HMIS_NOTE = "HMIS_NOTE"
-    STANDARD_NOTE = "STANDARD_NOTE"
-    GENERAL = "GENERAL"
-
-
-@strawberry.enum
 class TaskStatusEnum(enum.IntEnum):
     TO_DO = 0
     IN_PROGRESS = 1
