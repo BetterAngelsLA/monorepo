@@ -5,7 +5,7 @@ import strawberry_django
 from common.models import PhoneNumber
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError, ObjectDoesNotExist(f"django matching ID {id} could not be found.")
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from hmis.models import HmisClientProfile, HmisNote
 from strawberry import ID
 from strawberry.types import Info
@@ -24,7 +24,6 @@ from .types import (
     ProgramEnrollmentType,
     UpdateHmisClientProfileInput,
     UpdateHmisNoteInput,
-
 )
 
 
