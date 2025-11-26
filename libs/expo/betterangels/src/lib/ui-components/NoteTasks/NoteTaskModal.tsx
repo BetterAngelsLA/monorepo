@@ -3,40 +3,25 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SelahTeamEnum, UpdateTaskInput } from '../../apollo';
 import { useModalScreen } from '../../providers';
-import { TaskForm } from '../TaskForm';
+
+// FIX: Point up one level (..) to the sibling 'TaskForm' folder, then the file
+import { TaskForm, TaskFormData } from '../TaskForm/TaskForm';
 
 interface INoteTasksModalProps {
-  clientProfileId: string;
-  noteId: string;
-  refetch: () => void;
-  team?: SelahTeamEnum | null;
-  task?: UpdateTaskInput;
+  initialValues?: Partial<TaskFormData>;
+  onSubmit: (data: TaskFormData) => Promise<void>;
+  onDelete?: () => void;
 }
 
 export default function NoteTasksModal(props: INoteTasksModalProps) {
-  const { clientProfileId, noteId, refetch, team, task } = props;
-
+  const { initialValues, onSubmit, onDelete } = props;
   const { closeModalScreen } = useModalScreen();
   const { top: topInset } = useSafeAreaInsets();
 
-  const closeModal = () => {
-    closeModalScreen();
-  };
-
-  const onSuccess = () => {
-    refetch();
-    closeModal();
-  };
-
   return (
     <View
-      style={{
-        flex: 1,
-        backgroundColor: Colors.WHITE,
-        paddingTop: topInset,
-      }}
+      style={{ flex: 1, backgroundColor: Colors.WHITE, paddingTop: topInset }}
     >
       <View
         style={{
@@ -46,21 +31,30 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
         }}
       >
         <IconButton
-          onPress={closeModal}
-          accessibilityHint="closes the modal"
-          accessibilityLabel="Close modal"
+          onPress={closeModalScreen}
           variant="transparent"
+          accessibilityLabel="Close modal"
+          accessibilityHint="Closes the task modal"
         >
           <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
         </IconButton>
       </View>
+
       <TaskForm
-        clientProfileId={clientProfileId}
-        onCancel={closeModal}
-        task={task}
-        team={team}
-        onSuccess={onSuccess}
-        noteId={noteId}
+        initialValues={initialValues}
+        onSubmit={async (data) => {
+          await onSubmit(data);
+          closeModalScreen();
+        }}
+        onDelete={
+          onDelete
+            ? () => {
+                onDelete();
+                closeModalScreen();
+              }
+            : undefined
+        }
+        onCancel={closeModalScreen}
       />
     </View>
   );

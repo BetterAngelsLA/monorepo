@@ -98,7 +98,12 @@
     "fast-deep-equal": "*",
     "@testing-library/react": "*",
     "@jest/globals": "*",
-    "@expo/metro-config": "*"
+    "@expo/metro-config": "*",
+    "react-router-dom": "*",
+    "clsx": "*",
+    "embla-carousel-react": "*",
+    "tailwind-merge": "*",
+    "libphonenumber-js": "*"
   },
   "scripts": {
     "eas-build-pre-install": "corepack enable && mkdir -p .yarn && cp -R ../../.yarn/patches .yarn/patches 2>/dev/null || :",

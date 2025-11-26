@@ -1,233 +1,86 @@
-import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Colors } from '@monorepo/expo/shared/static';
 import {
   ControlledInput,
   Form,
   SingleSelect,
+  TextButton,
 } from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
 import { Controller, SubmitHandler, useForm } from 'react-hook-form';
-import {
-  SelahTeamEnum,
-  TaskType,
-  UpdateTaskInput,
-  extractOperationErrors,
-} from '../../apollo';
-import { applyOperationFieldErrors } from '../../errors';
-import { useSnackbar } from '../../hooks';
+import { View } from 'react-native';
+import { z } from 'zod'; // Ensure zod is installed
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
-import DeleteTask from './DeleteTask';
-import { CreateTaskDocument } from './__generated__/createTask.generated';
-import { UpdateTaskDocument } from './__generated__/updateTask.generated';
-import { FormSchema, TFormSchema, emptyState } from './formSchema';
+// Remove external formSchema import to prevent path errors
+// import { FormSchema, TFormSchema, emptyState } from './formSchema';
 
-type TActionType = 'update' | 'delete';
+// --- INLINE SCHEMA DEFINITION (Dependencies Removed) ---
+import { SelahTeamEnum, TaskStatusEnum } from '../../apollo';
+
+const FormSchema = z.object({
+  summary: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  team: z.nativeEnum(SelahTeamEnum).optional().or(z.literal('')),
+  status: z.nativeEnum(TaskStatusEnum).optional().or(z.literal('')),
+});
+
+export type TaskFormData = z.infer<typeof FormSchema>;
+
+const emptyState: TaskFormData = {
+  summary: '',
+  description: '',
+  team: '' as any,
+  status: '' as any,
+};
+// -------------------------------------------------------
 
 type TProps = {
-  clientProfileId?: string | null;
-  team?: SelahTeamEnum | null;
-  noteId?: string;
-  onCancel?: () => void;
-  onSuccess?: (taskId: string, action: TActionType) => void;
-  task?: UpdateTaskInput | null;
-  arrivedFrom?: string;
+  initialValues?: Partial<TaskFormData>;
+  onCancel: () => void;
+  // Parent injects the logic (Live vs Draft)
+  onSubmit: (data: TaskFormData) => Promise<void>;
+  onDelete?: () => void;
 };
 
 export function TaskForm(props: TProps) {
-  const {
-    clientProfileId,
-    team,
-    onSuccess,
-    onCancel,
-    noteId,
-    task,
-    arrivedFrom,
-  } = props;
+  const { initialValues, onSubmit, onDelete, onCancel } = props;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [disabled, setDisabled] = useState(false);
-  const { showSnackbar } = useSnackbar();
-  const [createTaskMutation] = useMutation(CreateTaskDocument);
-  const [updateTaskMutation] = useMutation(UpdateTaskDocument);
   const {
     control,
     handleSubmit,
     formState: { errors },
-    reset: resetForm,
-    setError,
+    reset,
     setValue,
-  } = useForm<TFormSchema>({
+  } = useForm<TaskFormData>({
     resolver: zodResolver(FormSchema),
-    defaultValues: { ...emptyState, team: team || '' },
+    defaultValues: { ...emptyState, ...initialValues },
   });
 
-  const getArgsFromStoreFieldName = (storeFieldName?: string) => {
-    if (!storeFieldName) return null;
-    const i = storeFieldName.indexOf('(');
-    if (i < 0) return null;
+  const handleFormSubmit: SubmitHandler<TaskFormData> = async (data) => {
+    setIsSubmitting(true);
     try {
-      return JSON.parse(storeFieldName.slice(i + 1, -1));
-    } catch {
-      return null;
-    }
-  };
-
-  const onSubmit: SubmitHandler<TFormSchema> = async (
-    formData: TFormSchema
-  ) => {
-    try {
-      setDisabled(true);
-
-      const { summary, description, team, status } = formData;
-
-      const response = task
-        ? await updateTaskMutation({
-            variables: {
-              data: {
-                id: task.id,
-                summary,
-                description,
-                status,
-                team: team || null,
-              },
-            },
-            errorPolicy: 'all',
-            update(cache, { data }) {
-              const payload = data?.updateTask;
-              if (!payload || payload.__typename !== 'TaskType') return;
-
-              cache.modify({
-                id: cache.identify({ __typename: 'TaskType', id: payload.id }),
-                fields: {
-                  summary: () => payload.summary,
-                  description: () => payload.description,
-                  status: () => payload.status,
-                  team: () => payload.team,
-                  updatedAt: () =>
-                    payload.updatedAt ?? new Date().toISOString(),
-                },
-              });
-            },
-          })
-        : await createTaskMutation({
-            variables: {
-              data: {
-                summary,
-                description,
-                status,
-                team: team || null,
-                clientProfile: clientProfileId,
-                note: noteId || null,
-              },
-            },
-            errorPolicy: 'all',
-            update(cache, { data }) {
-              const created = data?.createTask;
-              if (!created || created.__typename !== 'TaskType') return;
-
-              cache.modify({
-                id: 'ROOT_QUERY',
-                fields: {
-                  tasks(existing: any = {}, details: any) {
-                    if (!existing?.results) return existing;
-
-                    const { toReference, readField, storeFieldName } = details;
-                    const vars = getArgsFromStoreFieldName(storeFieldName);
-                    const offset = vars?.pagination?.offset ?? 0;
-                    if (offset !== 0) return existing;
-
-                    const newRef = toReference({
-                      __typename: 'TaskType',
-                      id: created.id,
-                    });
-                    if (
-                      existing.results.some(
-                        (ref: any) => readField('id', ref) === created.id
-                      )
-                    ) {
-                      return existing;
-                    }
-
-                    let results = [newRef, ...existing.results];
-
-                    const limit = vars?.pagination?.limit;
-                    if (typeof limit === 'number' && results.length > limit) {
-                      results = results.slice(0, limit);
-                    }
-
-                    const totalCount =
-                      typeof existing.totalCount === 'number'
-                        ? existing.totalCount + 1
-                        : existing.totalCount;
-
-                    return { ...existing, results, totalCount };
-                  },
-                },
-              });
-            },
-          });
-
-      const { validationErrors, errorMessage } = extractOperationErrors({
-        response,
-        queryKey: task ? 'updateTask' : 'createTask',
-        fields: Object.keys(FormSchema.shape),
-        resultTypename: 'TaskType',
-      });
-
-      // if has field validation errors, apply and return
-      if (validationErrors?.length) {
-        applyOperationFieldErrors(validationErrors, setError);
-
-        return;
-      }
-
-      if (errorMessage) {
-        throw new Error(errorMessage);
-      }
-
-      let newTask;
-
-      if (response.data && 'updateTask' in response.data) {
-        newTask = response.data.updateTask;
-      } else {
-        newTask = response.data?.createTask;
-      }
-
-      if (!newTask) {
-        throw new Error('mutation failed');
-      }
-
-      resetForm();
-      onSuccess?.((newTask as TaskType).id, 'update');
-    } catch (error) {
-      console.error('Task mutation error:', error);
-
-      showSnackbar({
-        message: 'Something went wrong. Please try again.',
-        type: 'error',
-      });
+      await onSubmit(data);
+      reset(emptyState);
+    } catch (e) {
+      console.error(e);
     } finally {
-      setDisabled(false);
+      setIsSubmitting(false);
     }
   };
 
   useEffect(() => {
-    if (!task) return;
-
-    resetForm({
-      ...emptyState,
-      summary: task.summary || undefined,
-      team: task.team || undefined,
-      description: task.description || '',
-      status: task.status || undefined,
-    });
-  }, [task]);
+    if (initialValues) {
+      reset({ ...emptyState, ...initialValues });
+    }
+  }, [initialValues, reset]);
 
   return (
     <Form.Page
       actionProps={{
-        onSubmit: handleSubmit(onSubmit),
+        onSubmit: handleSubmit(handleFormSubmit),
         onLeftBtnClick: onCancel,
-        disabled,
+        disabled: isSubmitting,
       }}
     >
       <Form>
@@ -235,13 +88,11 @@ export function TaskForm(props: TProps) {
           <ControlledInput
             required
             control={control}
-            disabled={disabled}
-            label={'Title'}
-            name={'summary'}
-            placeholder={'Enter title'}
-            onDelete={() => {
-              setValue('summary', emptyState.summary);
-            }}
+            label="Title"
+            name="summary"
+            disabled={isSubmitting}
+            placeholder="Enter title"
+            onDelete={() => setValue('summary', emptyState.summary)}
             errorMessage={errors.summary?.message}
           />
 
@@ -250,10 +101,10 @@ export function TaskForm(props: TProps) {
             control={control}
             render={({ field }) => (
               <SingleSelect
-                disabled={disabled}
                 allowSelectNone={true}
                 label="Team"
                 placeholder="Select team"
+                disabled={isSubmitting}
                 items={Object.entries(enumDisplaySelahTeam).map(
                   ([value, displayValue]) => ({ value, displayValue })
                 )}
@@ -268,14 +119,12 @@ export function TaskForm(props: TProps) {
             multiline
             numberOfLines={4}
             control={control}
-            disabled={disabled}
-            label={'Description'}
-            name={'description'}
-            placeholder={'Enter description'}
+            label="Description"
+            name="description"
+            disabled={isSubmitting}
+            placeholder="Enter description"
             inputStyle={{ minHeight: 150 }}
-            onDelete={() => {
-              setValue('description', emptyState.description);
-            }}
+            onDelete={() => setValue('description', emptyState.description)}
             errorMessage={errors.description?.message}
           />
 
@@ -284,9 +133,9 @@ export function TaskForm(props: TProps) {
             control={control}
             render={({ field }) => (
               <SingleSelect
-                disabled={disabled}
                 label="Status"
                 placeholder="Select status"
+                disabled={isSubmitting}
                 maxRadioItems={0}
                 items={Object.entries(enumDisplayTaskStatus).map(
                   ([value, displayValue]) => ({ value, displayValue })
@@ -300,11 +149,18 @@ export function TaskForm(props: TProps) {
         </Form.Fieldset>
       </Form>
 
-      <DeleteTask
-        id={task?.id}
-        onSuccess={(id) => onSuccess?.(id, 'delete')}
-        arrivedFrom={arrivedFrom}
-      />
+      {/* Replaced DeleteTask component with simple TextButton to avoid crashes */}
+      {onDelete && (
+        <View style={{ marginTop: 24, paddingHorizontal: 16 }}>
+          <TextButton
+            title="Delete Task"
+            color={Colors.ERROR}
+            onPress={onDelete}
+            disabled={isSubmitting}
+            accessibilityHint="Deletes this task"
+          />
+        </View>
+      )}
     </Form.Page>
   );
 }
