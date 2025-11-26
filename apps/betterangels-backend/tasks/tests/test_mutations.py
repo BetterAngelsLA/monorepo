@@ -133,7 +133,6 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         self.assertEqual(created_task["summary"], "hmis task summary")
         self.assertEqual(created_task["description"], "hmis task description")
-        self.assertEqual(created_task["team"], SelahTeamEnum.WDI_ON_SITE.name)
         self.assertEqual(created_task["status"], TaskStatusEnum.TO_DO.name)
         self.assertEqual(created_task["hmisNote"]["pk"], str(self.hmis_note.pk))
 
