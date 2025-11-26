@@ -1,4 +1,4 @@
-import { useMutationWithErrors } from '@monorepo/apollo';
+import { useMutation } from '@apollo/client/react';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
@@ -36,7 +36,7 @@ export function CreateClientInteractionBtn(props: TProps) {
   const isProcessing = useRef(false);
 
   const router = useRouter();
-  const [createNote] = useMutationWithErrors(CreateNoteDocument);
+  const [createNote] = useMutation(CreateNoteDocument);
   const { showSnackbar } = useSnackbar();
   const { blockScreenUntilNextNavigation, unblockScreen } = useBlockingScreen();
 
