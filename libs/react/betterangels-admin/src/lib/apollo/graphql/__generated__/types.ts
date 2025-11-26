@@ -2700,7 +2700,6 @@ export type TaskFilter = {
   clientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
-  scopes?: InputMaybe<Array<TaskScopeEnum>>;
   search?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Array<TaskStatusEnum>>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
@@ -2712,12 +2711,6 @@ export type TaskOrder = {
   status?: InputMaybe<Ordering>;
   updatedAt?: InputMaybe<Ordering>;
 };
-
-export enum TaskScopeEnum {
-  General = 'GENERAL',
-  HmisNote = 'HMIS_NOTE',
-  StandardNote = 'STANDARD_NOTE'
-}
 
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
