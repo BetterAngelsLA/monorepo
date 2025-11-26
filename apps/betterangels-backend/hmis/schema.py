@@ -1,11 +1,11 @@
-from typing import Iterable, cast
+from typing import Any, Iterable, cast
 
 import strawberry
 import strawberry_django
 from common.models import PhoneNumber
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from hmis.models import HmisClientProfile, HmisNote
 from strawberry import ID
 from strawberry.types import Info
@@ -18,11 +18,17 @@ from .types import (
     CreateHmisClientProfileInput,
     CreateHmisNoteInput,
     HmisClientProfileType,
+    HmisClientProgramType,
     HmisNoteType,
+    HmisProgramType,
     ProgramEnrollmentType,
     UpdateHmisClientProfileInput,
     UpdateHmisNoteInput,
 )
+
+
+def _get_client_program(program_data: dict[str, Any]) -> HmisClientProgramType:
+    return HmisClientProgramType(id=program_data["id"], program=HmisProgramType(**program_data["program"]))
 
 
 @strawberry.type
@@ -31,7 +37,10 @@ class Query:
     def hmis_client_profile(self, info: Info, id: ID) -> HmisClientProfileType:
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        hmis_client_profile = HmisClientProfile.objects.get(pk=id)
+        try:
+            hmis_client_profile = HmisClientProfile.objects.get(pk=id)
+        except HmisClientProfile.DoesNotExist:
+            raise ObjectDoesNotExist(f"Client Profile matching ID {id} could not be found.")
 
         if not hmis_client_profile.hmis_id:
             raise ValidationError("Missing Client hmis_id")
@@ -53,7 +62,10 @@ class Query:
     def hmis_note(self, info: Info, id: ID) -> HmisNoteType:
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        hmis_note = HmisNote.objects.get(pk=id)
+        try:
+            hmis_note = HmisNote.objects.get(pk=id)
+        except HmisNote.DoesNotExist:
+            raise ObjectDoesNotExist(f"Note matching ID {id} could not be found.")
 
         if not hmis_note.hmis_client_profile.hmis_id:
             raise ValidationError("Missing Client hmis_id")
@@ -63,11 +75,37 @@ class Query:
             note_hmis_id=hmis_note.hmis_id,
         )
 
+        client_program = (
+            _get_client_program(program_data) if (program_data := note_data.pop("client_program", None)) else None
+        )
+
         hmis_note = resolvers.update(info, hmis_note, {**note_data})
+
+        hmis_note.client_program = client_program  # type: ignore
 
         return cast(HmisNoteType, hmis_note)
 
     hmis_notes: OffsetPaginated[HmisNoteType] = strawberry_django.offset_paginated(permission_classes=[IsAuthenticated])
+
+    @strawberry.field()
+    def hmis_client_programs(
+        self,
+        info: Info,
+        client_id: ID,
+    ) -> list[HmisClientProgramType]:
+        hmis_api_bridge = HmisRestApiBridge(info=info)
+
+        try:
+            client_hmis_id = HmisClientProfile.objects.get(pk=client_id).hmis_id
+        except HmisClientProfile.DoesNotExist:
+            raise ObjectDoesNotExist(f"Client Profile matching ID {id} could not be found.")
+
+        if not client_hmis_id:
+            raise ValidationError("Missing Client hmis_id")
+
+        client_programs = hmis_api_bridge.get_client_programs(client_hmis_id=client_hmis_id)
+
+        return [_get_client_program(p) for p in client_programs["items"]]
 
 
 @strawberry.type
@@ -81,7 +119,10 @@ class Mutation:
 
         hmis_client_profile = resolvers.create(info, HmisClientProfile, {**client_data, "created_by": current_user})
 
-        hmis_api_bridge.create_program_enrollment(client_hmis_id=hmis_client_profile.pk)
+        if not hmis_client_profile.hmis_id:
+            raise ValidationError("Missing Client hmis_id")
+
+        hmis_api_bridge.create_client_program(client_hmis_id=hmis_client_profile.hmis_id)
 
         return cast(HmisClientProfileType, hmis_client_profile)
 
@@ -89,7 +130,10 @@ class Mutation:
     def update_hmis_client_profile(self, info: Info, data: UpdateHmisClientProfileInput) -> HmisClientProfileType:
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        hmis_client_profile = HmisClientProfile.objects.get(pk=data.id)
+        try:
+            hmis_client_profile = HmisClientProfile.objects.get(pk=data.id)
+        except HmisClientProfile.DoesNotExist:
+            raise ObjectDoesNotExist(f"Client Profile matching ID {id} could not be found.")
 
         data_dict = strawberry.asdict(data)
         phone_numbers = data_dict.pop("phone_numbers", []) or []
@@ -116,12 +160,19 @@ class Mutation:
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_hmis_note(self, info: Info, data: CreateHmisNoteInput) -> HmisNoteType:
-        hmis_client_profile = HmisClientProfile.objects.get(pk=data.hmis_client_profile_id)
+        try:
+            hmis_client_profile = HmisClientProfile.objects.get(pk=data.hmis_client_profile_id)
+        except HmisClientProfile.DoesNotExist:
+            raise ObjectDoesNotExist(f"Client Profile matching ID {id} could not be found.")
 
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
         note_data = hmis_api_bridge.create_note(client_hmis_id=hmis_client_profile.pk, data=data)
         current_user = get_current_user(info)
+
+        client_program = (
+            _get_client_program(program_data) if (program_data := note_data.pop("client_program", None)) else None
+        )
 
         hmis_note = resolvers.create(
             info,
@@ -133,29 +184,53 @@ class Mutation:
             },
         )
 
+        hmis_note.client_program = client_program  # type: ignore
+
         return cast(HmisNoteType, hmis_note)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def update_hmis_note(self, info: Info, data: UpdateHmisNoteInput) -> HmisNoteType:
-        hmis_note = HmisNote.objects.get(id=data.id)
-        hmis_client_profile_id = HmisClientProfile.objects.get(pk=data.hmis_client_profile_id).pk
+        try:
+            hmis_note = HmisNote.objects.get(pk=data.id)
+        except HmisNote.DoesNotExist:
+            raise ObjectDoesNotExist(f"Note matching ID {id} could not be found.")
 
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
+        if not hmis_note.hmis_client_profile.hmis_id:
+            raise ValidationError("Missing Client hmis_id")
+
         note_data = hmis_api_bridge.update_note(
-            client_hmis_id=hmis_client_profile_id, note_hmis_id=hmis_note.pk, data=data
+            client_hmis_id=hmis_note.hmis_client_profile.hmis_id,
+            note_hmis_id=hmis_note.hmis_id,
+            data=data,
+        )
+
+        client_program = (
+            _get_client_program(program_data) if (program_data := note_data.pop("client_program", None)) else None
         )
 
         hmis_note = resolvers.update(info, hmis_note, {**note_data})
 
+        hmis_note.client_program = client_program  # type: ignore
+
         return cast(HmisNoteType, hmis_note)
 
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
-    def create_program_enrollment(self, info: Info, client_hmis_id: int, program_hmis_id: int) -> ProgramEnrollmentType:
+    def create_hmis_client_program(self, info: Info, client_id: int, program_hmis_id: int) -> ProgramEnrollmentType:
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        enrollment_data = hmis_api_bridge.create_program_enrollment(
-            client_hmis_id=client_hmis_id, program_hmis_id=program_hmis_id
+        try:
+            hmis_client_profile = HmisClientProfile.objects.get(pk=client_id)
+        except HmisClientProfile.DoesNotExist:
+            raise ObjectDoesNotExist(f"Client Profile matching ID {id} could not be found.")
+
+        if not hmis_client_profile.hmis_id:
+            raise ValidationError("Missing Client hmis_id")
+
+        enrollment_data = hmis_api_bridge.create_client_program(
+            client_hmis_id=hmis_client_profile.hmis_id,
+            program_hmis_id=program_hmis_id,
         )
 
         return ProgramEnrollmentType(

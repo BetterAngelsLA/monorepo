@@ -1,10 +1,11 @@
+import { CombinedGraphQLErrors } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { extractHMISErrors } from '../../../apollo';
-import { applyOperationFieldErrors } from '../../../errors';
+import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
+import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
@@ -16,32 +17,26 @@ import {
 } from '../HmisProgramNoteForm';
 import {
   getHmisProgramNoteFormEmptyState,
-  hmisProgramNoteFormEmptyState,
+  HmisNoteFormFieldNames,
 } from '../HmisProgramNoteForm/formSchema';
-import { HmisCreateClientNoteDocument } from './__generated__/hmisCreateClientNote.generated';
+import { CreateHmisNoteDocument } from './__generated__/hmisCreateClientNote.generated';
 
 type TProps = {
-  hmisClientId: string;
+  clientId: string;
   arrivedFrom?: string;
 };
 
 export function HmisProgramNoteCreate(props: TProps) {
-  const { hmisClientId } = props;
+  const { clientId } = props;
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [createHmisClientNoteMutation] = useMutation(
-    HmisCreateClientNoteDocument
-  );
+  const [createHmisNote] = useMutation(CreateHmisNoteDocument);
 
-  const formKeys = Object.keys(hmisProgramNoteFormEmptyState);
-
-  const formMethods = useForm<THmisProgramNoteFormInputs>({
+  const methods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
     defaultValues: getHmisProgramNoteFormEmptyState(),
   });
-
-  const { setError } = formMethods;
 
   const onSubmit: SubmitHandler<THmisProgramNoteFormInputs> = async (
     values
@@ -50,53 +45,49 @@ export function HmisProgramNoteCreate(props: TProps) {
       const payload: THmisProgramNoteFormOutputs =
         HmisProgramNoteFormSchemaOutput.parse(values);
 
-      const { data } = await createHmisClientNoteMutation({
+      const createResponse = await createHmisNote({
         variables: {
-          clientNoteInput: {
-            personalId: hmisClientId,
+          data: {
+            hmisClientProfileId: clientId,
             ...payload,
           },
         },
         errorPolicy: 'all',
       });
 
-      const result = data?.hmisCreateClientNote;
+      const { data, error } = createResponse;
 
-      if (!result) {
-        throw new Error('missing hmisCreateClientNote response');
-      }
+      // if form field errors: handle and exit
+      if (CombinedGraphQLErrors.is(error)) {
+        const fieldErrors = extractExtensionFieldErrors(
+          error,
+          HmisNoteFormFieldNames
+        );
 
-      if (result?.__typename === 'HmisCreateClientNoteError') {
-        const { message: hmisErrorMessage } = result;
-        const { status, fieldErrors = [] } =
-          extractHMISErrors(hmisErrorMessage) || {};
+        if (fieldErrors.length) {
+          applyManualFormErrors(fieldErrors, methods.setError);
 
-        // handle unprocessable_entity errors and exit
-        if (status === 422) {
-          const formFieldErrors = fieldErrors.filter(({ field }) =>
-            formKeys.includes(field)
-          );
-          applyOperationFieldErrors(formFieldErrors, setError);
           return;
         }
-
-        if (status === 404) {
-          throw new Error('could not find Client of Program Enrollment');
-        }
-        // HmisCreateClientError exists but not 422 | 404
-        // throw generic error
-        throw new Error(hmisErrorMessage);
       }
 
-      if (result?.__typename !== 'HmisClientNoteType') {
-        throw new Error('invalid HmisClientNoteType response');
+      // non-validation error: throw
+      if (error) {
+        throw new Error(error.message);
       }
 
-      router.dismissTo(
-        `/client/${hmisClientId}?activeTab=${ClientViewTabEnum.Interactions}`
+      const result = data?.createHmisNote;
+
+      if (result?.__typename !== 'HmisNoteType') {
+        throw new Error('typename is not HmisNoteType');
+      }
+
+      router.replace(
+        `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
       );
     } catch (error) {
-      console.error('createHmisClientNoteMutation error:', error);
+      console.error('[createHmisNoteMutation] error:', error);
+
       showSnackbar({
         message: 'Something went wrong. Please try again.',
         type: 'error',
@@ -107,10 +98,10 @@ export function HmisProgramNoteCreate(props: TProps) {
   const {
     handleSubmit,
     formState: { isSubmitting },
-  } = formMethods;
+  } = methods;
 
   return (
-    <FormProvider {...formMethods}>
+    <FormProvider {...methods}>
       <Form.Page
         actionProps={{
           onSubmit: handleSubmit(onSubmit),
@@ -118,7 +109,7 @@ export function HmisProgramNoteCreate(props: TProps) {
           disabled: isSubmitting,
         }}
       >
-        <HmisProgramNoteForm hmisClientId={hmisClientId} />
+        <HmisProgramNoteForm clientId={clientId} />
       </Form.Page>
     </FormProvider>
   );

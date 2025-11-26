@@ -93,6 +93,7 @@
     "@types/geojson": "*",
     "expo-crypto": "*",
     "expo-image": "*",
+    "sanitize-html": "*",
     "@graphql-typed-document-node/core": "*",
     "fast-deep-equal": "*",
     "@testing-library/react": "*",

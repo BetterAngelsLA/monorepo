@@ -7,7 +7,7 @@ import {
 import { ReactElement, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import {
-  HmisClientFilterInput,
+  HmisClientProfileFilter,
   HmisClientProfileType,
   InputMaybe,
 } from '../../apollo';
@@ -23,7 +23,7 @@ type TProps = {
   renderItem: (client: HmisClientProfileType) => ReactElement | null;
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
-  filters?: InputMaybe<HmisClientFilterInput>;
+  filters?: InputMaybe<HmisClientProfileFilter>;
   paginationLimit?: number;
   showAllClientsLink?: boolean;
   renderHeaderText?: (props: TRenderListResultsHeader) => string;
@@ -73,7 +73,7 @@ export function HmisListClients(props: TProps) {
   return (
     <View style={[styles.container, style]}>
       <InfiniteList<HmisClientProfileType>
-        modelName="client"
+        modelName="hmisClientProfile"
         data={items}
         keyExtractor={(item) => item.id!}
         totalItems={total}

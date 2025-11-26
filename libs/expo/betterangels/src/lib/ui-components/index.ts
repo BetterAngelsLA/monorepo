@@ -18,8 +18,8 @@ export { default as FeatureFlagControlled } from './FeatureFlagControlled/Featur
 export { FileThumbnail } from './FileThumbnail/FileThumbnail';
 export * from './Filters';
 export * from './GirpNoteForm';
-export { default as HMISLoginForm } from './HMISLoginForm';
 export { default as Header } from './Header';
+export { default as HMISLoginForm } from './HMISLoginForm';
 export * from './Layout';
 export { default as LoginForm } from './LoginForm';
 export { default as MainContainer } from './MainContainer';
@@ -31,6 +31,7 @@ export * from './Nav';
 export { default as NavModal } from './NavModal';
 export { default as NoteCard } from './NoteCard';
 export { default as NoteTasks } from './NoteTasks';
+export { default as ProgramNoteCard } from './ProgramNoteCard';
 export { default as RequestedProvidedServices } from './RequestedProvidedServices';
 export { default as OtherCategory } from './RequestedProvidedServices/OtherCategory';
 export { default as SelectStatus } from './SelectStatus';
