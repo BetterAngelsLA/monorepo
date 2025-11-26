@@ -20,15 +20,23 @@ class Task(BaseModel):
         COMPLETED = 2, "Completed"
 
     client_profile = models.ForeignKey(
-        "clients.ClientProfile", on_delete=models.SET_NULL, blank=True, null=True, related_name="tasks", db_index=True
+        "clients.ClientProfile",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="tasks",
     )
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="tasks", db_index=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="tasks")
     description = models.TextField(blank=True, null=True)
-    note = models.ForeignKey(
-        "notes.Note", on_delete=models.CASCADE, blank=True, null=True, related_name="tasks", db_index=True
+    note = models.ForeignKey("notes.Note", on_delete=models.CASCADE, blank=True, null=True, related_name="tasks")
+    hmis_note = models.ForeignKey(
+        "hmis.HmisNote", null=True, blank=True, on_delete=models.CASCADE, related_name="tasks"
     )
     organization = models.ForeignKey(
-        Organization, on_delete=models.SET_NULL, null=True, related_name="tasks", db_index=True
+        Organization,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="tasks",
     )
     status = IntegerChoicesField(Status, default=Status.TO_DO, db_index=True)
     summary = models.CharField(max_length=100, db_index=True)
@@ -50,6 +58,12 @@ class Task(BaseModel):
                 fields=["summary"],
                 opclasses=["gin_trgm_ops"],
             ),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(note__isnull=True) | models.Q(hmis_note__isnull=True),
+                name="task_single_parent_check",
+            )
         ]
 
     objects = models.Manager()

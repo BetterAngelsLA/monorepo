@@ -597,7 +597,8 @@ union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 input CreateTaskInput {
   clientProfile: ID
   description: String
-  note: ID
+  note: ID = null
+  hmisNote: ID = null
   summary: String!
   team: SelahTeamEnum
   status: TaskStatusEnum
@@ -2229,6 +2230,7 @@ type TaskType {
   createdBy: UserType!
   description: String
   note: DjangoModelType
+  hmisNote: DjangoModelType
   organization: OrganizationType
   status: TaskStatusEnum
   summary: String
