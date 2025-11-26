@@ -16,6 +16,7 @@ import {
 import {
   PersonalInfoFormHmis,
   PersonalInfoFormSchema,
+  PersonalInfoFormSchemaOut,
   mapClientToPersonalInfoSchema,
   personalInfoFormEmptyState,
 } from './PersonalInfo';
@@ -25,6 +26,7 @@ export const hmisFormConfig = {
     title: 'Edit Full Name',
     Form: FullNameFormHmis,
     schema: FullNameFormSchema,
+    schemaOutput: undefined,
     emptyState: fullNameFormEmptyState,
     dataMapper: mapClientToFullNameSchema,
   },
@@ -32,6 +34,7 @@ export const hmisFormConfig = {
     title: 'Edit Demographic Info',
     Form: DemographicInfoFormHmis,
     schema: DemographicInfoFormSchema,
+    schemaOutput: undefined,
     emptyState: demographicInfoFormEmptyState,
     dataMapper: mapClientToDemographicSchema,
   },
@@ -39,6 +42,7 @@ export const hmisFormConfig = {
     title: 'Edit Personal Info',
     Form: PersonalInfoFormHmis,
     schema: PersonalInfoFormSchema,
+    schemaOutput: PersonalInfoFormSchemaOut,
     emptyState: personalInfoFormEmptyState,
     dataMapper: mapClientToPersonalInfoSchema,
   },
