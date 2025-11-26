@@ -76,7 +76,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     }
 
     return <ErrorListView title={errorTitle} bodyText={errorMessage} />;
-  }, [error, ErrorViewComponent]);
+  }, [errorTitle, errorMessage, ErrorViewComponent]);
 
   const EmptyView = useMemo(() => {
     if (loading) {
@@ -88,7 +88,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     }
 
     return ListEmptyComponent ?? <EmptyListView />;
-  }, [loading, ListEmptyComponent]);
+  }, [loading, error, ListEmptyComponent, ErrorView]);
 
   const mergedContentContainerStyle = useMemo(
     () => StyleSheet.flatten([styles.contentContainer, contentContainerStyle]),

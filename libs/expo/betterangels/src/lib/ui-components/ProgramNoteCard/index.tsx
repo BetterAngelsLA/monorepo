@@ -42,21 +42,6 @@ export default function ProgramNoteCard(props: INoteCardProps) {
           {format(new Date(hmisNote?.date), 'hh:mm a')}
         </TextRegular>
       )}
-
-      {/* TODO: ADD AFTER BA INTEGRATION
-      <ProgramNoteCardByline
-        createdBy={note.createdBy}
-        organization={note.organization}
-        team={note.team}
-      />
-
-      {(!!note.providedServices.length || !!note.requestedServices.length) && (
-        <ProgramNoteCardServices note={note} />
-      )}
-      <ProgramNoteCardFooter
-        interactedAt={note.interactedAt}
-        isSubmitted={note.isSubmitted}
-      /> */}
     </Pressable>
   );
 }

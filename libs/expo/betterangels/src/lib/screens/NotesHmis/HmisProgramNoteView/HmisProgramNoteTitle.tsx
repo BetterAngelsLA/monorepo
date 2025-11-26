@@ -24,12 +24,6 @@ export default function HmisProgramNoteTitle({
           {format(new Date(hmisNote?.date), 'hh:mm a')}
         </TextRegular>
       )}
-      {/* {hmisNote.category && (
-        <>
-          <TextBold size="sm">Category</TextBold>
-          <TextRegular size="sm">{hmisNote.category}</TextRegular>
-        </>
-      )} */}
     </View>
   );
 }
