@@ -1,4 +1,4 @@
-import { useMutationWithErrors } from '@monorepo/apollo';
+import { useMutation } from '@apollo/client/react';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import {
   BasicInput,
@@ -24,7 +24,7 @@ export default function HMISLoginForm() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const [hmisLogin] = useMutationWithErrors(HmisLoginDocument);
+  const [hmisLogin] = useMutation(HmisLoginDocument);
   const { refetchUser } = useUser();
 
   const onSubmit = useCallback(async () => {
@@ -35,22 +35,29 @@ export default function HMISLoginForm() {
     setErrorMsg('');
     setSubmitting(true);
     try {
-      const { data, errors } = await hmisLogin({
+      const { data, error } = await hmisLogin({
         variables: { email, password },
       });
-      if (errors?.length)
-        throw new Error(errors.map((e) => e.message).join('; '));
 
       const res = data?.hmisLogin;
       if (!res) {
         console.error('No response from server');
         return;
       }
+      if (error) {
+        console.error(error.message);
+        throw new Error('Sorry, login failed.');
+      }
+      if (res.__typename === 'HmisLoginError') {
+        console.error(res.message);
+        throw new Error('Sorry, login failed.');
+      }
       if (res.__typename === 'UserType') {
         await refetchUser();
         await persistOnSuccessfulSignIn(email);
         return;
       }
+      throw new Error();
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : 'Login failed');
     } finally {

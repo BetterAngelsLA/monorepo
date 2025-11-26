@@ -1,5 +1,4 @@
-import { useQuery } from '@apollo/client/react';
-import { useMutationWithErrors } from '@monorepo/apollo';
+import { useMutation, useQuery } from '@apollo/client/react';
 import {
   Colors,
   FontSizes,
@@ -26,7 +25,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
     variables: { id: noteId },
     fetchPolicy: 'network-only',
   });
-  const [updateNote, { error }] = useMutationWithErrors(UpdateNoteDocument);
+  const [updateNote] = useMutation(UpdateNoteDocument);
   const [autoNote, setAutoNote] = useState<string>('');
   const [publicNote, setPublicNote] = useState<string>('');
   const [userChange, setUserChange] = useState(false);
@@ -40,7 +39,7 @@ export default function PublicNote({ noteId }: { noteId: string }) {
       if (!noteId) return;
 
       try {
-        const { data } = await updateNote({
+        const { data, error } = await updateNote({
           variables: {
             data: {
               id: noteId,
