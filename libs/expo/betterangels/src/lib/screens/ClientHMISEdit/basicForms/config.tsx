@@ -1,6 +1,5 @@
-import { ZodType } from 'zod';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
-import { THmisFormSectionKey, TSectionConfig } from '../types';
+import { THmisFormSectionKey, TSectionConfigRecord } from '../types';
 import {
   DemographicInfoFormHmis,
   DemographicInfoFormSchema,
@@ -47,7 +46,7 @@ export const hmisFormConfig = {
     dataMapper: mapClientToPersonalInfoSchema,
   },
 } as const satisfies Partial<
-  Record<ClientProfileSectionEnum, TSectionConfig<ZodType<any, any, any>>>
+  Record<ClientProfileSectionEnum, TSectionConfigRecord>
 >;
 
 export function parseAsSectionKeyHMIS(

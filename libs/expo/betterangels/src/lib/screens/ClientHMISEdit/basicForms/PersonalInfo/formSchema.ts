@@ -41,8 +41,15 @@ export const PersonalInfoFormSchema = z.object({
 });
 
 export const PersonalInfoFormSchemaOut = PersonalInfoFormSchema.transform(
-  ({ birthDate, preferredLanguage, livingSituation, ...rest }) => {
-    let formattedDate;
+  ({
+    birthDate,
+    preferredLanguage,
+    livingSituation,
+    dobQuality,
+    veteran,
+    ...rest
+  }) => {
+    let formattedDate: string | undefined = undefined;
 
     if (birthDate instanceof Date && !Number.isNaN(birthDate.getTime())) {
       formattedDate = format(birthDate, 'yyyy-MM-dd');
@@ -53,6 +60,8 @@ export const PersonalInfoFormSchemaOut = PersonalInfoFormSchema.transform(
       birthDate: formattedDate,
       preferredLanguage: preferredLanguage === '' ? null : preferredLanguage,
       livingSituation: livingSituation === '' ? null : livingSituation,
+      dobQuality: dobQuality === '' ? null : dobQuality,
+      veteran: veteran === '' ? null : veteran,
     };
   }
 );

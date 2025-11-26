@@ -1,30 +1,23 @@
+import { CombinedGraphQLErrors } from '@apollo/client';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
-import { GraphQLError } from 'graphql';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
-  extractResponseExtensions,
   HmisClientProfileType,
   UpdateHmisClientProfileInput,
+  extractExtensionFieldErrors,
+  extractOperationFieldErrors,
 } from '../../apollo';
-import { applyManualFormErrors } from '../../errors';
+import { applyManualFormErrors, applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
 import { HmisClientProfileDocument } from '../ClientHMIS/__generated__/getHMISClient.generated';
-import {
-  UpdateHmisClientProfileDocument,
-  UpdateHmisClientProfileMutation,
-} from './__generated__/updateHmisClient.generated';
+import { UpdateHmisClientProfileDocument } from './__generated__/updateHmisClient.generated';
 import { hmisFormConfig, parseAsSectionKeyHMIS } from './basicForms/config';
 import { toUpdateHmisClientProfileInput } from './toHMISClientProfileInputs';
-
-type MutationExecResult<TData> = {
-  data?: TData | null;
-  errors?: readonly GraphQLError[];
-};
 
 type TProps = {
   id: string;
@@ -56,6 +49,7 @@ export function ClientHMISEdit(props: TProps) {
   } = hmisFormConfig[sectionName];
 
   type TFormValues = z.input<typeof sectionSchema>;
+  const sectionFormKeys = Object.keys(sectionSchema.shape);
 
   const [updateHmisClientProfileMutation, { loading: isUpdating }] =
     useMutation(UpdateHmisClientProfileDocument);
@@ -105,59 +99,61 @@ export function ClientHMISEdit(props: TProps) {
         return;
       }
 
-      const formValues = schemaOutput ? schemaOutput.parse(values) : values;
+      const formValues = schemaOutput
+        ? schemaOutput.parse(values)
+        : (values as Partial<UpdateHmisClientProfileInput>);
 
-      const inputs = toUpdateHmisClientProfileInput(
-        client,
-        formValues as UpdateHmisClientProfileInput
-      );
+      const inputs = toUpdateHmisClientProfileInput(client, formValues);
 
       if (!inputs) {
         return;
       }
 
-      const updateResponse = (await updateHmisClientProfileMutation({
+      const { data, error } = await updateHmisClientProfileMutation({
         variables: {
           data: inputs,
         },
         errorPolicy: 'all',
-        refetchQueries: [
-          { query: HmisClientProfileDocument, variables: { id } },
-        ],
-        awaitRefetchQueries: true,
-      })) as MutationExecResult<UpdateHmisClientProfileMutation>;
+      });
 
-      if (!updateResponse) {
-        throw new Error('missing updateHmisClientProfile response');
-      }
+      // handle OperationInfo validation errors
+      const opsValidationErrors = extractOperationFieldErrors({
+        data,
+        dataKey: 'updateHmisClientProfile',
+        fieldNames: sectionFormKeys,
+      });
 
-      const errorViaExtensions = extractResponseExtensions(updateResponse);
-
-      if (errorViaExtensions) {
-        applyManualFormErrors(errorViaExtensions, methods.setError);
+      if (opsValidationErrors.length) {
+        applyOperationFieldErrors(opsValidationErrors, methods.setError);
 
         return;
       }
 
-      const otherErrors = updateResponse.errors?.[0];
+      // handle GQL extension validation errors
+      if (CombinedGraphQLErrors.is(error)) {
+        const fieldErrors = extractExtensionFieldErrors(error, sectionFormKeys);
 
-      if (otherErrors) {
-        throw otherErrors.message;
+        if (fieldErrors?.length) {
+          applyManualFormErrors(fieldErrors, methods.setError);
+
+          return;
+        }
       }
 
-      const result = updateResponse.data?.updateHmisClientProfile;
-
-      if (result?.__typename === 'HmisClientProfileType') {
-        await refetch();
-
-        router.dismissTo(`/client/${result.id}`);
-      } else {
-        console.log('Unexpected result: ', result);
-        showSnackbar({
-          message: `Something went wrong!`,
-          type: 'error',
-        });
+      // throw unahandled errors
+      if (error) {
+        throw error;
       }
+
+      const result = data?.updateHmisClientProfile;
+
+      if (result?.__typename !== 'HmisClientProfileType') {
+        throw new Error(`Unexpected result: ${result}`);
+      }
+
+      await refetch();
+
+      router.dismissTo(`/client/${result.id}`);
     } catch (error) {
       console.error('updateHmisClientProfileMutation error:', error);
 
