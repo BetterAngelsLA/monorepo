@@ -5,7 +5,6 @@ import strawberry
 
 @strawberry.enum
 class TaskScopeEnum(enum.StrEnum):
-    ALL = "ALL"
     HMIS_NOTE = "HMIS_NOTE"
     STANDARD_NOTE = "STANDARD_NOTE"
     GENERAL = "GENERAL"

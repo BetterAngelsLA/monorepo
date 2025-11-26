@@ -55,6 +55,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
+            "hmisNote": None,
             "note": {"pk": str(self.note.pk)},
             "organization": {
                 "id": str(self.org.pk),
@@ -94,6 +95,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "firstName": self.org_1_case_manager_1.first_name,
                 "lastName": self.org_1_case_manager_1.last_name,
             },
+            "hmisNote": None,
             "note": None,
             "organization": {
                 "id": str(self.org.pk),

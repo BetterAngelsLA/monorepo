@@ -48,7 +48,7 @@ class TaskFilter:
 
     @strawberry_django.filter_field(resolve_value=True)
     def scopes(self, info: Info, value: list[TaskScopeEnum], prefix: str) -> Q:
-        if TaskScopeEnum.ALL in value:
+        if not value:
             return Q()
 
         conditions = []
@@ -60,10 +60,6 @@ class TaskFilter:
             conditions.append(Q(note__isnull=False))
 
         if TaskScopeEnum.GENERAL in value:
-            conditions.append(Q(note__isnull=True, hmis_note__isnull=True))
-
-        if not conditions:
-            conditions.append(Q(note__isnull=False))
             conditions.append(Q(note__isnull=True, hmis_note__isnull=True))
 
         return reduce(operator.or_, conditions)
