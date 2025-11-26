@@ -3,10 +3,9 @@ from unittest.mock import ANY
 from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
-from hmis.models import HmisNote
 from model_bakery import baker
 from notes.models import Note
-from tasks.enums import TaskScopeEnum, TaskStatusEnum
+from tasks.enums import TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 
