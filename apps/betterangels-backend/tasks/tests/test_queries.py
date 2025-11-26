@@ -3,9 +3,10 @@ from unittest.mock import ANY
 from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
+from hmis.models import HmisNote
 from model_bakery import baker
 from notes.models import Note
-from tasks.enums import TaskStatusEnum
+from tasks.enums import TaskScopeEnum, TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 
@@ -218,3 +219,99 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
+
+    # --------------------------------------------------------------------------
+    # Scope / HMIS Filters
+    # --------------------------------------------------------------------------
+
+    def test_tasks_query_scope_filter_default(self) -> None:
+        """
+        Verify Default Behavior:
+        If scopes is NOT provided, it should default to [STANDARD_NOTE, GENERAL].
+        It should HIDE HMIS tasks.
+        """
+        # 1. Create an HMIS Task (Should be hidden)
+        hmis_note = baker.make(HmisNote)
+        hmis_task = self.create_task_fixture({"summary": "HMIS Task", "hmisNote": str(hmis_note.pk)})["data"][
+            "createTask"
+        ]
+
+        # 2. Create a General Task (Should be visible)
+        general_task = self.create_task_fixture({"summary": "General Task"})["data"]["createTask"]
+
+        # 3. Query without filters
+        response = self.execute_graphql(self.get_tasks_query("id summary"))
+        results = response["data"]["tasks"]["results"]
+        ids = [t["id"] for t in results]
+
+        # Assertions
+        self.assertIn(self.task["id"], ids, "Standard Note Task should be visible by default")
+        self.assertIn(general_task["id"], ids, "General Task should be visible by default")
+        self.assertNotIn(hmis_task["id"], ids, "HMIS Task should be HIDDEN by default")
+
+    def test_tasks_query_scope_filter_hmis_note(self) -> None:
+        """
+        Verify filtering by HMIS_NOTE returns only HMIS tasks.
+        """
+        hmis_note = baker.make(HmisNote)
+        hmis_task = self.create_task_fixture({"summary": "HMIS Task", "hmisNote": str(hmis_note.pk)})["data"][
+            "createTask"
+        ]
+
+        # Create a general task just to ensure it's filtered out
+        general_task = self.create_task_fixture({"summary": "General Task"})["data"]["createTask"]
+
+        filters = {"scopes": [TaskScopeEnum.HMIS_NOTE.name]}
+        variables = {"filters": filters}
+
+        response = self.execute_graphql(self.get_tasks_query("id summary"), variables)
+        results = response["data"]["tasks"]["results"]
+        ids = [t["id"] for t in results]
+
+        self.assertIn(hmis_task["id"], ids)
+        self.assertNotIn(self.task["id"], ids)
+        self.assertNotIn(general_task["id"], ids)
+
+    def test_tasks_query_scope_filter_general(self) -> None:
+        """
+        Verify filtering by GENERAL returns only unlinked tasks.
+        """
+        general_task = self.create_task_fixture({"summary": "General Task"})["data"]["createTask"]
+
+        # Create HMIS task to ensure filtered out
+        hmis_note = baker.make(HmisNote)
+        hmis_task = self.create_task_fixture({"summary": "HMIS Task", "hmisNote": str(hmis_note.pk)})["data"][
+            "createTask"
+        ]
+
+        filters = {"scopes": [TaskScopeEnum.GENERAL.name]}
+        variables = {"filters": filters}
+
+        response = self.execute_graphql(self.get_tasks_query("id summary"), variables)
+        results = response["data"]["tasks"]["results"]
+        ids = [t["id"] for t in results]
+
+        self.assertIn(general_task["id"], ids)
+        self.assertNotIn(self.task["id"], ids)
+        self.assertNotIn(hmis_task["id"], ids)
+
+    def test_tasks_query_scope_filter_all(self) -> None:
+        """
+        Verify filtering by ALL returns everything.
+        """
+        general_task = self.create_task_fixture({"summary": "General Task"})["data"]["createTask"]
+        hmis_note = baker.make(HmisNote)
+        hmis_task = self.create_task_fixture({"summary": "HMIS Task", "hmisNote": str(hmis_note.pk)})["data"][
+            "createTask"
+        ]
+
+        filters = {"scopes": [TaskScopeEnum.ALL.name]}
+        variables = {"filters": filters}
+
+        response = self.execute_graphql(self.get_tasks_query("id summary"), variables)
+        results = response["data"]["tasks"]["results"]
+        ids = [t["id"] for t in results]
+
+        self.assertIn(self.task["id"], ids)
+        self.assertIn(general_task["id"], ids)
+        self.assertIn(hmis_task["id"], ids)

@@ -5,6 +5,7 @@ from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import ignore_warnings
+from hmis.models import HmisNote
 from model_bakery import baker
 from notes.models import Note
 from tasks.enums import TaskStatusEnum
@@ -19,6 +20,7 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self.graphql_client.force_login(self.org_1_case_manager_1)
         self.org = self.org_1_case_manager_1.organizations_organization.first()
         self.note = baker.make(Note, organization=self.org)
+        self.hmis_note = baker.make(HmisNote)
 
     @time_machine.travel("07-31-2025 10:11:12", tick=False)
     def test_create_task_mutation(self) -> None:
@@ -112,3 +114,61 @@ class TaskMutationTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         with self.assertRaises(Task.DoesNotExist):
             Task.objects.get(id=task_id)
             Task.objects.get(id=task_id)
+
+    @time_machine.travel("07-31-2025 10:11:12", tick=False)
+    def test_create_task_mutation_with_hmis_note(self) -> None:
+        """
+        Verify we can create a task linked specifically to an HMIS Note.
+        """
+        variables = {
+            "description": "hmis task description",
+            "hmisNote": str(self.hmis_note.pk),
+            "summary": "hmis task summary",
+            "team": SelahTeamEnum.WDI_ON_SITE.name,
+        }
+
+        response = self.create_task_fixture(variables)
+        created_task = response["data"]["createTask"]
+
+        # 1. Assert Response Structure
+        self.assertEqual(created_task["summary"], "hmis task summary")
+        self.assertEqual(created_task["description"], "hmis task description")
+        self.assertEqual(created_task["team"], SelahTeamEnum.WDI_ON_SITE.name)
+        self.assertEqual(created_task["status"], TaskStatusEnum.TO_DO.name)
+        self.assertEqual(created_task["hmisNote"]["pk"], str(self.hmis_note.pk))
+
+    def test_create_task_fails_when_linking_both_note_types(self) -> None:
+        """
+        Verify the API raises a ValidationError if we try to link
+        both a Regular Note AND an HMIS Note.
+        """
+        variables = {
+            "summary": "Illegal Task",
+            "note": str(self.note.pk),
+            "hmisNote": str(self.hmis_note.pk),
+        }
+
+        response = self.create_task_fixture(variables)
+
+        payload = response["data"]["createTask"]
+        self.assertIsNotNone(payload["messages"])
+        self.assertTrue(len(payload["messages"]) > 0)
+        error_message = payload["messages"][0]["message"]
+        self.assertIn("task_single_parent_check", error_message)
+        self.assertIn("violated", error_message)
+
+    def test_create_general_task_unlinked(self) -> None:
+        """
+        Verify we can still create a general task (linked to neither).
+        """
+        variables = {
+            "summary": "General To-Do",
+            # No note, No hmisNote
+        }
+
+        response = self.create_task_fixture(variables)
+        created_task = response["data"]["createTask"]
+
+        task_db = Task.objects.get(id=created_task["id"])
+        self.assertIsNone(task_db.note)
+        self.assertIsNone(task_db.hmis_note)
