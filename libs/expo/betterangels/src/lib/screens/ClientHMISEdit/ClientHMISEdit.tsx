@@ -7,9 +7,9 @@ import { useEffect, useLayoutEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import {
+  extractResponseExtensions,
   HmisClientProfileType,
   UpdateHmisClientProfileInput,
-  extractResponseExtensions,
 } from '../../apollo';
 import { applyManualFormErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';

@@ -1,18 +1,15 @@
 interactions:
 - request:
-    body: '{"clientNote": {"id": "56", "hmis_id": "479", "client_hmis_id": "388",
-      "hmis_client_profile_id": "66", "title": "updated note title", "note": "updated
-      note note", "date": "12/12/2012", "ref_client_program": "525"}, "fields": "messages.field,
-      last_updated, date, title, note, hmis_client_profile_id, client_hmis_id, id,
-      messages.kind, created_by.id, messages.message, hmis_id, added_date, ref_client_program,
-      client.id"}'
+    body: '{"clientNote": {"id": "141", "title": "updated note title", "note": "updated
+      note note", "date": "12/12/2012"}, "fields": "clientProgram.program.id,messages.message,added_date,note,messages.kind,title,messages.field,id,ref_client_program,client_program.program.name,clientProgram.program.name,client_program.program.id,client_program.id,date,clientProgram.id,last_updated"}'
     headers: {}
     method: PUT
     uri: ''
   response:
     body:
-      string: '{"id":479,"title":"updated note title","note":"updated note note","added_date":"2025-11-13
-        00:34:40","last_updated":"2025-11-13 00:58:42","ref_client_program":525,"date":"2012-12-12","client":{"id":388}}'
+      string: '{"id":521,"title":"updated note title","note":"updated note note","added_date":"2025-11-24
+        18:01:19","last_updated":"2025-11-24 18:04:24","ref_client_program":525,"date":"2012-12-12","clientProgram":{"id":525,"program":{"id":2,"name":"Housing
+        Program 01"}}}'
     headers: {}
     status:
       code: 200

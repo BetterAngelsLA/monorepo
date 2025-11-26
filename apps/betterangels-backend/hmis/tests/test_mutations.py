@@ -63,14 +63,20 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
 
         expected = {
             "id": ANY,
-            "hmisId": "471",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisId": "517",
+            "hmisClientProfile": {
+                "id": str(self.hmis_client_profile.pk),
+                "hmisId": self.hmis_client_profile.hmis_id,
+                "firstName": self.hmis_client_profile.first_name,
+                "lastName": self.hmis_client_profile.last_name,
+            },
             "title": "pitle",
             "note": "pote",
             "date": "2010-10-10",
-            "addedDate": "2025-11-13T07:58:27+00:00",
-            "lastUpdated": "2025-11-13T07:58:27+00:00",
+            "addedDate": "2025-11-25T01:37:07+00:00",
+            "lastUpdated": "2025-11-25T01:37:07+00:00",
             "refClientProgram": None,
+            "clientProgram": None,
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
 
@@ -83,21 +89,33 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "title": "prog note title",
             "note": "prog note note",
             "date": "2011-11-11",
-            "refClientProgram": 525,
+            "refClientProgram": "525",
         }
         response = self._create_hmis_note_fixture(variables)
         note = response["data"]["createHmisNote"]
 
         expected = {
             "id": ANY,
-            "hmisId": "480",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisId": "521",
+            "hmisClientProfile": {
+                "id": str(self.hmis_client_profile.pk),
+                "hmisId": self.hmis_client_profile.hmis_id,
+                "firstName": self.hmis_client_profile.first_name,
+                "lastName": self.hmis_client_profile.last_name,
+            },
             "title": "prog note title",
             "note": "prog note note",
             "date": "2011-11-11",
-            "addedDate": "2025-11-13T08:35:34+00:00",
-            "lastUpdated": "2025-11-13T08:35:34+00:00",
-            "refClientProgram": 525,
+            "addedDate": "2025-11-25T02:01:19+00:00",
+            "lastUpdated": "2025-11-25T02:01:19+00:00",
+            "refClientProgram": "525",
+            "clientProgram": {
+                "id": "525",
+                "program": {
+                    "id": "2",
+                    "name": "Housing Program 01",
+                },
+            },
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
 
@@ -107,7 +125,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
     def test_update_hmis_note_mutation(self) -> None:
         hmis_note = baker.make(
             HmisNote,
-            hmis_id="479",
+            hmis_id="521",
             hmis_client_profile_id=self.hmis_client_profile.pk,
             title="prog note title",
             note="prog note note",
@@ -117,7 +135,6 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
 
         variables = {
             "id": str(hmis_note.pk),
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
             "title": "updated note title",
             "note": "updated note note",
             "date": "2012-12-12",
@@ -127,14 +144,26 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
 
         expected = {
             "id": ANY,
-            "hmisId": "479",
-            "hmisClientProfileId": str(self.hmis_client_profile.pk),
+            "hmisId": "521",
+            "hmisClientProfile": {
+                "id": str(self.hmis_client_profile.pk),
+                "hmisId": self.hmis_client_profile.hmis_id,
+                "firstName": self.hmis_client_profile.first_name,
+                "lastName": self.hmis_client_profile.last_name,
+            },
             "title": "updated note title",
             "note": "updated note note",
             "date": "2012-12-12",
-            "addedDate": "2025-11-13T08:34:40+00:00",
-            "lastUpdated": "2025-11-13T08:58:42+00:00",
-            "refClientProgram": 525,
+            "addedDate": "2025-11-25T02:01:19+00:00",
+            "lastUpdated": "2025-11-25T02:04:24+00:00",
+            "refClientProgram": "525",
+            "clientProgram": {
+                "id": "525",
+                "program": {
+                    "id": "2",
+                    "name": "Housing Program 01",
+                },
+            },
             "createdBy": {"id": str(self.org_1_case_manager_1.pk)},
         }
 
