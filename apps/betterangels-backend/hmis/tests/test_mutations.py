@@ -29,6 +29,7 @@ from hmis.enums import (
 from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
 from model_bakery import baker
+from notes.models import OrganizationService, ServiceRequest
 from test_utils.vcr_config import scrubbed_vcr
 
 LOGIN_MUTATION = """
@@ -168,6 +169,42 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         }
 
         self.assertEqual(expected, note)
+
+    def test_create_hmis_note_service_request_mutation(self) -> None:
+        bag_svc = OrganizationService.objects.get(label="Bag(s)")
+        hmis_note = baker.make(
+            HmisNote,
+            hmis_id="479",
+            hmis_client_profile_id=self.hmis_client_profile.pk,
+            title="prog note title",
+            note="prog note note",
+            date="2011-11-11",
+            created_by=self.org_1_case_manager_1,
+        )
+        variables = {
+            "serviceId": str(bag_svc.pk),
+            "hmisNoteId": str(hmis_note.id),
+            "serviceRequestType": "PROVIDED",
+        }
+
+        initial_org_service_count = OrganizationService.objects.count()
+
+        response = self._create_hmis_note_service_request_fixture(variables)
+        self.assertEqual(initial_org_service_count, OrganizationService.objects.count())
+
+        response_service_request = response["data"]["createHmisNoteServiceRequest"]
+        service_request = ServiceRequest.objects.get(id=response_service_request["id"])
+        hmis_note = HmisNote.objects.get(id=hmis_note.id)
+
+        assert service_request.service
+        self.assertIn(service_request, hmis_note.provided_services.all())
+
+        self.assertEqual(response_service_request["service"]["id"], str(bag_svc.pk))
+        self.assertEqual(response_service_request["service"]["label"], bag_svc.label)
+
+        self.assertEqual(service_request.service.pk, bag_svc.pk)
+        self.assertEqual(service_request.service.label, bag_svc.label)
+        self.assertEqual(service_request.service.category, bag_svc.category)
 
 
 @override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
