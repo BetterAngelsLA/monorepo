@@ -6,6 +6,7 @@ import {
   demographicInfoFormEmptyState,
   mapClientToDemographicSchema,
 } from './DemographicInfo';
+import { DemographicInfoFormSchemaOut } from './DemographicInfo/formSchema';
 import {
   FullNameFormHmis,
   FullNameFormSchema,
@@ -33,7 +34,7 @@ export const hmisFormConfig = {
     title: 'Edit Demographic Info',
     Form: DemographicInfoFormHmis,
     schema: DemographicInfoFormSchema,
-    schemaOutput: undefined,
+    schemaOutput: DemographicInfoFormSchemaOut,
     emptyState: demographicInfoFormEmptyState,
     dataMapper: mapClientToDemographicSchema,
   },
