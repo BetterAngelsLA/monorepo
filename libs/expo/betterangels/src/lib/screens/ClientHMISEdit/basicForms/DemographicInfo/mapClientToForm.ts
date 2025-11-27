@@ -12,7 +12,15 @@ export function mapClientToDemographicSchema(
     raceEthnicity,
     additionalRaceEthnicityDetail,
     genderIdentityText,
-  } = client || {};
+    placeOfBirth,
+    physicalDescription,
+    heightInInches,
+    pronouns,
+    eyeColor,
+    hairColor,
+    maritalStatus,
+    adaAccommodation,
+  } = client;
 
   return {
     gender: gender ?? emptyState.gender,
@@ -20,5 +28,16 @@ export function mapClientToDemographicSchema(
     additionalRaceEthnicityDetail:
       additionalRaceEthnicityDetail ?? emptyState.additionalRaceEthnicityDetail,
     genderIdentityText: genderIdentityText ?? emptyState.genderIdentityText,
+    placeOfBirth: placeOfBirth ?? emptyState.placeOfBirth,
+    physicalDescription: physicalDescription ?? emptyState.physicalDescription,
+    pronouns: pronouns ?? emptyState.pronouns,
+    eyeColor: eyeColor ?? emptyState.eyeColor,
+    hairColor: hairColor ?? emptyState.hairColor,
+    maritalStatus: maritalStatus ?? emptyState.maritalStatus,
+    adaAccommodation: adaAccommodation ?? emptyState.adaAccommodation,
+    heightInInches:
+      typeof heightInInches === 'number'
+        ? String(heightInInches)
+        : emptyState.heightInInches,
   };
 }

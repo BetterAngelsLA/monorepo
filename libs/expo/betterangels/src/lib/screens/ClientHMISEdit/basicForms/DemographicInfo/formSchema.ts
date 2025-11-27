@@ -38,7 +38,12 @@ export const DemographicInfoFormSchema = z
     // BA fields
     placeOfBirth: z.string(),
     physicalDescription: z.string(),
-    heightInInches: z.number().optional(),
+    heightInInches: z
+      .union([
+        z.string().trim().regex(/^\d+$/, 'Invalid number'),
+        z.literal(''),
+      ])
+      .optional(), // optional string number
     pronouns: z.enum(PronounEnum).or(z.literal('')),
     eyeColor: z.enum(EyeColorEnum).or(z.literal('')),
     hairColor: z.enum(HairColorEnum).or(z.literal('')),
@@ -61,13 +66,24 @@ export const DemographicInfoFormSchema = z
   });
 
 export const DemographicInfoFormSchemaOut = DemographicInfoFormSchema.transform(
-  ({ pronouns, eyeColor, hairColor, maritalStatus, ...rest }) => {
+  ({
+    pronouns,
+    eyeColor,
+    hairColor,
+    maritalStatus,
+    heightInInches,
+    ...rest
+  }) => {
     return {
       ...rest,
       pronouns: pronouns === '' ? null : pronouns,
       eyeColor: eyeColor === '' ? null : eyeColor,
       hairColor: hairColor === '' ? null : hairColor,
       maritalStatus: maritalStatus === '' ? null : maritalStatus,
+      heightInInches:
+        typeof heightInInches === 'string' && heightInInches !== ''
+          ? Number(heightInInches)
+          : null,
     };
   }
 );

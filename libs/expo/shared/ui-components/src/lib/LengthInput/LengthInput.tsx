@@ -1,7 +1,8 @@
 import { Spacings } from '@monorepo/expo/shared/static';
-import { FormFieldError, Input } from '@monorepo/expo/shared/ui-components';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import FormFieldError from '../FormFieldError';
+import { Input } from '../Input';
 
 export type TFeetInchesValue = {
   feet: string;
@@ -9,7 +10,6 @@ export type TFeetInchesValue = {
 };
 
 type LengthInputProps = {
-  label?: string;
   value?: TFeetInchesValue;
   onChange?: (nextValue: TFeetInchesValue) => void;
   error?: string;
@@ -18,52 +18,70 @@ type LengthInputProps = {
 const EMPTY_VALUE: TFeetInchesValue = { feet: '', inches: '' };
 
 export function LengthInput(props: LengthInputProps) {
-  const { label, value, onChange, error } = props;
+  const { value, onChange, error } = props;
 
-  // Internal state so the component can be used in both controlled and uncontrolled modes.
-  const [internalValue, setInternalValue] = useState<TFeetInchesValue>(
-    value ?? EMPTY_VALUE
-  );
+  const isControlled = value !== undefined;
+  const [internalValue, setInternalValue] =
+    useState<TFeetInchesValue>(EMPTY_VALUE);
 
-  // If a controlled value is provided and it changes, sync internal state.
-  useEffect(() => {
-    if (!value) {
-      return;
+  const currentValue = isControlled ? value! : internalValue;
+
+  function normalizeInches(next: TFeetInchesValue): TFeetInchesValue {
+    const inchesText = next.inches.trim();
+
+    // If inches is blank or non-numeric, just leave as-is.
+    const inchesNumber = Number(inchesText);
+
+    if (inchesText === '' || Number.isNaN(inchesNumber)) {
+      return next;
     }
 
-    const hasChanged =
-      value.feet !== internalValue.feet ||
-      value.inches !== internalValue.inches;
-
-    if (hasChanged) {
-      setInternalValue(value);
+    if (inchesNumber < 12) {
+      return next;
     }
-  }, [value, internalValue.feet, internalValue.inches]);
 
-  function handleFeetChange(nextFeet: string) {
-    const nextValue: TFeetInchesValue = {
-      feet: nextFeet,
-      inches: internalValue.inches,
+    const feetText = next.feet.trim();
+    const feetNumber = Number(feetText);
+    const extraFeet = Math.floor(inchesNumber / 12);
+    const remainingInches = inchesNumber % 12;
+
+    const baseFeet =
+      feetText === '' || Number.isNaN(feetNumber) ? 0 : feetNumber;
+
+    return {
+      feet: String(baseFeet + extraFeet),
+      inches: String(remainingInches),
     };
+  }
 
-    setInternalValue(nextValue);
+  function updateValue(next: TFeetInchesValue) {
+    const normalized = normalizeInches(next);
+
+    if (!isControlled) {
+      setInternalValue(normalized);
+    }
 
     if (onChange) {
-      onChange(nextValue);
+      onChange(normalized);
     }
   }
 
+  function handleFeetChange(nextFeet: string) {
+    const next: TFeetInchesValue = {
+      feet: nextFeet,
+      inches: currentValue.inches,
+    };
+
+    updateValue(next);
+  }
+
   function handleInchesChange(nextInches: string) {
-    const nextValue: TFeetInchesValue = {
-      feet: internalValue.feet,
+    const next: TFeetInchesValue = {
+      feet: currentValue.feet,
       inches: nextInches,
     };
 
-    setInternalValue(nextValue);
-
-    if (onChange) {
-      onChange(nextValue);
-    }
+    updateValue(next);
   }
 
   return (
@@ -75,23 +93,25 @@ export function LengthInput(props: LengthInputProps) {
             inputMode="numeric"
             label="Feet"
             placeholder="Feet"
-            value={internalValue.feet}
+            value={currentValue.feet}
             onChangeText={handleFeetChange}
             error={!!error}
           />
         </View>
+
         <View style={styles.column}>
           <Input
             maxLength={2}
             inputMode="numeric"
             label="Inches"
             placeholder="Inches"
-            value={internalValue.inches}
+            value={currentValue.inches}
             onChangeText={handleInchesChange}
             error={!!error}
           />
         </View>
       </View>
+
       {error && <FormFieldError message={error} />}
     </View>
   );

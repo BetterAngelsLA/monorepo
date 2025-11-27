@@ -1,73 +1,97 @@
-import {
-  feetInchesToInches,
-  inchesToFeetInches,
-} from '@monorepo/expo/shared/ui-components';
 import { useEffect, useState } from 'react';
+import { feetInchesToInches, inchesToFeetInches } from '../Length';
 import { LengthInput, TFeetInchesValue } from './LengthInput';
 
 type LengthInputInchesProps = {
-  label?: string;
   /**
-   * The total length in inches (for example, 66 for 5'6").
-   * Can be undefined when no height is set.
+   * The total length in inches as a string (for example, "66" for 5'6").
+   * Can be undefined or empty when no height is set.
    */
-  valueInches?: number | null;
+  valueInches?: string;
   /**
-   * Called with the total inches when the user changes the input.
+   * Called with the total inches as a string when the user changes the input.
    * Will receive undefined if the input is effectively empty.
    */
-  onChangeInches?: (nextInches: number | undefined) => void;
+  onChangeInches?: (nextInches: string | undefined) => void;
   error?: string;
 };
 
+const EMPTY_FEET_INCHES: TFeetInchesValue = { feet: '', inches: '' };
+
 export function LengthInputInches(props: LengthInputInchesProps) {
-  const { label, valueInches, onChangeInches, error } = props;
+  const { valueInches, onChangeInches, error } = props;
 
-  const [internalValue, setInternalValue] = useState<TFeetInchesValue>(() => {
-    if (!valueInches) {
-      return { feet: '', inches: '' };
-    }
+  const [internalValue, setInternalValue] =
+    useState<TFeetInchesValue>(EMPTY_FEET_INCHES);
 
-    return inchesToFeetInches(valueInches);
-  });
-
-  // Sync from external inches value → feet/inches when it changes.
+  /**
+   * Sync from the external "total inches" → feet/inches.
+   *
+   * Behavior:
+   * - If parent clears the value (undefined / ''), we clear the local inputs.
+   * - If parent provides a number *and* our local inputs are still empty,
+   *   we adopt the parent's value (initial prefill / form reset).
+   * - After the user starts typing, internalValue is the source of truth
+   *   and we do NOT overwrite it from valueInches on every change.
+   */
   useEffect(() => {
-    if (!valueInches) {
-      setInternalValue({ feet: '', inches: '' });
-      return;
-    }
+    setInternalValue((previousValue) => {
+      // Reset from parent
+      if (valueInches === undefined || valueInches === '') {
+        const alreadyEmpty =
+          previousValue.feet === '' && previousValue.inches === '';
 
-    const next = inchesToFeetInches(valueInches);
+        if (alreadyEmpty) {
+          return previousValue;
+        }
 
-    const hasChanged =
-      next.feet !== internalValue.feet || next.inches !== internalValue.inches;
+        return EMPTY_FEET_INCHES;
+      }
 
-    if (hasChanged) {
-      setInternalValue(next);
-    }
-  }, [valueInches, internalValue.feet, internalValue.inches]);
+      const valueInchesNumber = Number(valueInches);
 
-  function handleFeetInchesChange(next: TFeetInchesValue) {
-    setInternalValue(next);
+      if (Number.isNaN(valueInchesNumber)) {
+        return previousValue;
+      }
 
+      const next = inchesToFeetInches(valueInchesNumber);
+
+      const previousIsEmpty =
+        previousValue.feet === '' && previousValue.inches === '';
+
+      // Only adopt the parent-provided inches if we have not yet
+      // accepted any user edits (initial load / prefill).
+      if (!previousIsEmpty) {
+        return previousValue;
+      }
+
+      return next;
+    });
+  }, [valueInches]);
+
+  function emitChange(next: TFeetInchesValue) {
     if (!onChangeInches) {
       return;
     }
 
     const totalInches = feetInchesToInches(next.feet, next.inches);
 
-    if (!totalInches) {
+    if (totalInches === undefined || totalInches === null) {
       onChangeInches(undefined);
+
       return;
     }
 
-    onChangeInches(totalInches);
+    onChangeInches(String(totalInches));
+  }
+
+  function handleFeetInchesChange(next: TFeetInchesValue) {
+    setInternalValue(next);
+    emitChange(next);
   }
 
   return (
     <LengthInput
-      label={label}
       value={internalValue}
       onChange={handleFeetInchesChange}
       error={error}
