@@ -10,6 +10,7 @@ import { sanitizeHtmlString } from '@monorepo/expo/shared/utils';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
+// Ensure this path is correct for your project structure
 import { MainScrollContainer } from '../../../ui-components';
 import HmisProgramNoteTitle from './HmisProgramNoteTitle';
 import { HmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
@@ -21,7 +22,7 @@ type TProps = {
 
 export function HmisProgramNoteView(props: TProps) {
   const { id, clientId } = props;
-  const { data, error, loading } = useQuery(HmisNoteDocument, {
+  const { data, error, loading, refetch } = useQuery(HmisNoteDocument, {
     variables: { id },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -53,15 +54,26 @@ export function HmisProgramNoteView(props: TProps) {
     return <LoadingView />;
   }
 
+  // FIX: Log the actual error to the console so you can debug the GraphQL failure
   if (error) {
-    throw new Error('Something went wrong. Please try again.');
+    console.error(
+      'HmisProgramNoteView Query Error:',
+      JSON.stringify(error, null, 2)
+    );
+    return (
+      <View style={{ padding: 20 }}>
+        <TextRegular color={Colors.ERROR}>
+          Unable to load note details. See console for errors.
+        </TextRegular>
+      </View>
+    );
   }
 
   if (hmisNote?.__typename !== 'HmisNoteType') {
     return null;
   }
 
-  const { note, hmisClientProfile, clientProgram } = hmisNote;
+  const { note, hmisClientProfile, clientProgram, tasks } = hmisNote;
   const { firstName, lastName } = hmisClientProfile || {};
   const { program } = clientProgram || {};
   const programName = program?.name;
@@ -91,6 +103,15 @@ export function HmisProgramNoteView(props: TProps) {
           </View>
         )}
       </View>
+
+      {/* NEW: Render the Tasks associated with this Note */}
+      {/* <NoteTasks
+        clientProfileId={clientId}
+        noteId={id} // Passing ID puts NoteTasks in "Live Mode"
+        tasks={tasks} // Pass the tasks fetched by HmisNoteDocument
+        refetch={refetch}
+        team={null} // Pass team if available in hmisNote
+      /> */}
     </MainScrollContainer>
   );
 }

@@ -14,5 +14,6 @@ export default function FeatureFlagControlled({
   fallback = null,
 }: TProps): ReactNode {
   const active = useFeatureFlagActive(flag);
+  console.log(active);
   return active ? children : fallback;
 }

@@ -15,11 +15,9 @@ import {
 } from '../../apollo';
 import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
-// Ensure generated file paths are correct
+// Ensure correct paths
 import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
 import { UpdateTaskDocument } from '../TaskForm/__generated__/updateTask.generated';
-
-// FIX: Point to TaskForm component correctly
 import { TaskFormData } from '../TaskForm/TaskForm';
 import NoteTasksModal from './NoteTaskModal';
 
@@ -43,7 +41,6 @@ export default function NoteTasks(props: INoteTasksProps) {
     team,
     onDraftTasksChange,
   } = props;
-
   const { showModalScreen } = useModalScreen();
   const { showSnackbar } = useSnackbar();
 
@@ -54,7 +51,6 @@ export default function NoteTasks(props: INoteTasksProps) {
   const isDraftMode = !noteId;
   const displayTasks = isDraftMode ? draftTasks : serverTasks || [];
 
-  // Sync drafts to parent
   useEffect(() => {
     if (isDraftMode && onDraftTasksChange) {
       onDraftTasksChange(draftTasks);
@@ -65,19 +61,16 @@ export default function NoteTasks(props: INoteTasksProps) {
     data: TaskFormData,
     existingTask?: UpdateTaskInput
   ) => {
-    // 1. DRAFT MODE
     if (isDraftMode) {
-      await new Promise((r) => setTimeout(r, 100)); // UX delay
-
+      await new Promise((r) => setTimeout(r, 100));
       const safeTeam = data.team === '' ? null : data.team;
       const newTask: UpdateTaskInput = {
         id: existingTask?.id || `temp-${Date.now()}`,
         summary: data.summary,
         description: data.description || undefined,
-        status: data.status || TaskStatusEnum.ToDo, // Use string 'OPEN' or TaskStatusEnum.ToDo
+        status: data.status || TaskStatusEnum.ToDo,
         team: safeTeam || team || null,
       };
-
       setDraftTasks((prev) =>
         existingTask
           ? prev.map((t) => (t.id === existingTask.id ? newTask : t))
@@ -85,20 +78,17 @@ export default function NoteTasks(props: INoteTasksProps) {
       );
       return;
     }
-
-    // 2. LIVE MODE (Uncomment when ready to enable live editing)
+    // Live Mode Logic (Uncomment if needed)
     /*
     try {
       if (existingTask?.id) {
         await updateTask({ variables: { data: { ...data, id: existingTask.id } } });
       } else {
-        await createTask({
-          variables: { data: { ...data, clientProfile: clientProfileId, note: noteId, team: team || null } }
-        });
+        await createTask({ variables: { data: { ...data, clientProfile: clientProfileId, note: noteId, team: team || null } } });
       }
       refetch?.();
     } catch (err) {
-      showSnackbar({ message: 'Failed to save task', type: 'error' });
+      showSnackbar({ message: 'Failed to save', type: 'error' });
       throw err;
     }
     */
@@ -107,8 +97,6 @@ export default function NoteTasks(props: INoteTasksProps) {
   const handleDelete = (task: UpdateTaskInput) => {
     if (isDraftMode) {
       setDraftTasks((prev) => prev.filter((t) => t.id !== task.id));
-    } else {
-      console.warn('Live delete requires DeleteTaskDocument');
     }
   };
 

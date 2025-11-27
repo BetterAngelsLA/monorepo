@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useModalScreen } from '../../providers';
 
-// FIX: Point up one level (..) to the sibling 'TaskForm' folder, then the file
+// Ensure this path is correct relative to NoteTasksModal.tsx
 import { TaskForm, TaskFormData } from '../TaskForm/TaskForm';
 
 interface INoteTasksModalProps {

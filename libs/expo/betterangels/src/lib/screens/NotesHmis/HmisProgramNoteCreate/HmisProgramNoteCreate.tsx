@@ -6,11 +6,9 @@ import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { ScrollView } from 'react-native';
-// Ensure correct path to Apollo types
 import { extractExtensionFieldErrors, UpdateTaskInput } from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
-// Fix import path if needed (Assuming NoteTasks is in ui-components)
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
 import {
   HmisProgramNoteForm,
@@ -24,7 +22,8 @@ import {
   HmisNoteFormFieldNames,
 } from '../HmisProgramNoteForm/formSchema';
 import { CreateHmisNoteDocument } from './__generated__/hmisCreateClientNote.generated';
-// Import CreateTaskDocument for the loop
+
+// IMPORTS
 import { NoteTasks } from '../../../ui-components';
 import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
 
@@ -39,17 +38,15 @@ export function HmisProgramNoteCreate(props: TProps) {
   const { showSnackbar } = useSnackbar();
   const scrollRef = useRef<ScrollView>(null);
 
-  // Mutations
   const [createHmisNote] = useMutation(CreateHmisNoteDocument);
   const [createTask] = useMutation(CreateTaskDocument);
 
-  // Local State for Drafts (Tasks stored in memory)
   const [draftTasks, setDraftTasks] = useState<UpdateTaskInput[]>([]);
 
   const methods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
     defaultValues: getHmisProgramNoteFormEmptyState(),
-    mode: 'onSubmit', // Ensure we only validate/submit on explicit action
+    mode: 'onSubmit',
   });
 
   const onSubmit: SubmitHandler<THmisProgramNoteFormInputs> = async (
@@ -59,9 +56,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       const payload: THmisProgramNoteFormOutputs =
         HmisProgramNoteFormSchemaOutput.parse(values);
 
-      // ============================================================
-      // 1. CREATE NOTE (Get Note ID)
-      // ============================================================
+      // 1. Create Note (Get ID)
       const createResponse = await createHmisNote({
         variables: {
           data: {
@@ -87,18 +82,12 @@ export function HmisProgramNoteCreate(props: TProps) {
       if (error) throw new Error(error.message);
 
       const newNote = data?.createHmisNote;
-      if (
-        newNote?.__typename !== 'HmisNoteType' ||
-        (newNote?.__typename === 'HmisNoteType' && !newNote?.id)
-      ) {
+      if (!newNote?.id || newNote.__typename !== 'HmisNoteType') {
         throw new Error('Failed to create HMIS Note');
       }
 
-      // ============================================================
-      // 2. CREATE TASKS (Loop and Attach)
-      // ============================================================
+      // 2. Create Tasks (Link to Note)
       if (draftTasks.length > 0) {
-        // We use Promise.all to fire them in parallel for speed
         await Promise.all(
           draftTasks.map((task) =>
             createTask({
@@ -109,6 +98,7 @@ export function HmisProgramNoteCreate(props: TProps) {
                   status: task.status,
                   team: task.team,
                   clientProfile: clientId,
+                  // IMPORTANT: Using 'hmisNote' to fix linking crash
                   hmisNote: newNote.id,
                 },
               },
@@ -117,7 +107,7 @@ export function HmisProgramNoteCreate(props: TProps) {
         );
       }
 
-      // 3. DONE
+      // 3. Redirect
       router.replace(
         `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
       );
@@ -142,8 +132,6 @@ export function HmisProgramNoteCreate(props: TProps) {
         }}
       >
         <HmisProgramNoteForm clientId={clientId} />
-
-        {/* Draft Task Manager */}
         <NoteTasks
           clientProfileId={clientId}
           scrollRef={scrollRef}
