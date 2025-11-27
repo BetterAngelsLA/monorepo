@@ -21,7 +21,7 @@ export const demographicInfoFormEmptyState: TDemographicInfoFormSchema = {
   // BA fields
   pronouns: '',
   placeOfBirth: '',
-  heightInInches: undefined,
+  heightInInches: '',
   eyeColor: '',
   hairColor: '',
   maritalStatus: '',
@@ -38,12 +38,10 @@ export const DemographicInfoFormSchema = z
     // BA fields
     placeOfBirth: z.string(),
     physicalDescription: z.string(),
-    heightInInches: z
-      .union([
-        z.string().trim().regex(/^\d+$/, 'Invalid number'),
-        z.literal(''),
-      ])
-      .optional(), // optional string number
+    heightInInches: z.any().transform((val) => {
+      const number = Number(val);
+      return number > 0 ? String(number) : '';
+    }), // anything that converts to positive number
     pronouns: z.enum(PronounEnum).or(z.literal('')),
     eyeColor: z.enum(EyeColorEnum).or(z.literal('')),
     hairColor: z.enum(HairColorEnum).or(z.literal('')),
@@ -81,9 +79,7 @@ export const DemographicInfoFormSchemaOut = DemographicInfoFormSchema.transform(
       hairColor: hairColor === '' ? null : hairColor,
       maritalStatus: maritalStatus === '' ? null : maritalStatus,
       heightInInches:
-        typeof heightInInches === 'string' && heightInInches !== ''
-          ? Number(heightInInches)
-          : null,
+        Number(heightInInches) > 0 ? Number(heightInInches) : null,
     };
   }
 );
