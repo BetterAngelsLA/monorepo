@@ -231,7 +231,7 @@ class Mutation:
                     active_workers = inspector.active()
                     celery_workers_available = active_workers is not None and len(active_workers) > 0
                     # Debug logging
-                except Exception as e:
+                except Exception:
                     # Celery not available or not responding
                     celery_workers_available = False
 

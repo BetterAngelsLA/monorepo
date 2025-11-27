@@ -490,3 +490,41 @@ class OtpMutationTests(GraphQLBaseTestCase, TestCase):
         # Check response
         self.assertIsNone(response.get("errors"))
         self.assertIsNotNone(response["data"]["verifyOtp"]["token"])
+
+    @override_settings(ACCOUNT_LOGIN_BY_CODE_ENABLED=True, ACCOUNT_LOGIN_BY_CODE_TIMEOUT=300)
+    def test_request_otp_overwrites_previous_code(self) -> None:
+        """Test that requesting a new OTP overwrites the previous code for the same email."""
+        from django.core.cache import cache
+
+        mutation = """
+            mutation RequestOtp($email: String!) {
+                requestOtp(email: $email) {
+                    success
+                }
+            }
+        """
+        variables = {"email": self.test_email}
+
+        # First OTP request
+        cache_key = f"otp_code:{self.test_email}"
+        first_code = "111111"
+        cache.set(cache_key, first_code, 300)
+
+        # Verify first code is stored
+        self.assertEqual(cache.get(cache_key), first_code)
+
+        # Second OTP request (should overwrite)
+        with patch("accounts.schema.secrets.choice") as mock_choice:
+            # Mock to return '2' for all 6 digits
+            mock_choice.return_value = "2"
+            response = self.execute_graphql(mutation, variables)
+
+        # Check response
+        self.assertIsNone(response.get("errors"))
+        self.assertTrue(response["data"]["requestOtp"]["success"])
+
+        # Verify the code was overwritten with new code
+        stored_code = cache.get(cache_key)
+        self.assertIsNotNone(stored_code)
+        self.assertEqual(stored_code, "222222")
+        self.assertNotEqual(stored_code, first_code)
