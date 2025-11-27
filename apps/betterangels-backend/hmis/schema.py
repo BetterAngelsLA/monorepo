@@ -167,7 +167,7 @@ class Mutation:
 
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
-        note_data = hmis_api_bridge.create_note(client_hmis_id=hmis_client_profile.pk, data=data)
+        note_data = hmis_api_bridge.create_note(client_hmis_id=hmis_client_profile.hmis_id, data=data)
         current_user = get_current_user(info)
 
         client_program = (
