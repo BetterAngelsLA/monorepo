@@ -4,22 +4,6 @@
   "sourceRoot": "libs/react/shelter-operator/src",
   "projectType": "library",
   "tags": [],
-  "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "{workspaceRoot}/apps/betterangels-backend/schema.graphql"
-    ]
-  },
-  "targets": {
-    "generate-graphql-types": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "libs/react/shelter-operator",
-        "command": "graphql-codegen --config codegen.ts"
-      },
-      "outputs": [
-        "{workspaceRoot}/libs/react/shelter-operator/src/lib/**/__generated__/"
-      ]
-    }
-  }
+  "// targets": "to see all targets run: nx show project shared --web",
+  "targets": {}
 }
