@@ -31,8 +31,6 @@ from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
 from strawberry_django.utils.query import filter_for_user
 
-logger = logging.getLogger(__name__)
-
 from .exceptions import (
     OTPDisabledError,
     OTPExpiredError,
@@ -53,6 +51,8 @@ from .types import (
     UpdateUserInput,
     UserType,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def annotate_member_role(org_id: str) -> Case:
@@ -227,6 +227,7 @@ class Mutation:
                 try:
                     from celery import current_app
                     from celery.app.control import Inspect
+
                     inspector = Inspect(app=current_app)
                     active_workers = inspector.active()
                     celery_workers_available = active_workers is not None and len(active_workers) > 0
