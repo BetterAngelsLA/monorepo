@@ -1,6 +1,5 @@
 from django.contrib import admin
 from hmis.models import HmisClientProfile, HmisNote
-from rangefilter.filters import DateRangeFilterBuilder
 
 
 @admin.register(HmisClientProfile)
