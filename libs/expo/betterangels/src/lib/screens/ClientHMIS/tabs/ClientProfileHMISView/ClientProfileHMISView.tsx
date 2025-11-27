@@ -10,6 +10,7 @@ import { getHMISEditButtonRoute } from '../../../Client/ClientProfile/utils/getH
 import {
   DemographicInfoCardHmis,
   FullNameCardHmis,
+  ImportantNotesCard,
   PersonalInfoCardHmis,
 } from './ClientCardsHMIS';
 
@@ -71,6 +72,14 @@ export function ClientProfileHMISView(props: TProps) {
           onEditClick={onClickEdit}
         >
           <PersonalInfoCardHmis client={client} />
+        </ExpandableProfileContainer>
+        <ExpandableProfileContainer
+          card={ClientProfileSectionEnum.ImportantNotes}
+          openCard={expandedCard}
+          onOpenCloseClick={onOpenCloseClick}
+          onEditClick={onClickEdit}
+        >
+          <ImportantNotesCard client={client} />
         </ExpandableProfileContainer>
         <ExpandableProfileContainer
           card={ClientProfileSectionEnum.Demographic}
