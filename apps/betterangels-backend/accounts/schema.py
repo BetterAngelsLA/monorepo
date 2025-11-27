@@ -33,6 +33,13 @@ from strawberry_django.utils.query import filter_for_user
 
 logger = logging.getLogger(__name__)
 
+from .exceptions import (
+    OTPDisabledError,
+    OTPExpiredError,
+    OTPInvalidError,
+    OTPRequestError,
+    OTPUserNotFoundError,
+)
 from .models import PermissionGroup, User
 from .types import (
     AuthInput,
@@ -165,7 +172,7 @@ class Mutation:
         """
         # Check if login by code is enabled
         if not getattr(settings, "ACCOUNT_LOGIN_BY_CODE_ENABLED", False):
-            raise Exception("OTP login is not enabled. Set ACCOUNT_LOGIN_BY_CODE_ENABLED=True in .env.")
+            raise OTPDisabledError("OTP login is not enabled. Set ACCOUNT_LOGIN_BY_CODE_ENABLED=True in .env.")
 
         try:
             email = email.lower().strip()
@@ -240,7 +247,7 @@ class Mutation:
 
         except Exception as e:
             logger.error(f"Error requesting OTP for {email}: {str(e)}")
-            raise Exception(f"Error requesting OTP: {str(e)}")
+            raise OTPRequestError(f"Error requesting OTP: {str(e)}") from e
 
     @strawberry.mutation
     def verify_otp(self, info: Info, email: str, code: str) -> AuthPayload:
@@ -264,17 +271,17 @@ class Mutation:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             logger.warning(f"OTP verification failed: user not found for {email}")
-            raise Exception("Invalid email or code")
+            raise OTPUserNotFoundError("Invalid email or code")
 
         cache_key = f"otp_code:{email}"
         stored_code = cache.get(cache_key)
 
         if not stored_code:
             logger.warning(f"OTP verification failed: no code found in cache for {email}")
-            raise Exception("Invalid or expired code")
+            raise OTPExpiredError("Invalid or expired code")
 
         if stored_code != code:
-            raise Exception("Invalid code")
+            raise OTPInvalidError("Invalid code")
 
         # Log in the user if the code is correct
         request = info.context.request
