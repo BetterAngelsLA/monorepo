@@ -224,11 +224,9 @@ class Mutation:
                     active_workers = inspector.active()
                     celery_workers_available = active_workers is not None and len(active_workers) > 0
                     # Debug logging
-                    print(f"DEBUG: celery_enabled={celery_enabled}, active_workers={active_workers}, celery_workers_available={celery_workers_available}", flush=True)
                 except Exception as e:
                     # Celery not available or not responding
                     celery_workers_available = False
-                    print(f"DEBUG: Celery check failed: {e}", flush=True)
 
             # Log code only if Celery workers are NOT available (regardless of backend type)
             # If workers are running, they'll process emails (either to files or via SES)
@@ -237,10 +235,6 @@ class Mutation:
 
             if should_log_code:
                 logger.debug(f"OTP Code for {email}: {code} (expires in {timeout_seconds}s)")
-                print(f"\n{'='*50}", flush=True)
-                print(f"OTP Code for {email}: {code}", flush=True)
-                print(f"Expires in: {timeout_seconds} seconds", flush=True)
-                print(f"{'='*50}\n", flush=True)
 
             return RequestOtpResult(success=True)
 
