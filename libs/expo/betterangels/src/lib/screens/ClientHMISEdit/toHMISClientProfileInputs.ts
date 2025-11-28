@@ -1,14 +1,12 @@
 import {
-  HmisClientDataType,
   HmisClientProfileType,
   HmisGenderEnum,
   HmisRaceEnum,
   UpdateHmisClientProfileInput,
 } from '../../apollo';
 
-export type TUpdateHmisClientProfileInputsUnion = Partial<
-  HmisClientProfileType & HmisClientDataType
->;
+export type TUpdateHmisClientProfileInputsUnion =
+  Partial<HmisClientProfileType>;
 export function toUpdateHmisClientProfileInput(
   client: HmisClientProfileType,
   values: Partial<UpdateHmisClientProfileInput>
