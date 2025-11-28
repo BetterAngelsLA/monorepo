@@ -82,6 +82,18 @@ export enum AttachmentType {
   Video = 'VIDEO'
 }
 
+export type AuthInput = {
+  code?: InputMaybe<Scalars['String']['input']>;
+  code_verifier?: InputMaybe<Scalars['String']['input']>;
+  id_token?: InputMaybe<Scalars['String']['input']>;
+  redirect_uri?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type AuthPayload = {
+  __typename?: 'AuthPayload';
+  token: Scalars['String']['output'];
+};
+
 export type AuthResponse = {
   __typename?: 'AuthResponse';
   status_code: Scalars['String']['output'];
@@ -1352,6 +1364,7 @@ export type MoodType = {
 export type Mutation = {
   __typename?: 'Mutation';
   addOrganizationMember: AddOrganizationMemberPayload;
+  appleAuth: AuthResponse;
   createClientContact: CreateClientContactPayload;
   createClientDocument: CreateClientDocumentPayload;
   createClientHouseholdMember: CreateClientHouseholdMemberPayload;
@@ -1377,6 +1390,7 @@ export type Mutation = {
   deleteServiceRequest: DeleteServiceRequestPayload;
   deleteSocialMediaProfile: DeleteSocialMediaProfilePayload;
   deleteTask: DeleteTaskPayload;
+  googleAuth: AuthResponse;
   hmisCreateClient: HmisClientTypeHmisCreateClientError;
   hmisCreateClientNote: HmisClientNoteTypeHmisCreateClientNoteError;
   hmisLogin: UserTypeHmisLoginError;
@@ -1387,6 +1401,7 @@ export type Mutation = {
   login: AuthResponse;
   logout: Scalars['Boolean']['output'];
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
+  requestOtp: RequestOtpResult;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
   updateClientDocument: UpdateClientDocumentPayload;
@@ -1401,11 +1416,17 @@ export type Mutation = {
   updateServiceRequest: UpdateServiceRequestPayload;
   updateSocialMediaProfile: UpdateSocialMediaProfilePayload;
   updateTask: UpdateTaskPayload;
+  verifyOtp: AuthPayload;
 };
 
 
 export type MutationAddOrganizationMemberArgs = {
   data: OrgInvitationInput;
+};
+
+
+export type MutationAppleAuthArgs = {
+  input: AuthInput;
 };
 
 
@@ -1529,6 +1550,11 @@ export type MutationDeleteTaskArgs = {
 };
 
 
+export type MutationGoogleAuthArgs = {
+  input: AuthInput;
+};
+
+
 export type MutationHmisCreateClientArgs = {
   clientInput: HmisCreateClientInput;
   clientSubItemsInput: HmisCreateClientSubItemsInput;
@@ -1574,6 +1600,11 @@ export type MutationLoginArgs = {
 
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
+};
+
+
+export type MutationRequestOtpArgs = {
+  email: Scalars['String']['input'];
 };
 
 
@@ -1644,6 +1675,12 @@ export type MutationUpdateSocialMediaProfileArgs = {
 
 export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
+};
+
+
+export type MutationVerifyOtpArgs = {
+  code: Scalars['String']['input'];
+  email: Scalars['String']['input'];
 };
 
 export type NoteDataImportType = {
@@ -2223,6 +2260,11 @@ export type RemoveNoteServiceRequestInput = {
 };
 
 export type RemoveNoteServiceRequestPayload = NoteType | OperationInfo;
+
+export type RequestOtpResult = {
+  __typename?: 'RequestOtpResult';
+  success: Scalars['Boolean']['output'];
+};
 
 export type RevertNoteInput = {
   id: Scalars['ID']['input'];
