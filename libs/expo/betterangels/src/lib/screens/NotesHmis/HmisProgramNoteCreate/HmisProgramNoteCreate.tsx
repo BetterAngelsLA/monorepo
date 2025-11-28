@@ -82,7 +82,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       if (error) throw new Error(error.message);
 
       const newNote = data?.createHmisNote;
-      if (!newNote?.id || newNote.__typename !== 'HmisNoteType') {
+      if (newNote?.__typename !== 'HmisNoteType' || !newNote?.id) {
         throw new Error('Failed to create HMIS Note');
       }
 
@@ -97,8 +97,7 @@ export function HmisProgramNoteCreate(props: TProps) {
                   description: task.description,
                   status: task.status,
                   team: task.team,
-                  clientProfile: clientId,
-                  // IMPORTANT: Using 'hmisNote' to fix linking crash
+                  hmisClientProfile: clientId,
                   hmisNote: newNote.id,
                 },
               },
