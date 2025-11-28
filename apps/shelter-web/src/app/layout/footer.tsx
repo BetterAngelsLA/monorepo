@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/layout/styles/mergeCss';
 import { BaShelterLogoIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
 import { Link } from 'react-router-dom';
@@ -6,7 +7,6 @@ import {
   privacyPolicyPath,
   shelterHomePath,
 } from '../routes/routePaths';
-import { mergeCss } from '../shared/utils/styles/mergeCss';
 
 type IParams = {
   className?: string;

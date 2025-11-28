@@ -1,11 +1,11 @@
+import { HorizontalLayout } from '@monorepo/layout/horizontalLayout';
+import { mergeCss } from '@monorepo/layout/styles/mergeCss';
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Flyoutcontainer } from '../shared/flyout/Flyoutcontainer';
 import { ModalContainer } from '../shared/modal/modalContainer';
-import { mergeCss } from '../shared/utils/styles/mergeCss';
 import { Footer } from './footer';
 import { Header } from './header';
-import { HorizontalLayout } from './horizontalLayout';
 
 type IParams = {
   className?: string;

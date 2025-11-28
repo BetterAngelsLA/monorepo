@@ -1,4 +1,4 @@
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/layout/styles/mergeCss';
 import { TLatLng } from '../map/types.maps';
 import { ShelterCard, TShelter } from '../shelter/shelterCard';
 
