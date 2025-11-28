@@ -51,6 +51,5 @@ export const createApolloClient = (args: TArgs) => {
   return new ApolloClient({
     link: from(links),
     cache: cacheStore || new InMemoryCache(),
-    credentials: 'include',
   });
 };

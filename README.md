@@ -108,7 +108,7 @@ Are you a passionate technologist with a heart for service? Better Angels Tech C
 
 We have immediate opportunities for volunteers in front-end and back-end development, infrastructure, and testing. Join us in the early stages of our volunteer program and make a difference.
 
-Check out our [volunteer portal](https://volunteer.betterangels.la/need/detail/?need_id=866651) to sign up as a volunteer and get started!
+Check out our [volunteer portal](https://volunteer.betterangels.la/need/index?agency_id=151112) to sign up as a volunteer and get started!
 
 ---
 

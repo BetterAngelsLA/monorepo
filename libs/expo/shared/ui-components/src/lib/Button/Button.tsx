@@ -74,7 +74,7 @@ const PRESSED_VARIANTS: TVariants = {
   },
   secondary: {
     bg: Colors.GRAY_PRESSED,
-    color: Colors.PRIMARY_EXTRA_DARK,
+    color: Colors.PRIMARY_DARK,
     border: Colors.NEUTRAL_LIGHT,
   },
   negative: {
@@ -112,7 +112,7 @@ const VARIANTS: TVariants = {
   },
   secondary: {
     bg: Colors.WHITE,
-    color: Colors.PRIMARY_DARK,
+    color: Colors.PRIMARY_EXTRA_DARK,
     border: Colors.NEUTRAL_LIGHT,
   },
   negative: {
@@ -126,7 +126,7 @@ type TSpacing = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 
 interface IButtonProps {
   title: string;
-  size?: 'sm' | 'md'| 'full' | 'auto';
+  size?: 'sm' | 'md' | 'full' | 'auto';
   onPress?: () => void;
   variant:
     | 'primary'
@@ -251,7 +251,7 @@ export function Button(props: IButtonProps) {
                     marginLeft: icon ? Spacings.xs : 0,
                     fontFamily:
                       weight === 'regular'
-                        ? 'Poppings-Regular'
+                        ? 'Poppins-Regular'
                         : 'Poppins-SemiBold',
                     fontSize: FontSizes[fontSize].fontSize,
                     lineHeight: FontSizes[fontSize].lineHeight,

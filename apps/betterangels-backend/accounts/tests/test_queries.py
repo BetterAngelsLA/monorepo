@@ -156,7 +156,7 @@ class CurrentUserGraphQLTests(GraphQLBaseTestCase, ParametrizedTestCase):
         success_response = {"data": {"createAuthToken": {"authToken": token}}}
 
         with patch(
-            "hmis.api_bridge.HmisApiBridge._make_request",
+            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
             return_value=success_response,
         ):
             self.execute_graphql(

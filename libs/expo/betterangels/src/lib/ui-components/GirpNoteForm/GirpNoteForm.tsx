@@ -52,12 +52,7 @@ export function GirpNoteForm(props: TProps) {
   return (
     <>
       <KeyboardAwareScrollView>
-        <View
-          style={{
-            gap: Spacings.sm,
-            flex: 1,
-          }}
-        >
+        <View style={styles.container}>
           <TextBold size="lg">Write Note</TextBold>
           <TextRegular size="md">
             Use the generated text below to get started. When finished, tap
@@ -66,6 +61,7 @@ export function GirpNoteForm(props: TProps) {
 
           <View style={{ flexGrow: 1 }}>
             <TextInput
+              editable={!disabled}
               value={localNote}
               onChangeText={setLocalNote}
               multiline
@@ -101,6 +97,7 @@ export function GirpNoteForm(props: TProps) {
           }}
         >
           <Button
+            disabled={disabled}
             onPress={() => {
               localNote ? setLocalNote('') : generateNote();
             }}
@@ -131,6 +128,10 @@ export function GirpNoteForm(props: TProps) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    gap: Spacings.sm,
+    flex: 1,
+  },
   input: {
     flex: 1,
     padding: Spacings.sm,

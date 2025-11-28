@@ -33,7 +33,7 @@ const FileUploadTab = (props: IFileUploadTabProps) => {
         ]}
       >
         {(disabled && <CheckIcon size="sm" color={Colors.WHITE} />) || (
-          <PlusIcon size="sm" color={Colors.PRIMARY_DARK} />
+          <PlusIcon size="sm" color={Colors.PRIMARY_EXTRA_DARK} />
         )}
       </View>
 
