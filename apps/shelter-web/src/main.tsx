@@ -4,6 +4,11 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { ApolloProvider } from '@apollo/client';
 import { createApolloClient } from '@monorepo/react/shared';
+import {
+  ApiConfigProvider,
+  AuthProvider,
+  UserProvider,
+} from '@monorepo/react/shelter-operator';
 import App from './app/app';
 
 const csrfCookieName =
@@ -17,6 +22,8 @@ const apolloClient = createApolloClient({
   csrfHeaderName,
 });
 
+const apiUrl = import.meta.env.VITE_SHELTER_API_URL || '';
+
 // to allow preview by branch
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 
@@ -26,10 +33,16 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <ApolloProvider client={apolloClient}>
-      <BrowserRouter basename={basename}>
-        <App />
-      </BrowserRouter>
-    </ApolloProvider>
+    <ApiConfigProvider apiUrl={apiUrl}>
+      <ApolloProvider client={apolloClient}>
+        <BrowserRouter basename={basename}>
+          <UserProvider>
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </UserProvider>
+        </BrowserRouter>
+      </ApolloProvider>
+    </ApiConfigProvider>
   </StrictMode>
 );

@@ -1,12 +1,11 @@
 import { zodResolver } from '@hookform/resolvers/zod'; // Install this resolver
 import { Button, mergeCss, useAlert } from '@monorepo/react/components';
-import { toError } from '@monorepo/react/shared';
+import { Input, toError } from '@monorepo/react/shared';
 import { useState } from 'react';
 import { SubmitHandler, useForm } from 'react-hook-form';
 import { OrganizationMemberType } from '../../apollo/graphql/__generated__/types';
 import { extractOperationInfoMessage } from '../../apollo/graphql/response/extractOperationInfoMessage';
 import { useUser } from '../../hooks';
-import Input from '../Input';
 import {
   AddOrganizationMemberMutation,
   useAddOrganizationMemberMutation,

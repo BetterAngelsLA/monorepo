@@ -1,3 +1,3 @@
 export * from './AddUserForm';
-export { default as Input } from './Input';
+export { Input } from '@monorepo/react/shared';
 export { default as Navbar } from './Navbar';

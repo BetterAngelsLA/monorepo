@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import useUser from '../user/useUser';
+import { useUser } from '@monorepo/react/shared';
 import { useLogoutMutation } from './__generated__/auth.generated';
 
 export default function useSignOut() {

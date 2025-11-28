@@ -7,8 +7,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     <SharedAuthProvider
       config={{
         routeAccess,
-        signInRoute: '/sign-in',
-        defaultAuthenticatedRoute: '/users',
+        signInRoute: '/operator/sign-in',
+        defaultAuthenticatedRoute: '/operator',
       }}
     >
       {children}
