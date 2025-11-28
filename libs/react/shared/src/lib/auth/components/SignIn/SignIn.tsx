@@ -3,30 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '../../../components/Input';
 import { Regex } from '../../../static';
 import './SignIn.css';
+import { useApiConfig } from '../../../providers';
+import { useUser } from '../../../hooks';
 
 export interface SignInProps {
   /** Path to redirect to after successful login */
-  onSuccessRedirect?: string;
-  /** Welcome message title */
-  title?: string;
+  onSuccessRedirect: string;
   /** Welcome message description */
-  description?: string;
-  /** API URL for links */
-  apiUrl: string;
-  /** Function to make authenticated API calls */
-  fetchClient: (path: string, options?: RequestInit) => Promise<Response>;
-  /** Function to refetch user data after login */
-  refetchUser: () => Promise<void>;
+  description: string;
 }
 
 export default function SignIn({
-  onSuccessRedirect = '/users',
-  title = 'Sign In',
-  description = 'Welcome! Sign in for Better Angels and start making a difference in the LA Community.',
-  apiUrl,
-  fetchClient,
-  refetchUser,
+  onSuccessRedirect,
+  description,
 }: SignInProps) {
+  const { fetchClient, apiUrl } = useApiConfig();
+  const { refetchUser } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
@@ -77,7 +69,6 @@ export default function SignIn({
       });
       const data = await res.json();
 
-
       // Success (200) or already authenticated (409) - both mean user is authenticated
       if ((res.ok && data?.meta?.is_authenticated) || res.status === 409) {
         await refetchUser();
@@ -121,7 +112,7 @@ export default function SignIn({
   return (
     <div className="bg-neutral-99 flex min-h-screen items-center justify-center">
       <div className="rounded-3xl p-10 flex flex-col bg-white shadow-md w-[460px]">
-        <h1 className="font-bold text-2xl mb-2">{title}</h1>
+        <h1 className="font-bold text-2xl mb-2">Sign In</h1>
         <p className="mb-10">{description}</p>
         {step === 'initial' && (
           <>

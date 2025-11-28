@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useUser } from '../../hooks';
 
 export interface AuthProviderConfig {
   /** Route access configuration mapping paths to access types */
@@ -12,10 +13,6 @@ export interface AuthProviderConfig {
 
 export interface AuthProviderProps {
   children: ReactNode;
-  /** Current user object (null if not authenticated) */
-  user: unknown;
-  /** Whether user data is still loading */
-  isLoading: boolean;
   /** Configuration for routes and redirects */
   config: AuthProviderConfig;
 }
@@ -40,13 +37,12 @@ function getRouteAccess(
 
 export default function AuthProvider({
   children,
-  user,
-  isLoading,
   config,
 }: AuthProviderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const hasRedirected = useRef(false);
+  const { user, isLoading } = useUser();
 
   useEffect(() => {
     if (isLoading || hasRedirected.current) return;

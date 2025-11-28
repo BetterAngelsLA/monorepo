@@ -1,26 +1,9 @@
 import { SignIn as SharedSignIn, SignInProps as SharedSignInProps } from '@monorepo/react/shared';
-import { useApiConfig } from '../../providers';
-import { useUser } from '../../hooks';
 
-export interface SignInProps {
-  /** Path to redirect to after successful login */
-  onSuccessRedirect?: string;
-  /** Welcome message title */
-  title?: string;
-  /** Welcome message description */
-  description?: string;
-}
-
-export default function SignIn(props: SignInProps) {
-  const { fetchClient, apiUrl } = useApiConfig();
-  const { refetchUser } = useUser();
-
+export default function SignIn() {
   const sharedProps: SharedSignInProps = {
     onSuccessRedirect: '/operator',
-    ...props,
-    apiUrl,
-    fetchClient,
-    refetchUser,
+    description: 'Welcome! Sign in for Better Angels and start making a difference in the LA Community.'
   };
 
   return <SharedSignIn {...sharedProps} />;
