@@ -84,6 +84,17 @@ enum AttachmentType {
   UNKNOWN
 }
 
+input AuthInput {
+  code: String
+  code_verifier: String
+  id_token: String
+  redirect_uri: String
+}
+
+type AuthPayload {
+  token: String!
+}
+
 type AuthResponse {
   status_code: String!
 }
@@ -1228,6 +1239,10 @@ type MoodType {
 type Mutation {
   logout: Boolean!
   login(input: LoginInput!): AuthResponse!
+  googleAuth(input: AuthInput!): AuthResponse!
+  appleAuth(input: AuthInput!): AuthResponse!
+  requestOtp(email: String!): RequestOtpResult!
+  verifyOtp(email: String!, code: String!): AuthPayload!
   updateCurrentUser(data: UpdateUserInput!): UpdateCurrentUserPayload!
   deleteCurrentUser: DeleteCurrentUserPayload!
   addOrganizationMember(data: OrgInvitationInput!): AddOrganizationMemberPayload! @hasPerm(permissions: [{app: "organizations", permission: "add_org_member"}], any: true)
@@ -1635,6 +1650,10 @@ input RemoveNoteServiceRequestInput {
 }
 
 union RemoveNoteServiceRequestPayload = NoteType | OperationInfo
+
+type RequestOtpResult {
+  success: Boolean!
+}
 
 input RevertNoteInput {
   id: ID!
