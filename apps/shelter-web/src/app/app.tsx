@@ -1,3 +1,4 @@
+import { OperatorLayout } from '@monorepo/layout/operatorLayout/operatorLayout';
 import { APIProvider as MapsApiProvider } from '@vis.gl/react-google-maps';
 import { Route, Routes } from 'react-router-dom';
 import { MainLayout } from './layout/mainLayout';
@@ -13,11 +14,20 @@ export function App() {
   return (
     <MapsApiProvider apiKey={googleMapsApiKey} onError={onMapsProviderError}>
       <Routes>
-        <Route path="/" element={<MainLayout />}>
-          {routeChildren.map((route) => (
-            <Route key={route.path} path={route.path} element={route.element} />
-          ))}
-        </Route>
+        {routeChildren.map((route) => (
+          <Route
+            path={route.path}
+            element={
+              route.path.startsWith('/operator') ? (
+                <OperatorLayout />
+              ) : (
+                <MainLayout />
+              )
+            }
+          >
+            <Route path={route.path} element={route.element} />
+          </Route>
+        ))}
       </Routes>
     </MapsApiProvider>
   );

@@ -1,3 +1,4 @@
+import { mergeCss } from '@monorepo/layout/styles/mergeCss';
 import { CurrentLocationDot } from '@monorepo/react/components';
 import { MapPinIcon } from '@monorepo/react/icons';
 import {
@@ -17,7 +18,6 @@ import {
   useEffect,
   useState,
 } from 'react';
-import { mergeCss } from '../../utils/styles/mergeCss';
 import {
   DEFAULT_GESTURE_HANDLING,
   DEFAULT_MAP_ZOOM,

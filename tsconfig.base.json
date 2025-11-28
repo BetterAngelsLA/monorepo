@@ -39,7 +39,9 @@
       "@monorepo/react/storybook": ["libs/react/storybook/src/index.ts"],
       "@monorepo/react/shelter-operator": [
         "libs/react/shelter-operator/src/index.ts"
-      ]
+      ],
+      "@monorepo/layout": ["libs/layout"],
+      "@monorepo/layout/*": ["libs/layout/*"]
     }
   },
   "exclude": ["node_modules", "tmp"]

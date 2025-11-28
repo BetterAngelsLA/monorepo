@@ -1,4 +1,4 @@
-import { mergeCss } from '../../utils/styles/mergeCss';
+import { mergeCss } from '@monorepo/layout/styles/mergeCss';
 import { TShelterPropertyFilters } from '../shelters/sheltersDisplay';
 import { getFilterLabel } from './config';
 

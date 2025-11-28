@@ -1,6 +1,6 @@
 {
   "root": true,
-  "plugins": ["@nx", "react-native-a11y"],
+  "plugins": ["@nx", "react-native-a11y", "import"],
   "extends": ["plugin:react-native-a11y/all"],
   "overrides": [
     {
