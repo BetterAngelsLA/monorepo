@@ -7,6 +7,7 @@ const config: CodegenConfig = {
     'src/**/*.{graphql,ts,tsx}',
     '!src/**/__generated__/**/*.{graphql,ts,tsx}',
   ],
+  ignoreNoDocuments: true,
   generates: {
     'src/lib/apollo/graphql/__generated__/types.ts': {
       plugins: ['typescript'],
