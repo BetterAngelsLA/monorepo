@@ -54,7 +54,7 @@ export default function Dashboard() {
     <div style={{ display: 'flex', flexDirection: 'column', padding: '32px', width: '100%' }}>
       {/* Back button */}
       <div style={{ marginBottom: '24px' }}>
-        <Link to="/operator">
+        <Link to="/">
           <button style={{
             padding: '8px 16px',
             border: '1px solid #d1d5db',
@@ -156,7 +156,7 @@ export default function Dashboard() {
       )}
       {error && (
         <div style={{ marginTop: '8px', fontSize: '12px', color: '#ef4444' }}>
-          Backend error. Mock data shown as well.
+          Backend error
         </div>
       )}
     </div>

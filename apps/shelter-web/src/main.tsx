@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { ApolloProvider } from '@apollo/client';
 import { createApolloClient } from '@monorepo/react/shared';
-import { ChakraProvider, defaultSystem } from '@chakra-ui/react';
 
 import App from './app/app';
 
@@ -28,11 +27,9 @@ const root = ReactDOM.createRoot(
 root.render(
   <StrictMode>
     <ApolloProvider client={apolloClient}>
-      <ChakraProvider value={defaultSystem}>
         <BrowserRouter basename={basename}>
           <App />
         </BrowserRouter>
-      </ChakraProvider>
     </ApolloProvider>
   </StrictMode>
 );

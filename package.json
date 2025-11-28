@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@apollo/client": "^3.11.1",
-    "@chakra-ui/react": "^3.29.0",
     "@config-plugins/react-native-blob-util": "^9.0.0",
     "@config-plugins/react-native-pdf": "^9.0.0",
     "@emotion/react": "^11.14.0",
