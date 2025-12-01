@@ -1,6 +1,5 @@
-import { ZodType } from 'zod';
 import { ClientProfileSectionEnum } from '../../../screenRouting';
-import { THmisFormSectionKey, TSectionConfig } from '../types';
+import { THmisFormSectionKey, TSectionConfigRecord } from '../types';
 import {
   DemographicInfoFormHmis,
   DemographicInfoFormSchema,
@@ -14,8 +13,16 @@ import {
   mapClientToFullNameSchema,
 } from './FullName';
 import {
+  ImportantNotesFormHmis,
+  ImportantNotesFormSchema,
+  ImportantNotesFormSchemaOut,
+  importantNotesFormEmptyState,
+  mapClientToImportantNotes,
+} from './ImportantNotes';
+import {
   PersonalInfoFormHmis,
   PersonalInfoFormSchema,
+  PersonalInfoFormSchemaOut,
   mapClientToPersonalInfoSchema,
   personalInfoFormEmptyState,
 } from './PersonalInfo';
@@ -25,6 +32,7 @@ export const hmisFormConfig = {
     title: 'Edit Full Name',
     Form: FullNameFormHmis,
     schema: FullNameFormSchema,
+    schemaOutput: undefined,
     emptyState: fullNameFormEmptyState,
     dataMapper: mapClientToFullNameSchema,
   },
@@ -32,6 +40,7 @@ export const hmisFormConfig = {
     title: 'Edit Demographic Info',
     Form: DemographicInfoFormHmis,
     schema: DemographicInfoFormSchema,
+    schemaOutput: undefined,
     emptyState: demographicInfoFormEmptyState,
     dataMapper: mapClientToDemographicSchema,
   },
@@ -39,11 +48,20 @@ export const hmisFormConfig = {
     title: 'Edit Personal Info',
     Form: PersonalInfoFormHmis,
     schema: PersonalInfoFormSchema,
+    schemaOutput: PersonalInfoFormSchemaOut,
     emptyState: personalInfoFormEmptyState,
     dataMapper: mapClientToPersonalInfoSchema,
   },
+  [ClientProfileSectionEnum.ImportantNotes]: {
+    title: 'Edit Important Notes',
+    Form: ImportantNotesFormHmis,
+    schema: ImportantNotesFormSchema,
+    schemaOutput: ImportantNotesFormSchemaOut,
+    emptyState: importantNotesFormEmptyState,
+    dataMapper: mapClientToImportantNotes,
+  },
 } as const satisfies Partial<
-  Record<ClientProfileSectionEnum, TSectionConfig<ZodType<any, any, any>>>
+  Record<ClientProfileSectionEnum, TSectionConfigRecord>
 >;
 
 export function parseAsSectionKeyHMIS(
