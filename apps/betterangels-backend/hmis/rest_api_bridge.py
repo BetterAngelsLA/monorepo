@@ -451,7 +451,7 @@ class HmisRestApiBridge:
 
         return self._format_note_data(resp.json())
 
-    def create_note(self, client_hmis_id: int, data: CreateHmisNoteInput) -> dict[str, Any]:
+    def create_note(self, client_hmis_id: str, data: CreateHmisNoteInput) -> dict[str, Any]:
         path = f"/clients/{client_hmis_id}/client-notes"
         date = data.date.strftime(NOTE_DATE_FORMAT)
         fields = METADATA_FIELDS | NOTE_FIELDS

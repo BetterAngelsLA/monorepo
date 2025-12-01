@@ -165,9 +165,11 @@ class Mutation:
         except HmisClientProfile.DoesNotExist:
             raise ObjectDoesNotExist(f"Client Profile matching ID {id} could not be found.")
 
-        hmis_api_bridge = HmisRestApiBridge(info=info)
+        if not hmis_client_profile.hmis_id:
+            raise ValidationError("Missing Client hmis_id")
 
-        note_data = hmis_api_bridge.create_note(client_hmis_id=hmis_client_profile.pk, data=data)
+        hmis_api_bridge = HmisRestApiBridge(info=info)
+        note_data = hmis_api_bridge.create_note(client_hmis_id=hmis_client_profile.hmis_id, data=data)
         current_user = get_current_user(info)
 
         client_program = (
