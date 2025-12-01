@@ -13,6 +13,13 @@ import {
   mapClientToFullNameSchema,
 } from './FullName';
 import {
+  ImportantNotesFormHmis,
+  ImportantNotesFormSchema,
+  ImportantNotesFormSchemaOut,
+  importantNotesFormEmptyState,
+  mapClientToImportantNotes,
+} from './ImportantNotes';
+import {
   PersonalInfoFormHmis,
   PersonalInfoFormSchema,
   PersonalInfoFormSchemaOut,
@@ -44,6 +51,14 @@ export const hmisFormConfig = {
     schemaOutput: PersonalInfoFormSchemaOut,
     emptyState: personalInfoFormEmptyState,
     dataMapper: mapClientToPersonalInfoSchema,
+  },
+  [ClientProfileSectionEnum.ImportantNotes]: {
+    title: 'Edit Important Notes',
+    Form: ImportantNotesFormHmis,
+    schema: ImportantNotesFormSchema,
+    schemaOutput: ImportantNotesFormSchemaOut,
+    emptyState: importantNotesFormEmptyState,
+    dataMapper: mapClientToImportantNotes,
   },
 } as const satisfies Partial<
   Record<ClientProfileSectionEnum, TSectionConfigRecord>
