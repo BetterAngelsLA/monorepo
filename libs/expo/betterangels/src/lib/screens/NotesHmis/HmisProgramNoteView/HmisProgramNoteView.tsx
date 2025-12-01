@@ -89,7 +89,7 @@ export function HmisProgramNoteView(props: TProps) {
 
   return (
     // 4. Pass the scrollRef to your container so NoteTasks can reference it
-    <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} scrollRef={scrollRef}>
+    <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} ref={scrollRef}>
       <View style={styles.container}>
         <HmisProgramNoteTitle hmisNote={hmisNote} />
 

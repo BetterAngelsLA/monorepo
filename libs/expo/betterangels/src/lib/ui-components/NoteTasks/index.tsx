@@ -61,15 +61,18 @@ export default function NoteTasks(props: INoteTasksProps) {
     data: TaskFormData,
     existingTask?: UpdateTaskInput
   ) => {
+    // Helper to clean empty strings into valid Enum/null/undefined
+    const cleanStatus = data.status === '' ? undefined : data.status;
+    const cleanTeam = data.team === '' ? null : data.team;
+
     if (isDraftMode) {
       await new Promise((r) => setTimeout(r, 100));
-      const safeTeam = data.team === '' ? null : data.team;
       const newTask: UpdateTaskInput = {
         id: existingTask?.id || `temp-${Date.now()}`,
         summary: data.summary,
         description: data.description || undefined,
-        status: data.status || TaskStatusEnum.ToDo,
-        team: safeTeam || team || null,
+        status: cleanStatus || TaskStatusEnum.ToDo, // Fallback for draft
+        team: cleanTeam || team || null,
       };
       setDraftTasks((prev) =>
         existingTask
@@ -78,20 +81,37 @@ export default function NoteTasks(props: INoteTasksProps) {
       );
       return;
     }
-    // Live Mode Logic (Uncomment if needed)
-    /*
+
     try {
       if (existingTask?.id) {
-        await updateTask({ variables: { data: { ...data, id: existingTask.id } } });
+        await updateTask({
+          variables: {
+            data: {
+              ...data,
+              status: cleanStatus, // Use cleaned value
+              team: cleanTeam, // Use cleaned value
+              id: existingTask.id,
+            },
+          },
+        });
       } else {
-        await createTask({ variables: { data: { ...data, clientProfile: clientProfileId, note: noteId, team: team || null } } });
+        await createTask({
+          variables: {
+            data: {
+              ...data,
+              status: cleanStatus, // Use cleaned value
+              clientProfile: clientProfileId,
+              note: noteId,
+              team: cleanTeam || team || null, // Use cleaned value
+            },
+          },
+        });
       }
       refetch?.();
     } catch (err) {
       showSnackbar({ message: 'Failed to save', type: 'error' });
       throw err;
     }
-    */
   };
 
   const handleDelete = (task: UpdateTaskInput) => {
