@@ -8,8 +8,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useFeatureFlagActive } from '../../hooks';
-import { FeatureFlags } from '../../providers';
 
 export enum ClientViewTabEnum {
   Profile = 'Profile',
@@ -20,13 +18,6 @@ export enum ClientViewTabEnum {
 }
 
 const orderedTabs: ClientViewTabEnum[] = [
-  ClientViewTabEnum.Profile,
-  ClientViewTabEnum.Docs,
-  ClientViewTabEnum.Interactions,
-  ClientViewTabEnum.Locations,
-];
-
-const orderedTabsWithTasks: ClientViewTabEnum[] = [
   ClientViewTabEnum.Profile,
   ClientViewTabEnum.Interactions,
   ClientViewTabEnum.Tasks,
@@ -40,8 +31,7 @@ interface IClientTabsProps {
 }
 
 export default function ClientTabs({ selectedTab, setTab }: IClientTabsProps) {
-  const tasksFeatureOn = useFeatureFlagActive(FeatureFlags.TASKS_FF);
-  const visibleTabs = tasksFeatureOn ? orderedTabsWithTasks : orderedTabs;
+  const visibleTabs = orderedTabs;
 
   return (
     <View style={styles.container}>
