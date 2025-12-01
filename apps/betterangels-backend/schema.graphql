@@ -947,8 +947,8 @@ type HmisNoteType {
   clientProgram: HmisClientProgramType
   refClientProgram: String
   createdBy: UserType
-  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
-  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]!
+  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]
+  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]
 }
 
 type HmisNoteTypeOffsetPaginated {

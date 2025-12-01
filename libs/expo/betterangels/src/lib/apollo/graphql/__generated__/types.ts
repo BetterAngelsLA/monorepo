@@ -955,9 +955,9 @@ export type HmisNoteType = {
   id: Scalars['ID']['output'];
   lastUpdated?: Maybe<Scalars['DateTime']['output']>;
   note: Scalars['String']['output'];
-  providedServices: Array<ServiceRequestType>;
+  providedServices?: Maybe<Array<ServiceRequestType>>;
   refClientProgram?: Maybe<Scalars['String']['output']>;
-  requestedServices: Array<ServiceRequestType>;
+  requestedServices?: Maybe<Array<ServiceRequestType>>;
   title?: Maybe<Scalars['String']['output']>;
 };
 

@@ -209,8 +209,8 @@ class HmisNoteType:
     ref_client_program: Optional[str]
     created_by: Optional[UserType]
 
-    requested_services: list[ServiceRequestType]
-    provided_services: list[ServiceRequestType]
+    requested_services: Optional[list[ServiceRequestType]]
+    provided_services: Optional[list[ServiceRequestType]]
 
 
 @strawberry_django.input(ServiceRequest)
