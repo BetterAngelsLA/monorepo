@@ -43,9 +43,8 @@ class Query:
         if not hmis_client_profile.hmis_id:
             raise ValidationError("Missing Client hmis_id")
 
-        client_data = hmis_api_bridge.get_client(hmis_client_profile.hmis_id)
-
         hmis_api_bridge = HmisRestApiBridge(info=info)
+        client_data = hmis_api_bridge.get_client(hmis_client_profile.hmis_id)
 
         client_data.pop("unique_identifier")
         client_data.pop("hmis_id")
@@ -101,9 +100,9 @@ class Query:
         if not client_hmis_id:
             raise ValidationError("Missing Client hmis_id")
 
-        client_programs = hmis_api_bridge.get_client_programs(client_hmis_id=client_hmis_id)
-
         hmis_api_bridge = HmisRestApiBridge(info=info)
+
+        client_programs = hmis_api_bridge.get_client_programs(client_hmis_id=client_hmis_id)
 
         return [_get_client_program(p) for p in client_programs["items"]]
 
@@ -112,6 +111,8 @@ class Query:
 class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_hmis_client_profile(self, info: Info, data: CreateHmisClientProfileInput) -> HmisClientProfileType:
+        hmis_api_bridge = HmisRestApiBridge(info=info)
+
         client_data = hmis_api_bridge.create_client(data)
         current_user = get_current_user(info)
 
@@ -119,8 +120,6 @@ class Mutation:
 
         if not hmis_client_profile.hmis_id:
             raise ValidationError("Missing Client hmis_id")
-
-        hmis_api_bridge = HmisRestApiBridge(info=info)
 
         hmis_api_bridge.create_client_program(client_hmis_id=hmis_client_profile.hmis_id)
 
