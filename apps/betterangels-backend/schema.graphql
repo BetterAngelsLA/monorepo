@@ -976,6 +976,7 @@ type HmisProfileTypeOffsetPaginated {
 type HmisProgramType {
   id: String!
   name: String!
+  enableNotes: Int
 }
 
 enum HmisRaceEnum {
