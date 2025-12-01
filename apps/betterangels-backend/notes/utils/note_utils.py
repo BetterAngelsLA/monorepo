@@ -1,21 +1,22 @@
 from typing import Any
 
+from django.core.exceptions import ValidationError
 from notes.models import OrganizationService
 from organizations.models import Organization
 
 
-def get_service_args(service_request_data: dict[str, Any], organization: Organization) -> dict[str, Any]:
-    service_args = {}
+def get_service_args(
+    service_request_data: dict[str, Any],
+    organization: Organization,
+) -> dict[str, Any]:
+    if service_id := service_request_data.get("service_id"):
+        return {"service": service_id}
 
-    if service_id := service_request_data["service_id"]:
-        org_service = OrganizationService.objects.get(id=str(service_id))
-        service_args["service"] = service_id
-
-    if service_other := service_request_data["service_other"]:
+    if service_other := service_request_data.get("service_other"):
         org_service, _ = OrganizationService.objects.get_or_create(
             label=service_other,
             organization=organization,
         )
-        service_args["service"] = str(org_service.pk)  # type: ignore
+        return {"service": str(org_service.pk)}
 
-    return service_args
+    raise ValidationError("Service not provided")
