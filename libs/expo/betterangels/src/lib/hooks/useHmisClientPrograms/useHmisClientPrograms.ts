@@ -97,6 +97,10 @@ export function useHmisClientPrograms(props: TProps) {
         continue;
       }
 
+      if (!clientProgram.program.enableNotes) {
+        continue;
+      }
+
       clientPrograms.push(clientProgram);
     }
 

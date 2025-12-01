@@ -36,7 +36,7 @@ NOTE_DATE_FORMAT = "%m/%d/%Y"
 
 METADATA_FIELDS = {"id", "added_date", "last_updated"}
 NOTE_FIELDS = {"title", "note", "date", "ref_client_program"}
-CLIENT_PROGRAM_FIELDS = {"clientProgram.id", "clientProgram.program.name", "clientProgram.program.id"}
+CLIENT_PROGRAM_FIELDS = {"clientProgram.id", "clientProgram.program.id", "clientProgram.program.name"}
 CLIENT_FIELDS = {
     "unique_identifier",
     "personal_id",
@@ -190,7 +190,7 @@ class HmisRestApiBridge:
     def _get_field_dot_paths(
         self,
         info: Info,
-        default_fields: Optional[Iterable[str]],
+        default_fields: Optional[Iterable[str]] = None,
         ignored_fields: Optional[Iterable[str]] = None,
         selection_set: Optional[SelectionSetNode] = None,
     ) -> set[str]:
@@ -512,7 +512,8 @@ class HmisRestApiBridge:
         return self._format_note_data(resp.json())
 
     def get_client_programs(self, client_hmis_id: str) -> dict[str, Any]:
-        fields = {"id", "program.id", "program.name"}
+        fields = self._get_field_dot_paths(info=self.info, ignored_fields=BA_NOTE_FIELDS)
+
         body = {"fields": self._get_field_str(fields)}
         resp = self._make_request(
             path=f"/clients/{client_hmis_id}/client-programs",
@@ -524,7 +525,7 @@ class HmisRestApiBridge:
     def create_client_program(
         self,
         client_hmis_id: str,
-        program_hmis_id: int = 1,
+        program_hmis_id: int = 2,
     ) -> dict[str, Any]:
         DEFAULT_ENROLLMENT_DATA = {
             "programId": program_hmis_id,

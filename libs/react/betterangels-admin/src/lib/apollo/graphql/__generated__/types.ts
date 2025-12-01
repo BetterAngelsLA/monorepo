@@ -984,6 +984,7 @@ export type HmisProfileTypeOffsetPaginated = {
 
 export type HmisProgramType = {
   __typename?: 'HmisProgramType';
+  enableNotes?: Maybe<Scalars['Int']['output']>;
   id: Scalars['String']['output'];
   name: Scalars['String']['output'];
 };
