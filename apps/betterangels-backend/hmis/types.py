@@ -181,7 +181,7 @@ class HmisNoteOrdering:
 class HmisProgramType:
     id: str
     name: str
-    enable_notes: Optional[int]
+    enable_notes: Optional[int] = 0
 
 
 @strawberry.type
