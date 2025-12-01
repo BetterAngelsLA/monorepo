@@ -6,6 +6,7 @@ from common.models import PhoneNumber
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import transaction
 from hmis.models import HmisClientProfile, HmisNote
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.models import OrganizationService, ServiceRequest
@@ -250,48 +251,48 @@ class Mutation:
     def create_hmis_note_service_request(
         self, info: Info, data: CreateHmisNoteServiceRequestInput
     ) -> ServiceRequestType:
-        # with transaction.atomic():
-        user = get_current_user(info)
-        service_request_data = asdict(data)
-        service_request_type = str(service_request_data.pop("service_request_type"))
-        hmis_note_id = str(service_request_data.pop("hmis_note_id"))
-        hmis_note = HmisNote.objects.get(pk=hmis_note_id)
+        with transaction.atomic():
+            user = get_current_user(info)
+            service_request_data = asdict(data)
+            service_request_type = str(service_request_data.pop("service_request_type"))
+            hmis_note_id = str(service_request_data.pop("hmis_note_id"))
+            hmis_note = HmisNote.objects.get(pk=hmis_note_id)
 
-        ba_org = Organization.objects.get(name="Better Angels")
-        service_args = {}
+            ba_org = Organization.objects.get(name="Better Angels")
+            service_args = {}
 
-        if service_id := service_request_data["service_id"]:
-            org_service = OrganizationService.objects.get(id=str(service_id))
-            service_args["service"] = service_id
+            if service_id := service_request_data["service_id"]:
+                org_service = OrganizationService.objects.get(id=str(service_id))
+                service_args["service"] = service_id
 
-        if service_other := service_request_data["service_other"]:
-            org_service, _ = OrganizationService.objects.get_or_create(
-                label=service_other,
-                organization=ba_org,
+            if service_other := service_request_data["service_other"]:
+                org_service, _ = OrganizationService.objects.get_or_create(
+                    label=service_other,
+                    organization=ba_org,
+                )
+                service_args["service"] = str(org_service.pk)  # type: ignore
+
+            service_request = resolvers.create(
+                info,
+                ServiceRequest,
+                {
+                    **service_request_data,
+                    **service_args,
+                    "status": (
+                        ServiceRequestStatusEnum.TO_DO
+                        if service_request_type == ServiceRequestTypeEnum.REQUESTED
+                        else ServiceRequestStatusEnum.COMPLETED
+                    ),
+                    "hmis_client_profile": hmis_note.hmis_client_profile,
+                    "created_by": user,
+                },
             )
-            service_args["service"] = str(org_service.pk)  # type: ignore
 
-        service_request = resolvers.create(
-            info,
-            ServiceRequest,
-            {
-                **service_request_data,
-                **service_args,
-                "status": (
-                    ServiceRequestStatusEnum.TO_DO
-                    if service_request_type == ServiceRequestTypeEnum.REQUESTED
-                    else ServiceRequestStatusEnum.COMPLETED
-                ),
-                "hmis_client_profile": hmis_note.hmis_client_profile,
-                "created_by": user,
-            },
-        )
+            if service_request_type == ServiceRequestTypeEnum.PROVIDED:
+                hmis_note.provided_services.add(service_request)
+            elif service_request_type == ServiceRequestTypeEnum.REQUESTED:
+                hmis_note.requested_services.add(service_request)
+            else:
+                raise NotImplementedError
 
-        if service_request_type == ServiceRequestTypeEnum.PROVIDED:
-            hmis_note.provided_services.add(service_request)
-        elif service_request_type == ServiceRequestTypeEnum.REQUESTED:
-            hmis_note.requested_services.add(service_request)
-        else:
-            raise NotImplementedError
-
-        return cast(ServiceRequestType, service_request)
+            return cast(ServiceRequestType, service_request)
