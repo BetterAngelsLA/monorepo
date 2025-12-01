@@ -8,12 +8,12 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { sanitizeHtmlString } from '@monorepo/expo/shared/utils';
 import { useNavigation, useRouter } from 'expo-router';
-import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react'; // 1. Import useRef
+import { ScrollView, StyleSheet, View } from 'react-native'; // 1. Import ScrollView type
 // Ensure this path is correct for your project structure
-import { MainScrollContainer } from '../../../ui-components';
+import { MainScrollContainer, NoteTasks } from '../../../ui-components'; // 2. Import NoteTasks
 import HmisProgramNoteTitle from './HmisProgramNoteTitle';
-import { HmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
+import { HmisNoteWithTasksDocument } from './__generated__/HmisProgramNoteView.generated';
 
 type TProps = {
   id: string;
@@ -22,11 +22,18 @@ type TProps = {
 
 export function HmisProgramNoteView(props: TProps) {
   const { id, clientId } = props;
-  const { data, error, loading, refetch } = useQuery(HmisNoteDocument, {
-    variables: { id },
-    fetchPolicy: 'cache-and-network',
-    nextFetchPolicy: 'cache-first',
-  });
+
+  // 3. Create the Scroll Ref
+  const scrollRef = useRef<ScrollView>(null);
+
+  const { data, error, loading, refetch } = useQuery(
+    HmisNoteWithTasksDocument,
+    {
+      variables: { id },
+      fetchPolicy: 'cache-and-network',
+      nextFetchPolicy: 'cache-first',
+    }
+  );
   const hmisNote = data?.hmisNote;
   const navigation = useNavigation();
   const router = useRouter();
@@ -54,7 +61,6 @@ export function HmisProgramNoteView(props: TProps) {
     return <LoadingView />;
   }
 
-  // FIX: Log the actual error to the console so you can debug the GraphQL failure
   if (error) {
     console.error(
       'HmisProgramNoteView Query Error:',
@@ -73,6 +79,7 @@ export function HmisProgramNoteView(props: TProps) {
     return null;
   }
 
+  // Ensure 'tasks' is included in your Graphql query definition for HmisNoteDocument
   const { note, hmisClientProfile, clientProgram, tasks } = hmisNote;
   const { firstName, lastName } = hmisClientProfile || {};
   const { program } = clientProgram || {};
@@ -81,7 +88,8 @@ export function HmisProgramNoteView(props: TProps) {
   const sanitizedNote = sanitizeHtmlString(note);
 
   return (
-    <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+    // 4. Pass the scrollRef to your container so NoteTasks can reference it
+    <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} scrollRef={scrollRef}>
       <View style={styles.container}>
         <HmisProgramNoteTitle hmisNote={hmisNote} />
 
@@ -104,14 +112,15 @@ export function HmisProgramNoteView(props: TProps) {
         )}
       </View>
 
-      {/* NEW: Render the Tasks associated with this Note */}
-      {/* <NoteTasks
+      {/* 5. Render NoteTasks */}
+      <NoteTasks
         clientProfileId={clientId}
-        noteId={id} // Passing ID puts NoteTasks in "Live Mode"
-        tasks={tasks} // Pass the tasks fetched by HmisNoteDocument
+        noteId={id}
+        tasks={tasks}
         refetch={refetch}
-        team={null} // Pass team if available in hmisNote
-      /> */}
+        scrollRef={scrollRef}
+        team={null}
+      />
     </MainScrollContainer>
   );
 }

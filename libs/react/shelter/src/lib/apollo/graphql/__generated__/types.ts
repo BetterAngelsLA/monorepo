@@ -948,7 +948,15 @@ export type HmisNoteType = {
   lastUpdated?: Maybe<Scalars['DateTime']['output']>;
   note: Scalars['String']['output'];
   refClientProgram?: Maybe<Scalars['String']['output']>;
+  tasks: Array<TaskType>;
   title?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type HmisNoteTypeTasksArgs = {
+  filters?: InputMaybe<TaskFilter>;
+  ordering?: Array<TaskOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type HmisNoteTypeOffsetPaginated = {

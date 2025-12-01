@@ -25,6 +25,7 @@ from hmis.enums import (
 )
 from hmis.models import HmisClientProfile, HmisNote
 from strawberry import ID, Info, auto
+from tasks.types import TaskType
 
 
 @strawberry.type
@@ -203,6 +204,8 @@ class HmisNoteType:
     date: Optional[datetime.date]
     client_program: Optional[HmisClientProgramType]
     ref_client_program: Optional[str]
+
+    tasks: list[TaskType]
     created_by: Optional[UserType]
 
 
