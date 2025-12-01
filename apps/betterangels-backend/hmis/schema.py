@@ -2,6 +2,7 @@ from typing import Any, Iterable, cast
 
 import strawberry
 import strawberry_django
+from accounts.utils import get_user_permission_group
 from common.models import PhoneNumber
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
@@ -9,9 +10,9 @@ from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from hmis.models import HmisClientProfile, HmisNote
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
-from notes.models import OrganizationService, ServiceRequest
+from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
-from organizations.models import Organization
+from notes.utils.note_utils import get_service_args
 from strawberry import ID, asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
@@ -253,24 +254,14 @@ class Mutation:
     ) -> ServiceRequestType:
         with transaction.atomic():
             user = get_current_user(info)
+            permission_group = get_user_permission_group(user)
+
             service_request_data = asdict(data)
             service_request_type = str(service_request_data.pop("service_request_type"))
             hmis_note_id = str(service_request_data.pop("hmis_note_id"))
             hmis_note = HmisNote.objects.get(pk=hmis_note_id)
 
-            ba_org = Organization.objects.get(name="Better Angels")
-            service_args = {}
-
-            if service_id := service_request_data["service_id"]:
-                org_service = OrganizationService.objects.get(id=str(service_id))
-                service_args["service"] = service_id
-
-            if service_other := service_request_data["service_other"]:
-                org_service, _ = OrganizationService.objects.get_or_create(
-                    label=service_other,
-                    organization=ba_org,
-                )
-                service_args["service"] = str(org_service.pk)  # type: ignore
+            service_args = get_service_args(service_request_data, permission_group.organization)
 
             service_request = resolvers.create(
                 info,
