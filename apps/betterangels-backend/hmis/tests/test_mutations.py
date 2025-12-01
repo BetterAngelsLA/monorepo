@@ -172,15 +172,8 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
 
     def test_create_hmis_note_service_request_mutation(self) -> None:
         bag_svc = OrganizationService.objects.get(label="Bag(s)")
-        hmis_note = baker.make(
-            HmisNote,
-            hmis_id="479",
-            hmis_client_profile_id=self.hmis_client_profile.pk,
-            title="prog note title",
-            note="prog note note",
-            date="2011-11-11",
-            created_by=self.org_1_case_manager_1,
-        )
+        hmis_note = baker.make(HmisNote, _fill_optional=True)
+
         variables = {
             "serviceId": str(bag_svc.pk),
             "hmisNoteId": str(hmis_note.id),
@@ -205,6 +198,31 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         self.assertEqual(service_request.service.pk, bag_svc.pk)
         self.assertEqual(service_request.service.label, bag_svc.label)
         self.assertEqual(service_request.service.category, bag_svc.category)
+
+    def test_create_hmis_note_service_request_other_mutation(self) -> None:
+        hmis_note = baker.make(HmisNote, _fill_optional=True)
+        variables = {
+            "serviceOther": "another service",
+            "hmisNoteId": str(hmis_note.id),
+            "serviceRequestType": "PROVIDED",
+        }
+
+        initial_org_service_count = OrganizationService.objects.count()
+
+        response = self._create_hmis_note_service_request_fixture(variables)
+        self.assertEqual(initial_org_service_count + 1, OrganizationService.objects.count())
+
+        response_service_request = response["data"]["createHmisNoteServiceRequest"]
+        service_request = ServiceRequest.objects.get(id=response_service_request["id"])
+        hmis_note = HmisNote.objects.get(id=hmis_note.id)
+
+        assert service_request.service
+        self.assertIn(service_request, hmis_note.provided_services.all())
+
+        self.assertEqual(response_service_request["service"]["label"], "another service")
+
+        self.assertEqual(service_request.service.label, "another service")
+        self.assertIsNone(service_request.service.category)
 
 
 @override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")
