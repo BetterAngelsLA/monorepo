@@ -9,8 +9,7 @@ import { Avatar, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { useFeatureFlagActive, useSignOut, useUser } from '../hooks';
-import { FeatureFlags } from '../providers';
+import { useSignOut, useUser } from '../hooks';
 import { MainModal } from './MainModal';
 
 interface INavModalProps {
@@ -32,16 +31,18 @@ export default function NavModal(props: INavModalProps) {
   };
   const { signOut } = useSignOut();
 
-  const tasksFeatureOn = useFeatureFlagActive(FeatureFlags.TASKS_FF);
-
   const ACTIONS = [
-    tasksFeatureOn && {
+    {
       title: 'Tasks',
       Icon: TaskListIcon,
       route: '/tasks',
     },
-    { title: 'Settings', Icon: SettingsOutlineIcon, route: '/settings' },
-  ].filter(Boolean);
+    {
+      title: 'Settings',
+      Icon: SettingsOutlineIcon,
+      route: '/settings',
+    },
+  ];
 
   return (
     <>
