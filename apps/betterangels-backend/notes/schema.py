@@ -164,9 +164,7 @@ class Mutation:
             note = resolvers.update(
                 info,
                 note,
-                {
-                    "location": location,
-                },
+                {"location": location},
             )
 
             return cast(NoteType, note)

@@ -253,9 +253,7 @@ class Mutation:
             hmis_note = resolvers.update(
                 info,
                 hmis_note,
-                {
-                    "location": location,
-                },
+                {"location": location},
             )
 
             return cast(HmisNoteType, hmis_note)
