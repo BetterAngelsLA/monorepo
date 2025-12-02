@@ -67,10 +67,10 @@ export function ClientCardHMIS(props: IClientCardProps) {
                 ({age})
               </TextRegular>
             )}
-            {!!birthDate && !!heightInInches && (
+            {!!birthDate && !!formattedHeight && (
               <TextRegular size="xs"> | </TextRegular>
             )}
-            {!!heightInInches && (
+            {!!formattedHeight && (
               <TextRegular size="xs">Height: {formattedHeight}</TextRegular>
             )}
           </View>
