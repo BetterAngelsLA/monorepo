@@ -270,8 +270,3 @@ class UpdateHmisNoteInput:
     note: Optional[str]
     date: Optional[datetime.date]
     ref_client_program: Optional[str]
-    id: ID
-    title: Optional[str]
-    note: Optional[str]
-    date: Optional[datetime.date]
-    ref_client_program: Optional[str]

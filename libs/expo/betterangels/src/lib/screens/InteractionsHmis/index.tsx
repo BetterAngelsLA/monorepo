@@ -3,10 +3,14 @@ import { Colors } from '@monorepo/expo/shared/static';
 import { InfiniteList } from '@monorepo/expo/shared/ui-components';
 import { debounce } from '@monorepo/expo/shared/utils';
 import { router } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { ElementType, useCallback, useMemo, useState } from 'react';
 import { HmisNoteType } from '../../apollo';
 import { useUser } from '../../hooks';
-import { MainScrollContainer, ProgramNoteCard } from '../../ui-components';
+import {
+  Header,
+  MainScrollContainer,
+  ProgramNoteCard,
+} from '../../ui-components';
 import { DEFAULT_PAGINATION_LIMIT } from '../../ui-components/ClientProfileList/constants';
 import {
   HmisNotesDocument,
@@ -18,7 +22,7 @@ import InteractionsHeader from './InteractionsHeaderHmis';
 type TFilters = {
   authors: { id: string; label: string }[];
 };
-export default function InteractionsHmis() {
+export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
   const { user } = useUser();
   const [search, setSearch] = useState<string>('');
   const [filterSearch, setFilterSearch] = useState('');
@@ -79,24 +83,27 @@ export default function InteractionsHmis() {
   );
 
   return (
-    <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
-      <InteractionsHeader
-        onFiltersReset={onFiltersReset}
-        search={search}
-        setSearch={onChange}
-      />
-      <InteractionsFilters filters={filters} setFilters={updateFilters} />
-      <InfiniteList<HmisNoteType>
-        data={items}
-        keyExtractor={(item) => item.id ?? ''}
-        totalItems={total}
-        renderItem={renderItemFn}
-        loading={loading}
-        loadMore={loadMore}
-        hasMore={hasMore}
-        modelName="note"
-        error={!!error}
-      />
-    </MainScrollContainer>
+    <>
+      <Header title="Notes" Logo={Logo} />
+      <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+        <InteractionsHeader
+          onFiltersReset={onFiltersReset}
+          search={search}
+          setSearch={onChange}
+        />
+        <InteractionsFilters filters={filters} setFilters={updateFilters} />
+        <InfiniteList<HmisNoteType>
+          data={items}
+          keyExtractor={(item) => item.id ?? ''}
+          totalItems={total}
+          renderItem={renderItemFn}
+          loading={loading}
+          loadMore={loadMore}
+          hasMore={hasMore}
+          modelName="note"
+          error={!!error}
+        />
+      </MainScrollContainer>
+    </>
   );
 }
