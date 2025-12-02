@@ -6,7 +6,7 @@ import pghistory
 from accounts.models import User
 from clients.enums import PronounEnum
 from clients.models import AbstractClientProfile
-from common.models import BaseModel
+from common.models import BaseModel, Location
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Model
@@ -137,5 +137,6 @@ class HmisNote(BaseModel):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name="hmis_notes")
     title = models.CharField(max_length=255, null=True, blank=True)
     note = models.TextField(blank=True)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="hmis_notes")
 
     objects = models.Manager()
