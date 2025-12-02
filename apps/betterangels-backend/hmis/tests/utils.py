@@ -124,12 +124,17 @@ class HmisNoteBaseTestCase(GraphQLBaseTestCase):
                 pointOfInterest
             }
 
+            providedServices {
+                id
+                service { id label }
+            }
+            requestedServices {
+                id
+                service { id label }
+            }
             clientProgram {
                 id
-                program {
-                    id
-                    name
-                }
+                program { id name }
             }
 
             createdBy { id }
@@ -158,6 +163,53 @@ class HmisNoteBaseTestCase(GraphQLBaseTestCase):
                     }}
                 }}
             }}
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _create_hmis_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation CreateHmisNoteServiceRequest($data: CreateHmisNoteServiceRequestInput!) {
+                createHmisNoteServiceRequest(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on ServiceRequestType {
+                        id
+                        service { id label }
+                        status
+                        dueBy
+                        completedOn
+                        clientProfile { id }
+                        createdBy { id }
+                        createdAt
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _remove_hmis_note_service_request_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation RemoveHmisNoteServiceRequest($data: RemoveHmisNoteServiceRequestInput!) {
+                removeHmisNoteServiceRequest(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on HmisNoteType {
+                        id
+                        requestedServices { id }
+                        providedServices { id }
+                    }
+                }
+            }
         """
         return self.execute_graphql(mutation, {"data": variables})
 

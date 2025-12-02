@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("common", "0018_fix_file_extensions"),
-        ("hmis", "0003_hmisnote"),
+        ("hmis", "0004_hmisnote_services"),
     ]
 
     operations = [

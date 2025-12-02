@@ -21,6 +21,7 @@ from hmis.enums import (
     HmisSuffixEnum,
     HmisVeteranStatusEnum,
 )
+from notes.models import ServiceRequest
 from strawberry_django.descriptors import model_property
 
 
@@ -138,5 +139,7 @@ class HmisNote(BaseModel):
     title = models.CharField(max_length=255, null=True, blank=True)
     note = models.TextField(blank=True)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True, blank=True, related_name="hmis_notes")
+    provided_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="provided_hmis_notes")
+    requested_services = models.ManyToManyField(ServiceRequest, blank=True, related_name="requested_hmis_notes")
 
     objects = models.Manager()

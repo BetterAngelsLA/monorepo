@@ -529,6 +529,7 @@ class HmisRestApiBridge:
     ) -> dict[str, Any]:
         DEFAULT_ENROLLMENT_DATA = {
             "programId": program_hmis_id,
+            "sex": 99,
             "screenValues": {
                 "disabled": 99,
                 "enrollment_coc": "Default",

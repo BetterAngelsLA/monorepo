@@ -30,6 +30,9 @@ from hmis.enums import (
     HmisVeteranStatusEnum,
 )
 from hmis.models import HmisClientProfile, HmisNote
+from notes.enums import ServiceRequestTypeEnum
+from notes.models import ServiceRequest
+from notes.types import ServiceRequestType
 from strawberry import ID, Info, auto
 
 
@@ -212,6 +215,17 @@ class HmisNoteType:
     ref_client_program: Optional[str]
     created_by: Optional[UserType]
     location: Optional[LocationType]
+
+    requested_services: Optional[list[ServiceRequestType]]
+    provided_services: Optional[list[ServiceRequestType]]
+
+
+@strawberry_django.input(ServiceRequest)
+class CreateHmisNoteServiceRequestInput:
+    hmis_note_id: ID
+    service_id: Optional[ID]
+    service_other: Optional[str]
+    service_request_type: ServiceRequestTypeEnum
 
 
 @strawberry_django.input(HmisNote)
