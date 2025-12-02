@@ -1,14 +1,10 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 
 import { ScrollView } from 'react-native';
-import { SelahTeamEnum } from '../../../apollo';
 import AuthorsFilter from './AuthorsFilter';
-import OrganizationFilter from './OrganizationFilter';
 
 type TFilters = {
   authors: { id: string; label: string }[];
-  organizations: { id: string; label: string }[];
-  teams: { id: SelahTeamEnum; label: string }[];
 };
 
 interface IInteractionsFiltersProps {
@@ -31,7 +27,6 @@ export default function InteractionsFilters(props: IInteractionsFiltersProps) {
       horizontal
     >
       <AuthorsFilter {...props} />
-      <OrganizationFilter {...props} />
     </ScrollView>
   );
 }

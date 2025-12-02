@@ -9,15 +9,13 @@ import {
 import { debounce } from '@monorepo/expo/shared/utils';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { Ordering, SelahTeamEnum } from '../../../../apollo';
+import { Ordering } from '../../../../apollo';
 import { useInfiniteScroll, useUser } from '../../../../hooks';
 import { Modal } from '../../../../ui-components';
 import { InteractionAuthorsDocument } from './__generated__/AuthorsFilter.generated';
 
 type TFilters = {
   authors: { id: string; label: string }[];
-  organizations: { id: string; label: string }[];
-  teams: { id: SelahTeamEnum; label: string }[];
 };
 
 interface IAuthorsFilterProps {
