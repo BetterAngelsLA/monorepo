@@ -264,6 +264,7 @@ class Mutation:
 
             return cast(HmisNoteType, hmis_note)
 
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_hmis_note_service_request(
         self, info: Info, data: CreateHmisNoteServiceRequestInput
     ) -> ServiceRequestType:
