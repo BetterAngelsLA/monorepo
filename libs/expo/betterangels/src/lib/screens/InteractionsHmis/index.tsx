@@ -16,6 +16,7 @@ import { Header, HorizontalContainer } from '../../ui-components';
 import InteractionsFilters from './InteractionsFiltersHmis';
 import InteractionsHeader from './InteractionsHeaderHmis';
 import InteractionsSorting from './InteractionsSortingHmis';
+import { Loading } from '@monorepo/expo/shared/ui-components';
 
 const paginationLimit = 10;
 
@@ -175,7 +176,7 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
             </TextRegular>
           </View>
         )} */}
-        {/* <FlatList
+        <FlatList
           contentContainerStyle={{ paddingBottom: 60 }}
           refreshControl={
             <RefreshControl
@@ -201,7 +202,7 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
           }
           onEndReached={loadMoreInteractions}
           onEndReachedThreshold={0.5}
-        /> */}
+        />
       </HorizontalContainer>
     </View>
   );
