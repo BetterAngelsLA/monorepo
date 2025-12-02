@@ -16,7 +16,7 @@ export default function InteractionsFilters(props: IInteractionsFiltersProps) {
   return (
     <ScrollView
       style={{
-        marginBottom: Spacings.xl,
+        marginBottom: Spacings.xs,
         flexGrow: 0,
         flexShrink: 0,
       }}
