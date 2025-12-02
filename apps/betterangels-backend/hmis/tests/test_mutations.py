@@ -141,6 +141,9 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
         hmis_note.provided_services.set(provided_services)
         hmis_note.requested_services.set(requested_services)
+        # TODO: remove after service cutover
+        assert provided_services[0].service
+        assert requested_services[0].service
 
         variables = {
             "id": str(hmis_note.pk),
