@@ -599,6 +599,7 @@ export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfile
 export type CreateTaskInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
   hmisNote?: InputMaybe<Scalars['ID']['input']>;
   note?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
@@ -947,7 +948,15 @@ export type HmisNoteType = {
   lastUpdated?: Maybe<Scalars['DateTime']['output']>;
   note: Scalars['String']['output'];
   refClientProgram?: Maybe<Scalars['String']['output']>;
+  tasks: Array<TaskType>;
   title?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type HmisNoteTypeTasksArgs = {
+  filters?: InputMaybe<TaskFilter>;
+  ordering?: Array<TaskOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type HmisNoteTypeOffsetPaginated = {
@@ -2451,6 +2460,7 @@ export type TaskType = {
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   description?: Maybe<Scalars['String']['output']>;
+  hmisClientProfile?: Maybe<HmisProfileType>;
   hmisNote?: Maybe<DjangoModelType>;
   id: Scalars['ID']['output'];
   note?: Maybe<DjangoModelType>;

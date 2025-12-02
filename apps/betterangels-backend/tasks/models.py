@@ -26,6 +26,13 @@ class Task(BaseModel):
         null=True,
         related_name="tasks",
     )
+    hmis_client_profile = models.ForeignKey(
+        "hmis.HmisClientProfile",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="tasks",
+    )
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="tasks")
     description = models.TextField(blank=True, null=True)
     note = models.ForeignKey("notes.Note", on_delete=models.CASCADE, blank=True, null=True, related_name="tasks")
@@ -63,7 +70,15 @@ class Task(BaseModel):
             models.CheckConstraint(
                 condition=models.Q(note__isnull=True) | models.Q(hmis_note__isnull=True),
                 name="task_single_parent_check",
-            )
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(client_profile__isnull=False, hmis_client_profile__isnull=True)
+                    | models.Q(client_profile__isnull=True, hmis_client_profile__isnull=False)
+                    | models.Q(client_profile__isnull=True, hmis_client_profile__isnull=True)
+                ),
+                name="task_only_one_client_link",
+            ),
         ]
 
     objects = models.Manager()

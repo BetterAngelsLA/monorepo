@@ -596,9 +596,10 @@ union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 input CreateTaskInput {
   clientProfile: ID
+  hmisClientProfile: ID
   description: String
-  note: ID = null
-  hmisNote: ID = null
+  note: ID
+  hmisNote: ID
   summary: String!
   team: SelahTeamEnum
   status: TaskStatusEnum
@@ -937,6 +938,7 @@ type HmisNoteType {
   date: Date
   clientProgram: HmisClientProgramType
   refClientProgram: String
+  tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
   createdBy: UserType
 }
 
@@ -1989,6 +1991,7 @@ enum TaskStatusEnum {
 
 type TaskType {
   id: ID!
+  hmisClientProfile: HmisProfileType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
