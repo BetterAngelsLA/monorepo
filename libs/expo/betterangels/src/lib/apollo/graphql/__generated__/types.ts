@@ -541,6 +541,15 @@ export type CreateHmisNoteInput = {
 
 export type CreateHmisNotePayload = HmisNoteType | OperationInfo;
 
+export type CreateHmisNoteServiceRequestInput = {
+  hmisNoteId: Scalars['ID']['input'];
+  serviceId?: InputMaybe<Scalars['ID']['input']>;
+  serviceOther?: InputMaybe<Scalars['String']['input']>;
+  serviceRequestType: ServiceRequestTypeEnum;
+};
+
+export type CreateHmisNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
+
 export type CreateHmisProfilePayload = HmisProfileType | OperationInfo;
 
 export type CreateNoteDataImportInput = {
@@ -1208,6 +1217,7 @@ export type Mutation = {
   createHmisClientProfile: CreateHmisClientProfilePayload;
   createHmisClientProgram: CreateHmisClientProgramPayload;
   createHmisNote: CreateHmisNotePayload;
+  createHmisNoteServiceRequest: CreateHmisNoteServiceRequestPayload;
   createHmisProfile: CreateHmisProfilePayload;
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
@@ -1295,6 +1305,11 @@ export type MutationCreateHmisClientProgramArgs = {
 
 export type MutationCreateHmisNoteArgs = {
   data: CreateHmisNoteInput;
+};
+
+
+export type MutationCreateHmisNoteServiceRequestArgs = {
+  data: CreateHmisNoteServiceRequestInput;
 };
 
 
