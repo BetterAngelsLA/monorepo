@@ -50,7 +50,7 @@ export function ClientCardHMIS(props: IClientCardProps) {
         <TextBold size="sm">
           {firstName} {lastName}{' '}
           {nameSuffix &&
-            `${enumDisplayHmisSuffix[nameSuffix as HmisSuffixEnum]}`}{' '}
+            `${enumDisplayHmisSuffix[nameSuffix as HmisSuffixEnum]} `}
           {alias && `(${alias})`}
         </TextBold>
 
