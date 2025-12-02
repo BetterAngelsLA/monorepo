@@ -27,7 +27,6 @@ from hmis.enums import (
 from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
 from model_bakery import baker
-from notes.enums import ServiceRequestStatusEnum
 from notes.models import OrganizationService, ServiceRequest
 from test_utils.vcr_config import scrubbed_vcr
 
