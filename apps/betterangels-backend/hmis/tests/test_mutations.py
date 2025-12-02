@@ -74,6 +74,8 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "title": "pitle",
             "note": "pote",
             "date": "2010-10-10",
+            "providedServices": [],
+            "requestedServices": [],
             "addedDate": "2025-11-25T01:37:07+00:00",
             "lastUpdated": "2025-11-25T01:37:07+00:00",
             "refClientProgram": None,
@@ -107,6 +109,8 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "title": "prog note title",
             "note": "prog note note",
             "date": "2011-11-11",
+            "providedServices": [],
+            "requestedServices": [],
             "addedDate": "2025-11-25T02:01:19+00:00",
             "lastUpdated": "2025-11-25T02:01:19+00:00",
             "refClientProgram": "525",
@@ -133,6 +137,10 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             date="2011-11-11",
             created_by=self.org_1_case_manager_1,
         )
+        provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.first())]
+        requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
+        hmis_note.provided_services.set(provided_services)
+        hmis_note.requested_services.set(requested_services)
 
         variables = {
             "id": str(hmis_note.pk),
@@ -155,6 +163,24 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "title": "updated note title",
             "note": "updated note note",
             "date": "2012-12-12",
+            "providedServices": [
+                {
+                    "id": str(provided_services[0].pk),
+                    "service": {
+                        "id": str(provided_services[0].service.pk),
+                        "label": provided_services[0].service.label,
+                    },
+                }
+            ],
+            "requestedServices": [
+                {
+                    "id": str(requested_services[0].pk),
+                    "service": {
+                        "id": str(requested_services[0].service.pk),
+                        "label": requested_services[0].service.label,
+                    },
+                }
+            ],
             "addedDate": "2025-11-25T02:01:19+00:00",
             "lastUpdated": "2025-11-25T02:04:24+00:00",
             "refClientProgram": "525",
