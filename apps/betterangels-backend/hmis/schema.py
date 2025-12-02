@@ -2,10 +2,11 @@ from typing import Any, Iterable, cast
 
 import strawberry
 import strawberry_django
-from common.models import PhoneNumber
+from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import transaction
 from hmis.models import HmisClientProfile, HmisNote
 from strawberry import ID
 from strawberry.types import Info
@@ -24,6 +25,7 @@ from .types import (
     ProgramEnrollmentType,
     UpdateHmisClientProfileInput,
     UpdateHmisNoteInput,
+    UpdateHmisNoteLocationInput,
 )
 
 
@@ -240,3 +242,20 @@ class Mutation:
             client_id=enrollment_data["ref_client"],
             ref_client_program=enrollment_data["ref_program"],
         )
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_hmis_note_location(self, info: Info, data: UpdateHmisNoteLocationInput) -> HmisNoteType:
+        with transaction.atomic():
+            hmis_note = HmisNote.objects.get(id=data.id)
+
+            location_data: dict = strawberry.asdict(data)
+            location = Location.get_or_create_location(location_data["location"])
+            hmis_note = resolvers.update(
+                info,
+                hmis_note,
+                {
+                    "location": location,
+                },
+            )
+
+            return cast(HmisNoteType, hmis_note)

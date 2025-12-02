@@ -12,7 +12,13 @@ from clients.enums import (
     LivingSituationEnum,
     PreferredCommunicationEnum,
 )
-from common.graphql.types import NonBlankString, PhoneNumberInput, PhoneNumberType
+from common.graphql.types import (
+    LocationInput,
+    LocationType,
+    NonBlankString,
+    PhoneNumberInput,
+    PhoneNumberType,
+)
 from django.db.models import Q, QuerySet
 from hmis.enums import (
     HmisDobQualityEnum,
@@ -205,6 +211,7 @@ class HmisNoteType:
     client_program: Optional[HmisClientProgramType]
     ref_client_program: Optional[str]
     created_by: Optional[UserType]
+    location: Optional[LocationType]
 
 
 @strawberry_django.input(HmisNote)
@@ -230,3 +237,9 @@ class UpdateHmisNoteInput:
     note: Optional[str]
     date: Optional[datetime.date]
     ref_client_program: Optional[str]
+
+
+@strawberry_django.input(HmisNote)
+class UpdateHmisNoteLocationInput:
+    id: ID
+    location: LocationInput

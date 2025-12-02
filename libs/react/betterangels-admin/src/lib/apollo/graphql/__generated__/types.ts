@@ -945,6 +945,7 @@ export type HmisNoteType = {
   hmisId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   lastUpdated?: Maybe<Scalars['DateTime']['output']>;
+  location?: Maybe<LocationType>;
   note: Scalars['String']['output'];
   refClientProgram?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
@@ -1229,6 +1230,7 @@ export type Mutation = {
   updateCurrentUser: UpdateCurrentUserPayload;
   updateHmisClientProfile: UpdateHmisClientProfilePayload;
   updateHmisNote: UpdateHmisNotePayload;
+  updateHmisNoteLocation: UpdateHmisNoteLocationPayload;
   updateHmisProfile: UpdateHmisProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
@@ -1442,6 +1444,11 @@ export type MutationUpdateHmisClientProfileArgs = {
 
 export type MutationUpdateHmisNoteArgs = {
   data: UpdateHmisNoteInput;
+};
+
+
+export type MutationUpdateHmisNoteLocationArgs = {
+  data: UpdateHmisNoteLocationInput;
 };
 
 
@@ -2597,6 +2604,13 @@ export type UpdateHmisNoteInput = {
   refClientProgram?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type UpdateHmisNoteLocationInput = {
+  id: Scalars['ID']['input'];
+  location: LocationInput;
+};
+
+export type UpdateHmisNoteLocationPayload = HmisNoteType | OperationInfo;
 
 export type UpdateHmisNotePayload = HmisNoteType | OperationInfo;
 
