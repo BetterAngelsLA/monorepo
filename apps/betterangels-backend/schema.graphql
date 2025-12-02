@@ -926,6 +926,8 @@ input HmisNoteFilter {
   OR: HmisNoteFilter
   NOT: HmisNoteFilter
   DISTINCT: Boolean
+  authors: [ID!]
+  search: String
 }
 
 input HmisNoteOrdering {

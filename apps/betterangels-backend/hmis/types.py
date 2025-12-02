@@ -12,7 +12,12 @@ from clients.enums import (
     LivingSituationEnum,
     PreferredCommunicationEnum,
 )
-from common.graphql.types import NonBlankString, PhoneNumberInput, PhoneNumberType
+from common.graphql.types import (
+    NonBlankString,
+    PhoneNumberInput,
+    PhoneNumberType,
+    make_in_filter,
+)
 from django.db.models import Q, QuerySet
 from hmis.enums import (
     HmisDobQualityEnum,
@@ -170,6 +175,27 @@ class UpdateHmisClientProfileInput(HmisClientProfileBaseType):
 class HmisNoteFilter:
     hmis_client_profile: Optional[ID]
     created_by: Optional[ID]
+    authors = make_in_filter("created_by", ID)
+
+    @strawberry_django.filter_field
+    def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Q:
+        if value is None:
+            return Q()
+
+        search_terms = value.split()
+        query = Q()
+
+        for term in search_terms:
+            q_search = Q(
+                Q(hmis_client_profile__first_name__icontains=term)
+                | Q(hmis_client_profile__last_name__icontains=term)
+                | Q(title__icontains=term)
+                | Q(note__icontains=term)
+            )
+
+            query &= q_search
+
+        return Q(query)
 
 
 @strawberry_django.order_type(HmisNote, one_of=False)
@@ -239,6 +265,11 @@ class ProgramEnrollmentType:
 
 @strawberry_django.input(HmisNote)
 class UpdateHmisNoteInput:
+    id: ID
+    title: Optional[str]
+    note: Optional[str]
+    date: Optional[datetime.date]
+    ref_client_program: Optional[str]
     id: ID
     title: Optional[str]
     note: Optional[str]
