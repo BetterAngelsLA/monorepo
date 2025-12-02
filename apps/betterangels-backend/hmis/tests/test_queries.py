@@ -46,6 +46,10 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
 
     @scrubbed_vcr.use_cassette("test_hmis_note_query.yaml")
     def test_hmis_note_query(self) -> None:
+        self._setup_location()
+        self.hmis_note.location = self.location
+        self.hmis_note.save()
+
         query = f"""
             query ($id: ID!) {{
                 hmisNote(id: $id) {{
@@ -79,6 +83,17 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
                     "id": "2",
                     "name": "Housing Program 01",
                 },
+            },
+            "location": {
+                "id": str(self.location.pk),
+                "address": {
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
+                },
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
             },
             "createdBy": None,
         }

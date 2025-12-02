@@ -112,6 +112,18 @@ class HmisNoteBaseTestCase(GraphQLBaseTestCase):
             date
             refClientProgram
 
+            location {
+                id
+                address {
+                    street
+                    city
+                    state
+                    zipCode
+                }
+                point
+                pointOfInterest
+            }
+
             clientProgram {
                 id
                 program {
