@@ -73,6 +73,7 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
         onPress={() => {
           router.navigate({
             pathname: `/notes-hmis/${item.id}`,
+            params: { clientId: item.hmisClientProfile?.id },
           });
         }}
         variant="interactions"
