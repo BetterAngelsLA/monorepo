@@ -112,12 +112,17 @@ class HmisNoteBaseTestCase(GraphQLBaseTestCase):
             date
             refClientProgram
 
+            providedServices {
+                id
+                service { id label }
+            }
+            requestedServices {
+                id
+                service { id label }
+            }
             clientProgram {
                 id
-                program {
-                    id
-                    name
-                }
+                program { id name }
             }
 
             createdBy { id }
