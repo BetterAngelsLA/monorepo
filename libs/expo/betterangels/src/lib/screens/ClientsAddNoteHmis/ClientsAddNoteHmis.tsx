@@ -24,7 +24,7 @@ export function ClientsAddNoteHmis({ Logo }: { Logo: ElementType }) {
 
   const renderHmisClientItem = useCallback(
     (client: THmisClientProfile) => {
-      const id = client.id;
+      const { id } = client;
 
       if (!id) {
         return null;
