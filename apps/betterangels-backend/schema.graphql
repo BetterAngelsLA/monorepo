@@ -88,6 +88,11 @@ type AuthResponse {
   status_code: String!
 }
 
+enum BedStatusChoices {
+  AVAILABLE
+  RESERVED
+}
+
 enum CityChoices {
   AGOURA_HILLS
   ALHAMBRA
@@ -428,6 +433,17 @@ type ContactInfoType {
   contactNumber: PhoneNumber!
 }
 
+input CreateBedInput {
+  shelterId: ID!
+  status: BedStatusChoices!
+}
+
+type CreateBedPayload {
+  id: ID!
+  status: BedStatusChoices
+  shelterId: ID!
+}
+
 union CreateClientContactPayload = ClientContactType | OperationInfo
 
 input CreateClientDocumentInput {
@@ -578,16 +594,16 @@ union DeleteNotePayload = NoteType | OperationInfo
 
 union DeleteServiceRequestPayload = DeletedObjectType | OperationInfo
 
+type DeleteShelterPayload {
+  success: Boolean!
+}
+
 union DeleteSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 union DeleteTaskPayload = DeletedObjectType | OperationInfo
 
 type DeletedObjectType {
   id: Int!
-}
-
-type DeleteShelterPayload {
-    success: Boolean!
 }
 
 enum DemographicChoices {
@@ -1278,6 +1294,7 @@ type Mutation {
   createTask(data: CreateTaskInput!): CreateTaskPayload! @hasPerm(permissions: [{app: "tasks", permission: "add_task"}], any: true)
   updateTask(data: UpdateTaskInput!): UpdateTaskPayload! @permissionedQuerySet(permissions: [{app: "tasks", permission: "change_task"}], any: true)
   deleteTask(data: DeleteDjangoObjectInput!): DeleteTaskPayload!
+  createBed(input: CreateBedInput!): CreateBedPayload!
   deleteShelter(id: ID!): DeleteShelterPayload!
 }
 

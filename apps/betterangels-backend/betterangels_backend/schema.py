@@ -9,6 +9,7 @@ from notes.schema import Mutation as NotesMutation
 from notes.schema import Query as NotesQuery
 from shelters.schema import Mutation as SheltersMutation
 from shelters.schema import Query as SheltersQuery
+from shelters.schema import Mutation as SheltersMutation
 from strawberry import Schema
 from strawberry.tools import merge_types
 from strawberry_django.optimizer import DjangoOptimizerExtension

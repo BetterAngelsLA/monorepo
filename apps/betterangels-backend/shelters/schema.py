@@ -1,10 +1,11 @@
+from graphql import GraphQLError
 import strawberry
 import strawberry_django
 from django.db.models import QuerySet
 from graphql import GraphQLError
 from shelters.enums import StatusChoices
-from shelters.models import Shelter
-from shelters.types import ShelterType
+from shelters.models import Bed, Shelter
+from shelters.types import CreateBedInput, CreateBedPayload, ShelterType
 from strawberry.types import Info
 from strawberry_django.pagination import OffsetPaginated
 
@@ -22,9 +23,26 @@ class Query:
 class DeleteShelterPayload:
     success: bool
 
-
 @strawberry.type
 class Mutation:
+    @strawberry.mutation
+    def create_bed(self, info: strawberry.Info, input: CreateBedInput) -> CreateBedPayload:
+        try:
+            shelter = Shelter.objects.get(id=input.shelterId)
+        except Shelter.DoesNotExist:
+            raise GraphQLError("Shelter not found.")
+
+        bed = Bed.objects.create(
+            shelter_id=shelter,
+            status=input.status,
+        )
+
+        return CreateBedPayload(
+            id=strawberry.ID(str(bed.id)),
+            status=bed.status,
+            shelterId=strawberry.ID(str(bed.shelter_id.id)),
+        )
+
     @strawberry.mutation
     def delete_shelter(self, info: Info, id: strawberry.ID) -> DeleteShelterPayload:
         try:

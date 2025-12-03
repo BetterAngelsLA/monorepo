@@ -11,6 +11,7 @@ from django.contrib.gis.measure import D
 from django.db.models import Prefetch, Q, QuerySet
 from shelters.enums import (
     AccessibilityChoices,
+    BedStatusChoices,
     CityChoices,
     DemographicChoices,
     EntryRequirementChoices,
@@ -33,6 +34,7 @@ from shelters.enums import (
 from shelters.models import (
     SPA,
     Accessibility,
+    Bed,
     City,
     ContactInfo,
     Demographic,
@@ -351,3 +353,22 @@ class ShelterType:
                 else:
                     ranges.append(None)
         return ranges or None
+
+
+@strawberry.input
+class CreateBedInput:
+    shelterId: strawberry.ID
+    status: BedStatusChoices
+
+
+@strawberry_django.type(Bed)
+class BedType:
+    id: ID
+    status: BedStatusChoices
+
+
+@strawberry.type
+class CreateBedPayload:
+    id: strawberry.ID
+    status: Optional[BedStatusChoices]
+    shelterId: strawberry.ID
