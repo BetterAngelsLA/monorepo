@@ -19,7 +19,6 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
 
   const { isHmisUser } = useUser();
 
-  // shared actions
   const ACTIONS: TMainModalAction[] = [
     {
       title: 'Add client',
@@ -35,11 +34,6 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
       },
     },
   ];
-
-  // non-hmis actions
-  if (!isHmisUser) {
-    ACTIONS.unshift();
-  }
 
   return (
     <MainModal
