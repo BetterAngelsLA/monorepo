@@ -933,8 +933,10 @@ export type HmisNoteFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<HmisNoteFilter>;
   OR?: InputMaybe<HmisNoteFilter>;
+  authors?: InputMaybe<Array<Scalars['ID']['input']>>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type HmisNoteOrdering = {
