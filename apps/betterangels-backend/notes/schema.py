@@ -145,9 +145,7 @@ class Mutation:
 
     @strawberry_django.mutation(
         permission_classes=[IsAuthenticated],
-        extensions=[
-            HasRetvalPerm(perms=[NotePermissions.CHANGE]),
-        ],
+        extensions=[HasRetvalPerm(perms=[NotePermissions.CHANGE])],
     )
     def update_note_location(self, info: Info, data: UpdateNoteLocationInput) -> NoteType:
         with transaction.atomic(), pghistory.context(note_id=data.id, timestamp=timezone.now(), label=info.field_name):
@@ -166,9 +164,7 @@ class Mutation:
             note = resolvers.update(
                 info,
                 note,
-                {
-                    "location": location,
-                },
+                {"location": location},
             )
 
             return cast(NoteType, note)

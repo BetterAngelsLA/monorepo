@@ -13,6 +13,8 @@ from clients.enums import (
     PreferredCommunicationEnum,
 )
 from common.graphql.types import (
+    LocationInput,
+    LocationType,
     NonBlankString,
     PhoneNumberInput,
     PhoneNumberType,
@@ -234,6 +236,7 @@ class HmisNoteType:
     client_program: Optional[HmisClientProgramType]
     ref_client_program: Optional[str]
     created_by: Optional[UserType]
+    location: Optional[LocationType]
 
     requested_services: Optional[list[ServiceRequestType]]
     provided_services: Optional[list[ServiceRequestType]]
@@ -270,3 +273,9 @@ class UpdateHmisNoteInput:
     note: Optional[str]
     date: Optional[datetime.date]
     ref_client_program: Optional[str]
+
+
+@strawberry_django.input(HmisNote)
+class UpdateHmisNoteLocationInput:
+    id: ID
+    location: LocationInput
