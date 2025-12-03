@@ -26,18 +26,19 @@ export default function MainPlusModal(props: IMainPlusModalProps) {
       Icon: UserAddIcon,
       route: '/clients/create',
     },
-  ];
-
-  // non-hmis actions
-  if (!isHmisUser) {
-    ACTIONS.unshift({
-      title: 'Add interaction',
+    {
+      title: `Add ${isHmisUser ? 'note' : 'interaction'}`,
       Icon: FilePlusIcon,
       route: '/',
       params: {
         createInteraction: 'true',
       },
-    });
+    },
+  ];
+
+  // non-hmis actions
+  if (!isHmisUser) {
+    ACTIONS.unshift();
   }
 
   return (
