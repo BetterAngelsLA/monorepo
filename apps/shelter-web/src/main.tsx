@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { ApolloProvider } from '@apollo/client';
 import { createApolloClient } from '@monorepo/react/shared';
+
 import App from './app/app';
 
 const csrfCookieName =
@@ -17,7 +18,6 @@ const apolloClient = createApolloClient({
   csrfHeaderName,
 });
 
-// to allow preview by branch
 const basename = import.meta.env.VITE_APP_BASE_PATH || '/';
 
 const root = ReactDOM.createRoot(
@@ -27,9 +27,9 @@ const root = ReactDOM.createRoot(
 root.render(
   <StrictMode>
     <ApolloProvider client={apolloClient}>
-      <BrowserRouter basename={basename}>
-        <App />
-      </BrowserRouter>
+        <BrowserRouter basename={basename}>
+          <App />
+        </BrowserRouter>
     </ApolloProvider>
   </StrictMode>
 );

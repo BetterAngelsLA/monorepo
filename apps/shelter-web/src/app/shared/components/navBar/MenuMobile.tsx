@@ -1,7 +1,11 @@
 import { CloseIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { Link } from 'react-router-dom';
-import { aboutUsPath, shelterHomePath } from '../../../routes/routePaths';
+import {
+  aboutUsPath,
+  operatorPath,
+  shelterHomePath,
+} from '../../../routes/routePaths';
 import { flyoutAtom } from '../../atoms/flyoutAtom';
 import { mergeCss } from '../../utils/styles/mergeCss';
 
@@ -62,6 +66,15 @@ export function MenuMobile() {
             className={mergeCss(hoverBtnCss)}
           >
             About Us
+          </Link>
+        </div>
+        <div>
+          <Link
+            aria-label="navigate to operator page"
+            to={operatorPath}
+            className={mergeCss(hoverBtnCss)}
+          >
+            Operator
           </Link>
         </div>
       </div>

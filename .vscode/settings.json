@@ -32,5 +32,5 @@
   "python.testing.pytestArgs": ["apps", "libs"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
-  "python.analysis.autoImportCompletions": true
+  "python.analysis.autoImportCompletions": true,
 }
