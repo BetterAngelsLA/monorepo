@@ -28,7 +28,6 @@ export default function Dashboard() {
 
   if (error) console.error('[Dashboard GraphQL error]', error);
 
-  // Convert backend data to UI-friendly shelter objects
   const backendShelters: Shelter[] =
     data?.sheltersByOrganization?.results?.map((s: any) => ({
       id: String(s.id),

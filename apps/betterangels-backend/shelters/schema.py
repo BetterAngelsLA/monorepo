@@ -1,5 +1,7 @@
 import strawberry
 import strawberry_django
+from strawberry.types import Info
+
 from shelters.enums import StatusChoices
 from common.permissions.utils import IsAuthenticated
 from django.db.models import QuerySet
@@ -8,6 +10,7 @@ from shelters.models import Shelter
 from shelters.types import ShelterType
 from strawberry_django.pagination import OffsetPaginated
 from strawberry_django.permissions import HasPerm
+from shelters.permissions import ShelterPermissions
 
 
 @strawberry.type
@@ -18,14 +21,22 @@ class Query:
     def shelters(self) -> QuerySet:
         return Shelter.objects.filter(status=StatusChoices.APPROVED)
 
-    # modified code
     @strawberry_django.offset_paginated(
         OffsetPaginated[ShelterType],
         permission_classes=[IsAuthenticated],
-        extensions=[HasPerm(NotePermissions.ADD)],
+        extensions=[HasPerm(ShelterPermissions.VIEW)],
     )
-    def shelters_by_organization(self, organization_id: strawberry.ID) -> QuerySet[Shelter]:
-        queryset: QuerySet[Shelter] = Shelter.objects.filter(organization_id=organization_id).order_by("-created_at")
-        return queryset
+    def shelters_by_organization(
+        self,
+        info: Info,
+        organization_id: strawberry.ID, 
+    ) -> QuerySet[Shelter]:
+        user = info.context.request.user
+        user_org_id = getattr(user, "organization_id", None)
+        effective_org_id = user_org_id or int(organization_id)
 
-    #
+        return (
+            Shelter.objects
+            .filter(organization_id=effective_org_id)
+            .order_by("-created_at")
+        )
