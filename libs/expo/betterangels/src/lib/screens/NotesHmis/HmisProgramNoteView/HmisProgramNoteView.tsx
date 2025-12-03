@@ -12,7 +12,7 @@ import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
 import HmisProgramNoteTitle from './HmisProgramNoteTitle';
-import { HmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
+import { ViewHmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
 
 type TProps = {
   id: string;
@@ -21,7 +21,7 @@ type TProps = {
 
 export function HmisProgramNoteView(props: TProps) {
   const { id, clientId } = props;
-  const { data, error, loading } = useQuery(HmisNoteDocument, {
+  const { data, error, loading } = useQuery(ViewHmisNoteDocument, {
     variables: { id },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -67,6 +67,8 @@ export function HmisProgramNoteView(props: TProps) {
   const programName = program?.name;
   const clientName = buildFullName(firstName, lastName);
   const sanitizedNote = sanitizeHtmlString(note);
+
+  console.log('NOTE: ', note);
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>

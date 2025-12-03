@@ -1,0 +1,17 @@
+query HmisServiceCategories(
+  $ordering: [OrganizationServiceCategoryOrdering!]! = []
+  $pagination: OffsetPaginationInput
+) {
+  serviceCategories(pagination: $pagination, ordering: $ordering) {
+    results {
+      services {
+        label
+        priority
+        id
+      }
+      name
+      priority
+      id
+    }
+  }
+}

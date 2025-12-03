@@ -20,6 +20,7 @@ export * from './Filters';
 export * from './GirpNoteForm';
 export { default as Header } from './Header';
 export { default as HMISLoginForm } from './HMISLoginForm';
+export { default as HmisRequestedProvidedServices } from './HmisRequestedProvidedServices';
 export * from './Layout';
 export { default as LoginForm } from './LoginForm';
 export { default as MainContainer } from './MainContainer';

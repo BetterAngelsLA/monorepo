@@ -8,6 +8,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
+import { ServiceRequestTypeEnum } from '../../../apollo';
 import { useHmisClientPrograms } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { GirpNoteForm } from '../../../ui-components';
@@ -16,6 +17,8 @@ import {
   THmisProgramNoteFormInputs,
   hmisProgramNoteFormEmptyState,
 } from './formSchema';
+import ProvidedServices from './HmisProvidedServices';
+import RequestedServices from './HmisRequestedServices';
 import { FieldCardHmisNote } from './shared/FieldCardHmisNote';
 import { renderValue } from './shared/renderValue';
 import { TFormKeys } from './types';
@@ -49,6 +52,7 @@ export function HmisProgramNoteForm(props: TProps) {
   const refClientProgramValue = watch('refClientProgram') || '';
   const dateYmd = watch('date') || '';
   const noteValue = watch('note') || '';
+  const services = watch('services') || [];
 
   const {
     clientPrograms,
@@ -220,6 +224,17 @@ export function HmisProgramNoteForm(props: TProps) {
           disabled={formDisabled}
         />
       </FieldCardHmisNote>
+
+      <ProvidedServices
+        services={
+          services[ServiceRequestTypeEnum.Provided]?.serviceRequests || []
+        }
+      />
+      <RequestedServices
+        services={
+          services[ServiceRequestTypeEnum.Requested]?.serviceRequests || []
+        }
+      />
 
       {!hideProgram && (
         <FieldCardHmisNote
