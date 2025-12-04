@@ -1,34 +1,143 @@
+import { useMutation } from '@apollo/client/react';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SelahTeamEnum, UpdateTaskInput } from '../../apollo';
+import { SelahTeamEnum, TaskStatusEnum, UpdateTaskInput } from '../../apollo';
+import { useSnackbar } from '../../hooks';
 import { useModalScreen } from '../../providers';
+
+// 1. Import Mutations
+import { CreateTaskDocument } from '../TaskForm/__generated__/createTask.generated';
+import { DeleteTaskDocument } from '../TaskForm/__generated__/deleteTask.generated';
+import { UpdateTaskDocument } from '../TaskForm/__generated__/updateTask.generated';
+
 import { TaskForm } from '../TaskForm';
+import { TaskFormData } from '../TaskForm/TaskForm';
 
 interface INoteTasksModalProps {
-  clientProfileId: string;
-  noteId: string;
+  clientProfileId?: string;
+  hmisClientProfileId?: string; // <--- Ensure this is used
+  noteId?: string;
+  hmisNoteId?: string;
   refetch: () => void;
   team?: SelahTeamEnum | null;
   task?: UpdateTaskInput;
+  onSubmit?: (data: TaskFormData, existingId?: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 export default function NoteTasksModal(props: INoteTasksModalProps) {
-  const { clientProfileId, noteId, refetch, team, task } = props;
+  const {
+    clientProfileId,
+    hmisClientProfileId,
+    noteId,
+    hmisNoteId,
+    refetch,
+    team,
+    task,
+    onSubmit,
+    onDelete,
+  } = props;
 
   const { closeModalScreen } = useModalScreen();
+  const { showSnackbar } = useSnackbar();
   const { top: topInset } = useSafeAreaInsets();
+
+  const [createTask] = useMutation(CreateTaskDocument);
+  const [updateTask] = useMutation(UpdateTaskDocument);
+  const [deleteTask] = useMutation(DeleteTaskDocument);
 
   const closeModal = () => {
     closeModalScreen();
   };
 
-  const onSuccess = () => {
-    refetch();
-    closeModal();
+  const handleSave = async (formData: TaskFormData) => {
+    // A. Draft Mode
+    if (onSubmit) {
+      onSubmit(formData, task?.id);
+      closeModal();
+      return;
+    }
+
+    // B. Live Mode
+    try {
+      const cleanStatus = formData.status || undefined;
+      const cleanTeam = formData.team === '' ? null : formData.team;
+
+      if (task?.id) {
+        await updateTask({
+          variables: {
+            data: {
+              id: task.id,
+              summary: formData.summary,
+              description: formData.description,
+              status: cleanStatus,
+              team: cleanTeam,
+            },
+          },
+        });
+      } else {
+        await createTask({
+          variables: {
+            data: {
+              summary: formData.summary,
+              description: formData.description,
+              status: cleanStatus,
+              team: cleanTeam || team || null,
+
+              // FIX: Map IDs correctly based on which props are present
+              clientProfile: clientProfileId || null,
+              hmisClientProfile: hmisClientProfileId || null, // <--- Added this
+
+              note: noteId || null,
+              hmisNote: hmisNoteId || null,
+            },
+          },
+        });
+      }
+      refetch();
+      closeModal();
+    } catch (error) {
+      console.error('Task mutation error:', error);
+      showSnackbar({ message: 'Failed to save task.', type: 'error' });
+    }
   };
+
+  const handleDelete = async () => {
+    if (onDelete && task?.id) {
+      onDelete(task.id);
+      closeModal();
+      return;
+    }
+
+    if (task?.id) {
+      try {
+        await deleteTask({
+          variables: {
+            id: task.id,
+          },
+        });
+        refetch();
+        closeModal();
+      } catch (error) {
+        console.error('Task delete error:', error);
+        showSnackbar({ message: 'Failed to delete task.', type: 'error' });
+      }
+    } else {
+      closeModal();
+    }
+  };
+
+  const initialValues: Partial<TaskFormData> = {
+    summary: task?.summary || '',
+    description: task?.description || '',
+    status: task?.status || TaskStatusEnum.ToDo,
+    team: (task?.team as SelahTeamEnum) || team || '',
+  };
+
+  const showDelete = !!onDelete || !!task?.id;
 
   return (
     <View
@@ -54,13 +163,12 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
           <PlusIcon size="md" color={Colors.BLACK} rotate="45deg" />
         </IconButton>
       </View>
+
       <TaskForm
-        clientProfileId={clientProfileId}
+        initialValues={initialValues}
+        onSubmit={handleSave}
         onCancel={closeModal}
-        task={task}
-        team={team}
-        onSuccess={onSuccess}
-        noteId={noteId}
+        onDelete={showDelete ? handleDelete : undefined}
       />
     </View>
   );

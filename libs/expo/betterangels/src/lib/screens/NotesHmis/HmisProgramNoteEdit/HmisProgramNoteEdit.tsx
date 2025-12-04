@@ -6,7 +6,6 @@ import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { HmisNoteType } from '../../../apollo';
 import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
@@ -20,7 +19,10 @@ import {
   THmisProgramNoteFormOutputs,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm';
-import { HmisNoteDocument } from './__generated__/hmisGetClientNote.generated';
+import {
+  HmisNoteDocument,
+  HmisNoteQuery,
+} from './__generated__/hmisGetClientNote.generated';
 import { UpdateHmisNoteDocument } from './__generated__/hmisUpdateClientNote.generated';
 
 type TProps = {
@@ -35,7 +37,11 @@ export function HmisProgramNoteEdit(props: TProps) {
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [existingNote, setExistingNote] = useState<HmisNoteType>();
+
+  // FIX: Use the specific Query type, not the full Schema type
+  // This prevents errors about missing fields (like createdAt/updatedAt) that the query didn't request.
+  const [existingNote, setExistingNote] = useState<HmisNoteQuery['hmisNote']>();
+
   const [updateHmisNoteMutation] = useMutation(UpdateHmisNoteDocument);
 
   const methods = useForm<THmisProgramNoteFormInputs>({
@@ -43,13 +49,12 @@ export function HmisProgramNoteEdit(props: TProps) {
     defaultValues: hmisProgramNoteFormEmptyState,
   });
 
-  // Note: we assume cached note is valid and refetch only on missing fields.
-  // fetchPolicy=cache-first: use cache unless missing fields in cache
-  // partialRefetch=true: refetch if any requested field is missing
+  // Fetch the Note (ensure your .graphql file requests the 'tasks' field!)
   const {
     data: noteData,
     loading: noteDataLoading,
     error: getNoteNetworkError,
+    refetch,
   } = useQuery(HmisNoteDocument, {
     variables: { id },
     fetchPolicy: 'cache-first',
@@ -111,7 +116,6 @@ export function HmisProgramNoteEdit(props: TProps) {
 
       const { data, error } = updateResponse;
 
-      // if form field errors: handle and exit
       if (CombinedGraphQLErrors.is(error)) {
         const fieldErrors = extractExtensionFieldErrors(
           error,
@@ -120,12 +124,10 @@ export function HmisProgramNoteEdit(props: TProps) {
 
         if (fieldErrors.length) {
           applyManualFormErrors(fieldErrors, methods.setError);
-
           return;
         }
       }
 
-      // non-validation error: throw
       if (error) {
         throw new Error(error.message);
       }
@@ -141,7 +143,6 @@ export function HmisProgramNoteEdit(props: TProps) {
       );
     } catch (error) {
       console.error('[updateHmisNoteMutation] error:', error);
-
       showSnackbar({
         message: 'Something went wrong. Please try again.',
         type: 'error',
@@ -170,6 +171,9 @@ export function HmisProgramNoteEdit(props: TProps) {
           clientId={clientId}
           disabled={formDisabled}
           editing={true}
+          noteId={id}
+          existingTasks={existingNote?.tasks}
+          refetch={refetch}
         />
       </Form.Page>
     </FormProvider>

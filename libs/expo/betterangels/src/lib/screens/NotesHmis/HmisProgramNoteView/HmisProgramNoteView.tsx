@@ -8,11 +8,11 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { sanitizeHtmlString } from '@monorepo/expo/shared/utils';
 import { useNavigation, useRouter } from 'expo-router';
-import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { MainScrollContainer } from '../../../ui-components';
+import { useEffect, useRef } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { MainScrollContainer, NoteTasks } from '../../../ui-components';
 import HmisProgramNoteTitle from './HmisProgramNoteTitle';
-import { HmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
+import { HmisNoteWithTasksDocument } from './__generated__/HmisProgramNoteView.generated';
 
 type TProps = {
   id: string;
@@ -21,11 +21,16 @@ type TProps = {
 
 export function HmisProgramNoteView(props: TProps) {
   const { id, clientId } = props;
-  const { data, error, loading } = useQuery(HmisNoteDocument, {
-    variables: { id },
-    fetchPolicy: 'cache-and-network',
-    nextFetchPolicy: 'cache-first',
-  });
+  const scrollRef = useRef<ScrollView>(null);
+
+  const { data, error, loading, refetch } = useQuery(
+    HmisNoteWithTasksDocument,
+    {
+      variables: { id },
+      fetchPolicy: 'cache-and-network',
+      nextFetchPolicy: 'cache-first',
+    }
+  );
   const hmisNote = data?.hmisNote;
   const navigation = useNavigation();
   const router = useRouter();
@@ -61,7 +66,7 @@ export function HmisProgramNoteView(props: TProps) {
     return null;
   }
 
-  const { note, hmisClientProfile, clientProgram } = hmisNote;
+  const { note, hmisClientProfile, clientProgram, tasks } = hmisNote;
   const { firstName, lastName } = hmisClientProfile || {};
   const { program } = clientProgram || {};
   const programName = program?.name;
@@ -69,7 +74,7 @@ export function HmisProgramNoteView(props: TProps) {
   const sanitizedNote = sanitizeHtmlString(note);
 
   return (
-    <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+    <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} ref={scrollRef}>
       <View style={styles.container}>
         <HmisProgramNoteTitle hmisNote={hmisNote} />
 
@@ -91,6 +96,16 @@ export function HmisProgramNoteView(props: TProps) {
           </View>
         )}
       </View>
+
+      <NoteTasks
+        clientProfileId={clientId}
+        noteId={id}
+        tasks={tasks}
+        refetch={refetch}
+        scrollRef={scrollRef}
+        team={null}
+        hideIfEmpty={true} // Only show if tasks exist
+      />
     </MainScrollContainer>
   );
 }
