@@ -5,7 +5,6 @@ import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
-  DeleteServiceRequestDocument,
   extractExtensionFieldErrors,
   ServiceRequestTypeEnum,
 } from '../../../apollo';
@@ -24,7 +23,10 @@ import {
   HmisNoteFormFieldNames,
 } from '../HmisProgramNoteForm/formSchema';
 import { CreateHmisNoteDocument } from './__generated__/hmisCreateClientNote.generated';
-import { CreateHmisServiceRequestDocument } from './__generated__/HmisServiceRequest.generated';
+import {
+  CreateHmisServiceRequestDocument,
+  RemoveHmisNoteServiceRequestDocument,
+} from './__generated__/HmisServiceRequest.generated';
 
 type TProps = {
   clientId: string;
@@ -36,15 +38,11 @@ function splitBucket(bucket?: {
     id?: string;
     service?: { id: string; label?: string } | null;
     markedForDeletion?: boolean;
-  }[];
-  serviceRequestsOthers?: {
     serviceRequestId?: string;
     serviceOther?: string | null;
-    markedForDeletion?: boolean;
   }[];
 }) {
   const serviceRequests = bucket?.serviceRequests ?? [];
-  const serviceRequestsOthers = bucket?.serviceRequestsOthers ?? [];
 
   // CREATE standard: brand-new rows (no id), not marked for deletion, with a selected service
   const toCreateStandard = serviceRequests
@@ -57,7 +55,7 @@ function splitBucket(bucket?: {
     .map((s) => ({ serviceRequestId: s.id! }));
 
   // CREATE “other”: brand-new (no serviceRequestId), not marked for deletion, with non-empty text
-  const toCreateOther = serviceRequestsOthers
+  const toCreateOther = serviceRequests
     .filter(
       (o) =>
         !o.serviceRequestId &&
@@ -68,8 +66,10 @@ function splitBucket(bucket?: {
     .map((o) => ({ serviceOther: o.serviceOther!.trim() }));
 
   // DELETE “other”: persisted (has serviceRequestId) and marked for deletion
-  const toDeleteOther = serviceRequestsOthers
-    .filter((o) => !!o.serviceRequestId && !!o.markedForDeletion)
+  const toDeleteOther = serviceRequests
+    .filter(
+      (o) => !!o.serviceRequestId && !!o.markedForDeletion && !!o.serviceOther
+    )
     .map((o) => ({ serviceRequestId: o.serviceRequestId! }));
 
   return { toCreateStandard, toDeleteStandard, toCreateOther, toDeleteOther };
@@ -81,7 +81,7 @@ export function HmisProgramNoteCreate(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [createHmisNote] = useMutation(CreateHmisNoteDocument);
-  const [deleteService] = useMutation(DeleteServiceRequestDocument);
+  const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
   const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
 
   async function applyBucket(
@@ -107,7 +107,15 @@ export function HmisProgramNoteCreate(props: TProps) {
 
     // delete standard
     for (const s of toDeleteStandard) {
-      await deleteService({ variables: { data: { id: s.serviceRequestId! } } });
+      await deleteService({
+        variables: {
+          data: {
+            serviceRequestId: s.serviceRequestId!,
+            hmisNoteId: noteId,
+            serviceRequestType: type,
+          },
+        },
+      });
     }
 
     // create “other”
@@ -125,7 +133,15 @@ export function HmisProgramNoteCreate(props: TProps) {
 
     // delete “other”
     for (const o of toDeleteOther) {
-      await deleteService({ variables: { data: { id: o.serviceRequestId! } } });
+      await deleteService({
+        variables: {
+          data: {
+            serviceRequestId: o.serviceRequestId!,
+            hmisNoteId: noteId,
+            serviceRequestType: type,
+          },
+        },
+      });
     }
   }
 

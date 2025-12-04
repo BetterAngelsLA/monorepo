@@ -26,3 +26,26 @@ mutation CreateHmisServiceRequest($data: CreateHmisNoteServiceRequestInput!) {
     }
   }
 }
+
+mutation RemoveHmisNoteServiceRequest(
+  $data: RemoveHmisNoteServiceRequestInput!
+) {
+  removeHmisNoteServiceRequest(data: $data) {
+    ... on OperationInfo {
+      messages {
+        kind
+        field
+        message
+      }
+    }
+    ... on HmisNoteType {
+      id
+      requestedServices {
+        id
+      }
+      providedServices {
+        id
+      }
+    }
+  }
+}

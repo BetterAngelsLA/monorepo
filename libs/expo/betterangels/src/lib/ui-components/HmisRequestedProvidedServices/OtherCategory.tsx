@@ -2,19 +2,15 @@ import { ControlledInput } from '@monorepo/expo/shared/ui-components';
 import { useForm } from 'react-hook-form';
 import ServiceOtherCheckbox from './ServiceOtherCheckbox';
 
+type OtherRow = {
+  serviceOther: string | null;
+  serviceRequestId?: string;
+  markedForDeletion?: boolean;
+};
+
 interface IOtherCategoryProps {
-  serviceRequests: {
-    serviceOther: string | null;
-    serviceRequestId: string | undefined;
-    markedForDeletion?: boolean;
-  }[];
-  setServiceRequests: (
-    services: {
-      serviceOther: string | null;
-      serviceRequestId: string | undefined;
-      markedForDeletion?: boolean;
-    }[]
-  ) => void;
+  serviceRequests: OtherRow[];
+  setServiceRequests: (rows: OtherRow[]) => void;
 }
 
 export default function OtherCategory(props: IOtherCategoryProps) {

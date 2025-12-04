@@ -23,11 +23,6 @@ export default function RequestedProvidedServices(
   const { showModalScreen } = useModalScreen();
   const { setValue, getValues } = useFormContext();
 
-  const oppositeType =
-    type === ServiceRequestTypeEnum.Provided
-      ? ServiceRequestTypeEnum.Requested
-      : ServiceRequestTypeEnum.Provided;
-
   if (!selectedServices) {
     return null;
   }

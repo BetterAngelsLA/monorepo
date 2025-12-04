@@ -8,14 +8,9 @@ export type ServicesDraft = Partial<
     {
       serviceRequests: {
         serviceRequestId?: string;
-        serviceId?: string;
-        label?: string;
+        service?: { id: string; label?: string } | null;
         markedForDeletion?: boolean;
-      }[];
-      serviceRequestsOthers: {
-        serviceRequestId?: string;
         serviceOther?: string | null;
-        markedForDeletion?: boolean;
       }[];
     }
   >
