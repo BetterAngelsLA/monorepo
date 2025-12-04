@@ -172,7 +172,7 @@ export function HmisProgramNoteEdit(props: TProps) {
           disabled={formDisabled}
           editing={true}
           noteId={id}
-          existingTasks={existingNote?.tasks}
+          existingTasks={existingNote?.tasks || []}
           refetch={refetch}
         />
       </Form.Page>

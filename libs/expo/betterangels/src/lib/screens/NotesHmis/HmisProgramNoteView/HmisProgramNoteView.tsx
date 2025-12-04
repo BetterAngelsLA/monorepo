@@ -100,7 +100,7 @@ export function HmisProgramNoteView(props: TProps) {
       <NoteTasks
         clientProfileId={clientId}
         noteId={id}
-        tasks={tasks}
+        tasks={tasks || []}
         refetch={refetch}
         scrollRef={scrollRef}
         team={null}

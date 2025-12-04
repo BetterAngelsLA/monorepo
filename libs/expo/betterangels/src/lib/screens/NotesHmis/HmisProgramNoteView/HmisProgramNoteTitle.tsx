@@ -1,12 +1,12 @@
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { format } from 'date-fns';
 import { View } from 'react-native';
-import { HmisNoteQuery } from './__generated__/HmisProgramNoteView.generated';
+import { HmisNoteWithTasksQuery } from './__generated__/HmisProgramNoteView.generated';
 
 export default function HmisProgramNoteTitle({
   hmisNote,
 }: {
-  hmisNote: HmisNoteQuery['hmisNote'] | undefined;
+  hmisNote: HmisNoteWithTasksQuery['hmisNote'] | undefined;
 }) {
   if (hmisNote?.__typename !== 'HmisNoteType') return null;
 
