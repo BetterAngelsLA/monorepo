@@ -5,7 +5,6 @@ import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
-  CreateNoteServiceRequestDocument,
   DeleteServiceRequestDocument,
   extractExtensionFieldErrors,
   ServiceRequestTypeEnum,
@@ -25,6 +24,7 @@ import {
   HmisNoteFormFieldNames,
 } from '../HmisProgramNoteForm/formSchema';
 import { CreateHmisNoteDocument } from './__generated__/hmisCreateClientNote.generated';
+import { CreateHmisServiceRequestDocument } from './__generated__/HmisServiceRequest.generated';
 
 type TProps = {
   clientId: string;
@@ -82,7 +82,7 @@ export function HmisProgramNoteCreate(props: TProps) {
   const { showSnackbar } = useSnackbar();
   const [createHmisNote] = useMutation(CreateHmisNoteDocument);
   const [deleteService] = useMutation(DeleteServiceRequestDocument);
-  const [createServiceRequest] = useMutation(CreateNoteServiceRequestDocument);
+  const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
 
   async function applyBucket(
     noteId: string,
@@ -97,7 +97,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            noteId,
+            hmisNoteId: noteId,
             serviceRequestType: type,
             serviceId: s.serviceId!,
           },
@@ -115,15 +115,12 @@ export function HmisProgramNoteCreate(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            noteId,
+            hmisNoteId: noteId,
             serviceRequestType: type,
             serviceOther: o.serviceOther!.trim(),
           },
         },
       });
-
-      console.log(noteId);
-      console.log(o.serviceOther!.trim());
     }
 
     // delete “other”
