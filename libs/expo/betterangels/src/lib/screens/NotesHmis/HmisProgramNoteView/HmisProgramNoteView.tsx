@@ -11,8 +11,9 @@ import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
-import HmisProgramNoteTitle from './HmisProgramNoteTitle';
 import { ViewHmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
+import HmisProgramNoteServices from './HmisProgramNoteServices';
+import HmisProgramNoteTitle from './HmisProgramNoteTitle';
 
 type TProps = {
   id: string;
@@ -61,14 +62,18 @@ export function HmisProgramNoteView(props: TProps) {
     return null;
   }
 
-  const { note, hmisClientProfile, clientProgram } = hmisNote;
+  const {
+    note,
+    hmisClientProfile,
+    clientProgram,
+    providedServices,
+    requestedServices,
+  } = hmisNote;
   const { firstName, lastName } = hmisClientProfile || {};
   const { program } = clientProgram || {};
   const programName = program?.name;
   const clientName = buildFullName(firstName, lastName);
   const sanitizedNote = sanitizeHtmlString(note);
-
-  console.log('NOTE: ', note);
 
   return (
     <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
@@ -82,6 +87,11 @@ export function HmisProgramNoteView(props: TProps) {
             <TextBold mb="xs">Program</TextBold>
             <TextRegular>{programName}</TextRegular>
           </View>
+        )}
+
+        {((providedServices && providedServices?.length > 0) ||
+          (requestedServices && requestedServices.length > 0)) && (
+          <HmisProgramNoteServices note={hmisNote} />
         )}
 
         {!!sanitizedNote.length && (

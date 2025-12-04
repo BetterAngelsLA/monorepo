@@ -2,48 +2,24 @@ import { format } from 'date-fns';
 import { z } from 'zod';
 import { ServiceRequestTypeEnum } from '../../../apollo';
 
-const StandardServiceDraftSchema = z.object({
-  serviceRequestId: z.string().optional(),
-  serviceId: z.string().optional(),
-  label: z.string().optional(),
-  markedForDeletion: z.boolean().optional(),
-});
-
-const OtherServiceDraftSchema = z.object({
-  serviceRequestId: z.string().optional(),
-  serviceOther: z.string().optional().nullable(),
-  markedForDeletion: z.boolean().optional(),
-});
-
-const ServiceBucketSchema = z.object({
-  serviceRequests: z
-    .array(StandardServiceDraftSchema)
-    .default([])
-    .transform((arr) =>
-      arr.filter(
-        (i) => i.markedForDeletion === true || i.serviceRequestId || i.serviceId
-      )
-    ),
-  serviceRequestsOthers: z
-    .array(OtherServiceDraftSchema)
-    .default([])
-    .transform((arr) =>
-      arr.filter(
-        (i) =>
-          i.markedForDeletion === true ||
-          i.serviceRequestId ||
-          (typeof i.serviceOther === 'string' &&
-            i.serviceOther.trim().length > 0)
-      )
-    ),
-});
-
-const ServicesDraftSchema = z
-  .object({
-    [ServiceRequestTypeEnum.Provided]: ServiceBucketSchema.optional(),
-    [ServiceRequestTypeEnum.Requested]: ServiceBucketSchema.optional(),
-  })
-  .default({});
+export type ServicesDraft = Partial<
+  Record<
+    ServiceRequestTypeEnum,
+    {
+      serviceRequests: {
+        serviceRequestId?: string;
+        serviceId?: string;
+        label?: string;
+        markedForDeletion?: boolean;
+      }[];
+      serviceRequestsOthers: {
+        serviceRequestId?: string;
+        serviceOther?: string | null;
+        markedForDeletion?: boolean;
+      }[];
+    }
+  >
+>;
 
 export const HmisProgramNoteFormSchema = z.object({
   title: z.string().min(1, 'Purpose is required.'),
@@ -56,7 +32,7 @@ export const HmisProgramNoteFormSchema = z.object({
     ),
   refClientProgram: z.string(),
   note: z.string().min(1, 'Note is required.'),
-  services: ServicesDraftSchema.optional().default({}),
+  services: z.custom<ServicesDraft>().optional(),
 });
 
 export type THmisProgramNoteFormSchema = z.infer<

@@ -7,9 +7,9 @@ import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import {
   CreateNoteServiceRequestDocument,
   DeleteServiceRequestDocument,
+  extractExtensionFieldErrors,
   ServiceRequestTypeEnum,
 } from '../../../apollo';
-import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
@@ -33,8 +33,8 @@ type TProps = {
 
 function splitBucket(bucket?: {
   serviceRequests?: {
-    serviceRequestId?: string;
-    serviceId?: string;
+    id?: string;
+    service?: { id: string; label?: string } | null;
     markedForDeletion?: boolean;
   }[];
   serviceRequestsOthers?: {
@@ -46,23 +46,33 @@ function splitBucket(bucket?: {
   const serviceRequests = bucket?.serviceRequests ?? [];
   const serviceRequestsOthers = bucket?.serviceRequestsOthers ?? [];
 
-  const toCreateStandard = serviceRequests.filter(
-    (s) => !s.serviceRequestId && !s.markedForDeletion && !!s.serviceId
-  );
-  const toDeleteStandard = serviceRequests.filter(
-    (s) => !!s.serviceRequestId && !!s.markedForDeletion
-  );
+  console.log(serviceRequests);
 
-  const toCreateOther = serviceRequestsOthers.filter(
-    (o) =>
-      !o.serviceRequestId &&
-      !o.markedForDeletion &&
-      !!o.serviceOther &&
-      o.serviceOther.trim().length > 0
-  );
-  const toDeleteOther = serviceRequestsOthers.filter(
-    (o) => !!o.serviceRequestId && !!o.markedForDeletion
-  );
+  // CREATE standard: brand-new rows (no id), not marked for deletion, with a selected service
+  const toCreateStandard = serviceRequests
+    .filter((s) => !s.id && !s.markedForDeletion && !!s.service?.id)
+    .map((s) => ({ serviceId: s.service!.id }));
+
+  // DELETE standard: persisted rows (has id) explicitly marked for deletion
+  const toDeleteStandard = serviceRequests
+    .filter((s) => !!s.id && !!s.markedForDeletion)
+    .map((s) => ({ serviceRequestId: s.id! }));
+
+  // CREATE “other”: brand-new (no serviceRequestId), not marked for deletion, with non-empty text
+  const toCreateOther = serviceRequestsOthers
+    .filter(
+      (o) =>
+        !o.serviceRequestId &&
+        !o.markedForDeletion &&
+        !!o.serviceOther &&
+        o.serviceOther.trim().length > 0
+    )
+    .map((o) => ({ serviceOther: o.serviceOther!.trim() }));
+
+  // DELETE “other”: persisted (has serviceRequestId) and marked for deletion
+  const toDeleteOther = serviceRequestsOthers
+    .filter((o) => !!o.serviceRequestId && !!o.markedForDeletion)
+    .map((o) => ({ serviceRequestId: o.serviceRequestId! }));
 
   return { toCreateStandard, toDeleteStandard, toCreateOther, toDeleteOther };
 }
@@ -79,7 +89,7 @@ export function HmisProgramNoteCreate(props: TProps) {
   async function applyBucket(
     noteId: string,
     type: ServiceRequestTypeEnum,
-    bucket: Parameters<typeof splitBucket>[0]
+    bucket: any
   ) {
     const { toCreateStandard, toDeleteStandard, toCreateOther, toDeleteOther } =
       splitBucket(bucket);
@@ -113,6 +123,9 @@ export function HmisProgramNoteCreate(props: TProps) {
           },
         },
       });
+
+      console.log(noteId);
+      console.log(o.serviceOther!.trim());
     }
 
     // delete “other”
@@ -174,18 +187,18 @@ export function HmisProgramNoteCreate(props: TProps) {
 
       const noteId = result.id;
 
-      const draft = services ?? {};
+      const draftServices = services ?? {};
 
       await applyBucket(
         noteId,
         ServiceRequestTypeEnum.Provided,
-        draft[ServiceRequestTypeEnum.Provided]
+        draftServices[ServiceRequestTypeEnum.Provided]
       );
 
       await applyBucket(
         noteId,
         ServiceRequestTypeEnum.Requested,
-        draft[ServiceRequestTypeEnum.Requested]
+        draftServices[ServiceRequestTypeEnum.Requested]
       );
 
       router.replace(
