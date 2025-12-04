@@ -45,7 +45,7 @@ export default function TabLayout() {
   const [isModalVisible, setModalVisible] = useState(false);
   const [tosModalIsOpen, setTosModalIsOpen] = useState(false);
   const router = useRouter();
-  const { user, isLoading } = useUser();
+  const { user, isLoading, isHmisUser } = useUser();
 
   useEffect(() => {
     if (
@@ -142,7 +142,7 @@ export default function TabLayout() {
                 color={color}
                 Icon={NoteIcon}
                 InactiveIcon={NoteIcon}
-                label="Interactions"
+                label={isHmisUser ? 'Notes' : 'Interactions'}
               />
             ),
           }}
