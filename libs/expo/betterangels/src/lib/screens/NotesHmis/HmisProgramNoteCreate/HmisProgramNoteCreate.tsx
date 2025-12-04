@@ -20,6 +20,7 @@ import {
   HmisNoteFormFieldNames,
 } from '../HmisProgramNoteForm/formSchema';
 import { CreateHmisNoteDocument } from './__generated__/hmisCreateClientNote.generated';
+import { UpdateHmisNoteLocationDocument } from './__generated__/updateHmisNoteLocation.generated';
 
 type TProps = {
   clientId: string;
@@ -32,6 +33,7 @@ export function HmisProgramNoteCreate(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [createHmisNote] = useMutation(CreateHmisNoteDocument);
+  const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
 
   const methods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
@@ -45,11 +47,13 @@ export function HmisProgramNoteCreate(props: TProps) {
       const payload: THmisProgramNoteFormOutputs =
         HmisProgramNoteFormSchemaOutput.parse(values);
 
+      const { location, ...rest } = payload;
+
       const createResponse = await createHmisNote({
         variables: {
           data: {
             hmisClientProfileId: clientId,
-            ...payload,
+            ...rest,
           },
         },
         errorPolicy: 'all',
@@ -80,6 +84,27 @@ export function HmisProgramNoteCreate(props: TProps) {
 
       if (result?.__typename !== 'HmisNoteType') {
         throw new Error('typename is not HmisNoteType');
+      }
+
+      const hmisNoteId = result.id;
+
+      if (location) {
+        await updateHmisNoteLocation({
+          variables: {
+            data: {
+              id: hmisNoteId,
+              location: {
+                point: [location.longitude, location.latitude],
+                address: location.formattedAddress
+                  ? {
+                      formattedAddress: location.formattedAddress,
+                      addressComponents: location.components,
+                    }
+                  : null,
+              },
+            },
+          },
+        });
       }
 
       router.replace(

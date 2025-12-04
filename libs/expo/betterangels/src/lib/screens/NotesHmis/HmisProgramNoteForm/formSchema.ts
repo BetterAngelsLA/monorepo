@@ -1,6 +1,13 @@
 import { format } from 'date-fns';
 import { z } from 'zod';
 
+export const LocationSchema = z.object({
+  latitude: z.number().gte(-90).lte(90),
+  longitude: z.number().gte(-180).lte(180),
+  formattedAddress: z.string().min(1, 'Required'),
+  components: z.string().optional(),
+});
+
 export const HmisProgramNoteFormSchema = z.object({
   title: z.string().min(1, 'Purpose is required.'),
   date: z
@@ -12,6 +19,7 @@ export const HmisProgramNoteFormSchema = z.object({
     ),
   refClientProgram: z.string(),
   note: z.string().min(1, 'Note is required.'),
+  location: LocationSchema.optional(),
 });
 
 export type THmisProgramNoteFormSchema = z.infer<
@@ -28,6 +36,12 @@ export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormSchema = {
   date: undefined,
   refClientProgram: '',
   note: '',
+  location: {
+    latitude: 0,
+    longitude: 0,
+    formattedAddress: '',
+    components: '',
+  },
 };
 
 /**

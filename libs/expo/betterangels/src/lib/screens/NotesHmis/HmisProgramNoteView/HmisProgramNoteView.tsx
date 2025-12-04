@@ -11,8 +11,9 @@ import { useNavigation, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { MainScrollContainer } from '../../../ui-components';
-import HmisProgramNoteTitle from './HmisProgramNoteTitle';
 import { HmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
+import HmisNoteLocation from './HmisNoteLocation';
+import HmisProgramNoteTitle from './HmisProgramNoteTitle';
 
 type TProps = {
   id: string;
@@ -81,6 +82,7 @@ export function HmisProgramNoteView(props: TProps) {
             <TextRegular>{programName}</TextRegular>
           </View>
         )}
+        {hmisNote.location?.point && <HmisNoteLocation hmisNote={hmisNote} />}
 
         {!!sanitizedNote.length && (
           <View>
