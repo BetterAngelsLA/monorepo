@@ -22,9 +22,9 @@ export default function HmisProgramNoteServices({
           <PillContainer
             maxVisible={5}
             pillVariant={'warning'}
-            pills={note['requestedServices']
-              // TODO: remove after cutover
-              .map((item) => item.serviceOther || item.service?.label || '')}
+            pills={note['requestedServices'].map(
+              (item) => item.service?.label || ''
+            )}
             variant={'expandable'}
           />
         </View>
@@ -38,7 +38,7 @@ export default function HmisProgramNoteServices({
             maxVisible={5}
             pillVariant={'success'}
             pills={note['providedServices'].map(
-              (item) => item.serviceOther || item.service?.label || ''
+              (item) => item.service?.label || ''
             )}
             variant={'expandable'}
           />
