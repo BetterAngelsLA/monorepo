@@ -237,7 +237,7 @@ class HmisNoteType:
     client_program: Optional[HmisClientProgramType]
     ref_client_program: Optional[str]
 
-    tasks: list[TaskType]
+    tasks: Optional[list[TaskType]]
     created_by: Optional[UserType]
     location: Optional[LocationType]
 

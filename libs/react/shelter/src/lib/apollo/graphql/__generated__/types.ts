@@ -962,7 +962,7 @@ export type HmisNoteType = {
   providedServices?: Maybe<Array<ServiceRequestType>>;
   refClientProgram?: Maybe<Scalars['String']['output']>;
   requestedServices?: Maybe<Array<ServiceRequestType>>;
-  tasks: Array<TaskType>;
+  tasks?: Maybe<Array<TaskType>>;
   title?: Maybe<Scalars['String']['output']>;
 };
 

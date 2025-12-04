@@ -949,7 +949,7 @@ type HmisNoteType {
   date: Date
   clientProgram: HmisClientProgramType
   refClientProgram: String
-  tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]!
+  tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]
   createdBy: UserType
   location: LocationType
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]
