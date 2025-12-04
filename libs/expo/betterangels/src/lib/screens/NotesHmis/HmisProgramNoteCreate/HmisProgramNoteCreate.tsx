@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { UpdateNoteLocationDocument } from '../../../apollo';
 import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
@@ -21,6 +20,7 @@ import {
   HmisNoteFormFieldNames,
 } from '../HmisProgramNoteForm/formSchema';
 import { CreateHmisNoteDocument } from './__generated__/hmisCreateClientNote.generated';
+import { UpdateHmisNoteLocationDocument } from './__generated__/updateHmisNoteLocation.generated';
 
 type TProps = {
   clientId: string;
@@ -33,7 +33,7 @@ export function HmisProgramNoteCreate(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [createHmisNote] = useMutation(CreateHmisNoteDocument);
-  const [updateNoteLocation] = useMutation(UpdateNoteLocationDocument);
+  const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
 
   const methods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
@@ -86,13 +86,13 @@ export function HmisProgramNoteCreate(props: TProps) {
         throw new Error('typename is not HmisNoteType');
       }
 
-      const noteId = result.id;
+      const hmisNoteId = result.id;
 
       if (location) {
-        await updateNoteLocation({
+        await updateHmisNoteLocation({
           variables: {
             data: {
-              id: noteId,
+              id: hmisNoteId,
               location: {
                 point: [location.longitude, location.latitude],
                 address: location.formattedAddress
