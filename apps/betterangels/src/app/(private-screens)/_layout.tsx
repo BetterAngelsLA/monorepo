@@ -155,7 +155,7 @@ export default function PrivateLayout() {
       <Stack.Screen
         name="notes-hmis/create/index"
         options={getDefaultStackNavOptions({
-          title: 'Add Interaction',
+          title: 'Add Note',
         })}
       />
       <Stack.Screen
@@ -167,7 +167,7 @@ export default function PrivateLayout() {
       <Stack.Screen
         name="notes-hmis/[id]/edit"
         options={getDefaultStackNavOptions({
-          title: 'Edit Interaction',
+          title: 'Edit Note',
         })}
       />
       <Stack.Screen

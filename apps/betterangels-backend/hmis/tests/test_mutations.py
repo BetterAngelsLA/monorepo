@@ -11,7 +11,7 @@ from clients.enums import (
     PreferredCommunicationEnum,
     PronounEnum,
 )
-from common.models import PhoneNumber
+from common.models import Location, PhoneNumber
 from common.tests.utils import GraphQLBaseTestCase
 from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
@@ -74,6 +74,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "title": "pitle",
             "note": "pote",
             "date": "2010-10-10",
+            "location": None,
             "providedServices": [],
             "requestedServices": [],
             "addedDate": "2025-11-25T01:37:07+00:00",
@@ -109,6 +110,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "title": "prog note title",
             "note": "prog note note",
             "date": "2011-11-11",
+            "location": None,
             "providedServices": [],
             "requestedServices": [],
             "addedDate": "2025-11-25T02:01:19+00:00",
@@ -166,6 +168,7 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
             "title": "updated note title",
             "note": "updated note note",
             "date": "2012-12-12",
+            "location": None,
             "providedServices": [
                 {
                     "id": str(provided_services[0].pk),
@@ -198,6 +201,48 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
         }
 
         self.assertEqual(expected, note)
+
+    def test_update_hmis_note_location_mutation(self) -> None:
+        self._setup_location()
+
+        hmis_note = baker.make(HmisNote, _fill_optional=True)
+        hmis_note_id = hmis_note.pk
+        json_address_input, address_input = self._get_address_inputs()
+
+        location = {
+            "address": json_address_input,
+            "point": self.point,
+            "pointOfInterest": self.point_of_interest,
+        }
+        variables = {
+            "id": hmis_note_id,
+            "location": location,
+        }
+
+        expected_query_count = 19
+        with self.assertNumQueriesWithoutCache(expected_query_count):
+            response = self._update_hmis_note_location_fixture(variables)
+
+        assert isinstance(address_input["addressComponents"], list)
+        expected_address = {
+            "street": (
+                f"{address_input['addressComponents'][0]['long_name']} "
+                f"{address_input['addressComponents'][1]['long_name']}"
+            ),
+            "city": address_input["addressComponents"][3]["long_name"],
+            "state": address_input["addressComponents"][5]["short_name"],
+            "zipCode": address_input["addressComponents"][7]["long_name"],
+        }
+
+        updated_note_location = response["data"]["updateHmisNoteLocation"]["location"]
+        self.assertEqual(updated_note_location["point"], self.point)
+        self.assertEqual(updated_note_location["address"], expected_address)
+
+        hmis_note = HmisNote.objects.get(id=hmis_note_id)
+        self.assertIsNotNone(hmis_note.location)
+
+        location = Location.objects.get(id=hmis_note.location.pk)  # type: ignore
+        self.assertEqual(hmis_note, location.hmis_notes.first())
 
     def test_create_hmis_note_service_request_mutation(self) -> None:
         bag_svc = OrganizationService.objects.get(label="Bag(s)")

@@ -4,7 +4,9 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from accounts.models import User
 from accounts.tests.baker_recipes import organization_recipe
+from common.models import Address, Location
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.gis.geos import Point
 from django.contrib.sites.models import Site
 from django.test import TestCase
 from model_bakery import baker
@@ -122,6 +124,23 @@ class GraphQLBaseTestCase(GraphQLTestCaseMixin, GraphQLAssertionsMixin, Parametr
         json_address_input["addressComponents"] = json.dumps(address_input["addressComponents"])
 
         return json_address_input, address_input
+
+    def _setup_location(self) -> None:
+        self.address = baker.make(
+            Address,
+            street=self.street,
+            city=self.city,
+            state=self.state,
+            zip_code=self.zip_code,
+        )
+        self.point = [-118.2437207, 34.0521723]
+        self.point_of_interest = "An Interesting Point"
+        self.location = baker.make(
+            Location,
+            address=self.address,
+            point=Point(self.point),
+            point_of_interest=self.point_of_interest,
+        )
 
     def _delete_fixture(self, object: str, object_id: str) -> Dict[str, Any]:
         mutation = f"""

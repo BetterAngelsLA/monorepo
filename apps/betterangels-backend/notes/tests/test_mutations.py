@@ -129,7 +129,6 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
         }
         self.assertEqual(updated_note, expected_note)
 
-    @skip("not implemented")
     def test_update_note_location_mutation(self) -> None:
         note_id = self.note["id"]
         json_address_input, address_input = self._get_address_inputs()
@@ -144,7 +143,7 @@ class NoteMutationTestCase(NoteGraphQLBaseTestCase):
             "location": location,
         }
 
-        expected_query_count = 25
+        expected_query_count = 24
         with self.assertNumQueriesWithoutCache(expected_query_count):
             response = self._update_note_location_fixture(variables)
 

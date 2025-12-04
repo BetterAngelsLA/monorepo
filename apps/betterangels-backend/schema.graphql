@@ -926,6 +926,8 @@ input HmisNoteFilter {
   OR: HmisNoteFilter
   NOT: HmisNoteFilter
   DISTINCT: Boolean
+  authors: [ID!]
+  search: String
 }
 
 input HmisNoteOrdering {
@@ -947,6 +949,7 @@ type HmisNoteType {
   clientProgram: HmisClientProgramType
   refClientProgram: String
   createdBy: UserType
+  location: LocationType
   requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]
   providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]
 }
@@ -1224,6 +1227,7 @@ type Mutation {
   createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload!
   updateHmisNote(data: UpdateHmisNoteInput!): UpdateHmisNotePayload!
   createHmisClientProgram(clientId: Int!, programHmisId: Int!): CreateHmisClientProgramPayload!
+  updateHmisNoteLocation(data: UpdateHmisNoteLocationInput!): UpdateHmisNoteLocationPayload!
   createHmisNoteServiceRequest(data: CreateHmisNoteServiceRequestInput!): CreateHmisNoteServiceRequestPayload!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
@@ -2154,6 +2158,13 @@ input UpdateHmisNoteInput {
   date: Date
   refClientProgram: String
 }
+
+input UpdateHmisNoteLocationInput {
+  id: ID!
+  location: LocationInput!
+}
+
+union UpdateHmisNoteLocationPayload = HmisNoteType | OperationInfo
 
 union UpdateHmisNotePayload = HmisNoteType | OperationInfo
 

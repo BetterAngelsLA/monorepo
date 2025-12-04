@@ -112,6 +112,18 @@ class HmisNoteBaseTestCase(GraphQLBaseTestCase):
             date
             refClientProgram
 
+            location {
+                id
+                address {
+                    street
+                    city
+                    state
+                    zipCode
+                }
+                point
+                pointOfInterest
+            }
+
             providedServices {
                 id
                 service { id label }
@@ -195,6 +207,36 @@ class HmisNoteBaseTestCase(GraphQLBaseTestCase):
                         id
                         requestedServices { id }
                         providedServices { id }
+                    }
+                }
+            }
+        """
+        return self.execute_graphql(mutation, {"data": variables})
+
+    def _update_hmis_note_location_fixture(self, variables: Dict) -> Dict[str, Any]:
+        mutation: str = """
+            mutation UpdateHmisNoteLocation($data: UpdateHmisNoteLocationInput!) {
+                updateHmisNoteLocation(data: $data) {
+                    ... on OperationInfo {
+                        messages {
+                            kind
+                            field
+                            message
+                        }
+                    }
+                    ... on HmisNoteType {
+                        id
+                        location {
+                            id
+                            address {
+                                street
+                                city
+                                state
+                                zipCode
+                            }
+                            point
+                            pointOfInterest
+                        }
                     }
                 }
             }
