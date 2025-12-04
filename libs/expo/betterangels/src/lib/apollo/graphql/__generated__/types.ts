@@ -1154,7 +1154,7 @@ export type LocationInput = {
 export type LocationType = {
   __typename?: 'LocationType';
   address: AddressType;
-  id: Scalars['ID']['output'];
+  id?: Maybe<Scalars['ID']['output']>;
   point: Scalars['Point']['output'];
   pointOfInterest?: Maybe<Scalars['String']['output']>;
 };
