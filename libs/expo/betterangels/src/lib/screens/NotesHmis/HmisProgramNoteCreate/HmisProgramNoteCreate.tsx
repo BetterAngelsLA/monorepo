@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
+import { UpdateNoteLocationDocument } from '../../../apollo';
 import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
@@ -32,6 +33,7 @@ export function HmisProgramNoteCreate(props: TProps) {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const [createHmisNote] = useMutation(CreateHmisNoteDocument);
+  const [updateNoteLocation] = useMutation(UpdateNoteLocationDocument);
 
   const methods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
@@ -45,11 +47,13 @@ export function HmisProgramNoteCreate(props: TProps) {
       const payload: THmisProgramNoteFormOutputs =
         HmisProgramNoteFormSchemaOutput.parse(values);
 
+      const { location, ...rest } = payload;
+
       const createResponse = await createHmisNote({
         variables: {
           data: {
             hmisClientProfileId: clientId,
-            ...payload,
+            ...rest,
           },
         },
         errorPolicy: 'all',
@@ -80,6 +84,27 @@ export function HmisProgramNoteCreate(props: TProps) {
 
       if (result?.__typename !== 'HmisNoteType') {
         throw new Error('typename is not HmisNoteType');
+      }
+
+      const noteId = result.id;
+
+      if (location) {
+        await updateNoteLocation({
+          variables: {
+            data: {
+              id: noteId,
+              location: {
+                point: [location.longitude, location.latitude],
+                address: location.formattedAddress
+                  ? {
+                      formattedAddress: location.formattedAddress,
+                      addressComponents: location.components,
+                    }
+                  : null,
+              },
+            },
+          },
+        });
       }
 
       router.replace(

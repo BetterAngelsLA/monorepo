@@ -11,6 +11,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { useHmisClientPrograms } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { GirpNoteForm } from '../../../ui-components';
+import HmisLocationComponent from '../HmisLocation';
 import { FORM_KEYS } from './constants';
 import {
   THmisProgramNoteFormInputs,
@@ -202,6 +203,11 @@ export function HmisProgramNoteForm(props: TProps) {
           }}
         />
       </FieldCardHmisNote>
+
+      <HmisLocationComponent
+        expanded={expandedField === FORM_KEYS.location}
+        setExpanded={setExpandedField}
+      />
 
       <FieldCardHmisNote
         required
