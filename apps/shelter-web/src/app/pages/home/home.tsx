@@ -1,8 +1,9 @@
+import { MaxWLayout } from '@monorepo/layout/maxWLayout';
+import { mergeCss } from '@monorepo/layout/styles/mergeCss';
 import { useMap } from '@vis.gl/react-google-maps';
 import { useAtom } from 'jotai';
 import { useEffect, useState } from 'react';
 import { SHELTERS_MAP_ID } from '../../constants.app';
-import { MaxWLayout } from '../../layout/maxWLayout';
 import { locationAtom } from '../../shared/atoms/locationAtom';
 import { modalAtom } from '../../shared/atoms/modalAtom';
 import { sheltersAtom } from '../../shared/atoms/sheltersAtom';
@@ -20,7 +21,6 @@ import {
 } from '../../shared/components/shelter/shelterCard';
 import { ShelterSearch } from '../../shared/components/shelters/shelterSearch';
 import { ModalAnimationEnum } from '../../shared/modal/modal';
-import { mergeCss } from '../../shared/utils/styles/mergeCss';
 
 export function Home() {
   const [atomLocation, setLocation] = useAtom(locationAtom);
@@ -69,11 +69,7 @@ export function Home() {
           shelter={
             shelters.find((shelter) => shelter.id === markerId) as TShelter
           }
-          footer={
-            <div className={mergeCss(footerStyle)}>
-              View Details
-            </div>
-          }
+          footer={<div className={mergeCss(footerStyle)}>View Details</div>}
         />
       ),
       animation: ModalAnimationEnum.EXPAND,

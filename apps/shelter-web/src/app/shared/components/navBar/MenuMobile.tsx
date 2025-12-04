@@ -1,9 +1,9 @@
+import { mergeCss } from '@monorepo/layout/styles/mergeCss';
 import { CloseIcon } from '@monorepo/react/icons';
 import { useAtom } from 'jotai';
 import { Link } from 'react-router-dom';
 import { aboutUsPath, shelterHomePath } from '../../../routes/routePaths';
 import { flyoutAtom } from '../../atoms/flyoutAtom';
-import { mergeCss } from '../../utils/styles/mergeCss';
 
 export function MenuMobile() {
   const [_flyout, setFlyout] = useAtom(flyoutAtom);

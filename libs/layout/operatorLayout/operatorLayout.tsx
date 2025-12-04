@@ -1,9 +1,9 @@
-import { HorizontalLayout } from '@monorepo/layout/horizontalLayout';
 import { mergeCss } from '@monorepo/layout/styles/mergeCss';
 import { ReactElement } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Flyoutcontainer } from '../shared/flyout/Flyoutcontainer';
-import { ModalContainer } from '../shared/modal/modalContainer';
+// import { Flyoutcontainer } from '../shared/flyout/Flyoutcontainer';
+// import { ModalContainer } from '../shared/modal/modalContainer';
+import { HorizontalLayout } from '@monorepo/layout/horizontalLayout';
 import { Footer } from './footer';
 import { Header } from './header';
 
@@ -11,7 +11,7 @@ type IParams = {
   className?: string;
 };
 
-export function MainLayout(props: IParams): ReactElement {
+export function OperatorLayout(props: IParams): ReactElement {
   const { className = '' } = props;
 
   const parentCss = [
@@ -36,8 +36,8 @@ export function MainLayout(props: IParams): ReactElement {
       <HorizontalLayout className="bg-dark-blue mt-auto">
         <Footer />
       </HorizontalLayout>
-      <ModalContainer />
-      <Flyoutcontainer />
+      {/* <ModalContainer /> */}
+      {/* <Flyoutcontainer /> */}
     </div>
   );
 }
