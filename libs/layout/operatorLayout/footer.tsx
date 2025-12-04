@@ -1,12 +1,10 @@
-import { mergeCss } from '@monorepo/layout/styles/mergeCss';
-import { BaShelterLogoIcon } from '@monorepo/react/icons';
+// import { BaShelterLogoIcon } from '@monorepo/react/icons';
 import { ReactElement } from 'react';
-import { Link } from 'react-router-dom';
-import {
-  aboutUsPath,
-  privacyPolicyPath,
-  shelterHomePath,
-} from '../routes/routePaths';
+// import {
+//   aboutUsPath,
+//   privacyPolicyPath,
+//   shelterHomePath,
+// } from '../routes/routePaths';
 
 type IParams = {
   className?: string;
@@ -49,13 +47,13 @@ export function Footer(props: IParams): ReactElement {
     <footer className={parentCss}>
       <div className="flex flex-col md:flex-row md:items-center justify-between">
         <div className="flex items-center mb-11 md:mt-3">
-          <BaShelterLogoIcon className="h-8" />
+          {/* <BaShelterLogoIcon className="h-8" /> */}
           <div className="text-white flex ml-3 text-2xl">
             <div className="font-normal">Shelter</div>
             <div className="font-semibold">LA</div>
           </div>
         </div>
-        <div className="flex flex-col md:flex-row gap-2 md:gap-6 text-[14px] md:mb-9">
+        {/* <div className="flex flex-col md:flex-row gap-2 md:gap-6 text-[14px] md:mb-9">
           <Link
             aria-label="navigate to Homepage"
             to={shelterHomePath}
@@ -77,7 +75,7 @@ export function Footer(props: IParams): ReactElement {
           >
             Privacy Policy
           </Link>
-        </div>
+        </div> */}
       </div>
       <div className="-mx-4 md:mx-0">
         <div className="mt-12 md:mt-6 border-t-[0.5px] border-[#375C76] pt-6 flex justify-start md:justify-end px-4 md:px-0">

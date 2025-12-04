@@ -1,5 +1,5 @@
+import { HorizontalLayout } from '@monorepo/layout/horizontalLayout';
 import { useEffect } from 'react';
-import { HorizontalLayout } from '../layout/horizontalLayout';
 
 declare module 'react' {
   interface HTMLAttributes<T> extends AriaAttributes, DOMAttributes<T> {
