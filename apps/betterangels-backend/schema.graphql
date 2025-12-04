@@ -1138,7 +1138,7 @@ input LocationInput {
 }
 
 type LocationType {
-  id: ID!
+  id: ID
   address: AddressType!
   point: Point!
   pointOfInterest: String
