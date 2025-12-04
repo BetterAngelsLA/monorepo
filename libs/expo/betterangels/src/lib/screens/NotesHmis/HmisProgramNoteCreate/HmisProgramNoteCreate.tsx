@@ -46,8 +46,6 @@ function splitBucket(bucket?: {
   const serviceRequests = bucket?.serviceRequests ?? [];
   const serviceRequestsOthers = bucket?.serviceRequestsOthers ?? [];
 
-  console.log(serviceRequests);
-
   // CREATE standard: brand-new rows (no id), not marked for deletion, with a selected service
   const toCreateStandard = serviceRequests
     .filter((s) => !s.id && !s.markedForDeletion && !!s.service?.id)

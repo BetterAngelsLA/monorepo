@@ -8,7 +8,6 @@ export default function HmisProgramNoteServices({
 }: {
   note: ViewHmisNoteQuery['hmisNote'];
 }) {
-  console.log('NOTE: ', note.providedServices);
   return (
     <View>
       {!!note.requestedServices?.length && (
