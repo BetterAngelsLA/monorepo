@@ -1,5 +1,6 @@
 import BottomSheet, { BottomSheetProps } from '@gorhom/bottom-sheet';
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { appZIndex } from '@monorepo/react/shared';
 import { ReactNode, useRef } from 'react';
 import { StyleSheet } from 'react-native';
 import BottomSheetModalContent from './Content';
@@ -18,6 +19,7 @@ export function BottomSheetModal(props: IBottmomSheetModalProps) {
       style={styles.container}
       backgroundStyle={styles.background}
       handleIndicatorStyle={styles.indicatorStyle}
+      containerStyle={styles.containerStyle}
       ref={bottomSheetRef}
       {...rest}
     >
@@ -45,5 +47,8 @@ const styles = StyleSheet.create({
     width: 54,
     height: 5,
     borderRadius: Radiuses.xxs,
+  },
+  containerStyle: {
+    zIndex: appZIndex.p3,
   },
 });
