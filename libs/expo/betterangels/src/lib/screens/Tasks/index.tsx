@@ -7,6 +7,7 @@ import {
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { TaskType } from '../../apollo';
 import { useUser } from '../../hooks';
 import { TUser } from '../../providers/user/UserContext';
 import { pagePaddingHorizontal } from '../../static';
@@ -18,9 +19,6 @@ import {
   nullTaskFilters,
   toTaskFilterValue,
 } from '../../ui-components';
-import { TasksQuery } from './__generated__/Tasks.generated';
-
-type TTask = TasksQuery['tasks']['results'][number];
 
 function getInitialFilterValues(user?: TUser) {
   return {
@@ -39,7 +37,7 @@ export default function Tasks() {
     getInitialFilterValues(user)
   );
 
-  const handleTaskPress = useCallback((task: TTask) => {
+  const handleTaskPress = useCallback((task: TaskType) => {
     router.navigate({
       pathname: `/task/${task.id}`,
       params: { arrivedFrom: '/tasks' },
@@ -47,7 +45,7 @@ export default function Tasks() {
   }, []);
 
   const renderTaskItem = useCallback(
-    (task: TTask) => <TaskCard task={task} onPress={handleTaskPress} />,
+    (task: TaskType) => <TaskCard task={task} onPress={handleTaskPress} />,
     [handleTaskPress]
   );
 
