@@ -605,11 +605,13 @@ export type CreateShelterInput = {
   healthServices: Array<HealthServiceChoices>;
   immediateNeeds: Array<ImmediateNeedChoices>;
   instagram?: InputMaybe<Scalars['String']['input']>;
+  intakeHours?: InputMaybe<Array<TimeRangeInput>>;
   location?: InputMaybe<ShelterLocationInput>;
   maxStay?: InputMaybe<Scalars['Int']['input']>;
   mealServices: Array<MealServiceChoices>;
   name: Scalars['String']['input'];
   onSiteSecurity?: InputMaybe<Scalars['Boolean']['input']>;
+  operatingHours?: InputMaybe<Array<TimeRangeInput>>;
   organization?: InputMaybe<Scalars['ID']['input']>;
   otherRules?: InputMaybe<Scalars['String']['input']>;
   otherServices?: InputMaybe<Scalars['String']['input']>;
@@ -2557,6 +2559,7 @@ export type ShelterType = {
   id: Scalars['ID']['output'];
   immediateNeeds: Array<ImmediateNeedType>;
   instagram?: Maybe<Scalars['String']['output']>;
+  intakeHours?: Maybe<Array<Maybe<TimeRange>>>;
   interiorPhotos: Array<ShelterPhotoType>;
   location?: Maybe<ShelterLocationType>;
   maxStay?: Maybe<Scalars['Int']['output']>;
@@ -2733,6 +2736,11 @@ export type TimeRange = {
   __typename?: 'TimeRange';
   end?: Maybe<Scalars['DateTime']['output']>;
   start?: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type TimeRangeInput = {
+  end?: InputMaybe<Scalars['Time']['input']>;
+  start?: InputMaybe<Scalars['Time']['input']>;
 };
 
 export enum TrainingServiceChoices {
