@@ -7,7 +7,7 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { ReactElement, ReactNode, useCallback } from 'react';
 import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
-import { InputMaybe, TaskFilter, TaskOrder } from '../../apollo';
+import { InputMaybe, TaskFilter, TaskOrder, TaskType } from '../../apollo';
 import {
   TasksDocument,
   TasksQuery,
@@ -19,10 +19,8 @@ import {
   DEFAULT_QUERY_ORDER,
 } from './constants';
 
-type TTask = TasksQuery['tasks']['results'][number];
-
 type TProps = {
-  renderItem: (task: TTask) => ReactElement | null;
+  renderItem: (task: TaskType) => ReactElement | null;
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<TaskFilter>;
@@ -45,7 +43,7 @@ export function TaskList(props: TProps) {
   } = props;
 
   const { items, total, loading, loadMore, hasMore, error } =
-    useInfiniteScrollQuery<TTask, TasksQuery, TasksQueryVariables>({
+    useInfiniteScrollQuery<TaskType, TasksQuery, TasksQueryVariables>({
       document: TasksDocument,
       queryFieldName: 'tasks',
       variables: {
@@ -55,8 +53,10 @@ export function TaskList(props: TProps) {
       pageSize: paginationLimit,
     });
 
+  console.log('ITEMS: ', items);
+
   const renderItemFn = useCallback(
-    (item: TTask) => renderItem(item),
+    (item: TaskType) => renderItem(item),
     [renderItem]
   );
 
@@ -72,7 +72,7 @@ export function TaskList(props: TProps) {
 
   return (
     <View style={[styles.container, style]}>
-      <InfiniteList<TTask>
+      <InfiniteList<TaskType>
         data={items}
         keyExtractor={(item) => item.id}
         totalItems={total}
