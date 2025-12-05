@@ -309,7 +309,11 @@ This section provides guidelines to help new volunteer contributors get set up a
 
 ### Getting Started
 
-Follow these steps to get started as a contributor. Begin by following the [Installation Guide](#installation-guide) up to but not including **Step 6: Clone the monorepo**. Complete steps 1-3 below, then continue with the installation guide from **Step 7: Go to the monorepo and run yarn install**.
+Follow these steps to get started as a contributor. Begin by:
+
+1. Following the [Installation Guide](#installation-guide) up to but not including **Step 6: Clone the monorepo**.
+2. Complete steps 1-3 below
+3. Then continue with the installation guide from **Step 7: Go to the monorepo and run yarn install**.
 
 #### 1. Forking the Repository
 
