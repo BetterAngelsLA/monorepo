@@ -1,3 +1,4 @@
+import { useMutation } from '@apollo/client/react';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -8,24 +9,56 @@ import {
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { TaskType } from '../../../apollo';
-import { useModalScreen } from '../../../providers';
-import { pagePaddingHorizontal } from '../../../static';
-import { TaskCard, TaskForm, TaskList } from '../../../ui-components';
-import { ClientProfileQuery } from '../__generated__/Client.generated';
+import { HmisClientProfileType, TaskType } from '../../../../apollo';
+import { useSnackbar } from '../../../../hooks';
+import { useModalScreen } from '../../../../providers';
+import { pagePaddingHorizontal } from '../../../../static';
+import { TaskCard, TaskForm, TaskList } from '../../../../ui-components';
+import { TaskFormData } from '../../../../ui-components/NoteTasks';
+import { CreateTaskDocument } from '../../../../ui-components/TaskForm/__generated__/createTask.generated';
 
 type TProps = {
-  client: ClientProfileQuery | undefined;
+  client: HmisClientProfileType | undefined;
 };
 
-export function TasksTab(props: TProps) {
+export function ClientTasksHMISView(props: TProps) {
   const { client } = props;
 
   const [search, setSearch] = useState('');
+  const [createTask] = useMutation(CreateTaskDocument);
+  const { showSnackbar } = useSnackbar();
 
-  const currentPath = client
-    ? `/client/${client?.clientProfile.id}?newTab=Tasks`
-    : undefined;
+  const currentPath = client ? `/client/${client?.id}?newTab=Tasks` : undefined;
+
+  const onSubmit = async (task: TaskFormData) => {
+    if (!client?.id) return;
+    try {
+      const result = await createTask({
+        variables: {
+          data: {
+            summary: task.summary!,
+            description: task.description,
+            status: task.status,
+            team: task.team || null,
+            hmisClientProfile: client.id,
+          },
+        },
+      });
+
+      if (result.data?.createTask.__typename === 'OperationInfo') {
+        console.log(result.data.createTask.messages);
+      }
+
+      console.log('RESULT: ', result.data?.createTask);
+      closeModalScreen();
+    } catch (e) {
+      showSnackbar({
+        message: 'Error uploading profile photo.',
+        type: 'error',
+      });
+      console.error(e);
+    }
+  };
 
   const handleTaskPress = useCallback((task: TaskType) => {
     router.navigate({
@@ -63,7 +96,7 @@ export function TasksTab(props: TProps) {
     );
   }
 
-  if (!client?.clientProfile.id) {
+  if (!client?.id) {
     throw new Error('Something went wrong. Please try again.');
   }
 
@@ -72,14 +105,10 @@ export function TasksTab(props: TProps) {
       presentation: 'modal',
       content: (
         <TaskForm
-          clientProfileId={client?.clientProfile.id}
           onCancel={() => {
             closeModalScreen();
           }}
-          onSuccess={() => {
-            closeModalScreen();
-          }}
-          arrivedFrom={currentPath || '/tasks'}
+          onSubmit={onSubmit}
         />
       ),
       title: 'Follow-Up Task',
@@ -97,7 +126,7 @@ export function TasksTab(props: TProps) {
       />
 
       <TaskList
-        filters={{ search, clientProfile: client.clientProfile.id }}
+        filters={{ search, clientProfile: client.id }}
         renderItem={renderTaskItem}
         renderHeader={renderListHeaderText}
       />

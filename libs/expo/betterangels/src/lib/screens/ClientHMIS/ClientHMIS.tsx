@@ -13,6 +13,7 @@ import { renderTabComponent } from './tabs/utils/renderTabComponent';
 const hmisTabs: ClientViewTabEnum[] = [
   ClientViewTabEnum.Profile,
   ClientViewTabEnum.Interactions,
+  ClientViewTabEnum.Tasks,
 ];
 
 type TProps = {
