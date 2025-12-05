@@ -38,6 +38,8 @@ export default function Dashboard() {
 
   const totalPages = Math.max(1, Math.ceil(backendShelters.length / PAGE_SIZE));
 
+  if (error) console.error('[Dashboard GraphQL error]', error);
+
   const paginatedShelters = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     const end = start + PAGE_SIZE;
@@ -55,11 +57,8 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      <ShelterSearchBar
-        onSearch={(value) => {
-          console.log('Searching for:', value);
-        }}
-      />
+      {/* Search bar */}
+      <ShelterSearchBar />
 
       {/* TABLE */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden w-full">
