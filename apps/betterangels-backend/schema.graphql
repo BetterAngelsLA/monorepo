@@ -633,6 +633,8 @@ input CreateShelterInput {
   cityCouncilDistrict: Int = null
   supervisorialDistrict: Int = null
   overallRating: Int = null
+  operatingHours: [TimeRangeInput!] = null
+  intakeHours: [TimeRangeInput!] = null
 }
 
 union CreateShelterPayload = ShelterType | OperationInfo
@@ -2091,6 +2093,7 @@ type ShelterType {
   heroImage: String
   distanceInMiles: Float
   operatingHours: [TimeRange]
+  intakeHours: [TimeRange]
 }
 
 type ShelterTypeOffsetPaginated {
@@ -2237,6 +2240,11 @@ scalar Time
 type TimeRange {
   start: DateTime
   end: DateTime
+}
+
+input TimeRangeInput {
+  start: Time = null
+  end: Time = null
 }
 
 enum TrainingServiceChoices {
