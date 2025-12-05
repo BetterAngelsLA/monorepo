@@ -261,7 +261,6 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
 
         response_service_request = response["data"]["createHmisNoteServiceRequest"]
         service_request = ServiceRequest.objects.get(id=response_service_request["id"])
-        hmis_note = HmisNote.objects.get(id=hmis_note.id)
 
         assert service_request.service
         self.assertIn(service_request, hmis_note.provided_services.all())
@@ -288,7 +287,6 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
 
         response_service_request = response["data"]["createHmisNoteServiceRequest"]
         service_request = ServiceRequest.objects.get(id=response_service_request["id"])
-        hmis_note = HmisNote.objects.get(id=hmis_note.id)
 
         assert service_request.service
         self.assertIn(service_request, hmis_note.provided_services.all())
@@ -297,6 +295,29 @@ class HmisNoteMutationTests(HmisNoteBaseTestCase):
 
         self.assertEqual(service_request.service.label, "another service")
         self.assertIsNone(service_request.service.category)
+
+    def test_remove_hmis_note_service_request_mutation(self) -> None:
+        provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.first())]
+        requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
+
+        hmis_note = baker.make(HmisNote, _fill_optional=True)
+        hmis_note.provided_services.set(provided_services)
+        hmis_note.requested_services.set(requested_services)
+
+        service_to_remove = provided_services[0]
+
+        variables = {
+            "serviceRequestId": str(service_to_remove.pk),
+            "hmisNoteId": str(hmis_note.pk),
+            "serviceRequestType": "PROVIDED",
+        }
+
+        self._remove_hmis_note_service_request_fixture(variables)
+
+        self.assertNotIn(service_to_remove, hmis_note.provided_services.all())
+        self.assertIn(requested_services[0], hmis_note.requested_services.all())
+        self.assertEqual(hmis_note.provided_services.count(), 0)
+        self.assertEqual(hmis_note.requested_services.count(), 1)
 
 
 @override_settings(HMIS_REST_URL="https://example.com", HMIS_HOST="example.com")

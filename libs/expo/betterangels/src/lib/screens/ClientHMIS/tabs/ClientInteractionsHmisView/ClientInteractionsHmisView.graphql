@@ -17,6 +17,20 @@ query HmisNotes(
       note
       date
       refClientProgram
+      providedServices {
+        id
+        service {
+          id
+          label
+        }
+      }
+      requestedServices {
+        id
+        service {
+          id
+          label
+        }
+      }
       hmisClientProfile {
         id
         hmisId

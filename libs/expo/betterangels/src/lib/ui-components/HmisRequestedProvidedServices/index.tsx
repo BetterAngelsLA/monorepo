@@ -1,43 +1,36 @@
 import { Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, Pill } from '@monorepo/expo/shared/ui-components';
-import { RefObject } from 'react';
-import { ScrollView, View } from 'react-native';
-import { ServiceRequestTypeEnum, ViewNoteQuery } from '../../apollo';
+import { useFormContext } from 'react-hook-form';
+import { View } from 'react-native';
+import { ServiceRequestTypeEnum } from '../../apollo';
 import { useModalScreen } from '../../providers';
+import { ViewHmisNoteQuery } from '../../screens/NotesHmis/HmisProgramNoteView/__generated__/HmisProgramNoteView.generated';
 import { enumDisplayServiceType } from '../../static';
 import ServicesModal from './ServicesModal';
 
 interface IRequestedServicesProps {
-  noteId: string;
-  scrollRef: RefObject<ScrollView | null>;
   services:
-    | ViewNoteQuery['note']['requestedServices']
-    | ViewNoteQuery['note']['providedServices'];
-  refetch: () => void;
+    | ViewHmisNoteQuery['hmisNote']['providedServices']
+    | ViewHmisNoteQuery['hmisNote']['requestedServices'];
+
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
 
 export default function RequestedProvidedServices(
   props: IRequestedServicesProps
 ) {
-  const {
-    noteId,
-    services: initialServiceRequests,
-    scrollRef,
-    refetch,
-    type,
-  } = props;
+  const { services: selectedServices, type } = props;
   const { showModalScreen } = useModalScreen();
+  const { setValue, getValues } = useFormContext();
 
-  if (!initialServiceRequests) {
+  if (!selectedServices) {
     return null;
   }
 
   return (
     <FieldCard
-      scrollRef={scrollRef}
       actionName={
-        initialServiceRequests.length ? (
+        selectedServices?.length ? (
           <View
             style={{
               flexDirection: 'row',
@@ -45,7 +38,7 @@ export default function RequestedProvidedServices(
               gap: Spacings.xs,
             }}
           >
-            {initialServiceRequests.map((item, index) => (
+            {selectedServices?.map((item, index) => (
               <Pill
                 variant={
                   type === ServiceRequestTypeEnum.Provided
@@ -53,7 +46,7 @@ export default function RequestedProvidedServices(
                     : 'warning'
                 }
                 key={index}
-                label={item.service?.label || ''}
+                label={item.service?.label || item.serviceOther || ''}
               />
             ))}
           </View>
@@ -69,10 +62,16 @@ export default function RequestedProvidedServices(
           hideHeader: true,
           content: (
             <ServicesModal
-              noteId={noteId}
+              onSelect={(e) => {
+                const current = getValues('services') ?? {};
+                setValue(
+                  'services',
+                  { ...current, ...e },
+                  { shouldDirty: true }
+                );
+              }}
               type={type}
-              initialServiceRequests={initialServiceRequests}
-              refetch={refetch}
+              selectedServices={selectedServices || []}
             />
           ),
         })
