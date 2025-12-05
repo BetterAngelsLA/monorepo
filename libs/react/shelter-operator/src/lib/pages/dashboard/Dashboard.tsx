@@ -26,7 +26,7 @@ export default function Dashboard() {
 
   const [page, setPage] = useState(1);
 
-  // Load backend shelters into global atom
+  // load shelters into global atom
   useEffect(() => {
     if (data?.sheltersByOrganization?.results) {
       const backendShelters: Shelter[] =
@@ -82,6 +82,19 @@ export default function Dashboard() {
 
       {/* Search bar */}
       <ShelterSearchBar />
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '16px',
+          fontSize: '14px',
+          color: '#4b5563',
+        }}
+      >
+        {filteredShelters.length} Results
+      </div>
 
       {/* TABLE */}
       <div
