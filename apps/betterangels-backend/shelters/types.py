@@ -351,3 +351,14 @@ class ShelterType:
                 else:
                     ranges.append(None)
         return ranges or None
+
+    @strawberry_django.field
+    def intake_hours(self, root: Shelter) -> Optional[List[Optional[TimeRange]]]:
+        ranges: List[Optional[TimeRange]] = []
+        if root.intake_hours:
+            for start, end in root.intake_hours:
+                if start is not None or end is not None:
+                    ranges.append(TimeRange(start=start, end=end))
+                else:
+                    ranges.append(None)
+        return ranges or None
