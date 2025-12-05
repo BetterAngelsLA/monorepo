@@ -1,10 +1,10 @@
 from datetime import time
-from typing import Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, Protocol, cast
 
 import strawberry
 import strawberry_django
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import models, transaction
 from django.db.models import QuerySet
 from graphql import GraphQLError
 from places import Places
@@ -63,6 +63,10 @@ from strawberry import ID, UNSET
 from strawberry.types import Info
 from strawberry_django.mutations import resolvers
 from strawberry_django.pagination import OffsetPaginated
+
+
+class ModelWithObjects(Protocol):
+    objects: models.Manager[Any]
 
 
 def format_validation_errors(exc: ValidationError) -> List[Dict[str, object]]:
@@ -156,7 +160,7 @@ class CreateShelterInput:
 class Mutation:
     @strawberry_django.mutation
     def create_shelter(self, info: Info, input: CreateShelterInput) -> ShelterType:
-        enum_field_model_map = {
+        enum_field_model_map: Dict[str, Any] = {
             "accessibility": Accessibility,
             "demographics": Demographic,
             "special_situation_restrictions": SpecialSituationRestriction,
@@ -179,12 +183,14 @@ class Mutation:
             "funders": Funder,
         }
 
-        data = {key: value for key, value in strawberry.asdict(input).items() if value is not UNSET}
+        raw_data = cast(Dict[str, Any], strawberry.asdict(input))
+        data: Dict[str, Any] = {key: value for key, value in raw_data.items() if value is not UNSET}
 
-        m2m_values = {
-            field: [getattr(option, "value", option) for option in data.pop(field, []) or []]
-            for field in enum_field_model_map
-        }
+        m2m_values: Dict[str, List[Any]] = {}
+        for field in enum_field_model_map:
+            raw_values = data.pop(field, None)
+            values = cast(List[Any], raw_values or [])
+            m2m_values[field] = [getattr(option, "value", option) for option in values]
 
         organization = data.pop("organization", None)
         if organization is not None:
@@ -198,8 +204,9 @@ class Mutation:
         operating_hours = data.pop("operating_hours", None)
         if operating_hours is not None:
             try:
+                operating_hours_input = cast(List[Optional[Dict[str, Optional[time]]]], operating_hours)
                 data["operating_hours"] = [
-                    (slot.get("start"), slot.get("end")) for slot in operating_hours if slot is not None
+                    (slot.get("start"), slot.get("end")) for slot in operating_hours_input if slot is not None
                 ]
             except Exception as exc:
                 raise GraphQLError(
@@ -209,8 +216,9 @@ class Mutation:
         intake_hours = data.pop("intake_hours", None)
         if intake_hours is not None:
             try:
+                intake_hours_input = cast(List[Optional[Dict[str, Optional[time]]]], intake_hours)
                 data["intake_hours"] = [
-                    (slot.get("start"), slot.get("end")) for slot in intake_hours if slot is not None
+                    (slot.get("start"), slot.get("end")) for slot in intake_hours_input if slot is not None
                 ]
             except Exception as exc:
                 raise GraphQLError(
@@ -220,10 +228,11 @@ class Mutation:
         location = data.pop("location", None)
         if location:
             try:
-                latitude = location.get("latitude")
-                longitude = location.get("longitude")
+                location_data = cast(Dict[str, Optional[Any]], location)
+                latitude = location_data.get("latitude")
+                longitude = location_data.get("longitude")
                 data["location"] = Places(
-                    place=location.get("place"),
+                    place=location_data.get("place"),
                     latitude=str(latitude) if latitude is not None else None,
                     longitude=str(longitude) if longitude is not None else None,
                 )
@@ -239,8 +248,11 @@ class Mutation:
                 shelter = resolvers.create(info, Shelter, data)
 
                 for field, model_cls in enum_field_model_map.items():
+                    model_with_objects = cast(ModelWithObjects, model_cls)
                     try:
-                        instances = [model_cls.objects.get_or_create(name=value)[0] for value in m2m_values[field]]
+                        instances = [
+                            model_with_objects.objects.get_or_create(name=value)[0] for value in m2m_values[field]
+                        ]
                     except ValidationError as exc:
                         raise GraphQLError(
                             "Validation Errors",
