@@ -1,54 +1,96 @@
+#!/bin/bash
 
-     sudo apt install wslu
-     if ! sudo apt install wslu; then
-        echo "Failed to install wslu. This is required for Windows path conversion."
-        exit 1
-     fi
-     WINDOWS_HOME="$(wslpath "$(wslvar USERPROFILE)")"
+echo "Configuring WSL2 for Android Development..."
 
-     {
-         echo "WINDOWS_HOME=\"$WINDOWS_HOME\""
-         echo "export ANDROID_HOME=\$WINDOWS_HOME/AppData/Local/Android/Sdk"
-         echo "export PATH=\$PATH:\$ANDROID_HOME/emulator"
-         echo "export PATH=\$PATH:\$ANDROID_HOME/tools"
-         echo "export PATH=\$PATH:\$ANDROID_HOME/platform-tools"
-     } >> ~/.bashrc
+# Get Windows User Profile
+# Find the correct C:\Users\Name path even if username differs
 
-          # Function to check if a line exists in ~/.bashrc
-     line_exists() {
-         grep -Fxq "$1" ~/.bashrc
-     }
-     # Add each line only if it doesn't exist
-     if ! line_exists "WINDOWS_HOME=\"$WINDOWS_HOME\""; then
-         echo "WINDOWS_HOME=\"$WINDOWS_HOME\"" >> ~/.bashrc
-     fi
-     if ! line_exists "export ANDROID_HOME=\$WINDOWS_HOME/AppData/Local/Android/Sdk"; then
-         echo "export ANDROID_HOME=\$WINDOWS_HOME/AppData/Local/Android/Sdk" >> ~/.bashrc
-     fi
-     if ! line_exists "export PATH=\$PATH:\$ANDROID_HOME/emulator"; then
-         echo "export PATH=\$PATH:\$ANDROID_HOME/emulator" >> ~/.bashrc
-     fi
-     if ! line_exists "export PATH=\$PATH:\$ANDROID_HOME/tools"; then
-         echo "export PATH=\$PATH:\$ANDROID_HOME/tools" >> ~/.bashrc
-     fi
-     if ! line_exists "export PATH=\$PATH:\$ANDROID_HOME/platform-tools"; then
-         echo "export PATH=\$PATH:\$ANDROID_HOME/platform-tools" >> ~/.bashrc
-     fi
+WINDOWS_USER_PROFILE=$(cmd.exe /c "echo %USERPROFILE%" 2>/dev/null | tr -d '\r')
+WINDOWS_HOME=$(wslpath "$WINDOWS_USER_PROFILE")
 
-    # List of executable paths
-    declare -a exe_paths=(
-        "$WINDOWS_HOME/AppData/Local/Android/Sdk/platform-tools/adb.exe"
-        # Add more .exe paths here
-    )
+# Define Paths
 
-    # Loop through each path, strip the '.exe', and create a symlink in the same directory
-    for path in "${exe_paths[@]}"; do
-        if [ -f "$path" ]; then
-            directory=$(dirname "$path")  # Get the directory of the .exe file
-            exe_name=$(basename "$path" .exe)  # Strip the '.exe' and get base name
-            sudo ln -sf "$path" "$directory/$exe_name"  # Create symlink in the same directory
-            sudo ln -sf "$path" /usr/local/bin/$exe_name
-        else
-            echo "$path not found at expected location."
-        fi
-    done
+ANDROID_HOME="$WINDOWS_HOME/AppData/Local/Android/Sdk"
+PLATFORM_TOOLS="$ANDROID_HOME/platform-tools"
+
+# Get Hostname Logic
+# Look specifically for the eth0 interface to avoid picking up Docker/VPN IPs
+
+WSL_IP=$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+if [ -z "$WSL_IP" ]; then
+    # Fallback if eth0 isn't found
+    WSL_IP=$(hostname -I | awk '{print $1}')
+fi
+
+# Configure .bashrc
+
+declare -a config_lines=(
+    "# Android SDK Setup"
+    "export WINDOWS_HOME=\"$WINDOWS_HOME\""
+    "export ANDROID_HOME=\"$ANDROID_HOME\""
+    "export PATH=\"\$PATH:\$ANDROID_HOME/emulator\""
+    "export PATH=\"\$PATH:\$ANDROID_HOME/tools\""
+    "export PATH=\"\$PATH:\$ANDROID_HOME/platform-tools\""
+    "export REACT_NATIVE_PACKAGER_HOSTNAME=\"$WSL_IP\""
+)
+
+echo "Updating .bashrc..."
+
+# Add a blank line to separate new content from existing content.
+if ! grep -Fxq "${config_lines[0]}" ~/.bashrc; then
+    echo "" >> ~/.bashrc
+fi
+
+for line in "${config_lines[@]}"; do
+    if ! grep -Fxq "$line" ~/.bashrc; then
+        echo "$line" >> ~/.bashrc
+        echo "Added: $line"
+    fi
+done
+
+# Create Shims
+
+create_shim() {
+    local target_dir=$1
+    local exe_path=$2
+    local shim_path="$target_dir/adb"
+
+    echo "Creating shim at $shim_path..."
+
+    if [ "$target_dir" == "$PLATFORM_TOOLS" ]; then
+        # Shim 1: Windows Side (Required for Expo/Nx to find ADB)
+        cat <<EOF > "$shim_path"
+#!/bin/bash
+exec "\$(dirname "\$0")/adb.exe" "\$@"
+EOF
+    else
+        # Shim 2: Linux Side (Required for CLI convenience)
+        echo '#!/bin/bash' | sudo tee "$shim_path" > /dev/null
+        echo "exec \"$exe_path\" \"\$@\"" | sudo tee -a "$shim_path" > /dev/null
+    fi
+
+    # Make executable
+    if [ -w "$shim_path" ]; then
+        chmod +x "$shim_path"
+    else
+        sudo chmod +x "$shim_path"
+    fi
+}
+
+# Apply Shim 1 (Windows)
+if [ -d "$PLATFORM_TOOLS" ]; then
+    create_shim "$PLATFORM_TOOLS" "adb.exe"
+    echo "NOTE: If you update Android Studio SDK Tools, this specific shim will be deleted."
+    echo "      Simply re-run this script to restore it."
+else
+    echo "Error: Platform-tools directory not found at $PLATFORM_TOOLS"
+fi
+
+# Apply Shim 2 (Linux)
+if [ -f "$PLATFORM_TOOLS/adb.exe" ]; then
+    create_shim "/usr/local/bin" "$PLATFORM_TOOLS/adb.exe"
+fi
+
+echo "Configuration complete."
+echo "1. Run 'source ~/.bashrc' to refresh variables."
+echo "2. Run 'adb --version' to verify."
