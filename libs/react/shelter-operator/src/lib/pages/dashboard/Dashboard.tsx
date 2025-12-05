@@ -2,6 +2,7 @@ import { useQuery } from '@apollo/client/react';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Shelter, ShelterRow } from '../../components/ShelterRow';
+import ShelterSearchBar from '../../components/ShelterSearchBar';
 import {
   ViewSheltersByOrganizationDocument,
   ViewSheltersByOrganizationQuery,
@@ -53,6 +54,12 @@ export default function Dashboard() {
           </button>
         </Link>
       </div>
+
+      <ShelterSearchBar
+        onSearch={(value) => {
+          console.log('Searching for:', value);
+        }}
+      />
 
       {/* TABLE */}
       <div className="bg-white rounded-2xl shadow-sm overflow-hidden w-full">
