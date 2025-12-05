@@ -1,21 +1,15 @@
+import { useSetAtom } from 'jotai';
 import { useState } from 'react';
+import { searchQueryAtom } from '../atoms/shelters';
 
-interface ShelterSearchBarProps {
-  placeholder?: string;
-  onSearch: (value: string) => void;
-}
-
-export default function ShelterSearchBar({
-  placeholder = 'Search shelters',
-  onSearch,
-}: ShelterSearchBarProps) {
+export default function ShelterSearchBar({ placeholder = 'Search shelters' }) {
   const [query, setQuery] = useState('');
+  const setSearchQuery = useSetAtom(searchQueryAtom);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setQuery(value);
-    onSearch(value);
-    console.log(query);
+    setSearchQuery(value);
   };
 
   return (

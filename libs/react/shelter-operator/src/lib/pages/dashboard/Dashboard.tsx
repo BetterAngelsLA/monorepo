@@ -1,13 +1,14 @@
-'use client';
-
+import { useAtom, useAtomValue } from 'jotai';
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { filteredSheltersAtom, sheltersAtom } from '../../atoms/shelters';
 import { ShelterRow } from '../../components/ShelterRow';
 import ShelterSearchBar from '../../components/ShelterSearchBar';
 import { useViewSheltersByOrganizationQuery } from '../../graphql/__generated__/shelters.generated';
+
 export type Shelter = {
   id: string;
-  name: string | null;
+  name: string;
   address: string | null;
   totalBeds: number | null;
   tags: string[] | null;
@@ -20,34 +21,37 @@ export default function Dashboard() {
     variables: { organizationId: '1' },
   });
 
-  useEffect(() => {
-    if (data?.sheltersByOrganization?.results) {
-      console.log('[Backend shelters]', data.sheltersByOrganization.results);
-    }
-  }, [data]);
-
-  if (error) console.error('[Dashboard GraphQL error]', error);
-
-  const backendShelters: Shelter[] =
-    data?.sheltersByOrganization?.results?.map((s: any) => ({
-      id: String(s.id),
-      name: s.name ?? null,
-      address: s.location?.place ?? null,
-      totalBeds: s.totalBeds ?? null,
-      tags: null,
-    })) ?? [];
-
-  const allShelters: Shelter[] = [...backendShelters];
+  const [allShelters, setAllShelters] = useAtom(sheltersAtom);
+  const filteredShelters = useAtomValue(filteredSheltersAtom);
 
   const [page, setPage] = useState(1);
 
-  const totalPages = Math.max(1, Math.ceil(allShelters.length / PAGE_SIZE));
+  // Load backend shelters into global atom
+  useEffect(() => {
+    if (data?.sheltersByOrganization?.results) {
+      const backendShelters: Shelter[] =
+        data.sheltersByOrganization.results.map((s: any) => ({
+          id: String(s.id),
+          name: s.name ?? '',
+          address: s.location?.place ?? null,
+          totalBeds: s.totalBeds ?? null,
+          tags: null,
+        }));
+      setAllShelters(backendShelters);
+    }
+  }, [data, setAllShelters]);
 
+  if (error) console.error('[Dashboard GraphQL error]', error);
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredShelters.length / PAGE_SIZE)
+  );
   const paginatedShelters = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
     const end = start + PAGE_SIZE;
-    return allShelters.slice(start, end);
-  }, [page, allShelters]);
+    return filteredShelters.slice(start, end);
+  }, [page, filteredShelters]);
 
   return (
     <div
@@ -76,11 +80,8 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      <ShelterSearchBar
-        onSearch={(value) => {
-          console.log('Searching for:', value);
-        }}
-      />
+      {/* Search bar */}
+      <ShelterSearchBar />
 
       {/* TABLE */}
       <div
