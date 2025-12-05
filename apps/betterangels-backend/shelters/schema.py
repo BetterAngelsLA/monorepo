@@ -5,6 +5,7 @@ import strawberry
 import strawberry_django
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import QuerySet
 from graphql import GraphQLError
 from places import Places
 from shelters.enums import (
@@ -22,7 +23,9 @@ from shelters.enums import (
     PetChoices,
     ReferralRequirementChoices,
     RoomStyleChoices,
-    ShelterChoices as ShelterTypeChoices,
+)
+from shelters.enums import ShelterChoices as ShelterTypeChoices
+from shelters.enums import (
     ShelterProgramChoices,
     SPAChoices,
     SpecialSituationRestrictionChoices,
@@ -48,14 +51,13 @@ from shelters.models import (
     RoomStyle,
     Shelter,
     ShelterProgram,
-    ShelterType as ShelterKind,
+)
+from shelters.models import ShelterType as ShelterKind
+from shelters.models import (
     SpecialSituationRestriction,
     Storage,
     TrainingService,
 )
-from django.db.models import QuerySet
-from shelters.enums import StatusChoices
-from shelters.models import Shelter
 from shelters.types import ShelterType
 from strawberry import ID, UNSET
 from strawberry.types import Info
@@ -207,7 +209,9 @@ class Mutation:
         intake_hours = data.pop("intake_hours", None)
         if intake_hours is not None:
             try:
-                data["intake_hours"] = [(slot.get("start"), slot.get("end")) for slot in intake_hours if slot is not None]
+                data["intake_hours"] = [
+                    (slot.get("start"), slot.get("end")) for slot in intake_hours if slot is not None
+                ]
             except Exception as exc:
                 raise GraphQLError(
                     "Invalid intake hours data.",

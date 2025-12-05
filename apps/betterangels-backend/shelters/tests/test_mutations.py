@@ -1,16 +1,7 @@
-from unittest.mock import ANY
-
 from accounts.models import User
 from common.tests.utils import GraphQLBaseTestCase
 from django.test import TestCase, ignore_warnings
 from model_bakery import baker
-from shelters.enums import (
-    AccessibilityChoices,
-    CityChoices,
-    DemographicChoices,
-    PetChoices,
-    ShelterChoices,
-)
 from shelters.models import Shelter
 from unittest_parametrize import ParametrizedTestCase
 
