@@ -247,54 +247,72 @@ Before you begin, ensure you have the following installed on your Windows machin
 
 1. **Configure WSL2**
 
-- Open a WSL2 terminal (e.g., Ubuntu).
-- Set up your SSH key for GitHub or other version control systems.
+   - Open a WSL2 terminal (e.g., Ubuntu).
+   - Set up your SSH key for GitHub or other version control systems.
 
 2. **Clone Your Repository**
 
-- Inside the WSL2 terminal, navigate to the directory where you want to work and clone your repository.
+   Inside the WSL2 terminal, navigate to the directory where you want to work and clone your repository.
 
 3. **Node.js, npm, yarn**
 
-- Install a specific version of Node.js using NVM (Node Version Manager):
+   Install a specific version of Node.js using NVM (Node Version Manager):
 
-  ```
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
-  ```
+   ```
+   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/master/install.sh | bash
+   ```
 
-  Restart your WSL2 terminal or run **source ~/.nvm/nvm.sh** to apply the changes.
+   Restart your WSL2 terminal or run **source ~/.nvm/nvm.sh** to apply the changes.
 
-  ```
-  nvm install 22.14.0
-  ```
+   ```
+   nvm install 22.14.0
+   ```
 
-  Should you encounter any problems, refer to [NVM Installation Guide](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating)
+   Should you encounter any problems, refer to [NVM Installation Guide](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating)
 
-  <br>
+   <br>
 
-- Enable Corepack to manage package managers like Yarn:
-  ```
-  corepack enable
-  ```
+   Enable Corepack to manage package managers like Yarn:
+
+   ```
+   corepack enable
+   ```
 
 4. **Android Studio**
 
-- Install Android Studio: [Download Android Studio](https://developer.android.com/studio)
+   Install Android Studio: [Download Android Studio](https://developer.android.com/studio)
 
 5. **WSL2 Configuration Script**
 
-- Run the following script to configure Android development tools:
+   In the root of the monorepo project, run the following script to configure Android development tools:
 
-  ```
-  ./wsl2-config.sh
-  ```
+   ```
+   ./wsl2-config.sh
+   source ~/.bashrc
+   ```
 
-- This script sets environment variables and creates a symbolic link for `adb`.
+   This script sets environment variables, configures the WSL network bridge for the emulator, and creates necessary shims for `adb`.
 
-6. **Final Steps**
+   > [!IMPORTANT] Maintenance Note: This script places a shim file inside your Android SDK folder. If you update your Android SDK Platform-Tools via Android Studio, that shim will be deleted. If you suddenly see `adb ENOENT` errors after an update, simply re-run this script to restore the environment.
 
-- Restart your WSL2 terminal or run `source ~/.bashrc` to apply the changes.
-- [Test your setup](#getting-started) by starting an Android emulator and running an Expo project.
+6. **Verify Setup**
+
+   Ensure the configuration was successful by checking the ADB version from your WSL terminal:
+
+   ```
+   adb --version
+   ```
+
+   Success: You should see output similar to `Android Debug Bridge version x.x.x.`
+
+7. **Launch the Application**
+
+   - Ensure your Android Emulator is running on Windows.
+   - Start the development server and launch the app:
+
+     ```
+     yarn nx run betterangels:start --android
+     ```
 
 **Conclusion**
 
