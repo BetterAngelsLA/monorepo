@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useViewSheltersByOrganizationQuery } from '../../graphql/__generated__/shelters.generated';
 import { ShelterRow } from '../../components/ShelterRow';
+import ShelterSearchBar from '../../components/ShelterSearchBar';
+import { useViewSheltersByOrganizationQuery } from '../../graphql/__generated__/shelters.generated';
 export type Shelter = {
   id: string;
   name: string | null;
@@ -11,7 +12,6 @@ export type Shelter = {
   totalBeds: number | null;
   tags: string[] | null;
 };
-
 
 const PAGE_SIZE = 8;
 
@@ -50,31 +50,48 @@ export default function Dashboard() {
   }, [page, allShelters]);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', padding: '32px', width: '100%' }}>
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        padding: '32px',
+        width: '100%',
+      }}
+    >
       {/* Back button */}
       <div style={{ marginBottom: '24px' }}>
         <Link to="/">
-          <button style={{
-            padding: '8px 16px',
-            border: '1px solid #d1d5db',
-            borderRadius: '8px',
-            backgroundColor: 'white',
-            fontSize: '14px',
-            cursor: 'pointer'
-          }}>
+          <button
+            style={{
+              padding: '8px 16px',
+              border: '1px solid #d1d5db',
+              borderRadius: '8px',
+              backgroundColor: 'white',
+              fontSize: '14px',
+              cursor: 'pointer',
+            }}
+          >
             Back
           </button>
         </Link>
       </div>
 
+      <ShelterSearchBar
+        onSearch={(value) => {
+          console.log('Searching for:', value);
+        }}
+      />
+
       {/* TABLE */}
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '16px',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
-        overflow: 'hidden',
-        width: '100%'
-      }}>
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: '16px',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+          overflow: 'hidden',
+          width: '100%',
+        }}
+      >
         {/* HEADER */}
         <div
           style={{
@@ -88,7 +105,7 @@ export default function Dashboard() {
             letterSpacing: '0.05em',
             color: '#374151',
             backgroundColor: '#f9fafb',
-            borderBottom: '1px solid #e5e7eb'
+            borderBottom: '1px solid #e5e7eb',
           }}
         >
           <div>Shelter Name</div>
@@ -103,14 +120,16 @@ export default function Dashboard() {
       </div>
 
       {/* PAGINATION */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginTop: '16px',
-        fontSize: '14px',
-        color: '#4b5563'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: '16px',
+          fontSize: '14px',
+          color: '#4b5563',
+        }}
+      >
         <div>
           Page {page} of {totalPages}
         </div>
@@ -123,7 +142,7 @@ export default function Dashboard() {
               borderRadius: '8px',
               backgroundColor: 'white',
               cursor: page === 1 ? 'not-allowed' : 'pointer',
-              opacity: page === 1 ? 0.4 : 1
+              opacity: page === 1 ? 0.4 : 1,
             }}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
@@ -138,7 +157,7 @@ export default function Dashboard() {
               borderRadius: '8px',
               backgroundColor: 'white',
               cursor: page === totalPages ? 'not-allowed' : 'pointer',
-              opacity: page === totalPages ? 0.4 : 1
+              opacity: page === totalPages ? 0.4 : 1,
             }}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
