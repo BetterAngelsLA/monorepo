@@ -19,7 +19,7 @@ export default function ShelterSearchBar({ placeholder = 'Search shelters' }) {
         value={query}
         onChange={handleChange}
         placeholder={placeholder}
-        className="px-4 py-2 rounded-xl outline-none shadow-sm my-4"
+        className="px-6 py-2 rounded-3xl border outline-none shadow-sm my-4"
       />
     </form>
   );
