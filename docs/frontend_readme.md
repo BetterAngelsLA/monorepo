@@ -17,9 +17,11 @@ If you are a volunteer be sure to also read the [Volunteer Contributors](#volunt
 - [Xcode](https://developer.apple.com/xcode/resources/)
 - [Android SDK Platform-Tools](https://developer.android.com/studio/releases/platform-tools)
 - Expo Dev Builds
-  - [Android](https://expo.dev/accounts/better-angels/projects/betterangels/builds/d76c28fb-9433-4f49-a062-6dfb961bc59a)
-  - [iOS](https://expo.dev/accounts/better-angels/projects/betterangels/builds/eee2cfba-66d7-4cfe-ad56-4bd7cd69e2cb)
-  - [iOS Simulator](https://expo.dev/accounts/better-angels/projects/betterangels/builds/905d580b-59fa-4c50-9372-9469b6305b43)
+  - [Android](https://expo.dev/accounts/better-angels/projects/betterangels/builds/52cc55cb-2459-4161-9d11-4c9786e93595)
+  - [iOS](https://expo.dev/accounts/better-angels/projects/betterangels/builds/ba30378b-2422-423b-8822-74bfa2db7d1e)
+  - [iOS Simulator](https://expo.dev/accounts/better-angels/projects/betterangels/builds/d3feca03-2134-4a54-974b-68cfed5f4e79)
+
+> If any of these Dev Builds are missing, and you have access to the `#tech-volunteers` Slack channel, there may be a pinned message with updated build info.
 
 **Setup:**
 
