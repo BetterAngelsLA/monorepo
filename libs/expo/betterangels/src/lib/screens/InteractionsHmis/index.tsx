@@ -100,6 +100,7 @@ export default function InteractionsHmis({ Logo }: { Logo: ElementType }) {
           renderItem={renderItemFn}
           loading={loading}
           loadMore={loadMore}
+          renderResultsHeader={null}
           hasMore={hasMore}
           modelName="note"
           error={!!error}

@@ -78,6 +78,7 @@ export function HmisListClients(props: TProps) {
         keyExtractor={(item) => item.id!}
         totalItems={total}
         renderItem={renderItemFn}
+        renderResultsHeader={null}
         itemGap={itemGap}
         loading={loading}
         loadMore={loadMore}
