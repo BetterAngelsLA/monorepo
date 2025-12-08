@@ -2,6 +2,7 @@ import type { ReactElement } from 'react';
 import { HmisClientProfileType } from '../../../../apollo';
 import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { ClientViewTabEnum } from '../../../Client/ClientTabs';
+import { InteractionLocations } from '../../../Client/Locations';
 import { ClientInteractionsHmisView } from '../ClientInteractionsHmisView';
 import { ClientProfileHMISView } from '../ClientProfileHMISView';
 
@@ -18,6 +19,9 @@ const tabRendererMap: Partial<
   ),
   [ClientViewTabEnum.Interactions]: ({ client }) => (
     <ClientInteractionsHmisView client={client} />
+  ),
+  [ClientViewTabEnum.Locations]: ({ client }) => (
+    <InteractionLocations clientProfileId={client?.id} />
   ),
 };
 
