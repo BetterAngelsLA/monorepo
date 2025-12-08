@@ -27,6 +27,7 @@ from hmis.enums import (
 from hmis.models import HmisClientProfile, HmisNote
 from hmis.tests.utils import HmisClientProfileBaseTestCase, HmisNoteBaseTestCase
 from model_bakery import baker
+from notes.models import OrganizationService, ServiceRequest
 from test_utils.vcr_config import scrubbed_vcr
 
 
@@ -46,6 +47,14 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
 
     @scrubbed_vcr.use_cassette("test_hmis_note_query.yaml")
     def test_hmis_note_query(self) -> None:
+        self._setup_location()
+        self.hmis_note.location = self.location
+        self.hmis_note.save()
+        provided_services = [baker.make(ServiceRequest, service=OrganizationService.objects.first())]
+        requested_services = [baker.make(ServiceRequest, service=OrganizationService.objects.last())]
+        self.hmis_note.provided_services.set(provided_services)
+        self.hmis_note.requested_services.set(requested_services)
+
         query = f"""
             query ($id: ID!) {{
                 hmisNote(id: $id) {{
@@ -57,6 +66,10 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
         response = self.execute_graphql(query, variables)
 
         hmis_note = response["data"]["hmisNote"]
+
+        # TODO: remove after service cutover
+        assert provided_services[0].service
+        assert requested_services[0].service
 
         expected = {
             "id": str(self.hmis_note.pk),
@@ -70,6 +83,24 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
             "title": "prog note title",
             "note": "prog note note",
             "date": "2011-11-11",
+            "providedServices": [
+                {
+                    "id": str(provided_services[0].pk),
+                    "service": {
+                        "id": str(provided_services[0].service.pk),
+                        "label": provided_services[0].service.label,
+                    },
+                }
+            ],
+            "requestedServices": [
+                {
+                    "id": str(requested_services[0].pk),
+                    "service": {
+                        "id": str(requested_services[0].service.pk),
+                        "label": requested_services[0].service.label,
+                    },
+                }
+            ],
             "addedDate": "2025-11-13T08:35:34+00:00",
             "lastUpdated": "2025-11-13T08:35:34+00:00",
             "refClientProgram": "525",
@@ -79,6 +110,17 @@ class HmisNoteQueryTests(HmisNoteBaseTestCase):
                     "id": "2",
                     "name": "Housing Program 01",
                 },
+            },
+            "location": {
+                "id": str(self.location.pk),
+                "address": {
+                    "street": self.address.street,
+                    "city": self.address.city,
+                    "state": self.address.state,
+                    "zipCode": self.address.zip_code,
+                },
+                "point": self.point,
+                "pointOfInterest": self.point_of_interest,
             },
             "createdBy": None,
         }

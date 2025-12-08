@@ -2,12 +2,18 @@ from typing import Any, Iterable, cast
 
 import strawberry
 import strawberry_django
-from common.models import PhoneNumber
+from accounts.utils import get_user_permission_group
+from common.models import Location, PhoneNumber
 from common.permissions.utils import IsAuthenticated
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db import transaction
 from hmis.models import HmisClientProfile, HmisNote
-from strawberry import ID
+from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
+from notes.models import ServiceRequest
+from notes.types import ServiceRequestType
+from notes.utils.note_utils import get_service_args
+from strawberry import ID, asdict
 from strawberry.types import Info
 from strawberry_django.auth.utils import get_current_user
 from strawberry_django.mutations import resolvers
@@ -17,6 +23,7 @@ from .rest_api_bridge import HmisRestApiBridge
 from .types import (
     CreateHmisClientProfileInput,
     CreateHmisNoteInput,
+    CreateHmisNoteServiceRequestInput,
     HmisClientProfileType,
     HmisClientProgramType,
     HmisNoteType,
@@ -24,6 +31,7 @@ from .types import (
     ProgramEnrollmentType,
     UpdateHmisClientProfileInput,
     UpdateHmisNoteInput,
+    UpdateHmisNoteLocationInput,
 )
 
 
@@ -240,3 +248,58 @@ class Mutation:
             client_id=enrollment_data["ref_client"],
             ref_client_program=enrollment_data["ref_program"],
         )
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def update_hmis_note_location(self, info: Info, data: UpdateHmisNoteLocationInput) -> HmisNoteType:
+        with transaction.atomic():
+            hmis_note = HmisNote.objects.get(id=data.id)
+
+            location_data: dict = strawberry.asdict(data)
+            location = Location.get_or_create_location(location_data["location"])
+            hmis_note = resolvers.update(
+                info,
+                hmis_note,
+                {"location": location},
+            )
+
+            return cast(HmisNoteType, hmis_note)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def create_hmis_note_service_request(
+        self, info: Info, data: CreateHmisNoteServiceRequestInput
+    ) -> ServiceRequestType:
+        with transaction.atomic():
+            user = get_current_user(info)
+            permission_group = get_user_permission_group(user)
+
+            service_request_data = asdict(data)
+            service_request_type = str(service_request_data.pop("service_request_type"))
+            hmis_note_id = str(service_request_data.pop("hmis_note_id"))
+            hmis_note = HmisNote.objects.get(pk=hmis_note_id)
+
+            service_args = get_service_args(service_request_data, permission_group.organization)
+
+            service_request = resolvers.create(
+                info,
+                ServiceRequest,
+                {
+                    **service_request_data,
+                    **service_args,
+                    "status": (
+                        ServiceRequestStatusEnum.TO_DO
+                        if service_request_type == ServiceRequestTypeEnum.REQUESTED
+                        else ServiceRequestStatusEnum.COMPLETED
+                    ),
+                    "hmis_client_profile": hmis_note.hmis_client_profile,
+                    "created_by": user,
+                },
+            )
+
+            if service_request_type == ServiceRequestTypeEnum.PROVIDED:
+                hmis_note.provided_services.add(service_request)
+            elif service_request_type == ServiceRequestTypeEnum.REQUESTED:
+                hmis_note.requested_services.add(service_request)
+            else:
+                raise NotImplementedError
+
+            return cast(ServiceRequestType, service_request)

@@ -539,6 +539,15 @@ input CreateHmisNoteInput {
 
 union CreateHmisNotePayload = HmisNoteType | OperationInfo
 
+input CreateHmisNoteServiceRequestInput {
+  hmisNoteId: ID!
+  serviceId: ID
+  serviceOther: String
+  serviceRequestType: ServiceRequestTypeEnum!
+}
+
+union CreateHmisNoteServiceRequestPayload = ServiceRequestType | OperationInfo
+
 union CreateHmisProfilePayload = HmisProfileType | OperationInfo
 
 input CreateNoteDataImportInput {
@@ -596,9 +605,10 @@ union CreateSocialMediaProfilePayload = SocialMediaProfileType | OperationInfo
 
 input CreateTaskInput {
   clientProfile: ID
+  hmisClientProfile: ID
   description: String
-  note: ID = null
-  hmisNote: ID = null
+  note: ID
+  hmisNote: ID
   summary: String!
   team: SelahTeamEnum
   status: TaskStatusEnum
@@ -917,6 +927,8 @@ input HmisNoteFilter {
   OR: HmisNoteFilter
   NOT: HmisNoteFilter
   DISTINCT: Boolean
+  authors: [ID!]
+  search: String
 }
 
 input HmisNoteOrdering {
@@ -937,7 +949,11 @@ type HmisNoteType {
   date: Date
   clientProgram: HmisClientProgramType
   refClientProgram: String
+  tasks(filters: TaskFilter, ordering: [TaskOrder!]! = [], pagination: OffsetPaginationInput): [TaskType!]
   createdBy: UserType
+  location: LocationType
+  requestedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]
+  providedServices(pagination: OffsetPaginationInput): [ServiceRequestType!]
 }
 
 type HmisNoteTypeOffsetPaginated {
@@ -1213,6 +1229,8 @@ type Mutation {
   createHmisNote(data: CreateHmisNoteInput!): CreateHmisNotePayload!
   updateHmisNote(data: UpdateHmisNoteInput!): UpdateHmisNotePayload!
   createHmisClientProgram(clientId: Int!, programHmisId: Int!): CreateHmisClientProgramPayload!
+  updateHmisNoteLocation(data: UpdateHmisNoteLocationInput!): UpdateHmisNoteLocationPayload!
+  createHmisNoteServiceRequest(data: CreateHmisNoteServiceRequestInput!): CreateHmisNoteServiceRequestPayload!
   deleteNote(data: DeleteDjangoObjectInput!): DeleteNotePayload! @hasRetvalPerm(permissions: [{app: "notes", permission: "delete_note"}], any: true)
   createNote(data: CreateNoteInput!): CreateNotePayload! @hasPerm(permissions: [{app: "notes", permission: "add_note"}], any: true)
   updateNote(data: UpdateNoteInput!): UpdateNotePayload! @permissionedQuerySet(permissions: [{app: "notes", permission: "change_note"}], any: true)
@@ -1989,6 +2007,7 @@ enum TaskStatusEnum {
 
 type TaskType {
   id: ID!
+  hmisClientProfile: HmisProfileType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
@@ -2142,6 +2161,13 @@ input UpdateHmisNoteInput {
   date: Date
   refClientProgram: String
 }
+
+input UpdateHmisNoteLocationInput {
+  id: ID!
+  location: LocationInput!
+}
+
+union UpdateHmisNoteLocationPayload = HmisNoteType | OperationInfo
 
 union UpdateHmisNotePayload = HmisNoteType | OperationInfo
 

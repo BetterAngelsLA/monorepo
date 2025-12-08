@@ -541,6 +541,15 @@ export type CreateHmisNoteInput = {
 
 export type CreateHmisNotePayload = HmisNoteType | OperationInfo;
 
+export type CreateHmisNoteServiceRequestInput = {
+  hmisNoteId: Scalars['ID']['input'];
+  serviceId?: InputMaybe<Scalars['ID']['input']>;
+  serviceOther?: InputMaybe<Scalars['String']['input']>;
+  serviceRequestType: ServiceRequestTypeEnum;
+};
+
+export type CreateHmisNoteServiceRequestPayload = OperationInfo | ServiceRequestType;
+
 export type CreateHmisProfilePayload = HmisProfileType | OperationInfo;
 
 export type CreateNoteDataImportInput = {
@@ -599,6 +608,7 @@ export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfile
 export type CreateTaskInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
   hmisNote?: InputMaybe<Scalars['ID']['input']>;
   note?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
@@ -924,8 +934,10 @@ export type HmisNoteFilter = {
   DISTINCT?: InputMaybe<Scalars['Boolean']['input']>;
   NOT?: InputMaybe<HmisNoteFilter>;
   OR?: InputMaybe<HmisNoteFilter>;
+  authors?: InputMaybe<Array<Scalars['ID']['input']>>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type HmisNoteOrdering = {
@@ -945,9 +957,30 @@ export type HmisNoteType = {
   hmisId: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   lastUpdated?: Maybe<Scalars['DateTime']['output']>;
+  location?: Maybe<LocationType>;
   note: Scalars['String']['output'];
+  providedServices?: Maybe<Array<ServiceRequestType>>;
   refClientProgram?: Maybe<Scalars['String']['output']>;
+  requestedServices?: Maybe<Array<ServiceRequestType>>;
+  tasks?: Maybe<Array<TaskType>>;
   title?: Maybe<Scalars['String']['output']>;
+};
+
+
+export type HmisNoteTypeProvidedServicesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type HmisNoteTypeRequestedServicesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type HmisNoteTypeTasksArgs = {
+  filters?: InputMaybe<TaskFilter>;
+  ordering?: Array<TaskOrder>;
+  pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
 export type HmisNoteTypeOffsetPaginated = {
@@ -1195,6 +1228,7 @@ export type Mutation = {
   createHmisClientProfile: CreateHmisClientProfilePayload;
   createHmisClientProgram: CreateHmisClientProgramPayload;
   createHmisNote: CreateHmisNotePayload;
+  createHmisNoteServiceRequest: CreateHmisNoteServiceRequestPayload;
   createHmisProfile: CreateHmisProfilePayload;
   createNote: CreateNotePayload;
   createNoteDataImport: CreateNoteDataImportPayload;
@@ -1229,6 +1263,7 @@ export type Mutation = {
   updateCurrentUser: UpdateCurrentUserPayload;
   updateHmisClientProfile: UpdateHmisClientProfilePayload;
   updateHmisNote: UpdateHmisNotePayload;
+  updateHmisNoteLocation: UpdateHmisNoteLocationPayload;
   updateHmisProfile: UpdateHmisProfilePayload;
   updateNote: UpdateNotePayload;
   updateNoteLocation: UpdateNoteLocationPayload;
@@ -1281,6 +1316,11 @@ export type MutationCreateHmisClientProgramArgs = {
 
 export type MutationCreateHmisNoteArgs = {
   data: CreateHmisNoteInput;
+};
+
+
+export type MutationCreateHmisNoteServiceRequestArgs = {
+  data: CreateHmisNoteServiceRequestInput;
 };
 
 
@@ -1442,6 +1482,11 @@ export type MutationUpdateHmisClientProfileArgs = {
 
 export type MutationUpdateHmisNoteArgs = {
   data: UpdateHmisNoteInput;
+};
+
+
+export type MutationUpdateHmisNoteLocationArgs = {
+  data: UpdateHmisNoteLocationInput;
 };
 
 
@@ -2451,6 +2496,7 @@ export type TaskType = {
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   description?: Maybe<Scalars['String']['output']>;
+  hmisClientProfile?: Maybe<HmisProfileType>;
   hmisNote?: Maybe<DjangoModelType>;
   id: Scalars['ID']['output'];
   note?: Maybe<DjangoModelType>;
@@ -2597,6 +2643,13 @@ export type UpdateHmisNoteInput = {
   refClientProgram?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
+
+export type UpdateHmisNoteLocationInput = {
+  id: Scalars['ID']['input'];
+  location: LocationInput;
+};
+
+export type UpdateHmisNoteLocationPayload = HmisNoteType | OperationInfo;
 
 export type UpdateHmisNotePayload = HmisNoteType | OperationInfo;
 
