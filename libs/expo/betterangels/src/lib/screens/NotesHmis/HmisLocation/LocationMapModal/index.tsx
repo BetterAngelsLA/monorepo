@@ -1,10 +1,3 @@
-import {
-  TMapView,
-  TPlaceLatLng,
-  TPlacesPrediction,
-  getPlaceAutocomplete,
-  getPlaceDetailsById,
-} from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationArrowIcon, SearchIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -17,6 +10,13 @@ import * as ExpoLocation from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TMapView } from '../../../../maps';
+import {
+  getPlaceAutocomplete,
+  getPlaceDetailsById,
+  TPlaceLatLng,
+  TPlacesPrediction,
+} from '../../../../services';
 import Directions from './Directions';
 import Map from './Map';
 import Selected from './Selected';
