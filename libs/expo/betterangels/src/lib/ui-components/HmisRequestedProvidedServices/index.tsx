@@ -8,11 +8,14 @@ import { ViewHmisNoteQuery } from '../../screens/NotesHmis/HmisProgramNoteView/_
 import { enumDisplayServiceType } from '../../static';
 import ServicesModal from './ServicesModal';
 
-interface IRequestedServicesProps {
-  services:
-    | ViewHmisNoteQuery['hmisNote']['providedServices']
-    | ViewHmisNoteQuery['hmisNote']['requestedServices'];
+type GqlServiceRow = NonNullable<
+  NonNullable<ViewHmisNoteQuery['hmisNote']['providedServices']>[number]
+>;
 
+type ServiceRowWithLocal = GqlServiceRow & { markedForDeletion?: boolean };
+
+interface IRequestedServicesProps {
+  services: ServiceRowWithLocal[];
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
 
@@ -38,17 +41,19 @@ export default function RequestedProvidedServices(
               gap: Spacings.xs,
             }}
           >
-            {selectedServices?.map((item, index) => (
-              <Pill
-                variant={
-                  type === ServiceRequestTypeEnum.Provided
-                    ? 'success'
-                    : 'warning'
-                }
-                key={index}
-                label={item.service?.label || item.serviceOther || ''}
-              />
-            ))}
+            {selectedServices
+              ?.filter(({ markedForDeletion }) => !markedForDeletion)
+              .map((item, index) => (
+                <Pill
+                  variant={
+                    type === ServiceRequestTypeEnum.Provided
+                      ? 'success'
+                      : 'warning'
+                  }
+                  key={index}
+                  label={item.service?.label || item.serviceOther || ''}
+                />
+              ))}
           </View>
         ) : (
           ''

@@ -52,11 +52,7 @@ type TItem = { id: string; label: string };
 type TCategory = { title: string; items: TItem[] };
 
 interface IServicesModalProps {
-  selectedServices: {
-    id: string;
-    service?: { label?: string; id: string } | null;
-    serviceOther?: string | null;
-  }[];
+  selectedServices: SelectedService[];
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
   onSelect: (patch: SelectPatch) => void;
 }
@@ -129,16 +125,15 @@ export default function ServicesModal(props: IServicesModalProps) {
 
   const hasService = useCallback(
     (
-      it: IServicesModalProps['selectedServices'][number]
-    ): it is { id: string; service: { id: string; label?: string } } =>
-      Boolean(it.service?.id),
+      it: SelectedService
+    ): it is SelectedService & { service: { id: string; label?: string } } =>
+      !!it.service?.id,
     []
   );
 
   const hasOther = useCallback(
-    (
-      it: IServicesModalProps['selectedServices'][number]
-    ): it is { id: string; serviceOther: string } => Boolean(it.serviceOther),
+    (it: SelectedService): it is SelectedService & { serviceOther: string } =>
+      typeof it.serviceOther === 'string' && it.serviceOther.length > 0,
     []
   );
 
@@ -146,27 +141,21 @@ export default function ServicesModal(props: IServicesModalProps) {
     const std = pipe(
       selectedServices,
       rfilter(hasService),
-      rmap(
-        (it) =>
-          ({
-            id: it.id,
-            service: { id: it.service.id, label: it.service.label ?? '' },
-            markedForDeletion: false,
-          } satisfies SelectedService)
-      )
+      rmap((it) => ({
+        id: it.id,
+        service: { id: it.service.id, label: it.service.label ?? '' },
+        markedForDeletion: it.markedForDeletion ?? false,
+      }))
     );
 
     const others = pipe(
       selectedServices,
       rfilter(hasOther),
-      rmap(
-        (it) =>
-          ({
-            id: it.id,
-            serviceOther: it.serviceOther,
-            markedForDeletion: false,
-          } satisfies SelectedService)
-      )
+      rmap((it) => ({
+        id: it.id,
+        serviceOther: it.serviceOther,
+        markedForDeletion: it.markedForDeletion ?? false,
+      }))
     );
 
     return [...std, ...others];
