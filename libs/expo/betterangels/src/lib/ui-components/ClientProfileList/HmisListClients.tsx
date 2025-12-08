@@ -73,12 +73,11 @@ export function HmisListClients(props: TProps) {
   return (
     <View style={[styles.container, style]}>
       <InfiniteList<HmisClientProfileType>
-        modelName="hmisClientProfile"
+        modelName="client"
         data={items}
         keyExtractor={(item) => item.id!}
         totalItems={total}
         renderItem={renderItemFn}
-        renderResultsHeader={null}
         itemGap={itemGap}
         loading={loading}
         loadMore={loadMore}

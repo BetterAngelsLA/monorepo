@@ -78,7 +78,6 @@ export function ClientInteractionsHmisView(props: TProps) {
         keyExtractor={(item) => item.id ?? ''}
         totalItems={total}
         renderItem={renderItemFn}
-        renderResultsHeader={null}
         loading={loading}
         loadMore={loadMore}
         hasMore={hasMore}
