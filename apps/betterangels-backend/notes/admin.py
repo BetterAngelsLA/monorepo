@@ -129,9 +129,12 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         return [CSV]
 
     autocomplete_fields = (
+        "client_profile",
+        "created_by",
+        "location",
+        "organization",
         "provided_services",
         "requested_services",
-        "organization",
     )
 
     list_display = (
