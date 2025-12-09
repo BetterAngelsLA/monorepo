@@ -53,6 +53,9 @@ declare -a config_lines=(
 
 echo "Updating .bashrc..."
 
+# Ensure .bashrc exists
+touch ~/.bashrc
+
 # Add a blank line to separate new content from existing content.
 if ! grep -Fxq "${config_lines[0]}" ~/.bashrc; then
     echo "" >> ~/.bashrc
