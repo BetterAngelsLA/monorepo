@@ -171,11 +171,15 @@ function toUpdateClienProfileInputs(
 
   const updatedInputs: UpdateClientProfileInput = { id };
 
-  // convert dateOfBirth to date string and remove time
-  if ('dateOfBirth' in values && values.dateOfBirth) {
-    updatedInputs.dateOfBirth = values.dateOfBirth
-      .toISOString()
-      .split('T')[0] as unknown as Date;
+  // convert dateOfBirth to date string and remove time, or null if cleared
+  if ('dateOfBirth' in values) {
+    if (values.dateOfBirth) {
+      updatedInputs.dateOfBirth = values.dateOfBirth
+        .toISOString()
+        .split('T')[0] as unknown as Date;
+    } else {
+      updatedInputs.dateOfBirth = null;
+    }
   }
 
   // profilePhoto is updated directly within component

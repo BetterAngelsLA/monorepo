@@ -49,7 +49,7 @@ export const PersonalInfoFormSchemaOut = PersonalInfoFormSchema.transform(
     veteran,
     ...rest
   }) => {
-    let formattedDate: string | undefined = undefined;
+    let formattedDate: string | null = null;
 
     if (birthDate instanceof Date && !Number.isNaN(birthDate.getTime())) {
       formattedDate = format(birthDate, 'yyyy-MM-dd');

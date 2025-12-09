@@ -195,6 +195,7 @@ export function HouseholdMemberForm(props: TProps) {
             render={({ field: { value, onChange } }) => (
               <DatePicker
                 type="numeric"
+                placeholder="Enter date"
                 label="Date of Birth"
                 disabled={isLoading}
                 validRange={{
