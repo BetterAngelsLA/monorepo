@@ -11,7 +11,6 @@ import {
   SubmitHandler,
   useForm,
 } from 'react-hook-form';
-import { UpdateTaskInput } from '../../apollo';
 import { enumDisplaySelahTeam, enumDisplayTaskStatus } from '../../static';
 
 import DeleteTask from './DeleteTask';
@@ -21,7 +20,6 @@ export type TaskFormData = TFormSchema;
 
 type TProps = {
   initialValues?: Partial<TaskFormData>;
-  task?: UpdateTaskInput;
   onCancel: () => void;
   onSubmit: (data: TaskFormData) => Promise<void> | void;
 
