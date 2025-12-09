@@ -9,15 +9,20 @@ import { NoteType } from '../../apollo';
 import { enumDisplaySelahTeam } from '../../static/enumDisplayMapping';
 
 interface IProgramNoteCardBylineProps {
-  createdBy: NoteType['createdBy'];
+  createdBy?: NoteType['createdBy'];
   organization: NoteType['organization'];
-  team: NoteType['team'];
+  team?: NoteType['team'];
 }
 
 export default function ProgramNoteCardByline(
   props: IProgramNoteCardBylineProps
 ) {
   const { createdBy, organization, team } = props;
+
+  const authorName = createdBy
+    ? `${createdBy.firstName} ${createdBy.lastName}`
+    : 'Unknown User';
+
   return (
     <View
       style={{
@@ -40,7 +45,7 @@ export default function ProgramNoteCardByline(
         }}
       >
         <TextMedium size="xsm" color={Colors.PRIMARY_EXTRA_DARK}>
-          {createdBy.firstName} {createdBy.lastName}
+          {authorName}
         </TextMedium>
         <TextRegular size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
           {organization.name}
