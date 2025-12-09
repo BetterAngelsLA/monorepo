@@ -1,5 +1,5 @@
 import { TextBold, TextRegular } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
+import { format, parseISO, startOfDay } from 'date-fns';
 import { View } from 'react-native';
 import { ViewHmisNoteQuery } from './__generated__/HmisProgramNoteView.generated';
 
@@ -10,6 +10,8 @@ export default function HmisProgramNoteTitle({
 }) {
   if (hmisNote?.__typename !== 'HmisNoteType') return null;
 
+  const date = startOfDay(parseISO(hmisNote.date));
+
   return (
     <View>
       {hmisNote?.title && (
@@ -19,9 +21,7 @@ export default function HmisProgramNoteTitle({
       )}
       {hmisNote.date && (
         <TextRegular mb="sm" size="sm">
-          {format(new Date(hmisNote.date), 'MM/dd/yyyy')}
-          {' @ '}
-          {format(new Date(hmisNote?.date), 'hh:mm a')}
+          {format(date, 'MM/dd/yyyy')}
         </TextRegular>
       )}
     </View>

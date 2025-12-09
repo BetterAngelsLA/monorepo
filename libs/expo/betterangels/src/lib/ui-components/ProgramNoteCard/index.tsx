@@ -1,6 +1,6 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
 import { TextRegular } from '@monorepo/expo/shared/ui-components';
-import { format } from 'date-fns';
+import { format, parseISO, startOfDay } from 'date-fns';
 import { Pressable, StyleSheet } from 'react-native';
 import { HmisNoteType } from '../../apollo';
 import ProgramNoteCardClient from './ProgramNoteCardClient';
@@ -16,6 +16,8 @@ interface INoteCardProps {
 
 export default function ProgramNoteCard(props: INoteCardProps) {
   const { hmisNote, variant, hasBorder, onPress } = props;
+  const date = startOfDay(parseISO(hmisNote.date));
+
   return (
     <Pressable
       accessibilityRole="button"
@@ -41,11 +43,7 @@ export default function ProgramNoteCard(props: INoteCardProps) {
         <ProgramNoteCardServices note={hmisNote} />
       )}
       {hmisNote.date && (
-        <TextRegular size="sm">
-          {format(new Date(hmisNote.date), 'MM/dd/yyyy')}
-          {' @ '}
-          {format(new Date(hmisNote?.date), 'hh:mm a')}
-        </TextRegular>
+        <TextRegular size="sm">{format(date, 'MM/dd/yyyy')}</TextRegular>
       )}
     </Pressable>
   );
