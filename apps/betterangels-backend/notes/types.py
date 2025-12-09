@@ -3,7 +3,8 @@ from typing import List, Optional
 
 import strawberry
 import strawberry_django
-from accounts.models import User
+from accounts.groups import GroupTemplateNames
+from accounts.models import PermissionGroup, User
 from accounts.types import OrganizationType, UserType
 from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
@@ -293,13 +294,27 @@ class InteractionAuthorOrder:
 @strawberry_django.type(
     User,
     filters=InteractionAuthorFilter,
-    order=InteractionAuthorOrder,
+    order=InteractionAuthorOrder,  # type: ignore[literal-required]
+    ordering=InteractionAuthorOrder,
 )
 class InteractionAuthorType:
     id: ID
     first_name: auto
     last_name: auto
     middle_name: auto
+
+    def get_queryset(self, info: Info) -> QuerySet[User]:
+        # TODO: Make unit test for this function
+        authorized_permission_groups = [template.value for template in GroupTemplateNames]
+
+        # Subquery to check if the user has any related permission group in an authorized group
+        permission_group_exists = PermissionGroup.objects.filter(
+            organization__users=OuterRef("pk"),  # Matches `User` to `Organization`
+            template__name__in=authorized_permission_groups,
+        )
+
+        # Use Exists to avoid duplicate users without `distinct()`
+        return User.objects.filter(Exists(permission_group_exists))
 
 
 # Data Import

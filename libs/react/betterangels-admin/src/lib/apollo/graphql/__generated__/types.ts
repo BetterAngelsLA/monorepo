@@ -1988,8 +1988,7 @@ export type QueryHmisProfilesArgs = {
 
 export type QueryInteractionAuthorsArgs = {
   filters?: InputMaybe<InteractionAuthorFilter>;
-  order?: InputMaybe<InteractionAuthorOrder>;
-  ordering?: InputMaybe<Array<InteractionAuthorOrder>>;
+  ordering?: Array<InteractionAuthorOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

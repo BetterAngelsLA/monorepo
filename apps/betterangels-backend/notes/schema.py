@@ -47,7 +47,6 @@ from .types import (
     CreateNoteServiceRequestInput,
     CreateServiceRequestInput,
     ImportNoteInput,
-    InteractionAuthorOrder,
     InteractionAuthorType,
     MoodType,
     NoteDataImportType,
@@ -86,13 +85,10 @@ class Query:
         extensions=[HasPerm(NotePermissions.ADD)],
     )
 
-    @strawberry_django.offset_paginated(
-        OffsetPaginated[InteractionAuthorType],
+    interaction_authors: OffsetPaginated[InteractionAuthorType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
-    def interaction_authors(self) -> QuerySet[User]:
-        return get_outreach_authorized_users()
 
 
 @strawberry.type

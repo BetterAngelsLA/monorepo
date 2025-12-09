@@ -1,6 +1,6 @@
 query FilterUsers(
   $filters: InteractionAuthorFilter
-  $ordering: InteractionAuthorOrder
+  $ordering: [InteractionAuthorOrder!]! = []
   $pagination: OffsetPaginationInput
 ) {
   interactionAuthors(
