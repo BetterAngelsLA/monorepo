@@ -5,4 +5,5 @@ export const FORM_KEYS = {
   date: 'date',
   refClientProgram: 'refClientProgram',
   note: 'note',
+  draftTasks: 'draftTasks',
 } as const satisfies { [K in TFormKeys]: K };
