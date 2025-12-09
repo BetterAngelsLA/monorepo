@@ -13,13 +13,22 @@ WINDOWS_HOME=$(wslpath "$WINDOWS_USER_PROFILE")
 ANDROID_HOME="$WINDOWS_HOME/AppData/Local/Android/Sdk"
 PLATFORM_TOOLS="$ANDROID_HOME/platform-tools"
 
-# Get Hostname Logic
+# Get Hostname
 # Look specifically for the eth0 interface to avoid picking up Docker/VPN IPs
 
-WSL_IP=$(ip addr show eth0 | grep "inet\b" | awk '{print $2}' | cut -d/ -f1)
+WSL_IP=$(ip addr show eth0 2>/dev/null | awk '/inet\b/ {print $2}' | cut -d/ -f1)
+
 if [ -z "$WSL_IP" ]; then
     # Fallback if eth0 isn't found
-    WSL_IP=$(hostname -I | awk '{print $1}')
+    WSL_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
+fi
+
+# Check for missing IP
+if [ -z "$WSL_IP" ]; then
+    echo "Error: Could not determine WSL IP address."
+    echo "       This is required for the Android Emulator to connect to Metro."
+    echo "       Check your network settings or ensure 'ip' command is available."
+    exit 1
 fi
 
 # Configure .bashrc
