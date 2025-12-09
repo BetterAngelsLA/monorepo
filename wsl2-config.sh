@@ -76,9 +76,9 @@ create_shim() {
 
     if [ "$target_dir" == "$PLATFORM_TOOLS" ]; then
         # Shim 1: Windows Side (Required for Expo/Nx to find ADB)
-        cat <<EOF > "$shim_path"
+        cat <<'EOF' > "$shim_path"
 #!/bin/bash
-exec "\$(dirname "\$0")/adb.exe" "\$@"
+exec "$(dirname "$0")/adb.exe" "$@"
 EOF
     else
         # Shim 2: Linux Side (Required for CLI convenience)
