@@ -50,6 +50,7 @@ export function ClientCardHMIS(props: IClientCardProps) {
         <TextBold size="sm">
           {firstName} {lastName}{' '}
           {nameSuffix &&
+            !['NO_ANSWER', 'DONT_KNOW'].includes(nameSuffix) &&
             `${enumDisplayHmisSuffix[nameSuffix as HmisSuffixEnum]} `}
           {alias && `(${alias})`}
         </TextBold>
