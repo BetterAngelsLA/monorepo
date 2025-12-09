@@ -72,14 +72,12 @@ export function TasksTab(props: TProps) {
       presentation: 'modal',
       content: (
         <TaskForm
-          clientProfileId={client?.clientProfile.id}
           onCancel={() => {
             closeModalScreen();
           }}
-          onSuccess={() => {
+          onSubmit={() => {
             closeModalScreen();
           }}
-          arrivedFrom={currentPath || '/tasks'}
         />
       ),
       title: 'Follow-Up Task',
