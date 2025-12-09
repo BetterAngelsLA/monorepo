@@ -268,7 +268,7 @@ Before you begin, ensure you have the following installed on your Windows machin
    nvm install 22.14.0
    ```
 
-   Should you encounter any problems, refer to [NVM Installation Guide](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating)
+   Should you encounter any problems, refer to [NVM Installation Guide](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating).
 
    <br>
 
