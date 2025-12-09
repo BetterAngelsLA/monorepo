@@ -38,13 +38,19 @@ class LoginInput:
     password: str
 
 
-@strawberry_django.ordering.order(Organization)
+@strawberry_django.order(Organization)
 class OrganizationOrder:
     name: auto
     id: auto
 
 
-@strawberry_django.filters.filter(Organization)
+@strawberry_django.order_type(Organization)
+class NewOrganizationOrder:
+    name: auto
+    id: auto
+
+
+@strawberry_django.filter_type(Organization)
 class OrganizationFilter:
     @strawberry_django.filter_field
     def search(
@@ -64,13 +70,13 @@ class OrganizationFilter:
         return (queryset.filter(query), Q())
 
 
-@strawberry_django.type(Organization, order=OrganizationOrder, filters=OrganizationFilter)  # type: ignore[literal-required]
+@strawberry_django.type(Organization, order=OrganizationOrder, ordering=OrganizationOrder, filters=OrganizationFilter)  # type: ignore[literal-required]
 class OrganizationType:
     id: ID
     name: auto
 
 
-@strawberry_django.type(Organization, order=OrganizationOrder, filters=OrganizationFilter, pagination=True)  # type: ignore[literal-required]
+@strawberry_django.type(Organization, order=OrganizationOrder, ordering=OrganizationOrder, filters=OrganizationFilter, pagination=True)  # type: ignore[literal-required]
 class OrganizationForUserType(OrganizationType):
     @classmethod
     def get_queryset(
