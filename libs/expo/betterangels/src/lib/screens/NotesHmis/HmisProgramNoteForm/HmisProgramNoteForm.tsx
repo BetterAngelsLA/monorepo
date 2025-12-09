@@ -17,8 +17,8 @@ import {
   THmisProgramNoteFormInputs,
   hmisProgramNoteFormEmptyState,
 } from './formSchema';
-import ProvidedServices from './HmisProvidedServices';
-import RequestedServices from './HmisRequestedServices';
+import HmisProvidedServices from './HmisProvidedServices';
+import HmisRequestedServices from './HmisRequestedServices';
 import { FieldCardHmisNote } from './shared/FieldCardHmisNote';
 import { renderValue } from './shared/renderValue';
 import { TFormKeys } from './types';
@@ -225,12 +225,12 @@ export function HmisProgramNoteForm(props: TProps) {
         />
       </FieldCardHmisNote>
 
-      <ProvidedServices
+      <HmisProvidedServices
         services={
           services[ServiceRequestTypeEnum.Provided]?.serviceRequests || []
         }
       />
-      <RequestedServices
+      <HmisRequestedServices
         services={
           services[ServiceRequestTypeEnum.Requested]?.serviceRequests || []
         }

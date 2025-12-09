@@ -6,7 +6,7 @@ interface IRequestedServicesProps {
   services?: ViewHmisNoteQuery['hmisNote']['requestedServices'];
 }
 
-export default function RequestedServices(props: IRequestedServicesProps) {
+export default function HmisRequestedServices(props: IRequestedServicesProps) {
   const { services } = props;
 
   return (

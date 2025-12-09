@@ -22,7 +22,7 @@ interface IRequestedServicesProps {
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
 
-export default function RequestedProvidedServices(
+export default function HmisRequestedProvidedServices(
   props: IRequestedServicesProps
 ) {
   const { services: selectedServices, type } = props;

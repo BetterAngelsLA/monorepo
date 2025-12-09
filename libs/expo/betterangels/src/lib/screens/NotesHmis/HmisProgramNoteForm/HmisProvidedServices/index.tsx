@@ -6,7 +6,9 @@ interface IHmisProvidedServicesProps {
   services?: ViewHmisNoteQuery['hmisNote']['providedServices'];
 }
 
-export default function ProvidedServices(props: IHmisProvidedServicesProps) {
+export default function HmisProvidedServices(
+  props: IHmisProvidedServicesProps
+) {
   const { services } = props;
 
   return (

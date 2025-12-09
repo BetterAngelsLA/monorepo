@@ -38,7 +38,6 @@ function splitBucket(bucket?: {
     id?: string;
     service?: { id: string; label?: string } | null;
     markedForDeletion?: boolean;
-    serviceRequestId?: string;
     serviceOther?: string | null;
   }[];
 }) {
@@ -58,7 +57,7 @@ function splitBucket(bucket?: {
   const toCreateOther = serviceRequests
     .filter(
       (o) =>
-        !o.serviceRequestId &&
+        o.id?.startsWith('tmp-other') &&
         !o.markedForDeletion &&
         !!o.serviceOther &&
         o.serviceOther.trim().length > 0
@@ -67,10 +66,8 @@ function splitBucket(bucket?: {
 
   // DELETE “other”: persisted (has serviceRequestId) and marked for deletion
   const toDeleteOther = serviceRequests
-    .filter(
-      (o) => !!o.serviceRequestId && !!o.markedForDeletion && !!o.serviceOther
-    )
-    .map((o) => ({ serviceRequestId: o.serviceRequestId! }));
+    .filter((o) => !!o.id && !!o.markedForDeletion && !!o.serviceOther)
+    .map((o) => ({ serviceRequestId: o.id! }));
 
   return { toCreateStandard, toDeleteStandard, toCreateOther, toDeleteOther };
 }
