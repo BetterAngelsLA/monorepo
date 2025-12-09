@@ -6,7 +6,7 @@ import { toLocalCalendarDate } from '@monorepo/expo/shared/utils';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { HmisNoteType, ServiceRequestTypeEnum } from '../../../apollo';
+import { ServiceRequestTypeEnum } from '../../../apollo';
 import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
@@ -24,6 +24,7 @@ import {
   THmisProgramNoteFormOutputs,
   hmisProgramNoteFormEmptyState,
 } from '../HmisProgramNoteForm';
+import { ViewHmisNoteQuery } from '../HmisProgramNoteView/__generated__/HmisProgramNoteView.generated';
 import { HmisNoteDocument } from './__generated__/hmisGetClientNote.generated';
 import { UpdateHmisNoteDocument } from './__generated__/hmisUpdateClientNote.generated';
 
@@ -39,7 +40,6 @@ function splitBucket(bucket?: {
     id?: string;
     service?: { id: string; label?: string } | null;
     markedForDeletion?: boolean;
-    serviceRequestId?: string;
     serviceOther?: string | null;
   }[];
 }) {
@@ -59,7 +59,7 @@ function splitBucket(bucket?: {
   const toCreateOther = serviceRequests
     .filter(
       (o) =>
-        !o.serviceRequestId &&
+        o.id?.startsWith('tmp-other') &&
         !o.markedForDeletion &&
         !!o.serviceOther &&
         o.serviceOther.trim().length > 0
@@ -68,10 +68,8 @@ function splitBucket(bucket?: {
 
   // DELETE “other”: persisted (has serviceRequestId) and marked for deletion
   const toDeleteOther = serviceRequests
-    .filter(
-      (o) => !!o.serviceRequestId && !!o.markedForDeletion && !!o.serviceOther
-    )
-    .map((o) => ({ serviceRequestId: o.serviceRequestId! }));
+    .filter((o) => !!o.id && !!o.markedForDeletion && !!o.serviceOther)
+    .map((o) => ({ serviceRequestId: o.id! }));
 
   return { toCreateStandard, toDeleteStandard, toCreateOther, toDeleteOther };
 }
@@ -81,7 +79,8 @@ export function HmisProgramNoteEdit(props: TProps) {
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [existingNote, setExistingNote] = useState<HmisNoteType>();
+  const [existingNote, setExistingNote] =
+    useState<ViewHmisNoteQuery['hmisNote']>();
   const [updateHmisNoteMutation] = useMutation(UpdateHmisNoteDocument);
   const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
   const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);

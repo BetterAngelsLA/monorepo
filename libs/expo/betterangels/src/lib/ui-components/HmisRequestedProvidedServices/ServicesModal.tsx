@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pipe, filter as rfilter, find as rfind, map as rmap } from 'remeda';
@@ -69,8 +69,8 @@ export default function ServicesModal(props: IServicesModalProps) {
 
   const [searchText, setSearchText] = useState('');
 
-  let tmpCounter = 0;
-  const makeTmpId = () => `tmp-other-${tmpCounter++}`;
+  const tmpIdRef = useRef(0);
+  const makeTmpId = useCallback(() => `tmp-other-${tmpIdRef.current++}`, []);
 
   const sortCategories = (arr: ApiCategory[]) =>
     [...arr].sort(
@@ -141,9 +141,10 @@ export default function ServicesModal(props: IServicesModalProps) {
     const std = pipe(
       selectedServices,
       rfilter(hasService),
+      rfilter((it) => !it.serviceOther || it.serviceOther.trim().length === 0),
       rmap((it) => ({
         id: it.id,
-        service: { id: it.service.id, label: it.service.label ?? '' },
+        service: { id: it.service!.id, label: it.service!.label ?? '' },
         markedForDeletion: it.markedForDeletion ?? false,
       }))
     );
@@ -201,9 +202,9 @@ export default function ServicesModal(props: IServicesModalProps) {
     () =>
       rows
         .filter((r) => r.serviceOther)
-        .map((r, idx) => ({
+        .map((r) => ({
           serviceOther: r.serviceOther!,
-          serviceRequestId: r.id ?? makeTmpId(),
+          serviceRequestId: r.id,
           markedForDeletion: r.markedForDeletion ?? false,
         })),
     [rows]
@@ -219,18 +220,37 @@ export default function ServicesModal(props: IServicesModalProps) {
     ) => {
       setRows((prev) => {
         const nonOther = prev.filter((r) => !r.serviceOther);
-        const merged = next.map((o) => ({
-          id:
-            o.serviceRequestId && !o.serviceRequestId.startsWith('tmp-other-')
-              ? o.serviceRequestId
-              : undefined,
-          serviceOther: o.serviceOther,
-          markedForDeletion: o.markedForDeletion ?? false,
-        }));
+
+        const merged = next.map((o) => {
+          let existing =
+            (o.serviceRequestId &&
+              prev.find((r) => r.id === o.serviceRequestId)) ||
+            prev.find(
+              (r) =>
+                !!r.serviceOther &&
+                r.serviceOther === o.serviceOther &&
+                !r.service
+            );
+
+          const isServerId =
+            !!o.serviceRequestId &&
+            !o.serviceRequestId.startsWith('tmp-other-');
+
+          const id = isServerId
+            ? o.serviceRequestId!
+            : existing?.id ?? makeTmpId();
+
+          return {
+            id,
+            serviceOther: o.serviceOther,
+            markedForDeletion: o.markedForDeletion ?? false,
+          } as SelectedService;
+        });
+
         return [...nonOther, ...merged];
       });
     },
-    []
+    [makeTmpId]
   );
 
   // ---------- Submit ----------

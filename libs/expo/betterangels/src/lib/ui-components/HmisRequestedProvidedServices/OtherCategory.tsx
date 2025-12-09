@@ -38,7 +38,7 @@ export default function OtherCategory(props: IOtherCategoryProps) {
       {serviceRequests.map((service, idx) => {
         return (
           <ServiceOtherCheckbox
-            key={service.serviceOther}
+            key={service.serviceRequestId ?? `other-${service.serviceOther}`}
             serviceRequests={serviceRequests}
             setServiceRequests={setServiceRequests}
             service={service}

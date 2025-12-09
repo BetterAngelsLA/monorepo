@@ -1,25 +1,17 @@
 import { Checkbox, TextRegular } from '@monorepo/expo/shared/ui-components';
 import { StyleSheet, View } from 'react-native';
 
+type OtherRow = {
+  serviceOther: string | null;
+  serviceRequestId?: string;
+  markedForDeletion?: boolean;
+};
+
 interface IServiceOtherCheckboxProps {
-  service: {
-    serviceOther: string | null;
-    serviceRequestId?: string;
-    markedForDeletion?: boolean;
-  };
+  service: OtherRow;
   idx: number;
-  serviceRequests: {
-    serviceRequestId: string | undefined;
-    serviceOther: string | null;
-    markedForDeletion?: boolean;
-  }[];
-  setServiceRequests: (
-    serviceRequests: {
-      serviceOther: string | null;
-      serviceRequestId: string | undefined;
-      markedForDeletion?: boolean;
-    }[]
-  ) => void;
+  serviceRequests: OtherRow[];
+  setServiceRequests: (rows: OtherRow[]) => void;
 }
 
 const isTmp = (id?: string) => !!id && id.startsWith('tmp-other-');
