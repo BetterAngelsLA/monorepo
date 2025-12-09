@@ -52,7 +52,7 @@ export function HmisProgramNoteForm(props: TProps) {
   const refClientProgramValue = watch('refClientProgram') || '';
   const dateYmd = watch('date') || '';
   const noteValue = watch('note') || '';
-  const services = watch('services') || [];
+  const services = watch('services') || {};
 
   const {
     clientPrograms,

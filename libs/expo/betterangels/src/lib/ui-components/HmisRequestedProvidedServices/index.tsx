@@ -9,13 +9,16 @@ import { enumDisplayServiceType } from '../../static';
 import ServicesModal from './ServicesModal';
 
 type GqlServiceRow = NonNullable<
-  NonNullable<ViewHmisNoteQuery['hmisNote']['providedServices']>[number]
+  NonNullable<
+    | ViewHmisNoteQuery['hmisNote']['providedServices']
+    | ViewHmisNoteQuery['hmisNote']['requestedServices']
+  >[number]
 >;
 
 type ServiceRowWithLocal = GqlServiceRow & { markedForDeletion?: boolean };
 
 interface IRequestedServicesProps {
-  services: ServiceRowWithLocal[];
+  services?: ServiceRowWithLocal[] | null;
   type: ServiceRequestTypeEnum.Provided | ServiceRequestTypeEnum.Requested;
 }
 

@@ -1,7 +1,5 @@
-import {
-  HmisRequestedProvidedServices,
-  ServiceRequestTypeEnum,
-} from '@monorepo/expo/betterangels';
+import { ServiceRequestTypeEnum } from '../../../../apollo';
+import { HmisRequestedProvidedServices } from '../../../../ui-components';
 import { ViewHmisNoteQuery } from '../../HmisProgramNoteView/__generated__/HmisProgramNoteView.generated';
 
 interface IRequestedServicesProps {

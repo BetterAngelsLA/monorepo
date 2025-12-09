@@ -7,8 +7,8 @@ export type ServicesDraft = Partial<
     ServiceRequestTypeEnum,
     {
       serviceRequests: {
-        serviceRequestId?: string;
-        service?: { id: string; label?: string } | null;
+        id: string;
+        service?: { id: string; label: string } | null;
         markedForDeletion?: boolean;
         serviceOther?: string | null;
       }[];

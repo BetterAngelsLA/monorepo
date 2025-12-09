@@ -222,7 +222,7 @@ export default function ServicesModal(props: IServicesModalProps) {
         const nonOther = prev.filter((r) => !r.serviceOther);
 
         const merged = next.map((o) => {
-          let existing =
+          const existing =
             (o.serviceRequestId &&
               prev.find((r) => r.id === o.serviceRequestId)) ||
             prev.find(
