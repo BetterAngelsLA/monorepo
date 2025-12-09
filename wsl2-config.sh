@@ -6,6 +6,14 @@ echo "Configuring WSL2 for Android Development..."
 # Find the correct C:\Users\Name path even if username differs
 
 WINDOWS_USER_PROFILE=$(cmd.exe /c "echo %USERPROFILE%" 2>/dev/null | tr -d '\r')
+
+# Check for missing profile
+if [ -z "$WINDOWS_USER_PROFILE" ]; then
+    echo "Error: Could not detect Windows User Profile via cmd.exe."
+    echo "       Ensure you are running this in a valid WSL2 environment."
+    exit 1
+fi
+
 WINDOWS_HOME=$(wslpath "$WINDOWS_USER_PROFILE")
 
 # Define Paths
