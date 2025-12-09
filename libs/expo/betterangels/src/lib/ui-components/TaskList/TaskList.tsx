@@ -53,8 +53,6 @@ export function TaskList(props: TProps) {
       pageSize: paginationLimit,
     });
 
-  console.log('ITEMS: ', items);
-
   const renderItemFn = useCallback(
     (item: TaskType) => renderItem(item),
     [renderItem]

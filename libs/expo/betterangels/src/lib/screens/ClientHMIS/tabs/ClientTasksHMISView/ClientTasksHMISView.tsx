@@ -28,8 +28,6 @@ export function ClientTasksHMISView(props: TProps) {
   const [createTask] = useMutation(CreateTaskDocument);
   const { showSnackbar } = useSnackbar();
 
-  const currentPath = client ? `/client/${client?.id}?newTab=Tasks` : undefined;
-
   const onSubmit = async (task: TaskFormData) => {
     if (!client?.id) return;
     try {
@@ -49,7 +47,6 @@ export function ClientTasksHMISView(props: TProps) {
         console.log(result.data.createTask.messages);
       }
 
-      console.log('RESULT: ', result.data?.createTask);
       closeModalScreen();
     } catch (e) {
       showSnackbar({
@@ -63,7 +60,6 @@ export function ClientTasksHMISView(props: TProps) {
   const handleTaskPress = useCallback((task: TaskType) => {
     router.navigate({
       pathname: `/task/${task.id}`,
-      params: { arrivedFrom: currentPath },
     });
   }, []);
 
@@ -126,7 +122,7 @@ export function ClientTasksHMISView(props: TProps) {
       />
 
       <TaskList
-        filters={{ search, clientProfile: client.id }}
+        filters={{ search, hmisClientProfile: client.id }}
         renderItem={renderTaskItem}
         renderHeader={renderListHeaderText}
       />
