@@ -17,6 +17,10 @@ interface INoteCardBylineProps {
 export default function NoteCardByline(props: INoteCardBylineProps) {
   const { createdBy, organization, team } = props;
 
+  const authorName = createdBy
+    ? `${createdBy.firstName} ${createdBy.lastName}`
+    : 'Unknown User';
+
   return (
     <View
       style={{
@@ -39,9 +43,7 @@ export default function NoteCardByline(props: INoteCardBylineProps) {
         }}
       >
         <TextMedium size="xsm" color={Colors.PRIMARY_EXTRA_DARK}>
-          {createdBy
-            ? `${createdBy.firstName} ${createdBy.lastName}`
-            : 'Unknown User'}
+          {authorName}
         </TextMedium>
 
         <TextRegular size="xs" color={Colors.PRIMARY_EXTRA_DARK}>

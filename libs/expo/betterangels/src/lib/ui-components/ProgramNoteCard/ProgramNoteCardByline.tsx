@@ -19,6 +19,10 @@ export default function ProgramNoteCardByline(
 ) {
   const { createdBy, organization, team } = props;
 
+  const authorName = createdBy
+    ? `${createdBy.firstName} ${createdBy.lastName}`
+    : 'Unknown User';
+
   return (
     <View
       style={{
@@ -41,9 +45,7 @@ export default function ProgramNoteCardByline(
         }}
       >
         <TextMedium size="xsm" color={Colors.PRIMARY_EXTRA_DARK}>
-          {createdBy
-            ? `${createdBy.firstName} ${createdBy.lastName}`
-            : 'Unknown User'}
+          {authorName}
         </TextMedium>
         <TextRegular size="xs" color={Colors.PRIMARY_EXTRA_DARK}>
           {organization.name}
