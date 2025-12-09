@@ -1519,14 +1519,6 @@ export type MutationUpdateTaskArgs = {
   data: UpdateTaskInput;
 };
 
-export type NewClientProfileOrder =
-  { firstName: Ordering; id?: never; lastName?: never; }
-  |  { firstName?: never; id: Ordering; lastName?: never; }
-  |  { firstName?: never; id?: never; lastName: Ordering; };
-
-export type NewShelterOrder =
-  { name: Ordering; };
-
 export type NoteDataImportType = {
   __typename?: 'NoteDataImportType';
   id: Scalars['UUID']['output'];
@@ -1907,7 +1899,6 @@ export type QueryBulkClientProfileImportRecordsArgs = {
 export type QueryCaseworkerOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
-  ordering?: Array<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1952,7 +1943,6 @@ export type QueryClientProfileArgs = {
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
-  ordering?: Array<NewClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1999,6 +1989,7 @@ export type QueryHmisProfilesArgs = {
 export type QueryInteractionAuthorsArgs = {
   filters?: InputMaybe<InteractionAuthorFilter>;
   order?: InputMaybe<InteractionAuthorOrder>;
+  ordering?: InputMaybe<Array<InteractionAuthorOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2049,7 +2040,6 @@ export type QueryShelterArgs = {
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
   order?: InputMaybe<ShelterOrder>;
-  ordering?: Array<NewShelterOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2744,7 +2734,6 @@ export type UserType = {
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
-  ordering?: Array<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

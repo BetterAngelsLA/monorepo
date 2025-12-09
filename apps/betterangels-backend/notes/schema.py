@@ -1,4 +1,4 @@
-from typing import Dict, cast
+from typing import Dict, Optional, cast
 
 import pghistory
 import strawberry
@@ -47,6 +47,7 @@ from .types import (
     CreateNoteServiceRequestInput,
     CreateServiceRequestInput,
     ImportNoteInput,
+    InteractionAuthorOrder,
     InteractionAuthorType,
     MoodType,
     NoteDataImportType,

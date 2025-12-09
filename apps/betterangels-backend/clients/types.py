@@ -89,15 +89,8 @@ class CreateClientDocumentInput:
     namespace: ClientDocumentNamespaceEnum
 
 
-@strawberry_django.order(ClientProfile)
+@strawberry_django.ordering.order(ClientProfile)
 class ClientProfileOrder:
-    first_name: auto
-    last_name: auto
-    id: auto
-
-
-@strawberry_django.order_type(ClientProfile)
-class NewClientProfileOrder:
     first_name: auto
     last_name: auto
     id: auto
@@ -329,7 +322,7 @@ class ClientProfileBaseType:
     veteran_status: auto
 
 
-@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, ordering=NewClientProfileOrder, pagination=True)  # type: ignore[literal-required]
+@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
     id: ID
     contacts: Optional[List[ClientContactType]]
