@@ -1,5 +1,21 @@
 import { format } from 'date-fns';
 import { z } from 'zod';
+import { SelahTeamEnum, TaskStatusEnum } from '../../../apollo';
+
+// ----------------------------------------------------------------------
+// 1. Local Draft Task Type
+// ----------------------------------------------------------------------
+export type LocalDraftTask = {
+  id: string;
+  summary: string;
+  description?: string | null;
+  status?: TaskStatusEnum;
+  team?: SelahTeamEnum | null;
+};
+
+// ----------------------------------------------------------------------
+// 2. Validation Schema
+// ----------------------------------------------------------------------
 
 export const HmisProgramNoteFormSchema = z.object({
   title: z.string().min(1, 'Purpose is required.'),
@@ -7,54 +23,71 @@ export const HmisProgramNoteFormSchema = z.object({
     .date()
     .optional()
     .refine(
-      (val) => val instanceof Date && !Number.isNaN(val.getTime()), // not using isValid as it allows integer dates
+      (val) => val instanceof Date && !Number.isNaN(val.getTime()),
       'Date is required.'
     ),
   refClientProgram: z.string(),
   note: z.string().min(1, 'Note is required.'),
+
+  // FIX 1: Remove .default([]). This makes the field REQUIRED in the type definition,
+  // preventing the "undefined is not assignable to LocalDraftTask[]" error.
+  // We handle the default value via the 'getHmisProgramNoteFormEmptyState' function.
+  draftTasks: z.array(z.custom<LocalDraftTask>()),
 });
 
-export type THmisProgramNoteFormSchema = z.infer<
+// ----------------------------------------------------------------------
+// 3. Types
+// ----------------------------------------------------------------------
+
+// We explicitly intersect to ensure the TypeScript type for draftTasks is robust
+export type THmisProgramNoteFormInputs = z.input<
   typeof HmisProgramNoteFormSchema
+> & {
+  draftTasks: LocalDraftTask[];
+};
+
+// ----------------------------------------------------------------------
+// 4. Output Schema (API Payload)
+// ----------------------------------------------------------------------
+
+// We omit draftTasks so it doesn't interfere with the Note creation payload parsing
+export const HmisProgramNoteFormSchemaOutput = HmisProgramNoteFormSchema.omit({
+  draftTasks: true,
+})
+  .extend({
+    date: z.date(), // required
+  })
+  .transform(({ date, ...rest }) => ({
+    ...rest,
+    date: format(date, 'yyyy-MM-dd'),
+  }));
+
+export type THmisProgramNoteFormOutputs = z.output<
+  typeof HmisProgramNoteFormSchemaOutput
 >;
 
-/**
- * Static empty state used for resets (e.g., clearing a single field).
- * NOTE: date is intentionally undefined here. Do NOT put `new Date()` here,
- * because this object is evaluated once at module load.
- */
-export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormSchema = {
+// ----------------------------------------------------------------------
+// 5. Empty States
+// ----------------------------------------------------------------------
+
+export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormInputs = {
   title: '',
   date: undefined,
   refClientProgram: '',
   note: '',
+  draftTasks: [],
 };
 
-/**
- * Dynamic empty state to use when initializing a NEW form instance.
- * This ensures `new Date()` is called each time the form is created.
- */
 export const getHmisProgramNoteFormEmptyState =
-  (): THmisProgramNoteFormSchema => ({
+  (): THmisProgramNoteFormInputs => ({
     ...hmisProgramNoteFormEmptyState,
     date: new Date(),
+    draftTasks: [],
   });
 
-export const HmisProgramNoteFormSchemaOutput = HmisProgramNoteFormSchema.extend(
-  {
-    date: z.date(), // required
-  }
-).transform(({ date, ...rest }) => ({
-  ...rest,
-  date: format(date, 'yyyy-MM-dd'),
-}));
-
-export type THmisProgramNoteFormInputs = z.input<
-  typeof HmisProgramNoteFormSchema
->;
-export type THmisProgramNoteFormOutputs = z.output<
-  typeof HmisProgramNoteFormSchemaOutput
->;
+// ----------------------------------------------------------------------
+// 6. Field Names
+// ----------------------------------------------------------------------
 
 type HmisNoteFormFieldName = keyof typeof HmisProgramNoteFormSchema.shape;
 
