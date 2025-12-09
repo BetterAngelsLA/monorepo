@@ -175,7 +175,7 @@ class NoteType:
     id: ID
     client_profile: Optional[ClientProfileType]
     created_at: auto
-    created_by: UserType
+    created_by: Optional[UserType]
     interacted_at: auto
     is_submitted: auto
     location: Optional[LocationType]
