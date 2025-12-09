@@ -1563,7 +1563,7 @@ export type NoteType = {
   __typename?: 'NoteType';
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
-  createdBy: UserType;
+  createdBy?: Maybe<UserType>;
   id: Scalars['ID']['output'];
   interactedAt: Scalars['DateTime']['output'];
   isSubmitted: Scalars['Boolean']['output'];

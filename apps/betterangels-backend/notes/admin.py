@@ -128,6 +128,15 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
     def get_export_formats(self) -> list:
         return [CSV]
 
+    autocomplete_fields = (
+        "client_profile",
+        "created_by",
+        "location",
+        "organization",
+        "provided_services",
+        "requested_services",
+    )
+
     list_display = (
         "note_purpose",
         "client_profile",
@@ -159,6 +168,7 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         MoodInline,
     ]
     readonly_fields = (
+        "created_by",
         "interacted_at",
         "updated_at",
     )
