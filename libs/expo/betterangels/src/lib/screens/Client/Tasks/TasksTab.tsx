@@ -1,3 +1,4 @@
+import { useMutation } from '@apollo/client/react';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -9,9 +10,12 @@ import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { TaskType } from '../../../apollo';
+import { useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { pagePaddingHorizontal } from '../../../static';
 import { TaskCard, TaskForm, TaskList } from '../../../ui-components';
+import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
+import { TaskFormData } from '../../../ui-components/TaskForm/TaskForm';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
 
 type TProps = {
@@ -22,6 +26,38 @@ export function TasksTab(props: TProps) {
   const { client } = props;
 
   const [search, setSearch] = useState('');
+
+  const [createTask] = useMutation(CreateTaskDocument);
+  const { showSnackbar } = useSnackbar();
+
+  const onSubmit = async (task: TaskFormData) => {
+    if (!client?.clientProfile.id) return;
+    try {
+      const result = await createTask({
+        variables: {
+          data: {
+            summary: task.summary!,
+            description: task.description,
+            status: task.status,
+            team: task.team || null,
+            clientProfile: client.clientProfile.id,
+          },
+        },
+      });
+
+      if (result.data?.createTask.__typename === 'OperationInfo') {
+        console.log(result.data.createTask.messages);
+      }
+
+      closeModalScreen();
+    } catch (e) {
+      showSnackbar({
+        message: 'Error uploading profile photo.',
+        type: 'error',
+      });
+      console.error(e);
+    }
+  };
 
   const currentPath = client
     ? `/client/${client?.clientProfile.id}?newTab=Tasks`
@@ -75,9 +111,7 @@ export function TasksTab(props: TProps) {
           onCancel={() => {
             closeModalScreen();
           }}
-          onSubmit={() => {
-            closeModalScreen();
-          }}
+          onSubmit={onSubmit}
         />
       ),
       title: 'Follow-Up Task',
