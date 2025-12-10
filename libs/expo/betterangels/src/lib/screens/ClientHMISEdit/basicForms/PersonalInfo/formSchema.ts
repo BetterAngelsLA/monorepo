@@ -56,12 +56,10 @@ export const PersonalInfoFormSchemaOut = PersonalInfoFormSchema.transform(
       formattedDate = format(birthDate, 'yyyy-MM-dd');
     }
 
-    const finalDobQuality = formattedDate ? dobQuality : null;
-
     return {
       ...rest,
       birthDate: formattedDate,
-      dobQuality: finalDobQuality === '' ? null : finalDobQuality,
+      dobQuality: dobQuality === '' ? null : dobQuality,
       preferredLanguage: preferredLanguage === '' ? null : preferredLanguage,
       livingSituation: livingSituation === '' ? null : livingSituation,
       veteran: veteran === '' ? null : veteran,
