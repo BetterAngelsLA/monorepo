@@ -59,9 +59,9 @@ export const PersonalInfoFormSchemaOut = PersonalInfoFormSchema.transform(
     return {
       ...rest,
       birthDate: formattedDate,
-      dobQuality: dobQuality === '' ? null : dobQuality,
       preferredLanguage: preferredLanguage === '' ? null : preferredLanguage,
       livingSituation: livingSituation === '' ? null : livingSituation,
+      dobQuality: dobQuality === '' ? null : dobQuality,
       veteran: veteran === '' ? null : veteran,
     };
   }
