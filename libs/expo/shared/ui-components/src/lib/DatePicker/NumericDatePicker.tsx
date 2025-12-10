@@ -25,7 +25,7 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
             borderWidth: 1,
             borderColor: Colors.NEUTRAL_LIGHT,
           }}
-          calendarIcon={value ? '' : undefined}
+          calendarIcon={value ? null : undefined}
           withDateFormatInLabel={false}
           style={{
             width: '100%',
@@ -37,14 +37,15 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
           {...rest}
         />
 
-        {value && onChange && (
+        {value && onChange && !disabled && (
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Clear date"
             accessibilityHint="Clears the selected date"
             hitSlop={8}
             style={styles.clearButton}
-            onPress={() => onChange(undefined)}
+            disabled={disabled}
+            onPress={() => onChange(null)}
           >
             <InputClearIcon />
           </Pressable>
