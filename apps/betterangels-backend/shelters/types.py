@@ -30,6 +30,8 @@ from shelters.enums import (
     StorageChoices,
     TrainingServiceChoices,
 )
+
+# fmt: off
 from shelters.models import (
     SPA,
     Accessibility,
@@ -50,7 +52,13 @@ from shelters.models import (
     ShelterProgram,
 )
 from shelters.models import ShelterType as ShelterKind
-from shelters.models import SpecialSituationRestriction, Storage, TrainingService
+from shelters.models import (
+    SpecialSituationRestriction,
+    Storage,
+    TrainingService,
+)
+
+# fmt: on
 from strawberry import ID, asdict, auto
 
 
@@ -346,4 +354,5 @@ class ShelterType:
                     ranges.append(TimeRange(start=start, end=end))
                 else:
                     ranges.append(None)
+        return ranges or None
         return ranges or None
