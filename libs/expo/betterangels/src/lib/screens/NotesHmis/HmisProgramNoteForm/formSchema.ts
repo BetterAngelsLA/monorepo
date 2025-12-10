@@ -1,5 +1,20 @@
 import { format } from 'date-fns';
 import { z } from 'zod';
+import { ServiceRequestTypeEnum } from '../../../apollo';
+
+export type ServicesDraft = Partial<
+  Record<
+    ServiceRequestTypeEnum,
+    {
+      serviceRequests: {
+        id: string;
+        service?: { id: string; label: string } | null;
+        markedForDeletion?: boolean;
+        serviceOther?: string | null;
+      }[];
+    }
+  >
+>;
 
 export const HmisProgramNoteFormSchema = z.object({
   title: z.string().min(1, 'Purpose is required.'),
@@ -12,6 +27,7 @@ export const HmisProgramNoteFormSchema = z.object({
     ),
   refClientProgram: z.string(),
   note: z.string().min(1, 'Note is required.'),
+  services: z.custom<ServicesDraft>().optional(),
 });
 
 export type THmisProgramNoteFormSchema = z.infer<
@@ -28,6 +44,7 @@ export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormSchema = {
   date: undefined,
   refClientProgram: '',
   note: '',
+  services: {},
 };
 
 /**

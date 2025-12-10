@@ -1253,6 +1253,7 @@ export type Mutation = {
   importNote: ImportNotePayload;
   login: AuthResponse;
   logout: Scalars['Boolean']['output'];
+  removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
@@ -1432,6 +1433,11 @@ export type MutationImportNoteArgs = {
 
 export type MutationLoginArgs = {
   input: LoginInput;
+};
+
+
+export type MutationRemoveHmisNoteServiceRequestArgs = {
+  data: RemoveHmisNoteServiceRequestInput;
 };
 
 
@@ -2090,6 +2096,14 @@ export enum RelationshipTypeEnum {
   Sibling = 'SIBLING',
   Uncle = 'UNCLE'
 }
+
+export type RemoveHmisNoteServiceRequestInput = {
+  hmisNoteId: Scalars['ID']['input'];
+  serviceRequestId: Scalars['ID']['input'];
+  serviceRequestType: ServiceRequestTypeEnum;
+};
+
+export type RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo;
 
 export type RemoveNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
