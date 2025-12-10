@@ -30,6 +30,7 @@ from .types import (
     LoginInput,
     OrganizationMemberOrdering,
     OrganizationMemberType,
+    OrganizationOrder,
     OrganizationType,
     OrgInvitationInput,
     UpdateUserInput,
@@ -72,7 +73,7 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
-    def caseworker_organizations(self) -> QuerySet[Organization]:
+    def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> QuerySet[Organization]:
         queryset: QuerySet[Organization] = Organization.objects.filter(
             permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
         )

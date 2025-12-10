@@ -50,11 +50,7 @@ from shelters.models import (
     ShelterProgram,
 )
 from shelters.models import ShelterType as ShelterKind
-from shelters.models import (
-    SpecialSituationRestriction,
-    Storage,
-    TrainingService,
-)
+from shelters.models import SpecialSituationRestriction, Storage, TrainingService
 from strawberry import ID, asdict, auto
 
 
@@ -240,7 +236,7 @@ class ShelterFilter:
         return queryset, Q()
 
 
-@strawberry_django.ordering.order(Shelter)
+@strawberry_django.ordering.order_type(Shelter)
 class ShelterOrder:
     name: auto
 
@@ -251,7 +247,7 @@ class TimeRange:
     end: Optional[datetime]
 
 
-@strawberry_django.type(Shelter, filters=ShelterFilter, order=ShelterOrder)  # type: ignore
+@strawberry_django.type(Shelter, filters=ShelterFilter, ordering=ShelterOrder)
 class ShelterType:
     id: ID
     accessibility: List[AccessibilityType]

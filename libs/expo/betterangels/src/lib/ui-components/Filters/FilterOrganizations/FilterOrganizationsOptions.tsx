@@ -49,10 +49,12 @@ export function FilterOrganizationsOptions(props: TProps) {
       document: FilterOrganizationsDocument,
       queryFieldName: 'caseworkerOrganizations',
       variables: {
-        order: {
-          name: Ordering.AscNullsLast,
-          id: Ordering.Desc,
-        },
+        ordering: [
+          {
+            name: Ordering.AscNullsLast,
+          },
+          { id: Ordering.Desc },
+        ],
         filters: {
           search: searchQuery,
         },

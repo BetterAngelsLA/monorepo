@@ -347,11 +347,10 @@ export type ClientProfileImportRecordsBulkInput = {
   sourceIds: Array<Scalars['String']['input']>;
 };
 
-export type ClientProfileOrder = {
-  firstName?: InputMaybe<Ordering>;
-  id?: InputMaybe<Ordering>;
-  lastName?: InputMaybe<Ordering>;
-};
+export type ClientProfileOrder =
+  { firstName: Ordering; id?: never; lastName?: never; }
+  |  { firstName?: never; id: Ordering; lastName?: never; }
+  |  { firstName?: never; id?: never; lastName: Ordering; };
 
 export type ClientProfilePhotoInput = {
   clientProfile: Scalars['ID']['input'];
@@ -1710,10 +1709,9 @@ export type OrganizationMemberTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type OrganizationOrder = {
-  id?: InputMaybe<Ordering>;
-  name?: InputMaybe<Ordering>;
-};
+export type OrganizationOrder =
+  { id: Ordering; name?: never; }
+  |  { id?: never; name: Ordering; };
 
 export type OrganizationServiceCategoryOrdering = {
   id?: InputMaybe<Ordering>;
@@ -1899,6 +1897,7 @@ export type QueryBulkClientProfileImportRecordsArgs = {
 export type QueryCaseworkerOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
+  ordering?: InputMaybe<Array<OrganizationOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1943,6 +1942,7 @@ export type QueryClientProfileArgs = {
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
+  ordering?: Array<ClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1988,6 +1988,7 @@ export type QueryHmisProfilesArgs = {
 
 export type QueryInteractionAuthorsArgs = {
   filters?: InputMaybe<InteractionAuthorFilter>;
+  order?: InputMaybe<InteractionAuthorOrder>;
   ordering?: Array<InteractionAuthorOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2038,7 +2039,7 @@ export type QueryShelterArgs = {
 
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
-  order?: InputMaybe<ShelterOrder>;
+  ordering?: Array<ShelterOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2270,9 +2271,8 @@ export type ShelterLocationType = {
   place: Scalars['String']['output'];
 };
 
-export type ShelterOrder = {
-  name?: InputMaybe<Ordering>;
-};
+export type ShelterOrder =
+  { name: Ordering; };
 
 export type ShelterPhotoType = {
   __typename?: 'ShelterPhotoType';

@@ -44,10 +44,12 @@ export default function OrganizationFilter(props: IOrganizationFilterProps) {
   const { data, loading, error } = useQuery(CaseworkerOrganizationsDocument, {
     variables: {
       filters: { search: filterSearch },
-      order: {
-        name: Ordering.AscNullsLast,
-        id: Ordering.Desc,
-      },
+      ordering: [
+        {
+          name: Ordering.AscNullsLast,
+        },
+        { id: Ordering.Desc },
+      ],
       pagination: { limit: paginationLimit, offset: offset },
     },
   });

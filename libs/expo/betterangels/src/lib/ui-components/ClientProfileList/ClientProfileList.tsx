@@ -30,7 +30,7 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<ClientProfileFilter>;
-  order?: ClientProfileOrder | null;
+  ordering?: ClientProfileOrder | ClientProfileOrder[];
   paginationLimit?: number;
   showAllClientsLink?: boolean;
   renderHeaderText?: (props: ListHeaderProps) => string;
@@ -40,7 +40,7 @@ type TProps = {
 
 export function ClientProfileList({
   filters,
-  order = DEFAULT_QUERY_ORDER,
+  ordering = DEFAULT_QUERY_ORDER,
   itemGap = DEFAULT_ITEM_GAP,
   paginationLimit = DEFAULT_PAGINATION_LIMIT,
   renderItem,
@@ -58,7 +58,7 @@ export function ClientProfileList({
     >({
       document: ClientProfilesDocument,
       queryFieldName: 'clientProfiles',
-      variables: { filters, order: order || undefined },
+      variables: { filters, ordering: ordering || undefined },
       pageSize: paginationLimit,
     });
 

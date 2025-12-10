@@ -49,11 +49,13 @@ export function FilterClientOptions(props: TProps) {
       document: FilterClientProfilesDocument,
       queryFieldName: 'clientProfiles',
       variables: {
-        order: {
-          firstName: Ordering.AscNullsLast,
-          lastName: Ordering.AscNullsLast,
-          id: Ordering.Desc,
-        },
+        ordering: [
+          {
+            firstName: Ordering.AscNullsLast,
+          },
+          { lastName: Ordering.AscNullsLast },
+          { id: Ordering.Desc },
+        ],
         filters: {
           search: searchQuery,
         },
