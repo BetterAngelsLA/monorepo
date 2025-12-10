@@ -1710,9 +1710,10 @@ export type OrganizationMemberTypeOffsetPaginated = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type OrganizationOrder =
-  { id: Ordering; name?: never; }
-  |  { id?: never; name: Ordering; };
+export type OrganizationOrder = {
+  id?: InputMaybe<Ordering>;
+  name?: InputMaybe<Ordering>;
+};
 
 export type OrganizationServiceCategoryOrdering = {
   id?: InputMaybe<Ordering>;
@@ -2272,8 +2273,9 @@ export type ShelterLocationType = {
   place: Scalars['String']['output'];
 };
 
-export type ShelterOrder =
-  { name: Ordering; };
+export type ShelterOrder = {
+  name?: InputMaybe<Ordering>;
+};
 
 export type ShelterPhotoType = {
   __typename?: 'ShelterPhotoType';

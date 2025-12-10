@@ -38,7 +38,7 @@ class LoginInput:
     password: str
 
 
-@strawberry_django.order_type(Organization)
+@strawberry_django.order_type(Organization, one_of=False)
 class OrganizationOrder:
     name: auto
     id: auto

@@ -216,7 +216,7 @@ class ShelterFilter:
         return queryset, Q()
 
 
-@strawberry_django.ordering.order_type(models.Shelter)
+@strawberry_django.ordering.order_type(models.Shelter, one_of=False)
 class ShelterOrder:
     name: auto
 
