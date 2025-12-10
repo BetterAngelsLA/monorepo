@@ -1,10 +1,9 @@
 import { Colors, Radiuses, Spacings } from '@monorepo/expo/shared/static';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { DatePickerInput } from 'react-native-paper-dates';
 import FormFieldLabel from '../FormFieldLabel';
 import { InputClearIcon } from '../Input/InputClearIcon';
 import { INumericDatePickerProps } from './types';
-
-const { Pressable, StyleSheet, View } = require('react-native');
 
 export function NumericDatePicker(props: INumericDatePickerProps) {
   const { label, disabled, value, onChange, ...rest } = props;
@@ -19,13 +18,14 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
           mode="outlined"
           iconColor={Colors.PRIMARY_EXTRA_DARK}
           textColor={disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+          placeholderTextColor={Colors.NEUTRAL}
           outlineColor={Colors.NEUTRAL_LIGHT}
           outlineStyle={{
             borderRadius: Radiuses.xs,
             borderWidth: 1,
             borderColor: Colors.NEUTRAL_LIGHT,
           }}
-          calendarIcon={(value ? null : undefined) as string | undefined}
+          calendarIcon={value ? null : undefined}
           withDateFormatInLabel={false}
           style={{
             width: '100%',
@@ -45,7 +45,7 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
             hitSlop={8}
             style={styles.clearButton}
             disabled={disabled}
-            onPress={() => onChange(null as unknown as Date | undefined)}
+            onPress={() => onChange(null)}
           >
             <InputClearIcon />
           </Pressable>
