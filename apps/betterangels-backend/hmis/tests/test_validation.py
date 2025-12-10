@@ -19,7 +19,7 @@ def _make(cls: Type[TInput], **kwargs: Any) -> TInput:
     Constructs a Strawberry Input class with partial arguments.
     Missing arguments are left as UNSET.
     """
-    return cls(**kwargs)
+    return cls(**kwargs)  # type: ignore
 
 
 class HmisValidationTests(ParametrizedTestCase, SimpleTestCase):
