@@ -15,8 +15,10 @@ from . import models
 @strawberry_django.filter_type(models.Task, lookups=True)
 class TaskFilter:
     client_profile: Optional[ID]
+    hmis_client_profile: Optional[ID]
     created_by: Optional[ID]
     client_profiles = make_in_filter("client_profile", ID)
+    hmis_client_profiles = make_in_filter("hmis_client_profile", ID)
     authors = make_in_filter("created_by", ID)
     organizations = make_in_filter("organization", ID)
     status = make_in_filter("status", TaskStatusEnum)

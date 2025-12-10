@@ -1979,12 +1979,14 @@ type SwitchType {
 
 input TaskFilter {
   clientProfile: ID
+  hmisClientProfile: ID
   createdBy: ID
   AND: TaskFilter
   OR: TaskFilter
   NOT: TaskFilter
   DISTINCT: Boolean
   clientProfiles: [ID!]
+  hmisClientProfiles: [ID!]
   authors: [ID!]
   organizations: [ID!]
   status: [TaskStatusEnum!]
