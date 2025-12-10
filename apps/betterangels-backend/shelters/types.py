@@ -165,7 +165,7 @@ class ShelterPropertyInput:
     parking: Optional[List[ParkingChoices]] = None
 
 
-@strawberry_django.filters.filter(models.Shelter)
+@strawberry_django.filter(models.Shelter)
 class ShelterFilter:
     @strawberry_django.filter_field
     def properties(
@@ -216,7 +216,7 @@ class ShelterFilter:
         return queryset, Q()
 
 
-@strawberry_django.ordering.order_type(models.Shelter, one_of=False)
+@strawberry_django.order_type(models.Shelter, one_of=False)
 class ShelterOrder:
     name: auto
 

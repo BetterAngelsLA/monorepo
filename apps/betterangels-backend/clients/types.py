@@ -25,7 +25,7 @@ from django.db.models import Exists, Max, OuterRef, Q, QuerySet
 from django.utils import timezone
 from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
-from strawberry_django.filters import filter
+from strawberry_django import filter
 
 from .models import (
     ClientContact,
@@ -89,7 +89,7 @@ class CreateClientDocumentInput:
     namespace: ClientDocumentNamespaceEnum
 
 
-@strawberry_django.ordering.order_type(ClientProfile, one_of=False)
+@strawberry_django.order_type(ClientProfile, one_of=False)
 class ClientProfileOrder:
     first_name: auto
     last_name: auto
