@@ -303,7 +303,8 @@ class InteractionAuthorType:
     last_name: auto
     middle_name: auto
 
-    def get_queryset(self, info: Info) -> QuerySet[User]:
+    @classmethod
+    def get_queryset(cls, queryset: QuerySet[User], info: Info) -> QuerySet[User]:
         # TODO: Make unit test for this function
         authorized_permission_groups = [template.value for template in GroupTemplateNames]
 
@@ -314,7 +315,7 @@ class InteractionAuthorType:
         )
 
         # Use Exists to avoid duplicate users without `distinct()`
-        return User.objects.filter(Exists(permission_group_exists))
+        return queryset.filter(Exists(permission_group_exists))
 
 
 # Data Import

@@ -2041,7 +2041,7 @@ export type QueryShelterArgs = {
 
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
-  ordering?: Array<ShelterOrder>;
+  ordering?: InputMaybe<Array<ShelterOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

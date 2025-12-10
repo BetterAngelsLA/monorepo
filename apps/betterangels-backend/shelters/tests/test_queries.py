@@ -322,8 +322,8 @@ class ShelterQueryTestCase(GraphQLTestCaseMixin, ParametrizedTestCase, TestCase)
         interior_photo_1 = InteriorPhoto.objects.create(shelter=shelters[1], file=self.file)
 
         query = f"""
-            query ($offset: Int, $limit: Int, $ordering: ShelterOrder) {{
-                shelters(pagination: {{offset: $offset, limit: $limit}}, order: $ordering) {{
+            query ($offset: Int, $limit: Int, $ordering: [ShelterOrder!]! = []) {{
+                shelters(pagination: {{offset: $offset, limit: $limit}}, ordering: $ordering) {{
                     totalCount
                     pageInfo {{
                         limit
