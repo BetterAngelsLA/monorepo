@@ -14,7 +14,9 @@ export type INumericDatePickerProps = Omit<
   | 'outlineColor'
   | 'outlineStyle'
   | 'withDateFormatInLabel'
->;
+> & {
+  onDelete?: () => void;
+};
 
 export interface IWheelDatePickerProps extends TMarginProps {
   mode: 'date' | 'time';
@@ -30,7 +32,10 @@ export interface IWheelDatePickerProps extends TMarginProps {
   minDate?: Date;
   maxDate?: Date;
   value?: Date | null;
+  onDelete?: () => void;
 }
+
+// ... Rest of the file (WithRHF, etc)
 
 type OmittedRHFKeys = 'value' | 'onChange' | 'onBlur';
 

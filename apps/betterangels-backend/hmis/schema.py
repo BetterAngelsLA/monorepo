@@ -9,6 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db import transaction
 from hmis.models import HmisClientProfile, HmisNote
+from hmis.validation import validate_and_sanitize_hmis_profile
 from notes.enums import ServiceRequestStatusEnum, ServiceRequestTypeEnum
 from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
@@ -119,8 +120,8 @@ class Query:
 class Mutation:
     @strawberry_django.mutation(permission_classes=[IsAuthenticated])
     def create_hmis_client_profile(self, info: Info, data: CreateHmisClientProfileInput) -> HmisClientProfileType:
+        data = validate_and_sanitize_hmis_profile(data)
         hmis_api_bridge = HmisRestApiBridge(info=info)
-
         client_data = hmis_api_bridge.create_client(data)
         current_user = get_current_user(info)
 
@@ -139,6 +140,8 @@ class Mutation:
             hmis_client_profile = HmisClientProfile.objects.get(pk=data.id)
         except HmisClientProfile.DoesNotExist:
             raise ObjectDoesNotExist(f"Client Profile matching ID {id} could not be found.")
+
+        data = validate_and_sanitize_hmis_profile(data, instance=hmis_client_profile)
 
         hmis_api_bridge = HmisRestApiBridge(info=info)
 
