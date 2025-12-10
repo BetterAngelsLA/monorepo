@@ -347,10 +347,11 @@ export type ClientProfileImportRecordsBulkInput = {
   sourceIds: Array<Scalars['String']['input']>;
 };
 
-export type ClientProfileOrder =
-  { firstName: Ordering; id?: never; lastName?: never; }
-  |  { firstName?: never; id: Ordering; lastName?: never; }
-  |  { firstName?: never; id?: never; lastName: Ordering; };
+export type ClientProfileOrder = {
+  firstName?: InputMaybe<Ordering>;
+  id?: InputMaybe<Ordering>;
+  lastName?: InputMaybe<Ordering>;
+};
 
 export type ClientProfilePhotoInput = {
   clientProfile: Scalars['ID']['input'];

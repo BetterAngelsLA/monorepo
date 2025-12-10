@@ -89,7 +89,7 @@ class CreateClientDocumentInput:
     namespace: ClientDocumentNamespaceEnum
 
 
-@strawberry_django.ordering.order_type(ClientProfile)
+@strawberry_django.ordering.order_type(ClientProfile, one_of=False)
 class ClientProfileOrder:
     first_name: auto
     last_name: auto

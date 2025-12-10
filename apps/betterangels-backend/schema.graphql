@@ -348,7 +348,7 @@ input ClientProfileImportRecordsBulkInput {
   sourceIds: [String!]!
 }
 
-input ClientProfileOrder @oneOf {
+input ClientProfileOrder {
   firstName: Ordering
   lastName: Ordering
   id: Ordering
