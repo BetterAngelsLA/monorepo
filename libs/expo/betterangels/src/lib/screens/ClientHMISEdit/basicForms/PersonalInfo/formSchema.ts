@@ -55,18 +55,16 @@ export const PersonalInfoFormSchemaOut = PersonalInfoFormSchema.transform(
     veteran,
     ...rest
   }) => {
-    let formattedDate: string | null = null;
+    let formattedDate: string | undefined = undefined;
 
     if (birthDate instanceof Date && !Number.isNaN(birthDate.getTime())) {
       formattedDate = format(birthDate, 'yyyy-MM-dd');
     }
 
-    const finalDobQuality = formattedDate ? dobQuality : null;
-
     return {
       ...rest,
       birthDate: formattedDate,
-      dobQuality: finalDobQuality === '' ? null : finalDobQuality,
+      dobQuality: dobQuality === '' ? null : dobQuality,
       preferredLanguage: preferredLanguage === '' ? null : preferredLanguage,
       livingSituation: livingSituation === '' ? null : livingSituation,
       veteran: veteran === '' ? null : veteran,

@@ -1,6 +1,5 @@
 import { Colors, Radiuses } from '@monorepo/expo/shared/static';
 import { View } from 'react-native';
-import { TextInput } from 'react-native-paper';
 import { DatePickerInput } from 'react-native-paper-dates';
 import FormFieldLabel from '../FormFieldLabel';
 import { INumericDatePickerProps } from './types';
@@ -24,19 +23,6 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
             if (onDelete) onDelete();
           }
         }}
-        // Handle Clear Button
-        right={
-          !disabled && value ? (
-            <TextInput.Icon
-              icon="close"
-              onPress={() => {
-                if (onChange) onChange(undefined);
-                if (onDelete) onDelete();
-              }}
-              forceTextInputFocus={false}
-            />
-          ) : undefined
-        }
         iconColor={Colors.PRIMARY_EXTRA_DARK}
         textColor={disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
         outlineColor={Colors.NEUTRAL_LIGHT}
