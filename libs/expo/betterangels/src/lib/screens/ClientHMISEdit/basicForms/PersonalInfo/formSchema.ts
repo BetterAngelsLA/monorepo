@@ -21,17 +21,12 @@ export const personalInfoFormEmptyState: TPersonalInfoFormSchema = {
 
 export const PersonalInfoFormSchema = z.object({
   birthDate: z
-    .preprocess(
-      (arg) => {
-        if (arg === '' || arg === null) {
-          return undefined;
-        }
-        return arg;
-      },
-      z.coerce.date().refine((date) => !Number.isNaN(date.getTime()), {
-        message: 'Date is invalid.',
-      })
-    )
+    .union([
+      z.coerce
+        .date()
+        .refine((val) => !Number.isNaN(val.getTime()), 'Date is invalid.'),
+      z.literal(''),
+    ])
     .optional(),
 
   dobQuality: z.enum(HmisDobQualityEnum).or(z.literal('')),
@@ -55,16 +50,18 @@ export const PersonalInfoFormSchemaOut = PersonalInfoFormSchema.transform(
     veteran,
     ...rest
   }) => {
-    let formattedDate: string | undefined = undefined;
+    let formattedDate: string | null = null;
 
     if (birthDate instanceof Date && !Number.isNaN(birthDate.getTime())) {
       formattedDate = format(birthDate, 'yyyy-MM-dd');
     }
 
+    const finalDobQuality = formattedDate ? dobQuality : null;
+
     return {
       ...rest,
       birthDate: formattedDate,
-      dobQuality: dobQuality === '' ? null : dobQuality,
+      dobQuality: finalDobQuality === '' ? null : finalDobQuality,
       preferredLanguage: preferredLanguage === '' ? null : preferredLanguage,
       livingSituation: livingSituation === '' ? null : livingSituation,
       veteran: veteran === '' ? null : veteran,
