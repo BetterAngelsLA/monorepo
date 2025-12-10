@@ -5,6 +5,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import { HmisNoteType } from '../../apollo';
 import ProgramNoteCardClient from './ProgramNoteCardClient';
 import ProgramNoteCardHeader from './ProgramNoteCardHeader';
+import ProgramNoteCardServices from './ProgramNoteCardServices';
 
 interface INoteCardProps {
   hmisNote: HmisNoteType;
@@ -36,6 +37,10 @@ export default function ProgramNoteCard(props: INoteCardProps) {
       {!!hmisNote.title && <ProgramNoteCardHeader purpose={hmisNote.title} />}
       {variant === 'interactions' && (
         <ProgramNoteCardClient clientProfile={hmisNote.hmisClientProfile} />
+      )}
+      {(!!hmisNote.providedServices?.length ||
+        !!hmisNote.requestedServices?.length) && (
+        <ProgramNoteCardServices note={hmisNote} />
       )}
       {hmisNote.date && (
         <TextRegular size="sm">{format(date, 'MM/dd/yyyy')}</TextRegular>

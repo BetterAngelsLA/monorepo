@@ -29,6 +29,7 @@ from .types import (
     HmisNoteType,
     HmisProgramType,
     ProgramEnrollmentType,
+    RemoveHmisNoteServiceRequestInput,
     UpdateHmisClientProfileInput,
     UpdateHmisNoteInput,
     UpdateHmisNoteLocationInput,
@@ -303,3 +304,19 @@ class Mutation:
                 raise NotImplementedError
 
             return cast(ServiceRequestType, service_request)
+
+    @strawberry_django.mutation(permission_classes=[IsAuthenticated])
+    def remove_hmis_note_service_request(self, info: Info, data: RemoveHmisNoteServiceRequestInput) -> HmisNoteType:
+        with transaction.atomic():
+            hmis_note = HmisNote.objects.get(pk=data.hmis_note_id)
+
+            service_request = ServiceRequest.objects.get(id=data.service_request_id)
+
+            if data.service_request_type == ServiceRequestTypeEnum.REQUESTED:
+                hmis_note.requested_services.remove(service_request)
+            elif data.service_request_type == ServiceRequestTypeEnum.PROVIDED:
+                hmis_note.provided_services.remove(service_request)
+            else:
+                raise NotImplementedError
+
+            return cast(HmisNoteType, hmis_note)

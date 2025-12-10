@@ -50,7 +50,7 @@ export default function RequestedProvidedServices(
                 variant={
                   type === ServiceRequestTypeEnum.Provided
                     ? 'success'
-                    : 'primary'
+                    : 'warning'
                 }
                 key={index}
                 label={item.service?.label || ''}

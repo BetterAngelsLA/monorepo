@@ -253,6 +253,13 @@ class CreateHmisNoteServiceRequestInput:
     service_request_type: ServiceRequestTypeEnum
 
 
+@strawberry.input
+class RemoveHmisNoteServiceRequestInput:
+    service_request_id: ID
+    hmis_note_id: ID
+    service_request_type: ServiceRequestTypeEnum
+
+
 @strawberry_django.input(HmisNote)
 class CreateHmisNoteInput:
     hmis_client_profile_id: str
