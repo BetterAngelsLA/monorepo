@@ -12,7 +12,7 @@ export const emptyState: TFormSchema = {
 };
 
 export const FormSchema = z.object({
-  id: z.string(),
+  id: z.string().optional(),
   summary: z.string().min(1, 'Title is required.'),
   team: z.enum(SelahTeamEnum).or(z.literal('')),
   description: z.string(),

@@ -18,6 +18,7 @@ import NoteTasksModal from './NoteTaskModal';
 
 // Define the Form Data Interface Locally if not exported elsewhere
 export interface TaskFormData {
+  id?: string;
   summary: string;
   description?: string;
   status?: TaskStatusEnum;
@@ -113,12 +114,14 @@ export default function NoteTasks(props: INoteTasksProps) {
           },
         });
       } else {
+        delete data.id;
         await createTask({
           variables: {
             data: {
               ...data,
               status: cleanStatus,
-              clientProfile: clientProfileId || hmisClientProfileId,
+              clientProfile: clientProfileId,
+              hmisClientProfile: hmisClientProfileId,
               team: cleanTeam || team || null,
               // Handle linking to either Note type
               note: noteId || null,
