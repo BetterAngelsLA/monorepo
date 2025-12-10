@@ -4,7 +4,7 @@ import pghistory
 import strawberry
 import strawberry_django
 from accounts.models import User
-from accounts.utils import get_outreach_authorized_users, get_user_permission_group
+from accounts.utils import get_user_permission_group
 from clients.models import ClientProfileImportRecord
 from common.graphql.extensions import PermissionedQuerySet
 from common.graphql.types import DeleteDjangoObjectInput, DeletedObjectType
@@ -85,13 +85,10 @@ class Query:
         extensions=[HasPerm(NotePermissions.ADD)],
     )
 
-    @strawberry_django.offset_paginated(
-        OffsetPaginated[InteractionAuthorType],
+    interaction_authors: OffsetPaginated[InteractionAuthorType] = strawberry_django.offset_paginated(
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
-    def interaction_authors(self) -> QuerySet[User]:
-        return get_outreach_authorized_users()
 
 
 @strawberry.type
