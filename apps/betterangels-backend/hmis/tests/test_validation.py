@@ -1,7 +1,6 @@
 import datetime
 from typing import Any, Dict, Optional, Type, TypeVar
 
-from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase
 from hmis.enums import HmisDobQualityEnum
 from hmis.models import HmisClientProfile
@@ -20,7 +19,7 @@ def _make(cls: Type[TInput], **kwargs: Any) -> TInput:
     Constructs a Strawberry Input class with partial arguments.
     Missing arguments are left as UNSET.
     """
-    return cls(**kwargs)  # type: ignore
+    return cls(**kwargs)
 
 
 class HmisValidationTests(ParametrizedTestCase, SimpleTestCase):
@@ -35,7 +34,7 @@ class HmisValidationTests(ParametrizedTestCase, SimpleTestCase):
                 None,
                 {"email": "test@example.com", "california_id": "CA123"},
             ),
-            # --- DOB SANITIZATION (Valid Date Cases) ---
+            # --- DOB: DEFAULTING LOGIC ---
             (
                 "Create: Date provided, Quality UNSET -> Default to FULL",
                 _make(CreateHmisClientProfileInput, birth_date=DATE_1990, dob_quality=UNSET),
@@ -43,7 +42,8 @@ class HmisValidationTests(ParametrizedTestCase, SimpleTestCase):
                 {"dob_quality": HmisDobQualityEnum.FULL},
             ),
             (
-                "Update: Date provided, Quality explicitly NOT_COLLECTED -> Upgrade to FULL",
+                "Update: Date provided, Quality explicitly NOT_COLLECTED (Conflict) -> Force Clear Date",
+                # Rule change: If you say "Not Collected", we nuke the date.
                 _make(
                     UpdateHmisClientProfileInput,
                     id=ID("1"),
@@ -51,9 +51,9 @@ class HmisValidationTests(ParametrizedTestCase, SimpleTestCase):
                     dob_quality=HmisDobQualityEnum.NOT_COLLECTED,
                 ),
                 None,
-                {"dob_quality": HmisDobQualityEnum.FULL},
+                {"birth_date": None},  # Date gets cleared
             ),
-            # --- NEW: DOB CLEARING LOGIC (The Fix) ---
+            # --- DOB: CLEARING LOGIC (Explicit Nulls) ---
             (
                 "Update: Clear Date + Quality UNSET -> Reset Quality to NOT_COLLECTED",
                 _make(UpdateHmisClientProfileInput, id=ID("1"), birth_date=None, dob_quality=UNSET),
@@ -62,32 +62,61 @@ class HmisValidationTests(ParametrizedTestCase, SimpleTestCase):
             ),
             (
                 "Update: Clear Date + Quality Invalid (FULL) -> Reset Quality to NOT_COLLECTED",
-                # This simulates the frontend bug: sending birthDate: null but keeping dobQuality: FULL
                 _make(UpdateHmisClientProfileInput, id=ID("1"), birth_date=None, dob_quality=HmisDobQualityEnum.FULL),
                 None,
                 {"dob_quality": HmisDobQualityEnum.NOT_COLLECTED},
             ),
             (
                 "Update: Clear Date + Quality Valid (REFUSED) -> Keep REFUSED",
-                # If user clears date but explicitly sets Refused, we should respect that.
                 _make(
                     UpdateHmisClientProfileInput, id=ID("1"), birth_date=None, dob_quality=HmisDobQualityEnum.NO_ANSWER
                 ),
                 None,
                 {"dob_quality": HmisDobQualityEnum.NO_ANSWER},
             ),
+            # --- DOB: CONFLICT RESOLUTION (The new "Destructive" rules) ---
+            (
+                "Conflict: Input Date + Quality Refused -> Force Clear Date",
+                _make(
+                    UpdateHmisClientProfileInput,
+                    id=ID("1"),
+                    birth_date=DATE_1990,
+                    dob_quality=HmisDobQualityEnum.NO_ANSWER,
+                ),
+                None,
+                {"birth_date": None},  # Data is destroyed to resolve conflict
+            ),
+            (
+                "Conflict: Input Date + Quality Dont Know -> Force Clear Date",
+                _make(
+                    UpdateHmisClientProfileInput,
+                    id=ID("1"),
+                    birth_date=DATE_1990,
+                    dob_quality=HmisDobQualityEnum.DONT_KNOW,
+                ),
+                None,
+                {"birth_date": None},
+            ),
             # --- MERGE LOGIC (INSTANCE + INPUT) ---
             (
-                "Merge: Input has Date, Instance has Bad Quality -> Fix Input",
+                "Merge: Input has Date, Instance has Bad Quality -> Fix Input to FULL",
+                # Date is present (input), Quality is missing (input) but Bad in DB.
+                # Since we have a date, we default quality to FULL.
                 _make(UpdateHmisClientProfileInput, id=ID("1"), birth_date=DATE_1990, dob_quality=UNSET),
                 HmisClientProfile(dob_quality=HmisDobQualityEnum.NOT_COLLECTED),
                 {"dob_quality": HmisDobQualityEnum.FULL},
             ),
             (
-                "Merge: Input has Date, Instance has Good Quality -> Keep UNSET (Don't touch)",
-                _make(UpdateHmisClientProfileInput, id=ID("1"), birth_date=DATE_1990, dob_quality=UNSET),
-                HmisClientProfile(dob_quality=HmisDobQualityEnum.FULL),
-                {"dob_quality": UNSET},
+                "Merge Conflict: Instance has Date + Input sets Refused -> Force Clear Date",
+                # User is updating ONLY the quality to "Refused", implying the date should be removed.
+                _make(
+                    UpdateHmisClientProfileInput,
+                    id=ID("1"),
+                    birth_date=UNSET,
+                    dob_quality=HmisDobQualityEnum.NO_ANSWER,
+                ),
+                HmisClientProfile(birth_date=DATE_1990),
+                {"birth_date": None},
             ),
         ],
     )
@@ -110,50 +139,3 @@ class HmisValidationTests(ParametrizedTestCase, SimpleTestCase):
                 expected_value,
                 f"Failed: {test_id} - Field '{field}' expected {expected_value}, got {actual_value}",
             )
-
-    @parametrize(
-        "test_id, input_data, instance_data",
-        [
-            (
-                "Conflict: Date + Refused",
-                _make(
-                    UpdateHmisClientProfileInput,
-                    id=ID("1"),
-                    birth_date=DATE_1990,
-                    dob_quality=HmisDobQualityEnum.NO_ANSWER,
-                ),
-                None,
-            ),
-            (
-                "Conflict: Date + Don't Know",
-                _make(
-                    UpdateHmisClientProfileInput,
-                    id=ID("1"),
-                    birth_date=DATE_1990,
-                    dob_quality=HmisDobQualityEnum.DONT_KNOW,
-                ),
-                None,
-            ),
-            (
-                "Merge Conflict: Instance has Date + Input sets Refused (without clearing date)",
-                _make(
-                    UpdateHmisClientProfileInput,
-                    id=ID("1"),
-                    birth_date=UNSET,
-                    dob_quality=HmisDobQualityEnum.NO_ANSWER,
-                ),
-                HmisClientProfile(birth_date=DATE_1990),
-            ),
-        ],
-    )
-    def test_validation_raises_error(
-        self,
-        test_id: str,
-        input_data: Any,
-        instance_data: Optional[HmisClientProfile],
-    ) -> None:
-        """
-        Tests that invalid combinations raise a ValidationError.
-        """
-        with self.assertRaisesMessage(ValidationError, "Data Conflict"):
-            validate_and_sanitize_hmis_profile(input_data, instance=instance_data)

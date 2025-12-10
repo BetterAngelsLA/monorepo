@@ -1,6 +1,5 @@
 from typing import Any, Optional, TypeVar, Union
 
-from django.core.exceptions import ValidationError
 from hmis.enums import HmisDobQualityEnum
 from hmis.models import HmisClientProfile
 from hmis.types import CreateHmisClientProfileInput, UpdateHmisClientProfileInput
@@ -41,39 +40,43 @@ def _sanitize_strings(data: T) -> None:
 
 def _validate_dob(data: T, instance: Optional[HmisClientProfile]) -> None:
     """
-    Mutates data to enforce DOB Quality rules.
+    Mutates data to enforce DOB rules.
+    Rule: If the Quality indicates the date is unknown/refused/not collected,
+    we MUST clear the birth_date.
     """
-    final_dob = _get_effective_value(data, instance, "birth_date")
+    # 1. Determine the effective quality (Input > DB > None)
     final_quality = _get_effective_value(data, instance, "dob_quality")
 
-    # CASE A: Date Exists
+    # 2. Define the states that mandate a cleared date
+    clear_date_reasons = [
+        HmisDobQualityEnum.NOT_COLLECTED,
+        HmisDobQualityEnum.NO_ANSWER,
+        HmisDobQualityEnum.DONT_KNOW,
+    ]
+
+    # 3. CRITICAL RULE: If quality is one of the "Missing" types, force clear the date.
+    if final_quality in clear_date_reasons:
+        # We explicitly overwrite any input or existing date with None
+        data.birth_date = None
+        return
+
+    # 4. If we are here, the Quality allows for a date. Let's check the date.
+    final_dob = _get_effective_value(data, instance, "birth_date")
+
     if final_dob:
-        if not final_quality or final_quality == HmisDobQualityEnum.NOT_COLLECTED:
+        # If we have a date, but quality is missing (None), default it to FULL.
+        # (Note: We don't need to check for NOT_COLLECTED here because Step 3 handled it)
+        if not final_quality:
             data.dob_quality = HmisDobQualityEnum.FULL
-            final_quality = HmisDobQualityEnum.FULL  # Update local for next check
 
-        invalid_qualities = [HmisDobQualityEnum.NO_ANSWER, HmisDobQualityEnum.DONT_KNOW]
-        if final_quality in invalid_qualities:
-            raise ValidationError(
-                "Data Conflict: You cannot provide a specific Birth Date "
-                "if the Data Quality is set to 'Refused' or 'Client Doesn't Know'. "
-                "Please update the Quality field."
-            )
-
-    # CASE B: Date is being Cleared (None)
+    # 5. Handle case where Date is manually cleared (set to None)
+    #    but Quality wasn't updated.
     elif getattr(data, "birth_date", UNSET) is None:
-        input_quality = getattr(data, "dob_quality", UNSET)
+        # If the user explicitly cleared the date, ensure we have a valid "No Date" reason.
+        # If the current quality is FULL or APPROXIMATE (or missing), revert to NOT_COLLECTED.
+        valid_no_date_reasons = clear_date_reasons
 
-        # These are the ONLY valid qualities when you have no birth date
-        valid_no_date_reasons = [
-            HmisDobQualityEnum.NO_ANSWER,
-            HmisDobQualityEnum.DONT_KNOW,
-            HmisDobQualityEnum.NOT_COLLECTED,
-        ]
-
-        # If the provided quality is NOT one of the valid reasons (or is missing/null),
-        # default it to "Not Collected".
-        if input_quality not in valid_no_date_reasons:
+        if final_quality not in valid_no_date_reasons:
             data.dob_quality = HmisDobQualityEnum.NOT_COLLECTED
 
 
