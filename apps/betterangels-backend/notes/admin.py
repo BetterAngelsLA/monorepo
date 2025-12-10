@@ -168,6 +168,7 @@ class NoteAdmin(AttachmentAdminMixin, ExportActionMixin, admin.ModelAdmin):
         MoodInline,
     ]
     readonly_fields = (
+        "created_by",
         "interacted_at",
         "updated_at",
     )

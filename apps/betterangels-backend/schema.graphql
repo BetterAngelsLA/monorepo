@@ -1295,7 +1295,7 @@ type NoteType {
   id: ID!
   clientProfile: ClientProfileType
   createdAt: DateTime!
-  createdBy: UserType!
+  createdBy: UserType
   interactedAt: DateTime!
   isSubmitted: Boolean!
   location: LocationType
