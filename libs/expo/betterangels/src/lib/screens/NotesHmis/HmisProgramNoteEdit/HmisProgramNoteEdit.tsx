@@ -112,7 +112,6 @@ export function HmisProgramNoteEdit(props: TProps) {
     defaultValues: hmisProgramNoteFormEmptyState,
   });
 
-  // Fetch the Note (ensure your .graphql file requests the 'tasks' field!)
   const {
     data: noteData,
     loading: noteDataLoading,

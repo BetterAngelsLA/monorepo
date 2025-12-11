@@ -47,7 +47,7 @@ export default function TaskHeader(props: TTaskHeaderProps) {
       closeModalScreen();
     } catch (e) {
       showSnackbar({
-        message: 'Error uploading profile photo.',
+        message: 'Error updating the task.',
         type: 'error',
       });
       console.error(e);

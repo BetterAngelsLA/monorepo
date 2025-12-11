@@ -52,7 +52,7 @@ export function TasksTab(props: TProps) {
       closeModalScreen();
     } catch (e) {
       showSnackbar({
-        message: 'Error uploading profile photo.',
+        message: 'Error creating a task.',
         type: 'error',
       });
       console.error(e);

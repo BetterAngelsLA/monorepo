@@ -16,6 +16,7 @@ import { pagePaddingHorizontal } from '../../../../static';
 import { TaskCard, TaskForm, TaskList } from '../../../../ui-components';
 import { TaskFormData } from '../../../../ui-components/NoteTasks';
 import { CreateTaskDocument } from '../../../../ui-components/TaskForm/__generated__/createTask.generated';
+import { TasksDocument } from '../../../../ui-components/TaskList/__generated__/Tasks.generated';
 
 type TProps = {
   client: HmisClientProfileType | undefined;
@@ -41,6 +42,8 @@ export function ClientTasksHMISView(props: TProps) {
             hmisClientProfile: client.id,
           },
         },
+        refetchQueries: [TasksDocument],
+        awaitRefetchQueries: true,
       });
 
       if (result.data?.createTask.__typename === 'OperationInfo') {
@@ -50,7 +53,7 @@ export function ClientTasksHMISView(props: TProps) {
       closeModalScreen();
     } catch (e) {
       showSnackbar({
-        message: 'Error uploading profile photo.',
+        message: 'Error creating a task.',
         type: 'error',
       });
       console.error(e);
