@@ -50,7 +50,7 @@ export function HmisProgramNoteEdit(props: TProps) {
   const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
 
   async function applyBucket(
-    noteId: string,
+    id: string,
     type: ServiceRequestTypeEnum,
     bucket: any
   ) {
@@ -61,7 +61,7 @@ export function HmisProgramNoteEdit(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
             serviceId: s.serviceId!,
           },
@@ -75,7 +75,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         variables: {
           data: {
             serviceRequestId: s.serviceRequestId!,
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
           },
         },
@@ -87,7 +87,7 @@ export function HmisProgramNoteEdit(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
             serviceOther: o.serviceOther!.trim(),
           },
@@ -101,7 +101,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         variables: {
           data: {
             serviceRequestId: o.serviceRequestId!,
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
           },
         },

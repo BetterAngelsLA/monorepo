@@ -46,7 +46,7 @@ export function HmisProgramNoteCreate(props: TProps) {
   const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
 
   async function applyBucket(
-    noteId: string,
+    id: string,
     type: ServiceRequestTypeEnum,
     bucket: any
   ) {
@@ -58,7 +58,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
             serviceId: s.serviceId!,
           },
@@ -72,7 +72,7 @@ export function HmisProgramNoteCreate(props: TProps) {
         variables: {
           data: {
             serviceRequestId: s.serviceRequestId!,
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
           },
         },
@@ -84,7 +84,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
             serviceOther: o.serviceOther!.trim(),
           },
@@ -98,7 +98,7 @@ export function HmisProgramNoteCreate(props: TProps) {
         variables: {
           data: {
             serviceRequestId: o.serviceRequestId!,
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
           },
         },
@@ -157,13 +157,13 @@ export function HmisProgramNoteCreate(props: TProps) {
         throw new Error('typename is not HmisNoteType');
       }
 
-      const noteId = result.id;
+      const hmisNoteId = result.id;
 
       if (location) {
         await updateHmisNoteLocation({
           variables: {
             data: {
-              id: noteId,
+              id: hmisNoteId,
               location: {
                 point: [location.longitude, location.latitude],
                 address: location.formattedAddress
@@ -181,13 +181,13 @@ export function HmisProgramNoteCreate(props: TProps) {
       const draftServices = services ?? {};
 
       await applyBucket(
-        noteId,
+        hmisNoteId,
         ServiceRequestTypeEnum.Provided,
         draftServices[ServiceRequestTypeEnum.Provided]
       );
 
       await applyBucket(
-        noteId,
+        hmisNoteId,
         ServiceRequestTypeEnum.Requested,
         draftServices[ServiceRequestTypeEnum.Requested]
       );
