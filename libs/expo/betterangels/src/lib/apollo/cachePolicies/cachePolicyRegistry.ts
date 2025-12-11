@@ -35,12 +35,12 @@ const policyFactoryList = [
   >({
     key: 'clientProfiles',
     entityTypename: 'ClientProfileType',
-    cacheKeyVariables: ['filters', 'order'] as const,
+    cacheKeyVariables: ['filters', 'ordering'] as const,
   }),
   getQueryPolicyFactory<FilterUsersQuery, FilterUsersQueryVariables>({
     key: 'interactionAuthors',
     entityTypename: 'InteractionAuthorType',
-    cacheKeyVariables: ['filters', 'order'] as const,
+    cacheKeyVariables: ['filters', 'ordering'] as const,
   }),
   getQueryPolicyFactory<
     FilterOrganizationsQuery,
@@ -48,7 +48,7 @@ const policyFactoryList = [
   >({
     key: 'caseworkerOrganizations',
     entityTypename: 'OrganizationType',
-    cacheKeyVariables: ['filters', 'order'] as const,
+    cacheKeyVariables: ['filters', 'ordering'] as const,
   }),
   getQueryPolicyFactory<TasksQuery, TasksQueryVariables>({
     key: 'tasks',

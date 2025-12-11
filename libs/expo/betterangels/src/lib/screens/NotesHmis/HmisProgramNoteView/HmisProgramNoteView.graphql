@@ -1,4 +1,4 @@
-query HmisNoteWithTasks($id: ID!) {
+query ViewHmisNote($id: ID!) {
   hmisNote(id: $id) {
     ... on HmisNoteType {
       id
@@ -33,6 +33,22 @@ query HmisNoteWithTasks($id: ID!) {
         description
         status
         team
+      }
+      providedServices {
+        id
+        service {
+          id
+          label
+        }
+        serviceOther
+      }
+      requestedServices {
+        id
+        service {
+          id
+          label
+        }
+        serviceOther
       }
     }
   }

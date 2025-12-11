@@ -11,8 +11,9 @@ import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { MainScrollContainer, NoteTasks } from '../../../ui-components';
+import { ViewHmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
+import HmisProgramNoteServices from './HmisProgramNoteServices';
 import HmisProgramNoteTitle from './HmisProgramNoteTitle';
-import { HmisNoteWithTasksDocument } from './__generated__/HmisProgramNoteView.generated';
 
 type TProps = {
   id: string;
@@ -23,14 +24,11 @@ export function HmisProgramNoteView(props: TProps) {
   const { id, clientId } = props;
   const scrollRef = useRef<ScrollView>(null);
 
-  const { data, error, loading, refetch } = useQuery(
-    HmisNoteWithTasksDocument,
-    {
-      variables: { id },
-      fetchPolicy: 'cache-and-network',
-      nextFetchPolicy: 'cache-first',
-    }
-  );
+  const { data, error, loading, refetch } = useQuery(ViewHmisNoteDocument, {
+    variables: { id },
+    fetchPolicy: 'cache-and-network',
+    nextFetchPolicy: 'cache-first',
+  });
   const hmisNote = data?.hmisNote;
   const navigation = useNavigation();
   const router = useRouter();
@@ -66,7 +64,14 @@ export function HmisProgramNoteView(props: TProps) {
     return null;
   }
 
-  const { note, hmisClientProfile, clientProgram, tasks } = hmisNote;
+  const {
+    note,
+    hmisClientProfile,
+    clientProgram,
+    providedServices,
+    requestedServices,
+    tasks,
+  } = hmisNote;
   const { firstName, lastName } = hmisClientProfile || {};
   const { program } = clientProgram || {};
   const programName = program?.name;
@@ -85,6 +90,11 @@ export function HmisProgramNoteView(props: TProps) {
             <TextBold mb="xs">Program</TextBold>
             <TextRegular>{programName}</TextRegular>
           </View>
+        )}
+
+        {((providedServices && providedServices?.length > 0) ||
+          (requestedServices && requestedServices.length > 0)) && (
+          <HmisProgramNoteServices note={hmisNote} />
         )}
 
         {!!sanitizedNote.length && (

@@ -34,6 +34,22 @@ query HmisNote($id: ID!) {
         status
         team
       }
+      providedServices {
+        id
+        service {
+          id
+          label
+        }
+        serviceOther
+      }
+      requestedServices {
+        id
+        service {
+          id
+          label
+        }
+        serviceOther
+      }
     }
   }
 }

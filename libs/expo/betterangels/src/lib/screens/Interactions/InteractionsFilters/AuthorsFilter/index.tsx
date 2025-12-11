@@ -44,7 +44,7 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
   const { data, loading, error } = useQuery(InteractionAuthorsDocument, {
     variables: {
       filters: { search: filterSearch },
-      order: {
+      ordering: {
         firstName: Ordering.AscNullsFirst,
         lastName: Ordering.AscNullsFirst,
         id: Ordering.Desc,

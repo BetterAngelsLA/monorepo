@@ -16,6 +16,21 @@ export type LocalDraftTask = {
 // ----------------------------------------------------------------------
 // 2. Validation Schema
 // ----------------------------------------------------------------------
+import { ServiceRequestTypeEnum } from '../../../apollo';
+
+export type ServicesDraft = Partial<
+  Record<
+    ServiceRequestTypeEnum,
+    {
+      serviceRequests: {
+        id: string;
+        service?: { id: string; label: string } | null;
+        markedForDeletion?: boolean;
+        serviceOther?: string | null;
+      }[];
+    }
+  >
+>;
 
 export const HmisProgramNoteFormSchema = z.object({
   title: z.string().min(1, 'Purpose is required.'),
@@ -33,6 +48,7 @@ export const HmisProgramNoteFormSchema = z.object({
   // preventing the "undefined is not assignable to LocalDraftTask[]" error.
   // We handle the default value via the 'getHmisProgramNoteFormEmptyState' function.
   draftTasks: z.array(z.custom<LocalDraftTask>()),
+  services: z.custom<ServicesDraft>().optional(),
 });
 
 // ----------------------------------------------------------------------
@@ -76,6 +92,7 @@ export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormInputs = {
   refClientProgram: '',
   note: '',
   draftTasks: [],
+  services: {},
 };
 
 export const getHmisProgramNoteFormEmptyState =
