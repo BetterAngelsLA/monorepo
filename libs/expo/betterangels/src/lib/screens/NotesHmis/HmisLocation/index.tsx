@@ -19,6 +19,7 @@ type SectionKey =
   | 'date'
   | 'refClientProgram'
   | 'note'
+  | 'services'
   | null;
 
 const INITIAL_LOCATION = {
@@ -133,7 +134,7 @@ export default function HmisLocationComponent(props: ILocationProps) {
           longitude,
           latitude,
           formattedAddress,
-          components: JSON.stringify(components),
+          components,
         });
       } catch (err) {
         console.error('Error auto-setting initial location', err);

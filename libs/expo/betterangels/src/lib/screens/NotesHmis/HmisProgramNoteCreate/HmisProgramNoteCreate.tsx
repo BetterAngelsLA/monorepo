@@ -157,19 +157,19 @@ export function HmisProgramNoteCreate(props: TProps) {
         throw new Error('typename is not HmisNoteType');
       }
 
-      const hmisNoteId = result.id;
+      const noteId = result.id;
 
       if (location) {
         await updateHmisNoteLocation({
           variables: {
             data: {
-              id: hmisNoteId,
+              id: noteId,
               location: {
                 point: [location.longitude, location.latitude],
                 address: location.formattedAddress
                   ? {
                       formattedAddress: location.formattedAddress,
-                      addressComponents: location.components,
+                      addressComponents: JSON.stringify(location.components),
                     }
                   : null,
               },
@@ -177,7 +177,6 @@ export function HmisProgramNoteCreate(props: TProps) {
           },
         });
       }
-      const noteId = result.id;
 
       const draftServices = services ?? {};
 
