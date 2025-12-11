@@ -65,8 +65,8 @@ export default function Selected(props: ISelectedProps) {
     setValue('location', {
       longitude: currentLocation?.longitude,
       latitude: currentLocation?.latitude,
-      address: address?.full,
-      components: JSON.stringify(address?.addressComponents),
+      formattedAddress: address?.full,
+      components: address?.addressComponents,
     });
   }
 

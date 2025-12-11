@@ -164,6 +164,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       const hmisNoteId = newNote.id;
 
       if (location) {
+
         await updateHmisNoteLocation({
           variables: {
             data: {
