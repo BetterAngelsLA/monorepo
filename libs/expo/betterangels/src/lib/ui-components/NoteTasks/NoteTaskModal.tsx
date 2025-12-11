@@ -51,7 +51,7 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
     update(cache, { data }) {
       if (data?.deleteTask?.__typename !== 'DeletedObjectType') {
         console.error(
-          `[DeleteTask] failed to delete Task id [${id}]. __typename DeletedObjectType missing from response.`
+          `[DeleteTask] failed to delete Task  __typename DeletedObjectType missing from response.`
         );
 
         return;
