@@ -25,17 +25,16 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
             borderWidth: 1,
             borderColor: Colors.NEUTRAL_LIGHT,
           }}
-          // Use empty string to hide icon when value exists (workaround for library limitation)
-          calendarIcon={value ? '' : undefined}
           withDateFormatInLabel={false}
           style={{
             width: '100%',
             height: 56,
           }}
           disabled={disabled}
+          {...rest}
           value={value}
           onChange={onChange}
-          {...rest}
+          calendarIcon={value ? '' : undefined}
         />
 
         {value && onChange && !disabled && (
