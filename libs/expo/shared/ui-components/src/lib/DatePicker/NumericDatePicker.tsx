@@ -1,63 +1,36 @@
 import { Colors, Radiuses } from '@monorepo/expo/shared/static';
 import { View } from 'react-native';
-import { HelperText } from 'react-native-paper'; // Import HelperText
 import { DatePickerInput } from 'react-native-paper-dates';
 import FormFieldLabel from '../FormFieldLabel';
 import { INumericDatePickerProps } from './types';
 
-// Add helperText and errorMessage to your interface if not already there
-interface ExtendedProps extends INumericDatePickerProps {
-  helperText?: string;
-  errorMessage?: string;
-}
-
-export function NumericDatePicker(props: ExtendedProps) {
-  const {
-    label,
-    disabled,
-    value,
-    onChange,
-    errorMessage,
-    helperText,
-    ...rest
-  } = props;
-
-  const hasError = !!errorMessage;
+export function NumericDatePicker(props: INumericDatePickerProps) {
+  const { label, disabled, ...rest } = props;
 
   return (
     <View>
       {typeof label === 'string' && <FormFieldLabel label={label} />}
-
       <DatePickerInput
         locale="en"
         inputMode="start"
         mode="outlined"
-        value={value}
-        onChange={onChange}
         disabled={disabled}
-        hasError={hasError}
-        iconColor={Colors.PRIMARY_EXTRA_DARK}
-        textColor={disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
-        outlineColor={hasError ? Colors.ERROR : Colors.NEUTRAL_LIGHT}
-        activeOutlineColor={hasError ? Colors.ERROR : Colors.PRIMARY}
+        iconColor={disabled ? Colors.NEUTRAL : Colors.PRIMARY_EXTRA_DARK}
+        textColor={disabled ? Colors.NEUTRAL : Colors.PRIMARY_EXTRA_DARK}
+        outlineColor={Colors.NEUTRAL_LIGHT}
         outlineStyle={{
           borderRadius: Radiuses.xs,
           borderWidth: 1,
-          borderColor: hasError ? Colors.ERROR : Colors.NEUTRAL_LIGHT,
+          borderColor: Colors.NEUTRAL_LIGHT,
         }}
         withDateFormatInLabel={false}
         style={{
           width: '100%',
           height: 56,
-          backgroundColor: disabled ? '#f0f0f0' : 'white',
+          backgroundColor: disabled ? Colors.NEUTRAL_EXTRA_LIGHT : Colors.WHITE,
         }}
         {...rest}
       />
-      {(hasError || helperText) && (
-        <HelperText type={hasError ? 'error' : 'info'} visible={true}>
-          {errorMessage || helperText}
-        </HelperText>
-      )}
     </View>
   );
 }
