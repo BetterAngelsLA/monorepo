@@ -47,7 +47,28 @@ export default function NoteTasksModal(props: INoteTasksModalProps) {
 
   const [createTask] = useMutation(CreateTaskDocument);
   const [updateTask] = useMutation(UpdateTaskDocument);
-  const [deleteTask] = useMutation(DeleteTaskDocument);
+  const [deleteTask] = useMutation(DeleteTaskDocument, {
+    update(cache, { data }) {
+      if (data?.deleteTask?.__typename !== 'DeletedObjectType') {
+        console.error(
+          `[DeleteTask] failed to delete Task id [${id}]. __typename DeletedObjectType missing from response.`
+        );
+
+        return;
+      }
+
+      // Cache store ID is a string, so must convert
+      const deletedId = String(data.deleteTask.id);
+
+      cache.evict({
+        // Note `__typename: 'TaskType'` is not in the response payload. It uses a generic `DeletedObjectType`.
+        id: cache.identify({ __typename: 'TaskType', id: deletedId }),
+      });
+
+      // clean up
+      cache.gc();
+    },
+  });
 
   const closeModal = () => {
     closeModalScreen();
