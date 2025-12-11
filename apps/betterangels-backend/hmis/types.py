@@ -35,6 +35,7 @@ from notes.enums import ServiceRequestTypeEnum
 from notes.models import ServiceRequest
 from notes.types import ServiceRequestType
 from strawberry import ID, Info, auto
+from tasks.types import TaskType
 
 
 @strawberry.type
@@ -235,6 +236,8 @@ class HmisNoteType:
     date: Optional[datetime.date]
     client_program: Optional[HmisClientProgramType]
     ref_client_program: Optional[str]
+
+    tasks: Optional[list[TaskType]]
     created_by: Optional[UserType]
     location: Optional[LocationType]
 
@@ -247,6 +250,13 @@ class CreateHmisNoteServiceRequestInput:
     hmis_note_id: ID
     service_id: Optional[ID]
     service_other: Optional[str]
+    service_request_type: ServiceRequestTypeEnum
+
+
+@strawberry.input
+class RemoveHmisNoteServiceRequestInput:
+    service_request_id: ID
+    hmis_note_id: ID
     service_request_type: ServiceRequestTypeEnum
 
 

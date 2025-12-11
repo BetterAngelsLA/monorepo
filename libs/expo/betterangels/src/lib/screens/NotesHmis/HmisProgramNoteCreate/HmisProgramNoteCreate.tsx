@@ -4,7 +4,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { extractExtensionFieldErrors } from '../../../apollo/graphql/response/extractExtensionFieldErrors';
+import {
+  extractExtensionFieldErrors,
+  ServiceRequestTypeEnum,
+} from '../../../apollo';
 import { applyManualFormErrors } from '../../../errors';
 import { useSnackbar } from '../../../hooks';
 import { ClientViewTabEnum } from '../../Client/ClientTabs';
@@ -19,7 +22,12 @@ import {
   getHmisProgramNoteFormEmptyState,
   HmisNoteFormFieldNames,
 } from '../HmisProgramNoteForm/formSchema';
+import splitBucket from '../utils/splitBucket';
 import { CreateHmisNoteDocument } from './__generated__/hmisCreateClientNote.generated';
+import {
+  CreateHmisServiceRequestDocument,
+  RemoveHmisNoteServiceRequestDocument,
+} from './__generated__/HmisServiceRequest.generated';
 import { UpdateHmisNoteLocationDocument } from './__generated__/updateHmisNoteLocation.generated';
 
 type TProps = {
@@ -34,6 +42,69 @@ export function HmisProgramNoteCreate(props: TProps) {
   const { showSnackbar } = useSnackbar();
   const [createHmisNote] = useMutation(CreateHmisNoteDocument);
   const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
+  const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
+  const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
+
+  async function applyBucket(
+    noteId: string,
+    type: ServiceRequestTypeEnum,
+    bucket: any
+  ) {
+    const { toCreateStandard, toDeleteStandard, toCreateOther, toDeleteOther } =
+      splitBucket(bucket);
+
+    // create standard
+    for (const s of toCreateStandard) {
+      await createServiceRequest({
+        variables: {
+          data: {
+            hmisNoteId: noteId,
+            serviceRequestType: type,
+            serviceId: s.serviceId!,
+          },
+        },
+      });
+    }
+
+    // delete standard
+    for (const s of toDeleteStandard) {
+      await deleteService({
+        variables: {
+          data: {
+            serviceRequestId: s.serviceRequestId!,
+            hmisNoteId: noteId,
+            serviceRequestType: type,
+          },
+        },
+      });
+    }
+
+    // create “other”
+    for (const o of toCreateOther) {
+      await createServiceRequest({
+        variables: {
+          data: {
+            hmisNoteId: noteId,
+            serviceRequestType: type,
+            serviceOther: o.serviceOther!.trim(),
+          },
+        },
+      });
+    }
+
+    // delete “other”
+    for (const o of toDeleteOther) {
+      await deleteService({
+        variables: {
+          data: {
+            serviceRequestId: o.serviceRequestId!,
+            hmisNoteId: noteId,
+            serviceRequestType: type,
+          },
+        },
+      });
+    }
+  }
 
   const methods = useForm<THmisProgramNoteFormInputs>({
     resolver: zodResolver(HmisProgramNoteFormSchema),
@@ -47,7 +118,7 @@ export function HmisProgramNoteCreate(props: TProps) {
       const payload: THmisProgramNoteFormOutputs =
         HmisProgramNoteFormSchemaOutput.parse(values);
 
-      const { location, ...rest } = payload;
+      const { location, services, ...rest } = payload;
 
       const createResponse = await createHmisNote({
         variables: {
@@ -106,6 +177,21 @@ export function HmisProgramNoteCreate(props: TProps) {
           },
         });
       }
+      const noteId = result.id;
+
+      const draftServices = services ?? {};
+
+      await applyBucket(
+        noteId,
+        ServiceRequestTypeEnum.Provided,
+        draftServices[ServiceRequestTypeEnum.Provided]
+      );
+
+      await applyBucket(
+        noteId,
+        ServiceRequestTypeEnum.Requested,
+        draftServices[ServiceRequestTypeEnum.Requested]
+      );
 
       router.replace(
         `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`

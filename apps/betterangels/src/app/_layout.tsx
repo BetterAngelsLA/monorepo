@@ -6,8 +6,6 @@ import {
   cachePolicyRegistry,
   ErrorCrashView,
   FeatureControlProvider,
-  FeatureFlagControlled,
-  FeatureFlags,
   KeyboardToolbarProvider,
   ModalScreenProvider,
   NativePaperProvider,
@@ -53,15 +51,10 @@ export default function RootLayout() {
                     <BlockingScreenProvider>
                       <SnackbarProvider>
                         <ModalScreenProvider>
-                          <FeatureFlagControlled
-                            flag={FeatureFlags.APP_UPDATE_PROMPT_FF}
-                          >
-                            <AppUpdatePrompt />
-                            <StatusBar
-                              style={Platform.OS === 'ios' ? 'light' : 'auto'}
-                            />
-                          </FeatureFlagControlled>
-                          {/* All Stack.Screens in AppRoutesStack */}
+                          <AppUpdatePrompt />
+                          <StatusBar
+                            style={Platform.OS === 'ios' ? 'light' : 'auto'}
+                          />
                           <AppRoutesStack />
                         </ModalScreenProvider>
                       </SnackbarProvider>

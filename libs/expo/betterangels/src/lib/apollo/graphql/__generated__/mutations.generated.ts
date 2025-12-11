@@ -15,7 +15,7 @@ export type UpdateNoteMutationVariables = Types.Exact<{
 
 
 export type UpdateNoteMutation = { __typename?: 'Mutation', updateNote:
-    | { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, createdAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy: { __typename?: 'UserType', id: string, username?: string | null, email?: string | null } }
+    | { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, createdAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy?: { __typename?: 'UserType', id: string, username?: string | null, email?: string | null } | null }
     | { __typename?: 'OperationInfo' }
    };
 
@@ -25,7 +25,7 @@ export type RevertNoteMutationVariables = Types.Exact<{
 
 
 export type RevertNoteMutation = { __typename?: 'Mutation', revertNote:
-    | { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy: { __typename?: 'UserType', id: string } }
+    | { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, isSubmitted: boolean, interactedAt: any, createdAt: any, location?: { __typename?: 'LocationType', point: any, pointOfInterest?: string | null, address: { __typename?: 'AddressType', id: string, street?: string | null, city?: string | null, state?: string | null, zipCode?: string | null } } | null, providedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, requestedServices: Array<{ __typename?: 'ServiceRequestType', id: string, serviceEnum?: Types.ServiceEnum | null, serviceOther?: string | null }>, clientProfile?: { __typename?: 'ClientProfileType', id: string } | null, createdBy?: { __typename?: 'UserType', id: string } | null }
     | { __typename?: 'OperationInfo' }
    };
 

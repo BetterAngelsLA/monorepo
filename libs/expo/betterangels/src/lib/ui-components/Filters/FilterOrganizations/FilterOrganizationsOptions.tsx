@@ -49,7 +49,7 @@ export function FilterOrganizationsOptions(props: TProps) {
       document: FilterOrganizationsDocument,
       queryFieldName: 'caseworkerOrganizations',
       variables: {
-        order: {
+        ordering: {
           name: Ordering.AscNullsLast,
           id: Ordering.Desc,
         },

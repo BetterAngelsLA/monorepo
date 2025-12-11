@@ -1,5 +1,20 @@
 import { format } from 'date-fns';
 import { z } from 'zod';
+import { ServiceRequestTypeEnum } from '../../../apollo';
+
+export type ServicesDraft = Partial<
+  Record<
+    ServiceRequestTypeEnum,
+    {
+      serviceRequests: {
+        id: string;
+        service?: { id: string; label: string } | null;
+        markedForDeletion?: boolean;
+        serviceOther?: string | null;
+      }[];
+    }
+  >
+>;
 
 export const LocationSchema = z.object({
   latitude: z.number().gte(-90).lte(90),
@@ -20,6 +35,7 @@ export const HmisProgramNoteFormSchema = z.object({
   refClientProgram: z.string(),
   note: z.string().min(1, 'Note is required.'),
   location: LocationSchema.optional(),
+  services: z.custom<ServicesDraft>().optional(),
 });
 
 export type THmisProgramNoteFormSchema = z.infer<
@@ -42,6 +58,7 @@ export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormSchema = {
     formattedAddress: '',
     components: '',
   },
+  services: {},
 };
 
 /**
