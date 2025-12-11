@@ -14,7 +14,8 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
         locale="en"
         inputMode="start"
         mode="outlined"
-        iconColor={Colors.PRIMARY_EXTRA_DARK}
+        disabled={disabled}
+        iconColor={disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
         textColor={disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
         outlineColor={Colors.NEUTRAL_LIGHT}
         outlineStyle={{
@@ -26,8 +27,8 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
         style={{
           width: '100%',
           height: 56,
+          backgroundColor: disabled ? Colors.NEUTRAL_EXTRA_LIGHT : Colors.WHITE,
         }}
-        disabled={disabled}
         {...rest}
       />
     </View>

@@ -20,14 +20,18 @@ export const personalInfoFormEmptyState: TPersonalInfoFormSchema = {
 };
 
 export const PersonalInfoFormSchema = z.object({
-  birthDate: z
-    .union([
-      z.coerce
-        .date()
-        .refine((val) => !Number.isNaN(val.getTime()), 'Date is invalid.'),
-      z.literal(''),
-    ])
-    .optional(),
+  birthDate: z.coerce
+    .date()
+    .nullable()
+    .refine(
+      (date) => {
+        if (!date) return true;
+        return !Number.isNaN(date.getTime());
+      },
+      {
+        message: 'Date is invalid.',
+      }
+    ),
   dobQuality: z.enum(HmisDobQualityEnum).or(z.literal('')),
   veteran: z.enum(HmisVeteranStatusEnum).or(z.literal('')),
   livingSituation: z.enum(LivingSituationEnum).or(z.literal('')),
@@ -49,11 +53,10 @@ export const PersonalInfoFormSchemaOut = PersonalInfoFormSchema.transform(
     veteran,
     ...rest
   }) => {
-    let formattedDate: string | undefined = undefined;
-
-    if (birthDate instanceof Date && !Number.isNaN(birthDate.getTime())) {
-      formattedDate = format(birthDate, 'yyyy-MM-dd');
-    }
+    const formattedDate =
+      birthDate instanceof Date && !Number.isNaN(birthDate.getTime())
+        ? format(birthDate, 'yyyy-MM-dd')
+        : null;
 
     return {
       ...rest,

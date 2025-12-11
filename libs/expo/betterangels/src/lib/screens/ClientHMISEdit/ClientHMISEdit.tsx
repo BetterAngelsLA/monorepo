@@ -87,7 +87,7 @@ export function ClientHMISEdit(props: TProps) {
     methods.reset({
       ...mappedValues,
     });
-  }, [clientData, id]);
+  }, [clientData, id, dataMapper, methods]);
 
   if (clientDataLoading) {
     return <LoadingView />;
@@ -116,7 +116,6 @@ export function ClientHMISEdit(props: TProps) {
         errorPolicy: 'all',
       });
 
-      // handle OperationInfo validation errors
       const opsValidationErrors = extractOperationFieldErrors({
         data,
         dataKey: 'updateHmisClientProfile',
@@ -125,22 +124,17 @@ export function ClientHMISEdit(props: TProps) {
 
       if (opsValidationErrors.length) {
         applyOperationFieldErrors(opsValidationErrors, methods.setError);
-
         return;
       }
 
-      // handle GQL extension validation errors
       if (CombinedGraphQLErrors.is(error)) {
         const fieldErrors = extractExtensionFieldErrors(error, sectionFormKeys);
-
         if (fieldErrors?.length) {
           applyManualFormErrors(fieldErrors, methods.setError);
-
           return;
         }
       }
 
-      // throw unahandled errors
       if (error) {
         throw error;
       }
@@ -156,7 +150,6 @@ export function ClientHMISEdit(props: TProps) {
       router.dismissTo(`/client/${result.id}`);
     } catch (error) {
       console.error('updateHmisClientProfileMutation error:', error);
-
       showSnackbar({
         message: 'Something went wrong. Please try again.',
         type: 'error',
