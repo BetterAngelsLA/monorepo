@@ -10,7 +10,6 @@ import {
 export function DatePicker<T extends FieldValues = FieldValues>(
   props: IDatePickerProps<T>
 ) {
-  // Extract helperText if you added it to IDatePickerProps, or pass via ...rest
   const { type, control, name, rules, ...rest } = props;
 
   if (control && name) {
@@ -26,13 +25,11 @@ export function DatePicker<T extends FieldValues = FieldValues>(
           const sharedProps = { value, onChange, onBlur };
 
           if (type === 'numeric') {
-            // FIX: Don't strip 'error'. Pass the message down.
             return (
               <NumericDatePicker
                 {...(rest as INumericDatePickerProps)}
                 {...sharedProps}
-                errorMessage={error?.message} // Pass RHF error message
-                // helperText={helperText} // Pass custom helper text
+                errorMessage={error?.message}
               />
             );
           }
@@ -50,12 +47,7 @@ export function DatePicker<T extends FieldValues = FieldValues>(
 
   // Non-RHF handling...
   if (type === 'numeric') {
-    return (
-      <NumericDatePicker
-        {...(rest as INumericDatePickerProps)}
-        // helperText={helperText}
-      />
-    );
+    return <NumericDatePicker {...(rest as INumericDatePickerProps)} />;
   }
 
   return <WheelDatePicker {...(rest as IWheelDatePickerProps)} />;
