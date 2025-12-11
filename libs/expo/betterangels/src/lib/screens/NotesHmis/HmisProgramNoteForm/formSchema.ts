@@ -1,6 +1,10 @@
 import { format } from 'date-fns';
 import { z } from 'zod';
-import { SelahTeamEnum, TaskStatusEnum } from '../../../apollo';
+import {
+  SelahTeamEnum,
+  ServiceRequestTypeEnum,
+  TaskStatusEnum,
+} from '../../../apollo';
 
 // ----------------------------------------------------------------------
 // 1. Local Draft Task Type
@@ -16,7 +20,6 @@ export type LocalDraftTask = {
 // ----------------------------------------------------------------------
 // 2. Validation Schema
 // ----------------------------------------------------------------------
-import { ServiceRequestTypeEnum } from '../../../apollo';
 
 export type ServicesDraft = Partial<
   Record<
