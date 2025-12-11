@@ -17,12 +17,11 @@ export function NumericDatePicker(props: ExtendedProps) {
     disabled,
     value,
     onChange,
-    errorMessage, // receive the error message
-    helperText, // receive the helper text
+    errorMessage,
+    helperText,
     ...rest
   } = props;
 
-  // Determine if we are in an error state
   const hasError = !!errorMessage;
 
   return (
@@ -35,9 +34,7 @@ export function NumericDatePicker(props: ExtendedProps) {
         mode="outlined"
         value={value}
         onChange={onChange}
-        // Fix: Use the actual prop, don't hardcode true
         disabled={disabled}
-        // Pass error state to the input styling
         hasError={hasError}
         iconColor={Colors.PRIMARY_EXTRA_DARK}
         textColor={disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
@@ -52,12 +49,10 @@ export function NumericDatePicker(props: ExtendedProps) {
         style={{
           width: '100%',
           height: 56,
-          backgroundColor: disabled ? '#f0f0f0' : 'white', // Optional: visually grey out background
+          backgroundColor: disabled ? '#f0f0f0' : 'white',
         }}
         {...rest}
       />
-
-      {/* Render Helper Text or Error Message */}
       {(hasError || helperText) && (
         <HelperText type={hasError ? 'error' : 'info'} visible={true}>
           {errorMessage || helperText}
