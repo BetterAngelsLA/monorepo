@@ -20,24 +20,18 @@ export const personalInfoFormEmptyState: TPersonalInfoFormSchema = {
 };
 
 export const PersonalInfoFormSchema = z.object({
-  birthDate: z.preprocess(
-    (arg) => {
-      if (arg === '' || arg === null) return null;
-      return arg;
-    },
-    z.coerce
-      .date()
-      .nullable()
-      .refine(
-        (date) => {
-          if (!date) return true;
-          return !Number.isNaN(date.getTime());
-        },
-        {
-          message: 'Date is invalid.',
-        }
-      )
-  ),
+  birthDate: z.coerce
+    .date()
+    .nullable()
+    .refine(
+      (date) => {
+        if (!date) return true;
+        return !Number.isNaN(date.getTime());
+      },
+      {
+        message: 'Date is invalid.',
+      }
+    ),
   dobQuality: z.enum(HmisDobQualityEnum).or(z.literal('')),
   veteran: z.enum(HmisVeteranStatusEnum).or(z.literal('')),
   livingSituation: z.enum(LivingSituationEnum).or(z.literal('')),
