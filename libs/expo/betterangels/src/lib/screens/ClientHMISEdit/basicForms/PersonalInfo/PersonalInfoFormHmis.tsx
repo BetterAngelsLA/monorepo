@@ -35,7 +35,7 @@ export function PersonalInfoFormHmis() {
 
   useEffect(() => {
     if (isDobDisabled) {
-      setValue('birthDate', undefined);
+      setValue('birthDate', null);
     }
   }, [isDobDisabled, setValue]);
 
