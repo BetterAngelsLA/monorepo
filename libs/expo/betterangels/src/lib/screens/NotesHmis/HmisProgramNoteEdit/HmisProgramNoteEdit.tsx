@@ -219,7 +219,6 @@ export function HmisProgramNoteEdit(props: TProps) {
       if (result?.__typename !== 'HmisNoteType') {
         throw new Error('typename is not HmisNoteType');
       }
-      const noteId = result.id;
 
       const draftServices = services ?? {};
 
@@ -227,7 +226,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         await updateHmisNoteLocation({
           variables: {
             data: {
-              id: noteId,
+              id,
               location: {
                 point: [location.longitude, location.latitude],
                 address: location.formattedAddress
@@ -243,13 +242,13 @@ export function HmisProgramNoteEdit(props: TProps) {
       }
 
       await applyBucket(
-        noteId,
+        id,
         ServiceRequestTypeEnum.Provided,
         draftServices[ServiceRequestTypeEnum.Provided]
       );
 
       await applyBucket(
-        noteId,
+        id,
         ServiceRequestTypeEnum.Requested,
         draftServices[ServiceRequestTypeEnum.Requested]
       );
