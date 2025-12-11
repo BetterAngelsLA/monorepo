@@ -66,7 +66,6 @@ export function PersonalInfoFormHmis() {
           control={control}
           type="numeric"
           label="Date of Birth"
-          // 4. Pass the condition to the disabled prop
           disabled={isDobDisabled}
           validRange={{
             endDate: new Date(),

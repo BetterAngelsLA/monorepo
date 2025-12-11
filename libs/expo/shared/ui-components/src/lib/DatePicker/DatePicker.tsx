@@ -18,20 +18,13 @@ export function DatePicker<T extends FieldValues = FieldValues>(
         control={control}
         name={name}
         rules={rules}
-        render={({
-          field: { value, onChange, onBlur },
-          fieldState: { error },
-        }) => {
+        render={({ field: { value, onChange, onBlur } }) => {
           const sharedProps = { value, onChange, onBlur };
 
           if (type === 'numeric') {
-            return (
-              <NumericDatePicker
-                {...(rest as INumericDatePickerProps)}
-                {...sharedProps}
-                errorMessage={error?.message}
-              />
-            );
+            const { error: _unused, ...numericRest } = rest;
+
+            return <NumericDatePicker {...numericRest} {...sharedProps} />;
           }
 
           return (
@@ -45,7 +38,7 @@ export function DatePicker<T extends FieldValues = FieldValues>(
     );
   }
 
-  // Non-RHF handling...
+  // non-RHF
   if (type === 'numeric') {
     return <NumericDatePicker {...(rest as INumericDatePickerProps)} />;
   }
