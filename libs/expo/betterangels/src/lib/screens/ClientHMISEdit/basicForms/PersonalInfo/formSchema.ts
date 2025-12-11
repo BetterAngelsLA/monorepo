@@ -28,7 +28,6 @@ export const PersonalInfoFormSchema = z.object({
       z.literal(''),
     ])
     .optional(),
-
   dobQuality: z.enum(HmisDobQualityEnum).or(z.literal('')),
   veteran: z.enum(HmisVeteranStatusEnum).or(z.literal('')),
   livingSituation: z.enum(LivingSituationEnum).or(z.literal('')),
@@ -50,7 +49,7 @@ export const PersonalInfoFormSchemaOut = PersonalInfoFormSchema.transform(
     veteran,
     ...rest
   }) => {
-    let formattedDate: string | null = null;
+    let formattedDate: string | undefined = undefined;
 
     if (birthDate instanceof Date && !Number.isNaN(birthDate.getTime())) {
       formattedDate = format(birthDate, 'yyyy-MM-dd');
