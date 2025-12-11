@@ -31,6 +31,7 @@ export function PersonalInfoFormHmis() {
           control={control}
           type="numeric"
           label="Date of Birth"
+          placeholder="Enter date"
           disabled={isSubmitting}
           validRange={{
             endDate: new Date(),

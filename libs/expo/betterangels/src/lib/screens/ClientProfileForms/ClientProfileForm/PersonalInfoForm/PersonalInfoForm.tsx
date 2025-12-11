@@ -169,12 +169,22 @@ export function PersonalInfoForm() {
       <Form.Field title="Date of Birth">
         <DatePicker
           type="numeric"
+          placeholder='Enter date'
           validRange={{
             endDate: new Date(),
             startDate: new Date('1900-01-01'),
           }}
-          value={dateOfBirth}
-          onChange={(date) => setValue('dateOfBirth', date)}
+          value={dateOfBirth || undefined}
+          onChange={(date) => {
+            // Only update if we have a valid date
+            // This prevents saving incomplete dates when user is still editing
+            if (date instanceof Date && !Number.isNaN(date.getTime())) {
+              setValue('dateOfBirth', date, { shouldDirty: true, shouldValidate: true });
+            } else if (date === undefined || date === null) {
+              // Allow clearing the date
+              setValue('dateOfBirth', undefined, { shouldDirty: true, shouldValidate: true });
+            }
+          }}
         />
       </Form.Field>
 
