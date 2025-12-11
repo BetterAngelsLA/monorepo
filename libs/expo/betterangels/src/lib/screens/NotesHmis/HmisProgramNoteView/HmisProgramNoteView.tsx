@@ -8,9 +8,9 @@ import {
 } from '@monorepo/expo/shared/ui-components';
 import { sanitizeHtmlString } from '@monorepo/expo/shared/utils';
 import { useNavigation, useRouter } from 'expo-router';
-import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { MainScrollContainer } from '../../../ui-components';
+import { useEffect, useRef } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { MainScrollContainer, NoteTasks } from '../../../ui-components';
 import { ViewHmisNoteDocument } from './__generated__/HmisProgramNoteView.generated';
 import HmisNoteLocation from './HmisNoteLocation';
 import HmisProgramNoteServices from './HmisProgramNoteServices';
@@ -23,7 +23,9 @@ type TProps = {
 
 export function HmisProgramNoteView(props: TProps) {
   const { id, clientId } = props;
-  const { data, error, loading } = useQuery(ViewHmisNoteDocument, {
+  const scrollRef = useRef<ScrollView>(null);
+
+  const { data, error, loading, refetch } = useQuery(ViewHmisNoteDocument, {
     variables: { id },
     fetchPolicy: 'cache-and-network',
     nextFetchPolicy: 'cache-first',
@@ -69,6 +71,7 @@ export function HmisProgramNoteView(props: TProps) {
     clientProgram,
     providedServices,
     requestedServices,
+    tasks,
   } = hmisNote;
   const { firstName, lastName } = hmisClientProfile || {};
   const { program } = clientProgram || {};
@@ -77,7 +80,7 @@ export function HmisProgramNoteView(props: TProps) {
   const sanitizedNote = sanitizeHtmlString(note);
 
   return (
-    <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT}>
+    <MainScrollContainer bg={Colors.NEUTRAL_EXTRA_LIGHT} ref={scrollRef}>
       <View style={styles.container}>
         <HmisProgramNoteTitle hmisNote={hmisNote} />
 
@@ -105,6 +108,16 @@ export function HmisProgramNoteView(props: TProps) {
           </View>
         )}
       </View>
+
+      <NoteTasks
+        hmisClientProfileId={clientId}
+        hmisNoteId={id}
+        tasks={tasks || []}
+        refetch={refetch}
+        scrollRef={scrollRef}
+        team={null}
+        hideIfEmpty={true} // Only show if tasks exist
+      />
     </MainScrollContainer>
   );
 }

@@ -38,6 +38,13 @@ query HmisNote($id: ID!) {
           name
         }
       }
+      tasks {
+        id
+        summary
+        description
+        status
+        team
+      }
       providedServices {
         id
         service {

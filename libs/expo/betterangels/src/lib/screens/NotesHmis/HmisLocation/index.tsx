@@ -20,6 +20,7 @@ type SectionKey =
   | 'refClientProgram'
   | 'note'
   | 'services'
+  | 'draftTasks'
   | null;
 
 const INITIAL_LOCATION = {

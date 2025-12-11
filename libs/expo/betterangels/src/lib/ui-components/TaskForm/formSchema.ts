@@ -4,6 +4,7 @@ import { SelahTeamEnum, TaskStatusEnum } from '../../apollo';
 export type TFormSchema = z.infer<typeof FormSchema>;
 
 export const emptyState: TFormSchema = {
+  id: '',
   summary: '',
   team: '',
   description: '',
@@ -11,6 +12,7 @@ export const emptyState: TFormSchema = {
 };
 
 export const FormSchema = z.object({
+  id: z.string().optional(),
   summary: z.string().min(1, 'Title is required.'),
   team: z.enum(SelahTeamEnum).or(z.literal('')),
   description: z.string(),
