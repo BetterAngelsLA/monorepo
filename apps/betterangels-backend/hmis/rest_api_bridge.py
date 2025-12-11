@@ -40,7 +40,7 @@ CLIENT_PROGRAM_FIELDS = {"clientProgram.id", "clientProgram.program.id", "client
 CLIENT_FIELDS = {
     "unique_identifier",
     "personal_id",
-    "alias",
+    # "alias",  # TODO: Turn on when API fixes alias returning null issue
     "birth_date",
     "dob_quality",
     "first_name",
@@ -348,10 +348,10 @@ class HmisRestApiBridge:
         fields = self._get_field_dot_paths(
             info=self.info,
             default_fields=METADATA_FIELDS,
-            ignored_fields=BA_CLIENT_FIELDS,
+            ignored_fields={*BA_CLIENT_FIELDS, "alias"},
         )
 
-        fields_str = self._get_field_str(fields - BA_CLIENT_FIELDS)
+        fields_str = self._get_field_str(fields)
 
         resp = self._make_request(
             path=f"/clients/{hmis_id}",
@@ -411,7 +411,7 @@ class HmisRestApiBridge:
         )
 
         fields = self._get_field_dot_paths(
-            info=self.info, default_fields=METADATA_FIELDS, ignored_fields=BA_CLIENT_FIELDS
+            info=self.info, default_fields=METADATA_FIELDS, ignored_fields={*BA_CLIENT_FIELDS, "alias"}
         )
 
         combined_fields = fields | {*cleaned_client_field_input.keys()} | {*cleaned_client_sub_field_input.keys()}
