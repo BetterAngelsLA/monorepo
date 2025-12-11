@@ -112,13 +112,11 @@ export function HmisProgramNoteEdit(props: TProps) {
     defaultValues: hmisProgramNoteFormEmptyState,
   });
 
-  // Note: we assume cached note is valid and refetch only on missing fields.
-  // fetchPolicy=cache-first: use cache unless missing fields in cache
-  // partialRefetch=true: refetch if any requested field is missing
   const {
     data: noteData,
     loading: noteDataLoading,
     error: getNoteNetworkError,
+    refetch,
   } = useQuery(HmisNoteDocument, {
     variables: { id },
     fetchPolicy: 'cache-first',
@@ -193,7 +191,6 @@ export function HmisProgramNoteEdit(props: TProps) {
 
       const { data, error } = updateResponse;
 
-      // if form field errors: handle and exit
       if (CombinedGraphQLErrors.is(error)) {
         const fieldErrors = extractExtensionFieldErrors(
           error,
@@ -202,12 +199,10 @@ export function HmisProgramNoteEdit(props: TProps) {
 
         if (fieldErrors.length) {
           applyManualFormErrors(fieldErrors, methods.setError);
-
           return;
         }
       }
 
-      // non-validation error: throw
       if (error) {
         throw new Error(error.message);
       }
@@ -239,7 +234,6 @@ export function HmisProgramNoteEdit(props: TProps) {
       );
     } catch (error) {
       console.error('[updateHmisNoteMutation] error:', error);
-
       showSnackbar({
         message: 'Something went wrong. Please try again.',
         type: 'error',
@@ -268,6 +262,9 @@ export function HmisProgramNoteEdit(props: TProps) {
           clientId={clientId}
           disabled={formDisabled}
           editing={true}
+          noteId={id}
+          existingTasks={existingNote?.tasks || []}
+          refetch={refetch}
         />
       </Form.Page>
     </FormProvider>

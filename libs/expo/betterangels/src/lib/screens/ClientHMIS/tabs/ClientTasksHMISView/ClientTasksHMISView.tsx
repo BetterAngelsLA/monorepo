@@ -9,29 +9,28 @@ import {
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { TaskType } from '../../../apollo';
-import { useSnackbar } from '../../../hooks';
-import { useModalScreen } from '../../../providers';
-import { pagePaddingHorizontal } from '../../../static';
-import { TaskCard, TaskForm, TaskList } from '../../../ui-components';
-import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
-import { TaskFormData } from '../../../ui-components/TaskForm/TaskForm';
-import { ClientProfileQuery } from '../__generated__/Client.generated';
+import { HmisClientProfileType, TaskType } from '../../../../apollo';
+import { useSnackbar } from '../../../../hooks';
+import { useModalScreen } from '../../../../providers';
+import { pagePaddingHorizontal } from '../../../../static';
+import { TaskCard, TaskForm, TaskList } from '../../../../ui-components';
+import { TaskFormData } from '../../../../ui-components/NoteTasks';
+import { CreateTaskDocument } from '../../../../ui-components/TaskForm/__generated__/createTask.generated';
+import { TasksDocument } from '../../../../ui-components/TaskList/__generated__/Tasks.generated';
 
 type TProps = {
-  client: ClientProfileQuery | undefined;
+  client: HmisClientProfileType | undefined;
 };
 
-export function TasksTab(props: TProps) {
+export function ClientTasksHMISView(props: TProps) {
   const { client } = props;
 
   const [search, setSearch] = useState('');
-
   const [createTask] = useMutation(CreateTaskDocument);
   const { showSnackbar } = useSnackbar();
 
   const onSubmit = async (task: TaskFormData) => {
-    if (!client?.clientProfile.id) return;
+    if (!client?.id) return;
     try {
       const result = await createTask({
         variables: {
@@ -40,9 +39,11 @@ export function TasksTab(props: TProps) {
             description: task.description,
             status: task.status,
             team: task.team || null,
-            clientProfile: client.clientProfile.id,
+            hmisClientProfile: client.id,
           },
         },
+        refetchQueries: [TasksDocument],
+        awaitRefetchQueries: true,
       });
 
       if (result.data?.createTask.__typename === 'OperationInfo') {
@@ -59,14 +60,9 @@ export function TasksTab(props: TProps) {
     }
   };
 
-  const currentPath = client
-    ? `/client/${client?.clientProfile.id}?newTab=Tasks`
-    : undefined;
-
   const handleTaskPress = useCallback((task: TaskType) => {
     router.navigate({
       pathname: `/task/${task.id}`,
-      params: { arrivedFrom: currentPath },
     });
   }, []);
 
@@ -99,7 +95,7 @@ export function TasksTab(props: TProps) {
     );
   }
 
-  if (!client?.clientProfile.id) {
+  if (!client?.id) {
     throw new Error('Something went wrong. Please try again.');
   }
 
@@ -129,7 +125,7 @@ export function TasksTab(props: TProps) {
       />
 
       <TaskList
-        filters={{ search, clientProfile: client.clientProfile.id }}
+        filters={{ search, hmisClientProfile: client.id }}
         renderItem={renderTaskItem}
         renderHeader={renderListHeaderText}
       />

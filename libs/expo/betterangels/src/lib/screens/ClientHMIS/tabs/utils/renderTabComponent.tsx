@@ -4,6 +4,7 @@ import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { ClientViewTabEnum } from '../../../Client/ClientTabs';
 import { ClientInteractionsHmisView } from '../ClientInteractionsHmisView';
 import { ClientProfileHMISView } from '../ClientProfileHMISView';
+import { ClientTasksHMISView } from '../ClientTasksHMISView';
 
 type RenderArgs = {
   client?: HmisClientProfileType;
@@ -18,6 +19,9 @@ const tabRendererMap: Partial<
   ),
   [ClientViewTabEnum.Interactions]: ({ client }) => (
     <ClientInteractionsHmisView client={client} />
+  ),
+  [ClientViewTabEnum.Tasks]: ({ client }) => (
+    <ClientTasksHMISView client={client} />
   ),
 };
 
