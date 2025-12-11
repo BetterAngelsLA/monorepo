@@ -17,7 +17,9 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
           inputMode="start"
           mode="outlined"
           iconColor={Colors.PRIMARY_EXTRA_DARK}
-          textColor={disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+          textColor={
+            disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK
+          }
           placeholderTextColor={Colors.NEUTRAL}
           outlineColor={Colors.NEUTRAL_LIGHT}
           outlineStyle={{
