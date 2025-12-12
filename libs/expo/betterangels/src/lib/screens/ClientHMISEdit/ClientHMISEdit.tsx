@@ -1,22 +1,23 @@
+import { CombinedGraphQLErrors } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, LoadingView } from '@monorepo/expo/shared/ui-components';
 import { useNavigation, useRouter } from 'expo-router';
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { HmisClientType, extractHMISErrors } from '../../apollo';
-import { applyOperationFieldErrors } from '../../errors';
+import {
+  HmisClientProfileType,
+  UpdateHmisClientProfileInput,
+  extractExtensionFieldErrors,
+  extractOperationFieldErrors,
+} from '../../apollo';
+import { applyManualFormErrors, applyOperationFieldErrors } from '../../errors';
 import { useSnackbar } from '../../hooks';
-import {
-  GetHmisClientDocument,
-  useGetHmisClientQuery,
-} from '../ClientHMIS/__generated__/getHMISClient.generated';
-import { useHmisUpdateClientMutation } from './__generated__/updateHmisClient.generated';
+import { HmisClientProfileDocument } from '../ClientHMIS/__generated__/getHMISClient.generated';
+import { UpdateHmisClientProfileDocument } from './__generated__/updateHmisClient.generated';
 import { hmisFormConfig, parseAsSectionKeyHMIS } from './basicForms/config';
-import {
-  TUpdateClientInputsUnion,
-  toHMISClientProfileInputs,
-} from './toHMISClientProfileInputs';
+import { toUpdateHmisClientProfileInput } from './toHMISClientProfileInputs';
 
 type TProps = {
   id: string;
@@ -24,13 +25,13 @@ type TProps = {
 };
 
 export function ClientHMISEdit(props: TProps) {
-  const { componentName, id: personalId } = props;
+  const { componentName, id } = props;
 
   const router = useRouter();
   const navigation = useNavigation();
   const { showSnackbar } = useSnackbar();
 
-  const [client, setClient] = useState<HmisClientType>();
+  const [client, setClient] = useState<HmisClientProfileType>();
 
   const sectionName = parseAsSectionKeyHMIS(componentName);
 
@@ -42,16 +43,16 @@ export function ClientHMISEdit(props: TProps) {
     title: screenTitle,
     Form: SectionForm,
     schema: sectionSchema,
+    schemaOutput,
     emptyState,
     dataMapper,
   } = hmisFormConfig[sectionName];
 
   type TFormValues = z.input<typeof sectionSchema>;
+  const sectionFormKeys = Object.keys(sectionSchema.shape);
 
-  const [updateHmisClientMutation, { loading: isUpdating }] =
-    useHmisUpdateClientMutation();
-
-  const debugMode = process.env['EXPO_PUBLIC_GQL_DEBUG'] === 'true';
+  const [updateHmisClientProfileMutation, { loading: isUpdating }] =
+    useMutation(UpdateHmisClientProfileDocument);
 
   useLayoutEffect(() => {
     if (screenTitle) {
@@ -59,26 +60,23 @@ export function ClientHMISEdit(props: TProps) {
     }
   }, [screenTitle, navigation]);
 
-  const formMethods = useForm<TFormValues>({
+  const methods = useForm<TFormValues>({
     resolver: zodResolver(sectionSchema),
     defaultValues: emptyState,
   });
 
-  const { data: clientData, loading: clientDataLoading } =
-    useGetHmisClientQuery({
-      variables: { personalId },
-    });
+  const {
+    data: clientData,
+    loading: clientDataLoading,
+    refetch,
+  } = useQuery(HmisClientProfileDocument, {
+    variables: { id },
+  });
 
   useEffect(() => {
-    const client = clientData?.hmisGetClient;
+    const client = clientData?.hmisClientProfile;
 
-    if (client?.__typename !== 'HmisClientType') {
-      return;
-    }
-
-    const valid = clientData?.hmisGetClient.__typename === 'HmisClientType';
-
-    if (!valid) {
+    if (client?.__typename !== 'HmisClientProfileType') {
       return;
     }
 
@@ -86,93 +84,72 @@ export function ClientHMISEdit(props: TProps) {
 
     const mappedValues = dataMapper(client);
 
-    formMethods.reset({
+    methods.reset({
       ...mappedValues,
     });
-  }, [clientData, personalId]);
+  }, [clientData, id, dataMapper, methods]);
 
   if (clientDataLoading) {
     return <LoadingView />;
   }
+
   const onSubmit: SubmitHandler<TFormValues> = async (values) => {
     try {
       if (!client) {
         return;
       }
 
-      const currentFormKeys = sectionSchema.keyof().options as string[];
+      const formValues = schemaOutput
+        ? schemaOutput.parse(values)
+        : (values as Partial<UpdateHmisClientProfileInput>);
 
-      const { clientInput, clientSubItemsInput } = toHMISClientProfileInputs(
-        client,
-        currentFormKeys,
-        values as TUpdateClientInputsUnion
-      );
+      const inputs = toUpdateHmisClientProfileInput(client, formValues);
 
-      const { data: updateData, errors } = await updateHmisClientMutation({
+      if (!inputs) {
+        return;
+      }
+
+      const { data, error } = await updateHmisClientProfileMutation({
         variables: {
-          clientInput,
-          clientSubItemsInput,
+          data: inputs,
         },
         errorPolicy: 'all',
-        // TODO: replace with cache typePolicy or push directly to cache
-        refetchQueries: [
-          { query: GetHmisClientDocument, variables: { personalId } },
-        ],
-        awaitRefetchQueries: true,
       });
 
-      if (debugMode && errors) {
-        console.error(errors); // raw error
-        console.log(JSON.stringify(errors, null, 2)); // parsed error
+      const opsValidationErrors = extractOperationFieldErrors({
+        data,
+        dataKey: 'updateHmisClientProfile',
+        fieldNames: sectionFormKeys,
+      });
+
+      if (opsValidationErrors.length) {
+        applyOperationFieldErrors(opsValidationErrors, methods.setError);
+        return;
       }
 
-      const updatedClient = updateData?.hmisUpdateClient;
-
-      if (!updatedClient) {
-        throw new Error('missing hmisUpdateClient response');
-      }
-
-      if (updatedClient.__typename === 'HmisUpdateClientError') {
-        const { message: hmisErrorMessage } = updatedClient;
-
-        const parsedErr = extractHMISErrors(hmisErrorMessage) || {};
-
-        const { status, fieldErrors = [] } = parsedErr;
-
-        if (debugMode) {
-          console.error(updatedClient); // raw error
-          console.log(JSON.stringify(parsedErr, null, 2)); // parsed error
-        }
-
-        if (status === 422) {
-          const formFieldErrors = fieldErrors.filter(({ field }) =>
-            currentFormKeys.includes(field)
-          );
-
-          applyOperationFieldErrors(formFieldErrors, formMethods.setError);
-
-          // Note:
-          // 1. returned field keys are returned in multiple formats (snake + camel)
-          // 2. returned keys may be inconsistent with form (nameQuality vs nameDataQuality)
-          // 3. perhaps may receive 422 errors for fields not in form (not currentFormKeys)
+      if (CombinedGraphQLErrors.is(error)) {
+        const fieldErrors = extractExtensionFieldErrors(error, sectionFormKeys);
+        if (fieldErrors?.length) {
+          applyManualFormErrors(fieldErrors, methods.setError);
           return;
         }
-
-        // HmisUpdateClientError exists but not 422
-        // throw generic error
-        throw new Error(hmisErrorMessage);
       }
 
-      if (updatedClient.__typename !== 'HmisClientType') {
-        throw new Error('invalid hmisUpdateClient response');
+      if (error) {
+        throw error;
       }
 
-      const { personalId: returnedId } = updatedClient;
+      const result = data?.updateHmisClientProfile;
 
-      router.dismissTo(`/client/${returnedId}`);
+      if (result?.__typename !== 'HmisClientProfileType') {
+        throw new Error(`Unexpected result: ${result}`);
+      }
+
+      await refetch();
+
+      router.dismissTo(`/client/${result.id}`);
     } catch (error) {
-      console.error('updateHmisClientMutation error:', error);
-
+      console.error('updateHmisClientProfileMutation error:', error);
       showSnackbar({
         message: 'Something went wrong. Please try again.',
         type: 'error',
@@ -181,12 +158,12 @@ export function ClientHMISEdit(props: TProps) {
   };
 
   return (
-    <FormProvider {...formMethods}>
+    <FormProvider {...methods}>
       <Form.Page
         actionProps={{
-          onSubmit: formMethods.handleSubmit(onSubmit),
+          onSubmit: methods.handleSubmit(onSubmit),
           onLeftBtnClick: router.back,
-          disabled: isUpdating || formMethods.formState.isSubmitting,
+          disabled: isUpdating || methods.formState.isSubmitting,
         }}
       >
         <SectionForm />

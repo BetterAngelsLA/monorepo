@@ -1,0 +1,55 @@
+query HmisNote($id: ID!) {
+  hmisNote(id: $id) {
+    ... on HmisNoteType {
+      id
+      hmisId
+      addedDate
+      lastUpdated
+      title
+      note
+      date
+      refClientProgram
+      hmisClientProfile {
+        id
+        hmisId
+        firstName
+        lastName
+      }
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+      clientProgram {
+        id
+        program {
+          id
+          name
+        }
+      }
+      tasks {
+        id
+        summary
+        description
+        status
+        team
+      }
+      providedServices {
+        id
+        service {
+          id
+          label
+        }
+        serviceOther
+      }
+      requestedServices {
+        id
+        service {
+          id
+          label
+        }
+        serviceOther
+      }
+    }
+  }
+}

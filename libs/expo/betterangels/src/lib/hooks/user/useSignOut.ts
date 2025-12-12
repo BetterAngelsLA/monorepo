@@ -1,4 +1,5 @@
-import { gql, useMutation } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import CookieManager from '@react-native-cookies/cookies';
 import { useCallback } from 'react';
 import useUser from './useUser';

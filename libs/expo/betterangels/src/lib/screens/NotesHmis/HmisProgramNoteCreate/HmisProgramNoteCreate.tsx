@@ -1,103 +1,208 @@
+import { CombinedGraphQLErrors } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form } from '@monorepo/expo/shared/ui-components';
 import { useRouter } from 'expo-router';
 import { FormProvider, SubmitHandler, useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { extractHMISErrors } from '../../../apollo';
-import { applyOperationFieldErrors } from '../../../errors';
-import { useSnackbar } from '../../../hooks';
-import { ClientViewTabEnum } from '../../Client/ClientTabs';
-import { HmisProgramNoteForm } from '../HmisProgramNoteForm';
 import {
+  extractExtensionFieldErrors,
+  ServiceRequestTypeEnum,
+} from '../../../apollo';
+import { applyManualFormErrors } from '../../../errors';
+import { useSnackbar } from '../../../hooks';
+import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
+import { ClientViewTabEnum } from '../../Client/ClientTabs';
+import {
+  HmisProgramNoteForm,
   HmisProgramNoteFormSchema,
-  HmisProgramNoteFormtSchemaOutput,
-  TFormInput,
-  TFormOutput,
-  hmisProgramNoteFormEmptyState,
+  HmisProgramNoteFormSchemaOutput,
+  THmisProgramNoteFormInputs,
+} from '../HmisProgramNoteForm';
+import {
+  getHmisProgramNoteFormEmptyState,
+  HmisNoteFormFieldNames,
 } from '../HmisProgramNoteForm/formSchema';
-import { useHmisCreateClientNoteMutation } from './__generated__/hmisCreateClientNote.generated';
+import splitBucket from '../utils/splitBucket';
+import { CreateHmisNoteDocument } from './__generated__/hmisCreateClientNote.generated';
+import {
+  CreateHmisServiceRequestDocument,
+  RemoveHmisNoteServiceRequestDocument,
+} from './__generated__/HmisServiceRequest.generated';
 
 type TProps = {
-  hmisClientId: string;
+  clientId: string;
   arrivedFrom?: string;
 };
 
 export function HmisProgramNoteCreate(props: TProps) {
-  const { hmisClientId } = props;
+  const { clientId } = props;
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-  const [createHmisClientNoteMutation] = useHmisCreateClientNoteMutation();
+  const [createHmisNote] = useMutation(CreateHmisNoteDocument);
+  const [createTask] = useMutation(CreateTaskDocument);
+  const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
+  const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
 
-  type TFormValues = z.input<typeof HmisProgramNoteFormSchema>;
+  async function applyBucket(
+    noteId: string,
+    type: ServiceRequestTypeEnum,
+    bucket: any
+  ) {
+    const { toCreateStandard, toDeleteStandard, toCreateOther, toDeleteOther } =
+      splitBucket(bucket);
 
-  const formKeys = Object.keys(hmisProgramNoteFormEmptyState);
-
-  const formMethods = useForm<TFormInput>({
-    resolver: zodResolver(HmisProgramNoteFormSchema),
-    defaultValues: hmisProgramNoteFormEmptyState,
-  });
-
-  const { setError } = formMethods;
-
-  const onSubmit: SubmitHandler<TFormValues> = async (values) => {
-    try {
-      const payload: TFormOutput =
-        HmisProgramNoteFormtSchemaOutput.parse(values);
-
-      const { data } = await createHmisClientNoteMutation({
+    // create standard
+    for (const s of toCreateStandard) {
+      await createServiceRequest({
         variables: {
-          clientNoteInput: {
-            personalId: hmisClientId,
-            ...payload,
+          data: {
+            hmisNoteId: noteId,
+            serviceRequestType: type,
+            serviceId: s.serviceId!,
           },
         },
+      });
+    }
 
+    // delete standard
+    for (const s of toDeleteStandard) {
+      await deleteService({
+        variables: {
+          data: {
+            serviceRequestId: s.serviceRequestId!,
+            hmisNoteId: noteId,
+            serviceRequestType: type,
+          },
+        },
+      });
+    }
+
+    // create “other”
+    for (const o of toCreateOther) {
+      await createServiceRequest({
+        variables: {
+          data: {
+            hmisNoteId: noteId,
+            serviceRequestType: type,
+            serviceOther: o.serviceOther!.trim(),
+          },
+        },
+      });
+    }
+
+    // delete “other”
+    for (const o of toDeleteOther) {
+      await deleteService({
+        variables: {
+          data: {
+            serviceRequestId: o.serviceRequestId!,
+            hmisNoteId: noteId,
+            serviceRequestType: type,
+          },
+        },
+      });
+    }
+  }
+
+  const methods = useForm<THmisProgramNoteFormInputs>({
+    resolver: zodResolver(HmisProgramNoteFormSchema),
+    defaultValues: getHmisProgramNoteFormEmptyState(),
+    mode: 'onSubmit',
+  });
+
+  const onSubmit: SubmitHandler<THmisProgramNoteFormInputs> = async (
+    values
+  ) => {
+    try {
+      // 1. Separate Draft Tasks from the Note fields
+      // We do this because 'draftTasks' is not part of the HmisProgramNoteSchemaOutput
+      const { draftTasks, ...noteFields } = values;
+
+      // 2. Validate/Parse Note fields
+      const payload = HmisProgramNoteFormSchemaOutput.parse(noteFields);
+
+      // 3. Create Note
+      const { services, ...rest } = payload;
+
+      const createResponse = await createHmisNote({
+        variables: {
+          data: {
+            hmisClientProfileId: clientId,
+            ...rest,
+          },
+        },
         errorPolicy: 'all',
       });
 
-      const result = data?.hmisCreateClientNote;
+      const { data, error } = createResponse;
 
-      if (!result) {
-        throw new Error('missing hmisCreateClientNote response');
-      }
-
-      if (result?.__typename === 'HmisCreateClientNoteError') {
-        const { message: hmisErrorMessage } = result;
-
-        const { status, fieldErrors = [] } =
-          extractHMISErrors(hmisErrorMessage) || {};
-
-        // handle unprocessable_entity errors and exit
-        if (status === 422) {
-          const formFieldErrors = fieldErrors.filter(({ field }) =>
-            formKeys.includes(field)
-          );
-
-          applyOperationFieldErrors(formFieldErrors, setError);
-
+      // Handle Validation Errors
+      if (CombinedGraphQLErrors.is(error)) {
+        const fieldErrors = extractExtensionFieldErrors(
+          error,
+          HmisNoteFormFieldNames
+        );
+        if (fieldErrors.length) {
+          applyManualFormErrors(fieldErrors, methods.setError);
           return;
         }
-
-        if (status === 404) {
-          throw new Error('could not find Client of Program Enrollment');
-        }
-
-        // HmisCreateClientError exists but not 422 | 404
-        // throw generic error
-        throw new Error(hmisErrorMessage);
       }
 
-      if (result?.__typename !== 'HmisClientNoteType') {
-        throw new Error('invalid HmisClientNoteType response');
+      // Handle Generic Errors
+      if (error) {
+        throw new Error(error.message);
       }
 
-      router.dismissTo(
-        `/client/${hmisClientId}?activeTab=${ClientViewTabEnum.Interactions}`
+      const newNote = data?.createHmisNote;
+
+      if (newNote?.__typename !== 'HmisNoteType' || !newNote?.id) {
+        throw new Error('Failed to create HMIS Note');
+      }
+
+      // 4. Create Tasks (Link to the new Note)
+      // Eventually we can move this back to HMIS Note creation
+      if (draftTasks?.length > 0) {
+        await Promise.all(
+          draftTasks.map((task) =>
+            createTask({
+              variables: {
+                data: {
+                  summary: task.summary,
+                  description: task.description,
+                  status: task.status,
+                  team: task.team,
+                  hmisClientProfile: clientId,
+                  hmisNote: newNote.id,
+                },
+              },
+            })
+          )
+        );
+      }
+
+      // 5. Success - Redirect
+      const noteId = newNote.id;
+
+      const draftServices = services ?? {};
+
+      await applyBucket(
+        noteId,
+        ServiceRequestTypeEnum.Provided,
+        draftServices[ServiceRequestTypeEnum.Provided]
+      );
+
+      await applyBucket(
+        noteId,
+        ServiceRequestTypeEnum.Requested,
+        draftServices[ServiceRequestTypeEnum.Requested]
+      );
+
+      router.replace(
+        `/client/${clientId}?activeTab=${ClientViewTabEnum.Interactions}`
       );
     } catch (error) {
-      console.error('createHmisClientNoteMutation error:', error);
-
+      console.error('[HmisProgramNoteCreate] error:', error);
       showSnackbar({
         message: 'Something went wrong. Please try again.',
         type: 'error',
@@ -108,10 +213,10 @@ export function HmisProgramNoteCreate(props: TProps) {
   const {
     handleSubmit,
     formState: { isSubmitting },
-  } = formMethods;
+  } = methods;
 
   return (
-    <FormProvider {...formMethods}>
+    <FormProvider {...methods}>
       <Form.Page
         actionProps={{
           onSubmit: handleSubmit(onSubmit),
@@ -119,7 +224,7 @@ export function HmisProgramNoteCreate(props: TProps) {
           disabled: isSubmitting,
         }}
       >
-        <HmisProgramNoteForm hmisClientId={hmisClientId} />
+        <HmisProgramNoteForm clientId={clientId} />
       </Form.Page>
     </FormProvider>
   );

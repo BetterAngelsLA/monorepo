@@ -1,3 +1,4 @@
+import { useMutation } from '@apollo/client/react';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
@@ -8,13 +9,14 @@ import {
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { TaskType } from '../../../apollo';
+import { useSnackbar } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { pagePaddingHorizontal } from '../../../static';
 import { TaskCard, TaskForm, TaskList } from '../../../ui-components';
-import { TasksQuery } from '../../Tasks/__generated__/Tasks.generated';
+import { CreateTaskDocument } from '../../../ui-components/TaskForm/__generated__/createTask.generated';
+import { TaskFormData } from '../../../ui-components/TaskForm/TaskForm';
 import { ClientProfileQuery } from '../__generated__/Client.generated';
-
-type TTask = TasksQuery['tasks']['results'][number];
 
 type TProps = {
   client: ClientProfileQuery | undefined;
@@ -25,11 +27,43 @@ export function TasksTab(props: TProps) {
 
   const [search, setSearch] = useState('');
 
+  const [createTask] = useMutation(CreateTaskDocument);
+  const { showSnackbar } = useSnackbar();
+
+  const onSubmit = async (task: TaskFormData) => {
+    if (!client?.clientProfile.id) return;
+    try {
+      const result = await createTask({
+        variables: {
+          data: {
+            summary: task.summary!,
+            description: task.description,
+            status: task.status,
+            team: task.team || null,
+            clientProfile: client.clientProfile.id,
+          },
+        },
+      });
+
+      if (result.data?.createTask.__typename === 'OperationInfo') {
+        console.log(result.data.createTask.messages);
+      }
+
+      closeModalScreen();
+    } catch (e) {
+      showSnackbar({
+        message: 'Error creating a task.',
+        type: 'error',
+      });
+      console.error(e);
+    }
+  };
+
   const currentPath = client
     ? `/client/${client?.clientProfile.id}?newTab=Tasks`
     : undefined;
 
-  const handleTaskPress = useCallback((task: TTask) => {
+  const handleTaskPress = useCallback((task: TaskType) => {
     router.navigate({
       pathname: `/task/${task.id}`,
       params: { arrivedFrom: currentPath },
@@ -37,7 +71,7 @@ export function TasksTab(props: TProps) {
   }, []);
 
   const renderTaskItem = useCallback(
-    (task: TTask) => (
+    (task: TaskType) => (
       <TaskCard task={task} onPress={handleTaskPress} variant="withoutClient" />
     ),
     [handleTaskPress]
@@ -74,14 +108,10 @@ export function TasksTab(props: TProps) {
       presentation: 'modal',
       content: (
         <TaskForm
-          clientProfileId={client?.clientProfile.id}
           onCancel={() => {
             closeModalScreen();
           }}
-          onSuccess={() => {
-            closeModalScreen();
-          }}
-          arrivedFrom={currentPath || '/tasks'}
+          onSubmit={onSubmit}
         />
       ),
       title: 'Follow-Up Task',

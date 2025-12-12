@@ -1,5 +1,5 @@
 import uuid
-from typing import cast
+from typing import Optional, cast
 
 import strawberry
 import strawberry_django
@@ -28,7 +28,9 @@ from .models import PermissionGroup, User
 from .types import (
     AuthResponse,
     LoginInput,
+    OrganizationMemberOrdering,
     OrganizationMemberType,
+    OrganizationOrder,
     OrganizationType,
     OrgInvitationInput,
     UpdateUserInput,
@@ -71,7 +73,7 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(NotePermissions.ADD)],
     )
-    def caseworker_organizations(self) -> QuerySet[Organization]:
+    def caseworker_organizations(self, ordering: Optional[list[OrganizationOrder]] = None) -> QuerySet[Organization]:
         queryset: QuerySet[Organization] = Organization.objects.filter(
             permission_groups__name__icontains=GroupTemplateNames.CASEWORKER
         )
@@ -104,7 +106,9 @@ class Query:
         permission_classes=[IsAuthenticated],
         extensions=[HasPerm(UserOrganizationPermissions.VIEW_ORG_MEMBERS)],
     )
-    def organization_members(self, info: Info, organization_id: str) -> QuerySet[User]:
+    def organization_members(
+        self, info: Info, organization_id: str, ordering: Optional[list[OrganizationMemberOrdering]] = None
+    ) -> QuerySet[User]:
         current_user = cast(User, get_current_user(info))
         try:
             organization = filter_for_user(

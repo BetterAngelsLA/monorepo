@@ -3,6 +3,7 @@ from accounts.schema import Query as AccountsQuery
 from clients.schema import Mutation as ClientsMutation
 from clients.schema import Query as ClientsQuery
 from common.graphql.schema import Query as CommonQuery
+from hmis.gql_schema import Mutation as HmisGqlMutation
 from hmis.schema import Mutation as HmisMutation
 from hmis.schema import Query as HmisQuery
 from notes.schema import Mutation as NotesMutation
@@ -19,7 +20,7 @@ from tasks.schema import Query as TasksQuery
 queries = (AccountsQuery, ClientsQuery, CommonQuery, HmisQuery, NotesQuery, TasksQuery, SheltersQuery)
 Query = merge_types("Query", queries)
 
-mutations = (AccountsMutation, ClientsMutation, HmisMutation, NotesMutation, TasksMutation)
+mutations = (AccountsMutation, ClientsMutation, HmisGqlMutation, HmisMutation, NotesMutation, TasksMutation)
 Mutation = merge_types("Mutation", mutations)
 
 schema = Schema(

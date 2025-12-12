@@ -26,6 +26,7 @@ interface IFieldCardProps extends TMarginProps {
   required?: boolean;
   error?: string | undefined;
   expanded?: boolean;
+  loading?: boolean;
   onPress: () => void;
   childHeight?: DimensionValue | undefined;
   overflow?: 'hidden' | 'visible' | 'scroll' | undefined;
@@ -38,6 +39,7 @@ export function FieldCardHmisNote(props: IFieldCardProps) {
     title,
     actionName,
     disabled,
+    loading,
     required,
     error,
     expanded,
@@ -49,6 +51,7 @@ export function FieldCardHmisNote(props: IFieldCardProps) {
   return (
     <FieldCardHmisNoteWrapper
       expanded={expanded}
+      loading={loading}
       onPress={() => !disabled && onPress()}
       title={title}
       error={error}

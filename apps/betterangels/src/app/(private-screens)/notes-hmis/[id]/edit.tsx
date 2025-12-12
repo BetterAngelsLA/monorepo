@@ -1,10 +1,24 @@
-import { TextBold } from '@monorepo/expo/shared/ui-components';
-import { View } from 'react-native';
+import { HmisProgramNoteEdit } from '@monorepo/expo/betterangels';
+import { useLocalSearchParams } from 'expo-router';
+
+type TSearchParams = {
+  id: string;
+  clientId: string;
+  arrivedFrom?: string;
+};
 
 export default function InteractionsHmisEdit() {
+  const { id, clientId, arrivedFrom } = useLocalSearchParams<TSearchParams>();
+
+  if (!id || !clientId) {
+    throw new Error('Something went wrong. Please try again.');
+  }
+
   return (
-    <View>
-      <TextBold>EDIT NOTE</TextBold>
-    </View>
+    <HmisProgramNoteEdit
+      id={id}
+      clientId={clientId}
+      arrivedFrom={arrivedFrom}
+    />
   );
 }

@@ -11,10 +11,10 @@ import {
 } from '../../apollo';
 import { pagePaddingHorizontal } from '../../static';
 import { ClientProfileListHeader } from './ClientProfileListHeader';
-import { ListLoadingView } from './ListLoadingView';
 import {
+  ClientProfilesDocument,
   ClientProfilesQuery,
-  useClientProfilesQuery,
+  ClientProfilesQueryVariables,
 } from './__generated__/ClientProfiles.generated';
 import {
   DEFAULT_ITEM_GAP,
@@ -30,7 +30,7 @@ type TProps = {
   style?: StyleProp<ViewStyle>;
   itemGap?: number;
   filters?: InputMaybe<ClientProfileFilter>;
-  order?: ClientProfileOrder | null;
+  ordering?: ClientProfileOrder | null;
   paginationLimit?: number;
   showAllClientsLink?: boolean;
   renderHeaderText?: (props: ListHeaderProps) => string;
@@ -40,7 +40,7 @@ type TProps = {
 
 export function ClientProfileList({
   filters,
-  order = DEFAULT_QUERY_ORDER,
+  ordering = DEFAULT_QUERY_ORDER,
   itemGap = DEFAULT_ITEM_GAP,
   paginationLimit = DEFAULT_PAGINATION_LIMIT,
   renderItem,
@@ -51,10 +51,14 @@ export function ClientProfileList({
   horizontalPadding = pagePaddingHorizontal,
 }: TProps) {
   const { items, total, loading, loadMore, hasMore, error } =
-    useInfiniteScrollQuery<TClientProfile, typeof useClientProfilesQuery>({
-      useQueryHook: useClientProfilesQuery,
+    useInfiniteScrollQuery<
+      TClientProfile,
+      ClientProfilesQuery,
+      ClientProfilesQueryVariables
+    >({
+      document: ClientProfilesDocument,
       queryFieldName: 'clientProfiles',
-      variables: { filters, order: order || undefined },
+      variables: { filters, ordering: ordering || undefined },
       pageSize: paginationLimit,
     });
 
@@ -77,7 +81,6 @@ export function ClientProfileList({
         loadMore={loadMore}
         hasMore={hasMore}
         modelName="client"
-        LoadingViewContent={<ListLoadingView style={{ paddingVertical: 40 }} />}
         renderResultsHeader={(visible, totalItems) => (
           <View
             style={[

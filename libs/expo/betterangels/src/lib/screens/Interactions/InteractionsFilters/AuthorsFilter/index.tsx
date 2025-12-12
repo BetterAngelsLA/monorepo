@@ -1,3 +1,4 @@
+import { useQuery } from '@apollo/client/react';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Button,
@@ -11,7 +12,7 @@ import { ScrollView, View } from 'react-native';
 import { Ordering, SelahTeamEnum } from '../../../../apollo';
 import { useInfiniteScroll, useUser } from '../../../../hooks';
 import { Modal } from '../../../../ui-components';
-import { useInteractionAuthorsQuery } from './__generated__/AuthorsFilter.generated';
+import { InteractionAuthorsDocument } from './__generated__/AuthorsFilter.generated';
 
 type TFilters = {
   authors: { id: string; label: string }[];
@@ -40,10 +41,10 @@ export default function AuthorsFilter(props: IAuthorsFilterProps) {
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const { data, loading, error } = useInteractionAuthorsQuery({
+  const { data, loading, error } = useQuery(InteractionAuthorsDocument, {
     variables: {
       filters: { search: filterSearch },
-      order: {
+      ordering: {
         firstName: Ordering.AscNullsFirst,
         lastName: Ordering.AscNullsFirst,
         id: Ordering.Desc,

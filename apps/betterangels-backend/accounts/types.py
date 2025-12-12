@@ -38,13 +38,13 @@ class LoginInput:
     password: str
 
 
-@strawberry_django.ordering.order(Organization)
+@strawberry_django.order_type(Organization, one_of=False)
 class OrganizationOrder:
     name: auto
     id: auto
 
 
-@strawberry_django.filters.filter(Organization)
+@strawberry_django.filter(Organization)
 class OrganizationFilter:
     @strawberry_django.filter_field
     def search(
@@ -64,7 +64,7 @@ class OrganizationFilter:
         return (queryset.filter(query), Q())
 
 
-@strawberry_django.type(Organization, order=OrganizationOrder, filters=OrganizationFilter)  # type: ignore[literal-required]
+@strawberry_django.type(Organization, order=OrganizationOrder, ordering=OrganizationOrder, filters=OrganizationFilter)  # type: ignore[literal-required]
 class OrganizationType:
     id: ID
     name: auto
@@ -124,7 +124,7 @@ class UserType(UserBaseType):
     has_accepted_tos: Optional[bool]
     has_accepted_privacy_policy: Optional[bool]
     is_outreach_authorized: Optional[bool]
-    username: auto
+    username: Optional[str]
 
     @strawberry_django.field
     def is_hmis_user(self, info: Info) -> Optional[bool]:
@@ -134,7 +134,26 @@ class UserType(UserBaseType):
         return bool(session.get(HMIS_SESSION_KEY_NAME, None))
 
 
-@strawberry_django.type(User)
+@strawberry_django.order_type(User, one_of=False)
+class OrganizationMemberOrdering:
+    id: auto
+    email: auto
+    first_name: auto
+    last_login: auto
+    last_name: auto
+
+    @strawberry_django.order_field
+    def member_role(
+        self,
+        info: Info,
+        queryset: QuerySet,
+        value: auto,
+        prefix: str,
+    ) -> tuple[QuerySet[User], list[strawberry_django.Ordering]]:
+        return queryset, [value.resolve(f"{prefix}_member_role")]
+
+
+@strawberry_django.type(User, pagination=True, ordering=OrganizationMemberOrdering)
 class OrganizationMemberType(UserBaseType):
     id: ID
     last_login: auto

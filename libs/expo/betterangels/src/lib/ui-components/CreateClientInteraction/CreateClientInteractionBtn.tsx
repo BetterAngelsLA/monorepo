@@ -1,3 +1,4 @@
+import { useMutation } from '@apollo/client/react';
 import { PlusIcon } from '@monorepo/expo/shared/icons';
 import { Colors } from '@monorepo/expo/shared/static';
 import { IconButton } from '@monorepo/expo/shared/ui-components';
@@ -6,7 +7,7 @@ import { ReactNode, useCallback, useRef } from 'react';
 import { Pressable, StyleSheet, ViewStyle } from 'react-native';
 import { useSnackbar } from '../../hooks';
 import { useBlockingScreen } from '../../providers';
-import { useCreateNoteMutation } from './__generated__/CreateInteraction.generated';
+import { CreateNoteDocument } from './__generated__/CreateInteraction.generated';
 
 type TProps = {
   clientProfileId: string;
@@ -35,7 +36,7 @@ export function CreateClientInteractionBtn(props: TProps) {
   const isProcessing = useRef(false);
 
   const router = useRouter();
-  const [createNote] = useCreateNoteMutation();
+  const [createNote] = useMutation(CreateNoteDocument);
   const { showSnackbar } = useSnackbar();
   const { blockScreenUntilNextNavigation, unblockScreen } = useBlockingScreen();
 

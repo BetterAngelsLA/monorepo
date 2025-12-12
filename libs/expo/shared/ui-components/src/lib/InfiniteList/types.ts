@@ -1,35 +1,14 @@
 import { type FlashListProps } from '@shopify/flash-list';
-import type { ComponentType, ReactElement, ReactNode } from 'react';
+import type { ComponentType, ReactElement } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
+import { TLoadingListView } from './LoadingListView';
 import { TRenderListResultsHeader } from './ResultsHeader';
 
 // FlashListProps to pass thru
 type ExtraFlashListProps<T> = Omit<
   Partial<FlashListProps<T>>,
-  | 'data'
-  | 'renderItem'
-  // | 'keyExtractor'
-  | 'ItemSeparatorComponent'
-  | 'onEndReached'
+  'data' | 'renderItem' | 'ItemSeparatorComponent' | 'onEndReached'
 >;
-
-// FlashList keyExtractor strategy
-// pass either idKey or custom keyExtractor fn
-// type ExtractKeyProps<T> = XOR<
-//   { idKey: Extract<keyof T, string | number> },
-//   { keyExtractor: (item: T, index: number) => string }
-// >;
-// pass either idKey or custom keyExtractor fn
-// type ExtractKeyProps<T> = XOR<
-//   { idKey: keyof T },
-//   { keyExtractor: (item: T, index: number) => string }
-// >;
-
-// for infinite scroll
-// type LoadMorePair = { loadMore: () => void; hasMore: boolean };
-// type LoadMoreNever = { loadMore?: never; hasMore?: never };
-
-// type LoadMoreProps = XOR<LoadMorePair, LoadMoreNever>;
 
 type LoadMoreProps = {
   loadMore?: () => void;
@@ -42,21 +21,21 @@ type InfiniteListBaseProps<T> = {
   data: T[];
   renderItem: (item: T) => ReactElement | null;
   estimatedItemSize?: number; // rendering optimization. see console message if undefined
-  // idKey: Extract<keyof T, string | number>;
-  // idKey: Extract<keyof T, string>;
-  // idKey: keyof T;
   loading?: boolean;
   itemGap?: number;
   totalItems?: number;
   modelName?: string; // singular model name to render in ResultsHeader
   modelNamePlural?: string; // plural model name to render in ResultsHeader
   renderResultsHeader?: TRenderListResultsHeader | null;
-  LoadingViewContent?: ReactNode | null;
+  loadingViewOptions?: TLoadingListView;
   showScrollIndicator?: boolean;
   ItemSeparatorComponent?: ComponentType<any> | null;
+  error?: boolean; // determines whether to show ErrorView
+  errorTitle?: string;
+  errorMessage?: string;
+  ErrorViewComponent?: ComponentType<any> | ReactElement | null;
 };
 
 export type TInfiniteListProps<T> = InfiniteListBaseProps<T> &
   ExtraFlashListProps<T> &
-  // ExtractKeyProps<T> &
   LoadMoreProps;

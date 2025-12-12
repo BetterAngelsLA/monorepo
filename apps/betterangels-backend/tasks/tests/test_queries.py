@@ -61,6 +61,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "lastName": self.org_1_case_manager_1.last_name,
             },
             "description": "task description",
+            "hmisNote": None,
             "note": {"pk": str(self.note.pk)},
             "organization": {
                 "id": str(self.org_1.pk),
@@ -103,6 +104,7 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 "lastName": self.org_1_case_manager_1.last_name,
             },
             "description": "task description",
+            "hmisNote": None,
             "note": {"pk": str(self.note.pk)},
             "organization": {
                 "id": str(self.org_1.pk),

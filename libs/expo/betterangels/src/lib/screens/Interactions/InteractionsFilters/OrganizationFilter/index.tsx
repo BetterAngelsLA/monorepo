@@ -1,3 +1,4 @@
+import { useQuery } from '@apollo/client/react';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import {
   Button,
@@ -11,7 +12,7 @@ import { ScrollView, View } from 'react-native';
 import { Ordering, SelahTeamEnum } from '../../../../apollo';
 import { useInfiniteScroll, useUser } from '../../../../hooks';
 import { Modal } from '../../../../ui-components';
-import { useCaseworkerOrganizationsQuery } from './__generated__/OrganizationFilter.generated';
+import { CaseworkerOrganizationsDocument } from './__generated__/OrganizationFilter.generated';
 
 type TFilters = {
   authors: { id: string; label: string }[];
@@ -40,10 +41,10 @@ export default function OrganizationFilter(props: IOrganizationFilterProps) {
   const [offset, setOffset] = useState<number>(0);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const { data, loading, error } = useCaseworkerOrganizationsQuery({
+  const { data, loading, error } = useQuery(CaseworkerOrganizationsDocument, {
     variables: {
       filters: { search: filterSearch },
-      order: {
+      ordering: {
         name: Ordering.AscNullsLast,
         id: Ordering.Desc,
       },

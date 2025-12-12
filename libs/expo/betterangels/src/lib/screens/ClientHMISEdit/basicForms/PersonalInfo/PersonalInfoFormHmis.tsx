@@ -1,33 +1,21 @@
 import {
+  ControlledInput,
   DatePicker,
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
-import { format, isValid, parse, parseISO } from 'date-fns';
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import {
+  enumDisplayLanguage,
+  enumDisplayLivingSituation,
   enumHmisDobQuality,
   enumHmisVeteranStatusEnum,
 } from '../../../../static';
-import { TPersonalInfoFormSchema } from './formSchema';
-
-const YMD = 'yyyy-MM-dd';
-
-const coerceDobToDate = (value?: string | Date | null) => {
-  if (!value) return undefined;
-  if (value instanceof Date) return isValid(value) ? value : undefined;
-
-  const s = String(value).trim();
-  if (!s) return undefined;
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
-    const d = parse(s, YMD, new Date());
-    return isValid(d) ? d : undefined;
-  }
-  const d = parseISO(s);
-  return isValid(d) ? d : undefined;
-};
+import {
+  TPersonalInfoFormSchema,
+  personalInfoFormEmptyState,
+} from './formSchema';
 
 export function PersonalInfoFormHmis() {
   const {
@@ -37,28 +25,25 @@ export function PersonalInfoFormHmis() {
     formState: { errors, isSubmitting },
   } = useFormContext<TPersonalInfoFormSchema>();
 
-  const dobStr = (watch('dob') as string | undefined) || '';
+  const dobQuality = watch('dobQuality');
 
-  const dob = useMemo(() => coerceDobToDate(dobStr), [dobStr]);
+  const isDobDisabled =
+    dobQuality === 'DONT_KNOW' ||
+    dobQuality === 'NO_ANSWER' ||
+    dobQuality === 'NOT_COLLECTED' ||
+    dobQuality === '';
+
+  useEffect(() => {
+    if (isDobDisabled) {
+      setValue('birthDate', null);
+    }
+  }, [isDobDisabled, setValue]);
 
   return (
     <Form>
       <Form.Fieldset>
-        <DatePicker
-          label="Date of Birth"
-          type="numeric"
-          validRange={{
-            endDate: new Date(),
-            startDate: new Date('1900-01-01'),
-          }}
-          value={dob}
-          onChange={(date) => {
-            const next = date && isValid(date) ? format(date, YMD) : '';
-            setValue('dob', next, { shouldDirty: true, shouldValidate: true });
-          }}
-        />
         <Controller
-          name="dobDataQuality"
+          name="dobQuality"
           control={control}
           render={({ field: { value, onChange } }) => (
             <SingleSelect
@@ -72,13 +57,23 @@ export function PersonalInfoFormHmis() {
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}
-              error={errors.dobDataQuality?.message}
+              error={errors.dobQuality?.message}
             />
           )}
         />
-
+        <DatePicker
+          name="birthDate"
+          control={control}
+          type="numeric"
+          label="Date of Birth"
+          disabled={isDobDisabled}
+          validRange={{
+            endDate: new Date(),
+            startDate: new Date('1900-01-01'),
+          }}
+        />
         <Controller
-          name="veteranStatus"
+          name="veteran"
           control={control}
           render={({ field: { value, onChange } }) => (
             <SingleSelect
@@ -92,7 +87,61 @@ export function PersonalInfoFormHmis() {
               )}
               selectedValue={value}
               onChange={(value) => onChange(value || '')}
-              error={errors.veteranStatus?.message}
+              error={errors.veteran?.message}
+            />
+          )}
+        />
+
+        <ControlledInput
+          name="californiaId"
+          label="CA ID#"
+          placeholder="Enter CA ID #"
+          control={control}
+          disabled={isSubmitting}
+          autoCapitalize="characters"
+          onDelete={() =>
+            setValue('californiaId', personalInfoFormEmptyState.californiaId)
+          }
+          error={!!errors.californiaId}
+          errorMessage={errors.californiaId?.message}
+        />
+
+        <Controller
+          name="livingSituation"
+          control={control}
+          render={({ field: { value, onChange } }) => (
+            <SingleSelect
+              allowSelectNone={true}
+              disabled={isSubmitting}
+              label="Living Situation"
+              placeholder="Select situation"
+              maxRadioItems={0}
+              items={Object.entries(enumDisplayLivingSituation).map(
+                ([val, displayValue]) => ({ value: val, displayValue })
+              )}
+              selectedValue={value}
+              onChange={(value) => onChange(value || '')}
+              error={errors.livingSituation?.message}
+            />
+          )}
+        />
+
+        <Controller
+          name="preferredLanguage"
+          control={control}
+          render={({ field: { value, onChange } }) => (
+            <SingleSelect
+              allowSelectNone={true}
+              disabled={isSubmitting}
+              label="Preferred Language"
+              placeholder="Select language"
+              maxRadioItems={0}
+              items={Object.entries(enumDisplayLanguage).map(
+                ([val, displayValue]) => ({ value: val, displayValue })
+              )}
+              selectedValue={value}
+              onChange={(value) => onChange(value || '')}
+              error={errors.preferredLanguage?.message}
             />
           )}
         />

@@ -1,0 +1,48 @@
+query HmisNotes(
+  $filters: HmisNoteFilter
+  $pagination: OffsetPaginationInput
+  $ordering: [HmisNoteOrdering!]! = []
+) {
+  hmisNotes(filters: $filters, pagination: $pagination, ordering: $ordering) {
+    totalCount
+    pageInfo {
+      limit
+      offset
+    }
+    results {
+      id
+      hmisId
+      lastUpdated
+      title
+      note
+      date
+      refClientProgram
+      providedServices {
+        id
+        service {
+          id
+          label
+        }
+      }
+      requestedServices {
+        id
+        service {
+          id
+          label
+        }
+      }
+      hmisClientProfile {
+        id
+        hmisId
+        firstName
+        lastName
+      }
+      addedDate
+      createdBy {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+}

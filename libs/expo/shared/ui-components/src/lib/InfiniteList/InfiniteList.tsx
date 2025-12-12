@@ -3,6 +3,7 @@ import { FlashList } from '@shopify/flash-list';
 import { useCallback, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { EmptyListView } from './EmptyListView';
+import { ErrorListView } from './ErrorListView';
 import { ItemSeparator as DefaultItemSeparator } from './ItemSeparator';
 import { LoadingListView } from './LoadingListView';
 import { ResultsHeader } from './ResultsHeader';
@@ -13,6 +14,9 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     style,
     contentContainerStyle,
     data,
+    error,
+    errorTitle,
+    errorMessage,
     keyExtractor,
     renderItem,
     loadMore,
@@ -22,7 +26,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     extraData,
     ListEmptyComponent,
     ListFooterComponent,
-    LoadingViewContent,
+    loadingViewOptions,
     onEndReachedThreshold = 0.05,
     renderResultsHeader,
     modelName,
@@ -30,6 +34,7 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     itemGap = Spacings.xs,
     showScrollIndicator = false,
     ItemSeparatorComponent,
+    ErrorViewComponent,
     ...rest
   } = props;
 
@@ -52,26 +57,38 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
     return () => <DefaultItemSeparator height={itemGap} />;
   }, [ItemSeparatorComponent, itemGap]);
 
-  const footerComponent = useMemo(() => {
+  const FooterComponent = useMemo(() => {
     if (ListFooterComponent) {
       return ListFooterComponent;
     }
 
     if (loading) {
-      return <LoadingListView content={LoadingViewContent} />;
+      return <LoadingListView {...loadingViewOptions} />;
     }
 
     // small footer helps ensure there’s space to hit the end
     return <View style={{ height: Spacings.sm }} />;
-  }, [ListFooterComponent, loading, LoadingViewContent]);
+  }, [ListFooterComponent, loading, loadingViewOptions]);
 
-  const emptyComponent = useMemo(() => {
+  const ErrorView = useMemo(() => {
+    if (ErrorViewComponent) {
+      return ErrorViewComponent;
+    }
+
+    return <ErrorListView title={errorTitle} bodyText={errorMessage} />;
+  }, [errorTitle, errorMessage, ErrorViewComponent]);
+
+  const EmptyView = useMemo(() => {
     if (loading) {
       return null;
     }
 
+    if (error) {
+      return ErrorView;
+    }
+
     return ListEmptyComponent ?? <EmptyListView />;
-  }, [loading, ListEmptyComponent]);
+  }, [loading, error, ListEmptyComponent, ErrorView]);
 
   const mergedContentContainerStyle = useMemo(
     () => StyleSheet.flatten([styles.contentContainer, contentContainerStyle]),
@@ -86,14 +103,16 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
 
   return (
     <View style={[styles.container, style]}>
-      <ResultsHeader
-        visibleCount={data.length}
-        totalCount={totalItems}
-        modelName={modelName}
-        modelNamePlural={modelNamePlural}
-        renderResultsHeader={renderResultsHeader}
-        style={styles.resultsHeader}
-      />
+      {!error && (
+        <ResultsHeader
+          visibleCount={data.length}
+          totalCount={totalItems}
+          modelName={modelName}
+          modelNamePlural={modelNamePlural}
+          renderResultsHeader={renderResultsHeader}
+          style={styles.resultsHeader}
+        />
+      )}
 
       <FlashList<T>
         data={data}
@@ -102,8 +121,8 @@ export function InfiniteList<T>(props: TInfiniteListProps<T>) {
         onEndReachedThreshold={onEndReachedThreshold}
         ItemSeparatorComponent={ItemSeparator}
         extraData={stableExtraData}
-        ListEmptyComponent={emptyComponent}
-        ListFooterComponent={footerComponent}
+        ListEmptyComponent={EmptyView}
+        ListFooterComponent={FooterComponent}
         contentContainerStyle={mergedContentContainerStyle}
         showsVerticalScrollIndicator={showScrollIndicator}
         {...rest}

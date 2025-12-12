@@ -1,7 +1,9 @@
-export { extractExtensionErrors } from './extractExtensionErrors';
+export { extractExtensionFieldErrors } from './extractExtensionFieldErrors';
 export { extractHMISErrors } from './extractHMISErrors';
 export { extractOperationErrors } from './extractOperationErrors';
+export { extractOperationFieldErrors } from './extractOperationFieldErrors';
 export { extractOperationInfo } from './extractOperationInfo';
 export { extractOperationInfoMessage } from './extractOperationInfoMessage';
-export { hasTypename } from './hasTypename';
-export * from './types';
+export { extractOperationInfoMessages } from './extractOperationInfoMessages';
+export { extractResponseExtensions } from './extractResponseExtensions';
+export * from './utils';

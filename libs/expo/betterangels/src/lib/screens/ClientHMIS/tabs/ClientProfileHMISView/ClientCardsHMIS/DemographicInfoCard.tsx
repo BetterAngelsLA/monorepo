@@ -1,5 +1,14 @@
-import { HmisClientType } from '../../../../../apollo';
-import { enumHmisGender, enumHmisRace } from '../../../../../static';
+import { getFormattedLength } from '@monorepo/expo/shared/ui-components';
+import { HmisClientProfileType } from '../../../../../apollo';
+import {
+  enumDisplayAdaAccommodationEnum,
+  enumDisplayEyeColor,
+  enumDisplayHairColor,
+  enumDisplayMaritalStatus,
+  enumDisplayPronoun,
+  enumHmisGender,
+  enumHmisRace,
+} from '../../../../../static';
 import {
   ClientProfileCard,
   ClientProfileCardContainer,
@@ -7,19 +16,25 @@ import {
 } from '../../../../../ui-components';
 
 type TProps = {
-  client?: HmisClientType;
+  client?: HmisClientProfileType;
 };
 
 export function DemographicInfoCardHmis(props: TProps) {
   const { client } = props;
-
-  const { data } = client || {};
   const {
     gender,
     raceEthnicity,
-    additionalRaceEthnicity,
-    differentIdentityText,
-  } = data || {};
+    additionalRaceEthnicityDetail,
+    genderIdentityText,
+    pronouns,
+    placeOfBirth,
+    heightInInches,
+    eyeColor,
+    hairColor,
+    maritalStatus,
+    physicalDescription,
+    adaAccommodation,
+  } = client || {};
 
   const genderValues = (gender || [])
     .filter((key) => !!key)
@@ -29,6 +44,18 @@ export function DemographicInfoCardHmis(props: TProps) {
   const raceEthnicityValues = (raceEthnicity || [])
     .filter((key) => !!key)
     .map((key) => enumHmisRace[key])
+    .join(', ');
+
+  const formattedHeight = getFormattedLength({
+    length: heightInInches,
+    inputUnit: 'inches',
+    outputUnit: 'inches',
+    format: 'feet-inches-symbol',
+  });
+
+  const adaAccommodationDisplay = (adaAccommodation || [])
+    .filter((key) => !!key)
+    .map((key) => enumDisplayAdaAccommodationEnum[key])
     .join(', ');
 
   const content: TClientProfileCardItem[] = [
@@ -42,17 +69,49 @@ export function DemographicInfoCardHmis(props: TProps) {
     },
     {
       header: ['Additional Race and Ethnicity'],
-      rows: [[additionalRaceEthnicity]],
+      rows: [[additionalRaceEthnicityDetail]],
     },
     {
       header: ['Different Identity Text'],
-      rows: [[differentIdentityText]],
+      rows: [[genderIdentityText]],
+    },
+    {
+      header: ['Pronouns'],
+      rows: [[pronouns && enumDisplayPronoun[pronouns]]],
+    },
+    {
+      header: ['Place of Birth'],
+      rows: [[placeOfBirth]],
+    },
+    {
+      header: ['Height'],
+      rows: [[formattedHeight]],
+    },
+    {
+      header: ['Eye Color'],
+      rows: [[eyeColor && enumDisplayEyeColor[eyeColor]]],
+    },
+    {
+      header: ['Hair Color'],
+      rows: [[hairColor && enumDisplayHairColor[hairColor]]],
+    },
+    {
+      header: ['Marital Status'],
+      rows: [[maritalStatus && enumDisplayMaritalStatus[maritalStatus]]],
+    },
+    {
+      header: ['Physical Description'],
+      rows: [[physicalDescription]],
+    },
+    {
+      header: ['ADA Accommodation'],
+      rows: [[adaAccommodationDisplay]],
     },
   ];
 
   return (
     <ClientProfileCardContainer>
-      <ClientProfileCard items={content} showAll={true} />
+      <ClientProfileCard items={content} />
     </ClientProfileCardContainer>
   );
 }
