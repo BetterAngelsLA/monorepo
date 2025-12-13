@@ -15,6 +15,7 @@ import {
   CreateHmisServiceRequestDocument,
   RemoveHmisNoteServiceRequestDocument,
 } from '../HmisProgramNoteCreate/__generated__/HmisServiceRequest.generated';
+import { UpdateHmisNoteLocationDocument } from '../HmisProgramNoteCreate/__generated__/updateHmisNoteLocation.generated';
 import {
   HmisNoteFormFieldNames,
   HmisProgramNoteForm,
@@ -44,11 +45,12 @@ export function HmisProgramNoteEdit(props: TProps) {
   const [existingNote, setExistingNote] =
     useState<ViewHmisNoteQuery['hmisNote']>();
   const [updateHmisNoteMutation] = useMutation(UpdateHmisNoteDocument);
+  const [updateHmisNoteLocation] = useMutation(UpdateHmisNoteLocationDocument);
   const [deleteService] = useMutation(RemoveHmisNoteServiceRequestDocument);
   const [createServiceRequest] = useMutation(CreateHmisServiceRequestDocument);
 
   async function applyBucket(
-    noteId: string,
+    id: string,
     type: ServiceRequestTypeEnum,
     bucket: any
   ) {
@@ -59,7 +61,7 @@ export function HmisProgramNoteEdit(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
             serviceId: s.serviceId!,
           },
@@ -73,7 +75,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         variables: {
           data: {
             serviceRequestId: s.serviceRequestId!,
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
           },
         },
@@ -85,7 +87,7 @@ export function HmisProgramNoteEdit(props: TProps) {
       await createServiceRequest({
         variables: {
           data: {
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
             serviceOther: o.serviceOther!.trim(),
           },
@@ -99,7 +101,7 @@ export function HmisProgramNoteEdit(props: TProps) {
         variables: {
           data: {
             serviceRequestId: o.serviceRequestId!,
-            hmisNoteId: noteId,
+            hmisNoteId: id,
             serviceRequestType: type,
           },
         },
@@ -175,7 +177,7 @@ export function HmisProgramNoteEdit(props: TProps) {
       const payload: THmisProgramNoteFormOutputs =
         HmisProgramNoteFormSchemaOutput.parse(values);
 
-      const { services, ...rest } = payload;
+      const { services, location, ...rest } = payload;
 
       const updateResponse = await updateHmisNoteMutation({
         variables: {
@@ -213,18 +215,35 @@ export function HmisProgramNoteEdit(props: TProps) {
         throw new Error('typename is not HmisNoteType');
       }
 
-      const noteId = result.id;
-
       const draftServices = services ?? {};
 
+      if (location) {
+        await updateHmisNoteLocation({
+          variables: {
+            data: {
+              id,
+              location: {
+                point: [location.longitude, location.latitude],
+                address: location.formattedAddress
+                  ? {
+                      formattedAddress: location.formattedAddress,
+                      addressComponents: JSON.stringify(location.components),
+                    }
+                  : null,
+              },
+            },
+          },
+        });
+      }
+
       await applyBucket(
-        noteId,
+        id,
         ServiceRequestTypeEnum.Provided,
         draftServices[ServiceRequestTypeEnum.Provided]
       );
 
       await applyBucket(
-        noteId,
+        id,
         ServiceRequestTypeEnum.Requested,
         draftServices[ServiceRequestTypeEnum.Requested]
       );

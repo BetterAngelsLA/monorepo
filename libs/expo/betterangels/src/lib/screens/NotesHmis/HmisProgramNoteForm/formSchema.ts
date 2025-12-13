@@ -21,6 +21,13 @@ export type LocalDraftTask = {
 // 2. Validation Schema
 // ----------------------------------------------------------------------
 
+export type LocationDraft = Partial<{
+  latitude: number;
+  longitude: number;
+  formattedAddress: string;
+  components: string;
+}>;
+
 export type ServicesDraft = Partial<
   Record<
     ServiceRequestTypeEnum,
@@ -46,6 +53,7 @@ export const HmisProgramNoteFormSchema = z.object({
     ),
   refClientProgram: z.string(),
   note: z.string().min(1, 'Note is required.'),
+  location: z.custom<LocationDraft>().optional(),
 
   // FIX 1: Remove .default([]). This makes the field REQUIRED in the type definition,
   // preventing the "undefined is not assignable to LocalDraftTask[]" error.
@@ -94,6 +102,12 @@ export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormInputs = {
   date: undefined,
   refClientProgram: '',
   note: '',
+  location: {
+    latitude: 0,
+    longitude: 0,
+    formattedAddress: '',
+    components: '',
+  },
   draftTasks: [],
   services: {},
 };

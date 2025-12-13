@@ -13,6 +13,7 @@ import { ServiceRequestTypeEnum, UpdateTaskInput } from '../../../apollo';
 import { useHmisClientPrograms } from '../../../hooks';
 import { useModalScreen } from '../../../providers';
 import { GirpNoteForm, NoteTasks } from '../../../ui-components';
+import HmisLocationComponent from '../HmisLocation';
 import { FORM_KEYS } from './constants';
 import {
   LocalDraftTask,
@@ -185,6 +186,11 @@ export function HmisProgramNoteForm(props: TProps) {
           }}
         />
       </FieldCardHmisNote>
+
+      <HmisLocationComponent
+        expanded={expandedField === FORM_KEYS.location}
+        setExpanded={setExpandedField}
+      />
 
       <FieldCardHmisNote
         required
