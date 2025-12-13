@@ -28,7 +28,9 @@ export function MainLayout(props: IParams): ReactElement {
   return (
     <div className={mergeCss(parentCss)}>
       <HorizontalLayout className="bg-steel-blue">
-        <Header />
+        <div className="flex items-center">
+          <Header />
+        </div>
       </HorizontalLayout>
       <HorizontalLayout className="mb-24">
         <Outlet />

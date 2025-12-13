@@ -1,0 +1,17 @@
+@keyframes dropdownSmooth {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px) scaleY(0.95);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(4px) scaleY(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+.animate-dropdownSmooth {
+  animation: dropdownSmooth 0.32s cubic-bezier(0.23, 1, 0.32, 1);
+}
