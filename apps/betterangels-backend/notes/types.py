@@ -169,7 +169,6 @@ class NoteFilter:
     models.Note,
     pagination=True,
     filters=NoteFilter,
-    order=NoteOrder,  # type: ignore[literal-required]
     ordering=NoteOrder,
 )
 class NoteType:
@@ -294,7 +293,6 @@ class InteractionAuthorOrder:
 @strawberry_django.type(
     User,
     filters=InteractionAuthorFilter,
-    order=InteractionAuthorOrder,  # type: ignore[literal-required]
     ordering=InteractionAuthorOrder,
 )
 class InteractionAuthorType:

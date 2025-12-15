@@ -322,7 +322,7 @@ class ClientProfileBaseType:
     veteran_status: auto
 
 
-@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, ordering=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
+@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, ordering=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
 class ClientProfileType(ClientProfileBaseType):
     id: ID
     contacts: Optional[List[ClientContactType]]
