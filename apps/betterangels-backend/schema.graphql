@@ -2025,7 +2025,7 @@ enum TaskStatusEnum {
 
 type TaskType {
   id: ID!
-  hmisClientProfile: HmisProfileType
+  hmisClientProfile: HmisClientProfileType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!

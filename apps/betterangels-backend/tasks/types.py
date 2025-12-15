@@ -1,10 +1,11 @@
 import operator
 from functools import reduce
-from typing import Optional
+from typing import TYPE_CHECKING, Annotated, Optional
 
+import strawberry
 import strawberry_django
 from accounts.types import OrganizationType, UserType
-from clients.types import ClientProfileType, HmisProfileType
+from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
 from common.graphql.types import make_in_filter
 from django.db.models import Q
@@ -12,6 +13,9 @@ from strawberry import ID, Info, auto
 from tasks.enums import TaskScopeEnum, TaskStatusEnum
 
 from . import models
+
+if TYPE_CHECKING:
+    from hmis.types import HmisClientProfileType
 
 
 @strawberry_django.filter_type(models.Task, lookups=True)
@@ -78,7 +82,7 @@ class TaskOrder:
 @strawberry_django.type(models.Task, pagination=True, filters=TaskFilter, ordering=TaskOrder)
 class TaskType:
     id: ID
-    hmis_client_profile: Optional[HmisProfileType]
+    hmis_client_profile: Optional[Annotated["HmisClientProfileType", strawberry.lazy("hmis.types")]]
     client_profile: Optional[ClientProfileType]
     created_at: auto
     created_by: UserType
