@@ -257,6 +257,12 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 [self.task, hmis_task, general_task],
                 [],
             ),
+            (
+                "empty_filter_default",
+                {"scopes": []},
+                [self.task, hmis_task, general_task],
+                [],
+            ),
         ]
 
         # 3. Iterate and Assert
