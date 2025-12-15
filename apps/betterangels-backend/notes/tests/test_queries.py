@@ -392,8 +392,8 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         self._update_note_fixture({"id": oldest_note["id"], "interactedAt": "2024-01-10T10:11:12+00:00"})
 
         query = """
-            query Notes($order: NoteOrder) {
-                notes(order: $order) {
+            query Notes($ordering: [NoteOrder!]) {
+                notes(ordering: $ordering) {
                     results{
                         id
                     }
@@ -404,7 +404,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
         # Test descending order
         expected_query_count = 3
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query, variables={"order": {"interactedAt": "DESC"}})
+            response = self.execute_graphql(query, variables={"ordering": [{"interactedAt": "DESC"}]})
 
         self.assertEqual(
             [n["id"] for n in response["data"]["notes"]["results"]],
@@ -413,7 +413,7 @@ class NoteQueryTestCase(NoteGraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         # Test ascending order
         with self.assertNumQueriesWithoutCache(expected_query_count):
-            response = self.execute_graphql(query, variables={"order": {"interactedAt": "ASC"}})
+            response = self.execute_graphql(query, variables={"ordering": [{"interactedAt": "ASC"}]})
 
         self.assertEqual(
             [n["id"] for n in response["data"]["notes"]["results"]],
