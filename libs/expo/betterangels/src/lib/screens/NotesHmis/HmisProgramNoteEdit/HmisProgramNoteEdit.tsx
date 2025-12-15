@@ -156,6 +156,18 @@ export function HmisProgramNoteEdit(props: TProps) {
           serviceRequests: existingRequestedServices,
         },
       },
+      location: {
+        longitude: existingNote.location?.point[0],
+        latitude: existingNote.location?.point[1],
+        formattedAddress: existingNote.location?.address
+          ? `${existingNote.location?.address.street}, ${existingNote.location?.address.city}, ${existingNote.location?.address.state} ${existingNote.location?.address.zipCode}`
+          : undefined,
+        shortAddressName:
+          existingNote.location?.address &&
+          existingNote.location?.address.street
+            ? existingNote.location?.address.street
+            : undefined,
+      },
     });
   }, [existingNote, methods]);
 
@@ -278,9 +290,9 @@ export function HmisProgramNoteEdit(props: TProps) {
         }}
       >
         <HmisProgramNoteForm
+          editing={true}
           clientId={clientId}
           disabled={formDisabled}
-          editing={true}
           noteId={id}
           existingTasks={existingNote?.tasks || []}
           refetch={refetch}

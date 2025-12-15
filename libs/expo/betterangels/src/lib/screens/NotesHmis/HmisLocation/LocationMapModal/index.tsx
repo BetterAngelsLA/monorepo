@@ -17,6 +17,7 @@ import {
   TPlaceLatLng,
   TPlacesPrediction,
 } from '../../../../services';
+import { LocationDraft } from '../../HmisProgramNoteForm';
 import Directions from './Directions';
 import Map from './Map';
 import Selected from './Selected';
@@ -29,21 +30,12 @@ const INITIAL_LOCATION = {
 type locationLongLat = {
   longitude: number;
   latitude: number;
-  name: string | undefined;
+  shortAddressName: string | undefined;
 };
 
-type TLocation =
-  | {
-      address: string | null | undefined;
-      latitude: number | null | undefined;
-      longitude: number | null | undefined;
-      name: string | null | undefined;
-    }
-  | undefined;
-
 interface ILocationMapModalProps {
-  setLocation: (location: TLocation) => void;
-  location: TLocation;
+  setLocation: (location: LocationDraft) => void;
+  location: LocationDraft;
   onclose?: () => void;
   setValue: (key: string, data: any) => void;
 }
@@ -87,14 +79,16 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   // --- Hydrate from existing note location once ---
   useEffect(() => {
     if (location?.latitude && location?.longitude) {
-      const name =
-        location.name ??
-        (location.address ? location.address.split(', ')[0] : undefined);
+      const shortAddressName =
+        location.shortAddressName ??
+        (location.formattedAddress
+          ? location.formattedAddress.split(', ')[0]
+          : undefined);
 
       setCurrentLocation({
         latitude: location.latitude,
         longitude: location.longitude,
-        name,
+        shortAddressName,
       });
 
       setInitialLocation({
@@ -103,14 +97,14 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       });
 
       setAddress(
-        location.address
+        location.formattedAddress
           ? {
-              short: name ?? '',
-              full: location.address,
+              short: shortAddressName ?? '',
+              full: location.formattedAddress,
               addressComponents: [],
             }
           : {
-              short: name ?? '',
+              short: shortAddressName ?? '',
               full: '',
               addressComponents: [],
             }
@@ -173,19 +167,19 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       setIsSearch(false);
       setSuggestions([]);
 
-      const name = place.description.split(', ')[0];
+      const shortAddressName = place.description.split(', ')[0];
 
-      const newLoc: TLocation = {
+      const newLoc: LocationDraft = {
         longitude: responseLocation.lng,
         latitude: responseLocation.lat,
-        name,
-        address: place.description,
+        shortAddressName,
+        formattedAddress: place.description,
       };
 
       setCurrentLocation({
         longitude: responseLocation.lng,
         latitude: responseLocation.lat,
-        name,
+        shortAddressName,
       });
 
       setInitialLocation({
@@ -204,7 +198,7 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
       );
 
       setAddress({
-        short: name,
+        short: shortAddressName,
         full: place.description,
         addressComponents: placeResult.address_components || [],
       });

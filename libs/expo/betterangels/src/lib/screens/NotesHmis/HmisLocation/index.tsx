@@ -4,11 +4,12 @@ import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { FieldCard, TextMedium } from '@monorepo/expo/shared/ui-components';
 import axios from 'axios';
 import * as ExpoLocation from 'expo-location';
-import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
 import { MapView, Marker, PROVIDER_GOOGLE } from '../../../maps';
 import { useModalScreen } from '../../../providers';
+import { LocationDraft } from '../HmisProgramNoteForm';
 import LocationMapModal from './LocationMapModal';
 
 const FIELD_KEY = 'location';
@@ -31,43 +32,30 @@ const INITIAL_LOCATION = {
 interface ILocationProps {
   expanded: boolean;
   setExpanded: Dispatch<SetStateAction<SectionKey>>;
-  point?: number[] | null;
-  address?:
-    | {
-        __typename?: 'AddressType' | undefined;
-        street?: string | null | undefined;
-        city?: string | null | undefined;
-        state?: string | null | undefined;
-        zipCode?: string | null | undefined;
-      }
-    | null
-    | undefined;
+  editing?: boolean;
+  error?: string;
 }
 
 type TLocation =
   | {
-      address: string | null | undefined;
+      formattedAddress: string | null | undefined;
       latitude: number | null | undefined;
       longitude: number | null | undefined;
-      name: string | null | undefined;
+      shortAddressName: string | null | undefined;
     }
   | undefined;
 
 export default function HmisLocationComponent(props: ILocationProps) {
-  const { expanded, setExpanded, address, point } = props;
+  const { expanded, setExpanded, editing, error } = props;
 
   const { baseUrl } = useApiConfig();
 
-  const { setValue } = useFormContext();
+  const { setValue, watch } = useFormContext();
+  const location = watch('location');
 
-  const [location, setLocation] = useState<TLocation>({
-    latitude: point ? point[1] : null,
-    longitude: point ? point[0] : null,
-    address: address
-      ? `${address.street}, ${address.city}, ${address.state} ${address.zipCode}`
-      : null,
-    name: address && address.street ? address.street : null,
-  });
+  const setLocation = (locationData: LocationDraft) => {
+    setValue('location', locationData);
+  };
 
   const locationRef = useRef<TLocation>(location);
   const autoFilledRef = useRef(false);
@@ -81,10 +69,7 @@ export default function HmisLocationComponent(props: ILocationProps) {
 
   // Auto-prefill on NEW notes: no point/address → use current or default location
   useEffect(() => {
-    const hasServerLocation = !!point && point.length === 2;
-    const hasLocalLocation = !!location?.latitude && !!location?.longitude;
-
-    if (hasServerLocation || hasLocalLocation || autoFilledRef.current) {
+    if (editing) {
       return;
     }
 
@@ -122,19 +107,12 @@ export default function HmisLocationComponent(props: ILocationProps) {
           : null;
         const components = result?.address_components ?? [];
 
-        const newLocation: TLocation = {
-          latitude,
-          longitude,
-          address: formattedAddress,
-          name: shortName,
-        };
-
-        setLocation(newLocation);
-
         setValue('location', {
+          ...location,
           longitude,
           latitude,
           formattedAddress,
+          shortAddressName: shortName,
           components,
         });
       } catch (err) {
@@ -143,12 +121,13 @@ export default function HmisLocationComponent(props: ILocationProps) {
     };
 
     void autoSetInitialLocation();
-  }, [point, address, baseUrl, location]);
+  }, [baseUrl]);
 
   return (
     <FieldCard
       required
       mb="xs"
+      error={error}
       setExpanded={() => {
         setExpanded(isLocation ? null : FIELD_KEY);
 
@@ -168,14 +147,15 @@ export default function HmisLocationComponent(props: ILocationProps) {
       }}
       title="Location "
       actionName={
-        (!location || (location && !location.address)) && !isLocation ? (
+        (!location || (location && !location.formattedAddress)) &&
+        !isLocation ? (
           <TextMedium size="sm">Add Location</TextMedium>
         ) : (
           <TextMedium size="sm">
             {location && location.latitude
-              ? location?.name
-                ? location.name
-                : location.address?.split(', ')[0]
+              ? location?.shortAddressName
+                ? location.shortAddressName
+                : location.formattedAddress?.split(', ')[0]
               : 'Add Location'}
           </TextMedium>
         )

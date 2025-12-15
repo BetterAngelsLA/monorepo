@@ -21,12 +21,25 @@ export type LocalDraftTask = {
 // 2. Validation Schema
 // ----------------------------------------------------------------------
 
-export type LocationDraft = Partial<{
-  latitude: number;
-  longitude: number;
-  formattedAddress: string;
-  components: string;
-}>;
+export type LocationDraft =
+  | Partial<{
+      latitude: number;
+      longitude: number;
+      formattedAddress: string;
+      shortAddressName: string;
+      components?: string;
+    }>
+  | undefined;
+
+export const LocationSchema = z
+  .object({
+    latitude: z.number().gte(-90).lte(90),
+    longitude: z.number().gte(-180).lte(180),
+    formattedAddress: z.string().min(1, 'Required'),
+    shortAddressName: z.string().optional(),
+    components: z.any().optional(), // accept array/object from Google
+  })
+  .strict();
 
 export type ServicesDraft = Partial<
   Record<
@@ -53,7 +66,7 @@ export const HmisProgramNoteFormSchema = z.object({
     ),
   refClientProgram: z.string(),
   note: z.string().min(1, 'Note is required.'),
-  location: z.custom<LocationDraft>().optional(),
+  location: LocationSchema,
 
   // FIX 1: Remove .default([]). This makes the field REQUIRED in the type definition,
   // preventing the "undefined is not assignable to LocalDraftTask[]" error.
@@ -102,12 +115,7 @@ export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormInputs = {
   date: undefined,
   refClientProgram: '',
   note: '',
-  location: {
-    latitude: 0,
-    longitude: 0,
-    formattedAddress: '',
-    components: '',
-  },
+  location: undefined as any,
   draftTasks: [],
   services: {},
 };

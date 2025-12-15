@@ -188,6 +188,8 @@ export function HmisProgramNoteForm(props: TProps) {
       </FieldCardHmisNote>
 
       <HmisLocationComponent
+        error={errors.location?.message}
+        editing={!!editing}
         expanded={expandedField === FORM_KEYS.location}
         setExpanded={setExpandedField}
       />
