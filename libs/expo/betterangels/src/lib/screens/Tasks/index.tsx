@@ -7,7 +7,7 @@ import {
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { TaskType } from '../../apollo';
+import { TaskScopeEnum, TaskType } from '../../apollo';
 import { useUser } from '../../hooks';
 import { TUser } from '../../providers/user/UserContext';
 import { pagePaddingHorizontal } from '../../static';
@@ -71,6 +71,7 @@ export default function Tasks() {
   const serverFilters = toTaskFilterValue({
     search,
     ...currentFilters,
+    scopes: [TaskScopeEnum.General], // Tasks screen shows only non-note tasks
   });
 
   return (

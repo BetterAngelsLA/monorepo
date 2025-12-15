@@ -1,5 +1,10 @@
 import { TFilterOption } from '@monorepo/expo/shared/ui-components';
-import { SelahTeamEnum, TaskFilter, TaskStatusEnum } from '../../../apollo';
+import {
+  SelahTeamEnum,
+  TaskFilter,
+  TaskScopeEnum,
+  TaskStatusEnum,
+} from '../../../apollo';
 
 const toIds = (arr?: TFilterOption[]) => arr?.map((option) => option.id);
 
@@ -14,6 +19,7 @@ export function toTaskFilterValue(input: {
   status?: TFilterOption[];
   clientProfiles?: TFilterOption[];
   hmisClientProfiles?: TFilterOption[];
+  scopes?: TaskScopeEnum[];
 }): TaskFilter {
   return {
     search: input.search || undefined,
@@ -23,5 +29,6 @@ export function toTaskFilterValue(input: {
     hmisClientProfiles: toIds(input.hmisClientProfiles),
     teams: toEnums<SelahTeamEnum>(input.teams),
     status: toEnums<TaskStatusEnum>(input.status),
+    scopes: input.scopes,
   };
 }
