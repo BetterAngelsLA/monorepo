@@ -2251,7 +2251,7 @@ type UserType {
   middleName: NonBlankString
   email: NonBlankString
   id: ID!
-  organizationsOrganization(filters: OrganizationFilter, pagination: OffsetPaginationInput): [OrganizationForUserType!]
+  organizationsOrganization(filters: OrganizationFilter, ordering: [OrganizationOrder!]! = [], pagination: OffsetPaginationInput): [OrganizationForUserType!]
   hasAcceptedTos: Boolean
   hasAcceptedPrivacyPolicy: Boolean
   isOutreachAuthorized: Boolean

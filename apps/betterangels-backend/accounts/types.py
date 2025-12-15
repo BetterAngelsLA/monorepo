@@ -70,7 +70,7 @@ class OrganizationType:
     name: auto
 
 
-@strawberry_django.type(Organization, filters=OrganizationFilter, pagination=True)
+@strawberry_django.type(Organization, ordering=OrganizationOrder, filters=OrganizationFilter, pagination=True)
 class OrganizationForUserType(OrganizationType):
     @classmethod
     def get_queryset(

@@ -2747,6 +2747,7 @@ export type UserType = {
 
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
+  ordering?: Array<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
