@@ -2001,6 +2001,7 @@ input TaskFilter {
   status: [TaskStatusEnum!]
   teams: [SelahTeamEnum!]
   search: String
+  scopes: [TaskScopeEnum!]
 }
 
 input TaskOrder {
@@ -2008,6 +2009,12 @@ input TaskOrder {
   createdAt: Ordering
   updatedAt: Ordering
   status: Ordering
+}
+
+enum TaskScopeEnum {
+  HMIS_NOTE
+  STANDARD_NOTE
+  GENERAL
 }
 
 enum TaskStatusEnum {
@@ -2018,7 +2025,7 @@ enum TaskStatusEnum {
 
 type TaskType {
   id: ID!
-  hmisClientProfile: HmisProfileType
+  hmisClientProfile: HmisClientProfileType
   clientProfile: ClientProfileType
   createdAt: DateTime!
   createdBy: UserType!
