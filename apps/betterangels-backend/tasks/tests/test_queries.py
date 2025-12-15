@@ -3,7 +3,7 @@ from unittest.mock import ANY
 from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
-from hmis.models import HmisNote
+from hmis.models import HmisClientProfile, HmisNote
 from model_bakery import baker
 from notes.models import Note
 from tasks.enums import TaskScopeEnum, TaskStatusEnum
@@ -224,68 +224,78 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
     def test_tasks_query_scope_filters(self) -> None:
         """
-        Verify task scope filtering for HMIS, GENERAL, default (all),
-        and multiple combined scopes.
+        Verify task scope filtering for HMIS, STANDARD (Client), GENERAL,
+        and multiple combined scopes based on Profile attachment.
         """
-        # 1. Setup Common Data
-        # Note: self.task (linked to Note) is already created in setUp()
+        # Task A: Standard Client Task
+        # Scope: STANDARD
+        standard_task = self.task
 
-        hmis_note = baker.make(HmisNote)
-        hmis_task = self.create_task_fixture({"summary": "HMIS Task", "hmisNote": str(hmis_note.pk)})["data"][
-            "createTask"
-        ]
+        # Task B: HMIS Client Task
+        hmis_profile = baker.make(HmisClientProfile)
+        hmis_task = self.create_task_fixture({"summary": "HMIS Task", "hmisClientProfile": str(hmis_profile.pk)})[
+            "data"
+        ]["createTask"]
 
-        general_task = self.create_task_fixture({"summary": "General Task"})["data"]["createTask"]
+        # Task C: General Task
+        # We explicitly ensure no profiles are attached.
+        general_task = self.create_task_fixture(
+            {"summary": "General Task", "clientProfile": None, "hmisClientProfile": None}
+        )["data"]["createTask"]
 
-        # 2. Define Scenarios
-        # Format: (test_name, filters_dict, expected_in, expected_out)
         scenarios = [
             (
-                "hmis_note_scope",
-                {"scopes": [TaskScopeEnum.HMIS_NOTE.name]},
+                "hmis_scope",
+                {"scopes": [TaskScopeEnum.HMIS.name]},
                 [hmis_task],
-                [self.task, general_task],
+                [standard_task, general_task],
             ),
             (
                 "general_scope",
                 {"scopes": [TaskScopeEnum.GENERAL.name]},
                 [general_task],
-                [self.task, hmis_task],
+                [standard_task, hmis_task],
             ),
             (
-                "standard_note_and_general",
-                {"scopes": [TaskScopeEnum.STANDARD_NOTE.name, TaskScopeEnum.GENERAL.name]},
-                [self.task, general_task],
+                "standard_scope",
+                {"scopes": [TaskScopeEnum.STANDARD.name]},
+                [standard_task],
+                [hmis_task, general_task],
+            ),
+            (
+                "standard_and_general",
+                {"scopes": [TaskScopeEnum.STANDARD.name, TaskScopeEnum.GENERAL.name]},
+                [standard_task, general_task],
                 [hmis_task],
             ),
             (
-                "standard_note_and_hmis_note",
-                {"scopes": [TaskScopeEnum.STANDARD_NOTE.name, TaskScopeEnum.HMIS_NOTE.name]},
-                [self.task, hmis_task],
+                "standard_and_hmis",
+                {"scopes": [TaskScopeEnum.STANDARD.name, TaskScopeEnum.HMIS.name]},
+                [standard_task, hmis_task],
                 [general_task],
             ),
             (
                 "all_scopes",
                 {
                     "scopes": [
-                        TaskScopeEnum.STANDARD_NOTE.name,
-                        TaskScopeEnum.HMIS_NOTE.name,
+                        TaskScopeEnum.STANDARD.name,
+                        TaskScopeEnum.HMIS.name,
                         TaskScopeEnum.GENERAL.name,
                     ]
                 },
-                [self.task, hmis_task, general_task],
+                [standard_task, hmis_task, general_task],
                 [],
             ),
             (
                 "no_filter_default",
                 {},
-                [self.task, hmis_task, general_task],
+                [standard_task, hmis_task, general_task],
                 [],
             ),
             (
                 "empty_filter_default",
                 {"scopes": []},
-                [self.task, hmis_task, general_task],
+                [standard_task, hmis_task, general_task],
                 [],
             ),
         ]

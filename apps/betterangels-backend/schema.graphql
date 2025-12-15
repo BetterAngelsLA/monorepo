@@ -2012,8 +2012,8 @@ input TaskOrder {
 }
 
 enum TaskScopeEnum {
-  HMIS_NOTE
-  STANDARD_NOTE
+  HMIS
+  STANDARD
   GENERAL
 }
 

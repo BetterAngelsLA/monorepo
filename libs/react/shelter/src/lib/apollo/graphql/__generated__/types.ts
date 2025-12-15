@@ -2502,8 +2502,8 @@ export type TaskOrder = {
 
 export enum TaskScopeEnum {
   General = 'GENERAL',
-  HmisNote = 'HMIS_NOTE',
-  StandardNote = 'STANDARD_NOTE'
+  Hmis = 'HMIS',
+  Standard = 'STANDARD'
 }
 
 export enum TaskStatusEnum {

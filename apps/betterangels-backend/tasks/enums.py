@@ -12,6 +12,6 @@ class TaskStatusEnum(enum.IntEnum):
 
 @strawberry.enum
 class TaskScopeEnum(enum.StrEnum):
-    HMIS_NOTE = "HMIS_NOTE"
-    STANDARD_NOTE = "STANDARD_NOTE"
+    HMIS = "HMIS"
+    STANDARD = "STANDARD"
     GENERAL = "GENERAL"

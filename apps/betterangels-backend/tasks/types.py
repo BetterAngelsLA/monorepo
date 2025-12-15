@@ -59,14 +59,14 @@ class TaskFilter:
 
         conditions = []
 
-        if TaskScopeEnum.HMIS_NOTE in value:
-            conditions.append(Q(hmis_note__isnull=False))
+        if TaskScopeEnum.HMIS in value:
+            conditions.append(Q(hmis_client_profile__isnull=False))
 
-        if TaskScopeEnum.STANDARD_NOTE in value:
-            conditions.append(Q(note__isnull=False))
+        if TaskScopeEnum.STANDARD in value:
+            conditions.append(Q(client_profile__isnull=False))
 
         if TaskScopeEnum.GENERAL in value:
-            conditions.append(Q(note__isnull=True, hmis_note__isnull=True))
+            conditions.append(Q(client_profile__isnull=True, hmis_client_profile__isnull=True))
 
         return reduce(operator.or_, conditions)
 
