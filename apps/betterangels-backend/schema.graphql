@@ -578,7 +578,6 @@ union CreateNotePayload = NoteType | OperationInfo
 
 input CreateNoteServiceRequestInput {
   serviceId: ID
-  serviceEnum: ServiceEnum
   serviceOther: String
   noteId: ID!
   serviceRequestType: ServiceRequestTypeEnum!
@@ -593,7 +592,6 @@ input CreateProfileDataImportInput {
 
 input CreateServiceRequestInput {
   serviceId: ID
-  serviceEnum: ServiceEnum
   status: ServiceRequestStatusEnum!
   serviceOther: String
   clientProfile: ID
@@ -1695,62 +1693,6 @@ enum SelahTeamEnum {
   WDI_OUTREACH
 }
 
-enum ServiceEnum {
-  BAG
-  BATTERIES
-  BICYCLE
-  BICYCLE_REPAIR
-  BIRTH_CERTIFICATE
-  BLANKET
-  BOOK
-  CALIFORNIA_LIFELINE_PHONE
-  CLOTHES
-  CONSENT_TO_CONNECT
-  CONTACT_DPSS
-  CONTACT_FRIEND
-  DENTAL
-  DISCOUNT_SCOOTER_RIDES
-  DMH_EVALUATION
-  DMV_NO_FEE_ID_FORM
-  EBT
-  FAMILY_REUNIFICATION
-  FEMININE_HYGIENE
-  FIRST_AID
-  FOOD
-  HARM_REDUCTION
-  HMIS_CONSENT
-  HYGIENE_KIT
-  INTERNET_ACCESS
-  LAHOP
-  LEGAL_COUNSEL
-  MAIL_PICK_UP
-  MEDICAL
-  MEDI_CAL
-  METRO_LIFE_TAP
-  NOTARY
-  OTHER
-  PET_CARE
-  PET_FOOD
-  PUBLIC_BENEFITS_PROGRAMS
-  RIDE
-  SAFE_PARKING
-  SHELTER
-  SHOES
-  SHOWER
-  SLEEPING_BAG
-  SOCIAL_SECURITY_CARD_REPLACEMENT
-  SSI_SSDI
-  STIMULUS_ASSISTANCE
-  STORAGE_BELONGINGS
-  STORAGE_DOCUMENTS
-  TARP
-  TENT
-  THERAPIST_APPOINTMENT
-  UNEMPLOYMENT_CERTIFICATION
-  VACCINE_PASSPORT
-  WATER
-}
-
 enum ServiceRequestStatusEnum {
   COMPLETED
   TO_DO
@@ -1759,8 +1701,6 @@ enum ServiceRequestStatusEnum {
 type ServiceRequestType {
   id: ID!
   service: OrganizationServiceType
-  serviceEnum: ServiceEnum
-  serviceOther: String
   status: ServiceRequestStatusEnum!
   dueBy: DateTime
   completedOn: DateTime

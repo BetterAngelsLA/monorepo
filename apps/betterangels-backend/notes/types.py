@@ -74,8 +74,6 @@ class OrganizationServiceCategoryType:
 class ServiceRequestType:
     id: ID
     service: Optional[OrganizationServiceType]
-    service_enum: auto
-    service_other: auto
     status: auto
     due_by: auto
     completed_on: auto
@@ -87,7 +85,6 @@ class ServiceRequestType:
 @strawberry_django.input(models.ServiceRequest)
 class CreateServiceRequestInput:
     service_id: Optional[ID]
-    service_enum: Optional[ServiceEnum]
     status: auto
     service_other: auto
     client_profile: ID | None
@@ -96,7 +93,6 @@ class CreateServiceRequestInput:
 @strawberry_django.input(models.ServiceRequest)
 class CreateNoteServiceRequestInput:
     service_id: Optional[ID]
-    service_enum: Optional[ServiceEnum]
     service_other: Optional[str]
     note_id: ID
     service_request_type: ServiceRequestTypeEnum
