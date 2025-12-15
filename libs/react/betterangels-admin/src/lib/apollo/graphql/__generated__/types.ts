@@ -1904,7 +1904,6 @@ export type QueryBulkClientProfileImportRecordsArgs = {
 
 export type QueryCaseworkerOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
-  order?: InputMaybe<OrganizationOrder>;
   ordering?: InputMaybe<Array<OrganizationOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -1949,7 +1948,6 @@ export type QueryClientProfileArgs = {
 
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
-  order?: InputMaybe<ClientProfileOrder>;
   ordering?: Array<ClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -1996,7 +1994,6 @@ export type QueryHmisProfilesArgs = {
 
 export type QueryInteractionAuthorsArgs = {
   filters?: InputMaybe<InteractionAuthorFilter>;
-  order?: InputMaybe<InteractionAuthorOrder>;
   ordering?: Array<InteractionAuthorOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2009,7 +2006,6 @@ export type QueryNoteArgs = {
 
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
-  order?: InputMaybe<NoteOrder>;
   ordering?: Array<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2751,7 +2747,7 @@ export type UserType = {
 
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
-  order?: InputMaybe<OrganizationOrder>;
+  ordering?: Array<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

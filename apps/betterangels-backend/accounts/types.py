@@ -64,13 +64,13 @@ class OrganizationFilter:
         return (queryset.filter(query), Q())
 
 
-@strawberry_django.type(Organization, order=OrganizationOrder, ordering=OrganizationOrder, filters=OrganizationFilter)  # type: ignore[literal-required]
+@strawberry_django.type(Organization, ordering=OrganizationOrder, filters=OrganizationFilter)
 class OrganizationType:
     id: ID
     name: auto
 
 
-@strawberry_django.type(Organization, order=OrganizationOrder, filters=OrganizationFilter, pagination=True)  # type: ignore[literal-required]
+@strawberry_django.type(Organization, ordering=OrganizationOrder, filters=OrganizationFilter, pagination=True)
 class OrganizationForUserType(OrganizationType):
     @classmethod
     def get_queryset(
