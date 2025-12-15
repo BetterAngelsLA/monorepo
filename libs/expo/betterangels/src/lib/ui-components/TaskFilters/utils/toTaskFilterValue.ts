@@ -13,12 +13,14 @@ export function toTaskFilterValue(input: {
   teams?: TFilterOption[];
   status?: TFilterOption[];
   clientProfiles?: TFilterOption[];
+  hmisClientProfiles?: TFilterOption[];
 }): TaskFilter {
   return {
     search: input.search || undefined,
     authors: toIds(input.authors),
     organizations: toIds(input.organizations),
     clientProfiles: toIds(input.clientProfiles),
+    hmisClientProfiles: toIds(input.hmisClientProfiles),
     teams: toEnums<SelahTeamEnum>(input.teams),
     status: toEnums<TaskStatusEnum>(input.status),
   };
