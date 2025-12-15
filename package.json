@@ -217,7 +217,7 @@
     "@expo/config-plugins": ">=54.0.1"
   },
   "engines": {
-    "node": "22.14.0"
+    "node": "22.21.1"
   },
   "packageManager": "yarn@4.2.2"
 }
