@@ -224,7 +224,8 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
     def test_tasks_query_scope_filters(self) -> None:
         """
-        Verify task scope filtering for HMIS, GENERAL, and default (all) scopes.
+        Verify task scope filtering for HMIS, GENERAL, default (all),
+        and multiple combined scopes.
         """
         # 1. Setup Common Data
         # Note: self.task (linked to Note) is already created in setUp()
@@ -252,6 +253,30 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
                 [self.task, hmis_task],
             ),
             (
+                "standard_note_and_general",
+                {"scopes": [TaskScopeEnum.STANDARD_NOTE.name, TaskScopeEnum.GENERAL.name]},
+                [self.task, general_task],
+                [hmis_task],
+            ),
+            (
+                "standard_note_and_hmis_note",
+                {"scopes": [TaskScopeEnum.STANDARD_NOTE.name, TaskScopeEnum.HMIS_NOTE.name]},
+                [self.task, hmis_task],
+                [general_task],
+            ),
+            (
+                "all_scopes",
+                {
+                    "scopes": [
+                        TaskScopeEnum.STANDARD_NOTE.name,
+                        TaskScopeEnum.HMIS_NOTE.name,
+                        TaskScopeEnum.GENERAL.name,
+                    ]
+                },
+                [self.task, hmis_task, general_task],
+                [],
+            ),
+            (
                 "no_filter_default",
                 {},
                 [self.task, hmis_task, general_task],
@@ -265,7 +290,6 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
             ),
         ]
 
-        # 3. Iterate and Assert
         for name, filters, included_tasks, excluded_tasks in scenarios:
             with self.subTest(name=name):
                 variables = {"filters": filters} if filters else {}
