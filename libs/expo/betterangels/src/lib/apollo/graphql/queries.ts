@@ -37,8 +37,6 @@ export const GET_NOTES = gql`
         }
         providedServices {
           id
-          serviceEnum
-          serviceOther
           service {
             id
             label
@@ -46,8 +44,6 @@ export const GET_NOTES = gql`
         }
         requestedServices {
           id
-          serviceEnum
-          serviceOther
           service {
             id
             label
@@ -110,8 +106,6 @@ export const GET_NOTE = gql`
       }
       providedServices {
         id
-        serviceEnum
-        serviceOther
         service {
           id
           label
@@ -119,8 +113,6 @@ export const GET_NOTE = gql`
       }
       requestedServices {
         id
-        serviceEnum
-        serviceOther
         service {
           id
           label

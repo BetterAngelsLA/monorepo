@@ -40,13 +40,17 @@ query NoteSummary($id: ID!) {
       }
       providedServices {
         id
-        serviceEnum
-        serviceOther
+        service {
+          id
+          label
+        }
       }
       requestedServices {
         id
-        serviceEnum
-        serviceOther
+        service {
+          id
+          label
+        }
       }
       organization {
         id

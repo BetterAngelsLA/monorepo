@@ -1,5 +1,4 @@
-import { ServiceEnum, ViewNoteQuery } from '../apollo';
-import { enumDisplayServices } from '../static/enumDisplayMapping';
+import { ViewNoteQuery } from '../apollo';
 
 interface IWatchedValue {
   purpose: ViewNoteQuery['note']['purpose'];
@@ -14,25 +13,8 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
     ? `G - The goal for this session was to ${purpose}`
     : 'G - ';
 
-  // const moodIText =
-  //   moods.length > 0 ? 'Case Manager asked how client was feeling.' : '';
-
-  // const moodsArray = moods.map((item) => item.descriptor);
-
-  // const moodRText =
-  //   moodsArray.length > 0
-  //     ? 'Client responded that he was ' +
-  //       moodsArray.slice(0, -1).join(', ').toLowerCase() +
-  //       (moodsArray.length > 1 ? ', and ' : '') +
-  //       moodsArray[moodsArray.length - 1].toLowerCase() +
-  //       '.'
-  //     : '';
-
   const providedServicesArray = providedServices.map((item) => {
-    if (item.serviceEnum === ServiceEnum.Other) {
-      return item.serviceOther;
-    }
-    return enumDisplayServices[item.serviceEnum!];
+    return item.service!.label;
   });
 
   const serviceIText =
@@ -54,10 +36,7 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
       : '';
 
   const requestedServicesArray = requestedServices.map((item) => {
-    if (item.serviceEnum === ServiceEnum.Other) {
-      return item.serviceOther;
-    }
-    return enumDisplayServices[item.serviceEnum!];
+    return item.service!.label;
   });
 
   const updatedP =
@@ -82,14 +61,10 @@ export default function generatePublicNote(watchedValues: IWatchedValue) {
         '.'
       : '';
 
-  const updatedI =
-    'I -' +
-    // (moodIText ? ' ' + moodIText : '') +
-    (serviceIText ? ' ' + serviceIText : '');
+  const updatedI = 'I -' + (serviceIText ? ' ' + serviceIText : '');
 
   const updatedR =
     'R -' +
-    // (moodRText ? ' ' + moodRText : '') +
     (serviceRText ? ' ' + serviceRText : '') +
     (requestedText ? ' ' + requestedText : '');
 
