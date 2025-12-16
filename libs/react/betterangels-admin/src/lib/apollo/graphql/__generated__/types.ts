@@ -2508,10 +2508,12 @@ export type TaskFilter = {
   NOT?: InputMaybe<TaskFilter>;
   OR?: InputMaybe<TaskFilter>;
   authors?: InputMaybe<Array<Scalars['ID']['input']>>;
-  clientProfile?: InputMaybe<IdFilterLookup>;
+  clientProfile?: InputMaybe<Scalars['ID']['input']>;
+  clientProfileLookup?: InputMaybe<IdFilterLookup>;
   clientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
-  hmisClientProfile?: InputMaybe<IdFilterLookup>;
+  hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
+  hmisClientProfileLookup?: InputMaybe<IdFilterLookup>;
   hmisClientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;

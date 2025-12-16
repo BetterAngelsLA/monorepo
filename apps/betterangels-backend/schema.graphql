@@ -2035,8 +2035,10 @@ type SwitchType {
 }
 
 input TaskFilter {
-  clientProfile: IDFilterLookup
-  hmisClientProfile: IDFilterLookup
+  clientProfile: ID
+  hmisClientProfile: ID
+  clientProfileLookup: IDFilterLookup
+  hmisClientProfileLookup: IDFilterLookup
   createdBy: ID
   AND: TaskFilter
   OR: TaskFilter

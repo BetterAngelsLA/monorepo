@@ -18,8 +18,10 @@ if TYPE_CHECKING:
 
 @strawberry_django.filter_type(models.Task, lookups=True)
 class TaskFilter:
-    client_profile: Optional[strawberry_django.FilterLookup[ID]]
-    hmis_client_profile: Optional[strawberry_django.FilterLookup[ID]]
+    client_profile: Optional[ID]
+    hmis_client_profile: Optional[ID]
+    client_profile_lookup: Optional[strawberry_django.FilterLookup[ID]]
+    hmis_client_profile_lookup: Optional[strawberry_django.FilterLookup[ID]]
     created_by: Optional[ID]
     client_profiles = make_in_filter("client_profile", ID)
     hmis_client_profiles = make_in_filter("hmis_client_profile", ID)
