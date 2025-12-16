@@ -2515,6 +2515,8 @@ export type TaskFilter = {
   hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
   hmisClientProfileLookup?: InputMaybe<IdFilterLookup>;
   hmisClientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
+  hmisNote?: InputMaybe<IdFilterLookup>;
+  note?: InputMaybe<IdFilterLookup>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Array<TaskStatusEnum>>;

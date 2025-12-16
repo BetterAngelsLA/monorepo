@@ -7,7 +7,7 @@ from clients.types import ClientProfileType
 from common.enums import SelahTeamEnum
 from common.graphql.types import make_in_filter
 from django.db.models import Q
-from strawberry import ID, Info, auto
+from strawberry import ID, UNSET, Info, auto
 from tasks.enums import TaskStatusEnum
 
 from . import models
@@ -20,8 +20,8 @@ if TYPE_CHECKING:
 class TaskFilter:
     client_profile: Optional[ID]
     hmis_client_profile: Optional[ID]
-    client_profile_lookup: Optional[strawberry_django.FilterLookup[ID]]
-    hmis_client_profile_lookup: Optional[strawberry_django.FilterLookup[ID]]
+    note: Optional[strawberry_django.FilterLookup[ID]]
+    hmis_note: Optional[strawberry_django.FilterLookup[ID]]
     created_by: Optional[ID]
     client_profiles = make_in_filter("client_profile", ID)
     hmis_client_profiles = make_in_filter("hmis_client_profile", ID)
@@ -51,6 +51,44 @@ class TaskFilter:
             query &= q_search
 
         return Q(query)
+
+    @strawberry_django.filter_field
+    def client_profile_lookup(self, info: Info, value: Optional[strawberry_django.FilterLookup[ID]], prefix: str) -> Q:
+        if not value:
+            return Q()
+
+        query = Q()
+
+        if value.exact is not UNSET and value.exact is not None:
+            query &= Q(client_profile=value.exact)
+
+        if value.is_null is not UNSET and value.is_null is not None:
+            query &= Q(client_profile__isnull=value.is_null)
+
+        if value.in_list is not UNSET and value.in_list is not None:
+            query &= Q(client_profile__in=value.in_list)
+
+        return query
+
+    @strawberry_django.filter_field
+    def hmis_client_profile_lookup(
+        self, info: Info, value: Optional[strawberry_django.FilterLookup[ID]], prefix: str
+    ) -> Q:
+        if not value:
+            return Q()
+
+        query = Q()
+
+        if value.exact is not UNSET and value.exact is not None:
+            query &= Q(hmis_client_profile=value.exact)
+
+        if value.is_null is not UNSET and value.is_null is not None:
+            query &= Q(hmis_client_profile__isnull=value.is_null)
+
+        if value.in_list is not UNSET and value.in_list is not None:
+            query &= Q(hmis_client_profile__in=value.in_list)
+
+        return query
 
 
 @strawberry_django.order_type(models.Task, one_of=False)

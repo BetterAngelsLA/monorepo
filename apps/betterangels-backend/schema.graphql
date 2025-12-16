@@ -2037,8 +2037,8 @@ type SwitchType {
 input TaskFilter {
   clientProfile: ID
   hmisClientProfile: ID
-  clientProfileLookup: IDFilterLookup
-  hmisClientProfileLookup: IDFilterLookup
+  note: IDFilterLookup
+  hmisNote: IDFilterLookup
   createdBy: ID
   AND: TaskFilter
   OR: TaskFilter
@@ -2051,6 +2051,8 @@ input TaskFilter {
   status: [TaskStatusEnum!]
   teams: [SelahTeamEnum!]
   search: String
+  clientProfileLookup: IDFilterLookup
+  hmisClientProfileLookup: IDFilterLookup
 }
 
 input TaskOrder {
