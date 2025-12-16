@@ -7,7 +7,7 @@ import {
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { TaskScopeEnum, TaskType } from '../../apollo';
+import { TaskType } from '../../apollo';
 import { useUser } from '../../hooks';
 import { TUser } from '../../providers/user/UserContext';
 import { pagePaddingHorizontal } from '../../static';
@@ -28,7 +28,7 @@ function getInitialFilterValues(user?: TUser) {
 }
 
 export default function Tasks() {
-  const { user } = useUser();
+  const { user, isHmisUser } = useUser();
 
   const [search, setSearch] = useState('');
   const [filtersKey, setFiltersKey] = useState(0);
@@ -71,8 +71,15 @@ export default function Tasks() {
   const serverFilters = toTaskFilterValue({
     search,
     ...currentFilters,
-    scopes: [TaskScopeEnum.General], // Tasks screen shows only non-note tasks
+    // Tasks screen shows only tasks w/o notes
+    note: { isNull: true },
+    hmisNote: { isNull: true },
   });
+
+  // must be hmis user to view Task with hmisClientProfile
+  if (!isHmisUser) {
+    serverFilters.hmisClientProfileLookup = { isNull: true };
+  }
 
   return (
     <View style={styles.container}>

@@ -1,8 +1,8 @@
 import { TFilterOption } from '@monorepo/expo/shared/ui-components';
 import {
+  IdFilterLookup,
   SelahTeamEnum,
   TaskFilter,
-  TaskScopeEnum,
   TaskStatusEnum,
 } from '../../../apollo';
 
@@ -19,7 +19,10 @@ export function toTaskFilterValue(input: {
   status?: TFilterOption[];
   clientProfiles?: TFilterOption[];
   hmisClientProfiles?: TFilterOption[];
-  scopes?: TaskScopeEnum[];
+  hmisNote?: IdFilterLookup;
+  note?: IdFilterLookup;
+  hmisClientProfileLookup?: IdFilterLookup;
+  clientProfileLookup?: IdFilterLookup;
 }): TaskFilter {
   return {
     search: input.search || undefined,
@@ -29,6 +32,9 @@ export function toTaskFilterValue(input: {
     hmisClientProfiles: toIds(input.hmisClientProfiles),
     teams: toEnums<SelahTeamEnum>(input.teams),
     status: toEnums<TaskStatusEnum>(input.status),
-    scopes: input.scopes,
+    hmisClientProfileLookup: input.hmisClientProfileLookup,
+    clientProfileLookup: input.clientProfileLookup,
+    hmisNote: input.hmisNote,
+    note: input.note,
   };
 }
