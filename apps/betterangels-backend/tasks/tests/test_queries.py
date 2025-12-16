@@ -3,10 +3,9 @@ from unittest.mock import ANY
 from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
-from hmis.models import HmisNote
 from model_bakery import baker
 from notes.models import Note
-from tasks.enums import TaskScopeEnum, TaskStatusEnum
+from tasks.enums import TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 
@@ -221,86 +220,3 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
-
-    def test_tasks_query_scope_filters(self) -> None:
-        """
-        Verify task scope filtering for HMIS, GENERAL, default (all),
-        and multiple combined scopes.
-        """
-        # 1. Setup Common Data
-        # Note: self.task (linked to Note) is already created in setUp()
-
-        hmis_note = baker.make(HmisNote)
-        hmis_task = self.create_task_fixture({"summary": "HMIS Task", "hmisNote": str(hmis_note.pk)})["data"][
-            "createTask"
-        ]
-
-        general_task = self.create_task_fixture({"summary": "General Task"})["data"]["createTask"]
-
-        # 2. Define Scenarios
-        # Format: (test_name, filters_dict, expected_in, expected_out)
-        scenarios = [
-            (
-                "hmis_note_scope",
-                {"scopes": [TaskScopeEnum.HMIS_NOTE.name]},
-                [hmis_task],
-                [self.task, general_task],
-            ),
-            (
-                "general_scope",
-                {"scopes": [TaskScopeEnum.GENERAL.name]},
-                [general_task],
-                [self.task, hmis_task],
-            ),
-            (
-                "standard_note_and_general",
-                {"scopes": [TaskScopeEnum.STANDARD_NOTE.name, TaskScopeEnum.GENERAL.name]},
-                [self.task, general_task],
-                [hmis_task],
-            ),
-            (
-                "standard_note_and_hmis_note",
-                {"scopes": [TaskScopeEnum.STANDARD_NOTE.name, TaskScopeEnum.HMIS_NOTE.name]},
-                [self.task, hmis_task],
-                [general_task],
-            ),
-            (
-                "all_scopes",
-                {
-                    "scopes": [
-                        TaskScopeEnum.STANDARD_NOTE.name,
-                        TaskScopeEnum.HMIS_NOTE.name,
-                        TaskScopeEnum.GENERAL.name,
-                    ]
-                },
-                [self.task, hmis_task, general_task],
-                [],
-            ),
-            (
-                "no_filter_default",
-                {},
-                [self.task, hmis_task, general_task],
-                [],
-            ),
-            (
-                "empty_filter_default",
-                {"scopes": []},
-                [self.task, hmis_task, general_task],
-                [],
-            ),
-        ]
-
-        for name, filters, included_tasks, excluded_tasks in scenarios:
-            with self.subTest(name=name):
-                variables = {"filters": filters} if filters else {}
-                response = self.execute_graphql(self.get_tasks_query("id"), variables)
-                results = response["data"]["tasks"]["results"]
-                result_ids = [t["id"] for t in results]
-
-                self.assertEqual(len(results), len(included_tasks))
-
-                for task in included_tasks:
-                    self.assertIn(task["id"], result_ids)
-
-                for task in excluded_tasks:
-                    self.assertNotIn(task["id"], result_ids)

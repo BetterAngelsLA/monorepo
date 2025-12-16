@@ -1037,6 +1037,54 @@ enum HmisVeteranStatusEnum {
   NOT_COLLECTED
 }
 
+input IDFilterLookup {
+  """Exact match. Filter will be skipped on `null` value"""
+  exact: ID
+
+  """Assignment test. Filter will be skipped on `null` value"""
+  isNull: Boolean
+
+  """
+  Exact match of items in a given list. Filter will be skipped on `null` value
+  """
+  inList: [ID!]
+
+  """Case-insensitive exact match. Filter will be skipped on `null` value"""
+  iExact: ID
+
+  """
+  Case-sensitive containment test. Filter will be skipped on `null` value
+  """
+  contains: ID
+
+  """
+  Case-insensitive containment test. Filter will be skipped on `null` value
+  """
+  iContains: ID
+
+  """Case-sensitive starts-with. Filter will be skipped on `null` value"""
+  startsWith: ID
+
+  """Case-insensitive starts-with. Filter will be skipped on `null` value"""
+  iStartsWith: ID
+
+  """Case-sensitive ends-with. Filter will be skipped on `null` value"""
+  endsWith: ID
+
+  """Case-insensitive ends-with. Filter will be skipped on `null` value"""
+  iEndsWith: ID
+
+  """
+  Case-sensitive regular expression match. Filter will be skipped on `null` value
+  """
+  regex: ID
+
+  """
+  Case-insensitive regular expression match. Filter will be skipped on `null` value
+  """
+  iRegex: ID
+}
+
 enum ImmediateNeedChoices {
   CLOTHING
   FOOD
@@ -1989,6 +2037,8 @@ type SwitchType {
 input TaskFilter {
   clientProfile: ID
   hmisClientProfile: ID
+  note: IDFilterLookup
+  hmisNote: IDFilterLookup
   createdBy: ID
   AND: TaskFilter
   OR: TaskFilter
@@ -2001,7 +2051,8 @@ input TaskFilter {
   status: [TaskStatusEnum!]
   teams: [SelahTeamEnum!]
   search: String
-  scopes: [TaskScopeEnum!]
+  clientProfileLookup: IDFilterLookup
+  hmisClientProfileLookup: IDFilterLookup
 }
 
 input TaskOrder {
@@ -2009,12 +2060,6 @@ input TaskOrder {
   createdAt: Ordering
   updatedAt: Ordering
   status: Ordering
-}
-
-enum TaskScopeEnum {
-  HMIS_NOTE
-  STANDARD_NOTE
-  GENERAL
 }
 
 enum TaskStatusEnum {
