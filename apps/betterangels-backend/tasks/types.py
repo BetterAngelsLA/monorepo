@@ -1,5 +1,3 @@
-import operator
-from functools import reduce
 from typing import TYPE_CHECKING, Annotated, Optional
 
 import strawberry
@@ -10,7 +8,7 @@ from common.enums import SelahTeamEnum
 from common.graphql.types import make_in_filter
 from django.db.models import Q
 from strawberry import ID, Info, auto
-from tasks.enums import TaskScopeEnum, TaskStatusEnum
+from tasks.enums import TaskStatusEnum
 
 from . import models
 
@@ -20,8 +18,8 @@ if TYPE_CHECKING:
 
 @strawberry_django.filter_type(models.Task, lookups=True)
 class TaskFilter:
-    client_profile: Optional[ID]
-    hmis_client_profile: Optional[ID]
+    client_profile: Optional[strawberry_django.FilterLookup[ID]]
+    hmis_client_profile: Optional[strawberry_django.FilterLookup[ID]]
     created_by: Optional[ID]
     client_profiles = make_in_filter("client_profile", ID)
     hmis_client_profiles = make_in_filter("hmis_client_profile", ID)
@@ -51,24 +49,6 @@ class TaskFilter:
             query &= q_search
 
         return Q(query)
-
-    @strawberry_django.filter_field(resolve_value=True)
-    def scopes(self, info: Info, value: list[TaskScopeEnum], prefix: str) -> Q:
-        if not value:
-            return Q()
-
-        conditions = []
-
-        if TaskScopeEnum.HMIS in value:
-            conditions.append(Q(hmis_client_profile__isnull=False))
-
-        if TaskScopeEnum.STANDARD in value:
-            conditions.append(Q(client_profile__isnull=False))
-
-        if TaskScopeEnum.GENERAL in value:
-            conditions.append(Q(client_profile__isnull=True, hmis_client_profile__isnull=True))
-
-        return reduce(operator.or_, conditions)
 
 
 @strawberry_django.order_type(models.Task, one_of=False)

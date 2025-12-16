@@ -3,10 +3,9 @@ from unittest.mock import ANY
 from clients.models import ClientProfile
 from common.enums import SelahTeamEnum
 from common.tests.utils import GraphQLBaseTestCase
-from hmis.models import HmisClientProfile, HmisNote
 from model_bakery import baker
 from notes.models import Note
-from tasks.enums import TaskScopeEnum, TaskStatusEnum
+from tasks.enums import TaskStatusEnum
 from tasks.models import Task
 from tasks.tests.utils import TaskGraphQLUtilsMixin
 
@@ -221,96 +220,3 @@ class TaskQueryTestCase(GraphQLBaseTestCase, TaskGraphQLUtilsMixin):
 
         self.assertEqual(response["data"]["tasks"]["totalCount"], 1)
         self.assertEqual(response["data"]["tasks"]["results"][0]["id"], task_id)
-
-    def test_tasks_query_scope_filters(self) -> None:
-        """
-        Verify task scope filtering for HMIS, STANDARD (Client), GENERAL,
-        and multiple combined scopes based on Profile attachment.
-        """
-        # Task A: Standard Client Task
-        # Scope: STANDARD
-        standard_task = self.task
-
-        # Task B: HMIS Client Task
-        hmis_profile = baker.make(HmisClientProfile)
-        hmis_task = self.create_task_fixture({"summary": "HMIS Task", "hmisClientProfile": str(hmis_profile.pk)})[
-            "data"
-        ]["createTask"]
-
-        # Task C: General Task
-        # We explicitly ensure no profiles are attached.
-        general_task = self.create_task_fixture(
-            {"summary": "General Task", "clientProfile": None, "hmisClientProfile": None}
-        )["data"]["createTask"]
-
-        scenarios = [
-            (
-                "hmis_scope",
-                {"scopes": [TaskScopeEnum.HMIS.name]},
-                [hmis_task],
-                [standard_task, general_task],
-            ),
-            (
-                "general_scope",
-                {"scopes": [TaskScopeEnum.GENERAL.name]},
-                [general_task],
-                [standard_task, hmis_task],
-            ),
-            (
-                "standard_scope",
-                {"scopes": [TaskScopeEnum.STANDARD.name]},
-                [standard_task],
-                [hmis_task, general_task],
-            ),
-            (
-                "standard_and_general",
-                {"scopes": [TaskScopeEnum.STANDARD.name, TaskScopeEnum.GENERAL.name]},
-                [standard_task, general_task],
-                [hmis_task],
-            ),
-            (
-                "standard_and_hmis",
-                {"scopes": [TaskScopeEnum.STANDARD.name, TaskScopeEnum.HMIS.name]},
-                [standard_task, hmis_task],
-                [general_task],
-            ),
-            (
-                "all_scopes",
-                {
-                    "scopes": [
-                        TaskScopeEnum.STANDARD.name,
-                        TaskScopeEnum.HMIS.name,
-                        TaskScopeEnum.GENERAL.name,
-                    ]
-                },
-                [standard_task, hmis_task, general_task],
-                [],
-            ),
-            (
-                "no_filter_default",
-                {},
-                [standard_task, hmis_task, general_task],
-                [],
-            ),
-            (
-                "empty_filter_default",
-                {"scopes": []},
-                [standard_task, hmis_task, general_task],
-                [],
-            ),
-        ]
-
-        for name, filters, included_tasks, excluded_tasks in scenarios:
-            with self.subTest(name=name):
-                variables = {"filters": filters} if filters else {}
-                response = self.execute_graphql(self.get_tasks_query("id"), variables)
-                results = response["data"]["tasks"]["results"]
-                result_ids = [t["id"] for t in results]
-
-                self.assertEqual(len(results), len(included_tasks))
-
-                for task in included_tasks:
-                    self.assertIn(task["id"], result_ids)
-
-                for task in excluded_tasks:
-                    self.assertNotIn(task["id"], result_ids)

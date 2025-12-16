@@ -129,7 +129,7 @@ export function TasksTab(props: TProps) {
       />
 
       <TaskList
-        filters={{ search, clientProfile: client.clientProfile.id }}
+        filters={{ search, clientProfile: { exact: client.clientProfile.id } }}
         renderItem={renderTaskItem}
         renderHeader={renderListHeaderText}
       />

@@ -1064,6 +1064,33 @@ export enum HmisVeteranStatusEnum {
   Yes = 'YES'
 }
 
+export type IdFilterLookup = {
+  /** Case-sensitive containment test. Filter will be skipped on `null` value */
+  contains?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-sensitive ends-with. Filter will be skipped on `null` value */
+  endsWith?: InputMaybe<Scalars['ID']['input']>;
+  /** Exact match. Filter will be skipped on `null` value */
+  exact?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-insensitive containment test. Filter will be skipped on `null` value */
+  iContains?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-insensitive ends-with. Filter will be skipped on `null` value */
+  iEndsWith?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-insensitive exact match. Filter will be skipped on `null` value */
+  iExact?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-insensitive regular expression match. Filter will be skipped on `null` value */
+  iRegex?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-insensitive starts-with. Filter will be skipped on `null` value */
+  iStartsWith?: InputMaybe<Scalars['ID']['input']>;
+  /** Exact match of items in a given list. Filter will be skipped on `null` value */
+  inList?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Assignment test. Filter will be skipped on `null` value */
+  isNull?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Case-sensitive regular expression match. Filter will be skipped on `null` value */
+  regex?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-sensitive starts-with. Filter will be skipped on `null` value */
+  startsWith?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export enum ImmediateNeedChoices {
   Clothing = 'CLOTHING',
   Food = 'FOOD',
@@ -2481,13 +2508,12 @@ export type TaskFilter = {
   NOT?: InputMaybe<TaskFilter>;
   OR?: InputMaybe<TaskFilter>;
   authors?: InputMaybe<Array<Scalars['ID']['input']>>;
-  clientProfile?: InputMaybe<Scalars['ID']['input']>;
+  clientProfile?: InputMaybe<IdFilterLookup>;
   clientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
-  hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
+  hmisClientProfile?: InputMaybe<IdFilterLookup>;
   hmisClientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
-  scopes?: InputMaybe<Array<TaskScopeEnum>>;
   search?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Array<TaskStatusEnum>>;
   teams?: InputMaybe<Array<SelahTeamEnum>>;
@@ -2499,12 +2525,6 @@ export type TaskOrder = {
   status?: InputMaybe<Ordering>;
   updatedAt?: InputMaybe<Ordering>;
 };
-
-export enum TaskScopeEnum {
-  General = 'GENERAL',
-  Hmis = 'HMIS',
-  Standard = 'STANDARD'
-}
 
 export enum TaskStatusEnum {
   Completed = 'COMPLETED',
