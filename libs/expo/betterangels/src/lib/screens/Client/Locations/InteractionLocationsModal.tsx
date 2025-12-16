@@ -16,8 +16,6 @@ export function InteractionLocationsModal() {
 
   const { selectedInteractions } = mapState;
 
-  console.log('SELECTED INTERACTIONS: ', selectedInteractions);
-
   const snapPoints = useMemo(() => [titleHeight], [titleHeight]);
 
   if (!selectedInteractions.length) {
