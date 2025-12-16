@@ -5796,8 +5796,8 @@ __metadata:
     react-native: "npm:0.81.5"
     react-native-blob-util: "npm:^0.21.2"
     react-native-gesture-handler: "npm:~2.28.0"
-    react-native-keyboard-controller: "npm:1.18.5"
-    react-native-maps: "npm:1.20.1"
+    react-native-keyboard-controller: "npm:^1.20.2"
+    react-native-maps: "npm:^1.26.20"
     react-native-nitro-cookies: "npm:^1.0.0"
     react-native-nitro-modules: "npm:^0.31.10"
     react-native-open-maps: "npm:^0.4.3"
@@ -23560,22 +23560,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-keyboard-controller@npm:1.19.0":
-  version: 1.19.0
-  resolution: "react-native-keyboard-controller@npm:1.19.0"
+"react-native-keyboard-controller@npm:^1.20.2":
+  version: 1.20.2
+  resolution: "react-native-keyboard-controller@npm:1.20.2"
   dependencies:
     react-native-is-edge-to-edge: "npm:^1.2.1"
   peerDependencies:
     react: "*"
     react-native: "*"
     react-native-reanimated: ">=3.0.0"
-  checksum: 10/d1446ab79473cdc5347990347263fa16ae6b0f90da9807b2382eb8b1914cc2bfa081bce8c74f273590192f35362250367a7abd4cff49c7a475791e1bf941f006
+  checksum: 10/d9e6a8b1b289fabbc06a0b6740dce60d379ae58f39ab609aac01c7e44315c6a61bc3076d02fcaaf21cd01051b10aaadcfa437e24421d4a27e0d5e88484c2419f
   languageName: node
   linkType: hard
 
-"react-native-maps@npm:^1.26.17":
-  version: 1.26.17
-  resolution: "react-native-maps@npm:1.26.17"
+"react-native-maps@npm:^1.26.20":
+  version: 1.26.20
+  resolution: "react-native-maps@npm:1.26.20"
   dependencies:
     "@types/geojson": "npm:^7946.0.13"
   peerDependencies:
@@ -23585,7 +23585,7 @@ __metadata:
   peerDependenciesMeta:
     react-native-web:
       optional: true
-  checksum: 10/9f228b2785371f1d9b72aeecf35d4286d89b0ce853c470b77fb6e47fce4c9cc9e03751160e89cbf2d37ec0bfc6a36cdfdbf3a5220736433a67eda42472ceb292
+  checksum: 10/7287bc50eabf495e8716fe47cc361011301e1b0586a783c014ab4ef1363d5439745807f29bcf9ca11a8226ba66e578dbf54090c75475cd44994c545d15037434
   languageName: node
   linkType: hard
 
