@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { ClientProfileSectionEnum } from '../../screenRouting';
 import { MainContainer } from '../../ui-components';
 import { ClientViewTabEnum } from '../Client/ClientTabs';
-import { HMISClientHeader } from './HMISClientHeader';
+import { HMISClientProfileHeader } from './HMISClientProfileHeader';
 import { HmisClientProfileDocument } from './__generated__/getHMISClient.generated';
 import { renderTabComponent } from './tabs/utils/renderTabComponent';
 
@@ -53,7 +53,7 @@ export function ClientHMIS(props: TProps) {
 
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      <HMISClientHeader client={client} />
+      <HMISClientProfileHeader client={client} />
 
       <Tabs
         tabs={hmisTabs}
