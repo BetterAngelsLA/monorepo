@@ -4,7 +4,7 @@ import {
   FeatureFlags,
   useUser,
 } from '@monorepo/expo/betterangels';
-import { Colors, Spacings } from '@monorepo/expo/shared/static';
+import { Colors } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
 import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
@@ -13,6 +13,12 @@ import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import NitroCookies from 'react-native-nitro-cookies';
 import Logo from './assets/images/logo.svg';
+
+const SHARED_BUTTON_PROPS = {
+  size: 'full',
+  borderRadius: 50,
+  borderWidth: 0,
+} as const;
 
 export default function Auth() {
   const router = useRouter();
@@ -31,25 +37,26 @@ export default function Auth() {
 
   return (
     <AuthContainer Logo={Logo}>
-      <View style={styles.buttonsContainer}>
+      <View style={styles.contentWrapper}>
         <FeatureFlagControlled
           flag={FeatureFlags.HMIS_FF}
           fallback={
             <Button
+              {...SHARED_BUTTON_PROPS}
               accessibilityHint="Goes to sign-in screen"
               onPress={() => router.navigate('/sign-in')}
               testID="get-started-button"
               title="Get Started"
-              size="full"
               variant="primaryDark"
-              borderRadius={50}
-              borderWidth={0}
             />
           }
         >
           <Text style={styles.heading}>Choose an account:</Text>
 
+          <View style={{ height: 16 }} />
+
           <Button
+            {...SHARED_BUTTON_PROPS}
             accessibilityHint="Opens Better Angels login"
             onPress={() =>
               router.navigate({
@@ -59,14 +66,13 @@ export default function Auth() {
             }
             testID="better-angels-login"
             title="Better Angels"
-            size="full"
             variant="primaryDark"
-            borderRadius={50}
-            borderWidth={0}
-            mb="lg"
           />
 
+          <View style={{ height: 16 }} />
+
           <Button
+            {...SHARED_BUTTON_PROPS}
             accessibilityHint="Opens HMIS login for service providers"
             onPress={() =>
               router.navigate({
@@ -76,14 +82,11 @@ export default function Auth() {
             }
             testID="hmis-login-button"
             title="HMIS"
-            size="full"
             variant="secondary"
-            borderRadius={50}
-            borderWidth={0}
           />
           <View style={styles.versionContainer}>
-            <Text style={styles.appVersion}>App Version: {nativeVersion}</Text>
-            <Text style={styles.appVersion}>OTA Version: {otaVersion}</Text>
+            <Text style={styles.appVersion}>App version: {nativeVersion}</Text>
+            <Text style={styles.appVersion}>OTA version: {otaVersion}</Text>
           </View>
         </FeatureFlagControlled>
       </View>
@@ -92,22 +95,21 @@ export default function Auth() {
 }
 
 const styles = StyleSheet.create({
-  buttonsContainer: {
+  contentWrapper: {
     width: '100%',
-    flex: 1,
     paddingBottom: 60,
-    justifyContent: 'flex-end',
+    marginTop: 139,
   },
   heading: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: Spacings.lg,
+    lineHeight: 18,
     textAlign: 'center',
     color: Colors.WHITE,
   },
   versionContainer: {
     alignItems: 'center',
-    marginTop: 12,
+    marginTop: 16,
   },
   appVersion: {
     fontSize: 12,

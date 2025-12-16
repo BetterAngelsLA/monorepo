@@ -13,28 +13,23 @@ export default function AuthContainer({
 }) {
   const insets = useSafeAreaInsets();
   const bottomOffset = insets.bottom;
+
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <View
         style={[
           styles.container,
           {
             paddingBottom: bottomOffset,
-            flex: 1,
+            justifyContent: 'flex-end',
             alignItems: 'center',
-            justifyContent: 'center',
           },
         ]}
       >
         {Logo && (
-          <View
-            style={{
-              position: 'absolute',
-              top: '40%',
-            }}
-          >
-            <Logo width={216} height={Spacings.xl} />
+          <View style={{ marginBottom: 0 }}>
+            <Logo width={216} height={33} />
           </View>
         )}
         {children}
@@ -48,5 +43,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: Spacings.sm,
     backgroundColor: Colors.PRIMARY,
+    width: '100%',
   },
 });
