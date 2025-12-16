@@ -1,10 +1,12 @@
 import datetime
+import re
 from datetime import timezone
 from enum import Enum
 from http import HTTPMethod
 from typing import Any, Collection, Iterable, Mapping, Optional
 from zoneinfo import ZoneInfo
 
+import jwt
 import requests
 import strawberry
 from common.constants import HMIS_SESSION_KEY_NAME
@@ -12,7 +14,7 @@ from common.errors import UnauthenticatedGQLError
 from common.utils import dict_keys_to_snake
 from cryptography.fernet import Fernet, InvalidToken
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from graphql import (
     FieldNode,
     FragmentSpreadNode,
@@ -89,7 +91,7 @@ BA_CLIENT_FIELDS = {
 BA_NOTE_FIELDS = {"hmisId", "createdBy", "hmisClientProfile"}
 
 
-class HmisRestApiBridge:
+class HmisApiBridge:
     """Utility class for interfacing with HMIS REST API."""
 
     def __init__(self, info: strawberry.Info) -> None:
@@ -153,7 +155,6 @@ class HmisRestApiBridge:
             "json": body,
             "timeout": timeout,
         }
-
         resp = requests.request(method, **request_args)  # type: ignore
 
         self._handle_error_response(resp)
@@ -166,6 +167,16 @@ class HmisRestApiBridge:
             raise RuntimeError("HMIS_TOKEN_KEY is not configured")
 
         return Fernet(key)
+
+    def _set_auth_token(self, token: str) -> None:
+        """"""
+        decoded = jwt.decode(token, options={"verify_signature": False})
+        self.session.set_expiry(decoded["exp"] - decoded["iat"] - 1)
+
+        f = self._fernet()
+        self.session[self.session_key] = f.encrypt(token.encode("utf-8")).decode("utf-8")
+
+        self.session.modified = True
 
     def _get_auth_token(self) -> Optional[str]:
         enc = self.session.get(self.session_key)
@@ -343,6 +354,50 @@ class HmisRestApiBridge:
 
     def _get_field_str(self, fields: Iterable[str]) -> str:
         return ",".join(fields)
+
+    def create_auth_token(self, username: str, password: str) -> None:
+        headers = self.headers.copy()
+        headers.pop("Host", None)
+        login_url = f"{self.endpoint}/login"
+
+        session = requests.Session()
+
+        try:
+            response = session.get(login_url, headers=headers)
+            response.raise_for_status()
+            html = response.text
+
+            param_match = re.search(r'meta name="csrf-param" content="([^"]+)"', html)
+            token_match = re.search(r'meta name="csrf-token" content="([^"]+)"', html)
+
+            if not param_match or not token_match:
+                raise ValidationError("❌ Error: Could not extract CSRF tokens.")
+
+            csrf_key = param_match.group(1)
+            csrf_val = token_match.group(1)
+
+            payload = {
+                csrf_key: csrf_val,
+                "LoginForm[username]": username,
+                "LoginForm[password]": password,
+                "LoginForm[external_idp_id]": "",
+                "LoginForm[fingerPrint]": "",
+            }
+
+            post_response = session.post(url=login_url, data=payload, headers=headers)
+
+            if post_response.url != login_url and "login" not in post_response.url:
+                if auth_token := post_response.cookies.get("auth_token"):
+                    self._set_auth_token(auth_token)
+
+            elif "Invalid username or password" in post_response.text:
+                raise PermissionDenied("❌ Login Failed: Invalid credentials.")
+
+            else:
+                raise ValidationError(f"⚠️ Status Code: {post_response.status_code}")
+
+        except Exception as e:
+            raise ValidationError(f"An error occurred: {e}")
 
     def get_client(self, hmis_id: str) -> dict[str, Any]:
         fields = self._get_field_dot_paths(
