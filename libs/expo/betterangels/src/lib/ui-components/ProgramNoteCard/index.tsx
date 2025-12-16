@@ -38,8 +38,6 @@ export default function ProgramNoteCard(props: INoteCardProps) {
       {hmisNote.date && (
         <TextRegular size="sm">
           {format(new Date(hmisNote.date), 'MM/dd/yyyy')}
-          {' @ '}
-          {format(new Date(hmisNote?.date), 'hh:mm a')}
         </TextRegular>
       )}
     </Pressable>

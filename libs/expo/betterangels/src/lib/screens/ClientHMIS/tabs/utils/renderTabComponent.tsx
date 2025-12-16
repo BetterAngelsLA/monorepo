@@ -2,8 +2,8 @@ import type { ReactElement } from 'react';
 import { HmisClientProfileType } from '../../../../apollo';
 import { ClientProfileSectionEnum } from '../../../../screenRouting';
 import { ClientViewTabEnum } from '../../../Client/ClientTabs';
-import { InteractionLocations } from '../../../Client/Locations';
 import { ClientInteractionsHmisView } from '../ClientInteractionsHmisView';
+import { ClientLocationsHmisView } from '../ClientLocationsHmisView';
 import { ClientProfileHMISView } from '../ClientProfileHMISView';
 
 type RenderArgs = {
@@ -21,7 +21,7 @@ const tabRendererMap: Partial<
     <ClientInteractionsHmisView client={client} />
   ),
   [ClientViewTabEnum.Locations]: ({ client }) => (
-    <InteractionLocations clientProfileId={client?.id} />
+    <ClientLocationsHmisView clientProfileId={client?.id} />
   ),
 };
 

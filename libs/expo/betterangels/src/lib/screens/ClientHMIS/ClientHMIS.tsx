@@ -51,9 +51,11 @@ export function ClientHMIS(props: TProps) {
     return null;
   }
 
+  const showHeader = currentTab !== ClientViewTabEnum.Locations;
+
   return (
     <MainContainer pt={0} pb={0} bg={Colors.NEUTRAL_EXTRA_LIGHT} px={0}>
-      <HMISClientHeader client={client} />
+      {showHeader && <HMISClientHeader client={client} />}
 
       <Tabs
         tabs={hmisTabs}

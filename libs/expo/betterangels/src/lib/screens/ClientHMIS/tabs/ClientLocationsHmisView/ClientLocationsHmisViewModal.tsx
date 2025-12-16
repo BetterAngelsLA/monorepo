@@ -4,19 +4,19 @@ import {
   TextBold,
   TextRegular,
 } from '@monorepo/expo/shared/ui-components';
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useClientInteractionsMapState } from '../../../state';
-import { NoteCard } from '../../../ui-components';
+import { useHmisClientInteractionsMapState } from '../../../../state';
+import { ProgramNoteCard } from '../../../../ui-components';
 
-export function InteractionLocationsModal() {
+export function ClientLocationsHmisViewModal() {
   const [titleHeight, setTitleHeight] = useState<number>(1);
+  const router = useRouter();
 
-  const [mapState] = useClientInteractionsMapState();
+  const [mapState] = useHmisClientInteractionsMapState();
 
   const { selectedInteractions } = mapState;
-
-  console.log('SELECTED INTERACTIONS: ', selectedInteractions);
 
   const snapPoints = useMemo(() => [titleHeight], [titleHeight]);
 
@@ -64,9 +64,15 @@ export function InteractionLocationsModal() {
       >
         {selectedInteractions.map((interaction) => {
           return (
-            <NoteCard
+            <ProgramNoteCard
+              onPress={() => {
+                router.navigate({
+                  pathname: `/notes-hmis/${interaction.id}`,
+                  params: { clientId: interaction.hmisClientProfile.id },
+                });
+              }}
               key={interaction.id}
-              note={interaction}
+              hmisNote={interaction}
               variant={'clientProfile'}
               hasBorder
             />
