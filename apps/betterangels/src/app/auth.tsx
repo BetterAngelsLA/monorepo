@@ -4,6 +4,7 @@ import {
   FeatureFlags,
   useUser,
 } from '@monorepo/expo/betterangels';
+import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { Button } from '@monorepo/expo/shared/ui-components';
 import CookieManager from '@react-native-cookies/cookies';
 import * as Application from 'expo-application';
@@ -21,8 +22,6 @@ export default function Auth() {
   const otaVersion = otaId ? otaId.slice(0, 7) : 'N/A';
 
   // make sure local user data is cleared when landing on this screen
-  // apolloProvider has no access to UserProvider so cannot really reset
-  // user on 401 errors
   useEffect(() => {
     setUser(undefined);
     CookieManager.clearAll();
@@ -46,7 +45,7 @@ export default function Auth() {
             />
           }
         >
-          <Text style={styles.heading}>Log in with</Text>
+          <Text style={styles.heading}>Choose an account:</Text>
 
           <Button
             accessibilityHint="Opens Better Angels login"
@@ -100,16 +99,17 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 18,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: Spacings.sm,
     textAlign: 'center',
+    color: Colors.WHITE,
   },
   versionContainer: {
-    alignItems: 'center', // centers children horizontally
+    alignItems: 'center',
     marginTop: 12,
   },
   appVersion: {
     fontSize: 12,
     lineHeight: 20,
-    color: '#FFFFFF', // softer, like your first shot
+    color: Colors.WHITE,
   },
 });
