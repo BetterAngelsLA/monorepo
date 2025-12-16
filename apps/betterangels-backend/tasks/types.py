@@ -2,7 +2,7 @@ from typing import Optional
 
 import strawberry_django
 from accounts.types import OrganizationType, UserType
-from clients.types import ClientProfileType
+from clients.types import ClientProfileType, HmisProfileType
 from common.enums import SelahTeamEnum
 from common.graphql.types import make_in_filter
 from django.db.models import Q
@@ -15,8 +15,10 @@ from . import models
 @strawberry_django.filter_type(models.Task, lookups=True)
 class TaskFilter:
     client_profile: Optional[ID]
+    hmis_client_profile: Optional[ID]
     created_by: Optional[ID]
     client_profiles = make_in_filter("client_profile", ID)
+    hmis_client_profiles = make_in_filter("hmis_client_profile", ID)
     authors = make_in_filter("created_by", ID)
     organizations = make_in_filter("organization", ID)
     status = make_in_filter("status", TaskStatusEnum)
@@ -56,6 +58,7 @@ class TaskOrder:
 @strawberry_django.type(models.Task, pagination=True, filters=TaskFilter, ordering=TaskOrder)
 class TaskType:
     id: ID
+    hmis_client_profile: Optional[HmisProfileType]
     client_profile: Optional[ClientProfileType]
     created_at: auto
     created_by: UserType
@@ -72,9 +75,10 @@ class TaskType:
 @strawberry_django.input(models.Task, partial=True)
 class CreateTaskInput:
     client_profile: Optional[ID]
+    hmis_client_profile: Optional[ID]
     description: auto
-    note: Optional[ID] = None
-    hmis_note: Optional[ID] = None
+    note: Optional[ID]
+    hmis_note: Optional[ID]
     summary: str
     team: Optional[SelahTeamEnum]
     status: Optional[TaskStatusEnum]

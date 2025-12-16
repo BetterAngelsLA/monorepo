@@ -8,6 +8,20 @@ mutation CreateHmisNote($data: CreateHmisNoteInput!) {
       note
       date
       refClientProgram
+      providedServices {
+        service {
+          id
+          label
+        }
+        serviceOther
+      }
+      requestedServices {
+        service {
+          id
+          label
+        }
+        serviceOther
+      }
       hmisClientProfile {
         id
         firstName

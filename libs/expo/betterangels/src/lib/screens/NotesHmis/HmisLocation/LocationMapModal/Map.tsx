@@ -7,11 +7,19 @@ import { MapView, Marker, PROVIDER_GOOGLE, TMapView } from '../../../../maps';
 
 interface IMapProps {
   currentLocation:
-    | { longitude: number; latitude: number; name: string | undefined }
+    | {
+        longitude: number;
+        latitude: number;
+        shortAddressName: string | undefined;
+      }
     | undefined;
   setCurrentLocation: (
     currentLocation:
-      | { longitude: number; latitude: number; name: string | undefined }
+      | {
+          longitude: number;
+          latitude: number;
+          shortAddressName: string | undefined;
+        }
       | undefined
   ) => void;
   setInitialLocation: (initialLocation: {
@@ -55,11 +63,11 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
     }
     const latitude = e.nativeEvent.coordinate.latitude;
     const longitude = e.nativeEvent.coordinate.longitude;
-    const name =
+    const shortAddressName =
       e.nativeEvent.name?.replace(/(\r\n|\n|\r)/gm, ' ') || undefined;
     const placeId = e.nativeEvent.placeId || undefined;
 
-    setCurrentLocation({ longitude, latitude, name });
+    setCurrentLocation({ longitude, latitude, shortAddressName });
     setInitialLocation({ longitude, latitude });
     setMinimizeModal(false);
     setSelected(true);
@@ -83,7 +91,9 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
         ? data.result.address_components
         : data.results[0].address_components;
 
-      const shortAddress = isId ? name : googleAddress.split(', ')[0];
+      const shortAddress = isId
+        ? shortAddressName
+        : googleAddress.split(', ')[0];
 
       setAddress({
         short: shortAddress,
@@ -94,8 +104,9 @@ const Map = forwardRef<TMapView, IMapProps>((props: IMapProps, ref) => {
       setSelected(true);
     } catch (err) {
       setAddress({
-        short: name || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
-        full: name || `${latitude}, ${longitude}`,
+        short:
+          shortAddressName || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`,
+        full: shortAddressName || `${latitude}, ${longitude}`,
         addressComponents: [],
       });
       console.error('Reverse geocode failed:', err);

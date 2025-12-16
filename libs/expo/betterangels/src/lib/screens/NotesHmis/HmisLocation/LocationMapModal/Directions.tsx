@@ -6,7 +6,7 @@ import openMap from 'react-native-open-maps';
 type locationLongLat = {
   longitude: number;
   latitude: number;
-  name: string | undefined;
+  shortAddressName: string | undefined;
 };
 
 interface IDirectionsProps {

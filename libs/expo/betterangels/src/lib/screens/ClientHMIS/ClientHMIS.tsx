@@ -14,6 +14,7 @@ const hmisTabs: ClientViewTabEnum[] = [
   ClientViewTabEnum.Profile,
   ClientViewTabEnum.Interactions,
   ClientViewTabEnum.Locations,
+  ClientViewTabEnum.Tasks,
 ];
 
 type TProps = {

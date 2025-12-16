@@ -608,6 +608,7 @@ export type CreateSocialMediaProfilePayload = OperationInfo | SocialMediaProfile
 export type CreateTaskInput = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
   hmisNote?: InputMaybe<Scalars['ID']['input']>;
   note?: InputMaybe<Scalars['ID']['input']>;
   status?: InputMaybe<TaskStatusEnum>;
@@ -961,6 +962,7 @@ export type HmisNoteType = {
   providedServices?: Maybe<Array<ServiceRequestType>>;
   refClientProgram?: Maybe<Scalars['String']['output']>;
   requestedServices?: Maybe<Array<ServiceRequestType>>;
+  tasks?: Maybe<Array<TaskType>>;
   title?: Maybe<Scalars['String']['output']>;
 };
 
@@ -971,6 +973,13 @@ export type HmisNoteTypeProvidedServicesArgs = {
 
 
 export type HmisNoteTypeRequestedServicesArgs = {
+  pagination?: InputMaybe<OffsetPaginationInput>;
+};
+
+
+export type HmisNoteTypeTasksArgs = {
+  filters?: InputMaybe<TaskFilter>;
+  ordering?: Array<TaskOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1244,6 +1253,7 @@ export type Mutation = {
   importNote: ImportNotePayload;
   login: AuthResponse;
   logout: Scalars['Boolean']['output'];
+  removeHmisNoteServiceRequest: RemoveHmisNoteServiceRequestPayload;
   removeNoteServiceRequest: RemoveNoteServiceRequestPayload;
   revertNote: RevertNotePayload;
   updateClientContact: UpdateClientContactPayload;
@@ -1426,6 +1436,11 @@ export type MutationLoginArgs = {
 };
 
 
+export type MutationRemoveHmisNoteServiceRequestArgs = {
+  data: RemoveHmisNoteServiceRequestInput;
+};
+
+
 export type MutationRemoveNoteServiceRequestArgs = {
   data: RemoveNoteServiceRequestInput;
 };
@@ -1554,7 +1569,7 @@ export type NoteType = {
   __typename?: 'NoteType';
   clientProfile?: Maybe<ClientProfileType>;
   createdAt: Scalars['DateTime']['output'];
-  createdBy: UserType;
+  createdBy?: Maybe<UserType>;
   id: Scalars['ID']['output'];
   interactedAt: Scalars['DateTime']['output'];
   isSubmitted: Scalars['Boolean']['output'];
@@ -1890,6 +1905,7 @@ export type QueryBulkClientProfileImportRecordsArgs = {
 export type QueryCaseworkerOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
   order?: InputMaybe<OrganizationOrder>;
+  ordering?: InputMaybe<Array<OrganizationOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1934,6 +1950,7 @@ export type QueryClientProfileArgs = {
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
   order?: InputMaybe<ClientProfileOrder>;
+  ordering?: Array<ClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -1980,6 +1997,7 @@ export type QueryHmisProfilesArgs = {
 export type QueryInteractionAuthorsArgs = {
   filters?: InputMaybe<InteractionAuthorFilter>;
   order?: InputMaybe<InteractionAuthorOrder>;
+  ordering?: Array<InteractionAuthorOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2029,7 +2047,7 @@ export type QueryShelterArgs = {
 
 export type QuerySheltersArgs = {
   filters?: InputMaybe<ShelterFilter>;
-  order?: InputMaybe<ShelterOrder>;
+  ordering?: InputMaybe<Array<ShelterOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 
@@ -2081,6 +2099,14 @@ export enum RelationshipTypeEnum {
   Sibling = 'SIBLING',
   Uncle = 'UNCLE'
 }
+
+export type RemoveHmisNoteServiceRequestInput = {
+  hmisNoteId: Scalars['ID']['input'];
+  serviceRequestId: Scalars['ID']['input'];
+  serviceRequestType: ServiceRequestTypeEnum;
+};
+
+export type RemoveHmisNoteServiceRequestPayload = HmisNoteType | OperationInfo;
 
 export type RemoveNoteServiceRequestInput = {
   noteId: Scalars['ID']['input'];
@@ -2462,6 +2488,8 @@ export type TaskFilter = {
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
   clientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
+  hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
+  hmisClientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Array<TaskStatusEnum>>;
@@ -2487,6 +2515,7 @@ export type TaskType = {
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   description?: Maybe<Scalars['String']['output']>;
+  hmisClientProfile?: Maybe<HmisProfileType>;
   hmisNote?: Maybe<DjangoModelType>;
   id: Scalars['ID']['output'];
   note?: Maybe<DjangoModelType>;

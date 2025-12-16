@@ -7,7 +7,7 @@ export type CreateNoteMutationVariables = Types.Exact<{
 
 
 export type CreateNoteMutation = { __typename?: 'Mutation', createNote:
-    | { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, createdAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy: { __typename?: 'UserType', id: string, username?: string | null, email?: string | null } }
+    | { __typename?: 'NoteType', id: string, purpose?: string | null, publicDetails: string, createdAt: any, clientProfile?: { __typename?: 'ClientProfileType', id: string, firstName?: string | null, lastName?: string | null, email?: string | null } | null, createdBy?: { __typename?: 'UserType', id: string, username?: string | null, email?: string | null } | null }
     | { __typename?: 'OperationInfo', messages: Array<{ __typename?: 'OperationMessage', kind: Types.OperationMessageKind, field?: string | null, message: string }> }
    };
 

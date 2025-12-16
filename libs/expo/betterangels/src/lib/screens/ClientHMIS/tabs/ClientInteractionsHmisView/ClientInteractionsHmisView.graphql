@@ -28,6 +28,20 @@ query HmisNotes(
         pointOfInterest
       }
       refClientProgram
+      providedServices {
+        id
+        service {
+          id
+          label
+        }
+      }
+      requestedServices {
+        id
+        service {
+          id
+          label
+        }
+      }
       hmisClientProfile {
         id
         hmisId

@@ -10,21 +10,13 @@ import {
 import { useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 import openMap from 'react-native-open-maps';
-
-type TLocation =
-  | {
-      address: string | null | undefined;
-      latitude: number | null | undefined;
-      longitude: number | null | undefined;
-      name: string | null | undefined;
-    }
-  | undefined;
+import { LocationDraft } from '../../HmisProgramNoteForm';
 
 interface ISelectedProps {
   currentLocation: {
     latitude: number;
     longitude: number;
-    name: string | undefined;
+    shortAddressName: string | undefined;
   };
   address:
     | { full: string; short: string; addressComponents: any[] }
@@ -32,7 +24,7 @@ interface ISelectedProps {
     | null;
   setChooseDirections: (chooseDirections: boolean) => void;
   setSelected: (selected: boolean) => void;
-  onSelectLocation: (location: TLocation) => void;
+  onSelectLocation: (location: LocationDraft) => void;
   minimizeModal: boolean;
   setValue: (key: string, data: any) => void;
 }
@@ -58,15 +50,15 @@ export default function Selected(props: ISelectedProps) {
     onSelectLocation({
       longitude: currentLocation?.longitude,
       latitude: currentLocation?.latitude,
-      address: address?.full,
-      name: currentLocation?.name,
+      formattedAddress: address?.full || '',
+      shortAddressName: currentLocation?.shortAddressName || '',
     });
 
     setValue('location', {
       longitude: currentLocation?.longitude,
       latitude: currentLocation?.latitude,
-      address: address?.full,
-      components: JSON.stringify(address?.addressComponents),
+      formattedAddress: address?.full,
+      components: address?.addressComponents,
     });
   }
 
@@ -81,7 +73,9 @@ export default function Selected(props: ISelectedProps) {
       }}
     >
       <TextBold mx="md">
-        {currentLocation?.name ? currentLocation?.name : address?.short}
+        {currentLocation?.shortAddressName
+          ? currentLocation?.shortAddressName
+          : address?.short}
       </TextBold>
       <View
         style={{

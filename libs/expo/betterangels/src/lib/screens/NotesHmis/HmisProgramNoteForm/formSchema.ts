@@ -1,12 +1,59 @@
 import { format } from 'date-fns';
 import { z } from 'zod';
+import {
+  SelahTeamEnum,
+  ServiceRequestTypeEnum,
+  TaskStatusEnum,
+} from '../../../apollo';
 
-export const LocationSchema = z.object({
-  latitude: z.number().gte(-90).lte(90),
-  longitude: z.number().gte(-180).lte(180),
-  formattedAddress: z.string().min(1, 'Required'),
-  components: z.string().optional(),
-});
+// ----------------------------------------------------------------------
+// 1. Local Draft Task Type
+// ----------------------------------------------------------------------
+export type LocalDraftTask = {
+  id: string;
+  summary: string;
+  description?: string | null;
+  status?: TaskStatusEnum;
+  team?: SelahTeamEnum | null;
+};
+
+// ----------------------------------------------------------------------
+// 2. Validation Schema
+// ----------------------------------------------------------------------
+
+export type LocationDraft =
+  | Partial<{
+      latitude: number;
+      longitude: number;
+      formattedAddress: string;
+      shortAddressName: string;
+      components?: string;
+    }>
+  | undefined;
+
+export const LocationSchema = z
+  .object({
+    latitude: z.number().gte(-90).lte(90),
+    longitude: z.number().gte(-180).lte(180),
+    formattedAddress: z.string().min(1, 'Required'),
+    shortAddressName: z.string().optional(),
+    components: z.any().optional(), // accept array/object from Google
+  })
+  .strict();
+
+export type ServicesDraft = Partial<
+  Record<
+    ServiceRequestTypeEnum,
+    {
+      serviceRequests: {
+        id: string;
+        service?: { id: string; label: string } | null;
+        markedForDeletion?: boolean;
+        serviceOther?: string | null;
+      }[];
+    }
+  >
+>;
 
 export const HmisProgramNoteFormSchema = z.object({
   title: z.string().min(1, 'Purpose is required.'),
@@ -14,61 +61,75 @@ export const HmisProgramNoteFormSchema = z.object({
     .date()
     .optional()
     .refine(
-      (val) => val instanceof Date && !Number.isNaN(val.getTime()), // not using isValid as it allows integer dates
+      (val) => val instanceof Date && !Number.isNaN(val.getTime()),
       'Date is required.'
     ),
   refClientProgram: z.string(),
   note: z.string().min(1, 'Note is required.'),
-  location: LocationSchema.optional(),
+  location: LocationSchema,
+
+  // FIX 1: Remove .default([]). This makes the field REQUIRED in the type definition,
+  // preventing the "undefined is not assignable to LocalDraftTask[]" error.
+  // We handle the default value via the 'getHmisProgramNoteFormEmptyState' function.
+  draftTasks: z.array(z.custom<LocalDraftTask>()),
+  services: z.custom<ServicesDraft>().optional(),
 });
 
-export type THmisProgramNoteFormSchema = z.infer<
+// ----------------------------------------------------------------------
+// 3. Types
+// ----------------------------------------------------------------------
+
+// We explicitly intersect to ensure the TypeScript type for draftTasks is robust
+export type THmisProgramNoteFormInputs = z.input<
   typeof HmisProgramNoteFormSchema
+> & {
+  draftTasks: LocalDraftTask[];
+};
+
+// ----------------------------------------------------------------------
+// 4. Output Schema (API Payload)
+// ----------------------------------------------------------------------
+
+// We omit draftTasks so it doesn't interfere with the Note creation payload parsing
+export const HmisProgramNoteFormSchemaOutput = HmisProgramNoteFormSchema.omit({
+  draftTasks: true,
+})
+  .extend({
+    date: z.date(), // required
+  })
+  .transform(({ date, ...rest }) => ({
+    ...rest,
+    date: format(date, 'yyyy-MM-dd'),
+  }));
+
+export type THmisProgramNoteFormOutputs = z.output<
+  typeof HmisProgramNoteFormSchemaOutput
 >;
 
-/**
- * Static empty state used for resets (e.g., clearing a single field).
- * NOTE: date is intentionally undefined here. Do NOT put `new Date()` here,
- * because this object is evaluated once at module load.
- */
-export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormSchema = {
+// ----------------------------------------------------------------------
+// 5. Empty States
+// ----------------------------------------------------------------------
+
+export const hmisProgramNoteFormEmptyState: THmisProgramNoteFormInputs = {
   title: '',
   date: undefined,
   refClientProgram: '',
   note: '',
-  location: {
-    latitude: 0,
-    longitude: 0,
-    formattedAddress: '',
-    components: '',
-  },
+  location: undefined as any,
+  draftTasks: [],
+  services: {},
 };
 
-/**
- * Dynamic empty state to use when initializing a NEW form instance.
- * This ensures `new Date()` is called each time the form is created.
- */
 export const getHmisProgramNoteFormEmptyState =
-  (): THmisProgramNoteFormSchema => ({
+  (): THmisProgramNoteFormInputs => ({
     ...hmisProgramNoteFormEmptyState,
     date: new Date(),
+    draftTasks: [],
   });
 
-export const HmisProgramNoteFormSchemaOutput = HmisProgramNoteFormSchema.extend(
-  {
-    date: z.date(), // required
-  }
-).transform(({ date, ...rest }) => ({
-  ...rest,
-  date: format(date, 'yyyy-MM-dd'),
-}));
-
-export type THmisProgramNoteFormInputs = z.input<
-  typeof HmisProgramNoteFormSchema
->;
-export type THmisProgramNoteFormOutputs = z.output<
-  typeof HmisProgramNoteFormSchemaOutput
->;
+// ----------------------------------------------------------------------
+// 6. Field Names
+// ----------------------------------------------------------------------
 
 type HmisNoteFormFieldName = keyof typeof HmisProgramNoteFormSchema.shape;
 
