@@ -132,9 +132,6 @@ class Mutation:
         hmis_api_bridge = HmisApiBridge(info=info)
         hmis_api_bridge.create_auth_token(email, password)
 
-        # Require an existing user record.
-        # We never auto-create accounts here — users must be pre-invited
-        # into an organization that is linked to HMIS.
         try:
             user = User.objects.get(email__iexact=email)
         except User.DoesNotExist:

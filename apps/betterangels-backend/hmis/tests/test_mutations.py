@@ -588,8 +588,8 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
     @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_hmis_login_success(self) -> None:
         with patch(
-            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
-            return_value=self.success_response,
+            "hmis.api_bridge.HmisApiBridge.create_auth_token",
+            return_value=None,
         ):
             resp = self.execute_graphql(
                 LOGIN_MUTATION,
@@ -611,39 +611,19 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
             "django.contrib.auth.backends.ModelBackend",
         )
 
+    @scrubbed_vcr.use_cassette("test_hmis_login_invalid_credentials.yaml")
     def test_hmis_login_invalid_credentials(self) -> None:
-        return_value = {
-            "data": {"createAuthToken": {"authToken": None}},
-            "errors": [
-                {
-                    "path": ["createAuthToken"],
-                    "data": None,
-                    "errorType": "422",
-                    "errorInfo": None,
-                    "locations": [{"line": 5, "column": 5, "sourceName": None}],
-                    "message": '{"name":"Unprocessable entity","message":"{\\"username\\":[\\"Incorrect username or password.\\"]}","code":0,"status":422,"messages":{"username":["Incorrect username or password."]}}',
-                }
-            ],
-        }
-
-        with patch(
-            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
-            return_value=return_value,
-        ):
-            resp = self.execute_graphql(
-                LOGIN_MUTATION,
-                variables={"email": self.existing_user.email, "password": "wrong"},
-            )
-
-        self.assertIsNone(resp.get("errors"))
-        payload = resp["data"]["hmisLogin"]
-        self.assertEqual(payload["__typename"], "HmisLoginError")
-        self.assertIn("Invalid credentials", payload["message"])
+        resp = self.execute_graphql(
+            LOGIN_MUTATION,
+            variables={"email": self.existing_user.email, "password": "wrong"},
+        )
+        self.assertEqual(len(resp["errors"]), 1)
+        self.assertIn("Login Failed: Invalid credentials.", resp["errors"][0]["message"])
 
     def test_hmis_login_unknown_email_no_autocreate(self) -> None:
         with patch(
-            "hmis.gql_api_bridge.HmisGraphQLApiBridge._make_request",
-            return_value=self.success_response,
+            "hmis.api_bridge.HmisApiBridge.create_auth_token",
+            return_value=None,
         ):
             resp = self.execute_graphql(
                 LOGIN_MUTATION,

@@ -390,11 +390,11 @@ class HmisApiBridge:
                 if auth_token := post_response.cookies.get("auth_token"):
                     self._set_auth_token(auth_token)
 
-            elif "Invalid username or password" in post_response.text:
-                raise PermissionDenied("❌ Login Failed: Invalid credentials.")
+            elif "Incorrect username or password" in post_response.text:
+                raise PermissionDenied("Login Failed: Invalid credentials.")
 
             else:
-                raise ValidationError(f"⚠️ Status Code: {post_response.status_code}")
+                raise ValidationError(f"Status Code: {post_response.status_code}")
 
         except Exception as e:
             raise ValidationError(f"An error occurred: {e}")
