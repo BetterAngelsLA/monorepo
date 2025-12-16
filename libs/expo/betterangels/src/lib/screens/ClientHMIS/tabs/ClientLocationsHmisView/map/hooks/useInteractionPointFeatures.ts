@@ -1,7 +1,5 @@
-import {
-  Ordering,
-  useGetHmisClientInteractionsWithLocation,
-} from '@monorepo/expo/betterangels';
+import { Ordering } from '../../../../../../apollo';
+import { useGetHmisClientInteractionsWithLocation } from '../../../../../../hooks';
 
 import { toPointFeature } from '@monorepo/expo/shared/ui-components';
 import { useMemo } from 'react';

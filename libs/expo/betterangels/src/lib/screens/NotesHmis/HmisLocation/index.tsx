@@ -1,9 +1,3 @@
-import {
-  MapView,
-  Marker,
-  PROVIDER_GOOGLE,
-  useModalScreen,
-} from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
@@ -13,6 +7,8 @@ import * as ExpoLocation from 'expo-location';
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { StyleSheet, View } from 'react-native';
+import { MapView, Marker, PROVIDER_GOOGLE } from '../../../maps';
+import { useModalScreen } from '../../../providers';
 import LocationMapModal from './LocationMapModal';
 
 const FIELD_KEY = 'location';

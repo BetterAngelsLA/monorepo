@@ -1,14 +1,9 @@
-import {
-  MapView,
-  Marker,
-  PROVIDER_GOOGLE,
-  TMapView,
-} from '@monorepo/expo/betterangels';
 import { useApiConfig } from '@monorepo/expo/shared/clients';
 import { LocationPinIcon } from '@monorepo/expo/shared/icons';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { forwardRef } from 'react';
+import { MapView, Marker, PROVIDER_GOOGLE, TMapView } from '../../../../maps';
 
 interface IMapProps {
   currentLocation:

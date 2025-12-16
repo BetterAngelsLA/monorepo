@@ -1,13 +1,11 @@
 import {
-  HmisNoteType,
-  useHmisClientInteractionsMapState,
-} from '@monorepo/expo/betterangels';
-import {
   TMapDeltaLatLng,
   coordsToRegion,
   defaultRegionDelta,
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo } from 'react';
+import { HmisNoteType } from '../../../../../../apollo';
+import { useHmisClientInteractionsMapState } from '../../../../../../state';
 
 type TProps = {
   interaction?: HmisNoteType;
