@@ -5682,7 +5682,6 @@ __metadata:
     "@portabletext/react": "npm:^3.2.0"
     "@react-native-async-storage/async-storage": "npm:2.2.0"
     "@react-native-community/datetimepicker": "npm:8.4.4"
-    "@react-native-cookies/cookies": "npm:^6.2.1"
     "@react-native-picker/picker": "npm:2.11.1"
     "@sanity/client": "npm:^6.27.1"
     "@shopify/flash-list": "npm:2.0.2"
@@ -5799,6 +5798,8 @@ __metadata:
     react-native-gesture-handler: "npm:~2.28.0"
     react-native-keyboard-controller: "npm:1.18.5"
     react-native-maps: "npm:1.20.1"
+    react-native-nitro-cookies: "npm:^1.0.0"
+    react-native-nitro-modules: "npm:^0.31.10"
     react-native-open-maps: "npm:^0.4.3"
     react-native-paper: "npm:^5.12.5"
     react-native-paper-dates: "npm:^0.22.47"
@@ -7330,17 +7331,6 @@ __metadata:
     react-native-windows:
       optional: true
   checksum: 10/e7aa38ac032fc4a75e6892e860e0c83d50eb5824c6e0fd8716a5aa28d86e384b46ef40a8d6342b211aad3ab8a386745e867eae43c26bc444cca489eb0812c8b5
-  languageName: node
-  linkType: hard
-
-"@react-native-cookies/cookies@npm:^6.2.1":
-  version: 6.2.1
-  resolution: "@react-native-cookies/cookies@npm:6.2.1"
-  dependencies:
-    invariant: "npm:^2.2.4"
-  peerDependencies:
-    react-native: ">= 0.60.2"
-  checksum: 10/cf479715f803f346dc46d4e73b08de76115370657bbc298ce0e6f2d87fafcd8c75a618b0a4943435ef312df142f2134deacf8a1aae7086f14f1265d1b46f8a56
   languageName: node
   linkType: hard
 
@@ -23596,6 +23586,27 @@ __metadata:
     react-native-web:
       optional: true
   checksum: 10/9f228b2785371f1d9b72aeecf35d4286d89b0ce853c470b77fb6e47fce4c9cc9e03751160e89cbf2d37ec0bfc6a36cdfdbf3a5220736433a67eda42472ceb292
+  languageName: node
+  linkType: hard
+
+"react-native-nitro-cookies@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "react-native-nitro-cookies@npm:1.0.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: ^0.31.4
+  checksum: 10/cfe0dfaf272b5966469e290c48121a4e83e7f4759656215a46a5e45ef200613a3ff699c6d30fd1f4beb42fdd1c9a05e77a65a99c0335c012f985b96132175823
+  languageName: node
+  linkType: hard
+
+"react-native-nitro-modules@npm:^0.31.10":
+  version: 0.31.10
+  resolution: "react-native-nitro-modules@npm:0.31.10"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10/b0dabcc7c251660d39c712898a2147fcb14bf99cbf2a1a4ff0bc2c8798e4d72b4d3a2ee03e684a1454aaee6a17d665ab38c3f445234a2e17aced32b776ecac38
   languageName: node
   linkType: hard
 
