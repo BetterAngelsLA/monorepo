@@ -68,7 +68,7 @@ export function ClientLocationsHmisViewModal() {
               onPress={() => {
                 router.navigate({
                   pathname: `/notes-hmis/${interaction.id}`,
-                  params: { clientId: interaction.hmisClientProfile.id },
+                  params: { clientId: interaction.hmisClientProfile?.id },
                 });
               }}
               key={interaction.id}

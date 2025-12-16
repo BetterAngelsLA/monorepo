@@ -1,6 +1,9 @@
 import { useQuery } from '@apollo/client/react';
-import { HmisNoteOrdering, HmisNoteType, Ordering } from '../../apollo';
-import { HmisNotesDocument } from '../../screens/ClientHMIS/tabs/ClientInteractionsHmisView/__generated__/ClientInteractionsHmisView.generated';
+import { HmisNoteOrdering, Ordering } from '../../apollo';
+import {
+  HmisNotesDocument,
+  HmisNotesQuery,
+} from '../../screens/ClientHMIS/tabs/ClientInteractionsHmisView/__generated__/ClientInteractionsHmisView.generated';
 
 const defaultSortOrder: HmisNoteOrdering = {
   date: Ordering.Desc,
@@ -26,7 +29,8 @@ export function useGetHmisClientInteractionsWithLocation(props: TProps) {
     nextFetchPolicy: 'cache-first',
   });
 
-  let interactions: HmisNoteType[] | undefined = undefined;
+  let interactions: HmisNotesQuery['hmisNotes']['results'] | undefined =
+    undefined;
 
   if (data) {
     interactions =

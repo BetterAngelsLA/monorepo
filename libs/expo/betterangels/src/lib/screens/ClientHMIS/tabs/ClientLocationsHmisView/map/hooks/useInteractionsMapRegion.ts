@@ -4,11 +4,11 @@ import {
   defaultRegionDelta,
 } from '@monorepo/expo/shared/ui-components';
 import { useMemo } from 'react';
-import { HmisNoteType } from '../../../../../../apollo';
 import { useHmisClientInteractionsMapState } from '../../../../../../state';
+import { HmisNoteQuery } from '../../../../../NotesHmis/HmisProgramNoteEdit/__generated__/hmisGetClientNote.generated';
 
 type TProps = {
-  interaction?: HmisNoteType;
+  interaction?: HmisNoteQuery['hmisNote'];
   delta?: TMapDeltaLatLng;
 };
 

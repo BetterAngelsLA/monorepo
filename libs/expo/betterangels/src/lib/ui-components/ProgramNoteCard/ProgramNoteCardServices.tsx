@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { HmisNotesQuery } from '../../screens/ClientHMIS/tabs/ClientInteractionsHmisView/__generated__/ClientInteractionsHmisView.generated';
 
 interface IProgramNoteCardServicesProps {
-  note: HmisNotesQuery['hmisNotes']['results'][0];
+  note: HmisNotesQuery['hmisNotes']['results'][number];
 }
 
 export default function ProgramNoteCardServices(

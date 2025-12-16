@@ -23,6 +23,7 @@ const tabRendererMap: Partial<
   ),
   [ClientViewTabEnum.Locations]: ({ client }) => (
     <ClientLocationsHmisView clientProfileId={client?.id} />
+  ),
   [ClientViewTabEnum.Tasks]: ({ client }) => (
     <ClientTasksHMISView client={client} />
   ),
