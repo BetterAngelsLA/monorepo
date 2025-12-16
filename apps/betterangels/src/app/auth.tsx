@@ -22,6 +22,8 @@ export default function Auth() {
   const otaVersion = otaId ? otaId.slice(0, 7) : 'N/A';
 
   // make sure local user data is cleared when landing on this screen
+  // apolloProvider has no access to UserProvider so cannot really reset
+  // user on 401 errors
   useEffect(() => {
     setUser(undefined);
     NitroCookies.clearAll();
