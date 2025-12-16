@@ -61,7 +61,7 @@ export default function Auth() {
             variant="primaryDark"
             borderRadius={50}
             borderWidth={0}
-            mb="sm"
+            mb="lg"
           />
 
           <Button
@@ -77,7 +77,7 @@ export default function Auth() {
             size="full"
             variant="secondary"
             borderRadius={50}
-            borderWidth={1}
+            borderWidth={0}
           />
           <View style={styles.versionContainer}>
             <Text style={styles.appVersion}>App Version: {nativeVersion}</Text>
@@ -97,9 +97,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   heading: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: Spacings.sm,
+    marginBottom: Spacings.lg,
     textAlign: 'center',
     color: Colors.WHITE,
   },

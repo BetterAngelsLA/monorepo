@@ -21,7 +21,6 @@ export default function AuthContainer({
           styles.container,
           {
             paddingBottom: bottomOffset,
-            position: 'relative',
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
@@ -29,8 +28,13 @@ export default function AuthContainer({
         ]}
       >
         {Logo && (
-          <View style={{ position: 'absolute' }}>
-            <Logo width={160} height={Spacings.md} />
+          <View
+            style={{
+              position: 'absolute',
+              top: '40%',
+            }}
+          >
+            <Logo width={216} height={Spacings.xl} />
           </View>
         )}
         {children}
