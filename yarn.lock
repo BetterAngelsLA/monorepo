@@ -5796,7 +5796,7 @@ __metadata:
     react-native: "npm:0.81.5"
     react-native-blob-util: "npm:^0.21.2"
     react-native-gesture-handler: "npm:~2.28.0"
-    react-native-keyboard-controller: "npm:^1.19.6"
+    react-native-keyboard-controller: "npm:~1.19.6"
     react-native-maps: "npm:^1.26.20"
     react-native-nitro-cookies: "npm:^1.0.0"
     react-native-nitro-modules: "npm:^0.31.10"
@@ -23560,16 +23560,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-keyboard-controller@npm:^1.19.6":
-  version: 1.20.2
-  resolution: "react-native-keyboard-controller@npm:1.20.2"
+"react-native-keyboard-controller@npm:~1.19.6":
+  version: 1.19.6
+  resolution: "react-native-keyboard-controller@npm:1.19.6"
   dependencies:
     react-native-is-edge-to-edge: "npm:^1.2.1"
   peerDependencies:
     react: "*"
     react-native: "*"
     react-native-reanimated: ">=3.0.0"
-  checksum: 10/d9e6a8b1b289fabbc06a0b6740dce60d379ae58f39ab609aac01c7e44315c6a61bc3076d02fcaaf21cd01051b10aaadcfa437e24421d4a27e0d5e88484c2419f
+  checksum: 10/cbd8202d1c5e70a2c7984c47d8e639f56e05f89a340264e0391a793f783e72644dbf2633007474977f9a00b92ddd6a39d6f76ca4decea5e30afc0e457eb2e4b3
   languageName: node
   linkType: hard
 
