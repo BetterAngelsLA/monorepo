@@ -30,7 +30,19 @@ export function TaskCard(props: TaskCardProps) {
         </TextBold>
 
         {variant !== 'withoutClient' && task.clientProfile && (
-          <TaskCardClient clientProfile={task.clientProfile} />
+          <TaskCardClient
+            firstName={task.clientProfile.firstName}
+            lastName={task.clientProfile.lastName}
+            profilePhotoUrl={task.clientProfile.profilePhoto?.url}
+          />
+        )}
+
+        {variant !== 'withoutClient' && task.hmisClientProfile && (
+          <TaskCardClient
+            firstName={task.hmisClientProfile.firstName}
+            lastName={task.hmisClientProfile.lastName}
+            profilePhotoUrl={task.hmisClientProfile.profilePhoto?.url}
+          />
         )}
 
         <TaskCardCreatedBy

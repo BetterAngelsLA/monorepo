@@ -3,6 +3,7 @@ import { ViewStyle } from 'react-native';
 import { useUser } from '../../hooks';
 import {
   FilterClients,
+  FilterHmisClients,
   FilterOrganizations,
   FilterStatic,
   FilterUsers,
@@ -20,7 +21,7 @@ type TProps = {
 export function TaskFilters(props: TProps) {
   const { onChange, selected, currentUserLabel, style } = props;
 
-  const { user } = useUser();
+  const { user, isHmisUser } = useUser();
 
   function onFilterChange(
     filterType: TTaskFilterType,
@@ -34,13 +35,25 @@ export function TaskFilters(props: TProps) {
 
   return (
     <Filters style={style}>
-      <FilterClients
-        buttonLabel={'Clients'}
-        title="Filter - Client"
-        onChange={(next) => onFilterChange('clientProfiles', next)}
-        initialSelected={selected.clientProfiles}
-        searchPlaceholder="Search clients"
-      />
+      {!isHmisUser && (
+        <FilterClients
+          buttonLabel={'Clients'}
+          title="Filter - Client"
+          onChange={(next) => onFilterChange('clientProfiles', next)}
+          initialSelected={selected.clientProfiles}
+          searchPlaceholder="Search clients"
+        />
+      )}
+
+      {!!isHmisUser && (
+        <FilterHmisClients
+          buttonLabel={'Clients'}
+          title="Filter - Client"
+          onChange={(next) => onFilterChange('hmisClientProfiles', next)}
+          initialSelected={selected.clientProfiles}
+          searchPlaceholder="Search clients"
+        />
+      )}
 
       <FilterStatic
         buttonLabel="Teams"

@@ -28,6 +28,14 @@ query Tasks(
           url
         }
       }
+      hmisClientProfile {
+        id
+        firstName
+        lastName
+        profilePhoto {
+          url
+        }
+      }
       createdBy {
         id
         firstName
