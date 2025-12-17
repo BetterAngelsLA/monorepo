@@ -1064,6 +1064,33 @@ export enum HmisVeteranStatusEnum {
   Yes = 'YES'
 }
 
+export type IdFilterLookup = {
+  /** Case-sensitive containment test. Filter will be skipped on `null` value */
+  contains?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-sensitive ends-with. Filter will be skipped on `null` value */
+  endsWith?: InputMaybe<Scalars['ID']['input']>;
+  /** Exact match. Filter will be skipped on `null` value */
+  exact?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-insensitive containment test. Filter will be skipped on `null` value */
+  iContains?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-insensitive ends-with. Filter will be skipped on `null` value */
+  iEndsWith?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-insensitive exact match. Filter will be skipped on `null` value */
+  iExact?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-insensitive regular expression match. Filter will be skipped on `null` value */
+  iRegex?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-insensitive starts-with. Filter will be skipped on `null` value */
+  iStartsWith?: InputMaybe<Scalars['ID']['input']>;
+  /** Exact match of items in a given list. Filter will be skipped on `null` value */
+  inList?: InputMaybe<Array<Scalars['ID']['input']>>;
+  /** Assignment test. Filter will be skipped on `null` value */
+  isNull?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Case-sensitive regular expression match. Filter will be skipped on `null` value */
+  regex?: InputMaybe<Scalars['ID']['input']>;
+  /** Case-sensitive starts-with. Filter will be skipped on `null` value */
+  startsWith?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export enum ImmediateNeedChoices {
   Clothing = 'CLOTHING',
   Food = 'FOOD',
@@ -1904,7 +1931,6 @@ export type QueryBulkClientProfileImportRecordsArgs = {
 
 export type QueryCaseworkerOrganizationsArgs = {
   filters?: InputMaybe<OrganizationFilter>;
-  order?: InputMaybe<OrganizationOrder>;
   ordering?: InputMaybe<Array<OrganizationOrder>>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -1949,7 +1975,6 @@ export type QueryClientProfileArgs = {
 
 export type QueryClientProfilesArgs = {
   filters?: InputMaybe<ClientProfileFilter>;
-  order?: InputMaybe<ClientProfileOrder>;
   ordering?: Array<ClientProfileOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -1996,7 +2021,6 @@ export type QueryHmisProfilesArgs = {
 
 export type QueryInteractionAuthorsArgs = {
   filters?: InputMaybe<InteractionAuthorFilter>;
-  order?: InputMaybe<InteractionAuthorOrder>;
   ordering?: Array<InteractionAuthorOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2009,7 +2033,6 @@ export type QueryNoteArgs = {
 
 export type QueryNotesArgs = {
   filters?: InputMaybe<NoteFilter>;
-  order?: InputMaybe<NoteOrder>;
   ordering?: Array<NoteOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
@@ -2486,10 +2509,14 @@ export type TaskFilter = {
   OR?: InputMaybe<TaskFilter>;
   authors?: InputMaybe<Array<Scalars['ID']['input']>>;
   clientProfile?: InputMaybe<Scalars['ID']['input']>;
+  clientProfileLookup?: InputMaybe<IdFilterLookup>;
   clientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
   createdBy?: InputMaybe<Scalars['ID']['input']>;
   hmisClientProfile?: InputMaybe<Scalars['ID']['input']>;
+  hmisClientProfileLookup?: InputMaybe<IdFilterLookup>;
   hmisClientProfiles?: InputMaybe<Array<Scalars['ID']['input']>>;
+  hmisNote?: InputMaybe<IdFilterLookup>;
+  note?: InputMaybe<IdFilterLookup>;
   organizations?: InputMaybe<Array<Scalars['ID']['input']>>;
   search?: InputMaybe<Scalars['String']['input']>;
   status?: InputMaybe<Array<TaskStatusEnum>>;
@@ -2515,7 +2542,7 @@ export type TaskType = {
   createdAt: Scalars['DateTime']['output'];
   createdBy: UserType;
   description?: Maybe<Scalars['String']['output']>;
-  hmisClientProfile?: Maybe<HmisProfileType>;
+  hmisClientProfile?: Maybe<HmisClientProfileType>;
   hmisNote?: Maybe<DjangoModelType>;
   id: Scalars['ID']['output'];
   note?: Maybe<DjangoModelType>;
@@ -2751,7 +2778,7 @@ export type UserType = {
 
 export type UserTypeOrganizationsOrganizationArgs = {
   filters?: InputMaybe<OrganizationFilter>;
-  order?: InputMaybe<OrganizationOrder>;
+  ordering?: Array<OrganizationOrder>;
   pagination?: InputMaybe<OffsetPaginationInput>;
 };
 

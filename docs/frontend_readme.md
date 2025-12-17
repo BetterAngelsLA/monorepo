@@ -67,10 +67,10 @@ Run the following on the host machine—**not in the container**:
    source ~/.zshrc
    ```
 
-1. Install node version 22.14.0
+1. Install node version 22.21.1
 
    ```bash
-   nvm install 22.14.0
+   nvm install 22.21.1
    ```
 
 1. Clone the monorepo
@@ -127,7 +127,7 @@ Run the following on the host machine—**not in the container**:
    If your current node version is incorrect, run the following and try again.
 
    ```bash
-   nvm use 22.14.0
+   nvm use 22.21.1
    ```
 
 #### Starting the iOS emulator
@@ -265,7 +265,7 @@ Before you begin, ensure you have the following installed on your Windows machin
    Restart your WSL2 terminal or run **source ~/.nvm/nvm.sh** to apply the changes.
 
    ```
-   nvm install 22.14.0
+   nvm install 22.21.1
    ```
 
    Should you encounter any problems, refer to [NVM Installation Guide](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating).

@@ -5,12 +5,12 @@ import {
   useUser,
 } from '@monorepo/expo/betterangels';
 import { Button } from '@monorepo/expo/shared/ui-components';
-import CookieManager from '@react-native-cookies/cookies';
 import * as Application from 'expo-application';
 import { useRouter } from 'expo-router';
 import * as Updates from 'expo-updates';
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import NitroCookies from 'react-native-nitro-cookies';
 import Logo from './assets/images/logo.svg';
 
 export default function Auth() {
@@ -25,7 +25,7 @@ export default function Auth() {
   // user on 401 errors
   useEffect(() => {
     setUser(undefined);
-    CookieManager.clearAll();
+    NitroCookies.clearAll();
   }, []);
 
   return (

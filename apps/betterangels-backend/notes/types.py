@@ -135,7 +135,7 @@ class NoteOrder:
     interacted_at: auto
 
 
-@strawberry_django.filter(models.Note)
+@strawberry_django.filter_type(models.Note)
 class NoteFilter:
     client_profile: ID | None
     created_by: ID | None
@@ -169,7 +169,6 @@ class NoteFilter:
     models.Note,
     pagination=True,
     filters=NoteFilter,
-    order=NoteOrder,  # type: ignore[literal-required]
     ordering=NoteOrder,
 )
 class NoteType:
@@ -266,7 +265,7 @@ class RevertNoteInput:
     revert_before_timestamp: datetime
 
 
-@strawberry_django.filter(User)
+@strawberry_django.filter_type(User)
 class InteractionAuthorFilter:
     @strawberry_django.filter_field
     def search(self, queryset: QuerySet, info: Info, value: Optional[str], prefix: str) -> Q:
@@ -294,7 +293,6 @@ class InteractionAuthorOrder:
 @strawberry_django.type(
     User,
     filters=InteractionAuthorFilter,
-    order=InteractionAuthorOrder,  # type: ignore[literal-required]
     ordering=InteractionAuthorOrder,
 )
 class InteractionAuthorType:

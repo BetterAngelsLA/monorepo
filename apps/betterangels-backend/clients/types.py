@@ -25,7 +25,6 @@ from django.db.models import Exists, Max, OuterRef, Q, QuerySet
 from django.utils import timezone
 from strawberry import ID, Info, auto
 from strawberry.file_uploads import Upload
-from strawberry_django import filter
 
 from .models import (
     ClientContact,
@@ -59,7 +58,7 @@ CLIENT_DOCUMENT_NAMESPACE_GROUPS = {
 }
 
 
-@filter(Attachment)
+@strawberry_django.filter_type(Attachment)
 class ClientDocumentFilter:
     @strawberry_django.filter_field
     def document_groups(
@@ -105,7 +104,7 @@ class ClientSearchInput:
     middle_name: Optional[str] = None
 
 
-@filter(ClientProfile)
+@strawberry_django.filter_type(ClientProfile)
 class ClientProfileFilter:
     @strawberry_django.filter_field
     def is_active(
@@ -322,7 +321,7 @@ class ClientProfileBaseType:
     veteran_status: auto
 
 
-@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, order=ClientProfileOrder, ordering=ClientProfileOrder, pagination=True)  # type: ignore[literal-required]
+@strawberry_django.type(ClientProfile, filters=ClientProfileFilter, ordering=ClientProfileOrder, pagination=True)
 class ClientProfileType(ClientProfileBaseType):
     id: ID
     contacts: Optional[List[ClientContactType]]
