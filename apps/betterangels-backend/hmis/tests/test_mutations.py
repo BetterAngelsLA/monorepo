@@ -17,6 +17,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.gis.geos import Point
 from django.test import TestCase, override_settings
+from hmis.api_bridge import HmisApiBridge
 from hmis.enums import (
     HmisDobQualityEnum,
     HmisGenderEnum,
@@ -582,15 +583,21 @@ class HmisLoginMutationTests(GraphQLBaseTestCase, TestCase):
         super().setUp()
         self.existing_user = baker.make(get_user_model(), _fill_optional=["email"])
 
-        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
-        self.success_response = {"data": {"createAuthToken": {"authToken": token}}}
-
     @override_settings(HMIS_TOKEN_KEY="LeUjRutbzg_txpcdszNmKbpX8rFiMWLnpJtPbF2nsS0=")
     def test_hmis_login_success(self) -> None:
+        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsImlhdCI6MTY3Mjc2NjAyOCwiZXhwIjoxNjc0NDk0MDI4fQ.kCak9sLJr74frSRVQp0_27BY4iBCgQSmoT3vQVWKzJg"
+
         with patch(
             "hmis.api_bridge.HmisApiBridge.create_auth_token",
-            return_value=None,
-        ):
+            autospec=True,
+        ) as mock_create_auth_token:
+
+            def fake_create_auth_token(self: HmisApiBridge, username: str, password: str) -> None:
+                self._set_auth_token(token)
+                return None
+
+            mock_create_auth_token.side_effect = fake_create_auth_token
+
             resp = self.execute_graphql(
                 LOGIN_MUTATION,
                 variables={"email": self.existing_user.email, "password": "anything"},
