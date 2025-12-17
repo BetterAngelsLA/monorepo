@@ -16,7 +16,7 @@ export default function AuthContainer({
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style="dark" />
       <View
         style={[
           styles.container,
