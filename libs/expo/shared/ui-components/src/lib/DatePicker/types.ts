@@ -14,7 +14,11 @@ export type INumericDatePickerProps = Omit<
   | 'outlineColor'
   | 'outlineStyle'
   | 'withDateFormatInLabel'
->;
+  | 'onChange'
+> & {
+  // Override onChange to accept null for explicit clearing
+  onChange?: (date: Date | null | undefined) => void;
+};
 
 export interface IWheelDatePickerProps extends TMarginProps {
   mode: 'date' | 'time';

@@ -104,9 +104,10 @@ function toApiInputs(values: THouseholdMemberFormState) {
     next.dateOfBirth = next.dateOfBirth
       .toISOString()
       .split('T')[0] as unknown as Date;
-    } else if (next.dateOfBirth === undefined || next.dateOfBirth === null) {
-      // explicitly set to null when cleared so backend knows to clear the field
-      next.dateOfBirth = null;
+  } else if (next.dateOfBirth === null) {
+    next.dateOfBirth = null;
+  } else if (next.dateOfBirth === undefined) {
+    delete next.dateOfBirth;
   }
 
   return next;

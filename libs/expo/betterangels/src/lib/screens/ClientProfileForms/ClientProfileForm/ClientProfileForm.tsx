@@ -178,17 +178,12 @@ function toUpdateClienProfileInputs(
 
   // only update dateOfBirth if it was touched/changed
   // this prevents clearing dates when the field wasn't intentionally modified
-  if (
-    'dateOfBirth' in values &&
-    ((dirtyFields && 'dateOfBirth' in dirtyFields) ||
-      values.dateOfBirth !== undefined)
-  ) {
-    if (values.dateOfBirth) {
+  if ('dateOfBirth' in values && dirtyFields && 'dateOfBirth' in dirtyFields) {
+    if (values.dateOfBirth instanceof Date) {
       updatedInputs.dateOfBirth = values.dateOfBirth
         .toISOString()
         .split('T')[0] as unknown as Date;
-    } else {
-      // Explicitly set to null when cleared so backend knows to clear the field
+    } else if (values.dateOfBirth === null) {
       updatedInputs.dateOfBirth = null;
     }
   }

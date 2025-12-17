@@ -212,6 +212,7 @@ export default function DateAndTime(props: IDateAndTimeProps) {
       >
         <DatePicker
           type="numeric"
+          placeholder='Enter date'
           validRange={{
             endDate: endOfDay,
             startDate: new Date('1900-01-01'),

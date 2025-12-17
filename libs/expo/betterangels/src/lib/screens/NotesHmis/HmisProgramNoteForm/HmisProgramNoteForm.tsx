@@ -200,6 +200,7 @@ export function HmisProgramNoteForm(props: TProps) {
           name="date"
           control={control}
           type="numeric"
+          placeholder='Enter date'
           disabled={formDisabled}
         />
       </FieldCardHmisNote>

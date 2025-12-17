@@ -11,13 +11,15 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
   return (
     <View>
       {typeof label === 'string' && <FormFieldLabel label={label} />}
-<View style={styles.inputWrapper}>
+      <View style={styles.inputWrapper}>
         <DatePickerInput
           locale="en"
           inputMode="start"
           mode="outlined"
           iconColor={Colors.PRIMARY_EXTRA_DARK}
-          textColor={disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK}
+          textColor={
+            disabled ? Colors.NEUTRAL_LIGHT : Colors.PRIMARY_EXTRA_DARK
+          }
           placeholderTextColor={Colors.NEUTRAL}
           outlineColor={Colors.NEUTRAL_LIGHT}
           outlineStyle={{
@@ -33,7 +35,7 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
           disabled={disabled}
           {...rest}
           value={value}
-          onChange={onChange}
+          onChange={onChange as (date: Date | undefined) => void}
           calendarIcon={value ? '' : undefined}
         />
 
@@ -45,7 +47,7 @@ export function NumericDatePicker(props: INumericDatePickerProps) {
             hitSlop={8}
             style={styles.clearButton}
             disabled={disabled}
-            onPress={() => onChange(undefined)}
+            onPress={() => onChange(null)}
           >
             <InputClearIcon />
           </Pressable>
