@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import CookieManager from '@react-native-cookies/cookies';
 import {
   createContext,
   ReactNode,
@@ -9,6 +8,7 @@ import {
   useState,
 } from 'react';
 import { Platform } from 'react-native';
+import NitroCookies from 'react-native-nitro-cookies';
 import { CSRF_HEADER_NAME, getCSRFToken } from '../common';
 
 type Env = 'production' | 'demo';
@@ -44,7 +44,7 @@ export const ApiConfigProvider = ({
 
   const switchEnvironment = async (env: Env) => {
     if (env === environment) return;
-    await CookieManager.clearAll();
+    await NitroCookies.clearAll();
     await AsyncStorage.setItem('currentEnvironment', env);
     setEnvironment(env);
   };
