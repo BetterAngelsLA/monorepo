@@ -1,38 +1,28 @@
 import { Colors, Spacings } from '@monorepo/expo/shared/static';
 import { StatusBar } from 'expo-status-bar';
-import { ElementType, ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ReactNode } from 'react';
+import { StyleSheet, View, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+type AuthContainerProps = {
+  children: ReactNode;
+  header?: ReactNode;
+  style?: ViewStyle;
+};
 
 export default function AuthContainer({
   children,
-  Logo,
-}: {
-  children: ReactNode;
-  Logo?: ElementType;
-}) {
+  header,
+  style,
+}: AuthContainerProps) {
   const insets = useSafeAreaInsets();
-  const bottomOffset = insets.bottom;
 
   return (
     <>
       <StatusBar style="dark" />
-      <View
-        style={[
-          styles.container,
-          {
-            paddingBottom: bottomOffset,
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-          },
-        ]}
-      >
-        {Logo && (
-          <View style={{ marginBottom: 0 }}>
-            <Logo width={216} height={33} />
-          </View>
-        )}
-        {children}
+      <View style={[styles.container, { paddingBottom: insets.bottom }, style]}>
+        <View style={styles.headerContainer}>{header}</View>
+        <View style={styles.contentContainer}>{children}</View>
       </View>
     </>
   );
@@ -41,8 +31,18 @@ export default function AuthContainer({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: Spacings.sm,
     backgroundColor: Colors.PRIMARY,
+    paddingHorizontal: Spacings.sm,
     width: '100%',
+  },
+  headerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 40,
+  },
+  contentContainer: {
+    width: '100%',
+    paddingBottom: 20,
   },
 });
