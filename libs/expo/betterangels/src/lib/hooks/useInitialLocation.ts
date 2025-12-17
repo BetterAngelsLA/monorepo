@@ -1,6 +1,6 @@
 import axios from 'axios';
 import * as ExpoLocation from 'expo-location';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { LocationDraft } from '../screens/NotesHmis/HmisProgramNoteForm';
 
 const INITIAL_LOCATION = {
@@ -14,9 +14,10 @@ export function useInitialLocation(
   location: LocationDraft | undefined,
   setValue: (name: 'location', value: LocationDraft) => void
 ) {
-  useEffect(() => {
-    if (editing) return;
+  const [userLocation, setUserLocation] =
+    useState<ExpoLocation.LocationObject | null>(null);
 
+  useEffect(() => {
     const autoSetInitialLocation = async () => {
       try {
         let { latitude, longitude } = INITIAL_LOCATION;
@@ -31,7 +32,11 @@ export function useInitialLocation(
             });
           latitude = userCurrentLocation.coords.latitude;
           longitude = userCurrentLocation.coords.longitude;
+
+          setUserLocation(userCurrentLocation);
         }
+
+        if (editing) return;
 
         const url = `${baseUrl}/proxy/maps/api/geocode/json?latlng=${latitude},${longitude}`;
         const { data } = await axios.get(url, {
@@ -61,4 +66,6 @@ export function useInitialLocation(
 
     void autoSetInitialLocation();
   }, [baseUrl]);
+
+  return [userLocation];
 }

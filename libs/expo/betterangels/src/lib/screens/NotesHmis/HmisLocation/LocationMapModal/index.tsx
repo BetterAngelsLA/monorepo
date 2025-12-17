@@ -38,10 +38,11 @@ interface ILocationMapModalProps {
   location: LocationDraft;
   onclose?: () => void;
   setValue: (key: string, data: any) => void;
+  userLocation: ExpoLocation.LocationObject | null;
 }
 
 export default function LocationMapModal(props: ILocationMapModalProps) {
-  const { location, setLocation, onclose, setValue } = props;
+  const { location, setLocation, onclose, setValue, userLocation } = props;
 
   const { baseUrl } = useApiConfig();
   const mapRef = useRef<TMapView>(null);
@@ -52,8 +53,6 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
   const [suggestions, setSuggestions] = useState<TPlacesPrediction[]>([]);
   const [chooseDirections, setChooseDirections] = useState(false);
   const [selected, setSelected] = useState<boolean>(false);
-  const [userLocation, setUserLocation] =
-    useState<ExpoLocation.LocationObject | null>(null);
 
   const [address, setAddress] = useState<
     { short: string; full: string; addressComponents: unknown[] } | undefined
@@ -245,20 +244,11 @@ export default function LocationMapModal(props: ILocationMapModalProps) {
 
   const goToUserLocation = async () => {
     try {
-      const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-
-      const userCurrentLocation = await ExpoLocation.getCurrentPositionAsync({
-        accuracy: ExpoLocation.Accuracy.Balanced,
-      });
-
-      setUserLocation(userCurrentLocation);
-
-      if (mapRef.current) {
+      if (mapRef.current && userLocation) {
         mapRef.current.animateToRegion(
           {
-            latitude: userCurrentLocation.coords.latitude,
-            longitude: userCurrentLocation.coords.longitude,
+            latitude: userLocation.coords.latitude,
+            longitude: userLocation.coords.longitude,
             latitudeDelta: 0.005,
             longitudeDelta: 0.005,
           },

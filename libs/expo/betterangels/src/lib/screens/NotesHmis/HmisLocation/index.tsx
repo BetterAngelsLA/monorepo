@@ -43,7 +43,12 @@ export default function HmisLocationComponent(props: ILocationProps) {
   const { setValue, watch } = useFormContext();
   const location = watch('location');
 
-  useInitialLocation(baseUrl, editing, location, setValue);
+  const [userLocation] = useInitialLocation(
+    baseUrl,
+    editing,
+    location,
+    setValue
+  );
 
   const setLocation = (locationData: LocationDraft) => {
     setValue('location', locationData);
@@ -66,6 +71,7 @@ export default function HmisLocationComponent(props: ILocationProps) {
 
           content: (
             <LocationMapModal
+              userLocation={userLocation}
               setValue={setValue}
               location={location}
               setLocation={setLocation}
