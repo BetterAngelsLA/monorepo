@@ -23,11 +23,6 @@ type SectionKey =
   | 'draftTasks'
   | null;
 
-const INITIAL_LOCATION = {
-  longitude: -118.258815,
-  latitude: 34.048655,
-};
-
 interface ILocationProps {
   expanded: boolean;
   setExpanded: Dispatch<SetStateAction<SectionKey>>;
