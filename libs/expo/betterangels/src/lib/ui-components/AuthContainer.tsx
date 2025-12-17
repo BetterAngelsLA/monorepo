@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type AuthContainerProps = {
   children: ReactNode;
-  header?: ReactNode;
+  header?: ReactNode; // Changed from Logo component to generic ReactNode
   style?: ViewStyle;
 };
 

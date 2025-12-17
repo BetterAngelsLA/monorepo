@@ -108,5 +108,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 20,
     color: Colors.WHITE,
+    opacity: 0.8,
   },
 });
