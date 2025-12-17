@@ -65,7 +65,11 @@ export default function ClientProfileForm(props: IClientProfileForms) {
         return;
       }
 
-      const inputs = toUpdateClienProfileInputs(id, values);
+      const inputs = toUpdateClienProfileInputs(
+        id,
+        values,
+        methods.formState.dirtyFields
+      );
 
       if (!inputs) {
         return;
@@ -163,7 +167,8 @@ export default function ClientProfileForm(props: IClientProfileForms) {
 
 function toUpdateClienProfileInputs(
   id: string,
-  values: FormValues
+  values: FormValues,
+  dirtyFields?: Partial<Record<keyof FormValues, boolean>>
 ): UpdateClientProfileInput | null {
   if (!values || !id) {
     return null;
@@ -171,11 +176,21 @@ function toUpdateClienProfileInputs(
 
   const updatedInputs: UpdateClientProfileInput = { id };
 
-  // convert dateOfBirth to date string and remove time
-  if ('dateOfBirth' in values && values.dateOfBirth) {
-    updatedInputs.dateOfBirth = values.dateOfBirth
-      .toISOString()
-      .split('T')[0] as unknown as Date;
+  // only update dateOfBirth if it was touched/changed
+  // this prevents clearing dates when the field wasn't intentionally modified
+  if (
+    'dateOfBirth' in values &&
+    ((dirtyFields && 'dateOfBirth' in dirtyFields) ||
+      values.dateOfBirth !== undefined)
+  ) {
+    if (values.dateOfBirth) {
+      updatedInputs.dateOfBirth = values.dateOfBirth
+        .toISOString()
+        .split('T')[0] as unknown as Date;
+    } else {
+      // Explicitly set to null when cleared so backend knows to clear the field
+      updatedInputs.dateOfBirth = null;
+    }
   }
 
   // profilePhoto is updated directly within component
