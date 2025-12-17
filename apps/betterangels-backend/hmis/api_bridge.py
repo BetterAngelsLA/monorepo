@@ -116,6 +116,10 @@ class HmisApiBridge:
             **auth_header,
         }
 
+    def _handle_token_refresh(self, resp: requests.Response) -> None:
+        if new_token := resp.cookies.get("auth_token"):
+            self._set_auth_token(new_token)
+
     def _handle_error_response(self, resp: requests.Response) -> None:
         if resp.status_code == 200:
             return
@@ -158,6 +162,7 @@ class HmisApiBridge:
         resp = requests.request(method, **request_args)  # type: ignore
 
         self._handle_error_response(resp)
+        self._handle_token_refresh(resp)
 
         return resp
 
