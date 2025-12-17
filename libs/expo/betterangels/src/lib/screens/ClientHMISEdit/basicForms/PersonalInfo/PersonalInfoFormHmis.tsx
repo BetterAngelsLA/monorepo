@@ -4,6 +4,7 @@ import {
   Form,
   SingleSelect,
 } from '@monorepo/expo/shared/ui-components';
+import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import {
   enumDisplayLanguage,
@@ -20,23 +21,27 @@ export function PersonalInfoFormHmis() {
   const {
     control,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useFormContext<TPersonalInfoFormSchema>();
+
+  const dobQuality = watch('dobQuality');
+
+  const isDobDisabled =
+    dobQuality === 'DONT_KNOW' ||
+    dobQuality === 'NO_ANSWER' ||
+    dobQuality === 'NOT_COLLECTED' ||
+    dobQuality === '';
+
+  useEffect(() => {
+    if (isDobDisabled) {
+      setValue('birthDate', null);
+    }
+  }, [isDobDisabled, setValue]);
 
   return (
     <Form>
       <Form.Fieldset>
-        <DatePicker
-          name="birthDate"
-          control={control}
-          type="numeric"
-          label="Date of Birth"
-          disabled={isSubmitting}
-          validRange={{
-            endDate: new Date(),
-            startDate: new Date('1900-01-01'),
-          }}
-        />
         <Controller
           name="dobQuality"
           control={control}
@@ -56,7 +61,17 @@ export function PersonalInfoFormHmis() {
             />
           )}
         />
-
+        <DatePicker
+          name="birthDate"
+          control={control}
+          type="numeric"
+          label="Date of Birth"
+          disabled={isDobDisabled}
+          validRange={{
+            endDate: new Date(),
+            startDate: new Date('1900-01-01'),
+          }}
+        />
         <Controller
           name="veteran"
           control={control}

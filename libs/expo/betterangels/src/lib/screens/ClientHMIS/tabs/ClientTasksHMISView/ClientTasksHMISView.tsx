@@ -125,7 +125,7 @@ export function ClientTasksHMISView(props: TProps) {
       />
 
       <TaskList
-        filters={{ search, hmisClientProfile: client.id }}
+        filters={{ search, hmisClientProfileLookup: { exact: client.id } }}
         renderItem={renderTaskItem}
         renderHeader={renderListHeaderText}
       />

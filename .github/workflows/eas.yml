@@ -31,7 +31,7 @@ jobs:
       - name: 🔧 Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22.14.0
+          node-version: 22.21.1
       - run: |
           corepack enable
 
@@ -95,7 +95,7 @@ jobs:
       - name: 🔧 Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22.14.0
+          node-version: 22.21.1
       - run: |
           corepack enable
           npm install --global eas-cli
@@ -260,7 +260,7 @@ jobs:
       - name: 🔧 Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 22.14.0
+          node-version: 22.21.1
       - run: |
           corepack enable
           npm install --global eas-cli

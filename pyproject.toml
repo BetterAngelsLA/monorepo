@@ -24,7 +24,7 @@ profile = "black"
 skip_glob = ["*/migrations/*"]
 
 [tool.poetry.dependencies]
-python = "3.13.5"
+python = "3.14.2"
 pre-commit = "^4.3.0"
 
 [tool.poetry.dependencies.betterangels-backend]

@@ -4,6 +4,7 @@ export type TTaskFilterType =
   | 'teams'
   | 'status'
   | 'clientProfiles'
+  | 'hmisClientProfiles'
   | 'authors'
   | 'organizations';
 
