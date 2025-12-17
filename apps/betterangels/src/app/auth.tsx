@@ -27,28 +27,33 @@ export default function Auth() {
   const otaId = Updates.updateId;
   const otaVersion = otaId ? otaId.slice(0, 7) : 'N/A';
 
+  // make sure local user data is cleared when landing on this screen
+  // apolloProvider has no access to UserProvider so cannot really reset
+  // user on 401 errors
   useEffect(() => {
     setUser(undefined);
     NitroCookies.clearAll();
   }, []);
 
   return (
-    <AuthContainer header={<Logo width={216} height={33} />}>
-      <FeatureFlagControlled
-        flag={FeatureFlags.HMIS_FF}
-        fallback={
-          <Button
-            {...SHARED_BUTTON_PROPS}
-            accessibilityHint="Goes to sign-in screen"
-            onPress={() => router.navigate('/sign-in')}
-            testID="get-started-button"
-            title="Get Started"
-            variant="primaryDark"
-          />
-        }
-      >
-        <View style={styles.buttonStack}>
+    <AuthContainer Logo={Logo}>
+      <View style={styles.contentWrapper}>
+        <FeatureFlagControlled
+          flag={FeatureFlags.HMIS_FF}
+          fallback={
+            <Button
+              {...SHARED_BUTTON_PROPS}
+              accessibilityHint="Goes to sign-in screen"
+              onPress={() => router.navigate('/sign-in')}
+              testID="get-started-button"
+              title="Get Started"
+              variant="primaryDark"
+            />
+          }
+        >
           <Text style={styles.heading}>Choose an account:</Text>
+
+          <View style={{ height: 16 }} />
 
           <Button
             {...SHARED_BUTTON_PROPS}
@@ -64,6 +69,8 @@ export default function Auth() {
             variant="primaryDark"
           />
 
+          <View style={{ height: 16 }} />
+
           <Button
             {...SHARED_BUTTON_PROPS}
             accessibilityHint="Opens HMIS login for service providers"
@@ -77,21 +84,20 @@ export default function Auth() {
             title="HMIS"
             variant="secondary"
           />
-
           <View style={styles.versionContainer}>
             <Text style={styles.appVersion}>App version: {nativeVersion}</Text>
             <Text style={styles.appVersion}>OTA version: {otaVersion}</Text>
           </View>
-        </View>
-      </FeatureFlagControlled>
+        </FeatureFlagControlled>
+      </View>
     </AuthContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  buttonStack: {
-    gap: 16,
+  contentWrapper: {
     width: '100%',
+    paddingBottom: 60,
   },
   heading: {
     fontSize: 14,
@@ -102,12 +108,11 @@ const styles = StyleSheet.create({
   },
   versionContainer: {
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 16,
   },
   appVersion: {
     fontSize: 12,
     lineHeight: 20,
     color: Colors.WHITE,
-    opacity: 0.8,
   },
 });
